@@ -948,7 +948,7 @@ const PYEO_ALERTS = {
     model: {
         aoi: AOI,
         dates: {monitoringStart: '2023-01-01', monitoringEnd: '2024-01-01'},
-        sources: {dataSets: {SENTINEL_2: ['SENTINEL_2']}, changeFromClasses: [1], changeToClasses: [2]}
+        sources: {classification: CLASSIFICATION.id, dataSets: {SENTINEL_2: ['SENTINEL_2']}, changeFromClasses: [1], changeToClasses: [2]}
     }
 }
 

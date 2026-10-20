@@ -12,6 +12,7 @@ import {Aoi} from '../aoi'
 import {bandPresentation} from './bands'
 import {PyeoAlertsToolbar} from './panels/pyeoAlertsToolbar'
 import {defaultModel} from './pyeoAlertsRecipe'
+import {sourcesRequirements} from './sourcesRequirements'
 import {getPreSetVisualizations} from './visualizations'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -63,6 +64,7 @@ export default () => ({
     components: {
         recipe: PyeoAlerts
     },
+    sourceRequirements: sourcesRequirements,
     imageSource: true,
     getDateRange,
     bandPresentation,

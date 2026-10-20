@@ -25,7 +25,7 @@ import {resolveProvider, UNSUPPORTED} from '../sourceProvider'
 export const SELECTED_SCENES = 'SELECTED_SCENES'
 export const NOT_DERIVABLE = 'NOT_DERIVABLE'
 
-//   {bands, defaults: {sources, options, start, end} | null, restriction: SELECTED_SCENES | NOT_DERIVABLE | null}
+//   {bands, defaults: {sources?, options?, start?, end?} | null, restriction: SELECTED_SCENES | NOT_DERIVABLE | null}
 export const readInputImagery$ = (reference, {loadRecipe$, loadedRecipes, assetMetadata$}, {defaults} = {}) =>
     reference?.type === ASSET
         ? fromAsset$(reference.id, {assetMetadata$}, defaults)
@@ -111,14 +111,21 @@ const recipeDefaults = (record, declaredProducer) => {
     }
 }
 
+// Each setting the asset states is proposed on its own, its dates as a pair: one it does not state, or states
+// malformed, is not.
 const assetDefaults = metadata => {
     const properties = metadata?.properties || {}
     const start = properties['system:time_start']
     const end = properties['system:time_end']
     const sources = parsed(properties.recipe_sources)
     const options = parsed(properties.recipe_compositeOptions || properties.recipe_options)
-    return sources && options && start !== undefined && end !== undefined
-        ? {defaults: {sources, options, start, end}, restriction: null}
+    const defaults = {
+        ...(sources && {sources}),
+        ...(options && {options}),
+        ...(start !== undefined && end !== undefined && {start, end})
+    }
+    return Object.keys(defaults).length
+        ? {defaults, restriction: null}
         : notDerivable
 }
 

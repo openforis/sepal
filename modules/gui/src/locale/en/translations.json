@@ -1646,7 +1646,8 @@
             "dataSets": {
               "label": "Optical datasets",
               "tooltip": "One or more Sentinel-2 / Landsat collections. Bands are harmonised across the selection.",
-              "required": "Pick at least one optical dataset"
+              "required": "Pick at least one optical dataset",
+              "unsuppliedInputs": "The selected datasets don't provide the bands this classification reads: {missing}. Choose datasets that do."
             },
             "cloudPercentageThreshold": {
               "label": "Maximum scene cloud cover",
@@ -1657,7 +1658,8 @@
               "label": "Classification recipe",
               "tooltip": "Only Classification recipes appear here. Class IDs and labels are pulled from the selected recipe.",
               "placeholder": "Select a Classification recipe",
-              "required": "Pick a Classification recipe"
+              "required": "Pick a Classification recipe",
+              "unsuppliedInputs": "No supported monitoring data provides the bands this classification reads: {missing}. Choose another classification."
             },
             "changeFromClasses": {
               "label": "FROM classes (baseline)",
@@ -1672,7 +1674,8 @@
             },
             "changeClasses": {
               "noClassification": "Select a classification recipe to choose From/To classes"
-            }
+            },
+            "andMore": "{items} and {count} more"
           }
         },
         "options": {
@@ -1690,7 +1693,12 @@
             "gateIndex": {
               "label": "Index",
               "tooltip": "Spectral index whose drop (baseline − monitoring) confirms an alert — a drop signals disturbance. Options depend on the selected sources.",
-              "required": "Pick an index"
+              "required": "Pick an index",
+              "unsupported": "The selected imagery can't compute {index}. Choose an index it supports, or turn the index gate off.",
+              "unavailable": {
+                "BASELINE": "The classification's imagery can't provide {index} for the index gate. Choose another index, or turn the gate off.",
+                "MONITORING": "The monitoring data can't provide {index} for the index gate. Choose another index, or turn the gate off."
+              }
             },
             "gateThreshold": {
               "label": "Minimum drop",
@@ -1713,8 +1721,7 @@
         "singleInputRequired": "This classification uses more than one input image, which isn't supported here. Choose a classification with a single input.",
         "selectedScenesUnsupported": "This classification was trained on hand-selected scenes, which isn't supported yet. Choose a classification trained on a date range.",
         "pending": "Reading the selected classification…",
-        "unavailable": "The selected classification could not be read. Choose it again to retry.",
-        "notDerivable": "Couldn't read the imagery dates from this classification (external asset). Set the baseline and monitoring dates manually."
+        "unavailable": "The selected classification could not be read. Choose it again to retry."
       }
     },
     "changeAlerts": {

@@ -29,6 +29,12 @@ const MASKED_ASSET = 'masked-asset'
 const RADAR = 'radar-1'
 const MOSAIC_ASSET = 'users/x/mosaic'
 const OPTICAL_BANDS = ['blue', 'green', 'red', 'nir', 'swir1', 'swir2']
+const EXPORTED_OPTICAL = {
+    'system:time_start': 1704067200000,
+    'system:time_end': 1735689600000,
+    recipe_sources: '{"dataSets":{"LANDSAT":["LANDSAT_9","LANDSAT_8"]},"cloudPercentageThreshold":75}',
+    recipe_compositeOptions: '{"corrections":["SR","BRDF"],"compose":"MEDOID"}'
+}
 
 describe('the imagery a classification was trained on', () => {
     it('is a directly selected optical mosaic, which states its own configuration', async () => {
@@ -80,6 +86,24 @@ describe('the imagery a classification was trained on', () => {
     })
 })
 
+// The properties an exported optical mosaic asset was reported with.
+describe('an asset exported with its whole configuration', () => {
+    it('proposes its sources, processing and dates', async () => {
+        assetMetadata$.mockReturnValue(of({bandNames: OPTICAL_BANDS, properties: EXPORTED_OPTICAL}))
+
+        const {bands, defaults, restriction} = await read({type: 'ASSET', id: MOSAIC_ASSET})
+
+        expect(bands).toEqual(OPTICAL_BANDS)
+        expect(defaults).toEqual({
+            sources: {dataSets: {LANDSAT: ['LANDSAT_9', 'LANDSAT_8']}, cloudPercentageThreshold: 75},
+            options: {corrections: ['SR', 'BRDF'], compose: 'MEDOID'},
+            start: 1704067200000,
+            end: 1735689600000
+        })
+        expect(restriction).toBe(null)
+    })
+})
+
 describe('asking for bands alone, as opening a saved recipe does', () => {
     it('reads no configuration from a recipe and proposes none', async () => {
         const {bands, defaults, restriction} = await read(recipeSelection(MOSAIC), {defaults: false})
@@ -113,7 +137,8 @@ describe('imagery no configuration can be derived from', () => {
     })
 
     // Its bands were read from the same response that failed to yield a configuration.
-    it('keeps the bands of an asset whose exported configuration is malformed', async () => {
+    // What is malformed is not proposed; what is stated beside it still is.
+    it('keeps the bands and dates of an asset whose exported configuration is malformed', async () => {
         assetMetadata$.mockReturnValue(of({
             bandNames: ['B1', 'B2'],
             properties: {recipe_sources: '{not json', recipe_options: '{}', 'system:time_start': 0, 'system:time_end': 1}
@@ -122,8 +147,17 @@ describe('imagery no configuration can be derived from', () => {
         const {bands, defaults, restriction} = await read({type: 'ASSET', id: MOSAIC_ASSET})
 
         expect(bands).toEqual(['B1', 'B2'])
-        expect(defaults).toBe(null)
-        expect(restriction).toBe(NOT_DERIVABLE)
+        expect(defaults).toEqual({options: {}, start: 0, end: 1})
+        expect(restriction).toBe(null)
+    })
+
+    it('proposes the dates of an asset that states no other configuration', async () => {
+        assetMetadata$.mockReturnValue(of({bandNames: OPTICAL_BANDS, properties: {'system:time_start': 0, 'system:time_end': 1}}))
+
+        const {defaults, restriction} = await read({type: 'ASSET', id: MOSAIC_ASSET})
+
+        expect(defaults).toEqual({start: 0, end: 1})
+        expect(restriction).toBe(null)
     })
 
     it('keeps the bands of an asset that was exported without one', async () => {

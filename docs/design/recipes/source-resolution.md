@@ -818,7 +818,7 @@ rule today:
 | --- | --- | --- |
 | Shared description refusal | band sets an input lacks; Stack mapping and names; Band Math output bands; Class/Index Change bands; LandTrendr and BAYTS product parameters | Stays. It is also a readiness finding. |
 | GUI declaration over a shared finding | `inputImageryRequirements`, `changeImageRequirements`, `trainingDataRequirements`, `remappingRequirements`, Band Math's calculation declaration | Stays. It supplies messages, items, sections and editors, and no predicate. |
-| GUI-only execution rule | PyEO's required classification; optical scene selection | Becomes a shared configuration requirement, one type per packet; the guard then goes. |
+| GUI-only execution rule | optical scene selection | Becomes a shared configuration requirement, one type per packet; the guard then goes. |
 | GUI rule duplicating a shared one | Classification's `canClassify` saved-data branch; Band Math's local output-image and output-name rules beside `NO_OUTPUT_BANDS`/`DUPLICATE_BAND_NAME`; Stack's band-name form rules | The shared finding is authoritative. A form rule may stay for drafts only, and must agree with it. |
 | Earth Engine-only failure | Masking's unselected mask; a missing AOI where one is required; PyEO band set specs | Becomes a shared configuration requirement; the Earth Engine error remains a backstop. |
 | Draft-only form rule | required fields while a panel is edited, such as a data set's reference data | Stays at the panel. It never changes the applied recipe's readiness. |
@@ -849,6 +849,15 @@ The declarations include:
   configured, and uses no supplied tree as given. The Regression stays described.
 - Masking's `MISSING_ROLE` at `['model', 'imageMask']` when no mask is selected. The Masking is refused as incomplete,
   not turned into a pass-through recipe. Its MSK section says "Select a mask" (`maskRequirements.js`).
+- PyEO Alerts' `MISSING_ROLE` at `['model', 'sources', 'classification']` when no classification is selected, and
+  `NO_CHANGE_CLASSES` at `['model', 'sources', 'changeFromClasses' | 'changeToClasses']` for an empty class list:
+  execution loads the classification and compares the two lists. Its report bands stay declared. SRC and the field
+  concerned say so (`pyeoAlerts/sourcesRequirements.js`). The Classification stays a `REFERENCE` need. Its
+  `UNSUPPLIED_CLASSIFIER_INPUTS`, at the data sets or the classification, requires the monitoring scenes
+  (`sceneBands`) to carry what the Classification's classifier reads; `UNAVAILABLE_GATE_INDEX`, for an enabled gate
+  only, requires its index of the scenes and of the Classification's input. They read the Classification record
+  (`recordsOf`) and that input's description (`describedSourceInputs`, only with the gate on); an unobserved input is
+  an observation needed, not a finding. AOI, band specifications and encoding are not migrated here.
 - Class Change's `MISSING_LEGEND` at `['model', 'fromImage' | 'toImage', 'legendEntries']` for each image whose legend
   is not a non-empty list: execution codes transitions from both legends' entries. The rule is the editor's existing
   `notEmpty`; its ten-entry limit stays an editor rule, since execution does not need it. The Class Change stays
@@ -1211,6 +1220,45 @@ unsuitable source; pending checks show busy feedback. This audit does not equate
 configuration invalidity. It does not opt additional recipe types into upstream-reference presentation, change their
 validation coverage, or change existing seeding/reconciliation of drafts. Temporary probes were removed after recording
 these results; permanent tests retain the implemented shared editor cases.
+
+#### Next validation packets (2026-10-20)
+
+The order below separates finishing the current PyEO work from extending its rules to other consumers. A shared
+backend helper accepting a Classification is not, by itself, a reason to expand a recipe's validation or GUI.
+
+1. **Finish PyEO compatibility (in progress, not accepted as complete).** Shared classifier-feature and conditional
+   index-gate requirements are implemented in the working tree. Before wrapping up, align OPT's index choices,
+   explanation and draft Apply validation with the execution-based shared rules. A direct asset baseline calculates
+   the index from spectral bands; a recipe baseline supplies the index by name. Pending evidence must not be judged
+   against bands cached for a previous Classification. Preserve explicitly saved indexes and unchanged reopening;
+   for a new configuration prefer NDVI, then a supported alternative. With no supported gate index, explain why On
+   is unavailable and leave the rest of OPT usable; an incompatible saved gate must remain visible with Off available
+   as a repair. Cover incompatible Sources drafts and the baseline evidence acquisition path with focused integration
+   tests. The supplied radar-classifier/Landsat combination must be refused before execution; that refusal is not a
+   claim of a successful live Earth Engine preview.
+2. **Reuse classifier compatibility for the GUI-supported consumers.** After the PyEO packet is verified and
+   committed, extract the common classifier-feature requirement while adding it to CCDC, Time Series and Phenology.
+   Classification is optional for these consumers: no selection requires no classifier check. Derive supplied
+   features from each consumer's actual optical, radar or Planet processing; do not copy PyEO's optical-only policy
+   or its optional drop-index requirement. Reuse the readiness traversal, evidence acquisition and GUI candidate
+   bindings rather than adding loaders, caches or duplicate panel predicates. Keep the Classification selector behind
+   More in all three (CCDC and Time Series already do; Phenology's presentation change is in the working tree).
+   Verify what the relevant image, chart and download paths enforce; image-output readiness alone does not establish
+   that every route is guarded. Preserve draft isolation, Cancel and recovery.
+3. **Diagnostic-code ownership.** Separately move recipe-specific codes beside the shared rules that own them;
+   generic output-contract diagnostics stay in `output/diagnostic.js`. Training-data codes belong with their common
+   rule, while calculation, constraint, legend and PyEO codes belong with their respective rules. Preserve code
+   strings and behaviour, updating imports without introducing a registry or a central recipe-code barrel.
+
+**Change Alerts is a separate inherited-settings review.** It has no Classification selector. Selecting a segment
+reference can copy the producer's Sources settings, including a Classification reference, through
+`changeAlerts/referenceObservation.js`. Establish the intended treatment of those inherited settings before adding
+compatibility validation or a new control; no new Classification control is requested. **LandTrendr is excluded** from
+the classifier-validation rollout: its current Sources GUI does not offer a Classification, despite the shared
+backend accepting that field. Do not add work solely for hypothetical or legacy configurations.
+
+Use failing witnesses and nearby tests while editing, then one focused verification campaign and static checks,
+with at most two workers. Do not broaden into repeated suite sweeps without a concrete unresolved concern.
 
 Keep these additional items visible, outside the completed packets:
 

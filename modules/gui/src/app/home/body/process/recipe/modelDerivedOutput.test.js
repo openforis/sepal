@@ -1241,7 +1241,8 @@ const phenologyOf = ({classification} = {}) => ({
     }
 })
 
-const pyeoAlertsOf = ({classification} = {}) => ({
+// Over the classification the session holds, unless a test names another.
+const pyeoAlertsOf = ({classification = LAND_COVER.id} = {}) => ({
     id: ID,
     type: 'PYEO_ALERTS',
     title: 'Alerts',

@@ -12,6 +12,7 @@ import {compose} from '~/compose'
 import {groupedBandOptions, toSources} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
+import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Notifications} from '~/widget/notifications'
@@ -56,6 +57,7 @@ class _Sources extends React.Component {
 
     render() {
         const {inputs: {dataSetType}} = this.props
+        const {advanced} = this.state
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -69,11 +71,15 @@ class _Sources extends React.Component {
                         {this.renderDataSets()}
                         {dataSetType.value === 'OPTICAL' ? this.renderCloudPercentageThreshold() : null}
                         {this.renderAssetId()}
-                        {this.renderClassification()}
+                        {advanced ? this.renderClassification() : null}
                         {this.renderBand()}
                     </Layout>
                 </Panel.Content>
-                <Form.PanelButtons/>
+                <Form.PanelButtons>
+                    <Button
+                        label={advanced ? msg('button.less') : msg('button.more')}
+                        onClick={() => this.setState(({advanced}) => ({advanced: !advanced}))}/>
+                </Form.PanelButtons>
             </RecipeFormPanel>
         )
     }
