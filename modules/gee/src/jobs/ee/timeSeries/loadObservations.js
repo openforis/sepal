@@ -2,6 +2,7 @@ import _ from 'lodash'
 import {map, mergeMap, of, switchMap, toArray} from 'rxjs'
 
 import {job} from '#gee/jobs/job'
+import {resolveImageOutput$} from '#gee/jobs/task/export/imageOutput'
 import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import {getCollection$} from '#sepal/ee/timeSeries/collection'
@@ -35,7 +36,8 @@ const worker$ = ({
             .get('array'), 'Extract chunk'
         )
     
-    return toGeometry$(aoi).pipe(
+    return ready$(recipe).pipe(
+        switchMap(() => toGeometry$(aoi)),
         switchMap(geometry => getCollection$({recipe, bands, geometry}).pipe(
             switchMap(collection => ee.getInfo$(collection.aggregate_array('system:index')).pipe(
                 switchMap(indexes => of(..._.chunk(indexes, CHUNK_SIZE))),
@@ -60,6 +62,15 @@ const worker$ = ({
         ))
     )
 }
+
+// A Time Series is held to what its image output requires (imageOutput.js) before the pixel or the collection is built:
+// the chart reads a collection band rather than the count, but every requirement on that image concerns the collection
+// both build. Establishing readiness may itself read Earth Engine. CCDC asks with its own recipe, whose image output is
+// not this collection, and Change Alerts with a bare model, so neither is held to anything here.
+const ready$ = recipe =>
+    recipe.type === 'TIME_SERIES'
+        ? resolveImageOutput$(recipe)
+        : of(null)
 
 export default job({
     jobName: 'Load observations',

@@ -1007,18 +1007,25 @@ One read answers every consumer, so they cannot disagree:
   be an image band. Each of the three requests checks on its own - the tile ids (`timeSeriesTiles$`) before the AOI
   is resolved or tiled, a tile's date ranges (`timeSeriesChunks$`) before any imagery check, and a chunk's export
   (`startTimeSeriesChunkExport$`) before tiling, building the collection, preparing a destination or submitting -
-  so calling the export without planning bypasses nothing. This does not validate the indicator itself. The exporters
-  these hand a built image to (`toAsset.js`, `toDrive.js`, `toWorkspace.js`) know nothing of recipes and add no
+  so calling the export without planning bypasses nothing. This does not validate the indicator itself. A Time
+  Series pixel chart request (`/timeSeries/loadObservations`, `jobs/ee/timeSeries/loadObservations.js`, for a
+  `TIME_SERIES` recipe) is held to the same readiness for the same reason, before the pixel geometry or the collection
+  is built or anything evaluated; its bands are collection bands, not checked against `count`, and the count image is
+  not built to establish readiness. CCDC's and Change Alerts' observation charts use the same endpoint - CCDC with its
+  own recipe, whose image output is not that collection, Change Alerts with a bare model - and are held to nothing.
+  The exporters these hand a built image to (`toAsset.js`, `toDrive.js`, `toWorkspace.js`) know nothing of recipes and add no
   check; whatever calls them directly is held to nothing here.
 
 **Outside the guarantee in this packet.** These build recipe images with no shared check, and still fail in Earth
 Engine:
 - Preview (`/preview`), guarded only by the client's `canPreview`.
 - Bands, image JSON, histogram, distinct values, sample and geometry/bounds routes.
-- The CCDC, LandTrendr and time-series chart loaders, and `nextReferenceDataPoints`.
+- The CCDC and LandTrendr chart loaders, CCDC's and Change Alerts' observation requests through
+  `/timeSeries/loadObservations`, and `nextReferenceDataPoints`.
 - Sampling Design steps and stratum areas.
 
-Preview and the chart routes stay as they are for now.
+Preview and the CCDC and LandTrendr chart routes stay as they are for now. Server-side Preview validation waits on a
+measured assessment of its cost.
 
 #### Performance
 
@@ -1263,8 +1270,10 @@ backend helper accepting a Classification is not, by itself, a reason to expand 
    task and `assetSources.js`) and the Drive and SEPAL image exports (`imageDriveExport.js`,
    `imageWorkspaceExport.js`), the last three building the image only for a ready recipe - and by Time Series
    downloads (`export/timeSeries.js`: tile ids, a tile's date ranges and each chunk's export, each checked before its
-   own work). Not enforced, and not migrated here: the CCDC and Time Series pixel charts
-   (`/timeSeries/loadObservations`, `/ccdc/loadSegments`), which reach Earth Engine without consulting readiness. A Classification with several inputs is
+   own work), and by the Time Series pixel chart (`/timeSeries/loadObservations` for a `TIME_SERIES` recipe, before
+   the pixel or collection is built). Not enforced, and not migrated here: the CCDC pixel chart's segments
+   (`/ccdc/loadSegments`) and its observations, and Change Alerts' observations, through the same endpoint - each
+   reaches Earth Engine without consulting readiness. A Classification with several inputs is
    not judged, though `classifyImage` refuses it.
 3. **Diagnostic-code ownership: done.** `lib/js/shared/src/recipe/output/diagnostic.js` keeps the output and
    resolution contract (`INCOMPLETE_IMAGE_OUTPUT` to `CONFLICTING_OBSERVATION`), `MISSING_ROLE`, and the band codes
@@ -1343,7 +1352,9 @@ identity still need one explicit repair; this is an accepted limitation, not a r
 - the `TRAINING_DATA` and geometry operations;
 - readiness for named map products;
 - the remaining GUI-only and Earth Engine-only rules, one type per packet;
-- whether Preview and the chart routes adopt the check.
+- whether Preview and the CCDC and LandTrendr chart routes adopt the check;
+- the collection readiness of CCDC's and Change Alerts' observation charts, which neither recipe's image readiness
+  stands for.
 
 **Later: shared form validation consistency.** Defer the broader review and refactoring until after the current
 validation/readiness work and nearer-term UI fixes. The immediate Masking correction can establish the intended

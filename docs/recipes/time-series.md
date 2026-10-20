@@ -23,8 +23,7 @@ classification; the output description stays. SRC is marked and its editor says 
 classification shows outside More while it cannot be used - and a draft refused for it cannot be applied. Selecting
 no classification requires nothing; a Classification record not held, or one with several inputs, is judged for
 nothing, and a Planet Daily band only eight-band imagery carries is not refused. Map previews, the Retrieve
-button and the download task Retrieve submits follow the finding; the pixel chart's observation request does not
-consult readiness.
+button, the download task Retrieve submits and the pixel chart's observation request follow the finding.
 
 ## Output
 
@@ -47,7 +46,11 @@ indicator of the collection to SEPAL. The download is still held to this image's
 concerns the collection both build; the indicator is not required to be one of its bands, and nothing validates the
 indicator itself. Its three Earth Engine requests (`modules/gee/src/jobs/task/export/timeSeries.js`) check
 independently: the tile ids before the AOI is tiled, a tile's date ranges before any imagery check, and each chunk's
-export before its collection is built, a destination prepared or the export submitted. The chart does not.
+export before its collection is built, a destination prepared or the export submitted. The chart's observation
+request (`modules/gee/src/jobs/ee/timeSeries/loadObservations.js`) is held to the same readiness, for a `TIME_SERIES`
+recipe, before it builds the pixel or the collection or evaluates anything; the bands it charts are not checked
+against `count`, and establishing readiness builds no count image. CCDC and Change Alerts chart observations through
+the same request and are not held to it.
 
 The GUI registration states a time series is no image source (`imageSource: false`), which keeps it out of other
 recipes' source pickers; declaring the image does not make it an input. Reached through the API or a saved model anyway,
@@ -93,3 +96,7 @@ Earth Engine is asked.
 - `modules/gee/test/jobs/task/export/timeSeries.test.js` - each download request refused for an incompatible
   classification before its own work, a chunk export refused without planning, the workflow unchanged after repair,
   and an unreadable classification failing as a read.
+- `modules/gee/test/jobs/ee/timeSeries/loadObservations.test.js` - the chart's observations refused for an
+  incompatible classification before any chart work, unchanged after repair, an unreadable classification failing as
+  a read, and no count image built; CCDC's and Change Alerts' observation requests answered as before, describing and
+  reading nothing.
