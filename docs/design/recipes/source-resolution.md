@@ -1455,6 +1455,10 @@ Keep these additional items visible, outside the completed packets:
     one declaring none keeps what is configured, which is no claim that it matches; with neither, it stays unset and
     Apply held. Change Alerts REF (`changeAlerts/panels/reference/assetSection.jsx`, `referenceRequirement.test.jsx`)
     now does as CCDC Slice's source already did (`ccdcSlice/panels/source/assetSection.test.jsx`).
+  - *Section switching from the derived input imagery list.* Fixed: `panels/inputImageryWithDerived/inputImagery.jsx`
+    now permits only its image editor (`{inputImage: 'allow'}`), as `panels/inputImagery` does. It no longer
+    overrides the fallback with `{_: 'allow'}`. Over a clean list another section opens and closes it, and the wizard
+    keeps other sections closed (`inputImageryPolicy.test.js`). The composed policy is `recipeFormPanelPolicy`.
   Open items:
   - *Duplication to fold into the form consistency work below:* Band Math's input editor copies
     `panels/inputImagery` with `name` for `band`; Class and Index Change each keep their own cleared-selection flags;

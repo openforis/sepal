@@ -27,6 +27,11 @@ const defaultPolicy = ({values, panelWizard: {wizard}}) =>
         ? {_: 'disallow'}
         : {_: 'allow-then-deactivate'}
 
+// What may open beside a form panel (widget/activation/activationPolicy.js): its policy - by default nothing over a set-up
+// wizard or unapplied edits, and otherwise anything, which closes it - with what the panel adds by id.
+export const recipeFormPanelPolicy = ({policy = defaultPolicy, additionalPolicy = () => ({})} = {}) =>
+    props => ({...policy(props), ...additionalPolicy(props)})
+
 export const recipeFormPanel = (
     {
         id,
@@ -100,7 +105,7 @@ export const recipeFormPanel = (
     }
 
     return WrappedComponent => {
-        const policyToApply = props => ({...policy(props), ...additionalPolicy(props)})
+        const policyToApply = recipeFormPanelPolicy({policy, additionalPolicy})
         // [HACK] Using withRecipe() twice.
         // withActivatable() is dependent on recipe for its policy -> withRecipe() before withActivatable()
         // withRecipe() is dependent on activatable props -> withActivatable() before withRecipe()
