@@ -1366,6 +1366,34 @@ backend helper accepting a Classification is not, by itself, a reason to expand 
    - **Change Alerts waits** for the inherited-settings decision. A request without a recipe stays unguarded.
    - **Limitation.** The transitive reads behind `REFERENCE` remain an acknowledged limitation.
 
+5. **Classification output compatibility: TODO.** The current collection compatibility rule checks input
+   features, not whether the selected Classification can provide the outputs an analysis needs. Validate the required
+   outputs through one shared capability declaration, rather than a consumer-specific classifier blacklist:
+   - per-class probabilities require `MULTIPROBABILITY`; confidence in the predicted class (`PROBABILITY`) is not a
+     substitute;
+   - regression requires regression output support;
+   - judge the outputs actually required by the analysis, without rejecting a Classification everywhere because one
+     consumer cannot use it. Account for classifier configuration, including SVM subtype, where support differs.
+   Use the same declaration for offered outputs, GUI candidate feedback, operation readiness and execution. Read
+   capabilities from the Classification record without constructing or observing its image. Establish each GUI-supported
+   consumer's needs from execution before extending validation; Change Alerts' inherited-settings policy stays separate.
+   **Execution: fixed (2026-10-20).** `timeSeries/collection.js` no longer requests regression and probabilities
+   unconditionally; that request had been exposed by SVM `C_SVC` refusing `REGRESSION`.
+   - It classifies each image only for the outputs a request names, among those the Classification declares
+     (`classificationBands`, which reuses `supportRegression` and `supportProbability`).
+   - It refuses one the Classification does not declare with `UNSUPPORTED_CLASSIFIED_OUTPUT`, before evaluation.
+   - A request naming only native bands reads nothing of the Classification.
+
+   Still open:
+   - **Readiness and GUI validation.** That refusal is execution's alone, and the validation above is not
+     implemented.
+   - **SVM subtype.** The shared declaration ignores SVM's subtype. The GUI's subtypes (`C_SVC`, `NU_SVC`,
+     `ONE_CLASS`) are not regression types, so regression is correctly excluded for all of them. Whether `ONE_CLASS`
+     supports `MULTIPROBABILITY` has not been verified against Earth Engine.
+   - **Native-band readiness.** Readiness still judges the classifier inputs of a native-band request that no longer
+     classifies anything. Making it band-sensitive would change the agreed policy and needs band-aware readiness
+     arguments, so it is a separate decision.
+
 **Change Alerts is a separate inherited-settings review.** It has no Classification selector. Selecting a segment
 reference can copy the producer's Sources settings, including a Classification reference, through
 `changeAlerts/referenceObservation.js`. Establish the intended treatment of those inherited settings before adding

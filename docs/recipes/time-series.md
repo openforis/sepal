@@ -1,7 +1,7 @@
 # Time Series
 
 Builds an optical, radar or Planet collection over an area and period, optionally with a Classification's
-regression and probabilities added to each image. Its chart plots a measure of that collection at a pixel, its
+regression or class probabilities added to each image where a request names them. Its chart plots a measure of that collection at a pixel, its
 Retrieve downloads one to SEPAL, and its map shows how many observations each pixel has.
 
 ## Inputs
@@ -63,13 +63,24 @@ the count is exported with `mean`, directly and through Masking or Stack, and an
 dependencies. That check validates no configuration: a model stating no AOI, sources or dates is not refused before
 Earth Engine is asked.
 
+## Classified outputs
+
+`lib/js/ee/src/timeSeries/collection.js` classifies each image only for the classified outputs a request names:
+`regression`, or `probability_<value>`. Each must be one the Classification declares (`classificationBands`,
+`lib/js/shared/src/recipe/type/classification.js`).
+
+- **Output modes.** The classifier is asked only for the output modes those outputs need. Class probabilities use
+  `MULTIPROBABILITY` and build no regression, so an SVM classifying `C_SVC` charts and downloads its probabilities.
+- **Unchanged values.** Probability names, values, masks and each branch's scaling are as before.
+- **Refusal.** A requested output the Classification does not declare, such as an SVM's regression, is refused with
+  `UNSUPPORTED_CLASSIFIED_OUTPUT` before anything is evaluated.
+- **Native bands.** A request naming only the images' own bands, such as the count's band `0`, reads nothing of the
+  Classification. A count with a Classification therefore builds.
+- **Readiness unchanged.** Readiness still requires the classifier's inputs to suit the collection, whatever band is
+  charted or downloaded.
+
 ## Open issues
 
-- **A count with a Classification source fails.** The count asks the collection for band `0`, and with a
-  Classification the optical and Planet branches of `lib/js/ee/src/timeSeries/collection.js` filter the requested
-  bands with `band.startsWith('probability_')`, which a number does not have: `TypeError: band.startsWith is not a
-  function`, reproduced live over a Landsat 8 series with an in-memory Classification. The chart and Retrieve name
-  their bands and are not affected.
 - **A period without scenes fails with Earth Engine's own error** (`Image.reduce: Unable to reduce an image with 0
   bands`), before the collection's "all images have been filtered out" can be reported; the catalogue no longer
   builds the image, so it answers regardless.
@@ -101,6 +112,9 @@ Earth Engine is asked.
 - `modules/gee/test/jobs/task/export/timeSeries.test.js` - each download request refused for an incompatible
   classification before its own work, a chunk export refused without planning, the workflow unchanged after repair,
   and an unreadable classification failing as a read.
+- `modules/gee/test/ee/timeSeries/classifiedOutputs.test.js` - over optical, radar and Planet collections, the output
+  modes each classified request constructs; an unsupported regression refused before anything is processed; native
+  and positional bands reading nothing of the Classification.
 - `modules/gee/test/jobs/ee/timeSeries/loadObservations.test.js` - the chart's observations refused for an
   incompatible classification before any chart work, unchanged after repair, an unreadable classification failing as
   a read, and no count image built; charted over an AOI that cannot be read, refers back or is incomplete, reading
