@@ -1,11 +1,13 @@
 import datasets$ from '#gee/jobs/datasets/datasets'
 import aoiBounds$ from '#gee/jobs/ee/aoi/bounds'
+import aoiGeoId$ from '#gee/jobs/ee/aoi/geoId'
 import aoiGeometry$ from '#gee/jobs/ee/aoi/geometry'
 import createFolder$ from '#gee/jobs/ee/asset/createFolder'
 import deleteAsset$ from '#gee/jobs/ee/asset/delete'
 import listAssets$ from '#gee/jobs/ee/asset/list'
 import assetMetadata$ from '#gee/jobs/ee/asset/metadata'
 import renameAsset$ from '#gee/jobs/ee/asset/rename'
+import assetVersions$ from '#gee/jobs/ee/asset/versions'
 import loadCCDCSegments$ from '#gee/jobs/ee/ccdc/loadSegments'
 import check$ from '#gee/jobs/ee/check'
 import nextReferenceDataPoints$ from '#gee/jobs/ee/classification/nextReferenceDataPoints'
@@ -61,6 +63,7 @@ export default router =>
         .post('/image/distinctBandValues', stream(ctx => distinctBandValues$(ctx)))
         .post('/image/sample', stream(ctx => sampleImage$(ctx)))
         .post('/assetMetadata', stream(ctx => assetMetadata$(ctx)))
+        .post('/assetVersions', stream(ctx => assetVersions$(ctx)))
         .get('/projects', stream(ctx => projects$(ctx)))
         .get('/asset/descendants', stream(ctx => listAssets$(ctx)))
         .post('/asset/createFolder', stream(ctx => createFolder$(ctx)))
@@ -71,6 +74,7 @@ export default router =>
         .post('/recipe/bounds', stream(ctx => imageBounds$(ctx)))
         .post('/aoi/bounds', stream(ctx => aoiBounds$(ctx)))
         .post('/aoi/geometry', stream(ctx => aoiGeometry$(ctx)))
+        .post('/aoi/geoId', stream(ctx => aoiGeoId$(ctx)))
         .post('/ccdc/loadSegments', stream(ctx => loadCCDCSegments$(ctx)))
         .post('/landTrendr/loadSegments', stream(ctx => loadLandTrendrSegments$(ctx)))
         .post('/timeSeries/loadObservations', stream(ctx => loadTimeSeriesbservations$(ctx)))

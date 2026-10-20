@@ -10,6 +10,9 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
+import {SectionButton} from '../../sectionButton'
+import {withOutputProblems} from '../../withOutputProblems'
+import {bandNamesProblemMessage, bandNamesProblems} from '../bandNamesProblems'
 import {RecipeActions} from '../stackRecipe'
 import {BandNames} from './bandNames/bandNames'
 import {toBandNames} from './bandNames/bandNamesUpdate'
@@ -29,7 +32,8 @@ class _StackToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, initialized} = this.props
+        const {recipeId, initialized, bandNamesProblems} = this.props
+        const bandNamesProblem = bandNamesProblems[0]
         return (
             <PanelWizard
                 panels={['inputImagery']}
@@ -49,7 +53,7 @@ class _StackToolbar extends React.Component {
                     vertical
                     placement='bottom-right'
                     className={styles.bottom}>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='inputImagery'
                         label={msg('process.panels.inputImagery.button')}
                         tooltip={msg('process.panels.inputImagery.tooltip')}
@@ -57,8 +61,11 @@ class _StackToolbar extends React.Component {
                         panel/>
                     <Toolbar.ActivationButton
                         id='bandNames'
+                        error={!!bandNamesProblem}
                         label={msg('process.stack.panel.bandNames.button')}
-                        tooltip={msg('process.stack.panel.bandNames.tooltip')}
+                        tooltip={bandNamesProblem
+                            ? msg('process.requirement.itemProblem', {item: bandNamesProblem.name, message: bandNamesProblemMessage(bandNamesProblem)})
+                            : msg('process.stack.panel.bandNames.tooltip')}
                         disabled={!initialized}
                         panel/>
                 </Toolbar>
@@ -76,5 +83,6 @@ class _StackToolbar extends React.Component {
 
 export const StackToolbar = compose(
     _StackToolbar,
+    withOutputProblems({bandNamesProblems}),
     withRecipe(mapRecipeToProps)
 )

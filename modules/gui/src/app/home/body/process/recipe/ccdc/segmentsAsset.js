@@ -3,6 +3,7 @@ import {map} from 'rxjs'
 
 import {SEGMENT_BANDS} from '#sepal/recipe/type/ccdc'
 import api from '~/apiRegistry'
+import {assetAvailableBands} from '~/app/home/map/imageLayerSource/assetBands'
 import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
 import {uuid} from '~/uuid'
 
@@ -12,7 +13,11 @@ import {uuid} from '~/uuid'
 // It admits nothing and verifies nothing. Every band name matching the suffix pattern becomes a base band and
 // the five known names become segment bands, whether or not what comes out describes a coherent CCDC image -
 // an asset with a single `x_rmse` band yields one base band. Deciding whether an asset really carries CCDC
-// segments needs typed band evidence this never looks at, array dimensionality included.
+// segments is left to each consumer's own requirement.
+//
+// It also carries the asset's typed bands, from the same metadata (`typedBands`: the asset, and each band with the array
+// rank its metadata states, undefined where none was established - assetBands.js). They are reported, not validated: no
+// other field depends on them, and a consumer's requirement judges them (segmentRequirements.js).
 //
 // Two different things come out of the same metadata and must not be confused. Band names are the only input
 // to the structural fields. The visualization properties are presentation templates and contribute to none of
@@ -21,8 +26,17 @@ import {uuid} from '~/uuid'
 
 export const describeSegmentsAsset$ = assetId =>
     api.gee.assetMetadata$({asset: assetId}).pipe(
-        map(segmentsAssetDescription)
+        map(metadata => typedSegmentsAssetDescription(metadata, {assetId}))
     )
+
+export const typedSegmentsAssetDescription = (metadata, {assetId}) => ({
+    ...segmentsAssetDescription(metadata),
+    typedBands: {
+        assetId,
+        bands: Object.entries(assetAvailableBands(metadata))
+            .map(([name, {dataType: {arrayDimensions}}]) => ({name, arrayDimensions}))
+    }
+})
 
 export const segmentsAssetDescription = ({bandNames = [], properties = {}} = {}) => ({
     bands: bandNames,

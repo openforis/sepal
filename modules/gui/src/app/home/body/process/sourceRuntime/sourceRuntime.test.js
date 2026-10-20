@@ -24,6 +24,12 @@ vi.mock('~/apiRegistry', async () => {
     return {
         default: {
             gee: {
+                assetVersions$: ({ids}) => ({
+                    subscribe: ({next}) => {
+                        next({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
+                        return {unsubscribe: () => {}}
+                    }
+                }),
                 bands$: params => {
                     state.bandsCalls.push(params)
                     const key = params.asset ? `ASSET:${params.asset}` : `RECIPE_REF:${params.recipe?.id}`
@@ -169,9 +175,13 @@ const observing = ({environment$, recipe, createObserver}) => {
     }
 }
 
+// When a description's closure was read: a time once it was, null otherwise.
+const READ_AT = {asymmetricMatch: value => value === null || Number.isFinite(value), toString: () => 'READ_AT'}
+
 const envelope = ({
-    status, description = null, diagnostics = [], error = null, dependencyValidity = null, basis = expect.any(Array)
-}) => ({status, description, diagnostics, error, dependencyValidity, basis})
+    status, description = null, diagnostics = [], error = null, dependencyValidity = null, basis = expect.any(Array),
+    assets = expect.any(Array), observedAt = READ_AT, readiness
+}) => ({status, description, diagnostics, error, dependencyValidity, basis, assets, observedAt, readiness})
 
 const completing = ({environment$, recipe}) => {
     const runtime = createSourceRuntime({environment$})
@@ -208,6 +218,13 @@ const CCDC_BANDS = [
 
 const DECLARED_CCDC_BANDS = ['tStart', 'ndvi_coefs']
 
+// Running a Masking builds its mask, so its mask asset is observed beside what describes it.
+const MASK_CALL = {asset: 'users/x/mask', includeDataTypes: true}
+
+const MASK_BANDS = [{name: 'mask', arrayDimensions: 0}]
+
+const RUNNABLE = {status: 'READY', findings: [], needs: {records: [], observations: []}}
+
 describe('capturing the environment', () => {
     it('subscribes to the environment only when the operation is subscribed', () => {
         const env = environmentOf()
@@ -231,7 +248,7 @@ describe('capturing the environment', () => {
         env.set(environment({catalogue: catalogue([inner])}))
         operation$.subscribe()
 
-        expect(state.bandsCalls).toEqual([{recipe: inner}])
+        expect(state.bandsCalls).toEqual([{recipe: inner}, MASK_CALL])
     })
 
     it('gives two subscriptions independent snapshots', () => {
@@ -245,7 +262,7 @@ describe('capturing the environment', () => {
 
         env.set(environment({catalogue: catalogue([ccdc()])}))
         operation$.subscribe()
-        expect(state.bandsCalls).toEqual([{recipe: ccdc()}])
+        expect(state.bandsCalls).toEqual([{recipe: ccdc()}, MASK_CALL])
         expect(env.subscribeCount()).toBe(2)
     })
 
@@ -259,7 +276,7 @@ describe('capturing the environment', () => {
 
         env.change(environment({catalogue: {}, earthEngineGeneration: 1}))
 
-        expect(state.bandsCalls).toEqual([{recipe: inner}])
+        expect(state.bandsCalls).toEqual([{recipe: inner}, MASK_CALL])
         expect(state.torndown).toEqual([])
     })
 
@@ -275,7 +292,7 @@ describe('capturing the environment', () => {
         const runtime = createSourceRuntime({environment$: env.environment$})
         runtime.resolveImageOutput$({recipe: current}).subscribe()
 
-        expect(state.bandsCalls).toEqual([{recipe: ccdc()}])
+        expect(state.bandsCalls).toEqual([{recipe: ccdc()}, MASK_CALL])
     })
 })
 
@@ -301,11 +318,13 @@ describe('completing the operation-local recipe closure', () => {
 
         emitRecipe('nested-1', ccdc('nested-1'))
 
-        expect(state.bandsCalls).toEqual([{
-            asset: 'users/x/segments',
-            includeDataTypes: true
-        }])
+        // Running the Masking builds its mask, a Remapping over the loaded recipe, whose bands are observed too.
+        expect(state.bandsCalls).toEqual([
+            {asset: 'users/x/segments', includeDataTypes: true},
+            {recipe: ccdc('nested-1')}
+        ])
         emit('ASSET:users/x/segments', CCDC_BANDS)
+        emit('RECIPE_REF:nested-1', DECLARED_CCDC_BANDS)
         expect(observed.latest().status).toBe('READY')
         expect(observed.latest().description.executionReference).toEqual({
             type: 'RECIPE_REF',
@@ -322,7 +341,7 @@ describe('completing the operation-local recipe closure', () => {
 
         expect(observed.latest()).toEqual(envelope({
             status: 'UNAVAILABLE',
-            error: failure,
+            error: failedRead('nested-1', failure),
             dependencyValidity: unknownWithMissing('nested-1')
         }))
         expect(observed.latest().diagnostics).toEqual([])
@@ -390,6 +409,7 @@ describe('the one-shot envelope', () => {
         const {env, recipe} = maskedCcdc()
         const observed = observing({environment$: env.environment$, recipe})
         emit('RECIPE_REF:ccdc-1', DECLARED_CCDC_BANDS)
+        emit('ASSET:users/x/mask', MASK_BANDS)
 
         expect(observed.states.map(({status}) => status)).toEqual(['LOADING', 'READY'])
         expect(observed.latest()).toEqual(envelope({
@@ -399,7 +419,8 @@ describe('the one-shot envelope', () => {
                 output: {kind: 'IMAGE', bands: sampled(CCDC_BANDS)},
                 evidence: []
             },
-            dependencyValidity: SOUND
+            dependencyValidity: SOUND,
+            readiness: RUNNABLE
         }))
         expect(observed.completed()).toBe(true)
         expect(observed.errored()).toBe(null)
@@ -423,8 +444,14 @@ describe('the one-shot envelope', () => {
         const failure = new Error('ajax error')
         const observed = observing({environment$: env.environment$, recipe})
         fail('RECIPE_REF:ccdc-1', failure)
+        emit('ASSET:users/x/mask', MASK_BANDS)
 
-        expect(observed.latest()).toEqual(envelope({status: 'UNAVAILABLE', error: failure, dependencyValidity: SOUND}))
+        expect(observed.latest()).toEqual(envelope({
+            status: 'UNAVAILABLE',
+            error: failure,
+            dependencyValidity: SOUND,
+            readiness: expect.objectContaining({status: 'UNAVAILABLE', findings: []})
+        }))
         expect(observed.latest().error).toBe(failure)
         expect(observed.errored()).toBe(null)
         expect(observed.completed()).toBe(true)
@@ -450,8 +477,9 @@ describe('the one-shot envelope', () => {
         const {env, recipe} = maskedCcdc()
         observing({environment$: env.environment$, recipe})
         emit('RECIPE_REF:ccdc-1', DECLARED_CCDC_BANDS)
+        emit('ASSET:users/x/mask', MASK_BANDS)
 
-        expect(state.torndown).toEqual(['RECIPE_REF:ccdc-1'])
+        expect(state.torndown).toEqual(['RECIPE_REF:ccdc-1', 'ASSET:users/x/mask'])
         expect(env.liveCount()).toBe(0)
     })
 
@@ -501,7 +529,7 @@ describe('structural dependency validity', () => {
 
         expect(observed.latest()).toEqual(envelope({
             status: 'UNAVAILABLE',
-            error: failure,
+            error: failedRead('gone', failure),
             dependencyValidity: {
                 status: 'INVALID',
                 diagnostics: [
@@ -558,7 +586,9 @@ describe('completing dependencies without describing', () => {
                 basis: [
                     {id: 'masked-1', content: expect.objectContaining({type: 'MASKING'})},
                     {id: 'ccdc-1', content: expect.objectContaining({type: 'CCDC'})}
-                ]
+                ],
+                assets: expect.any(Array),
+                observedAt: null
             }
         ])
         expect(state.bandsCalls).toEqual([])
@@ -576,9 +606,11 @@ describe('completing dependencies without describing', () => {
 
         expect(completed.latest()).toEqual({
             status: 'UNAVAILABLE',
-            error: failure,
+            error: failedRead('gone', failure),
             dependencyValidity: expect.objectContaining({status: 'INVALID'}),
-            basis: [{id: 'masked-1', content: expect.objectContaining({type: 'MASKING'})}]
+            basis: [{id: 'masked-1', content: expect.objectContaining({type: 'MASKING'})}],
+            assets: expect.any(Array),
+            observedAt: null
         })
         expect(state.bandsCalls).toEqual([])
     })
@@ -595,7 +627,9 @@ describe('completing dependencies without describing', () => {
             status: 'UNAVAILABLE',
             error: expect.objectContaining({code: 'SOURCE_IDENTITY_CHANGED'}),
             dependencyValidity: null,
-            basis: []
+            basis: [],
+            assets: [],
+            observedAt: null
         })
         expect(state.recipeTorndown).toEqual(['ccdc-1'])
     })
@@ -615,6 +649,7 @@ describe('what an operation read', () => {
         const observed = observing({environment$: env.environment$, recipe})
 
         emit('RECIPE_REF:ccdc-1', DECLARED_CCDC_BANDS)
+        emit('ASSET:users/x/mask', MASK_BANDS)
 
         expect(observed.latest().basis).toEqual([
             {
@@ -622,11 +657,10 @@ describe('what an operation read', () => {
                 content: {
                     id: 'masked-1',
                     type: 'MASKING',
-                    model: recipe.model,
-                    sourceEvidence: {sourceKey: 'RECIPE_REF:ccdc-1'}
+                    model: recipe.model
                 }
             },
-            {id: 'ccdc-1', content: {...ccdc(), sourceEvidence: undefined}}
+            {id: 'ccdc-1', content: ccdc()}
         ])
     })
 
@@ -637,34 +671,6 @@ describe('what an operation read', () => {
         const observed = observing({environment$: env.environment$, recipe: ccdc()})
 
         expect(observed.latest().basis).toEqual([])
-    })
-})
-
-describe('credential epochs', () => {
-    it('gives a token on subscription and a different one on each credential change', () => {
-        const env = environmentOf()
-        const runtime = createSourceRuntime({environment$: env.environment$})
-        const epochs = []
-        runtime.identity$().subscribe(epoch => epochs.push(epoch))
-
-        env.change(environment({earthEngineGeneration: 2}))
-
-        expect(epochs).toHaveLength(2)
-        expect(epochs[1]).not.toBe(epochs[0])
-    })
-
-    it('completes when the owning runtime scope closes, and releases the environment when left', () => {
-        const env = environmentOf()
-        const runtime = createSourceRuntime({environment$: env.environment$})
-        let completed = false
-        const left = runtime.identity$().subscribe()
-        runtime.identity$().subscribe({complete: () => completed = true})
-
-        left.unsubscribe()
-        expect(env.liveCount()).toBe(1)
-        env.close()
-
-        expect(completed).toBe(true)
     })
 })
 
@@ -814,7 +820,7 @@ describe('runtime invalidation', () => {
         }))
         expect(observed.latest().diagnostics).toEqual([])
         expect(observed.completed()).toBe(true)
-        expect(state.torndown).toEqual(['RECIPE_REF:ccdc-1'])
+        expect(state.torndown).toEqual(['RECIPE_REF:ccdc-1', 'ASSET:users/x/mask'])
     })
 
     it('reports closure of the owning runtime scope as UNAVAILABLE with its own code', () => {
@@ -827,7 +833,7 @@ describe('runtime invalidation', () => {
             dependencyValidity: SOUND
         }))
         expect(observed.completed()).toBe(true)
-        expect(state.torndown).toEqual(['RECIPE_REF:ccdc-1'])
+        expect(state.torndown).toEqual(['RECIPE_REF:ccdc-1', 'ASSET:users/x/mask'])
     })
 
     it('reports a subscription made after closure without observing anything', () => {
@@ -858,3 +864,6 @@ describe('runtime invalidation', () => {
         expect(error.message).toBe('Source runtime: SOURCE_IDENTITY_CHANGED')
     })
 })
+
+// A failed read of a record as the loader reports it: naming the record, the failure its cause.
+const failedRead = (recipeId, failure) => expect.objectContaining({recipeId, status: failure.status, cause: failure})

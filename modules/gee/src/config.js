@@ -3,6 +3,7 @@ import os from 'node:os'
 import {Command, Option} from 'commander'
 import _ from 'lodash'
 
+import {DEFAULT_GEOID_ENDPOINT} from '#sepal/geoId/httpGeoIdAdapter'
 import {getLogger} from '#sepal/log'
 
 const log = getLogger('config')
@@ -82,6 +83,11 @@ try {
                 .env('GOOGLE_REGION')
         )
         .addOption(
+            new Option('--geoid-endpoint <value>')
+                .env('GEOID_ENDPOINT')
+                .default(DEFAULT_GEOID_ENDPOINT)
+        )
+        .addOption(
             new Option('--google-project-id <value>')
                 .env('GOOGLE_PROJECT_ID')
                 .makeOptionMandatory()
@@ -130,6 +136,7 @@ const {geeEmail,
     sepalHost,
     googleRegion,
     recipeEndpoint,
+    geoidEndpoint: geoIdEndpoint,
     geeKey,
     googleProjectId,
     port,
@@ -171,6 +178,7 @@ log.info('Configuration loaded')
 
 export {
     eeLimits,
+    geoIdEndpoint,
     googleProjectId,
     googleRegion,
     instances,

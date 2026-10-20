@@ -3,18 +3,17 @@ import {describe, expect, it} from 'vitest'
 import {sliceOutputBands} from '#sepal/recipe/type/ccdcSlice'
 
 import {
-    baseBandsOf,
     chartSourceReference,
     dateFormatOf,
     materializedTemplates,
     outputBandsOf,
     retrievableBands,
-    segmentDescription,
     sliceRequest
 } from './sliceEvidence'
 
-// What a CCDC Slice recipe answers about the segments it slices, from the evidence in force. Fixtures are the
-// smallest shapes the source panel and the older sourceSync wrote, over one measure.
+// What a CCDC Slice recipe derives from the segments it slices, from the evidence in force (segmentEvidence.test.js
+// reads the description). Fixtures are the smallest shapes the source panel and the older sourceSync wrote, over one
+// measure.
 
 const DESCRIBED = {
     bands: ['ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude', 'tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb'],
@@ -55,11 +54,6 @@ const observed = (sourceKey, segments) => ({sourceKey, status: 'OBSERVED', segme
 describe('a slice whose source has been observed', () => {
     const recipe = sliceOf({source: COPIED, sourceEvidence: observed('RECIPE_REF:ccdc-1', DESCRIBED)})
 
-    it('answers from the observation, not the copy', () => {
-        expect(segmentDescription(recipe).status).toBe('OBSERVED')
-        expect(baseBandsOf(recipe).map(({name}) => name)).toEqual(['ndvi'])
-    })
-
     it('derives the scalar bands its operation produces from the physical bands the source carries', () => {
         expect(outputBandsOf(recipe)).toEqual([
             'ndvi',
@@ -79,10 +73,6 @@ describe('a slice whose source has been observed', () => {
     it('materializes the source templates against what it actually produces', () => {
         expect(materializedTemplates(recipe).map(({id}) => id)).toEqual(['v-ndvi', 'v-harmonic'])
         expect(DESCRIBED.visualizations.map(({id}) => id)).toContain('v-nbr')
-    })
-
-    it('interprets dates the way the source represents them', () => {
-        expect(dateFormatOf(recipe)).toBe(1)
     })
 })
 
@@ -122,43 +112,24 @@ describe('a description supplied by a consumer', () => {
     const unopened = sliceOf({source: {type: 'RECIPE_REF', id: 'ccdc-1'}})
 
     it('is used in place of runtime evidence', () => {
-        expect(baseBandsOf(unopened, DESCRIBED).map(({name}) => name)).toEqual(['ndvi'])
         expect(materializedTemplates(unopened, DESCRIBED).map(({id}) => id)).toEqual(['v-ndvi', 'v-harmonic'])
     })
 
     it('leaves the recipe answering nothing without it', () => {
-        expect(baseBandsOf(unopened)).toEqual([])
         expect(materializedTemplates(unopened)).toEqual([])
-    })
-})
-
-// A base band's measures are read one way, whatever spelling the description arrived in.
-describe('the measures of a base band', () => {
-    it('are read from a copy an older GUI saved under its own spelling', () => {
-        expect(baseBandsOf(sliceOf({source: COPIED}))).toEqual([{name: 'nbr', measures: ['value']}])
-    })
-
-    it('are read from an observation unchanged', () => {
-        const recipe = sliceOf({source: COPIED, sourceEvidence: observed('RECIPE_REF:ccdc-1', DESCRIBED)})
-
-        expect(baseBandsOf(recipe)).toEqual([{name: 'ndvi', measures: ['value', 'rmse', 'magnitude']}])
     })
 })
 
 describe('a slice whose source has not been observed', () => {
     const recipe = sliceOf({source: COPIED})
 
-    it('falls back to the copy an older GUI saved, saying so', () => {
-        expect(segmentDescription(recipe).status).toBe('UNOBSERVED')
-        expect(baseBandsOf(recipe).map(({name}) => name)).toEqual(['nbr'])
+    it('derives its bands from the copy an older GUI saved', () => {
         expect(outputBandsOf(recipe)).toContain('nbr_phase_1')
     })
 
     it('answers nothing from a recipe that carries no copy either', () => {
         const bare = sliceOf({source: {type: 'RECIPE_REF', id: 'ccdc-1'}})
 
-        expect(segmentDescription(bare).description).toBeNull()
-        expect(baseBandsOf(bare)).toEqual([])
         expect(outputBandsOf(bare)).toEqual([])
     })
 })
@@ -171,55 +142,13 @@ describe('a slice whose source could not be observed', () => {
     })
 
     it('answers nothing, rather than the copy', () => {
-        expect(segmentDescription(recipe).status).toBe('UNAVAILABLE')
-        expect(baseBandsOf(recipe)).toEqual([])
+        expect(outputBandsOf(recipe)).toEqual([])
         expect(materializedTemplates(recipe)).toEqual([])
     })
 })
 
-describe('evidence about a source the recipe no longer selects', () => {
-    it('is not used', () => {
-        const recipe = sliceOf({
-            source: {type: 'RECIPE_REF', id: 'ccdc-2'},
-            sourceEvidence: observed('RECIPE_REF:ccdc-1', DESCRIBED)
-        })
-
-        expect(segmentDescription(recipe).status).toBe('UNOBSERVED')
-        expect(baseBandsOf(recipe)).toEqual([])
-    })
-})
-
-// The date representation is configuration for an asset and evidence for a recipe. Zero is Julian days,
-// a value, not an absence.
+// Slice interprets segment times by the shared rule (segmentEvidence.test.js), with a default of its own.
 describe('the date representation', () => {
-    const assetSource = dateFormat => ({type: 'ASSET', id: 'users/x/segments', dateFormat})
-    const assetEvidence = observed('ASSET:users/x/segments', {...DESCRIBED, dateFormat: 2})
-
-    it('is what the user configured for an asset, over what its metadata says', () => {
-        expect(dateFormatOf(sliceOf({source: assetSource(1), sourceEvidence: assetEvidence}))).toBe(1)
-    })
-
-    it('preserves a configured zero', () => {
-        expect(dateFormatOf(sliceOf({source: assetSource(0), sourceEvidence: assetEvidence}))).toBe(0)
-    })
-
-    it('is the metadata value for an asset nobody configured', () => {
-        expect(dateFormatOf(sliceOf({source: assetSource(undefined), sourceEvidence: assetEvidence}))).toBe(2)
-    })
-
-    it('is the source\'s for a recipe, whatever an older copy says', () => {
-        const recipe = sliceOf({
-            source: {...COPIED, dateFormat: 0},
-            sourceEvidence: observed('RECIPE_REF:ccdc-1', DESCRIBED)
-        })
-
-        expect(dateFormatOf(recipe)).toBe(1)
-    })
-
-    it('falls back to the copy for a recipe source not yet observed', () => {
-        expect(dateFormatOf(sliceOf({source: {...COPIED, dateFormat: 2}}))).toBe(2)
-    })
-
     it('is Julian days when nothing at all says otherwise', () => {
         expect(dateFormatOf(sliceOf({source: {type: 'RECIPE_REF', id: 'ccdc-1'}}))).toBe(0)
     })

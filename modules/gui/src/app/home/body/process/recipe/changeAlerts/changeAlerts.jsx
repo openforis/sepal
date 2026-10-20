@@ -13,8 +13,10 @@ import {initializeLayers} from '../recipeImageLayerSource'
 import {SourceEvidenceSync} from '../sourceEvidenceSync'
 import {bandPresentation, mapProducts} from './bands'
 import {defaultModel, RecipeActions} from './changeAlertsRecipe'
+import {observedBands} from './monitoringData'
 import {ChangeAlertsToolbar} from './panels/changeAlertsToolbar'
 import {changeAlertsObservation} from './referenceObservation'
+import {referenceRequirements} from './referenceRequirement'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -70,5 +72,9 @@ export default () => ({
     },
     mapProducts,
     bandPresentation,
-    getPreSetVisualizations
+    getPreSetVisualizations,
+    sourceRequirements: referenceRequirements,
+    observedBands,
+    // What a layer, Retrieve or chart observes to check the reference it requires, wherever it is shown.
+    sourceObservation: changeAlertsObservation
 })

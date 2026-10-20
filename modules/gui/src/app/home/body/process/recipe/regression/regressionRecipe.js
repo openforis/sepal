@@ -19,7 +19,3 @@ export const getDefaultModel = () => ({
 export const retrieveTask = {
     includeTimeRange: false
 }
-
-export const hasTrainingData = recipe => {
-    return !!recipe.model.trainingData.dataSets.length
-}

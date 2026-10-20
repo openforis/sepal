@@ -4,22 +4,29 @@ import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
 import {monitoringDates} from '#sepal/recipe/changeAlerts/monitoringDates'
+import {PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
 import {compose} from '~/compose'
-import {getAvailableBands} from '~/sources'
+import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {toUserErrorMessage} from '~/userError'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Icon} from '~/widget/icon'
+import {Message} from '~/widget/message'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
 import {withRecipe} from '../../../recipeContext'
+import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
+import {resolveChartBand} from '../../chartBandSelection'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
+import {pixelChartAvailability} from '../../operationAvailability'
+import {pixelGenerationOfState} from '../../pixelGeneration'
+import {dateFormatOf, segmentDescription} from '../../segmentEvidence'
+import {PIXEL_SEGMENTS} from '../../sourceRequirements'
 import {loadCCDCObservations$, loadCCDCSegments$, RecipeActions} from '../changeAlertsRecipe'
-import {baseBandsOf, dateFormatOf, segmentBandsOf, segmentDescriptionGeneration} from '../referenceEvidence'
 import styles from './chartPixel.module.css'
 
 const fields = {
@@ -29,15 +36,11 @@ const fields = {
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
     latLng: selectFrom(recipe, 'ui.chartPixel'),
-    dateFormat: dateFormatOf(recipe),
-    // Samples are interpreted with the description they were taken under, so a newly accepted one
-    // supersedes them - and the description lives in ui, which recipe.model cannot see.
-    descriptionGeneration: segmentDescriptionGeneration(recipe),
-    corrections: selectFrom(recipe, 'model.options.corrections'),
-    dataSets: selectFrom(recipe, 'model.sources.dataSets'),
+    dateFormat: dateFormatOf(recipe, PRIMARY_IMAGE),
+    // Samples are interpreted with the description they were taken under, so another one supersedes them - and the
+    // description lives in ui, which recipe.model cannot see.
+    description: segmentDescription(recipe, PRIMARY_IMAGE).description,
     band: selectFrom(recipe, 'model.sources.band'),
-    bands: segmentBandsOf(recipe),
-    baseBands: baseBandsOf(recipe),
     harmonics: selectFrom(recipe, 'model.options.harmonics'),
     gapStrategy: selectFrom(recipe, 'model.options.gapStrategy'),
     extrapolateSegment: selectFrom(recipe, 'model.options.extrapolateSegment'),
@@ -63,9 +66,9 @@ class _ChartPixel extends React.Component {
     }
 
     renderPanel() {
-        const {latLng} = this.props
+        const {latLng, noChartableBand} = this.props
         const {segments, observations} = this.state
-        const loading = (!segments || !segments.length) && (!observations || !observations.length)
+        const loading = !noChartableBand && (!segments || !segments.length) && (!observations || !observations.length)
         return (
             <Panel
                 className={styles.panel}
@@ -132,6 +135,11 @@ class _ChartPixel extends React.Component {
                 color: '#FF0000'
             }
         ]
+        const {segmentsGate, noChartableBand} = this.props
+        if (noChartableBand)
+            return <Message type='info' text={msg('process.ccdc.chartPixel.noChartableBand')}/>
+        if (!segments && segmentsGate && !segmentsGate.wait)
+            return <Message type='info' text={msg('process.source.status.withheld', {section: msg(segmentsGate.section)})}/>
         const loading = !segments
         if (loading)
             return this.renderSpinner()
@@ -155,31 +163,40 @@ class _ChartPixel extends React.Component {
         }
     }
 
+    // The chart watches the evidence its segments need, so they are checked wherever it is open.
+    componentDidMount() {
+        const {recipeId, sourceRuntime} = this.props
+        this.evidence = sourceRuntime?.watchEvidence$({recipeId, operation: PIXEL_SEGMENTS}).subscribe()
+    }
+
+    // Segments are requested only once the reference is known to suit them (requestGate, sourceRequirements.js), and
+    // requested when it comes to; segments already charted stay while it is checked again.
     componentDidUpdate(prevProps) {
-        const {band, stream, recipe, latLng, descriptionGeneration, inputs: {selectedBand}} = this.props
+        const {band, stream, recipe, latLng, description, pixels, segmentsGate, noChartableBand, inputs: {selectedBand}} = this.props
 
-        if (!selectedBand.value)
-            selectedBand.set(band)
-
-        if (latLng && selectedBand.value && !_.isEqual(
-            [recipe.model, latLng, selectedBand.value, descriptionGeneration],
-            [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.selectedBand.value, prevProps.descriptionGeneration])
+        // Nothing is requested for a band being replaced: the update the replacement causes requests it.
+        const resolved = this.resolvedBand(selectedBand.value || band)
+        if (resolved !== selectedBand.value) {
+            selectedBand.set(resolved)
+            return
+        }
+        // With no band to chart, what was read for one charted before is not that band's, nor anything's now.
+        if (noChartableBand) {
+            return this.withdraw()
+        }
+        if (!latLng || !selectedBand.value) {
+            return
+        }
+        if (!_.isEqual(
+            [recipe.model, latLng, selectedBand.value, description, pixels],
+            [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.selectedBand.value, prevProps.description, prevProps.pixels])
         ) {
             this.cancel$.next(true)
             this.setState({segments: undefined})
-            stream('LOAD_CCDC_SEGMENTS',
-                loadCCDCSegments$({recipe, latLng, bands: [selectedBand.value]}).pipe(
-                    takeUntil(this.cancel$)
-                ),
-                segments => this.setState({segments}),
-                error => {
-                    this.close()
-                    Notifications.error({
-                        message: msg('process.ccdc.chartPixel.loadFailed'),
-                        error: toUserErrorMessage(error)
-                    })
-                }
-            )
+            this.segmentsHeld = Boolean(segmentsGate)
+            if (!this.segmentsHeld) {
+                this.loadSegments()
+            }
             stream('LOAD_CCDC_OBSERVATIONS',
                 loadCCDCObservations$({recipe, latLng, bands: [selectedBand.value]}).pipe(
                     takeUntil(this.cancel$)
@@ -193,23 +210,53 @@ class _ChartPixel extends React.Component {
                     })
                 }
             )
+        } else if (this.segmentsHeld && !segmentsGate) {
+            this.segmentsHeld = false
+            this.loadSegments()
         }
     }
 
+    loadSegments() {
+        const {stream, recipe, latLng, inputs: {selectedBand}} = this.props
+        stream('LOAD_CCDC_SEGMENTS',
+            loadCCDCSegments$({recipe, latLng, bands: [selectedBand.value]}).pipe(
+                takeUntil(this.cancel$)
+            ),
+            segments => this.setState({segments}),
+            error => {
+                this.close()
+                Notifications.error({
+                    message: msg('process.ccdc.chartPixel.loadFailed'),
+                    error: toUserErrorMessage(error)
+                })
+            }
+        )
+    }
+
+    // The measures the reference's segments can be plotted for and the observations show (pixelChartAvailability).
     bandOptions() {
-        const {bands, baseBands, corrections, dataSets} = this.props
-        const rmseBands = bands
-            .filter(band => band.endsWith('_rmse'))
-            .map(band => band.slice(0, -5))
-        const ccdcBands = baseBands
-            .map(({name}) => name)
-            .filter(band => rmseBands.includes(band))
-        const observationBands = getAvailableBands({
-            dataSets: Object.values(dataSets).flat(),
-            corrections
-        })
-        const intersection = _.intersection(ccdcBands, observationBands)
-        return intersection.map(name => ({value: name, label: name}))
+        const {chartBands} = this.props
+        return chartBands.map(name => ({value: name, label: name}))
+    }
+
+    // What is being read is let go and what was read is no longer shown. Once a band can be charted again, it is chosen
+    // and read as any replacement is.
+    withdraw() {
+        const {segments, observations} = this.state
+        this.cancel$.next(true)
+        this.segmentsHeld = false
+        if (segments || observations) {
+            this.setState({segments: undefined, observations: undefined})
+        }
+    }
+
+    // A band no longer offered is replaced by one that is - but only once what can be plotted is established: checking
+    // the reference again is no reason to change what is charted.
+    resolvedBand(band) {
+        const {chartable} = this.props
+        return chartable
+            ? resolveChartBand(band, this.bandOptions().map(({value}) => value))
+            : band
     }
 
     close() {
@@ -217,10 +264,31 @@ class _ChartPixel extends React.Component {
         this.setState({segments: undefined, observations: undefined})
         this.recipeActions.setChartPixel(null)
     }
+
+    componentWillUnmount() {
+        this.evidence?.unsubscribe()
+    }
+}
+
+// What the chart's pixels were read from beyond the recipe (pixelGeneration.js), and, assessed as the toolbar's action
+// assesses it, whether its segments may be read and which bands it can plot.
+const mapStateToProps = (state, {recipe, recipeId, sourceRuntime}) => {
+    const {gate, chartable, bands, noChartableBand} = pixelChartAvailability({
+        state, recipe, evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id), heldFor: key => sourceRuntime?.heldFor(key), now: Date.now()
+    })
+    return {
+        pixels: pixelGenerationOfState(state, recipeId),
+        segmentsGate: gate,
+        chartable,
+        chartBands: bands,
+        noChartableBand
+    }
 }
 
 export const ChartPixel = compose(
     _ChartPixel,
+    connect(mapStateToProps),
+    withSourceRuntime(),
     withRecipe(mapRecipeToProps),
     withForm({fields})
 )

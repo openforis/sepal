@@ -9,6 +9,7 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
+import {collectionClassifierRequirements} from '../collectionClassifierRequirements'
 import {bandPresentation} from './bands'
 import {PhenologyToolbar} from './panels/phenologyToolbar'
 import {defaultModel} from './phenologyRecipe'
@@ -57,6 +58,7 @@ export default () => ({
     components: {
         recipe: Phenology
     },
+    sourceRequirements: collectionClassifierRequirements({id: 'sources', label: 'process.changeAlerts.panel.sources.button'}),
     imageSource: true,
     getDateRange,
     bandPresentation,

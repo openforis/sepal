@@ -89,7 +89,8 @@ ScrollableList.propTypes = {
     onCancel: PropTypes.func
 }
 
-class _List extends React.Component {
+// What a list of options renders and how it is navigated: extended by the windowed list (windowedList.jsx).
+export class ListContent extends React.Component {
     autoCenter$ = new Subject()
     mouseOption$ = new Subject()
 
@@ -193,8 +194,9 @@ class _List extends React.Component {
         ) : null
     }
 
+    // A disabled option may say why it is.
     renderNonSelectableOption(option, index) {
-        const {alignment, air} = this.props
+        const {tooltipPlacement, alignment, air} = this.props
         return (
             <li key={option.key || option.value || index} style={this.getOptionStyle(option)}>
                 <Button
@@ -208,6 +210,9 @@ class _List extends React.Component {
                         fixedWidth: true
                     }}
                     label={option.render ? option.render() : option.label}
+                    tooltip={option.tooltip}
+                    tooltipPlacement={tooltipPlacement}
+                    tooltipAllowedWhenDisabled={!!option.tooltip}
                     width='max'
                     alignment={alignment}
                     disabled
@@ -252,6 +257,7 @@ class _List extends React.Component {
                     width='max'
                     alignment={alignment}
                     disableTransitions
+                    hook='option'
                     onMouseEnter={() => this.mouseOption$.next(key)}
                     onClick={() => this.selectOption(key)}>
                     {option.render ? option.render() : null}
@@ -440,6 +446,6 @@ class _List extends React.Component {
 }
 
 const List = compose(
-    _List,
+    ListContent,
     withSubscriptions()
 )

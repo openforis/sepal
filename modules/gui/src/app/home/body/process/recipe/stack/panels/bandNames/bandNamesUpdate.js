@@ -1,41 +1,29 @@
+// The band names entry of every image, following the bands each now includes. A band keeps the name it was given, even
+// one another band also has - a name is changed only where the user edits it. A band newly included takes its own name,
+// suffixed where a band of any image already has it.
 export const toBandNames = (images, prevBandNames) => {
-    const imagesWithNames = images
-        .map(({imageId, includedBands}) => {
-            const prevImageBandName = prevBandNames && prevBandNames
-                .find(({imageId: prevImageId}) => prevImageId === imageId)
-            return {imageId, bands: includedBands.map(({id, band: name}) => {
-                const prevOutputName = prevImageBandName && prevImageBandName.bands
-                    .find(({id: prevId}) => prevId === id)?.outputName
-                return ({id, originalName: name, outputName: prevOutputName || name})
-            })}
-        })
+    const entries = images.map(({imageId, includedBands}) => {
+        const prevBands = prevBandNames?.find(({imageId: prevImageId}) => prevImageId === imageId)?.bands || []
+        return {imageId, bands: includedBands.map(({id, band: name}) => ({
+            id,
+            originalName: name,
+            outputName: prevBands.find(({id: prevId}) => prevId === id)?.outputName
+        }))}
+    })
+    const taken = new Set(entries.flatMap(({bands}) => bands.map(({outputName}) => outputName)).filter(name => name !== undefined))
+    return entries.map(entry => ({
+        ...entry,
+        bands: entry.bands.map(band => band.outputName === undefined
+            ? {...band, outputName: unique(band.originalName, taken)}
+            : band)
+    }))
+}
 
-    const renameDuplicate = (name, updatedImagesWithNames) => {
-        const isDuplicate = name => !!updatedImagesWithNames
-            .filter(({bands}) => bands.find(({outputName: n}) => name === n))
-            .length
-
-        const recurseRename = (potentialName, i) => {
-            return isDuplicate(potentialName)
-                ? recurseRename(`${name}_${i}`, i + 1)
-                : potentialName
-        }
-
-        return recurseRename(name, 1)
+const unique = (name, taken) => {
+    let candidate = name
+    for (let suffix = 1; taken.has(candidate); suffix++) {
+        candidate = `${name}_${suffix}`
     }
-    return imagesWithNames
-        .reduce(
-            (acc, image) => ([
-                ...acc,
-                {
-                    ...image,
-                    bands: image.bands.map(band => ({
-                        ...band,
-                        originalName: band.originalName,
-                        outputName: renameDuplicate(band.outputName, acc)
-                    }))
-                }
-            ]),
-            []
-        )
+    taken.add(candidate)
+    return candidate
 }

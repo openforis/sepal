@@ -1,7 +1,5 @@
 import React from 'react'
 
-import {getAvailableIndexes} from '~/app/home/body/process/opticalIndexes'
-import {getDataSetBands} from '~/app/home/body/process/recipe/opticalMosaic/sources'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -10,11 +8,8 @@ import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
+import {preferredGateIndex, readableGateIndexes} from '../../gateIndexes'
 import styles from './options.module.css'
-
-// V1: land-change-meaningful normalized-difference indices (all bounded [-1, 1],
-// where a *drop* vs. baseline signals disturbance). Source-filtered at render.
-const GATE_INDEXES = ['ndvi', 'ndmi', 'nbr']
 
 const fields = {
     minConsecutiveDetections: new Form.Field()
@@ -30,8 +25,9 @@ const fields = {
 }
 
 const mapRecipeToProps = recipe => ({
-    dataSets: selectFrom(recipe, 'model.sources.dataSets'),
-    classificationBands: selectFrom(recipe, 'ui.classificationBands')
+    sources: selectFrom(recipe, 'model.sources'),
+    processing: selectFrom(recipe, 'model.options'),
+    classificationImagery: selectFrom(recipe, 'ui.classificationBands')
 })
 
 class _Options extends React.Component {
@@ -52,20 +48,25 @@ class _Options extends React.Component {
     }
 
     componentDidMount() {
-        this.forceGateOffIfUnavailable()
+        this.explainGateIndex()
     }
 
     componentDidUpdate() {
-        this.forceGateOffIfUnavailable()
+        this.explainGateIndex()
     }
 
-    // With no computable index, force the gate off so a stale/default "on" can't require an index
-    // the source can't produce — the toggle is also disabled in renderContent().
-    forceGateOffIfUnavailable() {
-        const {inputs: {useIndexGate}} = this.props
-        if (useIndexGate.value && !this.availableIndexes().length) {
-            useIndexGate.set(false)
+    // An index gated on that the imagery cannot compute is said beside the index and holds Apply back; it is not switched
+    // off for the user, so opening OPT edits nothing. Choosing an index it can compute, or turning the gate off, repairs
+    // it. Bands not yet known rule nothing out (availableIndexes).
+    explainGateIndex() {
+        const {inputs: {useIndexGate, gateIndex}} = this.props
+        const error = useIndexGate.value && gateIndex.value && !this.availableIndexes().includes(gateIndex.value)
+            ? msg('process.pyeoAlerts.panel.options.form.gateIndex.unsupported', {index: gateIndex.value.toUpperCase()})
+            : ''
+        if (error ? gateIndex.error !== error : this.explained) {
+            gateIndex.setInvalid(error)
         }
+        this.explained = !!error
     }
 
     renderContent() {
@@ -79,7 +80,7 @@ class _Options extends React.Component {
                         tooltip={msg('process.pyeoAlerts.panel.options.form.gateIndex.tooltip')}
                         input={gateIndex}
                         options={this.indexOptions()}
-                        disabled={!useIndexGate.value || !gateAvailable}
+                        disabled={!useIndexGate.value}
                     />
                     <Form.Buttons
                         label={msg('process.pyeoAlerts.panel.options.form.useIndexGate.label')}
@@ -91,7 +92,8 @@ class _Options extends React.Component {
                             {value: false, label: msg('process.pyeoAlerts.panel.options.form.useIndexGate.off')},
                             {value: true, label: msg('process.pyeoAlerts.panel.options.form.useIndexGate.on')}
                         ]}
-                        disabled={!gateAvailable}
+                        disabled={!gateAvailable && !useIndexGate.value}
+                        onChange={on => on && this.preferSupportedIndex()}
                     />
                 </Layout>
                 {useIndexGate.value && gateAvailable ? this.renderIndexThreshold() : null}
@@ -124,24 +126,35 @@ class _Options extends React.Component {
         )
     }
 
-    // Gate indexes computable on BOTH the classification's baseline imagery and the monitoring
-    // datasets — the gate runs on both, so a band missing from either rules the index out.
-    // classificationBands undefined ⇒ not resolved yet: fall back so we don't pre-disable.
-    availableIndexes() {
-        const {dataSets, classificationBands} = this.props
-        const classificationIndexes = classificationBands
-            ? getAvailableIndexes(classificationBands)
-            : GATE_INDEXES
-        const dataSetIndexes = dataSets && Object.keys(dataSets).length
-            ? getAvailableIndexes(getDataSetBands({model: {sources: {dataSets}}}))
-            : GATE_INDEXES
-        return GATE_INDEXES.filter(index =>
-            classificationIndexes.includes(index) && dataSetIndexes.includes(index)
-        )
+    // A gate turned on with no index saved takes NDVI, or else the first the gate can read; a saved one is kept.
+    preferSupportedIndex() {
+        const {model, inputs: {gateIndex}} = this.props
+        const preferred = preferredGateIndex(...this.gateContext())
+        if (!model?.indexGate && preferred && !this.availableIndexes().includes(gateIndex.value)) {
+            gateIndex.set(preferred)
+        }
     }
 
+    // The gate indexes it can read (gateIndexes.js). The classification's input is what Sources last read of it, only
+    // where that is the classification applied: one read for another, or not read yet, rules nothing out.
+    availableIndexes() {
+        return readableGateIndexes(...this.gateContext())
+    }
+
+    gateContext() {
+        const {sources, processing, classificationImagery} = this.props
+        const baseline = classificationImagery?.classification && classificationImagery.classification === sources?.classification
+            ? classificationImagery
+            : null
+        return [{sources, options: processing}, baseline]
+    }
+
+    // The indexes it can compute, and the one selected though it cannot, shown to be repaired.
     indexOptions() {
-        return this.availableIndexes().map(index => ({value: index, label: index.toUpperCase()}))
+        const {inputs: {gateIndex}} = this.props
+        const available = this.availableIndexes()
+        const unsupported = gateIndex.value && !available.includes(gateIndex.value) ? [gateIndex.value] : []
+        return [...available, ...unsupported].map(index => ({value: index, label: index.toUpperCase()}))
     }
 }
 

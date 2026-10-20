@@ -204,7 +204,7 @@ describe('a retained description', () => {
             output: {kind: 'IMAGE', bands: [{name: 'blue', dataType: {arrayDimensions: 0}}]},
             evidence: []
         }
-        const terminal = {status: 'READY', description, diagnostics: [], error: null, dependencyValidity: SOUND}
+        const terminal = {status: 'READY', description, diagnostics: [], error: null, dependencyValidity: SOUND, readiness: RUNNABLE}
 
         const read = readRecipeOutput({recipe, product: OUTPUT, graph, heldFor: () => terminal})
 
@@ -280,6 +280,9 @@ describe('whether a retained terminal is about the records held now', () => {
 const OUTPUT = {name: 'IMAGE_OUTPUT'}
 const COUNT = {name: 'COUNT'}
 const SOUND = {status: 'VALID', diagnostics: []}
+
+// What a settled read says of an output that can run.
+const RUNNABLE = {status: 'READY', findings: [], needs: {records: [], observations: []}}
 
 const mosaic = () => ({
     id: 'mosaic-1',

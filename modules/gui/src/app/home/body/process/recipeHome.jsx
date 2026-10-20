@@ -11,7 +11,7 @@ import {select} from '~/store'
 import {Content, SectionLayout} from '~/widget/sectionLayout'
 import {closeTab} from '~/widget/tabs/tabActions'
 
-import {duplicateRecipe$, initializeRecipe, isRecipeOpen, moveRecipes$, openRecipe, openRecipeRevision, removeRecipes$, selectRecipe} from './recipe'
+import {duplicateRecipe$, isRecipeOpen, moveRecipes$, openRecipe, openRecipeRevision, removeRecipes$, selectRecipe} from './recipe'
 import styles from './recipeHome.module.css'
 // import {publishEvent} from '~/eventPublisher'
 import {RecipeList} from './recipeList/recipeList'
@@ -54,15 +54,7 @@ class _RecipeHome extends React.Component {
     // Bypass the dependency cache so content and the first save revision come from one authoritative load.
     loadRecipe$(recipeId) {
         return api.recipe.load$(recipeId).pipe(
-            map(recipe => {
-                openRecipeRevision(recipe.id, recipe.revision)
-                return initializeRecipe(recipe)
-            }),
-            tap(recipe =>
-                actionBuilder('CACHE_RECIPE', recipe)
-                    .set(['process.loadedRecipes', recipe.id], recipe)
-                    .dispatch()
-            )
+            map(recipe => openRecipeRevision(recipe))
         )
     }
 

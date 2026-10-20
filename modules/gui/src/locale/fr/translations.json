@@ -858,8 +858,7 @@
     },
     "Recipe": {
       "label": "Formule",
-      "thisRecipeDescription": "cette formule",
-      "loadError": "Échec du chargement de la formule : {error}"
+      "thisRecipeDescription": "cette formule"
     },
     "Planet": {
       "label": "Planet",

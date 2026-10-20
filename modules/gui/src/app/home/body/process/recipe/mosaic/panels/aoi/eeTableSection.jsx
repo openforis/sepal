@@ -127,6 +127,7 @@ class _EETableSection extends React.Component {
                 />
                 <Form.Combo
                     label={msg('process.mosaic.panel.areaOfInterest.form.eeTable.row.label')}
+                    windowed
                     input={eeTableRow}
                     disabled={eeTableRowDisabled}
                     placeholder={msg(`process.mosaic.panel.areaOfInterest.form.eeTable.row.placeholder.${rowState}`)}

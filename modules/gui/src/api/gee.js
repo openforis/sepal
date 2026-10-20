@@ -48,6 +48,15 @@ export default {
             }
         }),
 
+    // Each asset's change token, read from its metadata alone (modules/gee/src/jobs/ee/asset/versions.js).
+    assetVersions$: ({ids}) =>
+        postJson$('/api/gee/assetVersions', {
+            body: {ids},
+            retry: {
+                maxRetries: 0
+            }
+        }),
+
     imageMetadata$: ({asset, recipe}) =>
         postJson$('/api/gee/imageMetadata', {
             body: {asset, recipe},
@@ -99,6 +108,14 @@ export default {
     aoiBounds$: aoi =>
         postJson$('/api/gee/aoi/bounds', {
             body: {aoi},
+            retry: {
+                maxRetries: 0
+            }
+        }),
+
+    aoiGeoId$: ({id, bufferMeters}) =>
+        postJson$('/api/gee/aoi/geoId', {
+            body: {id, bufferMeters},
             retry: {
                 maxRetries: 0
             }

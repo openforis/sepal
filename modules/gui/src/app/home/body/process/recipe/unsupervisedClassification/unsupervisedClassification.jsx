@@ -1,5 +1,7 @@
 import React from 'react'
 
+import {INPUT_IMAGE} from '#sepal/recipe/source/inputImagery'
+import {inputImageryRequirements} from '~/app/home/body/process/panels/inputImageryWithDerived/inputImageryRequirements'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
@@ -49,6 +51,8 @@ const UnsupervisedClassification = compose(
 
 export default () => ({
     id: 'UNSUPERVISED_CLASSIFICATION',
+    // The images it reads that the layout shows (mapLayout/dependencyLayerSources.js).
+    dependencyLayerRoles: [INPUT_IMAGE],
     labels: {
         name: msg('process.unsupervisedClassification.create'),
         creationDescription: msg('process.unsupervisedClassification.description'),
@@ -62,5 +66,6 @@ export default () => ({
         return null
     },
     bandPresentation,
-    getPreSetVisualizations
+    getPreSetVisualizations,
+    sourceRequirements: inputImageryRequirements
 })

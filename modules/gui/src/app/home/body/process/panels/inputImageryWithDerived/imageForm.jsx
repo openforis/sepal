@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 
+import {inputSourceKey} from '~/app/home/body/process/inputImages'
 import {mutate} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
@@ -8,25 +9,29 @@ import {ButtonGroup} from '~/widget/buttonGroup'
 import {ButtonPopup} from '~/widget/buttonPopup'
 import {Combo} from '~/widget/combo'
 import {CrudItem} from '~/widget/crudItem'
+import {inputFeedback} from '~/widget/form/inputFeedback'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 
-import {BandSetSpec} from './bandSetSpec'
+import {bandSetProblems, BandSetSpec} from './bandSetSpec'
 
 const ADD_ALL_BANDS = Symbol('addAllBands')
 
 export class ImageForm extends Component {
-    state = {loading: false}
+    state = {
+        loadingSource: null,
+        // The band set whose Add popup is open, and whether it was too short of bands when the popup opened.
+        adding: null
+    }
     render() {
-        const {inputs: {bands, bandSetSpecs}} = this.props
-        const {loading} = this.state
+        const {inputs: {bandSetSpecs}} = this.props
         return (
             <Layout
                 type='vertical'
                 spacing='compact'>
                 {this.renderInput()}
-                {!loading && bandSetSpecs.value?.length && bands.value?.length
+                {this.isShowingBandSets()
                     ? bandSetSpecs.value.map(bandSetSpec =>
                         this.renderBandSetSpec(bandSetSpec)
                     )
@@ -36,27 +41,33 @@ export class ImageForm extends Component {
     }
 
     renderInput() {
-        const {input, inputComponent} = this.props
-        const {loading} = this.state
+        const {input, inputComponent, labelButtons, inputs: {otherSources}} = this.props
         return React.createElement(inputComponent, {
             input,
-            busy: loading,
-            onLoading: () => {
-                this.setState({loading: true})
-            },
+            labelButtons,
+            otherSources: otherSources.value,
+            busy: this.isLoadingAnotherSource(),
+            onLoading: id => this.onLoading(id),
             onLoaded: ({id, bands, metadata, visualizations}) => this.onLoaded(id, bands, metadata, visualizations)
         })
     }
 
+    // A band set its source is known not to provide for is marked, saying why, as is each selection it cannot provide.
     renderBandSetSpec(bandSetSpec) {
         const imageBands = bandSetSpec.type === 'IMAGE_BANDS'
+        const {unavailable, insufficient} = this.problemsOf(bandSetSpec)
+        const problems = [
+            ...(unavailable.length ? [BandSetSpec.unavailableMessage(bandSetSpec, unavailable)] : []),
+            ...(insufficient && !this.defersInsufficiency(bandSetSpec) ? [BandSetSpec.insufficientMessage()] : [])
+        ]
         return (
             <ListItem
                 key={bandSetSpec.id}
                 expanded={imageBands || bandSetSpec.included.length}
-                expansion={this.renderSelection(bandSetSpec)}>
+                expansion={this.renderSelection(bandSetSpec, unavailable)}>
                 <CrudItem
                     title={BandSetSpec.renderTitle(bandSetSpec)}
+                    error={problems.length ? problems : null}
                     inlineComponents={this.renderAddButton(bandSetSpec)}
                     unsafeRemove={!imageBands}
                     removeConfirmationLabel={imageBands ? msg('button.removeAll') : undefined}
@@ -69,13 +80,15 @@ export class ImageForm extends Component {
         )
     }
 
-    renderSelection(bandSetSpec) {
+    renderSelection(bandSetSpec, unavailable) {
         return (
             <ButtonGroup>
                 {bandSetSpec.included.length
                     ? bandSetSpec.included.map(value =>
                         <Button
                             key={value}
+                            look={unavailable.includes(value) ? 'cancel' : 'default'}
+                            tooltip={unavailable.includes(value) ? BandSetSpec.unavailableMessage(bandSetSpec, [value]) : undefined}
                             label={value}
                             size='small'
                             air='less'
@@ -111,6 +124,7 @@ export class ImageForm extends Component {
                 icon='plus'
                 noChevron
                 showPopupOnMount={!bandSetSpec.included.length && bands.value?.length}
+                onToggle={shown => this.toggleAdding(bandSetSpec, shown)}
                 vPlacement='below'
                 hPlacement='over-left'
                 disabled={!options.length}
@@ -138,14 +152,13 @@ export class ImageForm extends Component {
         )
     }
 
-    componentDidUpdate(prevProps) {
-        const {inputs: {section: prevSection, bands, bandSetSpecs}} = prevProps
-        const {inputs: {section}} = this.props
-
-        if (prevSection.value !== section.value) {
-            bands.set(null)
-            bandSetSpecs.set(null)
-        }
+    // A band combination is told it needs more bands once its Add popup closes, not as its first band is added. One already
+    // short of bands when the popup opened stays told.
+    toggleAdding(bandSetSpec, shown) {
+        const {insufficient} = this.problemsOf(bandSetSpec)
+        this.setState(({adding}) => shown
+            ? {adding: {id: bandSetSpec.id, insufficient}}
+            : adding?.id === bandSetSpec.id ? {adding: null} : null)
     }
 
     addSelection(bandSetSpec, value) {
@@ -179,25 +192,76 @@ export class ImageForm extends Component {
         bandSetSpecs.set(updated)
     }
 
+    onLoading(id) {
+        this.setState({loadingSource: this.sourceOf(id)})
+    }
+
+    // What the selected source has is learned, not edited: for the source the input was saved with, it is where the form
+    // started. Only another source reconciles the band sets, keeping what it still offers - an image band it has, an
+    // index it can derive - and the image bands set, emptied if need be. Of the same source, every set is kept as the
+    // user left it, a selection it no longer has included.
     onLoaded(id, loadedBands, loadedMetadata, loadedVisualizations) {
-        const {form, inputs: {bands, bandSetSpecs, metadata, visualizations}} = this.props
-        this.setState({loading: false})
-        if (!id || !form.isDirty()) {
+        const {input, inputs: {bands, bandsSource, bandSetSpecs, metadata, visualizations}} = this.props
+        this.setState({loadingSource: null})
+        if (!id) {
             return
         }
-        const filteredSpecs = bandSetSpecs.value
-            .filter((spec, i) => !BandSetSpec.isEmpty(spec, loadedBands) || i === 0)
-            .map(spec => ({...spec, included: BandSetSpec.filter(spec, loadedBands)}))
+        const learn = (field, value) => input.isDirty() ? field.set(value) : field.setInitialValue(value)
+        learn(bands, loadedBands)
+        learn(metadata, loadedMetadata)
+        learn(visualizations, loadedVisualizations)
+        if (this.sourceOf(id) !== bandsSource.value) {
+            bandSetSpecs.set(bandSetSpecs.value
+                .filter((spec, i) => !BandSetSpec.isEmpty(spec, loadedBands) || i === 0)
+                .map(spec => ({...spec, included: BandSetSpec.filter(spec, loadedBands)})))
+            bandsSource.setInitialValue(this.sourceOf(id))
+        }
+    }
 
-        bandSetSpecs.set(filteredSpecs)
-        bands.set(loadedBands)
-        metadata.set(loadedMetadata)
-        visualizations.set(loadedVisualizations)
+    // The band sets are hidden only while another source than they were chosen against loads; one of that same source
+    // shows them as they are, whether or not it answers. Selections are shown even when their source has no bands, to be
+    // removed.
+    isShowingBandSets() {
+        const {inputs: {bands, bandSetSpecs}} = this.props
+        return !this.isLoadingAnotherSource()
+            && bandSetSpecs.value?.length
+            && (bands.value?.length || bandSetSpecs.value.some(({included}) => included.length))
+    }
+
+    isLoadingAnotherSource() {
+        const {inputs: {bandsSource}} = this.props
+        const {loadingSource} = this.state
+        return !!loadingSource && loadingSource !== bandsSource.value
+    }
+
+    // What the recipe built from this input alone is refused for, about this band set (outputCandidate.js): told to the
+    // band sets input as its feedback. Pending or failed, nothing.
+    problemsOf(bandSetSpec) {
+        const {form, inputs: {bandSetSpecs}} = this.props
+        const {diagnostics} = inputFeedback(form, bandSetSpecs)
+        const set = (bandSetSpecs.value || []).findIndex(({id}) => id === bandSetSpec.id)
+        return bandSetProblems(bandSetSpecs.value, diagnostics)[set] || NO_PROBLEMS
+    }
+
+    defersInsufficiency(bandSetSpec) {
+        const {adding} = this.state
+        return adding?.id === bandSetSpec.id && !adding.insufficient
+    }
+
+    sourceOf(id) {
+        const {inputs: {section}} = this.props
+        return inputSourceKey({type: section.value, id})
     }
 }
 
+const NO_PROBLEMS = Object.freeze({unavailable: [], insufficient: false})
+
 ImageForm.propTypes = {
     children: PropTypes.any,
+    // The panel's form: its band sets input's feedback says what the recipe built from this input is refused for.
+    form: PropTypes.object,
     inputComponent: PropTypes.any,
-    inputs: PropTypes.any
+    inputs: PropTypes.any,
+    // Shown in the source picker's label row: the choice of the kind of source.
+    labelButtons: PropTypes.array
 }

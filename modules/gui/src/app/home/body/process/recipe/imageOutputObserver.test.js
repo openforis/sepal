@@ -46,8 +46,13 @@ beforeEach(() => {
     state.torndown = []
 })
 
-const envelope = ({status, description = null, diagnostics = [], error = null}) =>
-    ({status, description, diagnostics, error})
+const envelope = ({status, description = null, diagnostics = [], error = null, readiness}) =>
+    ({status, description, diagnostics, error, readiness})
+
+// Whether running the observed output is possible, as an observation that answered everything says.
+const RUNNABLE = {status: 'READY', findings: [], needs: {records: [], observations: []}}
+
+const MASK_BANDS = [{name: 'mask', arrayDimensions: 0}]
 
 const observerOver = () => {
     const observer = createRecipeImageOutputObserver()
@@ -131,7 +136,8 @@ describe('observing a CCDC recipe directly', () => {
                 executionReference: {type: 'RECIPE_REF', id: 'ccdc-1'},
                 output: {kind: 'IMAGE', bands: DECLARED_CCDC_BANDS},
                 evidence: []
-            }
+            },
+            readiness: RUNNABLE
         }))
     })
 })
@@ -146,13 +152,14 @@ describe('observing MASKING over CCDC with an asset mask', () => {
         return {root, loadedRecipes: catalogue([root, inner])}
     }
 
-    it('observes only the primary recipe, never the mask asset', () => {
+    // The primary recipe describes it; running it builds the mask too, which is observed for whether it can.
+    it('observes the primary recipe, and the mask asset its running builds', () => {
         const {root, loadedRecipes} = maskedCcdc()
         const {observer} = observerOver()
         observer.observe({recipe: root, loadedRecipes})
 
-        expect(state.calls).toEqual([{recipe: loadedRecipes['ccdc-1']}])
-        expect(state.subscribed).toEqual(['RECIPE_REF:ccdc-1'])
+        expect(state.calls).toEqual([{recipe: loadedRecipes['ccdc-1']}, {asset: 'users/x/mask', includeDataTypes: true}])
+        expect(state.subscribed).toEqual(['RECIPE_REF:ccdc-1', 'ASSET:users/x/mask'])
     })
 
     it('keeps MASKING as the execution reference while CCDC supplies names and policies', () => {
@@ -160,6 +167,7 @@ describe('observing MASKING over CCDC with an asset mask', () => {
         const {observer, states} = observerOver()
         observer.observe({recipe: root, loadedRecipes})
         emit('RECIPE_REF:ccdc-1', CCDC_BANDS)
+        emit('ASSET:users/x/mask', MASK_BANDS)
 
         expect(latest(states)).toEqual(envelope({
             status: 'READY',
@@ -167,7 +175,8 @@ describe('observing MASKING over CCDC with an asset mask', () => {
                 executionReference: {type: 'RECIPE_REF', id: 'masked-1'},
                 output: {kind: 'IMAGE', bands: DECLARED_CCDC_BANDS},
                 evidence: []
-            }
+            },
+            readiness: RUNNABLE
         }))
     })
 })
@@ -186,7 +195,10 @@ describe('observing MASKING over an asset', () => {
         const {observer} = observerOver()
         observer.observe({recipe: root, loadedRecipes})
 
-        expect(state.calls).toEqual([{asset: 'users/x/primary', includeDataTypes: true}])
+        expect(state.calls).toEqual([
+            {asset: 'users/x/primary', includeDataTypes: true},
+            {asset: 'users/x/mask', includeDataTypes: true}
+        ])
         expect('recipe' in state.calls[0]).toBe(false)
     })
 
@@ -198,6 +210,7 @@ describe('observing MASKING over an asset', () => {
             {name: 'future_matrix', arrayDimensions: 2},
             {name: 'tStart', arrayDimensions: 1}
         ])
+        emit('ASSET:users/x/mask', MASK_BANDS)
 
         expect(latest(states)).toEqual(envelope({
             status: 'READY',
@@ -208,7 +221,8 @@ describe('observing MASKING over an asset', () => {
                     {name: 'tStart', arrayDimensions: 1}
                 ])},
                 evidence: []
-            }
+            },
+            readiness: RUNNABLE
         }))
     })
 
@@ -217,6 +231,7 @@ describe('observing MASKING over an asset', () => {
         const {observer, states} = observerOver()
         observer.observe({recipe: root, loadedRecipes})
         emit('ASSET:users/x/primary', [{name: 'B1', arrayDimensions: 0}])
+        emit('ASSET:users/x/mask', MASK_BANDS)
 
         expect(latest(states)).toEqual(envelope({
             status: 'READY',
@@ -227,8 +242,26 @@ describe('observing MASKING over an asset', () => {
                     bands: [{name: 'B1', dataType: {arrayDimensions: 0}}]
                 },
                 evidence: []
-            }
+            },
+            readiness: RUNNABLE
         }))
+    })
+
+    it('carries the encoding the asset states', () => {
+        const {root, loadedRecipes} = maskedAsset()
+        const {observer, states} = observerOver()
+        observer.observe({recipe: root, loadedRecipes})
+        const reflectance = {scale: 0.0001, offset: 0, unit: '1'}
+        emit('ASSET:users/x/primary', [
+            {name: 'red', arrayDimensions: 0, encoding: reflectance},
+            {name: 'qa', arrayDimensions: 0}
+        ])
+        emit('ASSET:users/x/mask', MASK_BANDS)
+
+        expect(latest(states).description.output.bands).toEqual([
+            {name: 'red', dataType: {arrayDimensions: 0}, encoding: reflectance},
+            {name: 'qa', dataType: {arrayDimensions: 0}}
+        ])
     })
 
     it('consults no copied recipe, provenance, or visualization metadata', () => {
@@ -246,7 +279,10 @@ describe('observing MASKING over an asset', () => {
         const {observer} = observerOver()
         observer.observe({recipe: root, loadedRecipes: catalogue([root])})
 
-        expect(state.calls).toEqual([{asset: 'users/x/primary', includeDataTypes: true}])
+        expect(state.calls).toEqual([
+            {asset: 'users/x/primary', includeDataTypes: true},
+            {asset: 'users/x/mask', includeDataTypes: true}
+        ])
     })
 })
 
@@ -269,7 +305,8 @@ describe('classifying what the session cannot answer', () => {
                 role: 'PRIMARY_IMAGE',
                 path: ['model', 'imageToMask'],
                 recipePath: ['masked-1', 'ccdc-absent']
-            }]
+            }],
+            readiness: expect.objectContaining({status: 'UNAVAILABLE', findings: []})
         }))
     })
 
@@ -282,7 +319,8 @@ describe('classifying what the session cannot answer', () => {
         expect(state.calls).toEqual([])
         expect(latest(states)).toEqual(envelope({
             status: 'INVALID',
-            diagnostics: [{code: 'NON_IMAGE_OUTPUT', path: [], recipePath: ['design-1']}]
+            diagnostics: [{code: 'NON_IMAGE_OUTPUT', path: [], recipePath: ['design-1']}],
+            readiness: expect.objectContaining({status: 'NOT_READY'})
         }))
     })
 })
@@ -296,7 +334,11 @@ describe('the Earth Engine boundary', () => {
         fail('RECIPE_REF:ccdc-1', failure)
 
         const published = latest(states)
-        expect(published).toEqual(envelope({status: 'UNAVAILABLE', error: failure}))
+        expect(published).toEqual(envelope({
+            status: 'UNAVAILABLE',
+            error: failure,
+            readiness: expect.objectContaining({status: 'UNAVAILABLE', findings: []})
+        }))
         expect(published.error).toBe(failure)
         expect(terminated()).toBe(null)
     })
@@ -325,6 +367,7 @@ describe('inputs are evidence, not storage', () => {
         const {observer, states} = observerOver()
         observer.observe({recipe: root, loadedRecipes})
         emit('RECIPE_REF:ccdc-1', CCDC_BANDS)
+        emit('ASSET:users/x/mask', MASK_BANDS)
 
         expect(latest(states)).toEqual(envelope({
             status: 'READY',
@@ -332,7 +375,8 @@ describe('inputs are evidence, not storage', () => {
                 executionReference: {type: 'RECIPE_REF', id: 'masked-1'},
                 output: {kind: 'IMAGE', bands: DECLARED_CCDC_BANDS},
                 evidence: []
-            }
+            },
+            readiness: RUNNABLE
         }))
         expect(JSON.stringify({root, loadedRecipes})).toEqual(before)
     })

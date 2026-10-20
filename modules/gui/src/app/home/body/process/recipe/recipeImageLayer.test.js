@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import {Observable} from 'rxjs'
+import {Observable, Subject} from 'rxjs'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {buildRecipeDependencyGraph} from '#sepal/recipe/source/dependencyGraph'
@@ -41,7 +41,9 @@ vi.mock('~/app/home/map/layer/earthEngineImageLayer', () => ({
 vi.mock('~/translate', () => ({msg: key => key}))
 
 // The bands the synthetic type's declaration describes, all scalar. Held outside its recipe, as runtime evidence would
-// be, so they can change while the recipe and its layer config stay the same.
+// be, so they can change while the recipe's content and its layer config stay the same. The session's answer is reused
+// for the same records (recipeOutput.js), so a change while a recipe is shown reaches it as a record read again
+// (`describedAs`).
 const synthetic = vi.hoisted(() => ({bands: []}))
 
 // A declared type for the generic cases, added to the real shared registry.
@@ -51,6 +53,8 @@ vi.mock('#sepal/recipe/recipeTypeRegistry', async importOriginal => {
     const declared = {
         type: 'SYNTHETIC',
         directSources: () => [],
+        // What it reads it reads for something other than an image, so running it observes none of it.
+        executionNeeds: {IMAGE_OUTPUT: {INPUT_IMAGE: 'REFERENCE'}},
         imageOutput: imageOutputProvider({
             describe: () => ({bands: synthetic.bands.map(name => ({name, dataType: {arrayDimensions: 0}})), evidence: []})
         })
@@ -85,7 +89,8 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
 
 const {RecipeImageLayer} = await import('./recipeImageLayer')
 const {recipeContent} = await import('./recipeContent')
-const {productArgs} = await import('./recipeOutput')
+const {compatibleBasis, outputLoading, productArgs} = await import('./recipeOutput')
+const {OutputRegistry} = await import('../sourceRuntime/outputRegistry')
 const {visualizations: radarPresets} = await import('./radarMosaic/visualizations')
 
 beforeEach(() => {
@@ -105,6 +110,8 @@ const recipeOf = ({type = 'SYNTHETIC', userDefined = []} = {}) => ({
 // cleared one. The two are different questions to ask the reconciler, so the builder keeps them apart.
 const build = ({recipe, visParams, previousLayer, mode = {}}) => {
     const updates = []
+    let current = recipe
+    const runtime = runtimeOf(() => ({[current.id]: current}))
     const instance = new RecipeImageLayer({
         currentRecipe: recipe,
         recipe,
@@ -112,6 +119,7 @@ const build = ({recipe, visParams, previousLayer, mode = {}}) => {
         source: {id: 'this-recipe'},
         layerConfig: visParams === undefined ? mode : {...mode, visParams},
         dependencyGraph: {recipes: [recipe], edges: [], diagnostics: []},
+        sourceRuntime: runtime.sourceRuntime,
         map: {},
         mapArea: {updateLayerConfig: layerConfig => updates.push(layerConfig)},
         tab: {busy: {set: () => {}}},
@@ -125,14 +133,23 @@ const build = ({recipe, visParams, previousLayer, mode = {}}) => {
     const didUpdate = () => instance.componentDidUpdate(instance.props)
     // React replaces props before it calls the lifecycle; without a renderer this is the equivalent. The
     // dependency graph is derived from the same records, so it moves with them as the selector's does.
-    const setRecipe = recipe => instance.props = {
-        ...instance.props,
-        recipe,
-        currentRecipe: recipe,
-        dependencyGraph: {recipes: [recipe], edges: [], diagnostics: []}
+    const setRecipe = recipe => {
+        current = recipe
+        runtime.sessionChanged()
+        instance.props = {
+            ...instance.props,
+            recipe,
+            currentRecipe: recipe,
+            dependencyGraph: {recipes: [recipe], edges: [], diagnostics: []}
+        }
     }
     const setLayerConfig = layerConfig => instance.props = {...instance.props, layerConfig}
-    return {instance, updates, didUpdate, setRecipe, setLayerConfig}
+    // What the declaration describes changed, the recipe read again unchanged.
+    const describedAs = bands => {
+        synthetic.bands = bands
+        setRecipe({...current})
+    }
+    return {instance, updates, didUpdate, setRecipe, setLayerConfig, describedAs}
 }
 
 const selections = updates => updates.map(({visParams}) => visParams)
@@ -140,6 +157,7 @@ const selections = updates => updates.map(({visParams}) => visParams)
 const styles = userDefined => recipeOf({userDefined})
 
 const VALID = {id: 'valid', bands: ['ndvi']}
+const ASSET_EDGE = {sourceRecipeId: 'recipe-1', reference: {type: 'ASSET', id: 'users/x/a'}, role: 'INPUT_IMAGE', path: []}
 const ALTERNATIVE = {id: 'alternative', bands: ['evi']}
 const STALE_SELECTION = {id: 'stale', bands: ['gone']}
 
@@ -258,33 +276,127 @@ describe('the render-time guard', () => {
     })
 })
 
-// A layer is built from what the recipe describes AND from the runtime evidence behind it. Reading a source
-// again can produce the same schema over different pixels, so the layer must be replaced rather than kept.
+// Runtime evidence about a source offers presets and prefill. What the pixels were read from is the pixel generation's
+// to say (see above), so publishing evidence again draws nothing again.
 describe('runtime evidence behind a layer', () => {
-    const observed = observation => ({
+    const observed = presets => ({
         ...recipeOf({userDefined: [VALID]}),
-        ui: {initialized: true, sourceEvidence: {sourceKey: 'RECIPE_REF:source-1', observation}}
+        ui: {initialized: true, sourceEvidence: {sourceKey: 'RECIPE_REF:source-1', status: 'OBSERVED', visualizations: presets}}
     })
 
-    it('replaces the layer when the source has been read again', () => {
-        const {instance, setRecipe} = build({recipe: observed(1), visParams: VALID})
+    it('keeps the layer when evidence about its source is published again', () => {
+        const {instance, setRecipe} = build({recipe: observed([]), visParams: VALID})
         const first = instance.maybeCreateLayer()
 
-        setRecipe(observed(2))
-        const second = instance.maybeCreateLayer()
-
-        expect(second).not.toBe(first)
-        expect(state.constructed).toHaveLength(2)
-    })
-
-    it('keeps the layer while nothing has been read again', () => {
-        const {instance, setRecipe} = build({recipe: observed(1), visParams: VALID})
-        const first = instance.maybeCreateLayer()
-
-        setRecipe(observed(1))
+        setRecipe(observed([ALTERNATIVE]))
 
         expect(instance.maybeCreateLayer()).toBe(first)
         expect(state.constructed).toHaveLength(1)
+    })
+})
+
+// What a preview's pixels were read from beyond its recipes: the assets it reads and explicit refreshes. The
+// description can stay exactly as it was while either changes the pixels.
+describe('what a layer draws from beyond its recipes', () => {
+    const readingAsset = () => {
+        const built = build({recipe: styles([VALID]), visParams: VALID})
+        const asset = evidence => built.instance.props = {
+            ...built.instance.props,
+            dependencyGraph: {...built.instance.props.dependencyGraph, edges: [ASSET_EDGE]},
+            ...evidence
+        }
+        asset({assetEvidence: {'users/x/a': {version: 'v1', checkedAt: 0}}})
+        return {...built, asset}
+    }
+
+    it('draws again when an asset it reads reports a new token, though its description is unchanged', () => {
+        const {instance, asset} = readingAsset()
+        const first = instance.maybeCreateLayer()
+
+        asset({assetEvidence: {'users/x/a': {version: 'v2', checkedAt: 1, changedAt: 1}}})
+
+        expect(instance.maybeCreateLayer()).not.toBe(first)
+        expect(state.constructed).toHaveLength(2)
+    })
+
+    it('keeps its drawing while the asset reports the same token, and when its first token is learned', () => {
+        const {instance, asset} = readingAsset()
+        asset({assetEvidence: {}})
+        const first = instance.maybeCreateLayer()
+
+        asset({assetEvidence: {'users/x/a': {version: 'v1', checkedAt: 0, changedAt: null}}})
+        asset({assetEvidence: {'users/x/a': {version: 'v1', checkedAt: 1, changedAt: null}}})
+
+        expect(instance.maybeCreateLayer()).toBe(first)
+    })
+
+    it('keeps a drawing made after an asset change when credentials are replaced and the asset is read again', () => {
+        const {instance, asset} = readingAsset()
+        asset({assetEvidence: {'users/x/a': {version: 'v2', checkedAt: 1, changedAt: 1}}})
+        const drawn = instance.maybeCreateLayer()
+
+        asset({assetEvidence: {}})
+        expect(instance.maybeCreateLayer()).toBe(drawn)
+        asset({assetEvidence: {'users/x/a': {version: 'v2', checkedAt: 2, changedAt: null}}})
+
+        expect(instance.maybeCreateLayer()).toBe(drawn)
+        expect(state.constructed).toHaveLength(1)
+    })
+
+    it('draws again when it was explicitly refreshed', () => {
+        const {instance, asset} = readingAsset()
+        const first = instance.maybeCreateLayer()
+
+        asset({sourceRefreshes: {recipes: {'recipe-1': 1}}})
+
+        expect(instance.maybeCreateLayer()).not.toBe(first)
+    })
+
+    it('keeps its drawing while a record it computes is read again, when what is read is the same', () => {
+        const {instance, asset} = readingAsset()
+        const first = instance.maybeCreateLayer()
+
+        asset({recordStaleness: {staleness: ({id}) => id === 'recipe-1' ? {id, revision: 2} : null}})
+        expect(instance.imageOutput().status).toBe('NEEDS_EVIDENCE')
+        expect(instance.maybeCreateLayer()).toBe(first)
+        asset({recordStaleness: undefined})
+
+        expect(instance.maybeCreateLayer()).toBe(first)
+        expect(state.constructed).toHaveLength(1)
+    })
+
+    it('keeps its drawing when a check of an asset it reads cannot reach Earth Engine', () => {
+        const {instance, asset} = readingAsset()
+        const first = instance.maybeCreateLayer()
+
+        asset({assetEvidence: {'users/x/a': {version: 'v1', checkedAt: 0, changedAt: null, failure: {kind: 'TRANSIENT', code: 'UNAVAILABLE'}}}})
+
+        expect(instance.maybeCreateLayer()).toBe(first)
+    })
+
+    it('keeps its drawing however long it is shown', () => {
+        vi.useFakeTimers()
+        try {
+            const {instance} = readingAsset()
+            const first = instance.maybeCreateLayer()
+
+            vi.advanceTimersByTime(7 * 24 * 60 * 60 * 1000)
+
+            expect(instance.maybeCreateLayer()).toBe(first)
+        } finally {
+            vi.useRealTimers()
+        }
+    })
+
+    it('is withheld while an asset it reads is found missing, and drawn again once it is found', () => {
+        const {instance, asset} = readingAsset()
+        instance.maybeCreateLayer()
+
+        asset({assetEvidence: {'users/x/a': {version: 'v1', checkedAt: 1, failure: {kind: 'DEFINITIVE', code: 'NOT_FOUND'}}}})
+        expect(instance.maybeCreateLayer()).toBe(null)
+        asset({assetEvidence: {'users/x/a': {version: 'v1', checkedAt: 2, failure: null}}})
+
+        expect(instance.maybeCreateLayer()).not.toBe(null)
     })
 })
 
@@ -424,17 +536,17 @@ describe('visualization reconciliation', () => {
         })
 
         it('builds a fresh layer when the candidates return, never the cancelled one', () => {
-            const {instance, updates, didUpdate} = build({recipe: styles([VALID]), visParams: VALID})
+            const {instance, updates, didUpdate, describedAs} = build({recipe: styles([VALID]), visParams: VALID})
             const first = instance.maybeCreateLayer()
 
-            // Only the available bands change: same recipe, same layer config, so watchedProps are identical
+            // Only the available bands change: same recipe content, same layer config, so watchedProps are identical
             // and a retained instance would be handed straight back.
-            synthetic.bands = []
+            describedAs([])
             didUpdate()
             expect(instance.layer).toBe(null)
             expect(instance.maybeCreateLayer()).toBe(null)
 
-            synthetic.bands = ['ndvi', 'evi']
+            describedAs(['ndvi', 'evi'])
             didUpdate()
 
             expect(instance.maybeCreateLayer()).not.toBe(first)
@@ -597,13 +709,96 @@ describe('acquiring what the layer shows', () => {
 
     it('draws masking over an optical mosaic the session holds at once, acquiring nothing', () => {
         const {instance, runtime} = shown({
-            recipe: masking({mask: {type: 'ASSET', id: 'users/x/mask'}, styles: [BLUE_STYLE]}),
+            recipe: masking({mask: {type: 'RECIPE_REF', id: 'mosaic-1'}, styles: [BLUE_STYLE]}),
             records: [mosaic()],
             visParams: BLUE_STYLE
         })
 
         expect(instance.maybeCreateLayer()).not.toBe(null)
         expect(runtime.operations).toEqual([])
+    })
+
+    // Running it builds the mask, which is observed before anything is drawn.
+    it('waits for a mask asset to be observed before drawing masking over an optical mosaic', () => {
+        const {instance, runtime} = shown({
+            recipe: masking({mask: {type: 'ASSET', id: 'users/x/mask'}, styles: [BLUE_STYLE]}),
+            records: [mosaic()],
+            visParams: BLUE_STYLE
+        })
+
+        expect(instance.maybeCreateLayer()).toBe(null)
+        expect(runtime.operations.map(({kind}) => kind)).toEqual(['DESCRIBE'])
+    })
+
+    // Whether it can run is read again as its description is: what was drawn stays while that is loaded again or cannot
+    // be had for now, and goes once something is found to keep it from running.
+    describe('masking drawn once its mask asset was observed', () => {
+        const drawnMasking = () => {
+            const shownMasking = shown({
+                recipe: masking({mask: {type: 'ASSET', id: 'users/x/mask'}, styles: [BLUE_STYLE]}),
+                records: [mosaic()],
+                visParams: BLUE_STYLE
+            })
+            const {instance, runtime, settle} = shownMasking
+            settle(runtime.operations[0], maskingDescribed(instance.props.recipe, readiness('READY')))
+            return {...shownMasking, drawn: instance.maybeCreateLayer()}
+        }
+
+        it('keeps its drawing while the mask is observed again, and when it cannot be for now', () => {
+            const {instance, runtime, settle, drawn} = drawnMasking()
+            expect(drawn).not.toBe(null)
+
+            runtime.changeCredentials()
+            expect(instance.imageOutput().readiness.status).toBe('NEEDS_EVIDENCE')
+            expect(instance.maybeCreateLayer()).toBe(drawn)
+            settle(runtime.operations[1], maskingDescribed(instance.props.recipe, readiness('UNAVAILABLE')))
+
+            expect(instance.maybeCreateLayer()).toBe(drawn)
+            expect(state.constructed).toHaveLength(1)
+        })
+
+        it.each([
+            ['described', recipe => maskingDescribed(recipe, readiness('NOT_READY', [MASK_FINDING]))],
+            ['not described for now', recipe => ({...unreadable(recipe), readiness: readiness('NOT_READY', [MASK_FINDING])})]
+        ])('is withheld once observed unable to run, %s', (_case, terminal) => {
+            const {instance, runtime, settle} = drawnMasking()
+
+            runtime.changeCredentials()
+            settle(runtime.operations[1], terminal(instance.props.recipe))
+
+            expect(instance.maybeCreateLayer()).toBe(null)
+        })
+    })
+
+    // Running it builds its input images, so without one it is not drawn, whatever its description says.
+    it.each([
+        ['a Classification', 'CLASSIFICATION', {legend: {entries: [{value: 1}, {value: 2}]}, trainingData: TRAINED, classifier: {type: 'RANDOM_FOREST'}}],
+        ['a Regression', 'REGRESSION', {trainingData: TRAINED, classifier: {type: 'RANDOM_FOREST'}}],
+        ['an Unsupervised Classification', 'UNSUPERVISED_CLASSIFICATION', {clusterer: {type: 'KMEANS', numberOfClusters: 5}}],
+        ['a Stack', 'STACK', {bandNames: {bandNames: []}}],
+        ['a Band Math', 'BAND_MATH', {calculations: {calculations: []}, outputBands: {outputImages: []}}],
+        ['a Remapping', 'REMAPPING', {legend: {entries: [{value: 1, constraints: []}]}}]
+    ])('withholds %s without input imagery, acquiring nothing', (_case, type, model) => {
+        const {instance, runtime} = shown({
+            recipe: {id: 'empty-1', type, model: {...model, inputImagery: {images: []}}, ...ownStyles([CLASS_STYLE])},
+            visParams: CLASS_STYLE
+        })
+
+        expect(instance.maybeCreateLayer()).toBe(null)
+        expect(runtime.operations).toEqual([])
+    })
+
+    it('draws a Classification once an input image is added to it', () => {
+        const empty = {
+            id: 'classification-1', type: 'CLASSIFICATION', ...ownStyles([CLASS_STYLE]),
+            model: {inputImagery: {images: []}, legend: {entries: [{value: 1}, {value: 2}]}, trainingData: TRAINED, classifier: {type: 'RANDOM_FOREST'}}
+        }
+        const {instance, setRecipe} = shown({recipe: empty, records: [mosaic()], visParams: CLASS_STYLE})
+        expect(instance.maybeCreateLayer()).toBe(null)
+
+        setRecipe({...empty, model: {...empty.model, inputImagery: {images: [MOSAIC_INPUT]}}})
+
+        expect(instance.maybeCreateLayer()).not.toBe(null)
     })
 
     it('keeps the display precision the optical mosaic presents for the cursor', () => {
@@ -685,21 +880,19 @@ describe('acquiring what the layer shows', () => {
             expect(state.constructed[1].visParams).toEqual(restyled)
         })
 
-        // The withheld layer was taken off the map and cancelled, so recovery must draw a new one.
-        it('is withheld when credentials change after it was drawn, then drawn anew once acquired again', () => {
+        // Credentials change how later requests authenticate, not the pixels already shown.
+        it('keeps its drawing when credentials change, while what it needs is acquired again and once it is', () => {
             const {instance, runtime, settle} = countLayer()
             settle(runtime.operations[0], completed(instance.props.recipe))
             const drawn = instance.maybeCreateLayer()
 
             runtime.changeCredentials()
-            expect(instance.maybeCreateLayer()).toBe(null)
+            expect(instance.maybeCreateLayer()).toBe(drawn)
             expect(runtime.operations).toHaveLength(2)
             settle(runtime.operations[1], completed(instance.props.recipe))
-            const redrawn = instance.maybeCreateLayer()
 
-            expect(redrawn).not.toBe(null)
-            expect(redrawn).not.toBe(drawn)
-            expect(state.constructed).toHaveLength(2)
+            expect(instance.maybeCreateLayer()).toBe(drawn)
+            expect(state.constructed).toHaveLength(1)
         })
     })
 
@@ -822,6 +1015,15 @@ describe('acquiring what the layer shows', () => {
                 .toEqual([{visualizationType: 'monitoring', mosaicType: 'latest'}, {visualizationType: 'calibration', mosaicType: 'median'}])
         })
 
+        it('keeps loading its dependencies when another period is shown before they are known', () => {
+            const {runtime, setLayerConfig} = shownAs('monitoring', 'latest')
+
+            setLayerConfig(view('calibration', 'median'))
+
+            expect(runtime.operations).toHaveLength(1)
+            expect(runtime.operations[0].torndown).toBe(false)
+        })
+
         it('rebuilds the preview on a restyle without acquiring anything again', () => {
             const {instance, runtime, settle, setLayerConfig} = shownAs('calibration', 'latest')
             settle(runtime.operations[0], completed(instance.props.recipe))
@@ -888,6 +1090,15 @@ const mosaic = () => ({
         compositeOptions: {corrections: ['SR'], compose: 'MEDIAN'}
     }
 })
+
+const CLASS_STYLE = {id: 'class-style', bands: ['class'], type: 'continuous'}
+
+const TRAINED = {dataSets: [{type: 'COLLECTED', referenceData: [{x: 0.5, y: 0.5, class: 1}, {x: 0.6, y: 0.6, class: 2}]}]}
+
+const MOSAIC_INPUT = {
+    imageId: 'image-1', type: 'RECIPE_REF', id: 'mosaic-1',
+    bandSetSpecs: [{id: 'image-bands', type: 'IMAGE_BANDS', included: ['red', 'nir']}]
+}
 
 const masking = ({mask, styles}) => ({
     id: 'masked-1',
@@ -966,6 +1177,19 @@ const described = recipe => ({
     diagnostics: []
 })
 
+// Masking described as the optical mosaic it masks, and whether it can run as `readiness` says.
+const maskingDescribed = (recipe, readiness) => ({
+    ...completed(recipe),
+    status: 'READY',
+    description: {output: {kind: 'IMAGE', bands: [{name: 'blue', dataType: {arrayDimensions: 0}}]}},
+    diagnostics: [],
+    readiness
+})
+
+const readiness = (status, findings = []) => ({status, findings, needs: {records: [], observations: []}})
+
+const MASK_FINDING = {code: 'MISSING_INPUT_BAND', path: ['model', 'imageMask'], recipePath: ['masked-1']}
+
 const unreadable = recipe => ({
     status: 'UNAVAILABLE',
     error: new Error('recipe not found'),
@@ -973,32 +1197,43 @@ const unreadable = recipe => ({
     basis: basisOf(recipe)
 })
 
-const runtimeOf = () => {
+// The runtime's real output registry, over a session holding the records the layer's props hold. Its operations are
+// the test's to settle, and credentials are replaced as Redux would replace them.
+const runtimeOf = catalogue => {
     const operations = []
-    const listeners = new Set()
-    const operation = kind => () => new Observable(subscriber => {
-        const entry = {kind, subscriber}
-        operations.push(entry)
+    const changes = new Subject()
+    let credentials = {}
+    const registry = new OutputRegistry({
+        session: () => ({catalogue: catalogue(), credentials, closed: false}),
+        sessionChanges$: changes,
+        acquisitionOf: outputLoading,
+        operationOf: ({kind}) => new Observable(subscriber => {
+            const operation = {kind, subscriber, torndown: false}
+            operations.push(operation)
+            return () => operation.torndown = true
+        }),
+        isCompatible: compatibleBasis
     })
     return {
         operations,
         sourceRuntime: {
-            resolveImageOutput$: operation('DESCRIBE'),
-            completeDependencies$: operation('DEPENDENCIES'),
-            identity$: () => new Observable(subscriber => {
-                listeners.add(subscriber)
-                subscriber.next({})
-                return () => listeners.delete(subscriber)
-            })
+            watchOutput$: question => registry.watchOutput$(question),
+            heldFor: key => registry.heldFor(key),
+            retryOutput: question => registry.retryOutput(question)
         },
-        changeCredentials: () => [...listeners].forEach(listener => listener.next({}))
+        sessionChanged: () => changes.next(),
+        changeCredentials: () => {
+            credentials = {}
+            changes.next()
+        }
     }
 }
 
 // A mounted layer over the records the real graph builder links. Re-rendering is React's; here the lifecycle is
 // called as React would call it. The map merges what the layer writes into its config, as the store does.
 const shown = ({recipe, records = [], visParams, layerConfig = {visParams}}) => {
-    const runtime = runtimeOf()
+    let catalogue = Object.fromEntries([recipe, ...records].map(record => [record.id, record]))
+    const runtime = runtimeOf(() => catalogue)
     const updates = []
     const graphOf = recipe => buildRecipeDependencyGraph({
         rootRecipe: recipe,
@@ -1035,7 +1270,10 @@ const shown = ({recipe, records = [], visParams, layerConfig = {visParams}}) => 
         instance.props = {...instance.props, layerConfig: next}
         rerender()
     }
+    // The store changes first and the runtime hears it inside the dispatch, before React re-renders the layer.
     const setRecipe = next => {
+        catalogue = {...catalogue, [next.id]: next}
+        runtime.sessionChanged()
         instance.props = {...instance.props, recipe: next, currentRecipe: next, dependencyGraph: graphOf(next)}
         rerender()
     }

@@ -1,3 +1,4 @@
+import {parseGeoId} from '#sepal/geoId/geoId'
 import {countryEETable} from '~/app/home/map/aoiLayer'
 
 // The 'SOURCE' section combines asset and recipe AOIs behind a sourceType toggle. The persisted model
@@ -30,6 +31,12 @@ export const valuesToModel = values => {
             return {
                 type: 'POLYGON',
                 path: values.polygon
+            }
+        case 'GEOID':
+            return {
+                type: 'GEOID',
+                id: parseGeoId(values.geoId).geoId,
+                ...(isBlank(values.bufferMeters) ? {} : {bufferMeters: Number(values.bufferMeters)})
             }
         case 'SOURCE':
             switch (values.sourceType) {
@@ -70,6 +77,12 @@ export const modelToValues = (model = {}) => {
             section: 'POLYGON',
             polygon: model.path
         }
+    } else if (model.type === 'GEOID') {
+        return {
+            section: 'GEOID',
+            geoId: model.id,
+            bufferMeters: model.bufferMeters ?? ''
+        }
     } else if (model.type === 'ASSET') {
         return {
             section: 'SOURCE',
@@ -86,3 +99,6 @@ export const modelToValues = (model = {}) => {
         return {}
     }
 }
+
+const isBlank = value =>
+    value === null || value === undefined || String(value).trim() === ''

@@ -11,11 +11,12 @@ import styles from './widget.module.css'
 
 export class _Widget extends React.Component {
     render() {
-        const {forwardedRef, layout, spacing, alignment, framed, border, disabled, className, contentClassName, onMouseOver, onMouseOut, onClick} = this.props
+        const {forwardedRef, layout, spacing, alignment, framed, border, disabled, className, contentClassName, label, onMouseOver, onMouseOut, onClick} = this.props
         const widgetState = this.getWidgetState()
         return (
             <div
                 ref={forwardedRef}
+                data-label={_.isString(label) ? label : undefined}
                 className={[
                     styles.container,
                     onClick ? styles.clickable : null,

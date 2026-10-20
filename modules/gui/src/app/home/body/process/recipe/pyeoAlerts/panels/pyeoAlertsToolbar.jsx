@@ -11,6 +11,7 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
+import {SectionButton} from '../../sectionButton'
 import {Dates} from './dates/dates'
 import {Options} from './options/options'
 import styles from './pyeoAlertsToolbar.module.css'
@@ -60,7 +61,7 @@ class _PyeoAlertsToolbar extends React.Component {
                         tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}
                         disabled={!initialized}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='sources'
                         label={msg('process.pyeoAlerts.panel.sources.button')}
                         tooltip={msg('process.pyeoAlerts.panel.sources.tooltip')}
@@ -78,7 +79,7 @@ class _PyeoAlertsToolbar extends React.Component {
                         tooltip={msg('process.timeSeries.panel.preprocess.tooltip')}
                         disabled={!initialized}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='pyeoAlertsOptions'
                         label={msg('process.pyeoAlerts.panel.options.button')}
                         tooltip={msg('process.pyeoAlerts.panel.options.tooltip')}

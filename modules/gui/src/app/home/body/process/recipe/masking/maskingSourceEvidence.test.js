@@ -40,14 +40,15 @@ const maskingRecipe = ({sourceEvidence, userDefined = []} = {}) => ({
     ...(sourceEvidence ? {ui: {sourceEvidence}} : {})
 })
 
-const observed = ({bands, visualizations}) => ({
+const observed = visualizations => ({
     sourceKey: 'RECIPE_REF:source-1',
     status: 'OBSERVED',
-    bands,
     visualizations
 })
 
-const dropped = observed({bands: scalar(['red', 'nir']), visualizations: [RED]})
+// The source's presets once it dropped the band, and the bands Masking's description then holds.
+const dropped = observed([RED])
+const droppedBands = scalar(['red', 'nir'])
 
 describe('a source that has dropped a band since the recipe was saved', () => {
     it('no longer offers the preset that named it', () => {
@@ -56,7 +57,7 @@ describe('a source that has dropped a band since the recipe was saved', () => {
 
     it('offers no preset once the source is known to be unavailable', () => {
         const unavailable = maskingRecipe({
-            sourceEvidence: {sourceKey: 'RECIPE_REF:source-1', status: 'UNAVAILABLE', bands: [], visualizations: []}
+            sourceEvidence: {sourceKey: 'RECIPE_REF:source-1', status: 'UNAVAILABLE', visualizations: []}
         })
 
         expect(getPreSetVisualizations(unavailable)).toEqual([])
@@ -69,7 +70,7 @@ describe('a local style naming a band the source has dropped', () => {
     const recipe = maskingRecipe({sourceEvidence: dropped, userDefined: [LOCAL_NDVI]})
 
     it('is not offered as a candidate', () => {
-        expect(offered(recipe, dropped.bands).map(({id}) => id)).toEqual(['v-red'])
+        expect(offered(recipe, droppedBands).map(({id}) => id)).toEqual(['v-red'])
     })
 
     it('is still saved on the recipe, unchanged', () => {
@@ -79,7 +80,7 @@ describe('a local style naming a band the source has dropped', () => {
     it('becomes a candidate again when the source has the band again', () => {
         const bands = scalar(['red', 'nir', 'ndvi'])
         const restored = maskingRecipe({
-            sourceEvidence: observed({bands, visualizations: [NDVI, RED]}),
+            sourceEvidence: observed([NDVI, RED]),
             userDefined: [LOCAL_NDVI]
         })
 
@@ -96,7 +97,7 @@ describe('a masked CCDC Segments asset', () => {
     const RMSE = {id: 'v-rmse', bands: ['ndvi_rmse']}
     const SEGMENT_BANDS = ['tStart', 'tEnd', 'ndvi_coefs', 'ndvi_rmse']
 
-    const maskedSegments = bands => ({
+    const maskedSegments = () => ({
         id: 'masked-1',
         type: 'MASKING',
         model: {
@@ -112,7 +113,6 @@ describe('a masked CCDC Segments asset', () => {
             sourceEvidence: {
                 sourceKey: 'ASSET:users/bob/segments',
                 status: 'OBSERVED',
-                bands,
                 visualizations: [HARMONIC, RMSE]
             }
         }
@@ -121,26 +121,26 @@ describe('a masked CCDC Segments asset', () => {
     const asArrays = SEGMENT_BANDS.map(name => ({name, dataType: {arrayDimensions: 1}}))
 
     it('offers no direct visualization, because every band is an array', () => {
-        expect(offered(maskedSegments(asArrays), asArrays)).toEqual([])
+        expect(offered(maskedSegments(), asArrays)).toEqual([])
     })
 
     it('does not offer the residual band merely because its name is present', () => {
-        expect(offered(maskedSegments(asArrays), asArrays).map(({id}) => id)).not.toContain('v-rmse')
+        expect(offered(maskedSegments(), asArrays).map(({id}) => id)).not.toContain('v-rmse')
     })
 
     it('still reports both templates as the source\u2019s presets, which is what they are', () => {
-        expect(getPreSetVisualizations(maskedSegments(asArrays)).map(({id}) => id))
+        expect(getPreSetVisualizations(maskedSegments()).map(({id}) => id))
             .toEqual(['v-harmonic', 'v-rmse'])
     })
 
     it('keeps every template on the recipe rather than deleting it', () => {
-        expect(maskedSegments(asArrays).model.imageToMask.visualizations).toEqual([HARMONIC, RMSE])
+        expect(maskedSegments().model.imageToMask.visualizations).toEqual([HARMONIC, RMSE])
     })
 
     // A style the user saved over an array band is no more drawable than an inherited one. It is withheld
     // from the choices and left untouched in the recipe.
     it('withholds a local style over an array band as well', () => {
-        const recipe = maskedSegments(asArrays)
+        const recipe = maskedSegments()
         const local = {id: 'local-rmse', bands: ['ndvi_rmse'], type: 'continuous'}
         recipe.layers.userDefinedVisualizations = {'this-recipe': [local]}
 
@@ -150,7 +150,7 @@ describe('a masked CCDC Segments asset', () => {
 
     it('offers a local style over a scalar band', () => {
         const bands = [...asArrays, {name: 'changeProb', dataType: {arrayDimensions: 0}}]
-        const recipe = maskedSegments(bands)
+        const recipe = maskedSegments()
         recipe.layers.userDefinedVisualizations = {
             'this-recipe': [{id: 'local-change', bands: ['changeProb'], type: 'continuous'}]
         }

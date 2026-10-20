@@ -11,6 +11,7 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
+import {SectionButton} from '../../sectionButton'
 import {RecipeActions} from '../classificationRecipe'
 import {Legend} from '../legend/legend'
 import {AuxiliaryImagery} from './auxiliaryImagery/auxiliaryImagery'
@@ -58,7 +59,7 @@ class _ClassificationToolbar extends React.Component {
                     vertical
                     placement='bottom-right'
                     className={styles.bottom}>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='inputImagery'
                         label={msg('process.classification.panel.inputImagery.button')}
                         tooltip={msg('process.classification.panel.inputImagery.tooltip')}
@@ -70,7 +71,7 @@ class _ClassificationToolbar extends React.Component {
                         tooltip={msg('process.classification.panel.legend.tooltip')}
                         disabled={!initialized}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='trainingData'
                         label={msg('process.classification.panel.trainingData.button')}
                         tooltip={msg('process.classification.panel.trainingData.tooltip')}

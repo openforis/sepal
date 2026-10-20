@@ -63,11 +63,11 @@ where a family still needs observation.
      soundness of the whole closure is reported separately
      ([reading a recipe's own output](gui-source-runtime.md#reading-a-recipes-own-output)). It reads the records
      the session holds, through the graph a map layer already derives, so Masking over an Optical Mosaic the
-     session has loaded is answered at once. A terminal its acquisition owner retains answers the rest, while it
-     is still about those records. Consumers never assemble dependency catalogues themselves.
-   - *Acquisition ownership.* Every consumer that can need observation has an acquisition owner whose lifetime
-     covers it. Reuse the source runtime and observation lifecycle; a synchronous getter never starts work.
-     Migrating a working consumer must not leave it permanently empty because nothing acquires its answer.
+     session has loaded is answered at once. A terminal the source runtime holds answers the rest, while it is
+     still about those records. Consumers never assemble dependency catalogues themselves.
+   - *Loading ownership.* Every consumer that can need observation watches its question while it is open, and the
+     source runtime loads and holds the answer for every consumer watching it; a synchronous getter never starts
+     work. Migrating a working consumer must not leave it permanently empty because nothing loads its answer.
 2. **One read, then switch the consumers once.** Map layers, preset filtering and Retrieve read through the same
    boundary for every type and do not branch on how a type describes its output. Types without a provider were
    answered there by an unverified legacy seam until every type declared its output (step 4), which removed it.
@@ -79,7 +79,9 @@ where a family still needs observation.
      optional-band conditions come from the declaration. Index Change declares `error` and `confidence` only when
      both images name an error band, and `change` only when its legend has entries. Class Change always declares
      `transition` and `confidence`; confidence is measured from both images' probability bands and is masked where
-     either image holds none, while the transition is still computed. Classification declares `class` (mode), then
+     either image holds none, while the transition is still computed. Both are described only once both images are,
+     and refused (`MISSING_INPUT_BAND`, at the field) where an image names a band, or Index Change an error band,
+     that its source's current description does not provide. Classification declares `class` (mode), then
      `class_probability` for classifiers that support probabilities, `regression` for those that support
      regression, and one `probability_<value>` per legend entry in the legend's stored order (all mean); an export
      returns its selected bands in the order requested, which Retrieve makes the output's order. Without legend entries its schema is unchanged, but Earth
@@ -186,7 +188,9 @@ where a family still needs observation.
      whose dimensionality was not observed is refused; no encoding is stated. Arrays can therefore be exported
      to Earth Engine alone. Its Earth Engine catalogue answers the configured names without building the image.
      Masking over Band Math exports those policies, so a scalar named `change` is averaged where Masking's fallback
-     took its mode.
+     took its mode. Through `inputs()` it also requires every band an input includes to be a band of that input's
+     current description, refused as `MISSING_INPUT_BAND` where it is included, and holds each input to its whole
+     description as Stack does - so an input that cannot be described refuses it, Earth Engine building it or not;
 4. **Make the declaration mandatory.** `imageOutput` is required, as `directSources` is. Sampling Design, which
    produces no image, declares `imageOutput: NO_IMAGE_OUTPUT`; read as an image it is refused as `NON_IMAGE_OUTPUT`,
    which is definitive, located at the design through any wrapper, and stops a generic image export. A type stating
@@ -227,7 +231,9 @@ families remain.
   A description being `READY` and a closure being `VALID` do not establish that the recipe can execute. Requirements
   must be evaluated through wrappers and at execution boundaries, with their evidence and freshness explicit; they
   must not become empty schemas or independent panel guards. This brings forward contract review, while requirement
-  validation remains a separate implementation packet below.
+  validation remains a separate implementation packet below. Reviewed, and its first packet implemented for
+  `IMAGE_OUTPUT`: [execution readiness](source-resolution.md#execution-readiness) states the contract, rule ownership,
+  dependency needs, the routes outside its guarantee and the rule migrations still to do.
 
 #### Preparation packets
 
@@ -244,7 +250,7 @@ Deliver steps 1–2 as three separately reviewable packets:
    `dependencyValidity` separately, and Retrieve and Task's asset export of a declared root require it to be
    `VALID`. A known
    schema is not permission to run ([dependency-scoped descriptions](gui-source-runtime.md#reading-a-recipes-own-output)).
-   After a failed closure, `SourceEvidenceSync` re-observes when a record it read changes; restoring only the
+   After a failed closure, the evidence registry re-observes when a record it read changes; restoring only the
    recipe it could not read does not.
 2. **Common GUI read API and display consumers.** Map layers read the product they name through the common read,
    and retain what they acquire through the runtime's one-shot operations for as long as they are mounted
@@ -252,7 +258,7 @@ Deliver steps 1–2 as three separately reviewable packets:
    the visualization editor are given that read. The editor's requests carry the product the layer shows.
    Map preview requires `VALID` dependencies.
    - Input workflows and Sampling Design filter the presets they copy against the names they observed.
-   - The `SourceEvidenceSync` whole-graph check stays; what its removal needs is recorded with
+   - The evidence registry's whole-graph check stays; what its removal needs is recorded with
      [live source evidence](gui-source-runtime.md#live-source-evidence).
 3. **Retrieve consumers.** Retrieve reads its recipe's image output through the same API, and each panel owns its
    acquisition while open. Its description is the one export authority: choices, destination compatibility and
@@ -270,33 +276,64 @@ reserve the full GUI suite for the final readiness check.
 
 In order, each independently mergeable:
 
-1. **Shared live output descriptions**, immediately after the output declarations are mandatory and the legacy
-   adapter is removed, with the execution-requirements contract reviewed first. Cached description readiness and
-   structural validity must retain their separate meanings rather than implying execution readiness.
-   The source runtime owns reusable descriptions and in-flight acquisitions; map layers and Retrieve subscribe to
-   the same current answer rather than acquiring independently on every panel opening.
-   Reuse the common read and acquisition contracts, with no recipe-specific caches.
-   - One source-version registry tracks local draft changes, recipe revisions, credential context and observed
-     asset versions. Relevant changes invalidate dependent answers immediately and trigger background refresh;
-     superseded responses cannot publish. Closing one consumer must not cancel work another still needs.
-   - Recipe revision refreshes and asset-version checks establish freshness. Prioritize assets used by active
-     consumers and share checks across dependents. SEPAL operations can invalidate immediately; polling must cover
-     external changes. Establish what collection versions reveal about member and metadata changes before relying
-     on them. Polling intervals and acceptable evidence age belong to this packet's contract review.
-   - Retrieve opens without a new acquisition when a current answer is held. Otherwise it waits for refresh, and
-     Apply rechecks currency before accepting the answer. Refresh failures never authorize stale options.
-   - Websocket recipe revision events can follow as a latency optimization; revision refresh on reconnect covers
-     missed events, and correctness must not depend on notification delivery.
-   This implements the interactive description-sharing part of
-   [source freshness](source-freshness.md). Persisted calculation freshness and coherent task execution remain
-   separate, later milestones. Acceptance: visualization and Retrieve share one acquisition for the same question,
-   and dependency or credential changes withdraw its authority for both until a current answer is available.
-2. **Instance-level requirement validation.** One shared `SUPPORTED | UNSUPPORTED | NEEDS_EVIDENCE` validator
+1. **Shared live output descriptions.** The declaration migration is complete. Implement this work in three
+   separately reviewed packets, following the [delivery contract](source-freshness.md#shared-output-description-delivery):
+   - **Packet 1, implemented:** runtime-owned watches for every active map/Retrieve question, including
+     descriptions answered locally without loading. Equal work is shared across consumers, with reference counting,
+     cancellation, held failures and bounded retention. Existing conservative local content and credential
+     invalidation, source evidence and the common read are preserved. No external freshness claim is added.
+   - **Packet 2, implemented:** recipe revision freshness and shared observations. Answers keep evidence of the
+     records they read and are withdrawn when a newer revision or a withdrawn listing supersedes it; the listing is
+     refreshed while outputs are watched; drafts are never replaced, and Retrieve waits for or refuses a dependency
+     draft storage does not hold. Band observations are shared by what Earth Engine evaluates
+     ([contract](source-freshness.md#packet-2-recipe-revisions-and-shared-observations)).
+   - **Packet 3, implemented:** asset evidence for every active consumer - a metadata `updateTime` token, polled while
+     visible, invalidated by this session's mutations and by failures naming an asset - withdraws descriptions and
+     export authority it supersedes, and redraws only what an asset change, an input change or an explicit Refresh
+     requires; elapsed time, unchanged checks, replaced credentials and transient failures keep existing drawings.
+     Source evidence is no longer a change signal
+     ([contract](source-freshness.md#packet-3-asset-freshness-and-redraw-signaling)).
+   Description loading and refresh are distinct from satellite acquisitions. Reuse the existing runtime and pure
+   read contracts, with no recipe-specific caches. Schema, structural validity and execution requirements remain
+   separate; no unused requirements resource or readiness framework is introduced here. A reused description does
+   not establish unchanged pixels. Task remains independent, and named map products cannot authorize exports.
+   Acceptance: map and Retrieve share work for the same question, closing one preserves the other's work, and Apply
+   rejects outdated authority before component effects run. Refresh failure never authorizes stale options.
+   Persisted calculation freshness and coherent execution remain later milestones. Websocket revision events are
+   optional latency improvements; correctness must not depend on notification delivery.
+2. **Configured-source requirement validation.** Check whether a particular recipe or asset meets a consumer's
+   requirements, using its configuration and available evidence. Change Alerts REF is implemented
+   ([contract](source-resolution.md#change-alerts-ref)), and so is CCDC Slice SRC
+   ([contract](source-resolution.md#ccdc-slice-src)), and BAYTS Alerts REF and PRC
+   ([contract](source-resolution.md#bayts-alerts-ref)); the remaining consumers follow. The
+   reference-API review set their order: image-asset metadata keeps array rank, so Change Alerts reads its reference
+   from metadata alone (done); shared segment-evidence readers and selection by role (done); evidence owned by the
+   source runtime, so an operation a type declares requirements for is checked wherever the recipe is shown, with
+   prefill behaviour kept (done); Change Alerts' boundary (done): pure shared requirements with stable ids over
+   explicit facts ([requirement contract](source-resolution.md#requirement-contract)), one requirement per operation's
+   actual reads - the alerts, the monitored measure in Sources, the segment chart - and every source section validated
+   before Apply through the shared form binding, with the Sources feedback and source-feasibility amendment
+   ([below](#declarative-validation-across-model-properties)). The agreed order from here:
+   1. Finish and commit Change Alerts (done).
+   2. Review the shared validation boundary against the
+      [declarative dependency evaluation](source-freshness.md#declarative-dependency-evaluation) plan and the
+      [validation guidance](../../code-design.md#validation-across-model-properties), with Change Alerts, Band Math and
+      Sampling Design as the concrete examples (done; [outcome](#validation-boundary-review)).
+   3. Adapt the boundary as the review finds: declared feedback inputs and explicit cross-section advisories (done).
+      Then resume CCDC Slice (done) and BAYTS (done), with a requirement derived from what its execution reads
+      ([findings](#configured-source-suitability-findings)); BAYTS' monitored passes are PRC's to check, advising
+      REF.
+   A separate follow-up is [declared reference layer sources](#declared-reference-layer-sources), replacing
+   recipe-specific input-layer bookkeeping with shared derivation.
+   One shared
+   `SUPPORTED | UNSUPPORTED | NEEDS_EVIDENCE` validator
    behind the recipe selectors, replacing type filters and type-level candidacy, and repeated at the execution
    boundary so saved, stale and directly submitted models fail with a stated diagnosis. See
-   [requirement and capability discovery](source-resolution.md#requirement-and-capability-discovery).
+   [requirement and capability discovery](source-resolution.md#requirement-and-capability-discovery) and the
+   [configured-source suitability findings](#configured-source-suitability-findings).
 3. **Declarative dependency evaluation**, starting with the
-   [Band Math chain](#later-follow-up-band-math-dependencies).
+   [Band Math chain](#later-follow-up-band-math-dependencies). The boundary review in item 2 informs it, and does not
+   implement it.
 4. **Capability projection, visualization applicability and snapshot retirement.** Transformation effects decide
    whether capabilities survive, including export-band subsets; visualizations are validated against the resolved
    product without positional remapping; Stack and Band Math stop treating copied input snapshots as authority.
@@ -316,12 +353,34 @@ In order, each independently mergeable:
 7. **Source planning and the temporal collection composer**, following the
    [research plan](output-products.md#research-plan).
 
-Recipe deletion warns about no dependents yet; [save-time edge indexing](source-resolution.md#deletion-and-movement)
-is a separate small packet.
+**Deferred until the task rewrite lands:** [task-driven asset invalidation](#task-driven-asset-invalidation).
+Re-audit the new task lifecycle and notification paths before choosing the integration route or scheduling it.
+Keep Task changes out of the next requirement-validation packet; its Task execution-boundary integration must
+be reviewed against the rewritten service.
 
-Visualizing a recipe whose dependency was deleted shows the user a raw JSON 404 error. This was observed manually;
-its origin has not been investigated, and whether it is a regression is not established. Investigate the error
-presentation separately.
+Recipe deletion warns about no dependents yet; [persisted reference indexing](#persisted-reference-index) is a
+separate follow-up, covering processing dependencies and display references. Loading
+[unused map sources](#load-map-sources-only-when-needed) should not serve as dependency checking.
+
+**Retained closed drafts after their save settles.** The recipe cache keeps a closed draft whose save has not settled
+past its last claimant (`recipeCacheClaims.js`), and nothing evicts it once the save settles: it stays cached until a
+claimant takes and releases it again. This retains an extra record, never loses unsaved work. Clean up separately,
+evicting an unclaimed closed draft when its save state settles.
+
+**Recipe-scoped modals, then opening a selected recipe.** Application-wide modals block tab navigation, so a
+source selector cannot open its selected recipe consistently everywhere it appears. Settle
+[recipe-scoped modals](#recipe-scoped-modals) first; [opening the selected recipe](#open-selected-recipe) follows.
+
+**Recipe packages: separate developer architecture track.** [Recipe packaging](#recipe-packages) is the intended
+direction for keeping a recipe's concerns together. It does not block or expand the current user-facing sequence:
+Change Alerts requirement and form-validation improvements, the validation boundary review, then CCDC Slice, then
+BAYTS. Those improvements can
+ship incrementally without waiting for a packaging design.
+
+Opening a recipe with an unavailable saved recipe layer source can show a raw JSON 404 notification, even when no
+map area displays that source. `RecipeImageLayerSource` interpolates the raw load error into its translated message;
+the translation helper serializes that object. Replace it with a readable diagnosis naming the source, keeping
+technical details in logs. This presentation correction is separate from lazy loading and reference indexing below.
 
 **Geometry reads during incomplete input editing.** A Stack remove-all/add-again sequence exposed a geometry request
 with no first input, causing `imageFactory` to read `.type` from undefined. The unguarded first-input access predates
@@ -387,7 +446,7 @@ same recipe. Failed reads can be retried. Authorized batch/closure endpoints and
 not implemented. Browser resolution completes a selected root's closure through the existing authenticated
 per-recipe read and the shared batch-shaped traversal. Retrieve preflight retains those records locally; the live
 evidence lifecycle uses the session's reference-counted loader. Neither makes browser evidence the execution graph.
-Recipe Fill and instance-level capability discovery still require their own acquisition and validation contracts.
+Recipe Fill and configured-source capability discovery still require their own acquisition and validation contracts.
 
 Activate output descriptions and capabilities one runtime boundary or consumer family at a time. Each milestone
 must correct an existing defect or deliver a usable generic contract without requiring the rest of the architecture
@@ -499,8 +558,8 @@ Candidacy is not evidence either: an asset mosaic declares where something would
 asset holds. Consumers therefore acquire source information and derive defaults as separate questions, and an
 answer to one survives a failure of the other.
 
-The adapters share the producer-step rule. Change Alerts and BAYTS candidate selectors use its declaration query;
-Slice's selector and the four classification pickers still use type filters. Declaration candidacy does not establish
+The adapters share the producer-step rule. Change Alerts, CCDC Slice and BAYTS candidate selectors use its
+declaration query; the four classification pickers still use type filters. Declaration candidacy does not establish
 support for a particular wrapper instance; that requires resolving the selected source and its evidence.
 
 An asset mosaic carries three declarations of the same shape, one per capability. Before adding another, review
@@ -648,8 +707,9 @@ Remaining work:
 
 ### 2. Stabilize Apply mask
 
-Masking declares identity band mapping and preserved values at valid pixels. Its live evidence comes from the
-selected primary source; copied bands and presets are only an unobserved compatibility fallback.
+Masking declares identity band mapping and preserved values at valid pixels. Its bands are its description, and
+its live evidence - the presets it inherits - comes from the selected primary source; copied presets are only an
+unobserved compatibility fallback.
 
 Remaining work:
 
@@ -766,12 +826,16 @@ date-format and compatibility rules are described in
 belong to [GUI source runtime](gui-source-runtime.md#live-source-evidence). No second synchronization or producer
 discovery path is needed.
 
+Done ([contract](source-resolution.md#ccdc-slice-src)): SRC's picker offers types that may provide segments
+(`mayProvideSegments`), with candidacy kept apart from verified support, which the requirements judge from evidence;
+the structural evidence Slice needs (`ccdcSegments.sliceSource`) is derived from what its execution reads and checked
+before Apply, by its layers and Retrieve, and the chart is held to `ccdcSegments.chartable`.
+
 Remaining work:
 
-- Replace Slice's hard-coded CCDC/ASSET_MOSAIC candidate filter with the declaration query, while keeping candidacy
-  distinct from verified support for a specific recipe or asset.
-- Define the closed `CCDC_SEGMENT_SLICE` transformation and structural capability evidence. The current mode-aware
-  band derivation is not a complete capability-validation contract.
+- Define the closed `CCDC_SEGMENT_SLICE` transformation capability, and recheck the structural requirement at the
+  execution boundary. The current mode-aware band derivation is not a complete capability-validation contract.
+- Validate Options' break-analysis band against the measures the source holds.
 - Preserve existing CCDC Segments assets through a narrow structural asset contract. Interpret legacy
   `visualization_*` and `baseBands` properties as template configuration after validation; do not require assets
   to be recreated or rewritten solely to adopt that contract.
@@ -789,19 +853,32 @@ Follow the [declarative evaluation direction](source-freshness.md#declarative-de
 shared source-observation lifecycle rather than adding another watcher, cache or source traversal.
 
 1. Identify user configuration versus derived fields in Band Math's current sync path, including expression and
-   output references. Preserve saved-model compatibility and intentional rename behavior.
+   output references. Preserve saved-model compatibility and intentional rename behavior (done).
 2. Express the chain's consumed inputs, requirements and derived output through recipe-owned pure functions,
-   using the existing expression parser. Use the same declaration and evaluation contract for local configuration,
-   calculation outputs and current evidence from selected recipes or assets; only their providers differ.
+   using the expression analysis the editor lints with (`modules/gui/src/widget/codeEditor/expressionAnalysis.js`).
+   Use the same declaration and evaluation contract for local configuration, calculation outputs and current evidence
+   from selected recipes or assets; only their providers differ. Done for local configuration. Current evidence of
+   the inputs' bands is judged by Band Math's output description instead (`inputs()`), which refuses what execution
+   would, and the editor marks the inputs it finds lacking a band, and Input imagery, from that description.
 3. Connect derived diagnostics to the owning sections and affected Preview/Retrieve operations. Remove the
-   superseded bookkeeping for this chain; leave unrelated sync behavior alone. Recheck the same requirements at
-   execution, so a closed panel or directly submitted model cannot bypass them.
+   superseded bookkeeping for this chain; leave unrelated sync behavior alone (done: the persisted `invalid` flag is
+   gone). Recheck the same requirements at execution, so a closed panel or directly submitted model cannot bypass
+   them (not done: Task and Earth Engine execution do not recheck them).
 
 Acceptance scenarios, without closing or reopening the recipe:
 
+- Deliberately removing an input band from the local selection removes its direct pass-through output, including
+  saved recipes whose copied input and output band IDs differ (done; [Band Math](../../recipes/band-math.md#inputs)).
+  Unaffected calculations remain executable. This is distinct from preserving an expression that needs the removed band.
 - Removing a required band identifies the affected calculation and output and prevents their execution, while
-  preserving the expression and output configuration. Restoring the band restores validity automatically.
-  Exercise the same rule for a local input-selection change and for a change to the external source's bands.
+  preserving the expression and output configuration. Restoring the band restores validity automatically. Done for a
+  local input-selection change; a change to the external source's bands is refused by the output description, which
+  withholds previews and Retrieve until the band returns, and marks the input and Input imagery until then. Still
+  deferred, as separate packets: judging an item's edit as a candidate before it is applied, with its own Apply policy,
+  and rechecking these requirements at the execution boundary. Where the description refuses the configuration before
+  reading the inputs - repeated output names, say, or nothing output - the editor reads them once to mark an input's
+  problem beside the refusal (`EXPLAIN`, [GUI source runtime](gui-source-runtime.md)); other consumers have the
+  refusal at once and read nothing for it.
 - Removing an unused band or changing only a visualization does not invalidate the calculation.
 - An unavailable source is reported as unverified, not as a missing band; a superseded observation cannot change
   the current diagnosis. Cover source replacement and upstream changes under the same recipe or asset ID.
@@ -818,6 +895,10 @@ compatibility, panel defaults and execution behavior as separate responsibilitie
 
 Still to do here:
 
+- Use the shared compact Asset/Recipe selector (`SourceTypeButtons`) in Change Alerts REF, replacing its section
+  selection screen and header dropdown, as in CCDC Slice SRC. Keep date-format controls asset-only, preserve saved
+  selections, prefill and candidate validation, and clear the previous selection and date format when changing type.
+  This is a presentation follow-up, separate from requirement migration.
 - Add an **Open recipe** action to the shared recipe selector, enabled when a recipe is selected. Focus its
   existing SEPAL tab by recipe ID, or open it in a new tab without replacing the current recipe. Preserve
   unsaved edits in existing tabs and support references across projects. Keep navigation in a shared
@@ -963,9 +1044,280 @@ band's multiplier. Other producers, export destinations, charts and legends adop
   role combinations and response contract, and land this as a dedicated cross-module commit rather than as part
   of Recipe source resolution.
 
+### Configured-source suitability findings
+
+Change Alerts REF is the first consumer, now implemented ([contract](source-resolution.md#change-alerts-ref)): its
+configured chain, asset structure, missing reference and selected-source presentation follow the constraints below.
+The findings do not authorize a migration of every picker or execution boundary. The capability-chain
+cases were reproduced through shared rules, without Earth Engine. Other findings come from code inspection,
+unless stated otherwise; they are not claims of end-to-end reproduction.
+
+| Gap | Current behavior | Follow-up |
+| --- | --- | --- |
+| Type candidacy differs from configured capability | Masking is a candidate for segments and BAYTS statistics even when its primary source is an optical mosaic; the configured provider walk rejects it. An unfilled preserving role is malformed, and Stack does not currently preserve these capabilities. | Start with a diagnosis for Change Alerts REF that names where the configured chain stopped. Keep deliberate picker eligibility separate from suitability. |
+| Wrapper support differs between consumers (resolved for CCDC Slice) | CCDC Slice's picker offers the types that may provide segments, Masking among them; a Masking over anything but CCDC is refused from its configured chain. | None for Slice. |
+| Asset segment inference is not validation | `ccdc/segmentsAsset.js` derives a base band from a lone `x_rmse` or a derived `x_intercept`; non-empty `baseBands` does not prove CCDC segments. Change Alerts and CCDC Slice judge typed bands under their own requirements instead. | None for those consumers; another consumer of segments defines its own minimum structural evidence. |
+| Historical-statistics validation is GUI-only (REF and PRC resolved) | BAYTS Alerts REF judges each pass's statistics from typed evidence, and PRC the monitored passes' coverage ([contract](source-resolution.md#bayts-alerts-ref)). Execution still uses the reference image without a capability check. | Review the execution contract separately. |
+| Wrappers bypass direct type exclusions | Masking over CCDC remains eligible wherever Masking is offered, including its own mask field, despite CCDC's direct exclusion. | Audit each consumer's actual shape requirement before introducing scalar-image validation; do not assume every image consumer requires scalars. |
+| Classification-only inputs rely on GUI filters | Execution callers assume classifier/training methods exist; wrong types can fail with missing-method errors. | Define the requirement and execution diagnosis without incidentally admitting Masking over Classification. |
+| Selected-source errors are poorly presented | Evidence failures can disable actions without marking SRC/REF; unavailable or no-longer-offered selections can appear blank or disappear from input lists while remaining in the model. | Preserve and display the selected reference, mark its owning section, and explain the specific failure. Never clear it as a side effect of validation. |
+| Asset metadata omitted array dimensionality (resolved) | The Earth Engine client's legacy conversion keeps a band's precision and range but drops the rank the Cloud API states (`dimensionsCount`), so an image asset's array bands read as scalars to `assetAvailableBands`: the asset layer offered them for styling and kept styles over them. `/assetMetadata` now converts the Cloud record itself and states each band's rank as `data_type.dimensions`, none for a scalar; a band with no type states none, and a rank that is no count, or a band the record does not match, stays unknown. Collections and Cloud GeoTIFFs already stated it. | Change Alerts REF reads its reference from metadata alone. Cursor display types read precision only and were unaffected. |
+| Picker and translation gaps | `RecipeInput` bypasses its filter for an unknown GUI type. Required-message keys reported missing include Classification training data; the AOI key also needs checking. CCDC Slice SRC and Change Alerts REF have theirs. | Add focused picker and message coverage when these paths are changed. |
+
+Contract constraints for the first packet:
+
+- Provider discovery must remain possible before its evidence is loaded. A producing declaration identifies where
+  to obtain evidence; it does not by itself validate the contents of an asset-backed recipe. Bare assets and
+  asset-backed recipes must use the same capability rule and explicitly current evidence.
+- Keep output schema, structural validity, suitability and complete execution requirements distinct. An unsuitable
+  source is not a transport failure. After an attempted load fails, the combined UI state must settle to unavailable,
+  not remain indefinitely checking or label the source unsuitable.
+- Absence from the recipe listing triggers an availability check; it does not prove deletion. Preserve new recipes
+  and open or unsettled drafts. Use missing-or-unavailable wording unless deletion is established separately.
+- Retain the selected reference, provider path and offending role/path in structured diagnostics. The GUI owns
+  translated wording and titles. A pure read must not dispatch or start another loading path.
+- Reuse source-runtime and evidence-lifecycle ownership. Changing shared `lib/js/ee` code can affect Task even
+  without editing `modules/task`; execution changes need a boundary review while Task is being rewritten.
+
+Scalar-image and classification-input requirements are subsequent packets; CCDC Slice's and BAYTS Alerts' are done. The first packet
+must not broaden their behavior while adapting shared discovery code. Execution parity for asset segment leaves
+and the ASSET/inline branches of `loadSegments` remains to be designed, rather than claimed by GUI validation.
+
+A recipe shown outside its editor is checked for every operation its type declares requirements for: the layer or
+chart requesting it watches the evidence the operation needs
+([evidence watches](gui-source-runtime.md#evidence-watches)), and a provider-only operation reads the records of a chain
+the session does not hold before it is allowed or refused. Presentation evidence of types without requirements is
+observed only by their editors.
+
+Its segment chart read bands its requirement did not check: `CCDCGraph` plots `tBreak`, `changeProb`, `numObs` and a
+measure's `_magnitude`, which the alerts never read, and a reference without them made the chart fail as it drew. The
+chart now has its own requirement, reported in REF as a warning without refusing a reference the alerts can use.
+
+Source-error presentation acceptance includes a visibly invalid owning SRC/REF section, an explanation naming
+the affected source, a retained selection that can be repaired, and visible progress on Refresh. The missing
+Refresh feedback was observed manually after deleting a temporary asset; the unavailable message and export
+blocking worked. Broader Retrieve diagnostic presentation and Refresh feedback remain separate follow-ups.
+
+### Declarative validation across model properties
+
+General form-design guidance lives in
+[code design](../../code-design.md#validation-across-model-properties); it is not owned by source resolution or limited
+to source fields. Distinguish feasibility, compatibility of current settings and invalidation of derived results.
+Declare rule inputs and feedback ownership, keeping pure domain rules separate from shared form coordination.
+Cross-section warnings are chosen for useful advance notice, not generated for every dependency or invalidation.
+The items below are concrete applications of that broader policy.
+
+- **Change Alerts amendment, implemented** ([contract](source-resolution.md#change-alerts-ref)): REF is refused if
+  none of the supported monitoring sources can use its measures. Otherwise the replacement is allowed, with one
+  short aggregate REF advisory naming the sections needing attention and both remedies: choose another reference or
+  update those sections. Sources stays invalid after Apply, marked on the toolbar - whose Sources button previously
+  ignored the section's problems, so an Optical-to-Radar replacement showed no error there. Its tooltip names the
+  setting to change: the type; other data sets of the same type or other pre-processing, pointing to both; or the
+  band. Sources' choices keep their existing presentation.
+- **Operation availability, implemented for the segment chart and Retrieve**
+  ([contract](source-resolution.md#operation-availability)): availability is a shared assessment of one operation.
+  It is derived from the declared requirements, the current configuration and the current evidence, by the
+  requirement reads the request gates already use. Its consumers are the toolbar action that opens the operation
+  (disabled while prerequisites are checked or unmet, with no added feedback), the open panel (the chart takes its
+  segment gate, bands and whether any band can be plotted from it) and the request or submission gate (Retrieve's
+  source gate). Recipe types supply declarations and facts, such as the bands Change Alerts' monitoring data
+  observes; the evaluation and the gate interpretation are shared. Retrieve's listing, draft and asset authority
+  stay with its panel and submission, since opening the panel is what renews them.
+  Rules over local model properties feed the same assessment, implemented for Band Math (below), so a form's Apply,
+  its toolbar action and its request gate answer from one rule. Planned, not implemented: other operations and
+  recipe types. It stays per operation, never a recipe-wide validity flag, and adds no separate validation system.
+- **Validation boundary review, done; its local-configuration direction implemented for Band Math**
+  <a id="validation-boundary-review"></a>. The requirement reader, candidate validation, section status, gates and
+  operation availability stay the one assessment; the review extends that contract rather than adding another.
+  Implemented from it, preserving behaviour: a section declares the form input showing what its requirements find
+  (`input`, a form input name, never a model location), or none, showing them on its toolbar button only; a
+  requirement declares the sections advising that it is not met (`advise`), so a recipe declaring none acquires no
+  cross-section advisory. Availability keeps its structured reason (the gate) whether or not a tooltip shows it.
+  Implemented for Band Math (`sourceRequirements.js`, [Band Math](../../recipes/band-math.md#configuration-checks)):
+  - rules over local configuration: a declaration supplies its facts from the recipe (`localFacts`) instead of a role
+    and its evidence, so its reads are checked at once, select nothing and are never acquired;
+  - optional item enumeration over those facts (`items`), one read per item - a calculation, an output image - with a
+    stable id, the model location its panel commits, and its prerequisites;
+  - prerequisites identified by declaration id and item id, never by rule id or path - Change Alerts declares
+    `ccdcSegments.monitoredMeasure` twice; a read keeps its own verdict apart from its effective one, a prerequisite
+    not read counts as unmet, and a suppressed message never makes its operation available;
+  - section marks, item marks and operation gates aggregating every item - an item held only by a prerequisite in
+    its own section marks its section too, by naming what it depends on; one held only by prerequisites in another
+    section marks nothing, that section saying what is wrong, while its operations stay held.
+
+  Not implemented: judging an edit by these rules before it is applied. A local declaration binds no form panel, so
+  each panel's Apply keeps its own validation. Proposed for a later packet: an item panel judged as a candidate by the
+  item being edited only, an item still being added included, with an explicit policy for whether unmet prerequisites
+  hold its Apply.
+
+  Sampling Design's planner (`planDerivedUpdates.js`) stays its current invalidation mechanism, unchanged for now; the
+  [direction](source-freshness.md#declarative-dependency-evaluation) remains current-input evaluation and result
+  provenance rather than edit-triggered flags. Staleness keeps today's mark but stays distinct from incompatibility
+  in the assessment. A rule over min-distance would keep that check's applicability: stratified, systematic sampling
+  only.
+- **Date compatibility follow-up:** verify execution's required reference coverage relative to calibration dates
+  and the available evidence before adding a declarative Dates requirement. Preserve user dates; distinguish an
+  incompatible selected period from a reference that supports no valid period. The proposed preceding-year rule
+  needs verification, not an assumption encoded in validation.
+- **Prevent impossible choices:** subsequently derive enabled monitoring types and relevant dependent fields from
+  established reference facts: disable incompatible choices, and hide dependent fields that cannot apply. Pending or
+  failed reads must not disable choices as if incompatibility were known. Consider defaulting an unset Type when
+  exactly one type is compatible; do not silently replace an explicit configured type or monitoring settings.
+  Defaulting policy remains a separate decision.
+- **Field-level Sources feedback, deferred:** saying an incompatibility on the Type, Data sets or Analysis band
+  choice itself needs button choices to present field errors, which they do not today; doing it for every form is a
+  separate decision. Where an incompatible type leaves no possible band, avoid a redundant band error beside the
+  actionable one on the type.
+- **Accessible field semantics, deferred:** labelled widgets as named groups stating disabled, busy and invalid
+  state, application-wide, rather than as part of a validation packet.
+
+- **Sampling Design review, not yet scheduled:** an AOI change affects many derived results and settings. Identify
+  actual incompatibilities separately from normal invalidation and recomputation. Assess whether retained choices
+  or loss of user work merit advance notice; do not automatically warn on AOI merely because other sections depend
+  on it. Existing invalidation alone neither establishes suitability nor requires a warning.
+
+Implement and verify concrete rules incrementally, then reuse the boundary in other recipes. This does not
+authorize an application-wide validation rewrite or a general constraint-solving framework.
+
+### Recipe packages
+
+Architectural direction, not yet scheduled. A recipe should ultimately be owned by one JavaScript package containing
+its shared definitions and domain rules, GUI components and text, Earth Engine implementation, and tests. SEPAL
+provides the common forms, maps, source runtime, persistence and execution infrastructure through explicit interfaces.
+The aim is simpler recipe development and ownership; current validation and diagnostic improvements deliver
+independent user benefits and retain priority.
+
+Two kinds of spread need addressing: registration in the GUI recipe catalogue, GUI layer catalogue, shared type
+registry and Earth Engine factory; and recipe logic spread between locations such as `recipe/type/changeAlerts.js`
+and `recipe/changeAlerts/`. Consolidating registries alone does not create a recipe package.
+
+The design must establish:
+
+- Separate browser-safe shared, GUI and execution entry points, with enforced dependency boundaries. One package
+  must not make server code part of the browser bundle or require React in Task.
+- Dependencies between recipe packages, including composition such as Change Alerts building mosaics: distinguish
+  direct package dependencies from capabilities supplied through host interfaces.
+- How the host discovers and registers each package's contributions without parallel hand-maintained catalogues.
+- Package and saved-model versioning, migrations, and compatibility between GUI, shared definitions and execution.
+- Build and deployment ownership. Packaging together does not require independent deployment: a first migration
+  may build and deploy recipe packages with SEPAL. Independent installation and deployment remain separate decisions.
+
+Use a simple recipe to test a concrete package layout and Change Alerts to examine cross-recipe dependencies before
+choosing a migration. Keep current declarations and pure rules compatible with this direction, but introduce no
+package framework or speculative dependency machinery into the ongoing source-requirement packets.
+
+### Declared reference layer sources
+
+Follow-up to the reference-API review; not part of the current suitability migrations.
+Recipe specifications explicitly opt source roles into becoming map-layout layer sources. Shared code derives
+those sources from the current references, so recipes do not each add and maintain them in input-panel handlers.
+Not every dependency is suitable for display; the declaration decides which ones are exposed.
+
+- Keep derived sources separate from sources explicitly added through the layout. Dropping an input reference
+  removes its derived source, never a user-added source that happens to reference the same asset or recipe.
+- Give derived sources stable identities tied to their role and, for multiple inputs, their input entry. Replacing
+  a reference should preserve area assignments and compatible settings through the existing reconciliation rules.
+- Treat Remove on a derived source as a persisted hide choice, so the source does not immediately reappear.
+  Define when that choice resets (for example, when the reference changes) before implementation.
+- Edit derived sources through their owning input panel. Layout-added sources remain independently editable.
+  Ownership should be explicit rather than inferred from source-ID conventions.
+- Specify cleanup of area assignments when a derived source disappears, and compatibility for existing saved
+  layouts, before migrating input panels. Keep derivation in the GUI; this declaration does not change execution.
+
+### Load map sources only when needed
+
+The map currently mounts a loader for every saved additional recipe source, including sources no area displays,
+to refresh its description. Use the recipe listing for display names, falling back to the saved description when
+needed. Listing absence does not establish deletion. Acquire the full recipe when an active consumer actually
+needs it, such as a displayed map layer, rather than merely because it remains in the layout's source list.
+
+- Keep source entries and area assignments intact when deferring their reads; use the existing runtime and cache
+  claims when a consumer starts or stops using one.
+- Verify that an unused source causes no full-recipe load, that selecting it loads and validates it, and that
+  display names follow listing changes without loading recipe contents.
+- Do not use these incidental reads to discover broken dependencies; that belongs to the reference index below.
+
+### Persisted reference index
+
+Extend the [save-time edge-indexing direction](source-resolution.md#deletion-and-movement) with a persisted index
+derived from recipe declarations and saved configuration. Recipes should not maintain another manual reference
+list. Index updates must remain consistent with the saved recipe revision; define how existing saved recipes are
+indexed before treating reverse-reference queries as complete.
+
+- Distinguish processing dependencies, whose loss breaks computation, from optional map display references.
+  A reference may serve both purposes. Display references must not become execution dependencies.
+- Support direct and transitive "used by" queries and warnings before deletion without loading every recipe's
+  full JSON. Respect access permissions when reporting dependents.
+- Keep processing references after deletion so their owning inputs can diagnose and repair them; never cascade
+  deletion to dependent recipes.
+- Define cleanup of display references after a confirmed deletion, including what happens to map areas using
+  them. The current manual removal also removes those areas; automatic cleanup must not inherit that implicitly.
+- A recipe-load 404 means missing or inaccessible, not confirmed deletion: the service deliberately answers both
+  alike. Do not automatically rewrite saved recipes on that signal alone, or on listing absence or transient
+  failure. Confirmed deletion events can support targeted cleanup under the policy above.
+
+These are follow-ups, not additions to the current suitability packet. Coordinate derived display references with
+[declared reference layer sources](#declared-reference-layer-sources).
+
+### Recipe-scoped modals
+
+Separate UI workstream, starting with inspection; implementation is not yet scheduled. This is a prerequisite for
+[opening the selected recipe](#open-selected-recipe), not an expansion of the current validation packets.
+Application-wide modals prevent switching recipe tabs and application sections. The intended direction is for an
+ordinary recipe editor to block interaction only within its owning recipe, leaving that navigation available.
+
+Audit the existing modal panels before deciding which to migrate. For each caller, record why it needs blocking,
+whether it needs map interaction, its nested editors, and its draft/Apply/Cancel lifecycle. Distinguish recipe-scoped
+editors, panels that must remain interactive with the map, and operations that genuinely need application-wide
+blocking. Do not convert every panel to a non-modal floating panel: overlapping panels on smaller screens would make
+editing crowded. Scene-area selection is acceptable as it stands and is not a reported layout defect.
+
+Inspect the shared Panel, activation, portal, backdrop, focus and keyboard mechanisms. Prefer a small shared scoping
+change with an explicit caller choice over per-recipe exceptions or a new panel framework. Reuse existing layout
+components and styling. Check hidden-tab behaviour and selector costs; scope changes must not add repeated work to
+every store notification or leave hidden panels handling input.
+
+The proposed first implementation slice is visualization parameters in two recipe tabs. It should let a user open
+an editor in each recipe and switch between them to compare settings, without dismissing either editor or showing
+both over the same map. Simultaneous side-by-side editors are not required. Review the interaction contract before
+implementing this pilot, then migrate other suitable callers in small groups.
+
+- Preserve pending form edits when leaving a tab or application section and returning. Navigation alone never
+  applies, clears or resets a draft. Keep existing Apply/Cancel and activation-policy protections.
+- Only the active recipe's editor and backdrop are visible and interactive. Hidden editors must not capture focus,
+  pointer events, Escape or other keyboard shortcuts. Define focus on opening, leaving, returning and dismissal.
+- Define backdrop extent and click behaviour, nested-dialog ownership, and how recipe-tab closure handles an
+  unapplied draft. Tab switching and tab closure are different operations; closing must retain the appropriate
+  unsaved-edit protection.
+- Verify two recipes with open drafts, navigation to another application section and back, Apply/Cancel isolation,
+  nested dialogs, keyboard interaction and a smaller viewport. Use focused lifecycle tests and manual browser checks;
+  do not rely on screenshots alone to establish focus or shortcut behaviour.
+
+After the pilot is accepted, add the shared recipe-selector open action. Opening the referenced recipe must preserve
+the originating editor and its draft, including when the selector is inside a recipe-scoped modal.
+
+### Open selected recipe
+
+Revisit after [recipe-scoped modals](#recipe-scoped-modals) are settled. A recipe selector offers to open its
+selected recipe; it must behave the same everywhere the selector appears, not only outside modals.
+
+- Leave the originating form as it was: opening never applies, clears or changes the selection or pending edits,
+  and they are intact on returning to its tab.
+- Select the recipe's existing tab when it has one, including one opened while the recipe was being read, rather
+  than opening a second.
+- Protect unsaved drafts: an open draft, or a closed one whose saves have not settled, is never replaced by a cached
+  or freshly read copy. Otherwise open through the authoritative load that initializes save revisions.
+- Work for a selection in another project without the ALL view; report a failed load without changing the current
+  tab or selection; keep the action reachable and operable by keyboard, without a panel's own keybindings taking
+  its keys.
+
 ### Task-driven asset invalidation
 
-Connect task completion to the shared asset-freshness design in a separate packet.
+Deferred while the task functionality is being rewritten. Once the rewrite lands, audit its destination changes,
+completion, failure and cancellation paths and its notification transport before proposing implementation.
+The route through user-assets remains a proposal, not an approved integration contract.
+Asset evidence already takes known mutations from the session
+(`assets.mutation`), with follow-up reads for Earth Engine's propagation delay.
 
 - Exporters report actual affected asset IDs to shared asset invalidation, without knowing which recipes or
   layers consume them. Invalidate when a destination may have changed and recheck after success, failure or

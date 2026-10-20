@@ -9,6 +9,7 @@ import {Recipe} from '~/app/home/body/process/recipeContext'
 import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
+import widgetStyles from '~/widget/widget.module.css'
 
 // Selecting another classification proposes the settings it was trained with. Until the read for THAT
 // selection has arrived, the recipe must keep the configuration it has, and when it is applied, the
@@ -48,6 +49,7 @@ vi.mock('~/widget/activation/activatable', () => ({
 }))
 
 const {Sources} = await import('./sources')
+const {defaultModel} = await import('../../pyeoAlertsRecipe')
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -112,13 +114,28 @@ describe('applying while the selected classification is still being read', () =>
         expect(options()).toEqual(SAVED_OPTIONS)
     })
 
-    it('says the classification is being read', async () => {
+    // Reading is no error: the selector is busy, explained, and Apply waits.
+    it('shows the classification busy while it is read, saying so without an error', async () => {
         const held = new Subject()
         await open({classificationRead: () => held})
 
         await select(OTHER)
 
-        expect(shownMessages()).toContain('process.pyeoAlerts.classification.pending')
+        expect(shownMessages().some(message => message.includes('process.pyeoAlerts.classification.pending'))).toBe(true)
+        expect(classificationField().querySelector('[data-feedback="error"]')).toBeNull()
+        expect(classificationField().querySelector(`.${widgetStyles.busy}`)).not.toBeNull()
+    })
+
+    it('shows no error before the selector has told the panel of the selection', async () => {
+        const held = new Subject()
+        await open({classificationRead: () => held})
+
+        selectWithoutSettling(OTHER)
+
+        expect(classificationField().querySelector('[data-feedback="error"]')).toBeNull()
+        submitFormNow()
+        expect(sources().classification).toBe(SAVED)
+        await settle()
     })
 })
 
@@ -255,7 +272,34 @@ it('applies a classification whose imagery states no configuration to copy', asy
     expect(sources().classification).toBe(OTHER)
     expect(dates()).toEqual({...SAVED_DATES, derived: false})
     expect(options()).toEqual(SAVED_OPTIONS)
-    expect(shownMessages()).toContain('process.pyeoAlerts.classification.notDerivable')
+    expect(shownMessages().filter(message => message.startsWith('process.pyeoAlerts.classification'))).toEqual([])
+})
+
+// The properties an exported optical mosaic asset was reported with.
+it('applies the dates and processing an asset exported with its whole configuration states', async () => {
+    assetMetadata$.mockReturnValue(of({bandNames: ['blue', 'green', 'red', 'nir', 'swir1', 'swir2'], properties: EXPORTED_OPTICAL}))
+    await open({imagery: {type: 'ASSET', id: 'users/x/optical'}})
+    await select(OTHER)
+    await chooseChangeClasses()
+
+    await apply()
+
+    expect(dates()).toMatchObject({baselineStart: '2024-01-01', baselineEnd: '2025-01-01', monitoringStart: '2025-01-01', derived: true})
+    expect(options()).toEqual({...SAVED_OPTIONS, corrections: ['SR', 'BRDF'], compose: 'MEDOID'})
+})
+
+it('applies the dates of an asset that states no other configuration, keeping the settings it does not state', async () => {
+    assetMetadata$.mockReturnValue(of({bandNames: ['B1'], properties: {'system:time_start': 1704067200000, 'system:time_end': 1735689600000}}))
+    await open({imagery: {type: 'ASSET', id: 'users/x/mosaic'}})
+    await select(OTHER)
+    await chooseChangeClasses()
+
+    await apply()
+
+    expect(dates()).toMatchObject({baselineStart: '2024-01-01', baselineEnd: '2025-01-01', monitoringStart: '2025-01-01', derived: true})
+    expect(options()).toEqual(SAVED_OPTIONS)
+    expect(sources().cloudPercentageThreshold).toBe(75)
+    expect(sources().dataSets).toEqual({LANDSAT: ['LANDSAT_8']})
 })
 
 describe('cancelling a previewed classification', () => {
@@ -289,6 +333,48 @@ describe('cancelling a previewed classification', () => {
 
 // Nothing is derived from a classification the user did not just choose, which only an Apply can show: a
 // proposal staged at opening would be committed by the next unrelated edit.
+// Choosing a classification clears the classes for it, which is no interaction with them; leaving one empty is.
+it('leaves the classes a classification cleared neutral, saying a list is required once it is emptied', async () => {
+    await open({})
+    await select(OTHER)
+    await settle()
+    expect(classesRequired()).toEqual([])
+
+    await chooseChangeFromClass('Forest')
+    await chooseChangeFromClass('Forest')
+
+    expect(classesRequired()).toEqual(['process.pyeoAlerts.panel.sources.form.changeFromClasses.required'])
+})
+
+// The default model starts with the gate on NDVI, which nobody chose; a recipe set up keeps the gate it has.
+describe('applying a classification whose imagery supports NBR but not NDVI', () => {
+    const NO_RED = {bandNames: ['blue', 'green', 'nir', 'swir2'], properties: {recipe_sources: '{"dataSets":{"LANDSAT":["LANDSAT_8"]}}'}}
+
+    it('gives a recipe being set up from its default model the index the gate can read', async () => {
+        assetMetadata$.mockReturnValue(of(NO_RED))
+        await open({imagery: {type: 'ASSET', id: 'users/x/no-red'}, recipe: {model: defaultModel, ui: {}}})
+        await select(OTHER)
+        await chooseChangeClasses()
+
+        await apply()
+
+        expect(sources().classification).toBe(OTHER)
+        expect(recipeModel().pyeoAlertsOptions.indexGate).toEqual({index: 'nbr', threshold: 0.2})
+    })
+
+    it('leaves the gate of a recipe already set up as it is', async () => {
+        assetMetadata$.mockReturnValue(of(NO_RED))
+        await open({imagery: {type: 'ASSET', id: 'users/x/no-red'}, recipe: {model: defaultModel, ui: {initialized: true}}})
+        await select(OTHER)
+        await chooseChangeClasses()
+
+        await apply()
+
+        expect(sources().classification).toBe(OTHER)
+        expect(recipeModel().pyeoAlertsOptions.indexGate).toEqual({index: 'ndvi', threshold: 0.2})
+    })
+})
+
 it('applies an unrelated edit to a saved recipe without re-deriving its settings', async () => {
     await open({})
 
@@ -320,6 +406,18 @@ const shownLegend = () =>
     (loadedRecipe().ui.classificationLegend?.entries || []).find(({value}) => value === 3)?.label
 
 const shownMessages = () => [...document.querySelectorAll('[data-message]')].map(element => element.textContent)
+
+const classificationField = () =>
+    document.querySelector('[data-label="process.pyeoAlerts.panel.sources.form.classification.label"]')
+
+const EXPORTED_OPTICAL = {
+    'system:time_start': 1704067200000,
+    'system:time_end': 1735689600000,
+    recipe_sources: '{"dataSets":{"LANDSAT":["LANDSAT_9","LANDSAT_8"]},"cloudPercentageThreshold":75}',
+    recipe_compositeOptions: '{"corrections":["SR","BRDF"],"compose":"MEDOID"}'
+}
+
+const classesRequired = () => shownMessages().filter(message => /changeFromClasses|changeToClasses/.test(message) && message.endsWith('.required'))
 
 const apply = () => clickButton('button.apply', 'the panel offers no Apply button')
 
@@ -450,7 +548,8 @@ afterEach(async () => {
     vi.restoreAllMocks()
 })
 
-const open = ({classificationRead, imageryRead, imagery: input}) => {
+// `recipe` replaces what the saved recipe is: its model and ui.
+const open = ({classificationRead, imageryRead, imagery: input, recipe}) => {
     if (input) {
         imagery = input
     }
@@ -478,7 +577,8 @@ const open = ({classificationRead, imageryRead, imagery: input}) => {
                         options: SAVED_OPTIONS,
                         dates: SAVED_DATES
                     },
-                    ui: {}
+                    ui: {},
+                    ...recipe
                 }
             },
             recipes: [

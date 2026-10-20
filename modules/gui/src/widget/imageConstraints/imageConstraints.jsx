@@ -87,13 +87,32 @@ class _ImageConstraints extends React.Component {
     }
 
     componentDidMount() {
-        const {constraintsId, booleanOperator, constraints = []} = this.props
+        const {constraintsId, booleanOperator, constraints = [], createCandidate} = this.props
+        this.mounted = true
+        this.candidate = createCandidate?.(() => this.mounted && this.forceUpdate())
         if (constraints.length) {
             this.setState({constraints})
         } else {
             this.addConstraint()
         }
         this.setState({constraintsId, booleanOperator})
+    }
+
+    componentDidUpdate() {
+        // An optional existing output candidate reads only this modal's draft, sharing source observations while
+        // keeping its findings separate from the applied recipe. Other constraint-editor callers do not create one.
+        this.candidate?.update(this.state.constraints)
+    }
+
+    componentWillUnmount() {
+        this.mounted = false
+        this.candidate?.stop()
+    }
+
+    candidateErrors() {
+        return this.candidate
+            ? this.props.candidateErrors(this.candidate.diagnostics(), this.state.constraints)
+            : {}
     }
 
     close() {
@@ -107,7 +126,7 @@ class _ImageConstraints extends React.Component {
 
     isInvalid() {
         const {invalidById} = this.state
-        return !!Object.values(invalidById).find(invalid => invalid)
+        return !!Object.values(invalidById).find(invalid => invalid) || Object.keys(this.candidateErrors()).length > 0
     }
 
     addConstraint() {
@@ -134,14 +153,14 @@ class _ImageConstraints extends React.Component {
     renderContent() {
         const {constraints} = this.state
         return (
-            <Layout type='vertical' spacing='tight'>
+            <Layout type='vertical' spacing='tight' shrink>
                 {constraints.map(constraint => this.renderConstraint(constraint))}
             </Layout>
         )
     }
 
     renderConstraint(constraint) {
-        const {images, applyOn} = this.props
+        const {images, applyOn, checkReferences} = this.props
         const {selected} = this.state
         return (
             <Constraint
@@ -150,6 +169,8 @@ class _ImageConstraints extends React.Component {
                 images={images}
                 selected={selected === constraint.id}
                 applyOn={applyOn}
+                checkReferences={checkReferences}
+                sourceError={this.candidateErrors()[constraint.id]}
                 onClick={() => this.select(constraint.id)}
                 onRemove={() => this.remove(constraint.id)}
                 onValidate={invalid => this.setState(({invalidById}) => ({
@@ -163,8 +184,12 @@ class _ImageConstraints extends React.Component {
         )
     }
 
+    // An invalid constraint keeps the focus, but any other invalid one can take it: several found invalid when opened can
+    // each be repaired.
     select(constraintId) {
-        !this.isInvalid() && this.setState(({selected}) => ({
+        const {selected, invalidById} = this.state
+        const selectable = !this.isInvalid() || ((invalidById[constraintId] || this.candidateErrors()[constraintId]) && constraintId !== selected)
+        selectable && this.setState(({selected}) => ({
             selected: selected === constraintId ? null : constraintId
         }))
     }
@@ -234,6 +259,10 @@ ImageConstraints.propTypes = {
     onChange: PropTypes.func.isRequired,
     applyOn: PropTypes.string,
     booleanOperator: PropTypes.any,
+    // Whether a constraint naming an image or band not among `images` is invalid.
+    checkReferences: PropTypes.any,
     constraints: PropTypes.array,
     constraintsId: PropTypes.string,
+    createCandidate: PropTypes.func,
+    candidateErrors: PropTypes.func,
 }

@@ -6,6 +6,7 @@ import {Subject, takeUntil} from 'rxjs'
 import api from '~/apiRegistry'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
+import {SourceKind} from '~/app/home/body/process/sourceTypeButtons'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -27,13 +28,15 @@ class _SourceSection extends React.Component {
         const {inputs: {sourceType}} = this.props
         return (
             <Layout>
-                {sourceType.value === 'RECIPE' ? this.renderRecipe() : this.renderAsset()}
+                <SourceKind input={sourceType} defaultKind='ASSET' onChange={() => this.onSourceTypeChanged()}>
+                    {({recipe, labelButtons}) => recipe ? this.renderRecipe(labelButtons) : this.renderAsset(labelButtons)}
+                </SourceKind>
                 <PreviewMap/>
             </Layout>
         )
     }
 
-    renderAsset() {
+    renderAsset(labelButtons) {
         const {inputs: {assetId}} = this.props
         return (
             <Form.AssetCombo
@@ -42,12 +45,12 @@ class _SourceSection extends React.Component {
                 input={assetId}
                 placeholder={msg('process.mosaic.panel.areaOfInterest.form.asset.asset.placeholder')}
                 allowedTypes={['Image', 'ImageCollection']}
-                labelButtons={[this.renderSourceType()]}
+                labelButtons={labelButtons}
             />
         )
     }
 
-    renderRecipe() {
+    renderRecipe(labelButtons) {
         const {inputs: {recipeId}} = this.props
         return (
             <RecipeInput
@@ -55,27 +58,8 @@ class _SourceSection extends React.Component {
                 placeholder={msg('process.mosaic.panel.areaOfInterest.form.recipe.recipe.placeholder')}
                 input={recipeId}
                 filter={isImageSource}
-                labelButtons={[this.renderSourceType()]}
+                labelButtons={labelButtons}
                 autoFocus
-            />
-        )
-    }
-
-    renderSourceType() {
-        const {inputs: {sourceType}} = this.props
-        return (
-            <Form.Buttons
-                key='sourceType'
-                spacing='none'
-                groupSpacing='none'
-                size='x-small'
-                shape='pill'
-                input={sourceType}
-                options={[
-                    {value: 'ASSET', label: msg('process.mosaic.panel.areaOfInterest.form.source.type.ASSET')},
-                    {value: 'RECIPE', label: msg('process.mosaic.panel.areaOfInterest.form.source.type.RECIPE')}
-                ]}
-                onChange={() => this.onSourceTypeChanged()}
             />
         )
     }
@@ -87,8 +71,6 @@ class _SourceSection extends React.Component {
     }
 
     componentDidMount() {
-        const {inputs: {sourceType}} = this.props
-        sourceType.value || sourceType.set('ASSET')
         this.setOverlay()
     }
 

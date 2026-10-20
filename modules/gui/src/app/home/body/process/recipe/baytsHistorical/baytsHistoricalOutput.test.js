@@ -103,15 +103,19 @@ const STACK = {
 
 const RECORDS = Object.fromEntries([HISTORICAL, MASKING, STACK].map(record => [record.id, record]))
 
-// A recipe's read as the session holds it, with what its acquisition would retain. Nothing here needs observing.
+// A recipe's read as the session holds it, with what its acquisition would retain. Only the mask a Masking builds needs
+// observing.
 const readOf = recipe => {
     const graph = buildMapDependencyGraph({recipe, loadedRecipes: RECORDS})
-    const {status, description, diagnostics} = readImageOutput({
+    const {status, description, diagnostics, readiness} = readImageOutput({
         graph,
         declarationFor: ({type}) => recipeType(type)?.imageOutput,
-        observationFor: () => undefined
+        readinessFor: ({type}) => recipeType(type),
+        observationFor: ({type, id}) => type === 'ASSET' && id === 'users/x/mask'
+            ? {bands: [{name: 'mask', dataType: {arrayDimensions: 0}}], evidence: []}
+            : undefined
     })
-    const terminal = {status, description, diagnostics, error: null, dependencyValidity: {status: 'VALID', diagnostics: []}}
+    const terminal = {status, description, diagnostics, error: null, dependencyValidity: {status: 'VALID', diagnostics: []}, readiness}
     return readRecipeOutput({recipe, product: {name: 'IMAGE_OUTPUT'}, graph, heldFor: () => terminal})
 }
 

@@ -1,5 +1,7 @@
 import React from 'react'
 
+import {INPUT_IMAGE} from '#sepal/recipe/source/inputImagery'
+import {inputImageryRequirements} from '~/app/home/body/process/panels/inputImageryWithDerived/inputImageryRequirements'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
@@ -13,6 +15,7 @@ import {getDefaultModel, RecipeActions} from './classificationRecipe'
 import {DataCollectionManager, DataCollectionManagerContext} from './dataCollectionManager'
 import {ClassificationToolbar} from './panels/classificationToolbar'
 import {CollectPanel} from './panels/collect/collectPanel'
+import {unmarkedTrainingDataRequirements} from './trainingDataRequirements'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -82,6 +85,8 @@ const Classification = compose(
 
 export default () => ({
     id: 'CLASSIFICATION',
+    // The images it reads that the layout shows (mapLayout/dependencyLayerSources.js).
+    dependencyLayerRoles: [INPUT_IMAGE],
     labels: {
         name: msg('process.classification.create'),
         creationDescription: msg('process.classification.description'),
@@ -95,5 +100,6 @@ export default () => ({
         return null
     },
     bandPresentation,
-    getPreSetVisualizations
+    getPreSetVisualizations,
+    sourceRequirements: [...inputImageryRequirements, ...unmarkedTrainingDataRequirements]
 })

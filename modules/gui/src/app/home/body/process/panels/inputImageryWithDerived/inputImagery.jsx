@@ -1,5 +1,6 @@
 import React from 'react'
 
+import {withItemProblems} from '~/app/home/body/process/recipe/selectedSource'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -17,6 +18,7 @@ import {Panel} from '~/widget/panel/panel'
 import {RecipeActions} from '../../recipe/classification/classificationRecipe'
 import {InputImage} from './inputImage'
 import styles from './inputImagery.module.css'
+import {INPUT_IMAGERY} from './inputImageryRequirements'
 
 const mapRecipeToProps = recipe => ({
     images: selectFrom(recipe, 'model.inputImagery.images') || []
@@ -66,25 +68,26 @@ class _InputImagery extends React.Component {
     renderImages(images) {
         return (
             <Layout type='vertical' spacing='tight'>
-                {images.map((image, index) => this.renderImage(image, index))}
+                {images.map(image => this.renderImage(image))}
             </Layout>
         )
     }
 
-    renderImage(image, index) {
-        const {recipeNameById} = this.props
+    // An input whose band sets select what its source does not provide is marked, saying why (inputImageryRequirements.js).
+    renderImage(image) {
+        const {recipeNameById, itemProblems} = this.props
         const name = image.type === 'RECIPE_REF'
             ? recipeNameById[image.id]
             : image.id
-        const key = `${image.type}-${image.id}-${index}`
         return name
             ? (
                 <ListItem
-                    key={key}
+                    key={image.imageId}
                     onClick={() => this.editImage(image)}>
                     <CrudItem
                         title={msg(`process.classification.panel.inputImagery.type.${image.type}`)}
                         description={name}
+                        error={itemProblems[image.imageId]}
                         removeTooltip={msg('process.classification.panel.inputImagery.remove.tooltip')}
                         onRemove={() => this.removeImage(image)}
                     />
@@ -123,6 +126,7 @@ const valuesToModel = null
 export const InputImagery = compose(
     _InputImagery,
     connect(mapStateToProps),
+    withItemProblems(INPUT_IMAGERY.id),
     recipeFormPanel({id: 'inputImagery', mapRecipeToProps, valuesToModel, additionalPolicy}),
     withActivators('inputImage')
 )

@@ -85,6 +85,26 @@ describe('an answer about the source that is selected', () => {
     })
 })
 
+// A source being loaded, before it answers.
+describe('a source being loaded', () => {
+    it('clears the bands of the source it replaces, so none are applied under it', () => {
+        const {component, written} = form()
+
+        component.onLoading('source-2')
+
+        expect(written).toHaveProperty('bands', undefined)
+    })
+
+    // Opening a saved recipe reloads its source, which is no edit.
+    it('leaves the bands of the source it reloads', () => {
+        const {component, written} = form()
+
+        component.onLoading('source-1')
+
+        expect(written).toEqual({})
+    })
+})
+
 // Two requests can be in flight when a user changes the selection, and the answers need not arrive in the
 // order they were asked. The late one describes a source the panel no longer names.
 describe('an answer about a source that is no longer selected', () => {

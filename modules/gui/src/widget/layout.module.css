@@ -55,6 +55,12 @@
     flex-direction: column;
 }
 
+/* Opt in for constrained lists whose rows handle truncation and keep controls visible. */
+.layout.vertical.shrink,
+.layout.vertical.shrink > .content {
+    min-width: 0;
+}
+
 /* vertical/spacing */
 
 .layout.vertical.spacing-loose > .content > * + * {

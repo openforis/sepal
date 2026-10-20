@@ -1,25 +1,9 @@
 import _ from 'lodash'
 
-import {removeImageLayerSource} from '~/app/home/body/process/mapLayout/imageLayerSources'
-import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {uuid} from '~/uuid'
 
 export const getDefaultModel = () => ({
 })
-
-export const RecipeActions = id => {
-    const actionBuilder = recipeActionBuilder(id)
-
-    return {
-        removeInputImage(imageToRemove) {
-            removeImageLayerSource({sourceId: imageToRemove.id, recipeId: id})
-            actionBuilder('REMOVE_INPUT_IMAGE', {imageToRemove})
-                .del(['model.inputImagery.images', {id: imageToRemove.id}])
-                .del(['ui.inputImagery.images', {id: imageToRemove.id}])
-                .dispatch()
-        }
-    }
-}
 
 export const retrieveTask = {
     includeTimeRange: false

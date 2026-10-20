@@ -1,5 +1,6 @@
 // An asset's bands as a map layer draws them, from the Earth Engine metadata read of it. Each band's `data_type` is a
-// PixelType, which states `dimensions` only for an array: a PixelType without it is a scalar. A band whose metadata
+// PixelType, which states `dimensions` only for an array: a PixelType without it is a scalar. /assetMetadata states it
+// so for an image asset as for an evaluated image (modules/gee/src/jobs/ee/asset/metadata.js). A band whose metadata
 // states no PixelType, or dimensions that are no count, establishes nothing about its shape, and is not drawn.
 export const assetAvailableBands = metadata =>
     Object.fromEntries((metadata?.bandNames || []).map(name => {

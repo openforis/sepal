@@ -6,9 +6,10 @@
 // input band's dimensionality, and a verified scalar its asset states no policy for is averaged. One asset stacked
 // twice is described and built under the distinct names its mapping gives. Over a CCDC recipe beside an asset, the
 // coefficients and segment starts it maps are built under their new names as the arrays they are described as, each
-// sampled, beside an averaged scalar. A mapping the declaration refuses before
-// reading anything is shown beside what Earth Engine does with it: two output bands named alike are built with the
-// second renamed, a band the input does not hold is refused, and an input with no mapping is named when built.
+// sampled, beside an averaged scalar. A mapping the declaration refuses before reading anything - naming its inputs,
+// which only explain the refusal - and a band it refuses once its input is read, are each shown beside what Earth
+// Engine does with them: two output bands named alike are built with the second renamed, a band the input does not
+// hold is refused, and an input with no mapping is named when built.
 //
 // Pixels. One value is compared: a renamed elevation against its source at a point.
 //
@@ -196,8 +197,10 @@ const expectDeclarationRefuses = async (name, recipe, code, {readsInputs}) => {
     try {
         const evidence = readsInputs ? await assetEvidence(recipe) : {}
         const {status, diagnostics, needs} = describedFrom(recipe, evidence)
+        const definitive = diagnostics.map(({code}) => code).filter(code => code !== 'UNAVAILABLE_DESCRIPTION')
         report(
-            status === 'INVALID' && _.isEqual(diagnostics.map(({code}) => code), [code]) && !needs.observations.length,
+            status === 'INVALID' && _.isEqual(definitive, [code])
+                && _.isEqual(needs.observations, readsInputs ? [] : inputReferences(recipe)),
             name,
             {status, diagnostics}
         )
@@ -205,6 +208,8 @@ const expectDeclarationRefuses = async (name, recipe, code, {readsInputs}) => {
         report(false, name, {error: error.message})
     }
 }
+
+const inputReferences = recipe => recipe.model.inputImagery.images.map(({type, id}) => ({type, id}))
 
 const expectOverCcdc = name => inScope(async () => {
     const start = Date.now()

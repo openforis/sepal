@@ -119,7 +119,8 @@ const readOf = ccdc => {
         },
         diagnostics: [],
         error: null,
-        dependencyValidity: {status: 'VALID', diagnostics: []}
+        dependencyValidity: {status: 'VALID', diagnostics: []},
+        readiness: {status: 'READY', findings: [], needs: {records: [], observations: []}}
     }
     const graph = buildRecipeDependencyGraph({rootRecipe: ccdc, recipesById: new Map([[ccdc.id, ccdc]])})
     return {

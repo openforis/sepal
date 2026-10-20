@@ -125,11 +125,22 @@ class _ButtonPopup extends React.Component {
         }
     }
 
-    componentDidUpdate({disabled: wasDisabled}) {
-        const {disabled} = this.props
+    componentDidUpdate({disabled: wasDisabled}, {showPopup: wasShown}) {
+        const {disabled, onToggle} = this.props
+        const {showPopup} = this.state
         if (!wasDisabled && disabled) {
             this.hidePopup()
         }
+        if (wasShown !== showPopup) {
+            onToggle && onToggle(showPopup)
+        }
+    }
+
+    // A popup gone with its button is closed, as far as anyone told of it opening knows.
+    componentWillUnmount() {
+        const {onToggle} = this.props
+        const {showPopup} = this.state
+        showPopup && onToggle && onToggle(false)
     }
 
     getLabel() {
@@ -238,4 +249,6 @@ ButtonPopup.propTypes = {
     onClick: PropTypes.func,
     onMouseOut: PropTypes.func,
     onMouseOver: PropTypes.func,
+    // Told whether the popup is shown, each time that changes.
+    onToggle: PropTypes.func,
 }

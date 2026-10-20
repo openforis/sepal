@@ -1,8 +1,8 @@
 # GUI source runtime
 
 Current browser source-resolution boundaries and their proposed extensions. The implemented one-shot
-`resolveImageOutput$` operation and the separate live `SourceEvidenceSync` lifecycle reuse pure shared contracts.
-The unified `watchSource$`, instance-level `querySources$`, versioned resource cache and coherent execution bundles
+`resolveImageOutput$` operation and the live evidence registry (`evidenceRegistry.js`) reuse pure shared contracts.
+The unified `watchSource$`, configured-source `querySources$`, versioned resource cache and coherent execution bundles
 remain design proposals. Components should not own dependency traversal or cache policy.
 
 ## Purpose
@@ -38,8 +38,8 @@ start operations. The service adapts the GUI environment to the shared resolver 
 - Browser descriptions are interactive evidence. They authorize task policy only for an explicitly reviewed
   declaration whose policy is stable across dependency-version drift.
 - Graph work and Earth Engine requests occur only for subscribed operations, never merely because Redux changed.
-- The current one-shot operation retains no result after completion. Future shared reuse belongs to a generic,
-  versioned runtime resource, not to Retrieve panels or individual recipe implementations.
+- A one-shot operation retains no result after completion. Shared reuse belongs to the runtime's output watches, not
+  to Retrieve panels or individual recipe implementations.
 - Future loading, freshness, shared resources and capability discovery extend the runtime without changing recipe
   components.
 
@@ -87,15 +87,20 @@ Browse, Tasks or other Home services that have no source-resolution concern.
 The context exposes one stable service object:
 
 ```js
-sourceRuntime.resolveImageOutput$({recipe})   // cold, one-shot: describe the canonical output
-sourceRuntime.completeDependencies$({recipe}) // cold, one-shot: the same operation stopped after its closure
-sourceRuntime.identity$()                     // credential epochs for a caller whose answer outlives an operation
+sourceRuntime.resolveImageOutput$({recipe})           // cold, one-shot: describe the canonical output
+sourceRuntime.completeDependencies$({recipe})         // cold, one-shot: the same operation stopped after its closure
+sourceRuntime.watchOutput$({recipeId, product})       // interest in one output question, reference-counted
+sourceRuntime.heldFor(key)                            // pure lookup: the current answer to a loading key, or null
+sourceRuntime.retryOutput({recipeId, product})        // explicit retry of a question's held failure, and of a failed listing
+sourceRuntime.refreshRecipeListing()                  // renew revision evidence older than a minute
 ```
 
 `completeDependencies$` shares the operation's environment capture, closure completion, limits, failure handling and
 identity invalidation; its terminal is `{status: COMPLETE | UNAVAILABLE, error, dependencyValidity, basis}`, and it
-neither consults a declaration nor observes. `identity$` emits an opaque token on subscription and a fresh one on each
-credential-container change, and completes when the owning scope ends; it never exposes credential values.
+neither consults a declaration nor observes. The next three are the shared output watches
+([reading a recipe's own output](#reading-a-recipes-own-output)); none exposes credential values.
+`refreshRecipeListing` is for a consumer that opens without watching, such as a Retrieve over a question already
+watched ([revision evidence](source-freshness.md#packet-2-recipe-revisions-and-shared-observations)).
 
 `resolveImageOutput$` is deliberately distinct from the pure synchronous `resolveImageOutput` in the shared
 library: the GUI operation observes runtime evidence asynchronously.
@@ -131,8 +136,8 @@ starting an observation. Future authorized loading remains part of `LOADING`; it
 one-shot boundary.
 
 Two subscriptions to the same returned Observable are two independent operations and may capture different
-catalogue states. One-shot command consumers normally subscribe once. Live watching will use a separate explicitly
-shared contract rather than changing these semantics later.
+catalogue states. One-shot command consumers normally subscribe once. Output watches are the separate, explicitly
+shared contract for live consumers; they leave these semantics unchanged.
 
 The service returns diagnostics unchanged. It does not translate, notify, log, retry or select a legacy fallback.
 Those decisions belong to the consumer that understands the operation being attempted.
@@ -164,8 +169,9 @@ resolution never combines records from different GUI states. The exact root reci
 even when the catalogue contains an older record with the same ID. Loaded records never overwrite that root or a
 record already captured from the editing session, and they are not written back to Redux.
 
-An Earth Engine credential-container change is different: unresolved one-shot operations and live watchers using
-the old identity become `UNAVAILABLE` and cannot trigger submission. Already accepted tasks are unaffected.
+An Earth Engine credential-container change is different: unresolved one-shot operations using the old identity
+become `UNAVAILABLE`, output watches withdraw what they held and load it again, and neither can trigger submission.
+Already accepted tasks are unaffected.
 
 Identity invalidation is runtime unavailability, not evidence that a recipe is invalid. It therefore uses an error
 rather than a source diagnostic:
@@ -221,11 +227,11 @@ The latter two are future shapes, not APIs to implement now:
 All can eventually share one catalogue internally. Keeping their semantics separate prevents a Retrieve decision
 from changing underneath submission and prevents a live panel from taking repeated one-shot snapshots itself.
 
-The current implementation deliberately repeats closure completion and band observation when a Retrieve panel is
-closed and reopened. Do not hide that latency with a panel-local or Masking-specific cache: neither a recipe ID nor
-an asset ID proves that the source still has the same content. The first reusable result must be owned by the source
-runtime's future versioned-resource layer described in
-[Source freshness, caching and invalidation](source-freshness.md).
+Output watches share one-shot work between consumers asking the same question and retain a settled answer briefly
+after the last one leaves, so a Retrieve panel reopened within that grace period loads nothing. Beyond it, closure
+completion and band observation are repeated. Do not hide that latency with a panel-local or Masking-specific cache:
+neither a recipe ID nor an asset ID proves that the source still has the same content. Longer reuse belongs to the
+versioned-resource layer described in [Source freshness, caching and invalidation](source-freshness.md).
 
 ## Recipe selector loading
 
@@ -341,7 +347,7 @@ an operation subscribed immediately after dispatch sees the updated catalogue wi
 or effect.
 
 The environment adapter does not remain subscribed merely because the provider exists. With no active operation
-or future watcher, a Redux action performs no source-runtime work. For an active one-shot operation, catalogue
+or output watch, a Redux action performs no source-runtime work. For an active one-shot operation, catalogue
 changes are ignored after its initial snapshot; only session invalidation is observed. The adapter must compare
 selected fields rather than wrapper-object identity.
 
@@ -350,23 +356,27 @@ unavailable terminal envelope before the adapter releases its Redux subscription
 though logout currently forces a full page reset: operation lifetime must be explicit rather than rely on browser
 navigation winning a race.
 
-The context value stays referentially stable and catalogue updates do not rerender its consumers. Per-source
-updates are published through operation Observables or, later, keyed live selectors. No React bridge, mutable
+The context value stays referentially stable and catalogue updates do not rerender its consumers. Updates reach
+consumers through operation Observables and output watch notifications. No React bridge, mutable
 environment sink or environment-publication effect is required.
 
 ### Performance invariants
 
-- With no active operation, watcher or retained answer, Redux actions perform no source-runtime work. A lifetime
-  owner holding an answer keeps one credential subscription, compared by reference on each Redux action.
+- With no active operation or output watch, Redux actions perform no source-runtime work. While any output
+  question is watched, the runtime keeps a store subscription and compares by reference, on each Redux action, the
+  catalogue, credential container, recipe listing and its state, open recipes and save states; only a change among
+  them recomputes the watched questions' reads and checks their works' ledgers. A retained answer subscribes to
+  nothing. While anything is watched the recipe listing is refreshed about every four and a half minutes.
 - An active operation performs only constant-time environment selection and session comparison on a Redux change;
   dependency requests are driven by that operation, not by Redux updates.
 - No catalogue object is cloned merely to update the runtime.
-- Graph construction and Earth Engine observation happen only when an operation is subscribed or a future live
-  watcher is active. The synchronous read runs over the graph a map layer's connected props already build, cached
-  by identity; it is not runtime work.
+- Earth Engine observation happens only when an operation is subscribed. Watched questions and consumers read over
+  graphs cached by identity (`mapDependencyGraph.js`); that read is not runtime work.
 - The shared resolver retains its per-operation dependency and observation deduplication.
-- Independent subscriptions deliberately do not share one-shot work. Future live watching owns caching and
-  multicasting explicitly.
+- Direct subscriptions to the one-shot operations do not share work. Output watches share it by loading key, and
+  every operation shares band observations by what Earth Engine evaluates (`observationRegistry.js`).
+- Map layers read revision staleness from the listing and open recipes alone, so an edit or a save elsewhere does not
+  rerender them.
 - There is one provider per retained Process instance, not one per recipe, panel or map layer.
 
 ## Retrieve integration
@@ -374,12 +384,13 @@ environment sink or environment-publication effect is required.
 Retrieve is a consumer of the common read, not a method on the source runtime.
 
 A Retrieve panel whose request is about its recipe's image output reads `IMAGE_OUTPUT` through the common read
-([reading a recipe's own output](#reading-a-recipes-own-output)), over the session graph a map layer builds, and owns
-one `OutputAcquisition` for as long as it is open (`withRetrieveOutput.jsx`); it never borrows a map layer's owner.
+([reading a recipe's own output](#reading-a-recipes-own-output)), over the session graph a map layer builds, and
+watches that question for as long as it is open (`withRetrieveOutput.jsx`). A map layer showing the same output asks
+the same question, so the two share one load, and closing either leaves the other's answer in place.
 What it offers, which destinations it enables, whether Apply is enabled and what a submission sends are decided by
 one rule (`retrieveOutput.js`) from one read:
 
-- A read still being acquired is pending. Choices are withheld, the destination selector is disabled as one control
+- A read still being loaded is pending. Choices are withheld, the destination selector is disabled as one control
   without changing its value, and Apply is disabled. The saved selection is untouched.
 - An answer that is not `READY`, or whose `dependencyValidity` is not `VALID`, blocks. Acquisition failures, invalid
   descriptions, a recipe with no image output and broken dependencies never become a fallback.
@@ -421,9 +432,8 @@ values under `ui` before Apply runs, and no request is built from `ui`.
 
 A recipe type supplies its generic image export as a task configuration (`retrieveTask`: `dataSetType`,
 `includeTimeRange` and a `fallbackPyramidingPolicy`), or a `submitTask` of its own. A type states no policy of its own:
-policies come from physical facts alone. The generic submitter takes explicit Retrieve options and at most one export
-authority - `imageOutputDescription` or `observedBands` - and refuses both. There is no
-image-customization callback: a request states its final selection before policies are derived. The styles attached
+policies come from physical facts alone. The generic submitter takes explicit Retrieve options and the one export
+authority, `imageOutputDescription`, and submits nothing without it. There is no image-customization callback: a request states its final selection before policies are derived. The styles attached
 are those the recipe offers over the answer's bands, restricted to the exported names.
 
 Optical Mosaic, Asset and CCDC Slice declare no policy for scalar bands, and fall back to `mean`, Earth Engine's own
@@ -432,12 +442,14 @@ scalars alone; it does not establish that averaging suits every scalar band. Mas
 `changeBased('change')`.
 
 **Evidence currency.** Evidence describes the source as it was read, from particular records, assets and credentials:
-its basis. `SourceEvidenceSync` decides by one rule (`outdatedBasis`, `sourceEvidenceBasis.js`) whether its basis
+its basis. The evidence registry decides by one rule (`outdatedBasis`, `sourceEvidenceBasis.js`) whether its basis
 still holds - whether to read again, and whether an answer may still be published. The credential container is judged
 by an opaque generation numbered by its identity; nothing compares, retains or publishes what it contains. The rule
 compares a selection by identity, so that reapplying a source panel is a change. Retrieve reads no evidence: what it
-authorizes is the description its own acquisition retains, keyed by the records it read and renewed when credentials
-change, so a source edited under the same id, or credentials replaced, authorize nothing described before.
+authorizes is the description the source runtime holds for its watched question, current only for the records its
+loading key names, the evidence of the assets its closure read and the credentials the session holds, so a source
+edited under the same id, an asset changed, missing or unchecked, or credentials replaced, authorize nothing described
+before. A blocked Retrieve names the asset and offers Refresh.
 
 A submission's freshness is the session's. Dependency records the runtime loaded without writing them to the
 session cannot be compared, and a persisted dependency changed after Apply is Task's to detect.
@@ -492,6 +504,15 @@ owns neither mechanism nor presentation.
 
 ## Roadmap evolution
 
+### Shared output watches
+
+Map layers and Retrieve watch their output questions through the runtime, which shares their description loading
+([shared loading](#reading-a-recipes-own-output)). Recipe revisions are followed and band observations shared across
+questions ([packet 2](source-freshness.md#packet-2-recipe-revisions-and-shared-observations)); asset evidence, redraw
+signaling independent of descriptions, explicit Refresh and the retirement of source evidence as a change signal
+follow ([packet 3](source-freshness.md#packet-3-asset-freshness-and-redraw-signaling)). Description sharing does not
+establish execution readiness, and Task remains independent.
+
 ### Runtime image output
 
 The one-shot runtime adapts the loaded-recipe cache, the authenticated per-recipe read and
@@ -525,7 +546,7 @@ was built from. That one operation-local context is what a caller needs to keep 
 to know which records a repair would change. Continuing to load means a graph that also has a definitive
 diagnostic can end in a loader failure rather than completing with the diagnostic: the one-shot runtime then
 reports `UNAVAILABLE` carrying the loader error, with `dependencyValidity` `INVALID` from the definitive
-diagnostic; `SourceEvidenceSync` and PyEO's imagery read report the loader failure; Task fails the export naming
+diagnostic; the evidence registry and PyEO's imagery read report the loader failure; Task fails the export naming
 both. The current `loadRecipesById$` adapter fans a
 frontier out over the existing authenticated `api.recipe.load$(id)` operation with bounded concurrency.
 Consequently, the temporary implementation needs at most one logical request batch per discovered graph depth; it
@@ -560,15 +581,68 @@ state, applicability and final export filtering remain owned by their consumers.
 
 ### Live source evidence
 
-Current bands and visualizations are inherited while the consuming recipe is open, but not yet through this
-runtime. `SourceEvidenceSync` uses the shared closure-completion boundary with the session's reference-counted
-recipe loader. It observes the immediate source's bands and follows declared inheritance over the resolved
-records for visualizations, including styles owned by the source and intermediate wrappers rather than their
-copied presets. Its operation basis compares persisted dependency inputs by value, retaining runtime
+The runtime keeps a recipe's evidence about its source current while anything watches it (`evidenceRegistry.js`); a
+preserving consumer's bands are its own description, which the runtime loads for its output watches. The registry
+uses the shared closure-completion boundary, claiming every record it reads in the session's reference-counted recipe
+cache (`recipeCacheClaims.js`), as components do - those the session already held as well as those it loads - so a
+record stays while any watch or component uses it. A draft, open or closed with its saves unsettled, outlives its last
+claimant. For Masking it follows declared inheritance over the resolved records for visualizations, including styles
+owned by the source and intermediate wrappers rather than their copied presets, and asks Earth Engine nothing about
+bands. Its operation basis compares persisted dependency inputs by value, retaining runtime
 `ui.sourceEvidence` and restored-template provenance (`ui.savedLayerSource`), as well as catalogue revisions,
-asset listing `updateTime` and Earth Engine identity. The basis covers every record the closure read, whether the
+each asset's token and explicit refreshes as the source runtime knows them
+([packet 3](source-freshness.md#packet-3-asset-freshness-and-redraw-signaling)), and Earth Engine identity. A token
+first learned after a read is no change. The assets it reads are claimed from the runtime while the recipe is
+watched. The basis covers every record the closure read, whether the
 closure completed or failed, and is taken against the session snapshot the operation started with; repairing a
 record read before a failure therefore observes again, while an unchanged failure is not retried on rerender.
+
+#### Evidence watches
+
+One observation per recipe is shared by everything watching it, wherever the recipe is shown:
+
+| Watcher | Acquires | How |
+|---|---|---|
+| A map layer or Retrieve panel | what the type's `sourceRequirements` hold its product to | inside `watchOutput$`, with no wiring of its own |
+| A segment chart | what `PIXEL_SEGMENTS` needs | `watchEvidence$({recipeId, operation})` while open |
+| The recipe's editor | the observation it names, for what its panels present | `SourceEvidenceSync`, `watchEvidence$({recipeId, observation})` |
+
+An operation in a declaration's `operations` acquires the whole observation, read by the observation the type registers
+(`sourceObservation`) unless an editor names its own. One only in `providerOperations` acquires the records of the
+selected source's closure and nothing else: the provider chain is judged from them, no capability evidence is read, and
+no asset is claimed. A type without requirements is observed only by its editor, so Masking's presets stay
+editor-only; Masking layers elsewhere keep the saved-snapshot fallback. CCDC Slice, Change Alerts and BAYTS Alerts
+declare requirements, so their layers, Retrieve and charts observe them wherever they are shown.
+
+The registry makes the live basis readable synchronously (`evidenceOwnerOf`) - `{observationId, basis, observes,
+records}` - without copying it into Redux, where it would lose the identities its rule compares. Each observation is
+identified uniquely across runtimes, since published evidence can outlive the runtime that numbered it; the evidence it
+publishes carries that identity, so a reader counts evidence only for the observation the live basis belongs to.
+`ui.sourceEvidenceObservation` notifies readers that an observation started and, for a records acquisition, that it
+settled. Checking is always an active acquisition: once the last watcher leaves, the work is cancelled, its asset and
+record claims are released, and readers see no owner. Source requirements read it
+([Change Alerts REF](source-resolution.md#change-alerts-ref)).
+
+A selection being edited in a recipe form panel is observed the same way before it is applied
+(`watchCandidate$`, driven by the panel's `SourceCandidate`, [Change Alerts REF](source-resolution.md#change-alerts-ref)):
+over the recipe as it would be with the panel's values applied, by the observation the type registers, under the same
+basis, claims and cancellation. Its evidence and owner are held by the registry and handed to the panel whenever
+either changes - a first token adopted into the basis included, so a later token is a change however early it is read.
+Nothing is published: no default is applied, nothing is announced and nothing is written, so the recipe's own evidence
+and drawing stay as they are until Apply. It is started only where the recipe's own observation does not hold for the
+candidate, and is let go when the edit changes, the panel closes or the recipe's observation comes to hold for it.
+Letting it go can release the last claim on a record it read - the selection Apply has just committed - while the
+recipe's observation of that selection is starting. A closure takes a record from the session only if the session
+still holds it when the closure claims it; one released since is loaded through the watch's own claim, so the session
+holds it again for the discovery reading the evidence.
+Apply does not adopt it; the recipe's evidence is read again through its own lifecycle.
+
+Updates are synchronous with the store change that causes them. Claiming records or assets, marking an observation
+started, publishing and applying an editor's defaults can all dispatch again, so an observation's identity and its
+cancellation are installed before anything can dispatch, and every write is made only for the entry, observation and
+basis still current when it is made, and only to a recipe the session still holds; an evicted record is never written
+back. A claim that returns after its observation ended or was replaced is released at once.
+
 The lifecycle keeps its own whole-graph check: a closure with any structural diagnostic is reported unavailable
 without observing. Removing it needs two things:
 
@@ -579,19 +653,35 @@ or invalidate pending answers. The full model remains part of the comparison: co
 invalidate even when the resulting band description is identical. The same comparison controls re-observation
 and whether a pending answer may publish.
 
-`SourceEvidenceSync` takes a per-recipe observation describing the selected source and how to read evidence about
-it. Masking, CCDC Slice, Change Alerts and BAYTS Alerts use this lifecycle. It completes the selected source's
-closure rather than the consumer's, so an unrelated incomplete consumer input cannot block acquisition of a
-replacement source. The selected source's own dependency failures still matter.
+An observation describes the selected source and how to read evidence about it. Masking, CCDC Slice, Change Alerts and
+BAYTS Alerts use this lifecycle. It completes the selected source's closure rather than the consumer's, so an
+unrelated incomplete consumer input cannot block acquisition of a replacement source. The selected source's own
+dependency failures still matter.
 
-An observation can supply `applyAccepted` assignments, written in the same action as accepted evidence, and a
-`reportUnavailable` callback for an accepted failure. Configuration policy compares source identity and payload
-against the last successful observation, so unchanged recovery does not overwrite user edits. Change Alerts and
-BAYTS own their default-setting policies; the lifecycle owns acceptance, cancellation and rejection of superseded
-responses. Change Alerts derives segment descriptions and monitoring settings from one asset-metadata response.
+What only an open editor may do stays with the editor's watch. An observation can supply `applyAccepted` assignments,
+written in the same action as accepted evidence while an editor watches and the recipe is open, and a
+`reportUnavailable` callback for an accepted failure. Evidence obtained while only a map watched changes no
+configuration. Configuration policy compares source identity and payload against the last evidence that policy
+processed (`ui.sourceEvidenceApplied`, advanced in the same action whether or not it assigned anything), so unchanged
+recovery does not overwrite user edits, and an editor opened over evidence a map already obtained processes it once,
+as it would have on arrival. A failure no editor has seen is announced once when one attaches; the error stays in the
+runtime, not Redux. Change Alerts and BAYTS own their default-setting policies; the registry owns acceptance,
+cancellation and rejection of superseded responses. Change Alerts derives segment descriptions and monitoring
+settings from one asset-metadata response, and BAYTS Alerts the historical statistics' typed bands and processing
+options; neither announces a failure, which their reference sections say instead.
 
-Accepted observations have a generation as well as a payload: charts and previews may need to discard prior
-results after re-observation even when the described bands are identical. Slice and Change Alerts reconcile
+An observation may declare `savedLayerSource`, as CCDC Slice's does: the registry then records the source the recipe's
+saved layers were styled for (`ui.savedLayerSource`) when the recipe is first observed in the session, by whoever
+watches - editor, layer, Retrieve or chart - in the action marking that observation started. It is written once, never
+replaced, only to a recipe the session holds, and never for a selection being edited. The observation and its basis
+are taken from the recipe with it recorded, so an editor opened after a map observed the recipe records nothing and
+reads nothing again. A recipe whose closure includes the Slice record - Masking over Slice - compares that record's
+provenance, and reads again once if it observed the Slice before the Slice itself was first observed.
+
+Accepted evidence is presentation only: it is in no content, work or preview key and carries no generation. Whether
+charts and previews must discard what they drew is the pixel generation's to say
+([packet 3](source-freshness.md#packet-3-asset-freshness-and-redraw-signaling)), and an observer over another recipe
+reads again when that recipe's evidence content changes. Slice and Change Alerts reconcile
 preset identities against the selected source and restored saved-layer styles. A different source cannot inherit
 those identities merely because its first response arrives late.
 
@@ -605,16 +695,19 @@ identity of the source as it was read, which a consumer's acquisitions and layer
 bands are read through the common read ([reading a recipe's own output](#reading-a-recipes-own-output)), never from
 evidence. Open drafts are not overwritten by persisted dependency reloads. Failed observations offer no
 visualizations, and are no answer rather than an empty one. Saved presets remain the fallback only where nothing has
-been observed. A shared live `watchSource$` would make this evidence available without an open consuming recipe and
-allow that fallback to retire.
+been observed. Presentation evidence is observed outside an editor only where a declared requirement needs it; a
+shared live `watchSource$` would make the rest available without an open consuming recipe and allow that fallback to
+retire.
 
 ### Asset map-layer refresh
 
-Asset map layers read metadata on activation, a changed catalogue `updateTime`, or explicit Refresh asset. A
-successful observation renews the preview even if the metadata is identical, retains unchanged preset identities
-and withholds missing-band or array styles without deleting saved selections. Failed reads are reported and
-superseded responses cannot publish. This does not detect every external asset change: task-reported invalidation
-and shared versioned metadata ownership remain future work in [source freshness](source-freshness.md#asset-freshness).
+Asset map layers claim their asset from the source runtime and read its metadata on activation, when its token
+changes, on explicit Refresh and when credentials change. A preview is drawn again only when the asset is seen to
+change or is refreshed; unchanged metadata, a failed check or read and replaced credentials keep what is drawn. They
+retain unchanged preset identities and withhold missing-band or array styles without deleting saved selections. An
+asset found missing is withheld and named. Failed reads are reported and superseded responses cannot publish. A
+change no token reports stays unseen until Refresh
+([packet 3](source-freshness.md#packet-3-asset-freshness-and-redraw-signaling)).
 
 ### Fill operations
 
@@ -626,9 +719,12 @@ another recipe as a source.
 ### Capabilities and candidate discovery
 
 The implemented producer-step rule supports `CCDC_SEGMENTS`, `BAYTS_HISTORICAL_STATS` and
-`OPTICAL_COLLECTION_DEFAULTS`. Change Alerts and BAYTS selectors query type-level candidacy, so they can offer a
-Masking recipe whose particular input does not satisfy their requirement. Slice and the classification pickers
-still have type filters. None of these is instance-level capability discovery.
+`OPTICAL_COLLECTION_DEFAULTS`. Change Alerts, CCDC Slice and BAYTS selectors query type-level candidacy, so they can
+offer a Masking recipe whose particular input does not satisfy their requirement. The classification pickers still
+have type filters. None of these is configured-source capability discovery. Change Alerts, CCDC Slice and BAYTS Alerts
+validate their selected source once chosen ([Change Alerts REF](source-resolution.md#change-alerts-ref),
+[CCDC Slice SRC](source-resolution.md#ccdc-slice-src), [BAYTS Alerts REF](source-resolution.md#bayts-alerts-ref));
+their pickers still offer type-level candidates.
 
 The proposed discovery query accepts an operation-specific requirement containing only the structural, adapter or
 capability constraints that operation needs, plus cardinality and saved selections. Validation distinguishes a
@@ -699,7 +795,7 @@ answered is told so rather than given a weaker answer that looks like an answer.
 **The read.** `readRecipeOutput({recipe, product, graph, heldFor})` (`recipe/recipeOutput.js`) answers which bands a
 configured recipe provides for one named product. It never starts work, and consumers do not assemble its context: a
 map layer's connected props already derive the session graph over `process.loadedRecipes` (`mapDependencyGraph.js`),
-cached by identity, and retained answers come from the layer's own acquisition owner.
+cached by identity, and retained answers come from the source runtime (`heldFor`).
 
 | Field | Meaning |
 |---|---|
@@ -717,8 +813,9 @@ the session graph when it holds every record its closure references, and is othe
 the shared `readImageOutput`, and the observer settles from its status too, so the two cannot drift. The observer adds
 only what its completed closure knows: a record still needed there is one that could not be had.
 
-**Retained answers.** Where the session cannot settle an answer, the owner acquires one of two runtime operations. They
-share environment capture, closure completion, limits, failure handling and identity invalidation:
+**Retained answers.** Where the session cannot settle an answer, the runtime loads it through one of two runtime
+operations, for whoever watches the question. They share environment capture, closure completion, limits, failure
+handling and identity invalidation:
 
 - `resolveImageOutput$` describes the canonical output over a completed closure. It serves an `IMAGE_OUTPUT` answer
   that needs a record or an observation, or whose closure is incomplete.
@@ -728,8 +825,8 @@ share environment capture, closure completion, limits, failure handling and iden
 Every terminal carries `basis`, the content of each record its closure read. A retained terminal answers only while
 the records the session holds are the ones it read, compared by the content projection the preview uses
 (`recipeContent`), and only under the credential epoch it was started under. Records the operation loaded without
-writing them to Redux cannot be compared. A change to one is seen when the layer's content changes for another
-reason or the layer remounts, as for preview.
+writing them to Redux cannot be compared. A change to one is seen only when the question's key changes for another
+reason, or once the answer's retention has ended and the question is watched again.
 
 One snapshot answers:
 
@@ -738,31 +835,71 @@ One snapshot answers:
 - A dependencies-only terminal answers validity beside a map-product answer. Such an answer reads nothing
   but the root recipe and its runtime evidence, so the terminal's basis proves it read that same root.
 - An observation that failed over a sound closure leaves `dependencyValidity` `VALID` and the description
-  `UNAVAILABLE`.
+  `UNAVAILABLE` - unless the observations that arrived establish a definitive diagnosis, which outranks it: the
+  description is then `INVALID`, and the failure is still reported for the assets it names
+  (`sourceRuntime/assetFailure.js`). Either settles once every observation requested has.
 
-**Who acquires.** Each consumer that can need evidence has an owner whose lifetime covers it:
+**Who watches.** Each consumer that can need evidence watches its question while it is open. The loading and the
+answers belong to the runtime (`sourceRuntime/outputRegistry.js`):
 
-| Consumer | Owner | Lifetime and invalidation |
+| Consumer | Watch | Lifetime |
 |---|---|---|
-| A recipe's map layer, on its own or another recipe's map | the `RecipeImageLayer` instance (`outputAcquisition.js`) | while mounted; keyed by the content of every record the session graph holds and the kind of work |
+| A recipe's map layer, on its own or another recipe's map | the `RecipeImageLayer` instance, on the product its config names (`outputWatch.js`) | while mounted |
 | Its layer form, visualization selector and visualization editor | none of their own: they are given the layer's read | - |
-| Masking, CCDC Slice, Change Alerts and BAYTS source evidence | `SourceEvidenceSync` | while the recipe is open; its basis |
-| A Retrieve panel over its recipe's image output | the panel instance (`withRetrieveOutput.jsx`), with its own `OutputAcquisition` | while open; as for a map layer |
+| Source evidence: Change Alerts', CCDC Slice's and BAYTS Alerts' requirements, and their and Masking's presentation | the output watches and charts needing it, and the editor (`evidenceRegistry.js`) | while any of them watches; its basis |
+| A Retrieve panel over its recipe's image output | the panel instance (`withRetrieveOutput.jsx`), on `IMAGE_OUTPUT` | while open |
 | Input workflows copying bands and presets at selection, and Sampling Design | their selection workflow | the selection; presets are filtered against the names that workflow observed |
 
-Visualization settings belong to the preview's key, not the acquisition key, so restyling a layer rebuilds its preview
-and acquires nothing.
+Visualization settings belong to the preview's key, not the loading key, so restyling a layer rebuilds its preview
+and loads nothing.
 
-A credential change drops what the layer holds and acquires exactly once again. The owner claims each slot before
-subscribing, so a terminal delivered synchronously, or a change handler re-entering the owner, finds the state it was
-started under. A credential change produces two notifications; the operation's `SOURCE_IDENTITY_CHANGED` terminal is
-never retained and starts nothing, and the epoch change starts the one replacement, whichever arrives first.
-`identity$` gives a lifetime owner those epochs without reading credentials, and is subscribed only while something is
-held or in flight. The runtime scope ending drops what is held and stops the owner for good.
+**Shared loading.** `watchOutput$({recipeId, product, explain})` registers interest in a question: a recipe id, the
+product its consumer reads, normalized as the read names it (`layerProduct`), and whether it asks to explain a refusal -
+an editor saying what needs repair. Questions differing only in `explain` are distinct, each loading what its own read
+names, and so are their retries, refreshes and the assets they read. While a question is watched, the runtime
+recomputes its read whenever the session's catalogue changes and loads what the read's `acquisition` names. A question
+the session answers alone is still watched and loads nothing. Work is keyed by the acquisition key, so questions
+naming the same key share one operation - a map layer and Retrieve over one output, or two parameter sets of one
+configuration-only product - while canonical output and products remain distinct questions.
+
+- Every watched question is recomputed on each session change, including one arriving in a dispatch during which
+  another question is first watched. A watch is told when the work answering its question changes: withdrawn for
+  other work, settled, or released because the session now answers alone. An edit leaving its key as it was tells
+  it nothing.
+
+- A question asked to explain, whose read the session refuses - its description, or whether it can run - while still
+  naming records or observations it does not hold, names `EXPLAIN`, ahead of any other work its read names: the
+  closure those records complete, then one pass observing what the refusal and readiness name, each observation
+  failing alone, settling `COMPLETE` with the diagnoses and readiness findings that evidence establishes, even where
+  it adds none - recorded, like any work's reads, before it settles. Where every observation fails it settles
+  `UNAVAILABLE` on those failures, so it is retried and never retained. The refusal answers at once and stays the
+  answer; a held `COMPLETE` explanation only adds diagnoses and findings, and the validity of its closure where the
+  session had none, and one pending, failed or withdrawn adds nothing. Questions not asked to explain never load it.
+- Unfinished work is cancelled and discarded when the last question claiming it is released. A consumer watches a
+  changed question before releasing the previous one, so switching a layer's product keeps loading the two share.
+- A settled `READY`, `INVALID` or `COMPLETE` answer is retained for 60 seconds after its last release, and at most 32
+  are retained unclaimed, the earliest released evicted first; both are configurable. A retained answer loads and
+  watches nothing, and a reopened question is recomputed from the session before an answer is reused.
+- An `UNAVAILABLE` answer is held while claimed, so consumers show failure rather than pending, and discarded at zero
+  claims. It is loaded again on `retryOutput`, on a key or credential change, or when watched after being discarded;
+  another subscriber, another question sharing it, or a render never retries it. A terminal whose basis differs from
+  the records its key names is held as such a failure (`SOURCE_BASIS_CHANGED`).
+- `heldFor` checks currency when it is called: the key, the credentials the session holds now and the retention
+  deadline. A read made in the same dispatch as an edit or a credential replacement, Apply's included, finds nothing
+  current.
+- Replaced credentials discard every answer and restart only watched work, once, whichever of the session change and
+  the operation's `SOURCE_IDENTITY_CHANGED` is heard first. Each operation claims its slot before subscribing, so a
+  terminal delivered synchronously finds the state it was started under. The runtime's scope ending completes every
+  watch and answers every key `SOURCE_RUNTIME_UNAVAILABLE`; nothing restarts.
+- Work keeps a ledger of the records it read, and is withdrawn, settled or not, when evidence supersedes one: a newer
+  revision in the listing or a save acknowledgement, or a listed recipe no longer listed. A cached record the listing
+  has moved past is read again first (`REFRESH`), and a draft never is. Band observations are shared across questions
+  by what Earth Engine evaluates, and kept for reuse only over complete evidence
+  ([packet 2](source-freshness.md#packet-2-recipe-revisions-and-shared-observations)).
 
 While an answer needs evidence the consumer shows what it shows for a recipe with no bands: no layer, no options, and
 the saved selection untouched. A snapshot copied into the model is not offered for a declared product while its answer
-is acquired. Once the recipe is set up and the answer could be drawn from, the layer keeps a selection matching a
+is loaded. Once the recipe is set up and the answer could be drawn from, the layer keeps a selection matching a
 candidate and otherwise selects the first candidate its picker offers
 ([selection behavior](visualizations.md#selection-behavior)). BAYTS Alerts, Change Alerts and LandTrendr apply the same
 rule in their own forms, over the presets of the mode shown, once their mode, filter and year are settled.
@@ -857,7 +994,10 @@ monitoring period or a reference is described with its nine change bands. Nothin
 The recipe's own layer and Retrieve wait for it to be initialized, its change styles are offered only once it states
 a period, and execution refuses it with its own error. A wrapper over it - Masking over an unfinished Change Alerts -
 has none of those gates: it is offered the bands, a style a user defines over them can request a preview, and an
-export is accepted and fails in Earth Engine. That exposure is accepted until requirements are validated.
+export is accepted and fails in Earth Engine. That exposure is accepted until Change Alerts declares those requirements:
+[execution readiness](source-resolution.md#execution-readiness) judges the declared configuration requirements and the
+needs of every executed dependency beside the description, so a Remapping, or a Masking by or of a Classification
+without training data, is no longer drawn or exported.
 
 **Mandatory output contracts.** Every registered type states its output, as it states its sources: an image output
 provider, or `NO_IMAGE_OUTPUT` for a type whose recipes produce no image - Sampling Design, whose samples its own tasks
@@ -895,12 +1035,18 @@ presentation concern.
 - **Masking** inherits its source's answer, and so its status:
   - over an Optical Mosaic the session holds, it is `READY` at once;
   - over an asset, it needs evidence;
-  - over a Regression or Unsupervised Classification the session holds, it is `READY` at once, with the policy each
-    declares;
+  - over a Regression or Unsupervised Classification the session holds, it has that recipe's answer: `READY` with the
+    policy each declares once its input images are described;
   - over a Sampling Design, it is `INVALID`: the design produces no image.
-- **Classification**, **Regression**, **Unsupervised Classification** and **Remapping** resolve synchronously from
-  their declarations, reading none of their sources; only whether those dependencies are sound still needs the
-  closure completed.
+- **Classification**, **Regression** and **Unsupervised Classification** read their input images, and are described
+  once those are: their bands are their declarations', and they are refused where an image's band sets select what
+  its source's description does not provide (`lib/js/shared/src/recipe/bandSets.js`), located at the selection,
+  whatever another input still awaits. Their training data is not read. A finding an observed input establishes is
+  known once the work observing it settles, which waits for every observation that work requested: until the other
+  inputs' observations answer or fail, it is not shown, and Retrieve and new previews are held. A finding the session
+  establishes alone, over a recipe input it describes, is shown at once. **Remapping** resolves synchronously from its
+  declaration, reading none of its sources; only whether those dependencies are sound still needs the closure
+  completed.
 
 ## Alternatives not selected
 
@@ -992,24 +1138,55 @@ prove only runtime-owned behavior:
 - closing the owning runtime scope emits `UNAVAILABLE` with error code `SOURCE_RUNTIME_UNAVAILABLE` to detached
   unresolved operations, answers nothing a submission could use and releases the environment subscription;
 - the context value and consumer render count remain stable across unrelated catalogue changes;
-- with no active operation, watcher or retained answer, Redux changes invoke no source-runtime selector, graph work or
-  observation;
+- with no active operation or output watch, Redux changes invoke no source-runtime selector, graph work or
+  observation, and a retained answer subscribes to nothing;
 - active environment selection is constant-time and does not build a graph;
 - no reducer side effect or ambient singleton-store read is used by the command path.
 
-The read and its lifetime owner prove, over graphs the real builder produces and the real declarations:
+The read, the output watches and the map layer prove, over graphs the real builder produces and the real declarations
+(`recipeOutput.test.js`, `sourceRuntime/outputRegistry.test.js`, `sourceRuntime/sourceRuntimeContext.test.jsx`,
+`recipeImageLayer.test.js`):
 
-- a model-derived output, and a wrapper over one the session holds, is answered at once with no acquisition;
+- a model-derived output, and a wrapper over one the session holds, is answered at once and loads nothing, while its
+  question is still watched;
+- a map layer and Retrieve asking the same question make one Earth Engine request, product parameter sets sharing a
+  configuration-only product share their dependency load, and canonical output and products stay apart;
+- closing either consumer leaves work the other needs, in both orders, and work is cancelled once every question
+  sharing it has left, including across a layer's product switch while it is loading;
 - a record the session lacks needs evidence rather than failing, and a definitive diagnosis on the read path outranks it;
 - a map product needs only its dependencies completed, keeps its bands when one cannot be read, and never has its
   canonical output described;
 - an unknown product is refused rather than answered as another;
 - a recipe with no image output is refused as one, directly and through a wrapper, beside a record still to be
   loaded too; an observation that failed over a sound closure keeps that closure `VALID`;
-- restyling a layer rebuilds its preview and acquires nothing;
-- a retained terminal about records the session has since replaced is refused;
-- a credential change drops what is held and acquires exactly once, in either notification order and after
-  settlement; the runtime scope ending stops the owner for good;
+- restyling a layer rebuilds its preview and loads nothing;
+- an edit or a credential replacement withdraws the answer within the dispatch that makes it, a late answer for a
+  replaced key installs nothing, and a terminal about other records than its key names is held as a failure;
+- an edit tells the watches whose answer it withdraws or leaves to the session alone, and no others, and is heard for
+  every watched question when another is first watched in the same dispatch, over the real store as well;
+- a credential change discards what is held and loads each watched question exactly once, in either notification
+  order, telling every consumer, while retained answers are discarded and not reloaded until watched again;
+- a failure is held rather than pending, is not reloaded by another subscriber or question, and recovers on retry, a
+  relevant edit, a credential change or a watch after it was discarded;
+- a settled answer is reused within the grace period, withdrawn at its deadline before cleanup runs, recomputed from
+  the session when reopened, and bounded by the unclaimed cap without evicting a watched answer;
+- the runtime scope ending completes every watch, answers unavailable and restarts nothing;
+- a newer revision of a privately loaded dependency withdraws its answer in the dispatch that lists it and loads it
+  once, an unrelated revision loads nothing, and an answer retained while unwatched is not reused after one; a late
+  answer installs nothing, and storage answering an old revision twice is held as a failure;
+- a dependency the listing stops listing is withdrawn and read again, a failure to read it is held until it is listed
+  again, and one never listed is left alone;
+- a cached record the listing has moved past is read again and replaced before a local answer uses it, a failure to
+  read it is held until retried, and an open draft is never read again;
+- an open dependency of an observed recipe is observed again once its save is acknowledged, and the acknowledgement
+  alone withdraws what was observed before it; a dependency whose tab closes while it is saving stays a draft;
+- Retrieve waits for a dependency's save, blocks each save failure and a newer stored revision under its own code,
+  blocks an expired or failed listing, and cannot submit in the dispatch that supersedes its answer; a retry refreshes a
+  failed listing;
+- one band observation serves a recipe's layer, its Retrieve, a Masking over it and Masking's evidence publications;
+  what is sent, the credentials or the reference type make another; closing one consumer leaves it running; one over
+  a disagreeing draft, a newer stored revision or an unknown revision is shared in flight and never reused, and reuse
+  is refused at lookup once idle or superseded, whether or not cleanup has run;
 - a preview is withheld until dependencies are known to be sound, with the saved selection kept;
 - Optical Mosaic's cursor rounding survives its declared bands;
 - the visualization editor opens only on known bands, carries the layer's product arguments in its histogram and

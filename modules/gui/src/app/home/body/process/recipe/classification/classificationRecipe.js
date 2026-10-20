@@ -1,7 +1,11 @@
 import _ from 'lodash'
 
+import {noTrainingData} from '#sepal/recipe/trainingData'
+import {requiresTraining} from '#sepal/recipe/type/classification'
+import {removeInputImage} from '~/app/home/body/process/inputImages'
 import {removeImageLayerSource} from '~/app/home/body/process/mapLayout/imageLayerSources'
-import {recipeActionBuilder} from '~/app/home/body/process/recipe'
+import {recipeActionBuilder, recipePath} from '~/app/home/body/process/recipe'
+import {select} from '~/store'
 import {msg} from '~/translate'
 import {uuid} from '~/uuid'
 
@@ -57,12 +61,14 @@ export const RecipeActions = id => {
         setEETableColumns(columns) {
             return set('SET_EE_TABLE_COLUMNS', 'ui.eeTable.columns', columns, {columns})
         },
+        // An input is its entry, known by its imageId; another can share its source, and keeps the source's layer.
         removeInputImage(imageToRemove) {
-            removeImageLayerSource({sourceId: imageToRemove.id, recipeId: id})
-            actionBuilder('REMOVE_INPUT_IMAGE', {imageToRemove})
-                .del(['model.inputImagery.images', {id: imageToRemove.id}])
-                .del(['ui.inputImagery.images', {id: imageToRemove.id}])
-                .dispatch()
+            const images = select(recipePath(id, 'model.inputImagery.images')) || []
+            const sourceShared = images.some(image => image.imageId !== imageToRemove.imageId && image.id === imageToRemove.id)
+            if (!sourceShared) {
+                removeImageLayerSource({sourceId: imageToRemove.id, recipeId: id})
+            }
+            removeInputImage(id, imageToRemove)
         },
         clearTrainingDataSet(dataSetToRemove) {
             actionBuilder('REMOVE_TRAINING_DATA_SET', {dataSetToRemove})
@@ -159,6 +165,10 @@ export const hasTrainingData = recipe => {
         const countPerClass = recipe.ui.collect.countPerClass || {}
         return Object.values(countPerClass).filter(count => count > 0).length >= 2
     } else {
-        return !!recipe.model.trainingData.dataSets.find(({referenceData = []}) => referenceData.length)
+        return !noTrainingData(recipe.model)
     }
 }
+
+// Whether the classifier has what it is trained on: a supplied decision tree is used as given.
+export const canClassify = recipe =>
+    !requiresTraining(recipe.model.classifier?.type) || hasTrainingData(recipe)

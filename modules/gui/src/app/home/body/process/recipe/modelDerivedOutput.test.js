@@ -55,6 +55,9 @@ const {retrieveTask: planetMosaicTask} = await import('./planetMosaic/planetMosa
 const {canPreview, displayTypes, layerProduct, productArgs, readRecipeOutput} = await import('./recipeOutput')
 const {buildMapDependencyGraph} = await import('./mapDependencyGraph')
 const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('./retrieveOutput')
+
+// Storage listed just now: a Retrieve is authorized by it (recipeListing.js).
+const CURRENT_LISTING = {checkedAt: Date.now()}
 const {recipeVisualizations} = await import('./visualizations')
 const {visualizationOptions: landTrendrVisualizationOptions} = await import('./landTrendr/visualizations')
 const {groupedBandPresentation: baytsAlertsRetrieveGroups} = await import('./baytsAlerts/bands')
@@ -64,6 +67,9 @@ const {visualizationOptions: changeAlertsVisualizationOptions} = await import('.
 const {groupedBandPresentation: radarMosaicRetrieveGroups} = await import('./radarMosaic/bands')
 const {groupedBandPresentation: planetMosaicRetrieveGroups} = await import('./planetMosaic/bands')
 const {renderableVisualizations} = await import('./visualizationMatching')
+const {typedSegmentsAssetDescription} = await import('./ccdc/segmentsAsset')
+const {declaredSelections, sourceKeyOf} = await import('./sourceEvidence')
+const {historicalStatsOf} = await import('./baytsAlerts/historicalStatistics')
 
 addRecipeType(regression())
 addRecipeType(unsupervisedClassification())
@@ -111,11 +117,35 @@ describe('a regression', () => {
 })
 
 describe('an unsupervised classification', () => {
-    it('is described from its declaration while the imagery it clusters is not even loaded', () => {
-        const {output} = read(clusteringOf({images: [{type: 'RECIPE_REF', id: 'mosaic-1'}]}))
+    it('is described from its declaration once the imagery it clusters is', () => {
+        const {output} = read(clusteringOf())
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands).toEqual([expect.objectContaining({name: 'class', dataType: {arrayDimensions: 0}})])
+    })
+
+    it('waits for the imagery it clusters to be described', () => {
+        const {output} = read(clusteringOf({images: [{imageId: 'image-1', type: 'RECIPE_REF', id: 'mosaic-1'}]}))
+
+        expect(output.status).toBe('NEEDS_EVIDENCE')
+    })
+
+    it('exports to Drive with no pyramiding policy', () => {
+        retrieve(read(clusteringOf()), 'DRIVE', clusteringTask)
+
+        expect(submitted).toHaveLength(1)
+        expect(submitted[0].params.image).not.toHaveProperty('pyramidingPolicy')
+    })
+
+    // Its imagery is read to describe it, so clustering itself is a cycle: it is not described either.
+    it('clustering itself is neither described, previewed nor exported', () => {
+        const answer = read(clusteringOf({images: [{imageId: 'image-1', type: 'RECIPE_REF', id: ID}]}))
+
+        retrieve(answer, 'GEE', clusteringTask)
+
+        expect(answer.output.status).toBe('INVALID')
+        expect(canPreview(answer.output)).toBe(false)
+        expect(submitted).toEqual([])
     })
 
     it('is presented with its label, the cluster range as cursor precision, and its preset style', () => {
@@ -143,8 +173,8 @@ describe('an index change', () => {
         ['error bands on both images', {errorBands: true}, ['difference', 'normalized_difference', 'ratio', 'error', 'confidence', 'change']],
         ['an error band on one image only', {errorBands: 'from'}, ['difference', 'normalized_difference', 'ratio', 'change']],
         ['an empty legend', {entries: []}, ['difference', 'normalized_difference', 'ratio']]
-    ])('with %s is described with the bands execution builds, reading neither image', (_case, configuration, names) => {
-        const {output} = read(indexChangeOf({images: RECIPE_IMAGES, ...configuration}))
+    ])('with %s is described with the bands execution builds, once its images are', (_case, configuration, names) => {
+        const {output} = read(indexChangeOf(configuration))
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands.map(({name}) => name)).toEqual(names)
@@ -197,11 +227,34 @@ describe('an index change', () => {
     })
 })
 
+// Its images are read to describe it, so comparing itself is a cycle: it is not described either.
+describe.each([
+    ['an index change', images => indexChangeOf(images && {images}), indexChangeTask, () => IMAGERY],
+    ['a class change', images => classChangeOf(images && {images}), classChangeTask, () => LAND_COVER_IMAGE]
+])('%s', (_type, changeOf, task, image) => {
+    it('exports to Drive with no pyramiding policy', () => {
+        retrieve(read(changeOf()), 'DRIVE', task)
+
+        expect(submitted).toHaveLength(1)
+        expect(submitted[0].params.image).not.toHaveProperty('pyramidingPolicy')
+    })
+
+    it('comparing itself is neither described, previewed nor exported', () => {
+        const answer = read(changeOf([{type: 'RECIPE_REF', id: ID}, image()]))
+
+        retrieve(answer, 'GEE', task)
+
+        expect(answer.output.status).toBe('INVALID')
+        expect(canPreview(answer.output)).toBe(false)
+        expect(submitted).toEqual([])
+    })
+})
+
 describe('a class change', () => {
     // Confidence is measured from both images' probability bands, and masked where either has none; the band is
     // there either way, whatever the snapshots saved when the images were selected say.
     it('is described with its transition and confidence, though neither saved snapshot holds a probability band', () => {
-        const {output} = read(classChangeOf({images: RECIPE_IMAGES}))
+        const {output} = read(classChangeOf())
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands.map(({name, dataType}) => [name, dataType.arrayDimensions]))
@@ -297,11 +350,12 @@ describe('a classification', () => {
 })
 
 describe('a remapping', () => {
-    it('is described with its class while the imagery it remaps is not even loaded', () => {
-        const {output} = read(remappingOf({images: [{imageId: 'image-1', type: 'RECIPE_REF', id: 'classes-1'}]}))
+    // Its class is described from its legend alone, but whether it can run needs the imagery its image builds.
+    it('waits for the imagery it remaps to be loaded before Retrieve offers its class', () => {
+        const {output, pending} = read(remappingOf({images: [{imageId: 'image-1', type: 'RECIPE_REF', id: 'classes-1', includedBands: [{band: 'class'}]}]}))
 
-        expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
-        expect(output.bands).toEqual([expect.objectContaining({name: 'class', dataType: {arrayDimensions: 0}})])
+        expect(output.status).toBe('NEEDS_EVIDENCE')
+        expect(pending).toBe(true)
     })
 
     // Execution builds an image without bands when there is no rule to remap by.
@@ -498,7 +552,7 @@ describe('a BAYTS alerts recipe', () => {
     const ALERTS = ['non_forest_probability', 'change_probability', 'flag', 'flag_orbit', 'first_detection_date', 'confirmation_date']
 
     it('is described with its alerts, while the historical recipe it monitors is not even loaded', () => {
-        const {output} = read(baytsAlertsOf({reference: {type: 'RECIPE_REF', id: 'bayts-historical-1'}}))
+        const output = described(baytsAlertsOf({reference: {type: 'RECIPE_REF', id: 'bayts-historical-1'}}))
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands.map(({name}) => name)).toEqual(ALERTS)
@@ -510,7 +564,7 @@ describe('a BAYTS alerts recipe', () => {
         const historical = baytsHistoricalOf({id: 'bayts-historical-1'})
         const alerts = baytsAlertsOf({reference: {type: 'RECIPE_REF', id: historical.id}})
 
-        const {output} = readAll([alerts, historical])
+        const output = described(alerts, historical)
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands.map(({name}) => name)).toEqual(ALERTS)
@@ -653,7 +707,7 @@ describe('a Change Alerts recipe', () => {
     ]
 
     it('is described with its changes in the order execution builds them, while the CCDC it monitors is not even loaded', () => {
-        const {output} = read(changeAlertsOf({reference: {type: 'RECIPE_REF', id: 'ccdc-1'}}))
+        const output = described(changeAlertsOf({reference: {type: 'RECIPE_REF', id: 'ccdc-1'}}))
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands.map(({name}) => name)).toEqual(CHANGES)
@@ -664,7 +718,7 @@ describe('a Change Alerts recipe', () => {
     // no style is offered, and execution refuses a missing period.
     it('is described with the same changes before a period or a reference is chosen, offering no style', () => {
         const recipe = changeAlertsOf({reference: {}, date: {...PERIOD, monitoringEnd: undefined}})
-        const {output} = read(recipe)
+        const output = described(recipe)
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands.map(({name}) => name)).toEqual(CHANGES)
@@ -673,7 +727,7 @@ describe('a Change Alerts recipe', () => {
 
     it('is presented with whole counts and fractional dates and measures, and offers its change styles', () => {
         const recipe = changeAlertsOf()
-        const {output} = read(recipe)
+        const output = described(recipe)
 
         expect(displayTypes(output)).toEqual({
             last_stable_date: {precision: 'float'},
@@ -712,10 +766,10 @@ describe('a Change Alerts recipe', () => {
 
     it('is neither previewed nor exported while the CCDC it monitors is found missing', () => {
         const recipe = changeAlertsOf({reference: {type: 'RECIPE_REF', id: 'ccdc-1'}})
-        const {output: {description}} = read(recipe)
+        const {description} = described(recipe)
         const missing = {status: 'READY', description, dependencyValidity: {status: 'INVALID', diagnostics: [{code: 'MISSING_SOURCE'}]}}
         const answer = readRetrieveOutput({
-            state: {process: {loadedRecipes: {[recipe.id]: recipe}}},
+            state: {process: {recipeListing: CURRENT_LISTING, loadedRecipes: {[recipe.id]: recipe}}},
             recipeId: recipe.id,
             heldFor: () => missing
         })
@@ -1031,11 +1085,8 @@ describe('a Radar Mosaic', () => {
 
 describe.each([
     ['a regression', recipe => regressionOf({trainingRecipe: recipe}), regressionTask],
-    ['an unsupervised classification', recipe => clusteringOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}]}), clusteringTask],
-    ['an index change', recipe => indexChangeOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}, ASSET_IMAGE]}), indexChangeTask],
-    ['a class change', recipe => classChangeOf(recipe && {images: [{type: 'RECIPE_REF', id: recipe}, ASSET_IMAGE]}), classChangeTask],
     ['a classification', recipe => classificationOf({trainingRecipe: recipe}), classificationTask],
-    ['a remapping', recipe => remappingOf(recipe && {images: [{imageId: 'image-1', type: 'RECIPE_REF', id: recipe}]}), remappingTask],
+    ['a remapping', recipe => remappingOf(recipe && {images: [{imageId: 'image-1', type: 'RECIPE_REF', id: recipe, includedBands: [{band: 'class'}]}]}), remappingTask],
     ['a phenology', recipe => phenologyOf({classification: recipe}), phenologyTask],
     ['a PyEO alerts recipe', recipe => pyeoAlertsOf({classification: recipe}), pyeoAlertsTask],
     ['a LandTrendr', recipe => landTrendrOf({classification: recipe}), landTrendrTask],
@@ -1067,19 +1118,27 @@ describe.each([
 
 const ID = 'model-1'
 
+// The imagery a model is fit to: an optical mosaic, described from its configuration as soon as it is loaded.
+const COVARIATES = {
+    id: 'covariates-1',
+    type: 'MOSAIC',
+    model: {sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, cloudPercentageThreshold: 100}, compositeOptions: {corrections: ['SR'], compose: 'MEDIAN'}}
+}
+const COVARIATES_IMAGE = {imageId: 'image-1', type: 'RECIPE_REF', id: COVARIATES.id}
+
 const regressionOf = ({trainingRecipe} = {}) => ({
     id: ID,
     type: 'REGRESSION',
     title: 'Biomass',
     model: {
-        inputImagery: {images: [{imageId: 'image-1', type: 'ASSET', id: 'users/x/covariates'}]},
+        inputImagery: {images: [COVARIATES_IMAGE]},
         trainingData: {dataSets: trainingRecipe
             ? [{type: 'RECIPE', recipe: trainingRecipe}]
-            : [{type: 'EE_TABLE', referenceData: []}]}
+            : [{type: 'EE_TABLE', referenceData: [{x: 0.5, y: 0.5, value: 112.4}]}]}
     }
 })
 
-const clusteringOf = ({images = [{imageId: 'image-1', type: 'ASSET', id: 'users/x/covariates'}], numberOfClusters = 5} = {}) => ({
+const clusteringOf = ({images = [COVARIATES_IMAGE], numberOfClusters = 5} = {}) => ({
     id: ID,
     type: 'UNSUPERVISED_CLASSIFICATION',
     title: 'Clusters',
@@ -1089,8 +1148,8 @@ const clusteringOf = ({images = [{imageId: 'image-1', type: 'ASSET', id: 'users/
     }
 })
 
-const ASSET_IMAGE = {type: 'ASSET', id: 'users/x/ndvi'}
-const RECIPE_IMAGES = [{type: 'RECIPE_REF', id: 'before-1'}, {type: 'RECIPE_REF', id: 'after-1'}]
+// The images an index change compares: the optical mosaic, whose NDVI and bands are described from its configuration.
+const IMAGERY = {type: 'RECIPE_REF', id: COVARIATES.id}
 
 const legendEntry = (value, operator) => ({
     value,
@@ -1100,14 +1159,14 @@ const legendEntry = (value, operator) => ({
     constraints: [{image: 'this-recipe', band: 'difference', operator, value: 0}]
 })
 
-const indexChangeOf = ({images: [from, to] = [ASSET_IMAGE, ASSET_IMAGE], errorBands, entries} = {}) => ({
+const indexChangeOf = ({images: [from, to] = [IMAGERY, IMAGERY], errorBands, entries} = {}) => ({
     id: ID,
     type: 'INDEX_CHANGE',
     title: 'Greening',
     model: {
         dates: {fromDate: '2020-01-01', toDate: '2021-01-01'},
-        fromImage: {...from, band: 'ndvi', ...(errorBands && {errorBand: 'ndvi_error'})},
-        toImage: {...to, band: 'ndvi', ...(errorBands === true && {errorBand: 'ndvi_error'})},
+        fromImage: {...from, band: 'ndvi', ...(errorBands && {errorBand: 'nir'})},
+        toImage: {...to, band: 'ndvi', ...(errorBands === true && {errorBand: 'nir'})},
         legend: {entries: entries || [legendEntry(1, '<'), legendEntry(2, '='), legendEntry(3, '>')]},
         options: {minConfidence: 2.5}
     }
@@ -1118,14 +1177,14 @@ const CLASSES = [{value: 1, label: 'Forest'}, {value: 2, label: 'Other'}]
 // A snapshot as the input panel saves it: each band with the class values its categorical style names.
 const classImage = (image, band) => ({...image, band, bands: {[band]: {values: [1, 2]}}, legendEntries: CLASSES})
 
-const classChangeOf = ({images: [from, to] = [ASSET_IMAGE, ASSET_IMAGE]} = {}) => ({
+const classChangeOf = ({images: [from, to] = [LAND_COVER_IMAGE, LAND_COVER_IMAGE]} = {}) => ({
     id: ID,
     type: 'CLASS_CHANGE',
     title: 'Deforestation',
     model: {
         dates: {fromDate: '2020-01-01', toDate: '2021-01-01'},
         fromImage: classImage(from, 'class'),
-        toImage: classImage(to, 'landcover'),
+        toImage: classImage(to, 'class'),
         legend: {entries: [1, 2, 3, 4].map(value => ({value, label: `transition ${value}`, color: '#000000'}))},
         options: {minConfidence: 0}
     }
@@ -1136,16 +1195,22 @@ const classificationOf = ({classifier = 'RANDOM_FOREST', values = [1, 2], traini
     type: 'CLASSIFICATION',
     title: 'Land cover',
     model: {
-        inputImagery: {images: [{imageId: 'image-1', type: 'ASSET', id: 'users/x/covariates'}]},
+        inputImagery: {images: [COVARIATES_IMAGE]},
         legend: {entries: values.map(value => ({id: `entry-${value}`, value, label: `class ${value}`, color: '#000000'}))},
         trainingData: {dataSets: trainingRecipe
             ? [{type: 'RECIPE', recipe: trainingRecipe}]
-            : [{type: 'SAMPLE_CLASSIFICATION', referenceData: []}]},
+            : [{type: 'SAMPLE_CLASSIFICATION', referenceData: [{x: 0.5, y: 0.5, class: values[0]}]}]},
         classifier: {type: classifier}
     }
 })
 
-const remappingOf = ({images = [{imageId: 'image-1', type: 'ASSET', id: 'users/x/classes'}], values = [1, 2, 3]} = {}) => ({
+// The classified images a class change compares: a classification, described once its imagery is, from its configuration.
+const LAND_COVER = {...classificationOf(), id: 'land-cover-1'}
+const LAND_COVER_IMAGE = {type: 'RECIPE_REF', id: LAND_COVER.id}
+
+// Over the classified image's class band, which the session describes from configuration, so whether it can run is
+// known without observing.
+const remappingOf = ({images = [{...LAND_COVER_IMAGE, imageId: 'image-1', includedBands: [{band: 'class'}]}], values = [1, 2, 3]} = {}) => ({
     id: ID,
     type: 'REMAPPING',
     title: 'Forest',
@@ -1176,7 +1241,8 @@ const phenologyOf = ({classification} = {}) => ({
     }
 })
 
-const pyeoAlertsOf = ({classification} = {}) => ({
+// Over the classification the session holds, unless a test names another.
+const pyeoAlertsOf = ({classification = LAND_COVER.id} = {}) => ({
     id: ID,
     type: 'PYEO_ALERTS',
     title: 'Alerts',
@@ -1187,7 +1253,8 @@ const pyeoAlertsOf = ({classification} = {}) => ({
     }
 })
 
-// Monitoring a historical asset unless told otherwise, so that nothing it reads has to be loaded.
+// Monitoring a historical asset unless told otherwise, so that nothing it reads has to be loaded. Its editor observed
+// that asset and found the statistics of both passes, as its evidence lifecycle publishes them (`ui.sourceEvidence`).
 const baytsAlertsOf = ({reference = {type: 'ASSET', id: 'users/x/bayts-historical'}} = {}) => ({
     id: ID,
     type: 'BAYTS_ALERTS',
@@ -1197,8 +1264,29 @@ const baytsAlertsOf = ({reference = {type: 'ASSET', id: 'users/x/bayts-historica
         date: {monitoringEnd: '2024-01-01', monitoringDuration: 2, monitoringDurationUnit: 'months'},
         options: {orbits: ['ASCENDING', 'DESCENDING']},
         baytsAlertsOptions: {}
-    }
+    },
+    ...(reference.type === 'ASSET' && {ui: {sourceEvidence: historicalStatsObserved(reference)}})
 })
+
+// An image asset's historical statistics as the observation reads them from its metadata: each band scalar.
+const historicalStatsObserved = reference => {
+    const bands = ['asc', 'desc'].flatMap(suffix =>
+        ['VV_mean', 'VV_std', 'VH_mean', 'VH_std', 'orbit', 'VV_speckle', 'VH_speckle'].map(statistic => `${statistic}_${suffix}`)
+    )
+    return {
+        status: 'OBSERVED',
+        sourceKey: sourceKeyOf(reference),
+        historicalStats: historicalStatsOf({
+            producer: {assetId: reference.id},
+            metadata: {
+                type: 'Image',
+                bandNames: bands,
+                bands: bands.map(id => ({id, dimensions: [5015, 3093], data_type: {type: 'PixelType', precision: 'float'}})),
+                properties: {}
+            }
+        })
+    }
+}
 
 const PERIOD = {
     monitoringEnd: '2024-01-01',
@@ -1212,7 +1300,8 @@ const OPTICAL_SOURCES = {band: 'ndvi', dataSetType: 'OPTICAL', dataSets: {LANDSA
 const RADAR_SOURCES = {band: 'VV', dataSetType: 'RADAR', dataSets: {SENTINEL_1: ['SENTINEL_1']}}
 const PLANET_SOURCES = {band: 'ndvi', dataSetType: 'PLANET', dataSets: {PLANET: ['DAILY']}, assets: ['users/x/daily']}
 
-// Monitoring a segments asset unless told otherwise, so that nothing it reads has to be loaded.
+// Monitoring a segments asset unless told otherwise, so that nothing it reads has to be loaded. Its editor observed that
+// asset and found segments for the monitored band, as its evidence lifecycle publishes them (`ui.sourceEvidence`).
 const changeAlertsOf = ({reference = {type: 'ASSET', id: 'users/x/segments'}, date = PERIOD, sources = OPTICAL_SOURCES} = {}) => ({
     id: ID,
     type: 'CHANGE_ALERTS',
@@ -1223,8 +1312,24 @@ const changeAlertsOf = ({reference = {type: 'ASSET', id: 'users/x/segments'}, da
         sources,
         options: {corrections: ['SR']},
         changeAlertsOptions: {minConfidence: 5, numberOfObservations: 3, minNumberOfChanges: 3}
-    }
+    },
+    ...(reference.type === 'ASSET' && {ui: {sourceEvidence: segmentsObserved(reference, sources.band)}})
 })
+
+// An image asset's segments as the observation reads them from its metadata: each band's grid, and its array rank.
+const segmentsObserved = (reference, band) => {
+    const bands = [['tStart', 1], ['tEnd', 1], [`${band}_coefs`, 2], [`${band}_rmse`, 1]]
+    return {
+        status: 'OBSERVED',
+        sourceKey: sourceKeyOf(reference),
+        segments: typedSegmentsAssetDescription({
+            type: 'Image',
+            bandNames: bands.map(([name]) => name),
+            bands: bands.map(([id, dimensions]) => ({id, dimensions: [5015, 3093], data_type: {type: 'PixelType', precision: 'double', dimensions}})),
+            properties: {dateFormat: 1}
+        }, {assetId: reference.id})
+    }
+}
 
 const RADAR_POINT_IN_TIME = ['VV', 'VH', 'ratio_VV_VH', 'orbit', 'dayOfYear', 'daysFromTarget']
 
@@ -1311,17 +1416,54 @@ const landTrendrOf = ({classification} = {}) => ({
     }
 })
 
-// The read a Retrieve panel makes, with nothing but the recipe itself loaded and nothing retained.
-const read = recipe => readRetrieveOutput({
-    state: {process: {loadedRecipes: {[recipe.id]: recipe}}},
-    recipeId: recipe.id,
-    heldFor: () => null
-})
+// The read a Retrieve panel makes, with nothing but the recipe itself and the imagery a model is fit to loaded, and
+// nothing retained.
+const read = recipe => readAll([recipe, COVARIATES, LAND_COVER])
 
-// The read a Retrieve panel makes of the first recipe, with the others loaded beside it and nothing retained.
-const readAll = ([recipe, ...others]) => readRetrieveOutput({
-    state: {process: {loadedRecipes: Object.fromEntries([recipe, ...others].map(record => [record.id, record]))}},
-    recipeId: recipe.id,
+// The read a Retrieve panel makes of the first recipe, with the others loaded beside it and nothing retained. What a
+// recipe's evidence lifecycle published on it was observed on a basis current for this read, and the asset it was read
+// from was just checked.
+const readAll = ([recipe, ...others]) => {
+    const owners = {}
+    const records = [recipe, ...others].map(record => observedNow(record, owners))
+    return readRetrieveOutput({
+        state: {process: {
+            recipeListing: CURRENT_LISTING,
+            loadedRecipes: Object.fromEntries(records.map(record => [record.id, record])),
+            assetEvidence: {generation: 0, assets: Object.fromEntries(records.flatMap(checkedAssets))}
+        }},
+        recipeId: recipe.id,
+        heldFor: () => null,
+        evidenceOwnerOf: id => owners[id] || null
+    })
+}
+
+const observedNow = (record, owners) => {
+    const evidence = record.ui?.sourceEvidence
+    if (!evidence) {
+        return record
+    }
+    const observationId = `observation-${record.id}`
+    owners[record.id] = {
+        observationId,
+        basis: {key: evidence.sourceKey, selections: declaredSelections(record), earthEngineGeneration: 0, refreshed: 0, dependencies: []},
+        observes: true,
+        records: 'COMPLETE'
+    }
+    return {...record, ui: {...record.ui, sourceEvidence: {...evidence, observationId}}}
+}
+
+const checkedAssets = record => {
+    const evidence = record.ui?.sourceEvidence
+    const assetId = evidence?.segments?.typedBands?.assetId || evidence?.historicalStats?.assetId
+    return assetId ? [[assetId, {version: 'v1', checkedAt: Date.now(), changedAt: null, failure: null}]] : []
+}
+
+// What the recipe's output is described as, whatever its sources are found to be, with the others loaded beside it.
+const described = (recipe, ...others) => readRecipeOutput({
+    recipe,
+    product: {name: 'IMAGE_OUTPUT'},
+    graph: buildMapDependencyGraph({recipe, loadedRecipes: Object.fromEntries([recipe, ...others].map(record => [record.id, record]))}),
     heldFor: () => null
 })
 

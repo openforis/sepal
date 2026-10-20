@@ -5,6 +5,7 @@ import {legacy_createStore as createStore} from 'redux'
 import {firstValueFrom, of, Subject, throwError} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
@@ -13,10 +14,18 @@ import {initStore} from '~/store'
 // Mounts the real lifecycle and observation against a Redux store; remote reads and presentation are faked.
 const assetMetadata$ = vi.fn()
 const loadRecipe$ = vi.fn()
-vi.mock('~/apiRegistry', () => ({default: {
-    gee: {assetMetadata$: (...args) => assetMetadata$(...args)},
-    recipe: {load$: (...args) => loadRecipe$(...args)}
-}}))
+// The token Earth Engine reports for every asset: the update time the asset store lists for it.
+const versions = vi.hoisted(() => ({current: 0}))
+vi.mock('~/apiRegistry', async () => {
+    const {of} = await import('rxjs')
+    return {default: {
+        gee: {
+            assetMetadata$: (...args) => assetMetadata$(...args),
+            assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: `v${versions.current}`}))})
+        },
+        recipe: {load$: (...args) => loadRecipe$(...args)}
+    }}
+})
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
@@ -35,7 +44,7 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
 
 const {SourceEvidenceSync} = await import('../sourceEvidenceSync')
 const {changeAlertsObservation} = await import('./referenceObservation')
-const {baseBandsOf} = await import('./referenceEvidence')
+const {baseBandsOf} = await import('../segmentEvidence')
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -68,7 +77,7 @@ describe('selecting a recipe as the reference', () => {
         sync({selection})
 
         expect(reference()).toEqual(selection)
-        expect(baseBandsOf(alertsRecipe()).map(({name}) => name)).toEqual(['red', 'nir'])
+        expect(baseBandsOf(alertsRecipe(), PRIMARY_IMAGE).map(({name}) => name)).toEqual(['red', 'nir'])
     })
 
     it('does not reset the monitoring configuration the user has chosen', () => {
@@ -97,7 +106,7 @@ describe('the producer of a selected recipe', () => {
 
         expect(sources().dataSets).toEqual({SENTINEL_1: ['SENTINEL_1']})
         expect(alertsRecipe().model.options).toEqual({corrections: []})
-        expect(baseBandsOf(alertsRecipe()).map(({name}) => name)).toEqual(['sentinel_1'])
+        expect(baseBandsOf(alertsRecipe(), PRIMARY_IMAGE).map(({name}) => name)).toEqual(['sentinel_1'])
     })
 
     it('is the asset a wrapper leads to, whose exported configuration seeds monitoring', async () => {
@@ -112,7 +121,7 @@ describe('the producer of a selected recipe', () => {
 
         expect(sources().dataSets).toEqual({SENTINEL_1: ['SENTINEL_1']})
         expect(alertsRecipe().model.options).toEqual({corrections: ['SPECKLE']})
-        expect(baseBandsOf(alertsRecipe()).map(({name}) => name)).toEqual(['red'])
+        expect(baseBandsOf(alertsRecipe(), PRIMARY_IMAGE).map(({name}) => name)).toEqual(['red'])
         expect(reference()).toEqual({type: 'RECIPE_REF', id: WRAPPED_ASSET})
     })
 })
@@ -262,7 +271,7 @@ describe('selecting a segments asset as the reference', () => {
         assetMetadata$
             .mockReturnValueOnce(of(assetMetadata({recipe_sources: JSON.stringify(exported)})))
             .mockReturnValue(of(assetMetadata({recipe_sources: JSON.stringify({dataSets: {LANDSAT: ['NIR']}})})))
-        const recipe = {model: {reference: {type: 'ASSET', id: SEGMENTS_ASSET}}}
+        const recipe = {type: 'CHANGE_ALERTS', model: {reference: {type: 'ASSET', id: SEGMENTS_ASSET}}}
 
         const evidence = await firstValueFrom(changeAlertsObservation.observe$({
             recipe, graph: {recipes: [], edges: []}, recipesById: new Map()
@@ -313,12 +322,11 @@ const settled = () => act(async () => {})
 
 const assetStates = properties => assetMetadata$.mockReturnValue(of(assetMetadata(properties)))
 
-let assetVersion = 0
 const reExport = () => act(async () => store.dispatch({
     type: 'ASSET_RE_EXPORTED',
     reduce: state => ({
         ...state,
-        assets: {user: [{id: SEGMENTS_ASSET, updateTime: `v${++assetVersion}`}], other: []}
+        assets: {user: [{id: SEGMENTS_ASSET, updateTime: `v${++versions.current}`}], other: []}
     })
 }))
 
@@ -373,7 +381,7 @@ const sync = ({selection, sources = {}}) => {
             },
             recipes: [],
             projects: [],
-            tabs: []
+            tabs: [{id: ALERTS}]
         },
         assets: {user: [{id: SEGMENTS_ASSET, updateTime: 'v0'}], other: []}
     }

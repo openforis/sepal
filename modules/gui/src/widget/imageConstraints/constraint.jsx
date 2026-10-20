@@ -15,10 +15,16 @@ import {isValidPropertyEqualityValue, propertyEqualityValue} from './propertyEqu
 
 const fields = {
     image: new Form.Field()
-        .notBlank(),
+        .notBlank()
+        .predicate((image, {references}) => !references || !!references[image], 'widget.imageConstraints.image.notOffered'),
     band: new Form.Field()
         .skip((_value, {property}) => property)
-        .notBlank(),
+        .notBlank()
+        .predicate(
+            (band, {image, references}) => !references?.[image] || references[image].includes(band),
+            'widget.imageConstraints.band.notOffered',
+            ({band}) => ({band})
+        ),
     property: new Form.Field()
         .skip((_value, {band}) => band)
         .notBlank(),
@@ -56,6 +62,9 @@ const fields = {
     fromInclusive: new Form.Field(),
     toInclusive: new Form.Field(),
     selectedClasses: new Form.Field(),
+    // Transient UI-only field: where the caller asks for references to be checked (`checkReferences`), the bands of each
+    // image offered, by id, so a constraint naming an image or band no longer offered is invalid. Never persisted.
+    references: new Form.Field(),
     // Transient UI-only field: the type of the currently selected property ('number'/'string'/'unknown'),
     // derived from the images schema (see syncPropertyType). Drives type-aware equality validation and
     // conversion. Never written into the persisted constraint.
@@ -83,9 +92,10 @@ class _Constraint extends React.Component {
         label: msg('widget.imageConstraints.operator.oneOf.label')
     }
 
+    // Collapsed, marked as its form judges it, saying why on its title; expanded, its fields say it.
     render() {
-        const {selected, onClick, onRemove} = this.props
-        const {imageSpec} = this.state
+        const {selected, onClick, onRemove, sourceError} = this.props
+        const {imageSpec, invalid} = this.state
         return (
             <ListItem
                 expanded={selected}
@@ -94,6 +104,7 @@ class _Constraint extends React.Component {
                 onClick={onClick}>
                 <CrudItem
                     title={imageSpec ? imageSpec.description : msg('widget.imageConstraints.image.notSelected')}
+                    error={!selected ? (invalid ? this.errorMessage() : sourceError) : null}
                     description={selected ? null : this.toDescription()}
                     unsafeRemove
                     onRemove={() => onRemove()}>
@@ -103,11 +114,11 @@ class _Constraint extends React.Component {
     }
 
     renderExpansion() {
-        const {images, inlineValue, inputs: {bit, operator}} = this.props
+        const {inlineValue, inputs: {bit, operator}} = this.props
         if (inlineValue && !this.applyOnBand()) {
             return (
                 <Layout className={styles.compactConstraint}>
-                    {images.length !== 1 ? this.renderImage() : null}
+                    {this.showImage() ? this.renderImage() : null}
                     <Layout type='horizontal-nowrap' spacing='compact' className={styles.comparison}>
                         {this.renderProperty()}
                         {this.renderOperator()}
@@ -118,7 +129,7 @@ class _Constraint extends React.Component {
         }
         return (
             <Layout>
-                {images.length !== 1 ? this.renderImage() : null}
+                {this.showImage() ? this.renderImage() : null}
                 <Layout type='horizontal'>
                     {this.applyOnBand() ? this.renderBand() : this.renderProperty()}
                     {operator.value !== 'class' ? this.renderOperator() : null}
@@ -130,37 +141,20 @@ class _Constraint extends React.Component {
     }
 
     renderImage() {
-        const {images, inputs: {image, band, operator}} = this.props
-        const imageOptions = images.map(({id, description, bands}) => ({value: id, label: description, bands}))
+        const {images, inputs: {image}} = this.props
+        const imageOptions = images.map(({id, description, bands, properties}) => ({value: id, label: description, bands, properties}))
         return (
             <Form.Combo
                 label={msg('widget.imageConstraints.image.label')}
                 input={image}
                 options={imageOptions}
-                onChange={({bands = [], properties = []}) => {
-                    const selectDefaultBand = bands.length === 1
-                    band.set(selectDefaultBand
-                        ? bands[0].name
-                        : null)
-                    if (selectDefaultBand) {
-                        if (bands[0].type === 'categorical') {
-                            operator !== 'class' && operator.set('class')
-                        } else {
-                            operator === 'class' && operator.set('<')
-                        }
-                    }
-
-                    const selectDefaultProperty = properties.length === 1
-                    band.set(selectDefaultProperty
-                        ? properties[0].name
-                        : null)
-                }}
+                onChange={option => this.selectImage(option)}
             />
         )
     }
 
     renderBand() {
-        const {images, inputs: {image, band, bit, operator}} = this.props
+        const {images, sourceError, inputs: {image, band, bit}} = this.props
         const bitButton = (
             <Form.Buttons
                 key={'bit'}
@@ -178,37 +172,26 @@ class _Constraint extends React.Component {
                 tabIndex={-1}
             />
         )
-        const bandOptions = image.value
-            ? images
-                .find(({id}) => id === image.value).bands
-                .map(({name, type}) => ({value: name, label: name, type}))
-            : []
+        const bandOptions = (images.find(({id}) => id === image.value)?.bands || [])
+            .map(({name, type}) => ({value: name, label: name, type}))
 
         return (
             <Form.Combo
                 label={msg('widget.imageConstraints.band.label')}
                 input={band}
+                errorMessage={sourceError ? {error: sourceError} : true}
                 options={bandOptions}
                 className={styles.band}
                 buttons={[bitButton]}
-                onChange={({type}) => {
-                    if (type === 'categorical') {
-                        operator.set('class')
-                    } else {
-                        (!operator.value || operator.value === 'class') && operator.set('<')
-                    }
-                }}
+                onChange={({type}) => this.bandSelected(type)}
             />
         )
     }
 
     renderProperty() {
-        const {images, categoriesByProperty, inputs: {image, property, operator, selectedClasses}} = this.props
-        const propertyOptions = image.value
-            ? images
-                .find(({id}) => id === image.value).properties
-                .map(({name, type}) => ({value: name, label: name, type}))
-            : []
+        const {images, categoriesByProperty, inputs: {image, property}} = this.props
+        const propertyOptions = (images.find(({id}) => id === image.value)?.properties || [])
+            .map(({name, type}) => ({value: name, label: name, type}))
 
         return (
             <Form.Combo
@@ -216,18 +199,42 @@ class _Constraint extends React.Component {
                 input={property}
                 options={propertyOptions}
                 className={styles.band}
-                onChange={categoriesByProperty
-                    ? ({value}) => {
-                        selectedClasses.set([])
-                        if (this.categoricalOptions(value)) {
-                            operator.set('class')
-                        } else if (operator.value === 'class') {
-                            operator.set('=')
-                        }
-                    }
-                    : null}
+                onChange={categoriesByProperty ? ({value}) => this.propertySelected(value) : null}
             />
         )
+    }
+
+    // An image offering a single band, or a single property, has it selected, as if chosen; one offering several leaves
+    // the choice to be made. Bands and properties are chosen apart.
+    selectImage({bands = [], properties = []}) {
+        const {categoriesByProperty, inputs: {band, property}} = this.props
+        const [defaultBand] = bands.length === 1 ? bands : []
+        const [defaultProperty] = properties.length === 1 ? properties : []
+        band.set(defaultBand ? defaultBand.name : null)
+        property.set(defaultProperty ? defaultProperty.name : null)
+        defaultBand && this.bandSelected(defaultBand.type)
+        defaultProperty && categoriesByProperty && this.propertySelected(defaultProperty.name)
+    }
+
+    // A categorical band is compared by class, any other by value.
+    bandSelected(type) {
+        const {inputs: {operator}} = this.props
+        if (type === 'categorical') {
+            operator.set('class')
+        } else {
+            (!operator.value || operator.value === 'class') && operator.set('<')
+        }
+    }
+
+    // A property with categories is compared by class, any other by value.
+    propertySelected(name) {
+        const {inputs: {operator, selectedClasses}} = this.props
+        selectedClasses.set([])
+        if (this.categoricalOptions(name)) {
+            operator.set('class')
+        } else if (operator.value === 'class') {
+            operator.set('=')
+        }
     }
 
     renderOperator() {
@@ -360,6 +367,7 @@ class _Constraint extends React.Component {
             : constraint[field] ? [constraint[field]] : []
             
         const {constraint} = this.props
+        this.syncReferences()
         image.set(constraint.image)
         band.set(constraint.band)
         property.set(constraint.property)
@@ -391,9 +399,24 @@ class _Constraint extends React.Component {
         if (this.syncPropertyType()) {
             return
         }
+        this.syncReferences()
         this.validate()
         this.updateConstraint()
         this.putImageSpecInState()
+    }
+
+    syncReferences() {
+        const {images, checkReferences, inputs: {references}} = this.props
+        references.set(checkReferences
+            ? Object.fromEntries(images.map(({id, bands = []}) => [id, bands.map(({name}) => name)]))
+            : undefined)
+    }
+
+    // A single image goes without saying, unless the constraint names one no longer offered: then it is shown, refused,
+    // to be replaced.
+    showImage() {
+        const {images, checkReferences, inputs: {image}} = this.props
+        return images.length !== 1 || (checkReferences && !images.some(({id}) => id === image.value))
     }
 
     // Mirror the selected property's schema type into the transient `propertyType` field, so equality
@@ -431,6 +454,12 @@ class _Constraint extends React.Component {
         const {images, inputs: {image}} = this.props
         const imageSpec = images.find(({id}) => id === image.value)
         this.setState(({imageSpec: prevSpec}) => _.isEqual(prevSpec, imageSpec) ? null : {imageSpec})
+    }
+
+    // The first of its fields' errors.
+    errorMessage() {
+        const {form, inputs} = this.props
+        return form.getErrorMessage(Object.values(inputs)) || null
     }
 
     validate() {

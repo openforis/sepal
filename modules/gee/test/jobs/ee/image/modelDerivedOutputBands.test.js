@@ -6,7 +6,7 @@ import {firstValueFrom, of, throwError} from 'rxjs'
 // The bands Regression, Unsupervised Classification, Index Change, Class Change, Classification and Remapping build,
 // through the REAL imageFactory, asset, covariate, training, classification, clustering, change and remapping code,
 // against their shared declarations. Only Earth Engine is substituted: an image is its bands' names and
-// dimensionality, and an image operation not modelled here fails. Objects without bands answer anything.
+// dimensionality, and an image operation not modelled here fails. Objects without bands answer anything. Run directly by the Node test runner.
 
 const ASSETS = {
     'users/x/covariates': ['red', 'nir', 'swir1'],
@@ -261,7 +261,9 @@ const remapping = ({values = [1, 2]} = {}) => ({
     }
 })
 
-const declared = recipe => recipeType(recipe.type).imageOutput.describe({recipe}).bands
+// What the declaration states with every input providing what it selects: those that read their inputs are refused only
+// for what one lacks, which is not what this compares.
+const declared = recipe => recipeType(recipe.type).imageOutput.describe({recipe, inputs: () => [], describedInputs: () => []}).bands
 
 for (const [type, recipe] of [
     ['Regression', REGRESSION],

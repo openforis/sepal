@@ -10,6 +10,7 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
 
+import {collectionClassifierRequirements} from '../collectionClassifierRequirements'
 import {bandPresentation, mapProducts} from './bands'
 import {dateRange, defaultModel, RecipeActions} from './ccdcRecipe'
 import {CcdcToolbar} from './panels/ccdcToolbar'
@@ -86,6 +87,7 @@ export default () => ({
     components: {
         recipe: CCDC
     },
+    sourceRequirements: collectionClassifierRequirements({id: 'sources', label: 'process.ccdc.panel.sources.button'}),
     imageSource: false,
     describeSegments$,
     getDateRange: recipe => dateRange(recipe.model.dates),

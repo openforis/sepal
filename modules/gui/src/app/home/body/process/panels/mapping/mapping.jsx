@@ -2,7 +2,12 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {reconcileConstraintInputs} from '~/app/home/body/process/inputImages'
+import {OutputCandidate} from '~/app/home/body/process/recipe/outputCandidate'
+import {constraintSourceErrors, constraintSourceRequirement} from '~/app/home/body/process/recipe/remapping/remappingRequirements'
+import {withItemProblems} from '~/app/home/body/process/recipe/selectedSource'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
@@ -58,15 +63,24 @@ class _Mapping extends React.Component {
     renderContent() {
         const {legendEntries} = this.props
         return (
-            <Layout type='vertical' spacing='tight'>
+            <Layout type='vertical' spacing='tight' shrink>
                 {legendEntries.map(entry => this.renderEntryMapping(entry))}
             </Layout>
         )
     }
 
     renderEntryMapping(entry) {
-        const {activator: {activatables}} = this.props
+        const {activator: {activatables}, itemProblems = {}} = this.props
+        const problem = itemProblems[entry.id]
         const onClick = () => activatables[`entryMapping-${entry.id}}`].activate()
+        const legendItem = (
+            <LegendItem
+                color={entry.color}
+                value={entry.value}
+                label={entry.label}
+                onClick={onClick}
+            />
+        )
         return (
             <ListItem
                 key={entry.id}
@@ -75,21 +89,15 @@ class _Mapping extends React.Component {
                 expansionClickable
                 expanded>
                 <CrudItem
-                    content={
-                        <LegendItem
-                            color={entry.color}
-                            value={entry.value}
-                            label={entry.label}
-                            onClick={onClick}
-                        />
-                    }
+                    content={legendItem}
+                    error={problem}
                 />
             </ListItem>
         )
     }
 
     renderMappingOverview({id, color, value, label, constraints = [], booleanOperator}) {
-        const {recipeNameById, inputImagery} = this.props
+        const {recipeNameById, inputImagery, recipeId, sourceRuntime} = this.props
         const images = inputImagery.map(inputImage => {
             const id = inputImage.imageId
             const description = inputImage.type === 'RECIPE_REF'
@@ -113,6 +121,12 @@ class _Mapping extends React.Component {
                     booleanOperator={booleanOperator}
                     constraints={constraints}
                     applyOn={'bands'}
+                    checkReferences
+                    createCandidate={onChange => new OutputCandidate({
+                        recipeId, sourceRuntime, declaration: constraintSourceRequirement,
+                        valuesToModel: constraints => ({entryId: id, constraints}), onChange
+                    })}
+                    candidateErrors={(diagnostics, constraints) => constraintSourceErrors(diagnostics, constraints, inputImagery)}
                     onChange={({constraints, booleanOperator}) => this.updateConstraints(id, constraints, booleanOperator)}
                 />
                 {constraints.length
@@ -139,22 +153,20 @@ class _Mapping extends React.Component {
     }
 
     updateConstraints(id, constraints, booleanOperator) {
-        const {recipeActionBuilder} = this.props
+        const {recipeActionBuilder, inputImagery} = this.props
         recipeActionBuilder('UPDATE_LEGEND_ENTRY_CONSTRAINTS', {constraints, booleanOperator})
-            .assign(['model.legend.entries', {id}], {constraints, booleanOperator})
+            .assign(['model.legend.entries', {id}], {constraints: reconcileConstraintInputs(constraints, inputImagery), booleanOperator})
             .dispatch()
     }
 
 }
 
-const additionalPolicy = () => ({
-    _: 'disallow'
-})
-
 export const Mapping = compose(
     _Mapping,
     connect(mapStateToProps),
-    recipeFormPanel({id: 'mapping', mapRecipeToProps, additionalPolicy}),
+    withItemProblems('mapping'),
+    recipeFormPanel({id: 'mapping', mapRecipeToProps}),
+    withSourceRuntime(),
     withActivators()
 )
 

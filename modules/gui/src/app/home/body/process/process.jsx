@@ -1,11 +1,12 @@
 import _ from 'lodash'
 import React from 'react'
 
-import {Recipe} from '~/app/home/body/process/recipeContext'
+import {Recipe, recipeActivationPath} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {select} from '~/store'
 import {msg} from '~/translate'
-import {withActivators} from '~/widget/activation/activator'
+import {withActivationContext} from '~/widget/activation/activationContext'
+import {activateIn} from '~/widget/activation/activator'
 import {withLeaveAlert} from '~/widget/leaveAlert'
 import {Notifications} from '~/widget/notifications'
 import {Tabs} from '~/widget/tabs/tabs'
@@ -89,15 +90,16 @@ class _Process extends React.Component {
         )
     }
 
+    // The dialog is about the recipe closed: what holds it back is that recipe's open panels, not another's.
     onCloseTab(tab, close) {
-        const {activator: {activatables: {closeRecipeDialog}}} = this.props
+        const {activationContext: {pathList}} = this.props
         const recipe = {
             ...select(recipePath(tab.id)),
             title: tab.title
         }
         const unsaved = recipe.ui && recipe.ui.unsaved && recipe.ui.initialized
         if (unsaved) {
-            closeRecipeDialog.activate({recipe})
+            activateIn(recipeActivationPath(pathList, tab.id), 'closeRecipeDialog', {recipe})
         } else {
             close()
         }
@@ -134,7 +136,7 @@ const mapStateToLeaveAlert = () => {
 
 const ProcessContent = compose(
     _Process,
-    withActivators('closeRecipeDialog'),
+    withActivationContext(),
     withLeaveAlert(mapStateToLeaveAlert)
 )
 

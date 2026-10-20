@@ -20,13 +20,19 @@ import {initStore} from '~/store'
 
 const assetMetadata$ = vi.fn()
 const loadRecipe$ = vi.fn()
-vi.mock('~/apiRegistry', () => ({default: {
-    gee: {assetMetadata$: (...args) => assetMetadata$(...args)},
-    recipe: {load$: (...args) => loadRecipe$(...args)}
-}}))
+// The token Earth Engine reports for every asset: the update time the asset store lists for it.
+const versions = vi.hoisted(() => ({current: 0}))
+vi.mock('~/apiRegistry', async () => {
+    const {of} = await import('rxjs')
+    return {default: {
+        gee: {
+            assetMetadata$: (...args) => assetMetadata$(...args),
+            assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: `v${versions.current}`}))})
+        },
+        recipe: {load$: (...args) => loadRecipe$(...args)}
+    }}
+})
 vi.mock('~/translate', () => ({msg: key => key}))
-const notifyError = vi.fn()
-vi.mock('~/widget/notifications', () => ({Notifications: {error: (...args) => notifyError(...args)}}))
 vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: () => ({})}))
 
@@ -47,7 +53,6 @@ let root, container, store
 
 beforeEach(() => {
     assetMetadata$.mockReset()
-    notifyError.mockReset()
     loadRecipe$.mockReset().mockReturnValue(throwError(() => new Error('Recipe not found')))
 })
 
@@ -120,36 +125,15 @@ describe('the producer of the selection already made', () => {
     })
 })
 
+// That it cannot be read is said in REF, as its section's status (sourceRequirement.test.jsx).
 describe('a source that cannot be read', () => {
-    // The options a monitoring run would use go on reading exactly as they did, so a read that seeded
-    // nothing is indistinguishable from one that had nothing to seed unless it is said out loud.
-    it('leaves the options as the user left them, and says the read failed', async () => {
+    it('leaves the options as the user left them', async () => {
         assetMetadata$.mockReturnValue(throwError(() => new Error('asset unavailable')))
 
         sync({selection: recipeSelection(WRAPPED_ASSET), options: {minObservations: 42}})
         await settled()
 
         expect(options()).toEqual({minObservations: 42})
-        expect(reportedFailures()).toEqual(['process.baytsAlerts.reference.recipe.loadError'])
-    })
-
-    // The reference recipe itself is gone, so the failure is the dependency read rather than the
-    // observation - which never runs at all.
-    it('says so when the selected recipe cannot be loaded', async () => {
-        sync({selection: recipeSelection('deleted-1'), options: {minObservations: 42}})
-        await settled()
-
-        expect(options()).toEqual({minObservations: 42})
-        expect(reportedFailures()).toEqual(['process.baytsAlerts.reference.recipe.loadError'])
-    })
-
-    it('says which asset failed when an asset was what was selected', async () => {
-        assetMetadata$.mockReturnValue(throwError(() => new Error('asset unavailable')))
-
-        sync({selection: {type: 'ASSET', id: STATS_ASSET}, options: {minObservations: 42}})
-        await settled()
-
-        expect(reportedFailures()).toEqual(['process.baytsAlerts.reference.asset.loadError'])
     })
 
     // A read that failed says which source was asked, not what was found: the first answer about this
@@ -196,23 +180,9 @@ describe('a response for a selection that has been replaced', () => {
 
         expect(options()).toMatchObject({orbits: ['ASCENDING'], minObservations: 20})
     })
-
-    it('announces no failure about the selection the recipe has moved off', async () => {
-        const held = new Subject()
-        assetMetadata$.mockReturnValue(held)
-        sync({selection: recipeSelection(WRAPPED_ASSET)})
-        await settled()
-
-        await update(ALERTS, {reference: recipeSelection(HISTORICAL)})
-        await act(async () => held.error(new Error('asset unavailable')))
-
-        expect(reportedFailures()).toEqual([])
-    })
 })
 
 const settled = () => act(async () => {})
-
-const reportedFailures = () => notifyError.mock.calls.map(([{message}]) => message)
 
 const recipeSelection = id => ({type: 'RECIPE_REF', id})
 
@@ -220,12 +190,11 @@ const assetStates = properties =>
     assetMetadata$.mockReturnValue(of({bandNames: ['VV_stdDev'], properties}))
 
 // The asset store's version is what tells the evidence lifecycle an asset has moved on.
-let assetVersion = 0
 const reExport = () => act(async () => store.dispatch({
     type: 'ASSET_RE_EXPORTED',
     reduce: state => ({
         ...state,
-        assets: {user: [{id: STATS_ASSET, updateTime: `v${++assetVersion}`}], other: []}
+        assets: {user: [{id: STATS_ASSET, updateTime: `v${++versions.current}`}], other: []}
     })
 }))
 
@@ -282,7 +251,7 @@ const sync = ({selection, options = {}}) => {
             recipes: [],
             projects: [],
             // No open tab: autosave is triggered from there and is not what synchronization exercises.
-            tabs: []
+            tabs: [{id: ALERTS}]
         },
         assets: {user: [{id: STATS_ASSET, updateTime: 'v0'}], other: []}
     }

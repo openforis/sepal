@@ -10,7 +10,7 @@ import {withKnownIdentities} from './visualizationMatching'
 //
 // A recipe that declares it preserves an input's band mapping and values has that input's CURRENT presets, not the
 // ones copied into its model when the input was selected; its bands are its declaration's to describe. This reads
-// what the sync component observed, and is the only reader: the types that inherit answer from it through their own
+// what its editor's evidence watch observed (evidenceRegistry.js), and is the only reader: the types that inherit answer from it through their own
 // helpers.
 //
 // Runtime only. `recipe.ui` is stripped before persisting, so nothing here is written into a saved recipe,
@@ -39,6 +39,14 @@ export const inheritedSourceKey = recipe =>
 // observation even when its source IDs are unchanged.
 export const declaredSelections = recipe =>
     directSourceEdges(recipe).edges.map(({path}) => _.get(recipe, path))
+
+// The edge a recipe's type declares for the source selected in a role, and the reference on it: null where the role is
+// unfilled or holds nothing the declaration reads as a reference.
+export const sourceEdgeOf = (recipe, role) =>
+    directSourceEdges(recipe).edges.find(edge => edge.role === role) || null
+
+export const selectedSourceOf = (recipe, role) =>
+    sourceEdgeOf(recipe, role)?.reference || null
 
 export const currentSourceEvidence = recipe => {
     const evidence = recipe?.ui?.sourceEvidence

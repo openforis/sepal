@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -10,6 +11,7 @@ import {mathOptions} from '~/widget/codeEditor/mathOptions'
 import {Form} from '~/widget/form'
 import {PanelSections} from '~/widget/panelSections'
 
+import {newVariableName} from '../../variableName'
 import styles from './calculation.module.css'
 import {ExpressionSection} from './expressionSection'
 import {FunctionSection} from './functionSection'
@@ -48,6 +50,7 @@ const fields = {
         .notBlank(),
     defaultBandName: new Form.Field(),
     bandName: new Form.Field(),
+    bandId: new Form.Field(),
     usedBands: new Form.Field()
         .notEmpty(),
     includedBands: new Form.Field()
@@ -120,9 +123,9 @@ class _Calculation extends React.Component {
     }
 
     setName() {
-        const {calculations, inputs: {name}} = this.props
+        const {images, calculations, inputs: {name}} = this.props
         if (!name.value) {
-            name.set(`c${calculations.length + 1}`)
+            name.set(newVariableName('c', {images, calculations}))
         }
     }
 
@@ -156,6 +159,7 @@ const modelToValues = model => {
         reducer: model.reducer,
         expression: model.expression,
         bandName: model.bandName,
+        bandId: model.type === 'FUNCTION' ? model.includedBands?.[0]?.id : undefined,
         bandRenameStrategy: model.bandRenameStrategy,
         regex: model.regex,
         bandRename: model.bandRename,
@@ -185,7 +189,7 @@ const valuesToModel = values => {
 export const updateIncludedBands = values =>
     makeUnique(renameBands(values))
 
-const renameBands = ({imageId, name, includedBands, defaultBandName, bandName, bandRenameStrategy, regex, bandRename}) => {
+const renameBands = ({imageId, name, includedBands, defaultBandName, bandName, bandId, bandRenameStrategy, regex, bandRename}) => {
     if (includedBands.length === 1) {
         return [{...includedBands[0], userBandName: bandName, name: bandName || defaultBandName || includedBands[0].name}]
     } else if (bandRenameStrategy === 'PREFIX') {
@@ -195,8 +199,9 @@ const renameBands = ({imageId, name, includedBands, defaultBandName, bandName, b
     } else if (bandRenameStrategy === 'REGEX') {
         return includedBands.map(band => ({...band, name: band.name.replace(new RegExp(regex), bandRename)}))
     } else {
+        // A FUNCTION calculation's one band keeps the identity it was saved with, which its output follows.
         return [{
-            id: uuid(),
+            id: bandId || uuid(),
             imageId: imageId,
             imageName: name,
             name: bandName || defaultBandName,
@@ -206,28 +211,23 @@ const renameBands = ({imageId, name, includedBands, defaultBandName, bandName, b
     }
 }
 
+// A name an earlier band already has is given the suffix after the highest `<name>_<n>` anywhere in the list - generated
+// names included - so no two bands share a name, however many repeat it and whatever suffixed names the list holds.
+// Suffixes are counted exactly, however long.
 const makeUnique = bands => {
-    return bands.reduce(
-        (acc, band, i) => {
-            const others = acc.slice(0, i)
-            const toUnique = () => {
-                const max = Math.max(...acc.map(o => {
-                    const match = new RegExp(`${band.name}_(\\d+)`).exec(o)
-                    return match ? parseInt(match[1]) : 0
-                }))
-                return `${band.name}_${max + 1}`
-            }
-            const uniqueString = others.find(({name}) => name === band.name)?.name
-                ? toUnique()
-                : band.name
-            return [
-                ...others,
-                {...band, name: uniqueString},
-                ...acc.slice(i + 1),
-            ]
-        },
-        bands
-    )
+    const names = bands.map(({name}) => name)
+    return bands.map((band, index) => {
+        if (!names.slice(0, index).includes(band.name)) {
+            return band
+        }
+        const suffixed = new RegExp(`^${_.escapeRegExp(band.name)}_(\\d+)$`)
+        const highest = names
+            .map(name => suffixed.exec(name)?.[1])
+            .filter(Boolean)
+            .reduce((highest, suffix) => BigInt(suffix) > highest ? BigInt(suffix) : highest, 0n)
+        names[index] = `${band.name}_${highest + 1n}`
+        return {...band, name: names[index]}
+    })
 }
 
 const policy = () => ({_: 'allow'})

@@ -60,9 +60,9 @@
     z-index: 1;
 }
 
-.container:hover .chevron,
-.container:has(:focus-visible) .chevron,
-.coordinateInputVisible .chevron {
+.container:hover .chevron:not(:disabled),
+.container:has(:focus-visible) .chevron:not(:disabled),
+.coordinateInputVisible .chevron:not(:disabled) {
     opacity: 1;
     pointer-events: auto;
     transform: translateX(0);
@@ -96,7 +96,7 @@
 
 .chevron:disabled {
     cursor: default;
-    opacity: var(--look-disabled-opacity);
+    visibility: hidden;
 }
 
 .chevron > span {
@@ -151,7 +151,7 @@
 }
 
 @media (hover: none) {
-    .chevron {
+    .chevron:not(:disabled) {
         opacity: 1;
         pointer-events: auto;
         transform: translateX(0);

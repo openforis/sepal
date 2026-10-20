@@ -211,7 +211,7 @@ export const EditLegendPanel = compose(
     withRecipe(mapRecipeToProps),
     withMap(),
     withActivatable({
-        id: 'editLegendPanel',
+        id: ({id}) => id,
         policy,
         alwaysAllow: true
     }),

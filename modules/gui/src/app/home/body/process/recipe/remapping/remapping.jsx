@@ -1,5 +1,6 @@
 import React from 'react'
 
+import {INPUT_IMAGE} from '#sepal/recipe/source/inputImagery'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
@@ -11,6 +12,7 @@ import {initializeLayers} from '../recipeImageLayerSource'
 import {bandPresentation} from './bands'
 import {RemappingToolbar} from './panels/remappingToolbar'
 import {getDefaultModel} from './remappingRecipe'
+import {remappingInputRequirements, remappingRequirements} from './remappingRequirements'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -44,6 +46,8 @@ const Remapping = compose(
 
 export default () => ({
     id: 'REMAPPING',
+    // The images it reads that the layout shows (mapLayout/dependencyLayerSources.js).
+    dependencyLayerRoles: [INPUT_IMAGE],
     labels: {
         name: msg('process.remapping.create'),
         creationDescription: msg('process.remapping.description'),
@@ -57,5 +61,6 @@ export default () => ({
         return null
     },
     bandPresentation,
-    getPreSetVisualizations
+    getPreSetVisualizations,
+    sourceRequirements: [...remappingInputRequirements, ...remappingRequirements]
 })

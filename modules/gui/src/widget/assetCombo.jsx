@@ -70,14 +70,15 @@ class _AssetCombo extends React.Component {
         return options ? (
             <Combo
                 options={options}
-                busyMessage={(busyMessage || this.props.stream('LOAD_ASSET_METADATA').active) && msg('widget.loading')}
+                windowed
+                busyMessage={busyMessage || (this.props.stream('LOAD_ASSET_METADATA').active && msg('widget.loading'))}
                 buttons={[
                     this.renderCopyIdButton(),
                     this.renderReloadButton()
                 ]}
                 onChange={this.onChange}
                 onFilterChange={this.onFilterChange}
-                warningMessage={warningMessage || assetError ? msg('asset.failedToLoadSome') : null}
+                warningMessage={warningMessage || (assetError ? msg('asset.failedToLoadSome') : null)}
                 errorMessage={errorMessage}
                 {...otherProps}
             />
@@ -488,9 +489,11 @@ class _AssetCombo extends React.Component {
                 this.onLoading(assetId)
                 stream({
                     name: 'LOAD_ASSET_METADATA',
+                    // Given up on when another asset is chosen, which is no failure: first() would take the
+                    // early end of a cut-short load for metadata that never existed.
                     stream$: this.getMetadata$(assetId).pipe(
-                        takeUntil(this.assetChanged$),
-                        first()
+                        first(),
+                        takeUntil(this.assetChanged$)
                     ),
                     onNext: metadata => this.onLoaded(asset, metadata),
                     onError: error => this.onError(assetId, error)

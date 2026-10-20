@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {CALCULATION_REFERENCES, calculationItem} from '#sepal/recipe/bandMath/calculationReferences'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -15,6 +16,7 @@ import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 
 import {withRecipe} from '../../../../recipeContext'
+import {describeProblem} from '../../bandMathRequirements'
 import styles from './calculation.module.css'
 
 const ADD_ALL_BANDS = Symbol('addAllBands')
@@ -25,13 +27,6 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _FunctionSection extends React.Component {
-    state = {bandOptions: [], bandIds: []}
-
-    constructor(props) {
-        super(props)
-        this.updateUsedBands = this.updateUsedBands.bind(this)
-    }
-
     render() {
         return (
             <Layout type='vertical'>
@@ -92,52 +87,52 @@ class _FunctionSection extends React.Component {
     }
 
     renderBands() {
-        const {inputs: {usedBands}} = this.props
-        const {bandOptions} = this.state
-        const selected = (usedBands.value || []).map(({imageId, id}) =>
-            this.toUniqueBandId(imageId, id)
-        )
+        const groups = this.bandGroups()
         return (
             <Form.FieldSet
                 label={msg('process.bandMath.panel.calculations.form.usedBands.label')}
                 tooltip={msg('process.bandMath.panel.calculations.form.usedBands.tooltip')}>
                 <Layout type='vertical' spacing='tight'>
-                    {bandOptions.map(group => this.renderBandGroup(group, selected))}
+                    {groups.map(group => this.renderBandGroup(group))}
                 </Layout>
             </Form.FieldSet>
         )
     }
 
-    renderBandGroup(group, selected) {
-        const selectedOptions = group.options.filter(({value}) => selected.includes(value))
+    renderBandGroup(group) {
+        const {selected} = group
+        const problems = [...new Set(selected.flatMap(({problems}) => problems))]
         return (
             <ListItem
                 key={group.key || group.label}
                 expanded
-                expansion={this.renderBandSelection(selectedOptions, selected)}>
+                expansion={this.renderBandSelection(selected)}>
                 <CrudItem
                     title={group.label}
-                    inlineComponents={this.renderAddBandButton(group, selected)}
+                    error={problems.length ? problems : null}
+                    inlineComponents={this.renderAddBandButton(group)}
                     removeConfirmationLabel={msg('button.removeAll')}
-                    removeDisabled={!selectedOptions.length}
-                    onRemove={() => this.removeGroupBands(group, selected)}
+                    removeDisabled={!selected.length}
+                    onRemove={() => this.removeGroupBands(group)}
                 />
             </ListItem>
         )
     }
 
-    renderBandSelection(selectedOptions, selected) {
+    renderBandSelection(selectedOptions) {
         return (
             <ButtonGroup>
                 {selectedOptions.length
-                    ? selectedOptions.map(({value, label}) =>
+                    ? selectedOptions.map(({value, label, problems}) =>
                         <Button
                             key={value}
                             label={label}
+                            look={problems.length ? 'cancel' : 'default'}
+                            tooltip={problems.length ? problems : undefined}
                             size='small'
                             air='less'
                             icon='times'
-                            onClick={() => this.removeBand(value, selected)}
+                            onClick={() => this.removeBand(value)}
                         />
                     )
                     : <NoData message={msg('process.panels.inputImagery.form.noBands')}/>
@@ -146,7 +141,8 @@ class _FunctionSection extends React.Component {
         )
     }
 
-    renderAddBandButton(group, selected) {
+    renderAddBandButton(group) {
+        const selected = group.selected.map(({value}) => value)
         const options = group.options.filter(({value}) => !selected.includes(value))
         const comboOptions = options.length > 1
             ? [
@@ -179,8 +175,8 @@ class _FunctionSection extends React.Component {
                         allowClear
                         onCancel={onBlur}
                         onChange={({value}) => value === ADD_ALL_BANDS
-                            ? this.addBands(options, selected)
-                            : this.addBands(options.filter(option => option.value === value), selected)}
+                            ? this.addBands(options)
+                            : this.addBands(options.filter(option => option.value === value))}
                     />
                 )}
             </ButtonPopup>
@@ -242,75 +238,106 @@ class _FunctionSection extends React.Component {
         )
     }
 
-    componentDidMount() {
-        const {images, calculations, inputs: {imageId}} = this.props
-        const calculationIndex = calculations.findIndex(calculation => calculation.imageId === imageId.value)
-        const availableCalculations = calculationIndex >= 0
-            ? calculations.slice(0, calculationIndex)
-            : calculations
-        const imageOptions = images.map(image => ({
-            key: image.imageId,
-            label: image.name,
-            options: image.includedBands.map(band => ({
-                value: this.toUniqueBandId(image.imageId, band.id),
-                label: band.name,
-                band: {...band, imageId: image.imageId, imageName: image.name}
-            }))
-        }))
+    // Scope and diagnostics come from the same rule as applied readiness. Only this draft is judged here,
+    // so a different broken calculation does not prevent applying a repair.
+    referenceFacts() {
+        const {images, calculations, inputs: {imageId, name, usedBands}} = this.props
+        const draft = {imageId: imageId.value, name: name.value, type: 'FUNCTION', usedBands: usedBands.value || []}
+        const index = calculations.findIndex(calculation => calculation.imageId === draft.imageId)
+        const candidates = index < 0
+            ? [...calculations, draft]
+            : calculations.map((calculation, i) => i === index ? draft : calculation)
+        return calculationItem({images, calculations: candidates}, index < 0 ? calculations.length : index).facts
+    }
 
-        const calculationOptions = availableCalculations.map(calculation => ({
-            key: calculation.imageId,
-            label: calculation.name,
-            options: calculation.includedBands.map(band => ({
-                value: this.toUniqueBandId(calculation.imageId, band.id),
-                label: band.name,
-                band: {...band, imageId: calculation.imageId, imageName: calculation.name},
-            }))
-        }))
-        const bandOptions = [...imageOptions, ...calculationOptions]
-        this.setState({bandOptions})
+    // Available choices and selected references are separate. Selections retain their saved metadata even if
+    // their source disappears or a physical band comes back with a different internal ID.
+    bandGroups() {
+        const {images, calculations, inputs: {usedBands}} = this.props
+        const facts = this.referenceFacts()
+        const groups = facts.scope.map(({imageId, name}) => {
+            const image = [...images, ...calculations].find(image => image.imageId === imageId)
+            return {
+                key: imageId, label: name, selected: [],
+                options: (image.includedBands || []).map(band => ({
+                    value: this.bandKey({...band, imageId}),
+                    label: band.name,
+                    band: {...band, imageId, imageName: name}
+                }))
+            }
+        })
+        for (const band of usedBands.value || []) {
+            let group = groups.find(group => group.key === band.imageId)
+            if (!group) {
+                group = {key: band.imageId, label: band.imageName, options: [], selected: []}
+                groups.push(group)
+            }
+            const {diagnostic} = CALCULATION_REFERENCES.evaluate({...facts, usedBands: [band]})
+            group.selected.push({
+                value: this.bandKey(band), label: band.name,
+                problems: diagnostic?.problems.map(describeProblem) || []
+            })
+        }
+        return groups
+    }
+
+    componentDidMount() {
+        this.componentDidUpdate()
     }
 
     componentDidUpdate() {
-        const {inputs: {reducer, defaultBandName}} = this.props
+        const {inputs: {reducer, defaultBandName, usedBands}} = this.props
         if (defaultBandName.value !== reducer.value) {
             defaultBandName.set(reducer.value)
         }
+        const {diagnostic} = CALCULATION_REFERENCES.evaluate(this.referenceFacts())
+        const error = diagnostic?.problems.map(describeProblem).join('\n') || ''
+        // Standard external field feedback also blocks every form submission path. Keep the field's
+        // existing notEmpty check; clearing a reference error must not make an empty function valid.
+        if ((error || this.referenceError) && usedBands.error !== error) {
+            usedBands.setInvalid(error)
+        }
+        this.referenceError = error
     }
 
-    updateUsedBands(bandIds) {
+    componentWillUnmount() {
+        // The same form field is also used by the expression section, which supplies its own draft feedback.
+        if (this.referenceError) this.props.inputs.usedBands.setInvalid('')
+    }
+
+    addBands(options) {
         const {inputs: {usedBands}} = this.props
-        const {bandOptions} = this.state
-
-        const bands = bandOptions
-            .map(({options}) => options)
-            .flat()
-            .filter(({value}) => bandIds.includes(value))
-            .map(({band}) => band)
-        usedBands.set(bands)
-    }
-
-    addBands(options, selected) {
+        const selected = usedBands.value || []
         this.updateUsedBands([
             ...selected,
-            ...options
-                .map(({value}) => value)
-                .filter(value => !selected.includes(value))
+            ...options.filter(({value}) => !selected.some(band => this.bandKey(band) === value)).map(({band}) => band)
         ])
     }
 
-    removeBand(value, selected) {
-        this.updateUsedBands(selected.filter(selectedValue => selectedValue !== value))
+    removeBand(value) {
+        const {inputs: {usedBands}} = this.props
+        this.updateUsedBands(usedBands.value.filter(band => this.bandKey(band) !== value))
     }
 
-    removeGroupBands(group, selected) {
-        const groupBandIds = group.options.map(({value}) => value)
-        const groupBandIdSet = new Set(groupBandIds)
-        this.updateUsedBands(selected.filter(value => !groupBandIdSet.has(value)))
+    removeGroupBands(group) {
+        const {inputs: {usedBands}} = this.props
+        this.updateUsedBands(usedBands.value.filter(band => band.imageId !== group.key))
     }
 
-    toUniqueBandId(imageId, bandId) {
-        return `${imageId}|${bandId}`
+    updateUsedBands(bands) {
+        const {inputs: {usedBands}} = this.props
+        // Selection changes have always followed configured input/calculation band order, which matters for
+        // first/last. Sort the retained objects instead of rebuilding them from choices, keeping their metadata.
+        // Missing references follow available ones in their existing relative order; opening does not reorder.
+        const available = this.referenceFacts().scope.flatMap(({imageId, bands}) =>
+            bands.map(name => this.bandKey({imageId, name})))
+        const order = new Map(available.map((key, index) => [key, index]))
+        const position = band => order.get(this.bandKey(band)) ?? available.length
+        usedBands.set([...bands].sort((a, b) => position(a) - position(b)))
+    }
+
+    bandKey({imageId, name}) {
+        return JSON.stringify([imageId, name])
     }
 
 }

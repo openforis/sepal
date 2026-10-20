@@ -18,8 +18,8 @@ import {ListItem} from '~/widget/listItem'
 import {Panel} from '~/widget/panel/panel'
 import {ScrubControl} from '~/widget/scrubControl'
 
-import {getImageLayerSource} from '../body/process/imageLayerSourceRegistry'
 import {assetDisplayLabel} from '../body/process/mapLayout/assetLabel'
+import {layerSourceDescription} from '../body/process/mapLayout/layerSourceNames'
 import {recipePath} from '../body/process/recipe'
 import {withRecipe} from '../body/process/recipeContext'
 import {withLayers} from '../body/process/withLayers'
@@ -99,7 +99,7 @@ class _MapAreaMenuPanel extends React.Component {
         const {imageLayer} = areas[area]
 
         const source = imageLayerSources.find(({id}) => id === imageLayer.sourceId)
-        const {description} = getImageLayerSource({recipe, source})
+        const description = layerSourceDescription({recipe, source})
         return (
             <div>{description}</div>
         )
@@ -510,7 +510,7 @@ class _MapAreaMenu extends React.Component {
         const {imageLayer} = areas[area]
 
         const source = imageLayerSources.find(({id}) => id === imageLayer.sourceId)
-        const {description} = getImageLayerSource({recipe, source})
+        const description = layerSourceDescription({recipe, source})
         return (
             <CrudItem title={msg(`imageLayerSources.${source.type}.label`)} description={description}/>
         )

@@ -9,18 +9,19 @@ import styles from './inputImage.module.css'
 
 export class ImageForm extends Component {
     state = {errorBandCleared: true}
+    // The source the bands held describe: the saved one on opening, until another is loaded.
+    bandsSource = this.props.input?.value
 
     render() {
-        const {input, inputComponent, filter, inputs: {bands}} = this.props
+        const {input, inputComponent, filter, labelButtons} = this.props
         return (
             <Layout>
                 <div ref={this.element} className={styles.inputComponent}>
                     {React.createElement(inputComponent, {
                         input,
                         filter,
-                        onLoading: () => {
-                            bands.set(undefined)
-                        },
+                        labelButtons,
+                        onLoading: id => this.onLoading(id),
                         onLoaded: ({id, bands, metadata, visualizations}) => this.onLoaded(id, bands, metadata, visualizations)
                     })}
                 </div>
@@ -38,6 +39,16 @@ export class ImageForm extends Component {
 
     update() {
 
+    }
+
+    // The bands of a source being replaced are cleared, so none are applied under another. Reloading the source they
+    // describe, as opening a saved recipe does, replaces nothing: clearing them would mark the panel as edited.
+    onLoading(id) {
+        const {inputs: {bands}} = this.props
+        if (id !== this.bandsSource) {
+            this.bandsSource = undefined
+            bands.set(undefined)
+        }
     }
 
     // What the source has now, matched against what the form holds. Three things govern whether it is
@@ -59,6 +70,7 @@ export class ImageForm extends Component {
         if (!id || id !== input.value) {
             return
         }
+        this.bandsSource = id
         const identified = withKnownIdentities(loadedVisualizations, visualizations.value)
         if (!form.isDirty()
             && _.isEqual(bands.value, loadedBands)
@@ -76,5 +88,6 @@ ImageForm.propTypes = {
     filter: PropTypes.func,
     input: PropTypes.object,
     inputComponent: PropTypes.any,
-    inputs: PropTypes.any
+    inputs: PropTypes.any,
+    labelButtons: PropTypes.array
 }

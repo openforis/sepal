@@ -20,9 +20,16 @@ const submitted = vi.hoisted(() => [])
 const geeReads = vi.hoisted(() => [])
 // What Earth Engine answers for a band request, where the scenario needs one observed.
 const observed = vi.hoisted(() => ({answer: null}))
+const listed = vi.hoisted(() => ({recipes: []}))
 
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
+        assetVersions$: ({ids}) => ({
+            subscribe: ({next}) => {
+                next({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
+                return {unsubscribe: () => {}}
+            }
+        }),
         bands$: args => {
             geeReads.push(args)
             const answer = observed.answer?.(args)
@@ -37,7 +44,11 @@ vi.mock('~/apiRegistry', () => ({default: {
             return of({bandNames: [], properties: {}})
         }
     },
-    recipe: {load$: id => throwError(() => new Error(`Unexpected recipe load: ${id}`))},
+    recipe: {
+        load$: id => throwError(() => new Error(`Unexpected recipe load: ${id}`)),
+        // Storage lists what the session lists: nothing is saved elsewhere while a panel is open here.
+        loadAll$: () => of(listed.recipes)
+    },
     tasks: {
         submit$: task => {
             submitted.push(task)
@@ -347,7 +358,7 @@ describe('retrieving from a Classification whose classifier changes', () => {
     })
 
     it('drops the regression SVM does not provide, keeping the class, which it submits', async () => {
-        await open({recipes: [saved], id: CLASSIFICATION.id, Panel: ClassificationRetrieve})
+        await open({recipes: [saved, MOSAIC], id: CLASSIFICATION.id, Panel: ClassificationRetrieve})
 
         await toSvm()
 
@@ -471,13 +482,11 @@ describe('what makes the panel resolve again', () => {
         expect(geeReads).toHaveLength(reads)
     })
 
-    it('withholds them the moment the model changes, blocks retrieval and asks again', async () => {
+    it('withholds them the moment its source\'s model changes, blocks retrieval and asks again', async () => {
         const reads = await resolved()
         const answer = answering()
 
-        await editRecipe(MASKED_CCDC.id, {
-            model: {...MASKED_CCDC.model, imageMask: {type: 'RECIPE_REF', id: CCDC.id, revised: true}}
-        })
+        await editRecipe(CCDC.id, {model: {...CCDC.model, revised: true}})
 
         expect(offers('red_coefs')).toBe(false)
         expect(geeReads.length).toBeGreaterThan(reads)
@@ -658,7 +667,7 @@ describe.each([
     it(`exports its ${band} band to Earth Engine under ${policy}, reading nothing`, async () => {
         const masked = maskingOver(source())
 
-        await open({recipes: [masked, source()], id: masked.id})
+        await open({recipes: [masked, source(), MOSAIC, CLASSIFICATION], id: masked.id})
         await click(band)
         await click('process.retrieve.form.destination.GEE')
         await click('process.retrieve.apply')
@@ -853,14 +862,15 @@ const MASKED_ASSET = {
     ui: {}
 }
 
-const COVARIATES = {imageId: 'image-1', type: 'ASSET', id: 'users/x/covariates'}
+// The imagery a model is fit to, described from its configuration without reading Earth Engine.
+const MODEL_IMAGERY = {imageId: 'image-1', type: 'RECIPE_REF', id: MOSAIC.id}
 
 const REGRESSION = {
     id: 'regression-1',
     type: 'REGRESSION',
     model: {
-        inputImagery: {images: [COVARIATES]},
-        trainingData: {dataSets: [{type: 'EE_TABLE', referenceData: []}]}
+        inputImagery: {images: [MODEL_IMAGERY]},
+        trainingData: {dataSets: [{type: 'EE_TABLE', referenceData: [{x: 0.5, y: 0.5, value: 112.4}]}]}
     }
 }
 
@@ -868,7 +878,7 @@ const CLUSTERS = {
     id: 'clusters-1',
     type: 'UNSUPERVISED_CLASSIFICATION',
     model: {
-        inputImagery: {images: [COVARIATES]},
+        inputImagery: {images: [MODEL_IMAGERY]},
         clusterer: {type: 'KMEANS', numberOfClusters: 5}
     }
 }
@@ -878,8 +888,8 @@ const INDEX_CHANGE = {
     type: 'INDEX_CHANGE',
     model: {
         dates: {fromDate: '2020-01-01', toDate: '2021-01-01'},
-        fromImage: {type: 'ASSET', id: 'users/x/before', band: 'ndvi'},
-        toImage: {type: 'ASSET', id: 'users/x/after', band: 'ndvi'},
+        fromImage: {type: 'RECIPE_REF', id: MOSAIC.id, band: 'ndvi'},
+        toImage: {type: 'RECIPE_REF', id: MOSAIC.id, band: 'ndvi'},
         legend: {entries: [{value: 1, booleanOperator: 'and', constraints: [{image: 'this-recipe', band: 'difference', operator: '>', value: 0}]}]},
         options: {minConfidence: 2.5}
     }
@@ -887,33 +897,34 @@ const INDEX_CHANGE = {
 
 const CLASSES = [{value: 1, label: 'Forest'}, {value: 2, label: 'Other'}]
 
+const CLASSIFICATION = {
+    id: 'classification-1',
+    type: 'CLASSIFICATION',
+    model: {
+        inputImagery: {images: [MODEL_IMAGERY]},
+        legend: {entries: CLASSES},
+        trainingData: {dataSets: [{type: 'SAMPLE_CLASSIFICATION', referenceData: [{x: 0.5, y: 0.5, class: 1}]}]},
+        classifier: {type: 'RANDOM_FOREST'}
+    }
+}
+
 const CLASS_CHANGE = {
     id: 'class-change-1',
     type: 'CLASS_CHANGE',
     model: {
         dates: {fromDate: '2020-01-01', toDate: '2021-01-01'},
-        fromImage: {type: 'ASSET', id: 'users/x/before', band: 'class', bands: {class: {values: [1, 2]}}, legendEntries: CLASSES},
-        toImage: {type: 'ASSET', id: 'users/x/after', band: 'class', bands: {class: {values: [1, 2]}}, legendEntries: CLASSES},
+        fromImage: {type: 'RECIPE_REF', id: CLASSIFICATION.id, band: 'class', bands: {class: {values: [1, 2]}}, legendEntries: CLASSES},
+        toImage: {type: 'RECIPE_REF', id: CLASSIFICATION.id, band: 'class', bands: {class: {values: [1, 2]}}, legendEntries: CLASSES},
         options: {minConfidence: 0}
     }
 }
 
-const CLASSIFICATION = {
-    id: 'classification-1',
-    type: 'CLASSIFICATION',
-    model: {
-        inputImagery: {images: [COVARIATES]},
-        legend: {entries: CLASSES},
-        trainingData: {dataSets: [{type: 'SAMPLE_CLASSIFICATION', referenceData: []}]},
-        classifier: {type: 'RANDOM_FOREST'}
-    }
-}
-
+// Over imagery described from its configuration: running it builds that imagery, which is judged without Earth Engine.
 const REMAPPING = {
     id: 'remapping-1',
     type: 'REMAPPING',
     model: {
-        inputImagery: {images: [COVARIATES]},
+        inputImagery: {images: [MODEL_IMAGERY]},
         legend: {entries: [{value: 1, booleanOperator: 'and', constraints: []}]}
     }
 }
@@ -937,7 +948,7 @@ const PYEO_ALERTS = {
     model: {
         aoi: AOI,
         dates: {monitoringStart: '2023-01-01', monitoringEnd: '2024-01-01'},
-        sources: {dataSets: {SENTINEL_2: ['SENTINEL_2']}, changeFromClasses: [1], changeToClasses: [2]}
+        sources: {classification: CLASSIFICATION.id, dataSets: {SENTINEL_2: ['SENTINEL_2']}, changeFromClasses: [1], changeToClasses: [2]}
     }
 }
 
@@ -1021,6 +1032,7 @@ const open = async (args = {}) => {
 
 const mountPanel = ({recipes = [MASKING, MOSAIC], id = MASKING.id, Panel = Retrieve} = {}) => {
     const [, ...sources] = recipes
+    listed.recipes = sources.map(({id, type}) => ({id, name: id, type}))
     store = createStore(
         (state = {
             dimensions: {width: 1024, height: 768},

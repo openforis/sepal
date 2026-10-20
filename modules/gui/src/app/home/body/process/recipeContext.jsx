@@ -21,11 +21,17 @@ const RecipeContext = ({recipeStatePath, children}) =>
  
 const withRecipeStatePath = withContext(Context, 'recipeStatePath')
 
+// Where a recipe's activatables are, within the activation context at `parentPathList`.
+export const recipeActivationPath = (parentPathList, id) =>
+    [...parentPathList, 'contexts', recipeActivationId(id)]
+
+const recipeActivationId = id => `recipe-${id}`
+
 export const Recipe = ({id, children}) =>
     id
         ? (
             <RecipeContext recipeStatePath={toPathList(['process.loadedRecipes', id])}>
-                <ActivationContext id={`recipe-${id}`}>
+                <ActivationContext id={recipeActivationId(id)}>
                     {children}
                 </ActivationContext>
             </RecipeContext>

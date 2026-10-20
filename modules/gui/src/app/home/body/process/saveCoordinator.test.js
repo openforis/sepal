@@ -1,6 +1,7 @@
 import {describe, expect, it} from 'vitest'
 
 const {createSaveCoordinator} = await import('./saveCoordinator')
+const {draftAgreement} = await import('./draftAgreement')
 
 const controllable = () => {
     const calls = []
@@ -14,10 +15,37 @@ const setup = () => {
     const saves = controllable()
     const loads = controllable()
     const outcomes = []
+    const published = []
+    const clock = fakeClock()
     const coordinator = createSaveCoordinator({
-        save: saves.fn, loadRecipe: loads.fn, onOutcome: outcome => outcomes.push(outcome)
+        save: saves.fn,
+        loadRecipe: loads.fn,
+        onOutcome: outcome => outcomes.push(outcome),
+        onState: (recipeId, state) => published.push({recipeId, ...state}),
+        clock
     })
-    return {saves: saves.calls, loads: loads.calls, outcomes, coordinator}
+    return {saves: saves.calls, loads: loads.calls, outcomes, published, clock, coordinator}
+}
+
+// Time moves only when a test says so, firing whatever came due.
+const fakeClock = () => {
+    let now = 0
+    let timers = []
+    return {
+        now: () => now,
+        setTimeout: (callback, ms) => {
+            const timer = {at: now + ms, callback}
+            timers.push(timer)
+            return timer
+        },
+        clearTimeout: timer => timers = timers.filter(other => other !== timer),
+        advance: ms => {
+            now += ms
+            const due = timers.filter(({at}) => at <= now)
+            timers = timers.filter(timer => !due.includes(timer))
+            due.forEach(({callback}) => callback())
+        }
+    }
 }
 
 const flush = () => new Promise(resolve => setTimeout(resolve, 0))
@@ -225,5 +253,147 @@ describe('ambiguous failure', () => {
 
         expect(saves).toHaveLength(3)
         expect(outcomes).toContainEqual(expect.objectContaining({recipeId: 'a', status: 'UNRESOLVED'}))
+    })
+})
+
+// What is published as persisted, and whether a draft is it (draftAgreement.js). A state is published after each
+// transition, so no subscriber can see one step of it.
+describe('what a draft agrees with', () => {
+    const latest = published => published.at(-1)
+    const agreement = (published, draft, knownRevision) =>
+        draftAgreement({draft, saveState: latest(published), knownRevision})
+
+    it('is the content loaded when the recipe was opened, at its revision', () => {
+        const {published, coordinator} = setup()
+        const opened = recipe('a', 'A')
+
+        coordinator.open('a', 4, opened.model)
+
+        expect(latest(published)).toMatchObject({status: 'SAVED', model: opened.model, revision: 4})
+        expect(agreement(published, opened)).toBe('AGREED')
+    })
+
+    it('waits for an edit queued when the one before it is acknowledged, never reporting that edit as saved', async () => {
+        const {saves, published, coordinator} = setup()
+        const [first, second] = [recipe('a', 'A'), recipe('a', 'B')]
+        coordinator.open('a', 4, recipe('a', 'OPENED').model)
+        coordinator.save(first)
+        coordinator.save(second)
+
+        await ack(saves[0], 5)
+
+        expect(latest(published)).toMatchObject({status: 'SAVING', model: first.model, revision: 5})
+        expect(published.filter(({status}) => status === 'SAVED').map(({revision}) => revision)).toEqual([4])
+        expect(agreement(published, second)).toBe('SAVE_PENDING')
+
+        await ack(saves[1], 6)
+
+        expect(latest(published)).toMatchObject({status: 'SAVED', model: second.model, revision: 6})
+        expect(agreement(published, second)).toBe('AGREED')
+    })
+
+    it('is a new model object holding the same content, which the autosave has nothing to save for', () => {
+        const {published, coordinator} = setup()
+        const opened = recipe('a', 'A')
+        coordinator.open('a', 4, opened.model)
+        const replaced = recipe('a', 'A')
+
+        coordinator.equivalent('a', opened.model, replaced.model)
+
+        expect(agreement(published, replaced)).toBe('AGREED')
+    })
+
+    it('is content whose acknowledgement was lost, once storage shows it landed', async () => {
+        const {saves, loads, published, coordinator} = setup()
+        const sent = recipe('a', 'A')
+        coordinator.open('a', 4, recipe('a', 'OPENED').model)
+        coordinator.save(sent)
+
+        await fail(saves[0], 503)
+        expect(agreement(published, sent)).toBe('SAVE_PENDING')
+        await loaded(loads[0], sent, 5)
+
+        expect(latest(published)).toMatchObject({status: 'SAVED', model: sent.model, revision: 5})
+        expect(agreement(published, sent)).toBe('AGREED')
+    })
+
+    it('is not content that was refused, even once nothing is left to send', async () => {
+        const {saves, published, coordinator} = setup()
+        const refused = recipe('a', 'A')
+        coordinator.open('a', 4, recipe('a', 'OPENED').model)
+        coordinator.save(refused)
+
+        await fail(saves[0], 400)
+
+        expect(latest(published)).toMatchObject({status: 'FAILED', revision: 4})
+        expect(agreement(published, refused)).toBe('SAVE_FAILED')
+    })
+
+    it('tells a confirmed conflict from a save that could not be resolved', async () => {
+        const conflicted = setup()
+        conflicted.coordinator.open('a', 4, recipe('a', 'OPENED').model)
+        conflicted.coordinator.save(recipe('a', 'A'))
+        await fail(conflicted.saves[0], 412)
+        await loaded(conflicted.loads[0], recipe('a', 'THEIRS'), 5)
+
+        const unresolved = setup()
+        unresolved.coordinator.open('a', 4, recipe('a', 'OPENED').model)
+        unresolved.coordinator.save(recipe('a', 'A'))
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await fail(unresolved.saves[attempt], 503)
+            await loaded(unresolved.loads[attempt], recipe('a', 'OLD'), 4)
+        }
+
+        expect(agreement(conflicted.published, recipe('a', 'A'))).toBe('SAVE_CONFLICT')
+        expect(agreement(unresolved.published, recipe('a', 'A'))).toBe('SAVE_UNRESOLVED')
+    })
+
+    it('is not a draft storage holds a newer revision of', () => {
+        const {published, coordinator} = setup()
+        const opened = recipe('a', 'A')
+        coordinator.open('a', 4, opened.model)
+
+        expect(agreement(published, opened, 5)).toBe('REMOTE_NEWER')
+    })
+})
+
+describe('a save waiting longer than the bound', () => {
+    const waiting = () => {
+        const context = setup()
+        context.coordinator.open('a', 4, recipe('a', 'OPENED').model)
+        context.coordinator.save(recipe('a', 'A'))
+        return context
+    }
+
+    it('is reported unconfirmed, and nothing is cancelled, retried or given up', async () => {
+        const {saves, outcomes, published, clock} = waiting()
+
+        clock.advance(60000)
+
+        expect(published.at(-1)).toMatchObject({status: 'SAVING', unconfirmed: true})
+        expect(saves).toHaveLength(1)
+        expect(outcomes).toEqual([])
+    })
+
+    it('is confirmed by a later acknowledgement', async () => {
+        const {saves, published, clock} = waiting()
+        clock.advance(60000)
+
+        await ack(saves[0], 5)
+
+        expect(published.at(-1)).toMatchObject({status: 'SAVED', unconfirmed: false, revision: 5})
+    })
+
+    it('is timed from the oldest content not yet acknowledged, not from the first edit of a busy session', async () => {
+        const {saves, published, clock, coordinator} = waiting()
+        clock.advance(40000)
+        coordinator.save(recipe('a', 'B'))
+        await ack(saves[0], 5)
+
+        clock.advance(40000)
+
+        expect(published.at(-1)).toMatchObject({status: 'SAVING', unconfirmed: false})
+        clock.advance(20000)
+        expect(published.at(-1)).toMatchObject({status: 'SAVING', unconfirmed: true})
     })
 })

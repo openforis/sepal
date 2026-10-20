@@ -6,11 +6,13 @@ import {compose} from '~/compose'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 
+import {invalidBandNameFormat} from '../../bandNameFormat'
+
 const fields = {
     allOutputNames: new Form.Field(),
     outputName: new Form.Field()
         .notBlank()
-        .match(/^[a-zA-Z_][a-zA-Z0-9_]{0,29}$/, 'process.stack.panel.bandNames.invalidFormat'),
+        .predicate(name => !invalidBandNameFormat(name), 'process.stack.panel.bandNames.invalidFormat'),
 }
 
 const constraints = {
@@ -41,9 +43,11 @@ class _BandName extends React.Component {
         )
     }
 
+    // A saved name is checked as it opens, not only once edited: a blank one sets nothing new to check.
     componentDidMount() {
         const {inputs: {outputName}} = this.props
         outputName.set(this.props.outputName)
+        outputName.validate()
         this.update()
     }
 

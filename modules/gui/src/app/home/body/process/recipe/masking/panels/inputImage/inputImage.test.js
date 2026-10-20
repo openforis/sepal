@@ -103,9 +103,4 @@ describe('sources with nothing to restore', () => {
         expect(modelToValues(model).visualizations).toBeUndefined()
         expect(valuesToModel(modelToValues(model)).visualizations).toBeUndefined()
     })
-
-    it('reports an unselected section without a model', () => {
-        expect(modelToValues({}).section).toBe('SELECTION')
-        expect(valuesToModel({section: 'SELECTION'})).toBe(null)
-    })
 })

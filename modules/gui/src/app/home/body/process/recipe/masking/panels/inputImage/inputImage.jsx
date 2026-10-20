@@ -2,15 +2,17 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {RecipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {msg} from '~/translate'
+import {SourceKind} from '~/app/home/body/process/sourceTypeButtons'
 import {Form} from '~/widget/form'
-import {PanelSections} from '~/widget/panelSections'
+import {Panel} from '~/widget/panel/panel'
 
 import {AssetSection} from './assetSection'
 import {ImageForm} from './imageForm'
 import styles from './inputImage.module.css'
 import {RecipeSection} from './recipeSection'
-import {SectionSelection} from './sectionSelection'
+
+// A new input starts as an asset.
+const NEW_INPUT_KIND = 'ASSET'
 
 export const fields = {
     section: new Form.Field()
@@ -31,100 +33,57 @@ export class InputImage extends React.Component {
 
     constructor(props) {
         super(props)
-        this.updateImageLayerSources = this.updateImageLayerSources.bind(this)
+        this.clearSource = this.clearSource.bind(this)
     }
 
     render() {
+        const {title} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
-                placement="bottom-right"
-                onApply={this.updateImageLayerSources}>
-                {this.renderSections()}
+                placement="bottom-right">
+                <Panel.Header icon='image' title={title}/>
+                <Panel.Content>
+                    {this.renderImageForm()}
+                </Panel.Content>
+                <Form.PanelButtons/>
             </RecipeFormPanel>
         )
     }
 
-    renderSections() {
-        const {title, inputs} = this.props
-        const sections = [
-            {
-                component: <SectionSelection section={inputs.section}/>
-            },
-            {
-                value: 'RECIPE_REF',
-                label: msg('process.masking.panel.inputImage.recipe.title'),
-                title: msg('process.masking.panel.inputImage.recipe.title'),
-                component: <ImageForm ${...this.props} inputComponent={RecipeSection} input={inputs.recipe}/>
-            },
-            {
-                value: 'ASSET',
-                label: msg('process.masking.panel.inputImage.asset.title'),
-                title: msg('process.masking.panel.inputImage.asset.title'),
-                component: <ImageForm ${...this.props} inputComponent={AssetSection} input={inputs.asset}/>
-            }
-        ]
+    renderImageForm() {
+        const {inputs} = this.props
         return (
-            <PanelSections
-                inputs={inputs}
-                sections={sections}
-                selected={inputs.section}
-                icon="image"
-                label={title}
-                onChange={() => {
-                    inputs.bands.set(undefined)
-                    inputs.recipe.set(undefined)
-                    inputs.asset.set(undefined)
-                    inputs.metadata.set(undefined)
-                    inputs.visualizations.set(undefined)
-                }}
-            />
+            <SourceKind input={inputs.section} recipe='RECIPE_REF' defaultKind={NEW_INPUT_KIND} onChange={this.clearSource}>
+                {({recipe, labelButtons}) =>
+                    <ImageForm
+                        {...this.props}
+                        inputComponent={recipe ? RecipeSection : AssetSection}
+                        input={recipe ? inputs.recipe : inputs.asset}
+                        labelButtons={labelButtons}
+                    />
+                }
+            </SourceKind>
         )
     }
 
-    updateImageLayerSources({section, asset, recipe: recipeId, metadata, visualizations}) {
-        const {recipeActionBuilder} = this.props
-
-        const imageMaskLayerSource = () => {
-            switch (section) {
-                case 'RECIPE_REF':
-                    return {
-                        id: recipeId,
-                        type: 'Recipe',
-                        sourceConfig: {
-                            recipeId
-                        }
-                    }
-                case 'ASSET':
-                    return {
-                        id: asset,
-                        type: 'Asset',
-                        sourceConfig: {
-                            description: asset,
-                            asset,
-                            metadata,
-                            visualizations
-                        }
-                    }
-                default:
-                    return
-            }
-        }
-
-        const source = imageMaskLayerSource()
-        // A layer entry is keyed by the id of what it shows. Applying a section with nothing selected once
-        // wrote an entry with no id and no recipe, which every later open tried to load.
-        if (source?.id) {
-            recipeActionBuilder('UPDATE_INPUT_IMAGE_LAYER_SOURCE', {source})
-                .set(['layers.additionalImageLayerSources', {id: source.id}], source)
-                .dispatch()
-        }
+    // A source of the other type starts over: nothing selected or read for the previous one carries across, and the
+    // selector now shown starts neutral, as a new one does.
+    clearSource() {
+        const {inputs} = this.props
+        const reset = {validate: false}
+        inputs.bands.set(undefined, reset)
+        inputs.recipe.set(undefined, reset)
+        inputs.asset.set(undefined, reset)
+        inputs.metadata.set(undefined, reset)
+        inputs.visualizations.set(undefined, reset)
     }
+
 }
 
 export const modelToValues = model => {
     const values = {
-        section: model.type || 'SELECTION',
+        section: model.type,
         bands: model.bands,
         visualizations: model.visualizations
     }
@@ -158,6 +117,5 @@ InputImage.propTypes = {
     filter: PropTypes.func,
     form: PropTypes.object.isRequired,
     inputs: PropTypes.object.isRequired,
-    recipeActionBuilder: PropTypes.any.isRequired,
     title: PropTypes.string.isRequired
 }

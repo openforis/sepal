@@ -33,6 +33,41 @@ exported with `sample` pyramiding and no encoding (`PYEO_ALERTS_BANDS`, see the
 [output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)). Asked for no bands it
 returns the whole report; a selection returns exactly the bands selected, in the order selected.
 
+### Readiness of Sources
+
+Execution loads the selected Classification and compares the From classes with the To classes, so it cannot run
+without a classification or with either class list empty. Shared readiness says so for `IMAGE_OUTPUT`
+(`lib/js/shared/src/recipe/type/pyeoAlerts.js`): `MISSING_ROLE` at `['model', 'sources', 'classification']`, and
+`NO_CHANGE_CLASSES` at `['model', 'sources', 'changeFromClasses']` or `['model', 'sources', 'changeToClasses']`. The
+report bands stay declared. Through the existing propagation, previews, Retrieve, recipes reading PyEO and asset
+exports are held back until Sources is repaired. SRC's toolbar button names the first missing setting
+(`pyeoAlerts/sourcesRequirements.js`), and its editor says it beside that field: at once for a configuration saved
+without it, and, for the class lists, only once the field says its own required error after the draft emptied it. A
+draft choosing no classification cannot be applied.
+
+Execution classifies every monitoring scene with the Classification's classifier, asking the scenes for each feature
+its input's band sets include (`toClassifierBands`): indexes and pairwise combinations are computed from scene bands,
+latitude, terrain and water imagery by the classifier itself. Readiness requires that the scenes carry them
+(`UNSUPPLIED_CLASSIFIER_INPUTS`, the features in `missing`). What a scene carries is `sceneBands`
+(`lib/js/shared/src/recipe/optical/opticalBands.js`), as the time series builds each scene: the bands the selected data
+sets share at the reflectance the corrections choose, tasseled cap where they hold its inputs, and every index they
+can compute - not a mosaic's catalogue. The finding is at `['model', 'sources', 'dataSets']` where another supported
+optical data set alone could carry them, otherwise at `['model', 'sources', 'classification']`: a Classification
+trained on radar statistics (`VV_mean`, ...) over Landsat monitoring is refused at the classification, whatever the
+gate. Monitoring that is not optical, or not chosen yet, is not judged. The features come from the Classification
+record the closure holds (`recordsOf`); one not held yet refuses nothing.
+
+An enabled index-drop gate also needs its index (`UNAVAILABLE_GATE_INDEX` at `['model', 'pyeoAlertsOptions',
+'indexGate', 'index']`): of the scenes (`source: 'MONITORING'`), and of the Classification's input (`source:
+'BASELINE'`) as execution obtains it - calculated from a direct asset's spectral bands, asked of a recipe input by
+name. The input is read, through the shared resolver (`describedSourceInputs`), only while the gate is on; an asset
+input not yet observed is asked for as any observation is, and is pending until it answers, not incompatible.
+SRC's toolbar button and fields say the classifier findings, at once, also while the set-up wizard has Sources open,
+and a Sources draft refused for them cannot be applied. OPT's toolbar button says the gate's, and OPT's own panel says
+what its draft's index cannot be read from, by the same rules. Choosing a classification clears the class lists quietly; at the
+wizard's Sources step neither the button nor an untouched field says anything yet. The rule that From and To must not
+overlap stays a form rule: execution does not need it.
+
 ## Classification selection and panel defaults
 
 Sources owns a one-shot read. It acquires the classification legend, checks the single input and resolves that
@@ -43,17 +78,21 @@ Band information and proposed configuration are independent answers. `OPTICAL_CO
 where collection defaults can be read, following declared preserving wrappers. A recipe producer supplies its
 sources, processing options and date range. An asset supplies band names and, when present, `recipe_sources`,
 `recipe_compositeOptions` or `recipe_options`, and `system:time_start`/`system:time_end` properties. One metadata
-response supplies both answers. Missing or malformed defaults do not erase available band information and do
-not establish that the image is unusable.
+response supplies both answers. Each default an asset states is proposed on its own - its dates as a pair - so dates
+are used even where no sources or processing were exported; one missing or malformed is not proposed, and the setting
+keeps what the panel has. Missing or malformed defaults do not erase available band information and do not establish
+that the image is unusable.
 
 Selecting a classification proposes defaults; opening a saved recipe reads presentation metadata without
 re-deriving its configuration. Dataset choices already saved or edited by the user are retained. The legend and
 input-band information live in runtime UI state, while proposed options and dates stay in the form until Apply.
 
 One acquisition record associates the current classification with its readiness and proposal. Submission checks
-that record against the field's actual value, including before the selector's deferred callback runs. Apply
-publishes sources and proposed options/dates in one action. A failed selection cannot be applied and can be
-retried; unavailable defaults allow manual configuration with a warning. Reselection and Cancel cancel pending
+that record against the field's actual value, including before the selector's deferred callback runs. While the
+selection is read, the selector is busy, explained in its tooltip, and Apply is held by that check alone; reading is
+no error. Apply publishes sources and proposed options/dates in one action. A failed selection says so on the
+selector, cannot be applied and can be retried. Where nothing can be derived, the panel keeps its settings for manual
+configuration, without a warning. Reselection and Cancel cancel pending
 work, and Cancel restores presentation metadata for the committed selection. See the
 [shared GUI workflow](../design/recipes/gui-source-runtime.md) for acquisition and form contracts.
 
@@ -64,15 +103,32 @@ classifier to the monitoring collection. The input's selected band specification
 bands requested from that collection. Monitoring scenes are sorted chronologically before the algorithm runs.
 
 The algorithm tests transitions from the selected baseline From classes into monitoring To classes, optionally
-requiring a drop from the baseline index. It aggregates detections into the report bands. Empty From/To choices
-produce a user-facing validation result. A missing AOI is refused before dependent reads or collection
-construction; the shared geometry resolver's absent-AOI meaning, "no restriction", is unsuitable here.
+requiring a drop from the baseline index. With the drop gate off, no index is built from the baseline or requested of
+monitoring beyond what the classifier itself reads; the gate does not make a classifier the monitoring data cannot
+feed valid. It aggregates detections into the report bands. Empty From/To choices
+produce a user-facing validation result, and are refused by readiness before execution. A missing AOI is refused
+before dependent reads or collection construction; the shared geometry resolver's absent-AOI meaning, "no
+restriction", is unsuitable here.
 
 ### Current index acquisition
 
-The Options panel offers NDVI, NDMI and NBR. It filters these against the raw bands reported for the
-Classification's input and the monitoring datasets. Matching is case-sensitive; unresolved band information
-uses the candidate list rather than proving support. This is not yet a general query for supplied index bands.
+The Options panel offers NDVI, NDMI and NBR, filtered by the rules readiness judges the applied gate by
+(`monitoringSuppliesIndex`, `baselineSuppliesIndex` in `lib/js/shared/src/recipe/type/pyeoAlerts.js`): the monitoring
+scenes must compute the index, and the Classification's input must supply it as execution obtains it - its spectral
+bands for an asset, the index itself by name for a recipe. The input's bands are what Sources last read of it, kept
+with the classification and input kind they are of (`ui.classificationBands`); bands read for another classification
+than the one applied, or not read yet, rule nothing out. Matching is case-sensitive. A new recipe's default model has
+the gate on NDVI, which nobody has chosen: while the recipe is being set up, applying Sources with a classification
+read gives the gate NDVI where it can read NDVI, otherwise the first index it can (`gateIndexes.js`), in the same
+Apply. A recipe already set up keeps its gate, a saved index is never replaced, and where no index can be read the
+gate stays as it is, explained in OPT and repaired by turning it off. A gate turned on there with no index saved
+takes NDVI, or else the first index the gate can read.
+
+Opening OPT edits nothing. An index gated on that the known bands cannot compute - the default NDVI over radar bands,
+or NBR beside a red/nir-only input - stays selected, is said beside the index and holds Apply back; it is never
+switched off for the user. Choosing an index the bands support, or turning the gate off (still possible while no index
+is available), repairs it, and Cancel leaves the saved gate as it was. With the gate off and no index available, the
+gate stays disabled. The check is the panel's alone; index availability is not a readiness requirement.
 
 | Baseline input | How execution obtains the index |
 | --- | --- |
@@ -105,6 +161,10 @@ additive offsets or unequal band factors do not. Band names alone cannot establi
 
 These are existing limitations or design ideas, not work required to complete the source-resolution migration.
 
+- **Classification-input ancestry.** `loadClassificationInputs$` in `lib/js/ee/src/pyeo/pyeoAlerts.js` uses
+  `loadRecipe$` directly before building the classification's input image, rather than following that read through
+  `recipeRef`. Audit cycle detection on this path separately. The main classification read already uses `recipeRef`;
+  the concern is limited to the input-loading path and has not been reproduced end to end.
 - **Uniform index acquisition.** Use a provided index when its meaning and encoding are known; otherwise
   calculate it from suitable spectral bands, for either a recipe or asset. Preserve the selected image and its
   masks. This would replace the recipe/asset branch and its wrapped-asset limitation. Shared output and encoding
@@ -113,10 +173,6 @@ These are existing limitations or design ideas, not work required to complete th
   monitoring inputs. Unique case-insensitive matching is a possible convenience, retaining the actual band
   name for execution. Ambiguous matches need an explicit outcome; sensor aliases and value semantics cannot
   be inferred from case folding.
-- **Acquisition with Require drop disabled.** The algorithm skips the index comparison, but its caller still
-  constructs the baseline index and requests an index in monitoring images, defaulting to NDVI. Investigate
-  avoiding this work if this feature is revisited. Graph construction alone does not establish which unused
-  operations Earth Engine evaluates.
 
 The selected-scenes check is a current prefill constraint, not scheduled policy work: selecting a
 Classification backed by a recipe with manually selected scenes is refused when deriving defaults. The check

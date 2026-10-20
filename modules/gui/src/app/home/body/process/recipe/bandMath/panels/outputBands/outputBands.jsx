@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -16,10 +15,21 @@ import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 
+import {itemStatusesOf} from '../../../selectedSourceStatus'
+import {readLocalRequirements} from '../../../sourceRequirements'
 import {ImageDescription} from '../../imageDescription'
 import {OutputBand} from './outputBand'
 import styles from './outputBands.module.css'
-import {addOutputBand, addOutputImage, createUniqueBandName} from './outputImages'
+import {
+    addOutputBand,
+    addOutputImage,
+    allOutputNames,
+    bandsToOutput,
+    hasUniqueOutputNames,
+    hasValidOutputNames,
+    namedApart,
+    withUniqueDefaultNames
+} from './outputImages'
 
 const ADD_ALL_BANDS = Symbol('addAllBands')
 
@@ -29,10 +39,13 @@ const fields = {
         .predicate(value => !value.find(({outputBands}) => !outputBands.length),
             'process.bandMath.panel.outputBands.missingBands'
         )
+        .predicate(hasValidOutputNames, 'process.bandMath.panel.outputBands.invalidFormat')
+        .predicate(hasUniqueOutputNames, 'process.bandMath.panel.outputBands.duplicateBand')
 }
 
 const mapRecipeToProps = recipe => {
     return ({
+        recipe,
         images: selectFrom(recipe, 'model.inputImagery.images'),
         calculations: selectFrom(recipe, 'model.calculations.calculations'),
         outputImages: selectFrom(recipe, 'model.outputBands.outputImages') || []
@@ -40,7 +53,9 @@ const mapRecipeToProps = recipe => {
 }
 
 class _OutputBands extends React.Component {
-    state = {allOutputBandNames: [], invalidBandsById: {}}
+    // The bands given a default name while the panel is open - repaired as it opens, added, or reset - by output image
+    // and band: their fields show it as a suggestion, not as a name already saved.
+    allocated = new Set()
 
     constructor(props) {
         super(props)
@@ -50,7 +65,6 @@ class _OutputBands extends React.Component {
         this.updateBand = this.updateBand.bind(this)
         this.removeBand = this.removeBand.bind(this)
         this.renderOutputImage = this.renderOutputImage.bind(this)
-        this.onValidationStatusChanged = this.onValidationStatusChanged.bind(this)
     }
 
     render() {
@@ -123,12 +137,14 @@ class _OutputBands extends React.Component {
         )
     }
 
+    // An output whose image no longer exists is shown as it was saved, to be removed: it offers no bands to add.
     renderOutputImage(outputImage) {
-        const {images, calculations} = this.props
-        const image = [...images, ...calculations].find(({imageId}) => imageId === outputImage.imageId)
+        const current = this.currentImage(outputImage.imageId)
+        const image = current || outputImage
+        const problem = this.draftProblems()[outputImage.imageId]
         return (
             <ListItem
-                key={image.imageId}
+                key={outputImage.imageId}
                 expansionClickable
                 expanded
                 expansion={this.renderOutputBands(outputImage)}
@@ -137,7 +153,8 @@ class _OutputBands extends React.Component {
                     title={msg(`process.bandMath.panel.outputBands.type.${image.type}`)}
                     description={<ImageDescription image={image}/>}
                     metadata={image.name}
-                    inlineComponents={this.renderAddBandButton(outputImage)}
+                    error={problem}
+                    inlineComponents={current ? this.renderAddBandButton(outputImage, current) : null}
                     unsafeRemove
                     onRemove={() => this.removeImage({image})}
                 />
@@ -147,19 +164,20 @@ class _OutputBands extends React.Component {
     }
 
     renderOutputBands(outputImage) {
-        const {allOutputBandNames} = this.state
+        const {inputs: {outputImages}} = this.props
+        const allOutputBandNames = allOutputNames(outputImages.value)
         return (
             <Layout type='horizontal' alignment='fill'>
                 {outputImage.outputBands.length
                     ? outputImage.outputBands.map(band => {
                         return <OutputBand
-                            key={band.name}
+                            key={band.id}
                             image={outputImage}
                             band={band}
+                            allocated={this.allocated.has(keyOf(outputImage, band))}
                             allOutputBandNames={allOutputBandNames}
                             onChange={this.updateBand}
-                            onRemove={this.removeBand}
-                            onValidationStatusChanged={this.onValidationStatusChanged}/>
+                            onRemove={this.removeBand}/>
                     }
                     )
                     : <NoData message={msg('process.bandMath.panel.outputBands.noBands')}/>}
@@ -167,10 +185,9 @@ class _OutputBands extends React.Component {
         )
     }
 
-    renderAddBandButton(outputImage) {
+    renderAddBandButton(outputImage, current) {
         const outputBandIds = outputImage.outputBands.map(({id}) => id)
-        const bandOptions = outputImage.includedBands
-            .filter(({id}) => !outputBandIds.includes(id))
+        const bandOptions = bandsToOutput(outputImage, current)
             .map(band => ({value: band.name, label: band.name, band, image: outputImage}))
         const options = bandOptions.length > 1
             ? [
@@ -211,121 +228,126 @@ class _OutputBands extends React.Component {
         )
     }
 
+    // A saved recipe can output bands under defaults another takes: the draft names them apart, which Apply saves and
+    // Cancel discards. What was applied is judged as saved until then.
     componentDidMount() {
-        const {outputImages, inputs} = this.props
-        inputs.outputImages.set(outputImages)
+        const {outputImages} = this.props
+        this.setDraft(withUniqueDefaultNames(outputImages), outputImages)
     }
 
     addImage({image}) {
         const {inputs: {outputImages}} = this.props
-        const updatedOutputImages = addOutputImage(image, outputImages.value)
-        outputImages.set(updatedOutputImages)
-        this.updateAllOutputBandNames(updatedOutputImages)
+        this.setDraft(addOutputImage(image, outputImages.value))
     }
 
     removeImage({image}) {
         const {inputs: {outputImages}} = this.props
-        const updatedOutputImages = outputImages.value.filter(({imageId}) => imageId !== image.imageId)
-        outputImages.set(updatedOutputImages)
-        this.updateAllOutputBandNames(updatedOutputImages)
+        outputImages.set(outputImages.value.filter(({imageId}) => imageId !== image.imageId))
     }
 
+    // Only a band its image includes now and does not already output is added, whatever the picker offered when it was
+    // chosen, and as the image includes it now: a choice offered before a rename carries the band's former name.
     addBand({value, image, band, bandOptions}) {
         const {inputs: {outputImages}} = this.props
-        const updatedOutputImages = value === ADD_ALL_BANDS
-            ? bandOptions.reduce(
-                (outputImages, {image, band}) => addOutputBand(image, band, outputImages),
-                outputImages.value
-            )
-            : addOutputBand(image, band, outputImages.value)
-
-        outputImages.set(updatedOutputImages)
-        this.updateAllOutputBandNames(updatedOutputImages)
+        const chosen = value === ADD_ALL_BANDS ? bandOptions : [{image, band}]
+        this.setDraft(chosen.reduce(
+            (outputImages, {image, band}) => {
+                const current = this.currentImage(image.imageId)
+                const currentBand = bandsToOutput(outputImages.find(({imageId}) => imageId === image.imageId), current)
+                    .find(({id}) => id === band.id)
+                return currentBand
+                    ? addOutputBand(current, currentBand, outputImages)
+                    : outputImages
+            },
+            outputImages.value
+        ))
     }
 
-    updateBand({image, band}) {
+    // A name typed changes this band alone: one another band is output under is refused, never taken from it. A band
+    // reset adopts the default now available to it, by the rule a band added is named by; no other band is renamed.
+    updateBand({image, band, reset}) {
         const {inputs: {outputImages}} = this.props
-        // When generating unique defaultBandNames, we need to include the updated band
-        // This temporary array does that
-        const tempOutputImages = [
-            ...outputImages.value.filter(({imageId}) => imageId !== image.imageId),
-            {
-                ...image,
-                outputBands: [
-                    ...image.outputBands.filter(({id}) => id !== band.id),
-                    band
-                ]
+        const imageIndex = outputImages.value.findIndex(({imageId}) => imageId === image.imageId)
+        const bandIndex = outputImages.value[imageIndex].outputBands.findIndex(({id}) => id === band.id)
+        const updated = outputImages.value.map((outputImage, index) => index === imageIndex
+            ? {
+                ...outputImage,
+                outputBands: outputImage.outputBands.map(outputBand => outputBand.id !== band.id
+                    ? outputBand
+                    : reset ? {...band, defaultOutputName: undefined} : band
+                )
             }
-        ]
-        const updatedOutputImages = outputImages.value.map(outputImage =>
-            outputImage.imageId === image.imageId
-                ? {
-                    ...outputImage,
-                    outputBands: outputImage.outputBands.map(b =>
-                        b.id === band.id
-                            ? band
-                            : b
-                    )
-                }
-                : {
-                    ...outputImage,
-                    outputBands: outputImage.outputBands.map(b =>
-                        ({
-                            ...b,
-                            defaultOutputName: createUniqueBandName(outputImage, b, tempOutputImages)
-                        })
-                    )
-                }
+            : outputImage
         )
-        outputImages.set(updatedOutputImages)
+        if (reset) {
+            this.allocated.add(keyOf(image, band))
+        }
+        this.setDraft(reset
+            ? namedApart(updated, at => at.imageIndex === imageIndex && at.bandIndex === bandIndex)
+            : updated
+        )
+    }
 
-        this.updateAllOutputBandNames(updatedOutputImages)
+    // The draft, each band given a default it did not have before noted as allocated.
+    setDraft(draft, previous = this.props.inputs.outputImages.value || NO_OUTPUT_IMAGES) {
+        const {inputs: {outputImages}} = this.props
+        const previousDefaults = new Map(previous.flatMap(outputImage =>
+            outputImage.outputBands.map(band => [keyOf(outputImage, band), band.defaultOutputName])
+        ))
+        draft.forEach(outputImage => outputImage.outputBands.forEach(band => {
+            const key = keyOf(outputImage, band)
+            if (!previousDefaults.has(key) || previousDefaults.get(key) !== band.defaultOutputName) {
+                this.allocated.add(key)
+            }
+        }))
+        outputImages.set(draft)
+    }
+
+    // What Band Math's own requirements (bandMathRequirements.js) find wrong with each output image as the draft
+    // configures it, the rest of the recipe as applied: its rows follow the draft, while the toolbar and the operations
+    // judge what is applied until Apply.
+    draftProblems() {
+        const {recipe, inputs: {outputImages}} = this.props
+        const draft = outputImages.value || NO_OUTPUT_IMAGES
+        if (this.judged?.model !== recipe.model || this.judged?.draft !== draft) {
+            const candidate = {
+                ...recipe,
+                model: {...recipe.model, outputBands: {...recipe.model.outputBands, outputImages: draft}}
+            }
+            const statuses = itemStatusesOf(readLocalRequirements(candidate), 'outputBands')
+            this.judged = {
+                model: recipe.model,
+                draft,
+                problems: Object.fromEntries(Object.entries(statuses).map(([id, {message}]) => [id, message]))
+            }
+        }
+        return this.judged.problems
+    }
+
+    // The input or calculation an output image is taken from, as configured now.
+    currentImage(imageId) {
+        const {images = [], calculations = []} = this.props
+        return [...images, ...calculations].find(image => image.imageId === imageId)
     }
 
     removeBand({image, band}) {
         const {inputs: {outputImages}} = this.props
-        const updatedOutputImages = outputImages.value.map(outputImage =>
-            outputImage.imageId === image.imageId
-                ? {
-                    ...outputImage,
-                    outputBands: outputImage.outputBands.filter(({id}) => id !== band.id)
-                }
-                : outputImage
+        outputImages.set(
+            outputImages.value.map(outputImage =>
+                outputImage.imageId === image.imageId
+                    ? {
+                        ...outputImage,
+                        outputBands: outputImage.outputBands.filter(({id}) => id !== band.id)
+                    }
+                    : outputImage
+            )
         )
-        outputImages.set(updatedOutputImages)
-        this.updateAllOutputBandNames(updatedOutputImages)
-    }
-
-    updateAllOutputBandNames(updatedOutputImages) {
-        const allOutputBandNames = updatedOutputImages
-            .map(({outputBands}) =>
-                outputBands.map(({defaultOutputName, outputName}) => outputName || defaultOutputName)
-            )
-            .flat()
-        this.setState({allOutputBandNames})
-    }
-
-    onValidationStatusChanged(componentId, valid) {
-        const updateValidation = () => {
-            const {inputs: {outputImages}} = this.props
-            const {invalidBandsById} = this.state
-            const valid = !Object.keys(invalidBandsById).length
-            outputImages.setInvalid(valid ? '' : 'not valid')
-        }
-
-        if (valid) {
-            this.setState(
-                ({invalidBandsById}) => ({invalidBandsById: _.omit(invalidBandsById, [componentId])}),
-                updateValidation
-            )
-        } else {
-            this.setState(
-                ({invalidBandsById}) => ({invalidBandsById: {...invalidBandsById, [componentId]: false}}),
-                updateValidation
-            )
-        }
     }
 }
+
+const NO_OUTPUT_IMAGES = Object.freeze([])
+
+const keyOf = ({imageId}, {id}) => `${imageId}|${id}`
 
 export const OutputBands = compose(
     _OutputBands,

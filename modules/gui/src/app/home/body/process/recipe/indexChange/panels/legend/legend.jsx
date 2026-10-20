@@ -113,10 +113,12 @@ class _Legend extends React.Component {
         entries.set([...entries.value, {id, value, color, label}])
     }
 
+    // Whether the entries are valid is learned from them, not edited: it holds Apply back without making the form
+    // dirty, which only a change to the entries does.
     updateLegendEntries(legendEntries, invalidLegendEntries) {
         const {inputs} = this.props
         inputs.entries.set(legendEntries)
-        inputs.invalidEntries.set(invalidLegendEntries)
+        inputs.invalidEntries.setInitialValue(invalidLegendEntries)
     }
 
     importLegend() {
@@ -140,7 +142,6 @@ const valuesToModel = ({entries}) => ({
 })
 
 const additionalPolicy = () => ({
-    _: 'disallow',
     legendImport: 'allow'
 })
 

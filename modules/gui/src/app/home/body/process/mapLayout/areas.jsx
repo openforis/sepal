@@ -12,10 +12,11 @@ import {HoverDetector} from '~/widget/hover'
 import {ListItem} from '~/widget/listItem'
 import {Padding} from '~/widget/padding'
 
-import {getImageLayerSource} from '../imageLayerSourceRegistry'
 import {withLayers} from '../withLayers'
 import styles from './areas.module.css'
+import {setLayerAreas} from './dependencyLayerSources'
 import {assignArea, removeArea, swapAreas, validAreas} from './layerAreas'
+import {layerSourceDescription} from './layerSourceNames'
 
 const AREA = Symbol('area')
 const SOURCE = Symbol('source')
@@ -151,7 +152,7 @@ class _Areas extends React.Component {
     renderSourceInfo(area, sourceId) {
         const {recipe, imageLayerSources} = this.props
         const source = imageLayerSources.find(source => source.id === sourceId)
-        const {description} = getImageLayerSource({recipe, source})
+        const description = layerSourceDescription({recipe, source})
         return source
             ? (
                 <div className={styles.areaContent}>
@@ -172,6 +173,7 @@ class _Areas extends React.Component {
         this.initializeDragDrop()
     }
 
+    // A move within the same drop area changes nothing shown, so only a move to another one is passed on.
     drag$(drag$, release$) {
         return drag$.pipe(
             filter(({dragging}) => dragging === true),
@@ -179,7 +181,7 @@ class _Areas extends React.Component {
                 drag$.pipe(
                     takeUntil(release$),
                     map(({coords}) => ({value, dropArea: this.getDropArea(coords)})),
-                    distinctUntilChanged()
+                    distinctUntilChanged((previous, current) => previous.dropArea === current.dropArea)
                 )
             )
         )
@@ -296,10 +298,8 @@ class _Areas extends React.Component {
     }
 
     updateAreas(areas) {
-        const {recipeActionBuilder} = this.props
-        recipeActionBuilder('UPDATE_LAYER_AREAS')
-            .set('layers.areas', areas)
-            .dispatch()
+        const {recipeId} = this.props
+        setLayerAreas({recipeId, areas})
     }
 
     getDropArea(cursor) {
@@ -332,10 +332,8 @@ class _Areas extends React.Component {
     }
 
     removeArea(area) {
-        const {layers: {areas}, recipeActionBuilder} = this.props
-        recipeActionBuilder('REMOVE_AREA')
-            .set('layers.areas', removeArea({areas, area}))
-            .dispatch()
+        const {layers: {areas}, recipeId} = this.props
+        setLayerAreas({recipeId, areas: removeArea({areas, area}), actionType: 'REMOVE_AREA'})
     }
 }
 

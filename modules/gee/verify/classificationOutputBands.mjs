@@ -4,7 +4,16 @@
 // classifiers of each family, a legend not stored in value order, and a Remapping with and without legend entries. An
 // export's arguments are checked to build and return the requested bands in the requested order. Without legend
 // entries, a probability-capable Classification's default output must fail with Earth Engine's refusal to reduce no
-// bands, while a request for its class alone still runs.
+// bands, while a request for its class alone still runs. Each declared band asked for alone keeps a bounded footprint,
+// which Index Change clips its output to.
+//
+// Remapping's inputs. Execution passes the bands each input includes as its `selection`, which an asset input does
+// not read: an asset is built with every band it stores, and only the bands a constraint reads are selected from it.
+// So only a missing band a constraint reads fails the image. A band an input lacks is compared, built and at one
+// pixel, with what the declaration would say if it refused any included band its input's description lacks: for a
+// band a constraint reads, for another band of an input a constraint reads, and for a band of an input no constraint
+// reads. A constraint reading a band the asset stores but the input does not include is built and sampled too, and
+// the asset input itself built as Remapping builds it.
 //
 // The input is one Landsat scene, trained on nine inline points. Read-only: recipes are held in memory, nothing is
 // saved and no asset is written. Authenticates with the service account:
@@ -15,14 +24,17 @@ import _ from 'lodash'
 import {firstValueFrom, switchMap, timeout} from 'rxjs'
 
 import {googleProjectId, serviceAccountCredentials} from '#gee/config'
-import {typedBands} from '#sepal/ee/bandEvidence'
+import {assetBandEvidence$, typedBands} from '#sepal/ee/bandEvidence'
 import ee from '#sepal/ee/ee'
 import ImageFactory from '#sepal/ee/imageFactory'
 import {withOutputBands} from '#sepal/ee/outputBands'
 import {classificationBands} from '#sepal/recipe/type/classification'
-import {remappingBands} from '#sepal/recipe/type/remapping'
+import {REMAPPING_BANDS, remappingBands} from '#sepal/recipe/type/remapping'
 
 const SCENE = 'LANDSAT/LC08/C02/T1_L2/LC08_231062_20230613'
+const ELEVATION = 'USGS/SRTMGL1_003'
+const MISSING_BAND = 'not_a_band'
+const MISSING_BAND_FAILURE = /not_a_band.*did not match any bands|did not match any bands.*not_a_band/
 const READ_TIMEOUT_MS = 180000
 const EMPTY_REDUCTION = /Unable to reduce an image with 0 bands/
 
@@ -71,14 +83,55 @@ const remappingRule = (value, from, to) => ({
     constraints: [{id: 'constraint', image: 'image-1', band: 'SR_B5', operator: 'range', from, to, fromInclusive: true, toInclusive: false}]
 })
 
-const remapping = entries => ({
+const remapping = (entries, images = [{imageId: 'image-1', type: 'ASSET', id: SCENE, includedBands: [{band: 'SR_B5'}]}]) => ({
     id: 'remapping-verify',
     type: 'REMAPPING',
     model: {
-        inputImagery: {images: [{imageId: 'image-1', type: 'ASSET', id: SCENE, includedBands: [{band: 'SR_B5'}]}]},
+        inputImagery: {images},
         legend: {entries}
     }
 })
+
+const sceneIncluding = (...bands) => ({imageId: 'image-1', type: 'ASSET', id: SCENE, includedBands: bands.map(band => ({band}))})
+
+// A rule reading the band of the scene this names.
+const ruleReading = band => ({...remappingRule(1, 0, 20000), constraints: [{...remappingRule(1, 0, 20000).constraints[0], band}]})
+
+const INPUT_CASES = [
+    {name: 'valid inputs', images: [sceneIncluding('SR_B5')], rule: ruleReading('SR_B5'), executes: true, missing: []},
+    {
+        name: 'a missing band a constraint reads',
+        images: [sceneIncluding(MISSING_BAND)],
+        rule: ruleReading(MISSING_BAND),
+        executes: false,
+        missing: [`${SCENE}:${MISSING_BAND}`]
+    },
+    {
+        name: 'a missing band no constraint reads, of an input one reads',
+        images: [sceneIncluding('SR_B5', MISSING_BAND)],
+        rule: ruleReading('SR_B5'),
+        executes: true,
+        missing: [`${SCENE}:${MISSING_BAND}`]
+    },
+    {
+        name: 'a missing band of an input no constraint reads',
+        images: [sceneIncluding('SR_B5'), {imageId: 'image-2', type: 'ASSET', id: ELEVATION, includedBands: [{band: MISSING_BAND}]}],
+        rule: ruleReading('SR_B5'),
+        executes: true,
+        missing: [`${ELEVATION}:${MISSING_BAND}`]
+    },
+    {
+        name: 'a band the asset stores but the input does not include, which a constraint reads',
+        images: [sceneIncluding('SR_B4')],
+        rule: ruleReading('SR_B5'),
+        executes: true,
+        missing: []
+    }
+]
+
+// What an executing case builds, and its value at the sampled pixel: the rule's class, its band within the range there.
+const EXECUTED_BANDS = [{name: 'class', arrayDimensions: 0}]
+const EXECUTED_PIXEL = {class: 1}
 
 const callbackPromise = fn =>
     new Promise((resolve, reject) => fn((result, error) => error ? reject(new Error(error)) : resolve(result)))
@@ -103,6 +156,50 @@ const built = async (recipe, args) => {
     } catch (error) {
         return {error: error.message}
     }
+}
+
+// Whether the image a factory builds with these arguments has a bounded footprint, or the failure to build it.
+const bounded = async (recipe, args) => {
+    try {
+        return {bounded: !await firstValueFrom(ImageFactory(recipe, args).getImage$().pipe(
+            switchMap(image => ee.getInfo$(image.geometry().isUnbounded(), 'footprint')),
+            timeout(READ_TIMEOUT_MS)
+        ))}
+    } catch (error) {
+        return {error: error.message}
+    }
+}
+
+// The value of the image a factory builds at one pixel inside the scene, or the failure to compute it.
+const sampled = async recipe => {
+    try {
+        return {value: await firstValueFrom(ImageFactory(recipe).getImage$().pipe(
+            switchMap(image => ee.getInfo$(image.reduceRegion({reducer: ee.Reducer.first(), geometry: ee.Geometry.Point([-60.30, -2.80]), scale: 30}), 'sampled pixel')),
+            timeout(READ_TIMEOUT_MS)
+        ))}
+    } catch (error) {
+        return {error: error.message}
+    }
+}
+
+// The included bands each input's band evidence lacks, as the proposed description would refuse them.
+const missingIncludedBands = async recipe => (await Promise.all(recipe.model.inputImagery.images.map(async ({id, includedBands}) => {
+    const available = new Set((await firstValueFrom(assetBandEvidence$(id).pipe(timeout(READ_TIMEOUT_MS)))).map(({name}) => name))
+    return includedBands.filter(({band}) => !available.has(band)).map(({band}) => `${id}:${band}`)
+}))).flat()
+
+const expectInputs = async ({name, images, rule, executes, missing: expectedMissing}) => {
+    const recipe = remapping([rule], images)
+    const [build, pixel, missing] = await Promise.all([built(recipe), sampled(recipe), missingIncludedBands(recipe)])
+    const executed = _.isEqual(build.bands, EXECUTED_BANDS) && _.isEqual(pixel.value, EXECUTED_PIXEL)
+    const refusedByEarthEngine = [build.error, pixel.error].every(error => MISSING_BAND_FAILURE.test(error || ''))
+    report(
+        (executes ? executed : refusedByEarthEngine)
+            && _.isEqual(remappingBands(recipe.model), REMAPPING_BANDS)
+            && _.isEqual(missing, expectedMissing),
+        `Remapping over ${name}: ${executes ? 'executes' : 'refused by Earth Engine'}, ${missing.length ? 'newly refused' : 'described'} by the proposal`,
+        {built: build.bands?.map(({name}) => name) || build.error, pixel: pixel.value || pixel.error, declaredToday: remappingBands(recipe.model).map(({name}) => name), proposalMissing: missing}
+    )
 }
 
 const asBuilt = bands => bands.map(({name, dataType}) => ({name, arrayDimensions: dataType.arrayDimensions}))
@@ -139,6 +236,11 @@ const main = async () => {
         {requested, built: exported.bands?.map(({name}) => name) || exported.error}
     )
 
+    for (const {name: band} of classificationBands(classification().model)) {
+        const alone = await bounded(classification(), withOutputBands({selection: [band]}))
+        report(alone.bounded === true, `Classification's ${band}, asked for alone, keeps a bounded footprint`, alone)
+    }
+
     const withoutLegend = classification({values: []})
     const defaultOutput = await built(withoutLegend)
     report(
@@ -157,6 +259,16 @@ const main = async () => {
     await expectDeclared('Remapping', withEntries, remappingBands(withEntries.model))
     const withoutEntries = remapping([])
     await expectDeclared('Remapping without legend entries', withoutEntries, remappingBands(withoutEntries.model))
+    for (const inputCase of INPUT_CASES) {
+        await expectInputs(inputCase)
+    }
+    const input = sceneIncluding('SR_B4')
+    const asRemappingBuildsIt = await built(input, {selection: input.includedBands.map(({band}) => band)})
+    report(
+        asRemappingBuildsIt.bands?.length > 1 && asRemappingBuildsIt.bands.some(({name}) => name === 'SR_B5'),
+        'An asset input, built as Remapping builds it, keeps every band it stores, not only those it includes',
+        {included: ['SR_B4'], built: asRemappingBuildsIt.bands?.map(({name}) => name) || asRemappingBuildsIt.error}
+    )
 
     if (failures) {
         throw new Error(`${failures} check(s) failed`)

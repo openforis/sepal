@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
@@ -14,6 +15,7 @@ import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
 import {withRecipe} from '../recipeContext'
+import {updateLayerSource, withSourceValues} from './layerSourceEdit'
 import styles from './selectPlanet.module.css'
 
 const mapStateToProps = () => {
@@ -27,24 +29,28 @@ const fields = {
     planetApiKey: new Form.Field().notBlank()
 }
 
+// Opened with a `source` to edit, the form starts from that source, whose API key is already validated.
 class _SelectPlanet extends React.Component {
-    state = {}
     apiKeyChanged$ = new Subject()
 
     constructor(props) {
         super(props)
         this.add = this.add.bind(this)
+        this.apply = this.apply.bind(this)
+        const {activatable: {source}} = props
+        this.state = {validatedApiKey: source?.sourceConfig.planetApiKey}
     }
 
     render() {
-        const {activatable: {deactivate}} = this.props
-        const {validatedApiKey} = this.state
+        const {activatable: {deactivate, source}} = this.props
         return (
             <Panel
                 className={styles.panel}
                 placement='modal'
                 onBackdropClick={deactivate}>
-                <Panel.Header title={msg('map.layout.addImageLayerSource.types.Planet.description')}/>
+                <Panel.Header title={source
+                    ? msg('map.layout.editImageLayerSource.types.Planet.description')
+                    : msg('map.layout.addImageLayerSource.types.Planet.description')}/>
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
@@ -54,15 +60,19 @@ class _SelectPlanet extends React.Component {
                             keybinding='Escape'
                             onClick={deactivate}
                         />
-                        <Panel.Buttons.Add
-                            disabled={!validatedApiKey}
-                            keybinding='Enter'
-                            onClick={this.add}
-                        />
+                        {this.renderConfirmButton()}
                     </Panel.Buttons.Main>
                 </Panel.Buttons>
             </Panel>
         )
+    }
+
+    renderConfirmButton() {
+        const {activatable: {source}} = this.props
+        const {validatedApiKey} = this.state
+        return source
+            ? <Panel.Buttons.Apply disabled={!validatedApiKey} keybinding='Enter' onClick={this.apply}/>
+            : <Panel.Buttons.Add disabled={!validatedApiKey} keybinding='Enter' onClick={this.add}/>
     }
 
     renderContent() {
@@ -116,7 +126,26 @@ class _SelectPlanet extends React.Component {
         deactivate()
     }
 
+    // A mosaic chosen in an area is one the previous key could reach; with another key, the area's layer picks its
+    // default mosaic again.
+    apply() {
+        const {inputs: {description}, recipeId, activatable: {deactivate, source}} = this.props
+        const {validatedApiKey} = this.state
+        const sameKey = validatedApiKey === source.sourceConfig.planetApiKey
+        updateLayerSource({
+            recipeId,
+            sourceId: source.id,
+            sourceConfig: {...source.sourceConfig, description: description.value, planetApiKey: validatedApiKey},
+            reconcileLayerConfig: layerConfig => sameKey || !layerConfig ? layerConfig : _.omit(layerConfig, 'urlTemplate')
+        })
+        deactivate()
+    }
 }
+
+const sourceValues = source => ({
+    description: source.sourceConfig.description,
+    planetApiKey: source.sourceConfig.planetApiKey
+})
 
 const policy = () => ({
     _: 'allow'
@@ -125,6 +154,7 @@ const policy = () => ({
 export const SelectPlanet = compose(
     _SelectPlanet,
     withForm({fields}),
+    withSourceValues(sourceValues),
     withRecipe(),
     withActivatable({id: 'selectPlanet', policy, alwaysAllow: true}),
     connect(mapStateToProps)

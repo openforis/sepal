@@ -28,6 +28,9 @@ vi.mock('~/apiRegistry', () => ({
 
 const {addRecipeType} = await import('../recipeTypeRegistry')
 const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('./retrieveOutput')
+
+// Storage listed just now: a Retrieve is authorized by it (recipeListing.js).
+const CURRENT_LISTING = {checkedAt: Date.now()}
 const {canPreview} = await import('./recipeOutput')
 
 // Registered in the GUI without a Retrieve panel of its own, so nothing here names a task.
@@ -146,7 +149,7 @@ const OVER_UNLOADED_AOI = {
 
 // The read a panel would make of the first recipe, with the others loaded beside it, retaining `held` if given.
 const read = ([recipe, ...others], held = null) => readRetrieveOutput({
-    state: {process: {loadedRecipes: Object.fromEntries([recipe, ...others].map(record => [record.id, record]))}},
+    state: {process: {recipeListing: CURRENT_LISTING, loadedRecipes: Object.fromEntries([recipe, ...others].map(record => [record.id, record]))}},
     recipeId: recipe.id,
     heldFor: () => held
 })

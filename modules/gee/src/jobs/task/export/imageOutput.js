@@ -5,6 +5,7 @@ import ImageFactory from '#sepal/ee/imageFactory'
 import {loadRecipe$} from '#sepal/ee/recipe'
 import {INVALID, READY, settledImageOutput$} from '#sepal/recipe/output/observeImageOutput'
 import {AVAILABLE_BANDS} from '#sepal/recipe/output/provider'
+import {NOT_READY} from '#sepal/recipe/output/readiness'
 import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
 import {
     completeRecipeClosure$,
@@ -19,7 +20,9 @@ import {ASSET} from '#sepal/recipe/source/reference'
 //
 // The description reads only the dependencies its providers need, so it cannot stand for whether the recipe may
 // run. A closure whose dependencies are not structurally sound fails the export before anything is described,
-// whether or not the description would have read the broken part.
+// whether or not the description would have read the broken part; and an output that cannot run - its own
+// configuration, or any recipe whose image running it builds, failing a requirement (readiness.js) - fails it too.
+// The image is built beside this check, so a refused export may already have started Earth Engine work.
 
 export const resolveImageOutput$ = recipe =>
     describe$(recipe)
@@ -38,11 +41,14 @@ const describe$ = recipe => closure$(recipe).pipe(
             ? settledImageOutput$({graph: closure.graph, ...acquisition})
             : throwError(() => dependencyError(recipe, validity))
     }),
-    map(({status, description, diagnostics, error}) => {
-        if (status === READY) {
-            return description
+    map(({status, description, diagnostics, error, readiness}) => {
+        if (status !== READY) {
+            throw outputError(recipe, {status, diagnostics, error})
         }
-        throw outputError(recipe, {status, diagnostics, error})
+        if (readiness.status !== READY) {
+            throw readinessError(recipe, readiness)
+        }
+        return description
     })
 )
 
@@ -76,7 +82,8 @@ const acquisition = {
         : observes === AVAILABLE_BANDS
             ? ImageFactory(recipe).getBands$().pipe(map(bandNames => bandNames.map(name => ({name}))))
             : imageBandEvidence$(recipe),
-    declarationFor: recipe => recipeType(recipe.type)?.imageOutput
+    declarationFor: recipe => recipeType(recipe.type)?.imageOutput,
+    readinessFor: recipe => recipeType(recipe.type)
 }
 
 const codesOf = diagnostics => diagnostics.map(({code}) => code).join(', ')
@@ -95,6 +102,11 @@ const closureError = (recipe, failed, error) => {
         )
         : error
 }
+
+const readinessError = (recipe, {status, findings, failures = []}) => new Error(status === NOT_READY
+    ? `Recipe ${recipe.id} cannot run: ${codesOf(findings)}`
+    : `Recipe ${recipe.id} cannot run: what it needs could not be read${failures[0] ? `: ${failures[0].message}` : ''}`,
+{cause: failures[0]})
 
 // A provider that faulted is diagnosed by the error it threw and nothing else, so what the state carries
 // decides what the failure can name.

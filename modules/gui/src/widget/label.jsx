@@ -72,7 +72,8 @@ class _Label extends React.Component {
                     name={ICON_NAME[tooltipSeverity]}
                     variant={ICON_VARIANT[tooltipSeverity]}
                     attributes={{
-                        fade: tooltipSeverity === 'warning'
+                        fade: tooltipSeverity === 'warning',
+                        'data-feedback': 'tooltip'
                     }}
                     tooltip={tooltip}
                     tooltipPlacement={tooltipPlacement}
@@ -88,6 +89,7 @@ class _Label extends React.Component {
             <Icon
                 name='triangle-exclamation'
                 variant='warning'
+                attributes={{'data-feedback': 'warning'}}
                 tooltip={warning}
                 tooltipPlacement='right'
                 tooltipDelay={0}
@@ -105,7 +107,8 @@ class _Label extends React.Component {
                 tooltipPlacement='right'
                 tooltipDelay={0}
                 attributes={{
-                    fade: true
+                    fade: true,
+                    'data-feedback': 'error'
                 }}
             />
         ) : null

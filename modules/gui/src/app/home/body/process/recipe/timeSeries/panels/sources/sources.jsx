@@ -88,8 +88,15 @@ class _Sources extends React.Component {
                 {this.renderDataSetTypes()}
                 {this.renderDataSets()}
                 {this.renderAssetId()}
+                {this.classificationProblem() ? this.renderClassification() : null}
             </Layout>
         )
+    }
+
+    // The classification is chosen under More; while what is selected there cannot be used, it shows anyway, saying why.
+    classificationProblem() {
+        const {form, inputs: {classification}} = this.props
+        return !!form.getErrorMessage(classification)
     }
 
     renderDataSetTypes() {
@@ -109,7 +116,7 @@ class _Sources extends React.Component {
     }
 
     renderDataSets() {
-        const {inputs: {dataSetType, dataSets}} = this.props
+        const {form, inputs: {dataSetType, dataSets}} = this.props
         if (!dataSetType.value) {
             return null
         }
@@ -119,6 +126,7 @@ class _Sources extends React.Component {
                 input={dataSets}
                 options={this.dataSetOptions()}
                 multiple={dataSetType.value === 'OPTICAL'}
+                errorMessage={form.getErrorMessage(dataSets)}
             />
         )
     }

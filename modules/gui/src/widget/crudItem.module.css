@@ -8,6 +8,12 @@
 .content {
     flex-grow: 1;
     flex-shrink: 1;
+    overflow: hidden;
+}
+
+/* Allow constrained rows to shrink without hiding their intrinsic width from content-sized popups. */
+.container, .item, .content, .info {
+    min-width: 0;
 }
 
 .inline {
@@ -45,6 +51,19 @@
 
 .inline {
     flex-shrink: 0;
+}
+
+/* A layout clips what overflows it: room is kept for the focus ring of the error mark at the row's end. */
+.titleRow {
+    max-width: 100%;
+    padding-right: 2px;
+}
+
+/* A long title is cut short, its error mark kept beside it. */
+.titleRowContent > :first-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .title {

@@ -394,7 +394,9 @@
   "gee": {
     "asset": {
       "error": {
-        "wrongType": "Asset is of type {actualType} while the only allowed types are: {allowedTypes}."
+        "wrongType": "Asset is of type {actualType} while the only allowed types are: {allowedTypes}.",
+        "invalidIds": "At most {max} asset ids can be checked at once.",
+        "notFound": "Asset not found: {asset}"
       }
     },
     "classification": {
@@ -406,6 +408,18 @@
       "earthEngineException": "{earthEngineMessage}",
       "failedToLoadRecipe": "Failed to load recipe",
       "title": "Google Earth Engine error"
+    },
+    "geoId": {
+      "error": {
+        "invalidBuffer": "The buffer must be a whole number of metres, at least {min, number}, for this GeoID.",
+        "invalidGeometry": "The geometry of GeoID {geoId} from the GeoID service ({host}) could not be used.",
+        "notFound": "GeoID {geoId} is not registered with the GeoID service ({host}).",
+        "rateLimited": "The GeoID service ({host}) is limiting requests. Try again later.",
+        "rejected": "The GeoID service ({host}) refused the request (HTTP {status}).",
+        "serviceError": "The GeoID service ({host}) reported an error (HTTP {status}). Try again later.",
+        "unreachable": "SEPAL could not reach the GeoID service ({host}). Try again later.",
+        "unusableResponse": "The GeoID service ({host}) returned a response SEPAL could not use."
+      }
     },
     "image": {
       "error": {
@@ -822,7 +836,26 @@
             }
           },
           "Recipe": {
-            "description": "Add a SEPAL recipe"
+            "description": "Add a SEPAL recipe",
+            "form": {
+              "name": {
+                "label": "Name",
+                "placeholder": "Optional display name"
+              }
+            }
+          }
+        }
+      },
+      "editImageLayerSource": {
+        "types": {
+          "Asset": {
+            "description": "Edit an Earth Engine asset layer"
+          },
+          "Planet": {
+            "description": "Edit a Planet account layer"
+          },
+          "Recipe": {
+            "description": "Change the SEPAL recipe of a layer"
           }
         }
       },
@@ -834,16 +867,37 @@
         }
       },
       "layer": {
+        "edit": {
+          "tooltip": "Edit layer"
+        },
         "remove": {
           "tooltip": "Remove layer"
+        },
+        "actions": {
+          "label": "Source actions",
+          "edit": "Edit source",
+          "rename": "Rename source",
+          "delete": "Delete source",
+          "deleteOwned": "Remove this source from the recipe’s inputs."
+        },
+        "delete": {
+          "confirmation": "Delete {description} from Layers? Any map area showing it stops showing it."
         }
       },
+      "legacySource": "No longer an input of this recipe; kept because a map area shows it",
+      "missingSources": "{count, plural, one {A layer source names a recipe that is no longer available} other {# layer sources name recipes that are no longer available}}",
       "mode": {
         "grid": {
           "label": "Grid"
         },
         "stack": {
           "label": "Stack"
+        }
+      },
+      "renameImageLayerSource": {
+        "title": "Rename layer",
+        "name": {
+          "label": "Label"
         }
       },
       "title": "Layers"
@@ -938,6 +992,18 @@
     },
     "interactionMode": {
       "chart": "Click the map to chart a pixel"
+    },
+    "layerSource": {
+      "refresh": {
+        "tooltip": "Refresh: read the sources this layer draws from again",
+        "failed": "Unable to refresh the layer sources"
+      },
+      "checking": "Checking asset…",
+      "unavailable": "Asset {asset} is not available. Refresh, or choose another source.",
+      "failing": "Earth Engine could not be reached. The drawing may be out of date.",
+    "held": "Cannot render ''{recipe}''. Review {section} in that recipe.",
+    "heldUpstream": "Cannot render ''{recipe}''. Review ''{source}'', which it reads.",
+    "checkingSection": "Checking the source selected in {section} of ''{recipe}''…"
     }
   },
   "featureLayerSources": {
@@ -981,7 +1047,6 @@
   "imageLayerSources": {
     "Asset": {
       "refresh": {
-        "tooltip": "Refresh asset",
         "failed": "Unable to refresh asset"
       },
       "label": "EE Asset",
@@ -990,7 +1055,8 @@
     "Recipe": {
       "label": "Recipe",
       "thisRecipeDescription": "This recipe",
-      "loadError": "Failed to load recipe: {error}"
+      "notFound": "The recipe for layer source ''{description}'' could not be found or is no longer accessible.",
+      "loadFailed": "Failed to load the recipe for layer source ''{description}''."
     },
     "Planet": {
       "label": "Planet",
@@ -1035,6 +1101,8 @@
             "label": "Legend"
           },
           "noBands": "No bands selected",
+          "duplicateSource": "Another input already uses this image.",
+          "missingBands": "Its source no longer has {bands}.",
           "noImagery": "Please add at least one image.",
           "recipe": {
             "label": "Recipe",
@@ -1061,7 +1129,11 @@
           "title": "Image to include"
         },
         "title": "Input imagery",
-        "tooltip": "Select input imagery"
+        "tooltip": "Select input imagery",
+        "unavailableBands": {
+          "input": "Some bands are unavailable. Open this image to review them.",
+          "inputs": "Some bands are unavailable. Review Input imagery."
+        }
       }
     },
     "mapZoom": {
@@ -1110,6 +1182,7 @@
         "loadFailed": "Failed to load chart.",
         "loadObservations.error": "Failed to load observations.",
         "loadSegments.error": "Failed to load segments.",
+        "noChartableBand": "The monitoring data observes none of the bands the reference's segments can be charted for.",
         "start.tooltip": "Chart time-series for pixel"
       },
       "create": "CCDC",
@@ -1480,23 +1553,17 @@
           "tooltip": "Retrieve time-series"
         },
         "source": {
-          "asset": {
-            "label": "Earth Engine CCDC Asset",
-            "title": "Earth Engine CCDC Asset",
-            "notCcdc": "Asset does not contain CCDC segments"
-          },
           "button": "SRC",
           "form": {
             "asset": {
-              "invalid": "Asset must be an exported CCDC asset",
               "label": "CCDC asset",
               "placeholder": "Enter CCDC asset ID",
               "required": "An asset ID must be specified"
+            },
+            "recipe": {
+              "label": "CCDC recipe",
+              "required": "Select a recipe"
             }
-          },
-          "recipe": {
-            "label": "Saved SEPAL CCDC recipe",
-            "title": "Saved SEPAL CCDC recipe"
           },
           "title": "Source",
           "tooltip": "Select EE asset with CCDC segments to slice"
@@ -1579,7 +1646,8 @@
             "dataSets": {
               "label": "Optical datasets",
               "tooltip": "One or more Sentinel-2 / Landsat collections. Bands are harmonised across the selection.",
-              "required": "Pick at least one optical dataset"
+              "required": "Pick at least one optical dataset",
+              "unsuppliedInputs": "The selected datasets don't provide the bands this classification reads: {missing}. Choose datasets that do."
             },
             "cloudPercentageThreshold": {
               "label": "Maximum scene cloud cover",
@@ -1590,7 +1658,8 @@
               "label": "Classification recipe",
               "tooltip": "Only Classification recipes appear here. Class IDs and labels are pulled from the selected recipe.",
               "placeholder": "Select a Classification recipe",
-              "required": "Pick a Classification recipe"
+              "required": "Pick a Classification recipe",
+              "unsuppliedInputs": "No supported monitoring data provides the bands this classification reads: {missing}. Choose another classification."
             },
             "changeFromClasses": {
               "label": "FROM classes (baseline)",
@@ -1605,7 +1674,8 @@
             },
             "changeClasses": {
               "noClassification": "Select a classification recipe to choose From/To classes"
-            }
+            },
+            "andMore": "{items} and {count} more"
           }
         },
         "options": {
@@ -1623,7 +1693,12 @@
             "gateIndex": {
               "label": "Index",
               "tooltip": "Spectral index whose drop (baseline − monitoring) confirms an alert — a drop signals disturbance. Options depend on the selected sources.",
-              "required": "Pick an index"
+              "required": "Pick an index",
+              "unsupported": "The selected imagery can't compute {index}. Choose an index it supports, or turn the index gate off.",
+              "unavailable": {
+                "BASELINE": "The classification's imagery can't provide {index} for the index gate. Choose another index, or turn the gate off.",
+                "MONITORING": "The monitoring data can't provide {index} for the index gate. Choose another index, or turn the gate off."
+              }
             },
             "gateThreshold": {
               "label": "Minimum drop",
@@ -1646,8 +1721,7 @@
         "singleInputRequired": "This classification uses more than one input image, which isn't supported here. Choose a classification with a single input.",
         "selectedScenesUnsupported": "This classification was trained on hand-selected scenes, which isn't supported yet. Choose a classification trained on a date range.",
         "pending": "Reading the selected classification…",
-        "unavailable": "The selected classification could not be read. Choose it again to retry.",
-        "notDerivable": "Couldn't read the imagery dates from this classification (external asset). Set the baseline and monitoring dates manually."
+        "unavailable": "The selected classification could not be read. Choose it again to retry."
       }
     },
     "changeAlerts": {
@@ -1760,8 +1834,7 @@
         "reference": {
           "asset": {
             "label": "Earth Engine CCDC Asset",
-            "title": "Earth Engine CCDC Asset",
-            "notCcdc": "Asset does not contain CCDC segments"
+            "title": "Earth Engine CCDC Asset"
           },
           "button": "REF",
           "form": {
@@ -1770,6 +1843,9 @@
               "label": "CCDC asset",
               "placeholder": "Enter CCDC asset ID",
               "required": "An asset ID must be specified"
+            },
+            "recipe": {
+              "required": "Select a recipe"
             }
           },
           "recipe": {
@@ -2260,6 +2336,7 @@
             "indexes": {
               "label": "Indexes"
             },
+            "insufficientBands": "Select at least two available bands.",
             "pairWiseExpression": {
               "ANGLE": {
                 "label": "Angle"
@@ -2276,7 +2353,9 @@
               "RATIO": {
                 "label": "Ratio"
               }
-            }
+            },
+            "unavailableBands": "Source no longer provides {bands}.",
+            "underivableIndexes": "Source no longer provides the bands to derive {indexes}."
           },
           "button": "IMG",
           "derivedBands": {
@@ -2331,6 +2410,9 @@
               "placeholder": "Enter an asset ID...",
               "required": "You must enter an asset ID"
             },
+            "bandSetSpecs": {
+              "required": "Select at least one band"
+            },
             "includedBands": {
               "label": "Included bands"
             },
@@ -2342,6 +2424,11 @@
             "section": {
               "required": "An image must be selected"
             }
+          },
+          "unavailableSelections": {
+            "incompleteCombination": "A band combination needs at least two available bands.",
+            "input": "Some bands or indexes are unavailable. Open this image to review them.",
+            "inputs": "Some bands or indexes are unavailable. Review Input imagery."
           },
           "loadingBands": "Loading available bands",
           "loadingBandsError": "Failed to load from Google Earth Engine",
@@ -2456,17 +2543,11 @@
             },
             "sampleClassification": {
               "typeToSample": {
-                "label": "Image source",
-                "ASSET": "EE Asset",
-                "RECIPE": "Recipe"
+                "label": "Image source"
               },
               "assetToSample": {
-                "label": "EE asset ID of classification",
                 "placeholder": "Enter an asset ID...",
                 "required": "You must enter an asset ID"
-              },
-              "recipeToSample": {
-                "label": "Recipe to sample"
               },
               "sampleScale": {
                 "label": "Scale to sample in",
@@ -2562,6 +2643,7 @@
               }
             }
           },
+          "missing": "Add training data",
           "noDataSet": "No training data set added",
           "remove": {
             "confirmationMessage": "Are you sure you want to remove {name} from your training data?",
@@ -2877,12 +2959,33 @@
           "title": "Band names",
           "tooltip": "Set the band names of the stack.",
           "duplicateBand": "Duplicate band name",
-          "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters"
+          "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters",
+          "problem": {
+            "duplicate": "\"{outputName}\" is the name of more than one band.",
+            "blank": "A band has no name.",
+            "unmapped": "Its bands are not named.",
+            "invalidFormat": "\"{outputName}\" is not a valid band name."
+          }
         }
       },
       "tabPlaceholder": "Stack"
     },
     "bandMath": {
+      "requirement": {
+        "syntaxError": "The expression cannot be read.",
+        "unknownVariable": "\"{variable}\" is neither an input nor an earlier calculation.",
+        "unknownBand": "\"{variable}\" has no band \"{band}\".",
+        "forwardReference": "\"{variable}\" is calculated after this calculation.",
+        "selfReference": "\"{variable}\" cannot use itself.",
+        "missingImage": "\"{variable}\" no longer exists.",
+        "invalidArgCount": "A function is given {argCount} arguments instead of {expectedArgCount}.",
+        "invalidBandCount": "\"{imageName}\" has {bandCount} bands, while another image read whole has {expectedBandCount}.",
+        "missingInputBands": "Its source no longer has {bands}.",
+        "noOutputBands": "\"{variable}\" outputs no bands.",
+        "noOutputImages": "No image or calculation is output.",
+        "invalidOutputName": "\"{outputName}\" is not a valid band name.",
+        "duplicateOutputName": "\"{outputName}\" is the name of more than one output band."
+      },
       "create": "Band Math",
       "description": "Perform band math on imagery from SEPAL and/or Google Earth Engine image assets.",
       "duplicateName": "Duplicate name. There are other images or calculations with this name.",
@@ -3002,6 +3105,10 @@
           "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters",
           "noImages": "No images/calculations added to output",
           "noBands": "No bands added to output",
+          "missingBands": "An image or calculation outputs no bands.",
+          "resetName": {
+            "tooltip": "Clear to use an available default name."
+          },
           "addImage": {
             "label": "Add",
             "tooltip": "Include bands from image or calculation to output",
@@ -3037,8 +3144,7 @@
         "inputImage": {
           "asset": {
             "label": "Earth Engine asset ID",
-            "placeholder": "Enter an asset ID...",
-            "title": "Earth Engine Asset"
+            "placeholder": "Enter an asset ID..."
           },
           "changeBand": {
             "label": "Change band"
@@ -3052,10 +3158,9 @@
           },
           "legend": {
             "label": "Legend",
-            "tooLong": "The legend is too long. It cannot contain more than {max} entries."
-          },
-          "recipe": {
-            "title": "Saved SEPAL Recipe"
+            "tooLong": "The legend is too long. It cannot contain more than {max} entries.",
+            "missing": "This image has no legend. Open it to add the classes to compare.",
+            "required": "Add the classes of the change band to compare."
           },
           "to": {
             "button": {
@@ -3063,6 +3168,9 @@
               "tooltip": "Select to image"
             },
             "title": "To image"
+          },
+          "image": {
+            "label": "Image"
           }
         },
         "legend": {
@@ -3101,9 +3209,7 @@
       "panel": {
         "inputImage": {
           "asset": {
-            "label": "Earth Engine asset ID",
-            "placeholder": "Enter an asset ID...",
-            "title": "Earth Engine Asset"
+            "placeholder": "Enter an asset ID..."
           },
           "changeBand": {
             "label": "Change band"
@@ -3120,8 +3226,7 @@
           },
           "recipe": {
             "label": "Recipe",
-            "placeholder": "Select a recipe...",
-            "title": "Saved SEPAL Recipe"
+            "placeholder": "Select a recipe..."
           },
           "to": {
             "button": {
@@ -3129,6 +3234,9 @@
               "tooltip": "Select to image"
             },
             "title": "To image"
+          },
+          "image": {
+            "label": "Image"
           }
         },
         "legend": {
@@ -3297,15 +3405,14 @@
       "panel": {
         "inputImage": {
           "asset": {
-            "label": "Earth Engine asset ID",
-            "placeholder": "Enter an asset ID...",
-            "title": "Earth Engine Asset"
+            "placeholder": "Enter an asset ID..."
           },
           "imageMask": {
             "button": {
               "label": "MSK",
               "tooltip": "Select mask to use"
             },
+            "missing": "Select a mask",
             "title": "Mask to use"
           },
           "imageToMask": {
@@ -3317,8 +3424,10 @@
           },
           "recipe": {
             "label": "Recipe",
-            "placeholder": "Select a recipe...",
-            "title": "Saved SEPAL Recipe"
+            "placeholder": "Select a recipe..."
+          },
+          "image": {
+            "label": "Image"
           }
         }
       },
@@ -3486,6 +3595,30 @@
                 "required": "A row must be selected"
               },
               "title": "Select from Fusion Table"
+            },
+            "geoId": {
+              "about": "About GeoID",
+              "checking": "Checking GeoID...",
+              "label": "GeoID",
+              "lookUp": "Look up a GeoID",
+              "multiple": "More than one GeoID found. An area of interest uses a single GeoID.",
+              "none": "No GeoID found. Paste a GeoID, or a link containing one.",
+              "notChecked": "Not checked: {error}",
+              "placeholder": "Paste a GeoID or a link containing one",
+              "title": "From GeoID",
+              "tooltip": "A GeoID is a permanent identifier for a location – a point or a boundary – registered with the Open Foris GeoID service. Paste a GeoID, or a link containing one."
+            },
+            "bufferMeters": {
+              "defaultPlaceholder": "Default",
+              "invalid": "A whole number of metres, at least {min, number}",
+              "label": "Buffer (m)",
+              "square": "m = {size, number} m × {size, number} m square",
+              "tooltip": {
+                "point": "This GeoID is a single location. The area of interest is the square reaching this distance from it in each direction.",
+                "polygon": "This GeoID is a boundary. The area of interest extends this distance beyond it; 0 keeps the boundary as it is.",
+                "unknown": "How far to extend the area of interest beyond the geometry of the GeoID. Leave empty for its default: a 250 m square around a point, the boundary itself for a polygon."
+              },
+              "unit": "m"
             },
             "polygon": {
               "description": "Draw a polygon on the map.",
@@ -4416,23 +4549,17 @@
           "tooltip": "Configure imagery pre-processing"
         },
         "reference": {
-          "asset": {
-            "label": "Earth Engine Asset",
-            "title": "Earth Engine Asset",
-            "notBayTSHistorical": "Asset is not a BAYTS historical image or image collection"
-          },
           "button": "REF",
           "form": {
             "asset": {
-              "invalid": "Asset must be an exported BAYTS historical asset",
               "label": "BAYTS historical asset",
               "placeholder": "Enter BAYTS historical asset ID",
               "required": "An asset ID must be specified"
+            },
+            "recipe": {
+              "label": "BAYTS historical recipe",
+              "required": "Select a recipe"
             }
-          },
-          "recipe": {
-            "label": "Saved SEPAL recipe",
-            "title": "Saved SEPAL recipe"
           },
           "title": "Source",
           "tooltip": "Select BAYTS historical asset or recipe to use as reference for alerts"
@@ -4445,14 +4572,6 @@
         "label": "Change alerts",
         "loading": "Loading tiles: {pending}",
         "tilesFailed": "{failed} failed"
-      },
-      "reference": {
-        "asset": {
-          "loadError": "Failed to load asset"
-        },
-        "recipe": {
-          "loadError": "Failed to load recipe"
-        }
       },
       "tabPlaceholder": "BAYTS_alerts"
     },
@@ -4502,7 +4621,8 @@
                 "label": "Descending",
                 "tooltip": "Include scenes from descending orbits."
               },
-              "label": "Orbits"
+              "label": "Orbits",
+              "required": "Select at least one orbit."
             },
             "outlierRemoval": {
               "aggressive": {
@@ -4860,6 +4980,11 @@
           "title": "Mapping"
         }
       },
+      "requirement": {
+        "bandNotIncluded": "A constraint reads band \"{band}\", which its input does not include.",
+        "missingInput": "A constraint reads an input that has been removed.",
+        "sourceBandMissing": "The input source no longer provides band \"{band}\". Restore it or select another band."
+      },
       "tabPlaceholder": "Remapping"
     },
     "retrieve": {
@@ -4959,6 +5084,21 @@
       "tooltip": "Retrieve recipe",
       "error": {
         "imageOutput": "Unable to determine the export requirements for this recipe. Please try again, and check that the recipes it depends on are available."
+      },
+      "assets": {
+        "checking": "Checking asset…",
+        "unavailable": "Asset {asset} is not available. Refresh, or choose another source.",
+        "failing": "Asset {asset} could not be checked. Earth Engine could not be reached.",
+        "expired": "The assets this recipe reads have not been checked recently.",
+        "retry": "Refresh"
+      },
+      "source": {
+        "missing": "No source is selected under {section}.",
+        "checking": "Checking the source selected under {section}…",
+        "unavailable": "The source selected under {section} is missing or unavailable. Open {section} to see why.",
+        "expired": "The source selected under {section} has not been checked recently. Refresh to check it again.",
+        "unsuitable": "The source selected under {section} cannot be used. Open {section} to see why.",
+        "configurationUnmet": "The settings under {section} need attention. Open {section} to see why."
       }
     },
     "saveRecipe": {
@@ -5641,6 +5781,92 @@
         "easeGrid2North": "North polar (EPSG:6931)",
         "easeGrid2South": "South polar (EPSG:6932)"
       }
+    },
+    "requirement": {
+      "inputImage": {
+        "field": {
+          "missingAsset": "This asset no longer exists or is not accessible.",
+        "missingRecipe": "This recipe no longer exists or is not accessible.",
+          "unavailableBand": "Source no longer provides {band}."
+        },
+        "missingAsset": "The selected asset no longer exists or is not accessible.",
+      "missingRecipe": "The selected recipe no longer exists or is not accessible.",
+        "unavailableBands": "Selected bands are unavailable. Open this image to review them."
+      },
+      "itemProblem": "{item}: {message}",
+      "output": "its settings",
+      "prerequisiteUnmet": "Depends on {items}, which need attention."
+    },
+    "source": {
+      "status": {
+        "checking": "Checking the selected source…",
+        "recipeNeedsAttention": "{recipe} needs attention.",
+        "recipeBlockedBy": "{recipe} cannot run because {origins} needs attention.",
+        "recipeBlockedByOrigins": "{recipe} cannot run because {origins} need attention.",
+        "recipeAlsoDependsOn": "{recipe} needs attention. It also depends on {origins}, which needs attention.",
+        "recipeAlsoDependsOnOrigins": "{recipe} needs attention. It also depends on {origins}, which need attention.",
+        "unavailable": "The selected source is missing or unavailable. Refresh, or choose another source.",
+        "assetUnavailable": "Asset {asset} could not be checked. Refresh, or choose another source.",
+        "assetMissing": "Asset {asset} is missing or unavailable. Refresh, or choose another source.",
+        "expired": "The selected source has not been checked recently. Refresh to check it again.",
+        "refresh": "Refresh",
+        "missing": "No source is selected.",
+        "notAProducer": "{way}{source} provides no {capability}.",
+        "unfilledRole": "{way}{source} does not select the image it stands for.",
+        "cyclic": "The selected source refers back to itself.",
+        "unsuitable": "The selected source cannot provide {capability}.",
+        "withheld": "Not loaded: the source selected in {section} cannot be used yet.",
+        "advisory": "{about}: {message}",
+        "sectionsIncompatible": "The settings in {sections} are incompatible with this reference. Choose another reference or update the settings in {sections}."
+      },
+      "operation": {
+        "PIXEL_SEGMENTS": "Segment chart"
+      },
+      "capability": {
+        "baytsHistoricalStats": "BAYTS historical statistics",
+        "ccdcSegments": "CCDC segments"
+      },
+      "historicalStats": {
+        "incompatible": "Asset {asset} does not have the BAYTS historical statistics alert detection reads: {problems}.",
+        "missingBand": "{band} is missing",
+        "arrayBand": "{band} is an array, where a scalar is needed",
+        "unexpectedBand": "{band} would be read as a statistic of its orbit pass",
+        "misordered": "{bands} must be stored VV before VH",
+        "undetermined": "The array dimensions of {count} bands of asset {asset} could not be established: {bands}.",
+        "noPass": "The selected source has no orbit pass with BAYTS historical statistics.",
+        "passAbsent": "The reference has no usable statistics for the {absent} orbit {count, plural, one {pass} other {passes}} monitored. Monitor {passes} instead.",
+        "malformedPasses": "The orbit passes to monitor are not valid. Choose them again.",
+        "passAbsentNoAlternative": "The reference has no usable statistics for the {absent} orbit {count, plural, one {pass} other {passes}} monitored."
+      },
+      "classifierInputs": {
+        "classification": "No collection this recipe can use provides the bands this classification reads: {missing}. Choose another classification, or none.",
+        "dataSets": "The selected data sets don't provide the bands this classification reads: {missing}. Choose data sets that do, or another classification."
+      },
+      "segments": {
+        "incompatible": "Asset {asset} does not have the CCDC segment layout alert detection reads: {problems}.",
+        "incompatibleSlice": "Asset {asset} does not have the CCDC segment layout slicing reads: {problems}.",
+        "notSegments": "This asset can't be used as a CCDC segment reference. Choose an asset or recipe that provides CCDC segments.",
+        "notSliceSegments": "This asset can't be sliced as CCDC segments. Choose an asset or recipe that provides CCDC segments.",
+        "missingBand": "{band} is missing",
+        "scalarBand": "{band} is not an array, where {expected}-dimensional arrays are needed",
+        "wrongDimensions": "{band} has {actual} array dimensions, where {expected} are needed",
+        "misordered": "the RMSE and magnitude bands of {measures} are not stored in the same order",
+        "undetermined": "The array dimensions of {count} bands of asset {asset} could not be established: {bands}.",
+        "andMore": "{items} and {count} more",
+        "measureAbsent": "The selected source has no segments for band {measure}. Choose a band it has segments for: {measures}.",
+        "measureUnobserved": "The selected monitoring data does not observe {measure}. Choose a band it observes that the selected source has segments for: {measures}.",
+        "noMonitorableMeasure": "The selected source has segments only for {measures}, which no supported monitoring data observes. Choose another source.",
+        "noAvailableMeasure": "The selected source has segments only for {measures}, which this type of monitoring data does not observe. Choose a type that observes one of them.",
+        "noObservedMeasure": "The selected source has segments only for {measures}, which the selected data sets do not observe as currently processed. Choose data sets that observe one of them, or check the surface reflectance (SR) correction in pre-processing.",
+        "noMeasures": "none",
+        "noMeasure": "The selected source has no band with both coefficients and RMSE.",
+        "noSliceMeasure": "The selected source has no band with coefficients, RMSE and magnitude.",
+        "noChartableMeasure": "No measure has the coefficients, RMSE and magnitude a segment chart plots."
+      }
+    },
+    "sourceType": {
+      "ASSET": "Asset",
+      "RECIPE": "Recipe"
     }
   },
   "sources": {
@@ -6500,6 +6726,7 @@
       },
       "band": {
         "label": "Band",
+        "notOffered": "\"{band}\" is not among this image's bands.",
         "notSelected": "[No band selected]"
       },
       "booleanOperator": {
@@ -6512,6 +6739,7 @@
       },
       "image": {
         "label": "Image",
+        "notOffered": "This image is no longer available.",
         "notSelected": "[No image selected]"
       },
       "logicalAnd": {
@@ -6599,7 +6827,10 @@
       },
       "ownRecipe": {
         "invalid": "A recipe cannot be used as its own input"
-      }
+      },
+      "loadError": "Unable to load recipe",
+      "selection": "Selected",
+      "unlisted": "Unavailable recipe"
     },
     "safetyButton": {
       "label": "Proceed"

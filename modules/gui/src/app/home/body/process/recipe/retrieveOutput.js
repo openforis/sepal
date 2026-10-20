@@ -1,3 +1,5 @@
+import _ from 'lodash'
+
 import {physicalDestinationCompatibility} from '#sepal/recipe/output/physicalDestinationCompatibility'
 import {VALID} from '#sepal/recipe/source/dependencyValidity'
 import {getLogger} from '~/log'
@@ -5,16 +7,50 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
 
+import {AGREED, draftAgreement, isDraft, SAVE_PENDING} from '../draftAgreement'
+import {CURRENT, EXPIRED, listingAuthority, WAITING} from '../recipeListing'
+import {
+    assetAuthority,
+    assetEvidenceOfState,
+    CURRENT as ASSET_CURRENT,
+    DEFAULT_ASSET_POLICY,
+    EXPIRED as ASSET_EXPIRED,
+    WAITING as ASSET_WAITING
+} from '../sourceRuntime/assetEvidence'
+import {knownRevisionOf, recordStalenessOfState} from '../sourceRuntime/recordCurrency'
 import {buildMapDependencyGraph} from './mapDependencyGraph'
-import {IMAGE_OUTPUT, INVALID, readRecipeOutput, READY, UNAVAILABLE} from './recipeOutput'
+import {retrieveAvailability} from './operationAvailability'
+import {IMAGE_OUTPUT, INVALID, NEEDS_EVIDENCE, readRecipeOutput, READY, UNAVAILABLE} from './recipeOutput'
 import {exportRequirements, submitRetrieveRecipeTask} from './recipeTaskSubmitter'
+import {configurationGate, outputRequirementGate} from './sourceRequirements'
 
 // Retrieve over a recipe's image output: what may be retrieved, decided once from one read, by the panel that
 // offers it and by the submission that sends it.
 //
-// The read is the common one (recipeOutput.js), over the records the session holds and what the panel's own
-// acquisition owner retains. Its description is the one authority: choices, destinations, policies and names all
-// come from it, and nothing else is retrieved.
+// The read is the common one (recipeOutput.js), over the records the session holds and what the source runtime holds
+// for the question the panel watches. Its description is the one authority: choices, destinations, policies and names
+// all come from it, and nothing else is retrieved.
+//
+// A description is evidence about the session's records, but an export executes what storage holds. So Retrieve is
+// authorized only while the recipe listing - this session's evidence of storage - is recent enough, and only while
+// every draft the output depends on - open, or closed with its saves unsettled - is what storage holds
+// (draftAgreement.js): a save still in flight is waited for, and anything else - a save unconfirmed past its bound, refused, conflicting or unresolved, a newer revision in
+// storage, or a draft never saved - blocks, named by its own code. The recipe itself is submitted as it is, so its own
+// draft needs no saving. Being open is no reason to block.
+//
+// Likewise for the assets the description was established from - those its closure read (assetEvidence.js): their
+// evidence must have been read within its authority, with nothing since found missing, failing or made stale by a
+// mutation. A read in flight is waited for; evidence expired or failed blocks, naming the asset. A source without a
+// token reports no change, so a description read from one authorizes nothing once it is `unversionedMaxAgeMs` old,
+// until it is refreshed; the description and its drawing stay as they are. Assets that only supply pixels establish
+// nothing an export is authorized by, and execution resolves its own inputs.
+//
+// A recipe whose type declares requirements of the sources it selects (`sourceRequirements`, sourceRequirements.js) is
+// authorized only while each is known to be met, decided from the same state and from the observation the source
+// runtime keeps the recipe's evidence current by (`evidenceOwnerOf`), which the panel's own watch acquires: while one is
+// being checked it is waited for, and otherwise it blocks, naming the section the source is selected in. Dependencies already known to be unsound refuse it for that.
+// A configuration that does not meet the requirements its type declares over it is refused for that, naming the section,
+// whatever its output reads as (`configurationGate`).
 //
 // A request is the selection translated into the physical names it exports: {names, retrieveOptions}, and the
 // options a structured selection could not translate, `unrecognized`, which no band answers. Recipes whose
@@ -28,24 +64,51 @@ export const RETRIEVABLE = 'RETRIEVABLE'
 
 export const UNRESOLVED_OUTPUT = 'UNRESOLVED_OUTPUT'
 export const UNSOUND_DEPENDENCIES = 'UNSOUND_DEPENDENCIES'
+// Described, and unable to run (#sepal/recipe/output/readiness): its bands are known, and none is exported.
+export const UNREADY_OUTPUT = 'UNREADY_OUTPUT'
 export const NO_SELECTION = 'NO_SELECTION'
 export const MISSING_SELECTION = 'MISSING_SELECTION'
 export const UNRECOGNIZED_SELECTION = 'UNRECOGNIZED_SELECTION'
 export const UNVERIFIED_SELECTION = 'UNVERIFIED_SELECTION'
 export const INCOMPATIBLE_DESTINATION = 'INCOMPATIBLE_DESTINATION'
 
-// The recipe, its output read, and whether that read is still being acquired, from one state of the session.
-// `pending` is an answer whose acquisition is not yet retained - acquiring, or about to be.
-export const readRetrieveOutput = ({state, recipeId, heldFor}) => {
+export const REVISIONS_PENDING = 'REVISIONS_PENDING'
+export const REVISIONS_EXPIRED = 'REVISIONS_EXPIRED'
+export const REVISIONS_UNAVAILABLE = 'REVISIONS_UNAVAILABLE'
+export const ASSETS_PENDING = 'ASSETS_PENDING'
+export const ASSETS_EXPIRED = 'ASSETS_EXPIRED'
+export const ASSETS_UNAVAILABLE = 'ASSETS_UNAVAILABLE'
+
+// The recipe, its output read, and whether that read is still being loaded, from one state of the session.
+// `pending` is an answer the runtime does not yet hold for the current key - loading, or about to be.
+export const readRetrieveOutput = ({state, recipeId, heldFor, evidenceOwnerOf, now = Date.now()}) => {
     const loadedRecipes = selectFrom(state, 'process.loadedRecipes') || {}
     const recipe = loadedRecipes[recipeId]
     if (!recipe) {
         return null
     }
     const graph = buildMapDependencyGraph({recipe, loadedRecipes})
-    const output = readRecipeOutput({recipe, product: {name: IMAGE_OUTPUT}, graph, heldFor})
-    const pending = Boolean(output.acquisition) && !heldFor(output.acquisition.key)
-    return {recipe, graph, output, pending}
+    const output = readRecipeOutput({
+        recipe, product: {name: IMAGE_OUTPUT}, graph, heldFor, currency: recordStalenessOfState(state),
+        assetEvidence: assetEvidenceOfState(state)
+    })
+    const held = output.acquisition && heldFor(output.acquisition.key)
+    const pending = Boolean(output.acquisition) && !held
+    // A configuration that does not meet its own requirements is refused for that, whatever its output reads as: the
+    // image it would build is not one it can. One its output read refuses is refused for that, naming its section.
+    const unmet = configurationGate({recipe, operation: IMAGE_OUTPUT})
+        || outputRequirementGate({recipe, output, operation: IMAGE_OUTPUT})
+    if (unmet) {
+        return {recipe, graph, output: withheld(output, unmet), pending: false}
+    }
+    const gate = output.status === READY
+        && authorityGate({
+            state, recipe, graph, basis: held?.basis || [], assets: held?.assets || [], observedAt: held?.observedAt ?? null,
+            dependencyValidity: output.dependencyValidity, evidenceOwnerOf, heldFor, now
+        })
+    return gate
+        ? {recipe, graph, output: withheld(output, gate), pending: gate.wait}
+        : {recipe, graph, output, pending}
 }
 
 // A selection of physical output names, in the output's order. "All bands" names every band the answer holds,
@@ -143,14 +206,73 @@ export const submitRetrieve = ({recipe, output, pending, request, task = {}, sub
     }
 }
 
+// Why the description may not authorize an export now, if it may not: {wait, code, recipeId}. A wait comes after
+// every block, so nothing that blocks is reported as pending.
+const authorityGate = ({state, recipe, graph, basis, assets, observedAt, dependencyValidity, evidenceOwnerOf, heldFor, now}) => {
+    const listing = listingAuthority({listingState: selectFrom(state, 'process.recipeListing'), now})
+    if (listing !== CURRENT) {
+        return listing === WAITING
+            ? {wait: true, code: REVISIONS_PENDING}
+            : {wait: false, code: listing === EXPIRED ? REVISIONS_EXPIRED : REVISIONS_UNAVAILABLE}
+    }
+    const loadedRecipes = selectFrom(state, 'process.loadedRecipes') || {}
+    const open = new Set((selectFrom(state, 'process.tabs') || []).map(({id}) => id))
+    const saves = selectFrom(state, 'process.saveStates') || {}
+    const listed = new Map((selectFrom(state, 'process.recipes') || []).map(({id, revision}) => [id, revision]))
+    const drafts = _.uniq([...graph.recipes.map(({id}) => id), ...basis.map(({id}) => id)])
+        .filter(id => id !== recipe.id && loadedRecipes[id] && isDraft({open: open.has(id), saveState: saves[id]}))
+        .map(id => ({
+            recipeId: id,
+            code: draftAgreement({
+                draft: loadedRecipes[id],
+                saveState: saves[id],
+                knownRevision: knownRevisionOf({listed: listed.get(id), saveState: saves[id]})
+            })
+        }))
+        .filter(({code}) => code !== AGREED)
+        .map(draft => ({...draft, wait: draft.code === SAVE_PENDING}))
+    const evidence = assetEvidenceOfState(state)
+    const unversionedTooOld = assetId => evidence[assetId]?.unversioned && observedAt !== null
+        && now - observedAt >= DEFAULT_ASSET_POLICY.unversionedMaxAgeMs
+    const unauthorized = assets
+        .map(assetId => ({
+            assetId,
+            authority: unversionedTooOld(assetId) ? ASSET_EXPIRED : assetAuthority(evidence[assetId], {now})
+        }))
+        .filter(({authority}) => authority !== ASSET_CURRENT)
+        .map(({assetId, authority}) => ({
+            assetId,
+            wait: authority === ASSET_WAITING,
+            code: authority === ASSET_WAITING ? ASSETS_PENDING : authority === ASSET_EXPIRED ? ASSETS_EXPIRED : ASSETS_UNAVAILABLE
+        }))
+    // Dependencies known to be unsound already refuse it, with what it describes (unresolvedOutput).
+    const requirement = dependencyValidity && dependencyValidity.status !== VALID
+        ? null
+        : retrieveAvailability({state, recipe, evidenceOwnerOf, heldFor, now}).gate
+    const reasons = [...drafts, ...unauthorized, ...(requirement ? [requirement] : [])]
+    return reasons.find(({wait}) => !wait) || reasons[0] || null
+}
+
+// The description is withheld: waited for as one still being loaded, or blocked as one that could not be had.
+const withheld = (output, {wait, code, recipeId, assetId, section}) => ({
+    ...output,
+    status: wait ? NEEDS_EVIDENCE : UNAVAILABLE,
+    authority: null,
+    description: null,
+    bands: [],
+    presentation: {},
+    availableBands: {},
+    diagnostics: [{code, ...(recipeId && {recipeId}), ...(assetId && {assetId}), ...(section && {section})}]
+})
+
 const decision = (status, reason = null, {missingBandNames = [], destinations = null} = {}) =>
     ({status, reason, missingBandNames, destinations})
 
-// Dependencies not known to be sound are no answer, whichever of the two is missing; a read still being acquired
-// is not yet one.
-const unresolvedOutput = ({status, dependencyValidity}, pending) => {
+// Dependencies not known to be sound are no answer, whichever of the two is missing; a read still being loaded
+// is not yet one. Nor is an output that cannot run, or whose readiness is not yet known.
+const unresolvedOutput = ({status, dependencyValidity, readiness}, pending) => {
     if (status === READY && dependencyValidity?.status === VALID) {
-        return null
+        return unreadyOutput(readiness, pending)
     }
     if (dependencyValidity && dependencyValidity.status !== VALID) {
         return decision(BLOCKED, UNSOUND_DEPENDENCIES)
@@ -161,6 +283,15 @@ const unresolvedOutput = ({status, dependencyValidity}, pending) => {
     return pending
         ? decision(RESOLVING)
         : decision(BLOCKED, status === READY ? UNSOUND_DEPENDENCIES : UNRESOLVED_OUTPUT)
+}
+
+const unreadyOutput = (readiness, pending) => {
+    if (!readiness || readiness.status === READY) {
+        return null
+    }
+    return readiness.status === NEEDS_EVIDENCE && pending
+        ? decision(RESOLVING)
+        : decision(BLOCKED, UNREADY_OUTPUT)
 }
 
 // The destinations these bands can be exported to, by the requirements submission itself validates; null when a

@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -18,7 +19,7 @@ import {SpatialSpeckleFilterOptions} from './spatialSpeckleFilterOptions'
 const fields = {
     advanced: new Form.Field(),
     orbits: new Form.Field()
-        .notEmpty('process.recipeMosaic.panel.options.form.orbits.required'),
+        .notEmpty('process.baytsHistorical.panel.options.form.orbits.required'),
     orbitNumbers: new Form.Field(),
     geometricCorrection: new Form.Field(),
     spatialSpeckleFilter: new Form.Field(),
@@ -60,6 +61,14 @@ class _Options extends React.Component {
         )
     }
 
+    componentDidMount() {
+        this.reconcileOrbits()
+    }
+
+    componentDidUpdate() {
+        this.reconcileOrbits()
+    }
+
     renderAdvanced() {
         const {monitor, inputs: {mask}} = this.props
         return (
@@ -92,7 +101,7 @@ class _Options extends React.Component {
     }
 
     renderOrbits() {
-        const {inputs: {orbits}} = this.props
+        const {monitor, supportedOrbits, form, inputs: {orbits}} = this.props
         const options = [
             {
                 value: 'ASCENDING',
@@ -104,13 +113,14 @@ class _Options extends React.Component {
                 label: msg('process.baytsHistorical.panel.options.form.orbits.descending.label'),
                 tooltip: msg('process.baytsHistorical.panel.options.form.orbits.descending.tooltip')
             }
-        ]
+        ].map(option => supportedOrbits ? {...option, disabled: !supportedOrbits.includes(option.value)} : option)
         return (
             <Form.Buttons
                 label={msg('process.baytsHistorical.panel.options.form.orbits.label')}
                 input={orbits}
                 multiple
                 options={options}
+                errorMessage={monitor ? form.getErrorMessage(orbits) : undefined}
             />
         )
     }
@@ -341,6 +351,22 @@ class _Options extends React.Component {
             && multitemporalSpeckleFilter.value !== 'NONE'
     }
 
+    // Keeps the passes chosen to those supported, or chooses every one supported where none of them is: once for each
+    // answer, so what is chosen after it - none, say - is left as chosen.
+    reconcileOrbits() {
+        const {supportedOrbits, inputs: {orbits}} = this.props
+        if (!supportedOrbits || _.isEqual(supportedOrbits, this.reconciledFor)) {
+            return
+        }
+        this.reconciledFor = supportedOrbits
+        const chosen = Array.isArray(orbits.value) ? orbits.value : []
+        const kept = chosen.filter(orbit => supportedOrbits.includes(orbit))
+        const reconciled = kept.length ? kept : supportedOrbits
+        if (!_.isEqual(reconciled, orbits.value)) {
+            orbits.set(reconciled)
+        }
+    }
+
 }
 
 const modelToValues = model => {
@@ -379,5 +405,7 @@ export const Options = compose(
 )
 
 Options.propTypes = {
-    monitor: PropTypes.any
+    monitor: PropTypes.any,
+    // The passes the source is established to support, where something establishes them; others cannot be chosen.
+    supportedOrbits: PropTypes.arrayOf(PropTypes.string)
 }

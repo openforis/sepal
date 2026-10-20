@@ -40,7 +40,7 @@ const mapStateToProps = (state, ownProps) => {
 }
 
 class _BandNames extends React.Component {
-    state = {allOutputNames: [], invalidBandsById: {}}
+    state = {invalidBandsById: {}}
 
     constructor(props) {
         super(props)
@@ -76,16 +76,15 @@ class _BandNames extends React.Component {
     }
 
     renderImageBandNames(image, imageIndex) {
-        const {bandNames, images, recipeNameById} = this.props
-        const {allOutputNames} = this.state
-        const names = bandNames[imageIndex].bands
+        const {images, recipeNameById} = this.props
+        const allOutputNames = this.allOutputNames()
         const name = image.type === 'RECIPE_REF'
             ? recipeNameById[image.id]
             : image.id
         const key = `${image.type}-${image.id}-${imageIndex}`
         const foo = (
             <Layout type='horizontal'>
-                {names.map(({originalName, outputName}, bandIndex) =>
+                {this.namesOf(image).map(({originalName, outputName}, bandIndex) =>
                     <BandName
                         key={originalName}
                         images={images}
@@ -93,8 +92,7 @@ class _BandNames extends React.Component {
                         originalName={originalName}
                         outputName={outputName}
                         allOutputNames={allOutputNames}
-                        onInputCreated={this.updateBandName}
-                        onChange={outputName => this.updateBandName({imageIndex, bandIndex, outputName})}
+                        onChange={outputName => this.updateBandName({image, bandIndex, outputName})}
                         onValidationStatusChanged={this.onValidationStatusChanged}
                     />
                 )}
@@ -140,49 +138,46 @@ class _BandNames extends React.Component {
         inputs.bandNames.set(bandNames)
     }
 
-    updateBandName({imageIndex, bandIndex, outputName}) {
+    // An input its mapping does not name gets an entry once one of its bands is named, the others left blank.
+    updateBandName({image, bandIndex, outputName}) {
         const {inputs: {bandNames}} = this.props
-        const prevBandNames = bandNames.value
+        const prevBandNames = this.currentBandNames()
+        const entry = {imageId: image.imageId, bands: this.namesOf(image)}
+        const updatedEntry = {
+            ...entry,
+            bands: entry.bands.map((band, index) => index === bandIndex ? {...band, outputName} : band)
+        }
+        bandNames.set(this.entryOf(image)
+            ? prevBandNames.map(other => other.imageId === image.imageId ? {...other, ...updatedEntry} : other)
+            : [...prevBandNames, updatedEntry])
+    }
 
-        const beforeImages = prevBandNames.slice(0, imageIndex)
-        const image = prevBandNames[imageIndex]
-        const beforeBands = image.bands.slice(0, bandIndex)
-        const band = image.bands[bandIndex]
-        const afterBands = image.bands.slice(bandIndex + 1)
-        const afterImages = prevBandNames.slice(imageIndex + 1)
-        const updatedBandNames = [
-            ...beforeImages,
-            {
-                ...image,
-                bands: [
-                    ...beforeBands,
-                    {
-                        ...band,
-                        outputName
-                    },
-                    ...afterBands
-                ]
-            },
-            ...afterImages
-        ]
-        bandNames.set(updatedBandNames)
+    currentBandNames() {
+        const {bandNames, inputs} = this.props
+        return inputs.bandNames.value || bandNames
+    }
 
-        const allOutputNames = updatedBandNames.map(({bands}) =>
-            bands.map(({outputName}) => outputName)
-        ).flat()
-        this.setState({allOutputNames})
+    // An input's entry is found by its imageId, as Stack's output finds it.
+    entryOf({imageId}) {
+        return this.currentBandNames().find(entry => entry.imageId === imageId)
+    }
+
+    namesOf(image) {
+        return this.entryOf(image)?.bands
+            || (image.includedBands || []).map(({id, band}) => ({id, originalName: band, outputName: ''}))
+    }
+
+    allOutputNames() {
+        const {images} = this.props
+        return images.flatMap(image => this.entryOf(image)?.bands || []).map(({outputName}) => outputName)
     }
 
 }
 
-const additionalPolicy = () => ({
-    _: 'disallow'
-})
-
 export const BandNames = compose(
     _BandNames,
     connect(mapStateToProps),
-    recipeFormPanel({id: 'bandNames', fields, mapRecipeToProps, additionalPolicy}),
+    recipeFormPanel({id: 'bandNames', fields, mapRecipeToProps}),
 )
 
 BandNames.propTypes = {

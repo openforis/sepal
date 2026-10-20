@@ -102,10 +102,12 @@ class _LegendPanel extends React.Component {
         inputs.entries.set(legendEntries)
     }
 
+    // Whether the entries are valid is learned from them, not edited: it holds Apply back without making the form
+    // dirty, which only a change to the entries does.
     updateLegendEntries(legendEntries, invalidLegendEntries) {
         const {inputs} = this.props
         inputs.entries.set(legendEntries)
-        inputs.invalidEntries.set(invalidLegendEntries)
+        inputs.invalidEntries.setInitialValue(invalidLegendEntries)
     }
 }
 
@@ -113,13 +115,9 @@ const valuesToModel = ({entries}) => ({
     entries: _.sortBy(entries, 'value')
 })
 
-const additionalPolicy = () => ({
-    _: 'disallow'
-})
-
 const LegendPanel = compose(
     _LegendPanel,
-    recipeFormPanel({id: 'legend', fields, additionalPolicy, valuesToModel})
+    recipeFormPanel({id: 'legend', fields, valuesToModel})
 )
 
 export const Legend = compose(

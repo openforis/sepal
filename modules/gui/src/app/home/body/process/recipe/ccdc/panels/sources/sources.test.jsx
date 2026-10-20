@@ -153,8 +153,9 @@ const open = ({classification, advanced}, {load$: reads} = {}) => {
     if (reads) {
         load$ = reads
     }
-    const Host = withForm({fields})(({inputs}) => (
+    const Host = withForm({fields})(({form, inputs}) => (
         <Sources
+            form={form}
             recipeId={RECIPE}
             inputs={inputs}
             corrections={['SR']}

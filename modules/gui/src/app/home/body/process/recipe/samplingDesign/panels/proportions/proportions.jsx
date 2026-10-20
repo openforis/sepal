@@ -383,30 +383,13 @@ class _Proportions extends React.Component {
     }
 
     onAssetLoaded({metadata, visualizations}) {
-        const {inputs: {assetId}} = this.props
         const bands = metadata.bands.map(({id}) => id) || []
         // Carries the property band's own resolution, which the Scale default is calculated from.
         this.bandMetadata = metadata.bands
-        this.updateImageLayerSources({
-            id: assetId.value,
-            type: 'Asset',
-            sourceConfig: {
-                asset: assetId.value,
-                metadata,
-                visualizations
-            },
-        })
         this.onImageLoaded(bands, visualizations)
     }
 
     onRecipeBandsLoaded({bandNames: bands, recipe}) {
-        this.updateImageLayerSources({
-            id: recipe.id,
-            type: 'Recipe',
-            sourceConfig: {
-                recipeId: recipe.id
-            },
-        })
         this.onImageLoaded(bands, recipeVisualizationsNaming(recipe, bands))
     }
 
@@ -701,13 +684,6 @@ class _Proportions extends React.Component {
             setImmediate(() => this.setPercentage(true))
         }
         return toProportions({percentage: adjustedPercentage, targetOverallProportion, strata, probabilityPerStratum})
-    }
-
-    updateImageLayerSources(source) {
-        const {recipeActionBuilder} = this.props
-        recipeActionBuilder('UPDATE_PROPORTIONS_IMAGE_LAYER_SOURCE', {source})
-            .set(['layers.additionalImageLayerSources', {id: source.id}], source)
-            .dispatch()
     }
     
     isPercentage() {

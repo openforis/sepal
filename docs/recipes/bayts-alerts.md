@@ -50,12 +50,14 @@ preview, histogram and distinct values - carries alike.
 - **An unknown mode is shown as the first observation.** Execution builds the `first` mosaic for any
   `visualizationType` other than `alerts` and `last`. The GUI never sends one: a layer naming no known mode shows no
   product.
-- **A recipe that has chosen no reference is not held back from preview.** No dependency is diagnosed when
-  `reference` is absent, as it is in a new recipe, so the read's dependency validity is `VALID` and it permits a
-  preview wherever the product's own requirements - for the radar observation, its dates - are met. That does not
-  establish that an uninitialized layer actually submits one. Execution asked for the radar observation without a
-  reference fails with `TypeError: Cannot read properties of undefined (reading 'type')`. A reference selected without an id is
-  diagnosed, `INCOMPLETE_REFERENCE`, and blocks preview.
+- **The radar observation of a recipe that has chosen no reference is not held back from preview.** The alerts are:
+  their reference requirement refuses a missing reference
+  ([BAYTS Alerts REF](../design/recipes/source-resolution.md#bayts-alerts-ref)). The radar observation reads the
+  reference's geometry, and a direct asset reference's mask, but none of its statistics, so it is not held to that
+  requirement, and no dependency is diagnosed when `reference` is absent, as it is in a new recipe, so the read's
+  dependency validity is `VALID` and it permits a preview wherever its dates are set. That does not establish that an uninitialized layer actually submits one. Execution asked for the radar
+  observation without a reference fails with `TypeError: Cannot read properties of undefined (reading 'type')`. A
+  reference selected without an id is diagnosed, `INCOMPLETE_REFERENCE`, and blocks preview.
 - **Radar Mosaic's window is always ±183 days** (see [Radar Mosaic](radar-mosaic.md)).
 
 ## Verification

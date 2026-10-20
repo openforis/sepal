@@ -25,6 +25,10 @@ export class SectionSelection extends React.Component {
                 label: msg('process.mosaic.panel.areaOfInterest.form.source.title')
             },
             {
+                value: 'GEOID',
+                label: msg('process.mosaic.panel.areaOfInterest.form.geoId.title')
+            },
+            {
                 value: 'POLYGON',
                 label: msg('process.mosaic.panel.areaOfInterest.form.polygon.title')
             },
