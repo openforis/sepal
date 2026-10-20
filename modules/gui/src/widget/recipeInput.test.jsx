@@ -318,7 +318,7 @@ describe('the recipes on offer', () => {
 
         const options = await offered()
 
-        expect(headings()).toEqual(['widget.recipeInput.recent', '/', '/Folder one', '/Folder one/Inner', '/Folder two'])
+        expect(headings()).toEqual(['widget.recipeInput.recent', '/', '/Folder one', '/Folder oneInner', '/Folder two'])
         expect(options).toEqual([
             ...recentRecipes().map(({name}) => name),
             'Filed under nothing', 'Right here', 'Deep down', 'Far away'

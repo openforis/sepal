@@ -62,8 +62,8 @@ describe('Breadcrumb', () => {
     it('reads as a path from the root', () => {
         mount({folders, folderId: '2024', onNavigate: () => {}})
 
-        expect(icons(container)).toEqual(['house', 'chevron-right'])
-        expect(container.textContent).toBe('Kenya/2024')
+        expect(icons(container)).toEqual(['house', 'chevron-right', 'chevron-right'])
+        expect(container.textContent).toBe('Kenya2024')
     })
 
     it('navigates to an ancestor but not to the current folder', () => {
@@ -153,6 +153,7 @@ describe('a path wider than its row', () => {
         mount({folders, folderId: Q1Q2.id, onNavigate: () => {}})
 
         expect(hiddenLabels()).toEqual(['Kenya', '2024', 'Q1'])
+        expect(icons(container.querySelector('[data-more]'))).toEqual(['chevron-right', 'chevron-right'])
     })
 
     it('opens a folder clicked among the ones gathered', () => {
@@ -195,21 +196,23 @@ describe('BreadcrumbLabel', () => {
     it('reads a path from the root', () => {
         show(<BreadcrumbLabel folders={folders} folderId={Y2024.id}/>)
 
-        expect(container.textContent).toBe('/Kenya/2024')
+        expect(container.textContent).toBe('/Kenya2024')
+        expect(icons(container)).toEqual(['chevron-right'])
     })
 
     it('gathers the folders above the ones that fit in an ellipsis, as the breadcrumb does', () => {
         rowWithRoomFor('Q1Q1Q2'.length)
         show(<BreadcrumbLabel folders={folders} folderId={Q1Q2.id}/>)
 
-        expect(container.textContent).toBe('/…/Q1/Q1Q2')
+        expect(container.textContent).toBe('/…Q1Q1Q2')
+        expect(icons(container)).toEqual(['chevron-right', 'chevron-right'])
     })
 
     it('names the folders it gathers on hover, and offers no way to them', () => {
         rowWithRoomFor('Q1Q1Q2'.length)
         show(<BreadcrumbLabel folders={folders} folderId={Q1Q2.id}/>)
 
-        expect(container.querySelector('[data-tooltip]').getAttribute('data-tooltip')).toBe('Kenya / 2024')
+        expect(container.querySelector('[data-tooltip]').getAttribute('data-tooltip')).toBe('Kenya > 2024')
         expect(container.querySelector('button')).toBeNull()
     })
 })

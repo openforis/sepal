@@ -67,6 +67,12 @@
     text-overflow: ellipsis;
 }
 
+.link.dropTarget {
+    --look-transparent-hover-background-color: color-mix(in srgb, var(--info-color) 18%, var(--panel-default-background-color));
+    --look-transparent-hover-color: var(--text-strong-color);
+    box-shadow: inset 0 0 0 2px var(--info-color);
+}
+
 /* The folders a path leaves out run on over as many lines as they need, where the path itself is cut:
    between the folders, and inside a name too long for a line of its own. */
 .wrapping {
@@ -92,7 +98,7 @@
 }
 
 /* The read-only path keeps the case of the names, even under a heading in capitals. Without the links'
-   padding, the gap is what spaces the slashes. */
+   padding, the gap is what spaces the separators. */
 .readOnly {
     display: flex;
     align-items: baseline;

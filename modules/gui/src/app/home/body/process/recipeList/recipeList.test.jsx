@@ -11,6 +11,7 @@ vi.mock('~/connect', () => ({connect: () => Component => Component}))
 vi.mock('~/store', () => ({select: () => undefined}))
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
+vi.mock('~/widget/portal', () => ({Portal: ({children}) => children}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 vi.mock('../createRecipe', () => ({CreateRecipe: () => null}))
 vi.mock('../recipeTypeRegistry', () => ({
@@ -296,6 +297,20 @@ describe('drag and drop', () => {
         dragOver(AT_ROOT.id, dropTarget(KENYA.id))
 
         expect(hoveredIds()).toEqual([KENYA.id])
+        expect(container.querySelector('[role="status"]').textContent).toBe('kenya_draftprocess.recipeList.drag.moveTo')
+    })
+
+    it('shows one badge for the selection and removes it when the drag ends', () => {
+        mount({selectedIds: [AT_ROOT.id, ALSO_AT_ROOT.id]})
+
+        const row = dragOver(AT_ROOT.id, container)
+
+        expect(container.querySelectorAll('[role="status"]')).toHaveLength(1)
+        expect(container.querySelector('[role="status"]').textContent).toBe('process.recipeList.drag.items')
+
+        act(() => row.drag$.next({dragging: false}))
+
+        expect(container.querySelector('[role="status"]')).toBeNull()
     })
 
     it('hovers nothing while the pointer is over what cannot take the drop', () => {
