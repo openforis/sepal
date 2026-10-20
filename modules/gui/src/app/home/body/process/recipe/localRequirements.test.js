@@ -3,7 +3,8 @@ import {describe, expect, it, vi} from 'vitest'
 // Requirements a recipe type declares over its own configuration, as the shared reader reads them beside those over its
 // sources: judged from the recipe alone, each item by declaration and item id, and held by what it depends on.
 
-vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
+// Keep the diagnostic when it is wrapped with an item label, without depending on that label or translated wording.
+vi.mock('~/translate', () => ({msg: (key, values) => values?.message || key}))
 const registry = vi.hoisted(() => ({}))
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: type => registry[type]}))
 
@@ -68,26 +69,42 @@ describe('an operation a local requirement holds', () => {
 })
 
 describe('what a section says', () => {
-    it('is held back by its items\' own problems, naming the item', () => {
-        const status = sectionStatusOf({}, readsOf(recipe({items: [item('a'), item('b', {ok: false})]})), SECTION.id)
+    it('marks only the item with its own problem and its section', () => {
+        const reads = readsOf(recipe({items: [item('a'), item('b', {ok: false})]}))
 
-        expect(status).toMatchObject({state: UNMET_CONFIGURATION})
-        expect(status.message).toContain('"item":"Item b"')
+        expect(sectionStatusOf({}, reads, SECTION.id)).toMatchObject({state: UNMET_CONFIGURATION})
+        expect(itemStatusesOf(reads, SECTION.id)).toEqual({b: expect.objectContaining({state: UNMET_CONFIGURATION})})
     })
 
-    it('is held back by an item unmet only by what it depends on, naming the item and what it depends on alone', () => {
+    it('marks only the originating section, while a dependency in another section blocks execution until repaired', () => {
+        const broken = item('a', {ok: false})
         registry.OTHER = {sourceRequirements: [
-            declaration({id: 'first', section: SECTION, items: [item('a', {ok: false})]}),
+            declaration({id: 'first', section: SECTION, items: [broken]}),
             declaration({id: 'second', section: OTHER_SECTION, items: [item('b', {needs: ['a'], from: 'first'})]})
         ]}
-        const reads = readsOf({id: 'r', type: 'OTHER', model: {}})
+        const model = {id: 'r', type: 'OTHER', model: {}}
+        const reads = readsOf(model)
 
-        const status = sectionStatusOf({}, reads, OTHER_SECTION.id)
-        expect(status).toEqual(expect.objectContaining({state: UNMET_CONFIGURATION, details: []}))
-        expect(status.message).toContain('Item b')
-        expect(status.message).toContain('Item a')
-        expect(status.message).not.toContain('BROKEN')
-        expect(itemStatusesOf(reads, OTHER_SECTION.id)).toEqual({b: expect.objectContaining({state: UNMET_CONFIGURATION})})
+        expect(sectionStatusOf({}, reads, SECTION.id)).toMatchObject({state: UNMET_CONFIGURATION})
+        expect(itemStatusesOf(reads, SECTION.id)).toEqual({a: expect.objectContaining({state: UNMET_CONFIGURATION})})
+        expect(sectionStatusOf({}, reads, OTHER_SECTION.id)).toBeNull()
+        expect(itemStatusesOf(reads, OTHER_SECTION.id)).toEqual({})
+        expect(effective(reads, 'b')).toEqual({own: 'SUPPORTED', status: 'UNSUPPORTED', unmet: [['first|a', true]]})
+        expect(requestGate({state: {}, recipe: model, operation: 'OUTPUT'})).toMatchObject({
+            code: 'CONFIGURATION_UNMET', wait: false, withdraw: true,
+            read: {declaration: {id: 'first'}, item: {id: 'a'}}
+        })
+
+        broken.facts.ok = true
+        const repaired = {...model}
+        const repairedReads = readsOf(repaired)
+
+        for (const section of [SECTION, OTHER_SECTION]) {
+            expect(sectionStatusOf({}, repairedReads, section.id)).toBeNull()
+            expect(itemStatusesOf(repairedReads, section.id)).toEqual({})
+        }
+        expect(effective(repairedReads, 'b')).toEqual({own: 'SUPPORTED', status: 'SUPPORTED', unmet: []})
+        expect(requestGate({state: {}, recipe: repaired, operation: 'OUTPUT'})).toBeNull()
     })
 
     it('says what an item finds itself before what another is held by', () => {
@@ -97,8 +114,11 @@ describe('what a section says', () => {
         const reads = readsOf({id: 'r', type: 'OTHER', model: {}})
 
         const status = sectionStatusOf({}, reads, SECTION.id)
-        expect(status.message).toContain('BROKEN')
-        expect(status.details).toEqual([expect.stringContaining('Item b')])
+        expect(status.message).toBe('BROKEN')
+        expect(status.details).toHaveLength(1)
+        expect(itemStatusesOf(reads, SECTION.id)).toMatchObject({
+            a: {state: UNMET_CONFIGURATION}, b: {state: UNMET_CONFIGURATION}
+        })
     })
 })
 

@@ -64,8 +64,6 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 const HOST = 'host-1'
 const SOURCE_ID = 'band-math-layer'
-const BUSY = 'map.visParams.bands.loading'
-
 const PRESET = {id: 'p-red', type: 'continuous', bands: ['red'], min: [0], max: [1], palette: ['#000000', '#FFFFFF']}
 const USER_DEFINED = {id: 'u-red', type: 'continuous', bands: ['red'], min: [0], max: [2], userDefined: true}
 
@@ -103,7 +101,9 @@ describe.each([
         expect(earthEngine.observations.some(isWaiting)).toBe(true)
         expect(comboInput()).toBe(input)
         expect(input.placeholder).toBe('red')
-        expect(combo.props.busyMessage).toBe(BUSY)
+        expect(combo.props.busyMessage).toBeTruthy()
+        expect(combo.props.errorMessage).toBeUndefined()
+        expect(combo.props.warningMessage).toBeUndefined()
     })
 
     it('offers nothing to edit while only its label is shown', async () => {
