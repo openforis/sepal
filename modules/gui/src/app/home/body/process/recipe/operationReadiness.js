@@ -17,6 +17,9 @@ import {recipeContent} from './recipeContent'
 //   dependencyValidity  whether the operation's closure is structurally sound; null while unknown
 //   acquisition         {kind: READINESS, key} of the loading the answer still needs, or null
 //   error               why that loading failed, where it did
+//   computation         the content of every record the operation's graph holds (recipeContent.js), its root first:
+//                       what it computes from, as a map layer compares what it draws from, so a change to any of them -
+//                       and nothing else - is a reason to run it again
 //
 // The session answers alone where its graph is complete and what it reads settles readiness. A finding settles it
 // whatever else is missing. Otherwise the runtime completes the closure and settles readiness over it, under a key
@@ -102,11 +105,13 @@ const sessionRead = (graph, operation) => {
     const settled = readiness.status === NOT_READY
         || validity?.status === INVALID
         || (validity?.status === VALID && readiness.status !== NEEDS_EVIDENCE)
+    const computation = graph.recipes.map(recipeContent)
     return {
         readiness,
         dependencyValidity: validity,
-        acquisition: settled ? null : {kind: READINESS, key: {kind: READINESS, operation, content: graph.recipes.map(recipeContent)}},
-        error: null
+        acquisition: settled ? null : {kind: READINESS, key: {kind: READINESS, operation, content: computation}},
+        error: null,
+        computation
     }
 }
 

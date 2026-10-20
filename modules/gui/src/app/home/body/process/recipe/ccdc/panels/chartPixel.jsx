@@ -21,6 +21,7 @@ import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
 import {resolveChartBand} from '../../chartBandSelection'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
 import {pixelObservationsAvailability} from '../../operationAvailability'
+import {selectedClassificationOfState} from '../../selectedClassification'
 import {CCDCGraph} from '../ccdcGraph'
 import {loadCCDCObservations$, loadCCDCSegments$, RecipeActions} from '../ccdcRecipe'
 import styles from './chartPixel.module.css'
@@ -35,8 +36,6 @@ const mapRecipeToProps = recipe => ({
     startDate: moment(selectFrom(recipe, 'model.dates.startDate'), 'YYYY-MM-DD').toDate(),
     endDate: moment(selectFrom(recipe, 'model.dates.endDate'), 'YYYY-MM-DD').toDate(),
     dateFormat: selectFrom(recipe, 'model.ccdcOptions.dateFormat'),
-    classificationLegend: selectFrom(recipe, 'ui.classification.classificationLegend'),
-    classifierType: selectFrom(recipe, 'ui.classification.classifierType'),
     corrections: selectFrom(recipe, 'model.options.corrections'),
     dataSets: selectFrom(recipe, 'model.sources.dataSets'),
     recipe
@@ -158,9 +157,10 @@ class _ChartPixel extends React.Component {
 
     // The segments and observations are requested only while the recipe's own requirements of its observations are
     // known to be met (pixelObservationsAvailability): once they are not known to be, what is being read is let go, and
-    // read again once they are; a chart they are found not to meet is closed.
+    // read again once they are; a chart they are found not to meet is closed. They are read again whenever what they are
+    // computed from changes - the recipe or a record it depends on - and only then.
     updateChart(prevProps) {
-        const {recipe, latLng, observationsGate, inputs: {selectedBand}} = this.props
+        const {computation, latLng, observationsGate, inputs: {selectedBand}} = this.props
         const availableBands = getAvailableBands(this.bandSetting())
         const band = resolveChartBand(selectedBand.value, availableBands)
         if (!latLng || !band || band !== selectedBand.value) {
@@ -174,8 +174,8 @@ class _ChartPixel extends React.Component {
             return this.close()
         }
         if (!prevProps || !_.isEqual(
-            [recipe.model, latLng, band],
-            [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.selectedBand.value])
+            [computation, latLng, band],
+            [prevProps.computation, prevProps.latLng, prevProps.inputs.selectedBand.value])
         ) {
             this.clearData()
             this.held = Boolean(observationsGate)
@@ -238,9 +238,16 @@ class _ChartPixel extends React.Component {
     }
 }
 
-const mapStateToProps = (state, {recipe, sourceRuntime}) => ({
-    observationsGate: pixelObservationsAvailability({state, recipe, heldFor: key => sourceRuntime?.heldFor(key)}).gate
-})
+// What it is computed from, beside whether it may be read (pixelObservationsAvailability), and what is offered of the
+// Classification its Sources select, as the session holds it now.
+const mapStateToProps = (state, {recipe, sourceRuntime}) => {
+    const {gate, computation} = pixelObservationsAvailability({state, recipe, heldFor: key => sourceRuntime?.heldFor(key)})
+    return {
+        observationsGate: gate,
+        computation,
+        ...selectedClassificationOfState(state, recipe)
+    }
+}
 
 export const ChartPixel = compose(
     _ChartPixel,

@@ -7,7 +7,6 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
 
-import {AGREED, draftAgreement, isDraft, SAVE_PENDING} from '../draftAgreement'
 import {CURRENT, EXPIRED, listingAuthority, WAITING} from '../recipeListing'
 import {
     assetAuthority,
@@ -17,7 +16,7 @@ import {
     EXPIRED as ASSET_EXPIRED,
     WAITING as ASSET_WAITING
 } from '../sourceRuntime/assetEvidence'
-import {knownRevisionOf, recordStalenessOfState} from '../sourceRuntime/recordCurrency'
+import {draftDisagreementsOfState, recordStalenessOfState} from '../sourceRuntime/recordCurrency'
 import {buildMapDependencyGraph} from './mapDependencyGraph'
 import {retrieveAvailability} from './operationAvailability'
 import {IMAGE_OUTPUT, INVALID, NEEDS_EVIDENCE, readRecipeOutput, READY, UNAVAILABLE} from './recipeOutput'
@@ -215,22 +214,8 @@ const authorityGate = ({state, recipe, graph, basis, assets, observedAt, depende
             ? {wait: true, code: REVISIONS_PENDING}
             : {wait: false, code: listing === EXPIRED ? REVISIONS_EXPIRED : REVISIONS_UNAVAILABLE}
     }
-    const loadedRecipes = selectFrom(state, 'process.loadedRecipes') || {}
-    const open = new Set((selectFrom(state, 'process.tabs') || []).map(({id}) => id))
-    const saves = selectFrom(state, 'process.saveStates') || {}
-    const listed = new Map((selectFrom(state, 'process.recipes') || []).map(({id, revision}) => [id, revision]))
-    const drafts = _.uniq([...graph.recipes.map(({id}) => id), ...basis.map(({id}) => id)])
-        .filter(id => id !== recipe.id && loadedRecipes[id] && isDraft({open: open.has(id), saveState: saves[id]}))
-        .map(id => ({
-            recipeId: id,
-            code: draftAgreement({
-                draft: loadedRecipes[id],
-                saveState: saves[id],
-                knownRevision: knownRevisionOf({listed: listed.get(id), saveState: saves[id]})
-            })
-        }))
-        .filter(({code}) => code !== AGREED)
-        .map(draft => ({...draft, wait: draft.code === SAVE_PENDING}))
+    const drafts = draftDisagreementsOfState(state, _.uniq([...graph.recipes.map(({id}) => id), ...basis.map(({id}) => id)])
+        .filter(id => id !== recipe.id))
     const evidence = assetEvidenceOfState(state)
     const unversionedTooOld = assetId => evidence[assetId]?.unversioned && observedAt !== null
         && now - observedAt >= DEFAULT_ASSET_POLICY.unversionedMaxAgeMs

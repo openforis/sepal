@@ -1354,6 +1354,14 @@ backend helper accepting a Classification is not, by itself, a reason to expand 
        held, the chart's recipe unchanged - it lets go of what it was reading, ignoring a late answer, and reads again
        once the gate clears.
      - Once withdrawn, the chart closes, cancelling its requests, so a late answer draws nothing.
+     - **Reloading.** An open chart reads again - observations, and CCDC's segments with them - whenever what it is
+       computed from changes. That is the `recipeContent` of every record in the operation's graph (`computation`,
+       `operationReadiness.js`), the same comparison a map layer draws by. An earlier read is cancelled.
+     - **What does not reload it.** Titles, layout, `ui`, unrelated recipes and the AOI the observations ignore.
+     - **Saved dependencies only.** A dependency the session edits is executed from storage's copy. The chart waits
+       while that copy is not the session's (`draftDisagreementsOfState`, shared with Retrieve), and reads once it is.
+     - **Band options.** The legend and classifier the band options offer come from the Classification record while
+       the session holds it (`selectedClassification.js`), and otherwise from the copy taken when it was selected.
    - **Unchanged:** CCDC Slice, Change Alerts and LandTrendr charts, `/ccdc/loadSegments`, Retrieve, previews and
      section marks.
    - **Limitation.** The runtime's `READINESS` work does not refresh records the listing has moved past (the image

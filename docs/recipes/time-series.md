@@ -28,6 +28,10 @@ action and an open chart follow the chart's own readiness (`PIXEL_OBSERVATIONS`)
 does not read never holds it back. A Classification still to be read holds the chart without a finding. Once found
 unsuitable, a pixel being chosen is let go and an open chart closes, cancelling its request.
 
+An open chart reads again whenever what it is computed from changes, such as the Classification's inputs or classifier
+settings. It waits while an edit to the Classification is not yet saved, since storage's copy is what is executed. Its
+band options follow the Classification record the session holds.
+
 ## Output
 
 Declared in `lib/js/shared/src/recipe/type/timeSeries.js` (see the
@@ -124,7 +128,10 @@ Earth Engine is asked.
   `chartPixelButton.test.jsx` and `pixelObservationsChart.test.jsx` - the chart's availability, said in Sources,
   over an unresolvable AOI, while the Classification is read and as the runtime settles it; the action withdrawn
   mid-selection; an open chart waiting, letting go of its request once the Classification is no longer held and
-  reading again once it is, and closing and cancelling on a finding (Time Series and CCDC alike).
+  reading again once it is, and closing and cancelling on a finding (Time Series and CCDC alike); reading again
+  after compatible input or classifier changes, waiting for the Classification's save, not for unrelated changes,
+  reading the band chosen, replacing a band the Classification no longer provides without reading it again, and
+  offering the Classification's outputs as its record holds them.
 - `modules/gui/src/app/home/body/process/sourceRuntime/assetFreshness.test.js` - watching a pixel's observations
   reads none of the AOI they ignore.
 - `lib/js/shared/test/recipe/output/operationReadiness.test.js` - the readiness-only read: nothing of the root
