@@ -1,7 +1,7 @@
 import _ from 'lodash'
 
 import {CYCLIC, discoverProvider, FOUND, MALFORMED, NOT_A_SOURCE, UNRESOLVED} from '#sepal/recipe/capability/discoverProvider'
-import {NOT_READY} from '#sepal/recipe/output/readiness'
+import {NOT_READY, PIXEL_SEGMENTS} from '#sepal/recipe/output/readiness'
 import {NEEDS_EVIDENCE, SUPPORTED, UNSUPPORTED} from '#sepal/recipe/requirement/verdict'
 import {VALID} from '#sepal/recipe/source/dependencyValidity'
 import {directSourceEdges} from '#sepal/recipe/source/directSources'
@@ -163,8 +163,8 @@ export const CONFIGURATION_UNMET = 'CONFIGURATION_UNMET'
 
 export const PREREQUISITE_UNMET = 'PREREQUISITE_UNMET'
 
-// The operation of reading the segments at a pixel, as a segment chart does.
-export const PIXEL_SEGMENTS = 'PIXEL_SEGMENTS'
+// The operation of reading the segments at a pixel, as a segment chart does (#sepal/recipe/output/readiness).
+export {PIXEL_SEGMENTS}
 
 // {declaration, selected, acquisition, providerChain, verdict, assetId?, missing?} for each requirement the recipe's type declares.
 // Local reads, in their declaration's place, are {declaration, local: true, item, acquisition, providerChain, ownVerdict,
