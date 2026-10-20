@@ -1,3 +1,5 @@
+// @vitest-environment-options {"settings": {"enableIframePageLoading": true, "navigation": {"disableChildFrameNavigation": true}}}
+
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {voilaReady$} from './voilaReady'

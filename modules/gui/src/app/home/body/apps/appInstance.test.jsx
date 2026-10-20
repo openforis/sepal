@@ -1,4 +1,4 @@
-// @vitest-environment-options {"settings": {"navigation": {"disableChildFrameNavigation": true}}}
+// @vitest-environment-options {"settings": {"enableIframePageLoading": true, "navigation": {"disableChildFrameNavigation": true}}}
 
 import {act} from 'react'
 import {createRoot} from 'react-dom/client'
