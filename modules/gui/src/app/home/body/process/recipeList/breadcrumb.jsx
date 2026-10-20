@@ -10,8 +10,14 @@ import {Tooltip} from '~/widget/tooltip'
 
 import styles from './breadcrumb.module.css'
 import {DropTargetContext} from './dropTargetContext'
-import {PATH_SEPARATOR, ROOT_LABEL} from './recipeListConstants'
+import {ROOT_LABEL} from './recipeListConstants'
 import {at, folderPath, ROOT} from './recipeTree'
+
+const Separator = () => (
+    <span className={styles.separator} aria-hidden='true'>
+        <Icon name='chevron-right' size='xs'/>
+    </span>
+)
 
 export class Breadcrumb extends React.Component {
     static contextType = DropTargetContext
@@ -38,7 +44,7 @@ export class Breadcrumb extends React.Component {
                 <ol className={styles.segments}>
                     <li className={styles.fixed}>
                         {this.renderSegment({id: ROOT}, atRoot)}
-                        {this.renderRootSeparator()}
+                        <Separator/>
                     </li>
                     {hidden.length
                         ? (
@@ -49,7 +55,7 @@ export class Breadcrumb extends React.Component {
                         : null}
                     {shown.map((segment, index) =>
                         <li key={segment.id} className={styles.segment}>
-                            {index || hidden.length ? this.renderSeparator() : null}
+                            {index || hidden.length ? <Separator/> : null}
                             {this.renderSegment(segment, index === shown.length - 1)}
                         </li>
                     )}
@@ -67,19 +73,6 @@ export class Breadcrumb extends React.Component {
                 this.current.current?.focus()
             }
         }
-    }
-
-    renderSeparator() {
-        return <span className={styles.separator} aria-hidden='true'>/</span>
-    }
-
-    // What follows the root is inside it, where the folders after it are only beside each other.
-    renderRootSeparator() {
-        return (
-            <span className={styles.separator} aria-hidden='true'>
-                <Icon name='chevron-right' size='xs'/>
-            </span>
-        )
     }
 
     // The last segment names where you already are, so it reads as a label rather than a way out.
@@ -132,7 +125,7 @@ export class Breadcrumb extends React.Component {
                 aria-label={msg('process.recipeList.breadcrumb.hidden', {count: hidden.length})}>
                 {hidden.map(({id, name}, index) =>
                     <li key={id} className={styles.segment}>
-                        {index ? this.renderSeparator() : null}
+                        {index ? <Separator/> : null}
                         <button
                             type='button'
                             className={this.linkClassName()}
@@ -172,7 +165,7 @@ export class Breadcrumb extends React.Component {
             return null
         }
         return drag.target && at(drag.target.folderId) === at(id)
-            ? lookStyles.hoverForcedOn
+            ? [lookStyles.hoverForcedOn, styles.dropTarget].join(' ')
             : lookStyles.hoverForcedOff
     }
 }
@@ -192,14 +185,14 @@ export const BreadcrumbLabel = ({folders, folderId}) => (
                 <span className={styles.fixed}>{ROOT_LABEL}</span>
                 {hidden.length
                     ? (
-                        <Tooltip msg={hidden.map(({name}) => name).join(PATH_SEPARATOR)} placement='bottom'>
+                        <Tooltip msg={hidden.map(({name}) => name).join(' > ')} placement='bottom'>
                             <span className={styles.fixed}>…</span>
                         </Tooltip>
                     )
                     : null}
                 {shown.map(({id, name}, index) =>
                     <React.Fragment key={id}>
-                        {index || hidden.length ? <span className={styles.separator}>/</span> : null}
+                        {index || hidden.length ? <Separator/> : null}
                         <span className={styles.name}>{name}</span>
                     </React.Fragment>
                 )}

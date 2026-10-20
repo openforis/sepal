@@ -5,6 +5,7 @@ import {msg} from '~/translate'
 import {CrudItem} from '~/widget/crudItem'
 import {ListItem} from '~/widget/listItem'
 
+import dragStyles from './dragPreview.module.css'
 import {DropTargetContext} from './dropTargetContext'
 
 // Direct children only, so what the row claims and what removal allows never disagree.
@@ -24,6 +25,7 @@ export const FolderItem = ({folder, counts, highlight, hovered, edit, selected, 
                 dragValue={{kind: 'folder', id: folder.id, folderId: folder.parentId, folder}}
                 dragPointer='mouse'
                 showDragHandle={false}
+                dragCloneClassName={dragStyles.hiddenClone}
                 onClick={() => edit ? onSelect(folder.id) : onClick(folder)}>
                 <CrudItem
                     icon='folder-open'
