@@ -1254,10 +1254,15 @@ backend helper accepting a Classification is not, by itself, a reason to expand 
    `/ccdc/loadSegments`), CCDC's asset export (`ccdcAssetExport.js`), Drive and SEPAL image exports, and Time Series
    download chunks - each reaches Earth Engine without consulting readiness. A Classification with several inputs is
    not judged, though `classifyImage` refuses it.
-3. **Diagnostic-code ownership.** Separately move recipe-specific codes beside the shared rules that own them;
-   generic output-contract diagnostics stay in `output/diagnostic.js`. Training-data codes belong with their common
-   rule, while calculation, constraint, legend and PyEO codes belong with their respective rules. Preserve code
-   strings and behaviour, updating imports without introducing a registry or a central recipe-code barrel.
+3. **Diagnostic-code ownership: done.** `lib/js/shared/src/recipe/output/diagnostic.js` keeps the output and
+   resolution contract (`INCOMPLETE_IMAGE_OUTPUT` to `CONFLICTING_OBSERVATION`), `MISSING_ROLE`, and the band codes
+   several rules share: `MISSING_INPUT_BAND` and `NO_OUTPUT_BANDS`. Each other code is declared beside the rule
+   emitting it: `NO_TRAINING_DATA` in `trainingData.js`; `UNDERIVABLE_INPUT_INDEX` and `INSUFFICIENT_INPUT_BANDS` in
+   `bandSets.js`; `INVALID_CALCULATION` in `bandMath/calculationReferences.js`; `UNMAPPED_INPUT` in `type/stack.js`;
+   `MISSING_CONSTRAINT_INPUT` and `CONSTRAINT_BAND_NOT_INCLUDED` in `type/remapping.js`; `MISSING_LEGEND` in
+   `type/classChange.js`; `NO_CHANGE_CLASSES` and `UNAVAILABLE_GATE_INDEX` in `type/pyeoAlerts.js`; and
+   `UNSUPPLIED_CLASSIFIER_INPUTS` in `classifierInputs.js`. Strings and behaviour are unchanged; importers name the
+   owning module, with no registry, barrel or re-export.
 
 **Change Alerts is a separate inherited-settings review.** It has no Classification selector. Selecting a segment
 reference can copy the producer's Sources settings, including a Classification reference, through

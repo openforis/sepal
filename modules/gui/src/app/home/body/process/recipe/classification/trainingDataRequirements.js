@@ -1,4 +1,4 @@
-import {NO_TRAINING_DATA} from '#sepal/recipe/output/diagnostic'
+import {NO_TRAINING_DATA} from '#sepal/recipe/trainingData'
 import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
 import {msg} from '~/translate'
 

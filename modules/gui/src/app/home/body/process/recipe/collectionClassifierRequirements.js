@@ -1,4 +1,4 @@
-import {UNSUPPLIED_CLASSIFIER_INPUTS} from '#sepal/recipe/output/diagnostic'
+import {UNSUPPLIED_CLASSIFIER_INPUTS} from '#sepal/recipe/classifierInputs'
 import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
 import {msg} from '~/translate'
 

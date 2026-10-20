@@ -1,5 +1,6 @@
 import {bandSetLocation} from '#sepal/recipe/bandSets'
-import {INSUFFICIENT_INPUT_BANDS, MISSING_INPUT_BAND, UNDERIVABLE_INPUT_INDEX} from '#sepal/recipe/output/diagnostic'
+import {INSUFFICIENT_INPUT_BANDS, UNDERIVABLE_INPUT_INDEX} from '#sepal/recipe/bandSets'
+import {MISSING_INPUT_BAND} from '#sepal/recipe/output/diagnostic'
 import {inputRecipeFeedback, missingInputImageryRequirement} from '~/app/home/body/process/panels/inputImagery/inputImageryRequirements'
 import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
 import {msg} from '~/translate'

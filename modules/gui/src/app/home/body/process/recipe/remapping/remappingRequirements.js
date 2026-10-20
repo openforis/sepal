@@ -1,6 +1,6 @@
 import _ from 'lodash'
 
-import {CONSTRAINT_BAND_NOT_INCLUDED, MISSING_CONSTRAINT_INPUT} from '#sepal/recipe/output/diagnostic'
+import {CONSTRAINT_BAND_NOT_INCLUDED, MISSING_CONSTRAINT_INPUT} from '#sepal/recipe/type/remapping'
 import {LEGEND_ENTRIES_PATH} from '#sepal/recipe/type/remapping'
 import {INPUT_BANDS, inputImageryRequirements} from '~/app/home/body/process/panels/inputImagery/inputImageryRequirements'
 import {msg} from '~/translate'

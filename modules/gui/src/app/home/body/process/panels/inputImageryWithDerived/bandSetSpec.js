@@ -1,5 +1,5 @@
 import {availableSelections, bandSetLocation} from '#sepal/recipe/bandSets'
-import {INSUFFICIENT_INPUT_BANDS} from '#sepal/recipe/output/diagnostic'
+import {INSUFFICIENT_INPUT_BANDS} from '#sepal/recipe/bandSets'
 import {getAvailableIndexes} from '~/app/home/body/process/opticalIndexes'
 import {msg} from '~/translate'
 

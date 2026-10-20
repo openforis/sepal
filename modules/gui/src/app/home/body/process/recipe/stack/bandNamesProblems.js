@@ -1,4 +1,5 @@
-import {DUPLICATE_BAND_NAME, INCOMPLETE_IMAGE_OUTPUT, UNMAPPED_INPUT} from '#sepal/recipe/output/diagnostic'
+import {DUPLICATE_BAND_NAME, INCOMPLETE_IMAGE_OUTPUT} from '#sepal/recipe/output/diagnostic'
+import {UNMAPPED_INPUT} from '#sepal/recipe/type/stack'
 import {msg} from '~/translate'
 
 import {invalidBandNameFormat} from './bandNameFormat'

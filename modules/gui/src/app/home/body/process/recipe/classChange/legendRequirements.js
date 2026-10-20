@@ -1,4 +1,4 @@
-import {MISSING_LEGEND} from '#sepal/recipe/output/diagnostic'
+import {MISSING_LEGEND} from '#sepal/recipe/type/classChange'
 import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
 import {msg} from '~/translate'
 

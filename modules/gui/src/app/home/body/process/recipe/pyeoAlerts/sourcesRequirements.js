@@ -1,4 +1,6 @@
-import {MISSING_ROLE, NO_CHANGE_CLASSES, UNAVAILABLE_GATE_INDEX, UNSUPPLIED_CLASSIFIER_INPUTS} from '#sepal/recipe/output/diagnostic'
+import {UNSUPPLIED_CLASSIFIER_INPUTS} from '#sepal/recipe/classifierInputs'
+import {MISSING_ROLE} from '#sepal/recipe/output/diagnostic'
+import {NO_CHANGE_CLASSES, UNAVAILABLE_GATE_INDEX} from '#sepal/recipe/type/pyeoAlerts'
 import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
 import {msg} from '~/translate'
 

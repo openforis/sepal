@@ -1,4 +1,4 @@
-import {INVALID_CALCULATION} from '#sepal/recipe/output/diagnostic'
+import {INVALID_CALCULATION} from '#sepal/recipe/bandMath/calculationReferences'
 import {msg} from '~/translate'
 
 import {IMAGE_OUTPUT} from '../recipeOutput'
