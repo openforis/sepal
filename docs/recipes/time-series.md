@@ -47,10 +47,12 @@ concerns the collection both build; the indicator is not required to be one of i
 indicator itself. Its three Earth Engine requests (`modules/gee/src/jobs/task/export/timeSeries.js`) check
 independently: the tile ids before the AOI is tiled, a tile's date ranges before any imagery check, and each chunk's
 export before its collection is built, a destination prepared or the export submitted. The chart's observation
-request (`modules/gee/src/jobs/ee/timeSeries/loadObservations.js`) is held to the same readiness, for a `TIME_SERIES`
-recipe, before it builds the pixel or the collection or evaluates anything; the bands it charts are not checked
-against `count`, and establishing readiness builds no count image. CCDC and Change Alerts chart observations through
-the same request and are not held to it.
+request (`modules/gee/src/jobs/ee/timeSeries/loadObservations.js`) is held to what this type declares its pixel
+observations require (`PIXEL_OBSERVATIONS`: the classifier inputs, the Classification and source imagery resolving).
+That check runs before the request builds the pixel or the collection or evaluates anything, and it judges the recipe
+at the clicked point: its AOI, which the chart does not read, is not required, and the submitted recipe is unchanged.
+The bands it charts are not checked against `count`, and the count image is not described. CCDC's observations are
+held the same way; Change Alerts asks with collection settings alone and is not.
 
 The GUI registration states a time series is no image source (`imageSource: false`), which keeps it out of other
 recipes' source pickers; declaring the image does not make it an input. Reached through the API or a saved model anyway,
@@ -98,5 +100,9 @@ Earth Engine is asked.
   and an unreadable classification failing as a read.
 - `modules/gee/test/jobs/ee/timeSeries/loadObservations.test.js` - the chart's observations refused for an
   incompatible classification before any chart work, unchanged after repair, an unreadable classification failing as
-  a read, and no count image built; CCDC's and Change Alerts' observation requests answered as before, describing and
-  reading nothing.
+  a read, and no count image built; charted over an AOI that cannot be read, refers back or is incomplete, reading
+  none of it, and without changing the submitted recipe; CCDC's observations refused and answered the same way,
+  describing nothing of its segments; Change Alerts' collection settings answered as before.
+- `lib/js/shared/test/recipe/output/operationReadiness.test.js` - the readiness-only read: nothing of the root
+  described, an undeclared operation refused, and a requirement's observed bands pending, judged and failing as
+  unavailable.

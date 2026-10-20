@@ -1007,20 +1007,30 @@ One read answers every consumer, so they cannot disagree:
   be an image band. Each of the three requests checks on its own - the tile ids (`timeSeriesTiles$`) before the AOI
   is resolved or tiled, a tile's date ranges (`timeSeriesChunks$`) before any imagery check, and a chunk's export
   (`startTimeSeriesChunkExport$`) before tiling, building the collection, preparing a destination or submitting -
-  so calling the export without planning bypasses nothing. This does not validate the indicator itself. A Time
-  Series pixel chart request (`/timeSeries/loadObservations`, `jobs/ee/timeSeries/loadObservations.js`, for a
-  `TIME_SERIES` recipe) is held to the same readiness for the same reason, before the pixel geometry or the collection
-  is built or anything evaluated; its bands are collection bands, not checked against `count`, and the count image is
-  not built to establish readiness. CCDC's and Change Alerts' observation charts use the same endpoint - CCDC with its
-  own recipe, whose image output is not that collection, Change Alerts with a bare model - and are held to nothing.
-  The exporters these hand a built image to (`toAsset.js`, `toDrive.js`, `toWorkspace.js`) know nothing of recipes and add no
-  check; whatever calls them directly is held to nothing here.
+  so calling the export without planning bypasses nothing. This does not validate the indicator itself.
+- **Pixel observations.**
+  - **What is judged.** A pixel chart's observation request (`/timeSeries/loadObservations`,
+    `jobs/ee/timeSeries/loadObservations.js`) is held to the `PIXEL_OBSERVATIONS` readiness its recipe's type
+    declares, before the pixel geometry or the collection is built or anything evaluated. This uses
+    `requireExecutable$` in `jobs/executionReadiness.js`, over `settledReadiness$` and `readReadiness`.
+  - **Time Series and CCDC** declare it, and the classifier-input requirement lists it.
+  - **What the read describes.** Nothing of the recipe's own image is described: neither the Time Series count nor
+    CCDC's catalogue. A requirement asking for its inputs' observed bands still has them acquired, and their failures
+    reported, as any read's are.
+  - **The point stands in for the AOI.** The recipe judged has its AOI replaced by the clicked point, without changing
+    the one submitted. An AOI the chart does not read is no dependency of it.
+  - **Undeclared types.** A typed recipe whose type declares nothing for the operation is refused
+    (`UNDECLARED_OPERATION`).
+  - **Change Alerts** asks with collection settings alone and is not judged.
+  - **Limitation.** A `REFERENCE` dependency is still loaded with its own transitive dependencies, which then count.
+- **Lower-level exporters.** The exporters the guarded exports hand a built image to (`toAsset.js`, `toDrive.js`,
+  `toWorkspace.js`) know nothing of recipes and add no check; whatever calls them directly is held to nothing here.
 
 **Outside the guarantee in this packet.** These build recipe images with no shared check, and still fail in Earth
 Engine:
 - Preview (`/preview`), guarded only by the client's `canPreview`.
 - Bands, image JSON, histogram, distinct values, sample and geometry/bounds routes.
-- The CCDC and LandTrendr chart loaders, CCDC's and Change Alerts' observation requests through
+- The CCDC and LandTrendr chart loaders (`/ccdc/loadSegments` included), Change Alerts' observation requests through
   `/timeSeries/loadObservations`, and `nextReferenceDataPoints`.
 - Sampling Design steps and stratum areas.
 
@@ -1270,10 +1280,10 @@ backend helper accepting a Classification is not, by itself, a reason to expand 
    task and `assetSources.js`) and the Drive and SEPAL image exports (`imageDriveExport.js`,
    `imageWorkspaceExport.js`), the last three building the image only for a ready recipe - and by Time Series
    downloads (`export/timeSeries.js`: tile ids, a tile's date ranges and each chunk's export, each checked before its
-   own work), and by the Time Series pixel chart (`/timeSeries/loadObservations` for a `TIME_SERIES` recipe, before
-   the pixel or collection is built). Not enforced, and not migrated here: the CCDC pixel chart's segments
-   (`/ccdc/loadSegments`) and its observations, and Change Alerts' observations, through the same endpoint - each
-   reaches Earth Engine without consulting readiness. A Classification with several inputs is
+   own work), and by Time Series' and CCDC's pixel observations (`/timeSeries/loadObservations`, `PIXEL_OBSERVATIONS`,
+   judged at the clicked point before the pixel or collection is built). Not enforced, and not migrated here: the CCDC
+   pixel chart's segments (`/ccdc/loadSegments`) and Change Alerts' observations - each reaches Earth Engine without
+   consulting readiness. A Classification with several inputs is
    not judged, though `classifyImage` refuses it.
 3. **Diagnostic-code ownership: done.** `lib/js/shared/src/recipe/output/diagnostic.js` keeps the output and
    resolution contract (`INCOMPLETE_IMAGE_OUTPUT` to `CONFLICTING_OBSERVATION`), `MISSING_ROLE`, and the band codes
@@ -1284,6 +1294,50 @@ backend helper accepting a Classification is not, by itself, a reason to expand 
    `type/classChange.js`; `NO_CHANGE_CLASSES` and `UNAVAILABLE_GATE_INDEX` in `type/pyeoAlerts.js`; and
    `UNSUPPLIED_CLASSIFIER_INPUTS` in `classifierInputs.js`. Strings and behaviour are unchanged; importers name the
    owning module, with no registry, barrel or re-export.
+4. **Chart readiness: audited (2026-10-20); first slice implemented (pixel observations).**
+
+   Confirmed findings:
+   - **The readiness pass is bound to describing `IMAGE_OUTPUT`.** In `resolveImageOutput.js` the root is described
+     first; for each `IMAGE_OUTPUT` need, the target is described too. A CCDC root is therefore described from its
+     catalogue (`ImageFactory(...).getBands$()`), which reads the Classification's bands and, for Planet Daily, runs an
+     Earth Engine evaluation over the configured AOI. A pixel chart needs neither.
+   - **The closure is transitive, and every edge counts.** It follows every direct source of every record, including
+     edges an operation calls `REFERENCE`. Any unsound edge makes `dependencyValidity` refuse.
+   - **The shipped Time Series chart guard over-requires.** A probe confirmed it: the chart uses the clicked point,
+     yet it is refused for an AOI recipe that cannot be read, or an AOI that is incomplete or cyclic. A readable AOI
+     recipe is read with its own dependencies.
+   - **Change Alerts' observation request carries no recipe.** It sends a bare `{model}`: its own sources and
+     options, with dates from the shared `monitoringDates`. Change Alerts declares no classifier requirement; that is
+     the inherited-settings decision below.
+   - **`/ccdc/loadSegments` builds one of three things:**
+     - a direct CCDC is segmented at the point, with its AOI replaced;
+     - an asset is read as stored;
+     - a recipe reference is resolved through `withSegmentSource$` to its producer. For example, Masking stands for
+       its CCDC, and an Asset Mosaic's segments asset is read for its date format. The referenced recipe's image is
+       then built with its own AOI, so it is that recipe's `IMAGE_OUTPUT`.
+   - **`PIXEL_SEGMENTS` is GUI-only today.** It names a consumer's request over its source's segment structure
+     (`ccdcSegments.chartable`), not a configuration requirement.
+
+   Implemented (first slice):
+   - **A readiness-only read.** `resolveReadiness`, `readReadiness` and `settledReadiness$` read the same
+     declarations, closure, attribution and evidence acquisition for one `operation`. They describe nothing of the
+     root. What a requirement asks of its inputs is acquired and fails as any read's is. A source the operation builds
+     the image of is still described and judged as its `IMAGE_OUTPUT`. A root whose type declares nothing for the
+     operation is refused (`UNDECLARED_OPERATION`).
+   - **`PIXEL_OBSERVATIONS`.** Time Series and CCDC declare it, needing only that their Classification and source
+     imagery resolve, and the classifier requirement lists it.
+   - **A gate of its own.** `requireExecutable$` (`modules/gee/src/jobs/executionReadiness.js`) shares the closure,
+     acquisition and errors with exports. Exports keep `resolveImageOutput$` and its description-plus-readiness
+     contract and messages.
+   - **The point stands in for the AOI.** `/timeSeries/loadObservations` judges a typed recipe at the clicked point,
+     with its AOI replaced immutably. This fixes the over-requirement above, and CCDC's observations are now guarded.
+
+   Proposed next:
+   - **Segments.** `/ccdc/loadSegments`: `PIXEL_SEGMENTS` for a direct CCDC; the referenced recipe's `IMAGE_OUTPUT`
+     for a recipe reference; nothing new for an asset. This moves `PIXEL_SEGMENTS` into shared code when that slice
+     needs it.
+   - **Change Alerts waits** for the inherited-settings decision. A request without a recipe stays unguarded.
+   - **Limitation.** The transitive reads behind `REFERENCE` remain an acknowledged limitation.
 
 **Change Alerts is a separate inherited-settings review.** It has no Classification selector. Selecting a segment
 reference can copy the producer's Sources settings, including a Classification reference, through

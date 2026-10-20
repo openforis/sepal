@@ -1,12 +1,13 @@
 import _ from 'lodash'
 import {map, mergeMap, of, switchMap, toArray} from 'rxjs'
 
+import {requireExecutable$} from '#gee/jobs/executionReadiness'
 import {job} from '#gee/jobs/job'
-import {resolveImageOutput$} from '#gee/jobs/task/export/imageOutput'
 import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import {getCollection$} from '#sepal/ee/timeSeries/collection'
 import {fileName} from '#sepal/path'
+import {PIXEL_OBSERVATIONS} from '#sepal/recipe/output/readiness'
 
 const CHUNK_SIZE = 100
 
@@ -36,7 +37,7 @@ const worker$ = ({
             .get('array'), 'Extract chunk'
         )
     
-    return ready$(recipe).pipe(
+    return ready$(recipe, aoi).pipe(
         switchMap(() => toGeometry$(aoi)),
         switchMap(geometry => getCollection$({recipe, bands, geometry}).pipe(
             switchMap(collection => ee.getInfo$(collection.aggregate_array('system:index')).pipe(
@@ -63,14 +64,17 @@ const worker$ = ({
     )
 }
 
-// A Time Series is held to what its image output requires (imageOutput.js) before the pixel or the collection is built:
-// the chart reads a collection band rather than the count, but every requirement on that image concerns the collection
-// both build. Establishing readiness may itself read Earth Engine. CCDC asks with its own recipe, whose image output is
-// not this collection, and Change Alerts with a bare model, so neither is held to anything here.
-const ready$ = recipe =>
-    recipe.type === 'TIME_SERIES'
-        ? resolveImageOutput$(recipe)
+// A recipe is held to what its type declares its pixel observations require (executionReadiness.js) before the pixel or
+// the collection is built, its own image never described. The collection is observed at the clicked point, so that is
+// the recipe judged: its AOI, which nothing here reads, is no dependency of it. Establishing readiness may itself read
+// Earth Engine. Change Alerts asks with collection settings alone, no recipe, and is held to nothing here.
+const ready$ = (recipe, pixel) =>
+    recipe.type
+        ? requireExecutable$({recipe: atPixel(recipe, pixel), operation: PIXEL_OBSERVATIONS})
         : of(null)
+
+const atPixel = (recipe, pixel) =>
+    ({...recipe, model: {...recipe.model, aoi: pixel}})
 
 export default job({
     jobName: 'Load observations',

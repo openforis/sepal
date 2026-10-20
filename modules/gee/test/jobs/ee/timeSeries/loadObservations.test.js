@@ -3,11 +3,11 @@ import {beforeEach, describe, it, mock} from 'node:test'
 
 import {lastValueFrom, of, throwError} from 'rxjs'
 
-// The observations a pixel chart loads. A Time Series' chart reads a band of the collection, not the recipe's count
-// image, but it is held to what that image requires, which concerns the collection both build. CCDC and Change Alerts
-// chart observations through the same request, and are held to nothing here. Earth Engine, the pixel geometry, the
-// collection and recipe reads are substituted; the closure, the declarations and the readiness the request is held
-// to are the real ones.
+// The observations a pixel chart loads. A Time Series' or a CCDC's chart reads a band of the collection, not the recipe's
+// image, and is held to what its type declares those observations require - the collection's classifier inputs -
+// judged at the clicked point, with nothing of the recipe's image described. Change Alerts asks with collection
+// settings alone and is held to nothing here. Earth Engine, the pixel geometry, the collection and recipe reads are
+// substituted; the closure, the declarations and the readiness the request is held to are the real ones.
 
 describe('loading the observations of a Time Series pixel', () => {
     it('is refused, building no pixel or collection and evaluating nothing, where the classification\'s classifier the Landsat scenes cannot feed', async () => {
@@ -45,29 +45,57 @@ describe('loading the observations of a Time Series pixel', () => {
 
         assert.deepEqual(state.recipeImages, [])
     })
+
+    // The chart observes the collection at the clicked point; the AOI is the recipe's, not the chart's.
+    for (const [_case, aoi] of [
+        ['a recipe that cannot be read', {type: 'RECIPE', id: 'aoi-recipe'}],
+        ['the time series itself', {type: 'RECIPE', id: 'time-series-1'}],
+        ['an incomplete reference', {type: 'RECIPE'}]
+    ]) {
+        it(`charts over an AOI of ${_case}, reading nothing of it`, async () => {
+            const recipe = {...classified, model: {...classified.model, aoi, sources: {dataSets: {LANDSAT: ['LANDSAT_8']}}}}
+
+            const result = await load({recipe, bands: ['ndvi']})
+
+            assert.equal(result.features.length, OBSERVATIONS.length)
+            assert.deepEqual(state.recipeReads, [])
+        })
+    }
+
+    it('judges the recipe at the pixel without changing the one submitted, which is what the collection is built from', async () => {
+        state.catalogue[CLASSIFICATION] = classification(['red', 'nir', 'ndvi'])
+        const recipe = deepFrozen(structuredClone(classified))
+
+        await load({recipe, bands: ['ndvi']})
+
+        assert.deepEqual(recipe, classified)
+        assert.equal(state.collections[0].recipe, recipe)
+    })
 })
 
-describe('loading the observations of a pixel for another recipe\'s chart', () => {
-    it('answers a CCDC\'s observations as before, describing no output and reading no recipe', async () => {
-        const ccdc = {
-            id: 'ccdc-1',
-            type: 'CCDC',
-            model: {
-                dates: {startDate: '2015-01-01', endDate: '2020-01-01'},
-                sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands: ['ndvi']},
-                options: {corrections: ['SR']}
-            }
-        }
+describe('loading the observations of a CCDC pixel', () => {
+    it('is refused, starting no chart work, where the classification\'s classifier the Landsat scenes cannot feed', async () => {
+        state.catalogue[CLASSIFICATION] = classification(['VV_mean', 'VH_med'])
 
-        const result = await load({recipe: ccdc, bands: ['ndvi']})
+        await assert.rejects(load({recipe: CCDC, bands: ['ndvi']}), /cannot run: UNSUPPLIED_CLASSIFIER_INPUTS$/)
 
-        assert.deepEqual(result, {features: OBSERVATIONS.map(([value, date]) => ({properties: {date: {value: date}, value}}))})
-        assert.deepEqual(state.collections, [{recipe: ccdc, bands: ['ndvi'], geometry: PIXEL}])
-        assert.deepEqual(state.recipeImages, [])
-        assert.deepEqual(state.recipeReads, [])
+        assertNoChartWork()
     })
 
-    it('answers the observations Change Alerts asks for with a model alone', async () => {
+    it('answers its observations once the classification is one the scenes can feed, describing nothing of its segments', async () => {
+        state.catalogue[CLASSIFICATION] = classification(['red', 'nir', 'ndvi'])
+
+        const result = await load({recipe: CCDC, bands: ['ndvi']})
+
+        assert.deepEqual(result, {features: OBSERVATIONS.map(([value, date]) => ({properties: {date: {value: date}, value}}))})
+        assert.deepEqual(state.collections, [{recipe: CCDC, bands: ['ndvi'], geometry: PIXEL}])
+        assert.deepEqual(state.recipeImages, [])
+        assert.deepEqual(state.recipeReads, [CLASSIFICATION])
+    })
+})
+
+describe('loading the observations Change Alerts asks for', () => {
+    it('answers them for collection settings alone, judging and reading nothing', async () => {
         const request = {model: {
             dates: {startDate: '2019-01-01', endDate: '2021-01-01'},
             sources: {dataSets: {LANDSAT: ['LANDSAT_8']}},
@@ -99,6 +127,18 @@ const classified = {
     }
 }
 
+// Over an AOI recipe nothing holds: the chart reads only its collection.
+const CCDC = {
+    id: 'ccdc-1',
+    type: 'CCDC',
+    model: {
+        aoi: {type: 'RECIPE', id: 'aoi-recipe'},
+        dates: {startDate: '2015-01-01', endDate: '2020-01-01'},
+        sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands: ['ndvi'], classification: CLASSIFICATION},
+        options: {corrections: ['SR']}
+    }
+}
+
 const classification = included => ({
     id: CLASSIFICATION,
     type: 'CLASSIFICATION',
@@ -110,6 +150,11 @@ const state = {}
 const load = async requestArgs => {
     const {default: loadObservations$} = await import('#gee/jobs/ee/timeSeries/loadObservations')
     return lastValueFrom(loadObservations$({requestArgs: {latLng: LAT_LNG, ...requestArgs}}))
+}
+
+const deepFrozen = value => {
+    Object.values(value).forEach(child => child && typeof child === 'object' && deepFrozen(child))
+    return Object.freeze(value)
 }
 
 const assertNoChartWork = () => {

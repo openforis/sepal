@@ -1,19 +1,9 @@
-import {catchError, defer, filter, map, switchMap, take, tap, throwError} from 'rxjs'
+import {map, switchMap, throwError} from 'rxjs'
 
-import {assetBandEvidence$, imageBandEvidence$} from '#sepal/ee/bandEvidence'
-import ImageFactory from '#sepal/ee/imageFactory'
-import {loadRecipe$} from '#sepal/ee/recipe'
 import {INVALID, READY, settledImageOutput$} from '#sepal/recipe/output/observeImageOutput'
-import {AVAILABLE_BANDS} from '#sepal/recipe/output/provider'
-import {NOT_READY} from '#sepal/recipe/output/readiness'
-import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
-import {
-    completeRecipeClosure$,
-    DEFAULT_RECIPE_CLOSURE_LIMITS
-} from '#sepal/recipe/source/completeRecipeClosure'
-import {dependencyValidity, INVALID as INVALID_DEPENDENCIES, VALID} from '#sepal/recipe/source/dependencyValidity'
-import {createLoadRecipesById$} from '#sepal/recipe/source/recipeClosureLoader'
-import {ASSET} from '#sepal/recipe/source/reference'
+import {dependencyValidity, VALID} from '#sepal/recipe/source/dependencyValidity'
+
+import {dependencyError, imageOutputAcquisition, readinessError, recipeClosure$} from '../../executionReadiness.js'
 
 // Resolved from the recipe being exported, never accepted from the submitter. A failed read, an incomplete closure, a
 // malformed declaration or a recipe producing no image fails the export.
@@ -34,11 +24,11 @@ export const selectedBandEncoding = (description, selectedBandNames) => {
     return (selectedBandNames || []).map(name => byName.get(name)).filter(band => band)
 }
 
-const describe$ = recipe => closure$(recipe).pipe(
+const describe$ = recipe => recipeClosure$(recipe).pipe(
     switchMap(closure => {
         const validity = dependencyValidity(closure)
         return validity.status === VALID
-            ? settledImageOutput$({graph: closure.graph, ...acquisition})
+            ? settledImageOutput$({graph: closure.graph, ...imageOutputAcquisition})
             : throwError(() => dependencyError(recipe, validity))
     }),
     map(({status, description, diagnostics, error, readiness}) => {
@@ -51,62 +41,6 @@ const describe$ = recipe => closure$(recipe).pipe(
         return description
     })
 )
-
-// Unseeded, so the description is built only from this operation's own reads. A failure stays the failure it
-// was; what the closure had already established about its dependencies is named beside it.
-const closure$ = recipe => defer(() => {
-    let failed = null
-    return completeRecipeClosure$({
-        rootRecipe: recipe,
-        seedRecipesById: new Map(),
-        loadRecipesById$: createLoadRecipesById$({loadRecipe$}),
-        limits: DEFAULT_RECIPE_CLOSURE_LIMITS
-    }).pipe(
-        tap(state => {
-            if (state.status === 'FAILED') {
-                failed = state
-            }
-        }),
-        filter(({status}) => status === 'COMPLETE'),
-        take(1),
-        catchError(error => throwError(() => closureError(recipe, failed, error)))
-    )
-})
-
-// This runtime builds the image itself rather than asking a service for its bands, and an asset is read with
-// its stored encoding. A producer asked what it can be asked for answers from its own catalogue, which costs
-// no image and no evaluation; its physical facts come from the declaration that asked.
-const acquisition = {
-    observeBands$: ({reference, recipe, observes}) => reference.type === ASSET
-        ? assetBandEvidence$(reference.id)
-        : observes === AVAILABLE_BANDS
-            ? ImageFactory(recipe).getBands$().pipe(map(bandNames => bandNames.map(name => ({name}))))
-            : imageBandEvidence$(recipe),
-    declarationFor: recipe => recipeType(recipe.type)?.imageOutput,
-    readinessFor: recipe => recipeType(recipe.type)
-}
-
-const codesOf = diagnostics => diagnostics.map(({code}) => code).join(', ')
-
-const dependencyError = (recipe, {status, diagnostics}) =>
-    new Error(`Recipe ${recipe.id} cannot run: its dependencies are ${status.toLowerCase()} (${codesOf(diagnostics)})`)
-
-// Only a failure after a definitive diagnosis gains a message of its own, naming both; any other is passed on
-// untouched, and the original is always the cause.
-const closureError = (recipe, failed, error) => {
-    const validity = failed && dependencyValidity(failed)
-    return validity?.status === INVALID_DEPENDENCIES
-        ? new Error(
-            `Could not read the dependencies of recipe ${recipe.id}: ${error?.message || error}; already known: ${codesOf(validity.diagnostics)}`,
-            {cause: error}
-        )
-        : error
-}
-
-const readinessError = (recipe, {status, findings, failures = []}) => new Error(status === NOT_READY
-    ? `Recipe ${recipe.id} cannot run: ${codesOf(findings)}`
-    : `Recipe ${recipe.id} cannot run: what it needs could not be read${failures[0] ? `: ${failures[0].message}` : ''}`,
-{cause: failures[0]})
 
 // A provider that faulted is diagnosed by the error it threw and nothing else, so what the state carries
 // decides what the failure can name.
