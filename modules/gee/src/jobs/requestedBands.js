@@ -4,6 +4,7 @@ import {requireExecutable$} from '#gee/jobs/executionReadiness'
 import {loadRecipe$} from '#sepal/ee/recipe'
 import {unsupportedClassifiedOutput} from '#sepal/ee/timeSeries/classifiedOutputRefusal'
 import {isClassifiedOutput, requestStages, unprovidedClassifiedOutputs} from '#sepal/recipe/classifiedOutputs'
+import {fittedMeasures, requestedMeasures} from '#sepal/recipe/type/ccdc'
 
 // What a request reading bands of a recipe's collection is held to before anything of it is built:
 //   1. `operation` over `recipe`, as its type declares it: every finding of its own configuration first, a configured
@@ -29,6 +30,14 @@ export const requireRequestStages$ = ({recipe, requested, effective}) => {
             of(undefined)
         ))
     )
+}
+
+// The second and third for a request for a CCDC's image, by what execution builds for it: the measures it asks for
+// (requestedMeasures), fitted with the breakpoint bands (fittedMeasures). `request` is what the image is built with:
+// {selection, outputBands, visualizationType}.
+export const requireCcdcImageStages$ = (recipe, request) => {
+    const requested = requestedMeasures(request)
+    return requireRequestStages$({recipe, requested, effective: fittedMeasures(recipe.model, requested)})
 }
 
 // The Classification is read as the readiness read it, once per request (recipeScope.js), and its outputs judged by

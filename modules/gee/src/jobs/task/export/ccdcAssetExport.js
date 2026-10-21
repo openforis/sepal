@@ -1,5 +1,6 @@
 import {forkJoin, map, switchMap} from 'rxjs'
 
+import {requireCcdcImageStages$} from '#gee/jobs/requestedBands'
 import ccdc from '#sepal/ee/timeSeries/ccdc'
 import {formatProperties} from '#sepal/formatProperties'
 
@@ -13,11 +14,13 @@ export const startCcdcAssetExport$ = params =>
     )
 
 // Every CCDC Segments export passes here, so here it is held to what the recipe's image output requires
-// (imageOutput.js): only a recipe that can run has its segments built. Establishing that may itself read Earth Engine -
-// the closure, and the evidence its requirements need - and its failures are passed on as they are.
+// (imageOutput.js), then to what the measures it names add (requireCcdcImageStages$): only a recipe that can run has
+// its segments built. Establishing that may itself read Earth Engine - the closure, and the evidence its requirements
+// need - and its failures are passed on as they are.
 export const ccdcAssetSource$ = ({image, description}) => {
     const {recipe, bands, scale, visualizations, properties, ...other} = image
     return resolveImageOutput$(recipe).pipe(
+        switchMap(() => requireCcdcImageStages$(recipe, {selection: bands})),
         switchMap(() => {
             const segments = ccdc(recipe, {selection: bands})
             return forkJoin({

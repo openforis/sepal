@@ -12,7 +12,8 @@ import {dependencyError, imageOutputAcquisition, readinessError, recipeClosure$}
 // run. A closure whose dependencies are not structurally sound fails the export before anything is described,
 // whether or not the description would have read the broken part; and an output that cannot run - its own
 // configuration, or any recipe whose image running it builds, failing a requirement (readiness.js) - fails it too.
-// The image is built beside this check, so a refused export may already have started Earth Engine work.
+// The image is built beside this check, so a refused export may already have started Earth Engine work - except a
+// CCDC's, which is built only once the check, and what its requested measures add, has passed (imageAssetExport.js).
 
 export const resolveImageOutput$ = recipe =>
     describe$(recipe)
