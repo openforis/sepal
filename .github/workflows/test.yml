@@ -105,6 +105,14 @@ jobs:
         if: '!cancelled()'
         working-directory: ${{matrix.module}}
 
+  python:
+    name: time-series stacker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: sudo apt-get update && sudo apt-get install -y python3-gdal
+      - run: /usr/bin/python3 -m unittest discover -s lib/python/shared -p 'test_*.py' -v
+
   shell:
     name: shell
     runs-on: ubuntu-latest
