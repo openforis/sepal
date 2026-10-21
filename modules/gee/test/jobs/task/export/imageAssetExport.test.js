@@ -593,6 +593,49 @@ describe('exporting a Classification reusing training data that samples fewer fe
     })
 })
 
+// PyEO's baseline is its Classification's own image, trained on that Classification's training data, so what running
+// that image needs refuses the export, whatever PyEO's index gate.
+describe('exporting a PyEO Alerts over a Classification storing no point', () => {
+    const POINTS = [{x: 1, y: 1, class: 1}, {x: 1, y: 2, class: 1}, {x: 2, y: 1, class: 2}, {x: 2, y: 2, class: 2}]
+    const OPTICAL_ASSET = 'users/x/optical'
+    const classificationOf = ({points = []} = {}) => ({
+        id: 'classification-1',
+        type: 'CLASSIFICATION',
+        model: {
+            inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: OPTICAL_ASSET, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['red', 'nir']}]}]},
+            legend: {entries: [{value: 1}, {value: 2}]},
+            trainingData: {dataSets: points.length ? [{type: 'COLLECTED', referenceData: points}] : []},
+            classifier: {type: 'RANDOM_FOREST'}
+        }
+    })
+    const pyeoAlerts = () => ({
+        id: 'pyeo-1',
+        type: 'PYEO_ALERTS',
+        model: {
+            aoi: {type: 'POLYGON', path: [[0, 0], [1, 0], [1, 1], [0, 0]]},
+            dates: {monitoringStart: '2024-01-01', monitoringEnd: '2024-06-01'},
+            sources: {classification: 'classification-1', dataSets: {SENTINEL_2: ['SENTINEL_2']}, changeFromClasses: [1], changeToClasses: [2]},
+            options: {corrections: ['SR']},
+            pyeoAlertsOptions: {minConsecutiveDetections: 2}
+        }
+    })
+
+    beforeEach(() => {
+        state.assets[OPTICAL_ASSET] = {bands: [{name: 'red', arrayDimensions: 0}, {name: 'nir', arrayDimensions: 0}], properties: {}}
+    })
+
+    it('fails the export, saying why, and exports once the Classification stores points', async () => {
+        const recipe = pyeoAlerts()
+        state.catalogue = {'classification-1': classificationOf()}
+
+        await assert.rejects(submit({recipe, bands: ['total_changes']}), /cannot run: NO_TRAINING_DATA$/)
+        assert.deepEqual(state.exported, [])
+
+        state.catalogue['classification-1'] = classificationOf({points: POINTS})
+        await submit({recipe, bands: ['total_changes']})
+    })
+})
+
 // A recipe zipping no input image cannot run, nor can a recipe whose image builds it.
 describe('exporting a recipe without input imagery', () => {
     const POINTS = [{x: 1, y: 1, class: 1}, {x: 1, y: 2, class: 1}, {x: 2, y: 1, class: 2}, {x: 2, y: 2, class: 2}]

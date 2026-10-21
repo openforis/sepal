@@ -435,13 +435,21 @@ describe('a phenology', () => {
 })
 
 describe('a PyEO alerts recipe', () => {
-    it('is described with its change report, while the classification it applies is not even loaded', () => {
-        const {output} = read(pyeoAlertsOf({classification: 'classification-1'}))
+    it('is described with its change report', () => {
+        const {output} = read(pyeoAlertsOf())
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands).toHaveLength(18)
         expect(output.bands.slice(0, 3).map(({name}) => name)).toEqual(['available_image_count', 'occluded_count', 'total_changes'])
         expect(output.bands.every(({dataType}) => dataType.arrayDimensions === 0)).toBe(true)
+    })
+
+    // Its baseline is that classification's image, so whether it can run waits for that recipe.
+    it('waits for the classification it applies while that recipe is not loaded, naming it as needed', () => {
+        const {output} = read(pyeoAlertsOf({classification: 'classification-1'}))
+
+        expect(output.status).toBe('NEEDS_EVIDENCE')
+        expect(output.readiness.needs.records).toEqual(['classification-1'])
     })
 
     it('is presented with its labels and ranges', () => {

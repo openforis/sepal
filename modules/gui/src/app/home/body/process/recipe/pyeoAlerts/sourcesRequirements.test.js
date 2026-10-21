@@ -55,7 +55,7 @@ describe('a PyEO Alerts whose Sources lack what it detects change with', () => {
 describe('a PyEO Alerts whose monitoring data cannot feed its classifier', () => {
     it('marks SRC at the classification where no supported monitoring data could, holding back previews and Retrieve', () => {
         const recipe = pyeoOf({dataSets: {LANDSAT: ['LANDSAT_9']}})
-        const state = stateOf(recipe, classificationOver(['VV_mean', 'VH_med']))
+        const state = stateOf(recipe, classificationOver(['VV_mean', 'VH_med'], {asset: 'users/x/radar'}))
 
         expect(sourceProblemsOfState(state, recipe.id, undefined, Date.now(), NOTHING_HELD))
             .toEqual({sources: expect.stringContaining('process.pyeoAlerts.panel.sources.form.classification.unsuppliedInputs')})
@@ -108,15 +108,29 @@ const pyeoOf = (sources, indexGate) => ({
     }
 })
 
-const CLASSIFICATION_RECORD = {id: CLASSIFICATION, type: 'CLASSIFICATION', model: {}}
+// A Sentinel-2 mosaic, described from its configuration: a Classification over it observes nothing.
+const MOSAIC = {
+    id: 'mosaic-1',
+    type: 'MOSAIC',
+    model: {sources: {dataSets: {SENTINEL_2: ['SENTINEL_2']}, cloudPercentageThreshold: 100}, compositeOptions: {corrections: ['SR'], compose: 'MEDIAN'}}
+}
 
-// A Classification over an asset, its classifier reading the features given.
-const classificationOver = included => ({...CLASSIFICATION_RECORD, model: {
-    inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]}
+// A Classification over the mosaic, or over an asset, trained on points it stores, its classifier reading the features
+// given.
+const classificationOver = (included, {asset} = {}) => ({id: CLASSIFICATION, type: 'CLASSIFICATION', model: {
+    inputImagery: {images: [asset
+        ? {imageId: 'i-1', type: 'ASSET', id: asset, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}
+        : {imageId: 'i-1', type: 'RECIPE_REF', id: MOSAIC.id, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}
+    ]},
+    legend: {entries: [{value: 1}, {value: 2}]},
+    classifier: {type: 'RANDOM_FOREST'},
+    trainingData: {dataSets: [{dataSetId: 'collected', type: 'COLLECTED', referenceData: [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]}]}
 }})
 
+const CLASSIFICATION_RECORD = classificationOver(['red', 'nir'])
+
 const stateOf = (recipe, ...records) => {
-    const all = [recipe, ...records, ...records.some(({id}) => id === CLASSIFICATION) ? [] : [CLASSIFICATION_RECORD]]
+    const all = [recipe, ...records, ...records.some(({id}) => id === CLASSIFICATION) ? [] : [CLASSIFICATION_RECORD], MOSAIC]
     return {
         process: {
             loadedRecipes: Object.fromEntries(all.map(record => [record.id, record])),

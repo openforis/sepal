@@ -1307,9 +1307,88 @@ feature the consumer trains on.
 
 Sample counts after masking and sampling are known only to Earth Engine.
 
-**Other callers.** The Time Series collection (Time Series, CCDC, Phenology) and PyEO Alerts call a Classification's
-`getTrainingData$()` through `CLASSIFICATION_SOURCE: REFERENCE`. Moving those to `TRAINING_DATA` interacts with the
-native-band classifier-input policy and is a separate decision.
+**Classification consumers' training readiness (audited 2026-10-21; PyEO implemented).** Time Series, CCDC and
+Phenology reach their Classification through `CLASSIFICATION_SOURCE: REFERENCE`. That checks only that it resolves, so
+none of the Classification's training checks apply to them. PyEO Alerts needs its Classification's `IMAGE_OUTPUT`
+instead.
+
+- **Confirmed behaviour.** When the shared collection (`timeSeries/collection.js`) uses a Classification, it reads the
+  record, calls `getTrainingData$()` with no bands and classifies each scene with `classifyImage`. `band_order` is
+  therefore the Classification's own features. It uses one only for a requested `regression` or `probability_*` band,
+  never for a decision tree (`supportRegression`, `supportProbability`), and never builds the Classification's image.
+
+  | Consumer and operation | Uses the Classification when | Trains | Builds its image | Checked today |
+  |---|---|---|---|---|
+  | Time Series `IMAGE_OUTPUT` (count) | never (`bands: [0]`) | no | no | `UNSUPPLIED_CLASSIFIER_INPUTS` all the same |
+  | Time Series pixel chart, Retrieve | the chart band or Retrieve indicator is classified | yes | no | classifier inputs; the band only at run time |
+  | Phenology `IMAGE_OUTPUT` | `sources.band` is classified | yes | no | classifier inputs, `UNSUPPORTED_CLASSIFIED_OUTPUT` |
+  | CCDC `IMAGE_OUTPUT`, `PIXEL_SEGMENTS` | classified `breakpointBands`, or a classified export or map band | yes | no | classifier inputs, breakpoint outputs; export bands only at run time |
+  | CCDC `PIXEL_OBSERVATIONS` | the chart band is classified | yes | no | classifier inputs |
+  | CCDC Slice, Change Alerts over a CCDC recipe | that CCDC's classified breakpoint bands, or a Slice base band | yes | no | through the CCDC, as above |
+  | PyEO Alerts `IMAGE_OUTPUT` | always | yes, except a decision tree | yes (`getImage$`, its baseline) | the Classification's `IMAGE_OUTPUT` readiness, classifier inputs, gate index |
+  | LandTrendr | never (no selector, an optical index) | no | no | nothing |
+
+- **Gap.** A PyEO Alerts was `READY` over a trained Classification that had no points, that reused a recipe without
+  input imagery, or that reused one sampling fewer features, though its run trains on that training data.
+- **PyEO's need is `IMAGE_OUTPUT` (implemented 2026-10-21).** `CLASSIFICATION_SOURCE` is an `IMAGE_OUTPUT` need of
+  PyEO's `IMAGE_OUTPUT` (`type/pyeoAlerts.js`). Its execution builds the Classification's image as its baseline, and
+  classifies the scenes with the classifier that image trains.
+  - **Reuse.** The Classification's own `IMAGE_OUTPUT` readiness supplies every check: input imagery, band sets through
+    its description, `NO_TRAINING_DATA` with the decision-tree exemption, providers' `TRAINING_DATA` and
+    `MISSING_TRAINING_FEATURES`. It adds no operation and no requirement.
+  - **Attribution.** Findings sit at the recipe they concern: `NO_TRAINING_DATA` and `MISSING_TRAINING_FEATURES` at
+    `[pyeo, classification]`, a provider's `MISSING_ROLE` at `[pyeo, classification, provider]`.
+  - **Index gate.** Turning the gate off still avoids every index-specific check. The Classification's baseline imagery
+    is validated either way, so its input is observed with the gate off too, and a band it lacks is refused there.
+  - **Pending and unavailable.** The Classification's input, and its providers' inputs, are acquired as the
+    Classification's own read acquires them. Pending holds PyEO and finds nothing; a failed observation makes it
+    unavailable and finds nothing.
+  - **Acquisition cost.** Records already in the closure need no further record discovery. Describing an input can
+    still need evidence:
+    - in the tested cases, an asset input is one band observation each, for the Classification and for each provider;
+    - a Sentinel-2 mosaic input is described from its configuration and observes nothing;
+    - another recipe input costs whatever describing that recipe costs, including its own evidence or catalogue reads,
+      which these tests do not establish.
+  - **GUI.** PyEO's Sources declares `referenceFeedback` for `CLASSIFICATION_SOURCE`, bound to the classification field
+    (`blocksApply: false`). The field names the Classification, whose own sections say why, while Retrieve and the
+    operations over PyEO hold.
+  - **Backend.** `requireExecutable$` refuses the export with the Classification's code before building anything.
+  - **Unchanged.** `UNSUPPLIED_CLASSIFIER_INPUTS` (the native-band policy), the gate check and the operation-specific
+    output checks.
+  - **Regressions:**
+    - `lib/js/shared/test/recipe/pyeoTrainingReadiness.test.js`:
+      - missing points, a provider without imagery and a provider lacking features;
+      - the control, the decision-tree exemption and repair;
+      - pending and failed observations, and a mosaic input observing nothing;
+    - `readiness.test.js`: the gate cases now also observe and validate the baseline;
+    - `pyeoAlerts/classificationFeedback.test.jsx`, mounted: explained beside the field, Retrieve held, cleared after
+      repair;
+    - `imageAssetExport.test.js`: refused, then exported once points are added;
+    - `pyeoAlerts/sourcesRequirements.test.js`: its Classification fixtures are now trainable;
+    - `modelDerivedOutput.test.js`: PyEO's output read waits for a Classification not yet loaded, naming it.
+- **Deferred, needing a decision.** Each is recorded separately and unchanged by this slice.
+  - **The collection consumers** train only for requested classified bands. Readiness has no requested-band input,
+    and a static need would refuse configurations that never train.
+    - CCDC's `breakpointBands` and Phenology's `band` are configuration and could select a conditional need.
+    - Time Series chart and Retrieve bands, and CCDC export, map and chart bands, are request parameters.
+    - The alternative is a `CLASSIFIER` operation declared by Classification, with its training requirements and no
+      image description, needed where training is requested.
+  - **Normalisation.** For SVM and minimum distance, training data is normalised but scenes passed to `classifyImage`
+    are not, for both the collection and PyEO. This is an execution question.
+  - **Native-band policy.** It refuses a Time Series count image, which never reads its Classification, for
+    unsupplied classifier inputs.
+  - **Run-time-only band checks.** Requested classified bands are checked only at run time for the Time Series chart
+    and Retrieve, and for CCDC export and chart bands.
+  - **Stale selections.** A stale `ui.classification` keeps classified outputs in the Time Series chart picker after
+    deselection, and Phenology keeps a chosen classified band.
+  - **Several input images** are refused only at run time (`classifyImage`, PyEO); the PyEO GUI prevents them.
+  - **LandTrendr** declares `CLASSIFICATION_SOURCE` without a selector, and `landTrendr.js`'s comment about always
+    resolving it is stale.
+- **Manual check before pushing.** Add to the accumulated batch:
+  1. A PyEO Alerts over a Classification that has input imagery and no training points. Sources' classification
+     field names the Classification, and Retrieve is held.
+  2. Add training points to the Classification. The explanation clears and Retrieve is available.
+  3. Optionally turn the index gate off and on. Neither changes the hold while the Classification has no points.
 
 #### Regression training data (implemented)
 
