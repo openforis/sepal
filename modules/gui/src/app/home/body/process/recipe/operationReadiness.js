@@ -1,5 +1,5 @@
 import {NEEDS_EVIDENCE, readReadiness} from '#sepal/recipe/output/readImageOutput'
-import {NOT_READY, PIXEL_OBSERVATIONS, PIXEL_SEGMENTS} from '#sepal/recipe/output/readiness'
+import {CLASSIFIED_PIXEL_OBSERVATIONS, NOT_READY, PIXEL_OBSERVATIONS, PIXEL_SEGMENTS} from '#sepal/recipe/output/readiness'
 import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
 import {dependencyValidity, INVALID, VALID} from '#sepal/recipe/source/dependencyValidity'
 import {MISSING_SOURCE} from '#sepal/recipe/source/diagnostic'
@@ -100,7 +100,7 @@ export const recipeForOperation = (recipe, operation) => {
 const AT_ANY_PIXEL = new WeakMap()
 
 // The operations a pixel chart runs at the point clicked, whatever AOI the recipe configures.
-const AT_PIXEL = [PIXEL_OBSERVATIONS, PIXEL_SEGMENTS]
+const AT_PIXEL = [PIXEL_OBSERVATIONS, CLASSIFIED_PIXEL_OBSERVATIONS, PIXEL_SEGMENTS]
 
 // The graph is cached by identity (mapDependencyGraph.js), so its read is too: per operation.
 const sessionReadOf = (graph, operation) => {

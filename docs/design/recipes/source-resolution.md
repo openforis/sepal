@@ -1016,10 +1016,14 @@ One read answers every consumer, so they cannot disagree:
   so calling the export without planning bypasses nothing. This does not validate the indicator itself.
 - **Pixel observations.**
   - **What is judged.** A pixel chart's observation request (`/timeSeries/loadObservations`,
-    `jobs/ee/timeSeries/loadObservations.js`) is held to the `PIXEL_OBSERVATIONS` readiness its recipe's type
-    declares, before the pixel geometry or the collection is built or anything evaluated. This uses
-    `requireExecutable$` in `jobs/executionReadiness.js`, over `settledReadiness$` and `readReadiness`.
-  - **Time Series and CCDC** declare it, and the classifier-input requirement lists it.
+    `jobs/ee/timeSeries/loadObservations.js`) is held to the readiness its recipe's type declares for observations of
+    the requested bands, before the pixel geometry or the collection is built or anything evaluated. The bands choose
+    the operation (`pixelObservationsOperation`, `classifiedOutputs.js`): `CLASSIFIED_PIXEL_OBSERVATIONS` where any is
+    an output the Classification computes, `PIXEL_OBSERVATIONS` otherwise. This uses `requireExecutable$` in
+    `jobs/executionReadiness.js`, over `settledReadiness$` and `readReadiness`.
+  - **Time Series and CCDC** declare both, and the classifier-input requirement lists both. Time Series' classified
+    observations need the Classification's `CLASSIFIER` readiness (see "Time Series' classified chart band"); CCDC's
+    still need only what its native observations need.
   - **What the read describes.** Nothing of the recipe's own image is described: neither the Time Series count nor
     CCDC's catalogue. A requirement asking for its inputs' observed bands still has them acquired, and their failures
     reported, as any read's are.
@@ -1341,10 +1345,10 @@ feature the consumer trains on.
 
 Sample counts after masking and sampling are known only to Earth Engine.
 
-**Classification consumers' training readiness (audited 2026-10-21; PyEO, Phenology and CCDC's breakpoint bands
-implemented).** Time Series, and CCDC's chart observations, reach their Classification through
-`CLASSIFICATION_SOURCE: REFERENCE`. That checks only that it resolves, so none of the Classification's training checks
-apply to them. PyEO Alerts needs its Classification's `IMAGE_OUTPUT`. Phenology, for its image, and CCDC, for its image
+**Classification consumers' training readiness (audited 2026-10-21; PyEO, Phenology, CCDC's breakpoint bands and
+Time Series' chart band implemented).** Time Series' image and Retrieve, and CCDC's chart observations, reach their
+Classification through `CLASSIFICATION_SOURCE: REFERENCE`. That checks only that it resolves, so none of the
+Classification's training checks apply to them. PyEO Alerts needs its Classification's `IMAGE_OUTPUT`. Phenology, for its image, and CCDC, for its image
 and segments, need its `CLASSIFIER` where a saved band - Phenology's `band`, CCDC's `breakpointBands` - is classified,
 and keep `REFERENCE` for native bands.
 
@@ -1356,7 +1360,8 @@ and keep `REFERENCE` for native bands.
   | Consumer and operation | Uses the Classification when | Trains | Builds its image | Checked today |
   |---|---|---|---|---|
   | Time Series `IMAGE_OUTPUT` (count) | never (`bands: [0]`) | no | no | `UNSUPPLIED_CLASSIFIER_INPUTS` all the same |
-  | Time Series pixel chart, Retrieve | the chart band or Retrieve indicator is classified | yes | no | classifier inputs; the band only at run time |
+  | Time Series pixel chart | the chart band is classified | yes | no | the Classification's `CLASSIFIER` readiness for a classified band (`CLASSIFIED_PIXEL_OBSERVATIONS`), classifier inputs; output capability before training, refused as execution refuses it |
+  | Time Series Retrieve | a Retrieve indicator is classified | yes | no | classifier inputs; the indicator only at run time |
   | Phenology `IMAGE_OUTPUT` | `sources.band` is classified | yes | no | the Classification's `CLASSIFIER` readiness for a classified band, classifier inputs, `UNSUPPORTED_CLASSIFIED_OUTPUT` |
   | CCDC `IMAGE_OUTPUT`, `PIXEL_SEGMENTS` | classified `breakpointBands`, or a classified export or map band | yes | no | the Classification's `CLASSIFIER` readiness for classified breakpoints, classifier inputs, breakpoint outputs; export bands only at run time |
   | CCDC `PIXEL_OBSERVATIONS` | the chart band is classified | yes | no | classifier inputs |
@@ -1409,11 +1414,13 @@ and keep `REFERENCE` for native bands.
     and a static need would refuse configurations that never train.
     - Phenology's `band` and CCDC's `breakpointBands` now select a conditional `CLASSIFIER` need (see "Phenology's
       configured classified band").
-    - Time Series chart and Retrieve bands, and CCDC export, map and chart bands, are request parameters.
+    - Time Series' chart band chooses `CLASSIFIED_PIXEL_OBSERVATIONS` (see "Time Series' classified chart band").
+    - Time Series Retrieve indicators, and CCDC export, map and chart bands, are still request parameters readiness
+      does not see.
   - **Native-band policy.** It refuses a Time Series count image, which never reads its Classification, for
     unsupplied classifier inputs.
-  - **Run-time-only band checks.** Requested classified bands are checked only at run time for the Time Series chart
-    and Retrieve, and for CCDC export and chart bands.
+  - **Run-time-only band checks.** Requested classified outputs are checked for capability only at run time, for every
+    request-parameter consumer; for Time Series Retrieve and CCDC export and chart bands, training is too.
 
 - **Completed behaviour and retained policies.**
   - **Normalisation (implemented).** Prediction imagery and reused samples now use the consumer's transformation;
@@ -1724,12 +1731,112 @@ is applied to every scene. It never builds the Classification's image. Readiness
       every classified case; the native controls and the decision tree pass either way.
     - Validation accepting any condition fails the four malformed-declaration cases.
 
+**Time Series' classified chart band (implemented 2026-10-21).** A band a Time Series chart observes that its
+Classification computes (`regression`, `probability_*`) trains that Classification and applies it to every image at the
+pixel (`collection.js`).
+
+- **Gap (confirmed by failing witnesses before the change).** The request was judged as `PIXEL_OBSERVATIONS`, whose
+  `CLASSIFICATION_SOURCE` need is `REFERENCE`. So `/timeSeries/loadObservations` built and evaluated the collection,
+  and the GUI requested it, over a Classification that stores no points, one reusing a recipe without input imagery,
+  or one reusing a recipe that samples fewer features than it trains on. Native bands over the same Classifications
+  read none of their training data, and are rightly answered.
+- **Why the request has to count.** The band is a request argument: unlike Phenology's `band` and CCDC's
+  `breakpointBands`, no model holds it, and readiness reads only records and evidence. A static `CLASSIFIER` need would
+  refuse native-band charts that never train, which would change the native-band policy. Stale capability options are
+  no reason: the resolved-record view already fixed those.
+- **Alternatives compared.**
+  - *Request arguments to readiness* (`executionNeed(…, request)`, `when(model, request)`, scoped to the root). Every
+    place that identifies a question by operation would also carry the bands: the GUI's session-read cache, the
+    acquisition key, `watchOutput$`, the runtime's asset interest and `requireExecutable$`. Yet readiness depends on the
+    request by one fact, whether any band is classified. Keying by bands would split one question per native band, and
+    keying by that fact is a second operation in disguise.
+  - *The bands saved in the model.* Request parameters are not recipe configuration.
+  - *A check of the Classification in the loader.* A parallel validator, outside the GUI's holds and attribution.
+  - **Chosen: an operation the request chooses.** `CLASSIFIED_PIXEL_OBSERVATIONS` (`output/readiness.js`) is reading
+    the observations of a band the Classification computes. `pixelObservationsOperation(bands)` (`classifiedOutputs.js`,
+    with `isClassifiedOutput`) is the one place the bands decide. Readiness, the traversal, evidence acquisition, the
+    server gate and every GUI identity are unchanged, since they already key by operation.
+- **Declarations.**
+  - Time Series: `CLASSIFIED_PIXEL_OBSERVATIONS: {CLASSIFICATION_SOURCE: CLASSIFIER, SOURCE_IMAGERY: REFERENCE}`. The
+    Classification's own `CLASSIFIER` readiness supplies every training rule. `collectionClassifierRequirement` lists
+    the operation, so the classifier-input policy is the same for both operations.
+  - CCDC declares it with its `PIXEL_OBSERVATIONS` needs, so a classified CCDC chart band is not refused as undeclared.
+    Holding it to training is CCDC's follow-up.
+- **Server.** `loadObservations.js` judges `pixelObservationsOperation(bands)` over the recipe and bands it builds: at
+  the pixel, and for Change Alerts the collection it monitors.
+  - **Order and the capability contract.** A classified band is judged in the order execution finds things:
+    `PIXEL_OBSERVATIONS` (closure, classifier inputs), then output capability, then `CLASSIFIED_PIXEL_OBSERVATIONS`.
+    Capability uses the existing rule over the Classification's record (`unprovidedClassifiedOutputs`). It is read
+    once per request, since the recipe scope caches it. An output not provided is refused with execution's own error
+    (`unsupportedClassifiedOutput`, `lib/js/ee/src/timeSeries/classifiedOutputRefusal.js`, which `collection.js` now
+    shares): a `ClientException`, 400, `UNSUPPORTED_CLASSIFIED_OUTPUT`. That holds whether or not the Classification
+    can be trained.
+  - **Cost.** A classified request settles readiness twice over one closure, and the second settling observes the
+    Classification's inputs. Native requests are unchanged.
+- **GUI** (`timeSeries/panels/chartPixel.jsx`).
+  - **The action.** It and `CHART_OPERATIONS` stay `PIXEL_OBSERVATIONS`, so the action is band-independent and stays
+    offered for native bands.
+  - **The open chart.** While a classified band is charted at a pixel, the chart also reads and watches that band's
+    operation (`BAND_OPERATIONS`) through `pixelOperationsAvailability` and `watchOperations`.
+  - **Holds.** That band's gate holds the band without closing the chart: it reaches `pixelChartUpdate` with
+    `withdraw: false`. So the existing hold, cancellation and recovery apply. Pending or unavailable evidence requests
+    nothing, and a finding lets the request go and is said in the chart (`classifiedBandWithheld`). Another band can
+    be chosen, and repair reads the band again. A finding of `CHART_OPERATIONS` still closes the chart.
+  - **Unchanged machinery.** `recipeForOperation` treats the operation as a pixel operation. The draft gate holds the
+    request until the Classification's save is acknowledged.
+- **Abstraction cost.** One operation, one selection function and two declarations, plus, in the chart, a second
+  availability read, a watch and a message. Nothing new for readiness to take, cache or load. The pattern costs an
+  operation per request-dependent consumer, and does not extend to `IMAGE_OUTPUT`. CCDC's export and map bands are
+  requested of its `IMAGE_OUTPUT`, which is also how other recipes consume a CCDC. The operation is a local answer to
+  one binary distinction: assess a broader operation-context design before extending the pattern to Retrieve or
+  exports.
+- **Regressions.**
+  - `classifiedOutputTraining.test.js` (shared): a Time Series row beside Phenology and CCDC. It covers every
+    training finding at the recipe it concerns, a type training no classifier, repair, pending and unavailable
+    evidence, a record not held, and native controls. A supplied decision tree is refused for nothing by readiness: the
+    route refuses output capability.
+    - Its `settle` helper used to settle `IMAGE_OUTPUT` whatever operation it was given, so the CCDC `PIXEL_SEGMENTS`
+      row's unavailable case passed through CCDC's image. It now settles the operation itself. Reverting that need
+      fails the case.
+  - `loadObservations.test.js` (gee):
+    - each training finding is refused before any chart work, and the request is answered after repair;
+    - unobservable input fails as a read;
+    - an unprovided output is refused with the 400 `UNSUPPORTED_CLASSIFIED_OUTPUT` client error before any chart work,
+      over a trainable and over a point-free Classification, but only after unsupplied classifier inputs, as before;
+    - native bands over each broken Classification are answered without observing its input;
+    - a CCDC classified band is answered.
+  - `timeSeries/panels/classifiedBandChart.test.jsx` (GUI, mounted over the real runtime, chart and action):
+    - a classified band over a Classification without points is never requested, the chart says why, stays open at
+      another pixel, and its action stays offered;
+    - a request in flight is cancelled when points are removed;
+    - repair reads the band again, and a repair waits for its save to be acknowledged;
+    - pending imagery holds the band until it is observed, and unavailable imagery holds it without a finding;
+    - a native band is read instead, and without waiting.
+  - **Witnesses.** Every native control passes either way.
+    - With Time Series' classified need at `REFERENCE`, today's need, 5 gee and 9 shared cases fail.
+    - With the GUI chart and `operationReadiness.js` restored from `HEAD`, 7 of the 8 GUI cases fail.
+    - Without the capability step, both capability cases fail: the point-free one with a plain `NO_TRAINING_DATA`.
+      Judging capability before the classifier inputs fails the order case.
+- **Remaining.**
+  - Time Series Retrieve: `timeseries.download` is held to `IMAGE_OUTPUT`, and its classified indicators need the
+    same training readiness.
+  - CCDC's chart: its classified observations, and the segments it fits to the chart band, which `PIXEL_SEGMENTS`
+    judges by `breakpointBands` alone. The GUI hold is the same.
+  - CCDC export and map bands.
+
 **Verification status of the readiness and normalisation changes (2026-10-21).** Checked against commits up to
 `3ea2e7f04`, plus two fixes to the verification script, which were defects in the script itself.
 
 - **Automated.**
   - Full GUI suite with two workers: 309 files and 4475 tests passed (326 s).
   - gee focused tests and the verify helper tests: 212 and 55 passed.
+  - **Later pre-commit GUI run (2026-10-21), including classified Time Series chart readiness and the origin merge:**
+    314 files, 4506 tests, 4503 passed and 3 failed (309 s, two workers). All three failures are in
+    `recipeGeometryLayer.test.jsx`: a Classification without input imagery still requests an outline, and removing or
+    restoring its last input does not cancel or resume as expected. The same three failures reproduce against committed
+    `2d1590763`, using temporary read-only source overlays, so they predate this chart slice. The geometry guard checks
+    `inputImageryRequirement` by object identity; the Classification declaration copied it when extending its operations
+    in `e8f8d8253`. Correct this before push, preserving geometry availability when only training data is missing.
 - **Live Earth Engine.** `modules/gee/verify/classifierNormalisation.mjs` passed all 24 checks and exited 0 (66 s).
   - **Training rows.** The provider was `LC08_231062_20170730`. Each reusing consumer trained on 15 rows: 6 from the
     provider, then 9 of its own. Each non-reusing case trained on its 9.
@@ -1742,7 +1849,8 @@ is applied to every scene. It never builds the Classification's image. Readiness
     `isUnbounded()` was negated with an unavailable `.not()`. Both are now evaluated as other verify scripts do.
     Acceptance criteria are unchanged.
 - **Browser batch: pending.** It needs a signed-in SEPAL session with linked Earth Engine access, which was not
-  available. To run it:
+  available. Record the SEPAL build and git commit tested, the browser, and each check's pass, fail or untested result.
+  Include reproduction details for failures; an automated pass does not complete a browser check. To run it:
   1. **Reused features (Classification, then Regression).**
      - Set up Provider and Consumer, both over imagery with `IMAGE_BANDS [red, nir]` and collected points. Consumer
        adds a `RECIPE` data set reusing Provider. Confirm Consumer previews and can be retrieved.
@@ -1755,11 +1863,15 @@ is applied to every scene. It never builds the Classification's image. Readiness
        held for both.
      - Restore Provider's original working point set, not a single point: clearing `NO_TRAINING_DATA` does not
        establish that enough samples or classes exist to train. Consumer is released, and its preview renders.
-  3. **PyEO.**
+  3. **PyEO and Phenology.**
      - Set up a PyEO Alerts over a Classification that has imagery but no points, with the index gate off. Sources'
        classification field names the Classification, and Retrieve is held.
      - Add points to the Classification. The explanation clears, Retrieve is offered, and a preview renders.
      - Repeat with the gate on.
+     - **Phenology:** choose a supported classified band over a working Classification and confirm its preview renders.
+       Remove the Classification's points and save: the classification field names it, and Retrieve is held. Restore
+       the original working point set: the explanation clears, Retrieve is offered, and the preview renders again.
+       With a native Phenology band, removing those points must not add a training restriction.
   4. **Charts.**
      - Open a Time Series pixel chart over a Classification-backed band, with the Time Series monitoring optical data.
      - Make a compatible upstream edit, such as adding a point: the chart reloads with data.
@@ -1773,6 +1885,15 @@ is applied to every scene. It never builds the Classification's image. Readiness
        chart closes or is held.
      - Restore the original point set: Retrieve is offered, and reopening the chart returns segments.
      - With native breakpoints only, removing the points changes nothing.
+     - **Time Series classified band.** Open a Time Series over a working Classification, also open in its own tab,
+       with its pixel chart on `probability_<class>`. Observation data points show.
+     - Remove the Classification's points. Once the save is acknowledged, the chart shows no data and says the
+       classification cannot be trained to compute this band. It stays open, and the toolbar's chart action stays
+       enabled. In the network panel, no further `loadObservations` request names the classified band.
+     - Choose `ndvi`: data points show. Choose the classified band again, close the chart and chart another pixel: it
+       opens and says why again, rather than closing.
+     - Restore the original point set. Until the save is acknowledged no request is sent; then the classified band's
+       data points show again.
      - **Change Alerts observations.** Open a Change Alerts over a CCDC reference, monitoring Landsat, with its
        pixel chart open. The observations series must show actual data points for the selected band, not only an
        empty chart. In the browser's network panel, the `loadObservations` request names the recipe:
@@ -1787,8 +1908,19 @@ is applied to every scene. It never builds the Classification's image. Readiness
      - Use a Time Series over an SVM Classification (C_SVC). Chart `probability_<class>`: it returns values without a
        regression error.
      - Retrieve offers only outputs the Classification supports: probabilities, and no regression for SVM.
-  6. **Working execution.** For each step above that releases a hold, confirm an actual response, not only an enabled
-     button: a preview tile for Classification, Regression and PyEO (these have no pixel charts), and a chart response
+     - Clear the Classification through Sources and Apply. Time Series and CCDC charts and Time Series Retrieve offer
+       no classified outputs; obsolete selections cannot be requested. For this CCDC check, use native breakpoint
+       bands so clearing the Classification does not leave an invalid classified breakpoint.
+     - Reselect the Classification and Apply: supported outputs return. Clearing it and then cancelling instead must
+       preserve the applied choices.
+  6. **Multiple-indicator Time Series Retrieve (origin merge).**
+     - Over a small AOI with known imagery, select two native indicators and retrieve them. The task finishes and its
+       files contain both indicators in their respective directories.
+     - Select a native indicator and a supported class probability together. A pending Classification save holds that
+       selection; once storage agrees, both remain selected and one retrieval produces both indicators.
+     - If enabling the additional SITS output, confirm it produces SITS files alongside the ordinary outputs.
+  7. **Working execution.** For each step above that releases a hold, confirm an actual response, not only an enabled
+     button: a preview tile for Classification, Regression, PyEO and Phenology (these have no pixel charts), and a chart response
      for the Time Series and CCDC charts.
 
 #### Regression training data (implemented)
@@ -1931,10 +2063,10 @@ by itself, a reason to expand a recipe's validation or GUI.
 | --- | --- | --- | --- |
 | 1 | Phenology's configured classified band needs the Classification's training readiness. | Complete (2026-10-21): the `CLASSIFIER` operation and a conditional need, reusing the existing training rules without describing the Classification's output; see "Phenology's configured classified band". | 0 |
 | 2 | CCDC's classified breakpoint bands need the same training readiness. | Complete (2026-10-21): `classifiedOutputNeed('breakpointBands')` for `IMAGE_OUTPUT` and `PIXEL_SEGMENTS`, native breakpoint controls unchanged; see "CCDC's breakpoint bands". | 0 |
-| 3 | Training readiness and output compatibility for classified bands requested by Time Series charts/downloads and CCDC charts/exports. | Design needed. Request bands are not currently arguments to readiness. GUI capability options and execution refusals already exist; introduce request-aware readiness only where it closes the remaining execution gap. | 2–4 |
+| 3 | Training readiness for classified bands requested by Time Series charts/downloads and CCDC charts/exports. | In progress. Time Series pixel observations complete (2026-10-21): the request's bands choose `CLASSIFIED_PIXEL_OBSERVATIONS`, which needs the Classification's `CLASSIFIER` readiness; see "Time Series' classified chart band". Next, after assessing a broader operation-context design: Time Series Retrieve, then CCDC's chart, then CCDC export and map bands. Output capability is refused with execution's own error, before training. | 1–3 |
 | 4 | Change Alerts' observation request needs an explicit server-side operation boundary. | Complete (2026-10-21): the chart sends the applied recipe; the job derives the observed collection (`observedCollection`) and holds it to Time Series' `PIXEL_OBSERVATIONS`; untyped requests are refused. See "Pixel observations". | 0 |
 
-**Planning estimate: 2–4 implementation slices** for the one remaining work item, request-dependent readiness, plus the browser verification
+**Planning estimate: 1–3 implementation slices** for the one remaining work item, request-dependent readiness, plus the browser verification
 checkpoint below. This is an estimate, not a count of proven defects or a promise of one commit per slice. Reassess the
 split after the request-dependent design. Design reports, review corrections and focused
 refactoring are not new rollout items.
@@ -1947,6 +2079,8 @@ separate decision changes it. Broader coverage listed under "Deferred beyond thi
 
 **Verification checkpoint before push:**
 
+- Correct the Classification outline regression recorded under "Verification status". The latest full GUI run has
+  three failures, also reproduced on committed HEAD; it is not a passing full-suite result for the current tree.
 - The full GUI suite and live numerical normalisation checks passed at the baseline recorded under "Verification
   status of the readiness and normalisation changes". The later deselection fix has focused GUI coverage; do not
   describe the earlier full-suite run as testing later commits.
@@ -2061,8 +2195,8 @@ The sequence below records completed delivery, with remaining boundaries stated 
        through `pixels`, as before.
 
 5. **Classified-output choices in charts and Retrieve: implemented (2026-10-21).** The resolved-record view fixed
-   the stale-option defects without a band-aware request contract. Request-dependent readiness remains in the
-   current delivery plan; the native-band policy decision stays separate.
+   the stale-option defects without a band-aware request contract. Request-dependent readiness is in the current
+   delivery plan (Time Series' chart band complete); the native-band policy decision stays separate.
    - **Gap fixed.** A Time Series' or CCDC's chart offered bands from the Classification record when the session
      held it, and otherwise from the copy Sources took (`ui.classification`). The source runtime read the stored
      record for readiness but kept it private, and readiness judges no band. So a stale copy could offer
@@ -2350,14 +2484,14 @@ extraction alone. The focused verification and two-worker limit below still appl
      fallback while unresolved, with classified requests held. Clearing the applied selection offers no capabilities
      from an old copy. Other metadata readers retain their documented copy policy.
    - **Optional choices.** Charts, downloads and exports offer only supported outputs, but a requested unsupported one
-     is refused by execution alone. Request-dependent readiness is in the current delivery plan; its argument
-     contract still needs design.
+     is refused by execution alone. Training readiness for requested bands is in the current delivery plan: a Time
+     Series chart band chooses `CLASSIFIED_PIXEL_OBSERVATIONS`; Retrieve and CCDC remain.
    - **PyEO's baseline** builds outputs it does not read.
    - **Uncertain types.** SVR types are not offered by the GUI. A supplied decision tree's output modes are not
      documented.
    - **Native-band readiness.** Readiness still judges the classifier inputs of a native-band request that no longer
-     classifies anything. Making it band-sensitive would change the agreed policy and needs band-aware readiness
-     arguments, so it is a separate decision.
+     classifies anything. Making it band-sensitive would change the agreed policy, so it is a separate decision. A
+     request-chosen operation, as for Time Series' chart band, could express it.
 
 **Change Alerts inherited settings: implemented (2026-10-21).** Change Alerts monitors only bands its imagery observes
 natively, and uses no Classification.

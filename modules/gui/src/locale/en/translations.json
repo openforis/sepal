@@ -5125,6 +5125,7 @@
         "count": "Count"
       },
       "chartPixel": {
+        "classifiedBandWithheld": "Not loaded: the classification selected in Sources cannot be trained to compute this band. Choose another band, or update the classification.",
         "loadObservations": {
           "error": "Failed to load observations",
           "noData": "Pixel has no observations"
