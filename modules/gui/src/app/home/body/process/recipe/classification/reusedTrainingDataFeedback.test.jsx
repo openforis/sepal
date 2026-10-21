@@ -140,6 +140,32 @@ describe.each([
     })
 })
 
+// The recipe it reuses samples only red, while it trains on red and nir: the data set reusing it is marked, naming that
+// recipe and nir, and the operations over its image are held, until that recipe samples nir too.
+describe.each([
+    ['CLASSIFICATION', ClassificationTrainingData],
+    ['REGRESSION', RegressionTrainingData]
+])('a %s trained on a recipe sampling fewer features than it trains on', (type, TrainingData) => {
+    it('marks the data set reusing it, naming that recipe and the feature it lacks, and holds its Retrieve', async () => {
+        await open(type, TrainingData, {images: [SELECTING_RED]})
+
+        expect(marked()).toEqual([{item: REUSED, message: 'process.classification.panel.trainingData.missingFeatures {"recipe":"Provider","features":"nir"}'}])
+        expect(retrieveGate()).toMatchObject({code: 'CONFIGURATION_UNMET'})
+    })
+
+    it('marks nothing, and can be retrieved, once that recipe samples it', async () => {
+        await open(type, TrainingData, {images: [SELECTING_RED]})
+
+        await act(async () => actionBuilder('REPAIR')
+            .set(['process.loadedRecipes', PROVIDER, 'model.inputImagery.images'], [ASSET_IMAGE])
+            .dispatch())
+        await settled()
+
+        expect(marked()).toEqual([])
+        expect(retrieveGate()).toBe(null)
+    })
+})
+
 const CONSUMER = 'consumer-1'
 const PROVIDER = 'provider-1'
 const REUSED = 'Reused'
@@ -147,6 +173,7 @@ const COLLECTED = 'Collected'
 const ASSET_IMAGE = {imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red', 'nir']}]}
 // Earth Engine answers every asset with red and nir alone.
 const SELECTING_MISSING_BAND = {...ASSET_IMAGE, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red', 'swir']}]}
+const SELECTING_RED = {...ASSET_IMAGE, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red']}]}
 const POINTS = [{x: 1, y: 1, class: 1, value: 1}, {x: 2, y: 2, class: 2, value: 2}]
 
 const LISTING = [
@@ -192,9 +219,11 @@ const retrieveGate = () => retrieveAvailability({
 
 // The data sets the list marks with a recipe's problem, by what the list describes each as, and what each says.
 const marked = () => [...container.querySelectorAll('[data-tooltip]')]
-    .map(element => ({element, message: JSON.parse(element.dataset.tooltip).find(text => text.startsWith('process.source.status.'))}))
+    .map(element => ({element, message: JSON.parse(element.dataset.tooltip).find(text => ITEM_PROBLEMS.some(prefix => text.startsWith(prefix)))}))
     .filter(({message}) => message)
     .map(({element, message}) => ({item: describedAs(element), message}))
+
+const ITEM_PROBLEMS = ['process.source.status.', 'process.classification.panel.trainingData.missingFeatures']
 
 const DESCRIPTIONS = [REUSED, COLLECTED, 'process.classification.panel.trainingData.type.COLLECTED.label']
 

@@ -1227,9 +1227,83 @@ and recovery. It does not migrate every outstanding rule.
 - **Boundary.** This establishes that configured points exist, not that they survive masking, cover the imagery or
   suffice for training.
 
-**Remaining gap, which no slice establishes yet:**
-- **Sampled-feature compatibility.** The consumer trains on the provider's samples under its own band order. Whether
-  they cover its imagery needs both inputs described (`recipeSection.jsx`'s TODO).
+**Sampled-feature compatibility (implemented 2026-10-21).** A consumer's reused training data must carry every
+feature the consumer trains on.
+
+- **Execution contract** (`classification.js`, `regression.js`):
+  - **Assembly.** The consumer's `getImage$` trains on `getTrainingData$(imageToClassify.bandNames())`. That is each
+    reused recipe's `getTrainingData$()`, in data-set order, and then the consumer's own samples. They are flattened
+    into one collection, with `band_order` set to the consumer's band names.
+  - **Provider samples.** Each recipe samples its stored points with `sampleRegions`:
+    - over its own image, after its own covariates and its own normalisation;
+    - at its own `scale || 1`.
+
+    Each sample carries every band of that image, plus `class` or `value`.
+  - **Nesting.** Each level sets its own `band_order` on its inner collection. The outermost one is the consumer's.
+  - **Training.** `train` passes no `inputProperties`, so `band_order` decides the features (`temporalSegmentation.js`
+    relies on the same default).
+- **Rule** (`trainingFeaturesRequirement`, `trainingData.js`). `MISSING_TRAINING_FEATURES` is a finding of the
+  consumer's `IMAGE_OUTPUT`, guarded in Classification by `requiresTraining`.
+  - **Scope.** Each recipe in a `RECIPE` data set's reuse closure that stores a point must sample every consumer
+    feature. A union across recipes proves nothing.
+  - **Exempt.** A recipe storing none contributes no samples and requires nothing, though the recipes it reuses still
+    count. Extra provider features are ignored.
+  - **Where it is found.** At the consumer's data set (`model.trainingData.dataSets[i]`), with `provider` (the
+    recipe whose samples lack them) and `features`. A recipe that two data sets reach is found at each.
+  - **Walk.** It walks the closure as `noTrainingData` does (`recordsOf`, `declares`, memoised, cycle-safe).
+  - **Consumer input.** The consumer's own input is asked for only where some recipe in the closure stores points.
+- **Sampled names** (`sampledFeatures`, `bandSets.js`), for one input image with described bands `B`:
+  - `IMAGE_BANDS` and `INDEXES`: what `availableSelections` provides;
+  - `PAIR_WISE_EXPRESSION`: `${b1}_${b2}_${operation.toLowerCase()}` for each pair of included bands, ordered by `B`
+    (`combinePairwise`, `extensions/image.js`), so the same selection over differently ordered inputs gives other
+    names;
+  - auxiliary covariates' bands (`auxiliaryBands`).
+
+  Each name appears once, as execution merges band sets and covariates with overwrite.
+- **Auxiliary covariates.** Their names have one owner, `lib/js/shared/src/recipe/auxiliaryImagery.js`.
+  `lib/js/ee/src/auxiliaryImagery.js` builds them and selects those names; Classification, Regression and
+  Unsupervised Classification use it instead of three copies.
+- **Context.** `describedInputs(role, of)` (`resolveImageOutput.js`) can be asked of a record `recordsOf` handed out.
+  That record is resolved under the chain it was first reached through, so a diagnosis upstream keeps its full
+  `recipePath`.
+- **Establishes nothing:**
+  - a record not held, or whose type produces no training data;
+  - an input not yet observed (pending) or not observable (unavailable);
+  - a recipe refused for its own band sets, which is said there;
+  - an input image without band sets;
+  - band combinations of one set that share a name (`a_b` with `c`, `a` with `b_c`), which execution suffixes as it
+    adds them. A name given by two band sets is overwritten, so it counts as one feature;
+  - a consumer or provider over several input images.
+- **GUI.** The training-data declarations (`trainingDataRequirements.js`) mark the data set, naming the recipe and the
+  missing features (`process.classification.panel.trainingData.missingFeatures`). Classification's TRN button stays
+  unmarked and Regression's is marked. Retrieve, layers and recipes over the consumer hold.
+  - **Repair:** drop the features from the consumer, add them to the provider, or remove the data set. Readiness is
+    recomputed from current records.
+- **Backend.** `requireExecutable$` refuses an export with `MISSING_TRAINING_FEATURES` before building anything.
+- **Regressions:**
+  - `lib/js/shared/test/recipe/trainingFeatures.test.js`, both types:
+    - compatible and incompatible providers, pair order and an auxiliary covariate;
+    - per-recipe rather than union, nested, empty and shared providers;
+    - repair, pending and unavailable evidence, upstream attribution, several inputs, and the decision tree;
+  - `modules/gee/test/ee/classification/sampledFeatures.test.js`: the real executions over a band-tracking stand-in
+    agree with `sampledFeatures`;
+  - `reusedTrainingDataFeedback.test.jsx`, mounted: the data set is marked, Retrieve is held, and both clear on repair;
+  - `imageAssetExport.test.js`: refused, then exported after repair.
+- **Deferred, establishing nothing for now:**
+  - several input images, and Earth Engine's suffix rule for names they repeat;
+  - normalisation and sampling-scale mismatches, which give matching names over different values;
+  - legend and value semantics;
+  - points masked in only some bands;
+  - Earth Engine's behaviour when training on a sample missing a `band_order` property: an error or a silently dropped
+    sample. Either way the refusal stands, but the manual check below records which.
+- **Manual check before pushing:**
+  1. A Classification `Provider` over an image, with `IMAGE_BANDS [red, nir]` and a few collected points. A
+     Classification `Consumer` over imagery with `IMAGE_BANDS [red, nir]` and its own points, plus a `RECIPE` data set
+     reusing `Provider`. The consumer can be retrieved.
+  2. Remove `nir` from `Provider`'s band set. The consumer's `Provider` data set names `Provider` and `nir`, and
+     Retrieve is held.
+  3. Restore `nir`. The mark clears and Retrieve is available again.
+  4. Repeat for Regression.
 
 Sample counts after masking and sampling are known only to Earth Engine.
 

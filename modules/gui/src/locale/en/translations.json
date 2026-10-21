@@ -2644,6 +2644,7 @@
             }
           },
           "missing": "Add training data",
+          "missingFeatures": "{recipe} samples no {features}, which this recipe is trained on.",
           "noDataSet": "No training data set added",
           "remove": {
             "confirmationMessage": "Are you sure you want to remove {name} from your training data?",

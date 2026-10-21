@@ -16,8 +16,6 @@ export class RecipeSection extends React.Component {
             />
         )
     }
-
-    // TODO: Should do some validation of the bands. Use a separate input for that?
 }
 
 RecipeSection.propTypes = {
