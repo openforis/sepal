@@ -14,10 +14,16 @@ import {isClassifiedOutput, requestStages, unprovidedClassifiedOutputs} from '#s
 //      (requestStages): classifying the collection, judged without the recipe's AOI, which training does not read.
 // A request building only bands of the images runs the first alone. Establishing readiness may itself read Earth
 // Engine - its evidence - but nothing of the request is computed and nothing trained.
-export const requireRequestedBands$ = ({recipe, operation, requested, effective}) => {
+export const requireRequestedBands$ = ({recipe, operation, requested, effective}) =>
+    requireExecutable$({recipe, operation}).pipe(
+        switchMap(() => requireRequestStages$({recipe, requested, effective}))
+    )
+
+// The second and third alone, for a request whose own operation is judged otherwise - a download, by the recipe's
+// image output it is held to (task/export/imageOutput.js) - and judged first.
+export const requireRequestStages$ = ({recipe, requested, effective}) => {
     const stages = requestStages(effective)
-    return requireExecutable$({recipe, operation}).pipe(
-        switchMap(() => stages.length ? provided$(recipe, requested) : of(undefined)),
+    return (stages.length ? provided$(recipe, requested) : of(undefined)).pipe(
         switchMap(() => stages.reduce(
             (judged$, stage) => judged$.pipe(switchMap(() => requireExecutable$({recipe: withoutAoi(recipe), operation: stage}))),
             of(undefined)

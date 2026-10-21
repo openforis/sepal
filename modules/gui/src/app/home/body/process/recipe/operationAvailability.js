@@ -61,13 +61,13 @@ export const pixelOperationsAvailability = ({state, recipe, heldFor, operations}
     return {available: !gate, gate, computation, recordOf}
 }
 
-// An open chart's operations at its pixel: those it runs whatever band it charts (`operations`), judged as
-// pixelOperationsAvailability judges them, and those the band it charts adds (`bandOperations`, requestStages,
-// #sepal/recipe/classifiedOutputs) - as {available, gate, bandGate, computation, recordOf}. The band's own gate
-// (`bandGate`) holds that band without closing the chart: in `gate` it never withdraws, so what is read for the band is
-// let go, and read again once it clears, while another band can be charted. A finding of it is the chart's to say. What
-// any band needs still closes the chart.
-export const pixelBandAvailability = ({state, recipe, heldFor, operations, bandOperations}) => {
+// A request's operations: those it runs whatever bands it names (`operations`), judged as pixelOperationsAvailability
+// judges them, and those its bands add (`bandOperations`, requestStages, #sepal/recipe/classifiedOutputs) - as
+// {available, gate, bandGate, computation, recordOf}. The bands' own gate (`bandGate`) holds those bands without
+// withdrawing what asks for them: in `gate` it never withdraws, so an open chart lets go of what it read for the band,
+// and reads again once it clears, while another band can be charted, and Retrieve holds the selection while another
+// can be chosen. A finding of it is the asker's to say. What any band needs still withdraws.
+export const requestedBandAvailability = ({state, recipe, heldFor, operations, bandOperations}) => {
     const chart = pixelOperationsAvailability({state, recipe, heldFor, operations})
     const bandGate = bandOperations.length
         ? pixelOperationsAvailability({state, recipe, heldFor, operations: bandOperations}).gate
@@ -76,8 +76,8 @@ export const pixelBandAvailability = ({state, recipe, heldFor, operations, bandO
     return {...chart, available: !gate, gate, bandGate}
 }
 
-// What the band an open chart charts adds is read for as long as it is that band's: the operations of another band, or
-// of none, replace those watched. requestStages answers the same list for the same stages, so they are told apart by
+// What the bands a request names add is read for as long as they are its bands: the operations of other bands, or of
+// none, replace those watched. requestStages answers the same list for the same stages, so they are told apart by
 // identity.
 export class BandOperationWatch {
     #operations = null

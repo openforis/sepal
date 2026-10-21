@@ -5010,8 +5010,11 @@
         },
         "bands": {
           "atLeastOne": "At least one band must be retrieved",
+          "checking": "Checking whether the selected bands can be retrieved...",
+          "classifiedWithheld": "The classification selected in Sources cannot be trained to compute the classified bands selected. Select other bands, or update the classification.",
           "label": "Bands to retrieve",
           "loading": "Loading available bands...",
+          "uncheckable": "Whether the selected bands can be retrieved could not be checked. Try again later.",
           "unavailable": "These bands are no longer available from this recipe: {bands}. Select from the bands offered above."
         },
         "crs": {

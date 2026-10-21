@@ -91,6 +91,18 @@ mock.module('#sepal/ee/recipe', {
             : throwError(() => new Error(`Recipe could not be read: ${id}`))
     }
 })
+// A Classification's input imagery, observed as readiness's own evidence: no work of the download's.
+mock.module('#sepal/ee/bandEvidence', {
+    exports: {
+        assetBandEvidence$: id => {
+            state.observed.push(id)
+            return state.unreadable.includes(id)
+                ? throwError(() => new Error(`Asset unreadable: ${id}`))
+                : of(['red', 'nir', 'ndvi'].map(name => ({name, arrayDimensions: 0})))
+        },
+        imageBandEvidence$: recipe => throwError(() => new Error(`Image described: ${recipe.id}`))
+    }
+})
 // A time series' image is described without building or observing anything.
 mock.module('#sepal/ee/imageFactory', {
     exports: {
@@ -120,8 +132,47 @@ const recipe = {
 }
 const image = {recipe, indicator: 'ndvi', scale: 30, tileSize: 2}
 
+const CLASSIFICATION = 'classification-1'
+const PROVIDER = 'provider-1'
+const CLASSIFIED = 'probability_1'
+const POINTS = [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]
+const classifiedImage = {...image, recipe: {...recipe, model: {...recipe.model, sources: {...recipe.model.sources, classification: CLASSIFICATION}}}}
+
+// A Classification over an asset of its own, selecting `included` of it, trained on its points and the recipes it reuses.
+const trainable = ({id = CLASSIFICATION, included = ['red', 'nir', 'ndvi'], images, points = POINTS, reuses = [], classifier = {type: 'RANDOM_FOREST'}} = {}) => ({
+    id,
+    type: 'CLASSIFICATION',
+    model: {
+        inputImagery: {images: images ?? [{imageId: 'i-1', type: 'ASSET', id: `users/x/${id}`, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]},
+        legend: {entries: [{value: 1}, {value: 2}]},
+        classifier,
+        trainingData: {dataSets: [
+            ...(points.length ? [{dataSetId: 'collected', type: 'COLLECTED', referenceData: points}] : []),
+            ...reuses.map(recipe => ({dataSetId: recipe, type: 'RECIPE', recipe}))
+        ]}
+    }
+})
+
+// Nothing of the download is planned: no AOI resolved or tiled, no tile looked up, nothing evaluated.
+const assertNothingPlanned = () => {
+    assert.deepEqual(state.aois, [])
+    assert.equal(state.tile, undefined)
+    assert.deepEqual(state.tilesLookedUp, [])
+    assert.deepEqual(state.getInfoCalls, [])
+}
+
+// Nothing of the chunk is built, its destination prepared or its export submitted.
+const assertNothingExported = () => {
+    assert.deepEqual(state.aois, [])
+    assert.equal(state.getCollection, undefined)
+    assert.equal(state.export, undefined)
+}
+
 beforeEach(() => {
-    Object.assign(state, {catalogue: {}, aois: [], getInfoCalls: [], tilesLookedUp: [], tile: undefined, getCollection: undefined, export: undefined})
+    Object.assign(state, {
+        catalogue: {}, aois: [], getInfoCalls: [], tilesLookedUp: [], tile: undefined, getCollection: undefined, export: undefined,
+        observed: [], unreadable: []
+    })
     tileIds = ['tile-0', 'tile-1']
     rangesWithImagery = []
 })
@@ -201,6 +252,129 @@ describe('a time-series download of a recipe that cannot run', () => {
 
         assert.equal(state.getCollection, undefined)
         assert.equal(state.export, undefined)
+    })
+})
+
+// An indicator the Classification computes trains its classifier on its training data and applies it to every image
+// of the collection (collection.js): what that needs refuses the download, after what the time series' image requires
+// and after the outputs asked for being ones the Classification provides - before anything is tiled, built or
+// exported. Planning judges every indicator the download names - `indicators`, or the one `indicator` a request from an
+// earlier release names - and each chunk its own. Indicators of the scenes need none of it.
+describe('a time-series download of indicators its Classification computes', () => {
+    const SVM = {type: 'SVM', svmType: 'C_SVC'}
+    const download = indicators => ({...classifiedImage, indicators, indicator: indicators[0]})
+    const chunkOf = (indicator, indicators = [indicator]) =>
+        ({description: 'ts', image: {...classifiedImage, indicators, indicator}, tileId: 'tile-1', tileIndex: 3, startDate: '2020-01-01', endDate: '2020-04-01'})
+    const dateRanges = [{startDate: '2020-01-01', endDate: '2020-04-01'}]
+    const sepalUser = {username: 'alice'}
+
+    for (const [_case, catalogue, code] of [
+        ['stores no points', () => ({[CLASSIFICATION]: trainable({points: []})}), 'NO_TRAINING_DATA'],
+        ['reuses a recipe without input imagery', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, images: []})}), 'MISSING_ROLE'],
+        ['reuses a recipe sampling fewer features', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, included: ['red']})}), 'MISSING_TRAINING_FEATURES']
+    ]) {
+        it(`refuses the tile ids, tiling nothing, where the Classification ${_case}`, async () => {
+            state.catalogue = catalogue()
+
+            await assert.rejects(lastValueFrom(timeSeriesTiles$({description: 'ts', image: download([CLASSIFIED])})), new RegExp(`time-series-1 cannot run: ${code}$`))
+
+            assertNothingPlanned()
+        })
+
+        it(`plans indicators of the scenes, observing nothing of the Classification's input, where it ${_case}`, async () => {
+            state.catalogue = catalogue()
+
+            assert.deepEqual(await lastValueFrom(timeSeriesTiles$({description: 'ts', image: download(['ndvi'])})), {tileIds: ['tile-0', 'tile-1']})
+            assert.deepEqual(state.observed, [])
+        })
+    }
+
+    it('refuses the tile ids of a download naming an indicator of the scenes beside one the Classification computes', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({points: []})}
+
+        await assert.rejects(lastValueFrom(timeSeriesTiles$({description: 'ts', image: download(['ndvi', CLASSIFIED])})), /NO_TRAINING_DATA$/)
+
+        assertNothingPlanned()
+    })
+
+    it('judges the one indicator a request from an earlier release names', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({points: []})}
+        const {indicators: _indicators, ...legacy} = download([CLASSIFIED])
+
+        await assert.rejects(lastValueFrom(timeSeriesTiles$({description: 'ts', image: legacy})), /NO_TRAINING_DATA$/)
+        assert.deepEqual(
+            await lastValueFrom(timeSeriesTiles$({description: 'ts', image: {...legacy, indicator: 'ndvi'}})),
+            {tileIds: ['tile-0', 'tile-1']}
+        )
+    })
+
+    it('refuses a tile\'s date ranges, checking no imagery', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({points: []})}
+
+        await assert.rejects(
+            lastValueFrom(timeSeriesChunks$({description: 'ts', image: download(['ndvi', CLASSIFIED]), tileId: 'tile-1', dateRanges})),
+            /NO_TRAINING_DATA$/
+        )
+
+        assertNothingPlanned()
+    })
+
+    it('refuses the chunk export of an indicator the Classification computes, building and exporting nothing', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({points: []})}
+
+        await assert.rejects(lastValueFrom(startTimeSeriesChunkExport$(chunkOf(CLASSIFIED, ['ndvi', CLASSIFIED]), {sepalUser})), /NO_TRAINING_DATA$/)
+
+        assertNothingExported()
+    })
+
+    it('exports the chunk of an indicator of the scenes, which judges its own indicator, beside one the Classification computes', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({points: []})}
+
+        await lastValueFrom(startTimeSeriesChunkExport$(chunkOf('ndvi', ['ndvi', CLASSIFIED]), {sepalUser}))
+
+        assertMatches(state.getCollection, {bands: ['ndvi']})
+        assert.deepEqual(state.observed, [])
+    })
+
+    it('exports the chunk once the Classification stores points again', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({points: []})}
+        await assert.rejects(lastValueFrom(startTimeSeriesChunkExport$(chunkOf(CLASSIFIED), {sepalUser})), /NO_TRAINING_DATA$/)
+
+        state.catalogue = {[CLASSIFICATION]: trainable()}
+        await lastValueFrom(startTimeSeriesChunkExport$(chunkOf(CLASSIFIED), {sepalUser}))
+
+        assertMatches(state.getCollection, {bands: [CLASSIFIED]})
+        assert.notEqual(state.export, undefined)
+    })
+
+    it('fails a chunk export with what could not be read, as no finding, where the Classification\'s input cannot be observed', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable()}
+        state.unreadable = [`users/x/${CLASSIFICATION}`]
+
+        await assert.rejects(
+            lastValueFrom(startTimeSeriesChunkExport$(chunkOf(CLASSIFIED), {sepalUser})),
+            /cannot run: what it needs could not be read: Asset unreadable: users\/x\/classification-1$/
+        )
+
+        assertNothingExported()
+    })
+
+    for (const [_case, untrained] of [['can be trained', {}], ['stores no points', {points: []}]]) {
+        it(`refuses an output its Classification does not provide as a client's error, tiling nothing, where it ${_case}`, async () => {
+            state.catalogue = {[CLASSIFICATION]: trainable({...untrained, classifier: SVM})}
+
+            await assert.rejects(lastValueFrom(timeSeriesTiles$({description: 'ts', image: download(['ndvi', 'regression'])})), error =>
+                error.errorCode === 'UNSUPPORTED_CLASSIFIED_OUTPUT' && error.statusCode === 400
+                && error.message === `Classification ${CLASSIFICATION} does not provide regression`)
+
+            assertNothingPlanned()
+        })
+    }
+
+    it('refuses classifier inputs the scenes cannot feed before anything the indicators add', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({points: [], included: ['VV_mean', 'VH_med'], classifier: SVM})}
+
+        await assert.rejects(lastValueFrom(timeSeriesTiles$({description: 'ts', image: download(['regression'])})), /cannot run: UNSUPPLIED_CLASSIFIER_INPUTS$/)
     })
 })
 

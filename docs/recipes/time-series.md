@@ -58,10 +58,20 @@ returns `count`.
 The collection's measures - what the chart plots and Retrieve downloads - are not bands of this image: the chart asks
 for the observations of a collection band at a pixel, and Retrieve submits `timeseries.download`, exporting the
 indicators of the collection it names to SEPAL. The download is still held to this image's readiness, since what it
-requires concerns the collection both build; the indicators are not required to be its bands, and nothing validates
-them. Its three Earth Engine requests (`modules/gee/src/jobs/task/export/timeSeries.js`) check
-independently: the tile ids before the AOI is tiled, a tile's date ranges before any imagery check, and each chunk's
-export before its collection is built, a destination prepared or the export submitted. The chart's observation
+requires concerns the collection both build; the indicators are not required to be its bands. An indicator the
+Classification computes adds, as the chart's band does, its capability (the coded 400) and then the collection
+classified, judged without the AOI (`requireRequestStages$`). Its three Earth Engine requests
+(`modules/gee/src/jobs/task/export/timeSeries.js`) check independently: the tile ids before the AOI is tiled, a tile's
+date ranges before any imagery check, and each chunk's export before its collection is built, a destination prepared or
+the export submitted. Planning judges every indicator the download names (`indicators`, or the single `indicator` a
+task from an earlier release names), and each chunk its own; a native chunk of a mixed download needs no training.
+
+The Retrieve panel holds its selection to the same (`requestGate`, `retrieve.jsx`): the image output's readiness
+whatever is selected, and the collection classified while a classified indicator is selected
+(`requestedBandAvailability`, watched while selected). A hold keeps the selection, disables Apply and is said in the
+panel; a submission, by Apply or the form, is judged again from the session as it stands. A native indicator is
+therefore held, too, while what the image output needs is read or a dependency's save is unacknowledged, as the
+toolbar's Retrieve button is. The chart's observation
 request (`modules/gee/src/jobs/ee/timeSeries/loadObservations.js`) is held to what this type declares observations of
 the requested bands require (`requireRequestedBands$`, `modules/gee/src/jobs/requestedBands.js`).
 `PIXEL_OBSERVATIONS`, for any band, needs the classifier inputs, and the Classification and source imagery resolving.
@@ -116,8 +126,7 @@ Earth Engine is asked.
   an SVM's type decides its class probabilities (`supportProbability`). No Time Series setting requires a classified
   output, so none is validated beyond the request.
 - **Readiness.** The classifier's inputs must suit the collection, whatever band is charted or downloaded. A charted
-  classified output also needs the Classification's training readiness (see Configuration). Retrieve's classified
-  indicators do not yet: a download over a Classification that cannot be trained is not refused before it runs.
+  or downloaded classified output also needs the Classification's training readiness (see Configuration and Output).
 
 ## Open issues
 
@@ -155,7 +164,15 @@ Earth Engine is asked.
   over an AOI recipe that cannot be read.
 - `modules/gee/test/jobs/task/export/timeSeries.test.js` - each download request refused for an incompatible
   classification before its own work, a chunk export refused without planning, the workflow unchanged after repair,
-  and an unreadable classification failing as a read.
+  and an unreadable classification failing as a read; classified indicators refused for each training finding before
+  anything is tiled, built or exported, mixed and earlier-release requests judged in full, each chunk its own
+  indicator, repair, unobservable input, the coded capability refusal and its precedence, and native indicators
+  planned without observing the Classification.
+- `modules/gui/src/app/home/body/process/recipe/timeSeries/panels/retrieve/retrieveTrainingReadiness.test.jsx` - the
+  panel's holds: a classified indicator over an untrainable Classification held and said, by Apply and the form; a
+  mixed selection submitting its native indicator once the classified one is let go; repair, saves, pending and
+  unobservable imagery; a submission judged from the session as it stands; a native indicator held once the image
+  output can no longer run, until repaired; the operations watched.
 - `modules/gee/test/ee/timeSeries/classifiedOutputs.test.js` - over optical, radar and Planet collections, the output
   modes each classified request constructs; an unsupported regression refused before anything is processed; native
   and positional bands reading nothing of the Classification.

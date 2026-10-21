@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types'
 import React from 'react'
+import {ReactReduxContext} from 'react-redux'
 
 import {
     isUnresolved,
@@ -120,8 +121,10 @@ const constraints = {
         )
 }
 
-const mapStateToProps = state => ({
-    projects: selectFrom(state, 'process.projects')
+// A request's selection is held as its owner judges it from the session (`requestGate`).
+const mapStateToProps = (state, {requestGate, inputs}) => ({
+    projects: selectFrom(state, 'process.projects'),
+    requestHold: requestGate ? requestGate(state, selectedValues(inputs?.bands?.value)) : null
 })
 
 const mapRecipeToProps = recipe => ({
@@ -131,6 +134,8 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _MosaicRetrievePanel extends React.Component {
+    static contextType = ReactReduxContext
+
     constructor(props) {
         super(props)
         this.state = {
@@ -154,6 +159,7 @@ class _MosaicRetrievePanel extends React.Component {
             || Boolean(destinationReconciliation)
             || this.blocksSubmission()
             || this.holdsRequest()
+            || Boolean(this.props.requestHold)
             || form.isInvalid()
         return (
             <RecipeFormPanel
@@ -453,24 +459,20 @@ class _MosaicRetrievePanel extends React.Component {
     // A request that is not about the recipe's output: what the recipe type supplies is the whole truth here, so
     // the control is free to drop a selected name its options no longer carry - once they are settled. While some are
     // still to be established (`pendingRequestOptions`), what is selected is kept as it is, however few of the options
-    // offered so far carry it, and is held while it names one of those or one not offered.
+    // offered so far carry it, and is held while it names one of those or one not offered. A selection its owner holds
+    // (`requestHold`) is kept, and the hold said.
     renderRequestOptions(options) {
-        const {single, pendingRequestOptions, inputs: {bands}} = this.props
-        return pendingRequestOptions
+        const {single, pendingRequestOptions, requestHold, inputs: {bands}} = this.props
+        const control = pendingRequestOptions
             ? (
-                <Layout spacing='compact'>
-                    <Buttons
-                        label={msg('process.retrieve.form.bands.label')}
-                        selected={bands.value}
-                        multiple={!single}
-                        options={options}
-                        onChange={selected => bands.set(selected)}
-                        framed
-                    />
-                    {this.holdsRequest()
-                        ? <Message type='info' icon='spinner' text={msg('process.retrieve.form.bands.loading')}/>
-                        : null}
-                </Layout>
+                <Buttons
+                    label={msg('process.retrieve.form.bands.label')}
+                    selected={bands.value}
+                    multiple={!single}
+                    options={options}
+                    onChange={selected => bands.set(selected)}
+                    framed
+                />
             )
             : (
                 <Form.Buttons
@@ -481,6 +483,19 @@ class _MosaicRetrievePanel extends React.Component {
                     framed
                 />
             )
+        const hold = this.holdsRequest()
+            ? <Message type='info' icon='spinner' text={msg('process.retrieve.form.bands.loading')}/>
+            : requestHold
+                ? <Message type='info' icon={requestHold.wait ? 'spinner' : 'triangle-exclamation'} text={requestHold.message}/>
+                : null
+        return pendingRequestOptions || hold
+            ? (
+                <Layout spacing='compact'>
+                    {control}
+                    {hold}
+                </Layout>
+            )
+            : control
     }
 
     // The control is given the selection rather than the form field: the selection is reconciled with the output
@@ -605,6 +620,7 @@ class _MosaicRetrievePanel extends React.Component {
         this.update()
         this.reconcileBands()
         this.reconcileDestination()
+        this.notifyRequestSelection()
     }
 
     componentDidUpdate(prevProps) {
@@ -615,6 +631,7 @@ class _MosaicRetrievePanel extends React.Component {
         this.settleInitialLoading()
         this.reconcileBands()
         this.reconcileDestination()
+        this.notifyRequestSelection()
     }
 
     componentWillUnmount() {
@@ -658,7 +675,7 @@ class _MosaicRetrievePanel extends React.Component {
     retrieve(values) {
         const {requestOptions, onRetrieve, readRetrieveOutput, selection = physicalSelection, task, submitTask} = this.props
         if (requestOptions) {
-            if (this.holdsRequest()) {
+            if (this.holdsRequest() || this.requestHoldNow(values)) {
                 return
             }
             this.rememberDestination(values)
@@ -794,6 +811,23 @@ class _MosaicRetrievePanel extends React.Component {
         }
     }
 
+    // What its owner holds of the selection submitted, judged from the session as it stands at this moment.
+    requestHoldNow({bands}) {
+        const {requestGate} = this.props
+        return requestGate ? requestGate(this.context.store.getState(), selectedValues(bands)) : null
+    }
+
+    // A request's owner is told each selection once, to read what holding it needs.
+    notifyRequestSelection() {
+        const {requestOptions, onRequestSelection, inputs: {bands}} = this.props
+        const selected = selectedValues(bands.value)
+        const key = JSON.stringify(selected)
+        if (requestOptions && onRequestSelection && key !== this.notifiedSelection) {
+            this.notifiedSelection = key
+            onRequestSelection(selected)
+        }
+    }
+
     // A selection a request's pending options cannot yet vouch for.
     holdsRequest() {
         const {requestOptions, pendingRequestOptions, inputs: {bands}} = this.props
@@ -879,9 +913,12 @@ export const MosaicRetrievePanel = compose(
 // A panel retrieves the recipe's image output unless it is given `requestOptions`: a request about something else,
 // whose options are the whole truth and which `onRetrieve` submits; `pendingRequestOptions` names those among them not
 // yet established, while any are: meanwhile nothing selected is dropped, and a selection naming one of them, or one
-// not offered, is held. Otherwise `bandOptions` only presents what the output holds, `selection` translates what is
-// chosen into the bands it exports (physical names by default), `task` configures the generic image export, and
-// `submitTask` replaces it where the recipe has its own.
+// not offered, is held. `requestGate(state, selected)` holds a selection as its owner judges it from the session given -
+// null, or {wait, message} - for the form and for its submission alike, the latter from the session as it then stands;
+// `onRequestSelection(selected)` tells the owner each selection, for it to read what that judgement needs. Otherwise
+// `bandOptions` only presents what the output holds, `selection` translates what is chosen into the bands it exports
+// (physical names by default), `task` configures the generic image export, and `submitTask` replaces it where the
+// recipe has its own.
 MosaicRetrievePanel.propTypes = {
     defaultCrs: PropTypes.string.isRequired,
     defaultFileDimensionsMultiple: PropTypes.number.isRequired,
@@ -894,6 +931,7 @@ MosaicRetrievePanel.propTypes = {
     className: PropTypes.any,
     defaultAssetType: PropTypes.any,
     pendingRequestOptions: PropTypes.array,
+    requestGate: PropTypes.func,
     requestOptions: PropTypes.array,
     scaleTicks: PropTypes.array,
     selection: PropTypes.shape({
@@ -908,6 +946,7 @@ MosaicRetrievePanel.propTypes = {
     toDrive: PropTypes.any,
     toEE: PropTypes.any,
     toSepal: PropTypes.any,
+    onRequestSelection: PropTypes.func,
     onRetrieve: PropTypes.func
 }
 

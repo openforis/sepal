@@ -22,7 +22,7 @@ import {withRecipe} from '../../../recipeContext'
 import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
-import {BandOperationWatch, pixelBandAvailability, watchOperations} from '../../operationAvailability'
+import {BandOperationWatch, requestedBandAvailability, watchOperations} from '../../operationAvailability'
 import {pixelChartUpdate} from '../../pixelChartUpdate'
 import {selectedClassificationOfState} from '../../selectedClassification'
 import {loadObservations$, RecipeActions} from '../timeSeriesRecipe'
@@ -31,7 +31,7 @@ import styles from './chartPixel.module.css'
 // What the chart runs at its pixel, whatever band it charts: the collection's observations. It and its action are held to
 // these, and watch them (timeSeriesToolbar.jsx). A band the Classification computes is read as the collection
 // classified as well (requestStages over the band, which is what the observations build), which holds that band alone
-// (pixelBandAvailability).
+// (requestedBandAvailability).
 export const CHART_OPERATIONS = [PIXEL_OBSERVATIONS]
 
 const fields = {
@@ -216,11 +216,11 @@ class _ChartPixel extends React.Component {
     }
 }
 
-// What it is computed from, beside whether it may be read (pixelBandAvailability) for the band charted, and what is
+// What it is computed from, beside whether it may be read (requestedBandAvailability) for the band charted, and what is
 // offered of the Classification its Sources select, as the session holds it now or as those reads resolved it.
 const mapStateToProps = (state, {recipe, sourceRuntime, latLng, inputs: {selectedBand}}) => {
     const bandOperations = requestStages(latLng && selectedBand.value ? [selectedBand.value] : [])
-    const {gate, bandGate, computation, recordOf} = pixelBandAvailability({
+    const {gate, bandGate, computation, recordOf} = requestedBandAvailability({
         state, recipe, heldFor: key => sourceRuntime?.heldFor(key), operations: CHART_OPERATIONS, bandOperations
     })
     return {

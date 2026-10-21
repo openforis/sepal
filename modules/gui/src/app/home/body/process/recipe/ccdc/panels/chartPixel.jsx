@@ -21,7 +21,7 @@ import {Panel} from '~/widget/panel/panel'
 import {withRecipe} from '../../../recipeContext'
 import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
-import {BandOperationWatch, pixelBandAvailability, watchOperations} from '../../operationAvailability'
+import {BandOperationWatch, requestedBandAvailability, watchOperations} from '../../operationAvailability'
 import {pixelChartUpdate} from '../../pixelChartUpdate'
 import {selectedClassificationOfState} from '../../selectedClassification'
 import {CCDCGraph} from '../ccdcGraph'
@@ -31,7 +31,7 @@ import styles from './chartPixel.module.css'
 // What the chart runs at its pixel, whatever band it charts: the collection's observations, and the segments CCDC fits to
 // them there. It and its action are held to these, and watch them (ccdcToolbar.jsx). A band the Classification computes
 // is read as the collection classified as well (requestStages over what the segments fit, fittedMeasures, which
-// includes the band the observations build), which holds that band, for both reads, alone (pixelBandAvailability).
+// includes the band the observations build), which holds that band, for both reads, alone (requestedBandAvailability).
 export const CHART_OPERATIONS = [PIXEL_OBSERVATIONS, PIXEL_SEGMENTS]
 
 const fields = {
@@ -232,11 +232,11 @@ class _ChartPixel extends React.Component {
     }
 }
 
-// What it is computed from, beside whether it may be read (pixelBandAvailability) for the band charted, and what is
+// What it is computed from, beside whether it may be read (requestedBandAvailability) for the band charted, and what is
 // offered of the Classification its Sources select, as the session holds it now or as those reads resolved it.
 const mapStateToProps = (state, {recipe, sourceRuntime, latLng, inputs: {selectedBand}}) => {
     const bandOperations = requestStages(latLng && selectedBand.value ? fittedMeasures(recipe.model, [selectedBand.value]) : [])
-    const {gate, bandGate, computation, recordOf} = pixelBandAvailability({
+    const {gate, bandGate, computation, recordOf} = requestedBandAvailability({
         state, recipe, heldFor: key => sourceRuntime?.heldFor(key), operations: CHART_OPERATIONS, bandOperations
     })
     return {

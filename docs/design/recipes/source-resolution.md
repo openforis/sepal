@@ -1361,7 +1361,7 @@ and keep `REFERENCE` for native bands.
   |---|---|---|---|---|
   | Time Series `IMAGE_OUTPUT` (count) | never (`bands: [0]`) | no | no | `UNSUPPLIED_CLASSIFIER_INPUTS` all the same |
   | Time Series pixel chart | the chart band is classified | yes | no | the Classification's `CLASSIFIER` readiness for a classified band (`CLASSIFIED_COLLECTION`), classifier inputs; output capability before training, refused as execution refuses it |
-  | Time Series Retrieve | a Retrieve indicator is classified | yes | no | classifier inputs; the indicator only at run time |
+  | Time Series Retrieve | a Retrieve indicator is classified | yes | no | `IMAGE_OUTPUT` as before; then requested capability and `CLASSIFIED_COLLECTION` over the indicators each request builds |
   | Phenology `IMAGE_OUTPUT` | `sources.band` is classified | yes | no | the Classification's `CLASSIFIER` readiness for a classified band, classifier inputs, `UNSUPPORTED_CLASSIFIED_OUTPUT` |
   | CCDC `IMAGE_OUTPUT`, `PIXEL_SEGMENTS` | classified `breakpointBands`, or a classified export or map band | yes | no | the Classification's `CLASSIFIER` readiness for classified breakpoints, classifier inputs, breakpoint outputs; export bands only at run time |
   | CCDC pixel chart (`PIXEL_OBSERVATIONS`, `PIXEL_SEGMENTS`) | the chart band is classified, or for segments a breakpoint band | yes | no | classifier inputs; the configured breakpoints' findings; then requested capability and `CLASSIFIED_COLLECTION` over the bands each request builds |
@@ -1415,8 +1415,8 @@ and keep `REFERENCE` for native bands.
     - Phenology's `band` and CCDC's `breakpointBands` now select a conditional `CLASSIFIER` need (see "Phenology's
       configured classified band").
     - Time Series' and CCDC's chart bands add `CLASSIFIED_COLLECTION` (see "CCDC's requested chart bands").
-    - Time Series Retrieve indicators, and CCDC export and map bands, are still request parameters readiness does not
-      see.
+    - Time Series Retrieve indicators add it too (see "Time Series Retrieve's classified indicators").
+    - CCDC export and map bands are still request parameters readiness does not see.
   - **Native-band policy.** It refuses a Time Series count image, which never reads its Classification, for
     unsupplied classifier inputs.
   - **Run-time-only band checks.** Requested classified outputs are checked for capability only at run time, for every
@@ -1926,6 +1926,86 @@ stage generalised, the band hold shared, and the CCDC chart integrated.
 - **Outside this slice:** preview gating, propagated requests, dependency-loading changes, and the Retrieve and export
   integration.
 
+**Time Series Retrieve's classified indicators (implemented 2026-10-21).** Slice 2 of the architecture checkpoint's
+sequence.
+
+- **Gaps (confirmed by failing witnesses).**
+  - **Server.** The three download requests were held to `IMAGE_OUTPUT` alone, which needs only `REFERENCE` of the
+    Classification. A classified indicator over a Classification without points, with an unusable reused provider or
+    with reused features missing was tiled, built and exported, and trained at execution. Capability surfaced only at
+    the chunk, after planning.
+  - **Open panel.** Retrieve's request path never consulted the image output's readiness once open. The toolbar
+    button holds on it, but an open panel submitted a native download after the Classification's features stopped
+    suiting the scenes. Only classified options awaiting the Classification's record or save were held.
+- **Server** (`modules/gee/src/jobs/task/export/timeSeries.js`).
+  - Each entry point runs `resolveImageOutput$`, unchanged: the description and `IMAGE_OUTPUT` readiness over the
+    download's AOI, with its configured findings. Then `requireRequestStages$` (`jobs/requestedBands.js`, split out of
+    `requireRequestedBands$`) runs: the requested capability (400, `UNSUPPORTED_CLASSIFIED_OUTPUT`), then
+    `CLASSIFIED_COLLECTION` without the AOI. This all happens before tiling, building, preparing a destination or
+    submitting an export.
+  - Tiles and date ranges judge every indicator (`image.indicators`, or the single `image.indicator` older tasks send).
+    A chunk judges its own `image.indicator`, so a native chunk of a mixed download does not train. Native-only
+    requests run `resolveImageOutput$` alone, as before.
+- **GUI.**
+  - `MosaicRetrievePanel`'s request path gains a two-prop contract:
+    - `requestGate(state, selected)`, which returns `null` or `{wait, message}`. It is judged in the panel's
+      `mapStateToProps` for Apply and the explanation, and again from the store's current state when a submission
+      arrives, by Apply or the form alike.
+    - `onRequestSelection(selected)`, which tells the owner each selection.
+  - Without a `requestGate`, the panel behaves as before for every other recipe.
+  - Time Series Retrieve implements the gate with `requestedBandAvailability`, the chart helper renamed now that it
+    holds requests generally: `[IMAGE_OUTPUT]`, plus `requestStages(selected)`. It watches that selection's stage with
+    `BandOperationWatch`, so selecting only native indicators releases it.
+  - Base findings are said with Retrieve's existing `configurationUnmet` message. A classified-only finding, pending
+    evidence and evidence that can't be read each get a message of their own. The existing pending-options hold, and
+    its capability resolution from the Classification's record, are unchanged.
+- **Behaviour change.** A native indicator is now held while the image output's readiness is being read, or while a
+  dependency's save is unacknowledged: the toolbar button and the image-output path already hold then. Two
+  `retrieveClassifiedOutputs.test.jsx` cases that pinned submission in those states now pin the hold and its release.
+  Its Classification fixture stores points, and its input is observable, so classified cases still pin capability
+  alone.
+- **Consolidation versus coordination.**
+  - **Consolidated:** the download's stage order now runs through the routes' shared helper, and its hold reuses the
+    charts' availability and watch helpers.
+  - **Coordination added:** one owner/panel contract of two props. It removes the panel's blind spot rather than
+    adding a mechanism. The gate is the existing operation-readiness read, so there is still one readiness mechanism.
+  - **Still repeated:** the AOI projection, now in `withoutAoi` for both the chart and download routes.
+- **Regressions.**
+  - `task/export/timeSeries.test.js` (gee):
+    - the three training findings refused before tiling, with native controls planned without observing the input;
+    - mixed downloads refused in full;
+    - an earlier release's single indicator judged;
+    - date ranges refused before any imagery check;
+    - each chunk judging its own indicator;
+    - repair, and unobservable input failing as a read;
+    - the coded 400 over trainable and point-free Classifications, after unsupplied classifier inputs.
+  - `retrieveTrainingReadiness.test.jsx` (GUI, mounted):
+    - a held, explained classified selection, by Apply and the form;
+    - a mixed selection released by deselecting its classified indicator;
+    - repair, and save agreement through the save coordinator;
+    - a submission made before the panel re-renders, refused from current state;
+    - pending imagery holding without a finding, then submitting; unobservable imagery held;
+    - a native indicator not waiting for training evidence;
+    - a base finding arising after Retrieve opened, held and explained by Apply and the form, then released by repair;
+    - the operations watched: `IMAGE_OUTPUT` alone, plus `CLASSIFIED_COLLECTION` while a classified indicator is
+      selected, released on deselection and on unmount. These match the routes' guards.
+- **Witnesses.**
+  - The export route from `HEAD`: 11 cases fail; native, own-chunk and inputs-first controls pass.
+  - The GUI from `HEAD` (the owner, the panel and the availability helpers): 7 of the 10 new cases fail, including the
+    open-panel gap and the late submission.
+  - A submission judged from the last render's props, not current state: that case fails.
+- **Focused campaign** (two workers at most):
+  - gee `test/jobs`, `test/ee/timeSeries` and `test/ee/classification`: 1214 passed;
+  - task `timeSeriesExport.test.js`: 9 passed;
+  - GUI: 100 files and 1954 tests passed. That covers every GUI test that mentions Retrieve, every top-level recipe
+    test, Time Series, CCDC, Mosaic, the source runtime and translations.
+
+  The full GUI suite was not repeated.
+- **Observed, not changed.** A saved Retrieve selection stored as a string, rather than a list, is dropped when
+  Retrieve opens with no option pending, and the settled request control renders at once. The new tests save lists,
+  as the multi-select control does.
+- **Outside this slice:** CCDC exports, previews, propagated requests and dependency loading.
+
 **Verification status of the readiness and normalisation changes (2026-10-21).** Checked against commits up to
 `3ea2e7f04`, plus two fixes to the verification script, which were defects in the script itself.
 
@@ -2048,6 +2128,15 @@ stage generalised, the band hold shared, and the CCDC chart integrated.
      - Select a native indicator and a supported class probability together. A pending Classification save holds that
        selection; once storage agrees, both remain selected and one retrieval produces both indicators.
      - If enabling the additional SITS output, confirm it produces SITS files alongside the ordinary outputs.
+     - **Classified indicators and training.** Open Retrieve over a working Classification and select `ndvi` and
+       `regression`. Remove the Classification's points and save. Retrieve holds the selection, says the
+       classification cannot be trained, and Apply stays disabled.
+     - Deselect `regression`: Apply is enabled and `ndvi` alone retrieves.
+     - Restore the original point set and select `regression` again. Until the save is acknowledged Retrieve holds;
+       then retrieve. The task must finish and produce actual files for both indicators: an enabled Apply or a started
+       task is not enough.
+     - With Retrieve open on a native indicator, switch the Classification's input to radar features. Retrieve holds and
+       says the settings need attention; switch back, and the native download runs.
   7. **Working execution.** For each step above that releases a hold, confirm an actual response, not only an enabled
      button: a preview tile for Classification, Regression, PyEO and Phenology (these have no pixel charts), and a chart response
      for the Time Series and CCDC charts.
@@ -2348,7 +2437,7 @@ Coverage checks proposed, each detecting a class of drift rather than one case:
 
      The stage generalisation, the shared hold and the CCDC integration land together. Preview gating, propagated
      requests and dependency-loading changes stay outside this slice.
-  2. **Time Series Retrieve.**
+  2. **Time Series Retrieve: implemented (2026-10-21; see "Time Series Retrieve's classified indicators").**
      - The stage generalised in step 1 applies as is: the download keeps its AOI for `IMAGE_OUTPUT`, and the stage is
        judged without it.
      - The GUI holds submission while a selected indicator is classified and the stage is not `READY`, with findings
@@ -2387,10 +2476,10 @@ by itself, a reason to expand a recipe's validation or GUI.
 | --- | --- | --- | --- |
 | 1 | Phenology's configured classified band needs the Classification's training readiness. | Complete (2026-10-21): the `CLASSIFIER` operation and a conditional need, reusing the existing training rules without describing the Classification's output; see "Phenology's configured classified band". | 0 |
 | 2 | CCDC's classified breakpoint bands need the same training readiness. | Complete (2026-10-21): `classifiedOutputNeed('breakpointBands')` for `IMAGE_OUTPUT` and `PIXEL_SEGMENTS`, native breakpoint controls unchanged; see "CCDC's breakpoint bands". | 0 |
-| 3 | Training readiness for classified bands requested by Time Series charts/downloads and CCDC charts/exports. | In progress. Time Series pixel observations complete (2026-10-21); see "Time Series' classified chart band". CCDC's chart complete (2026-10-21): the stage generalised as `CLASSIFIED_COLLECTION`, the server sequence and the band hold shared; see "CCDC's requested chart bands". Next: Time Series Retrieve, then CCDC export bands; see "Request-dependent readiness: architecture checkpoint". Direct previews could use the same root stage but are deferred for cost and scope. Wrappers asking a CCDC source for classified measures need a propagated context, and are deferred. | 2 |
+| 3 | Training readiness for classified bands requested by Time Series charts/downloads and CCDC charts/exports. | In progress. Complete (2026-10-21): Time Series pixel observations ("Time Series' classified chart band"); CCDC's chart, with the stage generalised as `CLASSIFIED_COLLECTION` and the server sequence and band hold shared ("CCDC's requested chart bands"); Time Series Retrieve ("Time Series Retrieve's classified indicators"). Next: CCDC export bands; see "Request-dependent readiness: architecture checkpoint". Direct previews could use the same root stage but are deferred for cost and scope. Wrappers asking a CCDC source for classified measures need a propagated context, and are deferred. | 1 |
 | 4 | Change Alerts' observation request needs an explicit server-side operation boundary. | Complete (2026-10-21): the chart sends the applied recipe; the job derives the observed collection (`observedCollection`) and holds it to Time Series' `PIXEL_OBSERVATIONS`; untyped requests are refused. See "Pixel observations". | 0 |
 
-**Planning estimate: 2 implementation slices** for the one remaining work item, request-dependent readiness, plus the browser verification
+**Planning estimate: 1 implementation slice** for the one remaining work item, request-dependent readiness, plus the browser verification
 checkpoint below. This is an estimate, not a count of proven defects or a promise of one commit per slice. Reassess the
 split after the request-dependent design. Design reports, review corrections and focused
 refactoring are not new rollout items.
@@ -2814,7 +2903,8 @@ extraction alone. The focused verification and two-worker limit below still appl
      from an old copy. Other metadata readers retain their documented copy policy.
    - **Optional choices.** Charts, downloads and exports offer only supported outputs, but a requested unsupported one
      is refused by execution alone. Training readiness for requested bands is in the current delivery plan: Time
-     Series and CCDC chart bands add `CLASSIFIED_COLLECTION`; Retrieve and CCDC exports remain.
+     Series and CCDC chart bands and Time Series Retrieve indicators add `CLASSIFIED_COLLECTION`; CCDC exports
+     remain.
    - **PyEO's baseline** builds outputs it does not read.
    - **Uncertain types.** SVR types are not offered by the GUI. A supplied decision tree's output modes are not
      documented.

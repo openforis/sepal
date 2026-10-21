@@ -18,11 +18,15 @@ import {PortalContainer, PortalContext} from '~/widget/portal'
 // until storage agrees. Until then what that copy offers of it is not
 // established: a selection naming such an output is kept and held, never discarded, and once the record says it is not
 // provided it is let go, to be replaced by the user. The registrations, runtime, form, panel and submission are real;
-// storage, Earth Engine, task submission and the workspace destination's check are the substitutes.
+// storage, Earth Engine, task submission and the workspace destination's check are the substitutes. The Classification
+// stores training points, so a classified output is held only for what it offers.
 
 const fake = vi.hoisted(() => ({stored: {}, listing: [], loads: [], heldLoads: null, submitted: []}))
 vi.mock('~/apiRegistry', () => ({default: {
-    gee: {assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})},
+    gee: {
+        assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
+        bands$: () => of(['red', 'nir'].map(name => ({name, arrayDimensions: 0})))
+    },
     recipe: {
         load$: id => {
             fake.loads.push(id)
@@ -150,10 +154,13 @@ describe('Time Series Retrieve over a Classification Sources copied while it reg
         expect(indicators()).toEqual([[NATIVE, 'probability_1']])
     })
 
-    it('submits a band of the images while the Classification is read, as before', async () => {
+    // What any indicator needs - the Classification's features suiting the scenes - is not known until it is read.
+    it('holds a band of the images while the Classification is read, as the download\'s image output requires, then submits it', async () => {
         fake.heldLoads = []
         await open({selected: NATIVE})
+        expect(applyEnabled()).toBe(false)
 
+        await answerHeldLoads()
         await apply()
 
         expect(indicators()).toEqual([[NATIVE]])
@@ -183,9 +190,13 @@ describe('Time Series Retrieve over a Classification Sources copied while it reg
         expect(indicators()).toEqual([['regression']])
     })
 
-    it('submits a band of the images while a Classification is being saved, as before', async () => {
+    // Its features are judged on storage's copy, which the download runs from.
+    it('holds a band of the images while a Classification it depends on is being saved, submitting it once storage agrees', async () => {
         await open({selected: NATIVE, saving: classificationOf(RANDOM_FOREST, 2)})
+        await apply()
+        expect(fake.submitted).toEqual([])
 
+        await saved(CLASSIFICATION)
         await apply()
 
         expect(indicators()).toEqual([[NATIVE]])
@@ -220,7 +231,8 @@ const classificationOf = (classifier, revision = 1) => ({
     model: {
         inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['red', 'nir']}]}]},
         legend: LEGEND,
-        classifier
+        classifier,
+        trainingData: {dataSets: [{dataSetId: 'collected', type: 'COLLECTED', referenceData: [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]}]}
     }
 })
 
