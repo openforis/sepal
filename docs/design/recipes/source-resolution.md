@@ -1285,12 +1285,17 @@ Near-term order:
      `watchOperations`. `recipeForOperation` remains the one pixel/AOI projection, shared by readiness reads,
      acquisition and the runtime's asset interest. Referenced images keep their own AOIs, and charts without
      operations (CCDC Slice, Change Alerts, LandTrendr) are unchanged.
-   - **Next: chart lifecycle.** Share the repeated Time Series/CCDC lifecycle for waiting, cancellation, resuming,
-     computation changes and band reconciliation (each panel's `componentDidUpdate`/`updateChart`, `held`, `hold`,
-     `clearData` and `close`), while retaining their distinct request construction and rendering. The two panels
-     currently differ in when a withdrawal is checked relative to band replacement; settle that difference
-     explicitly rather than by extraction. Existing regressions protect upstream edits, save waits, findings, late
-     responses, band replacement and ignored AOIs.
+   - **Chart lifecycle (consolidated 2026-10-21).** One pure decision, `pixelChartUpdate`
+     (`recipe/pixelChartUpdate.js`), says what an open Time Series or CCDC chart does on each update: close, let go,
+     replace the band, or read a band. Each panel applies the answer through its own `close`, `clearData` and
+     `loadData`. The precedence is explicit: a withdrawing gate closes the chart before its band is reconciled, so the
+     chosen band is kept (CCDC used to replace it first, and stayed open when no band remained). A band no longer
+     offered is replaced before anything is read. A changed computation, pixel or band reads once the gate allows. A
+     gate appearing lets go, and its clearing reads again; whether to resume is derived from the previous gate, which
+     replaces the panels' `held` flags. Time Series now also decides on mount, as CCDC did.
+     Remaining duplication, deliberately per panel: request construction (CCDC's paired segment and observation
+     streams), `clearData` over each chart's own state, `close`, the five-line application of the decision, mounting and
+     unmounting, band settings and rendering.
    - Prefer extracting the existing shared behaviour to introducing another resolver, cache, subscription system or
      general-purpose framework. Success means the next operation needs fewer independently coordinated changes,
      not merely fewer lines.

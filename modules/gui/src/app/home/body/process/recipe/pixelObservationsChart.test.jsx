@@ -110,6 +110,40 @@ describe.each([
         expect(container.querySelector('output')).toBe(null)
     })
 
+    // A finding is settled before the band charted is reconciled with those offered.
+    it('is closed where the classification is found not to suit the images, though no band is offered any more', () => {
+        openChart(ChartPixel, recipeOf(type), classificationOver(COMPATIBLE))
+        availableBands.mockReturnValue([])
+
+        holdClassification(classificationOver(RADAR_STATISTICS))
+
+        expect(chartPixel()).toBe(null)
+        expect(loadTimeSeriesObservations$).toHaveBeenCalledTimes(1)
+    })
+
+    it('keeps the band charted when closed by a finding, charting it once reopened over a repaired classification', () => {
+        openChart(ChartPixel, recipeOf(type), classificationOver(COMPATIBLE))
+        chooseBand('regression')
+
+        holdClassification(classificationOver(RADAR_STATISTICS, {type: 'SVM', svmType: 'C_SVC'}))
+        expect(chartPixel()).toBe(null)
+        holdClassification(classificationOver(COMPATIBLE))
+        chartAt(PIXEL)
+
+        expect(loadTimeSeriesObservations$.mock.lastCall[0]).toMatchObject({latLng: PIXEL, bands: ['regression']})
+    })
+
+    it('reads nothing while no band is offered, then the band offered once one is', () => {
+        availableBands.mockReturnValue([])
+        openChart(ChartPixel, recipeOf(type), classificationOver(COMPATIBLE))
+        expect(loadTimeSeriesObservations$).not.toHaveBeenCalled()
+
+        availableBands.mockReturnValue(['ndvi'])
+        holdClassification(classificationOver(['red', 'nir']))
+
+        expect(loadTimeSeriesObservations$.mock.calls.map(([{bands}]) => bands)).toEqual([['ndvi']])
+    })
+
     it('lets go of what it was reading once the classification is no longer held, and reads again once it is', () => {
         const pending = new Subject()
         let cancelled = false
@@ -184,6 +218,22 @@ describe.each([
         expect(loadTimeSeriesObservations$).toHaveBeenCalledTimes(1)
 
         holdClassification(edited, {status: 'SAVED', revision: 2, model: edited.model})
+        expect(loadTimeSeriesObservations$).toHaveBeenCalledTimes(2)
+    })
+
+    // As on renaming it: what the chart is computed from is unchanged, but storage's copy is not yet the session's.
+    it('lets go of what it was reading while its classification is being saved, reading once more once it is', () => {
+        const pending = new Subject()
+        let cancelled = false
+        loadTimeSeriesObservations$.mockReturnValueOnce(pending.pipe(finalize(() => cancelled = true)))
+        const classification = classificationOver(COMPATIBLE)
+        openChart(ChartPixel, recipeOf(type), classification, {classificationOpen: true})
+
+        holdClassification(classification, {status: 'SAVING', revision: 1})
+        expect(cancelled).toBe(true)
+        expect(loadTimeSeriesObservations$).toHaveBeenCalledTimes(1)
+
+        holdClassification(classification, {status: 'SAVED', revision: 2, model: classification.model})
         expect(loadTimeSeriesObservations$).toHaveBeenCalledTimes(2)
     })
 
@@ -376,7 +426,9 @@ const openChart = (ChartPixel, recipe, classification, {classificationOpen = fal
             </PortalContext>
         </Provider>
     ))
-    act(() => actionBuilder('CHART_PIXEL')
-        .set(['process.loadedRecipes', recipe.id, 'ui.chartPixel'], PIXEL)
-        .dispatch())
+    chartAt(PIXEL)
 }
+
+const chartAt = latLng => act(() => actionBuilder('CHART_PIXEL')
+    .set(['process.loadedRecipes', ID, 'ui.chartPixel'], latLng)
+    .dispatch())

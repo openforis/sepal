@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import moment from 'moment'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
@@ -22,6 +21,7 @@ import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
 import {pixelOperationsAvailability, watchOperations} from '../../operationAvailability'
+import {pixelChartUpdate} from '../../pixelChartUpdate'
 import {selectedClassificationOfState} from '../../selectedClassification'
 import {loadObservations$, RecipeActions} from '../timeSeriesRecipe'
 import styles from './chartPixel.module.css'
@@ -148,36 +148,11 @@ class _ChartPixel extends React.Component {
     componentDidMount() {
         const {recipeId, sourceRuntime} = this.props
         this.operationWatches = watchOperations({sourceRuntime, recipeId, operations: CHART_OPERATIONS})
+        this.updateChart()
     }
 
-    // Observations are requested only while the recipe's own requirements of them are known to be met
-    // (pixelOperationsAvailability): once they are not known to be, what is being read is let go, and read again once
-    // they are; a chart they are found not to meet is closed. They are read again whenever what they are computed from
-    // changes - the recipe or a record it depends on - and only then. A band no longer offered is replaced, and nothing is
-    // read for it: the update the replacement causes reads that one.
     componentDidUpdate(prevProps) {
-        const {computation, latLng, observationsGate, inputs: {selectedBand}} = this.props
-        if (latLng && observationsGate?.withdraw) {
-            return this.close()
-        }
-        const availableBands = getAvailableBands(this.bandSetting())
-        const band = availableBands.includes(selectedBand.value) ? selectedBand.value : availableBands[0] ?? null
-        if (band !== selectedBand.value) {
-            this.cancel$.next(true)
-            this.setState({observations: undefined})
-            selectedBand.set(band)
-            return
-        }
-        if (latLng && selectedBand.value && !_.isEqual(
-            [computation, latLng, selectedBand.value],
-            [prevProps.computation, prevProps.latLng, prevProps.inputs.selectedBand.value])
-        ) {
-            observationsGate ? this.hold() : this.loadData()
-        } else if (latLng && observationsGate && !prevProps.observationsGate) {
-            this.hold()
-        } else if (this.held && !observationsGate) {
-            this.loadData()
-        }
+        this.updateChart(prevProps)
     }
 
     componentWillUnmount() {
@@ -185,19 +160,22 @@ class _ChartPixel extends React.Component {
         this.cancel$.next(true)
     }
 
-    hold() {
-        this.cancel$.next(true)
-        this.held = true
-        this.setState({observations: undefined})
+    // The observations are read whenever they may be (pixelChartUpdate).
+    updateChart(prevProps) {
+        const {inputs: {selectedBand}} = this.props
+        const {close, clear, select, load} = pixelChartUpdate(this.props, prevProps, getAvailableBands(this.bandSetting()))
+        if (close) {
+            return this.close()
+        }
+        clear && this.clearData()
+        select !== undefined && selectedBand.set(select)
+        load && this.loadData(load)
     }
 
-    loadData() {
-        const {stream, recipe, latLng, inputs: {selectedBand}} = this.props
-        this.cancel$.next(true)
-        this.held = false
-        this.setState({observations: undefined})
+    loadData(band) {
+        const {stream, recipe, latLng} = this.props
         stream('LOAD_OBSERVATIONS',
-            loadObservations$({recipe, latLng, bands: [selectedBand.value]}).pipe(
+            loadObservations$({recipe, latLng, bands: [band]}).pipe(
                 takeUntil(this.cancel$)
             ),
             observations => this.setState({observations}),
@@ -211,10 +189,14 @@ class _ChartPixel extends React.Component {
         )
     }
 
-    close() {
+    clearData() {
         this.cancel$.next(true)
-        this.held = false
-        this.setState({observations: undefined})
+        if (this.state.observations !== undefined)
+            this.setState({observations: undefined})
+    }
+
+    close() {
+        this.clearData()
         this.recipeActions.setChartPixel(null)
     }
 }
@@ -224,7 +206,7 @@ class _ChartPixel extends React.Component {
 const mapStateToProps = (state, {recipe, sourceRuntime}) => {
     const {gate, computation} = pixelOperationsAvailability({state, recipe, heldFor: key => sourceRuntime?.heldFor(key), operations: CHART_OPERATIONS})
     return {
-        observationsGate: gate,
+        operationsGate: gate,
         computation,
         ...selectedClassificationOfState(state, recipe)
     }

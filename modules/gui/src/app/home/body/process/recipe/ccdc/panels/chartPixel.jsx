@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import moment from 'moment'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
@@ -18,9 +17,9 @@ import {Panel} from '~/widget/panel/panel'
 
 import {withRecipe} from '../../../recipeContext'
 import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
-import {resolveChartBand} from '../../chartBandSelection'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
 import {pixelOperationsAvailability, watchOperations} from '../../operationAvailability'
+import {pixelChartUpdate} from '../../pixelChartUpdate'
 import {selectedClassificationOfState} from '../../selectedClassification'
 import {CCDCGraph} from '../ccdcGraph'
 import {loadCCDCObservations$, loadCCDCSegments$, RecipeActions} from '../ccdcRecipe'
@@ -159,44 +158,20 @@ class _ChartPixel extends React.Component {
         this.cancel$.complete()
     }
 
-    // The segments and observations are requested only while the recipe's own requirements of both are known to be met
-    // (pixelOperationsAvailability): once they are not known to be, what is being read is let go, and
-    // read again once they are; a chart they are found not to meet is closed. They are read again whenever what they are
-    // computed from changes - the recipe or a record it depends on - and only then.
+    // The segments and observations are read together, whenever both may be (pixelChartUpdate).
     updateChart(prevProps) {
-        const {computation, latLng, operationsGate, inputs: {selectedBand}} = this.props
-        const availableBands = getAvailableBands(this.bandSetting())
-        const band = resolveChartBand(selectedBand.value, availableBands)
-        if (!latLng || !band || band !== selectedBand.value) {
-            this.clearData()
-            if (band !== selectedBand.value)
-                selectedBand.set(band)
-            // Form props still contain the old selection until the next update.
-            return
-        }
-        if (operationsGate?.withdraw) {
+        const {inputs: {selectedBand}} = this.props
+        const {close, clear, select, load} = pixelChartUpdate(this.props, prevProps, getAvailableBands(this.bandSetting()))
+        if (close) {
             return this.close()
         }
-        if (!prevProps || !_.isEqual(
-            [computation, latLng, band],
-            [prevProps.computation, prevProps.latLng, prevProps.inputs.selectedBand.value])
-        ) {
-            this.clearData()
-            this.held = Boolean(operationsGate)
-            if (!this.held) {
-                this.loadData(band)
-            }
-        } else if (operationsGate && !prevProps.operationsGate) {
-            this.clearData()
-            this.held = true
-        } else if (this.held && !operationsGate) {
-            this.loadData(band)
-        }
+        clear && this.clearData()
+        select !== undefined && selectedBand.set(select)
+        load && this.loadData(load)
     }
 
     loadData(band) {
         const {stream, recipe, latLng} = this.props
-        this.clearData()
         stream('LOAD_CCDC_SEGMENTS',
             loadCCDCSegments$({recipe, latLng, bands: [band]}).pipe(
                 takeUntil(this.cancel$)
@@ -231,7 +206,6 @@ class _ChartPixel extends React.Component {
 
     clearData() {
         this.cancel$.next(true)
-        this.held = false
         if (this.state.segments !== undefined || this.state.observations !== undefined)
             this.setState({segments: undefined, observations: undefined})
     }
