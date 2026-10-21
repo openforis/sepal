@@ -5040,7 +5040,7 @@
           "label": "Additional outputs",
           "SITS": {
             "label": "SITS files",
-            "tooltip": "Also write a sits/ folder, with one folder per tile, holding per-date files of every band that the SITS R package can read as one cube. They reference the downloaded data rather than copying it."
+            "tooltip": "Adds per-date VRT files for the SITS R package."
           }
         },
         "scale": {
