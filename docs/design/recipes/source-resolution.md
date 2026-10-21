@@ -1329,12 +1329,15 @@ feature the consumer trains on.
   - sampling-scale and raw value-encoding mismatches, which can give matching names over different values;
   - legend and value semantics;
   - points masked in only some bands;
-  - Earth Engine's behaviour when training on a sample missing a `band_order` property: an error or a silently dropped
-    sample. Either way the refusal stands, but the manual check below records which.
+  - Earth Engine's behaviour when training on a sample missing a property named by `band_order`: an error or a silently
+    dropped sample. The browser check below establishes the preflight refusal, not that execution behaviour. Establishing
+    the latter needs a separate controlled Earth Engine probe and is deferred, not a browser acceptance criterion.
 
   Normalisation of prediction imagery and reused Classification samples is implemented, with the live numerical
   verification recorded below; it is no longer part of this deferred list.
 - **Manual check before pushing:**
+  This is included in the consolidated browser batch, check 1 under "Verification status"; its recovery must produce
+  an actual preview, not merely enable Retrieve.
   1. A Classification `Provider` over an image, with `IMAGE_BANDS [red, nir]` and a few collected points. A
      Classification `Consumer` over imagery with `IMAGE_BANDS [red, nir]` and its own points, plus a `RECIPE` data set
      reusing `Provider`. The consumer can be retrieved.
@@ -1449,6 +1452,7 @@ and keep `REFERENCE` for native bands.
   - **LandTrendr** declares `CLASSIFICATION_SOURCE` without a selector, and `landTrendr.js`'s comment about always
     resolving it is stale.
 - **Manual check before pushing.** Add to the accumulated batch:
+  Included in consolidated browser check 3 under "Verification status"; check 9 adds the SVM normalisation smoke run.
   1. A PyEO Alerts over a Classification that has input imagery and no training points. Sources' classification
      field names the Classification, and Retrieve is held.
   2. Add training points to the Classification. The explanation clears and Retrieve is available.
@@ -2003,9 +2007,34 @@ sequence.
     test, Time Series, CCDC, Mosaic, the source runtime and translations.
 
   The full GUI suite was not repeated.
-- **Observed, not changed.** A saved Retrieve selection stored as a string, rather than a list, is dropped when
-  Retrieve opens with no option pending, and the settled request control renders at once. The new tests save lists,
-  as the multi-select control does.
+- **Legacy single indicator (fixed 2026-10-21).** An earlier release offered one indicator and saved it as the value
+  itself (`"ndvi"`), which the multi-select control dropped as no list, leaving Apply disabled until it was chosen
+  again. On the request path - Time Series Retrieve's form, its only user - the panel now selects that value as a
+  list when it opens (`selectSavedSingleRequest`, `retrievePanel.jsx`), before the control reconciles it. Lists are
+  kept as they are, and the gate, holds and submission are unchanged.
+  - **Settled options reconciled by the panel.** Selecting it as a list exposed an existing gap for lists: once Sources
+    applied no Classification, a saved `["regression"]` was no longer offered but stayed selected until the request
+    control next updated, and Apply submitted it meanwhile. A legacy string had escaped that only because the control
+    dropped it as no list. Once the options are settled, the panel now lets go of a selection they no longer offer
+    (`reconcileRequest`), as the image path does (`reconcileBands`).
+  - **Offer judged at submission.** Reconciling after a render cannot cover a submission in the same batch as the change.
+    Time Series Retrieve's gate now derives what is offered from the state it is given, as the render does
+    (`requestOffer`, `retrieve.jsx`): indicators not offered hold, naming them (`bands.unavailable`), and indicators of
+    a Classification not yet established wait, before readiness is judged. The panel asks the gate again at submission
+    from the store's current state, so Sources applying no Classification, or a classifier that does not compute the
+    indicator, refuses a submission made before the panel re-renders.
+  - **Regressions.** `retrieveTrainingReadiness.test.jsx` opens native and classified legacy selections: the native
+    one submits `["ndvi"]`; the classified one is held while untrainable, or while its imagery is pending, keeps its
+    selection, and submits once released. Two cases change the session and submit in the same batch: Sources applying
+    no Classification, and its classifier changed to SVM C_SVC, which does not compute `regression`; neither submits,
+    and the native indicator is then submitted alone. `unselectedClassification.test.jsx` clears the Classification
+    over a regression saved as a list and as a single indicator.
+  - **Witnesses.** With the panel from `HEAD`, the 3 legacy cases and the list case fail. Without the reconciliation,
+    both clearing cases fail. With the owner from `HEAD`, or its gate not judging the offer, both same-batch cases fail.
+    The existing cases pass either way.
+  - **Focused campaign** (two workers): Time Series, CCDC, the shared, Masking and CCDC Slice Retrieve panels,
+    `retrieveOutput`, the chart band tests, `unselectedClassification` and `wizardSectionMarks`, 28 files and 348
+    tests passed. The full GUI suite was not repeated.
 - **Outside this slice:** CCDC exports, previews, propagated requests and dependency loading.
 
 **CCDC's requested export bands (implemented 2026-10-21).** Slice 3 of the architecture checkpoint's sequence.
@@ -2224,24 +2253,54 @@ of a direct CCDC root, held as its asset exports are.
     `isUnbounded()` was negated with an unavailable `.not()`. Both are now evaluated as other verify scripts do.
     Acceptance criteria are unchanged.
 - **Browser batch: pending.** It needs a signed-in SEPAL session with linked Earth Engine access, which was not
-  available. Record the SEPAL build and git commit tested, the browser, and each check's pass, fail or untested result.
-  Include reproduction details for failures; an automated pass does not complete a browser check. To run it:
+  available. This is the consolidated batch for the accumulated readiness, chart, capability and normalisation work,
+  including CCDC Retrieve through `2428d713d`. No browser case below has been run or passed by writing this checklist.
+  - **Run record:** date, SEPAL URL/build, deployed GUI and gee git commits, browser/version, and tester. Confirm the
+    tested deployment contains the fixes; a local commit alone does not establish what the browser or worker runs.
+    Reload the app before starting, so an old tab does not keep the earlier untyped Change Alerts request contract.
+  - **Fixtures:** use a test project, small AOIs and short periods with known imagery. Keep working copies and the
+    original point sets for repair. Classification examples need enough points in at least two classes; Regression
+    examples need a working spread of values. Use a Random Forest where regression is requested, and SVM C_SVC only
+    in the capability and normalisation cases that name it. Keep training inputs compatible with the scene collection.
+  - **Evidence:** for every subcase record pass, fail or untested, recipe/asset ids and the actual result. For a failure
+    include the reproduction, message, network response and console error where relevant. Record completed task ids and
+    output paths for downloads/exports. An enabled button, accepted task or automated pass does not pass an execution
+    check. A missing fixture or a pending/cancellation state too brief to observe is untested, not passed.
+  - **Network checks:** keep DevTools open. Use throttling where needed to observe an in-flight read or unacknowledged
+    save. Check that an obsolete response does not restore old chart data after cancellation or closure. Wait for save
+    acknowledgement before judging settled behaviour, except where the subcase explicitly tests the save wait.
+
+  To run it (record subcases separately, including Classification/Regression and Time Series/CCDC variants):
   1. **Reused features (Classification, then Regression).**
      - Set up Provider and Consumer, both over imagery with `IMAGE_BANDS [red, nir]` and collected points. Consumer
        adds a `RECIPE` data set reusing Provider. Confirm Consumer previews and can be retrieved.
      - Open Provider and remove `nir` from its band set. Consumer's Provider data set names Provider and `nir`, and
        Retrieve is held.
      - Restore `nir`. The mark clears, and the preview renders.
+     - Keep Provider's points but remove its last input image. List removal updates the model immediately; do not
+       expect to Apply an empty list. Consumer's reusing data set names Provider's problem, Retrieve is held, and
+       adding the original imagery back restores the preview.
+     - With an upstream image recipe supplying a band already selected by Provider, remove or rename that band
+       upstream. The problem is attributed to Provider and its band-set field, not to absent training points. Restore
+       the upstream band or repair Provider's saved selection, and confirm Consumer renders again. The picker need
+       not let a user select a band that was already unavailable.
   2. **Empty chain.**
      - Give Consumer only the data set reusing Provider, and Provider points.
      - Delete all of Provider's points. Consumer is held: Regression's TRN says "Add training data", and Retrieve is
        held for both.
      - Restore Provider's original working point set, not a single point: clearing `NO_TRAINING_DATA` does not
        establish that enough samples or classes exist to train. Consumer is released, and its preview renders.
+     - Repeat through an intermediate recipe that reuses Provider and has no points of its own. Absence and repair
+       must propagate through the nested chain, for Classification and Regression.
+     - Add a separate empty provider with valid input imagery beside the working branch. The empty branch alone must
+       not block training. When every branch has no points, the explanation belongs to Consumer's training-data
+       section, not an error on an otherwise valid empty provider item. Classification's TRN stays unmarked by policy;
+       Regression's is marked.
   3. **PyEO and Phenology.**
      - Set up a PyEO Alerts over a Classification that has imagery but no points, with the index gate off. Sources'
        classification field names the Classification, and Retrieve is held.
-     - Add points to the Classification. The explanation clears, Retrieve is offered, and a preview renders.
+     - Restore a working point set to the Classification. The explanation clears, Retrieve is offered, and a preview
+       renders.
      - Repeat with the gate on.
      - **Phenology:** choose a supported classified band over a working Classification and confirm its preview renders.
        Remove the Classification's points and save: the classification field names it, and Retrieve is held. Restore
@@ -2251,15 +2310,16 @@ of a direct CCDC root, held as its asset exports are.
      - Open a Time Series pixel chart over a Classification-backed band, with the Time Series monitoring optical data.
      - Make a compatible upstream edit, such as adding a point: the chart reloads with data.
      - Make an incompatible one: switch the Classification's input from optical to radar features, keeping the Time
-       Series monitoring optical. (Removing a feature usually leaves it compatible.) The chart closes or is held, with
-       an explanation.
+       Series monitoring optical. (Removing a feature usually leaves it compatible.) The chart closes, its action is
+       disabled, and Sources explains the incompatible classifier inputs.
      - Repair it by switching the input back. The chart is offered again and returns data.
      - **CCDC breakpoints.** Open a CCDC with breakpoint bands `ndvi` and a classified `probability_<class>` over a
        working Classification, with its pixel chart open on segments.
-     - Remove the Classification's points: Sources' classification field names it, Retrieve is held, and the open
-       chart closes or is held.
+     - Remove the Classification's points: Sources' classification field names it, Retrieve is held, the open chart
+       closes, and the chart action is disabled.
      - Restore the original point set: Retrieve is offered, and reopening the chart returns segments.
-     - With native breakpoints only, removing the points changes nothing.
+     - With native breakpoints and a native chart band, removing the points adds no training restriction. Classified
+       chart bands have their own hold, tested below.
      - **CCDC classified export measure.** With native breakpoint bands (`ndvi`), open Retrieve over a Classification
        without points and select `ndvi` and `probability_<class>`. Both stay selected, the panel says the
        Classification cannot be trained for them, Apply is held, and pressing Enter in the form submits no task.
@@ -2286,6 +2346,11 @@ of a direct CCDC root, held as its asset exports are.
        again: until the save is acknowledged nothing is requested, then both show again.
      - With a classified breakpoint band instead, removing the points closes the chart and disables its action, as
        before.
+     - **Pending/unavailable evidence, both direct charts.** If a Classification input-evidence read can be kept pending
+       or made unavailable, the classified band sends no chart-data request and shows no confirmed training finding.
+       Restore the evidence: current data returns once, after save agreement. Distinguish that evidence request from
+       `loadObservations`/`loadSegments` themselves, whose request errors close the chart. Record this subcase as untested
+       if the evidence state cannot be isolated in the browser.
      - **Change Alerts observations.** Open a Change Alerts over a CCDC reference, monitoring Landsat, with its
        pixel chart open. The observations series must show actual data points for the selected band, not only an
        empty chart. In the browser's network panel, the `loadObservations` request names the recipe:
@@ -2296,6 +2361,10 @@ of a direct CCDC root, held as its asset exports are.
      - The server's independence from the reference is covered by the gee tests, since the GUI closes the chart while
        the reference cannot run. So are its refusals, an incomplete period or a Planet entry naming no asset, which
        the editors do not let through.
+     - **Pixel versus export AOI.** For direct Time Series and CCDC charts, choose a pixel just outside the consumer's
+       small configured AOI but within known scene coverage. Native observations, and CCDC segments, still return at
+       the clicked pixel. This does not establish the separate referenced-recipe AOI contract; do not remove or change
+       the Classification's own input AOIs to make the test pass.
   5. **Classified outputs.**
      - Use a Time Series over an SVM Classification (C_SVC). Chart `probability_<class>`: it returns values without a
        regression error.
@@ -2304,7 +2373,8 @@ of a direct CCDC root, held as its asset exports are.
        no classified outputs; obsolete selections cannot be requested. For this CCDC check, use native breakpoint
        bands so clearing the Classification does not leave an invalid classified breakpoint.
      - Reselect the Classification and Apply: supported outputs return. Clearing it and then cancelling instead must
-       preserve the applied choices.
+       preserve the applied choices. In Time Series Retrieve, clearing it drops the obsolete classified selection and
+       submits no task until a native band is chosen.
   6. **Multiple-indicator Time Series Retrieve (origin merge).**
      - Over a small AOI with known imagery, select two native indicators and retrieve them. The task finishes and its
        files contain both indicators in their respective directories.
@@ -2313,20 +2383,111 @@ of a direct CCDC root, held as its asset exports are.
      - If enabling the additional SITS output, confirm it produces SITS files alongside the ordinary outputs.
      - **Classified indicators and training.** Open Retrieve over a working Classification and select `ndvi` and
        `regression`. Remove the Classification's points and save. Retrieve holds the selection, says the
-       classification cannot be trained, and Apply stays disabled.
+       classification cannot be trained, Apply stays disabled, and Enter submits no task.
      - Deselect `regression`: Apply is enabled and `ndvi` alone retrieves.
      - Restore the original point set and select `regression` again. Until the save is acknowledged Retrieve holds;
        then retrieve. The task must finish and produce actual files for both indicators: an enabled Apply or a started
        task is not enough.
      - With Retrieve open on a native indicator, switch the Classification's input to radar features. Retrieve holds and
        says the settings need attention; switch back, and the native download runs.
-  7. **Working execution.** For each step above that releases a hold, confirm an actual response, not only an enabled
-     button: a preview tile for Classification, Regression, PyEO and Phenology (these have no pixel charts), and a chart response
-     for the Time Series and CCDC charts.
+     - With only a native indicator selected, an unacknowledged Classification save still holds Retrieve under the
+       existing base dependency policy; once storage agrees it downloads. On a cold open, an unresolved selected
+       Classification's record also holds the native selection until it is read, without adding training evidence.
+     - **Legacy single indicator.** Open a Time Series saved by a release that offered one indicator, whose Retrieve
+       selection is stored as a value (`"ndvi"`), not a list. Without selecting anything, Retrieve shows `ndvi`
+       selected and Apply is enabled; it retrieves, and the task produces the `ndvi` files. With a saved `regression`
+       over a Classification without points, the selection stays, Retrieve says why and holds until the points are
+       restored.
+  7. **Working execution.** For every recovery in this batch, confirm an actual response, not only an enabled
+     button: a preview tile for Classification, Regression, PyEO and Phenology (these have no pixel charts), and a chart
+     response for the Time Series, CCDC, CCDC Slice and Change Alerts charts. Download checks need completed tasks and
+     actual files; asset-export checks need completed tasks and an asset with the requested bands.
   8. **Classification outline.** Open a Classification with one input image and no training points: its outline
      shows on the map. Remove that last input: the outline disappears, the network panel shows the pending geometry
      request cancelled and no new one, and no error notification appears. Add the input back: the geometry is
      requested again and the outline shows.
+  9. **Normalisation smoke tests, still pending.**
+     - Use an SVM C_SVC Classification with normalisation `YES`, compatible optical imagery, a working two-class point
+       set and a rendering own-image preview. A Time Series using it returns `probability_<class>` observations, with
+       values in the displayed probability range and no regression error.
+     - Run a PyEO Alerts using that SVM Classification, with valid monitoring imagery. Its preview returns actual
+       tiles. Repeat a preview with the index gate on and off. An all-masked result or an empty chart is not evidence
+       of a working computation; use a fixture with known coverage.
+     - These are application smoke checks, not a numerical equality test between different scenes. The controlled
+       `classifierNormalisation.mjs` check already passed all 24 checks on 2026-10-21, including reused samples,
+       predictions, masks and footprints. It is not pending browser work. If rerun, record its deployed commit,
+       command, exit code and all results separately; do not overwrite the earlier evidence.
+  10. **Stored Classification versus the Sources copy.**
+      - Start with a working Random Forest selected by Time Series and CCDC, and charts last on `regression`; CCDC's
+        breakpoint bands stay native. Keep a regression selection in Time Series Retrieve too. In a second browser
+        session, change the Classification to SVM C_SVC and save it, leaving the consumers' stored Sources copies old.
+      - In the consumer session, close any Classification tab and reload/reopen the consumers without opening that
+        Classification. Once the stored record has been read, both chart pickers and Time Series Retrieve offer
+        probabilities and no regression. Charts replace regression with a native band before requesting data; Retrieve
+        drops the unsupported selection and submits nothing until another band is chosen.
+      - Change the stored classifier back to Random Forest in the other session. Once the newer revision is listed
+        (refresh/reopen if needed), regression becomes offered again. This checks stored-record refresh, not just a
+        record already open in the same session.
+      - With the Classification open in the consumer session, an edited classifier's options follow that session
+        record. If its save can be kept pending, classified chart/Retrieve requests stay held until storage agrees,
+        keeping an otherwise supported selected measure. Record an unobserved save window as untested.
+  11. **Change Alerts' inherited settings and native-only monitoring.**
+      - Over a working CCDC recipe, let Change Alerts propose monitoring settings, then edit and apply its own data
+        sets/options. Change only the producer's native breakpoint bands, then only its selected Classification
+        (keeping the producer runnable). Re-observation must not overwrite the user's monitoring edits.
+      - Change a real producer monitoring setting, such as its data sets or corrections. The existing prefill policy
+        still updates the proposal. Observing those same producer settings again leaves subsequent user edits alone.
+      - Repeat the ignored-settings check with a re-exported segments asset whose `recipe_sources` metadata changes
+        only its breakpoint bands or Classification. Record this asset variant separately if no replacement fixture
+        is available.
+      - With an accessible shared segments asset naming an inaccessible producer Classification in its metadata,
+        native monitoring and its chart work without loading that Classification or producer recipe. A referenced
+        recipe's genuine dependencies still count, unlike the shared asset's producer history.
+      - If a legacy Change Alerts fixture has a copied Classification or breakpoint bands, reopening it neither
+        requires them nor cleans them out of the saved model. If it has a classified monitored band saved, the chosen
+        band stays visible with the Sources explanation and Retrieve is held; choosing a native monitored band repairs
+        it. The segment chart remains available for a native chart band when its reference is sound. These legacy and
+        sharing cases require fixtures; mark them untested if unavailable rather than editing production data by hand.
+  12. **Referenced segment charts: CCDC Slice and Change Alerts.**
+      - For each consumer, chart a working CCDC recipe through a Masking with a valid mask. Make the Masking
+        unrunnable, for example by removing the input imagery of a recipe supplying its mask. The action is disabled,
+        the chart closes, and any in-flight request is cancelled. Repair that input and reopen: segments return, and
+        Change Alerts also shows observations. An old response must not redraw after closure. Testing a missing mask
+        itself needs a saved fixture if the mask editor prevents applying that state; do not count editor prevention as
+        observing the downstream refusal.
+      - Change a compatible upstream segmentation setting, such as CCDC's `lambda`, keeping the offered measures and
+        assets the same. The open chart cancels obsolete work and requests the updated segments after save agreement;
+        Change Alerts re-requests its observations too. Record the request sequence, not only a similar-looking graph.
+      - Change only a producer title/layout, or an unrelated recipe. No new chart request should be sent. A draft
+        reference choice in SRC/REF followed by Cancel also leaves the applied chart and requests unchanged.
+      - Open each consumer over an accessible segments asset instead. It charts without reading the producer's recipe
+        closure. If source evidence can be held pending, confirm it holds new requests without reporting a confirmed
+        configuration problem; recovery requests current data. Keep unobservable timing cases marked untested.
+  13. **Field feedback and saved invalid choices.**
+      - Save a CCDC regression breakpoint and a Phenology regression band over a trainable Random Forest, then change
+        the Classification to SVM C_SVC. Each saved invalid choice stays shown, with the unsupported-output explanation
+        beside its own field. Reopening Sources unedited still explains it; Cancel preserves the applied choice.
+      - Repair to a native measure and Apply: the field explanation clears, and CCDC segments / the Phenology preview
+        return. Check that upstream training feedback does not prevent opening Sources or applying a repair.
+      - For Time Series and PyEO, an incompatible classifier-input selection is explained beside the classification
+        field. Cancel preserves the applied configuration; applying compatible inputs clears the explanation and the
+        corresponding chart or PyEO preview works. Pending evidence must not appear as a broken-field validation error.
+  14. **Shared-runtime control smoke checks.** Open existing working Masking, Stack, Band Math and Remapping recipes
+      over compatible inputs, save/reopen, and confirm previews plus a small supported Retrieve still work. These are
+      controls for the shared traversal and panel changes, not acceptance of deferred classified-band propagation
+      through wrappers. Record missing fixtures as untested.
+
+  **Completion record:** record each numbered group's subcases (including both recipe types/consumers) as
+  `check/subcase | pass/fail/untested | recipe ids | response/task/output evidence | notes`. Record the final deployed
+  commit again after any fixes and recheck the affected cases. The browser batch stays pending until its results are
+  recorded; missing fixtures and skipped subcases must remain visible at the pre-push decision.
+
+  **Not additional acceptance work for this batch:** direct map-preview training gates, request propagation through
+  wrappers, executed-edge dependency loading and CCDC array-file destination compatibility remain deferred. The generic
+  Drive/SEPAL CCDC guards have mocked server coverage; CCDC Retrieve offers no such destination, and those tests do not
+  establish that array bands can be written to raster files. The unknown Earth Engine outcome for missing/null sample
+  features needs a separate controlled probe; the GUI now refuses known missing features before it can expose that
+  outcome. The completed live numerical check above and the still-pending browser smoke checks are different evidence.
 
 #### Regression training data (implemented)
 

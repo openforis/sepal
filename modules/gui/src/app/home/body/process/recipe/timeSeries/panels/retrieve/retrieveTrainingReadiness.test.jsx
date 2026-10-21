@@ -157,6 +157,42 @@ describe('Time Series Retrieve of an indicator its Classification computes', () 
     })
 })
 
+// What is offered is judged at submission as the session then holds it, not as the panel last rendered it.
+describe('Time Series Retrieve of an indicator no longer offered when the form is submitted', () => {
+    it('submits nothing where Sources apply no Classification just before, and holds it after', async () => {
+        await open({selected: CLASSIFIED})
+        expect(applyEnabled()).toBe(true)
+
+        await act(async () => {
+            actionBuilder('APPLY_SOURCES')
+                .set(['process.loadedRecipes', ID, 'model.sources.classification'], null)
+                .dispatch()
+            formOf().requestSubmit ? formOf().requestSubmit() : formOf().dispatchEvent(new Event('submit', {cancelable: true}))
+        })
+        await settled()
+
+        expect(fake.submitted).toEqual([])
+        expect(applyEnabled()).toBe(false)
+    })
+
+    it('submits nothing where the Classification is changed just before to a classifier that does not compute it', async () => {
+        await open({selected: [NATIVE, CLASSIFIED]})
+        expect(applyEnabled()).toBe(true)
+
+        await act(async () => {
+            actionBuilder('EDIT_CLASSIFIER')
+                .set(['process.loadedRecipes', CLASSIFICATION, 'model.classifier'], SVM)
+                .dispatch()
+            formOf().requestSubmit ? formOf().requestSubmit() : formOf().dispatchEvent(new Event('submit', {cancelable: true}))
+        })
+        await settled()
+        expect(fake.submitted).toEqual([])
+
+        await apply()
+        expect(submittedIndicators()).toEqual([[NATIVE]])
+    })
+})
+
 describe('Time Series Retrieve of an indicator its Classification computes over imagery still to be observed', () => {
     it('holds it, saying nothing is wrong, until that imagery is observed, then submits it', async () => {
         const observed = new Subject()
@@ -212,6 +248,46 @@ describe('an open Time Series Retrieve whose image output can no longer run', ()
     })
 })
 
+// An earlier release offered one indicator, and saved it as a value rather than a list: it opens selected, judged as any
+// selection is, and is submitted as a list.
+describe('Time Series Retrieve of the single indicator an earlier release saved', () => {
+    it('submits one of the scenes as it stands', async () => {
+        await open({selected: NATIVE, legacy: true})
+
+        expect(applyEnabled()).toBe(true)
+        await apply()
+
+        expect(submittedIndicators()).toEqual([[NATIVE]])
+    })
+
+    it('holds one its Classification computes, saying why, while that Classification stores no points, and submits it once it does', async () => {
+        await open({selected: CLASSIFIED, legacy: true, trainingData: []})
+
+        expect(applyEnabled()).toBe(false)
+        expect(shown()).toContain('process.retrieve.form.bands.classifiedWithheld')
+        await submitForm()
+        expect(fake.submitted).toEqual([])
+
+        await holdTrainingData([COLLECTED])
+        await apply()
+        expect(submittedIndicators()).toEqual([[CLASSIFIED]])
+    })
+
+    it('holds one its Classification computes, keeping it selected, until the imagery it needs is observed', async () => {
+        const observed = new Subject()
+        inputBands$.mockReturnValue(observed)
+        await open({selected: CLASSIFIED, legacy: true, input: ASSET_INPUT})
+
+        expect(applyEnabled()).toBe(false)
+        expect(shown()).toContain('process.retrieve.form.bands.checking')
+
+        await act(async () => observed.next(['red', 'nir'].map(name => ({name, arrayDimensions: 0}))))
+        await settled()
+        await apply()
+        expect(submittedIndicators()).toEqual([[CLASSIFIED]])
+    })
+})
+
 // The questions watched are those the download is held to (task/export/timeSeries.js, modules/gee).
 describe('what an open Time Series Retrieve watches', () => {
     it('is the image output alone for indicators of the scenes, the collection classified beside it for one the Classification computes, let go with it and with the panel', async () => {
@@ -237,6 +313,7 @@ const NATIVE = 'ndvi'
 const CLASSIFIED = 'regression'
 const REGRESSION = 'process.classification.bands.regression'
 const RADAR_FEATURES = ['VV_mean', 'VH_med']
+const SVM = {type: 'SVM', svmType: 'C_SVC'}
 const LEGEND = {entries: [{id: 'a', value: 1, label: 'Forest', color: '#000000'}, {id: 'b', value: 2, label: 'Other', color: '#ffffff'}]}
 const COLLECTED = {dataSetId: 'collected', type: 'COLLECTED', name: 'Collected', referenceData: [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]}
 const MOSAIC_INPUT = {imageId: 'i-1', type: 'RECIPE_REF', id: MOSAIC, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red', 'nir']}]}
@@ -249,8 +326,8 @@ const LISTING = [
 ]
 
 // Over Landsat 8 scenes, its Sources selecting the Random Forest and having copied it when they did; Retrieve last asked
-// for `selected`.
-const seriesRecipe = selected => ({
+// for `bands`.
+const seriesRecipe = bands => ({
     id: ID,
     type: 'TIME_SERIES',
     title: 'Series',
@@ -264,7 +341,7 @@ const seriesRecipe = selected => ({
     ui: {
         initialized: true,
         classification: {classificationLegend: LEGEND, classifierType: 'RANDOM_FOREST', classifier: {type: 'RANDOM_FOREST'}},
-        retrieve: {bands: [].concat(selected), scale: 30, tileSize: 2, shardSize: 256, fileDimensionsMultiple: 2, destination: 'SEPAL', filenamePrefix: 'series'}
+        retrieve: {bands, scale: 30, tileSize: 2, shardSize: 256, fileDimensionsMultiple: 2, destination: 'SEPAL', filenamePrefix: 'series'}
     }
 })
 
@@ -326,6 +403,9 @@ const submitForm = async () => {
 
 const indicators = () => fake.submitted.map(({params}) => [].concat(params.image.indicators))
 
+// The indicators submitted, as they were sent.
+const submittedIndicators = () => fake.submitted.map(({params}) => params.image.indicators)
+
 // The indicators the form holds selected.
 const selectedIndicators = () => [].concat(select(['process.loadedRecipes', ID, 'ui.retrieve.bands']) ?? [])
 
@@ -378,8 +458,9 @@ const saving = () => Object.entries(select('process.saveStates') || {})
     .map(([id]) => id)
 
 // `classificationOpen`: the Classification is open in a tab of its own, where it is edited and saved (saveRecipe$).
-const open = async ({selected, input = MOSAIC_INPUT, trainingData = [COLLECTED], classificationOpen = false}) => {
-    const records = [seriesRecipe(selected), classificationRecipe({input, trainingData}), mosaicRecipe()]
+// `legacy`: the one indicator selected is saved as the value itself, as an earlier release saved it.
+const open = async ({selected, legacy = false, input = MOSAIC_INPUT, trainingData = [COLLECTED], classificationOpen = false}) => {
+    const records = [seriesRecipe(legacy ? selected : [].concat(selected)), classificationRecipe({input, trainingData}), mosaicRecipe()]
     fake.stored = Object.fromEntries(records.map(record => [record.id, record]))
     const initialState = {
         dimensions: {width: 1024, height: 768},

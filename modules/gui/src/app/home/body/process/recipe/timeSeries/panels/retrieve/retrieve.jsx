@@ -25,14 +25,11 @@ const RETRIEVE_OPERATIONS = [IMAGE_OUTPUT]
 const mapRecipeToProps = recipe =>
     ({
         recipeId: recipe.id,
-        recipe,
-        sources: selectFrom(recipe, 'model.sources'),
-        corrections: selectFrom(recipe, 'model.options.corrections')
+        recipe
     })
 
-// What is offered of the Classification its Sources select, as the session holds it or as the readiness of what is
-// retrieved - the recipe's image output, over its own AOI - resolved it (operationReadiness.js). The download is run
-// from storage's copy, so what a draft of it offers is not established until storage agrees (draftDisagreementsOfState).
+// What is offered of the Classification its Sources select, as the readiness of what is retrieved - the recipe's image
+// output, over its own AOI - resolved it (operationReadiness.js).
 const mapStateToProps = (state, {recipe, sourceRuntime}) => {
     const {recordOf} = readOperationReadiness({
         recipe,
@@ -40,11 +37,7 @@ const mapStateToProps = (state, {recipe, sourceRuntime}) => {
         loadedRecipes: selectFrom(state, 'process.loadedRecipes') || {},
         heldFor: key => sourceRuntime?.heldFor(key)
     })
-    const classification = selectFrom(recipe, 'model.sources.classification')
-    return {
-        ...selectedClassificationOfState(state, recipe, recordOf),
-        classificationDraft: Boolean(classification) && draftDisagreementsOfState(state, [classification]).length > 0
-    }
+    return offeredClassificationOfState(state, recipe, recordOf)
 }
 
 class _Retrieve extends React.Component {
@@ -57,11 +50,11 @@ class _Retrieve extends React.Component {
     }
 
     render() {
-        const requestOptions = this.requestOptions()
+        const {options, pending} = requestOffer(this.props.recipe, this.props)
         return (
             <MosaicRetrievePanel
-                requestOptions={requestOptions}
-                pendingRequestOptions={this.pendingRequestOptions(requestOptions)}
+                requestOptions={options}
+                pendingRequestOptions={pending}
                 requestGate={this.requestGate}
                 onRequestSelection={this.watchSelection}
                 defaultScale={30}
@@ -87,19 +80,22 @@ class _Retrieve extends React.Component {
         this.bandWatch.unsubscribe()
     }
 
-    // A selection is held while what the download needs is not known to be met, as the server holds it: the image
-    // output's readiness and, for indicators the Classification computes, the collection classified
-    // (requestedBandAvailability) - read from the session as given, with the recipe as it holds it then.
+    // A selection is held, read from the session as given, with the recipe as it holds it then: while it names an
+    // indicator not offered, or not yet established; and while what the download needs is not known to be met, as the
+    // server holds it - the image output's readiness and, for indicators the Classification computes, the collection
+    // classified (requestedBandAvailability). A submission is judged by the same, so what is offered is judged as it
+    // stands then, not as last rendered.
     requestGate(state, selected) {
         const {recipeId, sourceRuntime} = this.props
         const recipe = selectFrom(state, ['process.loadedRecipes', recipeId])
         if (!recipe) {
             return null
         }
-        const {gate, bandGate} = requestedBandAvailability({
+        const {gate, bandGate, recordOf} = requestedBandAvailability({
             state, recipe, heldFor: key => sourceRuntime?.heldFor(key), operations: RETRIEVE_OPERATIONS, bandOperations: requestStages(selected)
         })
-        return holdOf(gate, bandGate)
+        return offerHoldOf(selected, requestOffer(recipe, offeredClassificationOfState(state, recipe, recordOf)))
+            || holdOf(gate, bandGate)
     }
 
     // What the selection adds is read for as long as it is selected.
@@ -108,30 +104,49 @@ class _Retrieve extends React.Component {
         this.bandWatch.update({sourceRuntime, recipeId, operations: requestStages(selected)})
     }
 
-    // The indicators a time series is downloaded for are measures of its collection, not bands of an image this
-    // recipe outputs, so the options are the whole truth of what may be asked for.
-    requestOptions() {
-        const {classificationLegend, classifierType, classifier, corrections, sources: {dataSets}} = this.props
-        return groupedBandOptions({
-            dataSets: toDataSetIds(dataSets),
-            corrections,
-            classification: {classifierType, classifier, classificationLegend, include: ['regression', 'probabilities']}
-        })
-    }
-
-    // While the Classification is known only by the copy Sources took, or by a draft storage does not hold yet, the
-    // outputs offered of it are not established.
-    pendingRequestOptions(requestOptions) {
-        const {classificationResolved, classificationDraft} = this.props
-        return classificationResolved && !classificationDraft
-            ? undefined
-            : requestOptions.flat().map(({value}) => value).filter(isClassifiedOutput)
-    }
-
     retrieve(retrieveOptions) {
         const {recipeId} = this.props
         return RecipeActions(recipeId).retrieve(retrieveOptions)
     }
+}
+
+// What is offered of the Classification its Sources select, as the session holds it or as `recordOf` resolved it
+// (selectedClassificationOfState). The download is run from storage's copy, so what a draft of it offers is not
+// established until storage agrees (draftDisagreementsOfState).
+const offeredClassificationOfState = (state, recipe, recordOf) => {
+    const id = selectFrom(recipe, 'model.sources.classification')
+    return {
+        ...selectedClassificationOfState(state, recipe, recordOf),
+        classificationDraft: Boolean(id) && draftDisagreementsOfState(state, [id]).length > 0
+    }
+}
+
+// The indicators a time series is downloaded for are measures of its collection, not bands of an image this recipe
+// outputs, so the options are the whole truth of what may be asked for: {options, pending}. While the Classification is
+// known only by the copy Sources took, or by a draft storage does not hold yet, the outputs offered of it are not
+// established (`pending`).
+const requestOffer = (recipe, {classificationLegend, classifierType, classifier, classificationResolved, classificationDraft}) => {
+    const options = groupedBandOptions({
+        dataSets: toDataSetIds(selectFrom(recipe, 'model.sources.dataSets')),
+        corrections: selectFrom(recipe, 'model.options.corrections'),
+        classification: {classifierType, classifier, classificationLegend, include: ['regression', 'probabilities']}
+    })
+    const pending = classificationResolved && !classificationDraft
+        ? undefined
+        : options.flat().map(({value}) => value).filter(isClassifiedOutput)
+    return {options, pending}
+}
+
+// A selection naming indicators not offered is held, naming them; one naming indicators not yet established waits.
+const offerHoldOf = (selected, {options, pending}) => {
+    const offered = options.flat().map(({value}) => value)
+    const unoffered = selected.filter(value => !offered.includes(value))
+    if (unoffered.length) {
+        return {wait: false, message: msg('process.retrieve.form.bands.unavailable', {bands: unoffered.join(', ')})}
+    }
+    return selected.some(value => pending?.includes(value))
+        ? {wait: true, message: msg('process.retrieve.form.bands.checking')}
+        : null
 }
 
 // What a hold says: a finding of what any indicator needs, in the section it is said in; one only of what the selected

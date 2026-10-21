@@ -621,8 +621,10 @@ class _MosaicRetrievePanel extends React.Component {
         if (!this.state.initialLoadingDone) {
             this.startMinimumLoading()
         }
+        this.selectSavedSingleRequest()
         this.update()
         this.reconcileBands()
+        this.reconcileRequest()
         this.reconcileDestination()
         this.notifyRequestSelection()
     }
@@ -634,6 +636,7 @@ class _MosaicRetrievePanel extends React.Component {
         this.update()
         this.settleInitialLoading()
         this.reconcileBands()
+        this.reconcileRequest()
         this.reconcileDestination()
         this.notifyRequestSelection()
     }
@@ -642,6 +645,15 @@ class _MosaicRetrievePanel extends React.Component {
         this.mounted = false
         clearTimeout(this.initialLoadingTimer)
         this.initialLoadingTimer = null
+    }
+
+    // Time Series Retrieve once offered a single indicator, and saved it as the value itself rather than a list. A request
+    // selecting several selects that one, before its control would drop a selection that is no list.
+    selectSavedSingleRequest() {
+        const {requestOptions, single, inputs: {bands}} = this.props
+        if (requestOptions && !single && typeof bands.value === 'string' && bands.value) {
+            bands.set([bands.value])
+        }
     }
 
     startMinimumLoading() {
@@ -811,6 +823,20 @@ class _MosaicRetrievePanel extends React.Component {
         const {inputs: {bands}, retrieveOutput, selection = physicalSelection} = this.props
         const kept = reconciledChoices({decision, saved: bands.value, offered: selection.choices(retrieveOutput.output)})
         if (kept) {
+            bands.set(kept)
+        }
+    }
+
+    // Once a request's options are settled, a selection naming one they no longer offer lets it go - here, rather than
+    // whenever its control next updates, which a control first rendered with them has not yet done.
+    reconcileRequest() {
+        const {requestOptions, pendingRequestOptions, single, inputs: {bands}} = this.props
+        if (!requestOptions || pendingRequestOptions || single || !Array.isArray(bands.value)) {
+            return
+        }
+        const offered = requestValues(requestOptions)
+        const kept = bands.value.filter(value => offered.includes(value))
+        if (kept.length !== bands.value.length) {
             bands.set(kept)
         }
     }

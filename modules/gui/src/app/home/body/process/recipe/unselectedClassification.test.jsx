@@ -154,9 +154,10 @@ describe.each([
     })
 })
 
+// Saved as a list, or as the value itself where an earlier release offered a single indicator.
 describe('Time Series Retrieve asked for a regression of the Classification its Sources select', () => {
-    it('stops offering classified outputs once Sources apply no Classification, letting go of the regression to be replaced', async () => {
-        await openRetrieve()
+    it.each([['a list', ['regression']], ['a single indicator', 'regression']])('stops offering classified outputs once Sources apply no Classification, letting go of the regression to be replaced, saved as %s', async (_case, saved) => {
+        await openRetrieve(saved)
         expect(offers(REGRESSION)).toBe(true)
 
         await clearClassification('process.timeSeries.panel.sources.form.classification.label')
@@ -198,8 +199,8 @@ const LISTING = [
     {id: CLASSIFICATION, name: CLASSIFICATION, type: 'CLASSIFICATION', revision: 1}
 ]
 
-// Sources select the Random Forest the session holds, and copied it when they did.
-const recipeOf = type => ({
+// Sources select the Random Forest the session holds, and copied it when they did; Retrieve last asked for `retrieveBands`.
+const recipeOf = (type, retrieveBands) => ({
     id: ID,
     type,
     title: 'Series',
@@ -215,7 +216,7 @@ const recipeOf = type => ({
     ui: {
         initialized: true,
         classification: {classificationLegend: LEGEND, classifierType: RANDOM_FOREST.type, classifier: RANDOM_FOREST},
-        retrieve: {bands: 'regression', scale: 30, tileSize: 2, shardSize: 256, fileDimensionsMultiple: 2, destination: 'SEPAL', filenamePrefix: 'series'}
+        retrieve: {bands: retrieveBands, scale: 30, tileSize: 2, shardSize: 256, fileDimensionsMultiple: 2, destination: 'SEPAL', filenamePrefix: 'series'}
     }
 })
 
@@ -287,14 +288,14 @@ const openChart = async ({type, Sources, ChartPixel}) => {
     await settled()
 }
 
-const openRetrieve = () => mount('TIME_SERIES', <><TimeSeriesSources/><Retrieve/></>)
+const openRetrieve = retrieveBands => mount('TIME_SERIES', <><TimeSeriesSources/><Retrieve/></>, retrieveBands)
 
-const mount = async (type, panels) => {
+const mount = async (type, panels, retrieveBands = ['regression']) => {
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: {[ID]: recipeOf(type), [CLASSIFICATION]: RANDOM_FOREST_CLASSIFICATION},
+            loadedRecipes: {[ID]: recipeOf(type, retrieveBands), [CLASSIFICATION]: RANDOM_FOREST_CLASSIFICATION},
             tabs: [{id: ID}],
             saveStates: {},
             recipes: fake.listing,
