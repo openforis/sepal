@@ -1170,12 +1170,24 @@ and recovery. It does not migrate every outstanding rule.
   - cycles stay `INVALID`;
   - a provider not held is pending, and the runtime reads it with the closure. The GUI's output read therefore
     withholds the consumer's bands until it has.
+- **Provider band sets (implemented 2026-10-21).** `inputBandSetRequirements([TRAINING_DATA])` (`bandSets.js`) are
+  declared by Classification and Regression. They apply the same refusals their image's description makes
+  (`inputBandSetRefusals`) to producing training data, with one requirement per code so the codes and paths are kept:
+  `MISSING_INPUT_BAND`, `UNDERIVABLE_INPUT_INDEX` and `INSUFFICIENT_INPUT_BANDS` at
+  `model.inputImagery.images[i].bandSetSpecs`.
+  - They read `describedInputs(INPUT_IMAGE)`, so the provider's input images are described and observed, but never
+    the provider's own image.
+  - An input not yet observed is pending, and one that could not be observed is unavailable; neither is a confirmed
+    missing band.
+  - `IMAGE_OUTPUT` keeps its description refusal alone, so it has no duplicate diagnostics.
+  - Export readiness (`requireExecutable$`) now observes the provider's input bands too.
 - **GUI.** The training-data section declares the existing `referenceFeedback` for `TRAINING_DATA_SOURCE`, and both
   training-data panels show each item's problem (`withItemProblems`). Classification's TRN button stays unmarked, as
   its other training-data declarations are; Regression's is marked.
 - **Regressions:**
   - `lib/js/shared/test/recipe/output/trainingDataReadiness.test.js`, for both types;
-  - `classification/reusedTrainingDataFeedback.test.jsx`, mounted;
+  - `classification/reusedTrainingDataFeedback.test.jsx`, mounted: missing imagery, and a missing selected band,
+    marked and cleared on repair;
   - existing tests updated where they pinned the old behaviour: a provider without imagery, a provider not loaded,
     and the readiness-needs validation message.
 
@@ -1189,9 +1201,7 @@ treatment that:
 A provider without points, beside a consumer without its own, therefore still runs into Earth Engine's refusal to
 train on nothing.
 
-**Remaining gaps, which this slice establishes neither of:**
-- **Band-set validation.** A provider's band-set refusals are description diagnostics of its image, which is not
-  described here.
+**Remaining gap, which no slice establishes yet:**
 - **Sampled-feature compatibility.** The consumer trains on the provider's samples under its own band order. Whether
   they cover its imagery needs both inputs described (`recipeSection.jsx`'s TODO).
 

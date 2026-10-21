@@ -13,8 +13,9 @@ import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
 // A Classification or Regression trained on another recipe's training data, which that recipe cannot produce - it has
-// no input imagery to sample its points over (TRAINING_DATA): the data set reusing it is marked in the Training data
-// panel, naming that recipe, whose own sections say why; the data sets beside it are not. Classification's TRN button
+// no input imagery to sample its points over, or selects a band its input does not have (TRAINING_DATA): the data set
+// reusing it is marked in the Training data panel, naming that recipe, whose own sections say why; the data sets beside
+// it are not. Classification's TRN button
 // does not say what holds its training data, Regression's does. The panels, store, source runtime and recipe types are
 // real; Earth Engine answers an asset's bands at once.
 
@@ -69,8 +70,11 @@ describe.each([
     ['CLASSIFICATION', ClassificationTrainingData, false],
     ['REGRESSION', RegressionTrainingData, true]
 ])('a %s trained on a recipe that cannot produce its training data', (type, TrainingData, buttonMarked) => {
-    it('marks the data set reusing it, naming that recipe, and no other', async () => {
-        await open(type, TrainingData, {images: []})
+    it.each([
+        ['has no input imagery', []],
+        ['selects a band its input does not have', [SELECTING_MISSING_BAND]]
+    ])('marks the data set reusing it, naming that recipe, and no other, where that recipe %s', async (_case, images) => {
+        await open(type, TrainingData, {images})
 
         expect(marked()).toEqual([{item: REUSED, message: expect.stringContaining('"recipe":"Provider"')}])
     })
@@ -82,8 +86,11 @@ describe.each([
             .toBe(buttonMarked)
     })
 
-    it('marks nothing once that recipe is repaired', async () => {
-        await open(type, TrainingData, {images: []})
+    it.each([
+        ['given input imagery', []],
+        ['selecting what its input has', [SELECTING_MISSING_BAND]]
+    ])('marks nothing once that recipe is repaired, %s', async (_case, images) => {
+        await open(type, TrainingData, {images})
 
         await act(async () => actionBuilder('REPAIR')
             .set(['process.loadedRecipes', PROVIDER, 'model.inputImagery.images'], [ASSET_IMAGE])
@@ -105,6 +112,8 @@ const PROVIDER = 'provider-1'
 const REUSED = 'Reused'
 const COLLECTED = 'Collected'
 const ASSET_IMAGE = {imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red', 'nir']}]}
+// Earth Engine answers every asset with red and nir alone.
+const SELECTING_MISSING_BAND = {...ASSET_IMAGE, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red', 'swir']}]}
 const POINTS = [{x: 1, y: 1, class: 1, value: 1}, {x: 2, y: 2, class: 2, value: 2}]
 
 const LISTING = [
