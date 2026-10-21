@@ -49,14 +49,16 @@ export const pixelChartAvailability = ({state, recipe, evidenceOwnerOf, heldFor,
 // requested while that copy is not the session's (draftDisagreementsOfState), as Retrieve holds an export.
 // `computation` is what the chart is computed from (operationReadiness.js): they run at the same pixel, so it is one,
 // and a chart charted from another is charted again. What the session does not hold is read by the runtime for as long
-// as the operations are watched (watchOperations).
+// as the operations are watched (watchOperations). `recordOf(id)` is a record of their closure as these reads resolved
+// it (operationReadiness.js).
 export const pixelOperationsAvailability = ({state, recipe, heldFor, operations}) => {
     const loadedRecipes = state.process?.loadedRecipes || {}
     const reads = operations.map(operation => readOperationReadiness({recipe, operation, loadedRecipes, heldFor}))
     const [{computation}] = reads
     const gates = reads.map(({readiness, dependencyValidity}) => operationGate(recipe, readiness, dependencyValidity)).filter(Boolean)
     const gate = gates.find(({withdraw}) => withdraw) || gates[0] || draftGate(state, recipe, computation)
-    return {available: !gate, gate, computation}
+    const recordOf = id => reads.map(read => read.recordOf(id)).find(Boolean) || null
+    return {available: !gate, gate, computation, recordOf}
 }
 
 // Has the source runtime read what the operations need of a recipe (watchOutput$ with `operation`) until unsubscribed:

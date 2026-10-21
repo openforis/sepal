@@ -202,13 +202,13 @@ class _ChartPixel extends React.Component {
 }
 
 // What it is computed from, beside whether it may be read (pixelOperationsAvailability), and what is offered of the
-// Classification its Sources select, as the session holds it now.
+// Classification its Sources select, as the session holds it now or as those reads resolved it.
 const mapStateToProps = (state, {recipe, sourceRuntime}) => {
-    const {gate, computation} = pixelOperationsAvailability({state, recipe, heldFor: key => sourceRuntime?.heldFor(key), operations: CHART_OPERATIONS})
+    const {gate, computation, recordOf} = pixelOperationsAvailability({state, recipe, heldFor: key => sourceRuntime?.heldFor(key), operations: CHART_OPERATIONS})
     return {
         operationsGate: gate,
         computation,
-        ...selectedClassificationOfState(state, recipe)
+        ...selectedClassificationOfState(state, recipe, recordOf)
     }
 }
 

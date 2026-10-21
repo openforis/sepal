@@ -20,6 +20,11 @@ import {recipeContent} from './recipeContent'
 //   computation         the content of every record the operation's graph holds (recipeContent.js), its root first:
 //                       what it computes from, as a map layer compares what it draws from, so a change to any of them -
 //                       and nothing else - is a reason to run it again
+//   recordOf(id)        a record of the operation's closure as this read resolved it: the session's where its graph
+//                       holds it, otherwise as a COMPLETE answer the runtime holds read it (its `basis`), or null. An
+//                       answer held is current by the runtime's own rules (outputRegistry.js); a pending or unavailable
+//                       one resolves nothing. Only what the operation read is resolved, nothing is loaded for it, and
+//                       nothing it resolves is installed in the session
 //
 // The session answers alone where its graph is complete and what it reads settles readiness. A finding settles it
 // whatever else is missing. Otherwise the runtime completes the closure and settles readiness over it, under a key
@@ -45,7 +50,13 @@ export const readOperationReadiness = ({recipe, operation, loadedRecipes, heldFo
         return session
     }
     return held.status === 'COMPLETE'
-        ? {...session, readiness: held.readiness || session.readiness, dependencyValidity: held.dependencyValidity, error: null}
+        ? {
+            ...session,
+            readiness: held.readiness || session.readiness,
+            dependencyValidity: held.dependencyValidity,
+            error: null,
+            recordOf: id => session.recordOf(id) || basisRecord(held, id)
+        }
         : {...session, readiness: {...session.readiness, status: UNAVAILABLE}, dependencyValidity: held.dependencyValidity, error: held.error || null}
 }
 
@@ -115,9 +126,13 @@ const sessionRead = (graph, operation) => {
         dependencyValidity: validity,
         acquisition: settled ? null : {kind: READINESS, key: {kind: READINESS, operation, content: computation}},
         error: null,
-        computation
+        computation,
+        recordOf: id => graph.recipes.find(record => record.id === id) || null
     }
 }
+
+const basisRecord = ({basis = []}, id) =>
+    basis.find(entry => entry.id === id)?.content || null
 
 const isComplete = graph =>
     !graph.diagnostics.some(({code}) => code === MISSING_SOURCE)

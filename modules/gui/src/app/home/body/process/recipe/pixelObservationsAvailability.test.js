@@ -83,6 +83,28 @@ describe.each(['CCDC', 'TIME_SERIES'])('a %s\'s pixel observations', type => {
     })
 })
 
+// The Classification a Time Series' pixel observations resolved, which the session does not hold: as the runtime read it
+// for the answer it holds now, current by the runtime's own rules (outputRegistry.js) - never from an answer that
+// failed, or one it no longer holds: superseded, expired or never read.
+describe('the Classification a Time Series\' pixel observations resolved', () => {
+    const recipe = recipeOf('TIME_SERIES')
+    const stored = {id: CLASSIFICATION, type: 'CLASSIFICATION', model: {classifier: {type: 'SVM'}}}
+    const answer = status => key => isObservationsKey(key)
+        ? {status, readiness: RUNNABLE, dependencyValidity: SOUND, basis: [{id: ID, content: recipe}, {id: CLASSIFICATION, content: stored}]}
+        : null
+
+    it('is the record the runtime read, while it holds a current answer', () => {
+        expect(readHeld(recipe, answer('COMPLETE')).recordOf(CLASSIFICATION)).toBe(stored)
+    })
+
+    it.each([
+        ['the answer is unavailable', answer('UNAVAILABLE')],
+        ['the runtime holds no answer', () => null]
+    ])('is none where %s', (_case, heldFor) => {
+        expect(readHeld(recipe, heldFor).recordOf(CLASSIFICATION)).toBe(null)
+    })
+})
+
 const ID = 'recipe-1'
 const CLASSIFICATION = 'classification-1'
 const SOUND = {status: 'VALID', diagnostics: []}
@@ -119,6 +141,9 @@ const loadedRecipesOf = (recipe, classification) =>
 
 const assess = (recipe, classification, heldFor = () => null) =>
     pixelOperationsAvailability({state: {process: {loadedRecipes: loadedRecipesOf(recipe, classification)}}, recipe, heldFor, operations: ['PIXEL_OBSERVATIONS']})
+
+const readHeld = (recipe, heldFor) =>
+    readOperationReadiness({recipe, operation: 'PIXEL_OBSERVATIONS', loadedRecipes: loadedRecipesOf(recipe), heldFor})
 
 const read = (recipe, classification) =>
     readOperationReadiness({recipe, operation: 'PIXEL_OBSERVATIONS', loadedRecipes: loadedRecipesOf(recipe, classification)})

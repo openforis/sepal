@@ -1348,6 +1348,37 @@ Near-term order:
 5. **Address optional classified-output requests.** First establish the smallest band-aware operation contract;
    validate the outputs actually requested without rejecting a Classification for optional outputs it cannot provide.
    Keep the separate native-band readiness policy decision explicit.
+   **First slice implemented (2026-10-21): chart band options from the resolved Classification.**
+   - **Gap fixed.** A Time Series' or CCDC's chart offered bands from the Classification record when the session
+     held it, and otherwise from the copy Sources took (`ui.classification`). The source runtime read the stored
+     record for readiness but kept it private, and readiness judges no band. So a stale copy could offer
+     `regression` of a Classification storage holds as an SVM, and the chart requested it; execution refused it
+     (`UNSUPPORTED_CLASSIFIED_OUTPUT`).
+   - **Read boundary.** `readOperationReadiness` answers `recordOf(id)`, scoped to that operation read. It
+     returns the session graph's record where the session holds it, otherwise the record in the `basis` of the
+     `COMPLETE` answer `heldFor` returns, otherwise null. An unavailable answer, or one `heldFor` no longer returns,
+     supplies nothing.
+     - `pixelOperationsAvailability` passes `recordOf` on.
+     - `selectedClassificationOfState(state, recipe, recordOf)` gives both charts a legend and classifier: the
+       session's, then the resolved one, then the copy.
+     - Components never read `basis`. Nothing is installed into the session, loaded, cached or watched for it.
+   - **Guarantee.** While the runtime holds a current answer for the chart's operations, the band options follow
+     the stored Classification. The existing band reconciliation (`pixelChartUpdate`) replaces a band it does not
+     provide before any request, so that output is never requested and stays unoffered while that Classification
+     is current.
+     - A record the session holds wins, so its edits are seen at once.
+     - A newer listed revision supersedes the answer. The runtime reads the record again and the options follow
+       what it now holds.
+     - Retention is the runtime's own (`outputRegistry.js`). An answer reopened within the grace period after
+       its question is released still resolves, and one past its deadline does not.
+   - **Limitations.**
+     - While the first read is pending, and during a re-read after supersession, the options are the copy's.
+       Requests are held meanwhile, and the band is reconciled before the first request.
+     - Unchanged: execution's refusal (the backstop), the native-band classifier-input policy, and bare `{model}`
+       observation requests.
+   - **Follow-up.** Time Series Retrieve reads its band options only from the copy, a gap of the same kind.
+   - **Deferred.** Band-aware operation readiness (`request: {bands}`, with request-distinct questions and keys) is
+     kept for an operation that genuinely needs request parameters.
 
 **Field-binding consolidation checkpoint.** The classifier-input and classified-output declarations repeat path
 matching, diagnostic selection, candidate construction and editor binding; field controls still need separate error
