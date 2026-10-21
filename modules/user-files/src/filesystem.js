@@ -1,6 +1,6 @@
 import {spawn} from 'node:child_process'
 import {createReadStream, createWriteStream, realpathSync} from 'node:fs'
-import {chmod, chown, lstat, mkdir, readdir, realpath, stat, unlink} from 'node:fs/promises'
+import {chmod, chown, lstat, mkdir, readdir, realpath, rm, stat, unlink} from 'node:fs/promises'
 import Path from 'node:path'
 
 import {getLogger} from '#sepal/log'
@@ -19,6 +19,16 @@ const resolvePath = (baseDir, path) => {
         isSubPath,
         isExternalPath
     }
+}
+
+// Only the parent is resolved, so a symlink is removed itself instead of its target.
+export const removeUserPath = async (userHomeDir, path) => {
+    const {absolutePath: parent, isSubPath} = resolvePath(userHomeDir, Path.dirname(path))
+    const name = Path.basename(path)
+    if (!isSubPath || ['', '.', '..'].includes(name)) {
+        throw new Error(`Refusing to remove path outside home: ${path}`)
+    }
+    await rm(Path.join(parent, name), {recursive: true})
 }
 
 const getUserInfo = async username => {

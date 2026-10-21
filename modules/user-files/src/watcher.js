@@ -1,4 +1,4 @@
-import {readdir, realpath, rm, stat} from 'node:fs/promises'
+import {readdir, realpath, stat} from 'node:fs/promises'
 import Path from 'node:path'
 
 import _ from 'lodash'
@@ -8,7 +8,7 @@ import {getLogger} from '#sepal/log'
 import {minDuration$} from '#sepal/rxjs'
 
 import {homeDir, pollIntervalMilliseconds} from './config.js'
-import {resolvePath} from './filesystem.js'
+import {removeUserPath, resolvePath} from './filesystem.js'
 import {clientTag, subscriptionTag} from './tag.js'
 
 const log = getLogger('watcher')
@@ -210,8 +210,7 @@ const createWatcher = async ({send, stop$}) => {
         } else {
             unmonitor({username, clientId, subscriptionId, path})
             try {
-                const {absolutePath} = resolvePath(await userHomeDir(username), path)
-                await rm(absolutePath, {recursive: true})
+                await removeUserPath(await userHomeDir(username), path)
                 log.debug(`${subscriptionTag({username, clientId, subscriptionId})} removed path: ${path}`)
             } catch (error) {
                 if (error.code === 'ENOENT') {
