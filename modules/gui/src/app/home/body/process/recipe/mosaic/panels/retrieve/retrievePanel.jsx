@@ -152,6 +152,7 @@ class _MosaicRetrievePanel extends React.Component {
             || destinationValidationPending
             || Boolean(destinationReconciliation)
             || this.blocksSubmission()
+            || this.holdsRequest()
             || form.isInvalid()
         return (
             <RecipeFormPanel
@@ -432,18 +433,36 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     // A request that is not about the recipe's output: what the recipe type supplies is the whole truth here, so
-    // the control is free to drop a selected name its options no longer carry.
+    // the control is free to drop a selected name its options no longer carry - once they are settled. While some are
+    // still to be established (`pendingRequestOptions`), what is selected is kept as it is, however few of the options
+    // offered so far carry it, and is held while it names one of those or one not offered.
     renderRequestOptions(options) {
-        const {single, inputs: {bands}} = this.props
-        return (
-            <Form.Buttons
-                label={msg('process.retrieve.form.bands.label')}
-                input={bands}
-                multiple={!single}
-                options={options}
-                framed
-            />
-        )
+        const {single, pendingRequestOptions, inputs: {bands}} = this.props
+        return pendingRequestOptions
+            ? (
+                <Layout spacing='compact'>
+                    <Buttons
+                        label={msg('process.retrieve.form.bands.label')}
+                        selected={bands.value}
+                        multiple={!single}
+                        options={options}
+                        onChange={selected => bands.set(selected)}
+                        framed
+                    />
+                    {this.holdsRequest()
+                        ? <Message type='info' icon='spinner' text={msg('process.retrieve.form.bands.loading')}/>
+                        : null}
+                </Layout>
+            )
+            : (
+                <Form.Buttons
+                    label={msg('process.retrieve.form.bands.label')}
+                    input={bands}
+                    multiple={!single}
+                    options={options}
+                    framed
+                />
+            )
     }
 
     // The control is given the selection rather than the form field: the selection is reconciled with the output
@@ -616,10 +635,14 @@ class _MosaicRetrievePanel extends React.Component {
 
     // A request about the recipe's output is decided again, from the session as it stands at this moment, by the
     // submission itself - never from what this panel last rendered. The project remembers the destination only
-    // once the retrieval was accepted.
+    // once the retrieval was accepted. A request's selection its pending options cannot yet vouch for is held here too,
+    // however the form is submitted.
     retrieve(values) {
         const {requestOptions, onRetrieve, readRetrieveOutput, selection = physicalSelection, task, submitTask} = this.props
         if (requestOptions) {
+            if (this.holdsRequest()) {
+                return
+            }
             this.rememberDestination(values)
             return onRetrieve(values)
         }
@@ -753,6 +776,16 @@ class _MosaicRetrievePanel extends React.Component {
         }
     }
 
+    // A selection a request's pending options cannot yet vouch for.
+    holdsRequest() {
+        const {requestOptions, pendingRequestOptions, inputs: {bands}} = this.props
+        if (!requestOptions || !pendingRequestOptions) {
+            return false
+        }
+        const offered = requestValues(requestOptions)
+        return selectedValues(bands.value).some(value => pendingRequestOptions.includes(value) || !offered.includes(value))
+    }
+
     reconcileDestination() {
         const destinations = this.destinations()
         const {destination} = this.props.inputs
@@ -826,9 +859,11 @@ export const MosaicRetrievePanel = compose(
 )
 
 // A panel retrieves the recipe's image output unless it is given `requestOptions`: a request about something else,
-// whose options are the whole truth and which `onRetrieve` submits. Otherwise `bandOptions` only presents what the
-// output holds, `selection` translates what is chosen into the bands it exports (physical names by default),
-// `task` configures the generic image export, and `submitTask` replaces it where the recipe has its own.
+// whose options are the whole truth and which `onRetrieve` submits; `pendingRequestOptions` names those among them not
+// yet established, while any are: meanwhile nothing selected is dropped, and a selection naming one of them, or one
+// not offered, is held. Otherwise `bandOptions` only presents what the output holds, `selection` translates what is
+// chosen into the bands it exports (physical names by default), `task` configures the generic image export, and
+// `submitTask` replaces it where the recipe has its own.
 MosaicRetrievePanel.propTypes = {
     defaultCrs: PropTypes.string.isRequired,
     defaultFileDimensionsMultiple: PropTypes.number.isRequired,
@@ -840,6 +875,7 @@ MosaicRetrievePanel.propTypes = {
     bandOptions: PropTypes.array,
     className: PropTypes.any,
     defaultAssetType: PropTypes.any,
+    pendingRequestOptions: PropTypes.array,
     requestOptions: PropTypes.array,
     scaleTicks: PropTypes.array,
     selection: PropTypes.shape({
@@ -855,6 +891,13 @@ MosaicRetrievePanel.propTypes = {
     toSepal: PropTypes.any,
     onRetrieve: PropTypes.func
 }
+
+// The values a request's grouped options offer, as their control counts them.
+const requestValues = groups => groups.flat()
+    .filter(({disabled, neverSelected}) => !disabled && !neverSelected)
+    .map(({value}) => value)
+
+const selectedValues = value => [].concat(value ?? [])
 
 const presentedChoices = (values, presentationGroups = []) => {
     const offered = new Set(values)

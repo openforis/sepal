@@ -1376,7 +1376,24 @@ Near-term order:
        Requests are held meanwhile, and the band is reconciled before the first request.
      - Unchanged: execution's refusal (the backstop), the native-band classifier-input policy, and bare `{model}`
        observation requests.
-   - **Follow-up.** Time Series Retrieve reads its band options only from the copy, a gap of the same kind.
+   - **Time Series Retrieve (implemented 2026-10-21).**
+     - **Source of the record.** Retrieve offers its indicators from the same `selectedClassificationOfState`. Its
+       `recordOf` comes from the recipe's `IMAGE_OUTPUT` readiness (`readOperationReadiness`), the readiness of what
+       it downloads, over its configured AOI, and Retrieve watches that question through `watchOperations` while
+       open. That readiness reads records only; nothing of the Classification is built, trained or observed.
+     - **Not checked against the count image.** The indicator is still a measure of the collection.
+     - **Shared-panel contract.** `MosaicRetrievePanel` gains `pendingRequestOptions` on its `requestOptions` path:
+       the options not yet established. They are given while the Classification is known only by its copy, or by a
+       session draft storage does not yet agree with (`draftDisagreementsOfState`), since the download runs from
+       storage's copy.
+       - Meanwhile the band control keeps what is selected, even a selection its options do not carry, and does
+         not drop it.
+       - A selection naming a pending option or an unoffered one is held, both at Apply and in the submission
+         itself, however the form is submitted. A selection of the images' own bands is submitted as before.
+       - No validation error is shown while pending.
+       - Once settled, the existing control lets go of an unsupported selection. The required-band rule then holds
+         Apply until the user chooses another; nothing is substituted.
+     - **Unchanged:** destination, scale, tiling and submission.
    - **Deferred.** Band-aware operation readiness (`request: {bands}`, with request-distinct questions and keys) is
      kept for an operation that genuinely needs request parameters.
 
