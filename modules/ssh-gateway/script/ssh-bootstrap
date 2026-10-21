@@ -25,7 +25,7 @@ if [ -s $sshScriptFile ]; then
   terminated=
   until [ "$n" -ge 5 ]
   do
-    eval "$sshScriptFile \"${SSH_ORIGINAL_COMMAND:-}\"" && break
+    "$sshScriptFile" "${SSH_ORIGINAL_COMMAND:-}" && break
     # Retrying is only worth it while the session still exists (transient drop) — once it
     # has been stopped the worker answers 404 and each retry just keeps the user staring
     # at a dead terminal. A bodiless heartbeat: this is a liveness PROBE, fired while the user
