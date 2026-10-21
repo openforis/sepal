@@ -906,8 +906,8 @@ executionNeeds: {[IMAGE_OUTPUT]: {[INPUT_IMAGE]: IMAGE_OUTPUT, [TRAINING_DATA_SO
 - `REFERENCE`: only the source's resolution is checked, which `dependencyValidity` already does. This is an explicitly
   limited check during migration, and it does not establish readiness for what is read.
 
-  A Classification trained from another recipe runs that recipe's `getTrainingData$()`. That builds the referenced
-  recipe's input imagery and samples its points over it. Its classified output need not be ready, but its imagery
+  A Classification trained from another recipe runs that recipe's `getSamples$()`. That builds the referenced
+  recipe's input imagery and samples its points over it, unscaled. Its classified output need not be ready, but its imagery
   matters, and so do its points. That role is now `TRAINING_DATA`, which checks the provider's imagery (see "Reused
   training data" below). A `RECIPE` training set still counts as present for `NO_TRAINING_DATA`. An `AOI` edge is
   `REFERENCE` until geometry is an operation.
@@ -1140,12 +1140,15 @@ and recovery. It does not migrate every outstanding rule.
 (`recipeSection.jsx` filters to `CLASSIFICATION`), and a Regression's selects another Regression. Sampled data sets
 (`SAMPLE_CLASSIFICATION`, `SAMPLE_IMAGE`) store their points when configured, so they are no runtime reference.
 
-**What execution does.** The consumer runs the provider's `getTrainingData$()`
-(`lib/js/ee/src/classification/classification.js`, `regression/regression.js`):
-- It builds the provider's input imagery, each image as its `IMAGE_OUTPUT`, with the provider's auxiliary covariates
-  and, for SVM and minimum-distance classifiers, its normalisation.
+**What execution does.** A Classification consumer runs the provider's `getSamples$()`
+(`lib/js/ee/src/classification/classification.js`); a Regression consumer runs its provider's `getTrainingData$()`
+(`regression/regression.js`):
+- It builds the provider's input imagery, each image as its `IMAGE_OUTPUT`, with the provider's auxiliary covariates.
+  It does not apply the provider's normalisation: a normalising Classification consumer scales the reused samples by
+  its own statistics (see "Reused Classification samples' normalisation").
 - It samples the provider's stored points over that imagery.
-- It concatenates the provider's own `RECIPE` sets, recursively.
+- It puts the samples of the provider's own `RECIPE` sets, recursively and in configured order, before the provider's
+  own.
 - The provider's classifier is never trained, and its image is never classified.
 
 **Implemented.**
@@ -1231,15 +1234,18 @@ and recovery. It does not migrate every outstanding rule.
 feature the consumer trains on.
 
 - **Execution contract** (`classification.js`, `regression.js`):
-  - **Assembly.** The consumer's `getImage$` trains on `getTrainingData$(imageToClassify.bandNames())`. That is each
-    reused recipe's `getTrainingData$()`, in data-set order, and then the consumer's own samples. They are flattened
-    into one collection, with `band_order` set to the consumer's band names.
+  - **Assembly.** The consumer's `getImage$` trains on its own `getTrainingData$`. For a Classification, that is each
+    reused recipe's raw samples (`getSamples$()`), in data-set order, scaled by the consumer's statistics where it
+    normalises, then its own samples. A Regression takes each reused Regression's `getTrainingData$()` instead. The
+    samples are flattened into one collection, with `band_order` set to the consumer's band names.
   - **Provider samples.** Each recipe samples its stored points with `sampleRegions`:
-    - over its own image, after its own covariates and its own normalisation;
+    - over its own image, after its own covariates, unscaled;
     - at its own `scale || 1`.
 
     Each sample carries every band of that image, plus `class` or `value`.
-  - **Nesting.** Each level sets its own `band_order` on its inner collection. The outermost one is the consumer's.
+  - **Nesting.** Classification providers return raw samples without `band_order` or statistics. The final consumer
+    sets `band_order` and, when normalising, applies its statistics once. Regression retains its `getTrainingData$()`
+    path.
   - **Training.** `train` passes no `inputProperties`, so `band_order` decides the features (`temporalSegmentation.js`
     relies on the same default).
 - **Rule** (`trainingFeaturesRequirement`, `trainingData.js`). `MISSING_TRAINING_FEATURES` is a finding of the
@@ -1425,8 +1431,8 @@ set; `YES` is the GUI default. Prediction now scales the imagery the Classificat
   - the multi-input own path, scaled once;
   - `normalize: 'NO'` and the other classifiers, untouched.
 
-  Readiness, settings and reused providers' own normalisation are unchanged. The last stays the gap recorded under
-  sampled-feature compatibility.
+  Readiness and settings are unchanged. Reused samples are scaled by the consumer, as described under "Reused
+  Classification samples' normalisation".
 - **Cost.** Classifying more scenes constructs no further reduction expression. The tests count constructed
   expressions, not Earth Engine evaluations: whether Earth Engine evaluates the shared statistics once per computation
   or once per tile is not established.
@@ -1465,6 +1471,70 @@ set; `YES` is the GUI default. Prediction now scales the imagery the Classificat
      check is expected to fail.
   3. As smoke tests, open an ordinary Time Series `probability_*` chart and run a PyEO Alerts over an SVM
      Classification. Both should run and look plausible.
+
+**Reused Classification samples' normalisation (implemented 2026-10-21).** A Classification trains on the samples of
+the recipes it reuses, and those are now transformed by the consumer alone.
+
+- **Gap (confirmed numerically over the real execution).** Reused samples arrived already normalised by each
+  provider's own classifier: scaled by its own range for a normalising SVM or minimum-distance provider, raw
+  otherwise. The consumer trained on them beside its own and never rescaled them. Every reuse case mixed feature
+  spaces, including Random Forest reusing a normalising provider and nested chains. Controls without reuse matched.
+- **Raw samples** (`getSamples$()`, `classification.js`). A Classification's samples for another recipe to train on
+  are its reused recipes' raw samples, in configured order, followed by its own points sampled over its unscaled
+  features (`addCovariates`) at its own points and `scale`. They carry no `band_order` and no statistics, and
+  construct no reduction. Reuse keeps its meaning: each provider samples its own imagery, never the consumer's.
+- **The consumer's transformation, applied once.**
+  - `reusedSamples$` takes each reused recipe's `getSamples$()`.
+  - Where the consumer normalises, `scaledSamples` maps every `band_order` feature of every reused sample with the
+    consumer's statistics: `(x - min) / (max - min)`, or, where the range is one value, `x / max`, and 0 for a band
+    constant at zero.
+  - A feature a sample lacks, or holds as null, is left as it is. It is never made a number, so
+    `MISSING_TRAINING_FEATURES` validation and Earth Engine's own refusal still apply.
+  - Its own samples are sampled over its already scaled image, which is pointwise the same transformation.
+  - Nested samples are raw all the way down, so they are transformed once, by the final consumer.
+- **Order is unchanged at every level:** reused data sets in configured order, then the recipe's own samples.
+- **Kept as they were:**
+  - the consumer's `band_order` and `feature_statistics`;
+  - labels and masks;
+  - extra provider features, which stay raw and unused;
+  - the public `getTrainingData$` that the Classification's own image, the Time Series collection and PyEO call;
+  - the `TRAINING_DATA` operation, which describes what producing samples needs (comments updated), with no new
+    operation;
+  - Regression, sampling scale, readiness and saved settings.
+- **Costs.** Acquisition is unchanged. No provider constructs a statistics reduction to serve samples. Reused samples
+  gain a per-sample, per-feature map where the consumer normalises. The tests count constructed expressions, not
+  evaluations.
+- **Expected change to outputs.**
+  - **Changes:** a Classification that reuses training data and either normalises itself or reuses a recipe that did,
+    and what Time Series, CCDC and PyEO compute with it. A provider that itself reuses data may also change, since the
+    correction applies to its own training too.
+  - **Unchanged:** a Classification without reuse, and a chain in which none normalises.
+- **Regressions.**
+  - Gee tests over the numeric stand-in, now shared as `numericEarthEngine.js`, compare whole training rows in order
+    (`reusedSamples.test.js`; `featureNormalisation.test.js` unchanged in substance):
+    - consumer and provider transformations, including Random Forest beside normalising recipes;
+    - nested chains transformed once;
+    - order at every level;
+    - an empty contributor;
+    - no provider reduction;
+    - an extra provider feature;
+    - zero-constant statistics never manufacturing a missing or null property;
+    - a constant band;
+    - a provider's own no-reuse output unchanged;
+    - controls.
+  - `classifierNormalisation.mjs` (live) adds a provider over another date of the same path and row. Its two
+    consumers, a normalising SVM and a Random Forest, must train on the provider's raw features scaled by the
+    consumer's statistics (raw for Random Forest), then their own rows: both blocks non-empty, compared as whole rows
+    in order. Prediction, footprint and mask are checked for them too.
+- **Unresolved:**
+  - small floating-point differences between scaling a sampled number and sampling a scaled image, absorbed by the
+    live tolerance;
+  - whether Earth Engine evaluates the shared statistics once;
+  - whether Earth Engine keeps a flattened collection's order, which the live order check relies on;
+  - what Earth Engine's training does with a reused sample lacking a feature, or holding null. Execution never fills it
+    in, and `train` documents that every feature must hold every input property;
+  - the explicit 0 for a band constant at zero, which the stand-in cannot tell apart, since it divides by zero to 0
+    as `ee.Image` does.
 
 #### Regression training data (implemented)
 

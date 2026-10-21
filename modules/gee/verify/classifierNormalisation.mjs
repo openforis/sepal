@@ -14,23 +14,35 @@
 //   - footprint: both bounded, the same area;
 //   - mask: a scene masked over part of the area is classified nowhere there, and still elsewhere.
 //
-// Normalising SVM and minimum-distance classifiers are compared beside a non-normalising SVM and a Random Forest. A
-// comparison without samples or jointly valid pixels fails. Read-only: the recipe is held in memory, nothing is saved
-// and no asset is written. Authenticates with the service account:
+// Normalising SVM and minimum-distance classifiers are compared beside a non-normalising SVM and a Random Forest.
+//
+// Reused training data is checked the same way. A provider - a Classification over the same path and row on another
+// date, found at run time, so its ranges differ - stores points of its own, and a normalising SVM and a Random Forest
+// consumer each reuse it. The consumer's training rows must be the provider's raw features at its own points over its
+// own scene, scaled by the CONSUMER's statistics where the consumer normalises and raw where it does not, followed by
+// the consumer's own rows: both blocks non-empty, each compared as whole rows, in that order. Prediction, footprint and
+// mask are checked for the reusing consumers too.
+//
+// A comparison without samples or jointly valid pixels fails. Read-only: the recipes are held in memory and read
+// through a RecipeScope of the run's own, nothing is saved and no asset is written. Authenticates with the service
+// account:
 //
 //   docker exec -w /usr/local/src/sepal/modules/gee gee node verify/classifierNormalisation.mjs
 
 import _ from 'lodash'
-import {firstValueFrom, map, timeout, zip} from 'rxjs'
+import {firstValueFrom, map, of, timeout, zip} from 'rxjs'
 
 import {googleProjectId, serviceAccountCredentials} from '#gee/config'
 import ee from '#sepal/ee/ee'
 import ImageFactory from '#sepal/ee/imageFactory'
+import {RecipeScope, withRecipeScope} from '#sepal/ee/recipeScope'
 
 import {sameRows} from './featureRows.mjs'
 import {identical, pixelComparison} from './pixelComparison.mjs'
 
-const SCENE = 'LANDSAT/LC08/C02/T1_L2/LC08_231062_20230613'
+const COLLECTION = 'LANDSAT/LC08/C02/T1_L2'
+const SCENE_INDEX = 'LC08_231062_20230613'
+const SCENE = `${COLLECTION}/${SCENE_INDEX}`
 const SCENE_BANDS = ['SR_B4', 'SR_B5', 'SR_B6']
 const FEATURES = [...SCENE_BANDS, 'latitude']
 const READ_TIMEOUT_MS = 300000
@@ -61,15 +73,27 @@ const CLASSIFIERS = {
 
 const NORMALISING = ['SVM, normalised', 'minimum distance, normalised']
 
-const INPUT = {imageId: 'image-1', type: 'ASSET', id: SCENE, bandSetSpecs: [{type: 'IMAGE_BANDS', included: SCENE_BANDS}]}
+// The provider's points: a subset, so its rows can be counted apart from the consumer's.
+const PROVIDER_POINTS = REFERENCE_DATA.slice(0, 6)
+const PROVIDER = 'classifier-normalisation-provider'
 
-const classification = classifier => ({
-    id: 'classifier-normalisation-verify',
+// Consumers reusing a normalising provider's training data.
+const REUSING = ['SVM, normalised', 'Random Forest']
+
+const inputOf = id => ({imageId: 'image-1', type: 'ASSET', id, bandSetSpecs: [{type: 'IMAGE_BANDS', included: SCENE_BANDS}]})
+
+const INPUT = inputOf(SCENE)
+
+const classification = (classifier, {id = 'classifier-normalisation-verify', input = INPUT, points = REFERENCE_DATA, reuses = []} = {}) => ({
+    id,
     type: 'CLASSIFICATION',
     model: {
-        inputImagery: {images: [INPUT]},
+        inputImagery: {images: [input]},
         legend: {entries: [2, 5, 10].map(value => ({id: `entry-${value}`, value, label: `class ${value}`, color: '#000000'}))},
-        trainingData: {dataSets: [{dataSetId: 'points', type: 'SAMPLE_CLASSIFICATION', referenceData: REFERENCE_DATA}]},
+        trainingData: {dataSets: [
+            ...reuses.map(recipe => ({dataSetId: recipe, type: 'RECIPE', recipe})),
+            {dataSetId: 'points', type: 'SAMPLE_CLASSIFICATION', referenceData: points}
+        ]},
         auxiliaryImagery: ['LATITUDE'],
         classifier,
         scale: SCALE
@@ -120,24 +144,28 @@ const paths = (recipe, bands, mask) => {
 const rawFeatures = scene => scene.select(SCENE_BANDS).addBands(ee.Image.pixelLonLat().select('latitude').float())
 
 // The training samples beside the scene's raw features at the same points, scaled by the carried statistics where
-// there are any: each sample a row of its class and features, compared as rows, as the samples carry no geometry to
-// pair them by.
-const featureEvidence = ({trainingData, scene}) => {
+// there are any - and, for a reused provider, its scene's raw features at its points, scaled by the same statistics:
+// each sample a row of its class and features, compared as rows, as the samples carry no geometry to pair them by.
+const featureEvidence = ({trainingData, scene}, provider) => {
     const statistics = trainingData.get('feature_statistics')
+    return read('features', ee.Dictionary({
+        statistics,
+        bandOrder: trainingData.get('band_order'),
+        trained: rowsOf(trainingData),
+        expected: expectedRows(scene, statistics, REFERENCE_DATA),
+        ...(provider && {reused: expectedRows(provider.scene, statistics, provider.points)})
+    }))
+}
+
+const expectedRows = (scene, statistics, points) => {
     const raw = rawFeatures(scene)
     const expected = ee.Image(ee.Algorithms.If(
         ee.Algorithms.IsEqual(statistics, null),
         raw,
         scaled(raw, ee.Dictionary(statistics))
     ))
-    const points = ee.FeatureCollection(REFERENCE_DATA.map(({x, y, class: value}) => ee.Feature(ee.Geometry.Point([x, y]), {class: value})))
-    const atPoints = expected.sampleRegions({collection: points, properties: ['class'], scale: SCALE})
-    return read('features', ee.Dictionary({
-        statistics,
-        bandOrder: trainingData.get('band_order'),
-        trained: rowsOf(trainingData),
-        expected: rowsOf(atPoints)
-    }))
+    const collection = ee.FeatureCollection(points.map(({x, y, class: value}) => ee.Feature(ee.Geometry.Point([x, y]), {class: value})))
+    return rowsOf(expected.sampleRegions({collection, properties: ['class'], scale: SCALE}))
 }
 
 const ROW = ['class', ...FEATURES]
@@ -198,7 +226,37 @@ const verify = async name => {
         `${name}: each training sample is the scene's features at its point ${normalising ? 'scaled by the carried statistics' : 'raw, no statistics carried'}`,
         features
     )
+    await verifyApplication(name, recipe, bands, {ownImage, applied})
+}
 
+// A consumer reusing a normalising provider's training data: the provider's rows first, raw features of its own scene
+// at its own points scaled by the consumer's statistics, or raw; then the consumer's own.
+const verifyReuse = async (name, providerInput) => {
+    const classifier = CLASSIFIERS[name]
+    const recipe = classification(classifier, {reuses: [PROVIDER]})
+    const provider = classification(CLASSIFIERS['SVM, normalised'], {id: PROVIDER, input: providerInput, points: PROVIDER_POINTS})
+    const bands = predictedBands(classifier)
+    const normalising = NORMALISING.includes(name)
+    await inScope({[PROVIDER]: provider}, async () => {
+        const {ownImage, applied, ...training} = await paths(recipe, bands)
+        const providerScene = await firstValueFrom(ImageFactory(providerInput).getImage$().pipe(timeout(READ_TIMEOUT_MS)))
+        const features = await featureEvidence(training, {scene: providerScene, points: PROVIDER_POINTS})
+        const reused = features.reused || []
+        report(
+            reused.length > 0 && features.expected?.length > 0
+                && features.trained?.length === reused.length + features.expected.length
+                && sameRows(features.trained.slice(0, reused.length), reused, TOLERANCE)
+                && sameRows(features.trained.slice(reused.length), features.expected, TOLERANCE)
+                && Boolean(features.statistics) === normalising
+                && _.isEqual(features.bandOrder, FEATURES),
+            `${name} reusing a normalising provider: its rows are the provider's own features ${normalising ? 'scaled by the consumer\'s statistics' : 'raw'}, then its own`,
+            features
+        )
+        await verifyApplication(`${name} reusing a normalising provider`, recipe, bands, {ownImage, applied})
+    })
+}
+
+const verifyApplication = async (name, recipe, bands, {ownImage, applied}) => {
     const comparison = pixelComparison(await pixelDifferences(applied, ownImage))
     report(identical(comparison), `${name}: classifyImage over the same scene predicts what its own image does, pixel by pixel`, comparison)
 
@@ -214,10 +272,30 @@ const verify = async name => {
     report(valid.masked === 0 && valid.unmasked > 0, `${name}: a scene masked over part of the area is classified only where it is not`, valid)
 }
 
+const inScope = (catalogue, fn) => {
+    const scope = new RecipeScope(id => of(catalogue[id]))
+    return withRecipeScope(scope, fn).finally(() => scope.close())
+}
+
+// Another scene of the same path and row, the least cloudy, so the provider's imagery and ranges are its own.
+const providerSceneId = async () => `${COLLECTION}/${await read('provider scene', ee.ImageCollection(COLLECTION)
+    .filter(ee.Filter.eq('WRS_PATH', 231))
+    .filter(ee.Filter.eq('WRS_ROW', 62))
+    .filter(ee.Filter.neq('system:index', SCENE_INDEX))
+    .filter(ee.Filter.lt('CLOUD_COVER', 20))
+    .sort('CLOUD_COVER')
+    .first()
+    .get('system:index'))}`
+
 const main = async () => {
     await authenticate()
     for (const name of Object.keys(CLASSIFIERS)) {
         await verify(name)
+    }
+    const providerScene = await providerSceneId()
+    console.info(`Provider scene: ${providerScene}`)
+    for (const name of REUSING) {
+        await verifyReuse(name, inputOf(providerScene))
     }
     if (failures) {
         throw new Error(`${failures} check(s) failed`)
