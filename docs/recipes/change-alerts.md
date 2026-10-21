@@ -16,6 +16,21 @@ and options, following a wrapper to the CCDC under it or reading a segments asse
 `recipe_options`, and a saved value is kept until the producer's settings change
 ([source evidence](../design/recipes/gui-source-runtime.md)). `changeAlertsOptions` configure the algorithm.
 
+Change Alerts monitors a band its imagery observes itself, and uses no Classification.
+- **Not proposed from the producer.** The producer's `classification` and `breakpointBands` are not proposed; ones an
+  older recipe saved stay stored.
+- **No dependency.** They are no dependency: Change Alerts needs no access to a Classification a shared segments
+  asset's `recipe_sources` name. A referenced recipe's own dependencies still count, since building its segments may
+  need them.
+- **Not run.** Execution builds the monitoring collection without one.
+- **A classified band is refused.** A saved monitored band a Classification computes (`regression`,
+  `probability_<value>`) is refused as `CLASSIFIED_MONITORED_BAND` (`lib/js/shared/src/recipe/type/changeAlerts.js`)
+  and by execution, and stays shown as chosen. SRC says on the band that Change Alerts cannot monitor it, and choosing
+  a band of the imagery repairs it.
+- **Server boundary.** The pixel chart's observation request no longer names the copied Classification. The server
+  cannot tell that bare collection request from another (`/timeSeries/loadObservations` judges no recipe without a
+  type), so the guarantee for it is the GUI's.
+
 REF says one thing at a time on the selected asset or recipe: a refusal is its error, in one sentence - an asset
 without CCDC segment time bands "can't be used as a CCDC segment reference", one with a malformed layout named by a
 few of its problems - and only once the reference is usable does a warning say what the segment chart cannot plot.

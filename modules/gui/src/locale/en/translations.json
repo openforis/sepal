@@ -5858,6 +5858,7 @@
         "undetermined": "The array dimensions of {count} bands of asset {asset} could not be established: {bands}.",
         "andMore": "{items} and {count} more",
         "measureAbsent": "The selected source has no segments for band {measure}. Choose a band it has segments for: {measures}.",
+        "measureClassified": "{measure} is computed by a classification, which Change Alerts doesn't use. Monitor a band of the imagery instead: {measures}.",
         "measureUnobserved": "The selected monitoring data does not observe {measure}. Choose a band it observes that the selected source has segments for: {measures}.",
         "noMonitorableMeasure": "The selected source has segments only for {measures}, which no supported monitoring data observes. Choose another source.",
         "noAvailableMeasure": "The selected source has segments only for {measures}, which this type of monitoring data does not observe. Choose a type that observes one of them.",

@@ -1,3 +1,5 @@
+import _ from 'lodash'
+
 import {monitoringDates} from '#sepal/recipe/changeAlerts/monitoringDates'
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
@@ -67,7 +69,8 @@ export const RecipeActions = id => {
 export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
     api.gee.loadCCDCSegments$({recipe: recipe.model.reference, latLng, bands})
 
-// TODO: Might need to tweak the recipe for this
+// The monitoring imagery's observations of a band of its own: the request names no Classification, which Change Alerts
+// does not use (type/changeAlerts.js). Nothing on the server identifies this collection as Change Alerts'.
 export const loadCCDCObservations$ = ({recipe, latLng, bands}) => {
     const {monitoringEnd, calibrationStart} = monitoringDates(recipe.model)
     return api.gee.loadTimeSeriesObservations$({
@@ -76,7 +79,7 @@ export const loadCCDCObservations$ = ({recipe, latLng, bands}) => {
                 startDate: calibrationStart,
                 endDate: monitoringEnd
             },
-            sources: recipe.model.sources,
+            sources: _.omit(recipe.model.sources, ['classification']),
             options: recipe.model.options
         }},
         latLng,

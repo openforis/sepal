@@ -63,7 +63,7 @@ mock.module('#sepal/ee/ee', {
 mock.module('#sepal/ee/timeSeries/collection', {
     exports: {
         getCollection$: ({recipe, bands}) => {
-            collectionRequests.push({type: recipe.type, bands})
+            collectionRequests.push({type: recipe.type, bands, classification: recipe.model.sources?.classification})
             return of(eeImage('collection'))
         }
     }
@@ -259,6 +259,31 @@ describe('the image Change Alerts monitors', () => {
 
         assert.deepEqual(recipesLoaded(), ['ccdc-1'])
         assert.deepEqual(maskApplications, [])
+    })
+})
+
+// Change Alerts monitors a band of its imagery and uses no Classification: one its Sources copied from the producer is not
+// run, and a band a Classification computes is refused before anything is built.
+describe('the imagery Change Alerts monitors', () => {
+    const monitoringRequests = () => collectionRequests.filter(({type}) => type !== 'CCDC')
+    const alertsMonitoring = sources => {
+        const recipe = alertsOver(DIRECT_REFERENCE)
+        return {...recipe, model: {...recipe.model, sources: {...recipe.model.sources, ...sources}}}
+    }
+
+    inOperation('is built without the Classification its Sources copied', async () => {
+        await firstValueFrom(changeAlerts(alertsMonitoring({classification: 'copied-classification'})).getImage$())
+
+        assert.deepEqual(monitoringRequests().map(({bands, classification}) => ({bands, classification})), [{bands: ['ndvi'], classification: undefined}])
+    })
+
+    inOperation('is not built for a band a Classification computes, which is refused', async () => {
+        await assert.rejects(
+            firstValueFrom(changeAlerts(alertsMonitoring({band: 'regression'})).getImage$()),
+            error => error.errorCode === 'CLASSIFIED_MONITORED_BAND'
+        )
+
+        assert.deepEqual(monitoringRequests(), [])
     })
 })
 

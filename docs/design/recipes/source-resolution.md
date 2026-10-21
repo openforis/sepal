@@ -1264,8 +1264,49 @@ these results; permanent tests retain the implemented shared editor cases.
 
 #### Next validation packets (2026-10-20)
 
-The order below separates finishing the current PyEO work from extending its rules to other consumers. A shared
+The delivery sequence below alternates fixes with consolidation; the packet history records what is covered. A shared
 backend helper accepting a Classification is not, by itself, a reason to expand a recipe's validation or GUI.
+
+**Delivery approach: iterate between focused fixes and bounded consolidation (2026-10-21).** Do not wait for the
+whole roadmap to be implemented before improving the structure, and do not start a broad redesign ahead of confirmed
+behaviour. Finish a small set of fixes, use their regressions to consolidate repeated contracts or lifecycle code,
+then implement the next set on that structure. The packet history below records coverage; it is not the remaining
+execution order.
+
+Near-term order:
+
+1. **Finish the Change Alerts inherited-settings correction** described below: monitoring uses native imagery,
+   incidental copied settings do not create dependencies, and the referenced producer retains its genuine dependencies.
+2. **Consolidate operation wiring and chart lifecycle before extending more operations.** Use separately reviewable,
+   behaviour-preserving slices:
+   - Keep an operation's effective recipe (including the pixel/AOI projection), required operations, readiness reads
+     and runtime interest consistent. The chart action and open chart must derive their needs from the same contract.
+     Preserve the distinct execution semantics of direct pixel charts and referenced images with their own AOIs.
+   - Share the repeated Time Series/CCDC lifecycle for waiting, cancellation, resuming, computation changes and band
+     reconciliation, while retaining their distinct request construction and rendering. Existing regressions protect
+     upstream edits, save waits, findings, late responses, band replacement and ignored AOIs.
+   - Prefer extracting the existing shared behaviour to introducing another resolver, cache, subscription system or
+     general-purpose framework. Success means the next operation needs fewer independently coordinated changes,
+     not merely fewer lines.
+3. **Align referenced segment-chart GUI availability with backend readiness** for CCDC Slice and Change Alerts,
+   using the consolidated operation wiring; retain their segment-structure checks.
+4. **Address optional classified-output requests.** First establish the smallest band-aware operation contract;
+   validate the outputs actually requested without rejecting a Classification for optional outputs it cannot provide.
+   Keep the separate native-band readiness policy decision explicit.
+
+**Field-binding consolidation checkpoint.** The classifier-input and classified-output declarations repeat path
+matching, diagnostic selection, candidate construction and editor binding; field controls still need separate error
+presentation wiring. Consolidate this narrowly before another rollout repeats it. Aim for one consistent path from a
+located requirement to field feedback and Apply blocking, with a mounted regression proving the explanation is shown.
+Keep the broader shared-control defaults and duplicated input-image editor refactor deferred under "Later: shared form
+validation consistency" below.
+
+After these slices, reassess the recorded gaps before extending `TRAINING_DATA`, geometry or named map-product
+readiness. Preview validation remains conditional on measured cost. Refactoring slices preserve behaviour and use
+the relevant existing regressions plus focused static checks; add tests for new contracts or uncovered behaviour,
+not for an extraction alone. The focused verification and two-worker limit below still apply.
+
+**Packet history and coverage:**
 
 1. **PyEO compatibility: done.** Shared classifier-feature and conditional index-gate requirements decide
    readiness, and OPT's index choices, explanation and draft Apply validation follow the same execution-based rules. A
@@ -1473,10 +1514,44 @@ backend helper accepting a Classification is not, by itself, a reason to expand 
      classifies anything. Making it band-sensitive would change the agreed policy and needs band-aware readiness
      arguments, so it is a separate decision.
 
-**Change Alerts is a separate inherited-settings review.** It has no Classification selector. Selecting a segment
-reference can copy the producer's Sources settings, including a Classification reference, through
-`changeAlerts/referenceObservation.js`. Establish the intended treatment of those inherited settings before adding
-compatibility validation or a new control; no new Classification control is requested. **LandTrendr is excluded** from
+**Change Alerts inherited settings: implemented (2026-10-21).** Change Alerts monitors only bands its imagery observes
+natively, and uses no Classification.
+
+The audit found:
+- **The incidental copy.** `referenceObservation.js` merged the producer's whole `sources`, so `classification` and
+  `breakpointBands` were copied as well as the monitoring settings.
+- **No reachable classified output.** No reachable configuration monitors one: Sources offers native bands, and
+  `MONITORED_MEASURE` judges against native observed measures.
+- **It still blocked.** The copied Classification was still a dependency, so one the user could not read - a shared
+  segments asset's `recipe_sources` naming another user's - refused the export
+  (`Recipe could not be read: <id>`) and held previews and Retrieve.
+
+Implemented:
+- **Dependencies.** CHANGE_ALERTS' `directSources` are its reference and, for Planet, its source assets;
+  `executionNeeds` drop `CLASSIFICATION_SOURCE`. A referenced recipe's own dependencies still count through the
+  reference's closure, so a referenced CCDC's unreadable Classification still refuses it. A segments asset needs none
+  of its producer's.
+- **Prefill.** It no longer proposes `classification` or `breakpointBands`. The other monitoring settings, and the
+  rule that unchanged producer settings observed again leave user edits alone, are as before. Whether they changed is
+  judged on the same monitoring-only projection, so a producer changing only its Classification or breakpoint bands
+  leaves user edits alone. Saved copies are kept,
+  inert; no migration or cleanup.
+- **A Change Alerts-owned rule.** `CLASSIFIED_MONITORED_BAND` (`type/changeAlerts.js`, using `isClassifiedOutput`) is
+  found at `['model', 'sources', 'band']` for a monitored band a Classification computes. Execution
+  (`timeSeries/changeAlerts.js`) refuses it with the same code, and builds the monitoring collection without
+  `classification`.
+- **GUI.** The saved band stays shown as chosen (`withChosenClassifiedOutputs`). `MONITORED_MEASURE`'s refusal at the
+  band says that Change Alerts cannot monitor a classified band (`process.source.segments.measureClassified`), and
+  choosing a band of the imagery repairs it. No output declaration was added for the code: Change Alerts' editor drafts
+  are judged without the runtime's answers (`sourceCandidate.js`), which such a declaration would require.
+
+Remaining boundary:
+- **Observation requests.** The GUI's bare observation request (`changeAlertsRecipe.js`) no longer names the copied
+  Classification. That is no server-side guarantee: `/timeSeries/loadObservations` judges nothing for a request
+  without a recipe type, and does not take every bare `{model}` for Change Alerts' collection. Redesigning that route
+  is separate.
+
+**LandTrendr is excluded** from
 the classifier-validation rollout: its current Sources GUI does not offer a Classification, despite the shared
 backend accepting that field. Do not add work solely for hypothetical or legacy configurations.
 

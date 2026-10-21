@@ -9,7 +9,7 @@ import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
-import {groupedBandOptions, toSources} from '~/sources'
+import {groupedBandOptions, toSources, withChosenClassifiedOutputs} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {select} from '~/store'
 import {msg} from '~/translate'
@@ -149,10 +149,11 @@ class _Sources extends React.Component {
         const ccdcBands = baseBands
             .map(({name}) => name)
             .filter(band => rmseBands.includes(band))
-        const options = collectionGrouped
+        const offered = collectionGrouped
             .map(group => group
                 .filter(({value}) => ccdcBands.includes(value))
             )
+        const options = withChosenClassifiedOutputs(offered, band.value)
             .filter(group => group.length)
             .map(group => ({options: group}))
         return (

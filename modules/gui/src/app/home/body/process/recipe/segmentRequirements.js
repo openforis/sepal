@@ -1,3 +1,4 @@
+import {isClassifiedOutput} from '#sepal/recipe/classifiedOutputs'
 import {
     CHARTABLE_SEGMENTS as CHARTABLE,
     INCOMPATIBLE_SEGMENT_STRUCTURE,
@@ -36,6 +37,17 @@ export const SLICE_SOURCE_SEGMENTS = {
 
 const REPRESENTATIVE = 3
 
+// A measure monitored that the segments lack, or that the data does not observe - unless it is one a Classification computes,
+// which Change Alerts cannot monitor at all (type/changeAlerts.js): choosing a band of the imagery repairs that.
+const monitoredMeasureMessage = diagnostic => {
+    const [key, measures] = isClassifiedOutput(diagnostic.measure)
+        ? ['measureClassified', representative(diagnostic.measures)]
+        : diagnostic.code === MONITORED_MEASURE_ABSENT
+            ? ['measureAbsent', representative(diagnostic.measures) || msg('process.source.segments.noMeasures')]
+            : ['measureUnobserved', representative(diagnostic.measures)]
+    return {message: msg(`process.source.segments.${key}`, {measure: diagnostic.measure, measures}), details: []}
+}
+
 const describeDiagnostic = (diagnostic, {incompatible = 'incompatible', notSegments = 'notSegments', noMeasure = 'noMeasure'} = {}) => {
     switch (diagnostic.code) {
         case INCOMPATIBLE_SEGMENT_STRUCTURE: {
@@ -55,21 +67,8 @@ const describeDiagnostic = (diagnostic, {incompatible = 'incompatible', notSegme
                 details: diagnostic.undetermined
             }
         case MONITORED_MEASURE_ABSENT:
-            return {
-                message: msg('process.source.segments.measureAbsent', {
-                    measure: diagnostic.measure,
-                    measures: representative(diagnostic.measures) || msg('process.source.segments.noMeasures')
-                }),
-                details: []
-            }
         case MONITORED_MEASURE_UNOBSERVED:
-            return {
-                message: msg('process.source.segments.measureUnobserved', {
-                    measure: diagnostic.measure,
-                    measures: representative(diagnostic.measures)
-                }),
-                details: []
-            }
+            return monitoredMeasureMessage(diagnostic)
         case NO_MONITORABLE_MEASURE:
         case NO_AVAILABLE_MEASURE:
         case NO_OBSERVED_MEASURE:

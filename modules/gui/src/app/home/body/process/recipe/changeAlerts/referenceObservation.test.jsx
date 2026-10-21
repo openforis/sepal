@@ -126,6 +126,79 @@ describe('the producer of a selected recipe', () => {
     })
 })
 
+// Change Alerts uses no Classification and fits no breakpoints: what a producer's Sources say of those is not taken,
+// whether the producer is a recipe or an asset's exported configuration, and what Change Alerts already holds is kept.
+describe('the producer settings monitoring takes', () => {
+    it('are a recipe\'s imagery settings, not its Classification or breakpoint bands', async () => {
+        sync({selection: {type: 'RECIPE_REF', id: MASKING}})
+        await hold(PRODUCER_CLASSIFICATION)
+
+        await update(CCDC, {
+            sources: {dataSets: {SENTINEL_1: ['SENTINEL_1']}, classification: PRODUCER_CLASSIFICATION.id, breakpointBands: ['vv']},
+            options: {corrections: []}
+        })
+
+        expect(sources().dataSets).toEqual({SENTINEL_1: ['SENTINEL_1']})
+        expect(sources()).not.toHaveProperty('classification')
+        expect(sources()).not.toHaveProperty('breakpointBands')
+    })
+
+    it('are an asset\'s exported imagery settings, not the Classification they name', async () => {
+        assetMetadata$.mockReturnValue(of(assetMetadata({
+            dateFormat: 2,
+            recipe_sources: JSON.stringify({dataSets: {SENTINEL_1: ['SENTINEL_1']}, classification: 'colleagues-classification'})
+        })))
+
+        sync({selection: {type: 'RECIPE_REF', id: WRAPPED_ASSET}})
+        await settled()
+
+        expect(sources().dataSets).toEqual({SENTINEL_1: ['SENTINEL_1']})
+        expect(sources()).not.toHaveProperty('classification')
+    })
+
+    // What is not taken is no change: the user's edits stay, as for any producer setting that has not changed.
+    it.each([
+        ['its breakpoint bands', async () => update(CCDC, {sources: {dataSets: {LANDSAT: ['RED', 'NIR']}, breakpointBands: ['nir']}})],
+        ['its Classification', async () => {
+            await hold(PRODUCER_CLASSIFICATION)
+            await update(CCDC, {sources: {dataSets: {LANDSAT: ['RED', 'NIR']}, classification: PRODUCER_CLASSIFICATION.id}})
+        }]
+    ])('leave the monitoring settings the user edited alone when a recipe producer changes only %s', async (_case, change) => {
+        sync({selection: {type: 'RECIPE_REF', id: MASKING}})
+        await settled()
+        await update(ALERTS, {sources: {...sources(), dataSets: {LANDSAT: ['SWIR1']}}})
+
+        await change()
+
+        expect(sources().dataSets).toEqual({LANDSAT: ['SWIR1']})
+    })
+
+    it.each([
+        ['its breakpoint bands', {breakpointBands: ['nir']}],
+        ['the Classification it names', {classification: 'colleagues-classification'}]
+    ])('leave the monitoring settings the user edited alone when an asset is re-exported changing only %s', async (_case, ignored) => {
+        assetStates({dateFormat: 2, recipe_sources: JSON.stringify({dataSets: {LANDSAT: ['RED']}})})
+        sync({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
+        await settled()
+        await update(ALERTS, {sources: {...sources(), dataSets: {LANDSAT: ['NIR']}}})
+
+        assetStates({dateFormat: 2, recipe_sources: JSON.stringify({dataSets: {LANDSAT: ['RED']}, ...ignored})})
+        await reExport()
+
+        expect(sources().dataSets).toEqual({LANDSAT: ['NIR']})
+    })
+
+    it('leave a Classification Change Alerts already saved as it is', async () => {
+        sync({selection: {type: 'RECIPE_REF', id: MASKING}, sources: {classification: 'saved-classification'}})
+        await hold(PRODUCER_CLASSIFICATION)
+
+        await update(CCDC, {sources: {dataSets: {SENTINEL_1: ['SENTINEL_1']}, classification: PRODUCER_CLASSIFICATION.id}})
+
+        expect(sources().dataSets).toEqual({SENTINEL_1: ['SENTINEL_1']})
+        expect(sources().classification).toBe('saved-classification')
+    })
+})
+
 describe('an observation repeated for another reason', () => {
     it('leaves monitoring settings the user has edited alone', async () => {
         sync({selection: {type: 'RECIPE_REF', id: MASKING}})
@@ -328,6 +401,18 @@ const reExport = () => act(async () => store.dispatch({
         ...state,
         assets: {user: [{id: SEGMENTS_ASSET, updateTime: `v${++versions.current}`}], other: []}
     })
+}))
+
+// A Classification of the producer's, held so that the producer can be described again.
+const PRODUCER_CLASSIFICATION = {
+    id: 'producer-classification',
+    type: 'CLASSIFICATION',
+    model: {legend: {entries: [{value: 1}]}, classifier: {type: 'RANDOM_FOREST'}, inputImagery: {images: []}}
+}
+
+const hold = record => act(async () => store.dispatch({
+    type: 'HOLD_RECORD',
+    reduce: state => ({...state, process: {...state.process, loadedRecipes: {...state.process.loadedRecipes, [record.id]: record}}})
 }))
 
 const update = (id, model) => act(async () => store.dispatch({

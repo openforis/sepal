@@ -765,6 +765,59 @@ describe('a recipe whose dependencies are not structurally sound', () => {
     })
 })
 
+// Change Alerts monitors a band its imagery observes, and uses no Classification: one its Sources copied from the
+// producer of its reference is kept as saved, but is no dependency of it. What the reference itself depends on still is.
+describe('exporting a Change Alerts', () => {
+    const alerts = ({reference = {type: 'ASSET', id: SEGMENTS_ASSET}, ...sources} = {}) => ({
+        id: 'alerts-1',
+        type: 'CHANGE_ALERTS',
+        model: {
+            reference,
+            sources: {dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_8']}, band: 'ndvi', ...sources},
+            options: {corrections: ['SR']},
+            date: {monitoringEnd: '2024-01-01', monitoringDuration: 1, monitoringDurationUnit: 'months', calibrationDuration: 2, calibrationDurationUnit: 'months'}
+        }
+    })
+    const SEGMENTS_ASSET = 'users/x/segments'
+    // A Classification of another user's, named by the asset's exported recipe_sources: this one cannot read it.
+    const INACCESSIBLE = 'colleagues-classification'
+
+    beforeEach(() => {
+        state.assets[SEGMENTS_ASSET] = {bands: [{name: 'tStart', arrayDimensions: 1}], properties: {}}
+    })
+
+    it('exports over a shared segments asset, though the Classification its Sources copied cannot be read', async () => {
+        const recipe = alerts({classification: INACCESSIBLE, breakpointBands: ['ndvi']})
+
+        await submit({recipe, bands: ['confidence']})
+
+        assert.deepEqual(state.recipeReads, [])
+    })
+
+    it('is refused where the CCDC it references depends on a Classification that cannot be read', async () => {
+        const ccdc = {
+            id: 'ccdc-1',
+            type: 'CCDC',
+            model: {sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands: ['ndvi'], classification: INACCESSIBLE}}
+        }
+        state.catalogue = {[ccdc.id]: ccdc}
+
+        await assert.rejects(
+            submit({recipe: alerts({reference: {type: 'RECIPE_REF', id: ccdc.id}}), bands: ['confidence']}),
+            error => error.message === `Recipe could not be read: ${INACCESSIBLE}`
+        )
+        assert.deepEqual(state.exported, [])
+    })
+
+    it('is refused at its band where that is one a Classification computes', async () => {
+        await assert.rejects(
+            submit({recipe: alerts({band: 'regression', classification: INACCESSIBLE}), bands: ['confidence']}),
+            /cannot run: CLASSIFIED_MONITORED_BAND$/
+        )
+        assert.deepEqual(state.exported, [])
+    })
+})
+
 const landsatMosaic = ({compose = 'MEDIAN'} = {}) => ({
     id: 'mosaic-1',
     type: 'MOSAIC',

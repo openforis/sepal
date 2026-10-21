@@ -37,17 +37,27 @@ export const changeAlertsObservation = {
     }
 }
 
-// Unchanged producer settings must not overwrite subsequent user edits.
+// Unchanged producer settings must not overwrite subsequent user edits. Of the producer's Sources, what configures the
+// imagery monitored is taken, and only a change to that is a change: its Classification and breakpoint bands are not,
+// for Change Alerts uses no Classification and fits no breakpoints (type/changeAlerts.js).
 const monitoringSettings = ({sourceKey, monitoring}, previous) => {
+    const taken = monitoringOf(monitoring)
     const sameSource = previous?.sourceKey === sourceKey
-    if (!monitoring || (sameSource && _.isEqual(monitoring, previous.monitoring))) {
+    if (!taken || (sameSource && _.isEqual(taken, monitoringOf(previous.monitoring)))) {
         return []
     }
     return [
-        ...(monitoring.sources ? [{path: 'model.sources', value: monitoring.sources, merge: true}] : []),
-        ...(monitoring.options ? [{path: 'model.options', value: monitoring.options, merge: true}] : [])
+        ...(taken.sources ? [{path: 'model.sources', value: taken.sources, merge: true}] : []),
+        ...(taken.options ? [{path: 'model.options', value: taken.options, merge: true}] : [])
     ]
 }
+
+const monitoringOf = monitoring => monitoring && {
+    sources: monitoring.sources ? _.omit(monitoring.sources, NOT_MONITORING) : monitoring.sources,
+    options: monitoring.options
+}
+
+const NOT_MONITORING = ['classification', 'breakpointBands']
 
 // Prefill on the first successful observation of a selection; preserve later user corrections.
 const assetDateFormat = (recipe, {sourceKey, segments}, previous) => {

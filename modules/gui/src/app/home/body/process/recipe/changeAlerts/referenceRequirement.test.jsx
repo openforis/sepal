@@ -967,6 +967,31 @@ describe('Sources\' settings, judged against the reference\'s segments', () => {
     })
 })
 
+// Change Alerts monitors a band of its imagery, and uses no Classification (type/changeAlerts.js). A band saved monitored
+// that a Classification computes stays shown as saved, said on the band as one Change Alerts cannot monitor, until a band
+// of the imagery is chosen.
+describe('a band saved monitored that a Classification computes', () => {
+    it('says on the band, opening unedited, that it cannot be monitored, until a band of the imagery is chosen', async () => {
+        fake.assets[SEGMENTS_ASSET] = segmentsAsset([...SEGMENT_BANDS, ...measureBands('regression'), ...measureBands('ndvi')])
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, panels: ['sources']})
+        await act(async () => panelButton('button.close').click())
+        await act(async () => store.dispatch(set(['process', 'loadedRecipes', ALERTS, 'model', 'sources', 'band'], 'regression')))
+        const saved = alertsRecipe().model.sources
+
+        await reopen('sources')
+
+        expect(errorsOf(BAND)).toEqual([expect.stringContaining('process.source.segments.measureClassified')])
+        expect(panelButton('button.apply')).toBeUndefined()
+        expect(panelButton('regression')?.classList.contains(lookStyles.highlight)).toBe(true)
+        expect(alertsRecipe().model.sources).toEqual(saved)
+
+        await chooseButton('ndvi')
+        expect(errorsOf(BAND)).toEqual([])
+        await apply()
+        expect(alertsRecipe().model.sources.band).toBe('ndvi')
+    })
+})
+
 // The segment chart plots more of each segment than the alerts read. What it cannot plot gates the chart, and is said
 // in REF as a warning beside - never instead of - what the alerts need.
 describe('a reference the alerts can use but a segment chart cannot plot', () => {
