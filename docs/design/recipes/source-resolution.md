@@ -1322,16 +1322,29 @@ Near-term order:
    - **Limitations.**
      - The backend still judges the reference record directly, not the consumer's declaration. The two agree by
        construction, and shared tests pin the GUI side (`referencedSegments.test.js`).
-     - The slice and alerts charts still reload only on their own model, pixels and description, not on every
-       upstream computation change. An upstream change that leaves readiness settled in the session does not reload
-       them (item 4).
+     - Reloading on compatible upstream changes followed in item 4.
      - Losing readiness also re-reads the Change Alerts observations, which share the chart's cancellation.
-4. **Reload referenced segment charts on compatible upstream changes.** A CCDC Slice or Change Alerts chart over a
-   recipe reference keeps its segments when the reference, or a recipe it builds, changes in a way that stays
-   runnable, since readiness then settles in the session without a pending phase. Read the segments again when what
-   the reference builds changes, as the direct charts do on `computation`. Keep the deliberate behaviours: segments
-   already drawn stay while the source's requirements are re-checked, and unrelated edits to the consumer reload
-   nothing. Existing slice and alerts regressions protect those.
+4. **Reload referenced segment charts on compatible upstream changes.** **Implemented (2026-10-21).**
+   - **Comparison.** Each panel's change comparison gains one entry: the `PIXEL_SEGMENTS` computation of the
+     consumer, less its own first entry (`sourceBuild`, `referenceBuild`). That entry is the `recipeContent` of every
+     record the reference's closure holds, its AOI included. The consumer's model, selected band, pixels and
+     description stay compared as before.
+   - **Guarantee.** A change to what the applied reference executes reloads an open chart through the existing
+     change path, even when it leaves the band description and asset identities unchanged (such as a CCDC
+     segmentation parameter). That path cancels the obsolete request, so its late answer draws nothing, and makes
+     one request when no gate holds. Change Alerts re-requests its observations with the segments, as on any change.
+     - An edit whose save is pending or unsaved holds the chart through the draft gate; it requests once storage
+       agrees.
+     - Titles, layout, `ui`, unrelated recipes, and a draft selection in SRC/REF that is then cancelled reload nothing.
+     - An asset reference adds no records, so its freshness (`pixels`) is unchanged.
+     - A source re-check alone still keeps drawn segments.
+   - **Limitations.**
+     - A build change clears drawn segments at once, as a pixel or model change does. It does not wait for a
+       re-check that happens at the same time. For a CCDC that re-check is synchronous; for an asset-backed
+       source the same edit already changes `pixels`.
+     - A refreshed record whose content is unchanged does not reload the chart. Asset contents are followed only
+       through `pixels`, as before.
+
 5. **Address optional classified-output requests.** First establish the smallest band-aware operation contract;
    validate the outputs actually requested without rejecting a Classification for optional outputs it cannot provide.
    Keep the separate native-band readiness policy decision explicit.

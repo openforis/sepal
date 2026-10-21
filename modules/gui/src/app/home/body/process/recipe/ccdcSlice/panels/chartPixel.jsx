@@ -200,12 +200,12 @@ class _ChartPixel extends React.Component {
         if (noChartableBand || !latLng || !band) {
             return this.clearData()
         }
-        // Read again when what is asked changes AND when the pixels may have moved without the model moving: a chart
-        // drawn before that goes on plotting pixels the source no longer has.
+        // Read again when what is asked changes, what the source builds included, AND when the pixels may have moved
+        // without the model moving: a chart drawn before that goes on plotting pixels the source no longer has.
         const gate = segmentsGate || operationsGate
         if (!prevProps || (operationsGate && !prevProps.operationsGate) || !_.isEqual(
-            [recipe.model, pixels, latLng, band, description],
-            [prevProps.recipe.model, prevProps.pixels, prevProps.latLng, prevProps.inputs.selectedBand.value, prevProps.description])
+            [recipe.model, pixels, latLng, band, description, sourceBuild(this.props)],
+            [prevProps.recipe.model, prevProps.pixels, prevProps.latLng, prevProps.inputs.selectedBand.value, prevProps.description, sourceBuild(prevProps)])
         ) {
             this.clearData()
             this.segmentsHeld = Boolean(gate)
@@ -272,15 +272,22 @@ const mapStateToProps = (state, {recipe, recipeId, sourceRuntime}) => {
     const {gate, chartable, bands, noChartableBand} = pixelChartAvailability({
         state, recipe, evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id), heldFor, now: Date.now()
     })
+    const operations = pixelOperationsAvailability({state, recipe, heldFor, operations: CHART_OPERATIONS})
     return {
         pixels: pixelGenerationOfState(state, recipeId),
         segmentsGate: gate,
-        operationsGate: pixelOperationsAvailability({state, recipe, heldFor, operations: CHART_OPERATIONS}).gate,
+        operationsGate: operations.gate,
+        computation: operations.computation,
         chartable,
         chartBands: bands,
         noChartableBand
     }
 }
+
+// What the source builds: the content of every record its segments are computed from but the slice's own, which leads
+// (pixelOperationsAvailability) and whose model is compared beside it. What the source executes, its own AOI included -
+// not titles, layout, ui or unrelated recipes.
+const sourceBuild = ({computation}) => computation.slice(1)
 
 export const ChartPixel = compose(
     _ChartPixel,

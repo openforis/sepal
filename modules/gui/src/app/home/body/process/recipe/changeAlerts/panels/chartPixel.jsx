@@ -178,7 +178,8 @@ class _ChartPixel extends React.Component {
     // Segments are requested only once the reference is known to suit them (requestGate, sourceRequirements.js) and to
     // run (pixelOperationsAvailability), and requested when it comes to; segments already charted stay while the
     // reference is checked again, and are let go, with the observations read again, once whether it runs is no longer
-    // known. A reference found unable to run closes the chart, whatever band is selected.
+    // known. A reference found unable to run closes the chart, whatever band is selected. A change to what the reference
+    // builds is read again as any other change is, the observations with the segments.
     componentDidUpdate(prevProps) {
         const {band, stream, recipe, latLng, description, pixels, segmentsGate, operationsGate, noChartableBand, inputs: {selectedBand}} = this.props
         if (latLng && operationsGate?.withdraw) {
@@ -200,8 +201,8 @@ class _ChartPixel extends React.Component {
         }
         const gate = segmentsGate || operationsGate
         if ((operationsGate && !prevProps.operationsGate) || !_.isEqual(
-            [recipe.model, latLng, selectedBand.value, description, pixels],
-            [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.selectedBand.value, prevProps.description, prevProps.pixels])
+            [recipe.model, latLng, selectedBand.value, description, pixels, referenceBuild(this.props)],
+            [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.selectedBand.value, prevProps.description, prevProps.pixels, referenceBuild(prevProps)])
         ) {
             this.cancel$.next(true)
             this.setState({segments: undefined})
@@ -290,15 +291,22 @@ const mapStateToProps = (state, {recipe, recipeId, sourceRuntime}) => {
     const {gate, chartable, bands, noChartableBand} = pixelChartAvailability({
         state, recipe, evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id), heldFor, now: Date.now()
     })
+    const operations = pixelOperationsAvailability({state, recipe, heldFor, operations: CHART_OPERATIONS})
     return {
         pixels: pixelGenerationOfState(state, recipeId),
         segmentsGate: gate,
-        operationsGate: pixelOperationsAvailability({state, recipe, heldFor, operations: CHART_OPERATIONS}).gate,
+        operationsGate: operations.gate,
+        computation: operations.computation,
         chartable,
         chartBands: bands,
         noChartableBand
     }
 }
+
+// What the reference builds: the content of every record its segments are computed from but the alerts' own, which
+// leads (pixelOperationsAvailability) and whose model is compared beside it. What the reference executes, its own AOI
+// included - not titles, layout, ui or unrelated recipes.
+const referenceBuild = ({computation}) => computation.slice(1)
 
 export const ChartPixel = compose(
     _ChartPixel,

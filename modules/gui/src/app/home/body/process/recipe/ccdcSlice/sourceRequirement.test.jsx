@@ -455,6 +455,51 @@ describe('the segment chart over a recipe it builds as that recipe\'s own image'
         await answerHeldLoads()
         expect(fake.segmentBands).toEqual(['ndvi', 'ndvi'])
     })
+
+    // A CCDC parameter changes the segments, not the bands they are described by.
+    it('reads again once what the source builds changes, though nothing it describes does, letting go of what it read', async () => {
+        fake.heldSegments = []
+        await editor({selection: ref('masking-ccdc'), chart: true})
+
+        await editRecord('ccdc-1', {ccdcOptions: {dateFormat: 1, minObservations: 8}})
+
+        expect(fake.cancelledSegments).toEqual(['ndvi'])
+        expect(fake.segmentBands).toEqual(['ndvi', 'ndvi'])
+    })
+
+    it('waits for an edit to what the source builds to be saved, then reads once', async () => {
+        await editor({selection: ref('masking-ccdc'), chart: true})
+
+        await saveEdit('ccdc-1', {ccdcOptions: {dateFormat: 1, minObservations: 8}})
+        expect(fake.segmentBands).toEqual(['ndvi'])
+
+        await saved('ccdc-1')
+        expect(fake.segmentBands).toEqual(['ndvi', 'ndvi'])
+    })
+
+    it('reads nothing again for a title, layout, ui or unrelated recipe', async () => {
+        await editor({selection: ref('masking-ccdc'), chart: true})
+
+        await act(async () => actionBuilder('UNRELATED')
+            .set(['process.loadedRecipes', 'ccdc-1', 'title'], 'Renamed')
+            .set(['process.loadedRecipes', 'ccdc-1', 'layers'], {areas: {center: {}}})
+            .set(['process.loadedRecipes', 'ccdc-1', 'ui'], {initialized: true})
+            .set(['process.loadedRecipes', 'other-1'], {id: 'other-1', type: 'MOSAIC', model: {}})
+            .dispatch())
+        await settled()
+
+        expect(fake.segmentBands).toEqual(['ndvi'])
+    })
+
+    it('reads nothing again for a source selected in SRC and cancelled', async () => {
+        await editor({selection: ref('masking-ccdc'), chart: true, panel: true})
+
+        await selectRecipe('CCDC')
+        await cancel()
+
+        expect(sliceRecipe().model.source).toEqual(ref('masking-ccdc'))
+        expect(fake.segmentBands).toEqual(['ndvi'])
+    })
 })
 
 const ASSET = {type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 1}
@@ -755,6 +800,29 @@ const answerHeldLoads = async () => {
     act(() => held.forEach(answer => answer()))
     await settled()
 }
+
+// An edit to a recipe closed while its save is still settling; then the save storage acknowledges, its revision adopted.
+const saveEdit = async (id, changes) => {
+    const model = {...sliceRecordOf(id).model, ...changes}
+    await act(async () => actionBuilder('EDIT')
+        .set(['process.loadedRecipes', id, 'model'], model)
+        .set(['process.saveStates', id], {status: 'SAVING', revision: 1})
+        .dispatch())
+    await settled()
+}
+
+const saved = async id => {
+    const record = {...sliceRecordOf(id), revision: 2}
+    fake.stored[id] = record
+    await act(async () => actionBuilder('SAVED')
+        .set(['process.loadedRecipes', id], record)
+        .set(['process.saveStates', id], {status: 'SAVED', revision: 2, model: record.model})
+        .set('process.recipes', LISTING.map(summary => summary.id === id ? {...summary, revision: 2} : summary))
+        .dispatch())
+    await settled()
+}
+
+const sliceRecordOf = id => selectFrom(store.getState(), ['process.loadedRecipes', id])
 
 // A recipe the slice's source reads, edited in this session.
 const editRecord = async (id, model) => {
