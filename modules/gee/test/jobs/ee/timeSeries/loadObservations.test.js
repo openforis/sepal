@@ -5,8 +5,8 @@ import {lastValueFrom, of, throwError} from 'rxjs'
 
 // The observations a pixel chart loads. A Time Series' or a CCDC's chart reads a band of the collection, not the recipe's
 // image, and is held to what its type declares those observations require - the collection's classifier inputs -
-// judged at the clicked point, with nothing of the recipe's image described. Change Alerts asks with collection
-// settings alone and is held to nothing here. Earth Engine, the pixel geometry, the collection and recipe reads are
+// judged at the clicked point, with nothing of the recipe's image described. A Change Alerts chart reads the collection
+// it monitors, judged as that collection is; settings naming no recipe are held to nothing, and refused. Earth Engine, the pixel geometry, the collection and recipe reads are
 // substituted; the closure, the declarations and the readiness the request is held to are the real ones.
 
 describe('loading the observations of a Time Series pixel', () => {
@@ -94,19 +94,57 @@ describe('loading the observations of a CCDC pixel', () => {
     })
 })
 
-describe('loading the observations Change Alerts asks for', () => {
-    it('answers them for collection settings alone, judging and reading nothing', async () => {
+// Change Alerts' chart observes the collection of its own Sources over its calibration and monitoring periods, judged
+// as that Time Series collection is (observedCollection): its reference, whose segments the chart plots beside them,
+// and a Classification its Sources copied from the reference's producer, are no part of it.
+describe('loading the observations of a Change Alerts pixel', () => {
+    it('answers them for the collection it monitors, reading neither its reference nor a Classification its Sources copied', async () => {
+        const result = await load({recipe: CHANGE_ALERTS, bands: ['ndvi']})
+
+        assert.deepEqual(result, {features: OBSERVATIONS.map(([value, date]) => ({properties: {date: {value: date}, value}}))})
+        assert.deepEqual(state.collections, [{recipe: OBSERVED, bands: ['ndvi'], geometry: PIXEL}])
+        assert.deepEqual(state.recipeReads, [])
+        assert.deepEqual(state.recipeImages, [])
+    })
+
+    it('answers them whatever its reference\'s own segments would need', async () => {
+        const recipe = {...CHANGE_ALERTS, model: {...CHANGE_ALERTS.model, reference: {type: 'RECIPE_REF'}}}
+
+        const result = await load({recipe, bands: ['ndvi']})
+
+        assert.equal(result.features.length, OBSERVATIONS.length)
+        assert.deepEqual(state.recipeReads, [])
+    })
+
+    it('is refused, starting no chart work, where the collection it monitors cannot run, and answered once repaired', async () => {
+        const broken = planetAlerts([{}])
+
+        await assert.rejects(load({recipe: broken, bands: ['blue']}), /change-alerts-1 cannot run: its dependencies are invalid \(MALFORMED_REFERENCE\)$/)
+        assertNoChartWork()
+
+        const result = await load({recipe: planetAlerts(['users/x/planet']), bands: ['blue']})
+
+        assert.equal(result.features.length, OBSERVATIONS.length)
+    })
+
+    it('is refused, starting no chart work, where it states no complete monitoring period', async () => {
+        const recipe = {...CHANGE_ALERTS, model: {...CHANGE_ALERTS.model, date: {monitoringEnd: '2021-01-01'}}}
+
+        await assert.rejects(load({recipe, bands: ['ndvi']}), /states no complete monitoring period/)
+        assertNoChartWork()
+    })
+})
+
+describe('loading the observations of collection settings naming no recipe', () => {
+    it('is refused, starting no chart work, as no recipe anything is held to', async () => {
         const request = {model: {
             dates: {startDate: '2019-01-01', endDate: '2021-01-01'},
-            sources: {dataSets: {LANDSAT: ['LANDSAT_8']}},
+            sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, classification: CLASSIFICATION},
             options: {corrections: ['SR']}
         }}
 
-        const result = await load({recipe: request, bands: ['ndvi']})
-
-        assert.deepEqual(result, {features: OBSERVATIONS.map(([value, date]) => ({properties: {date: {value: date}, value}}))})
-        assert.deepEqual(state.collections, [{recipe: request, bands: ['ndvi'], geometry: PIXEL}])
-        assert.deepEqual(state.recipeImages, [])
+        await assert.rejects(load({recipe: request, bands: ['ndvi']}), /recipe of a type/)
+        assertNoChartWork()
         assert.deepEqual(state.recipeReads, [])
     })
 })
@@ -138,6 +176,39 @@ const CCDC = {
         options: {corrections: ['SR']}
     }
 }
+
+// Monitoring Landsat against a CCDC recipe nothing holds, its Sources still carrying a Classification copied from that
+// recipe's producer, which cannot be read either.
+const CHANGE_ALERTS = {
+    id: 'change-alerts-1',
+    type: 'CHANGE_ALERTS',
+    model: {
+        reference: {type: 'RECIPE_REF', id: 'ccdc-unreadable'},
+        date: {monitoringEnd: '2021-01-01', monitoringDuration: 6, monitoringDurationUnit: 'months', calibrationDuration: 24, calibrationDurationUnit: 'months'},
+        sources: {dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_8']}, band: 'ndvi', classification: 'classification-unreadable'},
+        options: {corrections: ['SR'], harmonics: 2}
+    }
+}
+
+// What it observes: its Sources, without the copied Classification, over calibration and monitoring.
+const OBSERVED = {
+    id: 'change-alerts-1',
+    type: 'TIME_SERIES',
+    model: {
+        dates: {startDate: '2018-07-01', endDate: '2021-01-01'},
+        sources: {dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_8']}, band: 'ndvi'},
+        options: {corrections: ['SR'], harmonics: 2}
+    }
+}
+
+// Monitoring Planet imagery merged from the assets given.
+const planetAlerts = assets => ({
+    ...CHANGE_ALERTS,
+    model: {
+        ...CHANGE_ALERTS.model,
+        sources: {dataSetType: 'PLANET', dataSets: {PLANET: ['DAILY']}, assets, band: 'blue'}
+    }
+})
 
 const classification = included => ({
     id: CLASSIFICATION,

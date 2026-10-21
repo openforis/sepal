@@ -30,7 +30,9 @@ import {loadCCDCObservations$, loadCCDCSegments$, RecipeActions} from '../change
 import styles from './chartPixel.module.css'
 
 // What the chart runs at its pixel: the reference's segments, built as the reference's own image. It and its action are
-// held to these, and watch them (changeAlertsToolbar.jsx). Its observations are read as before, held to nothing.
+// held to these, and watch them (changeAlertsToolbar.jsx). Its observations are held on the server to the collection
+// they monitor (observedCollection, lib/js/shared/src/recipe/changeAlerts), and a refusal closes the chart as any
+// failure to read them does.
 export const CHART_OPERATIONS = [PIXEL_SEGMENTS]
 
 const fields = {

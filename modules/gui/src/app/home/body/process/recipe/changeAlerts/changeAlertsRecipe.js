@@ -1,6 +1,3 @@
-import _ from 'lodash'
-
-import {monitoringDates} from '#sepal/recipe/changeAlerts/monitoringDates'
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
@@ -69,20 +66,7 @@ export const RecipeActions = id => {
 export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
     api.gee.loadCCDCSegments$({recipe: recipe.model.reference, latLng, bands})
 
-// The monitoring imagery's observations of a band of its own: the request names no Classification, which Change Alerts
-// does not use (type/changeAlerts.js). Nothing on the server identifies this collection as Change Alerts'.
-export const loadCCDCObservations$ = ({recipe, latLng, bands}) => {
-    const {monitoringEnd, calibrationStart} = monitoringDates(recipe.model)
-    return api.gee.loadTimeSeriesObservations$({
-        recipe: {model: {
-            dates: {
-                startDate: calibrationStart,
-                endDate: monitoringEnd
-            },
-            sources: _.omit(recipe.model.sources, ['classification']),
-            options: recipe.model.options
-        }},
-        latLng,
-        bands
-    })
-}
+// The monitoring imagery's observations of a band of its own: the server derives the collection this recipe observes,
+// and judges it, from the recipe as applied (observedCollection, lib/js/shared/src/recipe/changeAlerts).
+export const loadCCDCObservations$ = ({recipe, latLng, bands}) =>
+    api.gee.loadTimeSeriesObservations$({recipe, latLng, bands})

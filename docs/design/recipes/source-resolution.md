@@ -1027,7 +1027,26 @@ One read answers every consumer, so they cannot disagree:
     the one submitted. An AOI the chart does not read is no dependency of it.
   - **Undeclared types.** A typed recipe whose type declares nothing for the operation is refused
     (`UNDECLARED_OPERATION`).
-  - **Change Alerts** asks with collection settings alone and is not judged.
+  - **Change Alerts (implemented 2026-10-21).** Its chart sends the applied Change Alerts recipe. The job derives the
+    collection it monitors with `observedCollection` (`lib/js/shared/src/recipe/changeAlerts/observedCollection.js`),
+    beside `mosaicRecipe.js`. That is a `TIME_SERIES` recipe, keeping the Change Alerts id, built from:
+    - its Sources without the copied `classification`;
+    - its options;
+    - the calibration start to monitoring end from `monitoringDates`.
+
+    That recipe is held to Time Series' `PIXEL_OBSERVATIONS` at the clicked point, before the pixel or collection is
+    built, and is what `getCollection$` builds. So the request names its real consumer, and is judged by declarations
+    that already describe that collection.
+    - **Not read:** the reference, whose segments the chart plots beside the observations and which observations never
+      execute, is not in that recipe, so its closure is not loaded. Neither is a Classification the Sources copied.
+    - **Not over-read:** passing the whole Change Alerts recipe with its existing declarations would not do. The
+      closure loads every declared edge, so it would read the reference and its own dependencies. A witness at the
+      previous job showed a typed Change Alerts request refused for an unreadable reference.
+    - **Refusals:** an incomplete monitoring period is refused before any chart work, and so is a Planet Sources entry
+      that names no asset (`MALFORMED_REFERENCE`). Settings naming no recipe type are refused with a 400 instead of
+      bypassing readiness.
+    - **Compatibility:** Time Series and CCDC requests, which name their recipe, are unchanged. A browser tab running
+      the previous GUI, which sent the bare settings, is refused until it reloads.
   - **Limitation.** A `REFERENCE` dependency is still loaded with its own transitive dependencies, which then count.
 - **Pixel segments.** A segment chart's request (`/ccdc/loadSegments`, `jobs/ee/ccdc/loadSegments.js`) is held to
   readiness before any segments image is built or anything is read at its pixel:
@@ -1754,6 +1773,16 @@ is applied to every scene. It never builds the Classification's image. Readiness
        chart closes or is held.
      - Restore the original point set: Retrieve is offered, and reopening the chart returns segments.
      - With native breakpoints only, removing the points changes nothing.
+     - **Change Alerts observations.** Open a Change Alerts over a CCDC reference, monitoring Landsat, with its
+       pixel chart open. The observations series must show actual data points for the selected band, not only an
+       empty chart. In the browser's network panel, the `loadObservations` request names the recipe:
+       `type: CHANGE_ALERTS` and its id.
+     - Edit the referenced CCDC so its own segments cannot run, for example a classified breakpoint over a
+       Classification without points. The chart closes, as it does for any reference that cannot run.
+     - Restore the CCDC, and reopen the chart at the same pixel. Observation data points and segments show again.
+     - The server's independence from the reference is covered by the gee tests, since the GUI closes the chart while
+       the reference cannot run. So are its refusals, an incomplete period or a Planet entry naming no asset, which
+       the editors do not let through.
   5. **Classified outputs.**
      - Use a Time Series over an SVM Classification (C_SVC). Chart `probability_<class>`: it returns values without a
        regression error.
@@ -1903,9 +1932,9 @@ by itself, a reason to expand a recipe's validation or GUI.
 | 1 | Phenology's configured classified band needs the Classification's training readiness. | Complete (2026-10-21): the `CLASSIFIER` operation and a conditional need, reusing the existing training rules without describing the Classification's output; see "Phenology's configured classified band". | 0 |
 | 2 | CCDC's classified breakpoint bands need the same training readiness. | Complete (2026-10-21): `classifiedOutputNeed('breakpointBands')` for `IMAGE_OUTPUT` and `PIXEL_SEGMENTS`, native breakpoint controls unchanged; see "CCDC's breakpoint bands". | 0 |
 | 3 | Training readiness and output compatibility for classified bands requested by Time Series charts/downloads and CCDC charts/exports. | Design needed. Request bands are not currently arguments to readiness. GUI capability options and execution refusals already exist; introduce request-aware readiness only where it closes the remaining execution gap. | 2–4 |
-| 4 | Change Alerts' observation request needs an explicit server-side operation boundary. | Design needed. The bare `{model}` request is unguarded; use the real consumer and the collection it runs without bringing in unrelated segment-production dependencies. | 1 |
+| 4 | Change Alerts' observation request needs an explicit server-side operation boundary. | Complete (2026-10-21): the chart sends the applied recipe; the job derives the observed collection (`observedCollection`) and holds it to Time Series' `PIXEL_OBSERVATIONS`; untyped requests are refused. See "Pixel observations". | 0 |
 
-**Planning estimate: 3–5 implementation slices** for the two remaining work items, plus the browser verification
+**Planning estimate: 2–4 implementation slices** for the one remaining work item, request-dependent readiness, plus the browser verification
 checkpoint below. This is an estimate, not a count of proven defects or a promise of one commit per slice. Reassess the
 split after the request-dependent design. Design reports, review corrections and focused
 refactoring are not new rollout items.
@@ -2140,9 +2169,9 @@ extraction alone. The focused verification and two-worker limit below still appl
    downloads (`export/timeSeries.js`: tile ids, a tile's date ranges and each chunk's export, each checked before its
    own work), and by Time Series' and CCDC's pixel observations (`/timeSeries/loadObservations`, `PIXEL_OBSERVATIONS`,
    judged at the clicked point before the pixel or collection is built), and by a CCDC's own segment chart
-   (`/ccdc/loadSegments`, `PIXEL_SEGMENTS`) and a segment source's image (`IMAGE_OUTPUT`, readiness alone). Not
-   enforced, and not migrated here: Change Alerts' observations, which reach Earth Engine without consulting
-   readiness. A Classification with several inputs is
+   (`/ccdc/loadSegments`, `PIXEL_SEGMENTS`) and a segment source's image (`IMAGE_OUTPUT`, readiness alone). Change
+   Alerts' observations are now judged as the Time Series collection they observe (see "Pixel observations"). A
+   Classification with several inputs is
    not judged, though `classifyImage` refuses it.
 3. **Diagnostic-code ownership: done.** `lib/js/shared/src/recipe/output/diagnostic.js` keeps the output and
    resolution contract (`INCOMPLETE_IMAGE_OUTPUT` to `CONFLICTING_OBSERVATION`), `MISSING_ROLE`, and the band codes
@@ -2256,10 +2285,8 @@ extraction alone. The focused verification and two-worker limit below still appl
    Remaining boundaries:
 
    - **Asset segments.** An asset's segment layout is checked only by the GUI's source requirement.
-   - **Change Alerts' observation route stays unguarded.** Its chart's observations are a bare `{model}` request,
-     and `/timeSeries/loadObservations` judges nothing for a request without a recipe type. Only its segments are
-     held to readiness (completed follow-up packet 3). The observation boundary is item 4 of the current delivery
-     plan; see "Remaining boundary" below.
+   - **Change Alerts' observation route is guarded (2026-10-21).** Its chart sends the applied recipe, and the job
+     judges the collection it monitors (see "Pixel observations"). Requests naming no recipe type are refused.
    - **Limitation.** The transitive reads behind `REFERENCE` remain an acknowledged limitation.
 
 5. **Classification output compatibility: implemented for the outputs a configuration chooses (2026-10-20).**
@@ -2363,11 +2390,9 @@ Implemented:
   choosing a band of the imagery repairs it. No output declaration was added for the code: Change Alerts' editor drafts
   are judged without the runtime's answers (`sourceCandidate.js`), which such a declaration would require.
 
-Remaining boundary:
-- **Observation requests.** The GUI's bare observation request (`changeAlertsRecipe.js`) no longer names the copied
-  Classification. That is no server-side guarantee: `/timeSeries/loadObservations` judges nothing for a request
-  without a recipe type, and does not take every bare `{model}` for Change Alerts' collection. Redesigning that route
-  is separate.
+Observation requests (resolved 2026-10-21):
+- **Observation requests.** The copied Classification is now set aside on the server (`observedCollection`), not
+  trusted to the GUI. `/timeSeries/loadObservations` refuses a request naming no recipe type.
 
 **LandTrendr is excluded** from
 the classifier-validation rollout: its current Sources GUI does not offer a Classification, despite the shared

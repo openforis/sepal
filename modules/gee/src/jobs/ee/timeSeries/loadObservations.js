@@ -1,18 +1,20 @@
 import _ from 'lodash'
-import {map, mergeMap, of, switchMap, toArray} from 'rxjs'
+import {defer, map, mergeMap, of, switchMap, toArray} from 'rxjs'
 
 import {requireExecutable$} from '#gee/jobs/executionReadiness'
 import {job} from '#gee/jobs/job'
 import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import {getCollection$} from '#sepal/ee/timeSeries/collection'
+import {ClientException} from '#sepal/exception'
 import {fileName} from '#sepal/path'
+import {observedCollection} from '#sepal/recipe/changeAlerts/observedCollection'
 import {PIXEL_OBSERVATIONS} from '#sepal/recipe/output/readiness'
 
 const CHUNK_SIZE = 100
 
 const worker$ = ({
-    requestArgs: {recipe, bands, latLng}
+    requestArgs: {recipe: requested, bands, latLng}
 }) => {
 
     const aoi = {type: 'POINT', ...latLng}
@@ -37,9 +39,10 @@ const worker$ = ({
             .get('array'), 'Extract chunk'
         )
     
-    return ready$(recipe, aoi).pipe(
-        switchMap(() => toGeometry$(aoi)),
-        switchMap(geometry => getCollection$({recipe, bands, geometry}).pipe(
+    return defer(() => of(observed(requested))).pipe(
+        switchMap(recipe => ready$(recipe, aoi).pipe(map(() => recipe))),
+        switchMap(recipe => toGeometry$(aoi).pipe(map(geometry => ({recipe, geometry})))),
+        switchMap(({recipe, geometry}) => getCollection$({recipe, bands, geometry}).pipe(
             switchMap(collection => ee.getInfo$(collection.aggregate_array('system:index')).pipe(
                 switchMap(indexes => of(..._.chunk(indexes, CHUNK_SIZE))),
                 mergeMap(indexChunk =>
@@ -67,11 +70,18 @@ const worker$ = ({
 // A recipe is held to what its type declares its pixel observations require (executionReadiness.js) before the pixel or
 // the collection is built, its own image never described. The collection is observed at the clicked point, so that is
 // the recipe judged: its AOI, which nothing here reads, is no dependency of it. Establishing readiness may itself read
-// Earth Engine. Change Alerts asks with collection settings alone, no recipe, and is held to nothing here.
+// Earth Engine.
 const ready$ = (recipe, pixel) =>
-    recipe.type
-        ? requireExecutable$({recipe: atPixel(recipe, pixel), operation: PIXEL_OBSERVATIONS})
-        : of(null)
+    requireExecutable$({recipe: atPixel(recipe, pixel), operation: PIXEL_OBSERVATIONS})
+
+// What a request observes: a Time Series' or a CCDC's own collection, or the one a Change Alerts recipe monitors
+// (observedCollection). Settings naming no recipe type are no recipe anything here can hold to what it requires.
+const observed = recipe => {
+    if (!recipe?.type) {
+        throw new ClientException('Observations are loaded for a recipe of a type', {statusCode: 400})
+    }
+    return recipe.type === 'CHANGE_ALERTS' ? observedCollection(recipe) : recipe
+}
 
 const atPixel = (recipe, pixel) =>
     ({...recipe, model: {...recipe.model, aoi: pixel}})
