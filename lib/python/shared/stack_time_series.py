@@ -16,9 +16,9 @@ from xml.dom import minidom
 # Keeps GDAL's error-return behaviour this script was written for; the sandbox runs it too.
 gdal.DontUseExceptions()
 
-tile_file_pattern = re.compile(r'.*-(\d{10}-\d{10}).tif')
+# Drive inserts a hyphen before chip coordinates; Cloud Storage appends them directly.
+tile_file_pattern = re.compile(r'.*(\d{10}-\d{10})\.tif$')
 tile_dir_pattern = re.compile(r'.*-(\d{10}-\d{10})')
-chunk_file_pattern = re.compile('chunk-(.*)')
 nodata_value = 0
 
 
@@ -62,9 +62,17 @@ def get_chunks(chunk_dirs):
             dates.append(date)
         chunks.append({
             'chunk_dir': chunk_dir,
-            'dates': dates
+            'dates': dates,
+            'tile_files': get_tile_files(chunk_dir)
         })
     return chunks
+
+
+def get_tile_files(chunk_dir):
+    tile_files = {}
+    for tif_file in get_tif_files(chunk_dir):
+        tile_files.setdefault(get_tile_name(tif_file), join(chunk_dir, tif_file))
+    return tile_files
 
 
 def get_tiles(chunk_dirs):
@@ -95,6 +103,7 @@ def create_tile_stacks(metadata, chunks, tiles):
 
 def create_tile_stack(metadata, chunks, tile):
     tile_dir = tile['tile_dir']
+    tile_name = tile_dir_pattern.search(basename(tile_dir))[1]
     root = ET.Element('VRTDataset', {
         'rasterXSize': str(tile['xSize']),
         'rasterYSize': str(tile['ySize'])
@@ -103,6 +112,7 @@ def create_tile_stack(metadata, chunks, tile):
     ET.SubElement(root, 'GeoTransform').text = tile['geoTransform']
     band_nr = 0
     for chunk in chunks:
+        chunk_file = get_chunk_file(chunk, tile_name)
         for i, date in enumerate(chunk['dates']):
             band_nr = band_nr + 1
             band = ET.SubElement(root, 'VRTRasterBand', {
@@ -112,15 +122,6 @@ def create_tile_stack(metadata, chunks, tile):
             ET.SubElement(band, 'Description').text = date
             ET.SubElement(band, 'NoDataValue').text = str(nodata_value)
             source = ET.SubElement(band, 'ComplexSource')
-
-            chunk_dir = chunk['chunk_dir']
-            chunk_name = chunk_file_pattern.search(basename(chunk_dir))[1]
-            tile_name = tile_dir_pattern.search(basename(tile_dir))[1]
-            matches = sorted(glob(join(chunk_dir, '*{0}-{1}.tif'.format(chunk_name, tile_name))))
-            if matches:
-                chunk_file = matches[0]
-            else:
-                chunk_file = sorted(glob(join(chunk_dir, '*{}.tif'.format(chunk_name))))[0]
             ET.SubElement(source, 'SourceFilename', {
                 'relativeToVRT': '1',
                 'shared': '0'
@@ -154,6 +155,15 @@ def create_tile_stack(metadata, chunks, tile):
     create_tile_dir(tile_dir)
     with open(stack_file, 'w+') as text_file:
         text_file.write(vrt)
+
+
+def get_chunk_file(chunk, tile_name):
+    chunk_file = chunk['tile_files'].get(tile_name)
+    if not chunk_file:
+        raise ValueError('{} has no file for tile {}; every chunk must be split into the same tiles'.format(
+            basename(chunk['chunk_dir']), tile_name
+        ))
+    return chunk_file
 
 
 def get_dates(chunks):
@@ -203,11 +213,13 @@ def extract_chunk_tile_bands(tif_file):
 
 
 def get_tile_dir(tif_file):
-    tile_name = tile_file_pattern.match(tif_file).group(1) \
-        if tile_file_pattern.match(tif_file) \
-        else '0000000000-0000000000'
     parent_dir = join(tif_file, pardir, pardir)
-    return abspath(join(parent_dir, 'tile-' + tile_name))
+    return abspath(join(parent_dir, 'tile-' + get_tile_name(tif_file)))
+
+
+def get_tile_name(tif_file):
+    match = tile_file_pattern.match(tif_file)
+    return match.group(1) if match else '0000000000-0000000000'
 
 
 def create_tile_dir(tile_dir):
