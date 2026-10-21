@@ -15,7 +15,8 @@ const log = getLogger('timeSeriesExport')
 const CONCURRENT_CHUNKS = 3
 
 export const timeSeriesExport = async (params, {sepal, report, signal, sleep, localProcessing}) => {
-    const {description, image: {workspacePath, recipe, indicators, additionalOutputs}} = params
+    // Tasks saved before several indicators could be exported name a single indicator, and Run again replays them.
+    const {description, image: {workspacePath, recipe, indicator, indicators = [indicator], additionalOutputs}} = params
     const downloadDir = workspacePath ? join(process.env.HOME, workspacePath) : join(process.env.HOME, 'downloads', description)
     await mkdir(downloadDir, {recursive: true})
     const {tileIds} = await sepal.gee('task/timeseries/tiles', params)

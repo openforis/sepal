@@ -278,14 +278,17 @@ def create_sits_tile_files(sits_dir, tile, band):
         vrt.FlushCache()
         vrt = None
         # BuildVRT writes an absolute source path whatever it is given; keep it relative so the export can move.
-        with open(out_file, 'r') as f:
-            content = f.read()
-        content = content.replace(stack_file, rel_stack_file).replace(
-            'relativeToVRT="0"', 'relativeToVRT="1"'
-        )
-        with open(out_file, 'w') as f:
-            f.write(content)
+        set_source_relative_to_vrt(out_file, rel_stack_file)
     ds = None
+
+
+# Edits the parsed XML, as the path GDAL wrote is XML-escaped and need not match the raw path textually.
+def set_source_relative_to_vrt(vrt_file, source_file):
+    tree = ET.parse(vrt_file)
+    for source_filename in tree.iter('SourceFilename'):
+        source_filename.text = source_file
+        source_filename.set('relativeToVRT', '1')
+    tree.write(vrt_file, encoding='utf-8')
 
 
 def make_relative_to_vrt(vrt_file):

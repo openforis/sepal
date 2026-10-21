@@ -99,6 +99,16 @@ test('exports and stacks each indicator of a tile in its own directory, asking f
     ])
 })
 
+test('a task saved with a single indicator runs again for that indicator', async () => {
+    const dir = `${home}/downloads/series`
+    const sepal = fakeSepal({tileIds: ['a'], ranges: {a: [RANGE]}})
+
+    await timeSeriesExport({...params, image: {recipe: params.image.recipe, indicator: 'evi'}}, context(sepal))
+
+    assert.deepEqual(sepal.exported.map(({body}) => body.image.indicator), ['evi'])
+    assert.deepEqual(events.filter(({stack}) => stack).map(({stack}) => stack[1]), [[`${dir}/evi/0`]])
+})
+
 test('the SITS files output writes the indicators of each tile to a sits directory of that tile', async () => {
     const dir = `${home}/downloads/series`
     const sepal = fakeSepal({tileIds: ['a', 'b'], ranges: {a: [RANGE], b: [RANGE]}})

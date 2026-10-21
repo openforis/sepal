@@ -68,14 +68,27 @@ class StackTimeSeriesTest(unittest.TestCase):
 
         stacker.stack_time_series(str(self.directory), 'ndvi', str(sits_dir))
 
+        moved_sits_dir = self.move_export() / 'sits'
+        self.assertEqual(len(list(moved_sits_dir.glob('SEPAL_*_NDVI_*.vrt'))), 16)
+        self.assert_pixels(moved_sits_dir / 'SEPAL_0000000000-0000000000_NDVI_2026-07-01.vrt', '2026-07-01', 11)
+        self.assert_pixels(moved_sits_dir / 'SEPAL_0000000512-0000000512_NDVI_2026-10-10.vrt', '2026-10-10', 142)
+
+    def test_sits_files_still_read_once_moved_whatever_characters_the_export_path_holds(self):
+        self.directory = self.directory / 'forêt & "eau" <2026>'
+        self.directory.mkdir()
+        self.write_chunks(separators=('-', '-'))
+
+        stacker.stack_time_series(str(self.directory), 'ndvi', str(self.directory / 'sits'))
+
+        moved_sits_dir = self.move_export() / 'sits'
+        self.assert_pixels(moved_sits_dir / 'SEPAL_0000000512-0000000512_NDVI_2026-10-10.vrt', '2026-10-10', 142)
+
+    def move_export(self):
         moved = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, moved)
         shutil.move(self.directory, moved / 'export')
         self.directory.mkdir()
-        moved_sits_dir = moved / 'export' / 'sits'
-        self.assertEqual(len(list(moved_sits_dir.glob('SEPAL_*_NDVI_*.vrt'))), 16)
-        self.assert_pixels(moved_sits_dir / 'SEPAL_0000000000-0000000000_NDVI_2026-07-01.vrt', '2026-07-01', 11)
-        self.assert_pixels(moved_sits_dir / 'SEPAL_0000000512-0000000512_NDVI_2026-10-10.vrt', '2026-10-10', 142)
+        return moved / 'export'
 
     def assert_pixels(self, path, date, value):
         dataset = gdal.Open(str(path))
