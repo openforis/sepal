@@ -1,8 +1,5 @@
 import moment from 'moment'
 
-import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
-
 const DATE_FORMAT = 'YYYY-MM-DD'
 
 export const defaultModel = {
@@ -25,28 +22,9 @@ export const defaultModel = {
     }
 }
 
-export const RecipeActions = id => {
-    const actionBuilder = recipeActionBuilder(id)
-
-    return {
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_DIAS_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions
-                })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .dispatch()
-        }
-    }
-}
+export const retrieveTask = {}
 
 export const getDateRange = recipe => {
     const {startDate, endDate} = recipe.model.dates
     return [moment(startDate, DATE_FORMAT), moment(endDate, DATE_FORMAT)]
 }
-
-const submitRetrieveRecipeTask = recipe =>
-    submitTask(recipe, {
-        pyramidingPolicy: {'.default': 'sample'}
-    })
