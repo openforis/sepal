@@ -108,6 +108,7 @@ describe('Time Series Retrieve over a Classification Sources copied while it reg
         fake.heldLoads = []
         await open({selected: 'regression'})
 
+        expect(offers(REGRESSION)).toBe(true)
         expect(applyEnabled()).toBe(false)
         expect(shown()).not.toContain('process.retrieve.form.bands.atLeastOne')
         await apply()

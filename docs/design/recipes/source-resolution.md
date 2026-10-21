@@ -1385,8 +1385,22 @@ instead.
     unsupplied classifier inputs.
   - **Run-time-only band checks.** Requested classified bands are checked only at run time for the Time Series chart
     and Retrieve, and for CCDC export and chart bands.
-  - **Stale selections.** A stale `ui.classification` keeps classified outputs in the Time Series chart picker after
-    deselection, and Phenology keeps a chosen classified band.
+  - **Classified outputs of an unselected Classification (implemented 2026-10-21).** `selectedClassificationOfState`
+    now lets the applied `model.sources.classification` decide whether there is a Classification. With none, it offers
+    no classifier or legend capabilities, whatever `ui.classification` copy remains. With one, the precedence is
+    unchanged: session record, resolved record, then the copy while unresolved. The Time Series and CCDC charts and
+    Time Series Retrieve therefore offer no classified output after deselection. Stored copies are not deleted, and
+    nothing is loaded for this.
+    - **Regressions.** `unselectedClassification.test.jsx`, mounted over the real Sources panel, chart and Retrieve:
+      - clearing the Classification through Sources and Apply stops the Time Series and CCDC charts (CCDC's breakpoint
+        bands native) offering or requesting a classified band, and they chart a native one;
+      - Retrieve stops offering classified outputs, drops the selection under its existing policy, and submits nothing
+        until a native band is chosen;
+      - controls: reselection offers the outputs again, and Cancel leaves the applied options;
+      - `retrieveClassifiedOutputs.test.jsx` covers a selected Classification still pending.
+  - **Retaining a broken choice is a separate matter.** Phenology deliberately keeps a classified band already chosen
+    but no longer provided, so that `UNSUPPORTED_CLASSIFIED_OUTPUT` can say what is wrong beside the field and the user
+    can repair it. That is a retained choice, explained and validated, not a new offer, and it is unchanged.
   - **Several input images** are refused only at run time (`classifyImage`, PyEO); the PyEO GUI prevents them.
   - **LandTrendr** declares `CLASSIFICATION_SOURCE` without a selector, and `landTrendr.js`'s comment about always
     resolving it is stale.
