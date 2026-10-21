@@ -193,6 +193,15 @@ test('format.fractionalYearsToDate(${JSON.stringify(fractionalYears)}) === ${res
         {fractionalYears: 2020.99999, result: new Date(2020, 11, 31)},
     )
 
+test('format.yearDayOfYearToDate(${JSON.stringify(yearDayOfYear)}) === ${result}')
+    .assert(({yearDayOfYear, result}) => expect(format.yearDayOfYearToDate(yearDayOfYear)).toEqual(result))
+    .where(
+        {yearDayOfYear: 2023001, result: new Date(2023, 0, 1)},
+        {yearDayOfYear: 2023154, result: new Date(2023, 5, 3)},
+        {yearDayOfYear: 2024366, result: new Date(2024, 11, 31)},
+        {yearDayOfYear: 2023153.6, result: new Date(2023, 5, 3)},
+    )
+
 const SECOND = 1000
 const MINUTE = 60 * SECOND
 const HOUR = 60 * MINUTE
