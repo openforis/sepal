@@ -74,6 +74,7 @@ const fields = {
         .notBlank(),
     filenamePrefix: new Form.Field()
         .skip((v, {destination}) => destination !== 'SEPAL'),
+    additionalOutputs: new Form.Field(),
     crs: new Form.Field()
         .notBlank(),
     crsTransform: new Form.Field()
@@ -181,7 +182,7 @@ class _MosaicRetrievePanel extends React.Component {
     }
 
     renderContent() {
-        const {allBands, allowTiling, toSepal, toEE, inputs: {destination, assetType}} = this.props
+        const {allBands, allowTiling, toSepal, toEE, sitsOutput, inputs: {destination, assetType}} = this.props
         const {more} = this.state
         if (this.isInitialLoading()) {
             return this.renderLoading()
@@ -191,6 +192,7 @@ class _MosaicRetrievePanel extends React.Component {
                 {allBands ? null : this.renderBandOptions()}
                 {this.renderScale()}
                 {toEE && toSepal && this.renderDestination()}
+                {sitsOutput ? this.renderAdditionalOutputs() : null}
                 {destination.value === 'SEPAL' ? this.renderWorkspaceDestination() : null}
                 {destination.value === 'SEPAL' ? this.renderFilenamePrefix() : null}
                 {destination.value === 'GEE' ? this.renderAssetType() : null}
@@ -323,6 +325,22 @@ class _MosaicRetrievePanel extends React.Component {
                 options={destinationOptions}
                 disabled={this.isDestinationControlDisabled()}
                 onChange={this.onDestinationChange}/>
+        )
+    }
+
+    renderAdditionalOutputs() {
+        const {inputs: {additionalOutputs}} = this.props
+        const options = [{
+            value: 'SITS',
+            label: msg('process.retrieve.form.additionalOutputs.SITS.label'),
+            tooltip: msg('process.retrieve.form.additionalOutputs.SITS.tooltip')
+        }]
+        return (
+            <Form.Buttons
+                label={msg('process.retrieve.form.additionalOutputs.label')}
+                input={additionalOutputs}
+                multiple
+                options={options}/>
         )
     }
 
@@ -848,6 +866,7 @@ MosaicRetrievePanel.propTypes = {
         unavailable: PropTypes.func.isRequired
     }),
     single: PropTypes.any,
+    sitsOutput: PropTypes.any,
     submitTask: PropTypes.func,
     task: PropTypes.object,
     toDrive: PropTypes.any,
