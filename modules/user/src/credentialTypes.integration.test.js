@@ -26,7 +26,6 @@ mock.module('./config.js', {
 const server = await import('#sepal/httpServer')
 const {hashPassword, verifyPassword} = await import('./crypto.js')
 const {email$} = await import('./email.js')
-const {userUpdated$} = await import('./events.js')
 const {createRoutes} = await import('./routes.js')
 const {UserApi} = await import('./userApi.js')
 const {UserRepository} = await import('./userRepository.js')
@@ -43,7 +42,6 @@ describe('a credential that is not a string', () => {
     let running
     let url
     const sentEmails = []
-    const publishedUsers = []
     const provisioned = []
     const subscriptions = []
 
@@ -54,15 +52,13 @@ describe('a credential that is not a string', () => {
         running = await startServer()
         url = path => `http://127.0.0.1:${running.address().port}${path}`
         subscriptions.push(
-            email$.subscribe(message => sentEmails.push(message)),
-            userUpdated$.subscribe(user => publishedUsers.push(user))
+            email$.subscribe(message => sentEmails.push(message))
         )
     })
 
     beforeEach(async () => {
         await testDb.reset()
         sentEmails.length = 0
-        publishedUsers.length = 0
         provisioned.length = 0
     })
 
@@ -72,55 +68,6 @@ describe('a credential that is not a string', () => {
             await new Promise(resolve => running.close(resolve))
         }
         await testDb?.remove()
-    })
-
-    describe('activating an account', () => {
-        for (const [description, token] of [
-            ['a number', 0],
-            ['a boolean', true],
-            ['an object', {}],
-            ['an array', [0]]
-        ]) {
-            test(`${description} as a token activates nothing`, async () => {
-                const pending = await givenPendingUser()
-
-                const response = await request('POST', '/activate', {body: {token, password: NEW_PASSWORD}})
-
-                const stored = await repository.findByUsername(USERNAME)
-                assert.equal(response.status, 400)
-                assert.equal(stored.status, 'PENDING')
-                assert.equal(stored.passwordHash, pending.passwordHash)
-                assert.equal(stored.token, TOKEN)
-                assert.deepEqual(provisioned, [])
-                assert.deepEqual(publishedUsers, [])
-            })
-        }
-
-        test('a password that is not a string activates nothing, even with the right token', async () => {
-            const pending = await givenPendingUser()
-
-            const response = await request('POST', '/activate', {body: {token: TOKEN, password: NOT_A_PASSWORD}})
-
-            const stored = await repository.findByUsername(USERNAME)
-            assert.equal(response.status, 400)
-            assert.equal(stored.status, 'PENDING')
-            assert.equal(stored.passwordHash, pending.passwordHash)
-            assert.equal(stored.token, TOKEN)
-            assert.deepEqual(provisioned, [])
-        })
-
-        test('the account is still activated by its own token', async () => {
-            await givenPendingUser()
-
-            const response = await request('POST', '/activate', {body: {token: TOKEN, password: NEW_PASSWORD}})
-
-            const stored = await repository.findByUsername(USERNAME)
-            assert.equal(response.status, 200)
-            assert.equal(stored.status, 'ACTIVE')
-            assert.equal(verifyPassword(NEW_PASSWORD, stored.passwordHash), true)
-            assert.equal(stored.token, null)
-            assert.deepEqual(provisioned, [USERNAME])
-        })
     })
 
     describe('validating a token', () => {

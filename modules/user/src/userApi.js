@@ -222,32 +222,7 @@ export class UserApi {
         ctx.body = userToMap(unlockedUser)
     }
 
-    // An activation token never expires: the invitation may sit in an inbox for weeks, and the token
-    // is single-use anyway. A password reset token does expire — see resetPassword.
-    async activate(ctx) {
-        const {token, password} = readBody(ctx)
-        if (!isValidPassword(password)) {
-            ctx.status = 400
-            ctx.body = {message: 'Invalid request'}
-            return
-        }
-        const user = isText(token) ? await this.#repository.findByToken(token) : null
-        if (!user) {
-            ctx.status = 400
-            ctx.body = {message: 'Invalid token'}
-            return
-        }
-        await this.#repository.updatePassword(user.username, hashPassword(password))
-        await this.#repository.updateStatus(user.username, 'ACTIVE')
-        await this.#repository.invalidateToken(token)
-        // Leaving PENDING: guarantee complete provisioning (home dir, data home, keypair) — it is
-        // skipped at invite/signup so never-activated users cost no filesystem resources.
-        const activated = await this.#ensureProvisioned(await this.#repository.findByUsername(user.username))
-        publishUserUpdated(activated)
-        ctx.body = userToMap(activated)
-    }
-
-    // Unlike activation, a reset token expires, and a LOCKED user cannot reset their way back in.
+    // A reset token expires, and a LOCKED user cannot reset their way back in.
     async resetPassword(ctx) {
         const {token, password, recaptchaToken} = readBody(ctx)
         if (!(await recaptcha.isValid(recaptchaToken, 'RESET_PASSWORD'))) {
