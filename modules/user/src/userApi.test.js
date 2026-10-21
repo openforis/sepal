@@ -43,6 +43,7 @@ mock.module('./email.js', {
 })
 
 const {UserApi} = await import('./userApi.js')
+const {GoogleOAuth} = await import('./googleOAuth.js')
 const {userChanged$} = await import('./events.js')
 const api = new UserApi({repository})
 
@@ -117,6 +118,21 @@ describe('POST /unlock', () => {
         await api.unlock(ctx)
 
         assertMatches(changed(), [{username: locked.username, status: 'PENDING'}])
+    })
+})
+
+describe('GET /google/associate-account', () => {
+    test('links nothing when the sign-in was started by another user', async () => {
+        const googleOAuth = new GoogleOAuth({fetchFn: async () => assert.fail('tokens requested')})
+        const googleService = {saveTokens: async () => assert.fail('tokens saved')}
+        const api = new UserApi({repository, googleOAuth, googleService})
+        const alice = anActiveUser({username: 'alice'})
+        const malloryState = new URL(googleOAuth.redirectUrl('mallory', '/')).searchParams.get('state')
+        const ctx = {state: {currentUser: alice}, query: {code: 'mallory-code', state: malloryState}, set: () => {}}
+
+        await api.associateGoogleAccount(ctx)
+
+        assert.equal(ctx.status, 400)
     })
 })
 

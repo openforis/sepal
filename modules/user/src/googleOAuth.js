@@ -1,3 +1,5 @@
+import {createHmac, randomBytes, timingSafeEqual} from 'node:crypto'
+
 const AUTH_BASE_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 const TOKEN_URL = 'https://www.googleapis.com/oauth2/v4/token'
 const REVOKE_URL = 'https://accounts.google.com/o/oauth2/revoke'
@@ -16,6 +18,8 @@ export class GoogleOAuth {
     #redirectUri
     #fetchFn
     #clock
+    // shortcut: the state key lives per process, so a restart mid sign-in fails that sign-in; persist it if user ever runs replicas.
+    #stateKey = randomBytes(32)
 
     constructor({clientId, clientSecret, callbackBaseUrl, fetchFn, clock}) {
         this.#clientId = clientId
@@ -25,18 +29,33 @@ export class GoogleOAuth {
         this.#clock = clock
     }
 
-    redirectUrl(destinationUrl) {
+    // The state is bound to the user, so a callback carrying someone else's code links nothing (login CSRF),
+    // and holds only a local path, so the final redirect cannot leave SEPAL.
+    redirectUrl(username, destinationUrl) {
+        const path = localPath(destinationUrl)
         const params = new URLSearchParams({
             scope: SCOPE,
             prompt: 'consent',
             access_type: 'offline',
             include_granted_scopes: 'true',
-            state: destinationUrl,
+            state: `${this.#sign(username, path)}.${path}`,
             redirect_uri: this.#redirectUri,
             response_type: 'code',
             client_id: this.#clientId
         })
         return `${AUTH_BASE_URL}?${params}`
+    }
+
+    // The local path a state sends the user back to, or null when it was not issued to this user.
+    destinationPath(username, state) {
+        const separator = typeof state === 'string' ? state.indexOf('.') : -1
+        if (separator < 0) {
+            return null
+        }
+        const signature = Buffer.from(state.slice(0, separator))
+        const path = state.slice(separator + 1)
+        const expected = Buffer.from(this.#sign(username, path))
+        return signature.length === expected.length && timingSafeEqual(signature, expected) ? path : null
     }
 
     // Google reports the lifetime as a duration, so the expiry is anchored on the moment the request
@@ -85,6 +104,10 @@ export class GoogleOAuth {
         })
     }
 
+    #sign(username, path) {
+        return createHmac('sha256', this.#stateKey).update(`${username}\n${path}`).digest('base64url')
+    }
+
     async #postToken(params) {
         const response = await this.#fetchFn(TOKEN_URL, {
             method: 'POST',
@@ -100,4 +123,9 @@ export class GoogleOAuth {
         }
         return data
     }
+}
+
+const localPath = destinationUrl => {
+    const {pathname, search, hash} = URL.parse(destinationUrl ?? '/', 'http://local') ?? new URL('http://local/')
+    return `/${pathname.replace(/^\/+/, '')}${search}${hash}`
 }

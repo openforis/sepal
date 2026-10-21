@@ -346,7 +346,8 @@ export class UserApi {
     }
 
     async googleAccessRequestUrl(ctx) {
-        ctx.body = {url: this.#googleOAuth.redirectUrl(ctx.query.destinationUrl)}
+        const {username} = ctx.state.currentUser
+        ctx.body = {url: this.#googleOAuth.redirectUrl(username, ctx.query.destinationUrl)}
     }
 
     // A meta-refresh rather than a redirect, so Google's querystring survives the hop intact.
@@ -358,10 +359,16 @@ export class UserApi {
 
     async associateGoogleAccount(ctx) {
         const {username} = ctx.state.currentUser
+        const destination = this.#googleOAuth.destinationPath(username, ctx.query.state)
+        if (!destination) {
+            ctx.status = 400
+            ctx.body = {message: 'Invalid state'}
+            return
+        }
         const tokens = await this.#googleOAuth.requestTokens(ctx.query.code)
         await this.#googleService.saveTokens(username, tokens)
         ctx.set('sepal-user-updated', username)
-        ctx.redirect(ctx.query.state)
+        ctx.redirect(destination)
     }
 
     // No tokens are passed: refreshGoogleTokens loads the user's stored ones itself.
