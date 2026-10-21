@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import {describe, it, mock, test} from 'node:test'
 
+import {ClientException} from '#sepal/exception'
 import {callsOf} from '#sepal/testSupport/mock'
 
 import {instanceName} from '../instanceName.js'
@@ -48,7 +49,7 @@ describe('requestSession', () => {
         const {mgr, events} = build({budgetClient})
 
         await assert.rejects(
-            mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 't'})
+            mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 'T3aSmall'})
         )
 
         assert.equal(events.emitWorkerSessionRequested.mock.callCount(), 0)
@@ -62,7 +63,7 @@ describe('requestSession', () => {
         const repo = makeRepo()
         repo.insert = mock.fn(async () => {order.push('insert')})
         const {mgr} = build({repo, instanceManager})
-        await mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 't'})
+        await mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 'T3aSmall'})
         assert.deepEqual(order, ['requestInstance', 'insert'])
     })
 
@@ -70,7 +71,7 @@ describe('requestSession', () => {
         const lockedUsers = makeLockedUsers(['a'])
         const {mgr, repo} = build({lockedUsers})
         assert.notEqual(
-            await mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 't'}),
+            await mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 'T3aSmall'}),
             undefined
         )
         assert.equal(repo.insert.mock.callCount(), 1)
@@ -87,7 +88,7 @@ describe('requestSession', () => {
                 const budgetClient = makeBudgetClient({check: mock.fn(async () => ({exceeded: true, reason}))})
                 const {mgr, repo, instanceManager} = build({budgetClient})
                 await assert.rejects(
-                    mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 't'}),
+                    mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 'T3aSmall'}),
                     Expected
                 )
                 assert.equal(instanceManager.requestInstance.mock.callCount(), 0)
@@ -102,7 +103,7 @@ describe('requestSession', () => {
             const lockedUsers = makeLockedUsers(['a'])
             const {mgr, repo, instanceManager} = build({lockedUsers, budgetClient: unreachable()})
             await assert.rejects(
-                mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 't'}),
+                mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 'T3aSmall'}),
                 InstanceBudgetExceeded
             )
             assert.deepEqual(callsOf(lockedUsers.isLocked), [['a']])
@@ -114,7 +115,7 @@ describe('requestSession', () => {
             const lockedUsers = makeLockedUsers()
             const {mgr, repo} = build({lockedUsers, budgetClient: unreachable()})
             assert.notEqual(
-                await mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 't'}),
+                await mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 'T3aSmall'}),
                 undefined
             )
             assert.deepEqual(callsOf(lockedUsers.isLocked), [['a']])
@@ -127,9 +128,22 @@ describe('requestSession', () => {
         const lockedUsers = makeLockedUsers(['a'])
         const {mgr, repo} = build({lockedUsers, budgetClient: null})
         await assert.rejects(
-            mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 't'}),
+            mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 'T3aSmall'}),
             InstanceBudgetExceeded
         )
+        assert.equal(repo.insert.mock.callCount(), 0)
+    })
+
+    test('instance type outside the catalog → ClientException, no budget check, instance or insert', async () => {
+        const {mgr, repo, instanceManager, budgetClient} = build()
+
+        await assert.rejects(
+            mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 'p5.48xlarge'}),
+            ClientException
+        )
+
+        assert.equal(budgetClient.check.mock.callCount(), 0)
+        assert.equal(instanceManager.requestInstance.mock.callCount(), 0)
         assert.equal(repo.insert.mock.callCount(), 0)
     })
 })
@@ -188,7 +202,7 @@ describe('closeSession', () => {
     test('two-step: update(CLOSED) THEN releaseInstance, then WorkerSessionClosed', async () => {
         const order = []
         const repo = makeRepo({getSession: () => session({state: State.ACTIVE})})
-        repo.update = mock.fn(async s => {order.push(`update:${s.state}`)})
+        repo.update = mock.fn(async s => { order.push(`update:${s.state}`); return true })
         const instanceManager = makeInstanceManager({
             releaseInstance: mock.fn(async id => {order.push(`release:${id}`)}),
         })
@@ -211,6 +225,16 @@ describe('closeSession', () => {
             /Session not owned by user/
         )
         assert.equal(repo.update.mock.callCount(), 0)
+        assert.equal(instanceManager.releaseInstance.mock.callCount(), 0)
+        assert.equal(events.emitWorkerSessionClosed.mock.callCount(), 0)
+    })
+
+    // Releasing twice would drop a claim the instance's next session may already hold.
+    test('closed concurrently after it was read → neither releases nor emits', async () => {
+        const repo = makeRepo({getSession: () => session({state: State.ACTIVE})})
+        repo.update = mock.fn(async () => false)
+        const {mgr, instanceManager, events} = build({repo})
+        await mgr.closeSession({sessionId: 's-1'})
         assert.equal(instanceManager.releaseInstance.mock.callCount(), 0)
         assert.equal(events.emitWorkerSessionClosed.mock.callCount(), 0)
     })
@@ -417,6 +441,14 @@ describe('heartbeat', () => {
         const {mgr} = build({repo})
         await assert.rejects(mgr.heartbeat({sessionId: 's-1'}), {statusCode: 404})
         assert.equal(repo.update.mock.callCount(), 0)
+    })
+
+    test('closed between its read and its write → 404', async () => {
+        const repo = makeRepo({getSession: () => session({state: State.ACTIVE})})
+        repo.update = mock.fn(async () => false)
+        const {mgr} = build({repo})
+        await assert.rejects(mgr.heartbeat({sessionId: 's-1', interaction: true}), {statusCode: 404})
+        assert.equal(repo.extendSession.mock.callCount(), 0)
     })
 
     test('unknown session → 404 (not the plain-Error 500)', async () => {
@@ -877,7 +909,7 @@ const makeRepo = (canned = {}) => {
     return {
         calls,
         insert: mock.fn(async s => record('insert', s)),
-        update: mock.fn(async s => record('update', s)),
+        update: mock.fn(async s => { record('update', s); return true }),
         getSession: mock.fn(async id => {
             record('getSession', id)
             if (canned.getSession) return canned.getSession(id)

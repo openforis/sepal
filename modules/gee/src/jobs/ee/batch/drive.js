@@ -1,6 +1,6 @@
 import {google} from 'googleapis'
 import moment from 'moment'
-import {catchError, EMPTY, expand, from, map, of, reduce, switchMap, throwError} from 'rxjs'
+import {catchError, defer, EMPTY, expand, map, of, reduce, switchMap, throwError} from 'rxjs'
 
 import {NotFoundException} from '#sepal/exception'
 import {getLogger} from '#sepal/log'
@@ -138,7 +138,9 @@ export const drive = ({sepalUser}) => {
                     parents: [parentId]
                 },
                 fields: 'id'
-            })
+            }),
+        // Not retried: a create that failed after Drive applied it would leave a duplicate folder.
+        {maxRetries: 0}
         )
 
     /**
@@ -206,14 +208,13 @@ export const drive = ({sepalUser}) => {
         return oAuth2Client
     }
 
-    const drive$ = (message, op) => {
+    const drive$ = (message, op, retryConfig = RETRY_CONFIG) => {
         log.debug(() => message)
         const drive = google.drive({version: 'v3', auth: auth()})
-        return from(op(drive)).pipe(
+        return defer(() => op(drive)).pipe(
             map(({data}) => data),
-            autoRetry(RETRY_CONFIG)
+            autoRetry(retryConfig)
         )
-
     }
 
     const and = (...conditions) =>

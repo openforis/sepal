@@ -37,12 +37,6 @@ const endpoints = [
     },
     {
         prefix: false,
-        path: '/api/user/activate',
-        target: `http://${modules.user}/activate`,
-        authenticate: false
-    },
-    {
-        prefix: false,
         path: '/api/user/validate',
         target: `http://${modules.user}/validate`,
         authenticate: false

@@ -11,7 +11,10 @@ mock.module('googleapis', {
     exports: {
         google: {
             auth: {OAuth2: class {setCredentials() {}}},
-            drive: () => ({files: {list: async params => ({data: list(params)})}})
+            drive: () => ({files: {list: async params => {
+                if (state.failures-- > 0) throw Object.assign(new Error('Backend Error'), {code: 503})
+                return {data: list(params)}
+            }}})
         }
     }
 })
@@ -27,6 +30,7 @@ beforeEach(() => {
         {id: 'f1', name: 'f1', parent: 'exports'}
     ]
     state.pages = {}
+    state.failures = 0
 })
 
 test('a folder listing gathers the files of every page', async () => {
@@ -58,6 +62,15 @@ test('a path with an empty name in it matches no folder', async () => {
         lastValueFrom(drive({sepalUser: ALICE}).listFiles$({path: 'SEPAL/exports/'})),
         {statusCode: 404}
     )
+})
+
+test('a transient Drive failure is retried with a fresh request', async () => {
+    state.pages.f1 = [{files: [{id: 'a', name: 'a.tif', size: '1'}]}]
+    state.failures = 1
+
+    const files = await lastValueFrom(drive({sepalUser: ALICE}).listFiles$({path: 'SEPAL/exports/f1'}))
+
+    assert.deepEqual(files, [{id: 'a', name: 'a.tif', size: '1'}])
 })
 
 // A query without a name condition matches every folder under the parent, as Drive does.

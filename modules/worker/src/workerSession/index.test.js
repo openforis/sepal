@@ -22,7 +22,7 @@ const timedOutSession = createWorkerSession({
 })
 
 const makeRepo = () => ({
-    update: mock.fn(async () => {}),
+    update: mock.fn(async () => true),
     getSession: mock.fn(async () => timedOutSession),
     sessionOnInstance: mock.fn(async () => null),
     sessions: mock.fn(async () => []),

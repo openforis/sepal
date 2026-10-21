@@ -15,7 +15,7 @@ describe('GoogleOAuth', () => {
 
     describe('redirectUrl', () => {
         test('sends the user to Google with the consent this module needs', () => {
-            const url = new URL(oauth().redirectUrl(DESTINATION))
+            const url = new URL(oauth().redirectUrl(USERNAME, DESTINATION))
 
             const params = url.searchParams
             assert.equal(url.origin + url.pathname, 'https://accounts.google.com/o/oauth2/v2/auth')
@@ -24,11 +24,36 @@ describe('GoogleOAuth', () => {
             assert.equal(params.get('access_type'), 'offline')
             assert.equal(params.get('prompt'), 'consent')
             assert.equal(params.get('include_granted_scopes'), 'true')
-            assert.equal(params.get('state'), DESTINATION)
             assert.equal(params.get('redirect_uri'), REDIRECT_URI)
             assert.equal(params.get('scope'), 'https://www.googleapis.com/auth/earthengine'
             + ' https://www.googleapis.com/auth/drive'
             + ' https://www.googleapis.com/auth/cloudplatformprojects.readonly')
+        })
+    })
+
+    describe('destinationPath', () => {
+        test('sends the user who started the sign-in back to the path they came from', () => {
+            const client = oauth()
+
+            const path = client.destinationPath(USERNAME, stateOf(client.redirectUrl(USERNAME, DESTINATION)))
+
+            assert.equal(path, '/app?tab=account')
+        })
+
+        test('refuses a state issued to another user', () => {
+            const client = oauth()
+
+            const path = client.destinationPath(USERNAME, stateOf(client.redirectUrl('mallory', DESTINATION)))
+
+            assert.equal(path, null)
+        })
+
+        test('never sends the user off SEPAL', () => {
+            const client = oauth()
+
+            const path = client.destinationPath(USERNAME, stateOf(client.redirectUrl(USERNAME, 'https://evil.example//evil.example/x')))
+
+            assert.equal(path, '/evil.example/x')
         })
     })
 
@@ -136,5 +161,8 @@ describe('GoogleOAuth', () => {
     const CLIENT_SECRET = 'csecret'
     const CALLBACK_BASE_URL = 'https://sepal.example.org'
     const REDIRECT_URI = 'https://sepal.example.org/api/user/google/access-request-callback'
-    const DESTINATION = 'https://sepal.example.org/app'
+    const USERNAME = 'alice'
+    const DESTINATION = 'https://sepal.example.org/app?tab=account'
+
+    const stateOf = url => new URL(url).searchParams.get('state')
 })

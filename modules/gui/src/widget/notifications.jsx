@@ -89,7 +89,7 @@ class _Notifications extends React.Component {
         const copyable = level === 'error' || error
         return title || copyable
             ? (
-                <Layout type='horizontal-no-wrap'>
+                <Layout type='horizontal-nowrap'>
                     <div className={styles.title}>
                         {title}
                     </div>

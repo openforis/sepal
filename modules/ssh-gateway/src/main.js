@@ -62,7 +62,7 @@ const writeSession$ = session => {
         -oUserKnownHostsFile=/dev/null \
         -oBatchMode=yes \
         -p 222 \
-        ${session.host} $1${interactive ? ' 2> >(grep -v "closed by remote host" >&2)' : ''}`
+        ${session.host} "$1"${interactive ? ' 2> >(grep -v "closed by remote host" >&2)' : ''}`
         // The one-shot "terminal opened" extension, before handing the user their shell: from
         // here on the terminal's liveness comes from pty atime sampled inside the container, and
         // nothing keeps an untouched connection alive.

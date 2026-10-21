@@ -101,7 +101,7 @@ describe('Time Series Retrieve over a Classification Sources copied while it reg
 
         await click(NATIVE)
         await apply()
-        expect(indicators()).toEqual([NATIVE])
+        expect(indicators()).toEqual([[NATIVE]])
     })
 
     it('holds the regression selected while the Classification is read, submitting nothing and saying nothing wrong', async () => {
@@ -133,7 +133,21 @@ describe('Time Series Retrieve over a Classification Sources copied while it reg
         await answerHeldLoads()
         await apply()
 
-        expect(indicators()).toEqual(['probability_1'])
+        expect(indicators()).toEqual([['probability_1']])
+    })
+
+    it('holds a native and classified selection together until the Classification is read, then submits both indicators', async () => {
+        fake.heldLoads = []
+        await open({selected: [NATIVE, 'probability_1']})
+
+        expect(applyEnabled()).toBe(false)
+        await submitForm()
+        expect(fake.submitted).toEqual([])
+
+        await answerHeldLoads()
+        await apply()
+
+        expect(indicators()).toEqual([[NATIVE, 'probability_1']])
     })
 
     it('submits a band of the images while the Classification is read, as before', async () => {
@@ -142,7 +156,7 @@ describe('Time Series Retrieve over a Classification Sources copied while it reg
 
         await apply()
 
-        expect(indicators()).toEqual([NATIVE])
+        expect(indicators()).toEqual([[NATIVE]])
     })
 
     it('offers the Classification as the session holds it once it does, over what storage and the copy say', async () => {
@@ -166,7 +180,7 @@ describe('Time Series Retrieve over a Classification Sources copied while it reg
 
         await saved(CLASSIFICATION)
         await apply()
-        expect(indicators()).toEqual(['regression'])
+        expect(indicators()).toEqual([['regression']])
     })
 
     it('submits a band of the images while a Classification is being saved, as before', async () => {
@@ -174,7 +188,7 @@ describe('Time Series Retrieve over a Classification Sources copied while it reg
 
         await apply()
 
-        expect(indicators()).toEqual([NATIVE])
+        expect(indicators()).toEqual([[NATIVE]])
     })
 
     it('offers it as storage holds it again once a newer revision is listed, reading it again', async () => {
@@ -261,7 +275,7 @@ const submitForm = async () => {
     await settled()
 }
 
-const indicators = () => fake.submitted.map(({params}) => params.image.indicator)
+const indicators = () => fake.submitted.map(({params}) => [].concat(params.image.indicators))
 
 const settled = async () => {
     for (let i = 0; i < 8; i++) {

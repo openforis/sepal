@@ -214,7 +214,10 @@ export const acceptPrivacyPolicy$ = () =>
 
 export const changeCurrentUserPassword$ = ({oldPassword, newPassword}) =>
     api.user.changePassword$({oldPassword, newPassword}).pipe(
-        switchMap(() => api.user.invalidateOtherSessions$())
+        switchMap(result => result.status === 'success'
+            ? api.user.invalidateOtherSessions$().pipe(map(() => result))
+            : of(result)
+        )
     )
 
 export const sshKeys$ = () => api.user.sshKeys$()

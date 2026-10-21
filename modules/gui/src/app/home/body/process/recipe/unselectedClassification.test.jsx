@@ -170,7 +170,7 @@ describe('Time Series Retrieve asked for a regression of the Classification its 
 
         await click(NATIVE)
         await retrieve()
-        expect(indicators()).toEqual([NATIVE])
+        expect(indicators()).toEqual([[NATIVE]])
     })
 })
 
@@ -254,7 +254,7 @@ const submitForm = async () => {
     await settled()
 }
 
-const indicators = () => fake.submitted.map(({params}) => params.image.indicator)
+const indicators = () => fake.submitted.map(({params}) => [].concat(params.image.indicators))
 
 // In Sources, where the classification is chosen under More, and cleared with the control its selector offers.
 const clearClassification = async label => {

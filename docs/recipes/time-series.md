@@ -48,10 +48,10 @@ the count whatever is asked for: neither a selection nor `outputBands` is read, 
 returns `count`.
 
 The collection's measures - what the chart plots and Retrieve downloads - are not bands of this image: the chart asks
-for the observations of a collection band at a pixel, and Retrieve submits `timeseries.download`, exporting one
-indicator of the collection to SEPAL. The download is still held to this image's readiness, since what it requires
-concerns the collection both build; the indicator is not required to be one of its bands, and nothing validates the
-indicator itself. Its three Earth Engine requests (`modules/gee/src/jobs/task/export/timeSeries.js`) check
+for the observations of a collection band at a pixel, and Retrieve submits `timeseries.download`, exporting the
+indicators of the collection it names to SEPAL. The download is still held to this image's readiness, since what it
+requires concerns the collection both build; the indicators are not required to be its bands, and nothing validates
+them. Its three Earth Engine requests (`modules/gee/src/jobs/task/export/timeSeries.js`) check
 independently: the tile ids before the AOI is tiled, a tile's date ranges before any imagery check, and each chunk's
 export before its collection is built, a destination prepared or the export submitted. The chart's observation
 request (`modules/gee/src/jobs/ee/timeSeries/loadObservations.js`) is held to what this type declares its pixel
@@ -60,6 +60,21 @@ That check runs before the request builds the pixel or the collection or evaluat
 at the clicked point: its AOI, which the chart does not read, is not required, and the submitted recipe is unchanged.
 The bands it charts are not checked against `count`, and the count image is not described. CCDC's observations are
 held the same way; Change Alerts asks with collection settings alone and is not.
+
+The task (`modules/task/src/runner/operations/timeSeriesExport.js`) exports one indicator per Earth Engine chunk
+request and lays the download out band first:
+
+```
+<export>/<indicator>/<tile>/chunk-<start>_<end>/   chunks as Earth Engine wrote them
+<export>/<indicator>/<tile>/stack.vrt, dates.csv   one band per date, from sepal-stack-time-series
+<export>/sits/<tile>/SEPAL_<chip>_<INDICATOR>_<date>.vrt
+```
+
+Each `<export>/<indicator>/` is laid out as a complete single-indicator download, so a tool that reads time series
+downloads is pointed at that folder. The `sits/` folder is written only when the SITS files
+additional output is chosen: thin VRTs over each indicator's `stack.vrt`, through relative paths so the export can
+move, named for a sits `local_cube` with `parse_info = c("X1", "tile", "band", "date")`. It has a folder per tile
+because chip names repeat across tiles; load one tile folder as a cube.
 
 The GUI registration states a time series is no image source (`imageSource: false`), which keeps it out of other
 recipes' source pickers; declaring the image does not make it an input. Reached through the API or a saved model anyway,
@@ -113,7 +128,11 @@ Earth Engine is asked.
 - `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js` - the read, presentation, preset style,
   the map's product, and a recipe over broken dependencies not previewed.
 - `modules/gui/src/app/home/body/process/recipe/timeSeries/timeSeriesWorkflow.test.js` - kept out of Masking's
-  pickers, and Retrieve submitting `timeseries.download` for the indicator named.
+  pickers, and Retrieve submitting `timeseries.download` for the indicators and additional outputs named.
+- `modules/task/src/runner/operations/timeSeriesExport.test.js` - the band-first layout, one chunk request per
+  indicator, and the per-tile `sits/` folders.
+- `lib/python/shared/test_stack_time_series.py` - stacking chunks, and sits files that still read their pixels once the
+  export has moved.
 - `modules/gee/test/jobs/task/export/imageAssetExport.test.js` - an image export records no encoding, reads no recipe, and fails
   over an AOI recipe that cannot be read.
 - `modules/gee/test/jobs/task/export/timeSeries.test.js` - each download request refused for an incompatible

@@ -11,7 +11,6 @@ export const createRoutes = ({userApi, sshKeyApi}) => router => router
     .post('/auth/password', ctx => userApi.authPassword(ctx))
     .get('/auth/authorized-keys', ctx => sshKeyApi.authorizedKeys(ctx))
     .get('/nss/snapshot', ctx => userApi.nssSnapshot(ctx))
-    .post('/activate', ctx => userApi.activate(ctx))
     .post('/authenticate', ctx => userApi.authenticate(ctx))
     .get('/google/access-request-callback', ctx => userApi.googleAccessRequestCallback(ctx))
     .post('/password/reset', ctx => userApi.resetPassword(ctx))

@@ -18,6 +18,8 @@ const Clients = () => {
         }
     }
 
+    const has = clientId => !!clients[clientId]
+
     const add = (username, clientId, ws, sessionId) => {
         clients[clientId] = {username, ws, sessionId, subscriptions: {}}
         log.debug(`${clientTag(username, clientId)} added to clients, now ${Object.keys(clients).length}`)
@@ -136,7 +138,7 @@ const Clients = () => {
         return usernames.forEach(username => callback(username))
     }
 
-    return {add, get, remove, addSubscription, removeSubscription, getSubscriptions, send, broadcast, forEach, forEachUser, sendByUsername, sendEventToUser, sendEventToClient, sendEventToSession, broadcastEvent}
+    return {add, has, get, remove, addSubscription, removeSubscription, getSubscriptions, send, broadcast, forEach, forEachUser, sendByUsername, sendEventToUser, sendEventToClient, sendEventToSession, broadcastEvent}
 }
 
 export {Clients}

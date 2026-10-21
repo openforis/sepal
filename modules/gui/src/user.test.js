@@ -8,12 +8,15 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 // response has gone out, so their reload lands as the new user.
 
 const browser = {session: null}
-const server = {resetAccepted: true, destroyedSessions: [], logouts: 0, otherSessionsInvalidatedFor: []}
+const server = {resetAccepted: true, oldPassword: 'old-password', destroyedSessions: [], logouts: 0, otherSessionsInvalidatedFor: []}
 let nextSessionId = 1
 vi.mock('~/apiRegistry', () => ({
     default: {
         user: {
             loadCurrentUser$: () => of(browser.session ? {username: browser.session.username} : null),
+            changePassword$: ({oldPassword}) => of(oldPassword === server.oldPassword
+                ? {status: 'success', message: 'Password changed'}
+                : {status: 'failure', message: 'Invalid old password'}),
             resetPassword$: () => server.resetAccepted ? of({}) : throwError(() => new Error('Invalid token')),
             logout$: () => {
                 server.logouts++
@@ -59,7 +62,7 @@ vi.mock('~/store', () => ({select: () => undefined}))
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}, warning: () => {}}}))
 
-const {login$, logout$, resetPassword$, startLoggedOff$} = await import('./user')
+const {changeCurrentUserPassword$, login$, logout$, resetPassword$, startLoggedOff$} = await import('./user')
 const {notePreviousUsername, takePreviousUsername} = await import('./loginSession')
 
 const RESET = {token: 't-1', username: 'bob', password: 'new-password-123', type: 'reset', recaptchaToken: 'r'}
@@ -125,6 +128,27 @@ describe('logout$', () => {
         await firstValueFrom(logout$())
 
         expect(takePreviousUsername()).toBeNull()
+    })
+})
+
+describe('changeCurrentUserPassword$', () => {
+    beforeEach(() => {
+        browser.session = {id: 's-alice', username: 'alice'}
+        server.otherSessionsInvalidatedFor.length = 0
+    })
+
+    it('reports success and invalidates the other sessions when the old password is right', async () => {
+        const result = await firstValueFrom(changeCurrentUserPassword$({oldPassword: server.oldPassword, newPassword: 'new-password-123'}))
+
+        expect(result.status).toBe('success')
+        expect(server.otherSessionsInvalidatedFor).toEqual(['alice'])
+    })
+
+    it('reports the failure and leaves the other sessions alone when the old password is wrong', async () => {
+        const result = await firstValueFrom(changeCurrentUserPassword$({oldPassword: 'wrong', newPassword: 'new-password-123'}))
+
+        expect(result.status).toBe('failure')
+        expect(server.otherSessionsInvalidatedFor).toEqual([])
     })
 })
 

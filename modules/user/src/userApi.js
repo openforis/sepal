@@ -222,32 +222,7 @@ export class UserApi {
         ctx.body = userToMap(unlockedUser)
     }
 
-    // An activation token never expires: the invitation may sit in an inbox for weeks, and the token
-    // is single-use anyway. A password reset token does expire — see resetPassword.
-    async activate(ctx) {
-        const {token, password} = readBody(ctx)
-        if (!isValidPassword(password)) {
-            ctx.status = 400
-            ctx.body = {message: 'Invalid request'}
-            return
-        }
-        const user = isText(token) ? await this.#repository.findByToken(token) : null
-        if (!user) {
-            ctx.status = 400
-            ctx.body = {message: 'Invalid token'}
-            return
-        }
-        await this.#repository.updatePassword(user.username, hashPassword(password))
-        await this.#repository.updateStatus(user.username, 'ACTIVE')
-        await this.#repository.invalidateToken(token)
-        // Leaving PENDING: guarantee complete provisioning (home dir, data home, keypair) — it is
-        // skipped at invite/signup so never-activated users cost no filesystem resources.
-        const activated = await this.#ensureProvisioned(await this.#repository.findByUsername(user.username))
-        publishUserUpdated(activated)
-        ctx.body = userToMap(activated)
-    }
-
-    // Unlike activation, a reset token expires, and a LOCKED user cannot reset their way back in.
+    // A reset token expires, and a LOCKED user cannot reset their way back in.
     async resetPassword(ctx) {
         const {token, password, recaptchaToken} = readBody(ctx)
         if (!(await recaptcha.isValid(recaptchaToken, 'RESET_PASSWORD'))) {
@@ -346,7 +321,8 @@ export class UserApi {
     }
 
     async googleAccessRequestUrl(ctx) {
-        ctx.body = {url: this.#googleOAuth.redirectUrl(ctx.query.destinationUrl)}
+        const {username} = ctx.state.currentUser
+        ctx.body = {url: this.#googleOAuth.redirectUrl(username, ctx.query.destinationUrl)}
     }
 
     // A meta-refresh rather than a redirect, so Google's querystring survives the hop intact.
@@ -358,10 +334,16 @@ export class UserApi {
 
     async associateGoogleAccount(ctx) {
         const {username} = ctx.state.currentUser
+        const destination = this.#googleOAuth.destinationPath(username, ctx.query.state)
+        if (!destination) {
+            ctx.status = 400
+            ctx.body = {message: 'Invalid state'}
+            return
+        }
         const tokens = await this.#googleOAuth.requestTokens(ctx.query.code)
         await this.#googleService.saveTokens(username, tokens)
         ctx.set('sepal-user-updated', username)
-        ctx.redirect(ctx.query.state)
+        ctx.redirect(destination)
     }
 
     // No tokens are passed: refreshGoogleTokens loads the user's stored ones itself.
