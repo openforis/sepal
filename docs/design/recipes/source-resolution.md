@@ -1191,15 +1191,41 @@ and recovery. It does not migrate every outstanding rule.
   - existing tests updated where they pinned the old behaviour: a provider without imagery, a provider not loaded,
     and the readiness-needs validation message.
 
-**Deferred: configuration-known absence of training data.** `noTrainingData` still counts any `RECIPE` set as
-present. Deciding from configuration that every provider, recursively, contributes no point needs a recursive
-treatment that:
-- keeps mixed sets ready;
-- waits for missing records;
-- never rejects an otherwise executable empty provider for contributing nothing.
-
-A provider without points, beside a consumer without its own, therefore still runs into Earth Engine's refusal to
-train on nothing.
+**Configuration-known absence of training data (implemented 2026-10-21).**
+- **Context extension.** `recordsOf(role, of = recipe)` (`resolveImageOutput.js`) can be asked of a record the
+  requirement already holds, over the same resolved graph. It is null while any selected record is not held.
+  `declares(record, operation)` says whether that record's type declares an operation (`declaresOperation`,
+  `output/readiness.js`), the same judgement `UNDECLARED_OPERATION` is made by.
+- **Rule** (`trainingData.js`, beside `NO_TRAINING_DATA`). `noTrainingData(model, {recordsOf})` establishes absence
+  only where:
+  - no data set stores a point;
+  - each `RECIPE` set resolves to a held record;
+  - that record's type declares `TRAINING_DATA`, asked through the context's `declares(record, operation)`, which uses
+    the traversal's own `readinessFor`;
+  - and it establishes the same, recursively.
+  - **Memoised per call.** A diamond's shared provider is judged once.
+  - **Nothing else establishes absence.** A provider reached again while it is still being judged establishes
+    nothing; a cycle stays the `dependencyValidity` problem. Nor do a missing or unreadable record (pending or
+    unavailable, as before), a reference resolving to no record (malformed), or a provider whose type produces no
+    training data, which keeps only its `UNDECLARED_OPERATION`, whatever its model holds.
+  - **Without the read's records** (no context, as for the GUI's collection guard `hasTrainingData`), a reused recipe
+    is never taken for none.
+  - **Classification.** `missingTrainingData(model, context)` keeps the decision-tree exemption first.
+  - **Role.** `TRAINING_DATA_SOURCE` now lives in `trainingData.js`, and both types re-export it.
+- **Where it is found.** Absence is a finding of the consumer's `IMAGE_OUTPUT` only, at its training data. An empty
+  provider's `TRAINING_DATA` stays ready, so no training-data item is marked.
+- **GUI.** The existing `NO_TRAINING_DATA` declaration says it: Regression's TRN is marked and Classification's stays
+  unmarked, while Retrieve, layers and recipes over it hold.
+- **Backend.** `requireExecutable$` refuses an export with `NO_TRAINING_DATA` before building anything.
+- **Regressions:**
+  - `lib/js/shared/test/recipe/trainingDataAbsence.test.js`, both types: direct and nested empty chains, mixed
+    branches, missing and malformed references, a diamond, a cycle, repair and reversal, an empty provider staying
+    ready for `TRAINING_DATA`, the call without context, and the decision tree;
+  - the unsupported-provider case in `trainingDataReadiness.test.js`, kept without `NO_TRAINING_DATA`;
+  - `reusedTrainingDataFeedback.test.jsx`, mounted: Retrieve held, toolbar policies, no item marked, repair;
+  - `imageAssetExport.test.js`: an export refused and then repaired upstream.
+- **Boundary.** This establishes that configured points exist, not that they survive masking, cover the imagery or
+  suffice for training.
 
 **Remaining gap, which no slice establishes yet:**
 - **Sampled-feature compatibility.** The consumer trains on the provider's samples under its own band order. Whether
@@ -1214,8 +1240,8 @@ native-band classifier-input policy and is a separate decision.
 #### Regression training data (implemented)
 
 - **Shared.** `trainingData.js` holds `noTrainingData` and `trainingDataRequirement`. Classification uses them with
-  `requiresTraining`; Regression uses `noTrainingData` alone. A `RECIPE` data set counts as training data, its points
-  unknown until execution reads them. Every other data set - an Earth Engine table, image samples - runs on the points
+  `requiresTraining`; Regression uses `noTrainingData` alone. A `RECIPE` data set counts as training data unless the
+  recipes it reuses are known to store none (see "Configuration-known absence of training data"). Every other data set - an Earth Engine table, image samples - runs on the points
   it stores, so none stored is none at all. Whether enough points survive masking, or lie within the imagery, is not
   judged.
 - **GUI.** Regression declares `trainingDataRequirements` beside `inputImageryRequirements`, its TRN button is a
@@ -1227,8 +1253,10 @@ native-band classifier-input policy and is a separate decision.
 
 #### Required input imagery (implemented)
 
-- **Shared.** `inputImageryRequirement` finds an empty input list, for `IMAGE_OUTPUT` only: a recipe trained on one
-  that lists none, or a named map product, is not judged by it. An input selected but not yet read, failing, gone or
+- **Shared.** `inputImageryRequirement` finds an empty input list, for `IMAGE_OUTPUT` and `TRAINING_DATA`. A
+  Classification or Regression whose training data another reuses is judged by it as a provider: producing that
+  training data samples over its input images, and with none its samples are silently dropped (see "Reused training
+  data"). A named map product is not judged by it. An input selected but not yet read, failing, gone or
   lacking a band it selects is not this finding: the closure, the description and the input's evidence say what it is.
 - **GUI.** `missingInputImageryRequirement` (`panels/inputImagery/inputImageryRequirements.js`) says it on IMG for
   every type listing input images - through both input imagery declarations, and Remapping's own - with the list's own

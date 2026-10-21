@@ -522,6 +522,43 @@ describe('exporting a recipe over a Classification without training data', () =>
     })
 })
 
+// Training data reused from recipes that store no point anywhere along their own reuse is none at all, known from their
+// records before anything is built (trainingData.js); one point upstream ends that.
+describe('exporting a Classification reusing training data that stores no point', () => {
+    const POINTS = [{x: 1, y: 1, class: 1}, {x: 1, y: 2, class: 1}, {x: 2, y: 1, class: 2}, {x: 2, y: 2, class: 2}]
+    const classificationOf = (id, {points = [], reuses = []} = {}) => ({
+        id,
+        type: 'CLASSIFICATION',
+        model: {
+            inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: DEM_ASSET, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['elevation']}]}]},
+            legend: {entries: [{value: 1}, {value: 2}]},
+            trainingData: {dataSets: [
+                ...(points.length ? [{type: 'COLLECTED', referenceData: points}] : []),
+                ...reuses.map(recipe => ({type: 'RECIPE', recipe}))
+            ]},
+            classifier: {type: 'RANDOM_FOREST'}
+        }
+    })
+
+    beforeEach(() => {
+        state.assets[DEM_ASSET] = {bands: [{name: 'elevation', arrayDimensions: 0}], properties: {}}
+    })
+
+    it('fails the export, saying why, and exports once a point is added upstream', async () => {
+        const recipe = classificationOf('consumer-1', {reuses: ['provider-1']})
+        state.catalogue = {
+            'provider-1': classificationOf('provider-1', {reuses: ['nested-1']}),
+            'nested-1': classificationOf('nested-1')
+        }
+
+        await assert.rejects(submit({recipe, bands: ['class']}), /cannot run: NO_TRAINING_DATA$/)
+        assert.deepEqual(state.exported, [])
+
+        state.catalogue['nested-1'] = classificationOf('nested-1', {points: POINTS})
+        await submit({recipe, bands: ['class']})
+    })
+})
+
 // A recipe zipping no input image cannot run, nor can a recipe whose image builds it.
 describe('exporting a recipe without input imagery', () => {
     const POINTS = [{x: 1, y: 1, class: 1}, {x: 1, y: 2, class: 1}, {x: 2, y: 1, class: 2}, {x: 2, y: 2, class: 2}]

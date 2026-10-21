@@ -52,6 +52,7 @@ const {default: regression} = await import('../regression/regression')
 const {TrainingData: ClassificationTrainingData} = await import('./panels/trainingData/trainingData')
 const {TrainingData: RegressionTrainingData} = await import('../regression/panels/trainingData/trainingData')
 const {sourceProblemsOfState} = await import('../selectedSourceStatus')
+const {retrieveAvailability} = await import('../operationAvailability')
 
 addRecipeType(classification())
 addRecipeType(regression())
@@ -107,6 +108,38 @@ describe.each([
     })
 })
 
+// Neither the consumer nor the recipe it reuses stores a point: it has nothing to train on, which its Training data says,
+// as the recipe it reuses - able to produce what it stores - is marked for nothing.
+describe.each([
+    ['CLASSIFICATION', ClassificationTrainingData, false],
+    ['REGRESSION', RegressionTrainingData, true]
+])('a %s whose reused training data stores no point', (type, TrainingData, buttonMarked) => {
+    it('holds its Retrieve for its training data, marking no data set', async () => {
+        await open(type, TrainingData, {images: [ASSET_IMAGE], points: false})
+
+        expect(retrieveGate()).toMatchObject({code: 'CONFIGURATION_UNMET', section: 'process.classification.panel.trainingData.button'})
+        expect(marked()).toEqual([])
+    })
+
+    it(`${buttonMarked ? 'says' : 'does not say'} so on its training data button`, async () => {
+        await open(type, TrainingData, {images: [ASSET_IMAGE], points: false})
+
+        expect(toolbarProblems().trainingData).toBe(buttonMarked ? 'process.classification.panel.trainingData.missing' : undefined)
+    })
+
+    it('can be retrieved once the recipe it reuses stores a point', async () => {
+        await open(type, TrainingData, {images: [ASSET_IMAGE], points: false})
+
+        await act(async () => actionBuilder('ADD_POINTS')
+            .set(['process.loadedRecipes', PROVIDER, 'model.trainingData.dataSets'], [{dataSetId: 'collected', type: 'COLLECTED', name: COLLECTED, referenceData: POINTS}])
+            .dispatch())
+        await settled()
+
+        expect(retrieveGate()).toBe(null)
+        expect(toolbarProblems().trainingData).toBe(undefined)
+    })
+})
+
 const CONSUMER = 'consumer-1'
 const PROVIDER = 'provider-1'
 const REUSED = 'Reused'
@@ -136,13 +169,26 @@ const recipeOf = (type, id, {images = [ASSET_IMAGE], dataSets}) => ({
 })
 
 // The consumer, trained on its own points and on the provider's, which is over `images`.
-const recipesOf = (type, {images}) => [
+// `points` false: neither stores a point of its own, the consumer keeping only the data set reusing the provider's.
+const recipesOf = (type, {images, points = true}) => [
     recipeOf(type, CONSUMER, {dataSets: [
-        {dataSetId: 'collected', type: 'COLLECTED', name: COLLECTED, referenceData: POINTS},
+        ...(points ? [{dataSetId: 'collected', type: 'COLLECTED', name: COLLECTED, referenceData: POINTS}] : []),
         {dataSetId: 'reused', type: 'RECIPE', name: REUSED, recipe: PROVIDER}
     ]}),
-    recipeOf(type, PROVIDER, {images, dataSets: [{dataSetId: 'collected', type: 'COLLECTED', name: COLLECTED, referenceData: POINTS}]})
+    recipeOf(type, PROVIDER, {images, dataSets: points ? [{dataSetId: 'collected', type: 'COLLECTED', name: COLLECTED, referenceData: POINTS}] : []})
 ]
+
+const toolbarProblems = () =>
+    sourceProblemsOfState(store.getState(), CONSUMER, id => runtime.evidenceOwnerOf(id), Date.now(), key => runtime.heldFor(key))
+
+// Why Retrieve of the consumer is held, as far as what its type declares decides it.
+const retrieveGate = () => retrieveAvailability({
+    state: store.getState(),
+    recipe: store.getState().process.loadedRecipes[CONSUMER],
+    evidenceOwnerOf: id => runtime.evidenceOwnerOf(id),
+    heldFor: key => runtime.heldFor(key),
+    now: Date.now()
+}).gate
 
 // The data sets the list marks with a recipe's problem, by what the list describes each as, and what each says.
 const marked = () => [...container.querySelectorAll('[data-tooltip]')]
@@ -167,8 +213,8 @@ const RuntimeProbe = withSourceRuntime()(({sourceRuntime}) => {
     return null
 })
 
-async function open(type, TrainingData, {images}) {
-    const records = recipesOf(type, {images})
+async function open(type, TrainingData, {images, points}) {
+    const records = recipesOf(type, {images, points})
     stored.records = Object.fromEntries(records.map(record => [record.id, record]))
     const initialState = {
         dimensions: {width: 1024, height: 768},
