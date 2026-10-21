@@ -1452,7 +1452,8 @@ set; `YES` is the GUI default. Prediction now scales the imagery the Classificat
 - **Unresolved:**
   - how `bestEffort` coarsens the statistics' scale on real imagery;
   - how often Earth Engine evaluates them.
-- **Manual check before pushing (live, controlled).**
+- **Manual check before pushing (live, controlled).** Steps 1 and 2, the numerical check, were run on 2026-10-21 and
+  passed (see "Verification status"). Step 3's smoke tests are still pending.
   1. Run `modules/gee/verify/classifierNormalisation.mjs`:
      `docker exec -w /usr/local/src/sepal/modules/gee gee node verify/classifierNormalisation.mjs`.
      It applies the exported `classifyImage` to the Classification's own input scene with its own training data, for
@@ -1469,7 +1470,7 @@ set; `YES` is the GUI default. Prediction now scales the imagery the Classificat
 
      A comparison without samples or jointly valid pixels fails. Before this change, the normalising cases' prediction
      check is expected to fail.
-  3. As smoke tests, open an ordinary Time Series `probability_*` chart and run a PyEO Alerts over an SVM
+  3. As smoke tests (pending), open an ordinary Time Series `probability_*` chart and run a PyEO Alerts over an SVM
      Classification. Both should run and look plausible.
 
 **Reused Classification samples' normalisation (implemented 2026-10-21).** A Classification trains on the samples of
@@ -1535,6 +1536,57 @@ the recipes it reuses, and those are now transformed by the consumer alone.
     in, and `train` documents that every feature must hold every input property;
   - the explicit 0 for a band constant at zero, which the stand-in cannot tell apart, since it divides by zero to 0
     as `ee.Image` does.
+
+**Verification status of the readiness and normalisation changes (2026-10-21).** Checked against commits up to
+`3ea2e7f04`, plus two fixes to the verification script, which were defects in the script itself.
+
+- **Automated.**
+  - Full GUI suite with two workers: 309 files and 4475 tests passed (326 s).
+  - gee focused tests and the verify helper tests: 212 and 55 passed.
+- **Live Earth Engine.** `modules/gee/verify/classifierNormalisation.mjs` passed all 24 checks and exited 0 (66 s).
+  - **Training rows.** The provider was `LC08_231062_20170730`. Each reusing consumer trained on 15 rows: 6 from the
+    provider, then 9 of its own. Each non-reusing case trained on its 9.
+  - **Predictions.** They were identical over 213,507 jointly valid pixels per band, and the footprints were identical.
+  - **Mask.** With the scene masked, 0 pixels were valid where it was masked and 106,711 elsewhere.
+  - **Witnesses.** `classification.js` from `23f230f5f`, before the normalisation fix, failed 7 checks: the
+    normalising cases' training rows and predictions, and every reuse row check. From `0a84dd54c`, before the reuse
+    fix, only the 2 reuse training-row checks failed.
+  - **Script fixes during the run.** The comparison area was built before Earth Engine was initialised, and
+    `isUnbounded()` was negated with an unavailable `.not()`. Both are now evaluated as other verify scripts do.
+    Acceptance criteria are unchanged.
+- **Browser batch: pending.** It needs a signed-in SEPAL session with linked Earth Engine access, which was not
+  available. To run it:
+  1. **Reused features (Classification, then Regression).**
+     - Set up Provider and Consumer, both over imagery with `IMAGE_BANDS [red, nir]` and collected points. Consumer
+       adds a `RECIPE` data set reusing Provider. Confirm Consumer previews and can be retrieved.
+     - Open Provider and remove `nir` from its band set. Consumer's Provider data set names Provider and `nir`, and
+       Retrieve is held.
+     - Restore `nir`. The mark clears, and the preview renders.
+  2. **Empty chain.**
+     - Give Consumer only the data set reusing Provider, and Provider points.
+     - Delete all of Provider's points. Consumer is held: Regression's TRN says "Add training data", and Retrieve is
+       held for both.
+     - Restore Provider's original working point set, not a single point: clearing `NO_TRAINING_DATA` does not
+       establish that enough samples or classes exist to train. Consumer is released, and its preview renders.
+  3. **PyEO.**
+     - Set up a PyEO Alerts over a Classification that has imagery but no points, with the index gate off. Sources'
+       classification field names the Classification, and Retrieve is held.
+     - Add points to the Classification. The explanation clears, Retrieve is offered, and a preview renders.
+     - Repeat with the gate on.
+  4. **Charts.**
+     - Open a Time Series pixel chart over a Classification-backed band, with the Time Series monitoring optical data.
+     - Make a compatible upstream edit, such as adding a point: the chart reloads with data.
+     - Make an incompatible one: switch the Classification's input from optical to radar features, keeping the Time
+       Series monitoring optical. (Removing a feature usually leaves it compatible.) The chart closes or is held, with
+       an explanation.
+     - Repair it by switching the input back. The chart is offered again and returns data.
+  5. **Classified outputs.**
+     - Use a Time Series over an SVM Classification (C_SVC). Chart `probability_<class>`: it returns values without a
+       regression error.
+     - Retrieve offers only outputs the Classification supports: probabilities, and no regression for SVM.
+  6. **Working execution.** For each step above that releases a hold, confirm an actual response, not only an enabled
+     button: a preview tile for Classification, Regression and PyEO (these have no pixel charts), and a chart response
+     for the Time Series and CCDC charts.
 
 #### Regression training data (implemented)
 

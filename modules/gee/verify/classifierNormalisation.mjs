@@ -60,7 +60,8 @@ const REFERENCE_DATA = [
 ]
 
 // Around the points, compared at a coarser scale; the scene is masked east of MASKED_EAST_OF in the mask check.
-const AREA = ee.Geometry.Rectangle([-60.33, -3.16, -59.97, -2.77])
+// A function, as Earth Engine builds no geometry before it is initialized.
+const area = () => ee.Geometry.Rectangle([-60.33, -3.16, -59.97, -2.77])
 const COMPARED_SCALE = 90
 const MASKED_EAST_OF = -60.15
 
@@ -185,7 +186,7 @@ const scaled = (image, statistics) => ee.Image(FEATURES.map(band => {
 
 // Two images over the area, band by band, as pixelComparison reads them.
 const pixelDifferences = (image, reference) => {
-    const region = {geometry: AREA, scale: COMPARED_SCALE, maxPixels: 1e8}
+    const region = {geometry: area(), scale: COMPARED_SCALE, maxPixels: 1e8}
     const jointlyValid = image.mask().and(reference.mask())
     return read('pixel differences', ee.Dictionary({
         bands: image.bandNames(),
@@ -197,7 +198,8 @@ const pixelDifferences = (image, reference) => {
 }
 
 const footprints = (image, reference) => read('footprints', ee.Dictionary({
-    bounded: image.geometry().isUnbounded().not().and(reference.geometry().isUnbounded().not()),
+    unbounded: image.geometry().isUnbounded(),
+    referenceUnbounded: reference.geometry().isUnbounded(),
     area: image.geometry().area(100),
     referenceArea: reference.geometry().area(100),
     differingArea: image.geometry().symmetricDifference(reference.geometry(), 100).area(100)
@@ -207,7 +209,7 @@ const footprints = (image, reference) => read('footprints', ee.Dictionary({
 const validCounts = image => {
     const longitude = ee.Image.pixelLonLat().select('longitude')
     const valid = image.select('class').mask()
-    const count = part => valid.updateMask(part).reduceRegion({reducer: ee.Reducer.sum().unweighted(), geometry: AREA, scale: COMPARED_SCALE, maxPixels: 1e8}).get('class')
+    const count = part => valid.updateMask(part).reduceRegion({reducer: ee.Reducer.sum().unweighted(), geometry: area(), scale: COMPARED_SCALE, maxPixels: 1e8}).get('class')
     return read('valid pixels', ee.Dictionary({masked: count(longitude.gt(MASKED_EAST_OF)), unmasked: count(longitude.lte(MASKED_EAST_OF))}))
 }
 
@@ -262,7 +264,7 @@ const verifyApplication = async (name, recipe, bands, {ownImage, applied}) => {
 
     const footprint = await footprints(applied, ownImage)
     report(
-        footprint.bounded && footprint.area > 0 && footprint.differingArea <= footprint.area * 1e-6,
+        footprint.unbounded === false && footprint.referenceUnbounded === false && footprint.area > 0 && footprint.differingArea <= footprint.area * 1e-6,
         `${name}: classifyImage over the scene keeps the footprint its own image has`,
         footprint
     )
