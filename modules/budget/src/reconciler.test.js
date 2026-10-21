@@ -59,8 +59,27 @@ test('combined: opens the missing session, keeps the still-open one, closes the 
     assert.deepEqual(callsOf(openSessionUse.closeSession), [[{sessionId: 's2', to: now}]])
 })
 
-const createMockOpenSessionUse = (openSessionIds = []) => ({
-    openSession: mock.fn(),
-    closeSession: mock.fn(),
-    openSessionIds: mock.fn(async () => openSessionIds),
+test('session requested while the worker is queried is not closed', async () => {
+    const openSessionUse = createMockOpenSessionUse(['s1'])
+    const workerClient = {
+        openSessions: async () => {
+            openSessionUse.requested('s2') // WorkerSessionRequested lands after the worker's snapshot
+            return [{username: 'alice', sessionId: 's1', instanceType: 'm5.large', creationTime: '2026-07-01T00:00:00Z'}]
+        },
+    }
+
+    const reconciler = createReconciler({workerClient, openSessionUse, clock: () => new Date('2026-07-03T00:00:00Z')})
+    await reconciler.reconcile()
+
+    assert.equal(openSessionUse.closeSession.mock.callCount(), 0)
 })
+
+const createMockOpenSessionUse = (openSessionIds = []) => {
+    const ids = [...openSessionIds]
+    return {
+        openSession: mock.fn(),
+        closeSession: mock.fn(),
+        openSessionIds: mock.fn(async () => [...ids]),
+        requested: sessionId => ids.push(sessionId),
+    }
+}

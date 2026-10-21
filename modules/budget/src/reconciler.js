@@ -1,5 +1,8 @@
 export const createReconciler = ({workerClient, openSessionUse, clock}) => {
     const reconcile = async () => {
+        // Read the table before the worker snapshot: a session requested in between would otherwise be
+        // in the table but not the snapshot, and get closed for good.
+        const sessionIds = await openSessionUse.openSessionIds()
         const open = await workerClient.openSessions()
         const openIds = new Set(open.map(s => s.sessionId))
 
@@ -14,7 +17,6 @@ export const createReconciler = ({workerClient, openSessionUse, clock}) => {
         }
 
         // Missed Closed: close rows still open here that the worker no longer reports.
-        const sessionIds = await openSessionUse.openSessionIds()
         const now = clock()
         for (const sessionId of sessionIds) {
             if (!openIds.has(sessionId))
