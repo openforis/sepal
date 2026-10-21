@@ -205,6 +205,10 @@ const initializeDownlink = ({servers, clients, wss, userStore, event$}) => {
     }
 
     const disconnect = (username, clientId) => {
+        // remove() terminates the socket, whose 'close' (or an 'error' then 'close') lands here again.
+        if (!clients.has(clientId)) {
+            return
+        }
         client$.next({username, clientId, disconnected: true})
         Object.entries(clients.getSubscriptions(clientId)).forEach(([subscriptionId, module]) => {
             clients.removeSubscription(clientId, subscriptionId)
