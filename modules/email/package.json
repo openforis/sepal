@@ -11,7 +11,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "bullmq": "^6.3.17",
+        "bullmq": "^6.4.0",
         "commander": "^15.0.0",
         "handlebars": "^4.7.10",
         "ioredis": "^6.0.0",
