@@ -13,7 +13,9 @@ const closeUserSessions = async (username, {repo, instanceManager, emitWorkerSes
     const sessions = await repo.userSessions(username, [State.PENDING, State.ACTIVE])
     for (const session of sessions) {
         try {
-            await repo.update(close(session))
+            if (!await repo.update(close(session))) {
+                continue
+            }
             await instanceManager.releaseInstance(session.instance.id)
             emitWorkerSessionClosed({username: session.username, sessionId: session.id})
         } catch (error) {

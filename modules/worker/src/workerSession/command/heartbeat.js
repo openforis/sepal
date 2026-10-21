@@ -41,7 +41,9 @@ const heartbeat = async ({sessionId, username, interaction}, {repo, interactionE
         throw notFound(`Session not open: ${sessionId}`)
     }
     if (isActive(session)) {
-        await repo.update(session)
+        if (!await repo.update(session)) {
+            throw notFound(`Session not open: ${sessionId}`)
+        }
         if (interaction) {
             await repo.extendSession({
                 sessionId,

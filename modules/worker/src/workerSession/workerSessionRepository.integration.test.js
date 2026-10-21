@@ -128,6 +128,28 @@ describe('WorkerSessionRepository', () => {
             assert.equal(apps.get(ANOTHER_SESSION_ID).length, 1)
         })
 
+        // A heartbeat or closer holding a read from before the close must not undo it.
+        test('never reopens a session that closed after it was read', async () => {
+            await repository.insert(activeSession())
+            const stale = await repository.getSession(SESSION_ID)
+            await repository.update(close(stale))
+
+            const changed = await repository.update(stale)
+
+            assert.equal(changed, false)
+            assert.equal((await repository.getSession(SESSION_ID)).state, State.CLOSED)
+        })
+
+        test('closes a session only once', async () => {
+            await repository.insert(activeSession())
+            const stale = await repository.getSession(SESSION_ID)
+
+            const first = await repository.update(close(stale))
+            const second = await repository.update(close(stale))
+
+            assert.deepEqual([first, second], [true, false])
+        })
+
         test('leaves the app associations of a session it only activates', async () => {
             await repository.insert(aSession())
             await sessionAppRepository.associate({username: USERNAME, appPath: '/app-one', sessionId: SESSION_ID, label: 'One'})

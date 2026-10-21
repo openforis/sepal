@@ -202,7 +202,7 @@ describe('closeSession', () => {
     test('two-step: update(CLOSED) THEN releaseInstance, then WorkerSessionClosed', async () => {
         const order = []
         const repo = makeRepo({getSession: () => session({state: State.ACTIVE})})
-        repo.update = mock.fn(async s => {order.push(`update:${s.state}`)})
+        repo.update = mock.fn(async s => { order.push(`update:${s.state}`); return true })
         const instanceManager = makeInstanceManager({
             releaseInstance: mock.fn(async id => {order.push(`release:${id}`)}),
         })
@@ -225,6 +225,16 @@ describe('closeSession', () => {
             /Session not owned by user/
         )
         assert.equal(repo.update.mock.callCount(), 0)
+        assert.equal(instanceManager.releaseInstance.mock.callCount(), 0)
+        assert.equal(events.emitWorkerSessionClosed.mock.callCount(), 0)
+    })
+
+    // Releasing twice would drop a claim the instance's next session may already hold.
+    test('closed concurrently after it was read → neither releases nor emits', async () => {
+        const repo = makeRepo({getSession: () => session({state: State.ACTIVE})})
+        repo.update = mock.fn(async () => false)
+        const {mgr, instanceManager, events} = build({repo})
+        await mgr.closeSession({sessionId: 's-1'})
         assert.equal(instanceManager.releaseInstance.mock.callCount(), 0)
         assert.equal(events.emitWorkerSessionClosed.mock.callCount(), 0)
     })
@@ -431,6 +441,14 @@ describe('heartbeat', () => {
         const {mgr} = build({repo})
         await assert.rejects(mgr.heartbeat({sessionId: 's-1'}), {statusCode: 404})
         assert.equal(repo.update.mock.callCount(), 0)
+    })
+
+    test('closed between its read and its write → 404', async () => {
+        const repo = makeRepo({getSession: () => session({state: State.ACTIVE})})
+        repo.update = mock.fn(async () => false)
+        const {mgr} = build({repo})
+        await assert.rejects(mgr.heartbeat({sessionId: 's-1', interaction: true}), {statusCode: 404})
+        assert.equal(repo.extendSession.mock.callCount(), 0)
     })
 
     test('unknown session → 404 (not the plain-Error 500)', async () => {
@@ -891,7 +909,7 @@ const makeRepo = (canned = {}) => {
     return {
         calls,
         insert: mock.fn(async s => record('insert', s)),
-        update: mock.fn(async s => record('update', s)),
+        update: mock.fn(async s => { record('update', s); return true }),
         getSession: mock.fn(async id => {
             record('getSession', id)
             if (canned.getSession) return canned.getSession(id)

@@ -33,7 +33,9 @@ const closeSessionsWithoutInstance = async ({repo, instanceManager, emitWorkerSe
             log.warn(`${sessionTag(session)} has gone unprobeable for the whole backstop window - closing anyway`)
         }
         try {
-            await repo.update(close(session))
+            if (!await repo.update(close(session))) {
+                continue
+            }
             emitWorkerSessionClosed({username: session.username, sessionId: session.id})
             log.info(`Closed ${sessionTag(session)} - instance ${status}`)
         } catch (error) {

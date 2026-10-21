@@ -61,6 +61,7 @@ test('one close failing does not abort the rest', async () => {
     })
     deps.repo.update = mock.fn(async s => {
         if (s.id === 's-1') throw new Error('boom')
+        return true
     })
     await closeSessionsWithoutInstance(deps)
     await closeSessionsWithoutInstance(deps)
@@ -85,7 +86,7 @@ const build = ({sessions, statuses}) => {
     const deps = {
         repo: {
             sessions: mock.fn(async () => sessions),
-            update: mock.fn(async () => {}),
+            update: mock.fn(async () => true),
         },
         instanceManager: {
             sessionsWithoutInstance: mock.fn(async probed => probed

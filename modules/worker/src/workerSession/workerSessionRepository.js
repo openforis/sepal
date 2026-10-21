@@ -68,31 +68,36 @@ export class WorkerSessionRepository {
     // update — state + update_time only. It deliberately does NOT write timeout_time: the deadline
     // moves through extendSession and nowhere else, so a stale in-memory session can never undo a
     // ratchet that landed while it was held.
-    //   PENDING/ACTIVE → SET state, update_time WHERE id
-    //   otherwise (CLOSED) → ALSO SET api_key = NULL
+    //   PENDING/ACTIVE → SET state, update_time WHERE id AND the row is still open
+    //   otherwise (CLOSED) → ALSO SET api_key = NULL, WHERE id AND the row is not yet closed
+    // Guarded so a caller holding a stale read can neither reopen a closed session nor close it
+    // twice. Returns whether the row changed; a closer that gets false must not release or emit.
     async update(session) {
         const now = this.#clock()
-        await this.#db.withConnection(async connection => {
-            if (session.state === PENDING || session.state === ACTIVE) {
-                await connection.query(
+        const changedRows = await this.#db.withConnection(async connection => {
+            const [result] = session.state === PENDING || session.state === ACTIVE
+                ? await connection.query(
                     `UPDATE worker_session
                         SET state = ?, update_time = ?
-                        WHERE id = ?`,
+                        WHERE id = ? AND state IN ('PENDING', 'ACTIVE')`,
                     [session.state, now, session.id]
                 )
-            } else {
-                await connection.query(
+                : await connection.query(
                     `UPDATE worker_session
                         SET state = ?, update_time = ?, api_key = NULL
-                        WHERE id = ?`,
+                        WHERE id = ? AND state <> 'CLOSED'`,
                     [session.state, now, session.id]
                 )
-            }
+            return result.affectedRows
         })
+        if (changedRows === 0) {
+            return false
+        }
         if (session.state === CLOSED) {
             // Cascade: a closed session's app associations are gone.
             await this.#sessionAppRepository.deleteForSession(session.id)
         }
+        return true
     }
 
     // activateSession — the guarded PENDING → ACTIVE transition. It stamps active_time and

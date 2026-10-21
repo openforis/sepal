@@ -5,7 +5,8 @@
 // The row-close must commit before the instance release runs.
 //
 // Ownership check: if command.username is set AND != session.username → throw Unauthorized.
-// Guard: if session state not in [PENDING, ACTIVE] → no-op return (already closed / bad state).
+// Guard: if session state not in [PENDING, ACTIVE], or the guarded row-close changes nothing
+// (closed concurrently) → no-op return.
 
 import {getLogger} from '#sepal/log'
 
@@ -30,8 +31,11 @@ const closeSession = async ({sessionId, username}, {repo, instanceManager, emitW
     if (!isActive(session) && !isPending(session)) {
         return null // already closed / not closeable — no-op (Groovy parity)
     }
-    // step 1 — close the row (separate transaction; CLOSED update nulls api_key)
-    await repo.update(close(session))
+    // step 1 — close the row (separate transaction; CLOSED update nulls api_key). A concurrent
+    // closer that got there first owns the release and the event.
+    if (!await repo.update(close(session))) {
+        return null
+    }
     // step 2 — release the instance (separate transaction)
     await instanceManager.releaseInstance(session.instance.id)
     // publish AFTER both steps
