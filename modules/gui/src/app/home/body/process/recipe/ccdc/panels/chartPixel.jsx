@@ -3,7 +3,7 @@ import moment from 'moment'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
-import {PIXEL_OBSERVATIONS} from '#sepal/recipe/output/readiness'
+import {PIXEL_OBSERVATIONS, PIXEL_SEGMENTS} from '#sepal/recipe/output/readiness'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {flatBandOptions, getAvailableBands, toDataSetIds} from '~/sources'
@@ -20,11 +20,15 @@ import {withRecipe} from '../../../recipeContext'
 import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
 import {resolveChartBand} from '../../chartBandSelection'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
-import {pixelObservationsAvailability} from '../../operationAvailability'
+import {pixelOperationsAvailability} from '../../operationAvailability'
 import {selectedClassificationOfState} from '../../selectedClassification'
 import {CCDCGraph} from '../ccdcGraph'
 import {loadCCDCObservations$, loadCCDCSegments$, RecipeActions} from '../ccdcRecipe'
 import styles from './chartPixel.module.css'
+
+// What the chart runs at its pixel: the collection's observations, and the segments CCDC fits to them there. Its
+// action is held to the same (ccdcToolbar.jsx).
+export const CHART_OPERATIONS = [PIXEL_OBSERVATIONS, PIXEL_SEGMENTS]
 
 const fields = {
     selectedBand: new Form.Field()
@@ -109,11 +113,11 @@ class _ChartPixel extends React.Component {
     }
 
     bandSetting() {
-        const {classificationLegend, classifierType, corrections, dataSets} = this.props
+        const {classificationLegend, classifierType, classifier, corrections, dataSets} = this.props
         return {
             dataSets: toDataSetIds(dataSets),
             corrections,
-            classification: {classificationLegend, classifierType, include: ['regression', 'probabilities']}
+            classification: {classificationLegend, classifierType, classifier, include: ['regression', 'probabilities']}
         }
     }
 
@@ -141,7 +145,9 @@ class _ChartPixel extends React.Component {
 
     componentDidMount() {
         const {recipeId, sourceRuntime} = this.props
-        this.observationsWatch = sourceRuntime?.watchOutput$({recipeId, operation: PIXEL_OBSERVATIONS}).subscribe()
+        this.operationWatches = sourceRuntime
+            ? CHART_OPERATIONS.map(operation => sourceRuntime.watchOutput$({recipeId, operation}).subscribe())
+            : []
         this.updateChart()
     }
 
@@ -150,17 +156,17 @@ class _ChartPixel extends React.Component {
     }
 
     componentWillUnmount() {
-        this.observationsWatch?.unsubscribe()
+        this.operationWatches.forEach(watch => watch.unsubscribe())
         this.cancel$.next(true)
         this.cancel$.complete()
     }
 
-    // The segments and observations are requested only while the recipe's own requirements of its observations are
-    // known to be met (pixelObservationsAvailability): once they are not known to be, what is being read is let go, and
+    // The segments and observations are requested only while the recipe's own requirements of both are known to be met
+    // (pixelOperationsAvailability): once they are not known to be, what is being read is let go, and
     // read again once they are; a chart they are found not to meet is closed. They are read again whenever what they are
     // computed from changes - the recipe or a record it depends on - and only then.
     updateChart(prevProps) {
-        const {computation, latLng, observationsGate, inputs: {selectedBand}} = this.props
+        const {computation, latLng, operationsGate, inputs: {selectedBand}} = this.props
         const availableBands = getAvailableBands(this.bandSetting())
         const band = resolveChartBand(selectedBand.value, availableBands)
         if (!latLng || !band || band !== selectedBand.value) {
@@ -170,7 +176,7 @@ class _ChartPixel extends React.Component {
             // Form props still contain the old selection until the next update.
             return
         }
-        if (observationsGate?.withdraw) {
+        if (operationsGate?.withdraw) {
             return this.close()
         }
         if (!prevProps || !_.isEqual(
@@ -178,14 +184,14 @@ class _ChartPixel extends React.Component {
             [prevProps.computation, prevProps.latLng, prevProps.inputs.selectedBand.value])
         ) {
             this.clearData()
-            this.held = Boolean(observationsGate)
+            this.held = Boolean(operationsGate)
             if (!this.held) {
                 this.loadData(band)
             }
-        } else if (observationsGate && !prevProps.observationsGate) {
+        } else if (operationsGate && !prevProps.operationsGate) {
             this.clearData()
             this.held = true
-        } else if (this.held && !observationsGate) {
+        } else if (this.held && !operationsGate) {
             this.loadData(band)
         }
     }
@@ -238,12 +244,12 @@ class _ChartPixel extends React.Component {
     }
 }
 
-// What it is computed from, beside whether it may be read (pixelObservationsAvailability), and what is offered of the
+// What it is computed from, beside whether it may be read (pixelOperationsAvailability), and what is offered of the
 // Classification its Sources select, as the session holds it now.
 const mapStateToProps = (state, {recipe, sourceRuntime}) => {
-    const {gate, computation} = pixelObservationsAvailability({state, recipe, heldFor: key => sourceRuntime?.heldFor(key)})
+    const {gate, computation} = pixelOperationsAvailability({state, recipe, heldFor: key => sourceRuntime?.heldFor(key), operations: CHART_OPERATIONS})
     return {
-        observationsGate: gate,
+        operationsGate: gate,
         computation,
         ...selectedClassificationOfState(state, recipe)
     }

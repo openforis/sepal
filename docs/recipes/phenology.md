@@ -17,6 +17,13 @@ or at the classification; SRC says why beside that field, the classification sho
 used, and a refused draft cannot be applied. Selecting none requires nothing. Map previews, the Retrieve button and
 image-to-asset, Drive and SEPAL exports follow the finding.
 
+A band the Classification computes - its regression or a class's probability - must be one its classifier's
+configuration provides (`classifiedOutputRequirement`, `lib/js/shared/src/recipe/classifiedOutputs.js`). An SVM
+offers no regression, and an SVM of one class offers no class probabilities. Otherwise `UNSUPPORTED_CLASSIFIED_OUTPUT`
+refuses it at the band; SRC says why beside it, and a refused draft cannot be applied. A band saved so stays shown as
+chosen, and opening the panel leaves it unedited, until another band is chosen
+(`modules/gui/src/app/home/body/process/recipe/classifiedOutputSources.test.jsx`).
+
 ## Output
 
 Phenology declares 35 scalar bands, whatever its configuration (see the

@@ -37,6 +37,7 @@ export const describeSegments = (ccdc, {classification} = {}) => {
             ? {
                 id: classification.id,
                 classifierType: classification.model.classifier?.type,
+                classifier: classification.model.classifier,
                 classificationLegend: classification.model.legend,
                 include: ['regression', 'probabilities']
             }

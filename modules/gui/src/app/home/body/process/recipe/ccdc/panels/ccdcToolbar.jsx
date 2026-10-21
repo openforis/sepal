@@ -21,7 +21,7 @@ import {RetrieveButton} from '../../retrieveButton'
 import {SectionButton} from '../../sectionButton'
 import {RecipeActions} from '../ccdcRecipe'
 import styles from './ccdcToolbar.module.css'
-import {ChartPixel} from './chartPixel'
+import {CHART_OPERATIONS, ChartPixel} from './chartPixel'
 import {Options} from './options/options'
 
 const mapRecipeToProps = recipe => ({
@@ -70,7 +70,7 @@ class _CcdcToolbar extends React.Component {
                     className={styles.top}>
                     <ChartPixelButton
                         disabled={!initialized}
-                        observes
+                        operations={CHART_OPERATIONS}
                         onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}/>
                     <RetrieveButton/>
                 </Toolbar>

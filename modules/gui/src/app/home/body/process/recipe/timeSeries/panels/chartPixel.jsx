@@ -26,6 +26,9 @@ import {selectedClassificationOfState} from '../../selectedClassification'
 import {loadObservations$, RecipeActions} from '../timeSeriesRecipe'
 import styles from './chartPixel.module.css'
 
+// What the chart runs at its pixel: the collection's observations. Its action is held to the same (timeSeriesToolbar.jsx).
+export const CHART_OPERATIONS = [PIXEL_OBSERVATIONS]
+
 const fields = {
     selectedBand: new Form.Field()
 }
@@ -109,11 +112,11 @@ class _ChartPixel extends React.Component {
     }
 
     bandSetting() {
-        const {classificationLegend, classifierType, corrections, dataSets} = this.props
+        const {classificationLegend, classifierType, classifier, corrections, dataSets} = this.props
         return {
             dataSets: toDataSetIds(dataSets),
             corrections,
-            classification: {classificationLegend, classifierType, include: ['regression', 'probabilities']}
+            classification: {classificationLegend, classifierType, classifier, include: ['regression', 'probabilities']}
         }
     }
 

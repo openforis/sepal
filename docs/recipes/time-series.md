@@ -80,6 +80,9 @@ Earth Engine is asked.
   `UNSUPPORTED_CLASSIFIED_OUTPUT` before anything is evaluated.
 - **Native bands.** A request naming only the images' own bands, such as the count's band `0`, reads nothing of the
   Classification. A count with a Classification therefore builds.
+- **What is offered.** The chart's and Retrieve's choices are the outputs the classifier's configuration provides:
+  an SVM's type decides its class probabilities (`supportProbability`). No Time Series setting requires a classified
+  output, so none is validated beyond the request.
 - **Readiness unchanged.** Readiness still requires the classifier's inputs to suit the collection, whatever band is
   charted or downloaded.
 

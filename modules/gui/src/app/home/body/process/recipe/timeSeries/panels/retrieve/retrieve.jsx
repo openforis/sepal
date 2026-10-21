@@ -15,6 +15,7 @@ const mapRecipeToProps = recipe =>
         sources: selectFrom(recipe, 'model.sources'),
         classificationLegend: selectFrom(recipe, 'ui.classification.classificationLegend'),
         classifierType: selectFrom(recipe, 'ui.classification.classifierType'),
+        classifier: selectFrom(recipe, 'ui.classification.classifier'),
         corrections: selectFrom(recipe, 'model.options.corrections')
     })
 
@@ -38,11 +39,11 @@ class _Retrieve extends React.Component {
     // The indicator a time series is downloaded for is a measure of its collection, not a band of an image this
     // recipe outputs, so the options are the whole truth of what may be asked for.
     requestOptions() {
-        const {classificationLegend, classifierType, corrections, sources: {dataSets}} = this.props
+        const {classificationLegend, classifierType, classifier, corrections, sources: {dataSets}} = this.props
         return groupedBandOptions({
             dataSets: toDataSetIds(dataSets),
             corrections,
-            classification: {classifierType, classificationLegend, include: ['regression', 'probabilities']}
+            classification: {classifierType, classifier, classificationLegend, include: ['regression', 'probabilities']}
         })
     }
 

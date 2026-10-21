@@ -7,7 +7,7 @@ import {selectFrom} from '~/stateUtils'
 export const getPreSetVisualizations = recipe => {
     const legend = selectFrom(recipe, 'model.legend') || {}
     const entries = _.sortBy(legend.entries, 'value') || []
-    const classifierType = selectFrom(recipe, 'model.classifier.type')
+    const classifier = selectFrom(recipe, 'model.classifier')
     const min = entries.length ? entries[0].value : 0
     const max = entries.length ? _.last(entries).value : 0
     const probabilityPalette = ['#000000', '#480000', '#710101', '#BA0000', '#FF0000', '#FFA500', '#FFFF00',
@@ -22,21 +22,21 @@ export const getPreSetVisualizations = recipe => {
             labels: entries.map(({label}) => label),
             palette: entries.map(({color}) => color),
         }),
-        supportRegression(classifierType) && normalize({
+        supportRegression(classifier) && normalize({
             type: 'continuous',
             bands: ['regression'],
             min,
             max,
             palette: entries.map(({color}) => color)
         }),
-        supportProbability(classifierType) && normalize({
+        supportProbability(classifier) && normalize({
             type: 'continuous',
             bands: ['class_probability'],
             min: 0,
             max: 100,
             palette: probabilityPalette
         }),
-        ...entries.map(({value}) => supportProbability(classifierType) && normalize({
+        ...entries.map(({value}) => supportProbability(classifier) && normalize({
             type: 'continuous',
             bands: [`probability_${value}`],
             min: 0,

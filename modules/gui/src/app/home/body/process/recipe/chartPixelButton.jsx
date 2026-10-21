@@ -1,7 +1,6 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {PIXEL_OBSERVATIONS} from '#sepal/recipe/output/readiness'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {withMap} from '~/app/home/map/mapContext'
@@ -19,7 +18,7 @@ import {Tooltip} from '~/widget/tooltip'
 
 import styles from './chartPixelButton.module.css'
 import {rankCoordinateCandidates} from './coordinateCandidates'
-import {pixelChartAvailability, pixelObservationsAvailability} from './operationAvailability'
+import {pixelChartAvailability, pixelOperationsAvailability} from './operationAvailability'
 
 const LONG_PRESS_DURATION_MS = 600
 const LONG_PRESS_MOVE_TOLERANCE_PX = 8
@@ -118,12 +117,12 @@ class _ChartPixelButton extends React.Component {
         ) : null
     }
 
-    // What a chart reading observations needs is read for as long as the chart can be opened from here.
+    // What the operations the chart runs at its pixel need is read for as long as the chart can be opened from here.
     componentDidMount() {
-        const {observes, recipe, sourceRuntime} = this.props
-        this.observationsWatch = observes
-            ? sourceRuntime?.watchOutput$({recipeId: recipe.id, operation: PIXEL_OBSERVATIONS}).subscribe()
-            : null
+        const {operations, recipe, sourceRuntime} = this.props
+        this.operationWatches = sourceRuntime
+            ? operations.map(operation => sourceRuntime.watchOutput$({recipeId: recipe.id, operation}).subscribe())
+            : []
     }
 
     // A pixel being chosen, or a long press about to offer coordinates, when the chart can no longer be opened would
@@ -296,7 +295,7 @@ class _ChartPixelButton extends React.Component {
     }
 
     componentWillUnmount() {
-        this.observationsWatch?.unsubscribe()
+        this.operationWatches.forEach(watch => watch.unsubscribe())
         this.cancelLongPress()
         this.state.clickListener?.remove()
         this.stopInteractionMode()
@@ -304,15 +303,16 @@ class _ChartPixelButton extends React.Component {
 }
 
 // Not offered while the chart's prerequisites are being checked or are not met (operationAvailability.js): those of the
-// segments it reads, and of the observations, for a chart reading those (`observes`).
-const mapStateToProps = (state, {recipe, sourceRuntime, disabled, observes}) => {
+// segments it reads from its source, and what its recipe's type declares the operations it runs at its pixel require
+// (`operations`).
+const mapStateToProps = (state, {recipe, sourceRuntime, disabled, operations}) => {
     const heldFor = key => sourceRuntime?.heldFor(key)
     return {
         disabled: disabled
             || !pixelChartAvailability({
                 state, recipe, evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id), heldFor, now: Date.now()
             }).available
-            || (observes && !pixelObservationsAvailability({state, recipe, heldFor}).available)
+            || (operations.length > 0 && !pixelOperationsAvailability({state, recipe, heldFor, operations}).available)
     }
 }
 
@@ -327,10 +327,11 @@ export const ChartPixelButton = compose(
 ChartPixelButton.propTypes = {
     onPixelSelected: PropTypes.func.isRequired,
     disabled: PropTypes.any,
-    observes: PropTypes.bool,
+    operations: PropTypes.arrayOf(PropTypes.string),
     tooltipKey: PropTypes.string
 }
 
 ChartPixelButton.defaultProps = {
+    operations: [],
     tooltipKey: 'process.chartPixel'
 }

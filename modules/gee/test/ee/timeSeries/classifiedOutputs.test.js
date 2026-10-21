@@ -7,7 +7,8 @@ import {firstValueFrom, of} from 'rxjs'
 // regression or class probabilities the request names, and only for those the Classification declares it provides
 // (#sepal/recipe/type/classification). The collection, the Classification's execution and its declaration are the
 // real ones; Earth Engine is a stand-in whose classifiers record the output mode each is asked for - and refuse, as
-// Earth Engine does, a regression of an SVM classifying C_SVC.
+// Earth Engine's table of output modes says it does, a regression of an SVM classifying C_SVC, and class probabilities
+// of an SVM of one class.
 
 const state = {}
 
@@ -25,6 +26,9 @@ const classifier = (type, config) => {
         setOutputMode: mode => {
             if (type === 'libsvm' && config.svmType === 'C_SVC' && mode === 'REGRESSION') {
                 throw new Error('Image.classify: The C_SVC SVM type does not support REGRESSION.')
+            }
+            if (type === 'libsvm' && config.svmType === 'ONE_CLASS' && mode === 'MULTIPROBABILITY') {
+                throw new Error('Image.classify: The ONE_CLASS SVM type does not support MULTIPROBABILITY.')
             }
             state.outputModes.push(mode)
             return trained
@@ -110,6 +114,23 @@ for (const [collectionType, dataSets, nativeBand] of [
             assert.deepEqual(state.processed, [])
         })
 
+        it('refuses class probabilities an SVM of one class does not provide, before classifying or processing anything', async () => {
+            state.classification = classification(SVM_ONE_CLASS)
+
+            await assert.rejects(collect({dataSets, bands: ['probability_1']}), error =>
+                error.errorCode === 'UNSUPPORTED_CLASSIFIED_OUTPUT' && /does not provide probability_1/.test(error.message))
+            assert.deepEqual(state.outputModes, [])
+            assert.deepEqual(state.processed, [])
+        })
+
+        it('asks an SVM classifying NU_SVC for the class probabilities requested', async () => {
+            state.classification = classification(SVM_NU_SVC)
+
+            await collect({dataSets, bands: ['probability_1']})
+
+            assert.deepEqual(state.outputModes, ['MULTIPROBABILITY'])
+        })
+
         it('reads nothing of the Classification for a band of the images themselves', async () => {
             await collect({dataSets, bands: [nativeBand]})
 
@@ -131,6 +152,8 @@ for (const [collectionType, dataSets, nativeBand] of [
 const CLASSIFICATION = 'classification-1'
 const RANDOM_FOREST = {type: 'RANDOM_FOREST', numberOfTrees: 25}
 const SVM_C_SVC = {type: 'SVM', svmType: 'C_SVC', kernelType: 'RBF', gamma: 0.5, cost: 10}
+const SVM_NU_SVC = {type: 'SVM', svmType: 'NU_SVC', kernelType: 'RBF', gamma: 0.5, nu: 0.5}
+const SVM_ONE_CLASS = {type: 'SVM', svmType: 'ONE_CLASS', kernelType: 'RBF', gamma: 0.5, nu: 0.5, oneClass: 1}
 
 // Over one asset, of two classes, trained on points collected for it.
 const classification = classifier => ({

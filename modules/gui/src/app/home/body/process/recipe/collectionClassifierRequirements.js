@@ -1,3 +1,4 @@
+import {UNSUPPORTED_CLASSIFIED_OUTPUT} from '#sepal/recipe/classifiedOutputs'
 import {UNSUPPLIED_CLASSIFIER_INPUTS} from '#sepal/recipe/classifierInputs'
 import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
 import {msg} from '~/translate'
@@ -32,6 +33,34 @@ export const collectionClassifierRequirements = sources => ['classification', 'd
         operations: [IMAGE_OUTPUT]
     }
 })
+
+// What a recipe whose Sources choose classified outputs at `field` - CCDC's breakpoint bands, Phenology's band - needs of
+// the Classification they select, as its shared definition finds it (classifiedOutputRequirement,
+// lib/js/shared/src/recipe/classifiedOutputs.js): that it provides them, by what its classifier's configuration supports.
+// Said at that field, which is what chooses them, and a draft choosing one it does not provide cannot be applied.
+export const classifiedOutputRequirements = (sources, field) => {
+    const path = ['model', 'sources', field]
+    const message = ({unsupported} = {}) => msg(`process.source.classifiedOutputs.${field}`, {unsupported: listed(unsupported)})
+    return {
+        id: `sources.${field}.classifiedOutputs`,
+        section: sources,
+        requirement: {id: `sources.${field}.classifiedOutputs`, describe: ({diagnostics}) => ({message: message(diagnostics[0]), details: []})},
+        summary: reads => message(reads.flatMap(({verdict}) => verdict.diagnostic.diagnostics)[0]),
+        outputDiagnostics: {
+            codes: [UNSUPPORTED_CLASSIFIED_OUTPUT],
+            itemOf: diagnostic => samePath(diagnostic.path, path)
+                ? {id: field, path, label: msg(sources.label)}
+                : null
+        },
+        editor: {
+            panel: sources.id,
+            input: () => field,
+            describe: diagnostics => message(diagnostics[0]),
+            candidate: (recipe, model) => ({...recipe, model: {...recipe.model, sources: model}})
+        },
+        operations: [IMAGE_OUTPUT]
+    }
+}
 
 const samePath = (path = [], expected) => path.length === expected.length && path.every((step, i) => step === expected[i])
 

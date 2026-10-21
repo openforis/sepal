@@ -17,8 +17,8 @@ import {PortalContainer, PortalContext} from '~/widget/portal'
 // nothing else. The registrations, readiness, store and chart are real; the Earth Engine requests, the graph renderer
 // and the band picker's widget are replaced.
 
-// The bands a chart offers: a native one, and the Classification's outputs its classifier supports, as the shared
-// capabilities say (supportRegression).
+// The bands a chart offers: a native one, and the Classification's outputs its classifier's configuration supports, as
+// the shared capabilities say (supportRegression, supportProbability).
 const {loadCCDCSegments$, loadTimeSeriesObservations$, availableBands, flatBandOptions} = vi.hoisted(() => {
     const availableBands = vi.fn()
     return {
@@ -54,7 +54,7 @@ vi.mock('./ccdc/ccdcGraph', () => ({
     CCDCGraph: ({observations}) => <output aria-label='chart'>{JSON.stringify({observations})}</output>
 }))
 
-const {supportRegression} = await import('#sepal/recipe/type/classification')
+const {supportProbability, supportRegression} = await import('#sepal/recipe/type/classification')
 const {addRecipeType} = await import('../recipeTypeRegistry')
 const {default: ccdc} = await import('./ccdc/ccdc')
 const {default: timeSeries} = await import('./timeSeries/timeSeries')
@@ -69,11 +69,14 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 let root, container
 
 beforeEach(() => {
-    availableBands.mockReset().mockImplementation(({classification} = {}) => [
-        'ndvi',
-        ...(supportRegression(classification?.classifierType) ? ['regression'] : []),
-        'probability_1'
-    ])
+    availableBands.mockReset().mockImplementation(({classification} = {}) => {
+        const classifier = classification?.classifier || classification?.classifierType
+        return [
+            'ndvi',
+            ...(supportRegression(classifier) ? ['regression'] : []),
+            ...(supportProbability(classifier) ? ['probability_1'] : [])
+        ]
+    })
     flatBandOptions.mockClear()
     loadCCDCSegments$.mockReset().mockReturnValue(of([]))
     loadTimeSeriesObservations$.mockReset().mockReturnValue(of({features: []}))
@@ -221,6 +224,15 @@ describe.each([
         expect(loadTimeSeriesObservations$.mock.calls.map(([{bands}]) => bands)).toEqual([['ndvi'], ['regression'], ['ndvi']])
     })
 
+    it('charts another band once its classification\'s SVM type no longer provides the class probability charted', () => {
+        openChart(ChartPixel, recipeOf(type), classificationOver(COMPATIBLE, {type: 'SVM', svmType: 'C_SVC'}))
+        chooseBand('probability_1')
+
+        holdClassification(classificationOver(COMPATIBLE, {type: 'SVM', svmType: 'ONE_CLASS'}))
+
+        expect(loadTimeSeriesObservations$.mock.calls.map(([{bands}]) => bands)).toEqual([['ndvi'], ['probability_1'], ['ndvi']])
+    })
+
     it('offers the outputs of its classification as the record holds them, not as copied when it was selected', () => {
         openChart(ChartPixel, recipeOf(type, {copied: {classificationLegend: LEGEND, classifierType: 'RANDOM_FOREST'}}), classificationOver(COMPATIBLE))
 
@@ -231,6 +243,44 @@ describe.each([
 })
 
 describe('an open CCDC chart', () => {
+    // Its segments are fitted at the pixel to its breakpoint bands too (PIXEL_SEGMENTS), whatever its observations need.
+    it('closes, requesting no more segments, once its classification no longer provides a breakpoint band', () => {
+        const pending = new Subject()
+        let cancelled = false
+        loadCCDCSegments$.mockReturnValueOnce(pending.pipe(finalize(() => cancelled = true)))
+        openChart(CcdcChartPixel, recipeOf('CCDC', {breakpointBands: ['regression']}), classificationOver(COMPATIBLE))
+        expect(loadCCDCSegments$).toHaveBeenCalledTimes(1)
+
+        holdClassification(classificationOver(COMPATIBLE, {type: 'SVM', svmType: 'C_SVC'}))
+
+        expect(chartPixel()).toBe(null)
+        expect(cancelled).toBe(true)
+        expect(loadCCDCSegments$).toHaveBeenCalledTimes(1)
+    })
+
+    it('lets go of its segments while what they need is being read, and reads them again once it is', () => {
+        const pending = new Subject()
+        let cancelled = false
+        loadCCDCSegments$.mockReturnValueOnce(pending.pipe(finalize(() => cancelled = true)))
+        openChart(CcdcChartPixel, recipeOf('CCDC', {breakpointBands: ['regression']}), classificationOver(COMPATIBLE))
+
+        releaseClassification()
+
+        expect(cancelled).toBe(true)
+        expect(chartPixel()).toEqual(PIXEL)
+        expect(loadCCDCSegments$).toHaveBeenCalledTimes(1)
+
+        holdClassification(classificationOver(COMPATIBLE))
+
+        expect(loadCCDCSegments$).toHaveBeenCalledTimes(2)
+    })
+
+    it('reads its segments over an AOI the session cannot resolve, which segmenting at the pixel does not read', () => {
+        openChart(CcdcChartPixel, recipeOf('CCDC', {aoi: {type: 'RECIPE', id: 'aoi-recipe'}, breakpointBands: ['regression']}), classificationOver(COMPATIBLE))
+
+        expect(loadCCDCSegments$).toHaveBeenCalledTimes(1)
+    })
+
     it('reads its segments again with its observations once its classification changes', () => {
         openChart(CcdcChartPixel, recipeOf('CCDC'), classificationOver(COMPATIBLE))
 
@@ -252,14 +302,14 @@ const CURRENT = {properties: {date: {value: 0}, value: 2}}
 const LEGEND = {entries: [{value: 1}, {value: 2}]}
 
 // `copied` is the Classification's legend and classifier as Sources copied them when it was selected.
-const recipeOf = (type, {aoi = {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]}, copied} = {}) => ({
+const recipeOf = (type, {aoi = {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]}, copied, breakpointBands = ['ndvi']} = {}) => ({
     id: ID,
     type,
     title: 'Recipe',
     model: {
         aoi,
         dates: {startDate: '2020-01-01', endDate: '2021-01-01'},
-        sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands: ['ndvi'], classification: CLASSIFICATION},
+        sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands, classification: CLASSIFICATION},
         options: {corrections: ['SR']},
         ccdcOptions: {dateFormat: 0}
     },

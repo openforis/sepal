@@ -1377,6 +1377,10 @@ backend helper accepting a Classification is not, by itself, a reason to expand 
        while that copy is not the session's (`draftDisagreementsOfState`, shared with Retrieve), and reads once it is.
      - **Band options.** The legend and classifier the band options offer come from the Classification record while
        the session holds it (`selectedClassification.js`), and otherwise from the copy taken when it was selected.
+     - **CCDC's segments.** CCDC's chart is also held to `PIXEL_SEGMENTS`, judged at the clicked point as its
+       observations are (the AOI projection, and the runtime's asset interest, cover both). A breakpoint band its
+       Classification stops providing closes an open chart, cancelling its requests, and withdraws the action until
+       repaired. Both operations wait on the same records, so no state holds the segments alone.
    - **Unchanged:** CCDC Slice, Change Alerts and LandTrendr charts, `/ccdc/loadSegments`, Retrieve, previews and
      section marks.
    - **Limitation.** The runtime's `READINESS` work does not refresh records the listing has moved past (the image
@@ -1394,14 +1398,17 @@ backend helper accepting a Classification is not, by itself, a reason to expand 
    - **The pixel** is built only once segments are available.
 
    Still open:
-   - **GUI segment gates.** The GUI's segment gates are unchanged: CCDC's own chart is held by `PIXEL_OBSERVATIONS`,
-     and CCDC Slice's and Change Alerts' by their `ccdcSegments.chartable` source requirement. The GUI does not read
-     a selected source's `IMAGE_OUTPUT` readiness for charting.
+   - **GUI segment gates.** CCDC's own chart action and open chart are held by both `PIXEL_OBSERVATIONS` and
+     `PIXEL_SEGMENTS` (`pixelOperationsAvailability`, the panel's `CHART_OPERATIONS`), each judged at the clicked
+     point and watched through the runtime. CCDC Slice's and Change Alerts' charts are held by their
+     `ccdcSegments.chartable` source requirement. The GUI does not read a selected source's `IMAGE_OUTPUT` readiness
+     for charting.
    - **Asset segments.** An asset's segment layout is checked only by the GUI's source requirement.
    - **Change Alerts waits** for the inherited-settings decision. A request without a recipe stays unguarded.
    - **Limitation.** The transitive reads behind `REFERENCE` remain an acknowledged limitation.
 
-5. **Classification output compatibility: TODO.** The current collection compatibility rule checks input
+5. **Classification output compatibility: implemented for the outputs a configuration chooses (2026-10-20).**
+   The collection compatibility rule checks input
    features, not whether the selected Classification can provide the outputs an analysis needs. Validate the required
    outputs through one shared capability declaration, rather than a consumer-specific classifier blacklist:
    - per-class probabilities require `MULTIPROBABILITY`; confidence in the predicted class (`PROBABILITY`) is not a
@@ -1419,12 +1426,49 @@ backend helper accepting a Classification is not, by itself, a reason to expand 
    - It refuses one the Classification does not declare with `UNSUPPORTED_CLASSIFIED_OUTPUT`, before evaluation.
    - A request naming only native bands reads nothing of the Classification.
 
+   **What each consumer requires, from execution:**
+   - **Time Series** requires no classified output. Its chart and download offer regression and probabilities as
+     optional choices (`ui`), which the collection builds or refuses per request.
+   - **CCDC** fits its breakpoint bands (`model.sources.breakpointBands`) in every segmentation, so a classified one
+     is required; measures an export or chart adds are optional choices.
+   - **Phenology** reads one band (`model.sources.band`), so a classified one is required.
+   - **PyEO** reads only the categorical `class`, which every classifier provides, so it has no output requirement.
+     Its baseline still builds the Classification's default outputs (`getImage$()` without a selection).
+
+   **Capabilities: shared, by configuration.** `supportRegression` and `supportProbability`
+   (`type/classification.js`) take the classifier's configuration (`model.classifier`); a type alone stays accepted,
+   with that type's defaults. They follow Earth Engine's table of output modes
+   (https://developers.google.com/earth-engine/guides/classification, "Classifier output modes"):
+   - REGRESSION: Random Forest, Gradient Tree Boost and CART. Minimum distance's REGRESSION is a distance, not offered.
+   - MULTIPROBABILITY: those three, Naive Bayes, and SVM `C_SVC` and `NU_SVC`. SVM `ONE_CLASS` offers only
+     CLASSIFICATION; an SVM without a type is Earth Engine's default `C_SVC`.
+   - A supplied decision tree is not in the table and offers only `class`. PROBABILITY is not used.
+   `classificationBands` derives from them, so Classification's declared outputs, its preset visualizations, the GUI
+   band choices (`sources.js`, given `classifier`) and execution's per-request refusal all follow the configuration.
+
+   **Validation.** `classifiedOutputRequirement` (`recipe/classifiedOutputs.js`) is declared by CCDC
+   (`breakpointBands`, for `IMAGE_OUTPUT` and `PIXEL_SEGMENTS`) and Phenology (`band`, for `IMAGE_OUTPUT`):
+   - a classified output the selected Classification's record does not declare is `UNSUPPORTED_CLASSIFIED_OUTPUT`, at
+     that field, naming `unsupported`;
+   - so is one chosen with no Classification selected;
+   - a record not yet held finds nothing, and its waiting is the closure's;
+   - in the GUI (`classifiedOutputRequirements`), SRC is marked, the field says why (`form.getErrorMessage` on CCDC's
+     breakpoint bands and Phenology's band), and a draft choosing one cannot be applied;
+   - a saved choice the Classification does not provide stays shown as made (`withChosenClassifiedOutputs`,
+     `sources.js`). Otherwise the form would drop it on its next render, unseen and as an edit. It can be taken back
+     there, and opening the panel leaves it unedited. A native band no longer offered is still dropped as before.
+
+   **Copied metadata.** `ui.classification` and the Sources panels now copy `model.classifier` beside its type, and
+   open charts read it from the held record.
+
    Still open:
-   - **Readiness and GUI validation.** That refusal is execution's alone, and the validation above is not
-     implemented.
-   - **SVM subtype.** The shared declaration ignores SVM's subtype. The GUI's subtypes (`C_SVC`, `NU_SVC`,
-     `ONE_CLASS`) are not regression types, so regression is correctly excluded for all of them. Whether `ONE_CLASS`
-     supports `MULTIPROBABILITY` has not been verified against Earth Engine.
+   - **Old copies.** `ui.classification` copies taken before this change carry the type alone. They are read as that
+     type's defaults - an SVM as `C_SVC` - until copied again or the record is held.
+   - **Optional choices.** Charts, downloads and exports offer only supported outputs, but a requested unsupported one
+     is refused by execution alone. Validating them in readiness would need band-aware operation arguments.
+   - **PyEO's baseline** builds outputs it does not read.
+   - **Uncertain types.** SVR types are not offered by the GUI. A supplied decision tree's output modes are not
+     documented.
    - **Native-band readiness.** Readiness still judges the classifier inputs of a native-band request that no longer
      classifies anything. Making it band-sensitive would change the agreed policy and needs band-aware readiness
      arguments, so it is a separate decision.

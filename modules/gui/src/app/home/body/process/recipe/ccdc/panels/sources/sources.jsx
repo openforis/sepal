@@ -9,7 +9,7 @@ import {getDataSetOptions as radarDataSetOptions, isRadarDataSet} from '~/app/ho
 import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
-import {groupedBandOptions, toDataSetIds, toSources} from '~/sources'
+import {groupedBandOptions, toDataSetIds, toSources, withChosenClassifiedOutputs} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
@@ -176,8 +176,8 @@ class _Sources extends React.Component {
     }
 
     renderBreakpointBands() {
-        const {inputs: {breakpointBands}} = this.props
-        const options = this.breakpointBandOptions()
+        const {form, inputs: {breakpointBands}} = this.props
+        const options = withChosenClassifiedOutputs(this.breakpointBandOptions(), breakpointBands.value)
             .filter(group => group.length)
             .map(group => ({options: group}))
         return (
@@ -188,6 +188,7 @@ class _Sources extends React.Component {
                 multiple
                 disabled={!options.length}
                 framed
+                errorMessage={form.getErrorMessage(breakpointBands)}
             />
         )
     }
@@ -222,12 +223,12 @@ class _Sources extends React.Component {
 
     breakpointBandOptions() {
         const {corrections, inputs: {dataSets}} = this.props
-        const {classificationLegend, classifierType} = this.state
+        const {classificationLegend, classifierType, classifier} = this.state
         return dataSets.value && dataSets.value.length
             ? groupedBandOptions({
                 dataSets: toDataSetIds(dataSets),
                 corrections,
-                classification: {classificationLegend, classifierType, include: ['regression', 'probabilities']}
+                classification: {classificationLegend, classifierType, classifier, include: ['regression', 'probabilities']}
             })
             : []
     }
@@ -246,7 +247,8 @@ class _Sources extends React.Component {
             loadRecipe$(recipeId).pipe(takeUntil(this.cancel$)),
             classification => this.setState({
                 classificationLegend: classification.model.legend,
-                classifierType: classification.model.classifier.type
+                classifierType: classification.model.classifier.type,
+                classifier: classification.model.classifier
             }),
             error => Notifications.error({
                 message: msg('process.ccdc.panel.sources.classificationLoadError', {error}),
@@ -258,7 +260,8 @@ class _Sources extends React.Component {
     deselectClassification() {
         this.setState({
             classificationLegend: null,
-            classifierType: null
+            classifierType: null,
+            classifier: null
         })
     }
 

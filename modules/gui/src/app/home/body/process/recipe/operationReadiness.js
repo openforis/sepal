@@ -1,5 +1,5 @@
 import {NEEDS_EVIDENCE, readReadiness} from '#sepal/recipe/output/readImageOutput'
-import {NOT_READY, PIXEL_OBSERVATIONS} from '#sepal/recipe/output/readiness'
+import {NOT_READY, PIXEL_OBSERVATIONS, PIXEL_SEGMENTS} from '#sepal/recipe/output/readiness'
 import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
 import {dependencyValidity, INVALID, VALID} from '#sepal/recipe/source/dependencyValidity'
 import {MISSING_SOURCE} from '#sepal/recipe/source/diagnostic'
@@ -25,8 +25,9 @@ import {recipeContent} from './recipeContent'
 // whatever else is missing. Otherwise the runtime completes the closure and settles readiness over it, under a key
 // naming the operation and the records read.
 //
-// The recipe judged is the one the operation runs. A pixel's observations are read at the clicked point, whichever it
-// is, so their recipe has no AOI: one the recipe configures is no dependency of them, and no point is assumed for it.
+// The recipe judged is the one the operation runs. A pixel's observations, and the segments a CCDC fits there, are read
+// at the clicked point, whichever it is, so their recipe has no AOI: one the recipe configures is no dependency of them,
+// and no point is assumed for it.
 
 export const READINESS = 'READINESS'
 
@@ -75,7 +76,7 @@ export const sectionOfFindings = (recipe, findings) => {
 // The recipe an operation runs, the same object for the same recipe, so a render reuses its graph - and what is read
 // for it, its assets included, is read of this one.
 export const recipeForOperation = (recipe, operation) => {
-    if (operation !== PIXEL_OBSERVATIONS || !recipe.model?.aoi) {
+    if (!AT_PIXEL.includes(operation) || !recipe.model?.aoi) {
         return recipe
     }
     if (!AT_ANY_PIXEL.has(recipe)) {
@@ -86,6 +87,9 @@ export const recipeForOperation = (recipe, operation) => {
 }
 
 const AT_ANY_PIXEL = new WeakMap()
+
+// The operations a pixel chart runs at the point clicked, whatever AOI the recipe configures.
+const AT_PIXEL = [PIXEL_OBSERVATIONS, PIXEL_SEGMENTS]
 
 // The graph is cached by identity (mapDependencyGraph.js), so its read is too: per operation.
 const sessionReadOf = (graph, operation) => {

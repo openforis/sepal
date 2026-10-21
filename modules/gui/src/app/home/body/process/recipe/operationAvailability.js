@@ -47,12 +47,18 @@ export const pixelChartAvailability = ({state, recipe, evidenceOwnerOf, heldFor,
 // session's (draftDisagreementsOfState), as Retrieve holds an export. `computation` is what the chart is computed from
 // (operationReadiness.js): a chart charted from another is charted again. The recipe's watcher of the question
 // (watchOutput$ with `operation`) is what has the runtime read what the session does not hold.
-export const pixelObservationsAvailability = ({state, recipe, heldFor}) => {
-    const {readiness, dependencyValidity, computation} = readOperationReadiness({
-        recipe, operation: PIXEL_OBSERVATIONS, loadedRecipes: state.process?.loadedRecipes || {}, heldFor
-    })
-    const gate = observationsGate(recipe, readiness, dependencyValidity)
-        || draftGate(state, recipe, computation)
+export const pixelObservationsAvailability = ({state, recipe, heldFor}) =>
+    pixelOperationsAvailability({state, recipe, heldFor, operations: [PIXEL_OBSERVATIONS]})
+
+// The same for a chart reading several operations at its pixel - CCDC's, its observations and its segments
+// (PIXEL_SEGMENTS) - each judged by what the recipe's type declares for it: a finding of any withdraws, otherwise what
+// any waits for holds. They run at the same pixel, so `computation` is one.
+export const pixelOperationsAvailability = ({state, recipe, heldFor, operations}) => {
+    const loadedRecipes = state.process?.loadedRecipes || {}
+    const reads = operations.map(operation => readOperationReadiness({recipe, operation, loadedRecipes, heldFor}))
+    const [{computation}] = reads
+    const gates = reads.map(({readiness, dependencyValidity}) => operationGate(recipe, readiness, dependencyValidity)).filter(Boolean)
+    const gate = gates.find(({withdraw}) => withdraw) || gates[0] || draftGate(state, recipe, computation)
     return {available: !gate, gate, computation}
 }
 
@@ -61,7 +67,7 @@ const draftGate = (state, recipe, computation) => {
     return draft ? {wait: draft.wait, withdraw: false, code: draft.code, section: null} : null
 }
 
-const observationsGate = (recipe, readiness, validity) => {
+const operationGate = (recipe, readiness, validity) => {
     if (readiness.status === NOT_READY) {
         return {wait: false, withdraw: true, code: CONFIGURATION_UNMET, section: sectionOfFindings(recipe, readiness.findings)}
     }

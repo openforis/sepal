@@ -58,13 +58,14 @@ class _TimeSeries extends React.Component {
                 classification => {
                     this.recipeActions.setClassification({
                         classificationLegend: classification.model.legend,
-                        classifierType: classification.model.classifier.type
+                        classifierType: classification.model.classifier.type,
+                        classifier: classification.model.classifier
                     })
                 },
                 error => Notifications.error({message: msg('process.timeSeries.panel.sources.classificationLoadError', {error}), error})
             )
         } else if (!classificationRecipeId && classificationLegend && !stream('LOAD_CLASSIFICATION_RECIPE').active) {
-            this.recipeActions.setClassification({classificationLegend: null, classifierType: null})
+            this.recipeActions.setClassification({classificationLegend: null, classifierType: null, classifier: null})
         }
     }
 }

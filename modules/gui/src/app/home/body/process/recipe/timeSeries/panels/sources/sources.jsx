@@ -221,7 +221,8 @@ class _Sources extends React.Component {
             loadRecipe$(recipeId).pipe(takeUntil(this.cancel$)),
             classification => this.setState({
                 classificationLegend: classification.model.legend,
-                classifierType: classification.model.classifier.type
+                classifierType: classification.model.classifier.type,
+                classifier: classification.model.classifier
             }),
             error => Notifications.error({
                 message: msg('process.timeSeries.panel.sources.classificationLoadError', {error}),
@@ -233,7 +234,8 @@ class _Sources extends React.Component {
     deselectClassification() {
         this.setState({
             classificationLegend: null,
-            classifierType: null
+            classifierType: null,
+            classifier: null
         })
     }
 

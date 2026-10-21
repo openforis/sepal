@@ -9,7 +9,7 @@ import {getDataSetOptions as radarDataSetOptions, isRadarDataSet} from '~/app/ho
 import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
-import {groupedBandOptions, toSources} from '~/sources'
+import {groupedBandOptions, toSources, withChosenClassifiedOutputs} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
@@ -157,19 +157,19 @@ class _Sources extends React.Component {
     }
 
     renderBand() {
-        const {corrections, inputs: {dataSets, band}} = this.props
-        const {classificationLegend, classifierType} = this.state
+        const {corrections, form, inputs: {dataSets, band}} = this.props
+        const {classificationLegend, classifierType, classifier} = this.state
         var dataSetArray = dataSets.value && _.isArray(dataSets.value)
             ? dataSets.value
             : [dataSets.value]
-        var classification = {classificationLegend, classifierType, include: ['regression', 'probabilities']}
+        var classification = {classificationLegend, classifierType, classifier, include: ['regression', 'probabilities']}
         const collectionGrouped = groupedBandOptions({
             dataSets: dataSetArray,
             corrections,
             classification
         })
         
-        const options = collectionGrouped
+        const options = withChosenClassifiedOutputs(collectionGrouped, band.value)
             .filter(group => group.length)
             .map(group => ({options: group}))
         return (
@@ -179,6 +179,7 @@ class _Sources extends React.Component {
                 options={options}
                 disabled={!options.length}
                 framed
+                errorMessage={form.getErrorMessage(band)}
             />
         )
     }
@@ -257,7 +258,8 @@ class _Sources extends React.Component {
             loadRecipe$(recipeId).pipe(takeUntil(this.cancel$)),
             classification => this.setState({
                 classificationLegend: classification.model.legend,
-                classifierType: classification.model.classifier.type
+                classifierType: classification.model.classifier.type,
+                classifier: classification.model.classifier
             }),
             error => Notifications.error({
                 message: msg('process.phenology.panel.sources.classificationLoadError', {error}),
@@ -269,7 +271,8 @@ class _Sources extends React.Component {
     deselectClassification() {
         this.setState({
             classificationLegend: null,
-            classifierType: null
+            classifierType: null,
+            classifier: null
         })
     }
 }

@@ -159,6 +159,25 @@ describe('the assets an output reads', () => {
         expect(fake.bands).toHaveLength(0)
     })
 
+    // A CCDC charted itself fits its segments at the clicked point too.
+    it('are not, for a CCDC\'s pixel segments, the AOI those ignore', () => {
+        const ccdc = {
+            id: 'ccdc-1',
+            type: 'CCDC',
+            model: {
+                aoi: {type: 'ASSET', id: 'users/x/aoi'},
+                dates: {startDate: '2020-01-01', endDate: '2021-01-01'},
+                sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands: ['ndvi']},
+                options: {corrections: ['SR']}
+            }
+        }
+        const session = sessionHolding([ccdc])
+
+        session.runtime.watchOutput$({recipeId: ccdc.id, operation: 'PIXEL_SEGMENTS'}).subscribe()
+
+        expect(versionReads()).toEqual([])
+    })
+
     it('are read when it is watched, though it is described from its configuration alone and runs observing nothing', () => {
         const session = sessionHolding([aoiMosaic('users/x/landcover')])
 

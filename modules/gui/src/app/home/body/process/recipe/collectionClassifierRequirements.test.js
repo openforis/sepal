@@ -48,6 +48,45 @@ describe.each(['CCDC', 'TIME_SERIES', 'PHENOLOGY'])('a %s', type => {
     })
 })
 
+// CCDC's breakpoint bands and Phenology's band choose what the Classification computes: one its classifier's
+// configuration does not provide is said there, and holds back previews and Retrieve; the class alone, or a band of the
+// images themselves, holds nothing; a Classification still being read is never refused.
+describe.each([
+    ['CCDC', 'breakpointBands', bands => bands],
+    ['PHENOLOGY', 'band', ([band]) => band]
+])('a %s choosing classified outputs at its %s', (type, field, valueOf) => {
+    it.each([
+        ['an SVM classifying C_SVC', {type: 'SVM', svmType: 'C_SVC'}, ['regression']],
+        ['an SVM of one class', {type: 'SVM', svmType: 'ONE_CLASS'}, ['probability_1']]
+    ])('marks the field where %s does not provide what it chooses, holding back previews and Retrieve', (_case, classifier, chosen) => {
+        const recipe = recipeOf(type, {classification: CLASSIFICATION, [field]: valueOf(chosen)})
+        const state = stateOf(recipe, classifiedBy(classifier))
+
+        expect(sourceProblemsOfState(state, ID, undefined, Date.now(), NOTHING_HELD))
+            .toEqual({sources: `process.source.classifiedOutputs.${field}`})
+        expect(requestGate({state, recipe, operation: 'IMAGE_OUTPUT', heldFor: NOTHING_HELD})).toMatchObject({withdraw: true})
+        expect(retrieveAvailability({state, recipe, heldFor: NOTHING_HELD}).available).toBe(false)
+    })
+
+    it.each([
+        ['a regression a classifier able to regress provides', {type: 'RANDOM_FOREST'}, ['regression']],
+        ['class probabilities an SVM classifying NU_SVC provides', {type: 'SVM', svmType: 'NU_SVC'}, ['probability_1']],
+        ['a band of the images themselves', {type: 'SVM', svmType: 'ONE_CLASS'}, ['ndvi']]
+    ])('marks nothing for %s', (_case, classifier, chosen) => {
+        const recipe = recipeOf(type, {classification: CLASSIFICATION, [field]: valueOf(chosen)})
+
+        expect(sourceProblemsOfState(stateOf(recipe, classifiedBy(classifier)), ID, undefined, Date.now(), NOTHING_HELD)).toEqual({})
+    })
+
+    it('refuses nothing, marking nothing, while its classification is still to be read', () => {
+        const recipe = recipeOf(type, {classification: CLASSIFICATION, [field]: valueOf(['regression'])})
+        const state = stateOf(recipe)
+
+        expect(sourceProblemsOfState(state, ID, undefined, Date.now(), NOTHING_HELD)).toEqual({})
+        expect(requestGate({state, recipe, operation: 'IMAGE_OUTPUT', heldFor: NOTHING_HELD})?.withdraw ?? false).toBe(false)
+    })
+})
+
 const ID = 'recipe-1'
 const CLASSIFICATION = 'classification-1'
 const NOTHING_HELD = () => null
@@ -69,6 +108,17 @@ const classificationOver = included => ({
     id: CLASSIFICATION,
     type: 'CLASSIFICATION',
     model: {inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]}}
+})
+
+// A Classification of two classes over optical bands the Landsat scenes supply, by the classifier given.
+const classifiedBy = classifier => ({
+    id: CLASSIFICATION,
+    type: 'CLASSIFICATION',
+    model: {
+        inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['red', 'nir']}]}]},
+        legend: {entries: [{value: 1}, {value: 2}]},
+        classifier
+    }
 })
 
 const stateOf = (...records) => ({
