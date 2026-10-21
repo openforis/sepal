@@ -19,6 +19,8 @@ import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 
+import {withItemProblems} from '../../../selectedSource'
+import {TRAINING_DATA} from '../../trainingDataRequirements'
 import styles from './trainingData.module.css'
 import {TrainingDataSet} from './trainingDataSet'
 
@@ -112,7 +114,7 @@ class _TrainingData extends React.Component {
     }
 
     renderDataSet(dataSet) {
-        const {dataCollectionManager} = this.props
+        const {dataCollectionManager, itemProblems} = this.props
         const name = dataSet.name
         if (!name)
             return null
@@ -124,6 +126,7 @@ class _TrainingData extends React.Component {
                 onClick={() => this.editDataSet(dataSet)}>
                 <CrudItem
                     title={msg(`process.classification.panel.trainingData.type.${dataSet.type}.label`)}
+                    error={itemProblems[dataSet.dataSetId]}
                     description={collected ? msg('process.classification.panel.trainingData.type.COLLECTED.label') : name}
                     removeMessage={msg('process.classification.panel.trainingData.remove.confirmationMessage', {name})}
                     removeTooltip={msg('process.classification.panel.trainingData.remove.tooltip')}
@@ -207,6 +210,7 @@ const valuesToModel = null
 
 export const TrainingData = compose(
     _TrainingData,
+    withItemProblems(TRAINING_DATA.id),
     recipeFormPanel({id: 'trainingData', mapRecipeToProps, valuesToModel, additionalPolicy}),
     withActivators('trainingDataSet')
 )

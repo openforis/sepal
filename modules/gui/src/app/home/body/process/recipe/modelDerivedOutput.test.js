@@ -92,11 +92,19 @@ beforeEach(() => {
 })
 
 describe('a regression', () => {
-    it('is described from its declaration while the recipe it trains on is not even loaded', () => {
-        const {output} = read(regressionOf({trainingRecipe: 'training-1'}))
+    it('is described from its declaration, whatever recipe it trains on', () => {
+        const {output} = readAll([regressionOf({trainingRecipe: TRAINING}), COVARIATES, LAND_COVER, trainingProviderOf('REGRESSION')])
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands).toEqual([expect.objectContaining({name: 'regression', dataType: {arrayDimensions: 0}})])
+    })
+
+    // Running it produces that recipe's training data (TRAINING_DATA), so whether it can run waits for that recipe.
+    it('waits for the recipe it trains on while that recipe is not loaded, naming it as needed', () => {
+        const {output} = read(regressionOf({trainingRecipe: TRAINING}))
+
+        expect(output.status).toBe('NEEDS_EVIDENCE')
+        expect(output.readiness.needs.records).toEqual([TRAINING])
     })
 
     it('is presented with its label, float cursor precision and preset style', () => {
@@ -291,8 +299,8 @@ describe('a classification', () => {
         ['a naive Bayes classifier', 'NAIVE_BAYES', ['class', 'class_probability', 'probability_1', 'probability_2']],
         ['a minimum distance classifier', 'MINIMUM_DISTANCE', ['class']],
         ['a decision tree', 'DECISION_TREE', ['class']]
-    ])('by %s is described with the bands execution builds, while the recipe it trains on is not even loaded', (_case, type, names) => {
-        const {output} = read(classificationOf({classifier: type, trainingRecipe: 'training-1'}))
+    ])('by %s is described with the bands execution builds, whatever recipe it trains on', (_case, type, names) => {
+        const {output} = readAll([classificationOf({classifier: type, trainingRecipe: TRAINING}), COVARIATES, LAND_COVER, trainingProviderOf('CLASSIFICATION')])
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands.map(({name}) => name)).toEqual(names)
@@ -1117,6 +1125,19 @@ describe.each([
 })
 
 const ID = 'model-1'
+
+// A recipe whose training data another reuses: over the covariates, with points of its own.
+const TRAINING = 'training-1'
+const trainingProviderOf = type => ({
+    id: TRAINING,
+    type,
+    model: {
+        inputImagery: {images: [COVARIATES_IMAGE]},
+        legend: {entries: [{value: 1, label: 'One', color: '#000000'}, {value: 2, label: 'Two', color: '#ffffff'}]},
+        classifier: {type: 'RANDOM_FOREST'},
+        trainingData: {dataSets: [{type: 'EE_TABLE', referenceData: [{x: 0.5, y: 0.5, class: 1, value: 1}]}]}
+    }
+})
 
 // The imagery a model is fit to: an optical mosaic, described from its configuration as soon as it is loaded.
 const COVARIATES = {

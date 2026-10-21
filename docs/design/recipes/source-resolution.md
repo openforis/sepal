@@ -908,9 +908,9 @@ executionNeeds: {[IMAGE_OUTPUT]: {[INPUT_IMAGE]: IMAGE_OUTPUT, [TRAINING_DATA_SO
 
   A Classification trained from another recipe runs that recipe's `getTrainingData$()`. That builds the referenced
   recipe's input imagery and samples its points over it. Its classified output need not be ready, but its imagery
-  matters, and so do its points. A dedicated `TRAINING_DATA` operation is the recorded follow-up. Until then a `RECIPE`
-  training set counts as present for `NO_TRAINING_DATA`, and its imagery is not checked. An `AOI` edge is `REFERENCE`
-  until geometry is an operation.
+  matters, and so do its points. That role is now `TRAINING_DATA`, which checks the provider's imagery (see "Reused
+  training data" below). A `RECIPE` training set still counts as present for `NO_TRAINING_DATA`. An `AOI` edge is
+  `REFERENCE` until geometry is an operation.
 - **Unclassified roles.** A role must be classified for the operation it is evaluated in. When readiness evaluates an
   actual edge whose role the type does not classify, it is a definitive finding (`UNCLASSIFIED_ROLE`) at that edge. It
   is found once per edge, in the same memoized traversal, with no rescan per consumer. The structural audit over
@@ -1133,6 +1133,73 @@ and recovery. It does not migrate every outstanding rule.
      - a `RECIPE` training set staying unknown;
      - a refused candidate leaving the applied recipe available;
      - an unclassified role.
+
+#### Reused training data (first slice implemented 2026-10-21)
+
+**What users can select.** A Classification's `RECIPE` training data set selects another Classification
+(`recipeSection.jsx` filters to `CLASSIFICATION`), and a Regression's selects another Regression. Sampled data sets
+(`SAMPLE_CLASSIFICATION`, `SAMPLE_IMAGE`) store their points when configured, so they are no runtime reference.
+
+**What execution does.** The consumer runs the provider's `getTrainingData$()`
+(`lib/js/ee/src/classification/classification.js`, `regression/regression.js`):
+- It builds the provider's input imagery, each image as its `IMAGE_OUTPUT`, with the provider's auxiliary covariates
+  and, for SVM and minimum-distance classifiers, its normalisation.
+- It samples the provider's stored points over that imagery.
+- It concatenates the provider's own `RECIPE` sets, recursively.
+- The provider's classifier is never trained, and its image is never classified.
+
+**Implemented.**
+- **Operation.** `TRAINING_DATA` (`output/readiness.js`), with an execution need of the same name: the edge's source
+  is judged as its `TRAINING_DATA`, not as its image.
+- **Declarations.** Classification and Regression declare:
+  - `IMAGE_OUTPUT: {INPUT_IMAGE: IMAGE_OUTPUT, TRAINING_DATA_SOURCE: TRAINING_DATA}`;
+  - `TRAINING_DATA: {INPUT_IMAGE: IMAGE_OUTPUT, TRAINING_DATA_SOURCE: TRAINING_DATA}`;
+  - `inputImageryRequirement` for both operations.
+- **Traversal** (`resolveImageOutput.js`).
+  - A source is visited once per operation, keyed by recipe and operation, so a recipe needed both as an image and
+    for its training data is judged both ways.
+  - A source whose type does not declare a non-image operation it is needed for is refused (`UNDECLARED_OPERATION`).
+  - Under `describesBuilt`, the provider is never described, because its image is not built. Its input images are,
+    through their `IMAGE_OUTPUT` need.
+- **Refused at the recipe each finding concerns:**
+  - a provider whose input image cannot run;
+  - a provider without input imagery, whose samples execution would silently drop;
+  - the same for nested providers.
+- **Unchanged:**
+  - a mixed set with an empty provider stays ready, since `NO_TRAINING_DATA` stays `IMAGE_OUTPUT` only;
+  - cycles stay `INVALID`;
+  - a provider not held is pending, and the runtime reads it with the closure. The GUI's output read therefore
+    withholds the consumer's bands until it has.
+- **GUI.** The training-data section declares the existing `referenceFeedback` for `TRAINING_DATA_SOURCE`, and both
+  training-data panels show each item's problem (`withItemProblems`). Classification's TRN button stays unmarked, as
+  its other training-data declarations are; Regression's is marked.
+- **Regressions:**
+  - `lib/js/shared/test/recipe/output/trainingDataReadiness.test.js`, for both types;
+  - `classification/reusedTrainingDataFeedback.test.jsx`, mounted;
+  - existing tests updated where they pinned the old behaviour: a provider without imagery, a provider not loaded,
+    and the readiness-needs validation message.
+
+**Deferred: configuration-known absence of training data.** `noTrainingData` still counts any `RECIPE` set as
+present. Deciding from configuration that every provider, recursively, contributes no point needs a recursive
+treatment that:
+- keeps mixed sets ready;
+- waits for missing records;
+- never rejects an otherwise executable empty provider for contributing nothing.
+
+A provider without points, beside a consumer without its own, therefore still runs into Earth Engine's refusal to
+train on nothing.
+
+**Remaining gaps, which this slice establishes neither of:**
+- **Band-set validation.** A provider's band-set refusals are description diagnostics of its image, which is not
+  described here.
+- **Sampled-feature compatibility.** The consumer trains on the provider's samples under its own band order. Whether
+  they cover its imagery needs both inputs described (`recipeSection.jsx`'s TODO).
+
+Sample counts after masking and sampling are known only to Earth Engine.
+
+**Other callers.** The Time Series collection (Time Series, CCDC, Phenology) and PyEO Alerts call a Classification's
+`getTrainingData$()` through `CLASSIFICATION_SOURCE: REFERENCE`. Moving those to `TRAINING_DATA` interacts with the
+native-band classifier-input policy and is a separate decision.
 
 #### Regression training data (implemented)
 
@@ -1424,8 +1491,8 @@ validation consistency" below.
   their item enumeration and editors differ: segment requirements, Band Math, input imagery and Change Alerts'
   reference.
 
-After these slices, reassess the recorded gaps before extending `TRAINING_DATA`, geometry or named map-product
-readiness. Preview validation remains conditional on measured cost. Refactoring slices preserve behaviour and use
+After these slices, reassess the recorded gaps before extending `TRAINING_DATA` (see "Reused training data"),
+geometry or named map-product readiness. Preview validation remains conditional on measured cost. Refactoring slices preserve behaviour and use
 the relevant existing regressions plus focused static checks; add tests for new contracts or uncovered behaviour,
 not for an extraction alone. The focused verification and two-worker limit below still apply.
 
