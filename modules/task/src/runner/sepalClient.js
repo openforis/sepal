@@ -37,20 +37,14 @@ export class SepalClient {
     }
 
     async #post(path, body, retry) {
-        try {
-            const response = await firstValueFrom(postJson$(`${this.#endpoint}/${path}`, {
-                body,
-                username: '',
-                password: this.#apiKey,
-                headers: {'No-auth-challenge': 'true'},
-                responseType: 'json',
-                ...(retry ? {retry} : {})
-            }))
-            return response.body
-        } catch (error) {
-            // The request carries the Authorization header, and failures are logged.
-            delete error.request
-            throw error
-        }
+        const response = await firstValueFrom(postJson$(`${this.#endpoint}/${path}`, {
+            body,
+            username: '',
+            password: this.#apiKey,
+            headers: {'No-auth-challenge': 'true'},
+            responseType: 'json',
+            ...(retry ? {retry} : {})
+        }))
+        return response.body
     }
 }
