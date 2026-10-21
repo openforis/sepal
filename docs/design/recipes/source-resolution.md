@@ -1374,7 +1374,7 @@ instead.
     - The alternative is a `CLASSIFIER` operation declared by Classification, with its training requirements and no
       image description, needed where training is requested.
   - **Normalisation.** For SVM and minimum distance, training data is normalised but scenes passed to `classifyImage`
-    are not, for both the collection and PyEO. This is an execution question.
+    are not, for both the collection and PyEO (see "Classifier normalisation on other imagery").
   - **Native-band policy.** It refuses a Time Series count image, which never reads its Classification, for
     unsupplied classifier inputs.
   - **Run-time-only band checks.** Requested classified bands are checked only at run time for the Time Series chart
@@ -1389,6 +1389,82 @@ instead.
      field names the Classification, and Retrieve is held.
   2. Add training points to the Classification. The explanation clears and Retrieve is available.
   3. Optionally turn the index gate off and on. Neither changes the hold while the Classification has no points.
+
+**Classifier normalisation on other imagery (implemented 2026-10-21).** A Classification with an SVM or
+minimum-distance classifier scales its features by its training imagery's per-band range, unless `normalize: 'NO'` is
+set; `YES` is the GUI default. Prediction now scales the imagery the Classification is applied to by that same range.
+
+- **Gap (confirmed by a numerical probe over the real execution).** The exported `classifyImage`, used by the Time
+  Series collection (SVM `probability_*`) and PyEO's monitoring scenes (`class`), classified raw features with a
+  classifier trained on scaled ones. PyEO's baseline, the Classification's own image, was scaled, so its baseline and
+  monitoring scenes were classified on different scales. Normalising each scene by its own range would not be
+  equivalent: the transformation is the training imagery's range.
+- **One preparation owner** (`classification.js`).
+  - `prepared(features)` takes the Classification's prepared imagery: `addCovariates` per input, so indexes, band
+    combinations and auxiliary covariates come first, then the inputs combined. It computes the statistics once, with
+    one `reduceRegion(minMax)` over that imagery at `scale || 30` (`bestEffort`, at most 1e6 pixels). It scales the
+    imagery once, clipped to its footprint, its properties kept.
+  - Training samples that image, and `getImage$` classifies it. `getImage$` now prepares once; it used to prepare
+    again through `getTrainingData$`.
+  - **Carrier.** The statistics are set as `feature_statistics` on the consumer's final training collection, beside
+    `band_order`. A reused recipe's statistics, set on its own collection, do not survive flattening.
+  - **Prediction.** The exported `classifyImage` scales only the features `addCovariates` derives from the given
+    image, with the statistics of the training data it is given. Other bands of that image stay raw, and its callers
+    are unchanged.
+- **Formula, unchanged:**
+  - `(x - min) / (max - min)`, or `x / max` where the range is one value;
+  - values beyond the training range stay beyond it;
+  - a band constant at zero is zero, since `ee.Image.divide` returns 0 for division by zero. That is documented Earth
+    Engine behaviour, not verified live.
+- **Preserved:**
+  - native-only requests;
+  - output modes;
+  - masks;
+  - scene properties;
+  - output scaling;
+  - the multi-input own path, scaled once;
+  - `normalize: 'NO'` and the other classifiers, untouched.
+
+  Readiness, settings and reused providers' own normalisation are unchanged. The last stays the gap recorded under
+  sampled-feature compatibility.
+- **Cost.** Classifying more scenes constructs no further reduction expression. The tests count constructed
+  expressions, not Earth Engine evaluations: whether Earth Engine evaluates the shared statistics once per computation
+  or once per tile is not established.
+- **Expected change to existing outputs.** Settings stay as saved, but outputs change wherever such a Classification
+  classifies other imagery: Time Series probabilities, CCDC's classified bands and PyEO's monitoring classification.
+  Earlier exports differ from re-exports. The Classification's own image is unchanged.
+- **Regressions.** `modules/gee/test/ee/classification/featureNormalisation.test.js`, over a numeric stand-in:
+  - training and prediction agreeing for SVM and minimum distance;
+  - values beyond the range left unclamped;
+  - extra scene bands left raw;
+  - derived features prepared before scaling;
+  - constant and zero-constant bands;
+  - the `NO` and Random Forest controls;
+  - consumer-owned statistics with a reused provider;
+  - one constructed reduction however many scenes are classified;
+  - the multi-input own path scaled once.
+- **Unresolved:**
+  - how `bestEffort` coarsens the statistics' scale on real imagery;
+  - how often Earth Engine evaluates them.
+- **Manual check before pushing (live, controlled).**
+  1. Run `modules/gee/verify/classifierNormalisation.mjs`:
+     `docker exec -w /usr/local/src/sepal/modules/gee gee node verify/classifierNormalisation.mjs`.
+     It applies the exported `classifyImage` to the Classification's own input scene with its own training data, for
+     normalising SVM and minimum distance beside a non-normalising SVM and a Random Forest.
+  2. Accept only a run whose every line is `PASS` and which exits 0:
+     - training features: each training sample's class and features, compared as a whole row, equal the scene's raw
+       features at its point, scaled by the carried `feature_statistics` with the transformation the script computes
+       itself (within 1e-5); for the controls, raw with no statistics. This inspects what is trained on, not the
+       features prediction is given;
+     - predictions: those features are judged only through what prediction gives. Class, and the SVM's probability,
+       must be identical pixel by pixel to the Classification's own image, with pixels valid in both;
+     - footprint: the same bounded area;
+     - mask: nothing classified where the scene is masked.
+
+     A comparison without samples or jointly valid pixels fails. Before this change, the normalising cases' prediction
+     check is expected to fail.
+  3. As smoke tests, open an ordinary Time Series `probability_*` chart and run a PyEO Alerts over an SVM
+     Classification. Both should run and look plausible.
 
 #### Regression training data (implemented)
 
