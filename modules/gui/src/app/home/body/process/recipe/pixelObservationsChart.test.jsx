@@ -11,7 +11,7 @@ import {initStore, select} from '~/store'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
 // An open Time Series or CCDC chart reads its pixel's observations only while what the recipe's type declares they
-// require is known to be met (pixelObservationsAvailability). Asked while the Classification is still to be read, it asks
+// require is known to be met (pixelOperationsAvailability). Asked while the Classification is still to be read, it asks
 // once it is; found unmet, the chart closes and what it was reading is let go, so a late answer draws nothing. It reads
 // again whenever what it is computed from changes - a record it depends on included, once storage holds it - and for
 // nothing else. The registrations, readiness, store and chart are real; the Earth Engine requests, the graph renderer

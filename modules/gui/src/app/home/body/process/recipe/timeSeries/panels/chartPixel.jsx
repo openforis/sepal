@@ -21,12 +21,13 @@ import {withRecipe} from '../../../recipeContext'
 import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
-import {pixelObservationsAvailability} from '../../operationAvailability'
+import {pixelOperationsAvailability, watchOperations} from '../../operationAvailability'
 import {selectedClassificationOfState} from '../../selectedClassification'
 import {loadObservations$, RecipeActions} from '../timeSeriesRecipe'
 import styles from './chartPixel.module.css'
 
-// What the chart runs at its pixel: the collection's observations. Its action is held to the same (timeSeriesToolbar.jsx).
+// What the chart runs at its pixel: the collection's observations. It and its action are held to these, and watch them
+// (timeSeriesToolbar.jsx).
 export const CHART_OPERATIONS = [PIXEL_OBSERVATIONS]
 
 const fields = {
@@ -146,11 +147,11 @@ class _ChartPixel extends React.Component {
 
     componentDidMount() {
         const {recipeId, sourceRuntime} = this.props
-        this.observationsWatch = sourceRuntime?.watchOutput$({recipeId, operation: PIXEL_OBSERVATIONS}).subscribe()
+        this.operationWatches = watchOperations({sourceRuntime, recipeId, operations: CHART_OPERATIONS})
     }
 
     // Observations are requested only while the recipe's own requirements of them are known to be met
-    // (pixelObservationsAvailability): once they are not known to be, what is being read is let go, and read again once
+    // (pixelOperationsAvailability): once they are not known to be, what is being read is let go, and read again once
     // they are; a chart they are found not to meet is closed. They are read again whenever what they are computed from
     // changes - the recipe or a record it depends on - and only then. A band no longer offered is replaced, and nothing is
     // read for it: the update the replacement causes reads that one.
@@ -180,7 +181,7 @@ class _ChartPixel extends React.Component {
     }
 
     componentWillUnmount() {
-        this.observationsWatch?.unsubscribe()
+        this.operationWatches.unsubscribe()
         this.cancel$.next(true)
     }
 
@@ -218,10 +219,10 @@ class _ChartPixel extends React.Component {
     }
 }
 
-// What it is computed from, beside whether it may be read (pixelObservationsAvailability), and what is offered of the
+// What it is computed from, beside whether it may be read (pixelOperationsAvailability), and what is offered of the
 // Classification its Sources select, as the session holds it now.
 const mapStateToProps = (state, {recipe, sourceRuntime}) => {
-    const {gate, computation} = pixelObservationsAvailability({state, recipe, heldFor: key => sourceRuntime?.heldFor(key)})
+    const {gate, computation} = pixelOperationsAvailability({state, recipe, heldFor: key => sourceRuntime?.heldFor(key), operations: CHART_OPERATIONS})
     return {
         observationsGate: gate,
         computation,

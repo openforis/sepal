@@ -1279,12 +1279,18 @@ Near-term order:
    incidental copied settings do not create dependencies, and the referenced producer retains its genuine dependencies.
 2. **Consolidate operation wiring and chart lifecycle before extending more operations.** Use separately reviewable,
    behaviour-preserving slices:
-   - Keep an operation's effective recipe (including the pixel/AOI projection), required operations, readiness reads
-     and runtime interest consistent. The chart action and open chart must derive their needs from the same contract.
-     Preserve the distinct execution semantics of direct pixel charts and referenced images with their own AOIs.
-   - Share the repeated Time Series/CCDC lifecycle for waiting, cancellation, resuming, computation changes and band
-     reconciliation, while retaining their distinct request construction and rendering. Existing regressions protect
-     upstream edits, save waits, findings, late responses, band replacement and ignored AOIs.
+   - **Operation wiring (consolidated 2026-10-21).** Each direct pixel chart declares its operations once, as its
+     panel's `CHART_OPERATIONS`: `PIXEL_OBSERVATIONS` for Time Series, plus `PIXEL_SEGMENTS` for CCDC. Its action
+     and open chart gate on that list through `pixelOperationsAvailability`, and both watch it through
+     `watchOperations`. `recipeForOperation` remains the one pixel/AOI projection, shared by readiness reads,
+     acquisition and the runtime's asset interest. Referenced images keep their own AOIs, and charts without
+     operations (CCDC Slice, Change Alerts, LandTrendr) are unchanged.
+   - **Next: chart lifecycle.** Share the repeated Time Series/CCDC lifecycle for waiting, cancellation, resuming,
+     computation changes and band reconciliation (each panel's `componentDidUpdate`/`updateChart`, `held`, `hold`,
+     `clearData` and `close`), while retaining their distinct request construction and rendering. The two panels
+     currently differ in when a withdrawal is checked relative to band replacement; settle that difference
+     explicitly rather than by extraction. Existing regressions protect upstream edits, save waits, findings, late
+     responses, band replacement and ignored AOIs.
    - Prefer extracting the existing shared behaviour to introducing another resolver, cache, subscription system or
      general-purpose framework. Success means the next operation needs fewer independently coordinated changes,
      not merely fewer lines.
@@ -1389,9 +1395,11 @@ not for an extraction alone. The focused verification and two-worker limit below
      with its AOI replaced immutably. This fixes the over-requirement above, and CCDC's observations are now guarded.
 
    GUI (Time Series and CCDC charts):
-   - **Availability.** The chart action (`ChartPixelButton` with `observes`) and the open chart are judged by
-     `pixelObservationsAvailability` (`operationAvailability.js`) over `readOperationReadiness`
-     (`recipe/operationReadiness.js`), which wraps `readReadiness`. They are never judged by the image output's answer.
+   - **Availability.** Each chart declares the operations it runs at its pixel once, as its panel's `CHART_OPERATIONS`.
+     Its action (`ChartPixelButton` with `operations`) and the open chart are both judged on them by
+     `pixelOperationsAvailability` (`operationAvailability.js`), over `readOperationReadiness`
+     (`recipe/operationReadiness.js`), which wraps `readReadiness`. Both watch them through `watchOperations`. They are
+     never judged by the image output's answer.
    - **Gate outcomes:**
      - a finding, or dependencies known unsound, withdraws, naming the section that the type's declarations say it in
        (Sources, for the classifier inputs);

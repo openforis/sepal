@@ -1,7 +1,10 @@
+import {Observable} from 'rxjs'
 import {describe, expect, it, vi} from 'vitest'
 
+import {PIXEL_OBSERVATIONS} from '#sepal/recipe/output/readiness'
+
 import {addRecipeType} from '../recipeTypeRegistry'
-import {pixelChartAvailability, retrieveAvailability} from './operationAvailability'
+import {pixelChartAvailability, retrieveAvailability, watchOperations} from './operationAvailability'
 import {PIXEL_SEGMENTS} from './sourceRequirements'
 
 addRecipeType({id: 'UNDECLARED', imageSource: true})
@@ -42,3 +45,30 @@ describe('the segment chart over a recipe whose type requires something of its s
         expect(evidenceOwnerOf).toHaveBeenCalledTimes(1)
     })
 })
+
+// The chart's action and its open panel each watch what they are held to, so the runtime reads what every operation
+// needs - not only the first - for as long as either is there.
+describe('watching the operations a chart runs at its pixel', () => {
+    it('has the runtime read each operation\'s question until let go', () => {
+        const {sourceRuntime, watched} = runtimeRecordingWatches()
+
+        const watches = watchOperations({sourceRuntime, recipeId: 'recipe-1', operations: [PIXEL_OBSERVATIONS, PIXEL_SEGMENTS]})
+        expect(watched).toEqual([
+            {recipeId: 'recipe-1', operation: PIXEL_OBSERVATIONS},
+            {recipeId: 'recipe-1', operation: PIXEL_SEGMENTS}
+        ])
+
+        watches.unsubscribe()
+        expect(watched).toEqual([])
+    })
+})
+
+// A runtime whose watched questions are those subscribed and not yet unsubscribed.
+const runtimeRecordingWatches = () => {
+    const watched = []
+    const watchOutput$ = question => new Observable(() => {
+        watched.push(question)
+        return () => watched.splice(watched.indexOf(question), 1)
+    })
+    return {sourceRuntime: {watchOutput$}, watched}
+}

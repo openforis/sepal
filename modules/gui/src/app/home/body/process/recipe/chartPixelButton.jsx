@@ -18,7 +18,7 @@ import {Tooltip} from '~/widget/tooltip'
 
 import styles from './chartPixelButton.module.css'
 import {rankCoordinateCandidates} from './coordinateCandidates'
-import {pixelChartAvailability, pixelOperationsAvailability} from './operationAvailability'
+import {pixelChartAvailability, pixelOperationsAvailability, watchOperations} from './operationAvailability'
 
 const LONG_PRESS_DURATION_MS = 600
 const LONG_PRESS_MOVE_TOLERANCE_PX = 8
@@ -120,9 +120,7 @@ class _ChartPixelButton extends React.Component {
     // What the operations the chart runs at its pixel need is read for as long as the chart can be opened from here.
     componentDidMount() {
         const {operations, recipe, sourceRuntime} = this.props
-        this.operationWatches = sourceRuntime
-            ? operations.map(operation => sourceRuntime.watchOutput$({recipeId: recipe.id, operation}).subscribe())
-            : []
+        this.operationWatches = watchOperations({sourceRuntime, recipeId: recipe.id, operations})
     }
 
     // A pixel being chosen, or a long press about to offer coordinates, when the chart can no longer be opened would
@@ -295,7 +293,7 @@ class _ChartPixelButton extends React.Component {
     }
 
     componentWillUnmount() {
-        this.operationWatches.forEach(watch => watch.unsubscribe())
+        this.operationWatches.unsubscribe()
         this.cancelLongPress()
         this.state.clickListener?.remove()
         this.stopInteractionMode()

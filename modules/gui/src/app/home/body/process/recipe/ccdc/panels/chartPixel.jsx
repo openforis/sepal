@@ -20,14 +20,14 @@ import {withRecipe} from '../../../recipeContext'
 import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
 import {resolveChartBand} from '../../chartBandSelection'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
-import {pixelOperationsAvailability} from '../../operationAvailability'
+import {pixelOperationsAvailability, watchOperations} from '../../operationAvailability'
 import {selectedClassificationOfState} from '../../selectedClassification'
 import {CCDCGraph} from '../ccdcGraph'
 import {loadCCDCObservations$, loadCCDCSegments$, RecipeActions} from '../ccdcRecipe'
 import styles from './chartPixel.module.css'
 
-// What the chart runs at its pixel: the collection's observations, and the segments CCDC fits to them there. Its
-// action is held to the same (ccdcToolbar.jsx).
+// What the chart runs at its pixel: the collection's observations, and the segments CCDC fits to them there. It and its
+// action are held to these, and watch them (ccdcToolbar.jsx).
 export const CHART_OPERATIONS = [PIXEL_OBSERVATIONS, PIXEL_SEGMENTS]
 
 const fields = {
@@ -145,9 +145,7 @@ class _ChartPixel extends React.Component {
 
     componentDidMount() {
         const {recipeId, sourceRuntime} = this.props
-        this.operationWatches = sourceRuntime
-            ? CHART_OPERATIONS.map(operation => sourceRuntime.watchOutput$({recipeId, operation}).subscribe())
-            : []
+        this.operationWatches = watchOperations({sourceRuntime, recipeId, operations: CHART_OPERATIONS})
         this.updateChart()
     }
 
@@ -156,7 +154,7 @@ class _ChartPixel extends React.Component {
     }
 
     componentWillUnmount() {
-        this.operationWatches.forEach(watch => watch.unsubscribe())
+        this.operationWatches.unsubscribe()
         this.cancel$.next(true)
         this.cancel$.complete()
     }

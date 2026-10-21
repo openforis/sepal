@@ -15,7 +15,7 @@ vi.mock('~/apiRegistry', () => ({default: {}}))
 const {addRecipeType, getRecipeType} = await import('../recipeTypeRegistry')
 const {default: ccdc} = await import('./ccdc/ccdc')
 const {default: timeSeries} = await import('./timeSeries/timeSeries')
-const {pixelObservationsAvailability} = await import('./operationAvailability')
+const {pixelOperationsAvailability} = await import('./operationAvailability')
 const {readOperationReadiness} = await import('./operationReadiness')
 
 addRecipeType(ccdc())
@@ -118,7 +118,7 @@ const loadedRecipesOf = (recipe, classification) =>
     Object.fromEntries([recipe, classification].filter(Boolean).map(record => [record.id, record]))
 
 const assess = (recipe, classification, heldFor = () => null) =>
-    pixelObservationsAvailability({state: {process: {loadedRecipes: loadedRecipesOf(recipe, classification)}}, recipe, heldFor})
+    pixelOperationsAvailability({state: {process: {loadedRecipes: loadedRecipesOf(recipe, classification)}}, recipe, heldFor, operations: ['PIXEL_OBSERVATIONS']})
 
 const read = (recipe, classification) =>
     readOperationReadiness({recipe, operation: 'PIXEL_OBSERVATIONS', loadedRecipes: loadedRecipesOf(recipe, classification)})

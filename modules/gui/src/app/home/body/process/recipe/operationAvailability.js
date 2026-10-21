@@ -1,7 +1,8 @@
 import _ from 'lodash'
+import {Subscription} from 'rxjs'
 
 import {READY} from '#sepal/recipe/output/readImageOutput'
-import {NOT_READY, PIXEL_OBSERVATIONS} from '#sepal/recipe/output/readiness'
+import {NOT_READY} from '#sepal/recipe/output/readiness'
 import {INVALID, VALID} from '#sepal/recipe/source/dependencyValidity'
 
 import {getRecipeType} from '../recipeTypeRegistry'
@@ -38,21 +39,17 @@ export const pixelChartAvailability = ({state, recipe, evidenceOwnerOf, heldFor,
     return {available: !gate && !noChartableBand, gate, chartable, bands, noChartableBand}
 }
 
-// The observation chart: {available, gate, computation}, `gate` being why a pixel's observations may not be requested
-// now - in the shape requestGate answers, {wait, withdraw, code, section} - or null. Judged by what the recipe's type
-// declares those observations require (operationReadiness.js), never by its image output. A finding, or dependencies
-// known unsound, withdraws what is charted, naming the section the finding is said in; while what it needs is being
-// read, nothing new is requested and what is charted stays; what could not be read is unavailable, which finds nothing.
-// A dependency the session edits is executed from storage's copy, so nothing is requested while that copy is not the
-// session's (draftDisagreementsOfState), as Retrieve holds an export. `computation` is what the chart is computed from
-// (operationReadiness.js): a chart charted from another is charted again. The recipe's watcher of the question
-// (watchOutput$ with `operation`) is what has the runtime read what the session does not hold.
-export const pixelObservationsAvailability = ({state, recipe, heldFor}) =>
-    pixelOperationsAvailability({state, recipe, heldFor, operations: [PIXEL_OBSERVATIONS]})
-
-// The same for a chart reading several operations at its pixel - CCDC's, its observations and its segments
-// (PIXEL_SEGMENTS) - each judged by what the recipe's type declares for it: a finding of any withdraws, otherwise what
-// any waits for holds. They run at the same pixel, so `computation` is one.
+// A chart running operations at its pixel - observations (PIXEL_OBSERVATIONS) for Time Series, those and the segments
+// fitted there (PIXEL_SEGMENTS) for CCDC - as {available, gate, computation}: `gate` being why they may not be
+// requested now - in the shape requestGate answers, {wait, withdraw, code, section} - or null. Each is judged by what the
+// recipe's type declares it requires (operationReadiness.js), never by its image output. A finding of any, or
+// dependencies known unsound, withdraws what is charted, naming the section the finding is said in; otherwise, while
+// what any needs is being read, nothing new is requested and what is charted stays; what could not be read is
+// unavailable, which finds nothing. A dependency the session edits is executed from storage's copy, so nothing is
+// requested while that copy is not the session's (draftDisagreementsOfState), as Retrieve holds an export.
+// `computation` is what the chart is computed from (operationReadiness.js): they run at the same pixel, so it is one,
+// and a chart charted from another is charted again. What the session does not hold is read by the runtime for as long
+// as the operations are watched (watchOperations).
 export const pixelOperationsAvailability = ({state, recipe, heldFor, operations}) => {
     const loadedRecipes = state.process?.loadedRecipes || {}
     const reads = operations.map(operation => readOperationReadiness({recipe, operation, loadedRecipes, heldFor}))
@@ -60,6 +57,15 @@ export const pixelOperationsAvailability = ({state, recipe, heldFor, operations}
     const gates = reads.map(({readiness, dependencyValidity}) => operationGate(recipe, readiness, dependencyValidity)).filter(Boolean)
     const gate = gates.find(({withdraw}) => withdraw) || gates[0] || draftGate(state, recipe, computation)
     return {available: !gate, gate, computation}
+}
+
+// Has the source runtime read what the operations need of a recipe (watchOutput$ with `operation`) until unsubscribed:
+// whatever is held to them - a chart's action, its open panel - watches them as it judges them.
+export const watchOperations = ({sourceRuntime, recipeId, operations}) => {
+    const watches = new Subscription()
+    sourceRuntime && operations.forEach(operation =>
+        watches.add(sourceRuntime.watchOutput$({recipeId, operation}).subscribe()))
+    return watches
 }
 
 const draftGate = (state, recipe, computation) => {
