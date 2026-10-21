@@ -2235,8 +2235,10 @@ of a direct CCDC root, held as its asset exports are.
       tests, passed, and so did the shared recipe tree (1256).
     - **Full GUI suite rerun (two workers): 314 files and 4506 tests, 4505 passed and 1 failed (312 s).** The failure
       was `remapping/panelActivation.test.jsx`, "opens with no panel open", which timed out at the 5 s default under
-      suite load. Run alone, the file passed 15 of 15, twice. The full run was not repeated, so a clean full-suite pass
-      for the current tree is still outstanding.
+      suite load. Run alone, the file passed 15 of 15, twice.
+  - **Full GUI suite at `8d04b160b` (2026-10-21, two workers): 316 files and 4547 tests passed, none failed (310 s).**
+    The tree was clean at that commit. It includes the request-dependent Retrieve work through the legacy-indicator and
+    submission-offer fixes, and the `panelActivation` timeout above did not recur.
   - **Request-dependent export guards (2026-10-21).** Verified by focused campaigns only, recorded with each slice; the
     gee one, for "CCDC's Drive and SEPAL image exports", ran `test/jobs` and `test/ee` (1346 passed); the GUI one, for
     "CCDC Retrieve's classified measures", 50 files and 756 tests. The Drive and SEPAL routes have no browser check:
@@ -2837,12 +2839,12 @@ separate decision changes it. Broader coverage listed under "Deferred beyond thi
 
 **Verification checkpoint before push:**
 
-- The Classification outline regression recorded under "Verification status" is corrected. The latest full GUI run
-  had one failure, a load timeout in `remapping/panelActivation.test.jsx` that passes alone. It is not a clean
-  full-suite pass for the current tree.
-- The full GUI suite and live numerical normalisation checks passed at the baseline recorded under "Verification
-  status of the readiness and normalisation changes". The later deselection fix has focused GUI coverage; do not
-  describe the earlier full-suite run as testing later commits.
+- The Classification outline regression recorded under "Verification status" is corrected. The full GUI suite at
+  `8d04b160b` passed all 316 files and 4547 tests with two workers (2026-10-21, 310 s, exit 0). The earlier
+  `remapping/panelActivation.test.jsx` timeout did not recur; its historical result is preserved above.
+- The full GUI run includes the later deselection, requested-band, legacy-indicator and submission-offer fixes.
+  Live numerical normalisation checks passed at the earlier baseline recorded under "Verification status of the
+  readiness and normalisation changes"; keep that evidence separate from the later GUI and route verification.
 - The signed-in browser batch and GUI smoke tests are still pending. Use the checklist in that verification entry,
   and include clearing and reselecting a Classification in Time Series/CCDC charts and Time Series Retrieve.
 - Check actual preview tiles or chart responses, as appropriate, after repair. Enabled buttons alone are not an
