@@ -1837,6 +1837,22 @@ pixel (`collection.js`).
     `2d1590763`, using temporary read-only source overlays, so they predate this chart slice. The geometry guard checks
     `inputImageryRequirement` by object identity; the Classification declaration copied it when extending its operations
     in `e8f8d8253`. Correct this before push, preserving geometry availability when only training data is missing.
+  - **Outline correction (2026-10-21).** The geometry guard now recognises the requirement by its rule:
+    `isInputImageryRequirement` (`source/inputImagery.js`) compares a declaration's `findings` with the shared
+    requirement's. Its stated operations can be extended; Classification's local `CLASSIFIER` extension and every
+    other type's list are unchanged. That was the only consumer relying on requirement-object identity, and
+    Classification's is the only copied declaration.
+    - Before editing, the 3 failures reproduced in `recipeGeometryLayer.test.jsx` (3 failed, 2 passed). After it, all
+      5 cases pass with their assertions unchanged:
+      - a Classification without points still has an outline;
+      - removing the last input cancels the request and notifies nothing;
+      - restoring an input requests and shows the outline again.
+    - Nearby: the map's AOI and geometry layers, the table layer and the Classification recipe tests, 9 files and 96
+      tests, passed, and so did the shared recipe tree (1256).
+    - **Full GUI suite rerun (two workers): 314 files and 4506 tests, 4505 passed and 1 failed (312 s).** The failure
+      was `remapping/panelActivation.test.jsx`, "opens with no panel open", which timed out at the 5 s default under
+      suite load. Run alone, the file passed 15 of 15, twice. The full run was not repeated, so a clean full-suite pass
+      for the current tree is still outstanding.
 - **Live Earth Engine.** `modules/gee/verify/classifierNormalisation.mjs` passed all 24 checks and exited 0 (66 s).
   - **Training rows.** The provider was `LC08_231062_20170730`. Each reusing consumer trained on 15 rows: 6 from the
     provider, then 9 of its own. Each non-reusing case trained on its 9.
@@ -1922,6 +1938,10 @@ pixel (`collection.js`).
   7. **Working execution.** For each step above that releases a hold, confirm an actual response, not only an enabled
      button: a preview tile for Classification, Regression, PyEO and Phenology (these have no pixel charts), and a chart response
      for the Time Series and CCDC charts.
+  8. **Classification outline.** Open a Classification with one input image and no training points: its outline
+     shows on the map. Remove that last input: the outline disappears, the network panel shows the pending geometry
+     request cancelled and no new one, and no error notification appears. Add the input back: the geometry is
+     requested again and the outline shows.
 
 #### Regression training data (implemented)
 
@@ -2079,8 +2099,9 @@ separate decision changes it. Broader coverage listed under "Deferred beyond thi
 
 **Verification checkpoint before push:**
 
-- Correct the Classification outline regression recorded under "Verification status". The latest full GUI run has
-  three failures, also reproduced on committed HEAD; it is not a passing full-suite result for the current tree.
+- The Classification outline regression recorded under "Verification status" is corrected. The latest full GUI run
+  had one failure, a load timeout in `remapping/panelActivation.test.jsx` that passes alone. It is not a clean
+  full-suite pass for the current tree.
 - The full GUI suite and live numerical normalisation checks passed at the baseline recorded under "Verification
   status of the readiness and normalisation changes". The later deselection fix has focused GUI coverage; do not
   describe the earlier full-suite run as testing later commits.

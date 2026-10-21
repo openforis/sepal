@@ -2,7 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
-import {inputImageryRequirement} from '#sepal/recipe/source/inputImagery'
+import {inputImageryRequirement, isInputImageryRequirement} from '#sepal/recipe/source/inputImagery'
 import api from '~/apiRegistry'
 import {compose} from '~/compose'
 import {withSubscriptions} from '~/subscription'
@@ -72,7 +72,7 @@ const hasGeometry = recipe =>
     recipe.ui.initialized && !lacksInputImagery(recipe)
 
 const lacksInputImagery = recipe =>
-    (recipeType(recipe.type)?.configurationRequirements || []).includes(inputImageryRequirement)
+    (recipeType(recipe.type)?.configurationRequirements || []).some(isInputImageryRequirement)
     && inputImageryRequirement.findings(recipe.model).length > 0
 
 export const RecipeGeometryLayer = compose(
