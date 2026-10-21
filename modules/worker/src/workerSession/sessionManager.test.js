@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import {describe, it, mock, test} from 'node:test'
 
+import {ClientException} from '#sepal/exception'
 import {callsOf} from '#sepal/testSupport/mock'
 
 import {instanceName} from '../instanceName.js'
@@ -48,7 +49,7 @@ describe('requestSession', () => {
         const {mgr, events} = build({budgetClient})
 
         await assert.rejects(
-            mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 't'})
+            mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 'T3aSmall'})
         )
 
         assert.equal(events.emitWorkerSessionRequested.mock.callCount(), 0)
@@ -62,7 +63,7 @@ describe('requestSession', () => {
         const repo = makeRepo()
         repo.insert = mock.fn(async () => {order.push('insert')})
         const {mgr} = build({repo, instanceManager})
-        await mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 't'})
+        await mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 'T3aSmall'})
         assert.deepEqual(order, ['requestInstance', 'insert'])
     })
 
@@ -70,7 +71,7 @@ describe('requestSession', () => {
         const lockedUsers = makeLockedUsers(['a'])
         const {mgr, repo} = build({lockedUsers})
         assert.notEqual(
-            await mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 't'}),
+            await mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 'T3aSmall'}),
             undefined
         )
         assert.equal(repo.insert.mock.callCount(), 1)
@@ -87,7 +88,7 @@ describe('requestSession', () => {
                 const budgetClient = makeBudgetClient({check: mock.fn(async () => ({exceeded: true, reason}))})
                 const {mgr, repo, instanceManager} = build({budgetClient})
                 await assert.rejects(
-                    mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 't'}),
+                    mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 'T3aSmall'}),
                     Expected
                 )
                 assert.equal(instanceManager.requestInstance.mock.callCount(), 0)
@@ -102,7 +103,7 @@ describe('requestSession', () => {
             const lockedUsers = makeLockedUsers(['a'])
             const {mgr, repo, instanceManager} = build({lockedUsers, budgetClient: unreachable()})
             await assert.rejects(
-                mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 't'}),
+                mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 'T3aSmall'}),
                 InstanceBudgetExceeded
             )
             assert.deepEqual(callsOf(lockedUsers.isLocked), [['a']])
@@ -114,7 +115,7 @@ describe('requestSession', () => {
             const lockedUsers = makeLockedUsers()
             const {mgr, repo} = build({lockedUsers, budgetClient: unreachable()})
             assert.notEqual(
-                await mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 't'}),
+                await mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 'T3aSmall'}),
                 undefined
             )
             assert.deepEqual(callsOf(lockedUsers.isLocked), [['a']])
@@ -127,9 +128,22 @@ describe('requestSession', () => {
         const lockedUsers = makeLockedUsers(['a'])
         const {mgr, repo} = build({lockedUsers, budgetClient: null})
         await assert.rejects(
-            mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 't'}),
+            mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 'T3aSmall'}),
             InstanceBudgetExceeded
         )
+        assert.equal(repo.insert.mock.callCount(), 0)
+    })
+
+    test('instance type outside the catalog → ClientException, no budget check, instance or insert', async () => {
+        const {mgr, repo, instanceManager, budgetClient} = build()
+
+        await assert.rejects(
+            mgr.requestSession({username: 'a', workerType: SANDBOX, instanceType: 'p5.48xlarge'}),
+            ClientException
+        )
+
+        assert.equal(budgetClient.check.mock.callCount(), 0)
+        assert.equal(instanceManager.requestInstance.mock.callCount(), 0)
         assert.equal(repo.insert.mock.callCount(), 0)
     })
 })

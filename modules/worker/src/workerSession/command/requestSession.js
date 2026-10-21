@@ -1,4 +1,5 @@
 // RequestSession:
+//   0. reject an instance type outside the catalog — it would reach EC2 as-is and bill at $0
 //   1. budget check — throws the matching typed error when the user is over budget. The
 //      authoritative answer comes from the budget module LIVE (budgetClient.check), so a restart
 //      or a lost event cannot let an over-budget user through; the event-fed lockedUsers set
@@ -16,6 +17,7 @@
 
 import crypto from 'node:crypto'
 
+import {ClientException} from '#sepal/exception'
 import {getLogger} from '#sepal/log'
 import {storedUsername} from '#sepal/username'
 
@@ -49,6 +51,9 @@ const requestSession = async (
     {username, workerType, instanceType},
     {repo, budgetClient, lockedUsers, instanceManager, clock, apiKeyGenerator, startupLeaseMinutes}
 ) => {
+    if (!instanceManager.getInstanceTypes().some(({id}) => id === instanceType)) {
+        throw new ClientException(`Unknown instance type: ${instanceType}`)
+    }
     const {exceeded, reason} = await budgetVerdict(username, {budgetClient, lockedUsers})
     if (exceeded) throw budgetErrorFor(reason, username)
     const now = clock()
