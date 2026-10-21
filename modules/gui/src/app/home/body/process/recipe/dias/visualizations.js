@@ -7,8 +7,8 @@ const DATE_FORMAT = 'YYYY-MM-DD'
 
 // Same colors the paper uses to distinguish sensors in its alert maps (Figure 4):
 // Sentinel-1 teal, Landsat salmon, Sentinel-2 violet, PlanetScope green.
-const SENSOR_PALETTE = ['#000000', '#1CADE4', '#FF6F61', '#C77DFF', '#6AA84F']
-const SENSOR_LABELS = ['None', 'Sentinel-1', 'Landsat', 'Sentinel-2', 'PlanetScope']
+export const SENSOR_PALETTE = ['#000000', '#1CADE4', '#FF6F61', '#C77DFF', '#6AA84F']
+export const SENSOR_LABELS = ['None', 'Sentinel-1', 'Landsat', 'Sentinel-2', 'PlanetScope']
 
 const toYdoy = date => {
     const m = moment(date, DATE_FORMAT)
