@@ -18,7 +18,7 @@ import {withSourceProblems} from '../../selectedSource'
 import {RecipeActions} from '../changeAlertsRecipe'
 import {hasSegmentDescription} from '../referenceEvidence'
 import styles from './changeAlertsToolbar.module.css'
-import {ChartPixel} from './chartPixel'
+import {CHART_OPERATIONS, ChartPixel} from './chartPixel'
 import {Date} from './date/date'
 import {Options} from './options/options'
 import {Reference} from './reference/reference'
@@ -71,6 +71,7 @@ class _ChangeAlertsToolbar extends React.Component {
                     className={styles.top}>
                     <ChartPixelButton
                         disabled={!initialized || !describedSource}
+                        operations={CHART_OPERATIONS}
                         onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}
                     />
                     <RetrieveButton disabled={!describedSource} tooltip={msg('process.changeAlerts.panel.retrieve.tooltip')}/>

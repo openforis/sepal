@@ -22,12 +22,16 @@ import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import {resolveChartBand} from '../../chartBandSelection'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
-import {pixelChartAvailability} from '../../operationAvailability'
+import {pixelChartAvailability, pixelOperationsAvailability, watchOperations} from '../../operationAvailability'
 import {pixelGenerationOfState} from '../../pixelGeneration'
 import {dateFormatOf, segmentDescription} from '../../segmentEvidence'
 import {PIXEL_SEGMENTS} from '../../sourceRequirements'
 import {loadCCDCObservations$, loadCCDCSegments$, RecipeActions} from '../changeAlertsRecipe'
 import styles from './chartPixel.module.css'
+
+// What the chart runs at its pixel: the reference's segments, built as the reference's own image. It and its action are
+// held to these, and watch them (changeAlertsToolbar.jsx). Its observations are read as before, held to nothing.
+export const CHART_OPERATIONS = [PIXEL_SEGMENTS]
 
 const fields = {
     selectedBand: new Form.Field()
@@ -163,16 +167,23 @@ class _ChartPixel extends React.Component {
         }
     }
 
-    // The chart watches the evidence its segments need, so they are checked wherever it is open.
+    // The chart watches the evidence its segments need, and what running them needs, so both are checked wherever it is
+    // open.
     componentDidMount() {
         const {recipeId, sourceRuntime} = this.props
         this.evidence = sourceRuntime?.watchEvidence$({recipeId, operation: PIXEL_SEGMENTS}).subscribe()
+        this.operationWatches = watchOperations({sourceRuntime, recipeId, operations: CHART_OPERATIONS})
     }
 
-    // Segments are requested only once the reference is known to suit them (requestGate, sourceRequirements.js), and
-    // requested when it comes to; segments already charted stay while it is checked again.
+    // Segments are requested only once the reference is known to suit them (requestGate, sourceRequirements.js) and to
+    // run (pixelOperationsAvailability), and requested when it comes to; segments already charted stay while the
+    // reference is checked again, and are let go, with the observations read again, once whether it runs is no longer
+    // known. A reference found unable to run closes the chart, whatever band is selected.
     componentDidUpdate(prevProps) {
-        const {band, stream, recipe, latLng, description, pixels, segmentsGate, noChartableBand, inputs: {selectedBand}} = this.props
+        const {band, stream, recipe, latLng, description, pixels, segmentsGate, operationsGate, noChartableBand, inputs: {selectedBand}} = this.props
+        if (latLng && operationsGate?.withdraw) {
+            return this.close()
+        }
 
         // Nothing is requested for a band being replaced: the update the replacement causes requests it.
         const resolved = this.resolvedBand(selectedBand.value || band)
@@ -187,13 +198,14 @@ class _ChartPixel extends React.Component {
         if (!latLng || !selectedBand.value) {
             return
         }
-        if (!_.isEqual(
+        const gate = segmentsGate || operationsGate
+        if ((operationsGate && !prevProps.operationsGate) || !_.isEqual(
             [recipe.model, latLng, selectedBand.value, description, pixels],
             [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.selectedBand.value, prevProps.description, prevProps.pixels])
         ) {
             this.cancel$.next(true)
             this.setState({segments: undefined})
-            this.segmentsHeld = Boolean(segmentsGate)
+            this.segmentsHeld = Boolean(gate)
             if (!this.segmentsHeld) {
                 this.loadSegments()
             }
@@ -210,7 +222,7 @@ class _ChartPixel extends React.Component {
                     })
                 }
             )
-        } else if (this.segmentsHeld && !segmentsGate) {
+        } else if (this.segmentsHeld && !gate) {
             this.segmentsHeld = false
             this.loadSegments()
         }
@@ -267,18 +279,21 @@ class _ChartPixel extends React.Component {
 
     componentWillUnmount() {
         this.evidence?.unsubscribe()
+        this.operationWatches.unsubscribe()
     }
 }
 
 // What the chart's pixels were read from beyond the recipe (pixelGeneration.js), and, assessed as the toolbar's action
-// assesses it, whether its segments may be read and which bands it can plot.
+// assesses it, whether its segments may be read, which bands it can plot, and whether the reference can run.
 const mapStateToProps = (state, {recipe, recipeId, sourceRuntime}) => {
+    const heldFor = key => sourceRuntime?.heldFor(key)
     const {gate, chartable, bands, noChartableBand} = pixelChartAvailability({
-        state, recipe, evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id), heldFor: key => sourceRuntime?.heldFor(key), now: Date.now()
+        state, recipe, evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id), heldFor, now: Date.now()
     })
     return {
         pixels: pixelGenerationOfState(state, recipeId),
         segmentsGate: gate,
+        operationsGate: pixelOperationsAvailability({state, recipe, heldFor, operations: CHART_OPERATIONS}).gate,
         chartable,
         chartBands: bands,
         noChartableBand

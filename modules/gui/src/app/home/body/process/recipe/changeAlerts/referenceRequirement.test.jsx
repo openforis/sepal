@@ -20,7 +20,7 @@ const fake = vi.hoisted(() => ({
     assets: {}, failing: new Set(), heldMetadata: null, failingPicker: new Set(), heldPickerMetadata: null, versions: {},
     heldVersions: null, missingVersions: new Set(), calls: [], segmentRequests: [], stored: {}, heldLoads: null,
     failingLoads: new Set(), segmentBands: [], observationBands: [], graphs: [], heldObservations: null,
-    cancelledObservations: []
+    cancelledObservations: [], heldSegments: null, cancelledSegments: []
 }))
 vi.mock('~/apiRegistry', async () => {
     const {Observable, of, throwError} = await import('rxjs')
@@ -58,11 +58,23 @@ vi.mock('~/apiRegistry', async () => {
             loadCCDCSegments$: ({recipe, bands}) => {
                 fake.segmentRequests.push(recipe)
                 fake.segmentBands.push(...bands)
-                return of({
+                const answer = {
                     tStart: [2018], tEnd: [2024], tBreak: [0], numObs: [100], changeProb: [0],
                     ...Object.fromEntries(bands.flatMap(band => [
                         [`${band}_coefs`, [[0.1, 0, 0, 0, 0, 0, 0, 0]]], [`${band}_rmse`, [0.1]], [`${band}_magnitude`, [0]]
                     ]))
+                }
+                if (!fake.heldSegments) {
+                    return of(answer)
+                }
+                return new Observable(subscriber => {
+                    let answered = false
+                    fake.heldSegments.push(() => {
+                        answered = true
+                        subscriber.next(answer)
+                        subscriber.complete()
+                    })
+                    return () => answered || fake.cancelledSegments.push(...bands)
                 })
             },
             loadTimeSeriesObservations$: ({bands}) => {
@@ -187,7 +199,7 @@ const {describeSegments$} = await import('../ccdc/segmentDescription')
 const {referenceRequirements} = await import('./referenceRequirement')
 const {mapProducts} = await import('./bands')
 const {recipeAccess} = await import('../../recipeAccess')
-const {ChartPixel} = await import('./panels/chartPixel')
+const {CHART_OPERATIONS, ChartPixel} = await import('./panels/chartPixel')
 const {requestGate} = await import('../sourceRequirements')
 const {actionBuilder} = await import('~/action-builder')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
@@ -252,6 +264,8 @@ beforeEach(() => {
     fake.graphs = []
     fake.heldObservations = null
     fake.cancelledObservations = []
+    fake.heldSegments = null
+    fake.cancelledSegments = []
     selecting.listener = null
     selecting.charted = []
 })
@@ -1190,6 +1204,74 @@ describe('the chart and Retrieve actions', () => {
     })
 })
 
+// /ccdc/loadSegments builds a recipe reference as that recipe's own image, over its own AOI (PIXEL_SEGMENTS of
+// CHANGE_ALERTS), so the segment chart is held to what running it needs - the reference's own requirements and those of
+// what it builds - beside what its segments need, and never to the alerts' own configuration. A Masking needs its mask.
+describe('the segment chart over a reference recipe built as its own image', () => {
+    it('is closed once the reference can no longer run, letting go of its request, and offered again once it can', async () => {
+        fake.heldSegments = []
+        await editor({selection: ref('masking-ccdc'), chart: true, actions: true})
+        expect(fake.segmentBands).toEqual(['ndvi'])
+
+        await editRecord('masking-ccdc', {imageMask: null})
+
+        expect(alertsRecipe().ui.chartPixel).toBe(null)
+        expect(fake.cancelledSegments).toEqual(['ndvi'])
+        await answerHeldSegments()
+        expect(fake.graphs.filter(({segments}) => segments)).toEqual([])
+        expect(await opens('chart')).toBe(false)
+
+        await editRecord('masking-ccdc', {imageMask: ref('mosaic-1')})
+
+        expect(await opens('chart')).toBe(true)
+        expect(fake.calls.filter(([name]) => name === 'bands')).toEqual([])
+    })
+
+    it('lets go of its request while what the reference builds is read, and requests once it can run', async () => {
+        fake.heldSegments = []
+        fake.stored = {'mosaic-2': {id: 'mosaic-2', name: 'Sentinel 2022', type: 'MOSAIC', model: {}, revision: 1}}
+        await editor({selection: ref('masking-ccdc'), chart: true})
+        fake.heldLoads = []
+
+        await editRecord('masking-ccdc', {imageMask: ref('mosaic-2')})
+
+        expect(fake.cancelledSegments).toEqual(['ndvi'])
+        expect(fake.segmentRequests).toEqual([ref('masking-ccdc')])
+        await answerHeldLoads()
+        expect(fake.segmentRequests).toEqual([ref('masking-ccdc'), ref('masking-ccdc')])
+    })
+
+    it('is offered whatever the alerts monitor, though that keeps Retrieve back', async () => {
+        await editor({selection: ref('masking-ccdc'), actions: true})
+
+        await act(async () => store.dispatch(set(['process', 'loadedRecipes', ALERTS, 'model', 'sources', 'band'], 'probability_1')))
+        await settled()
+
+        expect(await opens('retrieve')).toBe(false)
+        expect(await opens('chart')).toBe(true)
+    })
+
+    // The action is read rather than pressed: the panel open shields what lies outside it.
+    it('is held to the reference applied, not to one selected in REF and cancelled', async () => {
+        await editor({selection: ref('masking-ccdc'), actions: true, panels: ['reference']})
+        await editRecord('masking-mosaic', {imageMask: null})
+
+        await selectRecipe('Forest mask')
+        expect(actionButton('chart').disabled).toBe(false)
+        await cancel()
+
+        expect(alertsRecipe().model.reference).toEqual(ref('masking-ccdc'))
+        expect(actionButton('chart').disabled).toBe(false)
+    })
+
+    it('over a segments asset reads no recipe and describes nothing, as before', async () => {
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, chart: true, actions: true})
+
+        expect(fake.segmentRequests).toEqual([expect.objectContaining({type: 'ASSET', id: SEGMENTS_ASSET})])
+        expect(fake.calls.filter(([name]) => name === 'loadRecipe' || name === 'bands')).toEqual([])
+    })
+})
+
 describe('a mosaic of the period, shown with the editor closed', () => {
     const MOSAIC = {visualizationType: 'monitoring', mosaicType: 'latest', visParams: {type: 'rgb', bands: ['red', 'green', 'blue']}}
 
@@ -1511,7 +1593,7 @@ describe('a reference that could not be read', () => {
 describe('Apply right after the session moves past what the reference was read on', () => {
     it.each([
         ['credentials are replaced', () => store.dispatch(set(['user', 'currentUser', 'googleTokens'], {accessToken: 'renewed'}))],
-        ['a recipe the reference reads is edited', () => store.dispatch(set(['process', 'loadedRecipes', 'masking-ccdc', 'model', 'imageMask'], ref('mosaic-1')))],
+        ['a recipe the reference reads is edited', () => store.dispatch(set(['process', 'loadedRecipes', 'masking-ccdc', 'model', 'imageMask'], ref('ccdc-1')))],
         ['the asset it reads is changed by this session', () => assetsMutated([SEGMENTS_ASSET.split('/')])]
     ])('authorizes nothing on what was read before %s, and is authorized once the reference is read anew', async (_case, change) => {
         const selection = _case.startsWith('a recipe') ? ref('masking-ccdc') : {type: 'ASSET', id: SEGMENTS_ASSET}
@@ -1608,8 +1690,8 @@ function ref(id) {
 }
 
 const RECORDS = [
-    {id: 'masking-ccdc', name: 'Masked CCDC', type: 'MASKING', model: {imageToMask: ref('ccdc-1')}},
-    {id: 'masking-mosaic', name: 'Forest mask', type: 'MASKING', model: {imageToMask: ref('mosaic-1')}},
+    {id: 'masking-ccdc', name: 'Masked CCDC', type: 'MASKING', model: {imageToMask: ref('ccdc-1'), imageMask: ref('mosaic-1')}},
+    {id: 'masking-mosaic', name: 'Forest mask', type: 'MASKING', model: {imageToMask: ref('mosaic-1'), imageMask: ref('mosaic-1')}},
     {id: 'mosaic-1', name: 'Sentinel 2021', type: 'MOSAIC', model: {}},
     {id: 'asset-mosaic-1', name: 'Segments', type: 'ASSET_MOSAIC', model: {assetDetails: {assetId: SEGMENTS_ASSET}}},
     {
@@ -1746,7 +1828,7 @@ const editor = async ({selection, owner = true, chart = false, layer = false, ac
                                 <PortalContainer id='toolbar'/>
                                 <PortalContext id='toolbar'>
                                     <Toolbar vertical>
-                                        <span data-action='chart'><ChartPixelButton onPixelSelected={latLng => selecting.charted.push(latLng)}/></span>
+                                        <span data-action='chart'><ChartPixelButton operations={CHART_OPERATIONS} onPixelSelected={latLng => selecting.charted.push(latLng)}/></span>
                                         <span data-action='retrieve'><RetrieveButton/></span>
                                     </Toolbar>
                                 </PortalContext>
@@ -2007,6 +2089,19 @@ const answerHeldLoads = async () => {
     const held = fake.heldLoads
     fake.heldLoads = null
     act(() => held.forEach(answer => answer()))
+    await settled()
+}
+
+const answerHeldSegments = async () => {
+    const held = fake.heldSegments
+    fake.heldSegments = null
+    act(() => held.forEach(answer => answer()))
+    await settled()
+}
+
+// A recipe the reference reads, edited in this session.
+const editRecord = async (id, model) => {
+    await act(async () => actionBuilder('EDIT_RECORD').assign(['process.loadedRecipes', id, 'model'], model).dispatch())
     await settled()
 }
 

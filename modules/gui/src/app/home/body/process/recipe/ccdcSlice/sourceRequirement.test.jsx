@@ -16,7 +16,7 @@ import {initStore} from '~/store'
 
 const fake = vi.hoisted(() => ({
     assets: {}, failing: new Set(), heldMetadata: null, cancelledMetadata: [], versions: {}, calls: [],
-    segmentBands: [], heldSegments: null, cancelledSegments: [], graphs: [], stored: {}
+    segmentBands: [], heldSegments: null, cancelledSegments: [], graphs: [], stored: {}, heldLoads: null
 }))
 vi.mock('~/apiRegistry', async () => {
     const {Observable, of, throwError} = await import('rxjs')
@@ -70,7 +70,19 @@ vi.mock('~/apiRegistry', async () => {
         },
         // Storage holds the recipes the session does.
         recipe: {
-            load$: id => fake.stored[id] ? of(fake.stored[id]) : throwError(() => new Error(`Recipe ${id} not found`)),
+            load$: id => {
+                if (!fake.stored[id]) {
+                    return throwError(() => new Error(`Recipe ${id} not found`))
+                }
+                return fake.heldLoads
+                    ? new Observable(subscriber => {
+                        fake.heldLoads.push(() => {
+                            subscriber.next(fake.stored[id])
+                            subscriber.complete()
+                        })
+                    })
+                    : of(fake.stored[id])
+            },
             loadAll$: () => of(LISTING)
         }
     }}
@@ -123,7 +135,7 @@ const {sliceObservation} = await import('./sliceObservation')
 const {sliceRequirements} = await import('./sourceRequirement')
 const {describeSegments$} = await import('../ccdc/segmentDescription')
 const {Source} = await import('./panels/source/source')
-const {ChartPixel} = await import('./panels/chartPixel')
+const {CHART_OPERATIONS, ChartPixel} = await import('./panels/chartPixel')
 const {ChartPixelButton} = await import('../chartPixelButton')
 const {RetrieveButton} = await import('../retrieveButton')
 const {MapContext} = await import('~/app/home/map/mapContext')
@@ -160,6 +172,7 @@ beforeEach(() => {
     fake.cancelledSegments = []
     fake.graphs = []
     fake.stored = Object.fromEntries(RECORDS.map(record => [record.id, record]))
+    fake.heldLoads = null
 })
 
 afterEach(async () => {
@@ -407,6 +420,43 @@ describe('the segment chart', () => {
     })
 })
 
+// /ccdc/loadSegments builds a recipe source as that recipe's own image, over its own AOI (PIXEL_SEGMENTS of CCDC_SLICE),
+// so the chart is held to what running it needs - the source's own requirements and those of what it builds - beside
+// what its segments need. A Masking needs its mask; the CCDC it masks needs nothing more here.
+describe('the segment chart over a recipe it builds as that recipe\'s own image', () => {
+    it('is closed once the source can no longer run, letting go of its request, and offered again once it can', async () => {
+        fake.heldSegments = []
+        await editor({selection: ref('masking-ccdc'), chart: true, actions: true})
+        expect(fake.segmentBands).toEqual(['ndvi'])
+
+        await editRecord('masking-ccdc', {imageMask: null})
+
+        expect(sliceRecipe().ui.chartPixel).toBe(null)
+        expect(fake.cancelledSegments).toEqual(['ndvi'])
+        await answerHeldSegments()
+        expect(fake.graphs).toEqual([])
+        expect(await opens('chart')).toBe(false)
+
+        await editRecord('masking-ccdc', {imageMask: ref('mosaic-1')})
+
+        expect(await opens('chart')).toBe(true)
+    })
+
+    it('lets go of its request while what the source builds is read, and requests once it can run', async () => {
+        fake.heldSegments = []
+        fake.stored['mosaic-2'] = {id: 'mosaic-2', name: 'Sentinel 2022', type: 'MOSAIC', model: {}, revision: 1}
+        await editor({selection: ref('masking-ccdc'), chart: true})
+        fake.heldLoads = []
+
+        await editRecord('masking-ccdc', {imageMask: ref('mosaic-2')})
+
+        expect(fake.cancelledSegments).toEqual(['ndvi'])
+        expect(fake.segmentBands).toEqual(['ndvi'])
+        await answerHeldLoads()
+        expect(fake.segmentBands).toEqual(['ndvi', 'ndvi'])
+    })
+})
+
 const ASSET = {type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 1}
 
 const SEGMENT_BANDS = [['tStart', 1], ['tEnd', 1], ['tBreak', 1], ['numObs', 1], ['changeProb', 1]]
@@ -554,7 +604,7 @@ const render = () => act(async () => root.render(
                             <PortalContainer id='toolbar'/>
                             <PortalContext id='toolbar'>
                                 <Toolbar vertical>
-                                    <span data-action='chart'><ChartPixelButton onPixelSelected={() => {}}/></span>
+                                    <span data-action='chart'><ChartPixelButton operations={CHART_OPERATIONS} onPixelSelected={() => {}}/></span>
                                     <span data-action='retrieve'><RetrieveButton/></span>
                                 </Toolbar>
                             </PortalContext>
@@ -696,6 +746,19 @@ const answerHeldReads = async () => {
     const held = fake.heldMetadata
     fake.heldMetadata = null
     act(() => held.forEach(answer => answer()))
+    await settled()
+}
+
+const answerHeldLoads = async () => {
+    const held = fake.heldLoads
+    fake.heldLoads = null
+    act(() => held.forEach(answer => answer()))
+    await settled()
+}
+
+// A recipe the slice's source reads, edited in this session.
+const editRecord = async (id, model) => {
+    await act(async () => actionBuilder('EDIT_RECORD').assign(['process.loadedRecipes', id, 'model'], model).dispatch())
     await settled()
 }
 

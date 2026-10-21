@@ -4,7 +4,7 @@ import {describe, expect, it, vi} from 'vitest'
 import {PIXEL_OBSERVATIONS} from '#sepal/recipe/output/readiness'
 
 import {addRecipeType} from '../recipeTypeRegistry'
-import {pixelChartAvailability, retrieveAvailability, watchOperations} from './operationAvailability'
+import {pixelChartAvailability, pixelOperationsAvailability, retrieveAvailability, watchOperations} from './operationAvailability'
 import {PIXEL_SEGMENTS} from './sourceRequirements'
 
 addRecipeType({id: 'UNDECLARED', imageSource: true})
@@ -43,6 +43,30 @@ describe('the segment chart over a recipe whose type requires something of its s
         expect(chart.available).toBe(false)
         expect(chart.chartable).toBe(null)
         expect(evidenceOwnerOf).toHaveBeenCalledTimes(1)
+    })
+})
+
+// A CCDC Slice's chart reads the segments of the CCDC it selects as that CCDC's own image, over its own AOI
+// (#sepal/recipe/type/ccdcSlice). The CCDC's own chart segments at the clicked point instead, reading no AOI
+// (pixelObservationsChart.test.jsx).
+describe('the segments a CCDC Slice charts of a CCDC whose AOI is a recipe the session does not hold', () => {
+    const ccdc = {
+        id: 'ccdc-1',
+        type: 'CCDC',
+        model: {
+            aoi: {type: 'RECIPE', id: 'aoi-recipe'},
+            dates: {startDate: '2020-01-01', endDate: '2021-01-01'},
+            sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands: ['ndvi']},
+            options: {corrections: ['SR']}
+        }
+    }
+    const slice = {id: 'slice-1', type: 'CCDC_SLICE', model: {source: {type: 'RECIPE_REF', id: ccdc.id}}}
+    const state = {process: {loadedRecipes: {[slice.id]: slice, [ccdc.id]: ccdc}}}
+
+    it('wait for that AOI, as building the CCDC reads it', () => {
+        const {gate} = pixelOperationsAvailability({state, recipe: slice, heldFor: () => null, operations: [PIXEL_SEGMENTS]})
+
+        expect(gate).toMatchObject({wait: true, withdraw: false})
     })
 })
 

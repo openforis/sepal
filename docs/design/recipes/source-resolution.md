@@ -1300,8 +1300,39 @@ Near-term order:
      general-purpose framework. Success means the next operation needs fewer independently coordinated changes,
      not merely fewer lines.
 3. **Align referenced segment-chart GUI availability with backend readiness** for CCDC Slice and Change Alerts,
-   using the consolidated operation wiring; retain their segment-structure checks.
-4. **Address optional classified-output requests.** First establish the smallest band-aware operation contract;
+   using the consolidated operation wiring; retain their segment-structure checks. **Implemented (2026-10-21).**
+   - **Declaration.** Both consumers declare `PIXEL_SEGMENTS` with `{PRIMARY_IMAGE: IMAGE_OUTPUT}`. Change Alerts
+     also has `SOURCE_IMAGERY: REFERENCE`, which matters only for Planet assets, and has no configuration
+     requirement for the operation. In readiness-only mode, the shared resolver judges a selected recipe by its own
+     `IMAGE_OUTPUT` requirements and by those of every image it builds, without describing any of them. This is
+     the same judgement `/ccdc/loadSegments` makes of a `RECIPE_REF` through `requireExecutable$`. An asset
+     reference asks for nothing.
+   - **Guarantee.** For an applied recipe reference, the chart action and the open chart are both held by
+     `pixelOperationsAvailability` over the consumer's `CHART_OPERATIONS` (`[PIXEL_SEGMENTS]`), which the toolbar
+     passes to the action and the panel watches through `watchOperations`. This sits beside the
+     `ccdcSegments.chartable` source requirement, which is unchanged.
+     - A finding of the selected recipe, or of anything it builds (such as a Masking's missing mask), disables the
+       action. It also closes an open chart before its band is reconciled, cancelling its request.
+     - Pending or unavailable readiness holds the request. Losing readiness lets go of an in-flight request, and
+       recovery requests once. A draft dependency waits for its save, as for direct charts.
+     - The consumer's own configuration never gates the chart; for example, a classified monitored band holds back
+       only Retrieve.
+     - The referenced recipe keeps its own AOI. Only the consumer is projected, and neither consumer has an AOI.
+     - An asset reference still follows only its segment-structure checks.
+   - **Limitations.**
+     - The backend still judges the reference record directly, not the consumer's declaration. The two agree by
+       construction, and shared tests pin the GUI side (`referencedSegments.test.js`).
+     - The slice and alerts charts still reload only on their own model, pixels and description, not on every
+       upstream computation change. An upstream change that leaves readiness settled in the session does not reload
+       them (item 4).
+     - Losing readiness also re-reads the Change Alerts observations, which share the chart's cancellation.
+4. **Reload referenced segment charts on compatible upstream changes.** A CCDC Slice or Change Alerts chart over a
+   recipe reference keeps its segments when the reference, or a recipe it builds, changes in a way that stays
+   runnable, since readiness then settles in the session without a pending phase. Read the segments again when what
+   the reference builds changes, as the direct charts do on `computation`. Keep the deliberate behaviours: segments
+   already drawn stay while the source's requirements are re-checked, and unrelated edits to the consumer reload
+   nothing. Existing slice and alerts regressions protect those.
+5. **Address optional classified-output requests.** First establish the smallest band-aware operation contract;
    validate the outputs actually requested without rejecting a Classification for optional outputs it cannot provide.
    Keep the separate native-band readiness policy decision explicit.
 
@@ -1373,8 +1404,8 @@ not for an extraction alone. The focused verification and two-worker limit below
      yet it is refused for an AOI recipe that cannot be read, or an AOI that is incomplete or cyclic. A readable AOI
      recipe is read with its own dependencies.
    - **Change Alerts' observation request carries no recipe.** It sends a bare `{model}`: its own sources and
-     options, with dates from the shared `monitoringDates`. Change Alerts declares no classifier requirement; that is
-     the inherited-settings decision below.
+     options, with dates from the shared `monitoringDates`. Change Alerts declares no classifier requirement: it
+     monitors native imagery bands and uses no Classification (`docs/recipes/change-alerts.md`).
    - **`/ccdc/loadSegments` builds one of three things:**
      - a direct CCDC is segmented at the point, with its AOI replaced;
      - an asset is read as stored;
@@ -1455,10 +1486,12 @@ not for an extraction alone. The focused verification and two-worker limit below
    - **GUI segment gates.** CCDC's own chart action and open chart are held by both `PIXEL_OBSERVATIONS` and
      `PIXEL_SEGMENTS` (`pixelOperationsAvailability`, the panel's `CHART_OPERATIONS`), each judged at the clicked
      point and watched through the runtime. CCDC Slice's and Change Alerts' charts are held by their
-     `ccdcSegments.chartable` source requirement. The GUI does not read a selected source's `IMAGE_OUTPUT` readiness
-     for charting.
+     `ccdcSegments.chartable` source requirement and by their own `PIXEL_SEGMENTS`. That judges a recipe reference
+     as its `IMAGE_OUTPUT`, over its own AOI (roadmap item 3).
    - **Asset segments.** An asset's segment layout is checked only by the GUI's source requirement.
-   - **Change Alerts waits** for the inherited-settings decision. A request without a recipe stays unguarded.
+   - **Change Alerts' observation route stays unguarded.** Its chart's observations are a bare `{model}` request,
+     and `/timeSeries/loadObservations` judges nothing for a request without a recipe type. Only its segments are
+     held to readiness (roadmap item 3). Redesigning that route is separate (see "Remaining boundary").
    - **Limitation.** The transitive reads behind `REFERENCE` remain an acknowledged limitation.
 
 5. **Classification output compatibility: implemented for the outputs a configuration chooses (2026-10-20).**

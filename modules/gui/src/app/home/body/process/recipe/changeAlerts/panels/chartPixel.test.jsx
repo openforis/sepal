@@ -147,11 +147,21 @@ const described = evidence => ({
     ui: {chartPixel: {lat: 0, lng: 0}, sourceEvidence: sourceEvidence(evidence)}
 })
 
+// The Masking the alerts reference, over a CCDC, as the session holds them: it can run.
+const REFERENCED = [
+    {id: 'masking-1', type: 'MASKING', model: {imageToMask: {type: 'RECIPE_REF', id: 'ccdc-1'}, imageMask: {type: 'RECIPE_REF', id: 'mosaic-1'}}},
+    {id: 'mosaic-1', type: 'MOSAIC', model: {}},
+    {id: 'ccdc-1', type: 'CCDC', model: {sources: {dataSets: {LANDSAT: ['LANDSAT_8']}}, options: {corrections: []}, dates: {startDate: '2020-01-01', endDate: '2021-01-01'}}}
+]
+
 const openChart = recipe => {
     const initialState = {
         dimensions: {width: 1024, height: 768},
         process: {
-            loadedRecipes: {[recipe.id]: {...recipe, ui: {...recipe.ui, chartPixel: null}}},
+            loadedRecipes: {
+                [recipe.id]: {...recipe, ui: {...recipe.ui, chartPixel: null}},
+                ...Object.fromEntries(REFERENCED.map(record => [record.id, record]))
+            },
             tabs: [{id: recipe.id}],
             recipes: []
         }
