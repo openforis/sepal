@@ -1,10 +1,10 @@
 import {UNSUPPLIED_CLASSIFIER_INPUTS} from '#sepal/recipe/classifierInputs'
 import {MISSING_ROLE} from '#sepal/recipe/output/diagnostic'
-import {CLASSIFICATION_SOURCE, NO_CHANGE_CLASSES, UNAVAILABLE_GATE_INDEX} from '#sepal/recipe/type/pyeoAlerts'
+import {NO_CHANGE_CLASSES, UNAVAILABLE_GATE_INDEX} from '#sepal/recipe/type/pyeoAlerts'
 import {msg} from '~/translate'
 
+import {classificationReferenceFeedback} from '../collectionClassifierRequirements'
 import {fieldRequirement, listed, sourcesFieldRequirement} from '../fieldRequirement'
-import {referenceFeedback} from '../referenceFeedback'
 
 // What PyEO Alerts needs of its Sources and of its index gate, as its shared definition finds it
 // (lib/js/shared/src/recipe/type/pyeoAlerts.js): a classification selected, classes to detect change from and to,
@@ -22,7 +22,6 @@ const SOURCES = {id: 'sources', label: 'process.pyeoAlerts.panel.sources.button'
 const OPTIONS = {id: 'pyeoAlertsOptions', label: 'process.pyeoAlerts.panel.options.button'}
 
 const GATE_INDEX_PATH = ['model', 'pyeoAlertsOptions', 'indexGate', 'index']
-const CLASSIFICATION_PATH = ['model', 'sources', 'classification']
 
 const required = field => () => msg(`process.pyeoAlerts.panel.sources.form.${field}.required`)
 
@@ -48,20 +47,7 @@ export const sourcesRequirements = [
     sourcesField('classification', UNSUPPLIED_CLASSIFIER_INPUTS, unsupplied('classification')),
     sourcesField('dataSets', UNSUPPLIED_CLASSIFIER_INPUTS, unsupplied('dataSets')),
     fieldRequirement({id: 'options.gateIndex', section: OPTIONS, code: UNAVAILABLE_GATE_INDEX, path: GATE_INDEX_PATH, message: unavailableIndex}),
-    {
-        ...referenceFeedback({
-            section: SOURCES,
-            roles: [CLASSIFICATION_SOURCE],
-            itemOf: () => ({id: 'sources.classification', path: CLASSIFICATION_PATH, label: msg(SOURCES.label)})
-        }),
-        editor: {
-            panel: SOURCES.id,
-            input: 'classification',
-            blocksApply: false,
-            explain: true,
-            candidate: (recipe, sources) => ({...recipe, model: {...recipe.model, sources}})
-        }
-    }
+    classificationReferenceFeedback(SOURCES)
 ]
 
 const AND_MORE = 'process.pyeoAlerts.panel.sources.form.andMore'

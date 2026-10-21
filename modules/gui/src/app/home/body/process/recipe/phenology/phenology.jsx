@@ -9,7 +9,7 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
-import {classifiedOutputRequirements, collectionClassifierRequirements} from '../collectionClassifierRequirements'
+import {classificationReferenceFeedback, classifiedOutputRequirements, collectionClassifierRequirements} from '../collectionClassifierRequirements'
 import {bandPresentation} from './bands'
 import {PhenologyToolbar} from './panels/phenologyToolbar'
 import {defaultModel} from './phenologyRecipe'
@@ -62,7 +62,8 @@ export default () => ({
     },
     sourceRequirements: [
         ...collectionClassifierRequirements(SOURCES),
-        classifiedOutputRequirements(SOURCES, 'band')
+        classifiedOutputRequirements(SOURCES, 'band'),
+        classificationReferenceFeedback(SOURCES)
     ],
     imageSource: true,
     getDateRange,

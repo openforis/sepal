@@ -60,7 +60,7 @@ describe.each([
         ['an SVM of one class', {type: 'SVM', svmType: 'ONE_CLASS'}, ['probability_1']]
     ])('marks the field where %s does not provide what it chooses, holding back previews and Retrieve', (_case, classifier, chosen) => {
         const recipe = recipeOf(type, {classification: CLASSIFICATION, [field]: valueOf(chosen)})
-        const state = stateOf(recipe, classifiedBy(classifier))
+        const state = stateOf(recipe, classifiedBy(classifier), MOSAIC)
 
         expect(sourceProblemsOfState(state, ID, undefined, Date.now(), NOTHING_HELD))
             .toEqual({sources: `process.source.classifiedOutputs.${field}`})
@@ -75,7 +75,7 @@ describe.each([
     ])('marks nothing for %s', (_case, classifier, chosen) => {
         const recipe = recipeOf(type, {classification: CLASSIFICATION, [field]: valueOf(chosen)})
 
-        expect(sourceProblemsOfState(stateOf(recipe, classifiedBy(classifier)), ID, undefined, Date.now(), NOTHING_HELD)).toEqual({})
+        expect(sourceProblemsOfState(stateOf(recipe, classifiedBy(classifier), MOSAIC), ID, undefined, Date.now(), NOTHING_HELD)).toEqual({})
     })
 
     it('refuses nothing, marking nothing, while its classification is still to be read', () => {
@@ -110,13 +110,22 @@ const classificationOver = included => ({
     model: {inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]}}
 })
 
-// A Classification of two classes over optical bands the Landsat scenes supply, by the classifier given.
+// A Landsat mosaic, described from its configuration, so a Classification over it needs no observation.
+const MOSAIC = {
+    id: 'mosaic-1',
+    type: 'MOSAIC',
+    model: {sources: {dataSets: {LANDSAT: ['LANDSAT_9']}, cloudPercentageThreshold: 100}, compositeOptions: {corrections: ['SR'], compose: 'MEDIAN'}}
+}
+
+// A Classification of two classes over optical bands the Landsat scenes and its mosaic supply, by the classifier given,
+// trainable: a classified band trains it, so it stores points.
 const classifiedBy = classifier => ({
     id: CLASSIFICATION,
     type: 'CLASSIFICATION',
     model: {
-        inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['red', 'nir']}]}]},
+        inputImagery: {images: [{imageId: 'i-1', type: 'RECIPE_REF', id: MOSAIC.id, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['red', 'nir']}]}]},
         legend: {entries: [{value: 1}, {value: 2}]},
+        trainingData: {dataSets: [{dataSetId: 'collected', type: 'COLLECTED', referenceData: [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]}]},
         classifier
     }
 })

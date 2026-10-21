@@ -636,6 +636,54 @@ describe('exporting a PyEO Alerts over a Classification storing no point', () =>
     })
 })
 
+// A band the Classification computes trains its classifier on that Classification's training data and applies it to
+// every image of the collection, so what training needs refuses the export; a band of the images needs none of it.
+describe('exporting a Phenology analysing a band its Classification computes', () => {
+    const POINTS = [{x: 1, y: 1, class: 1}, {x: 1, y: 2, class: 1}, {x: 2, y: 1, class: 2}, {x: 2, y: 2, class: 2}]
+    const OPTICAL_ASSET = 'users/x/optical'
+    const classificationOf = ({points = []} = {}) => ({
+        id: 'classification-1',
+        type: 'CLASSIFICATION',
+        model: {
+            inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: OPTICAL_ASSET, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['red', 'nir']}]}]},
+            legend: {entries: [{value: 1}, {value: 2}]},
+            trainingData: {dataSets: points.length ? [{type: 'COLLECTED', referenceData: points}] : []},
+            classifier: {type: 'RANDOM_FOREST'}
+        }
+    })
+    const phenology = band => ({
+        id: 'phenology-1',
+        type: 'PHENOLOGY',
+        model: {
+            aoi: {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]},
+            dates: {fromYear: 2020, toYear: 2021},
+            sources: {classification: 'classification-1', dataSets: {LANDSAT: ['LANDSAT_8']}, band},
+            options: {corrections: ['SR']}
+        }
+    })
+
+    beforeEach(() => {
+        state.assets[OPTICAL_ASSET] = {bands: [{name: 'red', arrayDimensions: 0}, {name: 'nir', arrayDimensions: 0}], properties: {}}
+    })
+
+    it('fails the export, saying why, and exports once the Classification stores points', async () => {
+        const recipe = phenology('probability_1')
+        state.catalogue = {'classification-1': classificationOf()}
+
+        await assert.rejects(submit({recipe, bands: ['amplitude']}), /cannot run: NO_TRAINING_DATA$/)
+        assert.deepEqual(state.exported, [])
+
+        state.catalogue['classification-1'] = classificationOf({points: POINTS})
+        await submit({recipe, bands: ['amplitude']})
+    })
+
+    it('exports a band of the images while the Classification stores no point', async () => {
+        state.catalogue = {'classification-1': classificationOf()}
+
+        await submit({recipe: phenology('ndvi'), bands: ['amplitude']})
+    })
+})
+
 // A recipe zipping no input image cannot run, nor can a recipe whose image builds it.
 describe('exporting a recipe without input imagery', () => {
     const POINTS = [{x: 1, y: 1, class: 1}, {x: 1, y: 2, class: 1}, {x: 2, y: 1, class: 2}, {x: 2, y: 2, class: 2}]

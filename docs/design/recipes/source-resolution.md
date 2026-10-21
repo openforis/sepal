@@ -11,6 +11,9 @@ Structured dependency edges, authorized operation-scoped recipe reads and declar
 are implemented. The explicit live/bundled graph API, coherent execution bundles, generalized capability discovery
 and versioned provenance verification below describe the target design, not guarantees of current execution.
 
+For the remaining classifier/readiness work, start with the [current delivery plan](#current-delivery-plan-2026-10-21).
+The detailed audits and completed packet history below retain evidence and boundaries; they are not an open task list.
+
 ## Responsibilities
 
 This subsystem owns:
@@ -742,8 +745,10 @@ assessment's current scope.
 
 ### Execution readiness
 
-Implemented for `IMAGE_OUTPUT` (`lib/js/shared/src/recipe/output/readiness.js`); the other operations, and the rule
-migrations listed below, remain to do. It closes the gap [dependency-scoped descriptions](gui-source-runtime.md#reading-a-recipes-own-output)
+Implemented for declared `IMAGE_OUTPUT`, `PIXEL_OBSERVATIONS`, `PIXEL_SEGMENTS` and `TRAINING_DATA` operations
+(`lib/js/shared/src/recipe/output/readiness.js`). Coverage is operation- and recipe-specific; the
+[current delivery plan](#current-delivery-plan-2026-10-21) separates remaining work from completed migrations.
+It closes the gap [dependency-scoped descriptions](gui-source-runtime.md#reading-a-recipes-own-output)
 leave open: a description that is `READY` over a `VALID` closure is not permission to run. One rule produces findings,
 shared readiness combines them, and GUI declarations explain them; no rule is copied. It adds no validation framework:
 it reuses the declarations, the closure, the output read and its acquisition, its caches, and the requirement reads
@@ -907,9 +912,10 @@ executionNeeds: {[IMAGE_OUTPUT]: {[INPUT_IMAGE]: IMAGE_OUTPUT, [TRAINING_DATA_SO
   limited check during migration, and it does not establish readiness for what is read.
 
   A Classification trained from another recipe runs that recipe's `getSamples$()`. That builds the referenced
-  recipe's input imagery and samples its points over it, unscaled. Its classified output need not be ready, but its imagery
-  matters, and so do its points. That role is now `TRAINING_DATA`, which checks the provider's imagery (see "Reused
-  training data" below). A `RECIPE` training set still counts as present for `NO_TRAINING_DATA`. An `AOI` edge is
+  recipe's input imagery and samples its points over it, unscaled. Its classified output need not be ready, but its
+  imagery matters, and so do its points. That role is now `TRAINING_DATA`, which checks the provider's imagery (see
+  "Reused training data" below). `NO_TRAINING_DATA` follows held providers recursively to establish configured
+  absence of points; missing records never establish absence. An `AOI` edge is
   `REFERENCE` until geometry is an operation.
 - **Unclassified roles.** A role must be classified for the operation it is evaluated in. When readiness evaluates an
   actual edge whose role the type does not classify, it is a definitive finding (`UNCLASSIFIED_ROLE`) at that edge. It
@@ -1297,11 +1303,14 @@ feature the consumer trains on.
   - `imageAssetExport.test.js`: refused, then exported after repair.
 - **Deferred, establishing nothing for now:**
   - several input images, and Earth Engine's suffix rule for names they repeat;
-  - normalisation and sampling-scale mismatches, which give matching names over different values;
+  - sampling-scale and raw value-encoding mismatches, which can give matching names over different values;
   - legend and value semantics;
   - points masked in only some bands;
   - Earth Engine's behaviour when training on a sample missing a `band_order` property: an error or a silently dropped
     sample. Either way the refusal stands, but the manual check below records which.
+
+  Normalisation of prediction imagery and reused Classification samples is implemented, with the live numerical
+  verification recorded below; it is no longer part of this deferred list.
 - **Manual check before pushing:**
   1. A Classification `Provider` over an image, with `IMAGE_BANDS [red, nir]` and a few collected points. A
      Classification `Consumer` over imagery with `IMAGE_BANDS [red, nir]` and its own points, plus a `RECIPE` data set
@@ -1313,10 +1322,10 @@ feature the consumer trains on.
 
 Sample counts after masking and sampling are known only to Earth Engine.
 
-**Classification consumers' training readiness (audited 2026-10-21; PyEO implemented).** Time Series, CCDC and
-Phenology reach their Classification through `CLASSIFICATION_SOURCE: REFERENCE`. That checks only that it resolves, so
-none of the Classification's training checks apply to them. PyEO Alerts needs its Classification's `IMAGE_OUTPUT`
-instead.
+**Classification consumers' training readiness (audited 2026-10-21; PyEO and Phenology implemented).** Time Series
+and CCDC reach their Classification through `CLASSIFICATION_SOURCE: REFERENCE`. That checks only that it resolves, so
+none of the Classification's training checks apply to them. PyEO Alerts needs its Classification's `IMAGE_OUTPUT`.
+Phenology needs its `CLASSIFIER` where its saved band is classified, and keeps `REFERENCE` for a native band.
 
 - **Confirmed behaviour.** When the shared collection (`timeSeries/collection.js`) uses a Classification, it reads the
   record, calls `getTrainingData$()` with no bands and classifies each scene with `classifyImage`. `band_order` is
@@ -1327,7 +1336,7 @@ instead.
   |---|---|---|---|---|
   | Time Series `IMAGE_OUTPUT` (count) | never (`bands: [0]`) | no | no | `UNSUPPLIED_CLASSIFIER_INPUTS` all the same |
   | Time Series pixel chart, Retrieve | the chart band or Retrieve indicator is classified | yes | no | classifier inputs; the band only at run time |
-  | Phenology `IMAGE_OUTPUT` | `sources.band` is classified | yes | no | classifier inputs, `UNSUPPORTED_CLASSIFIED_OUTPUT` |
+  | Phenology `IMAGE_OUTPUT` | `sources.band` is classified | yes | no | the Classification's `CLASSIFIER` readiness for a classified band, classifier inputs, `UNSUPPORTED_CLASSIFIED_OUTPUT` |
   | CCDC `IMAGE_OUTPUT`, `PIXEL_SEGMENTS` | classified `breakpointBands`, or a classified export or map band | yes | no | classifier inputs, breakpoint outputs; export bands only at run time |
   | CCDC `PIXEL_OBSERVATIONS` | the chart band is classified | yes | no | classifier inputs |
   | CCDC Slice, Change Alerts over a CCDC recipe | that CCDC's classified breakpoint bands, or a Slice base band | yes | no | through the CCDC, as above |
@@ -1372,19 +1381,22 @@ instead.
     - `imageAssetExport.test.js`: refused, then exported once points are added;
     - `pyeoAlerts/sourcesRequirements.test.js`: its Classification fixtures are now trainable;
     - `modelDerivedOutput.test.js`: PyEO's output read waits for a Classification not yet loaded, naming it.
-- **Deferred, needing a decision.** Each is recorded separately and unchanged by this slice.
+- **Remaining work and decisions.** The collection consumers below are part of the
+  [current delivery plan](#current-delivery-plan-2026-10-21); native-band policy and multi-input expansion remain
+  outside that plan.
   - **The collection consumers** train only for requested classified bands. Readiness has no requested-band input,
     and a static need would refuse configurations that never train.
-    - CCDC's `breakpointBands` and Phenology's `band` are configuration and could select a conditional need.
+    - Phenology's `band` now selects a conditional `CLASSIFIER` need (see "Phenology's configured classified band").
+      CCDC's `breakpointBands` are configuration too and can follow the same design.
     - Time Series chart and Retrieve bands, and CCDC export, map and chart bands, are request parameters.
-    - The alternative is a `CLASSIFIER` operation declared by Classification, with its training requirements and no
-      image description, needed where training is requested.
-  - **Normalisation.** For SVM and minimum distance, training data is normalised but scenes passed to `classifyImage`
-    are not, for both the collection and PyEO (see "Classifier normalisation on other imagery").
   - **Native-band policy.** It refuses a Time Series count image, which never reads its Classification, for
     unsupplied classifier inputs.
   - **Run-time-only band checks.** Requested classified bands are checked only at run time for the Time Series chart
     and Retrieve, and for CCDC export and chart bands.
+
+- **Completed behaviour and retained policies.**
+  - **Normalisation (implemented).** Prediction imagery and reused samples now use the consumer's transformation;
+    see "Classifier normalisation on other imagery" and "Reused Classification samples' normalisation" below.
   - **Classified outputs of an unselected Classification (implemented 2026-10-21).** `selectedClassificationOfState`
     now lets the applied `model.sources.classification` decide whether there is a Classification. With none, it offers
     no classifier or legend capabilities, whatever `ui.classification` copy remains. With one, the precedence is
@@ -1401,6 +1413,8 @@ instead.
   - **Retaining a broken choice is a separate matter.** Phenology deliberately keeps a classified band already chosen
     but no longer provided, so that `UNSUPPORTED_CLASSIFIED_OUTPUT` can say what is wrong beside the field and the user
     can repair it. That is a retained choice, explained and validated, not a new offer, and it is unchanged.
+
+- **Outside this rollout.**
   - **Several input images** are refused only at run time (`classifyImage`, PyEO); the PyEO GUI prevents them.
   - **LandTrendr** declares `CLASSIFICATION_SOURCE` without a selector, and `landTrendr.js`'s comment about always
     resolving it is stale.
@@ -1550,6 +1564,110 @@ the recipes it reuses, and those are now transformed by the consumer alone.
     in, and `train` documents that every feature must hold every input property;
   - the explicit 0 for a band constant at zero, which the stand-in cannot tell apart, since it divides by zero to 0
     as `ee.Image` does.
+
+**Phenology's configured classified band (implemented 2026-10-21).** When Phenology's saved
+`sources.band` is a classified output (`regression` or `probability_*`), execution trains the selected
+Classification's classifier: `getTrainingData$` builds its imagery and samples its training data, and `classifyImage`
+is applied to every scene. It never builds the Classification's image. Readiness used to keep the Classification a
+`REFERENCE`, so none of its training requirements applied. It is now a `CLASSIFIER` need for a classified band.
+
+- **Gap (confirmed by a temporary readiness probe before the change).**
+  - With `regression` or `probability_1` as the band, Phenology is `READY` over a Classification without points, one
+    reusing a recipe without input imagery, and one reusing a recipe sampling fewer features. It acquires no evidence
+    for any of them.
+  - With native `ndvi`, the same Classifications are `READY`. These controls must stay so, with no training requirement
+    and no new acquisition.
+  - The existing checks still run either way: classifier inputs (`UNSUPPLIED_CLASSIFIER_INPUTS`) and output capability
+    (`UNSUPPORTED_CLASSIFIED_OUTPUT`).
+- **Alternatives considered.**
+  - **`IMAGE_OUTPUT` need.** Rejected: it would describe, and refuse by, an image Phenology never builds.
+  - **`TRAINING_DATA` need.** Insufficient: it deliberately lets an empty provider through, and `NO_TRAINING_DATA` and
+    `MISSING_TRAINING_FEATURES` belong to `IMAGE_OUTPUT` alone.
+  - **A Phenology configuration requirement walking the Classification itself.** Rejected: it would repeat the
+    traversal, nested providers, acquisition and attribution that readiness already owns.
+- **Implemented: a classifier-training operation and a conditional need.**
+  - **Scope.** Phenology only. Conditional needs are flat, with both branches validated as known
+    needs at registration; they are not a general policy language. `CLASSIFIER` does not describe the Classification's
+    output, while the existing requirements explicitly acquire the input evidence they need. Preserve PyEO's
+    explanation-only editor policy for upstream problems (`blocksApply: false`) in the corresponding Phenology
+    reference feedback, alongside the existing local output-capability validation.
+  - **Operation.** `CLASSIFIER` (`output/readiness.js`): training a Classification's classifier to apply to other
+    imagery. Its training data is produced and trained on, its image is not built.
+    - Classification declares `CLASSIFIER: {INPUT_IMAGE: IMAGE_OUTPUT, TRAINING_DATA_SOURCE: TRAINING_DATA}`, the same
+      needs as `TRAINING_DATA`, shared as one constant.
+    - It extends the `operations` of the requirements that already own these rules: `inputImageryRequirement`,
+      `inputBandSetRequirements`, `trainingDataRequirement` (with `requiresTraining`'s exemption) and
+      `trainingFeaturesRequirement`. `inputImageryRequirement`'s operations are extended in Classification's own
+      declaration, so the other types sharing it are unchanged. `trainingDataRequirement` and
+      `trainingFeaturesRequirement` take an `operations` argument defaulting to `[IMAGE_OUTPUT]`, so Regression and every
+      other caller keep their behaviour.
+    - Regression declares nothing for it. A source that does not declare it gets `UNDECLARED_OPERATION`.
+  - **Conditional need.** `conditionalNeed({when, then, otherwise})` (`output/readiness.js`) is a role's need that
+    follows the saved model. Phenology declares
+    `[CLASSIFICATION_SOURCE]: conditionalNeed({when: model => isClassifiedOutput(model?.sources?.band), then: CLASSIFIER, otherwise: REFERENCE})`.
+    - **Validation.** `validateReadinessDeclarations` accepts a need or a conditional need, but only one whose `then`
+      and `otherwise` are needs and whose `when` is a function. Malformed declarations still fail at registration.
+    - **Resolution.** `executionNeed(definition, operation, role, model)` resolves it. Its one caller, the traversal in
+      `resolveImageOutput.js`, passes the recipe's model.
+    - **Traversal.** It visits any need that is an operation (`need !== REFERENCE`), not only `IMAGE_OUTPUT` and
+      `TRAINING_DATA`. `declaresOperation` and the static needs of every other type are unchanged.
+  - **One owner per decision:**
+    - the classified-band predicate (`isClassifiedOutput`, already shared with execution and
+      `classifiedOutputRequirement`);
+    - each training rule (its existing requirement);
+    - the closure walk, evidence and attribution (the traversal);
+    - need resolution (`executionNeed`).
+
+    Nothing new validates, resolves, caches or subscribes. The one repetition is Classification's `CLASSIFIER` needs
+    map, identical to `TRAINING_DATA`'s and declared from the same constant.
+- **Behaviour.**
+  - **Classified band:**
+    - findings sit at the recipe they concern: `NO_TRAINING_DATA` and `MISSING_TRAINING_FEATURES` at
+      `[phenology, classification]`, a provider's `MISSING_ROLE` at `[phenology, classification, provider]`;
+    - a Classification not held is a record need;
+    - unobserved inputs are pending, and a failed observation is unavailable;
+    - a supplied decision tree is already refused as `UNSUPPORTED_CLASSIFIED_OUTPUT`, and `requiresTraining` exempts it
+      from training rules.
+  - **Native band:** today's `REFERENCE` behaviour exactly.
+  - **Acquisition,** only for a classified band: the Classification's input observations and its providers'. A recipe
+    input costs what describing it costs.
+  - **GUI.** `classificationReferenceFeedback(sources)` (`collectionClassifierRequirements.js`) declares
+    `referenceFeedback` for `CLASSIFICATION_SOURCE`, bound to the Sources `classification` field with
+    `blocksApply: false`. Phenology and PyEO both use it, replacing PyEO's inline copy. Retrieve, layers and recipes
+    over the recipe hold.
+  - **Backend.** `requireExecutable$` refuses the export with the Classification's code.
+  - **Preserved:**
+    - normalisation;
+    - Phenology's retained unsupported choice, and its `UNSUPPORTED_CLASSIFIED_OUTPUT` explanation;
+    - the native-band classifier-input policy.
+- **CCDC later.** Its `IMAGE_OUTPUT` and `PIXEL_SEGMENTS` declare the same conditional need, with
+  `when: model => (model?.sources?.breakpointBands || []).some(isClassifiedOutput)`, because every segmentation fits
+  the breakpoint bands. Request-dependent outputs are deferred, and no request contract is added: the Time Series
+  chart and Retrieve, and CCDC's chart, export and map bands.
+- **Regressions.**
+  - **Shared:**
+    - `recipeType.test.js`: `conditionalNeed` validation. A predicate that is not a function, a branch that is no need,
+      a missing branch or a nested condition are refused at registration, while a valid one is retained.
+    - `phenologyClassifier.test.js`, Phenology with a classified band over:
+      - no points, a provider without imagery, a provider lacking features, an input lacking a selected band (refused
+        once, without describing the Classification's image), and a working Classification;
+      - a type that trains no classifier (`UNDECLARED_OPERATION`), and a decision tree (only
+        `UNSUPPORTED_CLASSIFIED_OUTPUT`);
+      - repair, pending and unavailable evidence, and a record not held;
+      - native-band controls over the broken Classifications, `READY` and observing nothing.
+    - `classifiedOutputs.test.js`: its fixture Classification is now trainable and its input observed, so its cases
+      still pin output capability alone.
+    - The Classification's own `IMAGE_OUTPUT` and `TRAINING_DATA` tests are unchanged.
+  - **GUI (mounted):** `phenology/classificationFeedback.test.jsx`: the classification field explained, Retrieve held,
+    cleared on repair, and the native control. `collectionClassifierRequirements.test.js`'s output-capability fixture
+    is now trainable and over a mosaic described from configuration, so its controls still pin output compatibility
+    alone.
+  - **gee:** `imageAssetExport.test.js`: a Phenology export with a classified band refused with `NO_TRAINING_DATA`, then
+    accepted after repair; a native band exports.
+  - **Witnesses:**
+    - Phenology's need reverted to `REFERENCE`, or the traversal visiting only `IMAGE_OUTPUT` and `TRAINING_DATA`, fails
+      every classified case; the native controls and the decision tree pass either way.
+    - Validation accepting any condition fails the four malformed-declaration cases.
 
 **Verification status of the readiness and normalisation changes (2026-10-21).** Checked against commits up to
 `3ea2e7f04`, plus two fixes to the verification script, which were defects in the script itself.
@@ -1732,10 +1850,67 @@ configuration invalidity. It does not opt additional recipe types into upstream-
 validation coverage, or change existing seeding/reconciliation of drafts. Temporary probes were removed after recording
 these results; permanent tests retain the implemented shared editor cases.
 
-#### Next validation packets (2026-10-20)
+#### Current delivery plan (2026-10-21)
 
-The delivery sequence below alternates fixes with consolidation; the packet history records what is covered. A shared
-backend helper accepting a Classification is not, by itself, a reason to expand a recipe's validation or GUI.
+This is the remaining plan for the current classifier/readiness round. The completed histories that follow are
+reference material, not additional slices to implement. A shared backend helper accepting a Classification is not,
+by itself, a reason to expand a recipe's validation or GUI.
+
+| Order | Remaining work | Status and next step | Estimated implementation slices |
+| --- | --- | --- | --- |
+| 1 | Phenology's configured classified band needs the Classification's training readiness. | Complete (2026-10-21): the `CLASSIFIER` operation and a conditional need, reusing the existing training rules without describing the Classification's output; see "Phenology's configured classified band". | 0 |
+| 2 | CCDC's classified breakpoint bands need the same training readiness. | Follow the reviewed Phenology design for `IMAGE_OUTPUT` and `PIXEL_SEGMENTS`; keep native breakpoint controls unchanged. | 1 |
+| 3 | Training readiness and output compatibility for classified bands requested by Time Series charts/downloads and CCDC charts/exports. | Design needed. Request bands are not currently arguments to readiness. GUI capability options and execution refusals already exist; introduce request-aware readiness only where it closes the remaining execution gap. | 2–4 |
+| 4 | Change Alerts' observation request needs an explicit server-side operation boundary. | Design needed. The bare `{model}` request is unguarded; use the real consumer and the collection it runs without bringing in unrelated segment-production dependencies. | 1 |
+
+**Planning estimate: 4–6 implementation slices** for the three remaining work items, plus the browser verification
+checkpoint below. This is an estimate, not a count of proven defects or a promise of one commit per slice. Reassess the
+split after the request-dependent design. Design reports, review corrections and focused
+refactoring are not new rollout items.
+
+**Finish this round when:** the reviewed dependencies and requirements cover the training and collection work these
+operations actually run,
+pending and unavailable evidence stay distinct from findings, repairs recover through the existing runtime, and the
+focused regressions and browser checks pass. Preserve the current native-band classifier-input policy unless a
+separate decision changes it. Broader coverage listed under "Deferred beyond this round" is not required to finish.
+
+**Verification checkpoint before push:**
+
+- The full GUI suite and live numerical normalisation checks passed at the baseline recorded under "Verification
+  status of the readiness and normalisation changes". The later deselection fix has focused GUI coverage; do not
+  describe the earlier full-suite run as testing later commits.
+- The signed-in browser batch and GUI smoke tests are still pending. Use the checklist in that verification entry,
+  and include clearing and reselecting a Classification in Time Series/CCDC charts and Time Series Retrieve.
+- Check actual preview tiles or chart responses, as appropriate, after repair. Enabled buttons alone are not an
+  execution check. Complete this browser checkpoint before pushing the accumulated changes.
+
+**Already completed:**
+
+- shared classifier-input and configured output-capability checks;
+- readiness for recipe image exports, Time Series downloads, direct observation/segment charts and referenced
+  segment charts, with the documented route boundaries;
+- chart cancellation, recovery, compatible upstream reloads and band choices from the resolved Classification;
+- Time Series Retrieve's current capability options, pending/save holds and submission guard;
+- reused training-data imagery, band sets, recursive absence and sampled-feature checks;
+- PyEO's Classification image dependency and its training checks;
+- consistent normalisation for prediction imagery and reused Classification samples, with live numerical witnesses;
+- removal of incidental Change Alerts Classification dependencies, stale deselected capabilities, and the bounded
+  operation/lifecycle/field-binding consolidations.
+
+**Deferred beyond this round:**
+
+- multiple-input sampled-feature names, suffix collisions and collection-classifier input-count validation;
+- sampling-scale, raw value encoding and legend/value compatibility, and sample survival/sufficiency after masking;
+- changing the native-band classifier-input policy;
+- geometry, named map products and other unguarded routes, asset segment-layout validation, and the cost assessment
+  before server-side Preview checks; LandTrendr remains outside the classifier rollout;
+- `REFERENCE` closure over-reading and runtime refresh-policy changes;
+- shared form defaults, duplicated input editors, reference-feedback navigation and tab-indicator experiments.
+
+These are recorded boundaries or future decisions, not automatically scheduled fixes. Promote one into a new round
+only for an agreed need or a confirmed failure. The detailed follow-ups below retain their context.
+
+#### Completed follow-up packets (2026-10-21)
 
 **Delivery approach: iterate between focused fixes and bounded consolidation (2026-10-21).** Do not wait for the
 whole roadmap to be implemented before improving the structure, and do not start a broad redesign ahead of confirmed
@@ -1743,18 +1918,17 @@ behaviour. Finish a small set of fixes, use their regressions to consolidate rep
 then implement the next set on that structure. The packet history below records coverage; it is not the remaining
 execution order.
 
-Near-term order:
+The sequence below records completed delivery, with remaining boundaries stated explicitly:
 
-1. **Finish the Change Alerts inherited-settings correction** described below: monitoring uses native imagery,
+1. **Change Alerts inherited-settings correction: implemented.** Monitoring uses native imagery,
    incidental copied settings do not create dependencies, and the referenced producer retains its genuine dependencies.
-2. **Consolidate operation wiring and chart lifecycle before extending more operations.** Use separately reviewable,
-   behaviour-preserving slices:
+2. **Operation wiring and chart lifecycle: consolidated.** Delivered as separate slices:
    - **Operation wiring (consolidated 2026-10-21).** Each direct pixel chart declares its operations once, as its
      panel's `CHART_OPERATIONS`: `PIXEL_OBSERVATIONS` for Time Series, plus `PIXEL_SEGMENTS` for CCDC. Its action
      and open chart gate on that list through `pixelOperationsAvailability`, and both watch it through
      `watchOperations`. `recipeForOperation` remains the one pixel/AOI projection, shared by readiness reads,
-     acquisition and the runtime's asset interest. Referenced images keep their own AOIs, and charts without
-     operations (CCDC Slice, Change Alerts, LandTrendr) are unchanged.
+     acquisition and the runtime's asset interest. Referenced images keep their own AOIs. CCDC Slice and Change
+     Alerts adopted the wiring in the next packet; LandTrendr remains unchanged.
    - **Chart lifecycle (consolidated 2026-10-21).** One pure decision, `pixelChartUpdate`
      (`recipe/pixelChartUpdate.js`), says what an open Time Series or CCDC chart does on each update: close, let go,
      replace the band, or read a band. Each panel applies the answer through its own `close`, `clearData` and
@@ -1815,10 +1989,9 @@ Near-term order:
      - A refreshed record whose content is unchanged does not reload the chart. Asset contents are followed only
        through `pixels`, as before.
 
-5. **Address optional classified-output requests.** First establish the smallest band-aware operation contract;
-   validate the outputs actually requested without rejecting a Classification for optional outputs it cannot provide.
-   Keep the separate native-band readiness policy decision explicit.
-   **First slice implemented (2026-10-21): chart band options from the resolved Classification.**
+5. **Classified-output choices in charts and Retrieve: implemented (2026-10-21).** The resolved-record view fixed
+   the stale-option defects without a band-aware request contract. Request-dependent readiness remains in the
+   current delivery plan; the native-band policy decision stays separate.
    - **Gap fixed.** A Time Series' or CCDC's chart offered bands from the Classification record when the session
      held it, and otherwise from the copy Sources took (`ui.classification`). The source runtime read the stored
      record for readiness but kept it private, and readiness judges no band. So a stale copy could offer
@@ -1867,14 +2040,11 @@ Near-term order:
    - **Deferred.** Band-aware operation readiness (`request: {bands}`, with request-distinct questions and keys) is
      kept for an operation that genuinely needs request parameters.
 
-**Field-binding consolidation checkpoint.** The classifier-input and classified-output declarations repeat path
-matching, diagnostic selection, candidate construction and editor binding; field controls still need separate error
-presentation wiring. Consolidate this narrowly before another rollout repeats it. Aim for one consistent path from a
-located requirement to field feedback and Apply blocking, with a mounted regression proving the explanation is shown.
-Keep the broader shared-control defaults and duplicated input-image editor refactor deferred under "Later: shared form
-validation consistency" below.
+**Field-binding consolidation: completed (2026-10-21).** `recipe/fieldRequirement.js` replaced repeated path
+matching, diagnostic selection, candidate construction and editor binding in the classifier-input and classified-output
+declarations. Field controls keep their explicit error presentation. Broader shared-control defaults and duplicated
+input-image editors remain under "Later: shared form validation consistency" below.
 
-**Consolidated (2026-10-21).** `recipe/fieldRequirement.js` now builds each of these declarations once.
 - **`fieldRequirement({id, section, code, path, message, editor})`** provides:
   - the requirement's `describe` and the section `summary`, from the first diagnostic;
   - `outputDiagnostics` for one code at an exact path, its item identified by the declaration id;
@@ -1894,10 +2064,10 @@ validation consistency" below.
   their item enumeration and editors differ: segment requirements, Band Math, input imagery and Change Alerts'
   reference.
 
-After these slices, reassess the recorded gaps before extending `TRAINING_DATA` (see "Reused training data"),
-geometry or named map-product readiness. Preview validation remains conditional on measured cost. Refactoring slices preserve behaviour and use
-the relevant existing regressions plus focused static checks; add tests for new contracts or uncovered behaviour,
-not for an extraction alone. The focused verification and two-worker limit below still apply.
+Further delivery follows the current plan; geometry and named map-product coverage need a separate scope decision.
+Preview validation remains conditional on measured cost. Refactoring slices preserve behaviour and use the relevant
+existing regressions plus focused static checks; add tests for new contracts or uncovered behaviour, not for an
+extraction alone. The focused verification and two-worker limit below still apply.
 
 **Packet history and coverage:**
 
@@ -1944,7 +2114,7 @@ not for an extraction alone. The focused verification and two-worker limit below
 4. **Chart readiness: audited (2026-10-20); pixel observations implemented on the backend and in the GUI; pixel
    segments implemented on the backend.**
 
-   Confirmed findings:
+   Findings at audit time (the implemented slices below supersede the shipped-guard defects):
    - **The readiness pass is bound to describing `IMAGE_OUTPUT`.** In `resolveImageOutput.js` the root is described
      first; for each `IMAGE_OUTPUT` need, the target is described too. A CCDC root is therefore described from its
      catalogue (`ImageFactory(...).getBands$()`), which reads the Classification's bands and, for Planet Daily, runs an
@@ -2033,16 +2203,21 @@ not for an extraction alone. The focused verification and two-worker limit below
    - **Asset.** Unchanged.
    - **The pixel** is built only once segments are available.
 
-   Still open:
-   - **GUI segment gates.** CCDC's own chart action and open chart are held by both `PIXEL_OBSERVATIONS` and
+   GUI segment coverage (implemented):
+
+   - CCDC's own chart action and open chart are held by both `PIXEL_OBSERVATIONS` and
      `PIXEL_SEGMENTS` (`pixelOperationsAvailability`, the panel's `CHART_OPERATIONS`), each judged at the clicked
      point and watched through the runtime. CCDC Slice's and Change Alerts' charts are held by their
      `ccdcSegments.chartable` source requirement and by their own `PIXEL_SEGMENTS`. That judges a recipe reference
-     as its `IMAGE_OUTPUT`, over its own AOI (roadmap item 3).
+     as its `IMAGE_OUTPUT`, over its own AOI (completed follow-up packet 3).
+
+   Remaining boundaries:
+
    - **Asset segments.** An asset's segment layout is checked only by the GUI's source requirement.
    - **Change Alerts' observation route stays unguarded.** Its chart's observations are a bare `{model}` request,
      and `/timeSeries/loadObservations` judges nothing for a request without a recipe type. Only its segments are
-     held to readiness (roadmap item 3). Redesigning that route is separate (see "Remaining boundary").
+     held to readiness (completed follow-up packet 3). The observation boundary is item 4 of the current delivery
+     plan; see "Remaining boundary" below.
    - **Limitation.** The transitive reads behind `REFERENCE` remain an acknowledged limitation.
 
 5. **Classification output compatibility: implemented for the outputs a configuration chooses (2026-10-20).**
@@ -2099,11 +2274,15 @@ not for an extraction alone. The focused verification and two-worker limit below
    **Copied metadata.** `ui.classification` and the Sources panels now copy `model.classifier` beside its type, and
    open charts read it from the held record.
 
-   Still open:
-   - **Old copies.** `ui.classification` copies taken before this change carry the type alone. They are read as that
-     type's defaults - an SVM as `C_SVC` - until copied again or the record is held.
+   Remaining boundaries:
+
+   - **Old copies.** `ui.classification` copies taken before this change carry the type alone, interpreted as that
+     type's defaults. Charts and Time Series Retrieve now prefer the held or resolved record; copied metadata is a
+     fallback while unresolved, with classified requests held. Clearing the applied selection offers no capabilities
+     from an old copy. Other metadata readers retain their documented copy policy.
    - **Optional choices.** Charts, downloads and exports offer only supported outputs, but a requested unsupported one
-     is refused by execution alone. Validating them in readiness would need band-aware operation arguments.
+     is refused by execution alone. Request-dependent readiness is in the current delivery plan; its argument
+     contract still needs design.
    - **PyEO's baseline** builds outputs it does not read.
    - **Uncertain types.** SVR types are not offered by the GUI. A supplied decision tree's output modes are not
      documented.
@@ -2155,7 +2334,8 @@ backend accepting that field. Do not add work solely for hypothetical or legacy 
 Use failing witnesses and nearby tests while editing, then one focused verification campaign and static checks,
 with at most two workers. Do not broaden into repeated suite sweeps without a concrete unresolved concern.
 
-Keep these additional items visible, outside the completed packets:
+The following detailed decisions and limitations are deferred beyond the current delivery round. They are not a
+second execution queue:
 
 - **Remapping unused selections: source-type policy.** The new check covers bands constraints read. Live sampling in
   `remappingSourceBands.mjs` shows an unused missing asset selection executes, as does one through Stack (requested
@@ -2212,13 +2392,14 @@ Remapping's source-identity recovery and shared constraint-reference validation 
 verification of blocking and recovery through a second Remapping. Already-broken constraints with no retained
 identity still need one explicit repair; this is an accepted limitation, not a request for historical reconstruction.
 
-**Other recorded follow-ups:**
-- the `TRAINING_DATA` and geometry operations;
-- readiness for named map products;
-- the remaining GUI-only and Earth Engine-only rules, one type per packet;
-- whether Preview and the LandTrendr chart route adopt the check;
-- the collection readiness of CCDC's and Change Alerts' observation charts, which neither recipe's image readiness
-  stands for.
+**Broader coverage, deferred beyond this round:**
+
+- geometry operations and readiness for named map products;
+- other GUI-only and Earth Engine-only rules, subject to a separate audit and scope decision;
+- whether Preview and the LandTrendr chart route adopt the check, with Preview's cost measured first.
+
+`TRAINING_DATA` and CCDC's pixel-observation operation are already implemented. Remaining classifier-training
+coverage and Change Alerts' observation boundary are in the current delivery plan, not additional follow-ups here.
 
 **Later: shared form validation consistency.** Defer the broader review and refactoring until after the current
 validation/readiness work and nearer-term UI fixes. The immediate Masking correction can establish the intended

@@ -1,8 +1,10 @@
 import {UNSUPPORTED_CLASSIFIED_OUTPUT} from '#sepal/recipe/classifiedOutputs'
 import {UNSUPPLIED_CLASSIFIER_INPUTS} from '#sepal/recipe/classifierInputs'
+import {CLASSIFICATION_SOURCE} from '#sepal/recipe/source/collectionSources'
 import {msg} from '~/translate'
 
 import {listed, sourcesFieldRequirement} from './fieldRequirement'
+import {referenceFeedback} from './referenceFeedback'
 
 // What CCDC, Time Series and Phenology need of the Classification their Sources may select, as their shared definitions
 // find it (collectionClassifierRequirement, lib/js/shared/src/recipe/source/collectionSources.js): that the images of
@@ -31,5 +33,26 @@ export const classifiedOutputRequirements = (sources, field) => sourcesFieldRequ
     code: UNSUPPORTED_CLASSIFIED_OUTPUT,
     message: ({unsupported} = {}) => msg(`process.source.classifiedOutputs.${field}`, {unsupported: listed(unsupported, AND_MORE)})
 })
+
+// The Classification a recipe's Sources select, where what the recipe does with it needs that Classification to run
+// (lib/js/shared/src/recipe/type/pyeoAlerts.js, phenology.js): its readiness findings, which stay that recipe's, are
+// named beside the classification field, whose own sections say why. Presentation alone: the output read holds the
+// operations, and a draft is not held back for it.
+export const classificationReferenceFeedback = sources => ({
+    ...referenceFeedback({
+        section: sources,
+        roles: [CLASSIFICATION_SOURCE],
+        itemOf: () => ({id: `${sources.id}.classification`, path: CLASSIFICATION_PATH, label: msg(sources.label)})
+    }),
+    editor: {
+        panel: sources.id,
+        input: 'classification',
+        blocksApply: false,
+        explain: true,
+        candidate: (recipe, values) => ({...recipe, model: {...recipe.model, sources: values}})
+    }
+})
+
+const CLASSIFICATION_PATH = ['model', 'sources', 'classification']
 
 const AND_MORE = 'process.source.segments.andMore'
