@@ -309,6 +309,14 @@ describe('exporting the measures a CCDC fits that its Classification computes', 
         assert.deepEqual(captured.ccdc.options, {selection: [CLASSIFIED]})
     })
 
+    it('is refused, building and submitting nothing, for a recipe of another type, whose segments are built as a CCDC\'s', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({points: []})}
+
+        await assert.rejects(submit({model: {...fitting(), type: 'TIME_SERIES'}, bands: [CLASSIFIED]}), /ccdc-1 cannot run: NO_TRAINING_DATA$/)
+
+        assertNothingBuilt()
+    })
+
     it('fails with what could not be read, as no finding and building nothing, where the Classification\'s input cannot be observed', async () => {
         state.catalogue = {[CLASSIFICATION]: trainable()}
         delete state.assets[inputOf(CLASSIFICATION)]

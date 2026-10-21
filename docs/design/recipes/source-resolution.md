@@ -1363,7 +1363,7 @@ and keep `REFERENCE` for native bands.
   | Time Series pixel chart | the chart band is classified | yes | no | the Classification's `CLASSIFIER` readiness for a classified band (`CLASSIFIED_COLLECTION`), classifier inputs; output capability before training, refused as execution refuses it |
   | Time Series Retrieve | a Retrieve indicator is classified | yes | no | `IMAGE_OUTPUT` as before; then requested capability and `CLASSIFIED_COLLECTION` over the indicators each request builds |
   | Phenology `IMAGE_OUTPUT` | `sources.band` is classified | yes | no | the Classification's `CLASSIFIER` readiness for a classified band, classifier inputs, `UNSUPPORTED_CLASSIFIED_OUTPUT` |
-  | CCDC `IMAGE_OUTPUT`, `PIXEL_SEGMENTS` | classified `breakpointBands`, or a classified export or map band | yes | no | the Classification's `CLASSIFIER` readiness for classified breakpoints, classifier inputs, breakpoint outputs; for asset-export bands, requested capability and `CLASSIFIED_COLLECTION` over the measures they fit; Drive and SEPAL export and map bands only at run time |
+  | CCDC `IMAGE_OUTPUT`, `PIXEL_SEGMENTS` | classified `breakpointBands`, or a classified export or map band | yes | no | the Classification's `CLASSIFIER` readiness for classified breakpoints, classifier inputs, breakpoint outputs; for export bands, requested capability and `CLASSIFIED_COLLECTION` over the measures they fit; map bands only at run time |
   | CCDC pixel chart (`PIXEL_OBSERVATIONS`, `PIXEL_SEGMENTS`) | the chart band is classified, or for segments a breakpoint band | yes | no | classifier inputs; the configured breakpoints' findings; then requested capability and `CLASSIFIED_COLLECTION` over the bands each request builds |
   | CCDC Slice, Change Alerts over a CCDC recipe | that CCDC's classified breakpoint bands, or a Slice base band | yes | no | through the CCDC, as above |
   | PyEO Alerts `IMAGE_OUTPUT` | always | yes, except a decision tree | yes (`getImage$`, its baseline) | the Classification's `IMAGE_OUTPUT` readiness, classifier inputs, gate index |
@@ -1416,12 +1416,13 @@ and keep `REFERENCE` for native bands.
       configured classified band").
     - Time Series' and CCDC's chart bands add `CLASSIFIED_COLLECTION` (see "CCDC's requested chart bands").
     - Time Series Retrieve indicators add it too (see "Time Series Retrieve's classified indicators").
-    - CCDC's asset-export bands add it too (see "CCDC's requested export bands"). The bands its Drive and SEPAL image
-      exports request, and the map bands previews request, are still request parameters readiness does not see.
+    - CCDC's export bands add it too: to Earth Engine assets (see "CCDC's requested export bands") and to Drive and
+      SEPAL (see "CCDC's Drive and SEPAL image exports"). Map bands, which previews request, are still request
+      parameters readiness does not see.
   - **Native-band policy.** It refuses a Time Series count image, which never reads its Classification, for
     unsupplied classifier inputs.
   - **Run-time-only band checks.** Requested classified outputs are checked for capability only at run time, for every
-    request-parameter consumer; for Time Series Retrieve and CCDC asset-export and chart bands, training is too.
+    request-parameter consumer; for Time Series Retrieve and CCDC export and chart bands, training is too.
 
 - **Completed behaviour and retained policies.**
   - **Normalisation (implemented).** Prediction imagery and reused samples now use the consumer's transformation;
@@ -2035,10 +2036,8 @@ sequence.
   - Any other root keeps building beside its check. A Masking or other wrapper over a CCDC is a downstream request,
     still outside.
   - Native effective bands run the first step alone, and never train.
-- **Drive and SEPAL image exports (deferred).** `imageDriveExport.js` and `imageWorkspaceExport.js` still hold a direct
-  CCDC root to `IMAGE_OUTPUT` alone, so a classified measure requested there is constructed, and trained at execution,
-  over an untrainable Classification. A mocked Drive probe confirmed product construction starts over a point-free
-  Classification. Only the asset exports are guarded here.
+- **Drive and SEPAL image exports.** Not guarded by this slice; they run the same sequence now (see "CCDC's Drive and
+  SEPAL image exports").
 - **GUI preflight gap (documented, not changed).** CCDC Retrieve takes the image-output path
   (`ccdc/panels/retrieve/retrieve.jsx`, `ccdcMeasureSelection`): the measures offered come from its description, and it
   is held by the retrieve decision and `retrieveAvailability`. Nothing there judges `CLASSIFIED_COLLECTION` for the
@@ -2050,8 +2049,9 @@ sequence.
     the routes.
   - `requireCcdcImageStages$` is a two-line composition shared by both routes; on its own it consolidates nothing
     further.
-  - `imageAssetExport` names CCDC by its type (`ccdcType.type`). That is one type check in a generic route, rather than
-    a new recipe-type declaration with a single user.
+  - The generic image exports recognise CCDC by its type, in one place (`judgesRequest`, `imageOutput.js`). That is
+    one type check in the generic export path, rather than a new recipe-type declaration with a single user. CCDC's
+    own export judges every recipe as a CCDC, whatever type it states.
 - **Regressions.**
   - `ccdcAssetExport.test.js` (gee):
     - the three training findings refused before the segments are built, with native measures exported without
@@ -2080,8 +2080,54 @@ sequence.
   - GUI CCDC, CCDC Slice, Change Alerts, `retrieveOutput` and the chart band tests: 26 files and 356 tests passed.
 
   The full GUI suite was not repeated.
-- **Outside this slice:** the Drive and SEPAL image exports of a CCDC, previews, downstream request propagation,
-  dependency loading, and CCDC Retrieve's preflight above.
+- **Outside this slice:** the Drive and SEPAL image exports of a CCDC (guarded since, below), previews, downstream
+  request propagation, dependency loading, and CCDC Retrieve's preflight above.
+
+**CCDC's Drive and SEPAL image exports (implemented 2026-10-21).** The image exports to Drive and the SEPAL workspace
+of a direct CCDC root, held as its asset exports are.
+
+- **Gap (confirmed by failing witnesses).** `imageDriveExport.js` and `imageWorkspaceExport.js` went from
+  `resolveImageOutput$` straight to product construction. A requested classified measure with native breakpoints was
+  built, a destination prepared and an export started, over a Classification without points, with an unusable reused
+  provider, or with reused features missing.
+- **One sequence.** `resolveRequestedImageOutput$(recipe, request)` (`imageOutput.js`) resolves the image output once,
+  then, for a direct CCDC (`judgesRequest`), runs `requireCcdcImageStages$` over the request the image is built with.
+  It emits the description. The generic image exports use it:
+  - Drive and SEPAL pass `withOutputBands(bands)`, the request `ImageFactory` builds with, and build only after it;
+  - `imageAssetExport.js` uses it for a CCDC and keeps building any other recipe beside `resolveImageOutput$`.
+
+  `ccdcAssetExport.js` does not: it builds segments as a CCDC's whatever type the recipe states, so it runs
+  `requireCcdcImageStages$` unconditionally after `resolveImageOutput$`. A regression holds a `TIME_SERIES` root with
+  CCDC settings, asking for a classified measure over a point-free Classification, to `NO_TRAINING_DATA` before
+  anything is built; with the type-conditional helper there, it reached the exporter.
+
+  The order is the asset exports': the image output and configured findings over the export's AOI, the requested
+  capability as the coded 400, `CLASSIFIED_COLLECTION` without the CCDC's AOI, then product construction, destination
+  preparation and submission. Referenced imagery keeps its own AOIs. Non-CCDC roots are unchanged.
+- **Readiness, not destination support.** CCDC's bands are arrays. These routes now refuse an export that cannot be
+  trained. They do not establish that a Drive or SEPAL raster file can hold array bands, and do not validate that
+  (see the export-compatibility rule under "Resolved descriptions and capability lineage", and the deferred list). The
+  CCDC Retrieve panel offers only Earth Engine assets, so these routes are reached by direct requests alone, and there
+  is no browser check for them.
+- **Regressions** (`ccdcImageFileExport.test.js`, gee), each run against both routes:
+  - the three training findings for a coefficient band, refused before any product factory, build, destination or
+    export, with native bands exported without observing the Classification's input;
+  - RMSE, magnitude and mixed selections refused; timing-only, empty and absent selections exported over an
+    untrainable Classification;
+  - a classified breakpoint refused before a native band and before an unsupported one;
+  - repair releasing the guard, over the CCDC's own region; unobservable input failing as a read;
+  - the coded 400 over trainable and point-free Classifications, and unsupplied classifier inputs first.
+
+  Its Earth Engine substitute accepts any image: a started export there shows readiness released it, nothing about the
+  file. The existing Drive and SEPAL tests' CCDC fixture now names `ndvi_coefs`; it named `ndvi`, which CCDC does not
+  build and execution's derivation refuses. Their authentication, destination and non-CCDC cases are unchanged.
+- **Witnesses.** With both routes from `HEAD`, 20 of the 38 cases fail. The 18 that pass are the native, timing-only,
+  default-selection, configured-breakpoint and classifier-input controls. Judging the stages before the image output
+  fails the classifier-input order case on both routes.
+- **Focused campaign** (two workers): gee `test/jobs` and `test/ee`, 1346 passed. Lint and `git diff --check` are
+  clean. Shared, task and GUI code are unchanged, and the full GUI suite was not repeated.
+- **Outside:** destination compatibility for array bands, CCDC Retrieve's preflight, previews, propagated requests
+  and dependency loading.
 
 **Verification status of the readiness and normalisation changes (2026-10-21).** Checked against commits up to
 `3ea2e7f04`, plus two fixes to the verification script, which were defects in the script itself.
@@ -2112,6 +2158,9 @@ sequence.
       was `remapping/panelActivation.test.jsx`, "opens with no panel open", which timed out at the 5 s default under
       suite load. Run alone, the file passed 15 of 15, twice. The full run was not repeated, so a clean full-suite pass
       for the current tree is still outstanding.
+  - **Request-dependent export guards (2026-10-21).** Verified by focused campaigns only, recorded with each slice; the
+    latest, for "CCDC's Drive and SEPAL image exports", ran gee `test/jobs` and `test/ee` (1346 passed). Those routes
+    have no browser check: CCDC Retrieve offers no Drive or SEPAL destination.
 - **Live Earth Engine.** `modules/gee/verify/classifierNormalisation.mjs` passed all 24 checks and exited 0 (66 s).
   - **Training rows.** The provider was `LC08_231062_20170730`. Each reusing consumer trained on 15 rows: 6 from the
     provider, then 9 of its own. Each non-reusing case trained on its 9.
@@ -2529,9 +2578,9 @@ Coverage checks proposed, each detecting a class of drift rather than one case:
      - Precedence: `IMAGE_OUTPUT`'s configured findings as today, then requested capability with its 400, then
        training.
      - Confirm or fix the open-panel gate there.
-  3. **CCDC asset-export bands: implemented (2026-10-21; see "CCDC's requested export bands").** `ccdcAssetExport`
-     and `imageAssetExport` run the stage over the requested measures, before anything is built. `imageAssetExport`
-     then gates before building when the stage applies. The Drive and SEPAL image exports of a CCDC are deferred.
+  3. **CCDC export bands: implemented (2026-10-21; see "CCDC's requested export bands" and "CCDC's Drive and SEPAL
+     image exports").** `ccdcAssetExport`, `imageAssetExport` and the Drive and SEPAL image exports run the stage over
+     the requested measures, before anything is built.
 - **Optional, any time after:**
   - one shared projection, `operationRecipe(recipe, operation)`, for the GUI and routes, which would also let the GUI
     judge Change Alerts' observations;
@@ -2560,7 +2609,7 @@ by itself, a reason to expand a recipe's validation or GUI.
 | --- | --- | --- | --- |
 | 1 | Phenology's configured classified band needs the Classification's training readiness. | Complete (2026-10-21): the `CLASSIFIER` operation and a conditional need, reusing the existing training rules without describing the Classification's output; see "Phenology's configured classified band". | 0 |
 | 2 | CCDC's classified breakpoint bands need the same training readiness. | Complete (2026-10-21): `classifiedOutputNeed('breakpointBands')` for `IMAGE_OUTPUT` and `PIXEL_SEGMENTS`, native breakpoint controls unchanged; see "CCDC's breakpoint bands". | 0 |
-| 3 | Training readiness for classified bands requested by Time Series charts/downloads and CCDC charts/exports. | Complete (2026-10-21): Time Series pixel observations ("Time Series' classified chart band"); CCDC's chart, with the stage generalised as `CLASSIFIED_COLLECTION` and the server sequence and band hold shared ("CCDC's requested chart bands"); Time Series Retrieve ("Time Series Retrieve's classified indicators"); CCDC asset-export bands ("CCDC's requested export bands"). Remaining, deferred: the Drive and SEPAL image exports of a CCDC, CCDC Retrieve's preflight of the measures chosen, direct previews (which could use the same root stage) and wrappers asking a CCDC source for classified measures (which need a propagated context). | 0 |
+| 3 | Training readiness for classified bands requested by Time Series charts/downloads and CCDC charts/exports. | Complete (2026-10-21): Time Series pixel observations ("Time Series' classified chart band"); CCDC's chart, with the stage generalised as `CLASSIFIED_COLLECTION` and the server sequence and band hold shared ("CCDC's requested chart bands"); Time Series Retrieve ("Time Series Retrieve's classified indicators"); CCDC export bands, to assets ("CCDC's requested export bands") and to Drive and SEPAL ("CCDC's Drive and SEPAL image exports"). Remaining, deferred: CCDC Retrieve's preflight of the measures chosen, direct previews (which could use the same root stage) and wrappers asking a CCDC source for classified measures (which need a propagated context). | 0 |
 | 4 | Change Alerts' observation request needs an explicit server-side operation boundary. | Complete (2026-10-21): the chart sends the applied recipe; the job derives the observed collection (`observedCollection`) and holds it to Time Series' `PIXEL_OBSERVATIONS`; untyped requests are refused. See "Pixel observations". | 0 |
 
 **Planning estimate: no implementation slice remains** for request-dependent readiness; the browser verification
@@ -2610,11 +2659,11 @@ separate decision changes it. Broader coverage listed under "Deferred beyond thi
 - `REFERENCE` closure over-reading and runtime refresh-policy changes: not needed for classified requests, whose stage
   reads the subgraph that executes (see the architecture checkpoint);
 - server gating of direct map previews, which could then use the root training stage;
-- the Drive and SEPAL image exports of a CCDC (`imageDriveExport.js`, `imageWorkspaceExport.js`), still held to
-  `IMAGE_OUTPUT` alone, so a classified measure requested there is built over an untrainable Classification (see
-  "CCDC's requested export bands");
-- CCDC Retrieve's preflight of the measures chosen: the server refuses an untrainable classified measure for an asset
-  export, but the panel submits it (see "CCDC's requested export bands");
+- destination compatibility at the Drive and SEPAL execution boundaries: they judge a CCDC's readiness for the bands
+  requested, but neither refuse array bands nor establish that a raster file can hold them (see "CCDC's Drive and
+  SEPAL image exports");
+- CCDC Retrieve's preflight of the measures chosen: the server refuses an untrainable classified measure, but the panel
+  submits it (see "CCDC's requested export bands");
 - a propagated request context for wrappers asking a CCDC source for classified measures (CCDC Slice base bands,
   Masking, Stack, Band Math);
 - shared form defaults, duplicated input editors, reference-feedback navigation and tab-indicator experiments.
@@ -2992,9 +3041,9 @@ extraction alone. The focused verification and two-worker limit below still appl
      from an old copy. Other metadata readers retain their documented copy policy.
    - **Optional choices.** Charts, downloads and exports offer only supported outputs, but a requested unsupported one
      is refused by execution alone. Training readiness for requested bands is in the current delivery plan: Time
-     Series and CCDC chart bands, Time Series Retrieve indicators and CCDC asset-export bands add
-     `CLASSIFIED_COLLECTION`. Map previews, the Drive and SEPAL image exports of a CCDC, and CCDC Retrieve's preflight
-     of chosen measures, remain (see "CCDC's requested export bands").
+     Series and CCDC chart bands, Time Series Retrieve indicators and CCDC export bands add
+     `CLASSIFIED_COLLECTION`. Map previews and CCDC Retrieve's preflight of chosen measures remain (see "CCDC's
+     requested export bands").
    - **PyEO's baseline** builds outputs it does not read.
    - **Uncertain types.** SVR types are not offered by the GUI. A supplied decision tree's output modes are not
      documented.

@@ -1,7 +1,9 @@
-import {map, switchMap, throwError} from 'rxjs'
+import {map, of, switchMap, throwError} from 'rxjs'
 
+import {requireCcdcImageStages$} from '#gee/jobs/requestedBands'
 import {INVALID, READY, settledImageOutput$} from '#sepal/recipe/output/observeImageOutput'
 import {dependencyValidity, VALID} from '#sepal/recipe/source/dependencyValidity'
+import ccdcType from '#sepal/recipe/type/ccdc'
 
 import {dependencyError, imageOutputAcquisition, readinessError, recipeClosure$} from '../../executionReadiness.js'
 
@@ -12,11 +14,25 @@ import {dependencyError, imageOutputAcquisition, readinessError, recipeClosure$}
 // run. A closure whose dependencies are not structurally sound fails the export before anything is described,
 // whether or not the description would have read the broken part; and an output that cannot run - its own
 // configuration, or any recipe whose image running it builds, failing a requirement (readiness.js) - fails it too.
-// The image is built beside this check, so a refused export may already have started Earth Engine work - except a
-// CCDC's, which is built only once the check, and what its requested measures add, has passed (imageAssetExport.js).
+// An asset export builds the image beside this check, so a refused one may already have started Earth Engine work -
+// except a CCDC's, built only once resolveRequestedImageOutput$ has passed (imageAssetExport.js).
 
 export const resolveImageOutput$ = recipe =>
     describe$(recipe)
+
+// The image output, then what the bands the image is to be built with (`request`) add: for a direct CCDC, the measures
+// they ask it to fit (requireCcdcImageStages$) - a capability refused as a client's error, then the training those
+// computed by its Classification need. Nothing of the image is built for it.
+export const resolveRequestedImageOutput$ = (recipe, request) =>
+    resolveImageOutput$(recipe).pipe(
+        switchMap(imageOutput => judgesRequest(recipe)
+            ? requireCcdcImageStages$(recipe, request).pipe(map(() => imageOutput))
+            : of(imageOutput)
+        )
+    )
+
+// Whether the bands a recipe's image is requested with can ask more of its sources than its image output does.
+export const judgesRequest = recipe => recipe.type === ccdcType.type
 
 // Only the bands the export names. An export naming none builds whatever its producer builds by default, which the
 // available bands do not describe.

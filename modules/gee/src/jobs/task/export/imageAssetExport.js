@@ -1,13 +1,11 @@
 import {forkJoin, map, of, switchMap} from 'rxjs'
 
-import {requireCcdcImageStages$} from '#gee/jobs/requestedBands'
 import ImageFactory from '#sepal/ee/imageFactory'
 import {withOutputBands} from '#sepal/ee/outputBands'
 import {formatProperties} from '#sepal/formatProperties'
 import {encodingOfBands} from '#sepal/recipe/output/bandEncoding'
-import ccdcType from '#sepal/recipe/type/ccdc'
 
-import {resolveImageOutput$, selectedBandEncoding} from './imageOutput.js'
+import {judgesRequest, resolveImageOutput$, resolveRequestedImageOutput$, selectedBandEncoding} from './imageOutput.js'
 import {startImageToAssetExport$} from './toAsset.js'
 import {toVisualizationProperties} from './visualizations.js'
 
@@ -41,14 +39,12 @@ const source$ = ({recipe, bands, visualizations, scale, properties, ...retrieveO
     )
 
 // A CCDC asked for measures its Classification computes trains that Classification for them, so it is built only once
-// what its image output requires, and then what those measures add (requireCcdcImageStages$), is known to be met:
-// judged with what it is built with. Any other recipe is built beside its check (imageOutput.js).
+// what its image output requires, and then what those measures add, is known to be met: judged with what it is built
+// with (resolveRequestedImageOutput$). Any other recipe is built beside its check (imageOutput.js).
 const built$ = (recipe, request) =>
-    recipe.type === ccdcType.type
-        ? resolveImageOutput$(recipe).pipe(
-            switchMap(imageOutput => requireCcdcImageStages$(recipe, request).pipe(
-                switchMap(() => build$(recipe, request, of(imageOutput)))
-            ))
+    judgesRequest(recipe)
+        ? resolveRequestedImageOutput$(recipe, request).pipe(
+            switchMap(imageOutput => build$(recipe, request, of(imageOutput)))
         )
         : build$(recipe, request, resolveImageOutput$(recipe))
 

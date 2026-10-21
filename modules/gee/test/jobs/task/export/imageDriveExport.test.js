@@ -123,7 +123,7 @@ describe('an image export to Drive of a recipe that cannot run', () => {
         type: 'CLASSIFICATION',
         model: {inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]}}
     })
-    const exportOf = recipe => startImageDriveExport$({image: {...params.image, recipe, bands: {selection: ['ndvi']}}}, {sepalUser: ALICE})
+    const exportOf = recipe => startImageDriveExport$({image: {...params.image, recipe, bands: {selection: ['ndvi_coefs']}}}, {sepalUser: ALICE})
 
     beforeEach(() => {
         state.catalogue = {[ccdc.id]: ccdc, [MOSAIC.id]: MOSAIC}
