@@ -15,7 +15,7 @@ const log = getLogger('timeSeriesExport')
 const CONCURRENT_CHUNKS = 3
 
 export const timeSeriesExport = async (params, {sepal, report, signal, sleep, localProcessing}) => {
-    const {description, image: {workspacePath, recipe, indicators, format}} = params
+    const {description, image: {workspacePath, recipe, indicators, additionalOutputs}} = params
     const downloadDir = workspacePath ? join(process.env.HOME, workspacePath) : join(process.env.HOME, 'downloads', description)
     await mkdir(downloadDir, {recursive: true})
     const {tileIds} = await sepal.gee('task/timeseries/tiles', params)
@@ -25,7 +25,6 @@ export const timeSeriesExport = async (params, {sepal, report, signal, sleep, lo
             return
         }
         const {dateRanges} = await sepal.gee('task/timeseries/chunks', {...params, tileId, dateRanges: chunkDateRanges(recipe.model.dates)})
-        const tileDir = join(downloadDir, `${tileIndex}`)
         for (const indicator of indicators) {
             if (signal.aborted) {
                 return
@@ -33,7 +32,8 @@ export const timeSeriesExport = async (params, {sepal, report, signal, sleep, lo
             let chunks = 0
             const tileProgress = () => report(progress({tileIndex, totalTiles, chunks, totalChunks: dateRanges.length}))
             tileProgress()
-            const indicatorDir = join(tileDir, indicator)
+            // Each indicator's folder has the layout of a single-indicator export, so tools reading those still work.
+            const indicatorDir = join(downloadDir, indicator, `${tileIndex}`)
             await forEachInParallel(dateRanges, CONCURRENT_CHUNKS, signal, async ({startDate, endDate}, chunkSignal) => {
                 await exportToWorkspace({
                     start: () => sepal.startExport('task/export/timeseries/chunk', {...params, image: {...params.image, indicator}, tileId, tileIndex, startDate, endDate}),
@@ -44,7 +44,10 @@ export const timeSeriesExport = async (params, {sepal, report, signal, sleep, lo
                 tileProgress()
             })
             if (dateRanges.length && !signal.aborted) {
-                const sits = format === 'SITS' ? ['--band', indicator, '--sits-dir', join(tileDir, 'sits')] : []
+                // One sits folder per tile: chip names repeat across tiles, and they name the sits files.
+                const sits = additionalOutputs?.includes('SITS')
+                    ? ['--band', indicator, '--sits-dir', join(downloadDir, 'sits', `${tileIndex}`)]
+                    : []
                 await localProcessing.run(() => stack([indicatorDir, ...sits]), signal)
             }
         }
