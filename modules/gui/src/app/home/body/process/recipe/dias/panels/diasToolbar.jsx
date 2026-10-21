@@ -1,6 +1,7 @@
 import React from 'react'
 
 import {setInitialized} from '~/app/home/body/process/recipe'
+import {ChartPixelButton} from '~/app/home/body/process/recipe/chartPixelButton'
 import {Aoi} from '~/app/home/body/process/recipe/mosaic/panels/aoi/aoi'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
@@ -10,6 +11,8 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
+import {RecipeActions} from '../diasRecipe'
+import {ChartPixel} from './chartPixel/chartPixel'
 import {Dates} from './dates/dates'
 import styles from './diasToolbar.module.css'
 import {ForestMask} from './forestMask/forestMask'
@@ -22,6 +25,11 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _DiasToolbar extends React.Component {
+    constructor(props) {
+        super(props)
+        this.recipeActions = RecipeActions(props.recipeId)
+    }
+
     render() {
         const {recipeId, initialized} = this.props
         return (
@@ -30,6 +38,7 @@ class _DiasToolbar extends React.Component {
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
 
+                {initialized ? <ChartPixel/> : null}
                 <Retrieve/>
 
                 <Aoi/>
@@ -42,6 +51,10 @@ class _DiasToolbar extends React.Component {
                     vertical
                     placement='top-right'
                     className={styles.top}>
+                    <ChartPixelButton
+                        disabled={!initialized}
+                        tooltipKey='process.dias.chartPixel'
+                        onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}/>
                     <RetrieveButton tooltip={msg('process.dias.panel.retrieve.tooltip')}/>
                 </Toolbar>
                 <Toolbar

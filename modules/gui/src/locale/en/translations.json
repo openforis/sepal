@@ -2054,6 +2054,17 @@
       "create": "DIAS",
       "description": "Generate multi-sensor deforestation alerts using the Disturbance Index (DI) Z-score method.",
       "tabPlaceholder": "DIAS",
+      "chartPixel": {
+        "start.tooltip": "Chart the Disturbance Index for pixel",
+        "cancel.tooltip": "Cancel Disturbance Index charting",
+        "loadObservations.error": "Failed to load the Disturbance Index observations.",
+        "noData": "No Disturbance Index observations for this pixel.",
+        "notForest": "This pixel is outside the forest mask, so DIAS raises no alerts here.",
+        "date": "Date",
+        "sensor": "Sensor",
+        "di": "DI",
+        "threshold": "Threshold"
+      },
       "layers": {
         "imageLayer": {
           "sensors": "Sensors",

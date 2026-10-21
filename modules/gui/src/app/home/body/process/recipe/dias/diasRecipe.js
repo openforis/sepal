@@ -1,5 +1,8 @@
 import moment from 'moment'
 
+import api from '~/apiRegistry'
+import {recipeActionBuilder} from '~/app/home/body/process/recipe'
+
 const DATE_FORMAT = 'YYYY-MM-DD'
 
 export const defaultModel = {
@@ -22,9 +25,25 @@ export const defaultModel = {
     }
 }
 
+export const RecipeActions = id => {
+    const actionBuilder = recipeActionBuilder(id)
+
+    return {
+        setChartPixel(latLng) {
+            return actionBuilder('SET_CHART_PIXEL', latLng)
+                .set('ui.chartPixel', latLng)
+                .build()
+                .dispatch()
+        }
+    }
+}
+
 export const retrieveTask = {}
 
 export const getDateRange = recipe => {
     const {startDate, endDate} = recipe.model.dates
     return [moment(startDate, DATE_FORMAT), moment(endDate, DATE_FORMAT)]
 }
+
+export const loadObservations$ = ({recipe, latLng}) =>
+    api.gee.loadDiasObservations$({recipe, latLng})
