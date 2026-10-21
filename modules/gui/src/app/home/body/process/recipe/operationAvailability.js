@@ -61,6 +61,42 @@ export const pixelOperationsAvailability = ({state, recipe, heldFor, operations}
     return {available: !gate, gate, computation, recordOf}
 }
 
+// An open chart's operations at its pixel: those it runs whatever band it charts (`operations`), judged as
+// pixelOperationsAvailability judges them, and those the band it charts adds (`bandOperations`, requestStages,
+// #sepal/recipe/classifiedOutputs) - as {available, gate, bandGate, computation, recordOf}. The band's own gate
+// (`bandGate`) holds that band without closing the chart: in `gate` it never withdraws, so what is read for the band is
+// let go, and read again once it clears, while another band can be charted. A finding of it is the chart's to say. What
+// any band needs still closes the chart.
+export const pixelBandAvailability = ({state, recipe, heldFor, operations, bandOperations}) => {
+    const chart = pixelOperationsAvailability({state, recipe, heldFor, operations})
+    const bandGate = bandOperations.length
+        ? pixelOperationsAvailability({state, recipe, heldFor, operations: bandOperations}).gate
+        : null
+    const gate = chart.gate || (bandGate && {...bandGate, withdraw: false})
+    return {...chart, available: !gate, gate, bandGate}
+}
+
+// What the band an open chart charts adds is read for as long as it is that band's: the operations of another band, or
+// of none, replace those watched. requestStages answers the same list for the same stages, so they are told apart by
+// identity.
+export class BandOperationWatch {
+    #operations = null
+    #watches = new Subscription()
+
+    update({sourceRuntime, recipeId, operations}) {
+        if (operations !== this.#operations) {
+            this.#watches.unsubscribe()
+            this.#operations = operations
+            this.#watches = watchOperations({sourceRuntime, recipeId, operations})
+        }
+    }
+
+    unsubscribe() {
+        this.#watches.unsubscribe()
+        this.#operations = null
+    }
+}
+
 // Has the source runtime read what the operations need of a recipe (watchOutput$ with `operation`) until unsubscribed:
 // whatever is held to them - a chart's action, its open panel - watches them as it judges them.
 export const watchOperations = ({sourceRuntime, recipeId, operations}) => {

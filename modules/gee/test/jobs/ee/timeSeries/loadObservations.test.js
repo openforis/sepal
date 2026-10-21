@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import {beforeEach, describe, it, mock} from 'node:test'
 
-import {lastValueFrom, of, throwError} from 'rxjs'
+import {from, lastValueFrom, of, switchMap, throwError} from 'rxjs'
 
 // The observations a pixel chart loads. A Time Series' or a CCDC's chart reads a band of the collection, not the recipe's
 // image, and is held to what its type declares observations of that band require - the collection's classifier inputs,
@@ -151,6 +151,25 @@ describe('loading the observations of a CCDC pixel', () => {
         assert.equal(result.features.length, OBSERVATIONS.length)
     })
 
+    it('is refused for a band its Classification computes, starting no chart work, where that Classification stores no points', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({points: []})}
+
+        await assert.rejects(load({recipe: CCDC, bands: [CLASSIFIED]}), /ccdc-1 cannot run: NO_TRAINING_DATA$/)
+
+        assertNoChartWork()
+    })
+
+    // Observations build the band requested alone; the breakpoint bands are fitted by the segments, not observed.
+    it('answers a band of the scenes whatever its breakpoint bands need, observing nothing of the Classification\'s input', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({points: []})}
+        const recipe = {...CCDC, model: {...CCDC.model, sources: {...CCDC.model.sources, breakpointBands: ['ndvi', CLASSIFIED]}}}
+
+        const result = await load({recipe, bands: ['ndvi']})
+
+        assert.equal(result.features.length, OBSERVATIONS.length)
+        assert.deepEqual(state.observed, [])
+    })
+
     it('is refused, starting no chart work, where the classification\'s classifier the Landsat scenes cannot feed', async () => {
         state.catalogue[CLASSIFICATION] = classification(['VV_mean', 'VH_med'])
 
@@ -210,6 +229,27 @@ describe('loading the observations of a Change Alerts pixel', () => {
         await assert.rejects(load({recipe, bands: ['ndvi']}), /states no complete monitoring period/)
         assertNoChartWork()
     })
+})
+
+// The GUI's charts watch the same (timeSeries/panels/chartPixel.jsx, ccdc/panels/chartPixel.jsx).
+describe('the operations an observation request is judged by', () => {
+    for (const [type, recipeOf] of [['Time Series', () => classified], ['CCDC', () => CCDC]]) {
+        it(`are a ${type}'s observations for a band of the scenes`, async () => {
+            state.catalogue = {[CLASSIFICATION]: trainable()}
+
+            await load({recipe: recipeOf(), bands: ['ndvi']})
+
+            assert.deepEqual(state.judged, ['PIXEL_OBSERVATIONS'])
+        })
+
+        it(`are a ${type}'s observations and its collection classified for a band its Classification computes`, async () => {
+            state.catalogue = {[CLASSIFICATION]: trainable()}
+
+            await load({recipe: recipeOf(), bands: [CLASSIFIED]})
+
+            assert.deepEqual(state.judged, ['PIXEL_OBSERVATIONS', 'CLASSIFIED_COLLECTION'])
+        })
+    }
 })
 
 describe('loading the observations of collection settings naming no recipe', () => {
@@ -401,9 +441,21 @@ mock.module('#sepal/ee/imageFactory', {
     }
 })
 
+// The real readiness, recording each operation a request is judged by: loaded as a module of its own, which this mock
+// does not replace.
+const REAL_READINESS = new URL('../../../../src/jobs/executionReadiness.js?recorded', import.meta.url).href
+mock.module('#gee/jobs/executionReadiness', {
+    exports: {
+        requireExecutable$: args => {
+            state.judged.push(args.operation)
+            return from(import(REAL_READINESS)).pipe(switchMap(({requireExecutable$}) => requireExecutable$(args)))
+        }
+    }
+})
+
 beforeEach(() => {
     Object.assign(state, {
-        catalogue: {}, recipeReads: [], pixels: [], collections: [], evaluations: [], selected: [], recipeImages: [], observed: [],
+        catalogue: {}, recipeReads: [], pixels: [], collections: [], evaluations: [], selected: [], recipeImages: [], observed: [], judged: [],
         assetBands: {[`users/x/${CLASSIFICATION}`]: TRAINABLE_FEATURES, [`users/x/${PROVIDER}`]: TRAINABLE_FEATURES}
     })
 })

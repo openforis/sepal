@@ -2,26 +2,29 @@ import {act} from 'react'
 import {createRoot} from 'react-dom/client'
 import {Provider} from 'react-redux'
 import {legacy_createStore as createStore} from 'redux'
-import {finalize, of, Subject, throwError} from 'rxjs'
+import {defer, finalize, of, Subject, throwError} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
+import {SourceRuntimeProvider, useSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {MapContext} from '~/app/home/map/mapContext'
 import {initStore, select} from '~/store'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
-// A band an open Time Series chart observes that its selected Classification computes trains that Classification's
-// classifier: while it cannot be trained, or what training it needs is still being read, the chart reads nothing for the
-// band, letting go of what it was reading, and stays open - saying why where the Classification is found unable - so a
-// band of the images can be chosen; its action, which charts any band, stays offered. It reads the band once the
-// Classification can be trained, as storage holds it. A band of the images needs nothing of the training. The
-// registrations, store, source runtime, readiness, chart and its action are real; Earth Engine, storage, the map, the
-// graph renderer and the toolbar's and band picker's widgets are replaced.
+// A band an open Time Series or CCDC chart reads that its selected Classification computes trains that Classification's
+// classifier (the collection classified): while it cannot be trained, or what training it needs is still being read,
+// the chart reads nothing for the band, letting go of what it was reading, and stays open - saying why where the
+// Classification is found unable - so a band of the images can be chosen; its action, which charts any band, stays
+// offered. It reads the band once the Classification can be trained, as storage holds it. A band of the images needs
+// nothing of the training. A CCDC reads its segments and observations together, and holds both. What the chart watches
+// is what its requests are judged by (loadObservations.test.js, loadSegmentsReadiness.test.js, modules/gee). The
+// registrations, store, source runtime, readiness, charts and their action are real; Earth Engine, storage, the map,
+// the graph renderer and the toolbar's and band picker's widgets are replaced.
 
-const {loadTimeSeriesObservations$, inputBands$, saveRecipe$} = vi.hoisted(() => ({
+const {loadTimeSeriesObservations$, loadCCDCSegments$, inputBands$, saveRecipe$} = vi.hoisted(() => ({
     loadTimeSeriesObservations$: vi.fn(),
+    loadCCDCSegments$: vi.fn(),
     inputBands$: vi.fn(),
     saveRecipe$: vi.fn()
 }))
@@ -29,7 +32,10 @@ const stored = vi.hoisted(() => ({records: {}}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         loadTimeSeriesObservations$,
-        bands$: ({asset}) => inputBands$(asset),
+        loadCCDCSegments$,
+        bands$: ({asset, recipe}) => asset
+            ? inputBands$(asset)
+            : of(['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb', 'ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude'].filter(() => recipe?.type === 'CCDC')),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
     },
     recipe: {load$: id => of(stored.records[id]), loadAll$: () => of(LISTING), save$: request => saveRecipe$(request)}
@@ -45,7 +51,7 @@ vi.mock('~/widget/icon', () => ({Icon: () => null}))
 vi.mock('~/widget/toolbar/toolbar', () => ({
     Toolbar: {Button: ({onClick, disabled}) => <button aria-label='chart' disabled={disabled} onClick={onClick}/>}
 }))
-vi.mock('../../ccdc/ccdcGraph', () => ({CCDCGraph: () => <output aria-label='graph'/>}))
+vi.mock('./ccdc/ccdcGraph', () => ({CCDCGraph: () => <output aria-label='graph'/>}))
 vi.mock('~/widget/form', async importOriginal => {
     const {Form} = await importOriginal()
     return {
@@ -59,26 +65,37 @@ vi.mock('~/widget/form', async importOriginal => {
     }
 })
 
-const {addRecipeType} = await import('../../../recipeTypeRegistry')
-const {default: timeSeries} = await import('../timeSeries')
-const {default: classification} = await import('../../classification/classification')
-const {default: opticalMosaic} = await import('../../opticalMosaic/opticalMosaic')
-const {RecipeActions} = await import('../timeSeriesRecipe')
-const {ChartPixelButton} = await import('../../chartPixelButton')
-const {CHART_OPERATIONS, ChartPixel} = await import('./chartPixel')
+const {addRecipeType} = await import('../recipeTypeRegistry')
+const {default: timeSeries} = await import('./timeSeries/timeSeries')
+const {default: ccdc} = await import('./ccdc/ccdc')
+const {default: classification} = await import('./classification/classification')
+const {default: opticalMosaic} = await import('./opticalMosaic/opticalMosaic')
+const {RecipeActions: TimeSeriesActions} = await import('./timeSeries/timeSeriesRecipe')
+const {RecipeActions: CcdcActions} = await import('./ccdc/ccdcRecipe')
+const {ChartPixelButton} = await import('./chartPixelButton')
+const timeSeriesChart = await import('./timeSeries/panels/chartPixel')
+const ccdcChart = await import('./ccdc/panels/chartPixel')
 
 addRecipeType(timeSeries())
+addRecipeType(ccdc())
 addRecipeType(classification())
 addRecipeType(opticalMosaic())
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
+const CHARTS = [
+    {type: 'TIME_SERIES', chart: timeSeriesChart, RecipeActions: TimeSeriesActions, operations: ['PIXEL_OBSERVATIONS']},
+    {type: 'CCDC', chart: ccdcChart, RecipeActions: CcdcActions, operations: ['PIXEL_OBSERVATIONS', 'PIXEL_SEGMENTS']}
+]
+
 let root, container, map
 
 beforeEach(() => {
     loadTimeSeriesObservations$.mockReset().mockReturnValue(of({features: []}))
+    loadCCDCSegments$.mockReset().mockReturnValue(of([]))
     inputBands$.mockReset().mockReturnValue(of(['red', 'nir'].map(name => ({name, arrayDimensions: 0}))))
     saveRecipe$.mockReset().mockReturnValue(of({revision: 2}))
+    watched.length = 0
 })
 
 afterEach(async () => {
@@ -87,9 +104,9 @@ afterEach(async () => {
     container?.remove()
 })
 
-describe('an open Time Series chart of a band its Classification computes', () => {
+describe.each(CHARTS)('an open $type chart of a band its Classification computes', chart => {
     it('reads nothing for it while that Classification stores no points, saying so, open at any pixel charted', async () => {
-        await open({trainingData: []})
+        await open(chart, {trainingData: []})
         await chartAt(PIXEL)
 
         await chooseBand(CLASSIFIED)
@@ -103,7 +120,7 @@ describe('an open Time Series chart of a band its Classification computes', () =
     })
 
     it('lets go of what it was reading for it once the Classification stores no points, staying open', async () => {
-        await open()
+        await open(chart)
         await chartAt(PIXEL)
         const pending = new Subject()
         let cancelled = false
@@ -119,8 +136,8 @@ describe('an open Time Series chart of a band its Classification computes', () =
         expect(chartButton().disabled).toBe(false)
     })
 
-    it('reads it once the Classification stores points again', async () => {
-        await open({trainingData: []})
+    it('reads it once, once the Classification stores points again', async () => {
+        await open(chart, {trainingData: []})
         await chartAt(PIXEL)
         await chooseBand(CLASSIFIED)
 
@@ -131,7 +148,7 @@ describe('an open Time Series chart of a band its Classification computes', () =
     })
 
     it('reads a band of the images chosen instead', async () => {
-        await open({trainingData: []})
+        await open(chart, {trainingData: []})
         await chartAt(PIXEL)
         await chooseBand(CLASSIFIED)
 
@@ -142,7 +159,7 @@ describe('an open Time Series chart of a band its Classification computes', () =
     })
 
     it('waits for the points it is given to be saved, reading it once storage holds them', async () => {
-        await open({trainingData: [], classificationOpen: true})
+        await open(chart, {trainingData: [], classificationOpen: true})
         await chartAt(PIXEL)
         await chooseBand(CLASSIFIED)
         const save = new Subject()
@@ -163,11 +180,11 @@ describe('an open Time Series chart of a band its Classification computes', () =
     })
 })
 
-describe('an open Time Series chart of a band its Classification computes over imagery still to be observed', () => {
+describe.each(CHARTS)('an open $type chart of a band its Classification computes over imagery still to be observed', chart => {
     it('reads nothing for it, explaining nothing, until that imagery is observed', async () => {
         const observed = new Subject()
         inputBands$.mockReturnValue(observed)
-        await open({input: ASSET_INPUT, chartedBand: CLASSIFIED})
+        await open(chart, {input: ASSET_INPUT, chartedBand: CLASSIFIED})
 
         await chartAt(PIXEL)
         expect(requested()).toEqual([])
@@ -180,7 +197,7 @@ describe('an open Time Series chart of a band its Classification computes over i
 
     it('reads nothing for it, finding nothing, where that imagery cannot be observed', async () => {
         inputBands$.mockReturnValue(throwError(() => new Error('Earth Engine unreachable')))
-        await open({input: ASSET_INPUT, chartedBand: CLASSIFIED})
+        await open(chart, {input: ASSET_INPUT, chartedBand: CLASSIFIED})
 
         await chartAt(PIXEL)
 
@@ -191,11 +208,76 @@ describe('an open Time Series chart of a band its Classification computes over i
 
     it('reads a band of the images without waiting for it', async () => {
         inputBands$.mockReturnValue(new Subject())
-        await open({input: ASSET_INPUT})
+        await open(chart, {input: ASSET_INPUT})
 
         await chartAt(PIXEL)
 
         expect(requested()).toEqual([['ndvi']])
+    })
+})
+
+describe.each(CHARTS)('what an open $type chart watches', chart => {
+    it('is what its requests are judged by: for a band of the images, what any band needs', async () => {
+        await open(chart)
+        await chartAt(PIXEL)
+
+        expect(watchedOperations()).toEqual(chart.operations)
+    })
+
+    it('adds the collection classified for a band its Classification computes, and lets it go with that band and the chart', async () => {
+        await open(chart)
+        await chartAt(PIXEL)
+
+        await chooseBand(CLASSIFIED)
+        expect(watchedOperations()).toEqual([...chart.operations, 'CLASSIFIED_COLLECTION'])
+
+        await chooseBand('ndvi')
+        expect(watchedOperations()).toEqual(chart.operations)
+
+        await act(async () => root.unmount())
+        root = null
+        expect(watched).toEqual([])
+    })
+})
+
+describe('an open CCDC chart of a band its Classification computes', () => {
+    const [, ccdcChartCase] = CHARTS
+
+    it('reads its segments with its observations, and lets go of both, once that Classification stores no points', async () => {
+        await open(ccdcChartCase)
+        await chartAt(PIXEL)
+        const pendingSegments = new Subject()
+        let segmentsCancelled = false
+        loadCCDCSegments$.mockReturnValueOnce(pendingSegments.pipe(finalize(() => segmentsCancelled = true)))
+        await chooseBand(CLASSIFIED)
+        expect(segmentsRequested()).toEqual(requested())
+
+        await holdTrainingData([])
+        await chooseBand('ndvi')
+
+        expect(segmentsCancelled).toBe(true)
+        expect(segmentsRequested()).toEqual([['ndvi'], [CLASSIFIED], ['ndvi']])
+        expect(segmentsRequested()).toEqual(requested())
+    })
+
+    // A classified breakpoint band is the CCDC's own configuration: every segmentation fits it, whatever band is charted.
+    it('closes where a breakpoint band its Classification computes cannot be trained, rather than holding the band', async () => {
+        await open(ccdcChartCase, {breakpointBands: ['ndvi', CLASSIFIED]})
+        await chartAt(PIXEL)
+        await chooseBand(CLASSIFIED)
+
+        await holdTrainingData([])
+
+        expect(chartPixel()).toBe(null)
+        expect(chartButton().disabled).toBe(true)
+    })
+
+    it('is read over an AOI the session cannot resolve, which classifying the collection does not read', async () => {
+        await open(ccdcChartCase, {aoi: {type: 'RECIPE', id: 'aoi-recipe'}, chartedBand: CLASSIFIED})
+
+        await chartAt(PIXEL)
+
+        expect(requested()).toEqual([[CLASSIFIED]])
     })
 })
 
@@ -216,17 +298,22 @@ const LISTING = [
     {id: MOSAIC, name: 'Mosaic', type: 'MOSAIC', revision: 1}
 ]
 
-// Over Landsat 8 scenes, its Sources selecting the Random Forest and having copied it when they did.
-const seriesRecipe = () => ({
+// A Time Series or CCDC over Landsat 8 scenes, its Sources selecting the Random Forest and having copied it when they
+// did; a CCDC fitting the breakpoint bands given.
+const chartedRecipe = ({type, aoi = {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]}, breakpointBands = ['ndvi']}) => ({
     id: SERIES,
-    type: 'TIME_SERIES',
+    type,
     title: 'Series',
     revision: 1,
     model: {
-        aoi: {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]},
+        aoi,
         dates: {startDate: '2020-01-01', endDate: '2021-01-01'},
-        sources: {dataSetType: 'OPTICAL', classification: CLASSIFICATION, dataSets: {LANDSAT: ['LANDSAT_8']}, assets: [], cloudPercentageThreshold: 75},
-        options: {corrections: ['SR']}
+        sources: {
+            dataSetType: 'OPTICAL', classification: CLASSIFICATION, dataSets: {LANDSAT: ['LANDSAT_8']}, assets: [], cloudPercentageThreshold: 75,
+            ...(type === 'CCDC' ? {breakpointBands} : {})
+        },
+        options: {corrections: ['SR']},
+        ...(type === 'CCDC' ? {opticalPreprocess: {corrections: ['SR']}, ccdcOptions: {dateFormat: 1}} : {})
     },
     ui: {initialized: true, classification: {classificationLegend: LEGEND, classifierType: 'RANDOM_FOREST', classifier: {type: 'RANDOM_FOREST'}}}
 })
@@ -266,7 +353,30 @@ const chartButton = () => container.querySelector('button[aria-label=chart]')
 
 const requested = () => loadTimeSeriesObservations$.mock.calls.map(([{bands}]) => bands)
 
-const explained = () => container.textContent.includes('process.timeSeries.chartPixel.classifiedBandWithheld')
+const segmentsRequested = () => loadCCDCSegments$.mock.calls.map(([{bands}]) => bands)
+
+const explained = () => container.textContent.includes('process.chartPixel.classifiedBandWithheld')
+
+// The questions the runtime is asked to read, while they are asked.
+const watched = []
+
+// The operations of the questions watched about the recipe charted, by the chart and its action alike.
+const watchedOperations = () =>
+    [...new Set(watched.filter(({recipeId, operation}) => recipeId === SERIES && operation).map(({operation}) => operation))]
+
+// The runtime the chart and its action are given, its watches recorded.
+const RecordingWatches = ({children}) => {
+    const runtime = useSourceRuntime()
+    if (!runtime.recorded) {
+        const watchOutput$ = runtime.watchOutput$
+        runtime.recorded = true
+        runtime.watchOutput$ = question => defer(() => {
+            watched.push(question)
+            return watchOutput$(question).pipe(finalize(() => watched.splice(watched.indexOf(question), 1)))
+        })
+    }
+    return children
+}
 
 // The pixel is chosen on the map, as the chart's action has it listen for.
 const chartAt = async latLng => {
@@ -308,8 +418,10 @@ const mapOf = () => {
 }
 
 // `classificationOpen`: the Classification is open in a tab of its own, where it is edited and saved (saveRecipe$).
-async function open({input = MOSAIC_INPUT, trainingData = [COLLECTED], chartedBand = 'ndvi', classificationOpen = false} = {}) {
-    const records = [seriesRecipe(), classificationRecipe({input, trainingData}), mosaicRecipe()]
+async function open({type, chart: {CHART_OPERATIONS, ChartPixel}, RecipeActions}, {
+    input = MOSAIC_INPUT, trainingData = [COLLECTED], chartedBand = 'ndvi', classificationOpen = false, aoi, breakpointBands
+} = {}) {
+    const records = [chartedRecipe({type, aoi, breakpointBands}), classificationRecipe({input, trainingData}), mosaicRecipe()]
     stored.records = Object.fromEntries(records.map(record => [record.id, record]))
     const initialState = {
         dimensions: {width: 1024, height: 768},
@@ -333,15 +445,17 @@ async function open({input = MOSAIC_INPUT, trainingData = [COLLECTED], chartedBa
     await act(async () => root.render(
         <Provider store={store}>
             <SourceRuntimeProvider>
-                <MapContext map={map}>
-                    <PortalContainer id='chart-panel'/>
-                    <PortalContext id='chart-panel'>
-                        <Recipe id={SERIES}>
-                            <ChartPixelButton operations={CHART_OPERATIONS} onPixelSelected={latLng => recipeActions.setChartPixel(latLng)}/>
-                            <ChartPixel values={{selectedBand: chartedBand}}/>
-                        </Recipe>
-                    </PortalContext>
-                </MapContext>
+                <RecordingWatches>
+                    <MapContext map={map}>
+                        <PortalContainer id='chart-panel'/>
+                        <PortalContext id='chart-panel'>
+                            <Recipe id={SERIES}>
+                                <ChartPixelButton operations={CHART_OPERATIONS} onPixelSelected={latLng => recipeActions.setChartPixel(latLng)}/>
+                                <ChartPixel values={{selectedBand: chartedBand}}/>
+                            </Recipe>
+                        </PortalContext>
+                    </MapContext>
+                </RecordingWatches>
             </SourceRuntimeProvider>
         </Provider>
     ))

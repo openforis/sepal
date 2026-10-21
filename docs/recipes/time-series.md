@@ -28,8 +28,9 @@ action and an open chart follow the chart's own readiness (`PIXEL_OBSERVATIONS`)
 does not read never holds it back. A Classification still to be read holds the chart without a finding. Once found
 unsuitable, a pixel being chosen is let go and an open chart closes, cancelling its request.
 
-A chart band the Classification computes trains it, so the open chart also follows `CLASSIFIED_PIXEL_OBSERVATIONS`
-while such a band is selected: the Classification's training readiness. That holds the band, not the chart. While it is
+A chart band the Classification computes trains it, so the open chart also follows `CLASSIFIED_COLLECTION` (the
+collection classified) while such a band is selected: the Classification's training readiness. That holds the band, not
+the chart (`pixelBandAvailability`, shared with CCDC's chart). While it is
 pending or unavailable nothing is requested for it; once found unable to train (no points, an unusable reused recipe,
 reused features missing), the request is let go and the chart says so, staying open so a band of the images can be
 chosen. The action charts any band, so it follows `PIXEL_OBSERVATIONS` alone and stays offered. Repair reads the band
@@ -62,18 +63,19 @@ them. Its three Earth Engine requests (`modules/gee/src/jobs/task/export/timeSer
 independently: the tile ids before the AOI is tiled, a tile's date ranges before any imagery check, and each chunk's
 export before its collection is built, a destination prepared or the export submitted. The chart's observation
 request (`modules/gee/src/jobs/ee/timeSeries/loadObservations.js`) is held to what this type declares observations of
-the requested bands require. The bands choose the operation (`pixelObservationsOperation`,
-`lib/js/shared/src/recipe/classifiedOutputs.js`). `PIXEL_OBSERVATIONS`, for bands of the images, needs the classifier
-inputs, and the Classification and source imagery resolving. `CLASSIFIED_PIXEL_OBSERVATIONS`, for a band the
-Classification computes, needs the classifier inputs and the Classification's `CLASSIFIER` readiness: its training
-data, its reused recipes' input imagery and sampled features. The check runs before the request builds the pixel or the
+the requested bands require (`requireRequestedBands$`, `modules/gee/src/jobs/requestedBands.js`).
+`PIXEL_OBSERVATIONS`, for any band, needs the classifier inputs, and the Classification and source imagery resolving.
+A band the Classification computes adds the stage `CLASSIFIED_COLLECTION` (`requestStages`,
+`lib/js/shared/src/recipe/classifiedOutputs.js`): the classifier inputs and the Classification's `CLASSIFIER`
+readiness, meaning its training data and its reused recipes' input imagery and sampled features, judged without the
+Time Series' AOI. The check runs before the request builds the pixel or the
 collection or evaluates anything, and it judges the recipe at the clicked point: its AOI, which the chart does not
 read, is not required, and the submitted recipe is unchanged. The bands it charts are not checked against `count`, and
 the count image is not described. A classified band is judged in the order building the collection finds things: what
 any band needs (`PIXEL_OBSERVATIONS`), then whether the Classification provides it, then its training. An output it
 does not provide is refused as the collection refuses it, a client error coded `UNSUPPORTED_CLASSIFIED_OUTPUT`
-(`classifiedOutputRefusal.js`), whether or not the Classification can be trained. CCDC's observations are held to its own declarations, which do
-not yet require training for a classified chart band. Change Alerts' observations are judged as the Time Series
+(`classifiedOutputRefusal.js`), whether or not the Classification can be trained. CCDC's observations are held the
+same way. Change Alerts' observations are judged as the Time Series
 collection it monitors (`observedCollection`).
 
 The task (`modules/task/src/runner/operations/timeSeriesExport.js`) exports one indicator per Earth Engine chunk
@@ -166,13 +168,14 @@ Earth Engine is asked.
   the bands of the images answered over the same Classifications; CCDC's observations refused and
   answered the same way, describing nothing of its segments, a classified band included; Change Alerts' monitored
   collection.
-- `lib/js/shared/test/recipe/classifiedOutputTraining.test.js` - the classified chart band's `CLASSIFIED_PIXEL_OBSERVATIONS`
-  beside Phenology's and CCDC's classified bands: each training finding at the recipe it concerns, pending and
+- `lib/js/shared/test/recipe/classifiedOutputTraining.test.js` - `CLASSIFIED_COLLECTION` for Time Series and CCDC
+  beside Phenology's and CCDC's configured classified bands: each training finding at the recipe it concerns, pending and
   unavailable evidence, repair, and bands of the images observing nothing of the Classification.
-- `modules/gui/src/app/home/body/process/recipe/timeSeries/panels/classifiedBandChart.test.jsx` - an open chart's
+- `modules/gui/src/app/home/body/process/recipe/classifiedBandChart.test.jsx` - an open Time Series or CCDC chart's
   classified band held, with the chart open and its action offered: said where the Classification cannot be trained,
   its request let go, read after repair or once the repair is saved, read once pending imagery is observed, never read
-  while it cannot be; a band of the images read instead, and without waiting.
+  while it cannot be; a band of the images read instead, and without waiting; the operations watched, released with
+  the band and the chart.
 - `modules/gui/src/app/home/body/process/recipe/pixelObservationsAvailability.test.js`,
   `chartPixelButton.test.jsx` and `pixelObservationsChart.test.jsx` - the chart's availability, said in Sources,
   over an unresolvable AOI, while the Classification is read and as the runtime settles it; the action withdrawn

@@ -1017,13 +1017,13 @@ One read answers every consumer, so they cannot disagree:
 - **Pixel observations.**
   - **What is judged.** A pixel chart's observation request (`/timeSeries/loadObservations`,
     `jobs/ee/timeSeries/loadObservations.js`) is held to the readiness its recipe's type declares for observations of
-    the requested bands, before the pixel geometry or the collection is built or anything evaluated. The bands choose
-    the operation (`pixelObservationsOperation`, `classifiedOutputs.js`): `CLASSIFIED_PIXEL_OBSERVATIONS` where any is
-    an output the Classification computes, `PIXEL_OBSERVATIONS` otherwise. This uses `requireExecutable$` in
-    `jobs/executionReadiness.js`, over `settledReadiness$` and `readReadiness`.
-  - **Time Series and CCDC** declare both, and the classifier-input requirement lists both. Time Series' classified
-    observations need the Classification's `CLASSIFIER` readiness (see "Time Series' classified chart band"); CCDC's
-    still need only what its native observations need.
+    the requested bands, before the pixel geometry or the collection is built or anything evaluated. It is judged as
+    `PIXEL_OBSERVATIONS`, and, where a requested band is an output the Classification computes, then for that output's
+    capability and as `CLASSIFIED_COLLECTION` (`requireRequestedBands$`, `jobs/requestedBands.js`; see "CCDC's
+    requested chart bands"). This uses `requireExecutable$` in `jobs/executionReadiness.js`, over `settledReadiness$`
+    and `readReadiness`.
+  - **Time Series and CCDC** declare both operations, needing the Classification's `CLASSIFIER` readiness for the
+    stage (`CLASSIFIED_COLLECTION_NEEDS`), and the classifier-input requirement lists both.
   - **What the read describes.** Nothing of the recipe's own image is described: neither the Time Series count nor
     CCDC's catalogue. A requirement asking for its inputs' observed bands still has them acquired, and their failures
     reported, as any read's are.
@@ -1360,11 +1360,11 @@ and keep `REFERENCE` for native bands.
   | Consumer and operation | Uses the Classification when | Trains | Builds its image | Checked today |
   |---|---|---|---|---|
   | Time Series `IMAGE_OUTPUT` (count) | never (`bands: [0]`) | no | no | `UNSUPPLIED_CLASSIFIER_INPUTS` all the same |
-  | Time Series pixel chart | the chart band is classified | yes | no | the Classification's `CLASSIFIER` readiness for a classified band (`CLASSIFIED_PIXEL_OBSERVATIONS`), classifier inputs; output capability before training, refused as execution refuses it |
+  | Time Series pixel chart | the chart band is classified | yes | no | the Classification's `CLASSIFIER` readiness for a classified band (`CLASSIFIED_COLLECTION`), classifier inputs; output capability before training, refused as execution refuses it |
   | Time Series Retrieve | a Retrieve indicator is classified | yes | no | classifier inputs; the indicator only at run time |
   | Phenology `IMAGE_OUTPUT` | `sources.band` is classified | yes | no | the Classification's `CLASSIFIER` readiness for a classified band, classifier inputs, `UNSUPPORTED_CLASSIFIED_OUTPUT` |
   | CCDC `IMAGE_OUTPUT`, `PIXEL_SEGMENTS` | classified `breakpointBands`, or a classified export or map band | yes | no | the Classification's `CLASSIFIER` readiness for classified breakpoints, classifier inputs, breakpoint outputs; export bands only at run time |
-  | CCDC `PIXEL_OBSERVATIONS` | the chart band is classified | yes | no | classifier inputs |
+  | CCDC pixel chart (`PIXEL_OBSERVATIONS`, `PIXEL_SEGMENTS`) | the chart band is classified, or for segments a breakpoint band | yes | no | classifier inputs; the configured breakpoints' findings; then requested capability and `CLASSIFIED_COLLECTION` over the bands each request builds |
   | CCDC Slice, Change Alerts over a CCDC recipe | that CCDC's classified breakpoint bands, or a Slice base band | yes | no | through the CCDC, as above |
   | PyEO Alerts `IMAGE_OUTPUT` | always | yes, except a decision tree | yes (`getImage$`, its baseline) | the Classification's `IMAGE_OUTPUT` readiness, classifier inputs, gate index |
   | LandTrendr | never (no selector, an optical index) | no | no | nothing |
@@ -1414,9 +1414,9 @@ and keep `REFERENCE` for native bands.
     and a static need would refuse configurations that never train.
     - Phenology's `band` and CCDC's `breakpointBands` now select a conditional `CLASSIFIER` need (see "Phenology's
       configured classified band").
-    - Time Series' chart band chooses `CLASSIFIED_PIXEL_OBSERVATIONS` (see "Time Series' classified chart band").
-    - Time Series Retrieve indicators, and CCDC export, map and chart bands, are still request parameters readiness
-      does not see.
+    - Time Series' and CCDC's chart bands add `CLASSIFIED_COLLECTION` (see "CCDC's requested chart bands").
+    - Time Series Retrieve indicators, and CCDC export and map bands, are still request parameters readiness does not
+      see.
   - **Native-band policy.** It refuses a Time Series count image, which never reads its Classification, for
     unsupplied classifier inputs.
   - **Run-time-only band checks.** Requested classified outputs are checked for capability only at run time, for every
@@ -1733,7 +1733,9 @@ is applied to every scene. It never builds the Classification's image. Readiness
 
 **Time Series' classified chart band (implemented 2026-10-21).** A band a Time Series chart observes that its
 Classification computes (`regression`, `probability_*`) trains that Classification and applies it to every image at the
-pixel (`collection.js`).
+pixel (`collection.js`). The operation below, `CLASSIFIED_PIXEL_OBSERVATIONS` chosen by `pixelObservationsOperation`,
+has since been generalised as the stage `CLASSIFIED_COLLECTION` (see "CCDC's requested chart bands"); this entry keeps
+the names it was implemented with.
 
 - **Gap (confirmed by failing witnesses before the change).** The request was judged as `PIXEL_OBSERVATIONS`, whose
   `CLASSIFICATION_SOURCE` need is `REFERENCE`. So `/timeSeries/loadObservations` built and evaluated the collection,
@@ -1805,7 +1807,8 @@ pixel (`collection.js`).
       over a trainable and over a point-free Classification, but only after unsupplied classifier inputs, as before;
     - native bands over each broken Classification are answered without observing its input;
     - a CCDC classified band is answered.
-  - `timeSeries/panels/classifiedBandChart.test.jsx` (GUI, mounted over the real runtime, chart and action):
+  - `timeSeries/panels/classifiedBandChart.test.jsx`, since moved to `recipe/classifiedBandChart.test.jsx` (GUI,
+    mounted over the real runtime, chart and action):
     - a classified band over a Classification without points is never requested, the chart says why, stays open at
       another pixel, and its action stays offered;
     - a request in flight is cancelled when points are removed;
@@ -1823,6 +1826,105 @@ pixel (`collection.js`).
   - CCDC's chart: its classified observations, and the segments it fits to the chart band, which `PIXEL_SEGMENTS`
     judges by `breakpointBands` alone. The GUI hold is the same.
   - CCDC export and map bands.
+
+**CCDC's requested chart bands (implemented 2026-10-21).** Slice 1 of the architecture checkpoint's sequence: the
+stage generalised, the band hold shared, and the CCDC chart integrated.
+
+- **Gap (confirmed by failing witnesses).** A CCDC chart band the Classification computes trains it in both requests:
+  segments fit `[band]` with the breakpoint bands (`fittedMeasures`), and observations build `[band]`. The segment
+  request was judged by `PIXEL_SEGMENTS`, whose need follows `breakpointBands` alone. The observation request's
+  classified operation needed only `REFERENCE` for CCDC. The GUI chart read the band without holding it. With native
+  breakpoints, a Classification without points, with an unusable reused provider, or with reused features missing,
+  was trained on at execution.
+- **The stage** (`CLASSIFIED_COLLECTION`, `output/readiness.js`) is the collection classified by its Classification,
+  wherever its images are read.
+  - Its needs are declared once, `CLASSIFIED_COLLECTION_NEEDS` (`collectionSources.js`): the Classification's
+    `CLASSIFIER`, which reuses its existing training requirements, and the source imagery resolving. Time Series and
+    CCDC both declare it, and the classifier-input requirement lists it.
+  - It is AOI-independent. Routes judge it over the recipe without its AOI (`withoutAoi`), and the GUI lists it among
+    the operations `recipeForOperation` strips the AOI for. Only the consumer's AOI goes: the Classification's own
+    imagery keeps its AOIs.
+- **Effective bands** are each execution owner's. Observations build the bands requested. CCDC's segments build
+  `fittedMeasures(model, requested)`, which `ccdc.js` now also uses for the collection's bands instead of repeating the
+  union inline. `requestStages(effective)` (`classifiedOutputs.js`) is the one selector: constant lists, the stage or
+  none, so watchers tell them apart by identity. There is no type switch: each caller passes its own bands.
+- **Server sequence** (`requireRequestedBands$`, `modules/gee/src/jobs/requestedBands.js`), extracted from
+  `loadObservations.js`:
+  1. the base operation and every configured finding, a classified breakpoint's training and capability included;
+  2. the capability of the outputs the request names, by `unprovidedClassifiedOutputs`, refused with execution's
+     `unsupportedClassifiedOutput` (400, `UNSUPPORTED_CLASSIFIED_OUTPUT`);
+  3. the stages the effective bands add.
+
+  A native request runs the first alone, reading nothing more. `loadObservations.js` and the direct CCDC branch of
+  `loadSegments.js` use it before anything is built. The recipe-reference and asset segment branches are unchanged.
+- **GUI** (`operationAvailability.js`).
+  - `pixelBandAvailability({operations, bandOperations})` is the shared hold. A finding of the chart's own operations
+    closes the chart, as before. The band's gate holds that band without closing: it is passed to `pixelChartUpdate`
+    as non-withdrawing, so obsolete requests are cancelled, pending or unavailable evidence holds without a finding,
+    the draft gate waits for saves, and clearing reads once. A finding of the band is explained
+    (`process.chartPixel.classifiedBandWithheld`, shared by both charts).
+  - `BandOperationWatch` watches the band's operations while they are the band's, and releases them on another band or
+    on unmount.
+  - Time Series passes `requestStages([band])`. CCDC passes `requestStages(fittedMeasures(model, [band]))`, which covers
+    both its streams, so they are held, cancelled and resumed together.
+- **Decisions consolidated:**
+  - the stage order, from `loadObservations.js` into one server helper;
+  - the band hold and its watch, from Time Series' panel into two shared GUI helpers;
+  - which bands make a request classified, into one selector;
+  - the stage's needs, into one declaration;
+  - CCDC's fitted bands, into `fittedMeasures` for execution and route alike.
+- **New abstraction:**
+  - one stage operation, replacing an operation-specific variant;
+  - one server helper and two GUI helpers, each used by both charts;
+  - nothing new for readiness to take, cache or load.
+
+  The pixel projection is still defined three times (the GUI's `recipeForOperation`, the routes' `atPixel` and
+  `withoutAoi`); a shared projection remains optional.
+- **Preserved:**
+  - native requests succeed without training;
+  - CCDC's native observations don't depend on classified breakpoints;
+  - configured breakpoint findings take precedence over everything a request adds;
+  - Time Series' chart behaves as before; only its message key moved to the shared one, with the same text.
+- **Regressions.**
+  - `loadSegmentsReadiness.test.js` (gee):
+    - each training finding refused before anything is segmented, with native controls answered, fitting `ndvi` and
+      observing nothing of the Classification's input;
+    - repair, fitting the band with the breakpoint bands;
+    - unobservable input failing as a read;
+    - the four combinations where several things are wrong: a classified breakpoint's `NO_TRAINING_DATA` before an
+      unsupported requested output; the 400 before training; a configured unsupported breakpoint's finding before the
+      requested one; unsupplied classifier inputs before anything request-added.
+    - Readiness's own evidence evaluation is now told apart from chart work in its Earth Engine stand-in. Repair runs
+      each request in its own recipe scope.
+  - `loadObservations.test.js` (gee): a CCDC classified band refused over a Classification without points, and native
+    observations answered over classified breakpoints without observing the input.
+  - **Guard agreement.** Both gee files record the operations each request is judged by, through the real readiness:
+    native requests their base operation alone, classified ones `CLASSIFIED_COLLECTION` after it.
+    `classifiedBandChart.test.jsx` records the runtime's actual watches: the chart's operations, plus
+    `CLASSIFIED_COLLECTION` while a classified band is charted, released on a native band and on unmount. That is the
+    union of the two routes' guards.
+  - `classifiedOutputTraining.test.js` (shared): Time Series and CCDC rows for the stage. They cover every training
+    finding, pending and unavailable evidence, repair and native controls.
+  - `recipe/classifiedBandChart.test.jsx` (GUI), moved from `timeSeries/panels` and run for both charts:
+    - each case for Time Series and CCDC;
+    - CCDC holding and cancelling both streams together;
+    - a classified breakpoint's finding closing the chart rather than holding the band;
+    - a classified band read over an AOI the session cannot resolve.
+- **Witnesses.**
+  - CCDC's stage at `REFERENCE`: the CCDC observation case and 9 shared cases fail.
+  - `loadSegments.js` from `HEAD`: 7 gee cases fail (training, repair, unavailable, the coded refusal, the judged
+    operations). The precedence cases where configured findings win pass, as they did before.
+  - The CCDC chart panel from `HEAD`: 9 GUI cases fail, while the Time Series cases and native controls pass.
+  - The stage removed from the GUI's AOI-free operations: the unresolved-AOI case fails.
+- **Focused campaign** (two workers at most):
+  - shared `test/recipe`: 1270 passed;
+  - gee `test/jobs`, `test/ee/timeSeries` and `test/ee/classification`: 1198 passed;
+  - GUI: 75 files and 1408 tests passed, covering every top-level recipe test, Time Series, CCDC, CCDC Slice, Change
+    Alerts, Phenology, the source runtime and translations.
+
+  The full GUI suite was not repeated.
+- **Outside this slice:** preview gating, propagated requests, dependency-loading changes, and the Retrieve and export
+  integration.
 
 **Verification status of the readiness and normalisation changes (2026-10-21).** Checked against commits up to
 `3ea2e7f04`, plus two fixes to the verification script, which were defects in the script itself.
@@ -1910,6 +2012,17 @@ pixel (`collection.js`).
        opens and says why again, rather than closing.
      - Restore the original point set. Until the save is acknowledged no request is sent; then the classified band's
        data points show again.
+     - **CCDC classified chart band.** Open a CCDC with native breakpoint bands (`ndvi`) over a working Classification,
+       also open in its own tab, with its pixel chart on `probability_<class>`. Segments and observation data points
+       show.
+     - Remove the Classification's points. Once the save is acknowledged, the chart shows neither, says the
+       classification cannot be trained to compute this band, and stays open; the toolbar's chart action stays
+       enabled. In the network panel, no further `loadSegments` or `loadObservations` request names the classified
+       band.
+     - Choose `ndvi`: segments and observations show. Restore the original point set and choose the classified band
+       again: until the save is acknowledged nothing is requested, then both show again.
+     - With a classified breakpoint band instead, removing the points closes the chart and disables its action, as
+       before.
      - **Change Alerts observations.** Open a Change Alerts over a CCDC reference, monitoring Landsat, with its
        pixel chart open. The observations series must show actual data points for the selected band, not only an
        empty chart. In the browser's network panel, the `loadObservations` request names the recipe:
@@ -2073,6 +2186,197 @@ configuration invalidity. It does not opt additional recipe types into upstream-
 validation coverage, or change existing seeding/reconciliation of drafts. Temporary probes were removed after recording
 these results; permanent tests retain the implemented shared editor cases.
 
+#### Request-dependent readiness: architecture checkpoint (2026-10-21)
+
+A design assessment of the remaining request-dependent work, Time Series Retrieve and CCDC's optional chart and export
+bands, against the current readiness model. It made no production change. Caller flows were traced from the code.
+
+**Verdict.** The pieces are one contract, with one kind of fact missing and three decisions repeated.
+
+- **The contract.** An operation names what is built. Configured edges and per-operation needs say what that reads.
+  A projection gives the recipe that operation runs: the pixel for charts, `observedCollection` for Change Alerts'
+  observations. The routes enforce it before building; the GUI holds the same questions.
+- **The missing fact.** Readiness cannot see bands a request adds to what execution trains on. The collection
+  classifies whenever the bands it is asked for include a classified output (`collection.js`). Which bands those are
+  depends on the operation: observations build only the requested bands, while CCDC's segments and image fit the
+  requested measures together with `breakpointBands` (`fittedMeasures`).
+- **Which callers have the gap.** For Time Series' chart that request fact is now judged. It is still unjudged in:
+  - Time Series Retrieve, whose chunk export builds `[indicator]`;
+  - CCDC's chart segments and observations, which build `[band]`;
+  - CCDC's own export and image exports of a CCDC, which build the requested measures;
+  - direct map previews of a Time Series or CCDC, which build `visParams.bands` with no server gate;
+  - downstream requests: wrappers asking a CCDC source for classified measures, such as Slice base bands, Masking
+    pass-through, Stack and Band Math.
+- **Consolidation.** A bounded one is warranted, below. A general operation context is not, for this round.
+
+**1. What identifies the computation.**
+
+- **Today.** A question's identity is `(recipe, operation)` everywhere:
+  - the GUI's session-read cache, per graph and operation;
+  - the acquisition key `{kind: READINESS, operation, content}`;
+  - `watchOutput$({recipeId, operation})`;
+  - asset interest `recipeId:operation`;
+  - `requireExecutable$({recipe, operation})`.
+
+  The draft gate and currency follow the computation (`recipeContent` of the graph), so they need no request.
+- **For the training checks, the request contributes one fact:** whether the effective bands include a classified
+  output.
+  - The effective bands are each execution owner's to derive, and only they are passed to the common stage selector.
+    Time Series' and CCDC's observations use the requested bands; CCDC's segments and image use
+    `fittedMeasures(model, requested)`.
+  - Using `fittedMeasures` for CCDC's observations would hold native observations wherever a breakpoint is
+    classified, though they never train.
+  - Capability needs the band list itself. It is judged from the request and the Classification's record by its own
+    rule, outside readiness, so it adds nothing to identity.
+- **Alternatives, by caller.**
+
+  | | Explicit variant per operation | Context `{recipe, operation, request}` | One collection-training stage (recommended) |
+  |---|---|---|---|
+  | Shape | `CLASSIFIED_PIXEL_SEGMENTS`, a classified download operation, `CLASSIFIED_IMAGE_OUTPUT`… | `executionNeed(…, request)`, `when(model, request)`; the request normalised, root-only or propagated along edges | `CLASSIFIED_PIXEL_OBSERVATIONS` generalised to an AOI-independent stage, "the collection classified": `CLASSIFICATION_SOURCE: CLASSIFIER` plus classifier inputs. A route whose effective bands are classified runs its own operation with its configured findings, then the capability of the requested outputs, then this stage |
+  | Time Series Retrieve, mixed native and classified | A download operation and its classified variant. Each GUI and route site picks one | The request is keyed by its normalised fact. The same holds, with every identity widened | The GUI holds submission on the stage while any selected indicator is classified. `task/timeseries/tiles` judges the union (`image.indicators`, falling back to `image.indicator` from older runners), and each chunk judges its own indicator. Native chunks are unchanged |
+  | CCDC chart (segments, observations) | `CLASSIFIED_PIXEL_SEGMENTS`. Observations flip to `CLASSIFIER` | The request applies to the root. The traversal is changed | Segments run the stage over `fittedMeasures(model, [band])`, observations over `[band]`. CCDC declares the stage. The GUI chart reuses Time Series' band hold, extracted rather than copied |
+  | CCDC export and image exports of a CCDC | `CLASSIFIED_IMAGE_OUTPUT` must also be a description, so it changes `resolveImageOutput`, the product questions and every `IMAGE_OUTPUT` need site | Fits root exports | The exports run `IMAGE_OUTPUT` as today, then capability over the requested measures, then the stage, before building |
+  | Direct preview of a Time Series or CCDC | Variants at the preview's gate | Fits | The same root stage over the preview's effective bands. Deferred for cost and scope: the preview has no server gate yet |
+  | Downstream requests: wrappers asking a CCDC source for measures | Variants with conditional needs on each consumer, but Masking passes its request through | **Needed:** the request propagates along `IMAGE_OUTPUT` edges | Not covered: needs propagation (deferred) |
+  | Identity, currency, cancellation, save agreement | Unchanged: keyed by operation | Each of the five identity sites gains the request. Without normalisation, one question per native band | Unchanged. The stage is one more operation. The draft gate covers its computation. Cancellation and recovery reuse `pixelChartUpdate`; Retrieve holds submission only |
+  | Estimated change | 3–4 operations, 8–12 files, with `IMAGE_OUTPUT` special cases | 15–20 files across shared readiness, the server gate, the GUI runtime and routes | 3 slices of 6–10 files; no new identity |
+
+- **Why the stage rather than variants.** Every remaining caller needs the same check: the Classification trains.
+  That check depends on neither the operation nor the AOI; only whether it applies does, through the effective bands
+  each execution owner derives. One stage removes the need for a variant per operation, and the ordering lives in one
+  helper instead of each route.
+- **Why not a context yet.** For root requests the context would carry only the same fact, at the cost of widening
+  every identity. It becomes necessary only when a request propagates to a source, as when a wrapper asks a CCDC
+  source for classified measures its configuration does not fit. A direct preview is a root request and needs no
+  propagation. Neither is in this round, and the stage does not resolve the propagation gap or the dependency-loading
+  gap below.
+- **Precedence.** The base operation's configured findings come first, as today. CCDC's `IMAGE_OUTPUT` and
+  `PIXEL_SEGMENTS` already require training for classified breakpoints (`classifiedOutputNeed`), and their capability
+  (`classifiedOutputRequirement`). Next, the capability of the outputs a request adds (400,
+  `UNSUPPORTED_CLASSIFIED_OUTPUT`). Last, the additional training stage. So capability precedes training only among
+  the checks a request adds; it never displaces a configured finding.
+  - Tests should combine invalid conditions. A classified breakpoint over an untrainable Classification, with an
+    unsupported requested band, keeps the configured `NO_TRAINING_DATA`. Native breakpoints with an unsupported
+    requested band over an untrainable Classification get the 400. An unsupported breakpoint with an unsupported
+    requested band keeps the configured `UNSUPPORTED_CLASSIFIED_OUTPUT` finding. Unsupplied classifier inputs precede
+    everything request-added.
+
+**2. Which dependencies belong to it.**
+
+- **Configured graph and executed reads differ.**
+  - The closure descends every recipe edge (`dependencyGraph.js`, `completeRecipeClosure.js`). Readiness skips
+    `REFERENCE` edges (`resolveImageOutput.js`).
+  - `dependencyValidity` is all or nothing over the whole closure. So a cycle, a malformed reference, a deleted record
+    or a node-limit breach anywhere under a `REFERENCE` Classification refuses a native-band chart or export. Such a
+    request never reads that Classification's inputs or providers (`collection.js` reads nothing of it for native
+    bands).
+  - The GUI judges Change Alerts' `PIXEL_SEGMENTS` over the alerts root's closure; the server judges only the
+    reference.
+  - `imageOutput.js` states the over-read policy for exports.
+- **Not necessary for these callers.** The new checks apply only to classified bands, where the Classification and
+  what it trains on are executed: `CLASSIFIER` reads exactly that subgraph. Native requests keep today's over-read,
+  which is also where the native-band classifier-input policy reads the record.
+- **Keep separate.** It stays under "`REFERENCE` closure over-reading" (deferred). A later fix would scope validity to
+  edges reached through executed needs, plus each `REFERENCE` target's own resolution. It would change closure loading
+  and the runtime's caches.
+
+**3. How declarations stay aligned with execution.**
+
+Repeated decisions found:
+
+- **The pixel projection, three times.** The GUI's `recipeForOperation` drops the AOI; `loadObservations.js` and
+  `loadSegments.js` each set the clicked point. These are equivalent today: neither emits an AOI edge.
+- **Which operation a request runs.** Per-panel `CHART_OPERATIONS`, plus Time Series' `BAND_OPERATIONS`, against
+  per-route constants.
+  - CCDC's GUI chart omits the classified step the server runs.
+  - For CCDC Slice and Change Alerts charts, the GUI judges the wrapper as `PIXEL_SEGMENTS`. The route judges the
+    referenced recipe as `IMAGE_OUTPUT`, hard-coded beside the types' `PRIMARY_IMAGE: IMAGE_OUTPUT`.
+- **The stage order.** Configured findings, then requested capability, then training: only `loadObservations.js` has
+  it.
+- **Effective bands.** `fittedMeasures` is the shared owner, but `ccdc.js` repeats requested ∪ breakpoints inline for
+  the collection.
+- **Capability, three checks over two derivations.** `classifiedOutputRequirement` and `provided$` use
+  `unprovidedClassifiedOutputs`; `collection.js` uses `getBands$`, which is `classificationBands`. The GUI's options
+  use `supportRegression`, `supportProbability` and the legend (`sources.js`).
+- **Change Alerts' observed collection.** Server only. The GUI judges no observations for it.
+- **Gate before build.** `imageAssetExport` builds the image in parallel with its check (`forkJoin`), and the preview
+  has no server gate. `ccdcAssetExport` and the chart routes gate first.
+- **Retrieve's holds.** Hand-wired. The open panel takes the `requestOptions` path, which skips `authorityGate` and
+  `retrieveAvailability`. Reported by the trace and still to be confirmed by a witness. The server refuses anyway.
+
+Coverage checks proposed, each detecting a class of drift rather than one case:
+
+1. **Training implies a guard** (gee, per route × band shape). Run each real route over stubbed Earth Engine and a
+   Classification that stores no points. Bands: native, classified, mixed, and configured-classified breakpoints.
+   - Where the effective bands require classification, assert a refusal before product computation or training: no
+     product evaluated, no export started and no `getTrainingData$` call. Native requests over the same
+     Classification succeed, without training. Either way, readiness may still acquire its evidence, input
+     observations included.
+   - Routes: `loadObservations`; `loadSegments`, the CCDC itself and a reference; the three time-series task routes;
+     `ccdcAssetExport`; `imageAssetExport` of a CCDC with classified `outputBands`.
+   - Direct preview is listed as a known unguarded route.
+
+   Each slice adds its routes' rows. The check passes only once a route's guard exists, so no row records a known
+   failure.
+2. **The projection agrees** (shared). For each pixel operation over Time Series, CCDC and Change Alerts, the
+   judged recipe's edges equal those of the recipe the route builds. Trivial once the projection is one shared function
+   (optional step below); until then it pins the three copies.
+3. **The capability derivations agree** (GUI and shared). For each classifier type, SVM type and legend, the
+   classified outputs `sources.js` offers equal `classificationBands(model)`.
+4. **Charts and routes agree on operations** (shared helper). The GUI's operations for a band equal the stages the
+   route runs for that band, since both call the one helper.
+5. **A route inventory** (gee). Every `routes.js` entry that builds a recipe names its gate, or appears in an explicit
+   unguarded list. A new route fails until classified.
+
+**Recommended sequence.**
+
+- **Necessary for this round:**
+  1. **CCDC chart, with the stage helpers extracted: implemented (2026-10-21; see "CCDC's requested chart bands").**
+     Its second use was the moment to extract
+     from Time Series' chart:
+     - a shared stage selector, taking the effective bands each execution owner derives: requested bands for
+       observations, `fittedMeasures` for CCDC's segments;
+     - a server helper running, after the base operation's configured checks, the requested capability with
+       execution's error and then the stage;
+     - the GUI band hold.
+
+     The stage is generalised in this slice, since segments already make `CLASSIFIED_PIXEL_OBSERVATIONS` the wrong
+     name. It is renamed for "the collection classified", and is AOI-independent: judged over the recipe without its
+     AOI, since training reads none. CCDC declares it as `CLASSIFIER`, and `loadSegments.js` and `loadObservations.js`
+     run it. The CCDC chart holds the band for both streams. Checks 1 and 4 are added for these routes, including the
+     invalid combinations above. About 10 files plus tests; Time Series' chart behaviour is unchanged.
+
+     The stage generalisation, the shared hold and the CCDC integration land together. Preview gating, propagated
+     requests and dependency-loading changes stay outside this slice.
+  2. **Time Series Retrieve.**
+     - The stage generalised in step 1 applies as is: the download keeps its AOI for `IMAGE_OUTPUT`, and the stage is
+       judged without it.
+     - The GUI holds submission while a selected indicator is classified and the stage is not `READY`, with findings
+       said in the panel.
+     - The tiles route judges the union of indicators; each chunk judges its own. Native-only downloads are unchanged.
+     - Precedence: `IMAGE_OUTPUT`'s configured findings as today, then requested capability with its 400, then
+       training.
+     - Confirm or fix the open-panel gate there.
+  3. **CCDC export bands.** `ccdcAssetExport` and `imageAssetExport` run the stage over the requested measures,
+     before anything is built. `imageAssetExport` then gates before building when the stage applies.
+- **Optional, any time after:**
+  - one shared projection, `operationRecipe(recipe, operation)`, for the GUI and routes, which would also let the GUI
+    judge Change Alerts' observations;
+  - coverage checks 2, 3 and 5;
+  - the executed-edge validity fix;
+  - direct previews of a Time Series or CCDC, through the same root stage, once the preview gets a server gate;
+  - a propagated operation context, for wrappers requesting classified measures of a CCDC source.
+
+**Preserved throughout:**
+
+- the native-band classifier-input policy;
+- referenced recipes judged over their own AOIs;
+- configured findings first. Requested capability is refused with `ClientException`, 400,
+  `UNSUPPORTED_CLASSIFIED_OUTPUT`, before the additional training stage;
+- pending and unavailable never being findings;
+- training rules owned by Classification's `CLASSIFIER`, and capability by `unprovidedClassifiedOutputs` and
+  `classificationBands`.
+
 #### Current delivery plan (2026-10-21)
 
 This is the remaining plan for the current classifier/readiness round. The completed histories that follow are
@@ -2083,10 +2387,10 @@ by itself, a reason to expand a recipe's validation or GUI.
 | --- | --- | --- | --- |
 | 1 | Phenology's configured classified band needs the Classification's training readiness. | Complete (2026-10-21): the `CLASSIFIER` operation and a conditional need, reusing the existing training rules without describing the Classification's output; see "Phenology's configured classified band". | 0 |
 | 2 | CCDC's classified breakpoint bands need the same training readiness. | Complete (2026-10-21): `classifiedOutputNeed('breakpointBands')` for `IMAGE_OUTPUT` and `PIXEL_SEGMENTS`, native breakpoint controls unchanged; see "CCDC's breakpoint bands". | 0 |
-| 3 | Training readiness for classified bands requested by Time Series charts/downloads and CCDC charts/exports. | In progress. Time Series pixel observations complete (2026-10-21): the request's bands choose `CLASSIFIED_PIXEL_OBSERVATIONS`, which needs the Classification's `CLASSIFIER` readiness; see "Time Series' classified chart band". Next, after assessing a broader operation-context design: Time Series Retrieve, then CCDC's chart, then CCDC export and map bands. Output capability is refused with execution's own error, before training. | 1–3 |
+| 3 | Training readiness for classified bands requested by Time Series charts/downloads and CCDC charts/exports. | In progress. Time Series pixel observations complete (2026-10-21); see "Time Series' classified chart band". CCDC's chart complete (2026-10-21): the stage generalised as `CLASSIFIED_COLLECTION`, the server sequence and the band hold shared; see "CCDC's requested chart bands". Next: Time Series Retrieve, then CCDC export bands; see "Request-dependent readiness: architecture checkpoint". Direct previews could use the same root stage but are deferred for cost and scope. Wrappers asking a CCDC source for classified measures need a propagated context, and are deferred. | 2 |
 | 4 | Change Alerts' observation request needs an explicit server-side operation boundary. | Complete (2026-10-21): the chart sends the applied recipe; the job derives the observed collection (`observedCollection`) and holds it to Time Series' `PIXEL_OBSERVATIONS`; untyped requests are refused. See "Pixel observations". | 0 |
 
-**Planning estimate: 1–3 implementation slices** for the one remaining work item, request-dependent readiness, plus the browser verification
+**Planning estimate: 2 implementation slices** for the one remaining work item, request-dependent readiness, plus the browser verification
 checkpoint below. This is an estimate, not a count of proven defects or a promise of one commit per slice. Reassess the
 split after the request-dependent design. Design reports, review corrections and focused
 refactoring are not new rollout items.
@@ -2130,7 +2434,11 @@ separate decision changes it. Broader coverage listed under "Deferred beyond thi
 - changing the native-band classifier-input policy;
 - geometry, named map products and other unguarded routes, asset segment-layout validation, and the cost assessment
   before server-side Preview checks; LandTrendr remains outside the classifier rollout;
-- `REFERENCE` closure over-reading and runtime refresh-policy changes;
+- `REFERENCE` closure over-reading and runtime refresh-policy changes: not needed for classified requests, whose stage
+  reads the subgraph that executes (see the architecture checkpoint);
+- server gating of direct map previews, which could then use the root training stage;
+- a propagated request context for wrappers asking a CCDC source for classified measures (CCDC Slice base bands,
+  Masking, Stack, Band Math);
 - shared form defaults, duplicated input editors, reference-feedback navigation and tab-indicator experiments.
 
 These are recorded boundaries or future decisions, not automatically scheduled fixes. Promote one into a new round
@@ -2505,8 +2813,8 @@ extraction alone. The focused verification and two-worker limit below still appl
      fallback while unresolved, with classified requests held. Clearing the applied selection offers no capabilities
      from an old copy. Other metadata readers retain their documented copy policy.
    - **Optional choices.** Charts, downloads and exports offer only supported outputs, but a requested unsupported one
-     is refused by execution alone. Training readiness for requested bands is in the current delivery plan: a Time
-     Series chart band chooses `CLASSIFIED_PIXEL_OBSERVATIONS`; Retrieve and CCDC remain.
+     is refused by execution alone. Training readiness for requested bands is in the current delivery plan: Time
+     Series and CCDC chart bands add `CLASSIFIED_COLLECTION`; Retrieve and CCDC exports remain.
    - **PyEO's baseline** builds outputs it does not read.
    - **Uncertain types.** SVR types are not offered by the GUI. A supplied decision tree's output modes are not
      documented.

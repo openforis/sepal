@@ -2,8 +2,8 @@ import moment from 'moment'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
-import {pixelObservationsOperation} from '#sepal/recipe/classifiedOutputs'
-import {CLASSIFIED_PIXEL_OBSERVATIONS, PIXEL_OBSERVATIONS} from '#sepal/recipe/output/readiness'
+import {requestStages} from '#sepal/recipe/classifiedOutputs'
+import {PIXEL_OBSERVATIONS} from '#sepal/recipe/output/readiness'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {flatBandOptions, getAvailableBands, toDataSetIds} from '~/sources'
@@ -22,23 +22,17 @@ import {withRecipe} from '../../../recipeContext'
 import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
-import {pixelOperationsAvailability, watchOperations} from '../../operationAvailability'
+import {BandOperationWatch, pixelBandAvailability, watchOperations} from '../../operationAvailability'
 import {pixelChartUpdate} from '../../pixelChartUpdate'
 import {selectedClassificationOfState} from '../../selectedClassification'
 import {loadObservations$, RecipeActions} from '../timeSeriesRecipe'
 import styles from './chartPixel.module.css'
 
 // What the chart runs at its pixel, whatever band it charts: the collection's observations. It and its action are held to
-// these, and watch them (timeSeriesToolbar.jsx). A band the Classification computes is read as the classified
-// observations as well (BAND_OPERATIONS), which hold that band alone.
+// these, and watch them (timeSeriesToolbar.jsx). A band the Classification computes is read as the collection
+// classified as well (requestStages over the band, which is what the observations build), which holds that band alone
+// (pixelBandAvailability).
 export const CHART_OPERATIONS = [PIXEL_OBSERVATIONS]
-
-const NO_OPERATIONS = []
-
-const BAND_OPERATIONS = {
-    [PIXEL_OBSERVATIONS]: NO_OPERATIONS,
-    [CLASSIFIED_PIXEL_OBSERVATIONS]: [CLASSIFIED_PIXEL_OBSERVATIONS]
-}
 
 const fields = {
     selectedBand: new Form.Field()
@@ -137,7 +131,7 @@ class _ChartPixel extends React.Component {
         const loading = !observations
         const noObservations = observations && !observations.features.length
         if (bandGate?.withdraw) {
-            return <Message type='info' text={msg('process.timeSeries.chartPixel.classifiedBandWithheld')}/>
+            return <Message type='info' text={msg('process.chartPixel.classifiedBandWithheld')}/>
         } else if (loading) {
             return this.renderSpinner()
         } else if (noObservations) {
@@ -160,28 +154,25 @@ class _ChartPixel extends React.Component {
     componentDidMount() {
         const {recipeId, sourceRuntime} = this.props
         this.operationWatches = watchOperations({sourceRuntime, recipeId, operations: CHART_OPERATIONS})
+        this.bandWatch = new BandOperationWatch()
         this.watchBand()
         this.updateChart()
     }
 
     componentDidUpdate(prevProps) {
-        this.watchBand(prevProps)
+        this.watchBand()
         this.updateChart(prevProps)
     }
 
     componentWillUnmount() {
         this.operationWatches.unsubscribe()
-        this.bandWatches.unsubscribe()
+        this.bandWatch.unsubscribe()
         this.cancel$.next(true)
     }
 
-    // What the band charted needs beyond what any band does is read for as long as it is charted.
-    watchBand(prevProps) {
+    watchBand() {
         const {recipeId, sourceRuntime, bandOperations} = this.props
-        if (!prevProps || bandOperations !== prevProps.bandOperations) {
-            this.bandWatches?.unsubscribe()
-            this.bandWatches = watchOperations({sourceRuntime, recipeId, operations: bandOperations})
-        }
+        this.bandWatch.update({sourceRuntime, recipeId, operations: bandOperations})
     }
 
     // The observations are read whenever they may be (pixelChartUpdate).
@@ -225,19 +216,15 @@ class _ChartPixel extends React.Component {
     }
 }
 
-// What it is computed from, beside whether it may be read (pixelOperationsAvailability), and what is offered of the
-// Classification its Sources select, as the session holds it now or as those reads resolved it. What the band charted
-// needs beyond that (`bandGate`) holds that band without closing the chart, so another band can still be charted: a
-// finding of it is said in the chart instead.
+// What it is computed from, beside whether it may be read (pixelBandAvailability) for the band charted, and what is
+// offered of the Classification its Sources select, as the session holds it now or as those reads resolved it.
 const mapStateToProps = (state, {recipe, sourceRuntime, latLng, inputs: {selectedBand}}) => {
-    const heldFor = key => sourceRuntime?.heldFor(key)
-    const {gate, computation, recordOf} = pixelOperationsAvailability({state, recipe, heldFor, operations: CHART_OPERATIONS})
-    const bandOperations = latLng && selectedBand.value ? BAND_OPERATIONS[pixelObservationsOperation([selectedBand.value])] : NO_OPERATIONS
-    const bandGate = bandOperations.length
-        ? pixelOperationsAvailability({state, recipe, heldFor, operations: bandOperations}).gate
-        : null
+    const bandOperations = requestStages(latLng && selectedBand.value ? [selectedBand.value] : [])
+    const {gate, bandGate, computation, recordOf} = pixelBandAvailability({
+        state, recipe, heldFor: key => sourceRuntime?.heldFor(key), operations: CHART_OPERATIONS, bandOperations
+    })
     return {
-        operationsGate: gate || (bandGate && {...bandGate, withdraw: false}),
+        operationsGate: gate,
         bandGate,
         bandOperations,
         computation,
