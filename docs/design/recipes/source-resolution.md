@@ -1404,6 +1404,26 @@ located requirement to field feedback and Apply blocking, with a mounted regress
 Keep the broader shared-control defaults and duplicated input-image editor refactor deferred under "Later: shared form
 validation consistency" below.
 
+**Consolidated (2026-10-21).** `recipe/fieldRequirement.js` now builds each of these declarations once.
+- **`fieldRequirement({id, section, code, path, message, editor})`** provides:
+  - the requirement's `describe` and the section `summary`, from the first diagnostic;
+  - `outputDiagnostics` for one code at an exact path, its item identified by the declaration id;
+  - the editor binding: the panel, the message beside the input, and the recipe's own editor policy (`blocksApply`,
+    `quietWhileEdited`) merged in;
+  - the image output's operations.
+- **`sourcesFieldRequirement({field, ...})`** adds the Sources path, input and candidate, the candidate being
+  `model.sources` replaced by the panel's values.
+- **`listed(items, andMore)`** is the shared truncation.
+- **What each recipe keeps:** CCDC, Time Series and Phenology (`collectionClassifierRequirements.js`) and PyEO Alerts
+  (`pyeoAlerts/sourcesRequirements.js`) declare only their ids, codes, paths, messages, `andMore` keys and policies
+  (`wizardStepMark`, `blocksApply`, `quietWhileEdited`).
+- **The one identity change:** collection declarations' item id is now their declaration id, as PyEO's already was.
+  Nothing reads those items by id.
+- **What remains:** field controls keep their explicit error wiring (`form.getErrorMessage(input)` in each Sources
+  panel). That is presentation and is unchanged here. Other declaration families keep their own builders, since
+  their item enumeration and editors differ: segment requirements, Band Math, input imagery and Change Alerts'
+  reference.
+
 After these slices, reassess the recorded gaps before extending `TRAINING_DATA`, geometry or named map-product
 readiness. Preview validation remains conditional on measured cost. Refactoring slices preserve behaviour and use
 the relevant existing regressions plus focused static checks; add tests for new contracts or uncovered behaviour,

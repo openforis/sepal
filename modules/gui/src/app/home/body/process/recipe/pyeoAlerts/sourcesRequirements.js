@@ -1,8 +1,9 @@
 import {UNSUPPLIED_CLASSIFIER_INPUTS} from '#sepal/recipe/classifierInputs'
 import {MISSING_ROLE} from '#sepal/recipe/output/diagnostic'
 import {NO_CHANGE_CLASSES, UNAVAILABLE_GATE_INDEX} from '#sepal/recipe/type/pyeoAlerts'
-import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
 import {msg} from '~/translate'
+
+import {fieldRequirement, listed, sourcesFieldRequirement} from '../fieldRequirement'
 
 // What PyEO Alerts needs of its Sources and of its index gate, as its shared definition finds it
 // (lib/js/shared/src/recipe/type/pyeoAlerts.js): a classification selected, classes to detect change from and to,
@@ -18,47 +19,18 @@ import {msg} from '~/translate'
 const SOURCES = {id: 'sources', label: 'process.pyeoAlerts.panel.sources.button'}
 const OPTIONS = {id: 'pyeoAlertsOptions', label: 'process.pyeoAlerts.panel.options.button'}
 
-const SOURCES_PATH = ['model', 'sources']
 const GATE_INDEX_PATH = ['model', 'pyeoAlertsOptions', 'indexGate', 'index']
 
 const required = field => () => msg(`process.pyeoAlerts.panel.sources.form.${field}.required`)
 
 const unsupplied = field => ({missing}) =>
-    msg(`process.pyeoAlerts.panel.sources.form.${field}.unsuppliedInputs`, {missing: listed(missing)})
+    msg(`process.pyeoAlerts.panel.sources.form.${field}.unsuppliedInputs`, {missing: listed(missing, AND_MORE)})
 
 const unavailableIndex = ({index, source}) =>
     msg(`process.pyeoAlerts.panel.options.form.gateIndex.unavailable.${source}`, {index: index.toUpperCase()})
 
-const declaration = ({id, section, code, path, message, editor}) => ({
-    id,
-    section,
-    requirement: {id, describe: ({diagnostics}) => ({message: message(diagnostics[0]), details: []})},
-    summary: reads => message(reads.flatMap(({verdict}) => verdict.diagnostic.diagnostics)[0]),
-    outputDiagnostics: {
-        codes: [code],
-        itemOf: diagnostic => samePath(diagnostic.path, path)
-            ? {id, path, label: msg(section.label)}
-            : null
-    },
-    ...editor && {
-        editor: {
-            panel: section.id,
-            describe: diagnostics => message(diagnostics[0]),
-            candidate: (recipe, sources) => ({...recipe, model: {...recipe.model, sources}}),
-            ...editor
-        }
-    },
-    operations: [IMAGE_OUTPUT]
-})
-
-const sourcesField = (field, code, message, editor = {}) => declaration({
-    id: `sources.${field}.${code}`,
-    section: SOURCES,
-    code,
-    path: [...SOURCES_PATH, field],
-    message,
-    editor: {input: () => field, ...editor}
-})
+const sourcesField = (field, code, message, editor) =>
+    sourcesFieldRequirement({id: `sources.${field}.${code}`, section: SOURCES, field, code, message, editor})
 
 export const sourcesRequirements = [
     {...sourcesField('classification', MISSING_ROLE, required('classification')), wizardStepMark: false},
@@ -72,13 +44,7 @@ export const sourcesRequirements = [
     },
     sourcesField('classification', UNSUPPLIED_CLASSIFIER_INPUTS, unsupplied('classification')),
     sourcesField('dataSets', UNSUPPLIED_CLASSIFIER_INPUTS, unsupplied('dataSets')),
-    declaration({id: 'options.gateIndex', section: OPTIONS, code: UNAVAILABLE_GATE_INDEX, path: GATE_INDEX_PATH, message: unavailableIndex})
+    fieldRequirement({id: 'options.gateIndex', section: OPTIONS, code: UNAVAILABLE_GATE_INDEX, path: GATE_INDEX_PATH, message: unavailableIndex})
 ]
 
-const samePath = (path = [], expected) => path.length === expected.length && path.every((step, i) => step === expected[i])
-
-const REPRESENTATIVE = 3
-
-const listed = (items = []) => items.length > REPRESENTATIVE
-    ? msg('process.pyeoAlerts.panel.sources.form.andMore', {items: items.slice(0, REPRESENTATIVE).join(', '), count: items.length - REPRESENTATIVE})
-    : items.join(', ')
+const AND_MORE = 'process.pyeoAlerts.panel.sources.form.andMore'
