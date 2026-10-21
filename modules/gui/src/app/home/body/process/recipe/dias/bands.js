@@ -1,6 +1,7 @@
 const typeInt = {precision: 'int'}
 
-export const getAvailableBands = () => ({
+// Which bands a configured recipe has is its declaration's to say; this is how they are shown.
+export const bandPresentation = () => ({
     first_sensor: {dataType: typeInt},
     first_ydoy: {dataType: typeInt},
     confirming_sensor: {dataType: typeInt},
@@ -8,19 +9,13 @@ export const getAvailableBands = () => ({
     forest_mask: {dataType: typeInt}
 })
 
-export const getGroupedBandOptions = () => {
-    const toOption = band => ({value: band, label: band})
+// The groups Retrieve offers the bands in.
+export const groupedBandPresentation = () => {
+    const presentation = bandPresentation()
+    const toOption = band => ({value: band, label: band, ...presentation[band]})
     return [
-        [
-            toOption('first_sensor'),
-            toOption('first_ydoy')
-        ],
-        [
-            toOption('confirming_sensor'),
-            toOption('confirming_ydoy')
-        ],
-        [
-            toOption('forest_mask')
-        ]
+        ['first_sensor', 'first_ydoy'].map(toOption),
+        ['confirming_sensor', 'confirming_ydoy'].map(toOption),
+        ['forest_mask'].map(toOption)
     ]
 }

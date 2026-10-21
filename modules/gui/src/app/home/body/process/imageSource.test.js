@@ -19,7 +19,7 @@ describe('the recipe types offered as images', () => {
         const excluded = listRecipeTypes().filter(type => !isImageSource(type)).map(({id}) => id)
 
         expect(excluded.sort()).toEqual(['CCDC', 'SAMPLING_DESIGN', 'TIME_SERIES'])
-        expect(listRecipeTypes()).toHaveLength(23)
+        expect(listRecipeTypes()).toHaveLength(24)
     })
 
     it('are stated by every registration, which is refused without it', () => {

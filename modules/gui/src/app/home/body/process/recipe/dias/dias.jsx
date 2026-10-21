@@ -8,8 +8,8 @@ import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
-import {getAvailableBands} from './bands'
-import {defaultModel, getDateRange, RecipeActions} from './diasRecipe'
+import {bandPresentation} from './bands'
+import {defaultModel, getDateRange} from './diasRecipe'
 import {DiasToolbar} from './panels/diasToolbar'
 import {getPreSetVisualizations} from './visualizations'
 
@@ -23,7 +23,6 @@ class _Dias extends React.Component {
         super(props)
         const {savedLayers, recipeId} = props
         initializeLayers({recipeId, savedLayers})
-        this.recipeActions = RecipeActions(recipeId)
     }
 
     render() {
@@ -31,7 +30,7 @@ class _Dias extends React.Component {
         return (
             <Map>
                 <DiasToolbar/>
-                <Aoi value={aoi}/>
+                <Aoi value={aoi?.type && aoi}/>
             </Map>
         )
     }
@@ -41,11 +40,6 @@ const Dias = compose(
     _Dias,
     recipe({defaultModel, mapRecipeToProps})
 )
-
-const getDependentRecipeIds = recipe => {
-    const {type, id} = selectFrom(recipe, 'model.forestMask') || {}
-    return type === 'RECIPE_REF' ? [id] : []
-}
 
 export default () => ({
     id: 'DIAS',
@@ -58,8 +52,8 @@ export default () => ({
     components: {
         recipe: Dias
     },
-    getDependentRecipeIds,
+    imageSource: true,
     getDateRange,
-    getAvailableBands,
+    bandPresentation,
     getPreSetVisualizations
 })
