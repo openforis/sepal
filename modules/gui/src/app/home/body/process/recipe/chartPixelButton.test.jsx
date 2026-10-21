@@ -130,12 +130,22 @@ const recipeOf = (type, {breakpointBands = ['ndvi']} = {}) => ({
     ui: {}
 })
 
+// A Landsat mosaic, described from its configuration: a Classification over it needs no observation.
+const MOSAIC = {
+    id: 'mosaic-1',
+    type: 'MOSAIC',
+    model: {sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, cloudPercentageThreshold: 100}, compositeOptions: {corrections: ['SR'], compose: 'MEDIAN'}}
+}
+
+// A Classification over the mosaic, its classifier reading the features given, trainable: a classified breakpoint trains
+// it, so it stores points.
 const classificationOver = (included, classifier = {type: 'RANDOM_FOREST'}) => ({
     id: CLASSIFICATION,
     type: 'CLASSIFICATION',
     model: {
-        inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]},
+        inputImagery: {images: [{imageId: 'i-1', type: 'RECIPE_REF', id: MOSAIC.id, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]},
         legend: {entries: [{value: 1}, {value: 2}]},
+        trainingData: {dataSets: [{dataSetId: 'collected', type: 'COLLECTED', referenceData: [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]}]},
         classifier
     }
 })
@@ -169,7 +179,7 @@ const render = (type, classification, {operations = OPERATIONS[type], breakpoint
     const map = mapOf()
     const initialState = {
         process: {
-            loadedRecipes: Object.fromEntries([recipe, classification].filter(Boolean).map(record => [record.id, record])),
+            loadedRecipes: Object.fromEntries([recipe, classification, MOSAIC].filter(Boolean).map(record => [record.id, record])),
             tabs: [{id: recipe.id}],
             recipes: []
         }

@@ -35,7 +35,7 @@ export const classifiedOutputRequirements = (sources, field) => sourcesFieldRequ
 })
 
 // The Classification a recipe's Sources select, where what the recipe does with it needs that Classification to run
-// (lib/js/shared/src/recipe/type/pyeoAlerts.js, phenology.js): its readiness findings, which stay that recipe's, are
+// (lib/js/shared/src/recipe/type/pyeoAlerts.js, phenology.js, ccdc.js): its readiness findings, which stay that recipe's, are
 // named beside the classification field, whose own sections say why. Presentation alone: the output read holds the
 // operations, and a draft is not held back for it.
 export const classificationReferenceFeedback = sources => ({

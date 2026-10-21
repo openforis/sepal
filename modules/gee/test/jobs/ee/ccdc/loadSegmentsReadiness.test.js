@@ -18,7 +18,7 @@ const eeImage = (source, masks = []) => ({
     select: () => eeImage(source, masks),
     clip: () => eeImage(source, masks),
     reduceRegion: () => ({source, masks}),
-    bandNames: () => [`${source}:band`],
+    bandNames: () => state.assetBands[source] ?? [`${source}:band`],
     bandTypes: () => ({get: () => 'float'}),
     toDictionary: () => ({}),
     updateMask: mask => eeImage(source, [...masks, mask.source])
@@ -73,7 +73,7 @@ const inOperation = (name, fn) => it(name, async () => {
 })
 
 beforeEach(() => {
-    Object.assign(state, {catalogue: {}, recipesRead: [], described: [], evaluated: [], collections: []})
+    Object.assign(state, {catalogue: {}, assetBands: {}, recipesRead: [], described: [], evaluated: [], collections: []})
 })
 
 describe('the segments of a CCDC charted itself', () => {
@@ -114,6 +114,52 @@ describe('the segments of a CCDC charted itself', () => {
         await assert.rejects(chart(ccdcOf()), error => error.message === `No such recipe: ${CLASSIFICATION}`)
 
         assertNothingCharted()
+    })
+})
+
+// Every segmentation fits its breakpoint bands, so one the Classification computes trains its classifier on that
+// Classification's training data and applies it to every image of the collection: what training needs refuses the
+// segments. Breakpoint bands of the images need none of it.
+describe('the segments of a CCDC fitting a breakpoint band its Classification computes', () => {
+    const POINTS = [{x: 1, y: 1, class: 1}, {x: 1, y: 2, class: 1}, {x: 2, y: 1, class: 2}, {x: 2, y: 2, class: 2}]
+    const trainedClassification = ({points = []} = {}) => {
+        const {model, ...record} = classification(['red', 'nir'])
+        return {
+            ...record,
+            model: {
+                ...model,
+                legend: {entries: [{value: 1}, {value: 2}]},
+                trainingData: {dataSets: points.length ? [{type: 'COLLECTED', referenceData: points}] : []},
+                classifier: {type: 'RANDOM_FOREST'}
+            }
+        }
+    }
+
+    inOperation('are refused, segmenting and reading nothing at the pixel, where the Classification stores no point', async () => {
+        state.catalogue[CLASSIFICATION] = trainedClassification()
+
+        await assert.rejects(chart(ccdcOf({breakpointBands: ['ndvi', 'probability_1']})), /cannot run: NO_TRAINING_DATA$/)
+
+        assertNothingCharted()
+    })
+
+    inOperation('are read at the pixel once the Classification stores points', async () => {
+        state.catalogue[CLASSIFICATION] = trainedClassification({points: POINTS})
+        state.assetBands[CLASSIFICATION_INPUT] = ['red', 'nir']
+
+        const segments = await chart(ccdcOf({breakpointBands: ['ndvi', 'probability_1']}))
+
+        assert.deepEqual(segments, SEGMENTS)
+        assert.deepEqual(state.collections, [PIXEL_AOI])
+    })
+
+    inOperation('are read at the pixel for breakpoint bands of the images while the Classification stores no point', async () => {
+        state.catalogue[CLASSIFICATION] = trainedClassification()
+
+        const segments = await chart(ccdcOf({breakpointBands: ['ndvi']}))
+
+        assert.deepEqual(segments, SEGMENTS)
+        assert.deepEqual(state.collections, [PIXEL_AOI])
     })
 })
 
@@ -174,12 +220,12 @@ const MASKED_REFERENCE = {type: 'RECIPE_REF', id: MASKING}
 // Every band of the segments read at the pixel, empty where a pixel has none.
 const SEGMENTS = {source: 'segments', masks: []}
 
-const ccdcOf = ({aoi = {type: 'ASSET', id: 'users/x/bounds'}} = {}) => ({
+const ccdcOf = ({aoi = {type: 'ASSET', id: 'users/x/bounds'}, breakpointBands = ['ndvi']} = {}) => ({
     id: 'ccdc-1',
     type: 'CCDC',
     model: {
         aoi,
-        sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands: ['ndvi'], classification: CLASSIFICATION},
+        sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands, classification: CLASSIFICATION},
         dates: {startDate: '2015-01-01', endDate: '2021-01-01'},
         options: {corrections: ['SR']},
         ccdcOptions: {dateFormat: 1}
@@ -192,10 +238,11 @@ const maskingOf = ({mask = {type: 'ASSET', id: MASK_ASSET}} = {}) => ({
     model: {imageToMask: {type: 'RECIPE_REF', id: 'ccdc-1'}, imageMask: mask}
 })
 
+const CLASSIFICATION_INPUT = 'users/x/input'
 const classification = included => ({
     id: CLASSIFICATION,
     type: 'CLASSIFICATION',
-    model: {inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]}}
+    model: {inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: CLASSIFICATION_INPUT, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]}}
 })
 
 const chart = recipe => firstValueFrom(loadSegments$({requestArgs: {recipe, latLng: LAT_LNG, bands: ['ndvi']}}))

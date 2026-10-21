@@ -10,7 +10,7 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
 
-import {classifiedOutputRequirements, collectionClassifierRequirements} from '../collectionClassifierRequirements'
+import {classificationReferenceFeedback, classifiedOutputRequirements, collectionClassifierRequirements} from '../collectionClassifierRequirements'
 import {bandPresentation, mapProducts} from './bands'
 import {dateRange, defaultModel, RecipeActions} from './ccdcRecipe'
 import {CcdcToolbar} from './panels/ccdcToolbar'
@@ -92,7 +92,8 @@ export default () => ({
     },
     sourceRequirements: [
         ...collectionClassifierRequirements(SOURCES),
-        classifiedOutputRequirements(SOURCES, 'breakpointBands')
+        classifiedOutputRequirements(SOURCES, 'breakpointBands'),
+        classificationReferenceFeedback(SOURCES)
     ],
     imageSource: false,
     describeSegments$,

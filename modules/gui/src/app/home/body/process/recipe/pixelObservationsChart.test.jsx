@@ -366,12 +366,22 @@ const recipeOf = (type, {aoi = {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]}
     ui: copied ? {classification: copied} : {}
 })
 
+// A Landsat mosaic, described from its configuration: a Classification over it needs no observation.
+const MOSAIC = {
+    id: 'mosaic-1',
+    type: 'MOSAIC',
+    model: {sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, cloudPercentageThreshold: 100}, compositeOptions: {corrections: ['SR'], compose: 'MEDIAN'}}
+}
+
+// A Classification over the mosaic, its classifier reading the features given, trainable: a classified breakpoint trains
+// it, so it stores points.
 const classificationOver = (included, classifier = {type: 'RANDOM_FOREST'}) => ({
     id: CLASSIFICATION,
     type: 'CLASSIFICATION',
     model: {
-        inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]},
+        inputImagery: {images: [{imageId: 'i-1', type: 'RECIPE_REF', id: MOSAIC.id, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]},
         legend: LEGEND,
+        trainingData: {dataSets: [{dataSetId: 'collected', type: 'COLLECTED', referenceData: [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]}]},
         classifier
     }
 })
@@ -405,7 +415,7 @@ const openChart = (ChartPixel, recipe, classification, {classificationOpen = fal
     const initialState = {
         dimensions: {width: 1024, height: 768},
         process: {
-            loadedRecipes: Object.fromEntries([recipe, classification].filter(Boolean).map(record => [record.id, record])),
+            loadedRecipes: Object.fromEntries([recipe, classification, MOSAIC].filter(Boolean).map(record => [record.id, record])),
             tabs: [{id: recipe.id}, ...(classificationOpen ? [{id: CLASSIFICATION}] : [])],
             saveStates: classificationOpen ? {[CLASSIFICATION]: {status: 'SAVED', revision: 1, model: classification.model}} : {},
             recipes: []

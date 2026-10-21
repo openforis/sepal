@@ -11,13 +11,14 @@ import {lastValueFrom, of, throwError} from 'rxjs'
 // those exact bytes - and so do the closure, the declarations and the readiness the export is held to.
 
 const captured = {}
-const state = {catalogue: {}, catalogueUnreadable: false}
+const state = {catalogue: {}, catalogueUnreadable: false, assets: {}}
 
 beforeEach(() => {
     delete captured.ccdc
     delete captured.export
     state.catalogue = {}
     state.catalogueUnreadable = false
+    state.assets = {}
 })
 
 const geometry = {bounds: () => 'region-bounds'}
@@ -30,6 +31,25 @@ mock.module('#sepal/ee/timeSeries/ccdc', {
                 getImage$: () => of('segments-image'),
                 getGeometry$: () => of(geometry)
             }
+        }
+    }
+})
+// What reading an asset's bands evaluates (bandEvidence.js): an image whose bands a scenario states.
+const assetImage = bands => ({
+    bandNames: () => ({map: mapper => bands.map(({name}) => mapper(name))}),
+    bandTypes: () => ({get: name => bands.find(band => band.name === name)}),
+    toDictionary: () => ({})
+})
+mock.module('#sepal/ee/ee', {
+    exports: {
+        default: {
+            getAsset$: id => state.assets[id]
+                ? of({type: 'Image'})
+                : throwError(() => new Error(`Asset could not be read: ${id}`)),
+            Image: id => assetImage(state.assets[id] ?? []),
+            Dictionary: values => values,
+            PixelType: band => ({dimensions: () => band.arrayDimensions}),
+            getInfo$: value => of(value)
         }
     }
 })
@@ -162,6 +182,54 @@ describe('a CCDC Segments export held to what its recipe requires', () => {
         await assert.rejects(submit(), /unavailable output/)
         assert.equal(captured.ccdc, undefined)
         assert.equal(captured.export, undefined)
+    })
+})
+
+// Every segmentation fits its breakpoint bands, so one the Classification computes trains its classifier on that
+// Classification's training data and applies it to every image of the collection: what training needs refuses the
+// export. Breakpoint bands of the images need none of it.
+describe('exporting a CCDC fitting a breakpoint band its Classification computes', () => {
+    const POINTS = [{x: 1, y: 1, class: 1}, {x: 1, y: 2, class: 1}, {x: 2, y: 1, class: 2}, {x: 2, y: 2, class: 2}]
+    const OPTICAL_ASSET = 'users/x/optical'
+    const classificationOf = ({points = []} = {}) => ({
+        id: CLASSIFICATION,
+        type: 'CLASSIFICATION',
+        model: {
+            inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: OPTICAL_ASSET, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['red', 'nir']}]}]},
+            legend: {entries: [{value: 1}, {value: 2}]},
+            trainingData: {dataSets: points.length ? [{type: 'COLLECTED', referenceData: points}] : []},
+            classifier: {type: 'RANDOM_FOREST'}
+        }
+    })
+    const fitting = breakpointBands => {
+        const model = recipe()
+        model.model.sources = {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands, classification: CLASSIFICATION}
+        return model
+    }
+
+    beforeEach(() => {
+        state.assets[OPTICAL_ASSET] = [{name: 'red', arrayDimensions: 0}, {name: 'nir', arrayDimensions: 0}]
+    })
+
+    it('fails the export, saying why, building nothing, and exports once the Classification stores points', async () => {
+        const model = fitting(['ndvi', 'probability_1'])
+        state.catalogue[CLASSIFICATION] = classificationOf()
+
+        await assert.rejects(submit({model}), /cannot run: NO_TRAINING_DATA$/)
+        assert.equal(captured.ccdc, undefined)
+        assert.equal(captured.export, undefined)
+
+        state.catalogue[CLASSIFICATION] = classificationOf({points: POINTS})
+        const {image} = await submit({model})
+        assert.equal(image, 'segments-image')
+    })
+
+    it('exports breakpoint bands of the images while the Classification stores no point', async () => {
+        state.catalogue[CLASSIFICATION] = classificationOf()
+
+        const {image} = await submit({model: fitting(['ndvi'])})
+
+        assert.equal(image, 'segments-image')
     })
 })
 

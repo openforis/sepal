@@ -1322,10 +1322,12 @@ feature the consumer trains on.
 
 Sample counts after masking and sampling are known only to Earth Engine.
 
-**Classification consumers' training readiness (audited 2026-10-21; PyEO and Phenology implemented).** Time Series
-and CCDC reach their Classification through `CLASSIFICATION_SOURCE: REFERENCE`. That checks only that it resolves, so
-none of the Classification's training checks apply to them. PyEO Alerts needs its Classification's `IMAGE_OUTPUT`.
-Phenology needs its `CLASSIFIER` where its saved band is classified, and keeps `REFERENCE` for a native band.
+**Classification consumers' training readiness (audited 2026-10-21; PyEO, Phenology and CCDC's breakpoint bands
+implemented).** Time Series, and CCDC's chart observations, reach their Classification through
+`CLASSIFICATION_SOURCE: REFERENCE`. That checks only that it resolves, so none of the Classification's training checks
+apply to them. PyEO Alerts needs its Classification's `IMAGE_OUTPUT`. Phenology, for its image, and CCDC, for its image
+and segments, need its `CLASSIFIER` where a saved band - Phenology's `band`, CCDC's `breakpointBands` - is classified,
+and keep `REFERENCE` for native bands.
 
 - **Confirmed behaviour.** When the shared collection (`timeSeries/collection.js`) uses a Classification, it reads the
   record, calls `getTrainingData$()` with no bands and classifies each scene with `classifyImage`. `band_order` is
@@ -1337,7 +1339,7 @@ Phenology needs its `CLASSIFIER` where its saved band is classified, and keeps `
   | Time Series `IMAGE_OUTPUT` (count) | never (`bands: [0]`) | no | no | `UNSUPPLIED_CLASSIFIER_INPUTS` all the same |
   | Time Series pixel chart, Retrieve | the chart band or Retrieve indicator is classified | yes | no | classifier inputs; the band only at run time |
   | Phenology `IMAGE_OUTPUT` | `sources.band` is classified | yes | no | the Classification's `CLASSIFIER` readiness for a classified band, classifier inputs, `UNSUPPORTED_CLASSIFIED_OUTPUT` |
-  | CCDC `IMAGE_OUTPUT`, `PIXEL_SEGMENTS` | classified `breakpointBands`, or a classified export or map band | yes | no | classifier inputs, breakpoint outputs; export bands only at run time |
+  | CCDC `IMAGE_OUTPUT`, `PIXEL_SEGMENTS` | classified `breakpointBands`, or a classified export or map band | yes | no | the Classification's `CLASSIFIER` readiness for classified breakpoints, classifier inputs, breakpoint outputs; export bands only at run time |
   | CCDC `PIXEL_OBSERVATIONS` | the chart band is classified | yes | no | classifier inputs |
   | CCDC Slice, Change Alerts over a CCDC recipe | that CCDC's classified breakpoint bands, or a Slice base band | yes | no | through the CCDC, as above |
   | PyEO Alerts `IMAGE_OUTPUT` | always | yes, except a decision tree | yes (`getImage$`, its baseline) | the Classification's `IMAGE_OUTPUT` readiness, classifier inputs, gate index |
@@ -1386,8 +1388,8 @@ Phenology needs its `CLASSIFIER` where its saved band is classified, and keeps `
   outside that plan.
   - **The collection consumers** train only for requested classified bands. Readiness has no requested-band input,
     and a static need would refuse configurations that never train.
-    - Phenology's `band` now selects a conditional `CLASSIFIER` need (see "Phenology's configured classified band").
-      CCDC's `breakpointBands` are configuration too and can follow the same design.
+    - Phenology's `band` and CCDC's `breakpointBands` now select a conditional `CLASSIFIER` need (see "Phenology's
+      configured classified band").
     - Time Series chart and Retrieve bands, and CCDC export, map and chart bands, are request parameters.
   - **Native-band policy.** It refuses a Time Series count image, which never reads its Classification, for
     unsupplied classifier inputs.
@@ -1603,8 +1605,9 @@ is applied to every scene. It never builds the Classification's image. Readiness
       other caller keep their behaviour.
     - Regression declares nothing for it. A source that does not declare it gets `UNDECLARED_OPERATION`.
   - **Conditional need.** `conditionalNeed({when, then, otherwise})` (`output/readiness.js`) is a role's need that
-    follows the saved model. Phenology declares
-    `[CLASSIFICATION_SOURCE]: conditionalNeed({when: model => isClassifiedOutput(model?.sources?.band), then: CLASSIFIER, otherwise: REFERENCE})`.
+    follows the saved model. Phenology declares `[CLASSIFICATION_SOURCE]: classifiedOutputNeed('band')`, the
+    `conditionalNeed` choosing `CLASSIFIER` where `band` is a classified output and `REFERENCE` otherwise (see "CCDC's
+    breakpoint bands").
     - **Validation.** `validateReadinessDeclarations` accepts a need or a conditional need, but only one whose `then`
       and `otherwise` are needs and whose `when` is a function. Malformed declarations still fail at registration.
     - **Resolution.** `executionNeed(definition, operation, role, model)` resolves it. Its one caller, the traversal in
@@ -1640,15 +1643,48 @@ is applied to every scene. It never builds the Classification's image. Readiness
     - normalisation;
     - Phenology's retained unsupported choice, and its `UNSUPPORTED_CLASSIFIED_OUTPUT` explanation;
     - the native-band classifier-input policy.
-- **CCDC later.** Its `IMAGE_OUTPUT` and `PIXEL_SEGMENTS` declare the same conditional need, with
-  `when: model => (model?.sources?.breakpointBands || []).some(isClassifiedOutput)`, because every segmentation fits
-  the breakpoint bands. Request-dependent outputs are deferred, and no request contract is added: the Time Series
-  chart and Retrieve, and CCDC's chart, export and map bands.
+- **CCDC's breakpoint bands (implemented 2026-10-21).** CCDC's execution adds its `breakpointBands` to the collection
+  bands of every segmentation: its image for exports and maps (`timeSeries/ccdc.js`) and its segments at a pixel
+  (`loadSegments.js`). A classified breakpoint therefore trains the Classification for `IMAGE_OUTPUT` and
+  `PIXEL_SEGMENTS`. `PIXEL_OBSERVATIONS` reads only the chart band and keeps `REFERENCE`.
+  - **One owner for the need.** `classifiedOutputNeed(field)` (`classifiedOutputs.js`) is the conditional
+    `CLASSIFIER` need of a recipe choosing classified outputs at `field`. It reads that field as
+    `classifiedOutputRequirement` does, through the same helper, so need and output check agree on which bands count.
+    Phenology declares `classifiedOutputNeed('band')` and CCDC `classifiedOutputNeed('breakpointBands')` for both
+    operations. Phenology's inline condition is gone.
+  - **Over a CCDC recipe.** CCDC Slice and Change Alerts reach it as their segment source, so they inherit the
+    readiness through the traversal.
+  - **GUI.** CCDC's Sources declares `classificationReferenceFeedback`. Its local breakpoint-output validation and
+    retained invalid choices are unchanged.
+  - **Unchanged and deferred:**
+    - optional chart, export and map bands, which are request-dependent and add no request contract;
+    - `PIXEL_OBSERVATIONS`;
+    - the native-band policy;
+    - normalisation.
+  - **Regressions:**
+    - `classifiedOutputTraining.test.js`, which replaces `phenologyClassifier.test.js`, runs every case above for
+      Phenology's `IMAGE_OUTPUT` and CCDC's `IMAGE_OUTPUT` and `PIXEL_SEGMENTS` (42 tests). Reverting CCDC's need
+      fails its 17 classified cases; the Phenology rows and the native and decision-tree cases pass either way.
+    - `referencedSegments.test.js`: its SVM fixture stores points, so a classified breakpoint over it is refused for
+      the output alone.
+    - Mounted (GUI):
+      - `ccdc/classificationFeedback.test.jsx`: the field explained, Retrieve held, Apply available, repair, a native
+        control, and a retained invalid breakpoint;
+      - `ccdc/panels/classifiedBreakpointChart.test.jsx`: an open chart closes, cancels its segment request and disables
+        its button when training becomes invalid. Repair re-enables it, a new pixel requests segments again, and native
+        breakpoints keep it open;
+      - `chartPixelButton.test.jsx` and `pixelObservationsChart.test.jsx`: their Classification fixtures, under a
+        classified breakpoint, now store points over a mosaic described from configuration.
+    - gee:
+      - `ccdcAssetExport.test.js`: an export refused with `NO_TRAINING_DATA` before anything is built, then exported
+        after repair, with a native control. The file now stubs Earth Engine for its asset reads;
+      - `loadSegmentsReadiness.test.js`: segments refused before any collection is built or evaluated, then read after
+        repair, with a native control.
 - **Regressions.**
   - **Shared:**
     - `recipeType.test.js`: `conditionalNeed` validation. A predicate that is not a function, a branch that is no need,
       a missing branch or a nested condition are refused at registration, while a valid one is retained.
-    - `phenologyClassifier.test.js`, Phenology with a classified band over:
+    - `classifiedOutputTraining.test.js` (formerly `phenologyClassifier.test.js`), Phenology with a classified band over:
       - no points, a provider without imagery, a provider lacking features, an input lacking a selected band (refused
         once, without describing the Classification's image), and a working Classification;
       - a type that trains no classifier (`UNDECLARED_OPERATION`), and a decision tree (only
@@ -1712,6 +1748,12 @@ is applied to every scene. It never builds the Classification's image. Readiness
        Series monitoring optical. (Removing a feature usually leaves it compatible.) The chart closes or is held, with
        an explanation.
      - Repair it by switching the input back. The chart is offered again and returns data.
+     - **CCDC breakpoints.** Open a CCDC with breakpoint bands `ndvi` and a classified `probability_<class>` over a
+       working Classification, with its pixel chart open on segments.
+     - Remove the Classification's points: Sources' classification field names it, Retrieve is held, and the open
+       chart closes or is held.
+     - Restore the original point set: Retrieve is offered, and reopening the chart returns segments.
+     - With native breakpoints only, removing the points changes nothing.
   5. **Classified outputs.**
      - Use a Time Series over an SVM Classification (C_SVC). Chart `probability_<class>`: it returns values without a
        regression error.
@@ -1859,11 +1901,11 @@ by itself, a reason to expand a recipe's validation or GUI.
 | Order | Remaining work | Status and next step | Estimated implementation slices |
 | --- | --- | --- | --- |
 | 1 | Phenology's configured classified band needs the Classification's training readiness. | Complete (2026-10-21): the `CLASSIFIER` operation and a conditional need, reusing the existing training rules without describing the Classification's output; see "Phenology's configured classified band". | 0 |
-| 2 | CCDC's classified breakpoint bands need the same training readiness. | Follow the reviewed Phenology design for `IMAGE_OUTPUT` and `PIXEL_SEGMENTS`; keep native breakpoint controls unchanged. | 1 |
+| 2 | CCDC's classified breakpoint bands need the same training readiness. | Complete (2026-10-21): `classifiedOutputNeed('breakpointBands')` for `IMAGE_OUTPUT` and `PIXEL_SEGMENTS`, native breakpoint controls unchanged; see "CCDC's breakpoint bands". | 0 |
 | 3 | Training readiness and output compatibility for classified bands requested by Time Series charts/downloads and CCDC charts/exports. | Design needed. Request bands are not currently arguments to readiness. GUI capability options and execution refusals already exist; introduce request-aware readiness only where it closes the remaining execution gap. | 2–4 |
 | 4 | Change Alerts' observation request needs an explicit server-side operation boundary. | Design needed. The bare `{model}` request is unguarded; use the real consumer and the collection it runs without bringing in unrelated segment-production dependencies. | 1 |
 
-**Planning estimate: 4–6 implementation slices** for the three remaining work items, plus the browser verification
+**Planning estimate: 3–5 implementation slices** for the two remaining work items, plus the browser verification
 checkpoint below. This is an estimate, not a count of proven defects or a promise of one commit per slice. Reassess the
 split after the request-dependent design. Design reports, review corrections and focused
 refactoring are not new rollout items.
