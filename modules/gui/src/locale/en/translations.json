@@ -2123,7 +2123,7 @@
               }
             },
             "planet": {
-              "label": "PlanetScope",
+              "label": "Planet",
               "asset": {
                 "label": "Daily PlanetScope asset",
                 "placeholder": "Select an ingested PlanetScope ImageCollection asset",
