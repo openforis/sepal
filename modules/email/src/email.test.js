@@ -1,8 +1,26 @@
 import assert from 'node:assert/strict'
-import {test} from 'node:test'
+import {mock, test} from 'node:test'
 
 import {smtpFromDomain} from './config.js'
-import {getFrom, renderHtml} from './email.js'
+
+const sendMail = mock.fn(async () => ({}))
+mock.module('nodemailer', {
+    exports: {default: {createTransport: () => ({verify: async () => true, sendMail})}}
+})
+const {getFrom, renderHtml, send} = await import('./email.js')
+
+test('rejects when the mail server fails, so the queue retries the job', async () => {
+    sendMail.mock.mockImplementationOnce(async () => {
+        throw new Error('421 try again later')
+    })
+    await assert.rejects(send({id: 1, email: {to: 'a@example.org', content: 'hi'}}), /421/)
+})
+
+test('drops an email with an unknown content type without sending it', async () => {
+    sendMail.mock.resetCalls()
+    await send({id: 1, email: {to: 'a@example.org', content: 'hi', contentType: 'image/png'}})
+    assert.equal(sendMail.mock.callCount(), 0)
+})
 
 test('sends from sepal-<module> at the configured domain', () => {
     assert.equal(getFrom('worker'), `sepal-worker@${smtpFromDomain}`)
