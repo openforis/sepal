@@ -15,7 +15,8 @@ const log = getLogger('timeSeriesExport')
 const CONCURRENT_CHUNKS = 3
 
 export const timeSeriesExport = async (params, {sepal, report, signal, sleep, localProcessing}) => {
-    const {description, image: {workspacePath, recipe}} = params
+    // Tasks saved before several indicators could be exported name a single indicator, and Run again replays them.
+    const {description, image: {workspacePath, recipe, indicator, indicators = [indicator], additionalOutputs}} = params
     const downloadDir = workspacePath ? join(process.env.HOME, workspacePath) : join(process.env.HOME, 'downloads', description)
     await mkdir(downloadDir, {recursive: true})
     const {tileIds} = await sepal.gee('task/timeseries/tiles', params)
@@ -25,27 +26,38 @@ export const timeSeriesExport = async (params, {sepal, report, signal, sleep, lo
             return
         }
         const {dateRanges} = await sepal.gee('task/timeseries/chunks', {...params, tileId, dateRanges: chunkDateRanges(recipe.model.dates)})
-        let chunks = 0
-        const tileProgress = () => report(progress({tileIndex, totalTiles, chunks, totalChunks: dateRanges.length}))
-        tileProgress()
-        await forEachInParallel(dateRanges, CONCURRENT_CHUNKS, signal, async ({startDate, endDate}, chunkSignal) => {
-            await exportToWorkspace({
-                start: () => sepal.startExport('task/export/timeseries/chunk', {...params, tileId, tileIndex, startDate, endDate}),
-                downloadDir: join(downloadDir, `${tileIndex}`, `chunk-${startDate}_${endDate}`),
-                sepal, report: () => {}, signal: chunkSignal, sleep, localProcessing
-            })
-            chunks++
+        for (const indicator of indicators) {
+            if (signal.aborted) {
+                return
+            }
+            let chunks = 0
+            const tileProgress = () => report(progress({tileIndex, totalTiles, chunks, totalChunks: dateRanges.length}))
             tileProgress()
-        })
-        if (dateRanges.length && !signal.aborted) {
-            await localProcessing.run(() => stack(join(downloadDir, `${tileIndex}`)), signal)
+            // Each indicator's folder has the layout of a single-indicator export, so tools reading those still work.
+            const indicatorDir = join(downloadDir, indicator, `${tileIndex}`)
+            await forEachInParallel(dateRanges, CONCURRENT_CHUNKS, signal, async ({startDate, endDate}, chunkSignal) => {
+                await exportToWorkspace({
+                    start: () => sepal.startExport('task/export/timeseries/chunk', {...params, image: {...params.image, indicator}, tileId, tileIndex, startDate, endDate}),
+                    downloadDir: join(indicatorDir, `chunk-${startDate}_${endDate}`),
+                    sepal, report: () => {}, signal: chunkSignal, sleep, localProcessing
+                })
+                chunks++
+                tileProgress()
+            })
+            if (dateRanges.length && !signal.aborted) {
+                // One sits folder per tile: chip names repeat across tiles, and they name the sits files.
+                const sits = additionalOutputs?.includes('SITS')
+                    ? ['--band', indicator, '--sits-dir', join(downloadDir, 'sits', `${tileIndex}`)]
+                    : []
+                await localProcessing.run(() => stack([indicatorDir, ...sits]), signal)
+            }
         }
     }
 }
 
-const stack = dir =>
+const stack = args =>
     lastValueFrom(
-        terminal$('sepal-stack-time-series', [dir], {shell: false}).pipe(
+        terminal$('sepal-stack-time-series', args, {shell: false}).pipe(
             tap(({stream, value}) => {
                 if (value) {
                     stream === 'stdout' ? log.info(value) : log.warn(value)

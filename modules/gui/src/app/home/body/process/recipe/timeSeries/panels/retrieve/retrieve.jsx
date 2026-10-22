@@ -27,15 +27,15 @@ class _Retrieve extends React.Component {
                 defaultTileSize={2}
                 defaultShardSize={256}
                 defaultFileDimensionsMultiple={2}
-                single
                 toSepal
                 allowTiling
+                sitsOutput
                 onRetrieve={retrieveOptions => this.retrieve(retrieveOptions)}
             />
         )
     }
 
-    // The indicator a time series is downloaded for is a measure of its collection, not a band of an image this
+    // The indicators a time series is downloaded for are measures of its collection, not bands of an image this
     // recipe outputs, so the options are the whole truth of what may be asked for.
     requestOptions() {
         const {classificationLegend, classifierType, corrections, sources: {dataSets}} = this.props
