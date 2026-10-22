@@ -13,6 +13,7 @@ import {npmAudit} from './npm-audit.js'
 import {npmInstall} from './npm-install.js'
 import {npmTest} from './npm-test.js'
 import {npmUpdate} from './npm-update.js'
+import {prune} from './prune.js'
 import {restart} from './restart.js'
 import {shell} from './shell.js'
 import {start} from './start.js'
@@ -172,6 +173,11 @@ const main = async () => {
         .argument('[module...]', 'Modules to eslint')
         .option('-f, --fix', 'Fix autofixable ESLint errors.')
         .action(eslint)
+
+    program.command('prune')
+        .description('Remove dangling images, left behind when a rebuild moves their tag')
+        .option('-n, --dry-run', 'List the images without removing them')
+        .action(prune)
 
     try {
         await program.parseAsync(process.argv)
