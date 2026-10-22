@@ -476,7 +476,7 @@ export class UserApi {
 
     // Create a PENDING user, send the invitation email, and publish UserUpdated. Returns the reloaded
     // user. No filesystem/SSH provisioning here: that happens lazily when the user leaves PENDING
-    // (activate / password reset), so users who never activate cost no filesystem resources. New users
+    // (password reset), so users who never activate cost no filesystem resources. New users
     // get uid = gid = id (set by insertUser); collision-free against migrated LDAP ids.
     async #createInvitedUser({username, name, email, organization, intendedUse}) {
         const lowered = (username || '').toLowerCase()

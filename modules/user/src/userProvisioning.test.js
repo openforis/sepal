@@ -42,7 +42,7 @@ describe('ensureProvisioned', () => {
         assert.equal(unchanged, user)
     })
 
-    // Web access must not depend on provisioning; the next activate or reset tries again.
+    // Web access must not depend on provisioning; the next password reset tries again.
     test('reports the user unchanged when provisioning fails', async () => {
         const user = aUser()
 
