@@ -135,10 +135,12 @@ class _TabHandle extends React.Component {
     }
 
     onClick() {
-        const {selected} = this.props
-        selected
-            ? this.editTitle()
-            : this.selectTab()
+        const {selected, readOnlyTitle} = this.props
+        if (!selected) {
+            this.selectTab()
+        } else if (!readOnlyTitle) {
+            this.editTitle()
+        }
     }
 
     onTitleChange(e) {
@@ -239,6 +241,7 @@ TabHandle.propTypes = {
     id: PropTypes.string,
     placeholder: PropTypes.string,
     prefix: PropTypes.string,
+    readOnlyTitle: PropTypes.any,
     selected: PropTypes.any,
     statePath: PropTypes.string,
     tabBusy$: PropTypes.func,
