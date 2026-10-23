@@ -1,19 +1,28 @@
 import {act} from 'react'
 import {createRoot} from 'react-dom/client'
+import {legacy_createStore as createStore} from 'redux'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-// Dygraph draws on canvas; the fake records the options each chart was created with.
+// Dygraph draws on canvas; the fake records the options each chart was created with, the data it was built with and the
+// data it was redrawn with.
 const charts = vi.hoisted(() => [])
+const built = vi.hoisted(() => [])
+const redrawn = vi.hoisted(() => [])
 vi.mock('dygraphs', () => ({
     default: class {
-        constructor(_element, _data, options) {
+        constructor(_element, data, options) {
             charts.push(options)
+            built.push(data)
         }
 
-        updateOptions() {}
+        updateOptions({file}) {
+            redrawn.push(file)
+        }
     }
 }))
 
+import {Enabled} from '~/enabled'
+import {initStore} from '~/store'
 import {themeManager} from '~/theme'
 
 import {Graph, graphColor} from './graph'
@@ -67,3 +76,63 @@ describe('Graph chrome colors', () => {
         expect(charts.at(-1).series.observations.color).toBe('#2b2926')
     })
 })
+
+// Dygraph sizes a chart by its element when it builds it, so a Graph is drawn only where it is displayed: not while what it
+// is in is disabled - a panel of a tab not selected (panel.jsx) - but once that is enabled again, as it then stands.
+describe('a Graph in what is disabled and enabled again', () => {
+    let root, container
+
+    beforeEach(() => {
+        built.splice(0)
+        redrawn.splice(0)
+        initStore(createStore((state = {dimensions: {width: 1024, height: 768}}) => state))
+        container = document.createElement('div')
+        document.body.appendChild(container)
+        root = createRoot(container)
+    })
+    afterEach(() => {
+        act(() => root.unmount())
+        container.remove()
+    })
+
+    const show = (enabled, data) => act(() => root.render(
+        <Enabled enabled={enabled}>
+            <Graph data={data}/>
+        </Enabled>
+    ))
+
+    it('is drawn once enabled, from the data it was last given while disabled', () => {
+        show(false, FIRST)
+        show(false, SECOND)
+        expect(built).toEqual([])
+
+        show(true, SECOND)
+
+        expect(built).toEqual([SECOND])
+        expect(redrawn).toEqual([])
+    })
+
+    it('given new data while disabled, redraws it once enabled, without building it again', () => {
+        show(true, FIRST)
+        show(false, SECOND)
+        expect(redrawn).toEqual([])
+
+        show(true, SECOND)
+
+        expect(built).toEqual([FIRST])
+        expect(redrawn).toEqual([SECOND])
+    })
+
+    it('is neither built nor redrawn again as it is disabled and enabled again unchanged', () => {
+        show(true, FIRST)
+
+        show(false, FIRST)
+        show(true, FIRST)
+
+        expect(built).toEqual([FIRST])
+        expect(redrawn).toEqual([])
+    })
+})
+
+const FIRST = [[1, 2]]
+const SECOND = [[1, 2], [2, 3]]

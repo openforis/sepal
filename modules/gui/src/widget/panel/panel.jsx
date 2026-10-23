@@ -3,7 +3,7 @@ import React from 'react'
 
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
-import {withEnableDetector} from '~/enabled'
+import {withEnabled} from '~/enabled'
 import {Portal} from '~/widget/portal'
 
 import {BlurDetector} from '../blurDetector'
@@ -14,16 +14,6 @@ import {PanelHeader} from './panelHeader'
 import {PanelTabs} from './panelTabs'
 
 class _Panel extends React.Component {
-    state = {
-        enabled: true
-    }
-
-    constructor(props) {
-        super(props)
-        const {enableDetector: {onChange}} = props
-        onChange(enabled => this.setState({enabled}))
-    }
-
     render() {
         const {placement} = this.props
         switch (placement) {
@@ -73,14 +63,15 @@ class _Panel extends React.Component {
         )
     }
 
+    // Not displayed while what it is in is disabled - a tab not selected - and displayed again in the render that enables
+    // it, so what its content does on being enabled finds it displayed.
     renderContent() {
-        const {className, placement, children} = this.props
-        const {enabled} = this.state
+        const {className, placement, enabled, children} = this.props
         return (
             <div className={[
                 styles.panel,
                 styles[placement],
-                enabled ? null : styles.disabled,
+                enabled === false ? styles.disabled : null,
                 className
             ].join(' ')}>
                 {children}
@@ -91,7 +82,7 @@ class _Panel extends React.Component {
 
 export const Panel = compose(
     _Panel,
-    withEnableDetector(),
+    withEnabled(),
     asFunctionalComponent({
         placement: 'modal'
     })

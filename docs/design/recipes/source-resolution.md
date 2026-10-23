@@ -2395,11 +2395,10 @@ of a direct CCDC root, held as its asset exports are.
      - With only a native indicator selected, an unacknowledged Classification save still holds Retrieve under the
        existing base dependency policy; once storage agrees it downloads. On a cold open, an unresolved selected
        Classification's record also holds the native selection until it is read, without adding training evidence.
-     - **Legacy single indicator.** Open a Time Series saved by a release that offered one indicator, whose Retrieve
-       selection is stored as a value (`"ndvi"`), not a list. Without selecting anything, Retrieve shows `ndvi`
-       selected and Apply is enabled; it retrieves, and the task produces the `ndvi` files. With a saved `regression`
-       over a Classification without points, the selection stays, Retrieve says why and holds until the points are
-       restored.
+     - **Scalar UI-state compatibility (automated, not an old-recipe manual fixture).** Retrieve accepts a scalar
+       indicator already present in session UI state and normalizes it to a list. `recipe.ui` is excluded from saved
+       recipe content, so finding an old saved recipe with this selection is not a required browser check. The
+       scalar-selection and classified-hold paths have mounted regression coverage.
   7. **Working execution.** For every recovery in this batch, confirm an actual response, not only an enabled
      button: a preview tile for Classification, Regression, PyEO and Phenology (these have no pixel charts), and a chart
      response for the Time Series, CCDC, CCDC Slice and Change Alerts charts. Download checks need completed tasks and
@@ -2490,6 +2489,103 @@ of a direct CCDC root, held as its asset exports are.
   establish that array bands can be written to raster files. The unknown Earth Engine outcome for missing/null sample
   features needs a separate controlled probe; the GUI now refuses known missing features before it can expose that
   outcome. The completed live numerical check above and the still-pending browser smoke checks are different evidence.
+
+#### Browser feedback: partial results (2026-10-22)
+
+User-reported results from the shortened browser checklist, not an independently observed run. Deployment/build and
+recipe ids were not supplied. The user says to treat unmentioned checks in the supplied batch as passing; the rest of
+the batch will be supplied later. These results do not mark the whole browser batch complete. No production behaviour
+has been changed in response to this feedback.
+
+- **Reused training data (short checklist 5), Classification and Regression:**
+  - Removing Provider's `nir` shows "Provider samples no nir, which this recipe is trained on" on Consumer's training
+    data item. Regression marks TRN; Classification does not. Opening the item's editor shows no explanation or repair
+    guidance and offers Apply; applying again leaves the finding. The lack of editor feedback is a reported UX gap.
+  - Removing Provider's last input image shows an item finding for both types, and a TRN mark only for Regression.
+    Neither item's editor explains the problem. Both recover correctly when the input is restored.
+  - **Correction to schedule:** Classification suppresses all training-data toolbar marks, including broken-provider
+    and missing-feature findings. Replace that blanket suppression with marks for actual applicable findings,
+    consistently with Regression; an operation requiring training is already held by readiness. Preserve the
+    decision-tree exemption and distinguish pending/unavailable evidence from configuration findings.
+  - **Sampling direction clarified with the user:** reused Classification points must still be sampled over Provider's
+    input imagery, not Consumer's. The proposed change is to derive Consumer's required features over that imagery,
+    independent of Provider's own selected training features. Removing `nir` from Provider's band selection should
+    therefore work if its underlying imagery can still supply `nir`; an imagery source that genuinely cannot supply a
+    Consumer feature remains incompatible. This is a design direction, not implemented. Nested providers must retain
+    their own imagery and points; do not silently change Consumer's selected features to remove a finding.
+  - **Collection cost constraint (user-confirmed):** assemble the reused samples and Consumer's training data once per
+    collection computation, outside the per-scene classification loop, and reuse them across scenes. The current
+    `collection.js` calls `getTrainingData$()` before constructing its mapped collection; preserve that boundary.
+    Add one-scene versus many-scene coverage, including reused/nested points, when implementing the feature-selection
+    change. This is not a cross-request cache or a claim about Earth Engine's internal evaluation count.
+  - Provide an understandable repair from the item editor, whether through opening the offending Provider, replacing
+    or removing the reuse selection, or explaining the Consumer feature change needed. The final interaction is not
+    yet agreed; Apply must not be presented as though re-applying an unchanged reference repairs its upstream recipe.
+- **Referenced charts and Change Alerts (short checklist 6):**
+  - CCDC Sources should show its advanced ("More") view when a Classification is selected, so that selection is visible.
+  - Switching CCDC from compatible Optical to Radar shows classifier-input incompatibility beside the data-set field;
+    the user expects attribution beside the Classification field. The declaration currently binds this code to both
+    fields; review presentation ownership rather than adding a new validator.
+  - With Change Alerts monitoring Optical `nbr`, switching its CCDC producer to Radar reports "The selected source has
+    no segments for band nbr. Choose a band it has segments for: VV, VH, ratio_VV_VH and 1 more." Opening Sources shows
+    Radar automatically selected and no corresponding field explanation. The user reports that the recipe remains
+    chartable. Investigate the applied-model/editor mismatch and the actual bands the chart chooses. The follow-up
+    direction is to disable/close this analysis chart while its configured monitoring band cannot be supplied, rather
+    than silently chart another reference band. Do not turn that into a full alerts-image readiness requirement.
+  - **Sync policy:** the user questions automatic Optical-to-Radar switching. CCDC PRC changes also overwrite
+    Change Alerts overrides for properties the producer did not change. Code inspection confirms that a changed
+    monitoring snapshot merges all supplied Sources/options, rather than only changed fields. Preserve this observed
+    behaviour as a reported issue. The user's direction is less implicit syncing: if a setting must equal the source,
+    show the effective source value as read-only in the consumer, with its ownership explained. An editable consumer
+    setting belongs to the consumer and must not be silently overwritten by unrelated source edits. Identify which
+    processing settings actually must match before disabling controls; no concrete mandatory-setting list has yet been
+    established. For asset references, linked values must come from the asset's recorded settings, not require access
+    to its producer recipe. Do not implement this merely by greying out a stale copied value; execution and the shown
+    effective value must use the same ownership rule. No production sync behaviour is changed yet.
+- **Quick regression controls (short checklist 7):** reported passing.
+- **Additional feature request:** copy/paste visualization parameters between layers; recorded separately from readiness
+  regressions and not implemented.
+- **Checklist correction:** `recipe.ui` is stripped from persisted recipe content and recipe exports. The earlier
+  instruction to find a saved Time Series with a string `ui.retrieveOptions.bands` is not a valid ordinary saved-recipe
+  acceptance case. Scalar UI-state normalization has automated coverage; do not require an old saved recipe fixture.
+  For Change Alerts, leftover Classification/breakpoint fields under `model.sources` are persisted but ignored, with
+  automated regressions; no separate legacy fixture is required in addition to an ordinary existing-recipe smoke test.
+  A saved classified monitoring band is a distinct, explicitly refused configuration. Shared segments-asset checks
+  simply mean using a CCDC segments asset as the source of CCDC Slice and Change Alerts. Isolated slow/failed evidence
+  checks may be left to automated coverage when they cannot be reproduced naturally.
+
+#### Browser feedback: further results (2026-10-23)
+
+Further user-reported results from the shortened checklist. Unmentioned checks in the submitted portions are treated
+as passing, as requested; the unfinished remainder is not implicitly passed. No deployed build, recipe ids or network
+captures were supplied with this report. These observations are not independently reproduced and no production fix is
+claimed by recording them.
+
+- **Working baseline:** starting a chart, switching to another recipe tab, waiting for completion and switching back
+  leaves the layout squeezed into the top-right corner. Investigate hidden-tab measurement and reactivation, without
+  assuming the graph or panel is the cause. Direct CCDC/Time Series charts return data outside the consumer AOI;
+  referenced CCDC Slice/Change Alerts charts do not. That AOI distinction is expected: direct pixel operations replace
+  the consumer AOI, while references retain their own computation AOIs. Do not "fix" it by stripping upstream AOIs.
+- **Missing Classification points, Time Series:** the classified-band-only chart hold appears as designed, but the
+  user prefers closing/disabling the chart and marking Sources, consistently with CCDC's classified-breakpoint case.
+  Retrieve always shows "These bands are no longer available from this recipe: . Select from the bands offered
+  above", even in working configurations. This is a reported independent bug, not a valid empty missing-band finding.
+  The selected Classification should be visible on opening Sources ("More" enabled/expanded) and its problem explained
+  beside the classification field. Highlighting individual broken bands was considered, but a whole-selected-source
+  validity policy is the user's preferred direction for assessment.
+- **CCDC:** with classified breakpoints, the chart closes, Retrieve is held and Sources explains the Classification
+  problem. Classified bands remain selectable and recovery works after repairing the Classification; the user prefers
+  retaining that selection/recovery behaviour. The proposed change is to apply the source hold even when breakpoints
+  and requested bands are native. Phenology and PyEO training-hold behaviour is reported correct in the tested cases.
+- **Incompatible inputs:** PyEO marks both SRC and OPT. The user questions OPT because the reported incompatibility
+  cannot be repaired there. Determine whether this is the same upstream fault presented twice or a distinct enabled
+  index-gate requirement, and locate each explanation where it is actually repairable. Do not assume both codes are
+  duplicates or remove all OPT validation; see F10.
+- **Capabilities and stale copies:** reported good. WebSocket notification of upstream recipe updates is a separate
+  future feature, not required to pass these manual checks.
+- **For later:** CCDC Slice displays raw chart-band names even for a recipe reference; AOI layers redraw on recipe
+  changes that should not alter their geometry; show the charted location on the map. These are captured below as
+  follow-ups, not silently included in the readiness-policy implementation.
 
 #### Regression training data (implemented)
 
@@ -2813,11 +2909,391 @@ Coverage checks proposed, each detecting a class of drift rather than one case:
 - training rules owned by Classification's `CLASSIFIER`, and capability by `unprovidedClassifiedOutputs` and
   `classificationBands`.
 
-#### Current delivery plan (2026-10-21)
+#### Next steps from browser feedback (updated 2026-10-23)
 
-This is the remaining plan for the current classifier/readiness round. The completed histories that follow are
-reference material, not additional slices to implement. A shared backend helper accepting a Classification is not,
-by itself, a reason to expand a recipe's validation or GUI.
+These follow-ups come from the partial manual results above and the subsequent discussion. They are the next work,
+not completed fixes or a reason to reopen every deferred architecture item. The user's direction is Provider imagery
+with Consumer features, sampling outside the collection's per-scene loop, visible repair paths, and less implicit
+settings syncing. Remaining product choices are called out below instead of being treated as accepted designs.
+
+| Order | Follow-up | Status / boundary |
+| --- | --- | --- |
+| F1 | Training-data toolbar marks and item-editor explanations/repair | Concrete GUI fixes; both Classification and Regression. |
+| F2 | CCDC Sources: expose the selected Classification and locate incompatibility beside it | Concrete GUI fixes; retain the shared compatibility rule. |
+| F3 | Change Alerts: consistent applied/editor diagnostics and monitoring-band chart hold | Reproduce the reported Optical-to-Radar case; reuse the existing monitored-measure requirement. |
+| F4 | Reused training samples: Consumer features over Provider imagery, once per collection computation | Agreed semantic direction; execution and shared readiness must change together after tracing the sampling contract. |
+| F5 | Audit ownership of Change Alerts Sources/PRC settings | Technical prerequisite: identify, with reasons, which fields actually must match the reference. No mandatory-field list is established yet. |
+| F6 | Replace whole-group automatic syncing with explicit ownership | Depends on F5. Required matches are source-owned/read-only. Recommend copying editable defaults on initial creation only, preserving them on replacement, with an explicit copy action; not yet agreed. |
+| F7 | Copy/paste visualization parameters between layers | Separate requested feature; independent of the readiness corrections. |
+| F8 | Chart layout after tab return; Time Series Retrieve's unconditional empty unavailable-bands warning | Concrete browser bugs to reproduce and fix independently of the source-validity policy. |
+| F9 | Treat a selected Classification as required for Time Series and CCDC, including native requests | User-proposed direction, recommended for assessment; explicitly changes the previous native-control policy and should remove redundant request-stage coordination. |
+| F10 | PyEO: put incompatibility feedback in a section that can repair it | Trace the reported SRC/OPT combination; retain genuine local index-gate validation. |
+
+Prioritise reproducing the concrete F8 failures and assessing F9 before further work on request-band gates. F9 may
+supersede some of that machinery; do not implement another band-highlighting system first. F1/F2 and the independent
+chart/feedback corrections remain useful. F4 and F5 still need their technical contract/ownership reviews.
+
+**Implementation grouping after reviewing the complete feedback so far (2026-10-23).**
+
+F1-F10 identify issues, not ten required commits. Group implementation into the six correction slices below. Each
+slice includes its focused regressions and the relevant combined browser recheck; do not postpone all testing until
+the end. These are review boundaries, not exact file/commit counts. New results or a genuinely unresolved technical
+contract can change the split; they must not silently expand it.
+
+| Slice | Work grouped together | Covers | Completion evidence / dependency |
+| --- | --- | --- | --- |
+| S1: Chart layout on tab return | Implemented: defer graph drawing while disabled and make Panel visibility follow the enabled context in the same render. | F8 layout | Focused tests and independent review passed; user reported "Looks good" after the manual checklist and approved committing on 2026-10-23. Detailed per-case browser results were not supplied; see below. |
+| S2: Feedback where repairs happen | Consistent Classification/Regression TRN marks, explanation and Open Provider/replace/remove repair in item editors; visible Classification selection in Time Series/CCDC Sources; classifier-input attribution at Classification; repair-oriented PyEO SRC/OPT feedback; correct the empty Retrieve warning. | F1, F2, F10, F8 warning | GUI-focused slice using existing findings, not new readiness rules. Demonstrate real Provider failure, normal valid Retrieve, local versus upstream PyEO errors, repairs and Cancel. Keep current execution behaviour until S3/S4 change it explicitly. |
+| S3: One selected-Classification validity contract | Require a selected usable Classification for Time Series/CCDC base operations, independently of requested/breakpoint bands; common SRC explanation/action hold; remove redundant band-training stage/watch/messages/server settling. | F9; consumes S2 presentation | Shared declarations, server guards and GUI consumers must change coherently. Agree the native/count behaviour below first. Verify native/classified, no selection, decision tree, source repair/deselection, capability errors, cancellation and last-moment submit. Name the old checks removed. |
+| S4: Reused samples with Consumer features | Sample each contributing Provider's imagery at its points using Consumer's feature definition; preserve sampling scale, nesting/order and Consumer normalisation; update shared readiness to the same derivability contract. | F4 | Trace the feature-plan/readiness identity before coding; do not split execution from its corresponding refusals. Depends on the S3 base contract for consumer coverage. Whole-row numeric and controlled live checks plus a one-scene/many-scene witness of no per-scene sampling; recheck S2 repair feedback against the new semantics. |
+| S5: Change Alerts settings ownership | Audit Sources/PRC fields, then implement source-owned read-only required matches versus consumer-owned editable values; replace whole-group observation syncing and define initial/explicit copying. | F5, F6 | Audit first; agree the editable-copy policy below. UI and backend use the same effective values for recipe and asset references. Fresh reopen, overrides, reference replacement, Cancel, late metadata and asset metadata are mandatory cases. No automatic overwrite of editable settings. |
+| S6: Change Alerts validation and chart agreement | Retain invalid applied choices with field explanations; hold Retrieve and close/disable the analysis chart for an incompatible configured monitoring band; remove redundant panel validation. | F3 | Build on S5's ownership/effective-values contract so the form and operations judge the same configuration. Reproduce Optical-to-Radar, repair, cancellation, valid native controls and recipe/asset reference cases. Preserve operation scope rather than installing full image readiness on the chart. |
+
+**S1: Chart layout on tab return (implemented 2026-10-23; user feedback received).**
+
+- **Cause (reproduced in a mounted test, for Time Series and CCDC).** A recipe tab not selected leaves its layout in
+  place (`tabContent.module.css`: opacity only), but its panels are not displayed: `Panel` adds `.disabled`
+  (`display: none`) while the enabled context of the tab is false. Data arriving then made `Graph` build its Dygraph
+  inside that hidden panel. Dygraph sizes a chart by its element when it builds it: a hidden element has no size, so it
+  takes the defaults, written as inline `width: 480px; height: 320px` (`dygraphs/src/dygraph.js`, "assume the user
+  will call resize"), and keeps them. Returning to the tab displayed the panel around a chart fixed at that size.
+  Nothing resized it: the window did not change, and `Graph` neither watched its element nor rebuilt. A second,
+  ordering cause: `Panel` displayed itself again only after the render that enabled it, through the enable detector's
+  `onChange` and `setState`, so a child acting on being enabled still found it hidden.
+- **Fix, in the two shared owners.**
+  - `widget/graph.jsx`: `Graph` reads the enabled context (`withEnabled`). While disabled it draws nothing; once enabled
+    it draws what it was last given, building the chart or redrawing it as before, compared with what it last drew. A
+    chart already drawn is neither rebuilt nor redrawn by a tab switch alone.
+  - `widget/panel/panel.jsx`: `Panel` renders `.disabled` from the enabled context itself (`withEnabled`), so it is
+    hidden and displayed in the render that changes the context. A panel mounted inside a context that is already
+    disabled is now hidden too. Its tab is invisible either way, and `Graph` waits until it is shown.
+  - No data is requested again, and nothing is discarded, delayed or resized by a new mechanism. Chart data, the
+    selected pixel and band, and cancellation are owned by the charts and unchanged.
+- **Regressions.**
+  - `recipe/chartTabReactivation.test.jsx`: the real Time Series and CCDC charts in a real `TabContent`, with Earth
+    Engine and Dygraph substituted. Data arriving while the tab is not selected builds no chart. Selecting the tab
+    builds one, outside a hidden panel, with the data received and no further request. A chart drawn while selected is
+    neither rebuilt nor requested again across a tab switch.
+  - `widget/graph.test.jsx`: drawn once enabled, from the data last given while disabled; new data while disabled
+    redrawn once enabled without rebuilding; an unchanged chart not redrawn.
+  - `widget/panel/panel.test.jsx`: content finds its panel hidden in the render that disables it, and displayed in the
+    render that enables it.
+- **Witnesses.** With both files from `HEAD`, 5 of the 12 cases fail, including both charts' hidden-arrival cases.
+  With only the `Graph` fix, the charts are built while their panel is still hidden (and the panel case fails). With
+  only the `Panel` fix, they are built while the tab is not selected (and the graph cases fail).
+- **Focused campaign** (two workers): the widgets, the Time Series, CCDC, CCDC Slice, Change Alerts, LandTrendr,
+  Mosaic, Masking, Remapping, Classification and Band Math recipes, the chart band and Retrieve tests, and the map,
+  152 files and 1966 tests passed. ESLint and `git diff --check` are clean. The full GUI suite was not run for this
+  slice.
+- **Shared Panel risk review:** this changes visibility timing, not placement, portal targets, panel activation,
+  mounting/unmounting or form state. Hidden/visible changes now happen in the enabling render rather than a later
+  state update; a panel mounted already disabled now starts hidden. Remaining browser risks are content measuring
+  itself while hidden, focus on reactivation and overlay behaviour. A Graph-only solution could instead wait for
+  actual element dimensions, but the current enabled-only Graph fix demonstrably needs the Panel ordering change.
+  Independent review with old Panel mounted read-only and current Graph fails both hidden-arrival cases while the
+  already-drawn controls pass. Independently, the focused chart/graph/panel/tab set passes 50 tests, and unrelated
+  form-panel, Stack and Remapping activation/Apply/Cancel tests pass another 32; these do not establish browser layout.
+- **Browser feedback (2026-10-23):** after receiving the manual checklist, the user reported "Looks good" and approved
+  committing S1. No deployed build or per-case outcomes were supplied, so this is overall user feedback, not a claim
+  that every optional graph/Panel variant was individually verified. Retain the checklist for any outstanding cases.
+- **Browser checklist:** DOM tests do not establish rendered layout. For Time Series and for CCDC, open a pixel
+  chart, switch to another recipe tab before it loads, let it finish, and return. The chart must fill its panel at its
+  normal size, without a further segments or observations request in the network panel. Repeat the switch a few times,
+  and resize the window once. Also open a chart and switch tabs after it has loaded, and check a LandTrendr chart and
+  a layer histogram (the other `Graph` users). As a small unrelated-Panel smoke check, keep an edited Sources/Retrieve
+  panel open across a recipe-tab switch, confirm its values, focus and scrolling still work on return and Cancel/Apply
+  behave normally; open and dismiss a modal/confirmation as well.
+
+S1 and S2 can proceed independently of the semantic changes. S3 precedes S4 to avoid adapting sampling work to a
+request-stage design scheduled for removal. Start the read-only F5 audit early, but land S5's ownership behaviour
+before S6's final editor/gate consolidation. If S5 reveals a need to change persisted structure, describe its old/new
+shape and compatibility separately before implementation; no migration is approved by this plan.
+
+**Product choices still to settle for these slices:**
+
+1. **S3's strict selected-source contract.** The user's preferred direction and the recommendation are to hold Time
+   Series/CCDC native downloads/charts and their count outputs too when a selected Classification is untrainable,
+   until it is repaired or explicitly deselected. This is a deliberate product policy, not an execution necessity for
+   native bands. Confirm that full consequence before retiring the additional band-training gate. Apply it to these
+   two families first; do not silently change native Phenology or every recipe that happens to hold a reference.
+2. **S5's editable defaults.** Recommend copying on the first reference Apply during new-recipe creation only,
+   preserving editable values on replacement/reopen/refresh, and offering explicit copying through the normal form's
+   Apply/Cancel flow. This recommendation is still not agreed. Required matches are separately source-owned/read-only.
+
+Which PRC fields must match, how to derive Consumer features over multiple inputs, and what optional/required metadata
+existing assets actually contain are technical discovery tasks, not arbitrary user preferences. Return with evidence
+and a bounded choice if they expose a real tradeoff. Do not invent a mandatory-field list or automatically refuse
+older assets before doing that work. The collection sampling-once constraint, source imagery ownership and the rule
+that pending/unavailable evidence is not a finding are already established directions.
+
+**Independent improvements, after the correction slices unless reprioritised:**
+
+- P1: chart context/presentation — readable CCDC Slice band names and a map marker for the charted pixel. Keep request
+  identity unchanged and make marker lifetime follow the active chart/recipe. These can share a small UI slice.
+- P2: AOI update efficiency — measure redraw triggers and prevent redraws on irrelevant edits while preserving real
+  geometry changes and cancellation. Keep this performance investigation separate from the S1 layout fix.
+- P3: visualization Copy/Paste — F7 as a separate feature, using existing layer/visualization ownership and validation.
+- WebSocket recipe-update notification stays outside this implementation round; stale-copy checks were reported good.
+
+The direct-versus-referenced chart AOI difference is expected and has no corrective slice. The invalid legacy
+Time Series saved-UI fixture is removed from manual acceptance, and the passed controlled numerical checks are not
+unfinished browser work. Preserve successful manual results and re-run affected cases after each slice; missing
+remaining results are still pending. One final integrated automated checkpoint follows the completed correction set.
+
+**F1. Make a training-data problem visible and repairable where it is edited.**
+
+- `classification/trainingDataRequirements.js` currently maps every Classification declaration to `toolbarMark: false`.
+  Mark real findings consistently with Regression. Keep operation applicability and the decision-tree exemption with
+  the existing rules; do not invent a second toolbar validator or mark an evidence read as a configuration error.
+- Both training-data lists receive `withItemProblems`, but their `RecipeSection` editors only render a `RecipeInput`.
+  Carry the existing finding into the selected data-set editor, naming the Provider and explaining the needed repair.
+  Offer a direct way to open the relevant Provider; keep replacing/removing the reuse selection possible. For nested
+  findings, identify the actual offending recipe, not just the first reference in the chain.
+- Re-applying the unchanged reference must not imply that it repaired an upstream error. Explain that distinction;
+  do not indiscriminately disable Apply and trap the user in an editor from which a repair could be selected. An edited
+  reference must not keep a stale finding belonging only to the old Provider.
+- **Acceptance:** for both recipe families, an unusable Provider shows matching toolbar, list and item-editor feedback;
+  opening/repairing Provider clears it, replacement/removal and Cancel behave correctly, and the Consumer renders
+  after recovery. Cover real remaining feature incompatibility after F4, not a Provider selection change that F4 makes
+  valid. Existing current-behaviour witnesses remain historical evidence.
+
+**F2. Keep the selected Classification and its explanation visible in CCDC and Time Series.**
+
+- Open Sources in the advanced ("More") view when a Classification is selected. Allow Less/More to be toggled normally;
+  this is about the initial view and visibility, not forcing it open on every render or disabling the More button.
+  The 2026-10-23 feedback requests the same initial visibility for Time Series Sources; cover both panels rather than
+  leaving the selected dependency hidden in one of them.
+- `collectionClassifierRequirements` binds `UNSUPPLIED_CLASSIFIER_INPUTS` to both `classification` and `dataSets`.
+  Make the Classification field the explanation/repair location for CCDC's selected incompatible Classification,
+  including the Optical-to-Radar edit. Keep the data-set control's own validation. Review other users of this shared
+  declaration so a CCDC presentation fix does not silently change their editor policies.
+- **Acceptance:** a saved selection is visible on opening; incompatible collection inputs explain the problem beside
+  Classification; compatible edits and clearing/replacing the Classification repair it; Cancel preserves applied
+  settings. Reuse the same shared readiness finding and form binding, without a CCDC-specific compatibility checker.
+
+**F3. Align Change Alerts' applied settings, Sources editor and analysis chart.**
+
+- Reproduce the reported `nbr` case through the actual producer update and source observation. Determine separately
+  what the applied model holds, what the editor initially displays, and whether its controls replace an unoffered
+  selection. A changed form draft must not make an applied Sources error disappear without explaining the difference.
+- Retain an unsupported applied monitoring band visibly with its located explanation and an explicit repair. Do not
+  silently switch the monitoring data family or choose another band to make the form or chart look valid. The final
+  Sources/PRC ownership comes from F5/F6, rather than another local defaulting rule.
+- The Sources `MONITORED_MEASURE` declaration currently applies to `IMAGE_OUTPUT`, while chart availability uses
+  `PIXEL_SEGMENTS` and reference chartability. Extend the relevant shared requirement/availability declarations so an
+  incompatible configured monitoring band disables the chart action, closes an open chart and cancels obsolete work.
+  Use the configured band consistently; repair restores segments and monitoring observations.
+- Do not hold the chart to every alerts-image requirement: incomplete output dates or an unrelated export requirement
+  are not automatically chart failures. Preserve valid recipe-reference and segments-asset paths, server observation
+  guards, and pending/unavailable semantics. Keep backend and GUI operation coverage aligned where the chart actually
+  uses the configured monitoring band.
+- **Simplification goal (2026-10-22 discussion):** SRC explains findings from the same shared, operation-specific
+  readiness decision that holds retrieval and charting. Panels consume that decision rather than independently
+  inspecting Sources settings or reimplementing compatibility rules. Do not add an "SRC toolbar is red" check beside
+  the existing gates: toolbar presentation is not the authority, and an unapplied editor draft is not applied state.
+  Inventory the chart/Retrieve checks touched by this work and explicitly remove those made redundant by the shared
+  requirements, while preserving their existing behaviour in focused regressions.
+- Keep necessary consumer responsibilities: request-selected bands/measures add their applicable requirements;
+  pending/unavailable evidence has its own hold state; chart cancellation/closure/recovery remains lifecycle handling;
+  Retrieve rechecks current state at submission; server guards enforce the same requirements. These are not duplicate
+  configuration validators to delete. A relevant applied SRC finding disables the affected action, but SRC stays
+  accessible for repair. Implement this as consolidation of existing decisions, not another validation layer.
+- **Acceptance:** the Optical-to-Radar reproduction has consistent toolbar/editor messages and no chart request for
+  a substituted band; repair returns both chart streams. Confirm cancellation prevents late redraw, native compatible
+  controls still work, existing assets do not acquire their producer's recipe dependencies, and an unrelated output
+  finding does not disable a valid chart. The change report must identify which repeated checks were removed and which
+  request/lifecycle/submission guards remain necessary.
+
+**F4. Sample the Provider's imagery with the Consumer's feature definition.**
+
+- Trace both Classification and Regression reuse before implementing: the feature-selection issue exists in both,
+  although Classification's `getSamples$` and Regression's `getTrainingData$` are different execution paths. Apply the
+  same imagery/feature ownership principle, preserving class versus value labels and Regression's unnormalised path.
+- Provider owns its points and input imagery; Consumer defines the bands, derived indexes/combinations and covariates
+  it trains on. Derive those features on each point-contributing Provider's imagery, even if Provider's own band
+  selection omits them. Nested providers retain their own imagery, locations and sampling scale. Do not resample
+  everything over Consumer's imagery, mutate Consumer's selected bands, or persist sampled rows into either recipe.
+- Update execution and the shared training requirements as one contract. Currently `missingTrainingFeatures` compares
+  Consumer features to `ownFeatures(record.model, describedInputs(...))`, and Provider `TRAINING_DATA` validates its
+  own band sets. Reassess both against the features actually sampled for Consumer: changing only execution would leave
+  valid reuse refused, and removing the refusal would leave genuinely unsupported features unguarded. Provider's own
+  image/classifier still uses its own selections and keeps its own applicable findings.
+- Describe the Consumer feature definition once and establish whether each contributing Provider input can derive it.
+  Reuse shared band/index/covariate rules and the existing graph, evidence acquisition and finding attribution. Do not
+  add a parallel validator, recipe loader, stored validity flag or an operation for every band selection. Explicitly
+  assess how Consumer-specific sampling affects the existing operation identities before extending any public
+  readiness API. Establish input correspondence for multiple-input recipes before making claims about those cases;
+  existing unknown cases must not become guessed success or guessed incompatibility.
+- Assemble the sampling expression/training data outside the per-scene mapping, as `collection.js` already does for
+  `getTrainingData$()`, and reuse it for the collection. Preserve configured row ordering and empty/mixed/nested reuse
+  semantics. Apply Consumer normalisation once with Consumer's statistics; Provider classifier settings must not
+  transform those reused rows. No global cache or Earth Engine internal evaluation-count guarantee is implied.
+- **Acceptance:** Provider selects `red` over imagery containing `red,nir`, Consumer requests both, and reuse succeeds;
+  truly missing/underivable Provider imagery still gives a located finding; removing all Provider imagery remains
+  refused and repairs recover. Cover nested and mixed branches, indexes/covariates, unchanged no-reuse controls and
+  missing/unavailable evidence. Compare one-scene and many-scene construction to show no per-scene resampling, then
+  extend the controlled live numerical check to the new contract and retain its whole-row/prediction comparisons.
+
+**F5/F6. Make settings ownership explicit instead of automatically overwriting groups.**
+
+- Audit each Sources and PRC field from producer through monitoring execution, not just matching property names.
+  Record the owner, whether it must match, why a mismatch is invalid, where the effective value is read, and whether
+  that value exists in segments-asset metadata. Distinguish matching units/corrections needed for comparisons from
+  options that merely filter observations or configure a producer-only computation. Do not lock all of PRC by default.
+- **Agreed direction:** a genuinely required match is source-owned and shown read-only, labelled as coming from the
+  reference. Execution, editor values, readiness and submitted tasks use that same effective value. Do not merely
+  disable a control holding a stale copy. Unrelated source changes do not overwrite editable consumer fields.
+- For a recipe reference, use the authoritative current producer settings; for a segments asset, use its recorded
+  settings without loading a private producer. Treat unavailable required metadata explicitly; do not assume a match,
+  fetch inaccessible history, or silently invent a value. State any storage/import compatibility implications before
+  changing persisted fields; existing editable overrides must not be silently discarded on opening a recipe.
+- **Recommendation after code assessment, not yet agreed:** seed editable defaults when the first reference is applied
+  while creating a new Change Alerts recipe. State in the creation flow that Sources/PRC defaults came from that
+  reference; the following panels show the actual editable values. Thereafter they belong to Change Alerts. Replacing
+  a reference preserves these settings by default and may expose incompatibilities through normal shared readiness.
+  Offer an explicit "Use reference settings" action for a user who wants to copy the new reference's editable defaults.
+  Metadata refreshes and reopening a recipe are never requests to replace settings. Do not turn this into automatic
+  Optical-to-Radar switching for fields the audit classifies as editable.
+- **Acceptance:** editing producer property A cannot reset consumer override B; re-observing unchanged evidence and
+  title/layout changes are inert. A source-owned value is consistently read-only and used by execution after producer
+  changes. Asset-backed consumers work from metadata alone. Reopening and Cancel preserve user-owned settings; stale
+  output/observation requests are withdrawn when effective computation changes, then recover through existing holds.
+
+**F6 option assessment (2026-10-22; recommendation, not an implemented or approved policy).**
+
+| Option for editable settings | Benefit | Main drawback | Assessment |
+| --- | --- | --- | --- |
+| Always start from generic Change Alerts defaults; never copy | Minimal implicit behaviour | The defaults are optical and can be a poor starting point for radar/Planet references; users must reconstruct a suitable configuration | Too much setup for initial creation. |
+| Automatically copy whenever a reference is selected/replaced | Convenient matching starting values | Replacing the reference can erase deliberate consumer choices; cancelling/retrying or late metadata can make the replacement surprising | Do not use as the default for an existing configured consumer. |
+| Keep automatically following producer changes, perhaps with per-field override tracking | Unedited fields remain up to date | Requires ownership/baseline tracking and conflict rules; does not guarantee editable settings must match scientifically; retains hidden changes | More machinery and more implicit behaviour than this task calls for. |
+| Copy editable defaults at initial creation, then preserve them; allow explicit copying later | Useful initial setup with clear consumer ownership | A replacement can temporarily leave incompatible monitoring settings, which must be explained and repairable | Recommended, combined with source-owned read-only fields from F5. |
+
+- **Observed implementation risk:** `monitoringSettings` compares against `ui.sourceEvidenceApplied`. That state is
+  transient and initialized afresh on recipe load. Its first observation in a reopened editor can therefore propose
+  settings again even though the persisted recipe already contains deliberate overrides. The implementation must
+  distinguish a new, explicitly applied reference from the first metadata answer in a browser session. Do not add a
+  persisted "copied once" flag merely to patch that observation callback; prefer the existing explicit creation /
+  reference-Apply boundary and keep observation responsible for evidence.
+- **Lifecycle cases:** first reference in a genuinely new recipe gets a coherent initial set of editable defaults;
+  opening/importing an existing configured recipe does not initialize again; replacing a reference keeps consumer-owned
+  settings; reapplying the same reference, refreshing metadata, a source edit and a reference draft followed by Cancel
+  do not copy. Required linked fields remain source-owned under all of these cases, independently of editable copying.
+- **Explicit copying:** show which editable Sources/PRC values will be replaced in the normal form flow, then commit
+  them through Apply so Cancel can leave the recipe unchanged. Copy only the monitoring settings F5 identifies, as a
+  coherent configuration rather than merging incompatible data families. Do not copy Classification, breakpoint
+  bands, CCDC fitting parameters, monitoring dates or Change Alerts' detection thresholds. This does not require a new
+  source-following mode, per-field override flags or stored producer snapshots.
+- **Read-only assets and timing:** use the recipe/asset evidence already acquired for the selected reference; never
+  fetch a private producer behind a shared asset. If optional editable-default metadata is absent, keep usable consumer
+  defaults and explain that copying is unavailable; assess missing mandatory metadata separately under F5. A late
+  metadata result must not overwrite edits or a newly selected reference. Initialization/copying must be part of the
+  intended form action, not a delayed mutation after Apply when the user has moved on.
+- **Targeted checks before adoption:** reopen a saved recipe with overrides in a fresh session; replace optical with
+  radar with/without explicit copying; cancel the replacement/copy; edit while metadata is pending; re-export the same
+  asset; and open an asset with no optional configuration metadata. Assert both the displayed values and applied model
+  and keep relevant operation holds, avoiding tests that only prove one callback was called.
+
+**F7. Copy/paste layer visualization parameters.**
+
+- Add discoverable Copy/Paste actions for rendering parameters in the existing layer/visualization UI. Transfer the
+  visualization only; do not replace the destination layer's identity, recipe/source, AOI or processing settings.
+- Reuse the visualization model and existing validation. Show incompatible destination bands or invalid parameters
+  clearly; do not silently change data sources or paste an entire recipe. Keep this a separate feature, without
+  expanding the readiness follow-ups into a general layer-template framework.
+- **Acceptance:** compatible layers can share a style, destination identity/source remain unchanged, incompatible
+  bands have an understandable outcome, and existing visualization save/reopen behaviour is preserved. Define exact
+  transferable fields and clipboard behaviour in the small implementation proposal before adding controls.
+
+**F8. Fix the concrete chart-layout and Retrieve-message regressions.**
+
+- Reproduce starting a chart, changing recipe tabs before it finishes, allowing data to arrive while hidden, and
+  returning. Cover Time Series and CCDC and shared graph users where the reproduction applies. Inspect actual panel
+  and graph dimensions while hidden and on reactivation. Resize/re-layout only when visible dimensions are valid;
+  do not fix this by refetching identical Earth Engine data or discarding every inactive chart. Preserve normal
+  tab switches, cancellation and multiple recipe maps. A real-browser check is needed for actual layout; a DOM-only
+  mounted test cannot by itself establish the rendered dimensions.
+- Reproduce the Time Series Retrieve warning in a fully working configuration, with no Classification and with a
+  working Classification, before/after selecting native and classified indicators. Trace which render/gate path emits
+  the message and whether its missing-band list is actually non-empty. Show an unavailable-selection warning only for
+  a real unavailable selected band, naming it. An empty selection uses the existing selection rule, not a fabricated
+  missing-band message. A valid settled selection shows no error and submits successfully.
+- Keep these fixes independent of F9: hiding the warning by disabling the entire recipe would not correct its
+  appearance on valid configurations. Record the actual root causes and regression witnesses before marking complete.
+
+**F9. Assess and consolidate selected-Classification validity for Time Series and CCDC.**
+
+- **User's proposed contract:** selecting a Classification makes it part of the configured analysis. If it cannot
+  supply a usable classifier, Time Series and CCDC are invalid for their chart/retrieval operations even when the
+  requested measures and CCDC breakpoints are native. Explain the problem in SRC beside Classification, mark SRC,
+  disable actions, close an open chart and cancel obsolete work. Repair releases them. Keep supported classified
+  choices selected/offered through a training failure so the analysis resumes as configured after repair; do not
+  silently remove the Classification, change the chosen bands or add per-band error highlighting instead.
+- This deliberately revisits the former rule that native requests bypass training readiness. Native output may still
+  be computationally possible, but under this policy the user must repair or explicitly deselect the configured
+  Classification to proceed. Record that distinction rather than presenting the change as an execution dependency
+  discovered by tracing code. Readiness may acquire training-input evidence for a native request; native execution
+  must still not actually sample/train merely to enforce a configuration policy.
+- Assess a static shared `CLASSIFIER` need for selected Classifications on the affected base operations, preserving
+  missing-selection and decision-tree applicability. Use the existing Classification requirements, not its full
+  rendered `IMAGE_OUTPUT` and not a panel-specific "SRC is red" validator. Apply the same policy to server and GUI;
+  an open Retrieve panel still checks current state on submission. Do not implicitly extend this policy to every
+  recipe family, map product or previously unguarded route without naming the effect.
+- **Required simplification:** inventory `CLASSIFIED_COLLECTION`, `requestStages`, the additional server settling,
+  `BandOperationWatch`, requested-band holds and classified-band messages. Remove what becomes redundant when the
+  base operations already require the selected classifier. Keep request-output capability checks, useful band/measure
+  derivations, current-state offer/submission guards, save agreement, evidence handling and chart lifecycle. Shared
+  rules keep one owner; replacing every old hold with a new parallel SRC hold is not the intended outcome.
+- Explicitly review count images, native chunks/exports, classified/native breakpoints, request error precedence and
+  downstream CCDC consumers. A training failure promoted into the base configured checks can now precede a requested
+  capability refusal; do not claim the old capability-before-additional-training order is unchanged. Preserve the
+  coded capability contract when the configured source is otherwise valid. Do not install a full image-output gate
+  on pixel charts or remove the consumer-versus-reference AOI distinction.
+- **Acceptance:** for both Time Series and CCDC, native and classified requests over a broken selected Classification
+  are consistently held before product work; SRC and its editor identify the same problem; repair and explicit
+  deselection recover; choices survive repair; controls with no Classification and a valid one work. Replace the old
+  native-bypass assertions intentionally, record the behavioural cost, and verify the new shared declarations allow
+  deletion of the extra training-only paths without losing capability errors or submission-race protection.
+
+**F10. PyEO feedback must lead to a useful repair.**
+
+- Reproduce Optical-to-Radar Classification input changes with the index gate off and on, and record the actual SRC
+  and OPT findings separately. `UNSUPPLIED_CLASSIFIER_INPUTS` and `UNAVAILABLE_GATE_INDEX` are different rules; the
+  latter can concern baseline or monitoring imagery. The user report alone does not establish which OPT code fired.
+- If only changing the selected Classification/its imagery can repair a fault, explain it at SRC's Classification
+  field rather than directing the user to an unrelated OPT control. Avoid cascading toolbar errors for the same
+  upstream incompatibility. Keep OPT explanations for a genuine local choice that can be repaired by selecting a
+  supported index or changing the gate, with readiness still enforcing all applicable shared rules.
+- Use the existing findings and presentation bindings; do not invent a second index/compatibility validator or simply
+  suppress every OPT mark. **Acceptance:** each marked section offers the corresponding repair, upstream input repair
+  clears the relevant feedback, genuine index-gate failures remain visible, and gate-off controls acquire no gate
+  requirement.
+
+**Later usability/performance features from the 2026-10-23 feedback (not prerequisites for F8-F10).**
+
+- CCDC Slice chart labels should use human-readable band names when available, including recipe references. Keep raw
+  names for request identity and a fallback for asset measures without labels; test that labels do not alter requests.
+- Investigate AOI-layer redraws on unrelated recipe edits. Base updates on effective geometry/source changes; preserve
+  real geometry changes and pending-read cancellation. Measure which updates trigger work before adding caching.
+- Mark the charted pixel on the corresponding map. Follow the actual recipe/pixel, update when it changes, and avoid
+  stale markers on another tab or after chart closure. Define the marker interaction separately from chart validity.
+- Upstream recipe-update notification over WebSockets remains a separate future feature. The reported stale-copy
+  tests passed; it is not a prerequisite for this correction round and does not replace existing revision currency.
+
+**Verification and boundaries:** use focused regressions for each changed contract and combine browser rechecks over
+the existing fixtures. Update old manual expectations when F4/F6 change the behaviour they describe; do not silently
+relabel the earlier results as evidence of the new contract. Continue recording the user's remaining browser results.
+The initial request-dependent readiness packet below is complete, but its clean automated run does not cover these
+unimplemented follow-ups. F9 may replace part of that packet's request-dependent training design; its historical
+verification remains evidence of the former contract. Broader preview gating, propagated request contexts and
+executed-edge closure work remain deferred. No implementation slice count is asserted until the F4 contract, F5
+ownership audit and F9 policy assessment establish the scope.
+
+#### Current delivery plan (updated 2026-10-23)
+
+The table below records the completed initial classifier/readiness packet. The active follow-ups are F1-F10 in
+"Next steps from browser feedback" above; the packet's completion does not mean the reported browser issues are
+resolved. The completed histories that follow are reference material, not additional slices to implement. A shared
+backend helper accepting a Classification is not, by itself, a reason to expand a recipe's validation or GUI.
 
 | Order | Remaining work | Status and next step | Estimated implementation slices |
 | --- | --- | --- | --- |
@@ -2826,10 +3302,11 @@ by itself, a reason to expand a recipe's validation or GUI.
 | 3 | Training readiness for classified bands requested by Time Series charts/downloads and CCDC charts/exports. | Complete (2026-10-21): Time Series pixel observations ("Time Series' classified chart band"); CCDC's chart, with the stage generalised as `CLASSIFIED_COLLECTION` and the server sequence and band hold shared ("CCDC's requested chart bands"); Time Series Retrieve ("Time Series Retrieve's classified indicators"); CCDC export bands, to assets ("CCDC's requested export bands") and to Drive and SEPAL ("CCDC's Drive and SEPAL image exports"); CCDC Retrieve's preflight ("CCDC Retrieve's classified measures"). Remaining, deferred: direct previews (which could use the same root stage) and wrappers asking a CCDC source for classified measures (which need a propagated context). | 0 |
 | 4 | Change Alerts' observation request needs an explicit server-side operation boundary. | Complete (2026-10-21): the chart sends the applied recipe; the job derives the observed collection (`observedCollection`) and holds it to Time Series' `PIXEL_OBSERVATIONS`; untyped requests are refused. See "Pixel observations". | 0 |
 
-**Planning estimate: no implementation slice remains** for request-dependent readiness; the browser verification
-checkpoint below. This is an estimate, not a count of proven defects or a promise of one commit per slice. Reassess the
-split after the request-dependent design. Design reports, review corrections and focused
-refactoring are not new rollout items.
+**Initial packet:** no implementation slice remains in its planned request-dependent readiness rollout. Browser
+verification has now produced the concrete follow-ups F1-F10 above; they are not covered by that completion statement.
+Reassess their implementation split after the sampling-contract review, settings-ownership audit and selected-source
+policy assessment. Design reports,
+review corrections and focused refactoring are not independently counted rollout items.
 
 **Finish this round when:** the reviewed dependencies and requirements cover the training and collection work these
 operations actually run,
@@ -2845,8 +3322,10 @@ separate decision changes it. Broader coverage listed under "Deferred beyond thi
 - The full GUI run includes the later deselection, requested-band, legacy-indicator and submission-offer fixes.
   Live numerical normalisation checks passed at the earlier baseline recorded under "Verification status of the
   readiness and normalisation changes"; keep that evidence separate from the later GUI and route verification.
-- The signed-in browser batch and GUI smoke tests are still pending. Use the checklist in that verification entry,
-  and include clearing and reselecting a Classification in Time Series/CCDC charts and Time Series Retrieve.
+- The signed-in browser batch has partial user-reported results on 2026-10-22 and 2026-10-23, recorded under "Browser feedback".
+  The remaining results and relevant smoke tests are still pending. Resolve the reported issues or make an explicit
+  scope decision before treating the batch as passed; include clearing and reselecting a Classification in Time
+  Series/CCDC charts and Time Series Retrieve.
 - Check actual preview tiles or chart responses, as appropriate, after repair. Enabled buttons alone are not an
   execution check. Complete this browser checkpoint before pushing the accumulated changes.
 
@@ -2878,7 +3357,8 @@ separate decision changes it. Broader coverage listed under "Deferred beyond thi
   SEPAL image exports");
 - a propagated request context for wrappers asking a CCDC source for classified measures (CCDC Slice base bands,
   Masking, Stack, Band Math);
-- shared form defaults, duplicated input editors, reference-feedback navigation and tab-indicator experiments.
+- shared form defaults, duplicated input editors, generic reference-feedback navigation beyond F1's targeted training
+  item repair path, and tab-indicator experiments.
 
 These are recorded boundaries or future decisions, not automatically scheduled fixes. Promote one into a new round
 only for an agreed need or a confirmed failure. The detailed follow-ups below retain their context.
