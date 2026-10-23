@@ -87,10 +87,11 @@ const isInitialized = recipe =>
     selectFrom(recipe, 'ui.initialized')
 
 export const saveRecipe = tab => {
-    const recipe = {
-        ...select(recipePath(tab.id)),
-        title: tab.title
+    const loadedRecipe = select(recipePath(tab.id))
+    if (!loadedRecipe) {
+        return
     }
+    const recipe = {...loadedRecipe, title: tab.title}
     if (isInitialized(recipe)) {
         actionBuilder('SET_RECIPE_SAVED', recipe.id)
             .del(recipePath(recipe.id, 'ui.unsaved'))
@@ -98,6 +99,11 @@ export const saveRecipe = tab => {
             .dispatch()
         updateRecipeList(recipe)
         save$.next(recipe)
+    } else {
+        // A recipe still in its setup wizard is not saved yet, but its exports are already named after its title.
+        actionBuilder('SET_RECIPE_TITLE', recipe.id)
+            .set(recipePath(recipe.id, 'title'), recipe.title)
+            .dispatch()
     }
 }
 
