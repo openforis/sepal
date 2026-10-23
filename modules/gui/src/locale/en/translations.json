@@ -45,6 +45,7 @@
     },
     "googleAccountRequired": "Some apps are unavailable. To enable them, connect your SEPAL account to your Google account.",
     "info": "Show information about this app",
+    "landingTab": "App list",
     "launch": {
       "startingSession": "Starting session...",
       "startingServer": "Starting server...",
@@ -4954,6 +4955,7 @@
       "noProjectOption": "[no project]"
     },
     "recipe": {
+      "landingTab": "Recipes",
       "lastUpdate": "Last update",
       "loading": "Loading recipes",
       "loadingError": "Failed to load recipes. Please reload page to try again.",
@@ -6210,6 +6212,7 @@
     }
   },
   "terminal": {
+    "menuTab": "Instances",
     "server": {
       "error": "Failed to start terminal"
     }
