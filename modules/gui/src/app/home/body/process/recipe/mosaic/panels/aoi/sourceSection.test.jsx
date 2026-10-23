@@ -83,7 +83,7 @@ const show = ({recipeId}) => {
                 }
             },
             recipes: [],
-            projects: [],
+            folders: [],
             tabs: []
         }
     }

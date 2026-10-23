@@ -195,6 +195,13 @@
     flex-grow: 0;
 }
 
+/* A label may be narrower than what it holds, so that content which cuts itself to fit, with an ellipsis,
+   can do so inside a button of fixed width. */
+.button>.contents,
+.button>.contents>span.label {
+    min-width: 0;
+}
+
 /* labelStyle: smallcaps */
 
 .button.labelStyle-smallcaps>.contents {

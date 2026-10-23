@@ -109,7 +109,7 @@ class _Tabs extends React.Component {
     }
 
     renderTabHandle(tab) {
-        const {selectedTabId, statePath, tabPrefix, readOnlyTitles, onTitleChanged} = this.props
+        const {selectedTabId, statePath, tabPrefix, tabTooltip, readOnlyTitles, onTitleChanged} = this.props
         const {dragging} = this.state
         return (
             <TabHandle
@@ -119,6 +119,7 @@ class _Tabs extends React.Component {
                 title={tab.title}
                 placeholder={tab.placeholder}
                 prefix={tabPrefix ? tabPrefix(tab) : undefined}
+                tooltip={tabTooltip ? tabTooltip(tab) : undefined}
                 readOnlyTitle={readOnlyTitles}
                 selected={tab.id === selectedTabId}
                 tabBusy$={this.tabBusy$}
@@ -346,10 +347,10 @@ class _Tabs extends React.Component {
     }
 
     render() {
-        const {label, tabs} = this.props
+        const {tabs} = this.props
         return (
             <SectionLayout className={styles.container}>
-                <TopBar label={label}>
+                <TopBar label={this.getLabel()}>
                     {this.renderTabHandles()}
                 </TopBar>
                 <Content className={styles.tabContents}>
@@ -362,6 +363,12 @@ class _Tabs extends React.Component {
                 </Content>
             </SectionLayout>
         )
+    }
+
+    getLabel() {
+        const {label, selectedLabel, selectedTabId, tabs} = this.props
+        const selectedTab = tabs.find(({id}) => id === selectedTabId)
+        return (selectedLabel && selectedTab && selectedLabel(selectedTab)) || label
     }
 
     initialize() {
@@ -409,9 +416,11 @@ Tabs.propTypes = {
     isLandingTab: PropTypes.func,
     maxTabs: PropTypes.number,
     readOnlyTitles: PropTypes.any,
+    selectedLabel: PropTypes.func,
     selectedTabId: PropTypes.string,
     tabActions: PropTypes.func,
     tabPrefix: PropTypes.func,
+    tabTooltip: PropTypes.func,
     tabs: PropTypes.array,
     onAdd: PropTypes.func,
     onClose: PropTypes.func,

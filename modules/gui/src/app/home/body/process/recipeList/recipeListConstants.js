@@ -1,10 +1,4 @@
-import {msg} from '~/translate'
+export const PATH_SEPARATOR = ' / '
 
-export const PROJECT_RECIPE_SEPARATOR = ' / '
-
-export const NO_PROJECT_SYMBOL = '<no project>'
-
-export const NO_PROJECT_OPTION = () => ({
-    value: NO_PROJECT_SYMBOL,
-    label: msg('process.project.noProjectOption')
-})
+// The root has no name of its own: a path starts with it, as a file path starts with a slash.
+export const ROOT_LABEL = '/'

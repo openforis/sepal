@@ -32,7 +32,7 @@ vi.mock('~/app/home/body/process/recipeFormPanel', () => ({
     recipeFormPanel: () => Component => Component
 }))
 
-vi.mock('~/app/home/body/process/recipeList/projects', () => ({updateProject: vi.fn()}))
+vi.mock('~/app/home/body/process/recipeList/folderActions', () => ({updateFolder: vi.fn()}))
 vi.mock('~/classComponent', () => ({asFunctionalComponent: () => Component => Component}))
 vi.mock('~/connect', () => ({connect: () => Component => Component}))
 vi.mock('~/translate', () => ({msg: key => Array.isArray(key) ? key.join('.') : key}))
@@ -167,8 +167,8 @@ const baseProps = ({formInputs, submitTask = vi.fn(), ...overrides} = {}) => ({
     submitTask,
     // Every declared type's migration fallback, for its verified scalar bands.
     task: {fallbackPyramidingPolicy: {'.default': 'mean'}},
-    projectId: null,
-    projects: [],
+    folderId: null,
+    folders: [],
     recipePlaceholder: 'recipe',
     recipeTitle: 'Recipe',
     scaleTicks: [10, 30],
