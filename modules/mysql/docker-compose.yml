@@ -13,7 +13,7 @@ services:
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/mysql:${SEPAL_VERSION:-latest}"
     container_name: mysql
     ports:
-      - "${SEPAL_IP}:3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - "${SEPAL_DATA_DIR}/mysql:/data"
       # Parent image volume

@@ -3,13 +3,13 @@ import {getLogger} from '#sepal/log'
 const log = getLogger('userProvisioning')
 
 // Lazy provisioning: the SSH home + keypair and the SEPAL data home are NOT created at
-// signup/invite — only when the user leaves PENDING (activate / password reset), so users who never
+// signup/invite — only when the user leaves PENDING (password reset), so users who never
 // activate cost no filesystem resources. Always runs the (idempotent) provision script, so a user
 // leaving PENDING is guaranteed completely provisioned — home dir, data home and keypair — even
 // when a key is already stored but the filesystem is missing. Callers decide when to invoke it;
 // provision recursively chowns the data home, so don't call it on routine requests for
 // already-provisioned users. Never throws: web access must not depend on provisioning; a failure
-// here is logged and retried on the next activate/reset.
+// here is logged and retried on the next password reset.
 export const createEnsureProvisioned = ({repository, provision}) =>
     async user => {
         // Never invent a POSIX identity: chowning with a made-up uid/gid could orphan existing files.

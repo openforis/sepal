@@ -68,18 +68,21 @@ const renderHtml = ({subject, content, contentType}) => {
 const send = async ({id, email: {from: tentativeFrom, to, cc, bcc, subject = '', content = '', contentType = 'text/plain'}}) => {
     await transport.verify()
     const from = getFrom(tentativeFrom)
+    let html
     try {
-        const html = renderHtml({subject, content, contentType})
-        const email = {from, to, cc, bcc, subject, html}
-        log.isTrace()
-            ? log.trace(`<${id}> Sending email ${tag({from, to, cc, bcc, subject})}\n`, html)
-            : log.debug(`<${id}> Sending email ${tag({from, to, cc, bcc, subject})}`)
-        const status = await transport.sendMail(email)
-        log.info(`<${id}> Email sent ${tag({from, to, cc, bcc, subject})}`)
-        log.debug(() => [`<${id}> Email status:`, status])
+        html = renderHtml({subject, content, contentType})
     } catch (error) {
         log.warn(`<${id}> Ignoring email ${tag({from, to, cc, bcc, subject})}`, error)
+        return
     }
+    const email = {from, to, cc, bcc, subject, html}
+    log.isTrace()
+        ? log.trace(`<${id}> Sending email ${tag({from, to, cc, bcc, subject})}\n`, html)
+        : log.debug(`<${id}> Sending email ${tag({from, to, cc, bcc, subject})}`)
+    // Let send failures reject, so the queue retries the job.
+    const status = await transport.sendMail(email)
+    log.info(`<${id}> Email sent ${tag({from, to, cc, bcc, subject})}`)
+    log.debug(() => [`<${id}> Email status:`, status])
 }
 
 export {renderHtml, send, tag}
