@@ -244,7 +244,8 @@ class _Tasks extends React.Component {
     }
 
     renderTaskList(tasks) {
-        const itemKey = task => `${task.id}|${this.getHighlightMatcher()}`
+        // Rows redraw only when their key changes, and a recipe's folders can load or change after its task.
+        const itemKey = task => `${task.id}|${this.getHighlightMatcher()}|${this.getRecipePath(task)}`
         return (
             <FastList
                 items={tasks}
