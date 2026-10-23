@@ -6010,8 +6010,8 @@
       "id": "Task ID",
       "status": "Status",
       "recipeName": "Recipe Name",
-      "origin": "Origin",
       "recipeType": "Recipe Type",
+      "exportKind": "Export type",
       "recipeId": "Recipe ID",
       "creationTime": "Submitted at",
       "updateTime": {
@@ -6032,7 +6032,8 @@
         "status": "Status",
         "conf": "Recipe configuration",
         "location": "Location",
-        "progress": "Progress"
+        "progress": "Progress",
+        "exportConf": "Export configuration"
       },
       "sharing": {
         "label": "Access",
@@ -6071,7 +6072,19 @@
         "SAMPLING_DESIGN": "Sampling Design",
         "RECIPE_REF": "Recipe Reference",
         "ASSET": "Asset"
-      }
+      },
+      "kindNames": {
+        "IMAGE": "Image",
+        "TABLE": "Table"
+      },
+      "originNames": {
+        "RECIPE": "Recipe",
+        "NOTEBOOK": "Notebook",
+        "SCRIPT": "Script",
+        "APP": "App",
+        "SANDBOX": "Sandbox"
+      },
+      "originNotRecorded": "Origin not recorded"
     },
     "remove": {
       "tooltip": "Remove task"
