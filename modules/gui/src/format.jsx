@@ -82,6 +82,14 @@ const fractionalYearsToDate = fractionalYear => {
     return startOfYear.add(Math.floor(daysOfYear * fraction), 'days').toDate()
 }
 
+// YYYYDDD, e.g. 2023154 for 3 June 2023, with the day of year counted from 1.
+const yearDayOfYearToDate = yearDayOfYear => {
+    const rounded = Math.round(yearDayOfYear)
+    return moment({year: Math.floor(rounded / 1000), month: 0, date: 1})
+        .dayOfYear(rounded % 1000)
+        .toDate()
+}
+
 // scale: the magnitude of the input value (e.g. 'k')
 // minScale: the minimum magnitude of the output value (e.g. '')
 // precisionDigits: the total number of digits of the output value (e.g. 34.56 = 4 digits)
@@ -241,6 +249,7 @@ export default {
     fullDateTime,
     fullDate,
     fractionalYearsToDate,
+    yearDayOfYearToDate,
     date,
     fileSize,
     number,

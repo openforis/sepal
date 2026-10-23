@@ -2050,6 +2050,152 @@
       },
       "tabPlaceholder": "Change_alerts"
     },
+    "dias": {
+      "create": "DIAS",
+      "description": "Generate multi-sensor deforestation alerts using the Disturbance Index (DI) Z-score method.",
+      "tabPlaceholder": "DIAS",
+      "chartPixel": {
+        "start.tooltip": "Chart the Disturbance Index for pixel",
+        "cancel.tooltip": "Cancel Disturbance Index charting",
+        "loadObservations.error": "Failed to load the Disturbance Index observations.",
+        "noData": "No Disturbance Index observations for this pixel.",
+        "notForest": "This pixel is outside the forest mask, so DIAS raises no alerts here.",
+        "date": "Date",
+        "sensor": "Sensor",
+        "di": "DI",
+        "threshold": "Threshold"
+      },
+      "layers": {
+        "imageLayer": {
+          "sensors": "Sensors",
+          "dates": "Dates",
+          "forestMask": "Forest mask"
+        }
+      },
+      "panel": {
+        "aoi": {
+          "button": "AOI",
+          "tooltip": "Specify the area of interest"
+        },
+        "dates": {
+          "button": "DAT",
+          "title": "Date range",
+          "tooltip": "Specify the date range to compute the Disturbance Index and look for alerts in",
+          "form": {
+            "startDate": {
+              "label": "Start date",
+              "tooltip": "The first date to include in the Disturbance Index stream",
+              "required": "Start date is required",
+              "malformed": "Malformed start date",
+              "beforeEnd": "Start date must be before end date"
+            },
+            "endDate": {
+              "label": "End date",
+              "tooltip": "The last date to include in the Disturbance Index stream",
+              "required": "End date is required",
+              "malformed": "Malformed end date"
+            }
+          }
+        },
+        "sources": {
+          "button": "SRC",
+          "title": "Sensors",
+          "tooltip": "Select which sensors to combine into the Disturbance Index stream",
+          "form": {
+            "atLeastOneSensor": "At least one sensor must be enabled",
+            "landsat": {
+              "label": "Landsat",
+              "dataSets": {
+                "label": "Landsat missions",
+                "required": "At least one Landsat mission must be selected"
+              }
+            },
+            "sentinel2": {
+              "label": "Sentinel-2"
+            },
+            "sentinel1": {
+              "label": "Sentinel-1",
+              "orbits": {
+                "label": "Orbits",
+                "required": "At least one orbit must be selected",
+                "ASCENDING": "Ascending",
+                "DESCENDING": "Descending"
+              }
+            },
+            "planet": {
+              "label": "Planet",
+              "asset": {
+                "label": "Daily PlanetScope asset",
+                "placeholder": "Select an ingested PlanetScope ImageCollection asset",
+                "required": "A PlanetScope asset must be specified"
+              }
+            }
+          }
+        },
+        "forestMask": {
+          "button": "FOR",
+          "title": "Forest mask",
+          "tooltip": "Select the primary forest mask used to restrict where alerts can fire and to normalize the Disturbance Index",
+          "recipe": {
+            "label": "Saved SEPAL recipe",
+            "title": "Saved SEPAL recipe"
+          },
+          "asset": {
+            "label": "Earth Engine asset",
+            "title": "Earth Engine asset"
+          },
+          "hansen": {
+            "label": "Hansen Global Forest Change",
+            "title": "Hansen Global Forest Change"
+          },
+          "form": {
+            "asset": {
+              "label": "Forest mask asset",
+              "placeholder": "Select a forest mask Image or ImageCollection asset",
+              "tooltip": "Unmasked pixels are treated as forest",
+              "required": "An asset must be specified"
+            },
+            "recipe": {
+              "required": "A recipe must be specified"
+            },
+            "threshold": {
+              "label": "Forest threshold",
+              "tooltip": "Minimum tree canopy cover in year 2000 (Hansen Global Forest Change) for a pixel to be treated as forest. A pixel that lost forest before the start of the analysis period is excluded regardless of this threshold.",
+              "value": "{value}%",
+              "required": "A forest threshold must be specified"
+            }
+          }
+        },
+        "options": {
+          "button": "OPT",
+          "title": "Alert options",
+          "tooltip": "Configure the Disturbance Index threshold and confirmation window",
+          "form": {
+            "threshold": {
+              "label": "DI threshold",
+              "tooltip": "Minimum Disturbance Index (standard deviations from the forest population) for an observation to count towards an alert",
+              "value": "{value} SD"
+            },
+            "consecutiveObservations": {
+              "label": "Consecutive observations",
+              "tooltip": "Number of consecutive DI observations at or above the threshold required to confirm an alert"
+            },
+            "cloudMasking": {
+              "label": "Cloud masking",
+              "tooltip": "How aggressively to mask clouds, shadows and snow in Landsat and Sentinel-2 imagery before computing DI. Radar (Sentinel-1) is unaffected by clouds; PlanetScope is masked separately.",
+              "OFF": "Off",
+              "LIGHT": "Light",
+              "LIGHT.tooltip": "Uses only pre-computed cloud masks (Landsat's QA band, Sentinel-2's Cloud Score+ band) - fastest option, recommended for on-the-fly preview to avoid timeouts.",
+              "MODERATE": "Moderate",
+              "AGGRESSIVE": "Aggressive"
+            }
+          }
+        },
+        "retrieve": {
+          "tooltip": "Retrieve confirmed alerts"
+        }
+      }
+    },
     "classification": {
       "bands": {
         "class": "Class",

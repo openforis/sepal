@@ -7,6 +7,7 @@ import ccdcSlice from './recipe/ccdcSlice/ccdcSlice'
 import changeAlerts from './recipe/changeAlerts/changeAlerts'
 import classChange from './recipe/classChange/classChange'
 import classification from './recipe/classification/classification'
+import dias from './recipe/dias/dias'
 import indexChange from './recipe/indexChange/indexChange'
 import landTrendr from './recipe/landTrendr/landTrendr'
 import masking from './recipe/masking/masking'
@@ -39,6 +40,7 @@ export const registerRecipeTypes = () => {
     addRecipeType(indexChange())
     addRecipeType(remapping())
     addRecipeType(changeAlerts())
+    addRecipeType(dias())
     addRecipeType(pyeoAlerts())
     addRecipeType(baytsHistorical())
     addRecipeType(baytsAlerts())
