@@ -109,7 +109,7 @@ class _Tabs extends React.Component {
     }
 
     renderTabHandle(tab) {
-        const {selectedTabId, statePath, tabPrefix, readOnlyTitles, onTitleChanged} = this.props
+        const {selectedTabId, statePath, tabPrefix, isLandingTab, readOnlyTitles, onTitleChanged} = this.props
         const {dragging} = this.state
         return (
             <TabHandle
@@ -119,7 +119,7 @@ class _Tabs extends React.Component {
                 title={tab.title}
                 placeholder={tab.placeholder}
                 prefix={tabPrefix ? tabPrefix(tab) : undefined}
-                readOnlyTitle={readOnlyTitles}
+                readOnlyTitle={readOnlyTitles || (isLandingTab && isLandingTab(tab))}
                 selected={tab.id === selectedTabId}
                 tabBusy$={this.tabBusy$}
                 closing={tab.ui && tab.ui.closing}
@@ -318,7 +318,7 @@ class _Tabs extends React.Component {
 
     addTab(option) {
         const {onAdd} = this.props
-        const {statePath, tabs, isLandingTab} = this.props
+        const {statePath, tabs, isLandingTab, newTabPlaceholder} = this.props
         if (!this.isAddDisabled()) {
             if (isLandingTab) {
                 const tab = tabs.find(tab => isLandingTab(tab))
@@ -326,7 +326,7 @@ class _Tabs extends React.Component {
                     return selectTab(tab.id, statePath)
                 }
             }
-            addTab(statePath, option?.value, option.placeholder)
+            addTab(statePath, option?.value, option?.placeholder ?? newTabPlaceholder)
         } else {
             onAdd && onAdd()
         }
@@ -365,7 +365,7 @@ class _Tabs extends React.Component {
     }
 
     initialize() {
-        const {tabs, addTabOptions, initializeTypes, statePath} = this.props
+        const {tabs, addTabOptions, initializeTypes, newTabPlaceholder, statePath} = this.props
         if (initializeTypes) {
             initializeTypes.forEach(initializeType => {
                 if (!tabs.find(({type}) => type === initializeType)) {
@@ -375,7 +375,7 @@ class _Tabs extends React.Component {
             })
         } else {
             if (tabs.length === 0) {
-                addTab(statePath)
+                addTab(statePath, undefined, newTabPlaceholder)
             }
         }
     }
@@ -408,6 +408,7 @@ Tabs.propTypes = {
     isDirty: PropTypes.func,
     isLandingTab: PropTypes.func,
     maxTabs: PropTypes.number,
+    newTabPlaceholder: PropTypes.string,
     readOnlyTitles: PropTypes.any,
     selectedTabId: PropTypes.string,
     tabActions: PropTypes.func,

@@ -41,6 +41,7 @@ class _Process extends React.Component {
                     label={msg('home.sections.process')}
                     statePath='process'
                     isLandingTab={this.isLandingTab}
+                    newTabPlaceholder={msg('process.recipe.landingTab')}
                     tabActions={this.renderMenu}
                     onTitleChanged={saveRecipe}
                     onClose={this.onCloseTab}>
