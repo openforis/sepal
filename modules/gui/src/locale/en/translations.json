@@ -82,7 +82,7 @@
       "newSsdSection": "New instance with SSD",
       "newInstanceTitle": "Start new instance",
       "noInstanceType": "No instance type is available. Contact your administrator.",
-      "noSuitableInstance": "No available instance type satisfies this app's requirements ({cpu} CPU / {ram} GB RAM{gpu}). Contact your administrator.",
+      "belowRequirements": "This app recommends an instance with at least {specs}.",
       "alreadyRunning": "This app was already running on another instance — it opened there."
     },
     "admin": {
