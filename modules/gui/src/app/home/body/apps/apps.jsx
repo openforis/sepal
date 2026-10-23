@@ -56,6 +56,7 @@ class _Apps extends React.Component {
                 label={msg('home.sections.app-launch-pad')}
                 statePath='apps'
                 isLandingTab={this.isLandingTab}
+                newTabPlaceholder={msg('apps.landingTab')}
                 readOnlyTitles
                 tabPrefix={this.tabPrefixFor(sessions)}
                 onClose={this.onCloseTab}>
