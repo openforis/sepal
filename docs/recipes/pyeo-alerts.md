@@ -23,7 +23,7 @@ compositions; the latter is not supported by the classification selector.
 | Sources | Classification, monitoring datasets, cloud threshold and From/To classes. |
 | Pre-process | Editable processing options for the monitoring collection. |
 | Dates | Baseline window recorded by prefill and monitoring window used to build the collection. |
-| Detection options | Required detections and optional index-drop threshold. |
+| Detection options | Repeatability and detection thresholds, and optional index-drop threshold. |
 
 The baseline pixels come from the selected Classification, not from rebuilding imagery using PyEO's baseline
 dates. Monitoring images are constructed from PyEO's own datasets, processing options and monitoring dates.
@@ -110,6 +110,23 @@ produce a user-facing validation result, and are refused by readiness before exe
 before dependent reads or collection construction; the shared geometry resolver's absent-AOI meaning, "no
 restriction", is unsuitable here.
 
+### Detection thresholds
+
+OPT saves the thresholds in `model.pyeoAlertsOptions`; `toUolParams` (`lib/js/ee/src/pyeo/params.js`) passes them to
+UoL's parameters. Repeatability and cumulative detections count monitoring images from the first change date on,
+that date's image included; the From/To counts span the whole monitoring period.
+
+| OPT setting | UoL parameter | Default, range | Decides |
+| --- | --- | --- | --- |
+| `minRepeatability` | `percentageProbabilityThreshold` | 50, 10-100 % | `binary_timeseries_decision`, so `fcd_decision_map` |
+| `minCumulativeDetections` | `minRequiredValidatedDetectionsThreshold` | 2, 1-10 | `binary_timeseries_decision`, so `fcd_decision_map` |
+| `minFromDetections` (under More) | `minRequiredFromDetectionsThreshold` | 2, 1-10 | `binary_decision_from_to_map` only |
+| `minToDetections` (under More) | `minRequiredToDetectionsThreshold` | 2, 1-10 | `binary_decision_from_to_map` only |
+
+No range reaches 0: UoL's script reads these thresholds with `|| default`, which would run 0 as the default. OPT
+shows the From/To counts at once when either differs from its default. Recipes saved before `minCumulativeDetections` carry
+`minConsecutiveDetections`, which `toUolParams` and OPT still read.
+
 ### Current index acquisition
 
 The Options panel offers NDVI, NDMI and NBR, filtered by the rules readiness judges the applied gate by
@@ -169,6 +186,10 @@ These are existing limitations or design ideas, not work required to complete th
   calculate it from suitable spectral bands, for either a recipe or asset. Preserve the selected image and its
   masks. This would replace the recipe/asset branch and its wrapped-asset limitation. Shared output and encoding
   contracts come first; no PyEO-specific resolver or encoding convention should compete with them.
+- **Threshold ranges from the result.** UoL asked for the detection sliders to end at the largest
+  `post_fcd_change_count`, `from_class_count` or `to_class_count` in the area. That needs an area-wide reduction of
+  the full classification on every change of AOI, dates or classes before OPT can draw its sliders, and a moving
+  maximum can cut a saved value. The ranges stay fixed until there is a cheap, stable bound.
 - **Index choices and names.** Account for supplied indices as well as computable ones on both baseline and
   monitoring inputs. Unique case-insensitive matching is a possible convenience, retaining the actual band
   name for execution. Ambiguous matches need an explicit outcome; sensor aliases and value semantics cannot

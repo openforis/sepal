@@ -104,7 +104,7 @@ const pyeoOf = (sources, indexGate) => ({
         dates: {monitoringStart: '2024-01-01', monitoringEnd: '2024-06-01'},
         sources: {classification: CLASSIFICATION, dataSets: {SENTINEL_2: ['SENTINEL_2']}, changeFromClasses: [1], changeToClasses: [2], ...sources},
         options: {corrections: ['SR']},
-        pyeoAlertsOptions: {minConsecutiveDetections: 2, ...(indexGate && {indexGate})}
+        pyeoAlertsOptions: {minCumulativeDetections: 2, ...(indexGate && {indexGate})}
     }
 })
 
