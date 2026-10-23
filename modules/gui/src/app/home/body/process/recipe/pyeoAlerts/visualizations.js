@@ -5,7 +5,7 @@ import {selectFrom} from '~/stateUtils'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
-const DATE_PALETTE = ['#DBEAFE', '#0FA2F5']
+const DATE_PALETTE = ['#000000', '#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
 
 const toFractionalYear = (date, fallback) => {
     const m = moment(date, DATE_FORMAT, true)
