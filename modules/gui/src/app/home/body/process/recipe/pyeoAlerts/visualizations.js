@@ -24,14 +24,14 @@ export const getPreSetVisualizations = recipe => {
             bands: ['total_changes'],
             min: 0,
             max: 10,
-            palette: ['#ffffbf', '#d7191c']
+            palette: ['#FFFFFF', '#F70C1E']
         }),
         normalize({
             type: 'continuous',
             bands: ['post_fcd_change_repeatability_pct'],
             min: 0,
             max: 100,
-            palette: ['#ffffd4', '#fed98e', '#fe9929', '#d95f0e', '#993404']
+            palette: ['#DCFCE7', '#17B356']
         }),
         normalize({
             type: 'continuous',

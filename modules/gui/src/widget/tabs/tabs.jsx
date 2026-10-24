@@ -109,7 +109,7 @@ class _Tabs extends React.Component {
     }
 
     renderTabHandle(tab) {
-        const {selectedTabId, statePath, tabPrefix, onTitleChanged} = this.props
+        const {selectedTabId, statePath, tabPrefix, readOnlyTitles, onTitleChanged} = this.props
         const {dragging} = this.state
         return (
             <TabHandle
@@ -119,6 +119,7 @@ class _Tabs extends React.Component {
                 title={tab.title}
                 placeholder={tab.placeholder}
                 prefix={tabPrefix ? tabPrefix(tab) : undefined}
+                readOnlyTitle={readOnlyTitles}
                 selected={tab.id === selectedTabId}
                 tabBusy$={this.tabBusy$}
                 closing={tab.ui && tab.ui.closing}
@@ -407,6 +408,7 @@ Tabs.propTypes = {
     isDirty: PropTypes.func,
     isLandingTab: PropTypes.func,
     maxTabs: PropTypes.number,
+    readOnlyTitles: PropTypes.any,
     selectedTabId: PropTypes.string,
     tabActions: PropTypes.func,
     tabPrefix: PropTypes.func,

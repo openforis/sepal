@@ -168,6 +168,25 @@ describe('saving an open recipe', () => {
     })
 })
 
+describe('renaming a recipe tab', () => {
+    it('gives a recipe in its setup wizard the new title', () => {
+        const recipe = newRecipe()
+        session.state = withLoadedRecipes(recipe)
+
+        saveRecipe({id: recipe.id, title: 'toto'})
+
+        expect(dispatched.at(-1)[JSON.stringify(recipePath(recipe.id, 'title'))]).toEqual('toto')
+    })
+
+    it('creates no recipe for a tab that holds none', () => {
+        session.state = withLoadedRecipes()
+
+        saveRecipe({id: 'landing-tab', title: 'toto'})
+
+        expect(dispatched).toEqual([])
+    })
+})
+
 const selectPath = (state, path) => (Array.isArray(path) ? path : [path])
     .filter(segment => segment !== undefined)
     .flatMap(segment => typeof segment === 'string' ? segment.split('.') : [segment])
@@ -193,4 +212,15 @@ test('the first listing keeps a recipe saved while it was in flight', () => {
 
     const listed = dispatched.map(sets => sets[JSON.stringify('process.recipes')]).filter(Boolean).at(-1)
     expect(listed.map(({id}) => id)).toEqual(['other', 'created'])
+})
+
+const newRecipe = () => ({
+    id: 'r1',
+    type: 'CLASSIFICATION',
+    placeholder: 'Classification_2026-10-15_10-00-00',
+    ui: {unsaved: true}
+})
+
+const withLoadedRecipes = (...recipes) => ({
+    process: {loadedRecipes: Object.fromEntries(recipes.map(recipe => [recipe.id, recipe]))}
 })
