@@ -2961,7 +2961,7 @@ contract can change the split; they must not silently expand it.
 | Slice | Work grouped together | Covers | Completion evidence / dependency |
 | --- | --- | --- | --- |
 | S1: Chart layout on tab return | Implemented: defer graph drawing while disabled and make Panel visibility follow the enabled context in the same render. | F8 layout | Focused tests and independent review passed; user reported "Looks good" after the manual checklist and approved committing on 2026-10-23. Detailed per-case browser results were not supplied; see below. |
-| S2: Feedback where repairs happen | Consistent Classification/Regression training-data feedback, item-editor explanations and replacement/removal; visible Classification selection in Time Series/CCDC Sources; classifier-input attribution at Classification; repair-oriented PyEO SRC/OPT feedback; correct the empty Retrieve warning. | F1, F2, F10, F8 warning | The single-input selection check passes. Confirmed findings now hold Apply while replacement, Cancel and unchanged Close remain available; the user confirmed Classification's browser recheck passed. Stack Require drop derivation remains a separate follow-up. Empty-Provider refinement and S3/S4 remain separate. |
+| S2: Feedback where repairs happen | Consistent Classification/Regression training-data feedback, item-editor explanations and replacement/removal; visible Classification selection in Time Series/CCDC Sources; classifier-input attribution at Classification; repair-oriented PyEO SRC/OPT feedback; correct the empty Retrieve warning. | F1, F2, F10, F8 warning | The single-input selection check passes. Confirmed findings now hold Apply while replacement, Cancel and unchanged Close remain available; the user confirmed Classification's browser recheck passed. The separate Stack Require drop fix passed the user's actual-preview and remove/restore browser check on 2026-10-24. Empty-Provider refinement and S3/S4 remain separate. |
 | S3: One selected-Classification validity contract | Require a selected usable Classification for Time Series/CCDC base operations, independently of requested/breakpoint bands; common SRC explanation/action hold; remove redundant band-training stage/watch/messages/server settling. | F9; consumes S2 presentation | Shared declarations, server guards and GUI consumers must change coherently. Agree the native/count behaviour below first. Verify native/classified, no selection, decision tree, source repair/deselection, capability errors, cancellation and last-moment submit. Name the old checks removed. |
 | S4: Reused samples with Consumer features | Sample each contributing Provider's imagery at its points using Consumer's feature definition; preserve sampling scale, nesting/order and Consumer normalisation; update shared readiness to the same derivability contract. | F4 | Trace the feature-plan/readiness identity before coding; do not split execution from its corresponding refusals. Depends on the S3 base contract for consumer coverage. Whole-row numeric and controlled live checks plus a one-scene/many-scene witness of no per-scene sampling; recheck S2 repair feedback against the new semantics. |
 | S5: Change Alerts settings ownership | Audit Sources/PRC fields, then implement source-owned read-only required matches versus consumer-owned editable values; replace whole-group observation syncing and define initial/explicit copying. | F5, F6 | Audit first; agree the editable-copy policy below. UI and backend use the same effective values for recipe and asset references. Fresh reopen, overrides, reference replacement, Cancel, late metadata and asset metadata are mandatory cases. No automatic overwrite of editable settings. |
@@ -3022,7 +3022,7 @@ contract can change the split; they must not silently expand it.
   panel open across a recipe-tab switch, confirm its values, focus and scrolling still work on return and Cancel/Apply
   behave normally; open and dismiss a modal/confirmation as well.
 
-**S2: Feedback where repairs happen (implemented 2026-10-23; Classification's Apply-hold browser recheck passed; Stack index derivation remains a separate follow-up; Stack layout and the empty-Provider refinement remain separate).** Presentation and repair paths
+**S2: Feedback where repairs happen (implemented 2026-10-23; Classification's Apply-hold browser recheck passed; separate Stack index-derivation browser check passed 2026-10-24; Stack layout and the empty-Provider refinement remain separate).** Presentation and repair paths
 over the existing findings; training semantics and the selected-Classification policy are unchanged (S3/S4).
 
 - **Training data (F1).**
@@ -3439,6 +3439,69 @@ over the existing findings; training semantics and the selected-Classification p
     imagery - likewise; choose a working recipe - Apply saves it; Cancel keeps the applied one. Open a broken data set
     unchanged: Close works. Mounted tests cover upstream repair; recipe-modal navigation remains a separate follow-up.
 
+- **Require drop over a Stack input: index derivation, applied (2026-10-23; separate execution/readiness fix).**
+  - **Cause, confirmed in code and tests.** Readiness (`baselineSuppliesIndex`) and execution agreed, but only for
+    assets: an `ASSET` input's index was calculated of its spectral bands, while a `RECIPE_REF` input had to output a
+    band literally named after the index, which execution then selected (`imageFactory(input, {selection: [index]})`).
+    A Stack exposing red and nir but no ndvi was therefore refused - in OPT as "no alternative", by readiness, and it
+    would have failed in execution - while the same asset used directly was accepted. With the old rule restored,
+    the Stack regressions below fail and the direct-asset controls pass. Not reproduced in a browser by the agent.
+  - **Derivation contract.** One shared decision, `baselineIndexSource(baseline, index)`
+    (`lib/js/shared/src/recipe/type/pyeoAlerts.js`), over the input's type and output band names: `PROVIDED` where a
+    recipe outputs a band of the index's name; otherwise `CALCULATED` where it outputs every band
+    `REQUIRED_BANDS_BY_INDEX` names (an asset always takes this path, as before); `null` where neither; `undefined`
+    while the bands are not known, which refuses nothing. `baselineSuppliesIndex` (readiness, OPT's choices and its
+    candidates, Sources' set-up proposal) and execution's `baselineGateIndex$` (`lib/js/ee/src/pyeo/baselineGateIndex.js`)
+    both follow it. A recipe's names are those its declaration outputs - a Stack's mapping (`stackOutputNames`) - not
+    the asset beneath or the Classification's selected training bands.
+  - **Execution.** An asset's index is calculated of the whole asset as before. A recipe providing the index is
+    selected as before, already stored at ×10000 int16, never scaled again. A recipe otherwise is asked for only the
+    required bands (`selection`), and the index calculated with the existing `calculateIndex` - which divides by
+    `OPTICAL_STORED_PER_UNIT` - then ×`INDEX_SCALE` (10000) and int16, as monitoring stores its indexes, so the
+    threshold scaling is unchanged. A masked input pixel stays masked; the Stack's own footprint is that of the image
+    it builds. Built once, outside the monitoring-scene map, and not at all with Require drop off. Classifier inputs,
+    training, normalisation and the single-input rule are unchanged.
+  - **Costs.** Require drop on over a recipe input adds one `getBands$` of that recipe (a Stack's reads its mapping
+    alone, without Earth Engine) and selects only the required bands. Readiness reads nothing new: the input's
+    description it already acquires names the bands. Off, nothing.
+  - **Regressions.** Shared `readiness.test.js` over Asset -> Stack -> Classification -> PyEO, the Classification
+    training on red alone: NDVI, NDMI and NBR run over the Stack's raw bands; a provided ndvi band runs; red without
+    nir, or nir renamed `b8`, refused with no alternative; asset not yet observed, nothing refused; observation
+    failed, nothing of the gate; Require drop off, ready. gee `test/ee/pyeo/baselineGateIndex.test.js`: the real index
+    definitions over a numeric image double - NDVI [7142, 4418, 0, masked], NDMI [4634, 886, -4634, 5384], NBR
+    [5348, 0, -5348, 7307] of Stack outputs, bands read by the Stack's output names, a provided ndvi band passed through
+    unscaled, a renamed band refused, the direct asset unchanged. `pyeoIndexGate.test.js`: the Stack asked for its
+    required bands, monitoring asked for the index, one calculation, nothing read with Require drop off.
+    `pyeoGateReadiness.test.js`: a Drive export over a Stack without nir refused (`UNAVAILABLE_GATE_INDEX`) before
+    anything is built, then started once nir is restored. GUI `options.test.jsx` over the real runtime: Require drop
+    on NDVI offered and saved over a Stack of red and nir; NBR offered with swir2; removing nir from the Stack says to
+    turn it off, restoring it recovers with choices kept; a renamed nir keeps On disabled - only the Stack changing,
+    no Sources reopened and no UI copy written.
+  - **Witness.** With `baselineIndexSource` judging recipe inputs as before (their own index band only): shared 3,
+    gee 6 and GUI 3 of these regressions fail; the asset, provided-index, renamed, pending/unavailable and Require drop
+    off controls pass.
+  - **Verification (two workers).** Shared `test/recipe` 1289. gee: baseline index, PyEO AOI and gate, the PyEO,
+    Drive, Workspace and asset export tests and the classification numeric tests, 181. GUI: PyEO, Stack,
+    `sourcesClassifierInputs` and `outputRequirements`, 15 files and 181 tests. ESLint and `git diff --check` clean.
+    No full GUI suite, live Earth Engine or browser run: the numeric double establishes the arithmetic and scaling of
+    the code path, not Earth Engine's own evaluation.
+  - **Independent review (2026-10-24):** no code findings. The shared source decision preserves direct-asset
+    calculation and provided recipe indexes, while the new recipe calculation selects the required output bands.
+    The extra band read and image construction use the existing execution scope's cached recipe revision; no new
+    loader/cache is introduced. Independent checks passed 92 shared readiness/PyEO tests, 37 gee numeric,
+    orchestration, AOI and export-guard tests, and 181 GUI tests in 15 files. ESLint on the reviewed sources/tests
+    and `git diff --check` passed. Only this roadmap was changed by the reviewer. No live Earth Engine or browser
+    run; an actual PyEO preview and Stack remove/restore recovery remain to be checked.
+  - **Browser result (2026-10-24; user reported):** in response to the focused Stack checklist, the user says
+    "This works exactly like it should". Record NDVI Require drop with an actual PyEO preview, removing nir giving
+    the index error and holding preview, then restoring nir clearing it and rendering again with NDVI/threshold
+    preserved, as passed. The agent did not run the browser; no exact build, asset ids or numeric comparisons were
+    supplied. This closes that browser check, not the separate deferred work or a controlled numerical EE comparison.
+  - **Browser check instructions:** with the same optical asset directly and through a Stack mapping red and nir (no
+    ndvi), the Classification training on red: turn Require drop on with NDVI in OPT and Apply, and obtain an actual
+    PyEO preview for both. In the Stack's tab remove nir: OPT says to turn Require drop off and the preview is held;
+    restore nir: OPT recovers with NDVI and its threshold kept, and the preview renders again.
+
 - **Combined browser recheck instructions used for that run:**
   1. Classification and Regression over a Provider with no input imagery: TRN, the data set and its editor say what is
      wrong, with "Fix the problem in Provider, or select another recipe." and no Open action. A working recipe clears
@@ -3741,8 +3804,9 @@ automated checkpoint follows the completed correction set.
   cascade; opening OPT preserves its choices; repair restores the group; a compatible source with an unsupported
   index has a meaningful OPT repair; pending/unavailable is not a field error; a gate off acquires no gate requirement.
   **Status:** message/terminology and shared single-input corrections are implemented; the user confirmed the
-  two-input selection refusal. Require drop over a Stack input still requires the separate execution/readiness
-  correction described in S2's latest browser feedback. The direct-asset tests do not establish that recipe-input path.
+  two-input selection refusal. The separate Stack index-derivation correction now has shared, execution and GUI
+  coverage of the recipe-input chain and passed independent review on 2026-10-24. The user confirmed its actual
+  preview and Stack remove/restore browser check passed that day; see S2's "Require drop over a Stack input" entry.
 
 **Later usability/performance features from the 2026-10-23 feedback (not prerequisites for F8-F10).**
 

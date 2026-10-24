@@ -222,6 +222,47 @@ describe('OPT over a Classification whose imagery is changed', () => {
     })
 })
 
+// Asset -> Stack -> Classification -> PyEO: the index is calculated of the spectral bands the Stack outputs, by the names
+// its mapping gives them, whichever of them the Classification trains on - red alone here. Only the Stack changes.
+describe('OPT over a Classification of a Stack of an optical asset', () => {
+    it('offers Require drop on NDVI where the Stack outputs red and nir, providing no ndvi band', async () => {
+        await open({input: STACK_INPUT, stack: ['red', 'nir'], gate: undefined})
+
+        expect(gateButton(GATE_ON).disabled).toBe(false)
+        await press(GATE_ON)
+        expect(errorsOf(INDEX_LABEL)).toEqual([])
+        await press('button.apply')
+        expect(savedOptions().indexGate.index).toBe('ndvi')
+    })
+
+    it('offers NBR where the Stack outputs nir and swir2', async () => {
+        await open({input: STACK_INPUT, stack: ['red', 'nir', 'swir2'], gate: {index: 'ndvi', threshold: 0.2}})
+
+        await chooseGateIndex('NBR')
+
+        expect(errorsOf(INDEX_LABEL)).toEqual([])
+    })
+
+    it('says to turn Require drop off once nir is removed from the Stack, and recovers, its choices kept, once restored', async () => {
+        await open({input: STACK_INPUT, stack: ['red', 'nir'], gate: {index: 'ndvi', threshold: 0.3}})
+        expect(errorsOf(INDEX_LABEL)).toEqual([])
+
+        await holdStack(['red'])
+        expect(errorsOf(INDEX_LABEL)).toEqual([`${NO_ALTERNATIVE} {"index":"NDVI"}`])
+
+        await holdStack(['red', 'nir'])
+        expect(errorsOf(INDEX_LABEL)).toEqual([])
+        expect(selectedGateIndex()).toBe('NDVI')
+        expect(gateControls()).toEqual({useIndexGate: ENABLED, gateIndex: ENABLED, gateThreshold: ENABLED})
+    })
+
+    it('cannot have Require drop turned on where the Stack outputs nir under another name', async () => {
+        await open({input: STACK_INPUT, stack: ['red', 'nir'], renamed: {nir: 'b8'}, gate: undefined})
+
+        expect(gateButton(GATE_ON).disabled).toBe(true)
+    })
+})
+
 describe('a gate turned on with no index saved', () => {
     it('takes NDVI where the imagery provides it', async () => {
         await open({input: OPTICAL_INPUT, gate: undefined})
@@ -272,10 +313,37 @@ const RADAR_INPUT = assetInput('users/x/radar', ['VV', 'VH'])
 const ASSET_BANDS = Object.fromEntries([OPTICAL_INPUT, RED_NIR_INPUT, NIR_SWIR_INPUT, VISIBLE_INPUT, RADAR_INPUT]
     .map(({id, bandSetSpecs: [{included}]}) => [id, included]))
 
+const STACK = 'stack-1'
+
 const LISTING = [
     {id: PYEO, name: 'Alerts', type: 'PYEO_ALERTS', revision: 1},
-    {id: CLASSIFICATION, name: 'Classification', type: 'CLASSIFICATION', revision: 1}
+    {id: CLASSIFICATION, name: 'Classification', type: 'CLASSIFICATION', revision: 1},
+    {id: STACK, name: 'Stack', type: 'STACK', revision: 1}
 ]
+
+// The Classification's input: the Stack, its classifier trained on red alone.
+const STACK_INPUT = {imageId: 'i-1', type: 'RECIPE_REF', id: STACK, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red']}]}
+
+// A Stack of the optical asset, mapping its `bands` to outputs of the same names unless `renamed` maps one to another.
+const stackRecipe = (bands, renamed = {}) => ({
+    id: STACK,
+    type: 'STACK',
+    title: 'Stack',
+    revision: 1,
+    model: {
+        inputImagery: {images: [{imageId: 's-1', type: 'ASSET', id: OPTICAL_INPUT.id}]},
+        bandNames: {bandNames: [{imageId: 's-1', bands: bands.map(band => ({originalName: band, outputName: renamed[band] || band}))}]}
+    },
+    ui: {initialized: true}
+})
+
+// The Stack's mapping, as the session holds it after an edit in its own tab.
+const holdStack = async bands => {
+    await act(async () => actionBuilder('EDIT_STACK')
+        .set(['process.loadedRecipes', STACK, 'model.bandNames'], stackRecipe(bands).model.bandNames)
+        .dispatch())
+    await settled()
+}
 
 const pyeoRecipe = ({gate}) => ({
     id: PYEO,
@@ -364,9 +432,13 @@ const chooseGateIndex = async label => {
 
 // `classification`: what storage answers for the classification, which the session then does not hold - by default,
 // the session holds it over `input`.
-async function open({input, gate, classification}) {
+// `stack`: the bands a Stack the Classification's input names maps, `renamed` as stackRecipe takes it.
+async function open({input, gate, classification, stack, renamed}) {
     stored.classification = classification
-    const held = classification ? [] : [classificationRecipe(input)]
+    const held = [
+        ...classification ? [] : [classificationRecipe(input)],
+        ...stack ? [stackRecipe(stack, renamed)] : []
+    ]
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
