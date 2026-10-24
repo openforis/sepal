@@ -1660,7 +1660,8 @@
               "tooltip": "Only Classification recipes appear here. Class IDs and labels are pulled from the selected recipe.",
               "placeholder": "Select a Classification recipe",
               "required": "Pick a Classification recipe",
-              "unsuppliedInputs": "No supported monitoring data provides the bands this classification reads: {missing}. Choose another classification."
+              "unsuppliedInputs": "No supported monitoring data provides the bands this classification reads: {missing}. Choose another classification.",
+              "multipleInputs": "This classification uses {count} input images; PyEO Alerts needs exactly one. Remove the others from the classification, or choose another classification."
             },
             "changeFromClasses": {
               "label": "FROM classes (baseline)",
@@ -1689,16 +1690,23 @@
               "tooltip": "Require the chosen index to drop by at least the threshold (baseline − monitoring) before an alert is confirmed. Only decreases count — an index increase never confirms a change.",
               "off": "No",
               "on": "Yes",
-              "unavailable": "The selected classification's baseline imagery has no near-infrared band, so it cannot produce a spectral index; the index gate is unavailable."
+              "unavailable": "The selected classification's baseline imagery has no near-infrared band, so it cannot produce a spectral index; Require drop is unavailable.",
+              "dependsOnSources": {
+                "CHECKING": "Checking the classification under SRC before Require drop can be changed.",
+                "UNAVAILABLE": "The classification under SRC can't be checked right now, so Require drop can't be changed."
+              }
             },
             "gateIndex": {
               "label": "Index",
               "tooltip": "Spectral index whose drop (baseline − monitoring) confirms an alert — a drop signals disturbance. Options depend on the selected sources.",
               "required": "Pick an index",
-              "unsupported": "The selected imagery can't compute {index}. Choose an index it supports, or turn the index gate off.",
               "unavailable": {
-                "BASELINE": "The classification's imagery can't provide {index} for the index gate. Choose another index, or turn the gate off.",
-                "MONITORING": "The monitoring data can't provide {index} for the index gate. Choose another index, or turn the gate off."
+                "BASELINE": "The classification's imagery can't provide {index} for Require drop. Choose another index, or turn Require drop off.",
+                "MONITORING": "The monitoring data can't provide {index} for Require drop. Choose another index, or turn Require drop off."
+              },
+              "noAlternative": {
+                "BASELINE": "The classification's imagery can't provide {index} or any other index Require drop offers. Turn Require drop off.",
+                "MONITORING": "The monitoring data can't provide {index} or any other index Require drop offers. Turn Require drop off."
               }
             },
             "gateThreshold": {
@@ -1719,7 +1727,6 @@
         "loadError": "Failed to load the classification recipe: {error}",
         "mosaicLoadError": "Failed to load the classification's imagery: {error}",
         "assetLoadError": "Failed to read the classification asset metadata: {error}",
-        "singleInputRequired": "This classification uses more than one input image, which isn't supported here. Choose a classification with a single input.",
         "selectedScenesUnsupported": "This classification was trained on hand-selected scenes, which isn't supported yet. Choose a classification trained on a date range.",
         "pending": "Reading the selected classification…",
         "unavailable": "The selected classification could not be read. Choose it again to retry."
@@ -2644,7 +2651,7 @@
               }
             }
           },
-          "missing": "Add training data",
+          "missing": "Collect points on the map or add a training data set.",
           "missingFeatures": "{recipe} samples no {features}, which this recipe is trained on.",
           "noDataSet": "No training data set added",
           "remove": {
@@ -2686,6 +2693,9 @@
               "title": "Collect Earth Online",
               "tooltip": "Use training data from CEO"
             }
+          },
+          "reusedRecipe": {
+            "repair": "{count, plural, one {Fix the problem in {recipes}, or select another recipe.} other {Fix the problems in {recipes}, or select another recipe.}}"
           }
         }
       },
@@ -2707,6 +2717,7 @@
       "description": "Create a regression from SEPAL or Google Earth Engine imagery.",
       "panel": {
         "trainingData": {
+          "missing": "Add a training data set.",
           "form": {
             "eeTable": {
               "valueColumn": {

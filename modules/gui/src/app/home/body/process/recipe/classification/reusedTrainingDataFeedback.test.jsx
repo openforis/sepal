@@ -15,9 +15,9 @@ import {PortalContainer, PortalContext} from '~/widget/portal'
 // A Classification or Regression trained on another recipe's training data, which that recipe cannot produce - it has
 // no input imagery to sample its points over, or selects a band its input does not have (TRAINING_DATA): the data set
 // reusing it is marked in the Training data panel, naming that recipe, whose own sections say why; the data sets beside
-// it are not. Classification's TRN button
-// does not say what holds its training data, Regression's does. The panels, store, source runtime and recipe types are
-// real; Earth Engine answers an asset's bands at once.
+// it are not. The TRN button of either says what holds its training data. No training data at all is set-up not yet done:
+// the panel says how to add some, while the button marks nothing wrong. The panels, store, source runtime and recipe types
+// are real; Earth Engine answers an asset's bands at once.
 
 const stored = vi.hoisted(() => ({records: {}}))
 vi.mock('~/apiRegistry', () => ({default: {
@@ -68,9 +68,9 @@ afterEach(async () => {
 })
 
 describe.each([
-    ['CLASSIFICATION', ClassificationTrainingData, false],
-    ['REGRESSION', RegressionTrainingData, true]
-])('a %s trained on a recipe that cannot produce its training data', (type, TrainingData, buttonMarked) => {
+    ['CLASSIFICATION', ClassificationTrainingData, 'process.classification.panel.trainingData.missing'],
+    ['REGRESSION', RegressionTrainingData, 'process.regression.panel.trainingData.missing']
+])('a %s trained on a recipe that cannot produce its training data', (type, TrainingData, missing) => {
     it.each([
         ['has no input imagery', []],
         ['selects a band its input does not have', [SELECTING_MISSING_BAND]]
@@ -80,11 +80,11 @@ describe.each([
         expect(marked()).toEqual([{item: REUSED, message: expect.stringContaining('"recipe":"Provider"')}])
     })
 
-    it(`${buttonMarked ? 'says' : 'does not say'} so on its training data button`, async () => {
+    it('says so on its training data button, naming that recipe, as no guidance to add training data', async () => {
         await open(type, TrainingData, {images: []})
 
-        expect(Boolean(sourceProblemsOfState(store.getState(), CONSUMER, id => runtime.evidenceOwnerOf(id), Date.now(), key => runtime.heldFor(key)).trainingData))
-            .toBe(buttonMarked)
+        expect(toolbarProblems().trainingData).toContain('"recipe":"Provider"')
+        expect(shown()).not.toContain(missing)
     })
 
     it.each([
@@ -108,12 +108,26 @@ describe.each([
     })
 })
 
-// Neither the consumer nor the recipe it reuses stores a point: it has nothing to train on, which its Training data says,
-// as the recipe it reuses - able to produce what it stores - is marked for nothing.
 describe.each([
-    ['CLASSIFICATION', ClassificationTrainingData, false],
-    ['REGRESSION', RegressionTrainingData, true]
-])('a %s whose reused training data stores no point', (type, TrainingData, buttonMarked) => {
+    ['CLASSIFICATION', ClassificationTrainingData, 'process.classification.panel.trainingData.missing'],
+    ['REGRESSION', RegressionTrainingData, 'process.regression.panel.trainingData.missing']
+])('a %s without training data', (type, TrainingData, missing) => {
+    it('says how to add some in its Training data panel, marking neither the button nor a data set, and holds its Retrieve', async () => {
+        await open(type, TrainingData, {images: [ASSET_IMAGE], points: false, reuse: false})
+
+        expect(shown()).toContain(missing)
+        expect(toolbarProblems().trainingData).toBe(undefined)
+        expect(marked()).toEqual([])
+        expect(retrieveGate()).toMatchObject({code: 'CONFIGURATION_UNMET', section: 'process.classification.panel.trainingData.button'})
+    })
+})
+
+// Neither the consumer nor the recipe it reuses stores a point: it has nothing to train on, which its Training data
+// panel says, as the recipe it reuses - able to produce what it stores - is marked for nothing.
+describe.each([
+    ['CLASSIFICATION', ClassificationTrainingData, 'process.classification.panel.trainingData.missing'],
+    ['REGRESSION', RegressionTrainingData, 'process.regression.panel.trainingData.missing']
+])('a %s whose reused training data stores no point', (type, TrainingData, missing) => {
     it('holds its Retrieve for its training data, marking no data set', async () => {
         await open(type, TrainingData, {images: [ASSET_IMAGE], points: false})
 
@@ -121,10 +135,11 @@ describe.each([
         expect(marked()).toEqual([])
     })
 
-    it(`${buttonMarked ? 'says' : 'does not say'} so on its training data button`, async () => {
+    it('says how to add some in its Training data panel, its button unmarked', async () => {
         await open(type, TrainingData, {images: [ASSET_IMAGE], points: false})
 
-        expect(toolbarProblems().trainingData).toBe(buttonMarked ? 'process.classification.panel.trainingData.missing' : undefined)
+        expect(shown()).toContain(missing)
+        expect(toolbarProblems().trainingData).toBe(undefined)
     })
 
     it('can be retrieved once the recipe it reuses stores a point', async () => {
@@ -136,7 +151,7 @@ describe.each([
         await settled()
 
         expect(retrieveGate()).toBe(null)
-        expect(toolbarProblems().trainingData).toBe(undefined)
+        expect(shown()).not.toContain(missing)
     })
 })
 
@@ -195,15 +210,19 @@ const recipeOf = (type, id, {images = [ASSET_IMAGE], dataSets}) => ({
     ui: {initialized: true}
 })
 
-// The consumer, trained on its own points and on the provider's, which is over `images`.
-// `points` false: neither stores a point of its own, the consumer keeping only the data set reusing the provider's.
-const recipesOf = (type, {images, points = true}) => [
+// The consumer, trained on its own points and on the provider's, which is over `images`. `points` false: neither stores
+// a point of its own - a Classification keeping the data set its map collects into, empty. `reuse` false: the consumer
+// reuses nothing.
+const recipesOf = (type, {images, points = true, reuse = true}) => [
     recipeOf(type, CONSUMER, {dataSets: [
         ...(points ? [{dataSetId: 'collected', type: 'COLLECTED', name: COLLECTED, referenceData: POINTS}] : []),
-        {dataSetId: 'reused', type: 'RECIPE', name: REUSED, recipe: PROVIDER}
+        ...(!points && type === 'CLASSIFICATION' ? [{dataSetId: 'collected', type: 'COLLECTED', name: COLLECTED, referenceData: []}] : []),
+        ...(reuse ? [{dataSetId: 'reused', type: 'RECIPE', name: REUSED, recipe: PROVIDER}] : [])
     ]}),
     recipeOf(type, PROVIDER, {images, dataSets: points ? [{dataSetId: 'collected', type: 'COLLECTED', name: COLLECTED, referenceData: POINTS}] : []})
 ]
+
+const shown = () => document.body.textContent
 
 const toolbarProblems = () =>
     sourceProblemsOfState(store.getState(), CONSUMER, id => runtime.evidenceOwnerOf(id), Date.now(), key => runtime.heldFor(key))
@@ -242,8 +261,8 @@ const RuntimeProbe = withSourceRuntime()(({sourceRuntime}) => {
     return null
 })
 
-async function open(type, TrainingData, {images, points}) {
-    const records = recipesOf(type, {images, points})
+async function open(type, TrainingData, {images, points, reuse}) {
+    const records = recipesOf(type, {images, points, reuse})
     stored.records = Object.fromEntries(records.map(record => [record.id, record]))
     const initialState = {
         dimensions: {width: 1024, height: 768},

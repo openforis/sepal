@@ -172,6 +172,51 @@ describe('an image export to Drive of a recipe that cannot run', () => {
     })
 })
 
+// Its baseline is read of the Classification's one input image, so one of two is refused - gate or no gate - before
+// anything of the alerts is built, a folder is created or an export is started.
+describe('an image export to Drive of a PyEO Alerts over a Classification of two input images', () => {
+    const CLASSIFICATION = 'classification-1'
+    const input = (imageId, id) => ({imageId, type: 'ASSET', id, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['red', 'nir']}]})
+    const alerts = gate => ({
+        id: 'pyeo-1',
+        type: 'PYEO_ALERTS',
+        title: 'My alerts',
+        model: {
+            sources: {classification: CLASSIFICATION, dataSets: {LANDSAT: ['LANDSAT_8']}, changeFromClasses: [1], changeToClasses: [2]},
+            options: {corrections: ['SR']},
+            pyeoAlertsOptions: {minConsecutiveDetections: 2, ...(gate && {indexGate: gate})}
+        }
+    })
+
+    beforeEach(() => {
+        state.catalogue = {[CLASSIFICATION]: {
+            id: CLASSIFICATION,
+            type: 'CLASSIFICATION',
+            model: {
+                inputImagery: {images: [input('i-1', 'users/x/a'), input('i-2', 'users/x/b')]},
+                legend: {entries: [{value: 1}, {value: 2}]},
+                trainingData: {dataSets: [{type: 'COLLECTED', referenceData: [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]}]},
+                classifier: {type: 'RANDOM_FOREST'}
+            }
+        }}
+    })
+
+    for (const [_case, gate] of [['its gate off', undefined], ['its gate on', {index: 'ndvi', threshold: 0.2}]]) {
+        it(`is refused, ${_case}, before anything is built`, async () => {
+            await assert.rejects(
+                lastValueFrom(inEEContext(context({type: 'user'}), startImageDriveExport$(
+                    {image: {...params.image, recipe: alerts(gate), bands: {selection: ['total_changes']}}},
+                    {sepalUser: ALICE}
+                ))),
+                /cannot run: MULTIPLE_CLASSIFICATION_INPUTS$/
+            )
+            assert.deepEqual(state.built, [])
+            assert.deepEqual(state.folders, [])
+            assert.deepEqual(state.started, [])
+        })
+    }
+})
+
 test('creates the Drive folder as the user, one creation at a time per user, then starts the export into it', async () => {
     const result = await lastValueFrom(inEEContext(context({type: 'user'}), startImageDriveExport$(params, {sepalUser: ALICE})))
 

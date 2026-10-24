@@ -1448,7 +1448,10 @@ and keep `REFERENCE` for native bands.
     can repair it. That is a retained choice, explained and validated, not a new offer, and it is unchanged.
 
 - **Outside this rollout.**
-  - **Several input images** are refused only at run time (`classifyImage`, PyEO); the PyEO GUI prevents them.
+  - **Several input images** are refused only at run time (`classifyImage`, PyEO). PyEO's Sources panel checks this
+    when proposing a selection, but that does not guard an applied selection after its Classification changes. The
+    2026-10-23 browser recheck reproduced an internal layer error; the active S2 follow-up below calls for a shared
+    single-input finding at SRC, acquired by client and server readiness.
   - **LandTrendr** declares `CLASSIFICATION_SOURCE` without a selector, and `landTrendr.js`'s comment about always
     resolving it is stale.
 - **Manual check before pushing.** Add to the accumulated batch:
@@ -1515,7 +1518,9 @@ set; `YES` is the GUI default. Prediction now scales the imagery the Classificat
   - how `bestEffort` coarsens the statistics' scale on real imagery;
   - how often Earth Engine evaluates them.
 - **Manual check before pushing (live, controlled).** Steps 1 and 2, the numerical check, were run on 2026-10-21 and
-  passed (see "Verification status"). Step 3's smoke tests are still pending.
+  passed (see "Verification status"). Step 3 belongs to the browser batch the user reported complete on 2026-10-23;
+  unmentioned checks are passing under the user's reporting convention. Keep that report separate from the detailed
+  numerical evidence and recheck affected smoke paths after execution changes.
   1. Run `modules/gee/verify/classifierNormalisation.mjs`:
      `docker exec -w /usr/local/src/sepal/modules/gee gee node verify/classifierNormalisation.mjs`.
      It applies the exported `classifyImage` to the Classification's own input scene with its own training data, for
@@ -1532,7 +1537,7 @@ set; `YES` is the GUI default. Prediction now scales the imagery the Classificat
 
      A comparison without samples or jointly valid pixels fails. Before this change, the normalising cases' prediction
      check is expected to fail.
-  3. As smoke tests (pending), open an ordinary Time Series `probability_*` chart and run a PyEO Alerts over an SVM
+  3. As browser smoke tests, open an ordinary Time Series `probability_*` chart and run a PyEO Alerts over an SVM
      Classification. Both should run and look plausible.
 
 **Reused Classification samples' normalisation (implemented 2026-10-21).** A Classification trains on the samples of
@@ -2254,9 +2259,14 @@ of a direct CCDC root, held as its asset exports are.
   - **Script fixes during the run.** The comparison area was built before Earth Engine was initialised, and
     `isUnbounded()` was negated with an unavailable `.not()`. Both are now evaluated as other verify scripts do.
     Acceptance criteria are unchanged.
-- **Browser batch: pending.** It needs a signed-in SEPAL session with linked Earth Engine access, which was not
-  available. This is the consolidated batch for the accumulated readiness, chart, capability and normalisation work,
-  including CCDC Retrieve through `2428d713d`. No browser case below has been run or passed by writing this checklist.
+- **Browser batch: completed by the user, with reported issues (2026-10-23).** The user has finished the manual tests
+  and reported all issues; unmentioned tests are passing under their explicit reporting convention. The feedback,
+  subsequent decisions and implementation slices below are the correction work, not an unfinished initial test run.
+  This is user-reported browser evidence, not an agent-observed run; deployed build/browser details and per-case task
+  or asset ids were not supplied. The consolidated inventory below is retained as reference, including fixture-based
+  variants; it is not an instruction to repeat the whole batch or a claim of individual evidence for every variant.
+  After fixes, recheck the affected paths and nearby controls. Do not mark the batch clean until reported issues are
+  resolved or explicitly scoped out. The earlier lack of a signed-in agent browser no longer makes this batch pending.
   - **Run record:** date, SEPAL URL/build, deployed GUI and gee git commits, browser/version, and tester. Confirm the
     tested deployment contains the fixes; a local commit alone does not establish what the browser or worker runs.
     Reload the app before starting, so an old tab does not keep the earlier untyped Change Alerts request contract.
@@ -2407,7 +2417,7 @@ of a direct CCDC root, held as its asset exports are.
      shows on the map. Remove that last input: the outline disappears, the network panel shows the pending geometry
      request cancelled and no new one, and no error notification appears. Add the input back: the geometry is
      requested again and the outline shows.
-  9. **Normalisation smoke tests, still pending.**
+  9. **Normalisation smoke tests (part of the completed user batch).**
      - Use an SVM C_SVC Classification with normalisation `YES`, compatible optical imagery, a working two-class point
        set and a rendering own-image preview. A Time Series using it returns `probability_<class>` observations, with
        values in the displayed probability range and no regression error.
@@ -2478,17 +2488,18 @@ of a direct CCDC root, held as its asset exports are.
       controls for the shared traversal and panel changes, not acceptance of deferred classified-band propagation
       through wrappers. Record missing fixtures as untested.
 
-  **Completion record:** record each numbered group's subcases (including both recipe types/consumers) as
+  **Result format for targeted rechecks:** record affected subcases (including both recipe types/consumers) as
   `check/subcase | pass/fail/untested | recipe ids | response/task/output evidence | notes`. Record the final deployed
-  commit again after any fixes and recheck the affected cases. The browser batch stays pending until its results are
-  recorded; missing fixtures and skipped subcases must remain visible at the pre-push decision.
+  commit again after fixes. The initial batch is complete with the user-reported issues below; the remaining browser
+  work is targeted verification of corrections, not a second full manual campaign. Explicitly untested fixture/timing
+  variants remain visible rather than being invented as individually verified evidence.
 
   **Not additional acceptance work for this batch:** direct map-preview training gates, request propagation through
   wrappers, executed-edge dependency loading and CCDC array-file destination compatibility remain deferred. The generic
   Drive/SEPAL CCDC guards have mocked server coverage; CCDC Retrieve offers no such destination, and those tests do not
   establish that array bands can be written to raster files. The unknown Earth Engine outcome for missing/null sample
   features needs a separate controlled probe; the GUI now refuses known missing features before it can expose that
-  outcome. The completed live numerical check above and the still-pending browser smoke checks are different evidence.
+  outcome. The completed live numerical check above and the user's browser results are different evidence.
 
 #### Browser feedback: partial results (2026-10-22)
 
@@ -2586,6 +2597,13 @@ claimed by recording them.
 - **For later:** CCDC Slice displays raw chart-band names even for a recipe reference; AOI layers redraw on recipe
   changes that should not alter their geometry; show the charted location on the map. These are captured below as
   follow-ups, not silently included in the readiness-policy implementation.
+
+**User completion confirmation (2026-10-23):** "I've been through the manual tests now - I've reported all the issues."
+This supersedes the earlier partial/pending status. Under the user's instruction, unmentioned tests pass; reported
+issues remain open until corrected. S2's later browser feedback also covers the misleading TRN absence message,
+removal of Open Provider from the modal, simpler repair wording, and the agreed PyEO SRC/OPT prerequisite behaviour;
+the agreed CCDC family/view heights and keyboard band-add improvement are recorded with their own scope. There is no
+further initial manual-test report expected. Preserve these results and ask only for focused rechecks after fixes.
 
 #### Regression training data (implemented)
 
@@ -2943,7 +2961,7 @@ contract can change the split; they must not silently expand it.
 | Slice | Work grouped together | Covers | Completion evidence / dependency |
 | --- | --- | --- | --- |
 | S1: Chart layout on tab return | Implemented: defer graph drawing while disabled and make Panel visibility follow the enabled context in the same render. | F8 layout | Focused tests and independent review passed; user reported "Looks good" after the manual checklist and approved committing on 2026-10-23. Detailed per-case browser results were not supplied; see below. |
-| S2: Feedback where repairs happen | Consistent Classification/Regression TRN marks, explanation and Open Provider/replace/remove repair in item editors; visible Classification selection in Time Series/CCDC Sources; classifier-input attribution at Classification; repair-oriented PyEO SRC/OPT feedback; correct the empty Retrieve warning. | F1, F2, F10, F8 warning | GUI-focused slice using existing findings, not new readiness rules. Demonstrate real Provider failure, normal valid Retrieve, local versus upstream PyEO errors, repairs and Cancel. Keep current execution behaviour until S3/S4 change it explicitly. |
+| S2: Feedback where repairs happen | Consistent Classification/Regression training-data feedback, item-editor explanations and replacement/removal; visible Classification selection in Time Series/CCDC Sources; classifier-input attribution at Classification; repair-oriented PyEO SRC/OPT feedback; correct the empty Retrieve warning. | F1, F2, F10, F8 warning | The single-input selection check passes. Confirmed findings now hold Apply while replacement, Cancel and unchanged Close remain available; the user confirmed Classification's browser recheck passed. Stack Require drop derivation remains a separate follow-up. Empty-Provider refinement and S3/S4 remain separate. |
 | S3: One selected-Classification validity contract | Require a selected usable Classification for Time Series/CCDC base operations, independently of requested/breakpoint bands; common SRC explanation/action hold; remove redundant band-training stage/watch/messages/server settling. | F9; consumes S2 presentation | Shared declarations, server guards and GUI consumers must change coherently. Agree the native/count behaviour below first. Verify native/classified, no selection, decision tree, source repair/deselection, capability errors, cancellation and last-moment submit. Name the old checks removed. |
 | S4: Reused samples with Consumer features | Sample each contributing Provider's imagery at its points using Consumer's feature definition; preserve sampling scale, nesting/order and Consumer normalisation; update shared readiness to the same derivability contract. | F4 | Trace the feature-plan/readiness identity before coding; do not split execution from its corresponding refusals. Depends on the S3 base contract for consumer coverage. Whole-row numeric and controlled live checks plus a one-scene/many-scene witness of no per-scene sampling; recheck S2 repair feedback against the new semantics. |
 | S5: Change Alerts settings ownership | Audit Sources/PRC fields, then implement source-owned read-only required matches versus consumer-owned editable values; replace whole-group observation syncing and define initial/explicit copying. | F5, F6 | Audit first; agree the editable-copy policy below. UI and backend use the same effective values for recipe and asset references. Fresh reopen, overrides, reference replacement, Cancel, late metadata and asset metadata are mandatory cases. No automatic overwrite of editable settings. |
@@ -3004,6 +3022,441 @@ contract can change the split; they must not silently expand it.
   panel open across a recipe-tab switch, confirm its values, focus and scrolling still work on return and Cancel/Apply
   behave normally; open and dismiss a modal/confirmation as well.
 
+**S2: Feedback where repairs happen (implemented 2026-10-23; Classification's Apply-hold browser recheck passed; Stack index derivation remains a separate follow-up; Stack layout and the empty-Provider refinement remain separate).** Presentation and repair paths
+over the existing findings; training semantics and the selected-Classification policy are unchanged (S3/S4).
+
+- **Training data (F1).**
+  - *Cause.* Classification registered every training-data declaration with `toolbarMark: false`
+    (`unmarkedTrainingDataRequirements`), so its TRN said nothing that Regression's says. Neither data-set editor was
+    bound to the findings: the reused-recipe `RecipeSection` rendered a bare `RecipeInput`, so the editor explained
+    nothing and offered nothing to repair.
+  - *Change.* Classification uses the same `trainingDataRequirements` as Regression, and the unmarked copy is removed.
+    Decision trees are exempt by the shared rule (`requiresTraining`), and TRN, which is not a wizard step, is not
+    marked while the wizard leads (`panelWizard.reached`); pending evidence marks nothing, as before. The reused-recipe
+    reference feedback and missing-features declarations bind the data-set editor through the existing `editor`
+    mechanism (`REUSED_RECIPE_EDITOR`: panel `trainingDataSet`, input `recipe`, `blocksApply: false`, `explain: true`),
+    judging the recipe built from the edited data set alone: a newly chosen recipe is judged afresh, another data set's
+    finding stays on its own item and the toolbar, and nothing is held, so
+    replacement, removal and Cancel stay open. `ReusedRecipeInput` (both editors) offers "Open {recipe}" for the
+    recipes at fault - `referenceFeedback.origins`, the recipe further up a chain of reuse where it is that one, or the
+    missing-features providers, now given as ids - and says that applying the same recipe again does not repair it.
+    `openRecipeInTab$` (`recipe.jsx`) selects the recipe's tab where it is open, opens a tab on the session's draft where
+    it is closed with its saves unsettled (the cache rules: no storage read replaces a draft), and otherwise reads it
+    from storage, deciding again from the session when the read answers, composing the existing tab actions.
+  - *Regressions.* `classification/reusedTrainingDataEditor.test.jsx`, for both types over a Provider with no input
+    imagery: explanation, Open and hint, nothing held; Open selects a new tab and leaves the Consumer's; a working
+    replacement clears it and Apply saves it; left unchanged it still marks TRN; Cancel keeps the applied recipe; a
+    chain names and opens the recipe at fault. `reusedTrainingDataFeedback.test.jsx`: both TRN buttons say so. The TRN
+    expectations of `outputRequirements`, `wizardSectionMarks` and `trainingDataChain` were updated to the marked
+    contract; the wizard-step cases are unchanged, and the unnamed-data-set case now has points, so it still shows its
+    own finding.
+- **Time Series and CCDC Sources (F2).**
+  - *Cause.* Sources opened on Less unless More had been saved, hiding a selected Classification. The shared rule
+    locates `UNSUPPLIED_CLASSIFIER_INPUTS` at `dataSets` where another collection would feed the classifier - the
+    Optical-to-Radar edit - and the binding said it there.
+  - *Change.* Both panels open on More while a Classification is selected, decided once when opened; More/Less toggles
+    as before and saves `advanced` as before. `collectionClassifierRequirements` keeps both located findings and their
+    own messages but says both beside the Classification (`editor.input`), which Sources show while it cannot be used;
+    the data sets' own validation is unchanged. Phenology shares the binding and gets the same location; its policy
+    (a refused draft cannot be applied) is unchanged.
+  - *Regressions.* `sourcesClassifierInputs.test.jsx` (moved from `timeSeries/.../sourcesCompatibility.test.jsx`, now
+    over both panels): opening view and toggling; Optical-to-Radar explained beside the Classification, the data sets'
+    own `notEmpty` still theirs, repaired by Optical again; Cancel; an unusable Classification refused, then replaced;
+    repair by Radar with Apply; a saved unusable selection explained on opening. `unselectedClassification.test.jsx`
+    now reopens Sources after Apply, as Apply closes it.
+- **PyEO SRC/OPT (F10).**
+  - *Findings, reproduced.* Optical-to-Radar Classification input with Landsat monitoring: gate off, SRC alone
+    (`UNSUPPLIED_CLASSIFIER_INPUTS` at the classification); gate on NDVI, also OPT (`UNAVAILABLE_GATE_INDEX`,
+    `BASELINE`), whose message offered "choose another index", though no index the gate offers can be computed of radar
+    bands.
+  - *Change.* The shared rule locates a `BASELINE` gate finding at the classification where its imagery supplies none
+    of `GATE_INDEXES` (moved into the shared type, one list for rule and panel); otherwise at the gate index, OPT's
+    genuine choice. Sources say it beside the Classification (`noGateIndex`, `explain: true`). `MONITORING` findings and
+    OPT's own panel validation are unchanged.
+  - *Regressions.* `pyeoAlerts/inputIncompatibility.test.jsx`: radar with the gate off and on, SRC marked and OPT not,
+    explained beside the Classification and repaired by optical imagery; imagery feeding the classifier but offering no
+    gate index, SRC with the gate on and nothing with it off; an index the imagery cannot provide while it provides
+    another, OPT marked until NDVI is chosen. The shared `readiness.test.js` radar case asserts the new location.
+- **Time Series Retrieve's empty warning (F8).**
+  - *Cause.* The panel's `selectedValues` turned the form's empty value `''` into `['']`, which the Time Series gate's
+    offer check named as unavailable: "These bands are no longer available from this recipe: .".
+  - *Change.* `selectedValues` drops the empty value; the gate, holds, reconciliation and submission rechecks are
+    unchanged, and an empty selection meets the field's own `atLeastOne` rule.
+  - *Regressions.* `retrieveTrainingReadiness.test.jsx`: opened with nothing selected, over a working and a point-free
+    Classification, no warning and Apply held; a native indicator then submits.
+- **Consolidated.** One training-data declaration set for both recipe types (the unmarked copy removed); one gate-index
+  list for the shared rule and the panel; one classifier-input explanation location for Time Series, CCDC and
+  Phenology. No validator, loader or navigation framework was added; the editor feedback uses the existing `editor`
+  binding and `referenceFeedback` metadata.
+- **Witnesses.** With each part's files from `HEAD`: training data 9 of 34 fail (editor binding alone 6, recipe
+  sections alone 6; TRN marks, by mutation, 3); Sources 6 of 14 (binding 4, panels 2); PyEO 2 of 7 (shared rule alone 2,
+  SRC binding alone 2); Retrieve 2 of 17.
+- **Focused campaign** (two workers): GUI recipe suites for Classification, Regression, PyEO, CCDC, Time Series,
+  Phenology, CCDC Slice, Change Alerts, Remapping, Masking, Band Math and Stack, the shared Retrieve panels and
+  requirement/section-mark tests, the process panels, `recipeInput` and autosave, 102 files and 1410 tests; shared
+  `test/recipe` 1275 and gee PyEO 12. ESLint and `git diff --check` are clean. The full GUI suite was not run.
+- **Independent review: two corrections, applied.** The normal focused GUI cases passed (58) and the shared
+  readiness/PyEO checks passed (78), but three added review scenarios failed for both Classification and Regression
+  (six failures). Temporary review probes were removed; production code was not changed by the reviewer.
+  - **Item isolation:** with one healthy reused data set open for editing, add another data set referring to a Provider
+    with no input imagery. The healthy item's Recipe field shows the other Provider's error and Open action.
+    `REUSED_RECIPE_EDITOR.candidate` keeps every data set, and `OutputCandidate.findings()` takes the first matching
+    read without restricting it to the edited item. Scope the candidate or returned feedback to that data-set identity;
+    a genuine problem on another item still belongs in the applied list/toolbar, not this editor.
+  - **Navigation/draft safety:** delay Open Provider's storage answer; open that Provider elsewhere and edit it before
+    the answer arrives. The late answer overwrites the edited model and creates a second tab with the same recipe id.
+    Separately, opening a closed cached Provider with an unacknowledged save also replaces its draft with storage.
+    `openRecipeInTab$` checks whether it is open only before starting the read, then calls `openRecipeRevision`
+    unconditionally. Preserve held drafts using the existing cache/save rules and recheck current tab/record state
+    when the read completes. Add regressions for both cases plus repeated/concurrent Open actions; do not introduce a
+    parallel navigation cache or let repair navigation discard edits.
+  - **Corrections.** The editor's candidate is the recipe built from the edited data set alone, as an editor candidate
+    is (`recipeFormPanel.jsx`), so only its own findings reach the editor. `openRecipeInTab$` decides from the session
+    before reading and again when the read answers: an open tab is selected, a held draft opened as held, and only
+    otherwise is storage's record opened, in one tab. No navigation cache was added.
+  - **Regressions** (`reusedTrainingDataEditor.test.jsx`, both types): the editor of a healthy reused data set beside a
+    broken one says nothing and offers no Open, while the toolbar still marks TRN; a Provider opened and edited while
+    its read is pending keeps its edit and one tab; two Opens before the read answers open one tab; a closed Provider
+    whose save is unacknowledged opens as held, reading nothing. The harness forgets each recipe's save state after a
+    test, as the session's save coordinator outlives it.
+  - **Witnesses.** With the pre-review `openRecipeInTab$`, the three navigation cases fail for both types (6); with the
+    candidate keeping every data set, the isolation case fails for both (2). The editor file passes 20 of 20.
+  - **Correction review:** no further code findings. An independent run of the editor, recipe opening/closing,
+    save-coordinator, listing and cache-claim tests passed 92 tests in six files. ESLint on the corrected files and
+    `git diff --check` passed. Browser verification remains separate.
+- **Subsequent browser feedback and scope correction (2026-10-23):**
+  - **Open Provider: remove, user decision.** The action switches recipe tabs from inside a modal and is broken in the
+    browser; the user wants recipe-scoped modals handled separately, with generic recipe-opening in the selector later.
+    Remove the action from both training-data editors rather than repairing modal ownership or building a special
+    navigation route for this slice. This supersedes the earlier Open Provider requirement and its browser checks.
+    `openRecipeInTab$` and its new `showHeld` helper currently have only this caller: remove them, their now-unused
+    imports, the Open/open-error translations and tests dedicated to the removed operation. Preserve the item-isolation
+    correction and its tests, along with the rest of S2. Earlier navigation review/witness results above are historical.
+  - **Repair wording:** the user found "Applying this recipe again does not repair it..." awkward. Recommended wording
+    is "Fix the problem in {recipe}, or select another recipe." The located finding should say what is wrong; the hint
+    should not discuss re-applying implementation mechanics or imply a direct Open action still exists.
+  - **Empty training data versus a broken data set:** the user questions a red TRN instruction "Add training data",
+    since collecting points on the map is another valid route. The recommendation is neutral setup guidance for no
+    points yet ("Collect points on the map or add a training data set"), while retaining readiness holds and marking
+    TRN for a genuinely unusable configured data set. Do not restore blanket suppression of broken-Provider feedback.
+    This recommendation is recorded separately from the explicit decision to remove Open Provider.
+  - **PyEO OPT still shows an upstream fault:** the user confirms SRC marks the Classification, but opening OPT still
+    gives an index validation error for the radar-feature Classification versus optical monitoring case. The whole
+    PyEO analysis is already invalid through classifier-input compatibility, independently of the gate; switching the
+    gate off cannot repair that. `Options.explainGateIndex()` still derives and sets its own field error regardless of
+    the failed source prerequisite, so moving the toolbar finding alone was insufficient.
+    **Agreed form behaviour (2026-10-23):** one actionable compatibility explanation at SRC/Classification; retain the configured gate,
+    index and threshold visibly but disable the gate controls while source compatibility is invalid or not yet
+    established, with neutral guidance to resolve SRC (or a checking state). Do not automatically clear the gate or
+    replace its index. Independent alert controls may remain editable. No duplicate red index error for that upstream
+    fault. When the source is compatible again, resume normal local gate editing/validation. Implemented under
+    "Browser corrections" below; see revised F10. A compatible Classification with an unsupported optional gate is OPT's own
+    repair case, including turning the gate off when none of its indexes can be supplied.
+- **Browser corrections, applied (2026-10-23):**
+  - **Open Provider removed.** `ReusedRecipeInput` renders the reused recipe's `RecipeInput` with no label action.
+    `openRecipeInTab$` and `showHeld` are removed (`recipe.jsx` is as at `HEAD`), with the `reusedRecipe.open` and
+    `process.recipe.openError` translations and the editor test's five Open cases and their harness (delayed answers,
+    held draft, save-state cleanup). The single-data-set candidate, explanation, replacement, removal, Cancel and the
+    isolation case are kept.
+  - **Repair hint.** "Fix the problem in {recipe}, or select another recipe." ("Fix the problems in ..." for several),
+    naming `referenceFeedback.origins`.
+  - **No training data versus a broken data set.** `NO_TRAINING_DATA` is declared `toolbarMark: false` for both types
+    (`classificationTrainingDataRequirements`, `regressionTrainingDataRequirements`: one factory, differing only in the
+    guidance). It still holds Retrieve, layers and dependent recipes; the shared rule, decision-tree exemption, wizard
+    and pending semantics are unchanged. The Training data panel shows its message as neutral guidance - an info
+    message above the list, or the empty list's own message - read from the list's item (`TRAINING_DATA_LIST`):
+    Classification "Collect points on the map or add a training data set."; Regression, which collects nothing on its
+    map, "Add a training data set." Missing-features and reused-recipe findings still mark TRN, the item and its editor.
+  - **PyEO gate.** Shared rule: `UNAVAILABLE_GATE_INDEX` is judged only where `UNSUPPLIED_CLASSIFIER_INPUTS` finds
+    nothing - an analysis the monitoring data cannot classify has nothing to gate - and is always located at the gate
+    index, naming as `alternatives` the other offered indexes both the baseline and monitoring may supply. S2's
+    relocation of a no-index `BASELINE` finding to the classification, and its `noGateIndex` SRC declaration and
+    message, are removed. OPT binds `options.gateIndex` as its editor, so the draft's index is judged by that rule;
+    `Options.explainGateIndex` and `gateIndex.unsupported` are removed. With no alternative, the message says to turn
+    the gate off (`gateIndex.noAlternative.*`). OPT reads `gateDependencyOf` over the recipe's output requirement reads
+    (`withOutputRequirementReads`, `selectedSource.jsx`): `INCOMPATIBLE` where SRC's classifier-input declarations hold
+    a located finding, `CHECKING`/`UNAVAILABLE` where their output read is that. Meanwhile the gate's on/off, index and
+    threshold stay shown as saved and disabled, with neutral guidance (`useIndexGate.dependsOnSources.*`); the
+    detection count stays editable and nothing is cleared. The offered index list and default index followed Sources'
+    last read of the classification's bands until the freshness correction below.
+  - **Regressions.** `reusedTrainingDataFeedback.test.jsx`, both types: no training data says how to add some in the
+    panel, marking neither TRN nor a data set, Retrieve held; a reused recipe storing no point likewise; a Provider
+    without input imagery still marks TRN and gives no such guidance. `reusedTrainingDataEditor.test.jsx`, both types
+    (12): explanation and the new hint, no action in the recipe field's label, nothing held; replacement and Apply;
+    unchanged; Cancel; isolation; a chain naming the recipe at fault. `regression/trainingDataReadiness.test.jsx`: the
+    guidance in the mounted panel and an unmarked TRN, through the editor's reload, Cancel and Apply.
+    `wizardSectionMarks.test.jsx`: a Regression without training data unmarked through its wizard; its wizard-reach
+    cases now use an unnamed data set. `outputRequirements` and `trainingDataChain` are back to the unmarked contract.
+    `pyeoAlerts/panels/options/options.test.jsx`, rewritten over the real runtime and recipe types (12): incompatible
+    source (controls disabled with guidance, choices kept, no index error, detection count editable), recovery with
+    choices kept, checking then answered, unavailable, an unsupported index repaired by another, no alternative repaired
+    by gate-off, Cancel, On disabled where no index is offered, default-index selection.
+    `inputIncompatibility.test.jsx`: radar gate on/off marks SRC alone with one explanation; visible-band imagery with
+    the gate on marks OPT ("turn the gate off"), not SRC. Shared `readiness.test.js`: radar refused at the
+    classification alone; `alternatives` named, and none.
+  - **Witnesses.** With the pre-correction S2 files (`recipe.jsx`, `reusedRecipeInput.jsx`,
+    `trainingDataRequirements.js`, both recipe types, both panels), 20 of 136 training-data tests fail. Restoring an
+    Open-style label button fails the label-action case for both types (2); a candidate keeping every data set fails
+    isolation for both (2). With the pre-correction shared rule, PyEO declarations, OPT panel and `selectedSource.jsx`,
+    7 of 79 PyEO GUI tests and 3 of 71 shared readiness tests fail.
+  - **Verification.** Focused GUI campaign (two workers): Classification, Regression, PyEO, Time Series, CCDC,
+    Remapping, Masking, Stack, Band Math, Change Image, Change Alerts, `sourcesClassifierInputs`,
+    `unselectedClassification`, `wizardSectionMarks`, `outputRequirements`, recipe opening/closing, save-coordinator,
+    listing, autosave, cache claims and `recipeInput`: 93 files and 1278 tests passed; translations 2. Shared
+    `test/recipe` 1277; gee PyEO, model-derived bands and asset export, 4 files and 137 tests. ESLint and
+    `git diff --check` are clean. The full GUI suite was not run.
+  - **Earlier policy: empty Providers stay neutral; questioned again in the subsequent browser recheck below.** A data set reusing a recipe that stores no point is also `NO_TRAINING_DATA` alone, so it is now
+    unmarked and guided like an empty list; the shared finding does not tell the two apart.
+    **Review recommendation:** keep this neutral. An empty Provider is valid beside another data set contributing
+    points; a wholly empty chain needs recipe-level setup guidance, rather than declaring each Provider broken. No
+    extra detail on the shared finding is needed for that policy.
+  - **Independent correction review (2026-10-23): PyEO index choices still use stale evidence.** The shared gate
+    validation now follows the current Classification, but `Options.gateContext()` still reads
+    `ui.classificationBands`, which only Sources refreshes. Two temporary mounted probes changed the Classification's
+    input without changing that UI copy: visible-only imagery repaired to red/NIR leaves the gate's On button
+    disabled; red/NIR changed to NIR/SWIR leaves NBR absent from the offered repair choices. Both probes fail on the
+    current code. The existing recovery test's `holdInput` also updates the UI copy, so it does not cover an upstream
+    repair alone. Derive the offered/default indexes from the same current resolved evidence as the gate rule, keep
+    selected choices through checking/unavailability, and add regressions that do not write Sources' UI copy. Do not
+    require reopening Sources or add another loader/cache. This remaining repair gap is not a claim that the stale
+    UI copy was introduced by the browser corrections.
+    **Independent checks:** the six focused GUI files (`options`, reused-data editor/feedback, PyEO input
+    incompatibility, Regression readiness and wizard marks) passed 86 tests; shared readiness and PyEO passed 80.
+    ESLint on the reviewed changed sources and OPT tests, and `git diff --check`, passed. The two failing freshness
+    probes were removed; the reviewer changed only this roadmap, not production code or permanent tests. No browser
+    recheck or full GUI suite was run.
+  - **Freshness correction, applied (2026-10-23).** OPT offers, and turns the gate on with, the indexes the shared gate
+    rule finds readable now: `GateIndexCandidates` (`pyeoAlerts/gateIndexCandidates.js`) judges the recipe as applied
+    with the gate on each of `GATE_INDEXES` through the existing `OutputCandidate` and the exported gate declaration
+    (`GATE_INDEX_REQUIREMENT`), each watched while OPT is open and sharing the runtime's observations; one refused is
+    not offered, one still being judged is not ruled out. NDVI is preferred, then the first readable. OPT no longer
+    reads `ui.classificationBands` (its `mapRecipeToProps` and `gateContext` are removed); Sources' first-set-up
+    proposal still uses its own read through `gateIndexes.js`. No loader or cache was added, and Sources need not be
+    reopened. Choices are kept through checking and unavailability as before.
+    **Regressions** (`options.test.jsx`, 14): the fixtures no longer hold the UI copy, and `holdInput` changes only the
+    Classification. Visible-only imagery changed to red/NIR enables On, which takes NDVI and Apply saves it; red/NIR
+    changed to NIR/SWIR, gated on NDVI, says so beside the index and offers NBR, which repairs it and Apply saves it.
+    **Witness:** with the copy-based choices restored and the copy seeded at opening, those two fail as reproduced (On
+    stays disabled; no NBR option); the other 12 pass. **Checks:** PyEO GUI 9 files and 81 tests; with Classification,
+    Time Series, CCDC, `sourcesClassifierInputs`, `outputRequirements` and `wizardSectionMarks`, 39 files and 428
+    tests (two workers). ESLint on the changed files and `git diff --check` are clean. Shared code is unchanged since
+    its 1277-test run. No browser recheck or full GUI suite was run.
+    **Independent correction review:** no further code findings. The offered/default indexes use the same gate
+    declaration and current candidate-read evidence as validation, with all three candidate watches stopped when
+    OPT unmounts. The two reported freshness failures are covered without a UI copy. Independent GUI runs passed
+    214 tests in 14 files: PyEO and `sourcesClassifierInputs` (95), then the runtime, output registry, output
+    requirements and training-data editor (119). ESLint on the four correction files and `git diff --check` passed.
+    The reviewer changed only this verification record. The targeted browser recheck remains pending; no full GUI
+    suite was run.
+- **Further browser recheck feedback (2026-10-23; user reported, not independently browser-observed).** The user
+  reports the checks below completed; unmentioned behaviour is treated as passing, as requested. This supersedes
+  "browser recheck pending" above for that run, not the historical automated results or the need to recheck fixes.
+  Production code and tests have not been changed in response to this new feedback.
+  1. **Unchanged data-set editor offers Apply.** Reported for Classification. Reproduce opening an existing reused
+     data set without editing it, including an upstream error, and keep Close rather than Apply when its applied
+     settings are unchanged. Inspect mount-time initialization (`PanelSections` sets the wizard step; `RecipeSection`
+     loads the selected recipe and sets the name) and distinguish real edits from acquired metadata/defaults. No root
+     cause is confirmed yet. Do not change the shared form's dirty contract merely to hide this one symptom. Cover
+     Classification and Regression, a genuine replacement/edit, Cancel and a delayed recipe answer.
+  2. **One actionable editor explanation.** The blue "Fix the problem in Provider, or select another recipe" repeats
+     the existing red "Provider needs attention" feedback. Consolidate the repair instruction into the existing
+     field feedback, retain correct upstream-origin names and any useful cause, and remove the duplicate blue hint.
+     Keep list/toolbar feedback, editor isolation and replacement/removal/Cancel. This may remove the need for the
+     dedicated `ReusedRecipeInput` wrapper; do not expand every generic reference message for this local repair.
+  3. **Empty selected Provider: policy question reopened.** Neutral guidance for a recipe with no training data passed.
+     The user asks whether explicitly selecting a point-free Provider should instead mark that data set invalid.
+     Revised recommendation: retain neutral guidance where no training data has been configured; where a Consumer
+     explicitly selects a Provider and its entire training closure is known empty, locate the absence at the selected
+     data set so the user can repair it. Do not refuse a Consumer that has points from its own data or another branch
+     solely because one branch is empty; that branch can be explained without blocking valid training. Reuse asks for
+     samples, not the Provider's trained image; a Provider with no own points can also reuse a non-empty chain. The
+     Consumer must still be held when its whole closure is known empty. This refines the earlier blanket neutral
+     presentation and requires detail on the existing absence finding, not another recursive validator. Agree the
+     item-level presentation/strict policy before implementation; checking the Provider's `IMAGE_OUTPUT` is not the
+     appropriate substitute.
+  4. **PyEO redundant SRC guidance and terminology.** With a confirmed SRC error, the neutral sentence explaining that
+     the index gate depends on SRC is redundant; retain the disabled dependent controls and their values without a
+     second explanation of that fault. Short checking/unavailable status can still explain an otherwise unexplained
+     disabled group. User-visible messages should call the option "Require drop", as its field does, rather than
+     "index gate"; internal identifiers need not change. Treat these as wording/presentation corrections.
+  5. **PyEO single Classification input is an operation prerequisite.** The user supplied a server trace from
+     `pyeoAlerts.js:72`: "the classification must have exactly one input image", surfaced as "Failed to load layer /
+     Internal error". Code confirms execution always requires one input, with Require drop off or on. Sources only
+     rejects a newly proposed multi-input selection (`onClassification(..., proposing)`); applied selections and
+     upstream edits bypass that check. Declare this in shared PyEO readiness, bind it to SRC/Classification, and hold
+     client actions and server execution before product work. Reuse the held Classification record; pending/unavailable
+     records establish no cardinality finding. Suppress dependent index errors while this prerequisite fails. Test
+     one-to-two inputs and repair, gate off/on, an initially saved unsupported selection, and server refusal.
+  6. **Require drop reads imagery, not training-feature selections.** The user's correction is right: whether a
+     spectral index can be obtained depends on the Classification's baseline input image and the monitoring scenes,
+     independently of which of those bands its classifier selects. The prior browser instructions did not make that
+     distinction or the input-type distinction below clear enough. Keep index availability separate from classifier
+     feature compatibility, and test changing the source output rather than only `bandSetSpecs.included`.
+  7. **Recovery through Stack remains unresolved.** Adding nir back to an optical Stack over an EE asset did not
+     re-enable Index/Require drop in the user's browser. Current tests use direct `ASSET` inputs; they do not prove
+     this recipe-reference path. Code tracing establishes a relevant distinction: `baselineSuppliesIndex` accepts raw
+     red/nir for an asset, but a `RECIPE_REF` must currently expose a band literally named `ndvi`; execution likewise
+     asks a recipe input for that named band instead of deriving it from raw bands. A local call confirms raw
+     red/nir => true for ASSET, false for RECIPE_REF; adding a named ndvi => true for RECIPE_REF. This could explain
+     availability without establishing the entire cause of the reported disabled controls. Reproduce the real
+     Asset -> Stack -> Classification -> PyEO chain, including Stack mappings, current evidence, saves and gate
+     on/off. Distinguish a genuinely unavailable index from a stale/pending read before changing freshness again.
+     Recommended product direction, not implemented: allow deriving Require drop's index from suitable raw baseline
+     bands for recipe inputs too, preserving index units/masks and existing provided-index behaviour, rather than
+     requiring users to add a redundant ndvi output to a Stack. Change execution and shared availability together;
+     merely enabling the UI while execution still asks for a missing named band is insufficient. This is a separate
+     bounded execution/readiness correction if it cannot remain within S2's presentation scope.
+  **Next correction order:** finish the unchanged-editor/duplicate-message and PyEO presentation corrections; add the
+  shared single-input prerequisite; reproduce and decide the Stack/index derivation correction. Keep S2 uncommitted
+  until those intended corrections are reviewed. Do not silently include the still-open empty-Provider policy or the
+  independent Stack layout work as an agreed semantic change.
+- **Corrections from that feedback, applied (2026-10-23).** Items 1, 2, 4 and 5 above; items 3, 6 and 7 and the Stack
+  layout stay separate follow-ups, unimplemented. The Stack recovery failure is unresolved: the tests below use direct
+  `ASSET` inputs and establish nothing about the Asset -> Stack -> Classification -> PyEO path.
+  - **Unchanged editor offered Apply (item 1).** *Cause:* `PanelSections` sets the wizard step to 0 when it mounts,
+    and Classification's `modelToValues` gave `wizardStep` no value, so its initial "" differed and the form was
+    dirty on opening - for every Classification data set, working or broken; Regression's editor has no step. A
+    second cause, independent of it: `RecipeSection` renamed the data set after the reused recipe's loaded title on
+    every load, so a saved name differing from that title was an edit too. *Change:* `wizardStep: 0` in Classification's
+    `modelToValues`; both `RecipeSection`s keep the saved name while the recipe loaded is the one the data set was saved
+    with, and name it after the recipe otherwise. A recipe chosen while the saved one is still being read keeps its
+    name: `RecipeInput` already cancels the earlier read. The shared form's dirty contract is unchanged.
+  - **One explanation (item 2).** The editor bindings say their findings through a new optional `editor.message`
+    (`recipeFormPanel.jsx`, string-input editors only; others say the requirement's message as before):
+    reference feedback as "Fix the problem in {recipe}, or select another recipe." naming the origin recipe at fault,
+    the actual upstream recipe in nested reuse; missing features as their cause, then that instruction. Lists, toolbar
+    and other reference messages are unchanged. `ReusedRecipeInput` and its blue hint are removed; both
+    `RecipeSection`s render `RecipeInput` directly again.
+  - **PyEO presentation (item 4).** With a confirmed SRC finding OPT says nothing more; Require drop, Index and the
+    threshold stay disabled with their values, and the detection count editable. Only `CHECKING`/`UNAVAILABLE` keep a
+    short status. User-facing PyEO messages say "Require drop" instead of "index gate"/"the gate" (OPT's messages,
+    including `useIndexGate.unavailable`); identifiers are unchanged.
+  - **Single input (item 5).** Shared `MULTIPLE_CLASSIFICATION_INPUTS`, judged on the held Classification record
+    (`recordsOf`), located at `sources.classification` with its `count`; a record not held or unreadable establishes
+    nothing, and one with no input is that recipe's own refusal, said as before. While it holds, PyEO judges neither
+    classifier inputs nor the gate, so one SRC explanation stands, gate on or off. GUI: bound beside Classification
+    in Sources (`multipleInputs`) and part of `gateDependencyOf`, so OPT's gate waits on it as on an incompatible
+    classifier. Server: exports to Drive and Workspace are refused by the same readiness before anything is built.
+    Sources' selector-only refusal (`singleInputRequired`) is removed: a newly chosen classification of several
+    inputs is now refused by the shared rule like a saved one, holding Apply.
+  - **Regressions.** `reusedTrainingDataEditor.test.jsx` (22, both types): unchanged editors over a broken and a working
+    Provider offer Close; a saved name is kept; another recipe offers Apply and names the data set; a recipe chosen
+    while the saved one is being read stays chosen when that read answers; one explanation, no blue hint, no label
+    action; missing features with their cause; the nested origin; isolation, Apply, Cancel.
+    `inputIncompatibility.test.jsx`: one input to two and back, gate off and on; saved with two (one radar), saying
+    only the count; chosen in Sources, Apply held. `options.test.jsx`: two inputs keep the gate disabled as saved with
+    no index error or SRC sentence, and repair restores it; a confirmed incompatibility shows no sentence. Shared
+    `readiness.test.js`: two inputs refused at the classification alone, gate off and on; no record held, no finding.
+    gee `imageDriveExport.test.js`: a PyEO export over two inputs refused, gate off and on, before any build, folder or
+    export.
+  - **Witnesses (targeted mutations, each restored).** `wizardStep` default removed: 4 editor cases fail
+    (Classification); saved name not kept: 2; `editor.message` hook removed: 6. Shared rule removed: shared 2, gee 2,
+    GUI 5; its SRC binding/OPT dependency removed: GUI 5; OPT's SRC sentence restored: 2; selector-only refusal restored:
+    1.
+  - **Verification (two workers).** GUI: Classification, Regression, PyEO, Time Series, CCDC, Remapping, Masking,
+    Stack, Band Math, Change Image, Change Alerts, `sourcesClassifierInputs`, `unselectedClassification`,
+    `wizardSectionMarks`, `outputRequirements`, recipe/close/autosave/cache claims, `recipeInput` and translations, 92
+    files and 1254 tests. Shared `test/recipe` 1280. gee PyEO and image exports, 5 files and 111 tests. ESLint and
+    `git diff --check` are clean. No full GUI suite or browser run.
+  - **Slip during witnessing:** a restore script ran a bare `git checkout -q`, which with no paths changes nothing; the
+    working tree and index were confirmed unchanged.
+  - **Independent review of these corrections (2026-10-23):** no further code findings. The unchanged-editor fixes
+    initialize the existing step and preserve the saved name without changing shared dirty tracking; the optional
+    message hook preserves the default for other editors. The shared multi-input rule uses the held record, with
+    client feedback and dependent-control handling bound to that finding. Independent runs passed 189 GUI tests in
+    14 files (editor, PyEO, Regression readiness, Sources, wizard marks and output requirements), 83 shared
+    readiness/PyEO tests, and 15 Drive/Workspace export tests. ESLint on the reviewed changed files and
+    `git diff --check` passed. The reviewer changed only this verification record. No browser run or full GUI suite;
+    Stack recovery and the other separate follow-ups remain unverified by these checks.
+- **Latest browser recheck result and editor-policy correction (2026-10-23; user reported).**
+  - **Training-data editor:** the user reports the remaining issue is selecting a Provider that samples no nir, seeing
+    the combined cause/repair validation, and still being able to Apply. Code confirms `REUSED_RECIPE_EDITOR` is
+    `blocksApply: false`, inherited by the missing-features editor; this was intentional in the earlier presentation-only
+    policy. **New user requirement:** a confirmed finding on the edited reused data set must hold Apply. Use the
+    existing candidate/form blocking mechanism for both Classification and Regression; no second validator. Keep
+    choosing another recipe, removal, Cancel and Close for an unchanged item available. A compatible replacement
+    clears the finding and enables Apply. Preserve item isolation, and do not turn pending/unavailable evidence into
+    a confirmed error. Cover the disabled Apply and direct form submission, repair, an unchanged broken item's Close,
+    and a healthy item beside a broken one. This supersedes earlier S2 acceptance that deliberately allowed applying
+    a known-broken selection. Other items in this training-editor recheck were not reported as failures.
+  - **PyEO multi-input check:** choosing a Classification with two input images now gives the correct validation,
+    confirmed by the user. This is evidence for that browser case, not a claim of an independently observed run.
+  - **PyEO same-asset versus Stack comparison:** Require drop/Index work for the optical asset directly but remain
+    unavailable when the Classification uses a Stack containing a subset of the same asset's bands, including red
+    and nir. With Require drop already on, selecting the Stack-based Classification gives the no-alternative NDVI
+    error. This matches the traced ASSET/RECIPE_REF asymmetry: recipe inputs are asked for a named ndvi band rather
+    than calculating it from raw red/nir. The existing validation matches current execution, so changing only the
+    dropdown is insufficient. Next bounded follow-up: reproduce this exact chain, then align shared availability
+    and execution so recipe inputs can derive the index from suitable raw bands, preserving existing index output
+    units/masks and the provided-index path. Test actual Stack output/mapping changes, not only direct assets or the
+    Classification's selected training features. A PyEO layer rendering with Require drop off is expected because
+    the optional drop requirement is not executed; with it on, an unavailable index must hold execution.
+  - **Scope:** finish the confirmed-finding Apply hold before committing S2. Keep the Stack execution/readiness
+    correction as the next separate fix; the other deferred policies and layout work are unchanged. No production
+    code or tests changed while recording this feedback.
+- **Browser recheck instructions used for that run:**
+  1. Classification and Regression: open an existing reused data set, working and broken, and leave it untouched:
+     Close, not Apply. Choose another recipe: Apply. Cancel keeps the applied one.
+  2. Over a Provider with no input imagery: the recipe field says only "Fix the problem in Provider, or select another
+     recipe."; no blue hint. In nested reuse it names the recipe at fault.
+  3. PyEO over a radar-feature Classification: SRC explains it; OPT shows Require drop, Index and threshold disabled
+     with their values and no extra sentence. All OPT messages say "Require drop".
+  4. PyEO: add a second input image to its Classification in that recipe's tab: SRC says so beside Classification, gate
+     off or on, OPT's gate disabled; layers and Retrieve held. Remove it again: repaired. Choosing a two-input
+     Classification in Sources is refused, Apply held.
+
+- **Editor-policy correction, applied (2026-10-23).** A confirmed finding on the edited reused data set now holds
+  Apply. `REUSED_RECIPE_EDITOR` no longer sets `blocksApply: false`, so it - and the missing-features editor built on
+  it - holds Apply through the existing candidate/form blocking (`recipeFormPanel.jsx` `blocked()`, `inputFeedback`),
+  which `Form.Panel.apply()` refuses on every submission path, Enter and form submission included. Close of an
+  unchanged item is unaffected: it is offered whenever the form is clean, valid or not. Pending or unreadable evidence
+  holds nothing, as `OutputCandidate` refuses only confirmed reads; isolation is unchanged, the candidate being the
+  edited data set alone. This supersedes S2's earlier explanation-only acceptance for these editors. No validator,
+  loader, cache or operation was added; shared dirty tracking is unchanged.
+  - **Regressions** (`reusedTrainingDataEditor.test.jsx`, now 32, both types): in a healthy data set's editor,
+    choosing a Provider sampling no nir, or one without input imagery, shows the one explanation (cause and repair,
+    or repair), disables Apply, and a submitted form saves nothing; repairing that Provider upstream clears it and
+    Apply saves it; a compatible replacement saves; Cancel keeps the applied recipe. Existing cases kept: an unchanged
+    broken item closes; a broken item's compatible replacement saves; isolation; nested origin. The name and
+    delayed-answer cases now choose a compatible spare recipe instead of the broken Provider.
+  - **Witnesses.** With `blocksApply: false` restored, the six refusal/recovery cases fail (three per type). With
+    `Form.Panel.apply()`'s invalid guard removed and the binding blocking, the four submitted-form cases fail.
+  - **Verification (two workers):** Classification and Regression suites, `wizardSectionMarks`, `outputRequirements`,
+    `unselectedClassification`, `widget/form` and `recipeInput`, 15 files and 214 tests. ESLint on the changed files
+    and `git diff --check` are clean. No shared code changed, so nothing broader was run; no full GUI suite or browser
+    run. The PyEO multi-input browser result above stands; the Stack Require drop derivation, empty-Provider
+    refinement, Stack layout, S3/S4 and Sources sizing remain untouched.
+  - **Independent review (2026-10-23):** no further code findings. Both editor declarations now use the existing
+    candidate/form blocking; the form's invalid guard covers direct submission and clean Close remains available.
+    Independent editor, feedback, Regression readiness and form runs passed 87 tests in seven files. ESLint on the
+    binding and editor test, and `git diff --check`, passed. The reviewer changed only this roadmap; no production
+    code or tests, no full GUI suite or browser run.
+  - **Browser result (2026-10-23):** the user reports "Classification verified - all good" for the latest Apply-hold
+    recheck. Record Classification as passed; Regression was not explicitly included in that confirmation. The PyEO
+    Stack Require drop issue remains separate and unresolved by this result.
+  - **Browser recheck (pending):** Classification and Regression, in a working data set's editor: choose a Provider
+    sampling no nir - the cause and repair show, Apply is disabled, Enter applies nothing; choose one without input
+    imagery - likewise; choose a working recipe - Apply saves it; Cancel keeps the applied one. Open a broken data set
+    unchanged: Close works. Mounted tests cover upstream repair; recipe-modal navigation remains a separate follow-up.
+
+- **Combined browser recheck instructions used for that run:**
+  1. Classification and Regression over a Provider with no input imagery: TRN, the data set and its editor say what is
+     wrong, with "Fix the problem in Provider, or select another recipe." and no Open action. A working recipe clears
+     it; Cancel keeps the applied one; a healthy second data set's editor shows nothing.
+  2. A new Classification and a new Regression: TRN is not red; its panel shows the guidance; Retrieve is held.
+     Collecting a point (Classification) or adding a data set clears it.
+  3. PyEO over a Classification switched to radar imagery, gate on NDVI: SRC explains it, OPT is unmarked. In OPT the
+     gate, index and threshold are shown disabled with the SRC guidance, with no red index error, and the detection
+     count is editable. Restoring optical imagery re-enables the gate with its choices unchanged.
+  4. PyEO over imagery that feeds the classifier but provides no gate index (visible bands only), gate on: OPT says
+     to turn the gate off, SRC is unmarked; Off and Apply clear it. Over red/NIR imagery gated on NBR, choosing NDVI
+     repairs it.
+  5. With OPT open (gate off) over visible-only imagery, change the Classification's input to red/NIR in its own tab
+     and return without reopening Sources: On is enabled and takes NDVI. Gated on NDVI, change it to NIR/SWIR: NBR is
+     offered and repairs it.
+
+  Time Series/CCDC Sources and the Retrieve warning are unchanged by these corrections.
+
 S1 and S2 can proceed independently of the semantic changes. S3 precedes S4 to avoid adapting sampling work to a
 request-stage design scheduled for removal. Start the read-only F5 audit early, but land S5's ownership behaviour
 before S6's final editor/gate consolidation. If S5 reveals a need to change persisted structure, describe its old/new
@@ -3033,12 +3486,17 @@ that pending/unavailable evidence is not a finding are already established direc
 - P2: AOI update efficiency — measure redraw triggers and prevent redraws on irrelevant edits while preserving real
   geometry changes and cancellation. Keep this performance investigation separate from the S1 layout fix.
 - P3: visualization Copy/Paste — F7 as a separate feature, using existing layer/visualization ownership and validation.
+- P4: keyboard band addition — Enter adds the highlighted band, then highlights the next available band so consecutive
+  bands can be added with repeated Enter. Separate small widget follow-up; see the later usability notes below.
+- P5: CCDC Sources sizing — agreed family/view heights: stable heights for Optical/Radar/Planet and More/Less, with
+  the existing viewport cap and scrollable body. Decision recorded below; not implemented.
 - WebSocket recipe-update notification stays outside this implementation round; stale-copy checks were reported good.
 
 The direct-versus-referenced chart AOI difference is expected and has no corrective slice. The invalid legacy
 Time Series saved-UI fixture is removed from manual acceptance, and the passed controlled numerical checks are not
 unfinished browser work. Preserve successful manual results and re-run affected cases after each slice; missing
-remaining results are still pending. One final integrated automated checkpoint follows the completed correction set.
+the initial manual batch is now reported complete, with fixes and targeted rechecks outstanding. One final integrated
+automated checkpoint follows the completed correction set.
 
 **F1. Make a training-data problem visible and repairable where it is edited.**
 
@@ -3047,8 +3505,9 @@ remaining results are still pending. One final integrated automated checkpoint f
   the existing rules; do not invent a second toolbar validator or mark an evidence read as a configuration error.
 - Both training-data lists receive `withItemProblems`, but their `RecipeSection` editors only render a `RecipeInput`.
   Carry the existing finding into the selected data-set editor, naming the Provider and explaining the needed repair.
-  Offer a direct way to open the relevant Provider; keep replacing/removing the reuse selection possible. For nested
-  findings, identify the actual offending recipe, not just the first reference in the chain.
+  Keep replacing/removing the reuse selection possible. For nested findings, identify the actual offending recipe,
+  not just the first reference in the chain. Per the subsequent browser decision, do not add an Open Provider action
+  inside this modal. Generic selector navigation depends on separate recipe-scoped-modal work.
 - Re-applying the unchanged reference must not imply that it repaired an upstream error. Explain that distinction;
   do not indiscriminately disable Apply and trap the user in an editor from which a repair could be selected. An edited
   reference must not keep a stale finding belonging only to the old Provider.
@@ -3056,6 +3515,8 @@ remaining results are still pending. One final integrated automated checkpoint f
   opening/repairing Provider clears it, replacement/removal and Cancel behave correctly, and the Consumer renders
   after recovery. Cover real remaining feature incompatibility after F4, not a Provider selection change that F4 makes
   valid. Existing current-behaviour witnesses remain historical evidence.
+- **Status:** implemented in S2 with its browser corrections (2026-10-23): no training data at all is neutral panel
+  guidance, not a TRN mark, for both types; a broken configured data set is marked. Browser recheck pending.
 
 **F2. Keep the selected Classification and its explanation visible in CCDC and Time Series.**
 
@@ -3259,17 +3720,65 @@ remaining results are still pending. One final integrated automated checkpoint f
 - Reproduce Optical-to-Radar Classification input changes with the index gate off and on, and record the actual SRC
   and OPT findings separately. `UNSUPPLIED_CLASSIFIER_INPUTS` and `UNAVAILABLE_GATE_INDEX` are different rules; the
   latter can concern baseline or monitoring imagery. The user report alone does not establish which OPT code fired.
-- If only changing the selected Classification/its imagery can repair a fault, explain it at SRC's Classification
-  field rather than directing the user to an unrelated OPT control. Avoid cascading toolbar errors for the same
-  upstream incompatibility. Keep OPT explanations for a genuine local choice that can be repaired by selecting a
-  supported index or changing the gate, with readiness still enforcing all applicable shared rules.
-- Use the existing findings and presentation bindings; do not invent a second index/compatibility validator or simply
-  suppress every OPT mark. **Acceptance:** each marked section offers the corresponding repair, upstream input repair
-  clears the relevant feedback, genuine index-gate failures remain visible, and gate-off controls acquire no gate
-  requirement.
+- A Classification whose required features optical monitoring cannot provide invalidates PyEO regardless of index
+  gate settings. Explain and repair that prerequisite at SRC/Classification; do not offer a second red index error
+  inside OPT or imply switching the gate off fixes the source. The 2026-10-23 browser report confirms S2 fixed the
+  toolbar attribution but left the panel-level cascade (`Options.explainGateIndex`). Address both presentations using
+  the same shared compatibility state, not another local test for radar versus optical imagery or simply "SRC is red".
+- Distinguish a *compatible* classifier whose imagery cannot provide the chosen gate index. That is genuinely a gate
+  configuration problem: another supported index or turning the gate off can repair it. If no supported gate index
+  exists but classification itself is usable, explain gate availability in OPT and allow the meaningful gate-off
+  repair; do not label the selected Classification generally incompatible merely because this optional gate cannot
+  run. Reassess S2's blanket rule moving every no-baseline-index finding into SRC against this distinction.
+- **Agreed form behaviour (2026-10-23):** while source compatibility is invalid/pending, retain the chosen gate,
+  index and threshold, disable only the dependent gate group, and show neutral SRC-repair/checking guidance rather
+  than a field error; independent alert controls stay editable. When the source becomes compatible, restore local
+  gate interaction and any real gate finding. Do not clear selections or switch off the gate as a side effect of
+  opening OPT or refreshing evidence. A temporarily unknown input is not proof that no index is available.
+- Use the existing findings and presentation bindings; remove or consolidate the independent OPT validation that
+  creates contradictory feedback rather than layering another validator over it. **Acceptance:** incompatible radar
+  features with optical monitoring are held with the gate both off and on, with one source explanation and no OPT
+  cascade; opening OPT preserves its choices; repair restores the group; a compatible source with an unsupported
+  index has a meaningful OPT repair; pending/unavailable is not a field error; a gate off acquires no gate requirement.
+  **Status:** message/terminology and shared single-input corrections are implemented; the user confirmed the
+  two-input selection refusal. Require drop over a Stack input still requires the separate execution/readiness
+  correction described in S2's latest browser feedback. The direct-asset tests do not establish that recipe-input path.
 
 **Later usability/performance features from the 2026-10-23 feedback (not prerequisites for F8-F10).**
 
+- **Stack Band names layout:** four short band names do not appear in the expected two-by-two layout; the user reports
+  unexpected wrapping on the first line. Code uses a wrapping horizontal `Layout`, with ordinary form-input sizing
+  and margins, inside a panel capped at 29rem; short text does not itself determine field width. Prefer a local two-column
+  grid for these fields, falling back to one column in a narrow viewport, over changes to shared `Layout` or global
+  input widths. Confirm the rendered cause and check 1/2/3/4/many fields, long names, errors and scrolling. Recorded
+  as an independent small UI fix, not reproduced in a browser or implemented with S2.
+- **CCDC Sources height:** the user reports an excessively tall panel after choosing Radar and asks about stable
+  sizing versus content-based sizing. `ccdc/panels/sources/sources.module.css` explicitly sets `height: 46rem`, unlike
+  Time Series Sources, which only caps width. Blame dates the 46rem rule to `b166296a1` (2022-03-17); it is not caused
+  by S1's Panel visibility change or a new resize-stabilization mechanism. The old rule before that commit fixed a
+  content height at 40rem, so history does not establish that every older CCDC panel was content-sized.
+  Further code tracing confirms dynamic content: Classification loading replaces native-only breakpoint choices with
+  regression/probability options, one probability per class, so both their count and label wrapping can change. In
+  simple mode a Classification field can also appear for an error. Therefore content-based sizing alone (the initial
+  recommendation) would not fully address background-loading jumps.
+  **Agreed decision (2026-10-23): family/view heights.** Give Optical/Radar/Planet suitably sized, stable panel heights,
+  also accounting for More/Less. Allow resizing on those deliberate view changes, while late Classification options and explanations
+  use the existing scrollable body without changing the shell height. Keep header/footer stable, the shared viewport
+  cap, and readable content at small sizes. Choose heights with actual browser fixtures; do not add per-class-count
+  sizing, fit-then-freeze measurement state or another shared Panel mechanism. Content-based sizing with a reserved
+  band area was considered but not selected. This decision is not implemented yet. Check Optical/Radar/Planet,
+  More/Less, short/long legends, slow Classification loading, validation messages and
+  small-viewport scrolling before choosing final dimensions.
+- **Keyboard band addition:** in a Classification input image's Add bands popup, pressing Enter should add the
+  highlighted band and move the keyboard highlight to the next available band in the displayed order. The next Enter
+  adds that band; it must not add the next one immediately or jump back to the "All bands" entry after each addition.
+  Code tracing: `inputImageryWithDerived/imageForm.jsx` uses a `Combo` with `stayOpenOnSelect` and removes added options;
+  `ListContent.componentDidUpdate` currently resets highlighting on options/selection changes. Fix the relevant shared
+  picker behaviour narrowly; do not make every single-select list advance or treat arbitrary evidence/filter refreshes
+  as a band-add action. Keep filtering, mouse selection and arrow navigation, skip nonselectable rows, and define a
+  safe end-of-list state that cannot accidentally activate "All bands". Cover repeated Enter over the real band-add
+  flow, preserved filter text, the last available band and an unaffected ordinary selector. No persisted recipe-format
+  change is needed. This is recorded, not implemented in S2.
 - CCDC Slice chart labels should use human-readable band names when available, including recipe references. Keep raw
   names for request identity and a fallback for asset measures without labels; test that labels do not alter requests.
 - Investigate AOI-layer redraws on unrelated recipe edits. Base updates on effective geometry/source changes; preserve
@@ -3322,10 +3831,10 @@ separate decision changes it. Broader coverage listed under "Deferred beyond thi
 - The full GUI run includes the later deselection, requested-band, legacy-indicator and submission-offer fixes.
   Live numerical normalisation checks passed at the earlier baseline recorded under "Verification status of the
   readiness and normalisation changes"; keep that evidence separate from the later GUI and route verification.
-- The signed-in browser batch has partial user-reported results on 2026-10-22 and 2026-10-23, recorded under "Browser feedback".
-  The remaining results and relevant smoke tests are still pending. Resolve the reported issues or make an explicit
-  scope decision before treating the batch as passed; include clearing and reselecting a Classification in Time
-  Series/CCDC charts and Time Series Retrieve.
+- The user reports the manual batch complete on 2026-10-23 and all issues reported; unmentioned tests pass under their
+  explicit reporting convention. Results and subsequent decisions are recorded under "Browser feedback" and S2.
+  Resolve the reported issues or make an explicit scope decision before treating the batch as clean. After fixes,
+  run targeted browser rechecks of changed paths and nearby controls, rather than repeating the complete batch.
 - Check actual preview tiles or chart responses, as appropriate, after repair. Enabled buttons alone are not an
   execution check. Complete this browser checkpoint before pushing the accumulated changes.
 

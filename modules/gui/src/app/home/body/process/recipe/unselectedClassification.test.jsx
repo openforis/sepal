@@ -134,6 +134,7 @@ describe.each([
         await openChart({type, Sources, ChartPixel})
         await clearClassification(label)
         await press('button.apply')
+        await reopenSources()
 
         await selectClassification(label)
         await press('button.apply')
@@ -282,9 +283,23 @@ const settled = async () => {
     }
 }
 
+let chart
+
 const openChart = async ({type, Sources, ChartPixel}) => {
-    await mount(type, <><Sources/><ChartPixel values={{selectedBand: 'regression'}}/></>)
+    chart = {Sources, ChartPixel}
+    await mount(type, chartPanels('opened'))
     await act(async () => actionBuilder('CHART_PIXEL').set(['process.loadedRecipes', ID, 'ui.chartPixel'], {lat: 1, lng: 2}).dispatch())
+    await settled()
+}
+
+const chartPanels = opening => {
+    const {Sources, ChartPixel} = chart
+    return <><Sources key={opening}/><ChartPixel values={{selectedBand: 'regression'}}/></>
+}
+
+// Sources closed by Apply, and opened again beside the open chart, from what was applied.
+const reopenSources = async () => {
+    await act(async () => root.render(rendered(chartPanels('reopened'))))
     await settled()
 }
 
@@ -308,20 +323,22 @@ const mount = async (type, panels, retrieveBands = ['regression']) => {
     const container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
-    await act(async () => root.render(
-        <Provider store={store}>
-            <SourceRuntimeProvider>
-                <PortalContainer/>
-                <PortalContainer id='test-portal'/>
-                <PortalContext id='test-portal'>
-                    <EventShield>
-                        <Recipe id={ID}>
-                            {panels}
-                        </Recipe>
-                    </EventShield>
-                </PortalContext>
-            </SourceRuntimeProvider>
-        </Provider>
-    ))
+    await act(async () => root.render(rendered(panels)))
     await settled()
 }
+
+const rendered = panels => (
+    <Provider store={store}>
+        <SourceRuntimeProvider>
+            <PortalContainer/>
+            <PortalContainer id='test-portal'/>
+            <PortalContext id='test-portal'>
+                <EventShield>
+                    <Recipe id={ID}>
+                        {panels}
+                    </Recipe>
+                </EventShield>
+            </PortalContext>
+        </SourceRuntimeProvider>
+    </Provider>
+)

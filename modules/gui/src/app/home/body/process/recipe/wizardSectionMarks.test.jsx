@@ -96,8 +96,8 @@ const {Toolbar} = await import('~/widget/toolbar/toolbar')
 const {SectionButton} = await import('./sectionButton')
 const {sliceRequirements} = await import('./ccdcSlice/sourceRequirement')
 
-// Stands in for a problem found in a training data set the Classification configures - it declares none today: a data
-// set without a name.
+// Stands in for a problem found in a training data set a Classification or Regression configures - they declare none
+// today: a data set without a name.
 const UNNAMED_DATA_SET = {
     id: 'test.unnamedDataSet',
     section: TRAINING_DATA_SECTION,
@@ -111,7 +111,7 @@ const UNNAMED_DATA_SET = {
 }
 
 addRecipeType({...classification(), sourceRequirements: [...classification().sourceRequirements, UNNAMED_DATA_SET]})
-addRecipeType(regression())
+addRecipeType({...regression(), sourceRequirements: [...regression().sourceRequirements, UNNAMED_DATA_SET]})
 addRecipeType({id: 'CCDC_SLICE', imageSource: true, sourceRequirements: sliceRequirements})
 addRecipeType(bandMath())
 addRecipeType(remapping())
@@ -126,19 +126,45 @@ afterEach(async () => {
     container?.remove()
 })
 
-describe('a Regression without training data, being set up', () => {
-    it('leaves Training data unmarked while the wizard is at Input imagery, and is held back all the same', async () => {
+// No training data at all is set-up not yet done, which Training data's own panel guides: its button is not marked for it.
+describe('a Regression without training data', () => {
+    it('leaves Training data unmarked through its wizard and once it is done, and is held back all the same', async () => {
         await open(regressionOf(), RegressionToolbar)
+        expect(markedSections()).toEqual({})
+
+        await click(button('wizard.next'))
+        expect(openPanels()).toEqual(['trainingData'])
+        expect(markedSections()).toEqual({})
+        await click(button('wizard.done'))
+
+        expect(markedSections()).toEqual({})
+        expect(sectionProblems()).toEqual({})
+        expect(findings()).toEqual(['NO_TRAINING_DATA'])
+        expect(retrieveAvailable()).toBe(false)
+        expect(previewGate()).toMatchObject({withdraw: true, section: TRAINING_DATA})
+    })
+
+    it('leaves Training data unmarked once set up', async () => {
+        await open(regressionOf({initialized: true}), RegressionToolbar)
+
+        expect(markedSections()).toEqual({})
+        expect(retrieveAvailable()).toBe(false)
+    })
+})
+
+describe('a Regression whose data set is found to lack something, being set up', () => {
+    it('leaves Training data unmarked while the wizard is at Input imagery, and is held back all the same', async () => {
+        await open(regressionOf({dataSets: [UNNAMED_PLOTS]}), RegressionToolbar)
 
         expect(openPanels()).toEqual(['inputImagery'])
         expect(markedSections()).toEqual({})
-        expect(sectionProblems()).toEqual({trainingData: MISSING})
+        expect(sectionProblems()).toEqual({trainingData: UNNAMED})
         expect(retrieveAvailable()).toBe(false)
         expect(previewGate()).toMatchObject({withdraw: true})
     })
 
     it('marks Training data once the wizard reaches it, and keeps it marked going back', async () => {
-        await open(regressionOf(), RegressionToolbar)
+        await open(regressionOf({dataSets: [UNNAMED_PLOTS]}), RegressionToolbar)
 
         await click(button('wizard.next'))
         expect(openPanels()).toEqual(['trainingData'])
@@ -149,21 +175,19 @@ describe('a Regression without training data, being set up', () => {
     })
 
     it('marks Training data once the wizard is done', async () => {
-        await open(regressionOf(), RegressionToolbar)
+        await open(regressionOf({dataSets: [UNNAMED_PLOTS]}), RegressionToolbar)
 
         await click(button('wizard.next'))
         await click(button('wizard.done'))
 
         expect(openPanels()).toEqual([])
-        expect(markedSections()).toEqual({[TRAINING_DATA]: [MISSING]})
+        expect(markedSections()).toEqual({[TRAINING_DATA]: [UNNAMED]})
     })
-})
 
-describe('a Regression without training data, already set up', () => {
-    it('marks Training data at once', async () => {
-        await open(regressionOf({initialized: true}), RegressionToolbar)
+    it('already set up, marks Training data at once', async () => {
+        await open(regressionOf({initialized: true, dataSets: [UNNAMED_PLOTS]}), RegressionToolbar)
 
-        expect(markedSections()).toEqual({[TRAINING_DATA]: [MISSING]})
+        expect(markedSections()).toEqual({[TRAINING_DATA]: [UNNAMED]})
     })
 })
 
@@ -275,7 +299,6 @@ describe('a section button over requirements reading source evidence, while the 
 })
 
 const ID = 'recipe-1'
-const MISSING = 'process.classification.panel.trainingData.missing'
 const TRAINING_DATA = 'process.classification.panel.trainingData.button'
 const INPUT_IMAGERY = 'process.classification.panel.inputImagery.button'
 const UNNAMED = 'Name each training data set'
@@ -296,11 +319,14 @@ const compositeImage = included => ({
     bandSetSpecs: [{id: 'image-bands', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included}]
 })
 
-const regressionOf = ({initialized = false} = {}) => ({
+// Plots uploaded, of a value each, under no name.
+const UNNAMED_PLOTS = {dataSetId: 'plots', name: '', type: 'CSV_UPLOAD', referenceData: [{x: 1, y: 1, value: 10}, {x: 2, y: 2, value: 20}]}
+
+const regressionOf = ({initialized = false, dataSets = []} = {}) => ({
     id: ID, type: 'REGRESSION', revision: 1, ui: {initialized},
     model: {
         inputImagery: {images: [compositeImage(['red', 'nir', 'swir1'])]},
-        trainingData: {dataSets: []},
+        trainingData: {dataSets},
         auxiliaryImagery: [],
         classifier: {type: 'RANDOM_FOREST', numberOfTrees: 25}
     }

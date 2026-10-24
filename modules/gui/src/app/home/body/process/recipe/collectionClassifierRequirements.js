@@ -10,15 +10,18 @@ import {referenceFeedback} from './referenceFeedback'
 // find it (collectionClassifierRequirement, lib/js/shared/src/recipe/source/collectionSources.js): that the images of
 // the collection they configure carry what its classifier reads. Their output read judges that (sourceRequirements.js),
 // so Sources' toolbar button and the operations over the output say what that read establishes, and so does the Sources
-// editor beside the data sets, where another collection would carry it, or else the classification - said at once, for
-// it concerns a choice made. A draft refused for it cannot be applied. `sources` is the recipe's Sources section.
+// editor - said at once, for it concerns a choice made. The finding is located at the data sets where another collection
+// would carry it, or else at the classification, and its message says which repairs it; either way it is said beside the
+// classification, the dependency whose bands are missing, which Sources show while it cannot be used. A draft refused for
+// it cannot be applied. `sources` is the recipe's Sources section.
 export const collectionClassifierRequirements = sources => ['classification', 'dataSets'].map(field =>
     sourcesFieldRequirement({
         id: `sources.${field}.classifierInputs`,
         section: sources,
         field,
         code: UNSUPPLIED_CLASSIFIER_INPUTS,
-        message: ({missing} = {}) => msg(`process.source.classifierInputs.${field}`, {missing: listed(missing, AND_MORE)})
+        message: ({missing} = {}) => msg(`process.source.classifierInputs.${field}`, {missing: listed(missing, AND_MORE)}),
+        editor: {input: () => 'classification'}
     })
 )
 

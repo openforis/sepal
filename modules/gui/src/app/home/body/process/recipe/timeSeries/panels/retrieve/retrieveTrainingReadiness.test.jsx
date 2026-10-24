@@ -288,6 +288,23 @@ describe('Time Series Retrieve of the single indicator an earlier release saved'
     })
 })
 
+// Opened with no indicator selected yet, as a recipe never retrieved is.
+describe('Time Series Retrieve opened with nothing selected', () => {
+    for (const [_case, trainingData] of [['with a working Classification', [COLLECTED]], ['over a Classification without points', []]]) {
+        it(`names no indicator as unavailable, ${_case}, and submits one once selected`, async () => {
+            await open({selected: undefined, trainingData})
+
+            expect(shown()).not.toContain('process.retrieve.form.bands.unavailable')
+            expect(applyEnabled()).toBe(false)
+
+            await click(NATIVE)
+            expect(shown()).not.toContain('process.retrieve.form.bands.unavailable')
+            await apply()
+            expect(submittedIndicators()).toEqual([[NATIVE]])
+        })
+    }
+})
+
 // The questions watched are those the download is held to (task/export/timeSeries.js, modules/gee).
 describe('what an open Time Series Retrieve watches', () => {
     it('is the image output alone for indicators of the scenes, the collection classified beside it for one the Classification computes, let go with it and with the panel', async () => {
@@ -341,7 +358,7 @@ const seriesRecipe = bands => ({
     ui: {
         initialized: true,
         classification: {classificationLegend: LEGEND, classifierType: 'RANDOM_FOREST', classifier: {type: 'RANDOM_FOREST'}},
-        retrieve: {bands, scale: 30, tileSize: 2, shardSize: 256, fileDimensionsMultiple: 2, destination: 'SEPAL', filenamePrefix: 'series'}
+        retrieve: {...(bands !== undefined && {bands}), scale: 30, tileSize: 2, shardSize: 256, fileDimensionsMultiple: 2, destination: 'SEPAL', filenamePrefix: 'series'}
     }
 })
 
@@ -460,7 +477,7 @@ const saving = () => Object.entries(select('process.saveStates') || {})
 // `classificationOpen`: the Classification is open in a tab of its own, where it is edited and saved (saveRecipe$).
 // `legacy`: the one indicator selected is saved as the value itself, as an earlier release saved it.
 const open = async ({selected, legacy = false, input = MOSAIC_INPUT, trainingData = [COLLECTED], classificationOpen = false}) => {
-    const records = [seriesRecipe(legacy ? selected : [].concat(selected)), classificationRecipe({input, trainingData}), mosaicRecipe()]
+    const records = [seriesRecipe(legacy || selected === undefined ? selected : [].concat(selected)), classificationRecipe({input, trainingData}), mosaicRecipe()]
     fake.stored = Object.fromEntries(records.map(record => [record.id, record]))
     const initialState = {
         dimensions: {width: 1024, height: 768},

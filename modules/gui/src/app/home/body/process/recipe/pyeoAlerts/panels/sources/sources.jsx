@@ -285,17 +285,17 @@ export const Sources = compose(
                 inputs.changeFromClasses.set([], {validate: false})
                 inputs.changeToClasses.set([], {validate: false})
             }
+            this.setLegend(legend)
+            // Any number of input images but one is said beside the classification, as the shared rule finds it - of
+            // a saved selection, and of one the classification changed under, alike (sourcesRequirements.js).
             const images = (inputImagery && inputImagery.images) || []
             if (images.length !== 1) {
                 this.setClassificationBands(undefined)
                 if (proposing) {
-                    this.refuse(id, 'process.pyeoAlerts.classification.singleInputRequired')
-                } else {
-                    this.setLegend(legend)
+                    this.setAcquisition(manual(id))
                 }
                 return
             }
-            this.setLegend(legend)
             const input = images[0]
             if (input.type === 'RECIPE_REF' || input.type === 'ASSET') {
                 this.readInputImagery(id, input, proposing)

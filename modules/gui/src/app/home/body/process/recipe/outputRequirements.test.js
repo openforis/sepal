@@ -189,7 +189,8 @@ describe('a recipe whose output read refuses nothing', () => {
     })
 })
 
-// Classification's Training data button does not say it has no training data; what holds it says so all the same.
+// No training data at all is set-up not yet done: neither type's Training data button is marked for it, while what it holds
+// is held all the same.
 describe('a Classification without training data', () => {
     it('leaves its Training data section unmarked, while Retrieve and its previews are held, naming that section', () => {
         const state = sessionWith(modelOf([image('image-1', MOSAIC, ['red'])], {trainingData: NO_TRAINING_DATA}))
@@ -221,10 +222,10 @@ describe('a Classification without training data', () => {
 })
 
 describe('a Regression without training data', () => {
-    it('is marked on its Training data section, and Retrieve and its previews are held, naming that section', () => {
+    it('leaves its Training data section unmarked, while Retrieve and its previews are held, naming that section', () => {
         const state = sessionWith(modelOf([image('image-1', MOSAIC, ['red'])], {trainingData: {dataSets: []}}), {type: 'REGRESSION'})
 
-        expect(sourceProblems(state)).toEqual({trainingData: MISSING_TRAINING_DATA})
+        expect(sourceProblems(state)).toEqual({})
         expect(retrieve(state)).toMatchObject({available: false, gate: {code: 'CONFIGURATION_UNMET', section: TRAINING_DATA_SECTION}})
         expect(previewGate(state)).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET', section: TRAINING_DATA_SECTION})
     })
@@ -346,7 +347,6 @@ const INCOMPLETE = 'process.classification.panel.inputImagery.unavailableSelecti
 const TRAINING_DATA_SECTION = 'process.classification.panel.trainingData.button'
 const IMAGERY_SECTION = 'process.panels.inputImagery.button'
 const NO_IMAGERY = 'process.panels.inputImagery.form.noImagery'
-const MISSING_TRAINING_DATA = 'process.classification.panel.trainingData.missing'
 
 const MOSAIC = {
     id: 'mosaic-1',

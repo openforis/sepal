@@ -16,11 +16,12 @@ import {downloadCsv} from '~/widget/download'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
+import {Message} from '~/widget/message'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 
 import {withItemProblems} from '../../../selectedSource'
-import {TRAINING_DATA} from '../../trainingDataRequirements'
+import {TRAINING_DATA, TRAINING_DATA_LIST} from '../../trainingDataRequirements'
 import styles from './trainingData.module.css'
 import {TrainingDataSet} from './trainingDataSet'
 
@@ -105,9 +106,13 @@ class _TrainingData extends React.Component {
             : this.renderNoDataSetMessage()
     }
 
+    // How to add training data, while the recipe has none: guidance, not a problem with what is listed.
     renderDataSets(dataSets) {
+        const {itemProblems} = this.props
+        const missing = itemProblems[TRAINING_DATA_LIST]
         return (
             <Layout type='vertical' spacing='tight'>
+                {missing ? <Message type='info' text={missing}/> : null}
                 {dataSets}
             </Layout>
         )
@@ -140,8 +145,9 @@ class _TrainingData extends React.Component {
     }
 
     renderNoDataSetMessage() {
+        const {itemProblems} = this.props
         return (
-            <NoData message={msg('process.classification.panel.trainingData.noDataSet')}/>
+            <NoData message={itemProblems[TRAINING_DATA_LIST] || msg('process.classification.panel.trainingData.noDataSet')}/>
         )
     }
 

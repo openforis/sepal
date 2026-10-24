@@ -302,12 +302,12 @@ const setDirty = ({evaluatedPath, statePath, dirty}) => {
         .dispatch()
 }
 
-// What a candidate's findings tell each input of the panel: all of them to the editor's one input, or each to the input
-// the editor names for it.
+// What a candidate's findings tell each input of the panel: all of them to the editor's one input - as the editor says
+// them there (`editor.message(findings)`) or as the requirement does - or each to the input the editor names for it.
 const outputFeedbackOf = (editor, findings, values) => {
     if (typeof editor.input !== 'function') {
         return {[editor.input]: {
-            error: findings.message,
+            error: editor.message ? editor.message(findings) : findings.message,
             diagnostics: findings.diagnostics,
             ...(findings.referenceFeedback && {referenceFeedback: findings.referenceFeedback})
         }}

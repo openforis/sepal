@@ -985,7 +985,8 @@ const requestValues = groups => groups.flat()
     .filter(({disabled, neverSelected}) => !disabled && !neverSelected)
     .map(({value}) => value)
 
-const selectedValues = value => [].concat(value ?? [])
+// A form field nothing was chosen in holds an empty value, not a selection of it.
+const selectedValues = value => [].concat(value ?? []).filter(selected => selected !== '')
 
 const presentedChoices = (values, presentationGroups = []) => {
     const offered = new Set(values)
