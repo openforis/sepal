@@ -79,7 +79,9 @@ export const ASSETS_EXPIRED = 'ASSETS_EXPIRED'
 export const ASSETS_UNAVAILABLE = 'ASSETS_UNAVAILABLE'
 
 // The recipe, its output read, and whether that read is still being loaded, from one state of the session.
-// `pending` is an answer the runtime does not yet hold for the current key - loading, or about to be.
+// `pending` is an answer the runtime does not yet hold for the current key - loading, or about to be. `recordOf(id)` is
+// a record of the output's closure as the answer the runtime holds read it, or null: what a request offers of a record
+// the session does not hold (selectedClassification.js).
 export const readRetrieveOutput = ({state, recipeId, heldFor, evidenceOwnerOf, now = Date.now()}) => {
     const loadedRecipes = selectFrom(state, 'process.loadedRecipes') || {}
     const recipe = loadedRecipes[recipeId]
@@ -93,12 +95,13 @@ export const readRetrieveOutput = ({state, recipeId, heldFor, evidenceOwnerOf, n
     })
     const held = output.acquisition && heldFor(output.acquisition.key)
     const pending = Boolean(output.acquisition) && !held
+    const recordOf = id => held?.basis?.find(entry => entry.id === id)?.content || null
     // A configuration that does not meet its own requirements is refused for that, whatever its output reads as: the
     // image it would build is not one it can. One its output read refuses is refused for that, naming its section.
     const unmet = configurationGate({recipe, operation: IMAGE_OUTPUT})
         || outputRequirementGate({recipe, output, operation: IMAGE_OUTPUT})
     if (unmet) {
-        return {recipe, graph, output: withheld(output, unmet), pending: false}
+        return {recipe, graph, output: withheld(output, unmet), pending: false, recordOf}
     }
     const gate = output.status === READY
         && authorityGate({
@@ -106,8 +109,8 @@ export const readRetrieveOutput = ({state, recipeId, heldFor, evidenceOwnerOf, n
             dependencyValidity: output.dependencyValidity, evidenceOwnerOf, heldFor, now
         })
     return gate
-        ? {recipe, graph, output: withheld(output, gate), pending: gate.wait}
-        : {recipe, graph, output, pending}
+        ? {recipe, graph, output: withheld(output, gate), pending: gate.wait, recordOf}
+        : {recipe, graph, output, pending, recordOf}
 }
 
 // A selection of physical output names, in the output's order. "All bands" names every band the answer holds,
@@ -156,6 +159,11 @@ export const retrieveDecision = ({output, pending, names, unrecognized = [], des
         ? decision(BLOCKED, INCOMPATIBLE_DESTINATION, {destinations})
         : decision(RETRIEVABLE, null, {destinations})
 }
+
+// What a request about something other than the output's bands - Time Series' indicators - is held to of it: the same
+// decision without a band selection, so the output's readiness, authority and validity hold it as they hold an export.
+export const outputDecision = ({output, pending}) =>
+    unresolvedOutput(output, pending) || decision(RETRIEVABLE)
 
 // Whether the output could not be established - it failed, or its dependencies are not known to be sound. Neither
 // says anything about which bands it holds.

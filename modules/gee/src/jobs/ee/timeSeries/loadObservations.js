@@ -67,12 +67,11 @@ const worker$ = ({
     )
 }
 
-// A recipe is held to what its type declares its pixel observations of the bands requested require
-// (requireRequestedBands$) before the pixel or the collection is built, its own image never described. The bands it
-// builds are those requested. The collection is observed at the clicked point, so that is the recipe judged: its AOI,
-// which nothing here reads, is no dependency of it.
+// A recipe is held to what its type declares its pixel observations require, and to the bands requested
+// (requireRequestedBands$), before the pixel or the collection is built, its own image never described. The collection is
+// observed at the clicked point, so that is the recipe judged: its AOI, which nothing here reads, is no dependency of it.
 const ready$ = (recipe, pixel, bands) =>
-    requireRequestedBands$({recipe: atPixel(recipe, pixel), operation: PIXEL_OBSERVATIONS, requested: bands, effective: bands})
+    requireRequestedBands$({recipe: atPixel(recipe, pixel), operation: PIXEL_OBSERVATIONS, requested: bands})
 
 // What a request observes: a Time Series' or a CCDC's own collection, or the one a Change Alerts recipe monitors
 // (observedCollection). Settings naming no recipe type are no recipe anything here can hold to what it requires.

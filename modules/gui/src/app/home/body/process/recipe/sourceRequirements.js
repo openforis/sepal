@@ -335,25 +335,23 @@ export const readLocalRequirements = recipe => {
 // The identity of a local read: its declaration's id and its item's.
 export const readKey = ({declaration, item}) => keyOf(declaration.id, item?.id)
 
-// Why a request for an operation over the recipe may not start, by what it selected, if anything: blocks before waits.
-// Nothing an owner is not reading is waited for: no reader can say whether anything will. Retrieve refuses on any of
-// them; a new request for a preview or a chart is held (requestGate).
-export const sourceRequirementGate = ({state, recipe, operation, evidenceOwnerOf, heldFor, now}) =>
-    firstReason(requirementReasons({state, recipe, operation, evidenceOwnerOf, heldFor, now}))
-
 // Whether a new Earth Engine request for an operation over the recipe may start now: null when it may, otherwise
 // {wait, withdraw, code, section, read} - `read` the requirement's read behind it, as far as the operation is held to it. While a requirement is not known to be met nothing new is requested, and what is
 // already drawn stays - checking is no reason to change it. A source found missing or unsuitable, or a configuration
-// found not to meet its requirements, also withdraws it.
+// found not to meet its requirements, also withdraws it. Blocks come before waits, and nothing an owner is not reading
+// is waited for: no reader can say whether anything will.
 // Wherever the recipe is shown, the consumer requesting the operation watches the evidence it needs (sourceRuntime.js),
 // so what is held is being read.
 export const requestGate = ({state, recipe, operation, evidenceOwnerOf, heldFor, now}) =>
     requestGateOf(readSourceRequirements({state, recipe, evidenceOwnerOf, heldFor, now}), operation)
 
 // The same, judged from the recipe's reads (readSourceRequirements), for a caller asking more than one question of them.
-export const requestGateOf = (reads, operation) =>
-    firstReason(reasonsIn(reads, operation)
-        .map(reason => ({...reason, withdraw: WITHDRAWING.includes(reason.code)})))
+// A finding withdraws it whatever another requirement is still to establish.
+export const requestGateOf = (reads, operation) => {
+    const reasons = reasonsIn(reads, operation)
+        .map(reason => ({...reason, withdraw: WITHDRAWING.includes(reason.code)}))
+    return reasons.find(({withdraw}) => withdraw) || firstReason(reasons)
+}
 
 // Why the recipe's own configuration refuses an operation, if it does: {wait, withdraw, code, section, read}, decided
 // from the recipe alone, whatever its sources or its output read as.
@@ -378,9 +376,6 @@ export const establishedIn = (reads, operation) => {
 // An operation that needs the requirement met is answered by its whole read. One that only resolves the source through
 // its provider chain is refused only where that chain is, and waits only for its records: what the requirement judges
 // of the segments is not its concern.
-const requirementReasons = ({state, recipe, operation, evidenceOwnerOf, heldFor, now}) =>
-    reasonsIn(readSourceRequirements({state, recipe, evidenceOwnerOf, heldFor, now}), operation)
-
 const reasonsIn = (reads, operation) => reads
     .map(read => reasonFor(read, operation))
     .filter(Boolean)

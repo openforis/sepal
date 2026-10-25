@@ -1,7 +1,8 @@
 import {Observable} from 'rxjs'
 import {describe, expect, it, vi} from 'vitest'
 
-import {PIXEL_OBSERVATIONS} from '#sepal/recipe/output/readiness'
+import {IMAGE_OUTPUT, PIXEL_OBSERVATIONS} from '#sepal/recipe/output/readiness'
+import {PRIMARY_IMAGE} from '#sepal/recipe/type/ccdcSlice'
 
 import {addRecipeType} from '../recipeTypeRegistry'
 import {pixelChartAvailability, pixelOperationsAvailability, retrieveAvailability, watchOperations} from './operationAvailability'
@@ -19,6 +20,28 @@ addRecipeType({
         requirement: {capability: {capability: 'SEGMENTS'}},
         operations: [PIXEL_SEGMENTS]
     }]
+})
+
+// A CCDC Slice whose export requires something of the source it selects, and of a mask it has no edge for.
+addRecipeType({
+    id: 'CCDC_SLICE',
+    imageSource: true,
+    sourceRequirements: [
+        {
+            id: 'SLICED',
+            role: PRIMARY_IMAGE,
+            section: {id: 'source', label: 'source'},
+            requirement: {capability: {capability: 'SEGMENTS'}},
+            operations: [IMAGE_OUTPUT]
+        },
+        {
+            id: 'MASKED',
+            role: 'MASK_IMAGE',
+            section: {id: 'mask', label: 'mask'},
+            requirement: {capability: {capability: 'SEGMENTS'}},
+            operations: [IMAGE_OUTPUT]
+        }
+    ]
 })
 
 describe('operations over a recipe whose type declares no requirements of its sources', () => {
@@ -43,6 +66,19 @@ describe('the segment chart over a recipe whose type requires something of its s
         expect(chart.available).toBe(false)
         expect(chart.chartable).toBe(null)
         expect(evidenceOwnerOf).toHaveBeenCalledTimes(1)
+    })
+})
+
+// What withdraws Retrieve closes an open Retrieve (retrievePanel.jsx); what only holds it leaves it open.
+describe('Retrieve over a recipe one requirement of which is found unmet while another is still to be checked', () => {
+    it('is withdrawn, naming the section the finding is said in', () => {
+        const recipe = {id: 'slice-1', type: 'CCDC_SLICE', model: {source: {type: 'RECIPE_REF', id: 'ccdc-1'}}, ui: {}}
+        const state = {process: {loadedRecipes: {[recipe.id]: recipe}}}
+
+        const {available, gate} = retrieveAvailability({state, recipe, evidenceOwnerOf: () => null, heldFor: () => null, now: Date.now()})
+
+        expect(available).toBe(false)
+        expect(gate).toMatchObject({withdraw: true, code: 'SOURCE_MISSING', section: 'mask'})
     })
 })
 

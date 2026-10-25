@@ -4,6 +4,10 @@ Technical index for aligning how SEPAL recipes consume other recipes and Earth E
 cross-recipe concern. Masking, CCDC, CCDC Slice and Classification provide acceptance cases, but none owns the
 shared model. User-facing documentation belongs in the separate `sepal-doc` repository.
 
+[Recipe behavior contracts](behavior-contracts.md) records the interaction and design guidance from manual testing:
+configuration ownership, operation validity, repair feedback, editing, recovery and verification. Use it when
+designing a consumer change; the technical contracts below implement those choices rather than deciding them.
+
 ## Current delivery focus
 
 Make the shared output declaration the single band authority for every recipe type. The work after it —

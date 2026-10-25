@@ -7,6 +7,10 @@ and the distinction between canonical output and map-only products belong in
 [output-products.md](output-products.md). This document owns the traversal and evidence machinery that resolves
 those declarations.
 
+[Recipe behavior contracts](behavior-contracts.md) defines the user-facing design guidance for configuration,
+validation, repair and recovery. It separates operation prerequisites from deliberate analysis policies and provides
+the behavior questions to answer before extending these declarations or their presentation.
+
 Structured dependency edges, authorized operation-scoped recipe reads and declaration-based producer resolution
 are implemented. The explicit live/bundled graph API, coherent execution bundles, generalized capability discovery
 and versioned provenance verification below describe the target design, not guarantees of current execution.
@@ -889,6 +893,18 @@ Requirements and needs are declared per operation, and an operation inherits not
   is configured.
 - An operation a type does not declare readiness for keeps today's behaviour. The first slice declares `IMAGE_OUTPUT`
   only, so products are unchanged by it.
+- **Analysis prerequisites** are the exception to inheriting nothing: what the configured analysis needs whatever runs
+  it (`analysisPrerequisites: {needs: {[role]: need}, requirements: [{code, findings}]}`, `output/readiness.js`). Every
+  operation the type declares and every map product it names is held to them; an operation adds its own needs and
+  requirements and may not name a role the prerequisites need, so it cannot weaken them. A named product is read as an
+  operation by its name: the prerequisites, the `executionNeeds` and `configurationRequirements` naming it, and
+  `REFERENCE` for any other role. Its readiness is read beside its configuration-only description (`readReadiness`),
+  never through the canonical image, so a product neither describes nor builds that image to be judged; the read
+  acquires only the evidence its needs name. A product of a type declaring none of these is not judged
+  (`judgesMapProduct`) and its layer draws from its description alone, as before. Time Series and CCDC declare the
+  selected Classification so (S3); CCDC's count adds the breakpoint bands' classified-output requirement, since it
+  collects them. Phenology keeps its operation-scoped, conditional policy. LandTrendr's annual mosaic, BAYTS Alerts'
+  radar observation and Change Alerts' collection mosaic declare none and are unchanged.
 
 #### Dependency semantics
 
@@ -2962,7 +2978,7 @@ contract can change the split; they must not silently expand it.
 | --- | --- | --- | --- |
 | S1: Chart layout on tab return | Implemented: defer graph drawing while disabled and make Panel visibility follow the enabled context in the same render. | F8 layout | Focused tests and independent review passed; user reported "Looks good" after the manual checklist and approved committing on 2026-10-23. Detailed per-case browser results were not supplied; see below. |
 | S2: Feedback where repairs happen | Consistent Classification/Regression training-data feedback, item-editor explanations and replacement/removal; visible Classification selection in Time Series/CCDC Sources; classifier-input attribution at Classification; repair-oriented PyEO SRC/OPT feedback; correct the empty Retrieve warning. | F1, F2, F10, F8 warning | The single-input selection check passes. Confirmed findings now hold Apply while replacement, Cancel and unchanged Close remain available; the user confirmed Classification's browser recheck passed. The separate Stack Require drop fix passed the user's actual-preview and remove/restore browser check on 2026-10-24. Empty-Provider refinement and S3/S4 remain separate. |
-| S3: One selected-Classification validity contract | Require a selected usable Classification for Time Series/CCDC base operations, independently of requested/breakpoint bands; common SRC explanation/action hold; remove redundant band-training stage/watch/messages/server settling. | F9; consumes S2 presentation | Shared declarations, server guards and GUI consumers must change coherently. Agree the native/count behaviour below first. Verify native/classified, no selection, decision tree, source repair/deselection, capability errors, cancellation and last-moment submit. Name the old checks removed. |
+| S3: One selected-Classification validity contract | Require a selected usable Classification for Time Series/CCDC base operations, independently of requested/breakpoint bands; common SRC explanation/action hold; remove redundant band-training stage/watch/messages/server settling. | F9; consumes S2 presentation | Implemented and independently reviewed. User confirmed Retrieve closure/reopen and the already-broken CCDC/count-preview repair checks passed on 2026-10-25. Shared analysis prerequisites cover every operation and named map product. The timing-dependent keyboard check was not attempted in the browser; automated coverage passed. No requested browser recheck remains. |
 | S4: Reused samples with Consumer features | Sample each contributing Provider's imagery at its points using Consumer's feature definition; preserve sampling scale, nesting/order and Consumer normalisation; update shared readiness to the same derivability contract. | F4 | Trace the feature-plan/readiness identity before coding; do not split execution from its corresponding refusals. Depends on the S3 base contract for consumer coverage. Whole-row numeric and controlled live checks plus a one-scene/many-scene witness of no per-scene sampling; recheck S2 repair feedback against the new semantics. |
 | S5: Change Alerts settings ownership | Audit Sources/PRC fields, then implement source-owned read-only required matches versus consumer-owned editable values; replace whole-group observation syncing and define initial/explicit copying. | F5, F6 | Audit first; agree the editable-copy policy below. UI and backend use the same effective values for recipe and asset references. Fresh reopen, overrides, reference replacement, Cancel, late metadata and asset metadata are mandatory cases. No automatic overwrite of editable settings. |
 | S6: Change Alerts validation and chart agreement | Retain invalid applied choices with field explanations; hold Retrieve and close/disable the analysis chart for an incompatible configured monitoring band; remove redundant panel validation. | F3 | Build on S5's ownership/effective-values contract so the form and operations judge the same configuration. Reproduce Optical-to-Radar, repair, cancellation, valid native controls and recipe/asset reference cases. Preserve operation scope rather than installing full image readiness on the chart. |
@@ -3520,6 +3536,395 @@ over the existing findings; training semantics and the selected-Classification p
 
   Time Series/CCDC Sources and the Retrieve warning are unchanged by these corrections.
 
+**S3: One selected-Classification validity contract (implemented, independently reviewed and focused browser rechecks passed through 2026-10-25).**
+
+- **Policy.** A Classification a Time Series' or CCDC's Sources select is part of the configured analysis. It is
+  declared once, as the analysis prerequisites of both types (`selectedClassificationPrerequisites`,
+  `source/collectionSources.js`; see "Analysis prerequisites" under Operation scope): its `CLASSIFIER` readiness and
+  the collection's images carrying what its classifier reads (`UNSUPPLIED_CLASSIFIER_INPUTS`). Every operation and named
+  map product of either type is held to them, whatever bands are requested or fitted: Time Series `IMAGE_OUTPUT`
+  (count) and `PIXEL_OBSERVATIONS`; CCDC `IMAGE_OUTPUT` (segments), `PIXEL_OBSERVATIONS`, `PIXEL_SEGMENTS` and its
+  `COUNT` map product. The Classification's own requirements decide it
+  (training data, reused recipes' input imagery and sampled features, input bands); its image is not described. No
+  selection needs nothing; a supplied decision tree needs no training. This deliberately replaces the native-band
+  bypass: a native request is now held while the selected Classification cannot be trained, until it is repaired or
+  deselected. It is a policy, not an execution need: native execution still reads nothing of the Classification
+  (`collection.js`), while readiness acquires the evidence training would read - the Classification's input imagery,
+  observed even for a native request. Phenology is unchanged (`classifiedOutputNeed` for its classified band only).
+- **Inventory and inheritance.** Server routes guarded: pixel observations (`loadObservations.js`), CCDC pixel
+  segments (`loadSegments.js`), Time Series download planning/chunks (`task/export/timeSeries.js`), CCDC Segments asset
+  export (`ccdcAssetExport.js`), CCDC Drive/Workspace/asset image exports (`imageOutput.js`). GUI: both charts and
+  their action (`CHART_OPERATIONS`), both Retrieve panels, canonical-output previews and SRC. CCDC's named count
+  preview remains a confirmed gap (below). Downstream consumers inherit through
+  their existing need of a CCDC's image: CCDC Slice (image and segment chart), a Change Alerts' segment chart over a
+  CCDC, a Masking of a CCDC. A Change Alerts' own image only references its source and is unaffected. Pixel AOI
+  projection is unchanged (`recipeForOperation`, `atPixel`); referenced recipes keep their own AOIs. Previously
+  unguarded server routes - preview tiles and other map-layer requests - remain unguarded, as before; deferred.
+- **Removed.** `CLASSIFIED_COLLECTION` (operation), `CLASSIFIED_COLLECTION_NEEDS`, `requestStages`, the extra server
+  stage settling it without the AOI (`requireRequestStages$`, `requireCcdcImageStages$`, `withoutAoi`, the `effective`
+  bands parameter), `requestedBandAvailability`, `BandOperationWatch`, the charts' band gates/watches and
+  "classified band withheld" message, Time Series Retrieve's band gate and selection watch, CCDC Retrieve's own
+  `requestGate`/watch/hold (its export is held by its image output, judged at submission), and the translations
+  `process.chartPixel.classifiedBandWithheld` and `process.retrieve.form.bands.classifiedWithheld`. No panel-specific
+  SRC validator replaces them.
+- **Kept.** Requested-output capability checks (`requireProvidedOutputs$`, `requireCcdcRequestedOutputs$`, coded 400
+  `UNSUPPORTED_CLASSIFIED_OUTPUT`), the configured classified-output requirement (CCDC breakpoints, Phenology band),
+  `requestedMeasures`/`fittedMeasures`, Time Series Retrieve's current-state offer checks, legacy single-indicator
+  normalisation and reconciliation, the draft/save agreement gate, evidence handling, chart lifecycle
+  (`pixelChartUpdate`: a finding closes and cancels, pending/unavailable clears and waits).
+- **GUI presentation.** Time Series now declares `classificationReferenceFeedback`, as CCDC does: an upstream training
+  problem is named beside Classification in SRC and marks SRC; editing stays possible (presentation, Apply not held).
+  `sectionOfFindings` (`operationReadiness.js`) also locates an upstream finding through a declaration naming that
+  edge's role, so chart and Time Series Retrieve holds name the same section SRC marks. A supported classified band or
+  indicator stays selected through the failure and is charted or submitted after repair.
+- **Error precedence (changed intentionally).** The configuration is judged first, the Classification's training
+  included; requested-output capability second. A training failure therefore now precedes the coded 400 for an
+  unprovided requested output; the 400 is unchanged where the configured source is otherwise valid. The former
+  capability-before-additional-training order no longer holds.
+- **Tests.** Shared `classifiedOutputTraining.test.js` (every operation, native and classified, CCDC native and
+  classified breakpoints, each training finding, decision trees, pending/unavailable evidence, repair, no selection,
+  Phenology's native bypass kept); `referencedSegments.test.js` (CCDC Slice/Change Alerts segments inheriting the
+  policy, waiting for the Classification's input); `operationReadiness.test.js` (fixtures now trainable; what is
+  observed restated). gee `loadObservations`, `loadSegmentsReadiness`, Time Series download, CCDC asset, Drive,
+  Workspace and image-file exports: native and classified requests refused before product computation, building or
+  training; one operation judged; precedence; no selection and decision tree; the existing collection test still
+  shows native execution reads nothing of the Classification. GUI: `selectedClassificationChart.test.jsx` (renamed from
+  `classifiedBandChart.test.jsx`: close and cancel on a finding, reopen after repair, save or deselection, pending and
+  unavailable without closing, operations watched); CCDC `classifiedBreakpointChart`; CCDC `classificationFeedback`;
+  new `timeSeries/classificationFeedback.test.jsx` (SRC and the operations naming the same problem); both Retrieve
+  readiness tests (native and classified held by Apply and direct submission, choices surviving repair, last-moment
+  loss of points, pending/unavailable without a finding). Fixtures now needing a trainable Classification, because a
+  Time Series or CCDC selecting one requires it: `unselectedClassification`, `resolvedClassificationBands`,
+  `collectionClassifierRequirements`, `pixelObservationsAvailability`, `sourceRuntime` (one case also answering the
+  input's observation), the export/observation/segment gee fixtures. `classifiedOutputSources.test.jsx` toggles Less
+  before More, since CCDC Sources open on More while a Classification is selected (an S2 behaviour this file had not
+  been run against). `selectedClassificationChart.test.jsx` now forgets save states after each test; a save leaked
+  between tests before.
+- **Witnesses.** With every S3 production file restored from `HEAD` and the new tests kept: shared 60 of 132, gee 44 of
+  276 and GUI 38 of 162 fail; the three GUI files still passing are fixture-only updates. Targeted mutations: removing
+  Time Series' `classificationReferenceFeedback` fails 5; removing the upstream branch of `sectionOfFindings` fails 6.
+- **Verification (two workers).** Shared `test/recipe` 1330. gee unit tests (all, excluding integration) 107 files and
+  1424 tests. GUI `src/app/home/body/process` plus translations, 203 files and 3021 tests, every top-level recipe test
+  included. ESLint and `git diff --check` clean. No full GUI suite, live Earth Engine or browser run.
+- **Independent review (2026-10-24; correction needed).** The base-operation declarations and removal of band-specific
+  training holds fit the chosen policy. Independent focused checks passed 132 shared tests, 276 gee tests and 68 GUI
+  tests in six files. A server-boundary regression remains: `ccdcAssetExport.js` always builds CCDC segments, and the
+  Time Series download job always builds its collection, but both now obtain training readiness solely from the
+  request's stated recipe type. In fully mocked probes, changing an otherwise identical root to `MOSAIC`, with a
+  selected point-free Random Forest and requested `probability_1`, bypassed `NO_TRAINING_DATA`. The CCDC probe reached
+  both the segments builder and exporter; the Time Series chunk request also completed instead of refusing. The
+  existing non-CCDC-root regression uses `TIME_SERIES`, which now declares the same training need and therefore hides
+  this case. These specialised boundaries must judge the computation they actually build, or explicitly reject
+  incompatible root types under an agreed endpoint contract. Add regressions with a type that does not declare
+  `CLASSIFIER`; keep the refusal before product work. No production code was changed by the reviewer, both temporary
+  probes were removed, and no external Earth Engine work or exports were started. Browser verification remains pending.
+- **Correction, applied (2026-10-24).** The two specialised boundaries now judge the computation they build, whatever
+  type the request states: the CCDC Segments export (`ccdcAssetExport.js`) judges the recipe as a CCDC - image output
+  readiness, then the measures named - and the Time Series download (`task/export/timeSeries.js`, tile ids, date ranges
+  and chunk export alike) as a Time Series. Endpoint compatibility is unchanged: no stated type is rejected for itself,
+  and the builders still receive the recipe as submitted. No band-stage machinery returns. **Regressions:**
+  `ccdcAssetExport.test.js` - a root stated as `MOSAIC` (beside the existing `TIME_SERIES` case) over a point-free
+  Classification refused with `NO_TRAINING_DATA` before the segments are built or submitted, and exported as before
+  once the Classification can be trained; `timeSeries.test.js` - a root stated as `MOSAIC` refused at its tile ids, date
+  ranges and chunk export before anything is tiled, checked or built, and planned and exported once trainable.
+  **Witness:** judging the stated type again fails both `MOSAIC` refusals (the `TIME_SERIES` case still passes, as the
+  review found). **Checks:** gee unit tests 1428 (107 files); ESLint and `git diff --check` clean. Shared and GUI code
+  unchanged since their recorded runs.
+  **Independent recheck:** no remaining code findings. Both readiness checks project only the root type to the
+  computation the endpoint builds, retain its id/model/AOI, and leave the submitted recipe passed to the builders
+  unchanged. All three Time Series entry points use that check. The two affected backend suites passed 75 of 75;
+  ESLint on both routes and their tests and `git diff --check` passed. No production changes by the reviewer; the
+  browser checklist remains pending.
+- **Browser feedback (2026-10-24; user reported).** Both Retrieve panels stayed open after the selected Classification
+  became untrainable. Time Series said "The settings under SRC need attention. Open SRC to see why." CCDC said "The
+  source selected under SRC cannot be used. Open SRC to see why." and offered Refresh. The user reports the rest of
+  the focused checks behaved as expected; record those as passed, without an agent-run browser session or exact build
+  evidence. **Decided correction (applied; see the next entry):** a confirmed configuration finding closes an open Retrieve,
+  as it closes a chart. Retrieve/chart actions stay disabled and affected layers withheld; SRC owns the repair
+  explanation. No configuration-error message or Refresh action should keep Retrieve open. Implement this through
+  the shared operation lifecycle for both Retrieve paths, using existing readiness, rather than another SRC validator.
+  Pending/unavailable evidence and unacknowledged saves still hold submission without establishing invalidity; local
+  selection/destination errors remain in Retrieve. Keep current-state submission checks and server guards for the race
+  before closure. Preserve saved retrieval settings and normal close semantics; do not autosave unsubmitted edits or
+  reopen automatically after repair. **Regressions needed:** both panels close on upstream invalidity, submit nothing
+  even in the same event batch, and become available to reopen after repair; pending/unavailable evidence does not
+  close them, and local form errors remain editable. **Targeted browser recheck:** open Retrieve in each working
+  consumer, remove the Classification's points and save, confirm automatic closure and disabled actions, then restore
+  the original working points and save: Retrieve can be reopened with its saved settings. The other passed browser
+  checks need no repeat for this correction.
+  **Design checkpoint:** when an error leads to blue information text in a panel, stop and analyze whether the panel
+  should still be open, where the cause is repairable and which owner should explain it. Simplify the lifecycle and
+  remove redundant explanatory states rather than treating another message as the default repair. Neutral checking,
+  setup and genuine recovery information remain appropriate; see `behavior-contracts.md`.
+- **Retrieve closure correction, applied (2026-10-24).** One rule for both Retrieve paths, in the shared panel
+  (`mosaic/panels/retrieve/retrievePanel.jsx`): an open Retrieve closes, through its activatable's normal
+  `deactivate`, while the assessment that disables the toolbar's Retrieve action (`retrieveAvailability`,
+  `operationAvailability.js`) withdraws it - a source found missing or unsuitable, or a configuration found unmet,
+  the selected Classification's training among them. The panel closes only for what disables its action, so it cannot
+  reopen into a closure. `retrieveAvailability` now answers with `requestGate`'s `withdraw`, and `requestGateOf`
+  (`sourceRequirements.js`) puts a withdrawing reason before one still to be checked or unavailable: a finding is not
+  hidden by another requirement's missing evidence. Checking, unavailable or expired evidence and unacknowledged saves
+  hold the submission with the panel open; an empty selection or incomplete destination stays repairable in Retrieve.
+  Closing saves nothing edited since the last submission; settings last submitted are kept, and repair re-enables the
+  action without reopening it. Current-state submission checks and the server guards are unchanged.
+  **Lifecycle defect found by the real-lifecycle tests:** Time Series Retrieve's image-output watch was taken by its
+  outer component, which is mounted whenever the toolbar is, so it was never let go when the panel closed; the panel now
+  takes it for as long as it is open (`watchRequest`, replacing the unused `onRequestSelection`). **Removed:** the
+  panel's `SOURCE_MISSING`, `SOURCE_UNSUITABLE` and `CONFIGURATION_UNMET` messages with their Refresh for a confirmed
+  configuration problem; the translations `process.retrieve.source.missing` and `process.retrieve.source.unsuitable`;
+  `onRequestSelection`/`notifyRequestSelection`; `sourceRequirementGate` (its one test caller uses `requestGate`).
+  **Kept:** Time Series' `process.retrieve.source.configurationUnmet` hold, for an image-output readiness finding the
+  action is not withdrawn for (an AOI or source reference, say), with the evidence messages and their Refresh.
+  **Observed then, corrected in the next entry:** a submission Retrieve refused was still committed and closed the
+  panel. **Regressions:** both
+  `retrieveTrainingReadiness.test.jsx` files now mount the real activation, toolbar Retrieve action
+  (`RetrieveButton`), SRC section mark (`withSourceProblems`, the watch the toolbar keeps) and panel instead of an
+  always-active activatable: an open Retrieve closes over a classified and a native selection once the Classification
+  stores no points, its action disabled, SRC marked and nothing submitted; repair re-enables without reopening, and the
+  reopened panel submits what was last submitted, not an edit made before closing; removal and submission in one event
+  batch submit nothing and leave the project's destination; Time Series' unusable classifier inputs and CCDC's
+  classified breakpoint band close it too; pending and unobservable imagery and an unacknowledged save hold it open;
+  an empty selection and an unnamed workspace folder or asset keep it open and repairable; closing lets go of the
+  panel's watch, leaving SRC's mark watching, and repair re-enables without reading the imagery again. Assertions that
+  expected these panels to stay open with a configuration message are replaced; scenarios that opened the panel over
+  an already-broken Classification now find the action disabled. `operationAvailability.test.js`: a finding withdraws
+  Retrieve although another requirement is unchecked. **Witnesses:** with the pre-correction production code and the
+  new tests kept, 10 of 36 Retrieve tests fail - exactly the closure, repair-reopen and watch-release cases on both
+  paths; restoring only Time Series' outer-component watch fails its watch-release case; the old first-reason order
+  fails the priority case. **Verification (two workers):** GUI `src/app/home/body/process` plus translations, 203
+  files and 3028 tests; ESLint on the changed files and `git diff --check` clean. No full GUI suite or browser run.
+  **Browser recheck (pending):** in a Time Series and a CCDC whose Classification works, open Retrieve; in the
+  Classification's tab remove its points and save: Retrieve closes by itself, its button is disabled and SRC is marked.
+  Restore the points and save: the button is enabled, the panel stays closed, and opening it shows the settings last
+  submitted.
+- **Independent closure review (2026-10-25; one contract correction still needed).** The common withdrawal check,
+  withdrawing-reason priority and panel-scoped Time Series watch match the intended confirmed-finding lifecycle.
+  Independent focused GUI verification passed 223 tests in ten files, covering both Retrieve paths, the shared
+  destination and Masking panels, output decisions, source requirements, gate priority, CCDC Slice and chart lifecycle.
+  A refused keyboard submission remains a contract gap, although its underlying form behavior predates this slice.
+  Temporary mounted probes on both paths kept imagery pending, then submitted the form: no task was sent, but both
+  panels closed. The Time Series probe also changed the draft folder from `downloads/series` to
+  `downloads/unsubmitted`; the refused submit wrote that edit to `ui.retrieve.workspacePath`. `RecipeFormPanel`
+  commits action-form values before the Retrieve guard runs, and `Form.Panel` then treats the refusal as a completed
+  Apply. Existing pending tests click disabled Apply, so they do not exercise keyboard submission. **Required:**
+  reject before committing form values and preserve the open panel/draft for a non-withdrawing hold; an accepted
+  submission follows the normal commit/close path. Add real form-submit regressions for both paths, checking task,
+  project destination, saved UI values and panel state. Keep unrelated form behavior stable and retain current-state
+  and server guards. A separate malformed-AOI probe did close and disable Retrieve correctly; no additional finding
+  is established by that case. The probes were removed; the reviewer changed no production code. No browser or
+  external-service work was performed. The confirmed-finding closure/reopen browser recheck remains pending.
+- **Refused submission correction, applied (2026-10-25).** For the finding above, acceptance is now decided at the form's single submission point, before anything is committed or closed: `Form.Panel`
+  (`widget/form/panel.jsx`) takes an optional `accepts(values)`, which `RecipeFormPanel` passes through; refused, nothing
+  is applied and the panel stays open as it is, its edits still in the form. Retrieve's `accepts`
+  (`retrievePanel.jsx`) refuses whatever disables its Apply (`holdsSubmission`: loading, destination check or
+  reconciliation, its output decision, pending or held selections) and, from the session as it now stands, its owner's
+  `requestGate` or the export decision (`retrieveDecision`); the hold check formerly inside `retrieve()` moved there,
+  and the submission itself still decides again before submitting. Forms passing no `accepts` are unchanged.
+  **Regressions:** both `retrieveTrainingReadiness.test.jsx` files submit the form from the keyboard
+  (`requestSubmit`, what Enter in a field does) while the Classification's imagery is observed, after editing the
+  folder (Time Series) or asset (CCDC): the panel stays open, `ui.retrieve` keeps the last submitted value, no task is
+  submitted and the project is unchanged; once observed, the same submission submits the edited value and saves it.
+  Time Series' two refused race cases now also stay open. `widget/form/panel.test.jsx`: a submission its owner does not
+  accept applies nothing and stays open; one it accepts applies and closes. **Witness:** with `Form.Panel`'s check
+  removed and the former hold check restored in `retrieve()` (the pre-correction behaviour), 5 of 51 fail: both
+  keyboard regressions, the two Time Series race cases and the unit case. **Verification (two workers):** GUI
+  `src/app/home/body/process`, `src/widget/form`, `src/app/home/user` (other action forms) and translations, 216 files
+  and 3177 tests; ESLint on the changed files and `git diff --check` clean. No full GUI suite or browser run.
+  **Independent recheck (2026-10-25):** no remaining code findings. The optional acceptance hook runs before the
+  action-form commit, confirmation and close; Retrieve shares its rendered hold checks and also judges the submitted
+  values from current state. Existing forms without the hook retain their previous path. Independent verification
+  passed 266 tests in 17 files: both Retrieve readiness suites, the shared destination and Masking panels, all form
+  widget tests and the user action-form tests. ESLint on the reviewed sources/tests and `git diff --check` passed.
+  Only this roadmap was changed by the reviewer; no production changes or browser run.
+  **Browser recheck (pending):** with Retrieve open and the Classification's imagery still loading, edit the folder or
+  asset and press Enter in a field: nothing starts, the panel stays open with the edit, and closing and reopening shows
+  the previous value.
+- **Further browser feedback and independent trace (2026-10-25; CCDC count-preview correction pending).** The user
+  reports the first focused recheck passed: Retrieve closes on invalidation, stays closed on repair and reopens with
+  the previously saved settings. The second, timing-dependent keyboard/pending check was too complicated and was not
+  attempted. Keep it untested in the browser; automated coverage remains passed, and no repeat of that timing exercise
+  is requested now. Outside the script, opening a CCDC whose selected Classification has no training data produced
+  "Failed to load layer / No valid training data were found." This is a configuration fault that should hold preview
+  and be explained in SRC before a new layer is requested.
+  **Confirmed bypass:** CCDC defaults its layer to the named `COUNT` map product (`ccdc/bands.js`).
+  `recipeOutput.js` intentionally describes a map product with no readiness, and `recipeImageLayer.jsx` asks the source
+  gate for the product name `COUNT`; the Classification's needs and findings apply to `IMAGE_OUTPUT`, so they do not
+  hold that request. In a temporary probe using the real GUI registry, store and runtime, a fully held point-free
+  Classification yielded `SOURCE_UNSUITABLE` for the CCDC's image gate, but a null count gate, null count readiness and
+  an allowed preview. Both native breakpoints and `ndvi, probability_1` failed the expected hold; a trainable control
+  passed. This is not limited to a race while records load. Execution's count branch still requests fitted breakpoint
+  measures (`timeSeries/ccdc.js`), so classified breakpoints can train and reach Earth Engine's empty-training failure.
+  The exact live notification was not independently reproduced against Earth Engine.
+  **Required shared correction (user clarified):** all analysis entry points must honor the common prerequisites of
+  the configured recipe, including layers, named map products, charts and Retrieve. A broken selected Classification
+  makes the Time Series/CCDC analysis invalid for all of them under S3. Use existing shared readiness as the authority;
+  operations may add their own requirements. Do not add a CCDC count-specific validator, per-visualization checks or a
+  cached/stored validity flag. The count preview is a regression case exposing the missing common gate. Keep product
+  descriptions independent of authorization and of the canonical image catalogue; sharing analysis prerequisites
+  does not require every map product to build or describe the canonical image. Add real layer-request regressions
+  for opening an already-invalid recipe, native/classified breakpoints, lazy or pending evidence, repair and
+  no-Classification/decision-tree controls, and check other named-product entry points against the same shared
+  contract. Broader server preview gating remains separate deferred work; preserve operation-specific semantics
+  beyond the common analysis prerequisites. The
+  temporary probe was removed; no production code or external services were changed by the reviewer.
+  **Next browser recheck after the correction:** open the same already-broken CCDC: SRC explains the Classification,
+  no new preview is requested and no layer-error notification appears; restore the original working points and confirm
+  an actual count preview returns. The other passed checks need no repeat.
+- **Count-preview correction, applied (2026-10-25).** One shared contract replaces the per-operation copies of the
+  selected-Classification policy. `output/readiness.js` adds `analysisPrerequisites`, applied by `executionNeed` and
+  `configurationFindings` to every operation a type declares and every named map product (`declaresOperation` now counts
+  those); `validateReadinessDeclarations` refuses an operation naming a prerequisite role and a prerequisite requirement
+  scoped to operations; `judgesMapProduct` says whether a product's readiness can find anything. `collectionSources.js`
+  declares `selectedClassificationPrerequisites` (the `CLASSIFIER` need and `collectionClassifierRequirement`, now
+  operation-free); Time Series and CCDC declare it once instead of `[CLASSIFICATION_SOURCE]: CLASSIFIER` in each
+  operation and the requirement's operation list; Phenology scopes the requirement to its `IMAGE_OUTPUT` as before. CCDC
+  adds `COUNT` to its breakpoint classified-output requirement. In the GUI, `mapProductGate` (`operationAvailability.js`)
+  reads a judged product's readiness with the existing `readOperationReadiness` and the shared operation gate, and the
+  generic `recipeImageLayer.jsx` holds the layer on it beside `requestGate` and watches that operation while it shows the
+  product (`watchOperations`): a finding withholds or removes the layer, what is pending or unavailable draws nothing new
+  and finds nothing, and SRC explains through the existing output-requirement marks. No type, product or recipe name is
+  tested in the layer, and no validator, cache or stored flag is added. **Acquisition cost:** for CCDC's count, one
+  readiness read of the Classification and its input imagery's observation - what training reads - shared with the
+  toolbar's and other consumers' reads; the CCDC's own collection is never described for it, and products of other types
+  read nothing new. **Unchanged:** charts, Retrieve and server guards judge the same needs as before, the prerequisites
+  folded in; pixel operations keep their point AOI and referenced recipes their own; server preview gating stays
+  deferred. **Regressions:** `ccdc/countLayer.test.jsx` mounts the real layer, store, runtime and SRC marks: an
+  already-invalid saved CCDC over native and classified breakpoint bands requests no preview, constructs no layer and
+  raises no notification while SRC is marked; a drawn count is removed once the points are removed; repair draws it;
+  pending or unobservable imagery and a Classification record not yet loaded draw nothing and find nothing (`wait` or
+  `SOURCE_UNAVAILABLE`), a record arriving untrainable then being found; controls - a trainable Classification, no
+  Classification with native breakpoints, a decision tree without points - draw; judging reads only the Classification's
+  input asset, never the CCDC's description. Shared `analysisPrerequisites.test.js`: the count can run once what
+  training reads is observed while the CCDC image still needs its own observation; it needs only that observation;
+  CCDC's count is judged and the three other named products are not; the declaration's validation.
+  `classifiedOutputTraining.test.js` adds `COUNT` to its per-operation campaign (each training finding, decision tree,
+  pending evidence, repair, unprovided classified breakpoint, no selection). **Witnesses:** the pre-correction layer
+  (`recipeImageLayer.jsx` from `HEAD`) fails 8 of 12 layer tests; not applying prerequisites to named products fails
+  19 of 139 shared tests and 8 of 12 layer tests. **Verification (two workers):** shared `test/recipe` 1362; gee unit
+  tests 1428 (107 files); GUI `src/app/home/body/process`, `src/app/home/map`, `src/widget/form` and translations, 235
+  files and 3461 tests, including the accepted Retrieve closure and refused-submission tests; ESLint on the changed
+  files and `git diff --check` clean. No full GUI suite or browser run.
+  **Browser recheck (pending):** open the same broken CCDC: SRC explains it and no layer-error notification appears;
+  restore its working points: an actual count preview renders.
+- **Caller consolidation over the shared prerequisites, applied (2026-10-25).** Each analysis entry point was checked
+  for readiness checks, watches and configuration messages the shared verdict now covers. **Became shared:** Time
+  Series Retrieve is held as any Retrieve is. `withRetrieveOutput` reads and watches the image output for every panel
+  (its `isImageOutput` option is gone), and a request about something other than the output's bands is decided by the
+  same read without a band selection (`outputDecision`, `retrieveOutput.js`): readiness - the analysis prerequisites
+  among it - validity, listing, asset and save authority, judged at render and, through `accepts`, from the current
+  session at submission. Its pending and unestablished states are said as an export's are (checking; the shared
+  unavailable message with Refresh). `readRetrieveOutput` now also answers `recordOf`, the closure records the held
+  answer read, from which Time Series offers a Classification the session does not hold. **Removed:** Time Series'
+  separate base-readiness gate (`pixelOperationsAvailability` over `IMAGE_OUTPUT` and its `holdOf` messages), its
+  `IMAGE_OUTPUT` operation watch and `readOperationReadiness` read for offers, the panel's `watchRequest` hook that
+  carried that watch, and the translations `process.retrieve.source.configurationUnmet` and
+  `process.retrieve.form.bands.uncheckable`; per-operation copies of the selected-Classification need (previous entry).
+  The request path keeps no initial loading view and no output-dependent destination control: its choices are its own.
+  **Remains specific, and why:** Time Series' indicator offers and their hold (`requestGate`, `offerHoldOf`, the
+  draft-pending offer), which concern the request rather than the output; charts' pixel operations and band offers
+  (`pixelOperationsAvailability`, `CHART_OPERATIONS`), already the shared verdict over operations with the point AOI;
+  CCDC Slice's and Change Alerts' segment-capability gate (`pixelChartAvailability`, `watchEvidence$`), a requirement of
+  the selected source rather than an analysis prerequisite, beside the shared operation verdict both already close on;
+  their chart lifecycle stays for S6. Layers judge the image by its read and named products by `mapProductGate`. The
+  toolbar's action and the GUI requirement declarations (`collectionClassifierRequirements`,
+  `classificationReferenceFeedback`) stay: they present the shared findings where they are repaired. Not in scope:
+  visualization-reconciliation ownership, pixel-projection consolidation, reference-settings synchronization (S5).
+  **Regressions:** Time Series Retrieve's watch tests now expect only the output question every Retrieve watches,
+  released on closing; an unobservable input shows the shared unavailable message with Refresh on both paths; a
+  Classification the session does not hold is offered and submitted from the shared read's records
+  (`retrieveTrainingReadiness.test.jsx`); `retrieveDestinationCompatibility.test.jsx` replaces the case that pinned a
+  request reading nothing with one holding it while the output is read and submitting it once it can run;
+  `retrieveClassifiedOutputs.test.jsx` and `unselectedClassification.test.jsx` pass unchanged over the shared read.
+  **Witness:** taking offers' records from nothing again fails the not-held-Classification case. **Verification (two
+  workers):** GUI `src/app/home/body/process`, `src/app/home/map`, `src/widget/form` and translations, 235 files and
+  3462 tests; ESLint on the changed files and `git diff --check` clean. No full GUI suite or browser run.
+- **Independent prerequisite/consolidation review (2026-10-25; one layer-precedence correction needed).** The shared
+  analysis declaration, named-product traversal and removal of Time Series Retrieve's extra base gate match the
+  requested design. Independent focused verification passed 164 shared tests, 280 gee route tests and 278 GUI tests
+  in 11 files, including count-layer, existing named-product, Retrieve, form and chart cases; lint on the reviewed
+  sources/tests passed. A known withdrawal can still be ignored while the output description is transient:
+  `recipeImageLayer.jsx`'s `drawableLayer` returns `preserved(imageOutput)` when `canPreview` is false, before it checks
+  `sourceGate` or the new `productGate`. With an already drawn layer, unchanged drawing inputs and a description in
+  `NEEDS_EVIDENCE`, a gate with `withdraw: true` therefore returns the old layer. A temporary component-boundary probe
+  failed for each gate; the control without a confirmed finding preserved the old layer as intended. This is an
+  ordering issue in the shared renderer, not another recipe-specific requirement or a live-browser reproduction.
+  **Required:** apply confirmed withdrawals before any transient-preservation return; retain existing preservation
+  where there is no confirmed finding. Add the two precedence regressions and that control to the shared layer tests.
+  No new mechanism is needed. The probe was removed and no production code changed by the reviewer. The focused
+  already-broken-CCDC/repair browser check remains pending; no repeat of the timing-dependent Enter check is requested.
+- **Layer-precedence correction, applied (2026-10-25).** `drawableLayer` (`recipeImageLayer.jsx`) now takes the drawing
+  away for a withdrawing `sourceGate` or `productGate` before anything else is decided; only then does a description
+  that cannot be previewed preserve the existing drawing, and a gate still checking keeps it as before. No new
+  mechanism. **Regressions** (`recipeImageLayer.test.js`, for each gate): a drawn layer whose description is read again
+  (`NEEDS_EVIDENCE`) is removed for a confirmed finding, nothing new constructed; the control, a gate still checking,
+  keeps the unchanged drawing. The existing no-gate preservation cases are unchanged. **Witness:** the former order
+  fails both finding cases; the controls pass. **Verification (two workers):** GUI `src/app/home/body/process` and
+  `src/app/home/map`, 230 files and 3437 tests; ESLint on the changed files and `git diff --check` clean. The CCDC
+  opening/repair browser check remains pending.
+  **Independent recheck (2026-10-25):** no remaining code findings. Both withdrawing gates are now evaluated before
+  the transient-description preservation path, while a checking gate preserves the unchanged drawing. Shared layer,
+  CCDC count-layer and output tests passed 113 of 113 in three files; ESLint on the changed source/test and
+  `git diff --check` passed. No production changes or browser run by the reviewer. Only the already-broken CCDC and
+  restored count-preview browser check remains for this correction.
+  **Browser result (2026-10-25; user reported):** responding to that two-step checklist, the user says "It works
+  well". Record opening the already-broken CCDC with SRC feedback and no layer-error notification, then restoring
+  its original working points and obtaining an actual count preview, as passed. The agent did not run the browser;
+  no exact build, recipe/asset ids or network trace were supplied. This closes the remaining requested S3 browser
+  recheck. The timing-dependent pending/Enter browser case remains unattempted, with its automated tests passed;
+  no additional manual timing exercise is required by this correction. Historical pending records above describe
+  their status at the time and are retained.
+- **Browser checklist.**
+  1. Time Series and CCDC with a Classification storing no points: SRC marked and naming it beside Classification;
+     chart action disabled; Retrieve disabled; the map preview held - for native and classified
+     bands, native and classified CCDC breakpoints.
+  2. With a chart open, remove the Classification's last training point in its own tab: the chart closes; restore the
+     point (saved): the chart can be opened again, on the band it charted.
+  3. Open Retrieve with a classified and a native indicator selected; break the Classification: the panel closes and
+     submits nothing, and Retrieve is disabled. Repair: Retrieve can be reopened with its saved settings; no automatic
+     reopening or clearing of saved choices.
+  4. Deselect the Classification in Sources and Apply: charts and Retrieve work natively.
+  5. A decision-tree Classification without points: nothing held. A Classification still loading: holds without
+     an error. A CCDC Slice over a CCDC with an untrainable Classification: held, naming that recipe.
+
+**Generalization audit of the recent work (2026-10-25; structural review, not additional confirmed bugs).**
+
+The user's rule applies throughout: types declare the facts and prerequisites peculiar to their analysis; the shared
+mechanism enforces readiness and owns the consequences for execution and operation panels. A copied validator,
+per-panel interpretation of invalidity, or type-name exception in a generic component merits review. This is a bounded
+audit of the paths changed in this campaign, not an exhaustive audit of the application. The common-prerequisite and
+named-product implementation and its layer-precedence correction have now passed independent code review; the user
+also confirmed the focused CCDC count-preview browser recheck passed on 2026-10-25.
+
+Already consolidated: band-dependent training operations/holds are removed by S3's configured-analysis policy;
+Retrieve's confirmed-finding closure and acceptance-before-commit use shared components; PyEO's one-input check moved
+from its selector to shared readiness; its index derivation is shared by evidence, offers and execution. Keep these
+corrections rather than adding replacement recipe-specific gates.
+
+| Candidate | Evidence in current callers | Direction / priority |
+| --- | --- | --- |
+| Time Series Retrieve's extra base gate | Its image-output read, watch and readiness-to-message mapping previously overlapped the shared panel. Its indicator offers are genuinely request-specific. | Consolidation implemented and independently checked on 2026-10-25: all panels use `withRetrieveOutput` and the common output decision; Time Series keeps only its current-state indicator-offer checks. See the caller-consolidation record above. |
+| Chart lifecycle in CCDC Slice and Change Alerts | Both panels combine segment-capability and operation-readiness gates and separately implement close, cancel, wait and resume. Time Series/CCDC already use `pixelChartUpdate`. | Use common gate precedence and lifecycle decisions where equivalent. Keep segment/observation computation and asset-reference handling explicit; a capability check and an execution-readiness check establish different facts. Do this with the S5/S6 work where its final policy matters. |
+| Type-name exceptions in the shared layer component | `recipeImageLayer.jsx` has `SELF_MANAGED_VISUALIZATIONS` for BAYTS Alerts, Change Alerts and LandTrendr to avoid two writers reconciling the same selection. | Declare reconciliation ownership on the type and let the generic component consume it. Preserve behavior and regression coverage; this is a structural cleanup, not a new reproduced rendering bug. |
+| Repeated request projection | The GUI's `recipeForOperation` drops the consumer AOI, while observations and direct CCDC segments separately project to a clicked point. Change Alerts observations use their own shared monitoring projection. | Consolidate the shared computation identity/projection so judged and built requests agree, preserving referenced recipes' own AOIs. Existing projections are deliberate; duplication is the risk, not evidence that pixel charts should acquire the consumer AOI. |
+| Reference settings and background initialization | Change Alerts' `referenceObservation.js` uses `applyAccepted` to merge producer Sources/options into the consumer. The manual feedback already established unwanted overwriting, assigned to S5. | Apply one ownership contract: required source-owned values are effective/read-only; consumer-owned editable values survive background reads; defaults have a defined proposal action. Fields remain recipe-specific declarations. Do not introduce a generic synchronization framework or silently settle the initial-copy decision. |
+
+**Disposition agreed with the user (2026-10-25).** The bounded amendment has been sent to the running implementor:
+finish the common S3 gate, audit its layer/product/chart/Retrieve callers, and remove base gates, watches and
+configuration messages made redundant by it, especially Time Series Retrieve's. Keep genuine indicator-offer,
+current-state submission and save-agreement checks. Check the wrapper charts consume the same verdict; broader
+CCDC Slice/Change Alerts chart-lifecycle consolidation belongs with S6, after S5 settles ownership. Reference-setting
+synchronization remains S5. Visualization-reconciliation ownership (the shared layer's type-name allowlist) and
+pixel-projection consolidation remain recorded structural follow-ups outside the current amendment; assess their
+small implementation scope after S3, without making them new pre-commit blockers or assuming five extra slices.
+
+Retained domain adapters are not automatically missing generalization. `requestedMeasures`/`fittedMeasures` belong to
+CCDC; PyEO's supported indexes and input cardinality belong to PyEO; Classification's training rules belong to
+Classification. The CCDC dispatch in generic image-export request capability handling is a deliberate single-consumer
+adapter; revisit it if more types need the same request contract, rather than adding a declaration framework solely
+to remove a short dispatch. The current review adds no production changes or new failing tests. Finish and review the
+shared S3 gate first; assess the bounded candidates alongside the existing S4-S6 sequence instead of treating them as
+newly discovered blockers or an approved broad rewrite.
+
 S1 and S2 can proceed independently of the semantic changes. S3 precedes S4 to avoid adapting sampling work to a
 request-stage design scheduled for removal. Start the read-only F5 audit early, but land S5's ownership behaviour
 before S6's final editor/gate consolidation. If S5 reveals a need to change persisted structure, describe its old/new
@@ -3532,6 +3937,7 @@ shape and compatibility separately before implementation; no migration is approv
    until it is repaired or explicitly deselected. This is a deliberate product policy, not an execution necessity for
    native bands. Confirm that full consequence before retiring the additional band-training gate. Apply it to these
    two families first; do not silently change native Phenology or every recipe that happens to hold a reference.
+   **Status:** confirmed by the S3 request and implemented for Time Series and CCDC (2026-10-24); Phenology unchanged.
 2. **S5's editable defaults.** Recommend copying on the first reference Apply during new-recipe creation only,
    preserving editable values on replacement/reopen/refresh, and offering explicit copying through the normal form's
    Apply/Cancel flow. This recommendation is still not agreed. Required matches are separately source-owned/read-only.
@@ -3777,6 +4183,7 @@ automated checkpoint follows the completed correction set.
   deselection recover; choices survive repair; controls with no Classification and a valid one work. Replace the old
   native-bypass assertions intentionally, record the behavioural cost, and verify the new shared declarations allow
   deletion of the extra training-only paths without losing capability errors or submission-race protection.
+- **Status:** implemented as S3 (2026-10-24); see its record. Browser check pending.
 
 **F10. PyEO feedback must lead to a useful repair.**
 

@@ -1163,7 +1163,6 @@
     },
     "chartPixel": {
       "cancel.tooltip": "Cancel time-series charting",
-      "classifiedBandWithheld": "Not loaded: the classification selected in Sources cannot be trained to compute this band. Choose another band, or update the classification.",
       "coordinates": {
         "latitude": "Latitude: {value}",
         "longitude": "Longitude: {value}",
@@ -5022,10 +5021,8 @@
         "bands": {
           "atLeastOne": "At least one band must be retrieved",
           "checking": "Checking whether the selected bands can be retrieved...",
-          "classifiedWithheld": "The classification selected in Sources cannot be trained to compute the classified bands selected. Select other bands, or update the classification.",
           "label": "Bands to retrieve",
           "loading": "Loading available bands...",
-          "uncheckable": "Whether the selected bands can be retrieved could not be checked. Try again later.",
           "unavailable": "These bands are no longer available from this recipe: {bands}. Select from the bands offered above."
         },
         "crs": {
@@ -5116,12 +5113,9 @@
         "retry": "Refresh"
       },
       "source": {
-        "missing": "No source is selected under {section}.",
         "checking": "Checking the source selected under {section}…",
         "unavailable": "The source selected under {section} is missing or unavailable. Open {section} to see why.",
-        "expired": "The source selected under {section} has not been checked recently. Refresh to check it again.",
-        "unsuitable": "The source selected under {section} cannot be used. Open {section} to see why.",
-        "configurationUnmet": "The settings under {section} need attention. Open {section} to see why."
+        "expired": "The source selected under {section} has not been checked recently. Refresh to check it again."
       }
     },
     "saveRecipe": {

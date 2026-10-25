@@ -25,7 +25,8 @@ vi.mock('~/apiRegistry', () => ({default: {
             return of({features: []})
         },
         loadCCDCSegments$: () => of([]),
-        assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
+        assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
+        bands$: () => of(['red', 'nir'].map(name => ({name, arrayDimensions: 0})))
     },
     recipe: {
         load$: id => {
@@ -119,6 +120,7 @@ const SVM = {type: 'SVM', svmType: 'C_SVC'}
 const RANDOM_FOREST = {type: 'RANDOM_FOREST'}
 const LEGEND = {entries: [{value: 1}, {value: 2}]}
 
+// Trained on points of its own: the chart reads only while it can be trained (type/timeSeries.js, ccdc.js).
 const classificationOf = (classifier, revision = 1) => ({
     id: CLASSIFICATION,
     type: 'CLASSIFICATION',
@@ -126,7 +128,8 @@ const classificationOf = (classifier, revision = 1) => ({
     model: {
         inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['red', 'nir']}]}]},
         legend: LEGEND,
-        classifier
+        classifier,
+        trainingData: {dataSets: [{dataSetId: 'collected', type: 'COLLECTED', referenceData: [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]}]}
     }
 })
 

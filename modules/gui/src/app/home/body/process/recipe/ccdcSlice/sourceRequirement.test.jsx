@@ -145,7 +145,7 @@ const {PortalContainer, PortalContext} = await import('~/widget/portal')
 const {actionBuilder} = await import('~/action-builder')
 const {IMAGE_OUTPUT} = await import('../recipeOutput')
 const {CHECKING_SOURCE, selectedSourceStatusOfState, UNSUITABLE_SOURCE} = await import('../selectedSourceStatus')
-const {sourceRequirementGate} = await import('../sourceRequirements')
+const {requestGate} = await import('../sourceRequirements')
 
 registry.CCDC_SLICE = {sourceRequirements: sliceRequirements, sourceObservation: sliceObservation}
 registry.CCDC = {id: 'CCDC', describeSegments$}
@@ -779,7 +779,7 @@ const sourceStatus = () =>
     selectedSourceStatusOfState(store.getState(), SLICE, 'source', id => runtime.evidenceOwnerOf(id))
 
 // Why a Retrieve of the slice may not be submitted now, as far as its source decides that.
-const retrieveGate = () => sourceRequirementGate({
+const retrieveGate = () => requestGate({
     state: store.getState(), recipe: sliceRecipe(), operation: IMAGE_OUTPUT, evidenceOwnerOf: id => runtime.evidenceOwnerOf(id), now: Date.now()
 })
 

@@ -160,6 +160,9 @@ const VALID = {id: 'valid', bands: ['ndvi']}
 const ASSET_EDGE = {sourceRecipeId: 'recipe-1', reference: {type: 'ASSET', id: 'users/x/a'}, role: 'INPUT_IMAGE', path: []}
 const ALTERNATIVE = {id: 'alternative', bands: ['evi']}
 const STALE_SELECTION = {id: 'stale', bands: ['gone']}
+// A gate's answers (sourceRequirements.js, operationAvailability.js): a finding, and evidence still being read.
+const WITHDRAWN = {wait: false, withdraw: true, code: 'CONFIGURATION_UNMET', section: 'sources'}
+const CHECKING = {wait: true, withdraw: false, code: 'SOURCE_PENDING', section: null}
 
 describe('the render-time guard', () => {
     it('withholds any layer for a stale selection, the one already on screen included', () => {
@@ -360,6 +363,29 @@ describe('what a layer draws from beyond its recipes', () => {
         expect(instance.imageOutput().status).toBe('NEEDS_EVIDENCE')
         expect(instance.maybeCreateLayer()).toBe(first)
         asset({recordStaleness: undefined})
+
+        expect(instance.maybeCreateLayer()).toBe(first)
+        expect(state.constructed).toHaveLength(1)
+    })
+
+    // Whether the source suits the product (sourceGate) or the product's analysis can run (productGate).
+    it.each(['sourceGate', 'productGate'])('takes its drawing away for a finding of its %s while what it draws from is read again', gate => {
+        const {instance, asset} = readingAsset()
+        instance.maybeCreateLayer()
+
+        asset({recordStaleness: {staleness: ({id}) => id === 'recipe-1' ? {id, revision: 2} : null}, [gate]: WITHDRAWN})
+        expect(instance.imageOutput().status).toBe('NEEDS_EVIDENCE')
+
+        expect(instance.maybeCreateLayer()).toBe(null)
+        expect(state.constructed).toHaveLength(1)
+    })
+
+    it.each(['sourceGate', 'productGate'])('keeps its drawing while its %s is still checked and what it draws from is read again', gate => {
+        const {instance, asset} = readingAsset()
+        const first = instance.maybeCreateLayer()
+
+        asset({recordStaleness: {staleness: ({id}) => id === 'recipe-1' ? {id, revision: 2} : null}, [gate]: CHECKING})
+        expect(instance.imageOutput().status).toBe('NEEDS_EVIDENCE')
 
         expect(instance.maybeCreateLayer()).toBe(first)
         expect(state.constructed).toHaveLength(1)

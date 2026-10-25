@@ -12,10 +12,10 @@ import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
-// A CCDC fitting a breakpoint band its selected Classification computes trains that Classification's classifier: where
-// it cannot be trained - it stores no training points - the Sources panel names it beside the classification field,
-// whose own sections say why, and Retrieve is held, without holding the panel's Apply. Breakpoint bands of the images
-// need nothing of it. The panel, store, source runtime and recipe types are real; the recipe reads answer from stored
+// The Classification a CCDC's Sources select is part of its analysis, whatever its breakpoint bands (type/ccdc.js):
+// where it cannot be trained - it stores no training points - the Sources panel names it beside the classification
+// field, whose own sections say why, and Retrieve is held, without holding the panel's Apply - for a breakpoint band it
+// computes, which trains it, and for breakpoint bands of the images alike. The panel, store, source runtime and recipe types are real; the recipe reads answer from stored
 // records, Earth Engine the bands of a recipe's image at once.
 
 const stored = vi.hoisted(() => ({records: {}}))
@@ -69,9 +69,12 @@ afterEach(async () => {
     container?.remove()
 })
 
-describe('a CCDC fitting a breakpoint band its Classification computes, by whether that Classification stores training points', () => {
+describe.each([
+    ['a breakpoint band its Classification computes', ['ndvi', 'probability_1']],
+    ['breakpoint bands of the images alone', ['ndvi']]
+])('a CCDC fitting %s, by whether its Classification stores training points', (_case, breakpointBands) => {
     it('names the Classification beside the classification field, and holds Retrieve, while it cannot be trained', async () => {
-        await open({breakpointBands: ['ndvi', 'probability_1'], classifier: RANDOM_FOREST, points: false})
+        await open({breakpointBands, classifier: RANDOM_FOREST, points: false})
 
         expect(errorsOf(CLASSIFICATION_LABEL)).toEqual([NEEDS_ATTENTION])
         expect(retrieveGate()).toMatchObject({code: 'SOURCE_UNSUITABLE', section: SOURCES_BUTTON})
@@ -84,7 +87,7 @@ describe('a CCDC fitting a breakpoint band its Classification computes, by wheth
     })
 
     it('says nothing beside it, and can be retrieved, once the Classification stores points', async () => {
-        await open({breakpointBands: ['ndvi', 'probability_1'], classifier: RANDOM_FOREST, points: false})
+        await open({breakpointBands, classifier: RANDOM_FOREST, points: false})
 
         await act(async () => actionBuilder('ADD_POINTS')
             .set(['process.loadedRecipes', CLASSIFICATION, 'model.trainingData.dataSets'], [COLLECTED])
@@ -96,9 +99,10 @@ describe('a CCDC fitting a breakpoint band its Classification computes, by wheth
     })
 })
 
-describe('a CCDC fitting breakpoint bands of the images alone', () => {
-    it('says nothing beside the classification field, and can be retrieved, though its Classification stores no points', async () => {
-        await open({breakpointBands: ['ndvi'], classifier: RANDOM_FOREST, points: false})
+// Selecting none needs nothing of any.
+describe('a CCDC selecting no Classification', () => {
+    it('says nothing beside the classification field, and can be retrieved', async () => {
+        await open({breakpointBands: ['ndvi'], classifier: RANDOM_FOREST, points: false, classification: null})
 
         expect(errorsOf(CLASSIFICATION_LABEL)).toEqual([])
         expect(retrieveGate()).toBe(null)
@@ -134,7 +138,8 @@ const LISTING = [
 ]
 
 // Over Landsat 8 scenes, its breakpoint bands as given.
-const ccdcRecipe = ({breakpointBands}) => ({
+// `classification` null: its Sources select none.
+const ccdcRecipe = ({breakpointBands, classification = CLASSIFICATION}) => ({
     id: CCDC,
     type: 'CCDC',
     title: 'CCDC',
@@ -142,7 +147,7 @@ const ccdcRecipe = ({breakpointBands}) => ({
     model: {
         aoi: {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]},
         dates: {startDate: '2020-01-01', endDate: '2021-01-01'},
-        sources: {dataSetType: 'OPTICAL', classification: CLASSIFICATION, dataSets: {LANDSAT: ['LANDSAT_8']}, assets: [], cloudPercentageThreshold: 75, breakpointBands},
+        sources: {dataSetType: 'OPTICAL', classification, dataSets: {LANDSAT: ['LANDSAT_8']}, assets: [], cloudPercentageThreshold: 75, breakpointBands},
         options: {corrections: ['SR']},
         opticalPreprocess: {corrections: ['SR']},
         ccdcOptions: {dateFormat: 1}
@@ -207,8 +212,8 @@ const RuntimeProbe = withSourceRuntime()(({sourceRuntime}) => {
     return null
 })
 
-async function open({breakpointBands, classifier, points}) {
-    const records = [ccdcRecipe({breakpointBands}), classificationRecipe({classifier, points}), mosaicRecipe()]
+async function open({breakpointBands, classifier, points, classification}) {
+    const records = [ccdcRecipe({breakpointBands, classification}), classificationRecipe({classifier, points}), mosaicRecipe()]
     stored.records = Object.fromEntries(records.map(record => [record.id, record]))
     const initialState = {
         dimensions: {width: 1024, height: 768},

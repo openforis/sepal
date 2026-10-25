@@ -1,6 +1,6 @@
 import {map, of, switchMap, throwError} from 'rxjs'
 
-import {requireCcdcImageStages$} from '#gee/jobs/requestedBands'
+import {requireCcdcRequestedOutputs$} from '#gee/jobs/requestedBands'
 import {INVALID, READY, settledImageOutput$} from '#sepal/recipe/output/observeImageOutput'
 import {dependencyValidity, VALID} from '#sepal/recipe/source/dependencyValidity'
 import ccdcType from '#sepal/recipe/type/ccdc'
@@ -21,12 +21,12 @@ export const resolveImageOutput$ = recipe =>
     describe$(recipe)
 
 // The image output, then what the bands the image is to be built with (`request`) add: for a direct CCDC, the measures
-// they ask it to fit (requireCcdcImageStages$) - a capability refused as a client's error, then the training those
-// computed by its Classification need. Nothing of the image is built for it.
+// they ask it to fit, each one its Classification provides (requireCcdcRequestedOutputs$) - a capability refused as a
+// client's error. Its Classification's training is the image output's, judged first. Nothing of the image is built for it.
 export const resolveRequestedImageOutput$ = (recipe, request) =>
     resolveImageOutput$(recipe).pipe(
         switchMap(imageOutput => judgesRequest(recipe)
-            ? requireCcdcImageStages$(recipe, request).pipe(map(() => imageOutput))
+            ? requireCcdcRequestedOutputs$(recipe, request).pipe(map(() => imageOutput))
             : of(imageOutput)
         )
     )

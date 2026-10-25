@@ -6,22 +6,27 @@ import {defer, finalize, of, Subject, throwError} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
-import {Recipe} from '~/app/home/body/process/recipeContext'
+import {Recipe, withRecipe} from '~/app/home/body/process/recipeContext'
 import {SourceRuntimeProvider, useSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
+import {compose} from '~/compose'
 import {initStore, select} from '~/store'
+import {ActivationContext} from '~/widget/activation/activationContext'
 import {EventShield} from '~/widget/eventShield'
+import {PanelWizard} from '~/widget/panelWizard'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
-// What CCDC Retrieve holds a selection of measures to beyond its image output, as the server holds the export
-// (requireCcdcImageStages$, modules/gee): while what CCDC fits for them - with its breakpoint bands - includes an output
-// the selected Classification computes, that Classification's training (the collection classified). A hold keeps the
-// selection and says why where something is found wrong; nothing is submitted while it holds, by Apply or by the form
-// itself, judged from the session as it stands when submitted, and the project's destination is left as it was.
-// Selecting only measures of the scenes lets go of what training needs. The registrations, runtime, form, panel and
-// submission are real; storage, Earth Engine, task submission and the asset destination's check are the substitutes.
+// What CCDC Retrieve is held to, as the server holds the export (imageOutput.js, modules/gee): its image output - the
+// Classification its Sources select trainable among it, whatever measures are selected or breakpoint bands fitted
+// (type/ccdc.js). Once that is found not to hold, an open Retrieve closes, as a chart does, and its action is disabled
+// while SRC, where it is repaired, says why; repair offers it again, opening on what was last submitted. What is still
+// being read, or cannot be, and a save not yet acknowledged, hold the export with the panel open, keeping the selection,
+// as a selection or asset the form leaves incomplete does. Nothing is submitted while held, by Apply or by the form
+// itself, judged from the session as it stands when submitted, and the project's destination is left as it was. The
+// registrations, runtime, activation, Retrieve action, section marks, form, panel and submission are real; storage,
+// Earth Engine, task submission and the asset destination's check are the substitutes.
 
 const {inputBands$, saveRecipe$} = vi.hoisted(() => ({inputBands$: vi.fn(), saveRecipe$: vi.fn()}))
-const fake = vi.hoisted(() => ({stored: {}, submitted: [], projects: []}))
+const fake = vi.hoisted(() => ({stored: {}, submitted: [], projects: [], assetId: null}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
@@ -51,14 +56,16 @@ vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
 vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
-vi.mock('~/widget/activation/activatable', () => ({
-    withActivatable: () => Component => props => (
-        <Component {...props} activatable={{active: true, activate: () => {}, deactivate: () => {}}}/>
-    )
+// A toolbar button is pressed by its icon; it says whether what it opens is open.
+vi.mock('~/widget/toolbar/toolbarButton', () => ({
+    ToolbarButton: ({icon, disabled, selected, onClick}) =>
+        <button data-icon={icon} aria-pressed={Boolean(selected)} disabled={disabled} onClick={onClick}/>
 }))
-// The asset destination checks the user's assets: it reports that its check has settled.
+// The asset destination checks the user's assets: it reports that its check has settled, and is handed its input to
+// name another.
 vi.mock('~/widget/assetDestination', () => ({
-    AssetDestination: ({onValidityCheckChange}) => {
+    AssetDestination: ({assetInput, onValidityCheckChange}) => {
+        fake.assetId = assetInput
         useEffect(() => onValidityCheckChange(false), [])
         return null
     }
@@ -68,6 +75,8 @@ const {addRecipeType} = await import('../../../../recipeTypeRegistry')
 const {default: ccdc} = await import('../../ccdc')
 const {default: classification} = await import('../../../classification/classification')
 const {default: opticalMosaic} = await import('../../../opticalMosaic/opticalMosaic')
+const {RetrieveButton} = await import('../../../retrieveButton')
+const {withSourceProblems} = await import('../../../selectedSource')
 const {Retrieve} = await import('./retrieve')
 const {forgetRecipeSaveState} = await import('~/app/home/body/process/recipe')
 
@@ -81,10 +90,11 @@ let root, store
 
 beforeEach(() => {
     vi.useFakeTimers({toFake: ['setTimeout', 'clearTimeout']})
-    inputBands$.mockReset().mockReturnValue(of(['red', 'nir'].map(name => ({name, arrayDimensions: 0}))))
+    inputBands$.mockReset().mockReturnValue(of(INPUT_BANDS))
     saveRecipe$.mockReset().mockReturnValue(of({revision: 2}))
     fake.submitted = []
     fake.projects = []
+    fake.assetId = null
     watched.length = 0
 })
 
@@ -97,33 +107,38 @@ afterEach(async () => {
     vi.useRealTimers()
 })
 
-describe('CCDC Retrieve of a measure its Classification computes', () => {
-    it('holds it, saying why, while that Classification stores no points, however the form is submitted', async () => {
-        await open({selected: [CLASSIFIED], trainingData: []})
+// Read as the suites are defined.
+const CLASSIFIED_MEASURE = 'regression'
+const NATIVE_MEASURE = 'ndvi'
 
-        expect(applyEnabled()).toBe(false)
-        expect(shown()).toContain('process.retrieve.form.bands.classifiedWithheld')
-        await apply()
-        await submitForm()
+describe('an open CCDC Retrieve whose Classification loses its points', () => {
+    it.each([['one it computes', CLASSIFIED_MEASURE], ['one of the scenes', NATIVE_MEASURE]])('closes over %s, submitting nothing, its action disabled while SRC says why', async (_case, selected) => {
+        await open({selected: [selected]})
+        await openRetrieve()
+        expect(panelOpen()).toBe(true)
+
+        await holdTrainingData([])
+
+        expect(panelOpen()).toBe(false)
+        expect(retrieveButton().disabled).toBe(true)
+        expect(marked()).toEqual(['sources'])
+        await act(async () => retrieveButton().click())
+        await settled()
+        expect(panelOpen()).toBe(false)
         expect(fake.submitted).toEqual([])
         expect(fake.projects).toEqual([])
-        expect(selectedMeasures()).toEqual([CLASSIFIED])
     })
 
-    it('holds it beside a measure of the scenes, submitting the latter alone once the classified one is let go', async () => {
-        await open({selected: [NATIVE, CLASSIFIED], trainingData: []})
-        expect(applyEnabled()).toBe(false)
-
+    it('is offered again once they are restored, without opening, and opens on what was last submitted, not on what was edited since', async () => {
+        await open({selected: [NATIVE, CLASSIFIED]})
+        await openRetrieve()
         await click(REGRESSION)
-        await apply()
-
-        expect(measures()).toEqual([[NATIVE]])
-    })
-
-    it('submits it once the Classification stores points again, to the asset and with the options chosen', async () => {
-        await open({selected: [NATIVE, CLASSIFIED], trainingData: []})
+        await holdTrainingData([])
 
         await holdTrainingData([COLLECTED])
+        expect(retrieveButton().disabled).toBe(false)
+        expect(panelOpen()).toBe(false)
+        await openRetrieve()
         await apply()
 
         expect(measures()).toEqual([[NATIVE, CLASSIFIED]])
@@ -142,18 +157,123 @@ describe('CCDC Retrieve of a measure its Classification computes', () => {
         expect(fake.projects).toMatchObject([{id: PROJECT, defaultAssetFolder: 'projects/p/assets'}])
     })
 
-    it('waits for the points it is given to be saved, submitting it once storage holds them', async () => {
-        await open({selected: [CLASSIFIED], trainingData: [], classificationOpen: true})
+    it.each([['one it computes', CLASSIFIED_MEASURE], ['one of the scenes', NATIVE_MEASURE]])('submits nothing of %s, leaving the destination remembered, where they are removed in the event submitting it', async (_case, selected) => {
+        await open({selected: [selected]})
+        await openRetrieve()
+        expect(applyEnabled()).toBe(true)
+
+        await act(async () => {
+            actionBuilder('EDIT_TRAINING_DATA')
+                .set(['process.loadedRecipes', CLASSIFICATION, 'model.trainingData.dataSets'], [])
+                .dispatch()
+            requestSubmit()
+        })
+        await settled()
+
+        expect(fake.submitted).toEqual([])
+        expect(fake.projects).toEqual([])
+        expect(panelOpen()).toBe(false)
+    })
+})
+
+// A breakpoint band is fitted whatever is selected, so the image output itself needs that Classification's training.
+describe('an open CCDC Retrieve fitting a breakpoint band its Classification computes', () => {
+    it('closes over a measure of the scenes once that Classification stores no points, and submits it once repaired and opened again', async () => {
+        await open({selected: [NATIVE], breakpointBands: [NATIVE, CLASSIFIED]})
+        await openRetrieve()
+
+        await holdTrainingData([])
+        expect(panelOpen()).toBe(false)
+        expect(retrieveButton().disabled).toBe(true)
+
+        await holdTrainingData([COLLECTED])
+        await openRetrieve()
+        await apply()
+        expect(measures()).toEqual([[NATIVE]])
+    })
+})
+
+describe('an open CCDC Retrieve whose Classification imagery is not yet known', () => {
+    it.each([['one it computes', CLASSIFIED_MEASURE], ['one of the scenes', NATIVE_MEASURE]])('holds %s open, keeping it selected, until that imagery is observed, then submits it', async (_case, selected) => {
+        await open({selected: [selected]})
+        await openRetrieve()
+        const observed = new Subject()
+        inputBands$.mockReturnValue(observed)
+
+        await holdInput(ASSET_INPUT)
+        expect(panelOpen()).toBe(true)
+        expect(applyEnabled()).toBe(false)
+        await apply()
+        expect(fake.submitted).toEqual([])
+        expect(panelOpen()).toBe(true)
+        expect(selectedMeasures()).toEqual([selected])
+
+        await act(async () => observed.next(INPUT_BANDS))
+        await settled()
+        await apply()
+        expect(measures()).toEqual([[selected]])
+    })
+
+    it('holds it open, finding nothing, where that imagery cannot be observed', async () => {
+        await open({selected: [NATIVE]})
+        await openRetrieve()
+        inputBands$.mockReturnValue(throwError(() => new Error('Earth Engine unreachable')))
+
+        await holdInput(ASSET_INPUT)
+        expect(panelOpen()).toBe(true)
+        await apply()
+
+        expect(fake.submitted).toEqual([])
+        expect(panelOpen()).toBe(true)
+        expect(document.body.textContent).toContain('process.retrieve.source.unavailable')
+        expect(document.body.textContent).toContain('process.retrieve.assets.retry')
+    })
+})
+
+// Enter in a field submits the form, whatever Apply says (widget/form/panel.jsx).
+describe('an open CCDC Retrieve submitted from the keyboard while its Classification imagery is being observed', () => {
+    it('stays open, keeping the asset edited unsaved and submitting nothing, then submits it once that imagery is observed', async () => {
+        await open({selected: [NATIVE]})
+        await openRetrieve()
+        const observed = new Subject()
+        inputBands$.mockReturnValue(observed)
+        await holdInput(ASSET_INPUT)
+        await act(async () => fake.assetId.set(OTHER_ASSET_ID))
+        await settled()
+
+        await act(async () => requestSubmit())
+        await settled()
+
+        expect(panelOpen()).toBe(true)
+        expect(savedSettings()).toMatchObject({assetId: ASSET_ID})
+        expect(fake.submitted).toEqual([])
+        expect(fake.projects).toEqual([])
+
+        await act(async () => observed.next(INPUT_BANDS))
+        await settled()
+        await act(async () => requestSubmit())
+        await settled()
+        expect(fake.submitted.map(({params}) => params.image.assetId)).toEqual([OTHER_ASSET_ID])
+        expect(savedSettings()).toMatchObject({assetId: OTHER_ASSET_ID})
+    })
+})
+
+describe('an open CCDC Retrieve over a Classification edited in its own tab', () => {
+    it('holds it open until the points it is given are saved, submitting once storage holds them', async () => {
+        await open({selected: [CLASSIFIED], classificationOpen: true})
+        await openRetrieve()
         const save = new Subject()
         saveRecipe$.mockReturnValueOnce(save)
         const saves = saveRecipe$.mock.calls.length
 
-        await holdTrainingData([COLLECTED])
+        await holdTrainingData([COLLECTED, ADDED])
         await vi.waitFor(() => expect(saveRecipe$.mock.calls.length).toBe(saves + 1))
         await settled()
+        expect(panelOpen()).toBe(true)
         expect(applyEnabled()).toBe(false)
-        await submitForm()
+        await apply()
         expect(fake.submitted).toEqual([])
+        expect(panelOpen()).toBe(true)
 
         await act(async () => {
             save.next({revision: 2})
@@ -163,101 +283,82 @@ describe('CCDC Retrieve of a measure its Classification computes', () => {
         await apply()
         expect(measures()).toEqual([[CLASSIFIED]])
     })
-
-    it('submits nothing where the Classification loses its points just before the form is submitted, though the panel has not shown it', async () => {
-        await open({selected: [CLASSIFIED]})
-        expect(applyEnabled()).toBe(true)
-
-        await act(async () => {
-            actionBuilder('EDIT_TRAINING_DATA')
-                .set(['process.loadedRecipes', CLASSIFICATION, 'model.trainingData.dataSets'], [])
-                .dispatch()
-            formOf().requestSubmit ? formOf().requestSubmit() : formOf().dispatchEvent(new Event('submit', {cancelable: true}))
-        })
-        await settled()
-
-        expect(fake.submitted).toEqual([])
-        expect(fake.projects).toEqual([])
-    })
 })
 
-describe('CCDC Retrieve of a measure its Classification computes over imagery still to be observed', () => {
-    it('holds it, saying nothing is wrong and keeping it selected, until that imagery is observed, then submits it', async () => {
-        const observed = new Subject()
-        inputBands$.mockReturnValue(observed)
-        await open({selected: [CLASSIFIED], input: ASSET_INPUT})
+describe('an open CCDC Retrieve its own form leaves incomplete', () => {
+    it('stays open with nothing selected, submitting once a measure is', async () => {
+        await open({selected: [CLASSIFIED]})
+        await openRetrieve()
 
+        await click(REGRESSION)
+        expect(panelOpen()).toBe(true)
         expect(applyEnabled()).toBe(false)
-        expect(shown()).toContain('process.retrieve.form.bands.checking')
-        expect(shown()).not.toContain('process.retrieve.form.bands.classifiedWithheld')
-        expect(selectedMeasures()).toEqual([CLASSIFIED])
 
-        await act(async () => observed.next(['red', 'nir'].map(name => ({name, arrayDimensions: 0}))))
-        await settled()
+        await click(REGRESSION)
         await apply()
         expect(measures()).toEqual([[CLASSIFIED]])
     })
 
-    it('holds it, finding nothing, where that imagery cannot be observed', async () => {
-        inputBands$.mockReturnValue(throwError(() => new Error('Earth Engine unreachable')))
-        await open({selected: [CLASSIFIED], input: ASSET_INPUT})
-
-        await apply()
-
-        expect(fake.submitted).toEqual([])
-        expect(shown()).toContain('process.retrieve.form.bands.uncheckable')
-        expect(shown()).not.toContain('process.retrieve.form.bands.classifiedWithheld')
-    })
-
-    it('submits a measure of the scenes without waiting for it', async () => {
-        inputBands$.mockReturnValue(new Subject())
-        await open({selected: [NATIVE], input: ASSET_INPUT})
-
-        await apply()
-
-        expect(measures()).toEqual([[NATIVE]])
-    })
-})
-
-// A breakpoint band is fitted whatever is selected, so the image output itself needs that Classification's training.
-describe('CCDC Retrieve fitting a breakpoint band its Classification computes', () => {
-    it('is held by its image output, saying where, for a measure of the scenes, and submits it once repaired', async () => {
-        await open({selected: [NATIVE], breakpointBands: [NATIVE, CLASSIFIED], trainingData: []})
-
-        expect(applyEnabled()).toBe(false)
-        expect(shown()).toContain('process.retrieve.source.unsuitable')
-        expect(shown()).not.toContain('process.retrieve.form.bands.classifiedWithheld')
-        await submitForm()
-        expect(fake.submitted).toEqual([])
-
-        await holdTrainingData([COLLECTED])
-        await apply()
-        expect(measures()).toEqual([[NATIVE]])
-    })
-})
-
-// The questions watched are those the export is held to beyond its image output, which the panel itself watches.
-describe('what an open CCDC Retrieve watches', () => {
-    it('is nothing more for measures of the scenes, the collection classified for one the Classification computes or fits as a breakpoint band, let go with it and with the panel', async () => {
+    it('stays open with no asset named, submitting to the one named then', async () => {
         await open({selected: [NATIVE]})
-        expect(watchedOperations()).toEqual([])
+        await openRetrieve()
 
-        await click(REGRESSION)
-        expect(watchedOperations()).toEqual(['CLASSIFIED_COLLECTION'])
+        await act(async () => fake.assetId.set(''))
+        await settled()
+        expect(panelOpen()).toBe(true)
+        expect(applyEnabled()).toBe(false)
+
+        await act(async () => fake.assetId.set(OTHER_ASSET_ID))
+        await settled()
+        await apply()
+        expect(fake.submitted.map(({params}) => params.image.assetId)).toEqual([OTHER_ASSET_ID])
+    })
+})
+
+describe('CCDC Retrieve over a Classification that cannot be trained', () => {
+    it('is not offered, and submits a measure of the scenes once Sources select no Classification', async () => {
+        await open({selected: [NATIVE], trainingData: []})
+        expect(retrieveButton().disabled).toBe(true)
+
+        await act(async () => actionBuilder('APPLY_SOURCES')
+            .set(['process.loadedRecipes', CCDC, 'model.sources.classification'], null)
+            .dispatch())
+        await settled()
+        await openRetrieve()
+        await apply()
+
+        expect(measures()).toEqual([[NATIVE]])
+    })
+})
+
+// The export is held to its image output alone, which the panel itself watches: nothing more is watched, whatever is
+// selected or fitted.
+describe('what an open CCDC Retrieve watches', () => {
+    it('is nothing beyond its image output, whatever measures are selected or breakpoint bands fitted', async () => {
+        await open({selected: [NATIVE]})
+        await openRetrieve()
+        expect(watchedOperations()).toEqual([])
+        expect(watchedOutputs()).toEqual([MARKS_QUESTION, RETRIEVE_QUESTION])
 
         await click(REGRESSION)
         expect(watchedOperations()).toEqual([])
 
         await holdBreakpointBands([NATIVE, CLASSIFIED])
-        expect(watchedOperations()).toEqual(['CLASSIFIED_COLLECTION'])
-
-        await holdBreakpointBands([NATIVE])
         expect(watchedOperations()).toEqual([])
+    })
 
-        await click(REGRESSION)
-        await act(async () => root.unmount())
-        root = null
-        expect(watched).toEqual([])
+    it('is let go as the panel closes for a finding, leaving what SRC\'s mark reads, which offers Retrieve again once repaired without reading the imagery again', async () => {
+        await open({selected: [NATIVE], input: ASSET_INPUT})
+        await openRetrieve()
+        const reads = inputBands$.mock.calls.length
+
+        await holdTrainingData([])
+        expect(panelOpen()).toBe(false)
+        expect(watchedOutputs()).toEqual([MARKS_QUESTION])
+
+        await holdTrainingData([COLLECTED])
+        expect(retrieveButton().disabled).toBe(false)
+        expect(inputBands$.mock.calls.length).toBe(reads)
     })
 })
 
@@ -266,15 +367,18 @@ const CLASSIFICATION = 'classification-1'
 const MOSAIC = 'mosaic-1'
 const PROJECT = 'project-1'
 const ASSET_ID = 'projects/p/assets/ccdc'
+const OTHER_ASSET_ID = 'projects/p/assets/other'
 const NATIVE = 'ndvi'
 const CLASSIFIED = 'regression'
 const REGRESSION = 'process.classification.bands.regression'
+const INPUT_BANDS = ['red', 'nir'].map(name => ({name, arrayDimensions: 0}))
 const CCDC_BANDS = [
     'tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb',
     ...[NATIVE, 'swir1', CLASSIFIED].flatMap(measure => ['coefs', 'rmse', 'magnitude'].map(suffix => `${measure}_${suffix}`))
 ]
 const LEGEND = {entries: [{id: 'a', value: 1, label: 'Forest', color: '#000000'}, {id: 'b', value: 2, label: 'Other', color: '#ffffff'}]}
 const COLLECTED = {dataSetId: 'collected', type: 'COLLECTED', name: 'Collected', referenceData: [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]}
+const ADDED = {dataSetId: 'added', type: 'COLLECTED', name: 'Added', referenceData: [{x: 3, y: 3, class: 1}]}
 const MOSAIC_INPUT = {imageId: 'i-1', type: 'RECIPE_REF', id: MOSAIC, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red', 'nir']}]}
 const ASSET_INPUT = {imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red', 'nir']}]}
 
@@ -341,13 +445,30 @@ const classificationRecipe = ({input, trainingData}) => ({
 
 const buttons = () => [...document.querySelectorAll('button')]
 
-const shown = () => document.body.textContent
-
 const click = async label => {
     const button = buttons().find(button => button.textContent === label)
     expect(button, `no button labelled ${label}`).toBeDefined()
     await act(async () => button.click())
     await settled()
+}
+
+// The toolbar's Retrieve action.
+const retrieveButton = () => document.querySelector('button[data-icon=cloud-download-alt]')
+
+// Opened as its action opens it, past the loading view held for a minimum.
+const openRetrieve = async () => {
+    expect(retrieveButton().disabled, 'Retrieve is not offered').toBe(false)
+    await act(async () => retrieveButton().click())
+    await settled()
+    await act(async () => vi.advanceTimersByTime(MINIMUM_LOADING_MS + 50))
+    await settled()
+}
+
+// Open as its action says it is, and shown.
+const panelOpen = () => {
+    const shownOpen = Boolean(applyButton())
+    expect(retrieveButton().getAttribute('aria-pressed')).toBe(String(shownOpen))
+    return shownOpen
 }
 
 const applyButton = () => buttons().find(button => button.textContent === 'process.retrieve.apply')
@@ -361,12 +482,17 @@ const apply = async () => {
 
 const formOf = () => document.querySelector('form')
 
-const submitForm = async () => {
-    await act(async () => formOf().requestSubmit ? formOf().requestSubmit() : formOf().dispatchEvent(new Event('submit', {cancelable: true})))
-    await settled()
-}
+const requestSubmit = () => formOf().requestSubmit
+    ? formOf().requestSubmit()
+    : formOf().dispatchEvent(new Event('submit', {cancelable: true}))
 
 const measures = () => fake.submitted.map(({params}) => params.image.bands)
+
+// The retrieval settings the recipe keeps: those last submitted.
+const savedSettings = () => select(['process.loadedRecipes', CCDC, 'ui.retrieve'])
+
+// The sections the toolbar marks as needing attention.
+const marked = () => Object.keys(JSON.parse(document.querySelector('output[aria-label=marks]').dataset.marks))
 
 // The measures the form holds selected.
 const selectedMeasures = () => [].concat(select(['process.loadedRecipes', CCDC, 'ui.retrieve.bands']) ?? [])
@@ -375,6 +501,14 @@ const selectedMeasures = () => [].concat(select(['process.loadedRecipes', CCDC, 
 const holdTrainingData = async dataSets => {
     await act(async () => actionBuilder('EDIT_TRAINING_DATA')
         .set(['process.loadedRecipes', CLASSIFICATION, 'model.trainingData.dataSets'], dataSets)
+        .dispatch())
+    await settled()
+}
+
+// The Classification's input imagery, as the session holds it.
+const holdInput = async input => {
+    await act(async () => actionBuilder('EDIT_INPUT')
+        .set(['process.loadedRecipes', CLASSIFICATION, 'model.inputImagery.images'], [input])
         .dispatch())
     await settled()
 }
@@ -394,6 +528,11 @@ const watched = []
 const watchedOperations = () =>
     [...new Set(watched.filter(({recipeId, operation}) => recipeId === CCDC && operation).map(({operation}) => operation))]
 
+// The output questions watched about the CCDC: the panel's, and the toolbar marks', which ask for an explanation.
+const watchedOutputs = () => watched.filter(({recipeId, product}) => recipeId === CCDC && product)
+const RETRIEVE_QUESTION = {recipeId: CCDC, product: {name: 'IMAGE_OUTPUT'}}
+const MARKS_QUESTION = {recipeId: CCDC, product: {name: 'IMAGE_OUTPUT'}, explain: true}
+
 // The runtime Retrieve is given, its watches recorded.
 const RecordingWatches = ({children}) => {
     const runtime = useSourceRuntime()
@@ -408,6 +547,13 @@ const RecordingWatches = ({children}) => {
     return children
 }
 
+// The sections the toolbar marks, as it watches what marking them needs.
+const SectionMarks = compose(
+    ({sourceProblems}) => <output aria-label='marks' data-marks={JSON.stringify(sourceProblems)}/>,
+    withSourceProblems(),
+    withRecipe(recipe => ({recipeId: recipe.id}))
+)
+
 const settled = async () => {
     for (let i = 0; i < 8; i++) {
         await act(async () => {})
@@ -420,6 +566,7 @@ const saving = () => Object.entries(select('process.saveStates') || {})
     .map(([id]) => id)
 
 // `classificationOpen`: the Classification is open in a tab of its own, where it is edited and saved (saveRecipe$).
+// Retrieve is offered beside the toolbar's marks within its set-up wizard, done, as the toolbar offers it, and is closed.
 const open = async ({selected, breakpointBands = [NATIVE], input = MOSAIC_INPUT, trainingData = [COLLECTED], classificationOpen = false}) => {
     const records = [ccdcRecipe({selected, breakpointBands}), classificationRecipe({input, trainingData}), mosaicRecipe()]
     fake.stored = Object.fromEntries(records.map(record => [record.id, record]))
@@ -446,21 +593,25 @@ const open = async ({selected, breakpointBands = [NATIVE], input = MOSAIC_INPUT,
             <PortalContainer id='test-portal'/>
             <PortalContext id='test-portal'>
                 <EventShield>
-                    <SourceRuntimeProvider>
-                        <RecordingWatches>
-                            <Recipe id={CCDC}>
-                                <Retrieve/>
-                            </Recipe>
-                        </RecordingWatches>
-                    </SourceRuntimeProvider>
+                    <ActivationContext id='root'>
+                        <SourceRuntimeProvider>
+                            <RecordingWatches>
+                                <Recipe id={CCDC}>
+                                    <PanelWizard panels={['aoi', 'dates', 'sources']} initialized>
+                                        <SectionMarks/>
+                                        <RetrieveButton/>
+                                        <Retrieve/>
+                                    </PanelWizard>
+                                </Recipe>
+                            </RecordingWatches>
+                        </SourceRuntimeProvider>
+                    </ActivationContext>
                 </EventShield>
             </PortalContext>
         </Provider>
     ))
     await settled()
     await vi.waitFor(() => expect(saving()).toEqual([]))
-    await act(async () => vi.advanceTimersByTime(MINIMUM_LOADING_MS + 50))
-    await settled()
 }
 
 // The panel opens on a loading view held for a minimum, which a scenario about the form waits out.

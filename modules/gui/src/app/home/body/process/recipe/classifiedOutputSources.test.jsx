@@ -86,9 +86,11 @@ describe.each([
 
     // The form drops a choice none of its options offers whenever it renders again (form/buttons.jsx). CCDC holds More in
     // its form, so showing it is an edit there; either way, the saved choice is kept, and nothing can be applied over it.
+    // Sources opening on More, as CCDC's do while a Classification is selected, show Less first.
     it('keeps the saved choice, explained, when the panel renders again, as on showing More', async () => {
         await open({type, Sources, sources: {[field]: saved}})
 
+        button('button.less') && await press('button.less')
         await press('button.more')
 
         expect(messagesOf(label)).toContainEqual(expect.stringContaining(`classifiedOutputs.${field}`))

@@ -12,10 +12,9 @@ import {MapContext} from '~/app/home/map/mapContext'
 import {initStore, select} from '~/store'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
-// The segments an open CCDC chart fits at its pixel to a breakpoint band its selected Classification computes train
-// that Classification's classifier: once it cannot be trained - it stores no training points - the chart closes,
-// letting go of what it was reading, and its action is withdrawn until the Classification can be trained again.
-// Breakpoint bands of the images need nothing of it. The registrations, store, source runtime, readiness, chart and
+// The Classification a CCDC's Sources select is part of its analysis, whatever its breakpoint bands (type/ccdc.js): once
+// it cannot be trained - it stores no training points - an open chart closes, letting go of what it was reading, and
+// its action is withdrawn until the Classification can be trained again, or Sources select none. The registrations, store, source runtime, readiness, chart and
 // its action are real; Earth Engine, storage, the map, the graph renderer and the toolbar's and band picker's widgets
 // are replaced.
 
@@ -87,12 +86,15 @@ afterEach(async () => {
     container?.remove()
 })
 
-describe('an open CCDC chart fitting a breakpoint band its Classification computes', () => {
+describe.each([
+    ['a breakpoint band its Classification computes', ['ndvi', 'probability_1']],
+    ['breakpoint bands of the images alone', ['ndvi']]
+])('an open CCDC chart fitting %s', (_case, breakpointBands) => {
     it('closes, letting go of the segments it was reading, and withdraws its action, once that Classification stores no points', async () => {
         const pending = new Subject()
         let cancelled = false
         loadCCDCSegments$.mockReturnValueOnce(pending.pipe(finalize(() => cancelled = true)))
-        await open({breakpointBands: CLASSIFIED})
+        await open({breakpointBands})
         await chartAt(PIXEL)
         expect(loadCCDCSegments$).toHaveBeenCalledTimes(1)
 
@@ -105,7 +107,7 @@ describe('an open CCDC chart fitting a breakpoint band its Classification comput
     })
 
     it('is offered again once the Classification stores points again, reading the segments once a pixel is charted again', async () => {
-        await open({breakpointBands: CLASSIFIED})
+        await open({breakpointBands})
         await chartAt(PIXEL)
         await holdTrainingData([])
         expect(chartButton().disabled).toBe(true)
@@ -117,16 +119,19 @@ describe('an open CCDC chart fitting a breakpoint band its Classification comput
         expect(loadCCDCSegments$).toHaveBeenCalledTimes(2)
         expect(loadCCDCSegments$.mock.lastCall[0]).toMatchObject({latLng: OTHER_PIXEL, bands: ['ndvi']})
     })
-})
 
-describe('an open CCDC chart fitting breakpoint bands of the images alone', () => {
-    it('stays open, and its action offered, once its Classification stores no points', async () => {
+    it('is offered again once Sources select no Classification', async () => {
         await open({breakpointBands: ['ndvi']})
         await chartAt(PIXEL)
-
         await holdTrainingData([])
+        expect(chartButton().disabled).toBe(true)
 
-        expect(chartPixel()).toEqual(PIXEL)
+        await act(async () => actionBuilder('DESELECT')
+            .set(['process.loadedRecipes', CCDC, 'model.sources.classification'], null)
+            .set(['process.loadedRecipes', CCDC, 'model.sources.breakpointBands'], ['ndvi'])
+            .dispatch())
+        await settled()
+
         expect(chartButton().disabled).toBe(false)
     })
 })
@@ -136,7 +141,6 @@ const CLASSIFICATION = 'classification-1'
 const MOSAIC = 'mosaic-1'
 const PIXEL = {lat: 1, lng: 2}
 const OTHER_PIXEL = {lat: 3, lng: 4}
-const CLASSIFIED = ['ndvi', 'probability_1']
 const COLLECTED = {dataSetId: 'collected', type: 'COLLECTED', name: 'Collected', referenceData: [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]}
 
 const LISTING = [

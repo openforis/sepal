@@ -182,11 +182,6 @@ beforeEach(() => {
 describe('a time-series download of a recipe that cannot run', () => {
     const CLASSIFICATION = 'classification-1'
     const classified = {...image, recipe: {...recipe, model: {...recipe.model, sources: {...recipe.model.sources, classification: CLASSIFICATION}}}}
-    const classification = included => ({
-        id: CLASSIFICATION,
-        type: 'CLASSIFICATION',
-        model: {inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]}}
-    })
     const dateRanges = [{startDate: '2020-01-01', endDate: '2020-04-01'}]
     const chunk = {description: 'ts', image: classified, tileId: 'tile-1', tileIndex: 3, startDate: '2020-01-01', endDate: '2020-04-01'}
     const sepalUser = {username: 'alice'}
@@ -194,7 +189,7 @@ describe('a time-series download of a recipe that cannot run', () => {
     const RADAR_STATISTICS = ['VV_mean', 'VH_med']
 
     it('refuses the tile ids, before resolving the aoi, where the classification\'s classifier the Landsat scenes cannot feed', async () => {
-        state.catalogue[CLASSIFICATION] = classification(RADAR_STATISTICS)
+        state.catalogue[CLASSIFICATION] = trainable({included: RADAR_STATISTICS})
 
         await assert.rejects(lastValueFrom(timeSeriesTiles$({description: 'ts', image: classified})), /cannot run: UNSUPPLIED_CLASSIFIER_INPUTS$/)
 
@@ -204,7 +199,7 @@ describe('a time-series download of a recipe that cannot run', () => {
     })
 
     it('refuses a tile\'s date ranges, checking no imagery', async () => {
-        state.catalogue[CLASSIFICATION] = classification(RADAR_STATISTICS)
+        state.catalogue[CLASSIFICATION] = trainable({included: RADAR_STATISTICS})
 
         await assert.rejects(
             lastValueFrom(timeSeriesChunks$({description: 'ts', image: classified, tileId: 'tile-1', dateRanges})),
@@ -217,7 +212,7 @@ describe('a time-series download of a recipe that cannot run', () => {
     })
 
     it('refuses a chunk export requested directly, building and exporting nothing', async () => {
-        state.catalogue[CLASSIFICATION] = classification(RADAR_STATISTICS)
+        state.catalogue[CLASSIFICATION] = trainable({included: RADAR_STATISTICS})
 
         await assert.rejects(lastValueFrom(startTimeSeriesChunkExport$(chunk, {sepalUser})), /cannot run: UNSUPPLIED_CLASSIFIER_INPUTS$/)
 
@@ -227,7 +222,7 @@ describe('a time-series download of a recipe that cannot run', () => {
     })
 
     it('plans and exports as before once the classification is one the scenes can feed', async () => {
-        state.catalogue[CLASSIFICATION] = classification(['red', 'nir', 'ndvi'])
+        state.catalogue[CLASSIFICATION] = trainable()
         rangesWithImagery = ['2020-01-01']
 
         const tiles = await lastValueFrom(timeSeriesTiles$({description: 'ts', image: classified}))
@@ -255,12 +250,12 @@ describe('a time-series download of a recipe that cannot run', () => {
     })
 })
 
-// An indicator the Classification computes trains its classifier on its training data and applies it to every image
-// of the collection (collection.js): what that needs refuses the download, after what the time series' image requires
-// and after the outputs asked for being ones the Classification provides - before anything is tiled, built or
-// exported. Planning judges every indicator the download names - `indicators`, or the one `indicator` a request from an
-// earlier release names - and each chunk its own. Indicators of the scenes need none of it.
-describe('a time-series download of indicators its Classification computes', () => {
+// The Classification a time series' Sources select is part of its analysis: what training it needs refuses the
+// download, as what its image requires, whatever indicators it names - one the Classification computes, which trains it
+// (collection.js), and one of the scenes alike - before anything is tiled, built or exported. Then each indicator the
+// Classification computes must be one it provides: planning judges every indicator the download names - `indicators`,
+// or the one `indicator` a request from an earlier release names - and each chunk its own.
+describe('a time-series download over a Classification that cannot be trained', () => {
     const SVM = {type: 'SVM', svmType: 'C_SVC'}
     const download = indicators => ({...classifiedImage, indicators, indicator: indicators[0]})
     const chunkOf = (indicator, indicators = [indicator]) =>
@@ -273,20 +268,15 @@ describe('a time-series download of indicators its Classification computes', () 
         ['reuses a recipe without input imagery', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, images: []})}), 'MISSING_ROLE'],
         ['reuses a recipe sampling fewer features', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, included: ['red']})}), 'MISSING_TRAINING_FEATURES']
     ]) {
-        it(`refuses the tile ids, tiling nothing, where the Classification ${_case}`, async () => {
-            state.catalogue = catalogue()
+        for (const indicators of [[CLASSIFIED], ['ndvi']]) {
+            it(`refuses the tile ids of ${indicators.join(', ')}, tiling nothing, where the Classification ${_case}`, async () => {
+                state.catalogue = catalogue()
 
-            await assert.rejects(lastValueFrom(timeSeriesTiles$({description: 'ts', image: download([CLASSIFIED])})), new RegExp(`time-series-1 cannot run: ${code}$`))
+                await assert.rejects(lastValueFrom(timeSeriesTiles$({description: 'ts', image: download(indicators)})), new RegExp(`time-series-1 cannot run: ${code}$`))
 
-            assertNothingPlanned()
-        })
-
-        it(`plans indicators of the scenes, observing nothing of the Classification's input, where it ${_case}`, async () => {
-            state.catalogue = catalogue()
-
-            assert.deepEqual(await lastValueFrom(timeSeriesTiles$({description: 'ts', image: download(['ndvi'])})), {tileIds: ['tile-0', 'tile-1']})
-            assert.deepEqual(state.observed, [])
-        })
+                assertNothingPlanned()
+            })
+        }
     }
 
     it('refuses the tile ids of a download naming an indicator of the scenes beside one the Classification computes', async () => {
@@ -298,10 +288,10 @@ describe('a time-series download of indicators its Classification computes', () 
     })
 
     it('judges the one indicator a request from an earlier release names', async () => {
-        state.catalogue = {[CLASSIFICATION]: trainable({points: []})}
-        const {indicators: _indicators, ...legacy} = download([CLASSIFIED])
+        state.catalogue = {[CLASSIFICATION]: trainable({classifier: SVM})}
+        const {indicators: _indicators, ...legacy} = download(['regression'])
 
-        await assert.rejects(lastValueFrom(timeSeriesTiles$({description: 'ts', image: legacy})), /NO_TRAINING_DATA$/)
+        await assert.rejects(lastValueFrom(timeSeriesTiles$({description: 'ts', image: legacy})), error => error.errorCode === 'UNSUPPORTED_CLASSIFIED_OUTPUT')
         assert.deepEqual(
             await lastValueFrom(timeSeriesTiles$({description: 'ts', image: {...legacy, indicator: 'ndvi'}})),
             {tileIds: ['tile-0', 'tile-1']}
@@ -327,13 +317,20 @@ describe('a time-series download of indicators its Classification computes', () 
         assertNothingExported()
     })
 
-    it('exports the chunk of an indicator of the scenes, which judges its own indicator, beside one the Classification computes', async () => {
+    it('refuses the chunk export of an indicator of the scenes too, building and exporting nothing', async () => {
         state.catalogue = {[CLASSIFICATION]: trainable({points: []})}
 
-        await lastValueFrom(startTimeSeriesChunkExport$(chunkOf('ndvi', ['ndvi', CLASSIFIED]), {sepalUser}))
+        await assert.rejects(lastValueFrom(startTimeSeriesChunkExport$(chunkOf('ndvi', ['ndvi', CLASSIFIED]), {sepalUser})), /NO_TRAINING_DATA$/)
+
+        assertNothingExported()
+    })
+
+    it('exports the chunk of an indicator of the scenes, judging its own indicator alone, beside one a trainable Classification does not provide', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({classifier: SVM})}
+
+        await lastValueFrom(startTimeSeriesChunkExport$(chunkOf('ndvi', ['ndvi', 'regression']), {sepalUser}))
 
         assertMatches(state.getCollection, {bands: ['ndvi']})
-        assert.deepEqual(state.observed, [])
     })
 
     it('exports the chunk once the Classification stores points again', async () => {
@@ -359,22 +356,59 @@ describe('a time-series download of indicators its Classification computes', () 
         assertNothingExported()
     })
 
-    for (const [_case, untrained] of [['can be trained', {}], ['stores no points', {points: []}]]) {
-        it(`refuses an output its Classification does not provide as a client's error, tiling nothing, where it ${_case}`, async () => {
-            state.catalogue = {[CLASSIFICATION]: trainable({...untrained, classifier: SVM})}
+    it('refuses an output its trainable Classification does not provide as a client\'s error, tiling nothing', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({classifier: SVM})}
 
-            await assert.rejects(lastValueFrom(timeSeriesTiles$({description: 'ts', image: download(['ndvi', 'regression'])})), error =>
-                error.errorCode === 'UNSUPPORTED_CLASSIFIED_OUTPUT' && error.statusCode === 400
-                && error.message === `Classification ${CLASSIFICATION} does not provide regression`)
+        await assert.rejects(lastValueFrom(timeSeriesTiles$({description: 'ts', image: download(['ndvi', 'regression'])})), error =>
+            error.errorCode === 'UNSUPPORTED_CLASSIFIED_OUTPUT' && error.statusCode === 400
+            && error.message === `Classification ${CLASSIFICATION} does not provide regression`)
 
-            assertNothingPlanned()
-        })
-    }
+        assertNothingPlanned()
+    })
+
+    // What the configuration needs comes first: the Classification's training before an output asked of it.
+    it('refuses a Classification that cannot be trained before an output it does not provide, tiling nothing', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({points: [], classifier: SVM})}
+
+        await assert.rejects(lastValueFrom(timeSeriesTiles$({description: 'ts', image: download(['ndvi', 'regression'])})), /time-series-1 cannot run: NO_TRAINING_DATA$/)
+
+        assertNothingPlanned()
+    })
 
     it('refuses classifier inputs the scenes cannot feed before anything the indicators add', async () => {
-        state.catalogue = {[CLASSIFICATION]: trainable({points: [], included: ['VV_mean', 'VH_med'], classifier: SVM})}
+        state.catalogue = {[CLASSIFICATION]: trainable({included: ['VV_mean', 'VH_med'], classifier: SVM})}
 
         await assert.rejects(lastValueFrom(timeSeriesTiles$({description: 'ts', image: download(['regression'])})), /cannot run: UNSUPPLIED_CLASSIFIER_INPUTS$/)
+    })
+})
+
+// What a download builds is a Time Series' collection whatever type its recipe states, so it is judged as one: MOSAIC
+// declares no need of a Classification at all. Each entry point refuses before anything is tiled, checked or built.
+describe('a time-series download of a recipe stated as another type', () => {
+    const stated = {...classifiedImage, recipe: {...classifiedImage.recipe, type: 'MOSAIC'}, indicators: [CLASSIFIED], indicator: CLASSIFIED}
+    const dateRanges = [{startDate: '2020-01-01', endDate: '2020-04-01'}]
+    const chunk = {description: 'ts', image: stated, tileId: 'tile-1', tileIndex: 3, startDate: '2020-01-01', endDate: '2020-04-01'}
+    const sepalUser = {username: 'alice'}
+
+    it('refuses its tile ids, date ranges and chunk export, building nothing, where its Classification stores no points', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({points: []})}
+
+        await assert.rejects(lastValueFrom(timeSeriesTiles$({description: 'ts', image: stated})), /time-series-1 cannot run: NO_TRAINING_DATA$/)
+        await assert.rejects(lastValueFrom(timeSeriesChunks$({description: 'ts', image: stated, tileId: 'tile-1', dateRanges})), /NO_TRAINING_DATA$/)
+        await assert.rejects(lastValueFrom(startTimeSeriesChunkExport$(chunk, {sepalUser})), /NO_TRAINING_DATA$/)
+
+        assertNothingPlanned()
+        assertNothingExported()
+    })
+
+    it('is planned and exported as before once its Classification can be trained', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable()}
+
+        assert.deepEqual(await lastValueFrom(timeSeriesTiles$({description: 'ts', image: stated})), {tileIds: ['tile-0', 'tile-1']})
+        await lastValueFrom(startTimeSeriesChunkExport$(chunk, {sepalUser}))
+
+        assertMatches(state.getCollection, {recipe: stated.recipe, bands: [CLASSIFIED]})
+        assert.notEqual(state.export, undefined)
     })
 })
 

@@ -12,15 +12,15 @@ import {MapContext} from '~/app/home/map/mapContext'
 import {initStore, select} from '~/store'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
-// A band an open Time Series or CCDC chart reads that its selected Classification computes trains that Classification's
-// classifier (the collection classified): while it cannot be trained, or what training it needs is still being read,
-// the chart reads nothing for the band, letting go of what it was reading, and stays open - saying why where the
-// Classification is found unable - so a band of the images can be chosen; its action, which charts any band, stays
-// offered. It reads the band once the Classification can be trained, as storage holds it. A band of the images needs
-// nothing of the training. A CCDC reads its segments and observations together, and holds both. What the chart watches
-// is what its requests are judged by (loadObservations.test.js, loadSegmentsReadiness.test.js, modules/gee). The
-// registrations, store, source runtime, readiness, charts and their action are real; Earth Engine, storage, the map,
-// the graph renderer and the toolbar's and band picker's widgets are replaced.
+// The Classification a Time Series' or CCDC's Sources select is part of its analysis (type/timeSeries.js, ccdc.js): its
+// chart, whatever band it charts - one the Classification computes, or one of the images - is held to that
+// Classification being trainable. Once it is found unable, an open chart closes, letting go of what it was reading, and
+// its action is withdrawn until the Classification is repaired, as storage holds it, or Sources select none; a band the
+// chart charted is kept through that. While what training needs is still being read, or cannot be, an open chart reads
+// nothing and stays open, nothing found. A CCDC reads its segments and observations together, and lets go of both. What
+// the chart watches is what its requests are judged by (loadObservations.test.js, loadSegmentsReadiness.test.js,
+// modules/gee). The registrations, store, source runtime, readiness, charts and their action are real; Earth Engine,
+// storage, the map, the graph renderer and the toolbar's and band picker's widgets are replaced.
 
 const {loadTimeSeriesObservations$, loadCCDCSegments$, inputBands$, saveRecipe$} = vi.hoisted(() => ({
     loadTimeSeriesObservations$: vi.fn(),
@@ -73,6 +73,7 @@ const {default: opticalMosaic} = await import('./opticalMosaic/opticalMosaic')
 const {RecipeActions: TimeSeriesActions} = await import('./timeSeries/timeSeriesRecipe')
 const {RecipeActions: CcdcActions} = await import('./ccdc/ccdcRecipe')
 const {ChartPixelButton} = await import('./chartPixelButton')
+const {forgetRecipeSaveState} = await import('~/app/home/body/process/recipe')
 const timeSeriesChart = await import('./timeSeries/panels/chartPixel')
 const ccdcChart = await import('./ccdc/panels/chartPixel')
 
@@ -102,66 +103,55 @@ afterEach(async () => {
     await act(async () => root?.unmount())
     root = null
     container?.remove()
+    // The session's saves outlive a test: a recipe one saved is not the next one's.
+    ;[SERIES, CLASSIFICATION].forEach(forgetRecipeSaveState)
 })
 
-describe.each(CHARTS)('an open $type chart of a band its Classification computes', chart => {
-    it('reads nothing for it while that Classification stores no points, saying so, open at any pixel charted', async () => {
-        await open(chart, {trainingData: []})
-        await chartAt(PIXEL)
-
-        await chooseBand(CLASSIFIED)
-
-        expect(requested()).toEqual([['ndvi']])
-        expect(explained()).toBe(true)
-        expect(chartButton().disabled).toBe(false)
-        await chartAt(OTHER_PIXEL)
-        expect(chartPixel()).toEqual(OTHER_PIXEL)
-        expect(requested()).toEqual([['ndvi']])
-    })
-
-    it('lets go of what it was reading for it once the Classification stores no points, staying open', async () => {
-        await open(chart)
-        await chartAt(PIXEL)
+describe.each(CHARTS)('an open $type chart over the Classification its Sources select', chart => {
+    it.each(['ndvi', 'probability_1'])('closes charting %s, letting go of what it was reading, and withdraws its action, once that Classification stores no points', async band => {
+        await open(chart, {chartedBand: band})
         const pending = new Subject()
         let cancelled = false
         loadTimeSeriesObservations$.mockReturnValueOnce(pending.pipe(finalize(() => cancelled = true)))
-        await chooseBand(CLASSIFIED)
-        expect(requested()).toEqual([['ndvi'], [CLASSIFIED]])
+        await chartAt(PIXEL)
+        expect(requested()).toEqual([[band]])
 
         await holdTrainingData([])
 
+        expect(chartPixel()).toBe(null)
         expect(cancelled).toBe(true)
-        expect(requested()).toEqual([['ndvi'], [CLASSIFIED]])
-        expect(chartPixel()).toEqual(PIXEL)
-        expect(chartButton().disabled).toBe(false)
+        expect(requested()).toEqual([[band]])
+        expect(chartButton().disabled).toBe(true)
     })
 
-    it('reads it once, once the Classification stores points again', async () => {
-        await open(chart, {trainingData: []})
+    it('is offered again once the Classification stores points again, charting the band it charted', async () => {
+        await open(chart, {chartedBand: CLASSIFIED})
         await chartAt(PIXEL)
-        await chooseBand(CLASSIFIED)
+        await holdTrainingData([])
+        expect(chartButton().disabled).toBe(true)
 
         await holdTrainingData([COLLECTED])
+        expect(chartButton().disabled).toBe(false)
+        await chartAt(OTHER_PIXEL)
 
-        expect(requested()).toEqual([['ndvi'], [CLASSIFIED]])
-        expect(explained()).toBe(false)
+        expect(requested()).toEqual([[CLASSIFIED], [CLASSIFIED]])
     })
 
-    it('reads a band of the images chosen instead', async () => {
+    it('is offered again once Sources select no Classification', async () => {
         await open(chart, {trainingData: []})
+        expect(chartButton().disabled).toBe(true)
+
+        await act(async () => actionBuilder('DESELECT')
+            .set(['process.loadedRecipes', SERIES, 'model.sources.classification'], null)
+            .dispatch())
+        await settled()
         await chartAt(PIXEL)
-        await chooseBand(CLASSIFIED)
 
-        await chooseBand('ndvi')
-
-        expect(requested()).toEqual([['ndvi'], ['ndvi']])
-        expect(explained()).toBe(false)
+        expect(requested()).toEqual([['ndvi']])
     })
 
-    it('waits for the points it is given to be saved, reading it once storage holds them', async () => {
-        await open(chart, {trainingData: [], classificationOpen: true})
-        await chartAt(PIXEL)
-        await chooseBand(CLASSIFIED)
+    it('waits for the points it is given to be saved, offered once storage holds them', async () => {
+        await open(chart, {trainingData: [], classificationOpen: true, chartedBand: CLASSIFIED})
         const save = new Subject()
         saveRecipe$.mockReturnValueOnce(save)
         const saves = saveRecipe$.mock.calls.length
@@ -169,69 +159,54 @@ describe.each(CHARTS)('an open $type chart of a band its Classification computes
         await holdTrainingData([COLLECTED])
         await vi.waitFor(() => expect(saveRecipe$.mock.calls.length).toBe(saves + 1))
         await settled()
-        expect(requested()).toEqual([['ndvi']])
+        expect(chartButton().disabled).toBe(true)
 
         await act(async () => {
             save.next({revision: 2})
             save.complete()
         })
         await settled()
-        expect(requested().at(-1)).toEqual([CLASSIFIED])
+        await chartAt(PIXEL)
+        expect(requested()).toEqual([[CLASSIFIED]])
     })
 })
 
-describe.each(CHARTS)('an open $type chart of a band its Classification computes over imagery still to be observed', chart => {
-    it('reads nothing for it, explaining nothing, until that imagery is observed', async () => {
+describe.each(CHARTS)('an open $type chart whose Classification\'s imagery is still to be observed', chart => {
+    it.each(['ndvi', 'probability_1'])('reads nothing charting %s, staying open and finding nothing, until that imagery is observed', async band => {
+        await open(chart, {chartedBand: band})
+        await chartAt(PIXEL)
         const observed = new Subject()
         inputBands$.mockReturnValue(observed)
-        await open(chart, {input: ASSET_INPUT, chartedBand: CLASSIFIED})
 
-        await chartAt(PIXEL)
-        expect(requested()).toEqual([])
-        expect(explained()).toBe(false)
-
-        await act(async () => observed.next(['red', 'nir'].map(name => ({name, arrayDimensions: 0}))))
-        await settled()
-        expect(requested()).toEqual([[CLASSIFIED]])
-    })
-
-    it('reads nothing for it, finding nothing, where that imagery cannot be observed', async () => {
-        inputBands$.mockReturnValue(throwError(() => new Error('Earth Engine unreachable')))
-        await open(chart, {input: ASSET_INPUT, chartedBand: CLASSIFIED})
-
-        await chartAt(PIXEL)
-
-        expect(requested()).toEqual([])
-        expect(explained()).toBe(false)
+        await holdInput(ASSET_INPUT)
         expect(chartPixel()).toEqual(PIXEL)
+        expect(requested()).toEqual([[band]])
+
+        await act(async () => {
+            observed.next(['red', 'nir'].map(name => ({name, arrayDimensions: 0})))
+            observed.complete()
+        })
+        await settled()
+        expect(requested()).toEqual([[band], [band]])
     })
 
-    it('reads a band of the images without waiting for it', async () => {
-        inputBands$.mockReturnValue(new Subject())
-        await open(chart, {input: ASSET_INPUT})
-
+    it('reads nothing, staying open and finding nothing, where that imagery cannot be observed', async () => {
+        await open(chart)
         await chartAt(PIXEL)
+        inputBands$.mockReturnValue(throwError(() => new Error('Earth Engine unreachable')))
 
+        await holdInput(ASSET_INPUT)
+
+        expect(chartPixel()).toEqual(PIXEL)
         expect(requested()).toEqual([['ndvi']])
     })
 })
 
 describe.each(CHARTS)('what an open $type chart watches', chart => {
-    it('is what its requests are judged by: for a band of the images, what any band needs', async () => {
-        await open(chart)
+    it.each(['ndvi', 'probability_1'])('is what its requests are judged by, charting %s, and is let go with the chart', async band => {
+        await open(chart, {chartedBand: band})
         await chartAt(PIXEL)
 
-        expect(watchedOperations()).toEqual(chart.operations)
-    })
-
-    it('adds the collection classified for a band its Classification computes, and lets it go with that band and the chart', async () => {
-        await open(chart)
-        await chartAt(PIXEL)
-
-        await chooseBand(CLASSIFIED)
-        expect(watchedOperations()).toEqual([...chart.operations, 'CLASSIFIED_COLLECTION'])
-
-        await chooseBand('ndvi')
         expect(watchedOperations()).toEqual(chart.operations)
 
         await act(async () => root.unmount())
@@ -240,39 +215,24 @@ describe.each(CHARTS)('what an open $type chart watches', chart => {
     })
 })
 
-describe('an open CCDC chart of a band its Classification computes', () => {
+describe('an open CCDC chart over the Classification its Sources select', () => {
     const [, ccdcChartCase] = CHARTS
 
-    it('reads its segments with its observations, and lets go of both, once that Classification stores no points', async () => {
+    it('lets go of its segments with its observations once that Classification stores no points', async () => {
         await open(ccdcChartCase)
-        await chartAt(PIXEL)
         const pendingSegments = new Subject()
         let segmentsCancelled = false
         loadCCDCSegments$.mockReturnValueOnce(pendingSegments.pipe(finalize(() => segmentsCancelled = true)))
-        await chooseBand(CLASSIFIED)
+        await chartAt(PIXEL)
         expect(segmentsRequested()).toEqual(requested())
 
         await holdTrainingData([])
-        await chooseBand('ndvi')
 
         expect(segmentsCancelled).toBe(true)
-        expect(segmentsRequested()).toEqual([['ndvi'], [CLASSIFIED], ['ndvi']])
-        expect(segmentsRequested()).toEqual(requested())
-    })
-
-    // A classified breakpoint band is the CCDC's own configuration: every segmentation fits it, whatever band is charted.
-    it('closes where a breakpoint band its Classification computes cannot be trained, rather than holding the band', async () => {
-        await open(ccdcChartCase, {breakpointBands: ['ndvi', CLASSIFIED]})
-        await chartAt(PIXEL)
-        await chooseBand(CLASSIFIED)
-
-        await holdTrainingData([])
-
         expect(chartPixel()).toBe(null)
-        expect(chartButton().disabled).toBe(true)
     })
 
-    it('is read over an AOI the session cannot resolve, which classifying the collection does not read', async () => {
+    it('is read over an AOI the session cannot resolve, which charting at the pixel does not read', async () => {
         await open(ccdcChartCase, {aoi: {type: 'RECIPE', id: 'aoi-recipe'}, chartedBand: CLASSIFIED})
 
         await chartAt(PIXEL)
@@ -355,8 +315,6 @@ const requested = () => loadTimeSeriesObservations$.mock.calls.map(([{bands}]) =
 
 const segmentsRequested = () => loadCCDCSegments$.mock.calls.map(([{bands}]) => bands)
 
-const explained = () => container.textContent.includes('process.chartPixel.classifiedBandWithheld')
-
 // The questions the runtime is asked to read, while they are asked.
 const watched = []
 
@@ -385,19 +343,18 @@ const chartAt = async latLng => {
     await settled()
 }
 
-const chooseBand = async band => {
-    await act(async () => {
-        const select = container.querySelector('select[aria-label=band]')
-        select.value = band
-        select.dispatchEvent(new Event('change', {bubbles: true}))
-    })
-    await settled()
-}
-
 // The Classification's training data as the session holds it: saved, where it is open, as any edit of it is.
 const holdTrainingData = async dataSets => {
     await act(async () => actionBuilder('EDIT_TRAINING_DATA')
         .set(['process.loadedRecipes', CLASSIFICATION, 'model.trainingData.dataSets'], dataSets)
+        .dispatch())
+    await settled()
+}
+
+// The Classification's input imagery as the session holds it.
+const holdInput = async input => {
+    await act(async () => actionBuilder('EDIT_INPUT')
+        .set(['process.loadedRecipes', CLASSIFICATION, 'model.inputImagery.images'], [input])
         .dispatch())
     await settled()
 }

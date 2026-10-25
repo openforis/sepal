@@ -56,13 +56,14 @@ class _FormPanel extends React.Component {
         onClose && onClose()
     }
 
-    // Every submission path arrives here, and nothing is committed from an invalid form. The Apply and
+    // Every submission path arrives here, and nothing is committed from an invalid form, nor from one its owner
+    // does not accept as the session now stands (`accepts`): the panel then stays open as it is. The Apply and
     // wizard buttons already refuse; a keyboard submit reaches the same decision rather than around it.
     apply(onSuccess) {
-        const {form, confirmation, onApply, onError} = this.props
+        const {form, confirmation, accepts, onApply, onError} = this.props
         const {confirmed} = this.state
 
-        if (this.isInvalid()) {
+        if (this.isInvalid() || (accepts && !accepts(form && form.values()))) {
             return
         }
         if (confirmation && !confirmed) {
@@ -242,6 +243,7 @@ export const FormPanel = compose(
 FormPanel.propTypes = {
     children: PropTypes.any.isRequired,
     form: PropTypes.object.isRequired,
+    accepts: PropTypes.func,
     className: PropTypes.string,
     confirmation: PropTypes.func,
     isActionForm: PropTypes.any,

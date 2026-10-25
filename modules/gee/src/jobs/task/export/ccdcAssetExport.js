@@ -1,8 +1,9 @@
 import {forkJoin, map, switchMap} from 'rxjs'
 
-import {requireCcdcImageStages$} from '#gee/jobs/requestedBands'
+import {requireCcdcRequestedOutputs$} from '#gee/jobs/requestedBands'
 import ccdc from '#sepal/ee/timeSeries/ccdc'
 import {formatProperties} from '#sepal/formatProperties'
+import ccdcType from '#sepal/recipe/type/ccdc'
 
 import {resolveImageOutput$} from './imageOutput.js'
 import {startImageToAssetExport$} from './toAsset.js'
@@ -13,15 +14,16 @@ export const startCcdcAssetExport$ = params =>
         switchMap(startImageToAssetExport$)
     )
 
-// Every CCDC Segments export passes here, so here it is held to what the recipe's image output requires
-// (imageOutput.js), then to what the measures it names add (requireCcdcImageStages$) - whatever type the recipe states,
-// since its segments are built as a CCDC's: only a recipe that can run has its segments built. Establishing that may
+// Every CCDC Segments export passes here, so here it is held to what the image output of a CCDC requires (imageOutput.js),
+// then to the measures it names (requireCcdcRequestedOutputs$) - judged as a CCDC whatever type the recipe states, since
+// its segments are built as a CCDC's: only a recipe that can run as one has its segments built. Establishing that may
 // itself read Earth Engine - the closure, and the evidence its requirements need - and its failures are passed on as
 // they are.
 export const ccdcAssetSource$ = ({image, description}) => {
     const {recipe, bands, scale, visualizations, properties, ...other} = image
-    return resolveImageOutput$(recipe).pipe(
-        switchMap(() => requireCcdcImageStages$(recipe, {selection: bands})),
+    const built = {...recipe, type: ccdcType.type}
+    return resolveImageOutput$(built).pipe(
+        switchMap(() => requireCcdcRequestedOutputs$(built, {selection: bands})),
         switchMap(() => {
             const segments = ccdc(recipe, {selection: bands})
             return forkJoin({

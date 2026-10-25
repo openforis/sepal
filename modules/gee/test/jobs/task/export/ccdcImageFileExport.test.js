@@ -3,8 +3,9 @@ import {beforeEach, describe, it, mock} from 'node:test'
 
 import {defer, lastValueFrom, of, throwError} from 'rxjs'
 
-// A direct CCDC exported to Drive or the SEPAL workspace, held to what the bands it is asked for need of its
-// Classification. Recipe reads, image construction, the destination and Earth Engine are substituted; resolution, the
+// A direct CCDC exported to Drive or the SEPAL workspace, held to its image's readiness - its Classification trainable
+// among it, whatever bands it is asked for (type/ccdc.js) - then to the bands asked for being ones the Classification
+// provides. Recipe reads, image construction, the destination and Earth Engine are substituted; resolution, the
 // declarations and readiness are the real ones.
 //
 // The substituted Earth Engine accepts any image, so an export started here shows that readiness released it, not that a
@@ -34,11 +35,10 @@ for (const [destination, route, options] of ROUTES) {
         return lastValueFrom(inEEContext(CONTEXT, start$({image}, {sepalUser: ALICE})))
     }
 
-    // Exporting a CCDC's physical bands fits the measures they are built from (measuresFor) with its breakpoint bands. A
-    // measure its Classification computes trains that Classification, so what training needs refuses the export before
-    // its image is built, a destination prepared or an export started - after what the CCDC's configuration requires,
-    // and after the outputs asked for being ones the Classification provides.
-    describe(`exporting the bands of a CCDC to ${destination}, where its Classification computes some of them`, () => {
+    // What training the Classification needs refuses the export before its image is built, a destination prepared or an
+    // export started, whatever bands are named - built from a measure it computes, which trains it, from measures of the
+    // images, timing bands alone, or none. Then the outputs asked for must be ones the Classification provides.
+    describe(`exporting the bands of a CCDC to ${destination} over its Classification`, () => {
         for (const [_case, catalogue, code] of [
             ['stores no points', () => ({[CLASSIFICATION]: trainable({points: []})}), 'NO_TRAINING_DATA'],
             ['reuses a recipe without input imagery', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, images: []})}), 'MISSING_ROLE'],
@@ -52,13 +52,12 @@ for (const [destination, route, options] of ROUTES) {
                 assertNothingStarted()
             })
 
-            it(`exports bands of measures of the images, observing nothing of the Classification's input, where it ${_case}`, async () => {
+            it(`is refused, building nothing, for bands of measures of the images where the Classification ${_case}`, async () => {
                 state.catalogue = catalogue()
 
-                await exportTo({recipe: ccdcOf(), bands: ['ndvi_coefs', 'tStart']})
+                await assert.rejects(exportTo({recipe: ccdcOf(), bands: ['ndvi_coefs', 'tStart']}), new RegExp(`ccdc-1 cannot run: ${code}$`))
 
-                assert.deepEqual(state.observed.filter(id => id.endsWith('-input')), [])
-                assert.equal(state.started.length, 1)
+                assertNothingStarted()
             })
         }
 
@@ -73,9 +72,12 @@ for (const [destination, route, options] of ROUTES) {
         }
 
         for (const [_case, bands] of [['timing bands alone', ['tStart', 'tBreak', 'changeProb']], ['no bands', []], ['no selection', undefined]]) {
-            it(`exports ${_case} while the Classification stores no points`, async () => {
+            it(`is refused for ${_case}, building nothing, while the Classification stores no points, and exported once it stores some`, async () => {
                 state.catalogue = {[CLASSIFICATION]: trainable({points: []})}
+                await assert.rejects(exportTo({recipe: ccdcOf(), bands}), /ccdc-1 cannot run: NO_TRAINING_DATA$/)
+                assertNothingStarted()
 
+                state.catalogue = {[CLASSIFICATION]: trainable()}
                 await exportTo({recipe: ccdcOf(), bands})
 
                 assert.deepEqual(state.productFactories, ['ccdc-1'])
@@ -122,20 +124,27 @@ for (const [destination, route, options] of ROUTES) {
             assertNothingStarted()
         })
 
-        for (const [_case, untrained] of [['can be trained', {}], ['stores no points', {points: []}]]) {
-            it(`is refused for an output its Classification does not provide as a client's error, building nothing, where it ${_case}`, async () => {
-                state.catalogue = {[CLASSIFICATION]: trainable({...untrained, classifier: SVM})}
+        it('is refused for an output its trainable Classification does not provide as a client\'s error, building nothing', async () => {
+            state.catalogue = {[CLASSIFICATION]: trainable({classifier: SVM})}
 
-                await assert.rejects(exportTo({recipe: ccdcOf(), bands: ['ndvi_coefs', 'regression_coefs']}), error =>
-                    error.errorCode === 'UNSUPPORTED_CLASSIFIED_OUTPUT' && error.statusCode === 400
-                    && error.message === 'Classification classification-1 does not provide regression')
+            await assert.rejects(exportTo({recipe: ccdcOf(), bands: ['ndvi_coefs', 'regression_coefs']}), error =>
+                error.errorCode === 'UNSUPPORTED_CLASSIFIED_OUTPUT' && error.statusCode === 400
+                && error.message === 'Classification classification-1 does not provide regression')
 
-                assertNothingStarted()
-            })
-        }
+            assertNothingStarted()
+        })
+
+        // What the configuration needs comes first: the Classification's training before an output asked of it.
+        it('is refused for the Classification\'s training before an output it does not provide, building nothing', async () => {
+            state.catalogue = {[CLASSIFICATION]: trainable({points: [], classifier: SVM})}
+
+            await assert.rejects(exportTo({recipe: ccdcOf(), bands: ['ndvi_coefs', 'regression_coefs']}), /ccdc-1 cannot run: NO_TRAINING_DATA$/)
+
+            assertNothingStarted()
+        })
 
         it('is refused for classifier inputs the scenes cannot feed before anything the bands add', async () => {
-            state.catalogue = {[CLASSIFICATION]: trainable({points: [], included: ['VV_mean', 'VH_med'], classifier: SVM})}
+            state.catalogue = {[CLASSIFICATION]: trainable({included: ['VV_mean', 'VH_med'], classifier: SVM})}
 
             await assert.rejects(exportTo({recipe: ccdcOf(), bands: ['regression_coefs']}), /ccdc-1 cannot run: UNSUPPLIED_CLASSIFIER_INPUTS$/)
 

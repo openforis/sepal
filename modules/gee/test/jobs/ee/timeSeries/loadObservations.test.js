@@ -4,16 +4,26 @@ import {beforeEach, describe, it, mock} from 'node:test'
 import {from, lastValueFrom, of, switchMap, throwError} from 'rxjs'
 
 // The observations a pixel chart loads. A Time Series' or a CCDC's chart reads a band of the collection, not the recipe's
-// image, and is held to what its type declares observations of that band require - the collection's classifier inputs,
-// and for a Time Series band its Classification computes, what training that Classification needs - judged at the
-// clicked point, with nothing of the recipe's image described. A Change Alerts chart reads the collection it monitors,
+// image, and is held to what its type declares its observations require - the collection's classifier inputs, and the
+// Classification its Sources select trainable, whatever band is asked (type/timeSeries.js, type/ccdc.js) - judged at the
+// clicked point, with nothing of the recipe's image described. A band the Classification computes must be one it
+// provides, refused after what the configuration needs. A Change Alerts chart reads the collection it monitors,
 // judged as that collection is; settings naming no recipe are refused. Earth Engine, its band evidence, the pixel
 // geometry, the collection and recipe reads are substituted; the closure, the declarations and the readiness the
 // request is held to are the real ones.
 
+// Read as the suites are defined.
+const CLASSIFIED = 'probability_1'
+// Classifications that cannot be trained, and the finding each is refused for.
+const UNTRAINABLE = [
+    ['stores no points', () => ({[CLASSIFICATION]: trainable({points: []})}), 'NO_TRAINING_DATA'],
+    ['reuses a recipe without input imagery', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, images: []})}), 'MISSING_ROLE'],
+    ['reuses a recipe sampling fewer features', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, included: ['red']})}), 'MISSING_TRAINING_FEATURES']
+]
+
 describe('loading the observations of a Time Series pixel', () => {
     it('is refused, building no pixel or collection and evaluating nothing, where the classification\'s classifier the Landsat scenes cannot feed', async () => {
-        state.catalogue[CLASSIFICATION] = classification(['VV_mean', 'VH_med'])
+        state.catalogue[CLASSIFICATION] = trainable({included: RADAR_FEATURES})
 
         await assert.rejects(load({recipe: classified, bands: ['ndvi']}), /cannot run: UNSUPPLIED_CLASSIFIER_INPUTS$/)
 
@@ -21,7 +31,7 @@ describe('loading the observations of a Time Series pixel', () => {
     })
 
     it('answers the observations of the requested collection band once the classification is one the scenes can feed', async () => {
-        state.catalogue[CLASSIFICATION] = classification(['red', 'nir', 'ndvi'])
+        state.catalogue[CLASSIFICATION] = trainable()
 
         const result = await load({recipe: classified, bands: ['ndvi']})
 
@@ -41,7 +51,7 @@ describe('loading the observations of a Time Series pixel', () => {
     })
 
     it('establishes that the recipe can run without building its count image', async () => {
-        state.catalogue[CLASSIFICATION] = classification(['red', 'nir', 'ndvi'])
+        state.catalogue[CLASSIFICATION] = trainable()
 
         await load({recipe: classified, bands: ['ndvi']})
 
@@ -65,7 +75,7 @@ describe('loading the observations of a Time Series pixel', () => {
     }
 
     it('judges the recipe at the pixel without changing the one submitted, which is what the collection is built from', async () => {
-        state.catalogue[CLASSIFICATION] = classification(['red', 'nir', 'ndvi'])
+        state.catalogue[CLASSIFICATION] = trainable()
         const recipe = deepFrozen(structuredClone(classified))
 
         await load({recipe, bands: ['ndvi']})
@@ -75,31 +85,20 @@ describe('loading the observations of a Time Series pixel', () => {
     })
 })
 
-// A band the Classification computes trains its classifier on its training data and applies it to every image of the
-// collection (lib/js/ee/src/timeSeries/collection.js), so what training needs refuses the request, at the recipe it
-// concerns, before anything is built. A band of the scenes reads nothing of that training data.
-describe('loading a Time Series pixel\'s observations of a band its Classification computes', () => {
-    for (const [_case, catalogue, code] of [
-        ['stores no points', () => ({[CLASSIFICATION]: trainable({points: []})}), 'NO_TRAINING_DATA'],
-        ['reuses a recipe without input imagery', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, images: []})}), 'MISSING_ROLE'],
-        ['reuses a recipe sampling fewer features', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, included: ['red']})}), 'MISSING_TRAINING_FEATURES']
-    ]) {
-        it(`is refused, starting no chart work, where the Classification ${_case}`, async () => {
-            state.catalogue = catalogue()
+// The Classification a Time Series' Sources select is part of its analysis, so what training it needs refuses the
+// request, at the recipe it concerns, before anything is built - for a band it computes, which trains it
+// (lib/js/ee/src/timeSeries/collection.js), and for a band of the scenes alike, which would not.
+describe('loading a Time Series pixel\'s observations over a Classification that cannot be trained', () => {
+    for (const [_case, catalogue, code] of UNTRAINABLE) {
+        for (const band of [CLASSIFIED, 'ndvi']) {
+            it(`is refused for ${band}, starting no chart work, where the Classification ${_case}`, async () => {
+                state.catalogue = catalogue()
 
-            await assert.rejects(load({recipe: classified, bands: [CLASSIFIED]}), new RegExp(`time-series-1 cannot run: ${code}$`))
+                await assert.rejects(load({recipe: classified, bands: [band]}), new RegExp(`time-series-1 cannot run: ${code}$`))
 
-            assertNoChartWork()
-        })
-
-        it(`answers a band of the scenes, observing nothing of the Classification's input, where it ${_case}`, async () => {
-            state.catalogue = catalogue()
-
-            const result = await load({recipe: classified, bands: ['ndvi']})
-
-            assert.equal(result.features.length, OBSERVATIONS.length)
-            assert.deepEqual(state.observed, [])
-        })
+                assertNoChartWork()
+            })
+        }
     }
 
     it('answers it once the Classification stores points again, building the collection the request names', async () => {
@@ -122,18 +121,24 @@ describe('loading a Time Series pixel\'s observations of a band its Classificati
         assertNoChartWork()
     })
 
-    // As building the collection refuses it (collection.js), and before what training it needs is judged.
-    for (const [_case, untrained] of [['can be trained', {}], ['stores no points', {points: []}]]) {
-        it(`refuses an output its Classification does not provide as a client's error, starting no chart work, where it ${_case}`, async () => {
-            state.catalogue = {[CLASSIFICATION]: trainable({...untrained, classifier: {type: 'SVM', svmType: 'C_SVC'}})}
+    // As building the collection refuses it (collection.js), once the configuration is otherwise sound.
+    it('refuses an output its trainable Classification does not provide as a client\'s error, starting no chart work', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({classifier: {type: 'SVM', svmType: 'C_SVC'}})}
 
-            await assert.rejects(load({recipe: classified, bands: ['regression']}), error =>
-                error.errorCode === 'UNSUPPORTED_CLASSIFIED_OUTPUT' && error.statusCode === 400
-                && error.message === `Classification ${CLASSIFICATION} does not provide regression`)
+        await assert.rejects(load({recipe: classified, bands: ['regression']}), error =>
+            error.errorCode === 'UNSUPPORTED_CLASSIFIED_OUTPUT' && error.statusCode === 400
+            && error.message === `Classification ${CLASSIFICATION} does not provide regression`)
 
-            assertNoChartWork()
-        })
-    }
+        assertNoChartWork()
+    })
+
+    // What the configuration needs comes first: the Classification's training before an output asked of it.
+    it('refuses a Classification that cannot be trained before an output it does not provide', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({points: [], classifier: {type: 'SVM', svmType: 'C_SVC'}})}
+
+        await assert.rejects(load({recipe: classified, bands: ['regression']}), /time-series-1 cannot run: NO_TRAINING_DATA$/)
+        assertNoChartWork()
+    })
 
     it('refuses classifier inputs the scenes cannot feed before an output the Classification does not provide', async () => {
         state.catalogue = {[CLASSIFICATION]: trainable({included: RADAR_FEATURES, classifier: {type: 'SVM', svmType: 'C_SVC'}})}
@@ -159,19 +164,19 @@ describe('loading the observations of a CCDC pixel', () => {
         assertNoChartWork()
     })
 
-    // Observations build the band requested alone; the breakpoint bands are fitted by the segments, not observed.
-    it('answers a band of the scenes whatever its breakpoint bands need, observing nothing of the Classification\'s input', async () => {
-        state.catalogue = {[CLASSIFICATION]: trainable({points: []})}
-        const recipe = {...CCDC, model: {...CCDC.model, sources: {...CCDC.model.sources, breakpointBands: ['ndvi', CLASSIFIED]}}}
+    for (const breakpointBands of [['ndvi'], ['ndvi', CLASSIFIED]]) {
+        it(`is refused for a band of the scenes too, starting no chart work, where that Classification stores no points, breakpoint bands ${breakpointBands.join(', ')}`, async () => {
+            state.catalogue = {[CLASSIFICATION]: trainable({points: []})}
+            const recipe = {...CCDC, model: {...CCDC.model, sources: {...CCDC.model.sources, breakpointBands}}}
 
-        const result = await load({recipe, bands: ['ndvi']})
+            await assert.rejects(load({recipe, bands: ['ndvi']}), /ccdc-1 cannot run: NO_TRAINING_DATA$/)
 
-        assert.equal(result.features.length, OBSERVATIONS.length)
-        assert.deepEqual(state.observed, [])
-    })
+            assertNoChartWork()
+        })
+    }
 
     it('is refused, starting no chart work, where the classification\'s classifier the Landsat scenes cannot feed', async () => {
-        state.catalogue[CLASSIFICATION] = classification(['VV_mean', 'VH_med'])
+        state.catalogue[CLASSIFICATION] = trainable({included: RADAR_FEATURES})
 
         await assert.rejects(load({recipe: CCDC, bands: ['ndvi']}), /cannot run: UNSUPPLIED_CLASSIFIER_INPUTS$/)
 
@@ -179,7 +184,7 @@ describe('loading the observations of a CCDC pixel', () => {
     })
 
     it('answers its observations once the classification is one the scenes can feed, describing nothing of its segments', async () => {
-        state.catalogue[CLASSIFICATION] = classification(['red', 'nir', 'ndvi'])
+        state.catalogue[CLASSIFICATION] = trainable()
 
         const result = await load({recipe: CCDC, bands: ['ndvi']})
 
@@ -231,23 +236,42 @@ describe('loading the observations of a Change Alerts pixel', () => {
     })
 })
 
-// The GUI's charts watch the same (timeSeries/panels/chartPixel.jsx, ccdc/panels/chartPixel.jsx).
+// The GUI's charts watch the same (timeSeries/panels/chartPixel.jsx, ccdc/panels/chartPixel.jsx): one operation,
+// whatever band is asked.
 describe('the operations an observation request is judged by', () => {
     for (const [type, recipeOf] of [['Time Series', () => classified], ['CCDC', () => CCDC]]) {
-        it(`are a ${type}'s observations for a band of the scenes`, async () => {
-            state.catalogue = {[CLASSIFICATION]: trainable()}
+        for (const band of ['ndvi', CLASSIFIED]) {
+            it(`are a ${type}'s observations alone for ${band}`, async () => {
+                state.catalogue = {[CLASSIFICATION]: trainable()}
 
-            await load({recipe: recipeOf(), bands: ['ndvi']})
+                await load({recipe: recipeOf(), bands: [band]})
 
-            assert.deepEqual(state.judged, ['PIXEL_OBSERVATIONS'])
+                assert.deepEqual(state.judged, ['PIXEL_OBSERVATIONS'])
+            })
+        }
+    }
+})
+
+// Selecting none, or a supplied decision tree, needs no training: nothing is observed for it.
+describe('loading a pixel\'s observations needing no training', () => {
+    for (const [type, recipeOf] of [['Time Series', () => classified], ['CCDC', () => CCDC]]) {
+        it(`answers a ${type}'s selecting no Classification, reading none`, async () => {
+            const recipe = recipeOf()
+            const {classification: _classification, ...sources} = recipe.model.sources
+
+            const result = await load({recipe: {...recipe, model: {...recipe.model, sources}}, bands: ['ndvi']})
+
+            assert.equal(result.features.length, OBSERVATIONS.length)
+            assert.deepEqual(state.recipeReads, [])
+            assert.deepEqual(state.observed, [])
         })
 
-        it(`are a ${type}'s observations and its collection classified for a band its Classification computes`, async () => {
-            state.catalogue = {[CLASSIFICATION]: trainable()}
+        it(`answers a ${type}'s over a supplied decision tree storing no points`, async () => {
+            state.catalogue = {[CLASSIFICATION]: trainable({points: [], classifier: {type: 'DECISION_TREE', decisionTree: '1) root 9 0 0 (0 1) *'}})}
 
-            await load({recipe: recipeOf(), bands: [CLASSIFIED]})
+            const result = await load({recipe: recipeOf(), bands: ['ndvi']})
 
-            assert.deepEqual(state.judged, ['PIXEL_OBSERVATIONS', 'CLASSIFIED_COLLECTION'])
+            assert.equal(result.features.length, OBSERVATIONS.length)
         })
     }
 })
@@ -327,14 +351,7 @@ const planetAlerts = assets => ({
     }
 })
 
-const classification = included => ({
-    id: CLASSIFICATION,
-    type: 'CLASSIFICATION',
-    model: {inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]}}
-})
-
 const PROVIDER = 'provider-1'
-const CLASSIFIED = 'probability_1'
 const TRAINABLE_FEATURES = ['red', 'nir', 'ndvi']
 const RADAR_FEATURES = ['VV_mean', 'VH_med']
 const POINTS = [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]

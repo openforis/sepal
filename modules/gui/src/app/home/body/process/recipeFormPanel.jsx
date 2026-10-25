@@ -217,7 +217,7 @@ export const recipeFormPanel = (
     }
 }
 
-export const RecipeFormPanel = ({className, placement, isActionForm, additionalUpdates, onApply, onCancel, onClose, children}) =>
+export const RecipeFormPanel = ({className, placement, isActionForm, additionalUpdates, accepts, onApply, onCancel, onClose, children}) =>
     <Context.Consumer>
         {({id, evaluatedPath, form, statePath, valuesToModel, deactivate, prevValues}) => {
             const wrappedOnApply = values => {
@@ -239,6 +239,7 @@ export const RecipeFormPanel = ({className, placement, isActionForm, additionalU
                     className={className}
                     placement={placement}
                     form={form}
+                    accepts={accepts}
                     isActionForm={isActionForm}
                     onApply={values => {
                         wrappedOnApply(values)
@@ -259,6 +260,9 @@ export const RecipeFormPanel = ({className, placement, isActionForm, additionalU
 
 RecipeFormPanel.propTypes = {
     children: PropTypes.any.isRequired,
+    // Whether the values may be applied as the session now stands: refused, nothing is committed and the panel stays
+    // open (widget/form/panel.jsx).
+    accepts: PropTypes.func,
     // The rest of the recipe this panel's values imply, as [{path, value, merge}] over recipe-relative
     // paths, published in the same action as the panel's own model.
     additionalUpdates: PropTypes.func,

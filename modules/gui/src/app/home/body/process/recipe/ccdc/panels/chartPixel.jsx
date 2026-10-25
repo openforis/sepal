@@ -2,9 +2,7 @@ import moment from 'moment'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
-import {requestStages} from '#sepal/recipe/classifiedOutputs'
 import {PIXEL_OBSERVATIONS, PIXEL_SEGMENTS} from '#sepal/recipe/output/readiness'
-import {fittedMeasures} from '#sepal/recipe/type/ccdc'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {flatBandOptions, getAvailableBands, toDataSetIds} from '~/sources'
@@ -14,14 +12,13 @@ import {toUserErrorMessage} from '~/userError'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Icon} from '~/widget/icon'
-import {Message} from '~/widget/message'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
 import {withRecipe} from '../../../recipeContext'
 import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
-import {BandOperationWatch, requestedBandAvailability, watchOperations} from '../../operationAvailability'
+import {pixelOperationsAvailability, watchOperations} from '../../operationAvailability'
 import {pixelChartUpdate} from '../../pixelChartUpdate'
 import {selectedClassificationOfState} from '../../selectedClassification'
 import {CCDCGraph} from '../ccdcGraph'
@@ -29,9 +26,8 @@ import {loadCCDCObservations$, loadCCDCSegments$, RecipeActions} from '../ccdcRe
 import styles from './chartPixel.module.css'
 
 // What the chart runs at its pixel, whatever band it charts: the collection's observations, and the segments CCDC fits to
-// them there. It and its action are held to these, and watch them (ccdcToolbar.jsx). A band the Classification computes
-// is read as the collection classified as well (requestStages over what the segments fit, fittedMeasures, which
-// includes the band the observations build), which holds that band, for both reads, alone (requestedBandAvailability).
+// them there, both needing the Classification its Sources select trainable (type/ccdc.js). It and its action are held to
+// these, and watch them (ccdcToolbar.jsx): a Classification that becomes unusable closes it (pixelChartUpdate).
 export const CHART_OPERATIONS = [PIXEL_OBSERVATIONS, PIXEL_SEGMENTS]
 
 const fields = {
@@ -67,9 +63,9 @@ class _ChartPixel extends React.Component {
     }
 
     renderPanel() {
-        const {latLng, bandGate} = this.props
+        const {latLng} = this.props
         const {segments, observations} = this.state
-        const loading = !bandGate?.withdraw && (!segments || !segments.length) && (!observations || !observations.length)
+        const loading = (!segments || !segments.length) && (!observations || !observations.length)
         return (
             <Panel
                 className={styles.panel}
@@ -126,12 +122,10 @@ class _ChartPixel extends React.Component {
     }
 
     renderChart() {
-        const {dateFormat, startDate, endDate, bandGate, inputs: {selectedBand}} = this.props
+        const {dateFormat, startDate, endDate, inputs: {selectedBand}} = this.props
         const {segments, observations} = this.state
         const loading = !segments
-        if (bandGate?.withdraw) {
-            return <Message type='info' text={msg('process.chartPixel.classifiedBandWithheld')}/>
-        } else if (loading) {
+        if (loading) {
             return this.renderSpinner()
         } else {
             return (
@@ -152,26 +146,17 @@ class _ChartPixel extends React.Component {
     componentDidMount() {
         const {recipeId, sourceRuntime} = this.props
         this.operationWatches = watchOperations({sourceRuntime, recipeId, operations: CHART_OPERATIONS})
-        this.bandWatch = new BandOperationWatch()
-        this.watchBand()
         this.updateChart()
     }
 
     componentDidUpdate(prevProps) {
-        this.watchBand()
         this.updateChart(prevProps)
     }
 
     componentWillUnmount() {
         this.operationWatches.unsubscribe()
-        this.bandWatch.unsubscribe()
         this.cancel$.next(true)
         this.cancel$.complete()
-    }
-
-    watchBand() {
-        const {recipeId, sourceRuntime, bandOperations} = this.props
-        this.bandWatch.update({sourceRuntime, recipeId, operations: bandOperations})
     }
 
     // The segments and observations are read together, whenever both may be (pixelChartUpdate).
@@ -232,17 +217,14 @@ class _ChartPixel extends React.Component {
     }
 }
 
-// What it is computed from, beside whether it may be read (requestedBandAvailability) for the band charted, and what is
-// offered of the Classification its Sources select, as the session holds it now or as those reads resolved it.
-const mapStateToProps = (state, {recipe, sourceRuntime, latLng, inputs: {selectedBand}}) => {
-    const bandOperations = requestStages(latLng && selectedBand.value ? fittedMeasures(recipe.model, [selectedBand.value]) : [])
-    const {gate, bandGate, computation, recordOf} = requestedBandAvailability({
-        state, recipe, heldFor: key => sourceRuntime?.heldFor(key), operations: CHART_OPERATIONS, bandOperations
+// What it is computed from, beside whether it may be read (pixelOperationsAvailability), and what is offered of the
+// Classification its Sources select, as the session holds it now or as those reads resolved it.
+const mapStateToProps = (state, {recipe, sourceRuntime}) => {
+    const {gate, computation, recordOf} = pixelOperationsAvailability({
+        state, recipe, heldFor: key => sourceRuntime?.heldFor(key), operations: CHART_OPERATIONS
     })
     return {
         operationsGate: gate,
-        bandGate,
-        bandOperations,
         computation,
         ...selectedClassificationOfState(state, recipe, recordOf)
     }

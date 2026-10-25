@@ -30,7 +30,8 @@ vi.mock('~/apiRegistry', () => ({default: {
             fake.requests.push(bands)
             return of([])
         },
-        assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
+        assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
+        bands$: () => of(['red', 'nir'].map(name => ({name, arrayDimensions: 0})))
     },
     recipe: {
         load$: id => of(fake.stored[id]),
@@ -184,6 +185,8 @@ const NATIVE = 'ndvi'
 const REGRESSION = 'process.classification.bands.regression'
 const PROBABILITY = 'process.classification.bands.probability'
 
+// Trained on points of its own: a Time Series or CCDC selecting it charts and retrieves only while it can be trained
+// (lib/js/shared/src/recipe/type/timeSeries.js, ccdc.js).
 const RANDOM_FOREST_CLASSIFICATION = {
     id: CLASSIFICATION,
     type: 'CLASSIFICATION',
@@ -191,7 +194,8 @@ const RANDOM_FOREST_CLASSIFICATION = {
     model: {
         inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['red', 'nir']}]}]},
         legend: LEGEND,
-        classifier: RANDOM_FOREST
+        classifier: RANDOM_FOREST,
+        trainingData: {dataSets: [{dataSetId: 'collected', type: 'COLLECTED', name: 'Collected', referenceData: [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]}]}
     }
 }
 

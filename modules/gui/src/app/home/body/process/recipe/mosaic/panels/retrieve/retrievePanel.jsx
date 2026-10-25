@@ -2,9 +2,11 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {ReactReduxContext} from 'react-redux'
 
+import {retrieveAvailability} from '~/app/home/body/process/recipe/operationAvailability'
 import {
     isUnresolved,
     MISSING_SELECTION,
+    outputDecision,
     physicalRequest,
     reconciledChoices,
     RESOLVING,
@@ -15,6 +17,7 @@ import {
 import {withRetrieveOutput} from '~/app/home/body/process/recipe/withRetrieveOutput'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {updateProject} from '~/app/home/body/process/recipeList/projects'
+import {withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -90,16 +93,13 @@ const ASSET_MESSAGES = {
     ASSETS_UNAVAILABLE: 'process.retrieve.assets.failing',
     ASSETS_EXPIRED: 'process.retrieve.assets.expired'
 }
-// A source the recipe selected that does not meet its requirement, named by the section it is selected in, or a
-// configuration that does not, named by the section it is configured in.
+// A source the recipe selected that is not yet known to meet its requirement, named by the section it is selected in.
+// One found not to meet it, or a configuration found not to, closes the panel instead (`withdrawn`).
 const SOURCE_MESSAGES = {
-    SOURCE_MISSING: 'process.retrieve.source.missing',
     SOURCE_PENDING: 'process.retrieve.source.checking',
     SOURCE_UNCHECKED: 'process.retrieve.source.checking',
     SOURCE_UNAVAILABLE: 'process.retrieve.source.unavailable',
-    SOURCE_EXPIRED: 'process.retrieve.source.expired',
-    SOURCE_UNSUITABLE: 'process.retrieve.source.unsuitable',
-    CONFIGURATION_UNMET: 'process.retrieve.source.configurationUnmet'
+    SOURCE_EXPIRED: 'process.retrieve.source.expired'
 }
 const RESOLVED_CHOICES = 'RESOLVED_CHOICES'
 
@@ -121,11 +121,22 @@ const constraints = {
         )
 }
 
-// A selection is held as its owner judges it from the session (`requestGate`), beside whatever else holds it.
-const mapStateToProps = (state, {requestGate, inputs}) => ({
-    projects: selectFrom(state, 'process.projects'),
-    requestHold: requestGate ? requestGate(state, selectedValues(inputs?.bands?.value)) : null
-})
+// A selection is held as its owner judges it from the session (`requestGate`), beside whatever else holds it. Retrieve
+// is withdrawn as its action is (retrieveAvailability), for a finding that action is disabled by.
+const mapStateToProps = (state, {requestGate, inputs, recipeId, sourceRuntime}) => {
+    const recipe = selectFrom(state, ['process.loadedRecipes', recipeId])
+    return {
+        projects: selectFrom(state, 'process.projects'),
+        requestHold: requestGate ? requestGate(state, selectedValues(inputs?.bands?.value)) : null,
+        withdrawn: Boolean(recipe) && Boolean(retrieveAvailability({
+            state,
+            recipe,
+            evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id),
+            heldFor: key => sourceRuntime?.heldFor(key),
+            now: Date.now()
+        }).gate?.withdraw)
+    }
+}
 
 const mapRecipeToProps = recipe => ({
     projectId: recipe.projectId,
@@ -147,25 +158,21 @@ class _MosaicRetrievePanel extends React.Component {
         this.minimumLoadingElapsed = false
         this.initialLoadingTimer = null
         this.mounted = false
+        this.accepts = this.accepts.bind(this)
         this.onDestinationChange = this.onDestinationChange.bind(this)
         this.onDestinationValidityCheckChange = this.onDestinationValidityCheckChange.bind(this)
     }
 
     render() {
         const {className, form} = this.props
-        const {more, destinationValidationPending, destinationReconciliation} = this.state
-        const invalid = this.isInitialLoading()
-            || destinationValidationPending
-            || Boolean(destinationReconciliation)
-            || this.blocksSubmission()
-            || this.holdsRequest()
-            || Boolean(this.props.requestHold)
-            || form.isInvalid()
+        const {more} = this.state
+        const invalid = this.holdsSubmission() || form.isInvalid()
         return (
             <RecipeFormPanel
                 className={[styles.panel, className].join(' ')}
                 placement='top-right'
                 isActionForm
+                accepts={this.accepts}
                 onApply={values => {
                     const {fileDimensionsMultiple, shardSize} = values
                     return this.retrieve({...values, fileDimensions: fileDimensionsMultiple * shardSize})
@@ -487,7 +494,7 @@ class _MosaicRetrievePanel extends React.Component {
             ? <Message type='info' icon='spinner' text={msg('process.retrieve.form.bands.loading')}/>
             : requestHold
                 ? <Message type='info' icon={requestHold.wait ? 'spinner' : 'triangle-exclamation'} text={requestHold.message}/>
-                : null
+                : this.renderOutputHold()
         return pendingRequestOptions || hold
             ? (
                 <Layout spacing='compact'>
@@ -526,13 +533,35 @@ class _MosaicRetrievePanel extends React.Component {
                     : null}
                 {requestHold
                     ? <Message type='info' icon={requestHold.wait ? 'spinner' : 'triangle-exclamation'} text={requestHold.message}/>
-                    : null}
+                    : this.renderOutputHold()}
             </Layout>
         )
     }
 
+    // What of the output holds a request about something other than its bands, beside the choices it still shows: being
+    // read, with what running it needs; or not established, said as an export's is (renderUnresolved).
+    renderOutputHold() {
+        const {requestOptions} = this.props
+        const decision = this.decision()
+        if (!requestOptions || !decision) {
+            return null
+        }
+        if (decision.status === RESOLVING) {
+            return <Message type='info' icon='spinner' text={msg('process.retrieve.form.bands.checking')}/>
+        }
+        return isUnresolved(decision) ? this.renderUnresolvedMessage() : null
+    }
+
     // Why the output could not be established, naming an asset where one is the reason, with a way to try again.
     renderUnresolved() {
+        return (
+            <Widget label={msg('process.retrieve.form.bands.label')} framed>
+                {this.renderUnresolvedMessage()}
+            </Widget>
+        )
+    }
+
+    renderUnresolvedMessage() {
         const {retrieveOutput, refreshRetrieveOutput} = this.props
         const diagnostics = retrieveOutput?.output?.diagnostics || []
         const diagnostic = diagnostics.find(({assetId}) => assetId)
@@ -543,19 +572,21 @@ class _MosaicRetrievePanel extends React.Component {
                 ? msg(ASSET_MESSAGES[diagnostic.code] || 'process.retrieve.assets.unavailable', {asset: diagnostic.assetId})
                 : msg('process.retrieve.error.imageOutput')
         return (
-            <Widget label={msg('process.retrieve.form.bands.label')} framed>
-                <Layout spacing='compact'>
-                    <Message type='info' icon='triangle-exclamation' text={text}/>
-                    {refreshRetrieveOutput
-                        ? <Button
-                            icon='rotate'
-                            label={msg('process.retrieve.assets.retry')}
-                            onClick={() => refreshRetrieveOutput()}
-                        />
-                        : null}
-                </Layout>
-            </Widget>
+            <Layout spacing='compact'>
+                <Message type='info' icon='triangle-exclamation' text={text}/>
+                {this.renderRefresh(refreshRetrieveOutput)}
+            </Layout>
         )
+    }
+
+    renderRefresh(refreshRetrieveOutput) {
+        return refreshRetrieveOutput
+            ? <Button
+                icon='rotate'
+                label={msg('process.retrieve.assets.retry')}
+                onClick={() => refreshRetrieveOutput()}
+            />
+            : null
     }
 
     renderBandsMessage(text, icon) {
@@ -581,6 +612,9 @@ class _MosaicRetrievePanel extends React.Component {
     
     componentDidMount() {
         this.mounted = true
+        if (this.closeIfWithdrawn()) {
+            return
+        }
         const {allBands, defaultAssetType, defaultCrs, defaultScale, defaultShardSize, defaultFileDimensionsMultiple, defaultTileSize,
             inputs: {assetType, sharing, crs, crsTransform, scale, shardSize, fileDimensionsMultiple, tileSize, useAllBands, filenamePrefix}
         } = this.props
@@ -626,10 +660,12 @@ class _MosaicRetrievePanel extends React.Component {
         this.reconcileBands()
         this.reconcileRequest()
         this.reconcileDestination()
-        this.notifyRequestSelection()
     }
 
     componentDidUpdate(prevProps) {
+        if (this.closeIfWithdrawn()) {
+            return
+        }
         if (prevProps.inputs.destination.value !== this.props.inputs.destination.value) {
             this.setDestinationValidationPending(this.requiresDestinationValidation())
         }
@@ -638,13 +674,22 @@ class _MosaicRetrievePanel extends React.Component {
         this.reconcileBands()
         this.reconcileRequest()
         this.reconcileDestination()
-        this.notifyRequestSelection()
     }
 
     componentWillUnmount() {
         this.mounted = false
         clearTimeout(this.initialLoadingTimer)
         this.initialLoadingTimer = null
+    }
+
+    // A finding its action is withdrawn for closes the panel, as closing it would: what was last submitted is kept, and
+    // nothing edited since is saved. Its watches go with it, and repair offers the action again, without reopening it.
+    closeIfWithdrawn() {
+        const {withdrawn, activatable} = this.props
+        if (withdrawn) {
+            activatable.deactivate()
+        }
+        return withdrawn
     }
 
     // Time Series Retrieve once offered a single indicator, and saved it as the value itself rather than a list. A request
@@ -684,15 +729,32 @@ class _MosaicRetrievePanel extends React.Component {
         }
     }
 
-    // A request about the recipe's output is decided again, from the session as it stands at this moment, by the
-    // submission itself - never from what this panel last rendered. The project remembers the destination only
-    // once the retrieval was accepted. A request's selection its pending options cannot yet vouch for, and a selection
-    // its owner holds now, are held here too, however the form is submitted.
+    // Whether a submission, however made, is accepted - decided before anything of it is saved or the panel closes
+    // (RecipeFormPanel's `accepts`): not while the panel holds it, as Apply is disabled for, nor while the session as
+    // it stands at this moment holds it - never what this panel last rendered: by its owner's judgement of the
+    // selection, or, for a request about the recipe's output, by the decision its export is submitted by.
+    accepts(values) {
+        const {requestOptions, readRetrieveOutput, selection = physicalSelection, task} = this.props
+        if (this.holdsSubmission() || this.requestHoldNow(values)) {
+            return false
+        }
+        const read = readRetrieveOutput()
+        if (!read) {
+            return false
+        }
+        if (requestOptions) {
+            return outputDecision(read).status === RETRIEVABLE
+        }
+        const {recipe, output, pending} = read
+        const {names, unrecognized, retrieveOptions} = selection.request({recipe, output, retrieveOptions: this.withAllBands(values)})
+        return retrieveDecision({output, pending, names, unrecognized, destination: retrieveOptions.destination, task})
+            .status === RETRIEVABLE
+    }
+
+    // What is accepted is submitted, a request about the recipe's output decided again by the submission itself from
+    // the session as it now stands. The project remembers the destination only once the retrieval was accepted.
     retrieve(values) {
         const {requestOptions, onRetrieve, readRetrieveOutput, selection = physicalSelection, task, submitTask} = this.props
-        if (this.holdsRequest() || this.requestHoldNow(values)) {
-            return
-        }
         if (requestOptions) {
             this.rememberDestination(values)
             return onRetrieve(values)
@@ -731,16 +793,31 @@ class _MosaicRetrievePanel extends React.Component {
         }
     }
 
+    // A request's choices are its own, so only an export of the output's bands waits for them behind the opening view.
     isInitialLoading() {
-        return !this.state.initialLoadingDone
+        return !this.props.requestOptions && !this.state.initialLoadingDone
     }
 
-    // What may be retrieved as the form stands, decided by the one rule the submission decides by. None for a
-    // request that is not about the recipe's output.
+    // What holds a submission as the panel stands, beside its form's own validity.
+    holdsSubmission() {
+        const {destinationValidationPending, destinationReconciliation} = this.state
+        return this.isInitialLoading()
+            || destinationValidationPending
+            || Boolean(destinationReconciliation)
+            || this.blocksSubmission()
+            || this.holdsRequest()
+            || Boolean(this.props.requestHold)
+    }
+
+    // What may be retrieved as the form stands, decided by the one rule the submission decides by: for a request that
+    // is not about the output's bands, what of the output holds it alone (outputDecision).
     decision() {
         const {requestOptions, retrieveOutput, task} = this.props
-        if (requestOptions || !retrieveOutput) {
+        if (!retrieveOutput) {
             return null
+        }
+        if (requestOptions) {
+            return outputDecision(retrieveOutput)
         }
         const {output, pending} = retrieveOutput
         const {names, retrieveOptions: {destination}} = this.request()
@@ -795,8 +872,9 @@ class _MosaicRetrievePanel extends React.Component {
         return this.decision()?.destinations || null
     }
 
+    // A request's destinations do not depend on the output it is held to.
     isDestinationControlDisabled() {
-        return this.isResolving() || this.isUnresolved()
+        return !this.props.requestOptions && (this.isResolving() || this.isUnresolved())
     }
 
     blocksSubmission() {
@@ -817,7 +895,7 @@ class _MosaicRetrievePanel extends React.Component {
     // Once the output has answered, a saved choice it no longer offers goes from the selection, and the rest stay.
     reconcileBands() {
         const decision = this.decision()
-        if (!decision) {
+        if (!decision || this.props.requestOptions) {
             return
         }
         const {inputs: {bands}, retrieveOutput, selection = physicalSelection} = this.props
@@ -845,17 +923,6 @@ class _MosaicRetrievePanel extends React.Component {
     requestHoldNow({bands}) {
         const {requestGate} = this.props
         return requestGate ? requestGate(this.context.store.getState(), selectedValues(bands)) : null
-    }
-
-    // The owner of the selection is told each selection once, to read what holding it needs.
-    notifyRequestSelection() {
-        const {onRequestSelection, inputs: {bands}} = this.props
-        const selected = selectedValues(bands.value)
-        const key = JSON.stringify(selected)
-        if (onRequestSelection && key !== this.notifiedSelection) {
-            this.notifiedSelection = key
-            onRequestSelection(selected)
-        }
     }
 
     // A selection a request's pending options cannot yet vouch for.
@@ -928,7 +995,8 @@ class _MosaicRetrievePanel extends React.Component {
 export const MosaicRetrievePanel = compose(
     _MosaicRetrievePanel,
     connect(mapStateToProps),
-    withRetrieveOutput({isImageOutput: ({requestOptions}) => !requestOptions}),
+    withSourceRuntime(),
+    withRetrieveOutput(),
     recipeFormPanel({id: 'retrieve', fields, constraints, mapRecipeToProps}),
     asFunctionalComponent({
         scaleTicks: [10, 15, 20, 30, 60, 100],
@@ -947,8 +1015,10 @@ export const MosaicRetrievePanel = compose(
 // chosen into the bands it exports (physical names by default), `task` configures the generic image export, and
 // `submitTask` replaces it where the recipe has its own. Either way, `requestGate(state, selected)` holds the values
 // selected as their owner judges them from the session given - null, or {wait, message} - beside what else holds them,
-// for the form and for its submission alike, the latter from the session as it then stands;
-// `onRequestSelection(selected)` tells the owner each selection, for it to read what that judgement needs.
+// for the form and for its submission alike, the latter from the session as it then stands. Either way the recipe's
+// image output is read and watched while the panel is open (withRetrieveOutput), and its readiness, validity and
+// authority hold the submission (retrieveDecision, outputDecision). A finding the recipe's Retrieve action is withdrawn
+// for closes the panel (retrieveAvailability).
 MosaicRetrievePanel.propTypes = {
     defaultCrs: PropTypes.string.isRequired,
     defaultFileDimensionsMultiple: PropTypes.number.isRequired,
@@ -976,7 +1046,6 @@ MosaicRetrievePanel.propTypes = {
     toDrive: PropTypes.any,
     toEE: PropTypes.any,
     toSepal: PropTypes.any,
-    onRequestSelection: PropTypes.func,
     onRetrieve: PropTypes.func
 }
 

@@ -12,7 +12,6 @@ import ccdc from '#sepal/ee/timeSeries/ccdc'
 import {withSegmentSource$} from '#sepal/ee/timeSeries/segmentSource'
 import {fileName} from '#sepal/path'
 import {IMAGE_OUTPUT, PIXEL_SEGMENTS} from '#sepal/recipe/output/readiness'
-import {fittedMeasures} from '#sepal/recipe/type/ccdc'
 
 const worker$ = ({
     requestArgs: {recipe, latLng, bands}
@@ -55,12 +54,10 @@ const worker$ = ({
     )
 
     // A CCDC charted itself is segmented at the clicked point, which stands in for its AOI: what is judged is what runs,
-    // the measures requested fitted with its breakpoint bands (fittedMeasures), as ccdc.js fits them.
+    // its segments there, and the measures requested.
     const recipeSegments$ = () => {
         const atPixel = {...recipe, model: {...recipe.model, aoi}}
-        return requireRequestedBands$({
-            recipe: atPixel, operation: PIXEL_SEGMENTS, requested: bands, effective: fittedMeasures(atPixel.model, bands)
-        }).pipe(
+        return requireRequestedBands$({recipe: atPixel, operation: PIXEL_SEGMENTS, requested: bands}).pipe(
             map(() => ccdc(atPixel, {selection: bands}))
         )
     }

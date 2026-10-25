@@ -2,7 +2,8 @@ import _ from 'lodash'
 import {Subscription} from 'rxjs'
 
 import {READY} from '#sepal/recipe/output/readImageOutput'
-import {NOT_READY} from '#sepal/recipe/output/readiness'
+import {judgesMapProduct, NOT_READY} from '#sepal/recipe/output/readiness'
+import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
 import {INVALID, VALID} from '#sepal/recipe/source/dependencyValidity'
 
 import {getRecipeType} from '../recipeTypeRegistry'
@@ -14,10 +15,10 @@ import {
     establishedIn,
     PIXEL_SEGMENTS,
     readSourceRequirements,
+    requestGate,
     requestGateOf,
     SOURCE_PENDING,
-    SOURCE_UNAVAILABLE,
-    sourceRequirementGate
+    SOURCE_UNAVAILABLE
 } from './sourceRequirements'
 
 // Whether an operation over a recipe may start, assessed from what its type declares it needs of its sources
@@ -61,41 +62,28 @@ export const pixelOperationsAvailability = ({state, recipe, heldFor, operations}
     return {available: !gate, gate, computation, recordOf}
 }
 
-// A request's operations: those it runs whatever bands it names (`operations`), judged as pixelOperationsAvailability
-// judges them, and those its bands add (`bandOperations`, requestStages, #sepal/recipe/classifiedOutputs) - as
-// {available, gate, bandGate, computation, recordOf}. The bands' own gate (`bandGate`) holds those bands without
-// withdrawing what asks for them: in `gate` it never withdraws, so an open chart lets go of what it read for the band,
-// and reads again once it clears, while another band can be charted, and Retrieve holds the selection while another
-// can be chosen. A finding of it is the asker's to say. What any band needs still withdraws.
-export const requestedBandAvailability = ({state, recipe, heldFor, operations, bandOperations}) => {
-    const chart = pixelOperationsAvailability({state, recipe, heldFor, operations})
-    const bandGate = bandOperations.length
-        ? pixelOperationsAvailability({state, recipe, heldFor, operations: bandOperations}).gate
-        : null
-    const gate = chart.gate || (bandGate && {...bandGate, withdraw: false})
-    return {...chart, available: !gate, gate, bandGate}
+// A named map product - CCDC's count - is held to its own readiness, read as an operation by its name: the analysis
+// prerequisites of its type and whatever the product adds (#sepal/recipe/output/readiness), as an image is held to its
+// readiness (recipeOutput.js, canPreview). Its description stays its own, from configuration; readiness only acquires
+// what its needs read. {wait, withdraw, code, section}, or null: a finding withdraws what is drawn, said where it is
+// found (SRC for a selected Classification); what is still to be read, or could not be, draws nothing new. A product of
+// a type declaring nothing of it is drawn from its description alone (judgesMapProduct). The layer watches the operation
+// while it shows it (watchOperations).
+export const mapProductGate = ({state, recipe, product, heldFor}) => {
+    const operation = mapProductOperation(recipe, product)
+    if (!operation) {
+        return null
+    }
+    const {readiness, dependencyValidity} = readOperationReadiness({
+        recipe, operation, loadedRecipes: state.process?.loadedRecipes || {}, heldFor
+    })
+    return operationGate(recipe, readiness, dependencyValidity)
 }
 
-// What the bands a request names add is read for as long as they are its bands: the operations of other bands, or of
-// none, replace those watched. requestStages answers the same list for the same stages, so they are told apart by
-// identity.
-export class BandOperationWatch {
-    #operations = null
-    #watches = new Subscription()
-
-    update({sourceRuntime, recipeId, operations}) {
-        if (operations !== this.#operations) {
-            this.#watches.unsubscribe()
-            this.#operations = operations
-            this.#watches = watchOperations({sourceRuntime, recipeId, operations})
-        }
-    }
-
-    unsubscribe() {
-        this.#watches.unsubscribe()
-        this.#operations = null
-    }
-}
+// The operation a named map product's readiness is read as, where its type declares anything of it; null for the image
+// output, whose read judges its own readiness.
+export const mapProductOperation = (recipe, product) =>
+    product && judgesMapProduct(recipeType(recipe.type), product.name) ? product.name : null
 
 // Has the source runtime read what the operations need of a recipe (watchOutput$ with `operation`) until unsubscribed:
 // whatever is held to them - a chart's action, its open panel - watches them as it judges them.
@@ -126,10 +114,11 @@ const operationGate = (recipe, readiness, validity) => {
         : {wait: true, withdraw: false, code: SOURCE_PENDING, section: null}
 }
 
-// Retrieve of the recipe's image output: {available, gate}, `gate` being why it may not be retrieved
-// (sourceRequirementGate), as far as its sources decide that.
+// Retrieve of the recipe's image output: {available, gate}, `gate` being why it may not be retrieved, as far as its
+// sources decide that (requestGate). A gate that withdraws it is a finding: an open Retrieve closes for it, as a chart
+// does, and the section named explains it; one still checking, or unable to check, only holds the submission.
 export const retrieveAvailability = ({state, recipe, evidenceOwnerOf, heldFor, now}) => {
-    const gate = sourceRequirementGate({state, recipe, operation: IMAGE_OUTPUT, evidenceOwnerOf, heldFor, now})
+    const gate = requestGate({state, recipe, operation: IMAGE_OUTPUT, evidenceOwnerOf, heldFor, now})
     return {available: !gate, gate}
 }
 

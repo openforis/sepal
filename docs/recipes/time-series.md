@@ -28,13 +28,16 @@ action and an open chart follow the chart's own readiness (`PIXEL_OBSERVATIONS`)
 does not read never holds it back. A Classification still to be read holds the chart without a finding. Once found
 unsuitable, a pixel being chosen is let go and an open chart closes, cancelling its request.
 
-A chart band the Classification computes trains it, so the open chart also follows `CLASSIFIED_COLLECTION` (the
-collection classified) while such a band is selected: the Classification's training readiness. That holds the band, not
-the chart (`pixelBandAvailability`, shared with CCDC's chart). While it is
-pending or unavailable nothing is requested for it; once found unable to train (no points, an unusable reused recipe,
-reused features missing), the request is let go and the chart says so, staying open so a band of the images can be
-chosen. The action charts any band, so it follows `PIXEL_OBSERVATIONS` alone and stays offered. Repair reads the band
-again.
+A selected Classification is part of the configured analysis: every Time Series operation - its count image, the
+chart's observations, the download - needs its classifier trainable (`CLASSIFIER`), whatever bands are asked for, a
+band of the images included. That is a policy rather than an execution need: a native band reads nothing of the
+Classification and execution trains nothing for it, but readiness acquires the evidence training would read. While the
+Classification cannot be trained (no points, an unusable reused recipe, reused features missing), SRC names it beside
+the classification field (`classificationReferenceFeedback`), the chart and Retrieve actions are withdrawn, and an
+open chart or Retrieve closes, the chart cancelling its request; SRC alone explains it. While what training needs is
+still being read, or cannot be, an open chart reads nothing and an open Retrieve holds its submission, both staying
+open, nothing found. Repairing the Classification, or selecting none, offers them again without reopening them; the
+band charted and the retrieval settings last submitted are kept. A supplied decision tree needs no training. CCDC applies the same policy.
 
 An open chart reads again whenever what it is computed from changes, such as the Classification's inputs or classifier
 settings. It waits while an edit to the Classification is not yet saved, since storage's copy is what is executed. Its
@@ -58,34 +61,34 @@ returns `count`.
 The collection's measures - what the chart plots and Retrieve downloads - are not bands of this image: the chart asks
 for the observations of a collection band at a pixel, and Retrieve submits `timeseries.download`, exporting the
 indicators of the collection it names to SEPAL. The download is still held to this image's readiness, since what it
-requires concerns the collection both build; the indicators are not required to be its bands. An indicator the
-Classification computes adds, as the chart's band does, its capability (the coded 400) and then the collection
-classified, judged without the AOI (`requireRequestStages$`). Its three Earth Engine requests
+requires concerns the collection both build - the selected Classification trainable among it; the indicators are not
+required to be its bands. Then an indicator the Classification computes must be one it provides (the coded 400,
+`requireProvidedOutputs$`). Its three Earth Engine requests
 (`modules/gee/src/jobs/task/export/timeSeries.js`) check independently: the tile ids before the AOI is tiled, a tile's
 date ranges before any imagery check, and each chunk's export before its collection is built, a destination prepared or
 the export submitted. Planning judges every indicator the download names (`indicators`, or the single `indicator` a
-task from an earlier release names), and each chunk its own; a native chunk of a mixed download needs no training.
+task from an earlier release names), and each chunk its own.
 
-The Retrieve panel holds its selection to the same (`requestGate`, `retrieve.jsx`): the image output's readiness
-whatever is selected, and the collection classified while a classified indicator is selected
-(`requestedBandAvailability`, watched while selected). A hold keeps the selection, disables Apply and is said in the
-panel; a submission, by Apply or the form, is judged again from the session as it stands. A native indicator is
-therefore held, too, while what the image output needs is read or a dependency's save is unacknowledged, as the
-toolbar's Retrieve button is. The chart's observation
-request (`modules/gee/src/jobs/ee/timeSeries/loadObservations.js`) is held to what this type declares observations of
-the requested bands require (`requireRequestedBands$`, `modules/gee/src/jobs/requestedBands.js`).
-`PIXEL_OBSERVATIONS`, for any band, needs the classifier inputs, and the Classification and source imagery resolving.
-A band the Classification computes adds the stage `CLASSIFIED_COLLECTION` (`requestStages`,
-`lib/js/shared/src/recipe/classifiedOutputs.js`): the classifier inputs and the Classification's `CLASSIFIER`
-readiness, meaning its training data and its reused recipes' input imagery and sampled features, judged without the
-Time Series' AOI. The check runs before the request builds the pixel or the
-collection or evaluates anything, and it judges the recipe at the clicked point: its AOI, which the chart does not
-read, is not required, and the submitted recipe is unchanged. The bands it charts are not checked against `count`, and
-the count image is not described. A classified band is judged in the order building the collection finds things: what
-any band needs (`PIXEL_OBSERVATIONS`), then whether the Classification provides it, then its training. An output it
-does not provide is refused as the collection refuses it, a client error coded `UNSUPPORTED_CLASSIFIED_OUTPUT`
-(`classifiedOutputRefusal.js`), whether or not the Classification can be trained. CCDC's observations are held the
-same way. Change Alerts' observations are judged as the Time Series
+The Retrieve panel holds a download to the same as any Retrieve holds an export (the shared `retrievePanel.jsx`): it
+reads and watches the image output while open (`withRetrieveOutput`), and that read's readiness, validity, listing,
+asset and save authority hold the submission (`outputDecision`). What is particular to Time Series is the indicators
+offered and holding a selection to them (`requestGate`, `retrieve.jsx`), the Classification's record taken from the
+session or from that same read. A finding the toolbar's Retrieve action is withdrawn for - a Classification that
+cannot be trained - closes the panel (`retrieveAvailability`), as it closes a chart. A hold keeps the
+selection and disables Apply; a submission, by Apply or the form, is judged again from the session as it stands, so
+one made before the panel closes is refused. A refused submission saves nothing and leaves the panel open
+(`accepts`, `widget/form/panel.jsx`). Any indicator is held, with the panel open, while what the image output
+needs is read or a dependency's save is unacknowledged. The chart's observation request (`modules/gee/src/jobs/ee/timeSeries/loadObservations.js`) is held
+to what this type declares its observations require, then to the requested bands (`requireRequestedBands$`,
+`modules/gee/src/jobs/requestedBands.js`). `PIXEL_OBSERVATIONS` needs the classifier inputs, the source imagery
+resolving, and the selected Classification's `CLASSIFIER` readiness - its training data and its reused recipes' input
+imagery and sampled features, judged over the Classification's own imagery. The check runs before the request builds
+the pixel or the collection or evaluates anything, and it judges the recipe at the clicked point: its AOI, which the
+chart does not read, is not required, and the submitted recipe is unchanged. The bands it charts are not checked
+against `count`, and the count image is not described. The configuration is judged first, the Classification's
+training included; then a band the Classification computes must be one it provides, refused as the collection refuses
+it, a client error coded `UNSUPPORTED_CLASSIFIED_OUTPUT` (`classifiedOutputRefusal.js`). A Classification that cannot
+be trained therefore now precedes that capability error. CCDC's observations are held the same way. Change Alerts' observations are judged as the Time Series
 collection it monitors (`observedCollection`).
 
 The task (`modules/task/src/runner/operations/timeSeriesExport.js`) exports one indicator per Earth Engine chunk
@@ -169,30 +172,33 @@ Earth Engine is asked.
   indicator, repair, unobservable input, the coded capability refusal and its precedence, and native indicators
   planned without observing the Classification.
 - `modules/gui/src/app/home/body/process/recipe/timeSeries/panels/retrieve/retrieveTrainingReadiness.test.jsx` - the
-  panel's holds: a classified indicator over an untrainable Classification held and said, by Apply and the form; a
-  mixed selection submitting its native indicator once the classified one is let go; repair, saves, pending and
-  unobservable imagery; a submission judged from the session as it stands; a native indicator held once the image
-  output can no longer run, until repaired; the operations watched.
+  panel's lifecycle beside the real Retrieve action and SRC mark: an open panel closing, its action disabled and
+  nothing submitted, once the Classification cannot be trained, even in the event submitting it; repair offering it
+  again, reopening on what was last submitted; saves, pending and unobservable imagery, an empty selection and an
+  unnamed folder holding it open; deselection; a submission judged from the session as it stands; the image output
+  alone watched, let go on closing while SRC's mark keeps reading.
+- `modules/gui/src/app/home/body/process/recipe/timeSeries/classificationFeedback.test.jsx` - an untrainable
+  Classification named beside the classification field, SRC marked, Retrieve and the chart held naming SRC, Apply not
+  held; repair, deselection and a decision tree releasing them.
 - `modules/gee/test/ee/timeSeries/classifiedOutputs.test.js` - over optical, radar and Planet collections, the output
   modes each classified request constructs; an unsupported regression refused before anything is processed; native
   and positional bands reading nothing of the Classification.
 - `modules/gee/test/jobs/ee/timeSeries/loadObservations.test.js` - the chart's observations refused for an
   incompatible classification before any chart work, unchanged after repair, an unreadable classification failing as
   a read, and no count image built; charted over an AOI that cannot be read, refers back or is incomplete, reading
-  none of it, and without changing the submitted recipe; a classified band refused for each training finding before
-  any chart work, answered after repair, unavailable input observation failing as a read, an unprovided output refused
-  as the collection refuses it whether or not the Classification can be trained but after its classifier inputs, and
-  the bands of the images answered over the same Classifications; CCDC's observations refused and
-  answered the same way, describing nothing of its segments, a classified band included; Change Alerts' monitored
-  collection.
-- `lib/js/shared/test/recipe/classifiedOutputTraining.test.js` - `CLASSIFIED_COLLECTION` for Time Series and CCDC
-  beside Phenology's and CCDC's configured classified bands: each training finding at the recipe it concerns, pending and
-  unavailable evidence, repair, and bands of the images observing nothing of the Classification.
-- `modules/gui/src/app/home/body/process/recipe/classifiedBandChart.test.jsx` - an open Time Series or CCDC chart's
-  classified band held, with the chart open and its action offered: said where the Classification cannot be trained,
-  its request let go, read after repair or once the repair is saved, read once pending imagery is observed, never read
-  while it cannot be; a band of the images read instead, and without waiting; the operations watched, released with
-  the band and the chart.
+  none of it, and without changing the submitted recipe; native and classified bands refused for each training finding
+  before any chart work, answered after repair, unavailable input observation failing as a read; an unprovided output
+  refused as the collection refuses it once the Classification can be trained, after its training otherwise; one
+  operation judged whatever band; no selection and a decision tree reading nothing for training; CCDC's observations
+  refused and answered the same way, whatever its breakpoint bands; Change Alerts' monitored collection.
+- `lib/js/shared/test/recipe/classifiedOutputTraining.test.js` - `CLASSIFIER` for every Time Series and CCDC operation,
+  native and classified, beside Phenology's classified band: each training finding at the recipe it concerns, decision
+  trees, pending and unavailable evidence, repair; no selection needing nothing; Phenology's native band observing
+  nothing of the Classification.
+- `modules/gui/src/app/home/body/process/recipe/selectedClassificationChart.test.jsx` - an open Time Series or CCDC
+  chart, native or classified band, closing and cancelling once the Classification cannot be trained, its action
+  withdrawn until repair, the repair's save or deselection, its band kept; pending or unobservable imagery reading
+  nothing, the chart open; the operations watched, released with the chart.
 - `modules/gui/src/app/home/body/process/recipe/pixelObservationsAvailability.test.js`,
   `chartPixelButton.test.jsx` and `pixelObservationsChart.test.jsx` - the chart's availability, said in Sources,
   over an unresolvable AOI, while the Classification is read and as the runtime settles it; the action withdrawn

@@ -649,10 +649,16 @@ describe('settling whether an operation can run, without describing', () => {
         }
     }
     const atAnyPixel = {...timeSeries, model: {...timeSeries.model, aoi: undefined}}
+    // Trained on points of its own: the observations need it trainable (type/timeSeries.js).
     const classification = included => ({
         id: 'classification-1',
         type: 'CLASSIFICATION',
-        model: {inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]}}
+        model: {
+            inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]},
+            legend: {entries: [{value: 1}, {value: 2}]},
+            trainingData: {dataSets: [{dataSetId: 'collected', type: 'COLLECTED', referenceData: [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]}]},
+            classifier: {type: 'RANDOM_FOREST'}
+        }
     })
     const assessing = ({environment$, recipe}) => {
         const states = []
@@ -677,14 +683,17 @@ describe('settling whether an operation can run, without describing', () => {
         expect(state.bandsCalls).toEqual([])
     })
 
-    it('is ready once the classification is one the scenes can feed', () => {
+    it('is ready once the classification is one the scenes can feed, asking Earth Engine only for its input, to judge its training', () => {
         const env = environmentOf()
         env.set(environment({catalogue: catalogue([atAnyPixel])}))
         const assessed = assessing({environment$: env.environment$, recipe: atAnyPixel})
 
         emitRecipe('classification-1', classification(['red', 'nir', 'ndvi']))
+        expect(assessed.latest()).toMatchObject({status: 'LOADING'})
+        emit('ASSET:users/x/input', [{name: 'red'}, {name: 'nir'}, {name: 'ndvi'}].map(band => ({...band, arrayDimensions: 0})))
 
         expect(assessed.latest()).toMatchObject({status: 'COMPLETE', readiness: RUNNABLE})
+        expect(state.bandsCalls.map(({asset}) => asset)).toEqual(['users/x/input'])
     })
 
     it('is unavailable, finding nothing, where a record it needs cannot be read', () => {

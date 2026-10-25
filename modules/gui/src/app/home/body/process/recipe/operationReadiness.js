@@ -1,8 +1,9 @@
 import {NEEDS_EVIDENCE, readReadiness} from '#sepal/recipe/output/readImageOutput'
-import {CLASSIFIED_COLLECTION, NOT_READY, PIXEL_OBSERVATIONS, PIXEL_SEGMENTS} from '#sepal/recipe/output/readiness'
+import {NOT_READY, PIXEL_OBSERVATIONS, PIXEL_SEGMENTS} from '#sepal/recipe/output/readiness'
 import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
 import {dependencyValidity, INVALID, VALID} from '#sepal/recipe/source/dependencyValidity'
 import {MISSING_SOURCE} from '#sepal/recipe/source/diagnostic'
+import {directSourceEdges} from '#sepal/recipe/source/directSources'
 
 import {getRecipeType} from '../recipeTypeRegistry'
 import {buildMapDependencyGraph} from './mapDependencyGraph'
@@ -74,15 +75,27 @@ export const operationLoading = ({recipeId, operation, catalogue}) => {
 }
 
 // The section of the recipe that a finding over it is said in, as its type's declarations over its output locate the
-// same finding (sourceRequirements.js), or null where none does.
+// same finding (sourceRequirements.js) - its own, or one of a recipe it references, where a declaration names that
+// edge's role (`upstreamReferences`) - or null where none does.
 export const sectionOfFindings = (recipe, findings) => {
     const declarations = (getRecipeType(recipe.type)?.sourceRequirements || []).filter(({outputDiagnostics}) => outputDiagnostics)
-    const located = findings
+    const own = findings
         .filter(({recipePath = []}) => recipePath.length === 1 && recipePath[0] === recipe.id)
         .flatMap(finding => declarations.filter(({outputDiagnostics: {codes, itemOf}}) =>
             codes.includes(finding.code) && itemOf(finding, recipe, {recipeNames: {}})))
-    return located[0]?.section.label || null
+    const upstream = findings
+        .filter(({recipePath = []}) => recipePath.length > 1 && recipePath[0] === recipe.id)
+        .flatMap(({recipePath}) => declarations.filter(({outputDiagnostics: {upstreamReferences = []}}) =>
+            referencesThrough(recipe, upstreamReferences).includes(recipePath[1])))
+    return [...own, ...upstream][0]?.section.label || null
 }
+
+// The recipes the recipe's own edges in `roles` name.
+const referencesThrough = (recipe, roles) => roles.length
+    ? directSourceEdges(recipe).edges
+        .filter(({role, reference}) => roles.includes(role) && reference.type === 'RECIPE_REF')
+        .map(({reference}) => reference.id)
+    : []
 
 // The recipe an operation runs, the same object for the same recipe, so a render reuses its graph - and what is read
 // for it, its assets included, is read of this one.
@@ -99,9 +112,9 @@ export const recipeForOperation = (recipe, operation) => {
 
 const AT_ANY_PIXEL = new WeakMap()
 
-// The operations that read no AOI the recipe configures: a pixel chart's, run at the point clicked, and classifying the
-// collection, which trains on what the Classification reads, over its own imagery.
-const AT_PIXEL = [PIXEL_OBSERVATIONS, PIXEL_SEGMENTS, CLASSIFIED_COLLECTION]
+// The operations that read no AOI the recipe configures: a pixel chart's, run at the point clicked. A Classification they
+// train is judged over its own imagery.
+const AT_PIXEL = [PIXEL_OBSERVATIONS, PIXEL_SEGMENTS]
 
 // The graph is cached by identity (mapDependencyGraph.js), so its read is too: per operation.
 const sessionReadOf = (graph, operation) => {

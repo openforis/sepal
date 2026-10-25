@@ -2,7 +2,8 @@ import {describe, expect, it, vi} from 'vitest'
 
 // Whether a Time Series' or a CCDC's pixel chart may read observations, through their real registrations and the
 // shared readiness of PIXEL_OBSERVATIONS: the Classification their Sources select must be one the collection's images
-// can feed, judged at whatever pixel is chosen, so the AOI is no concern of it. What the session does not hold is
+// can feed, and trainable, whatever band is charted (type/timeSeries.js, ccdc.js), judged at whatever pixel is chosen,
+// so the AOI is no concern of it. Either problem withdraws the observations, naming Sources, where it is said. What the session does not hold is
 // waited for, under a key naming the operation, and an answer the runtime holds for another question never stands in.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
@@ -31,13 +32,22 @@ describe.each(['CCDC', 'TIME_SERIES'])('a %s\'s pixel observations', type => {
         expect(gate).toMatchObject({withdraw: true, wait: false, code: 'CONFIGURATION_UNMET', section: sourcesSectionOf(type)})
     })
 
-    it('are available again once the classification is one the images can feed, nothing left to read', () => {
+    it('are not available where its classification cannot be trained, said in Sources', () => {
         const recipe = recipeOf(type)
 
-        const {available} = assess(recipe, classificationOver(['red', 'nir', 'ndvi']))
+        const {available, gate} = assess(recipe, trainable({points: false}))
+
+        expect(available).toBe(false)
+        expect(gate).toMatchObject({withdraw: true, wait: false, code: 'CONFIGURATION_UNMET', section: sourcesSectionOf(type)})
+    })
+
+    it('are available again once the classification is one the images can feed and can be trained, nothing left to read', () => {
+        const recipe = recipeOf(type)
+
+        const {available} = assess(recipe, trainable())
 
         expect(available).toBe(true)
-        expect(read(recipe, classificationOver(['red', 'nir', 'ndvi'])).acquisition).toBe(null)
+        expect(read(recipe, trainable()).acquisition).toBe(null)
     })
 
     it.each([
@@ -47,7 +57,7 @@ describe.each(['CCDC', 'TIME_SERIES'])('a %s\'s pixel observations', type => {
     ])('are available over an AOI of %s, which they do not read', (_case, aoi) => {
         const recipe = recipeOf(type, {aoi})
 
-        expect(assess(recipe, classificationOver(['red', 'nir', 'ndvi'])).available).toBe(true)
+        expect(assess(recipe, trainable()).available).toBe(true)
     })
 
     it('wait, finding nothing, while the session does not hold the classification, naming the operation to read it for', () => {
@@ -134,10 +144,29 @@ const classificationOver = included => ({
     model: {inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]}}
 })
 
+// A Landsat mosaic, described from its configuration, so a Classification over it needs no observation.
+const MOSAIC = {
+    id: 'mosaic-1',
+    type: 'MOSAIC',
+    model: {sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, cloudPercentageThreshold: 100}, compositeOptions: {corrections: ['SR'], compose: 'MEDIAN'}}
+}
+
+// A Classification of two classes over optical bands of that mosaic, storing points unless `points` is false.
+const trainable = ({points = true} = {}) => ({
+    id: CLASSIFICATION,
+    type: 'CLASSIFICATION',
+    model: {
+        inputImagery: {images: [{imageId: 'i-1', type: 'RECIPE_REF', id: MOSAIC.id, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['red', 'nir']}]}]},
+        legend: {entries: [{value: 1}, {value: 2}]},
+        trainingData: {dataSets: points ? [{dataSetId: 'collected', type: 'COLLECTED', referenceData: [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]}] : []},
+        classifier: {type: 'RANDOM_FOREST'}
+    }
+})
+
 const isObservationsKey = ({kind, operation}) => kind === 'READINESS' && operation === 'PIXEL_OBSERVATIONS'
 
 const loadedRecipesOf = (recipe, classification) =>
-    Object.fromEntries([recipe, classification].filter(Boolean).map(record => [record.id, record]))
+    Object.fromEntries([recipe, classification, classification && MOSAIC].filter(Boolean).map(record => [record.id, record]))
 
 const assess = (recipe, classification, heldFor = () => null) =>
     pixelOperationsAvailability({state: {process: {loadedRecipes: loadedRecipesOf(recipe, classification)}}, recipe, heldFor, operations: ['PIXEL_OBSERVATIONS']})

@@ -37,12 +37,14 @@ describe.each(['CCDC', 'TIME_SERIES', 'PHENOLOGY'])('a %s', type => {
         expect(retrieveAvailability({state, recipe, heldFor: NOTHING_HELD}).available).toBe(false)
     })
 
+    // A Time Series or CCDC trains the Classification it selects whatever it asks of it (type/timeSeries.js, ccdc.js),
+    // so the one selected here stores points.
     it.each([
-        ['selecting no classification', undefined, ['VV_mean']],
-        ['selecting one the images can feed', CLASSIFICATION, ['red', 'nir', 'ndvi']]
-    ])('marks nothing %s', (_case, classification, included) => {
+        ['selecting no classification', undefined, () => [classificationOver(['VV_mean'])]],
+        ['selecting one the images can feed', CLASSIFICATION, () => [classifiedBy({type: 'RANDOM_FOREST'}), MOSAIC]]
+    ])('marks nothing %s', (_case, classification, records) => {
         const recipe = recipeOf(type, {classification})
-        const state = stateOf(recipe, classificationOver(included))
+        const state = stateOf(recipe, ...records())
 
         expect(sourceProblemsOfState(state, ID, undefined, Date.now(), NOTHING_HELD)).toEqual({})
     })

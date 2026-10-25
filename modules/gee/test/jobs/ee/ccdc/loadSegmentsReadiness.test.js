@@ -4,8 +4,10 @@ import {beforeEach, describe, it, mock} from 'node:test'
 import {firstValueFrom, of, throwError} from 'rxjs'
 
 // What a segment chart's request (/ccdc/loadSegments) is held to before anything is segmented or read at its pixel. A
-// CCDC charted itself is held to its PIXEL_SEGMENTS readiness, judged and segmented at the clicked point; a recipe
-// selected as a source is held to its own image's readiness, over its own AOI; an asset is read as it is. The real job,
+// CCDC charted itself is held to its PIXEL_SEGMENTS readiness - the Classification its Sources select trainable among it,
+// whatever bands are fitted (type/ccdc.js) - judged and segmented at the clicked point; a recipe selected as a source is
+// held to its own image's readiness, over its own AOI, which a CCDC beneath it brings its Classification's training to;
+// an asset is read as it is. The real job,
 // imageFactory, recipeRef, Masking, CCDC, segment source and readiness run; recipe reads, the collection and Earth
 // Engine are substituted.
 
@@ -97,7 +99,7 @@ beforeEach(() => {
 
 describe('the segments of a CCDC charted itself', () => {
     inOperation('are refused, segmenting and reading nothing at the pixel, where its classification\'s classifier the scenes cannot feed', async () => {
-        state.catalogue[CLASSIFICATION] = classification(RADAR_FEATURES)
+        state.catalogue[CLASSIFICATION] = trainable({included: RADAR_FEATURES})
 
         await assert.rejects(chart(ccdcOf()), /cannot run: UNSUPPLIED_CLASSIFIER_INPUTS$/)
 
@@ -105,7 +107,7 @@ describe('the segments of a CCDC charted itself', () => {
     })
 
     inOperation('are read at the pixel once the classification is one the scenes can feed, segmented there', async () => {
-        state.catalogue[CLASSIFICATION] = classification(COMPATIBLE)
+        state.catalogue[CLASSIFICATION] = trainable()
 
         const segments = await chart(ccdcOf())
 
@@ -118,7 +120,7 @@ describe('the segments of a CCDC charted itself', () => {
         ['the CCDC itself', {type: 'RECIPE', id: 'ccdc-1'}]
     ]) {
         inOperation(`are read over an AOI of ${_case}, which segmenting at the pixel does not read, leaving the request as it was`, async () => {
-            state.catalogue[CLASSIFICATION] = classification(COMPATIBLE)
+            state.catalogue[CLASSIFICATION] = trainable()
             const submitted = deepFrozen(ccdcOf({aoi}))
 
             const segments = await chart(submitted)
@@ -136,77 +138,24 @@ describe('the segments of a CCDC charted itself', () => {
     })
 })
 
-// Every segmentation fits its breakpoint bands, so one the Classification computes trains its classifier on that
-// Classification's training data and applies it to every image of the collection: what training needs refuses the
-// segments. Breakpoint bands of the images need none of it.
-describe('the segments of a CCDC fitting a breakpoint band its Classification computes', () => {
-    const POINTS = [{x: 1, y: 1, class: 1}, {x: 1, y: 2, class: 1}, {x: 2, y: 1, class: 2}, {x: 2, y: 2, class: 2}]
-    const trainedClassification = ({points = []} = {}) => {
-        const {model, ...record} = classification(['red', 'nir'])
-        return {
-            ...record,
-            model: {
-                ...model,
-                legend: {entries: [{value: 1}, {value: 2}]},
-                trainingData: {dataSets: points.length ? [{type: 'COLLECTED', referenceData: points}] : []},
-                classifier: {type: 'RANDOM_FOREST'}
-            }
-        }
-    }
-
-    inOperation('are refused, segmenting and reading nothing at the pixel, where the Classification stores no point', async () => {
-        state.catalogue[CLASSIFICATION] = trainedClassification()
-
-        await assert.rejects(chart(ccdcOf({breakpointBands: ['ndvi', 'probability_1']})), /cannot run: NO_TRAINING_DATA$/)
-
-        assertNothingCharted()
-    })
-
-    inOperation('are read at the pixel once the Classification stores points', async () => {
-        state.catalogue[CLASSIFICATION] = trainedClassification({points: POINTS})
-        state.assetBands[CLASSIFICATION_INPUT] = ['red', 'nir']
-
-        const segments = await chart(ccdcOf({breakpointBands: ['ndvi', 'probability_1']}))
-
-        assert.deepEqual(segments, SEGMENTS)
-        assert.deepEqual(state.collections, [PIXEL_AOI])
-    })
-
-    inOperation('are read at the pixel for breakpoint bands of the images while the Classification stores no point', async () => {
-        state.catalogue[CLASSIFICATION] = trainedClassification()
-
-        const segments = await chart(ccdcOf({breakpointBands: ['ndvi']}))
-
-        assert.deepEqual(segments, SEGMENTS)
-        assert.deepEqual(state.collections, [PIXEL_AOI])
-    })
-})
-
-// A band the chart asks for that the Classification computes is fitted with the breakpoint bands (fittedMeasures), so
-// the segments train that Classification on its training data whatever the breakpoint bands are: what training needs
-// refuses them, after what the CCDC's own configuration requires and after the outputs asked for being ones the
-// Classification provides. A band of the images needs none of it.
-describe('the segments of a CCDC charted itself for a band its Classification computes', () => {
+// The Classification a CCDC's Sources select is part of its analysis: what training it needs refuses the segments, at
+// the recipe it concerns, before anything is segmented - for a band it computes, fitted with the breakpoint bands, and
+// for a band of the images alike, whichever the breakpoint bands are.
+describe('the segments of a CCDC charted itself over a Classification that cannot be trained', () => {
     for (const [_case, catalogue, code] of [
         ['stores no points', () => ({[CLASSIFICATION]: trainable({points: []})}), 'NO_TRAINING_DATA'],
         ['reuses a recipe without input imagery', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, images: []})}), 'MISSING_ROLE'],
         ['reuses a recipe sampling fewer features', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, included: ['red']})}), 'MISSING_TRAINING_FEATURES']
     ]) {
-        inOperation(`are refused, segmenting nothing, where the Classification ${_case}`, async () => {
-            state.catalogue = catalogue()
+        for (const [band, breakpointBands] of [['probability_1', ['ndvi']], ['ndvi', ['ndvi']], ['ndvi', ['ndvi', 'probability_1']]]) {
+            inOperation(`are refused for ${band}, breakpoint bands ${breakpointBands.join(', ')}, segmenting nothing, where the Classification ${_case}`, async () => {
+                state.catalogue = catalogue()
 
-            await assert.rejects(chartBand(ccdcOf(), CLASSIFIED), new RegExp(`ccdc-1 cannot run: ${code}$`))
+                await assert.rejects(chartBand(ccdcOf({breakpointBands}), band), new RegExp(`ccdc-1 cannot run: ${code}$`))
 
-            assertNothingCharted()
-        })
-
-        inOperation(`are read for a band of the images, observing nothing of the Classification's input, where it ${_case}`, async () => {
-            state.catalogue = catalogue()
-
-            assert.deepEqual(await chartBand(ccdcOf(), 'ndvi'), SEGMENTS)
-            assert.deepEqual(state.fitted, [['ndvi']])
-            assert.deepEqual(state.described, [])
-        })
+                assertNothingCharted()
+            })
+        }
     }
 
     it('are read once the Classification stores points again, the band fitted with the breakpoint bands', async () => {
@@ -229,8 +178,8 @@ describe('the segments of a CCDC charted itself for a band its Classification co
     })
 })
 
-// The CCDC's own configuration is judged first, a classified breakpoint band's training and outputs included; then the
-// outputs the request adds, refused as the collection refuses them; then the training they add.
+// The CCDC's own configuration is judged first, its Classification's training and a classified breakpoint band's output
+// included; then the outputs the request adds, refused as the collection refuses them.
 describe('the segments of a CCDC charted itself where more than one thing is wrong', () => {
     const SVM = {type: 'SVM', svmType: 'C_SVC'}
 
@@ -242,8 +191,16 @@ describe('the segments of a CCDC charted itself where more than one thing is wro
         assertNothingCharted()
     })
 
-    inOperation('are refused for a requested output the Classification does not provide, as a client\'s error, before what training needs', async () => {
+    inOperation('are refused for the Classification\'s training before a requested output it does not provide, the breakpoint bands native', async () => {
         state.catalogue = {[CLASSIFICATION]: trainable({points: [], classifier: SVM})}
+
+        await assert.rejects(chartBand(ccdcOf(), 'regression'), /ccdc-1 cannot run: NO_TRAINING_DATA$/)
+
+        assertNothingCharted()
+    })
+
+    inOperation('are refused for a requested output a trainable Classification does not provide, as a client\'s error', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({classifier: SVM})}
 
         await assert.rejects(chartBand(ccdcOf(), 'regression'), error =>
             error.errorCode === 'UNSUPPORTED_CLASSIFIED_OUTPUT' && error.statusCode === 400
@@ -262,7 +219,7 @@ describe('the segments of a CCDC charted itself where more than one thing is wro
     })
 
     inOperation('are refused for classifier inputs the scenes cannot feed before anything the request adds', async () => {
-        state.catalogue = {[CLASSIFICATION]: trainable({points: [], included: RADAR_FEATURES, classifier: SVM})}
+        state.catalogue = {[CLASSIFICATION]: trainable({included: RADAR_FEATURES, classifier: SVM})}
 
         await assert.rejects(chartBand(ccdcOf(), 'regression'), /ccdc-1 cannot run: UNSUPPLIED_CLASSIFIER_INPUTS$/)
 
@@ -270,46 +227,55 @@ describe('the segments of a CCDC charted itself where more than one thing is wro
     })
 })
 
-// The GUI's chart watches the same (ccdc/panels/chartPixel.jsx): for a band of the images its segments' operation
-// alone, for a band the Classification computes the collection classified beside it.
+// The GUI's chart watches the same (ccdc/panels/chartPixel.jsx): its segments' operation alone, whatever band is asked.
 describe('the operations a CCDC chart\'s segment request is judged by', () => {
-    inOperation('are its segments\' for a band of the images', async () => {
-        state.catalogue = {[CLASSIFICATION]: trainable()}
+    for (const band of ['ndvi', 'probability_1']) {
+        inOperation(`are its segments' alone for ${band}`, async () => {
+            state.catalogue = {[CLASSIFICATION]: trainable()}
 
-        await chartBand(ccdcOf(), 'ndvi')
+            await chartBand(ccdcOf(), band)
 
-        assert.deepEqual(state.judged, ['PIXEL_SEGMENTS'])
+            assert.deepEqual(state.judged, ['PIXEL_SEGMENTS'])
+        })
+    }
+})
+
+// Selecting none, or a supplied decision tree, needs no training.
+describe('the segments of a CCDC needing no training', () => {
+    inOperation('are read selecting no Classification, reading none', async () => {
+        const {model: {sources: {classification: _classification, ...sources}, ...model}, ...recipe} = ccdcOf()
+
+        assert.deepEqual(await chart({...recipe, model: {...model, sources}}), SEGMENTS)
+        assert.deepEqual(state.recipesRead, [])
     })
 
-    inOperation('are its segments\' and the collection classified, without the CCDC\'s AOI, for a band its Classification computes', async () => {
-        state.catalogue = {[CLASSIFICATION]: trainable()}
+    inOperation('are read over a supplied decision tree storing no points', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({points: [], classifier: {type: 'DECISION_TREE', decisionTree: '1) root 9 0 0 (0 1) *'}})}
 
-        await chartBand(ccdcOf(), CLASSIFIED)
-
-        assert.deepEqual(state.judged, ['PIXEL_SEGMENTS', 'CLASSIFIED_COLLECTION'])
+        assert.deepEqual(await chart(ccdcOf()), SEGMENTS)
     })
 })
 
 describe('the segments of a recipe selected as a source', () => {
     inOperation('are refused, segmenting and reading nothing, where the CCDC a Masking masks cannot run', async () => {
-        state.catalogue = {[MASKING]: maskingOf(), 'ccdc-1': ccdcOf(), [CLASSIFICATION]: classification(RADAR_FEATURES)}
+        state.catalogue = {[MASKING]: maskingOf(), 'ccdc-1': ccdcOf(), [CLASSIFICATION]: trainable({included: RADAR_FEATURES})}
 
         await assert.rejects(chart(MASKED_REFERENCE), /cannot run: UNSUPPLIED_CLASSIFIER_INPUTS$/)
 
         assertNothingCharted()
     })
 
-    inOperation('are read once it can, masked, without describing the CCDC or its mask', async () => {
-        state.catalogue = {[MASKING]: maskingOf(), 'ccdc-1': ccdcOf(), [CLASSIFICATION]: classification(COMPATIBLE)}
+    inOperation('are read once it can, masked, describing neither the CCDC nor its mask, only its Classification\'s input', async () => {
+        state.catalogue = {[MASKING]: maskingOf(), 'ccdc-1': ccdcOf(), [CLASSIFICATION]: trainable()}
 
         const segments = await chart(MASKED_REFERENCE)
 
         assert.deepEqual(segments, {source: 'segments', masks: [MASK_ASSET]})
-        assert.deepEqual(state.described, [])
+        assert.deepEqual(state.described.filter(({name}) => name).map(({name}) => name), COMPATIBLE)
     })
 
     inOperation('are refused for what the selected recipe itself requires', async () => {
-        state.catalogue = {[MASKING]: maskingOf({mask: null}), 'ccdc-1': ccdcOf(), [CLASSIFICATION]: classification(COMPATIBLE)}
+        state.catalogue = {[MASKING]: maskingOf({mask: null}), 'ccdc-1': ccdcOf(), [CLASSIFICATION]: trainable()}
 
         await assert.rejects(chart(MASKED_REFERENCE), /cannot run: MISSING_ROLE$/)
 
@@ -318,7 +284,7 @@ describe('the segments of a recipe selected as a source', () => {
 
     // Running the selected recipe builds the CCDC over the CCDC's own AOI, so that AOI must be had.
     inOperation('need the AOI of the recipe running beneath it, which they read', async () => {
-        state.catalogue = {[MASKING]: maskingOf(), 'ccdc-1': ccdcOf({aoi: {type: 'RECIPE', id: 'gone'}}), [CLASSIFICATION]: classification(COMPATIBLE)}
+        state.catalogue = {[MASKING]: maskingOf(), 'ccdc-1': ccdcOf({aoi: {type: 'RECIPE', id: 'gone'}}), [CLASSIFICATION]: trainable()}
 
         await assert.rejects(chart(MASKED_REFERENCE), error => error.message === 'No such recipe: gone')
 
@@ -363,13 +329,6 @@ const maskingOf = ({mask = {type: 'ASSET', id: MASK_ASSET}} = {}) => ({
     id: MASKING,
     type: 'MASKING',
     model: {imageToMask: {type: 'RECIPE_REF', id: 'ccdc-1'}, imageMask: mask}
-})
-
-const CLASSIFICATION_INPUT = 'users/x/input'
-const classification = included => ({
-    id: CLASSIFICATION,
-    type: 'CLASSIFICATION',
-    model: {inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: CLASSIFICATION_INPUT, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]}}
 })
 
 const chart = recipe => chartBand(recipe, 'ndvi')

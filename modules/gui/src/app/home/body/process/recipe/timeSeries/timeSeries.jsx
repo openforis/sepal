@@ -10,7 +10,7 @@ import {Notifications} from '~/widget/notifications'
 
 import {recipeAccess} from '../../recipeAccess'
 import {Aoi} from '../aoi'
-import {collectionClassifierRequirements} from '../collectionClassifierRequirements'
+import {classificationReferenceFeedback, collectionClassifierRequirements} from '../collectionClassifierRequirements'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {bandPresentation} from './bands'
 import {TimeSeriesToolbar} from './panels/timeSeriesToolbar'
@@ -76,6 +76,8 @@ const TimeSeries = compose(
     recipeAccess()
 )
 
+const SOURCES = {id: 'sources', label: 'process.timeSeries.panel.sources.button'}
+
 export default () => ({
     id: 'TIME_SERIES',
     labels: {
@@ -87,7 +89,10 @@ export default () => ({
     components: {
         recipe: TimeSeries
     },
-    sourceRequirements: collectionClassifierRequirements({id: 'sources', label: 'process.timeSeries.panel.sources.button'}),
+    sourceRequirements: [
+        ...collectionClassifierRequirements(SOURCES),
+        classificationReferenceFeedback(SOURCES)
+    ],
     imageSource: false,
     // Keeps a time series out of other recipes' source pickers. It says nothing of its image: that is declared, and
     // its map shows it.
