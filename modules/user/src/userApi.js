@@ -36,7 +36,7 @@ export class UserApi {
     async authenticate(ctx) {
         const {username, password} = readBody(ctx)
         const user = isText(username) ? await this.#repository.findByUsername(username) : null
-        if (authenticates(user, password)) {
+        if (await authenticates(user, password)) {
             await this.#repository.setLastLoginTime(user.username)
             await this.#maybeRehashPassword(user, password)
             try {
@@ -113,8 +113,8 @@ export class UserApi {
     async changePassword(ctx) {
         const {oldPassword, newPassword} = readBody(ctx)
         const user = await this.#repository.findByUsername(ctx.state.currentUser.username)
-        if (isText(newPassword) && verifies(user, oldPassword)) {
-            await this.#repository.updatePassword(user.username, hashPassword(newPassword))
+        if (isText(newPassword) && await verifies(user, oldPassword)) {
+            await this.#repository.updatePassword(user.username, await hashPassword(newPassword))
             ctx.body = {status: 'success', message: 'Password changed'}
         } else {
             ctx.body = {status: 'failure', message: 'Invalid old password'}
@@ -247,7 +247,7 @@ export class UserApi {
             return
         }
         const wasPending = user.status === 'PENDING'
-        await this.#repository.updatePassword(user.username, hashPassword(password))
+        await this.#repository.updatePassword(user.username, await hashPassword(password))
         await this.#repository.updateStatus(user.username, 'ACTIVE')
         await this.#repository.invalidateToken(token)
         // Leaving PENDING (covers unlock: LOCKED -> PENDING -> reset link) must guarantee complete
@@ -394,7 +394,7 @@ export class UserApi {
     async authPassword(ctx) {
         const {username, password} = readBody(ctx)
         const user = isText(username) ? await this.#repository.findByUsername(username) : null
-        if (authenticates(user, password)) {
+        if (await authenticates(user, password)) {
             await this.#maybeRehashPassword(user, password)
             ctx.body = {status: 'success'}
         } else {
@@ -423,7 +423,7 @@ export class UserApi {
     async #maybeRehashPassword(user, password) {
         if (needsRehash(user.passwordHash)) {
             try {
-                await this.#repository.updatePassword(user.username, hashPassword(password))
+                await this.#repository.updatePassword(user.username, await hashPassword(password))
                 log.info(`Upgraded password hash for '${user.username}'`)
             } catch (error) {
                 log.warn(`Password hash upgrade failed for '${user.username}': ${error.message}`)
@@ -503,12 +503,12 @@ const suppliedUsername = ctx => {
 
 // Only a string can be verified: a hash is compared over the password's bytes, and Buffer.from turns
 // a value of any other type into bytes of its own rather than refusing it.
-const verifies = (user, password) =>
-    Boolean(user?.passwordHash) && isText(password) && verifyPassword(password, user.passwordHash)
+const verifies = async (user, password) =>
+    Boolean(user?.passwordHash) && isText(password) && await verifyPassword(password, user.passwordHash)
 
 // What both password endpoints mean by a successful login.
-const authenticates = (user, password) =>
-    user?.status === 'ACTIVE' && verifies(user, password)
+const authenticates = async (user, password) =>
+    user?.status === 'ACTIVE' && await verifies(user, password)
 
 // The username is validated lowercased, because that is the spelling insertUser will store.
 const isValidNewUser = ({username, name, email}) =>
