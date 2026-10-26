@@ -9,9 +9,10 @@ import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
-// OPT's index gate over a real store and form: an index the classification's imagery and the monitoring data cannot
+// OPT over a real store and form. The index gate: an index the classification's imagery and the monitoring data cannot
 // both compute is said beside the index, never switched off for the user, and opening OPT edits nothing. What is not
-// yet known of the imagery rules nothing out.
+// yet known of the imagery rules nothing out. The detection thresholds: UoL's defaults until saved, and the From/To
+// counts behind More unless one is set.
 
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
@@ -148,16 +149,74 @@ describe('an index the imagery cannot compute', () => {
     })
 })
 
+describe('the minimum drop', () => {
+    it('stays in place, disabled, while no drop is required', async () => {
+        await open({bands: OPTICAL_BANDS, gate: undefined})
+
+        expect(field(THRESHOLD_LABEL)).not.toBeNull()
+        expect(field(THRESHOLD_LABEL).className).toMatch(/disabled/)
+
+        await press('process.pyeoAlerts.panel.options.form.useIndexGate.on')
+
+        expect(field(THRESHOLD_LABEL).className).not.toMatch(/disabled/)
+    })
+})
+
+describe('detection thresholds', () => {
+    it('offer UoL\'s defaults to a recipe with none saved', async () => {
+        await open({bands: OPTICAL_BANDS, options: {}})
+
+        await press('button.more')
+
+        expect(shownThresholds()).toEqual({minRepeatability: 50, minCumulativeDetections: 2, minFromDetections: 2, minToDetections: 2})
+    })
+
+    it('keep the From/To detections behind More while both hold the default', async () => {
+        await open({bands: OPTICAL_BANDS, options: {minFromDetections: 2, minToDetections: 2}})
+
+        expect(shownThresholds()).not.toHaveProperty('minFromDetections')
+        expect(shownThresholds()).not.toHaveProperty('minToDetections')
+    })
+
+    it('show the From/To detections at once when one is set', async () => {
+        await open({bands: OPTICAL_BANDS, options: {minFromDetections: 3}})
+
+        expect(shownThresholds()).toMatchObject({minFromDetections: 3, minToDetections: 2})
+    })
+
+    it('are kept when another option is applied', async () => {
+        const thresholds = {minRepeatability: 70, minCumulativeDetections: 3, minFromDetections: 1, minToDetections: 4}
+        await open({bands: OPTICAL_BANDS, options: thresholds})
+
+        await press('process.pyeoAlerts.panel.options.form.useIndexGate.on')
+        await press('button.apply')
+
+        expect(savedOptions()).toMatchObject(thresholds)
+    })
+
+    it('save the cumulative detections of a recipe saved as minConsecutiveDetections under the new name', async () => {
+        await open({bands: OPTICAL_BANDS, options: {minConsecutiveDetections: 4}})
+        expect(shownThresholds().minCumulativeDetections).toBe(4)
+
+        await press('process.pyeoAlerts.panel.options.form.useIndexGate.on')
+        await press('button.apply')
+
+        expect(savedOptions().minCumulativeDetections).toBe(4)
+        expect(savedOptions()).not.toHaveProperty('minConsecutiveDetections')
+    })
+})
+
 const ID = 'pyeo-1'
 const CLASSIFICATION = 'classification-1'
 const UNSUPPORTED = 'process.pyeoAlerts.panel.options.form.gateIndex.unsupported'
 const RADAR_BANDS = ['VV', 'VH']
 const OPTICAL_BANDS = ['blue', 'green', 'red', 'nir', 'swir1', 'swir2']
 const INDEX_LABEL = 'process.pyeoAlerts.panel.options.form.gateIndex.label'
+const THRESHOLD_LABEL = 'process.pyeoAlerts.panel.options.form.gateThreshold.label'
 
 // `bands` read of the classification's input - an asset unless `type` says otherwise - for `readFor`, the classification
-// applied unless another is named.
-async function open({bands, gate, type = 'ASSET', readFor = CLASSIFICATION}) {
+// applied unless another is named. `options` are the saved detection thresholds.
+async function open({bands, gate, options = {minCumulativeDetections: 2}, type = 'ASSET', readFor = CLASSIFICATION}) {
     const initialState = {
         dimensions: {width: 1024, height: 768},
         process: {
@@ -166,7 +225,7 @@ async function open({bands, gate, type = 'ASSET', readFor = CLASSIFICATION}) {
                 type: 'PYEO_ALERTS',
                 model: {
                     sources: {classification: CLASSIFICATION, dataSets: {LANDSAT: ['LANDSAT_8']}},
-                    pyeoAlertsOptions: {minConsecutiveDetections: 2, ...(gate && {indexGate: gate})}
+                    pyeoAlertsOptions: {...options, ...(gate && {indexGate: gate})}
                 },
                 ui: {classificationBands: bands && {classification: readFor, type, bands}}
             }},
@@ -229,6 +288,25 @@ const gateIndexErrors = () => field(INDEX_LABEL)?.querySelector('[data-feedback=
 const selectedGateIndex = () => {
     const input = field(INDEX_LABEL).querySelector('input')
     return input.value || input.placeholder
+}
+
+const THRESHOLD_VALUE = /^process\.pyeoAlerts\.panel\.options\.form\.(minRepeatability|minCumulativeDetections|minFromDetections|minToDetections)\.value (\{.*\})$/
+
+// The thresholds the panel shows, by name, as their sliders say their values.
+const shownThresholds = () => Object.fromEntries(
+    texts()
+        .map(text => text.match(THRESHOLD_VALUE))
+        .filter(Boolean)
+        .map(([, name, values]) => [name, JSON.parse(values).value])
+)
+
+const texts = () => {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+    const found = []
+    while (walker.nextNode()) {
+        found.push(walker.currentNode.textContent)
+    }
+    return found
 }
 
 const chooseGateIndex = async label => {

@@ -1706,9 +1706,24 @@
               "required": "Set a threshold",
               "value": "{value}"
             },
-            "minConsecutiveDetections": {
-              "label": "Minimum consecutive detections",
-              "tooltip": "A pixel only flags as an alert after this many consecutive monitoring acquisitions show the same change.",
+            "minRepeatability": {
+              "label": "Minimum repeatability",
+              "tooltip": "A pixel only flags as an alert if this percentage of classified images verifies an initial change detection.",
+              "value": "{value}%"
+            },
+            "minCumulativeDetections": {
+              "label": "Minimum cumulative detections",
+              "tooltip": "A pixel only flags as an alert after this many cumulative monitoring acquisitions show the same change.",
+              "value": "{value} images"
+            },
+            "minFromDetections": {
+              "label": "Minimum From detections",
+              "tooltip": "A pixel can only flag in the 'Binary from-to decision' layer after this many occurrences of any of the FROM classes.",
+              "value": "{value} images"
+            },
+            "minToDetections": {
+              "label": "Minimum To detections",
+              "tooltip": "A pixel can only flag in the 'Binary from-to decision' layer after this many occurrences of any of the TO classes.",
               "value": "{value} images"
             }
           }

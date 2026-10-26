@@ -4,6 +4,7 @@ import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFo
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
+import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
@@ -12,7 +13,17 @@ import {preferredGateIndex, readableGateIndexes} from '../../gateIndexes'
 import styles from './options.module.css'
 
 const fields = {
-    minConsecutiveDetections: new Form.Field()
+    advanced: new Form.Field(),
+    minRepeatability: new Form.Field()
+        .notBlank()
+        .int(),
+    minCumulativeDetections: new Form.Field()
+        .notBlank()
+        .int(),
+    minFromDetections: new Form.Field()
+        .notBlank()
+        .int(),
+    minToDetections: new Form.Field()
         .notBlank()
         .int(),
     useIndexGate: new Form.Field(),
@@ -32,6 +43,7 @@ const mapRecipeToProps = recipe => ({
 
 class _Options extends React.Component {
     render() {
+        const {inputs: {advanced}} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -42,7 +54,11 @@ class _Options extends React.Component {
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
-                <Form.PanelButtons/>
+                <Form.PanelButtons>
+                    <Button
+                        label={advanced.value ? msg('button.less') : msg('button.more')}
+                        onClick={() => advanced.set(!advanced.value)}/>
+                </Form.PanelButtons>
             </RecipeFormPanel>
         )
     }
@@ -70,18 +86,40 @@ class _Options extends React.Component {
     }
 
     renderContent() {
-        const {inputs: {useIndexGate, gateIndex, minConsecutiveDetections}} = this.props
-        const gateAvailable = this.availableIndexes().length > 0
+        const {inputs: {advanced, minRepeatability, minCumulativeDetections}} = this.props
         return (
             <Layout>
+                {this.renderIndexGate()}
+                <Form.Slider
+                    label={msg('process.pyeoAlerts.panel.options.form.minRepeatability.label')}
+                    tooltip={msg('process.pyeoAlerts.panel.options.form.minRepeatability.tooltip')}
+                    input={minRepeatability}
+                    minValue={10}
+                    maxValue={100}
+                    ticks={[10, 25, 50, 75, 100]}
+                    info={value => msg('process.pyeoAlerts.panel.options.form.minRepeatability.value', {value})}
+                />
+                <Form.Slider
+                    label={msg('process.pyeoAlerts.panel.options.form.minCumulativeDetections.label')}
+                    tooltip={msg('process.pyeoAlerts.panel.options.form.minCumulativeDetections.tooltip')}
+                    input={minCumulativeDetections}
+                    minValue={1}
+                    maxValue={10}
+                    ticks={[1, 2, 3, 5, 10]}
+                    info={value => msg('process.pyeoAlerts.panel.options.form.minCumulativeDetections.value', {value})}
+                />
+                {advanced.value ? this.renderFromToDetections() : null}
+            </Layout>
+        )
+    }
+
+    // Disabled rather than hidden: the panel is anchored at the bottom, so a row appearing would move the rows above it.
+    renderIndexGate() {
+        const {inputs: {useIndexGate, gateIndex}} = this.props
+        const gateAvailable = this.availableIndexes().length > 0
+        return (
+            <React.Fragment>
                 <Layout type='horizontal' alignment='distribute' spacing='loose'>
-                    <Form.Combo
-                        label={msg('process.pyeoAlerts.panel.options.form.gateIndex.label')}
-                        tooltip={msg('process.pyeoAlerts.panel.options.form.gateIndex.tooltip')}
-                        input={gateIndex}
-                        options={this.indexOptions()}
-                        disabled={!useIndexGate.value}
-                    />
                     <Form.Buttons
                         label={msg('process.pyeoAlerts.panel.options.form.useIndexGate.label')}
                         tooltip={msg(gateAvailable
@@ -95,34 +133,59 @@ class _Options extends React.Component {
                         disabled={!gateAvailable && !useIndexGate.value}
                         onChange={on => on && this.preferSupportedIndex()}
                     />
+                    <Form.Combo
+                        label={msg('process.pyeoAlerts.panel.options.form.gateIndex.label')}
+                        tooltip={msg('process.pyeoAlerts.panel.options.form.gateIndex.tooltip')}
+                        input={gateIndex}
+                        options={this.indexOptions()}
+                        disabled={!useIndexGate.value}
+                    />
                 </Layout>
-                {useIndexGate.value && gateAvailable ? this.renderIndexThreshold() : null}
-                <Form.Slider
-                    label={msg('process.pyeoAlerts.panel.options.form.minConsecutiveDetections.label')}
-                    tooltip={msg('process.pyeoAlerts.panel.options.form.minConsecutiveDetections.tooltip')}
-                    input={minConsecutiveDetections}
-                    minValue={1}
-                    maxValue={10}
-                    ticks={[1, 2, 3, 5, 10]}
-                    info={value => msg('process.pyeoAlerts.panel.options.form.minConsecutiveDetections.value', {value})}
-                />
-            </Layout>
+                {this.renderIndexThreshold(!useIndexGate.value || !gateAvailable)}
+            </React.Fragment>
         )
     }
 
-    renderIndexThreshold() {
+    renderIndexThreshold(disabled) {
         const {inputs: {gateThreshold}} = this.props
         return (
             <Form.Slider
                 label={msg('process.pyeoAlerts.panel.options.form.gateThreshold.label')}
                 tooltip={msg('process.pyeoAlerts.panel.options.form.gateThreshold.tooltip')}
                 input={gateThreshold}
+                disabled={disabled}
                 minValue={0}
                 maxValue={1}
                 decimals={2}
                 ticks={[0, 0.25, 0.5, 0.75, 1]}
                 info={value => msg('process.pyeoAlerts.panel.options.form.gateThreshold.value', {value})}
             />
+        )
+    }
+
+    renderFromToDetections() {
+        const {inputs: {minFromDetections, minToDetections}} = this.props
+        return (
+            <React.Fragment>
+                <Form.Slider
+                    label={msg('process.pyeoAlerts.panel.options.form.minFromDetections.label')}
+                    tooltip={msg('process.pyeoAlerts.panel.options.form.minFromDetections.tooltip')}
+                    input={minFromDetections}
+                    minValue={1}
+                    maxValue={10}
+                    ticks={[1, 2, 3, 5, 10]}
+                    info={value => msg('process.pyeoAlerts.panel.options.form.minFromDetections.value', {value})}
+                />
+                <Form.Slider
+                    label={msg('process.pyeoAlerts.panel.options.form.minToDetections.label')}
+                    tooltip={msg('process.pyeoAlerts.panel.options.form.minToDetections.tooltip')}
+                    input={minToDetections}
+                    minValue={1}
+                    maxValue={10}
+                    ticks={[1, 2, 3, 5, 10]}
+                    info={value => msg('process.pyeoAlerts.panel.options.form.minToDetections.value', {value})}
+                />
+            </React.Fragment>
         )
     }
 
@@ -158,15 +221,34 @@ class _Options extends React.Component {
     }
 }
 
+const DEFAULT_REPEATABILITY = 50
+const DEFAULT_DETECTIONS = 2
+
 const valuesToModel = values => ({
-    minConsecutiveDetections: Number(values.minConsecutiveDetections),
+    minRepeatability: Number(values.minRepeatability),
+    minCumulativeDetections: Number(values.minCumulativeDetections),
+    minFromDetections: Number(values.minFromDetections),
+    minToDetections: Number(values.minToDetections),
     indexGate: values.useIndexGate
         ? {index: values.gateIndex, threshold: Number(values.gateThreshold)}
         : undefined
 })
 
-const modelToValues = model => ({
-    minConsecutiveDetections: model.minConsecutiveDetections || 2,
+// A recipe saved before the rename carries minConsecutiveDetections. From/To counts that are set are never hidden.
+const modelToValues = model => {
+    const minFromDetections = model.minFromDetections ?? DEFAULT_DETECTIONS
+    const minToDetections = model.minToDetections ?? DEFAULT_DETECTIONS
+    return {
+        advanced: minFromDetections !== DEFAULT_DETECTIONS || minToDetections !== DEFAULT_DETECTIONS,
+        minRepeatability: model.minRepeatability ?? DEFAULT_REPEATABILITY,
+        minCumulativeDetections: model.minCumulativeDetections ?? model.minConsecutiveDetections ?? DEFAULT_DETECTIONS,
+        minFromDetections,
+        minToDetections,
+        ...gateValues(model)
+    }
+}
+
+const gateValues = model => ({
     useIndexGate: !!model.indexGate,
     gateIndex: (model.indexGate && model.indexGate.index) || 'ndvi',
     gateThreshold: model.indexGate && model.indexGate.threshold !== undefined

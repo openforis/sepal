@@ -43,7 +43,10 @@ export const defaultModel = {
     },
     // Change-detection params (renamed from model.options).
     pyeoAlertsOptions: {
-        minConsecutiveDetections: 2,
+        minRepeatability: 50,
+        minCumulativeDetections: 2,
+        minFromDetections: 2,
+        minToDetections: 2,
         indexGate: {index: 'ndvi', threshold: 0.2}
     }
 }
