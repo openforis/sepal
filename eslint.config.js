@@ -1,8 +1,13 @@
+import {builtinModules} from 'node:module'
+
 import js from '@eslint/js'
 import stylistic from '@stylistic/eslint-plugin'
 import importPlugin from 'eslint-plugin-import-x'
 import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import globals from 'globals'
+
+const unprefixedBuiltin = `/^(${builtinModules.filter(name => !/[:/]/.test(name)).join('|')})(\\x2F|$)/`
+const builtinPrefixMessage = 'Import Node built-in modules with the node: prefix.'
 
 const baseConfig = {
     files: [
@@ -53,6 +58,16 @@ const baseConfig = {
         '@stylistic/space-infix-ops': 'error',
         '@stylistic/template-curly-spacing': 'error',
         'no-console': ['error', {allow: ['info', 'warn', 'error']}],
+        'no-restricted-syntax': ['error',
+            {
+                selector: `:matches(ImportDeclaration, ExportNamedDeclaration, ExportAllDeclaration, ImportExpression)[source.value=${unprefixedBuiltin}]`,
+                message: builtinPrefixMessage
+            },
+            {
+                selector: `CallExpression[callee.name='require'][arguments.0.value=${unprefixedBuiltin}]`,
+                message: builtinPrefixMessage
+            }
+        ],
         'no-unused-vars': ['error', {argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_'}],
         'simple-import-sort/imports': 'error',
         'simple-import-sort/exports': 'error',
