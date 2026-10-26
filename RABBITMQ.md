@@ -16,9 +16,8 @@ publishers are `{key, publish$}` (an RxJS stream per routing key), subscribers a
 
 | Routing key | Published by | Consumed by |
 |---|---|---|
-| `user.UserUpdated` | user | ssh-gateway |
+| `user.UserUpdated` | user | ssh-gateway, email |
 | `user.UserLocked` | user | gateway, worker |
-| `user.emailNotificationsEnabled` | *(none — legacy)* | email |
 | `workerSession.WorkerSessionRequested` | worker | budget, storage, ssh-gateway |
 | `workerSession.WorkerSessionActivated` | worker | budget, storage, ssh-gateway |
 | `workerSession.WorkerSessionClosed` | worker | budget, storage, gateway, ssh-gateway |
@@ -56,6 +55,9 @@ the full user map:
 - **sub:** ssh-gateway (queue `ssh-gateway.userUpdated`) — re-fetches the NSS passwd/group snapshot
   from the user module so sandbox POSIX identities stay current
   ([nssSync.js](modules/ssh-gateway/src/nssSync.js))
+- **sub:** email (queue `email.userUpdated`) — stores the user's `emailNotificationsEnabled` under
+  their `email` in its notification-preference cache, so a changed preference takes effect for the
+  next email ([messageHandler.js](modules/email/src/messageHandler.js))
 
 ### `user.UserLocked`
 - **pub:** user — when an admin locks a user (`POST /lock`)
@@ -64,11 +66,6 @@ the full user map:
 - **sub:** worker (queue `workersession.user`, bound to `user.*`) — closes all of the user's
   sandbox sessions; other `user.*` keys are ignored
   ([workerSession/index.js](modules/worker/src/workerSession/index.js))
-
-### `user.emailNotificationsEnabled` — `{username, enabled}`
-- **pub:** none in the current codebase (legacy key)
-- **sub:** email (queue `email.emailNotificationsEnabled`) — updates its notification-preference
-  cache ([messageHandler.js](modules/email/src/messageHandler.js))
 
 > The `user` module was formerly named `user-node`; the legacy Java `user` module it replaced
 > (which published the same keys via `RabbitMQTopic('user', …)`) has been deleted.
