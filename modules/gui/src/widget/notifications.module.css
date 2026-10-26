@@ -55,7 +55,7 @@
         margin-top: -100%;
         opacity: 0;
     }
-    70% {
+    50% {
         opacity: 0;
     }
     100% {
@@ -67,7 +67,7 @@
 
 .notification.removing {
     pointer-events: none;
-    animation: remove var(--dismiss-animation-duration-ms) ease-out normal forwards;
+    animation: remove var(--dismiss-animation-duration-ms) ease-in-out normal forwards;
 }
 
 @keyframes remove {
@@ -76,7 +76,7 @@
         margin-top: 0;
         opacity: 1;
     }
-    30% {
+    50% {
         opacity: 0;
     }
     100% {
