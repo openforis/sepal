@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import {test} from 'node:test'
 
-import {toClassifierBands, toUolParams} from './params.js'
+import {toClassifierBands, toUolParams} from '#sepal/ee/pyeo/params'
 
 test('passes change classes through', () => {
     const p = toUolParams({changeFromClasses: [1], changeToClasses: [2, 3]})
