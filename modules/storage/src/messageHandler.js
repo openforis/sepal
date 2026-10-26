@@ -5,20 +5,20 @@ import {CLIENT_UP, USER_DOWN} from '#sepal/event/definitions'
 import {getLogger} from '#sepal/log'
 
 import {setSessionActive, setSessionInactive} from './kvstore.js'
-import {scheduleStorageCheck} from './storageCheck.js'
+import {scheduleRescan} from './storageCheck.js'
 
 const log = getLogger('messageQueue')
 
 export const createMessageHandler = ({inactivityCheck}) => {
     const event$ = new Subject()
 
-    const scheduleStorageCheck$ = event$.pipe(
+    const scheduleRescan$ = event$.pipe(
         filter(({type}) => ['sessionActivated', 'sessionDeactivated', 'filesDeleted'].includes(type)),
         groupBy(event => JSON.stringify(event)),
         mergeMap(group$ =>
             group$.pipe(
                 debounceTime(1000),
-                switchMap(event => scheduleStorageCheck(event))
+                switchMap(event => scheduleRescan(event))
             )
         )
     )
@@ -47,9 +47,9 @@ export const createMessageHandler = ({inactivityCheck}) => {
         )
     )
 
-    scheduleStorageCheck$.subscribe({
-        error: error => log.fatal('Unexpected scheduleStorageCheck$ error:', error),
-        complete: () => log.fatal('Unexpected scheduleStorageCheck$ complete')
+    scheduleRescan$.subscribe({
+        error: error => log.fatal('Unexpected scheduleRescan$ error:', error),
+        complete: () => log.fatal('Unexpected scheduleRescan$ complete')
     })
 
     scheduleInactivityCheck$.subscribe({

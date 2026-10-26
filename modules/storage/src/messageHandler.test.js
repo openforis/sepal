@@ -9,7 +9,7 @@ import {callsOf} from '#sepal/testSupport/mock'
 // at the module edge so the test can watch what reaches the inactivity check.
 const setSessionActive = mock.fn(async () => undefined)
 const setSessionInactive = mock.fn(async () => undefined)
-const scheduleStorageCheck = mock.fn(async () => undefined)
+const scheduleRescan = mock.fn(async () => undefined)
 
 mock.module('./kvstore.js', {
     exports: {
@@ -19,7 +19,7 @@ mock.module('./kvstore.js', {
 })
 mock.module('./storageCheck.js', {
     exports: {
-        scheduleStorageCheck
+        scheduleRescan
     }
 })
 
@@ -37,6 +37,7 @@ describe('the message handler', () => {
         cancelled = []
         setSessionActive.mock.resetCalls()
         setSessionInactive.mock.resetCalls()
+        scheduleRescan.mock.resetCalls()
         inactivityCheck = {
             scheduleInactivityCheck: async ({username}) => {
                 scheduled.push(username)
@@ -73,6 +74,13 @@ describe('the message handler', () => {
         await deliver('systemEvent', {type: USER_DOWN, data: {user: {username: USERNAME}}})
 
         assert.deepEqual(scheduled, [USERNAME])
+    })
+
+    test('rescans the storage of a user who deleted files', async () => {
+        await deliver('files.FilesDeleted', {username: USERNAME})
+        await debounced()
+
+        assert.deepEqual(rescansOf('filesDeleted'), [{username: USERNAME, type: 'filesDeleted'}])
     })
 
     test('leaves the check alone when a user deletes files', async () => {
@@ -122,6 +130,13 @@ describe('the message handler', () => {
 
     // The streams answer on a promise, so the microtask queue has to run before the calls are visible.
     const drain = () => new Promise(resolve => setImmediate(resolve))
+
+    // Rescan requests are debounced per event for a second.
+    const debounced = () => new Promise(resolve => setTimeout(resolve, 1100))
+
+    // Earlier tests' handlers keep running, so their debounced session rescans can land here too.
+    const rescansOf = type =>
+        callsOf(scheduleRescan).map(([request]) => request).filter(request => request.type === type)
 
     const USERNAME = 'bob'
     const ANOTHER_USERNAME = 'alice'
