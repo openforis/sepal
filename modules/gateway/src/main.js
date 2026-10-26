@@ -20,6 +20,7 @@ import {AuthMiddleware} from './authMiddleware.js'
 import {amqpUri, port, redisUri, sandboxDefaultInstanceType, sepalHost} from './config.js'
 import {initializeGoogleAccessTokenRefresher} from './googleAccessToken.js'
 import {GoogleAccessTokenMiddleware} from './googleAccessTokenMiddleware.js'
+import {restrictMetricsToAdmins} from './metricsAccess.js'
 import {Proxy} from './proxy.js'
 import {sandboxInteractionRoute} from './sandbox/sandboxInteractionRoute.js'
 import {createSandboxProxy} from './sandbox/sandboxProxy.js'
@@ -160,7 +161,8 @@ const main = async () => {
     // catch-all proxy below would otherwise forward /api/user/auth/* and /api/user/nss/* to it.
     app.use(['/api/user/auth', '/api/user/nss'], (_req, res) => res.sendStatus(404))
 
-    app.use('/api/gateway/metrics', authMiddleware, apiMetrics({metricsPath: '/api/gateway/metrics'}))
+    restrictMetricsToAdmins(app, authMiddleware)
+    app.use('/api/gateway/metrics', apiMetrics({metricsPath: '/api/gateway/metrics'}))
 
     // authMiddleware FIRST so the route and the proxy see the injected sepal-user. /api/sandbox/start
     // must be matched before the /api/sandbox/** proxy, so it is registered first.
