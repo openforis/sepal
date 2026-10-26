@@ -84,7 +84,12 @@ const start = (websocket, req) => {
 
 const resize = (req, res) => {
     try {
-        const session = Session.get(req)
+        const session = Session.find(req.params.sessionId)
+        if (!session) {
+            log.warn(`Cannot resize missing session: ${req.params.sessionId}`)
+            res.status(404).end()
+            return
+        }
         const cols = parseInt(req.query.cols)
         const rows = parseInt(req.query.rows)
         session.terminal.resize(cols, rows)

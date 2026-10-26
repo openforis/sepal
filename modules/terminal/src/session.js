@@ -87,6 +87,9 @@ const get = req => {
     return sessions[id]
 }
 
+const find = id =>
+    sessions[id]
+
 const remove = id => {
     if (sessions[id]) {
         delete sessions[id]
@@ -96,4 +99,4 @@ const remove = id => {
     }
 }
 
-export {get, remove}
+export {find, get, remove}
