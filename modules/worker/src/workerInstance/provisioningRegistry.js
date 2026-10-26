@@ -19,13 +19,19 @@ const createProvisioningRegistry = () => {
     // run(instanceId, sessionId, fn) — true when fn ran, false when it was dropped. fn's rejection
     // propagates to the caller; the entry is cleared either way, so a failed provision does not
     // lock the instance out of the next attempt.
+    //
+    // fn receives isCurrent(): false once the entry is forgotten or taken over by another session.
+    // A provision outlives its session by up to seventeen minutes, and must stop touching the
+    // instance once it does.
     const run = async (instanceId, sessionId, fn) => {
         if (sessionIdByInstanceId.has(instanceId)) {
             return false
         }
         sessionIdByInstanceId.set(instanceId, sessionId)
+        const isCurrent = () =>
+            sessionIdByInstanceId.has(instanceId) && sessionIdByInstanceId.get(instanceId) === sessionId
         try {
-            await fn()
+            await fn(isCurrent)
         } finally {
             // Clear only the entry THIS call made. A forgotten provision that settles late must
             // not take the entry of the session that holds the instance now with it.

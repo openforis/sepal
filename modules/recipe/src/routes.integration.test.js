@@ -5,7 +5,7 @@ import {gzipSync} from 'node:zlib'
 import * as httpServer from '#sepal/httpServer'
 
 import {createRequireAuth} from './currentUser.js'
-import {createRoutes} from './routes.js'
+import {createRoutes, MAX_RECIPE_BYTES} from './routes.js'
 
 let server
 let baseUrl
@@ -110,6 +110,30 @@ describe('POST /:id', () => {
             {gzip: undefined, raw: Buffer.from('not gzip')})
 
         assert.equal(response.status, 400)
+        assert.equal(service.reached, false)
+    })
+
+    test('accepts a recipe of exactly the size limit', async () => {
+        const content = aRecipeContentOfBytes(MAX_RECIPE_BYTES)
+
+        const response = await POST(`/${A_RECIPE_ID}?type=MOSAIC`, {gzip: content})
+
+        assert.equal(response.status, 200)
+        assert.deepEqual(service.saveRecipeCommand.recipe.content, content)
+    })
+
+    test('refuses an upload larger than a recipe may be', async () => {
+        const response = await POST(`/${A_RECIPE_ID}?type=MOSAIC`, {raw: Buffer.alloc(MAX_RECIPE_BYTES + 1)})
+
+        assert.equal(response.status, 413)
+        assert.equal(service.reached, false)
+    })
+
+    test('refuses a small upload that decompresses beyond the size limit', async () => {
+        const response = await POST(`/${A_RECIPE_ID}?type=MOSAIC`,
+            {gzip: aRecipeContentOfBytes(MAX_RECIPE_BYTES + 1)})
+
+        assert.equal(response.status, 413)
         assert.equal(service.reached, false)
     })
 
@@ -388,6 +412,12 @@ function recipeServiceSpy() {
 }
 
 const aRecipeContent = (over = {}) => ({model: {source: 'LANDSAT'}, ...over})
+
+// A document whose JSON encoding is exactly `bytes` long.
+const aRecipeContentOfBytes = bytes => {
+    const unpadded = JSON.stringify(aRecipeContent({padding: ''})).length
+    return aRecipeContent({padding: 'x'.repeat(bytes - unpadded)})
+}
 
 // What a load returns: the stored document with the columns the repository injects.
 const aLoadedRecipe = (over = {}) => ({

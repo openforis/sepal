@@ -58,7 +58,19 @@ describe('onWorkerSessionRequested', () => {
 })
 
 describe('onWorkerSessionClosed', () => {
-    test('maps {sessionId} + an injected now onto openSessionUse.closeSession', async () => {
+    test('closes the use row at the closeTime the event carries, however late it is processed', async () => {
+        const openSessionUse = createMockOpenSessionUse()
+        const budgetCommands = createMockBudgetCommands()
+        const handlers = createSessionEventHandlers({openSessionUse, budgetCommands})
+
+        const closeTime = '2026-07-02T12:00:00.000Z'
+        await handlers.onWorkerSessionClosed({sessionId: 'sess-1', closeTime}, new Date('2026-07-02T18:00:00Z'))
+
+        assert.deepEqual(callsOf(openSessionUse.closeSession), [[{sessionId: 'sess-1', to: new Date(closeTime)}]])
+    })
+
+    // A worker that predates closeTime publishes without it.
+    test('falls back to the processing time when the event has no closeTime', async () => {
         const openSessionUse = createMockOpenSessionUse()
         const budgetCommands = createMockBudgetCommands()
         const handlers = createSessionEventHandlers({openSessionUse, budgetCommands})
@@ -69,7 +81,7 @@ describe('onWorkerSessionClosed', () => {
         assert.deepEqual(callsOf(openSessionUse.closeSession), [[{sessionId: 'sess-1', to: now}]])
     })
 
-    test('defaults to≈Date.now() when now is not injected', async () => {
+    test('defaults the processing time to Date.now() when now is not injected', async () => {
         const openSessionUse = createMockOpenSessionUse()
         const budgetCommands = createMockBudgetCommands()
         const handlers = createSessionEventHandlers({openSessionUse, budgetCommands})

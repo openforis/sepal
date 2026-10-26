@@ -1,4 +1,4 @@
-import {publishMessagesChanged} from './changed.js'
+import {publishMessagesChanged, publishReadStateChanged} from './changed.js'
 import {isAdmin} from './currentUser.js'
 import {messageToMap, notificationToMap} from './message.js'
 
@@ -50,9 +50,7 @@ export class MessageApi {
             messageId: ctx.params.id,
             state: readBody(ctx).state
         })
-        // Message-scoped (broadcast) rather than user-scoped: a read-state change also moves the
-        // message's acknowledged count, which every subscriber displays.
-        publishMessagesChanged()
+        publishReadStateChanged(username)
         ctx.status = 204
     }
 

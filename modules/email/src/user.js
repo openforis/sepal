@@ -1,4 +1,4 @@
-import {getEmailNotificationsEnabled as getEmailNotificationsEnabledCache, setEmailNotificationsEnabled as setEmailNotificationsEnabledCache} from './cache.js'
+import {getEmailNotificationsEnabled as getEmailNotificationsEnabledCache, setEmailNotificationsEnabledIfAbsent as setEmailNotificationsEnabledCache} from './cache.js'
 import {getEmailNotificationsEnabled as getEmailNotificationsEnabledRemote} from './http.js'
 
 const getEmailNotificationsEnabled = async emailAddress => {

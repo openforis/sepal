@@ -44,11 +44,11 @@ test('notificationToMap emits the full Message object under `message`', () => {
     })
 })
 
-test('notificationToMap defaults acknowledged to 0', () => {
+test('notificationToMap leaves acknowledged out when it was not counted', () => {
     const row = {
         messageId: 'm1', author: 'admin', subject: 's', contents: 'c', type: 'SYSTEM',
         creation_time: '2025-05-28T21:38:19.000Z', update_time: '2025-05-28T21:38:19.000Z',
-        username: 'bob', state: 'UNREAD', priority: 0
+        username: 'bob', state: 'UNREAD', priority: 0, acknowledged: null
     }
-    assert.equal(notificationToMap(row).acknowledged, 0)
+    assert.equal('acknowledged' in notificationToMap(row), false)
 })

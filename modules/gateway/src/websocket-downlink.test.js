@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict'
 import {EventEmitter} from 'node:events'
-import {afterEach, describe, test} from 'node:test'
+import {afterEach, beforeEach, describe, mock, test} from 'node:test'
 
 import {of, Subject} from 'rxjs'
 import {WebSocket} from 'ws'
 
-import {USER_DOWN, USER_UP} from '#sepal/event/definitions'
+import {CLIENT_DOWN, CLIENT_UP, USER_DOWN, USER_UP} from '#sepal/event/definitions'
 
 import {Clients} from './websocket-client.js'
 import {initializeDownlink} from './websocket-downlink.js'
@@ -34,6 +34,36 @@ describe('user presence', () => {
     })
 })
 
+describe('heartbeat', () => {
+    beforeEach(() => mock.timers.enable({apis: ['setInterval', 'setTimeout', 'Date']}))
+    afterEach(() => mock.timers.reset())
+
+    test('a client that stops answering heartbeats is disconnected', () => {
+        const {connect, clientEvents} = aDownlink()
+        const socket = connect('alice')
+        mock.timers.tick(HEARTBEAT_INTERVAL_MS)
+        answerHeartbeat(socket)
+
+        mock.timers.tick(2 * HEARTBEAT_INTERVAL_MS)
+
+        assert.deepEqual(clientEvents(), [CLIENT_UP, CLIENT_DOWN])
+    })
+
+    test('a client that closes with a heartbeat timeout pending is disconnected once', () => {
+        const {connect, clientEvents} = aDownlink()
+        const socket = connect('alice')
+        mock.timers.tick(HEARTBEAT_INTERVAL_MS)
+        answerHeartbeat(socket)
+
+        socket.emit('close')
+        mock.timers.tick(3 * HEARTBEAT_INTERVAL_MS)
+
+        assert.deepEqual(clientEvents(), [CLIENT_UP, CLIENT_DOWN])
+    })
+})
+
+const HEARTBEAT_INTERVAL_MS = 10 * 1000
+
 const openSockets = []
 
 afterEach(() => openSockets.splice(0).forEach(socket => socket.emit('close')))
@@ -57,7 +87,8 @@ const aDownlink = () => {
         return socket
     }
     const userEvents = () => events.filter(type => [USER_UP, USER_DOWN].includes(type))
-    return {connect, userEvents}
+    const clientEvents = () => events.filter(type => [CLIENT_UP, CLIENT_DOWN].includes(type))
+    return {connect, userEvents, clientEvents}
 }
 
 // Like ws: terminate() emits 'close' asynchronously.
@@ -68,5 +99,7 @@ const aSocket = () => {
     socket.terminate = () => setImmediate(() => socket.emit('close'))
     return socket
 }
+
+const answerHeartbeat = socket => socket.emit('message', JSON.stringify({hb: Date.now()}))
 
 const closed = () => new Promise(resolve => setImmediate(resolve))

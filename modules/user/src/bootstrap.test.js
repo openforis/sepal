@@ -37,8 +37,8 @@ describe('bootstrap', () => {
         assert.deepEqual(provisioned, [['sepaladmin', 10000, 10000], ['admin', 10001, 10001]])
         assert.equal(first.uid, 10000)
         assert.equal(first.sshPublicKey, 'ssh-rsa AAAAKEY')
-        assert.equal(verifyPassword('first-secret', first.passwordHash), true)
-        assert.equal(verifyPassword('second-secret', second.passwordHash), true)
+        assert.equal(await verifyPassword('first-secret', first.passwordHash), true)
+        assert.equal(await verifyPassword('second-secret', second.passwordHash), true)
     })
 
     test('leaves an administrator who already has credentials alone', async () => {
@@ -97,7 +97,7 @@ describe('bootstrap', () => {
         await bootstrap()()
 
         const second = await repository.findByUsername('admin')
-        assert.equal(verifyPassword('second-secret', second.passwordHash), true)
+        assert.equal(await verifyPassword('second-secret', second.passwordHash), true)
     })
 
     const bootstrap = (over = {}) => createBootstrap({

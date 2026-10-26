@@ -10,6 +10,7 @@
 
 import {ClientException, NotFoundException} from '#sepal/exception'
 import {getLogger} from '#sepal/log'
+import {storedUsername} from '#sepal/username'
 
 import {instanceName} from '../instanceName.js'
 import {instanceTag} from '../tag.js'
@@ -98,17 +99,22 @@ const createSessionManager = ({
 }) => {
     // ── collaborator bundles (matched to each handler's needs) ────────────────
     const closeDeps = {repo, instanceManager, emitWorkerSessionClosed: emitClosed}
+    const requestQueue = keyedQueue()
+    const oneRequestPerUser = (username, fn) => requestQueue(storedUsername(username), fn)
 
     // ── commands ──────────────────────────────────────────────────────────────
     // A requested session is a new PENDING row in the user's report. WorkerSessionRequested opens
     // budget's instance-use row, so a session closed before it ever activates is still billed from
     // its creationTime; emitChanged additionally signals the report change so other tabs see the
     // STARTING session immediately.
+    //
+    // One request per user at a time: each budget check must count the session the previous
+    // request inserted, or concurrent requests all pass the same check.
     const requestSession = async command => {
-        const session = await _requestSession(command, {
+        const session = await oneRequestPerUser(command.username, () => _requestSession(command, {
             repo, budgetClient, lockedUsers, instanceManager, clock, apiKeyGenerator,
             startupLeaseMinutes: expiryPolicy.startupLeaseMinutes,
-        })
+        }))
         // Strip the apiKey — the event is serialised to RabbitMQ.
         emitRequested({username: session.username, session: withApiKey(session, null)})
         emitChanged({username: session?.username})
@@ -427,6 +433,19 @@ const createSessionManager = ({
         userAppSessions,
         // wiring
         registerInstanceManagerHooks,
+    }
+}
+
+// keyedQueue — runs the functions given for one key one after another, and those for different
+// keys concurrently. A failure does not hold up the key's later functions.
+const keyedQueue = () => {
+    const tails = new Map()
+    return (key, fn) => {
+        const run = (tails.get(key) ?? Promise.resolve()).then(fn)
+        const tail = run.catch(() => {})
+        tails.set(key, tail)
+        tail.then(() => tails.get(key) === tail && tails.delete(key))
+        return run
     }
 }
 

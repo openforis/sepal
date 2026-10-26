@@ -4,6 +4,8 @@ import {rowToMessage} from './message.js'
 
 const MESSAGE = 'message'
 const NOTIFICATION = 'notification'
+const ACKNOWLEDGED_COUNT =
+    `(SELECT COUNT(*) FROM ${NOTIFICATION} r WHERE r.message_id = m.id AND r.state = 'READ')`
 
 export class MessageRepository {
     #db
@@ -54,21 +56,17 @@ export class MessageRepository {
     // LEFT JOIN so every non-removed message appears; notifications without a row default to UNREAD.
     // Unpublished messages (priority < 0) are admin-only and carry no notification: they never
     // reach non-admins and are forced READ so they cannot trigger any unread/auto-open behavior.
+    // Only admins see the acknowledged count, so only their lists carry it (null for anyone else):
+    // a non-admin's list then depends on their own read state alone.
     listNotifications(username, isAdmin) {
         return this.#db.withTransaction(async connection => {
             const [rows] = await connection.query(
                 `SELECT m.id AS messageId, m.username AS author, m.subject, m.contents, m.type, m.priority,
                         m.creation_time, m.update_time, ? AS username,
                         CASE WHEN m.priority < 0 THEN 'READ' ELSE COALESCE(n.state, 'UNREAD') END AS state,
-                        COALESCE(a.acknowledged, 0) AS acknowledged
+                        ${isAdmin ? ACKNOWLEDGED_COUNT : 'NULL'} AS acknowledged
                  FROM ${MESSAGE} m
                  LEFT JOIN ${NOTIFICATION} n ON n.message_id = m.id AND n.username = ?
-                 LEFT JOIN (
-                     SELECT message_id, COUNT(*) AS acknowledged
-                     FROM ${NOTIFICATION}
-                     WHERE state = 'READ'
-                     GROUP BY message_id
-                 ) a ON a.message_id = m.id
                  WHERE m.removed = FALSE AND (m.priority >= 0 OR ?)
                  ORDER BY m.update_time DESC`,
                 [username, username, !!isAdmin]

@@ -24,7 +24,7 @@ class StorageQuotaExceeded extends Error {
     }
 }
 
-// The reason a user is over budget. Sent on the wire by GET /budget/check/:username and mapped
+// The reason a user is over budget. Sent on the wire by POST /budget/check/:username and mapped
 // back to a typed error by the worker (modules/worker/src/workerSession/budgetErrors.js), so these
 // strings are a cross-module contract — do not rename without changing the worker in lockstep.
 const Reason = Object.freeze({

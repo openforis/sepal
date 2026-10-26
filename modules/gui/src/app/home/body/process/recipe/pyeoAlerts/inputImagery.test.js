@@ -29,6 +29,7 @@ const MASKED_ASSET = 'masked-asset'
 const RADAR = 'radar-1'
 const MOSAIC_ASSET = 'users/x/mosaic'
 const OPTICAL_BANDS = ['blue', 'green', 'red', 'nir', 'swir1', 'swir2']
+const PICKED_SCENES = {'scene-area-1': [{id: 'LC08_1', dataSet: 'LANDSAT_8'}]}
 const EXPORTED_OPTICAL = {
     'system:time_start': 1704067200000,
     'system:time_end': 1735689600000,
@@ -113,10 +114,17 @@ describe('asking for bands alone, as opening a saved recipe does', () => {
         expect(restriction).toBe(null)
     })
 
+    // The index gate asks a recipe input for its index by name, and a mosaic computes any index its bands allow.
+    it('includes the indexes a mosaic recipe computes on request', async () => {
+        const {bands} = await read(recipeSelection(MOSAIC), {defaults: false})
+
+        expect(bands).toEqual(expect.arrayContaining(['ndvi', 'ndmi', 'nbr']))
+    })
+
     // Hand-picked scenes rule out deriving a monitoring window, which is not a reason to withhold the
     // bands of a recipe the user has already committed to.
     it('reads the bands of a source whose configuration could not be derived', async () => {
-        recipes[MOSAIC].model.sceneSelectionOptions = {type: 'SELECT'}
+        Object.assign(recipes[MOSAIC].model, {sceneSelectionOptions: {type: 'SELECT'}, scenes: PICKED_SCENES})
 
         const {bands, restriction} = await read(recipeSelection(MOSAIC), {defaults: false})
 
@@ -127,7 +135,7 @@ describe('asking for bands alone, as opening a saved recipe does', () => {
 
 describe('imagery no configuration can be derived from', () => {
     it('reports hand-picked scenes, leaving the bands it did read', async () => {
-        recipes[MOSAIC].model.sceneSelectionOptions = {type: 'SELECT'}
+        Object.assign(recipes[MOSAIC].model, {sceneSelectionOptions: {type: 'SELECT'}, scenes: PICKED_SCENES})
 
         const {bands, defaults, restriction} = await read(recipeSelection(MOSAIC))
 

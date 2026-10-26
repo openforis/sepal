@@ -10,6 +10,7 @@ import {defaultModel as defaultPlanetModel} from '~/app/home/body/process/recipe
 import {defaultModel as defaultRadarModel} from '~/app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
 import {pointInTimeVisualizations} from '~/app/home/body/process/recipe/radarMosaic/visualizations'
 import {getTaskInfo} from '~/app/home/body/process/recipe/recipeOutputPath'
+import {submitExportTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 import {recipeVisualizationsNaming} from '~/app/home/body/process/recipe/visualizations'
 import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import {publishEvent} from '~/eventPublisher'
@@ -225,7 +226,7 @@ export const submitRetrieveTask = ({recipe, retrieveOptions}) => {
         destination: 'GEE',
         data_set_type: recipe.model.dataSetType
     })
-    return api.tasks.submit$(task).subscribe()
+    return submitExportTask(task)
 }
 
 export const dateRange = dates => ([moment.utc(dates.startDate, DATE_FORMAT), moment.utc(dates.endDate, DATE_FORMAT)])

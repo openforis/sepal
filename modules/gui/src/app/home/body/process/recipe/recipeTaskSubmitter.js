@@ -12,6 +12,7 @@ import {recipeVisualizations} from '~/app/home/body/process/recipe/visualization
 import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import {publishEvent} from '~/eventPublisher'
 import {msg} from '~/translate'
+import {Notifications} from '~/widget/notifications'
 
 export const pyramidingPolicies = {
 
@@ -240,5 +241,14 @@ export const submitRetrieveRecipeTask = (recipe, {retrieveOptions, ...config}) =
         ...(dataSetType && {data_set_type: dataSetType})
     })
     
-    return api.tasks.submit$(task).subscribe()
+    return submitExportTask(task)
 }
+
+// The Retrieve panel has closed by the time the task service answers, so a rejection is reported here or not at all.
+export const submitExportTask = task =>
+    api.tasks.submit$(task).subscribe({
+        error: error => Notifications.error({
+            message: msg('process.retrieve.error.submit'),
+            error: error.response?.message
+        })
+    })

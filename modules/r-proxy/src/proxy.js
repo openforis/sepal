@@ -5,6 +5,7 @@ import {getLogger} from '#sepal/log'
 import {httpPort} from './config.js'
 import {serveCran} from './proxy-cran.js'
 import {serveGitHub} from './proxy-github.js'
+import {serveFailure} from './proxy-utils.js'
 
 const log = getLogger('proxy')
 
@@ -14,7 +15,8 @@ const handleRequest = async (req, res) => {
             ? await serveGitHub(req, res)
             : await serveCran(req, res)
     } catch (error) {
-        log.error(error)
+        log.error('Failed to handle request:', req.url, error)
+        serveFailure(res)
     }
 }
 

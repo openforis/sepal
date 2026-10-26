@@ -276,7 +276,7 @@ describe('the email management link', () => {
         const c = ctx({params: {token: 'tok'}})
         await tokenApi.expiryPage(c)
         assert.deepEqual(callsOf(sessionManager.instanceDescription), [['s1']])
-        assert.ok(c.body.includes('Instance <b>crazy-banana</b> (t3a.small, $0.02/h)'))
+        assert.ok(c.body.includes('Session <b>crazy-banana</b> (t3a.small, $0.02/h)'))
         assert.ok(!c.body.includes('Instance 2'))
     })
 
@@ -290,7 +290,7 @@ describe('the email management link', () => {
         }))
         const c = ctx({params: {token: 'tok'}})
         await tokenApi.expiryPage(c)
-        assert.ok(c.body.includes('Instance <b>crazy-banana</b> (t3a.small)'))
+        assert.ok(c.body.includes('Session <b>crazy-banana</b> (t3a.small)'))
     })
 
     test('an instance with no derivable name is still named, not left blank', async () => {
@@ -302,7 +302,7 @@ describe('the email management link', () => {
         }))
         const c = ctx({params: {token: 'tok'}})
         await tokenApi.expiryPage(c)
-        assert.ok(c.body.includes('One of your instances'))
+        assert.ok(c.body.includes('One of your sessions'))
     })
 
     // The ordinal is a position among OPEN sessions, so it must be read before the close or the

@@ -5,7 +5,7 @@ WebSocket-based terminal emulation. Creates PTY sessions for user SSH access, br
 ## Commands
 
 ```bash
-npm test              # Node test runner (no test files currently exist)
+npm test              # Node test runner
 npm run testWatch     # Node test runner watch mode
 ```
 

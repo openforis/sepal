@@ -130,9 +130,9 @@ test('updateNotification returns 204', async () => {
     assert.equal(c.status, 204)
 })
 
-test('updateNotification publishes a message-scoped change, so acknowledged counts refresh for everyone', async () => {
+test('updateNotification publishes a change scoped to the reading user', async () => {
     await api.updateNotification(ctx({params: {id: 'm1'}, request: {body: {state: 'READ'}}}))
-    assert.deepEqual(changes, [{}])
+    assert.deepEqual(changes, [{username: 'admin'}])
 })
 
 test('listNotifications publishes no change', async () => {

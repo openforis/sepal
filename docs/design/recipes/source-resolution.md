@@ -5037,6 +5037,28 @@ recheck is passed; do not ask for it again unless later changes affect the path.
 evidence, not an agent-observed run or proof of a completed export. Build details and per-case task IDs were not
 supplied. The final full GUI campaign remains pending. No staging, commit or push was performed for this record.
 
+**S4 commit and origin integration (2026-10-26).** S4 is committed as `df7f4d019`
+("feat(recipe): sample reused training data with the consumer's named features"). After fetching origin, 43
+upstream commits through `5f52279983` are integrated without rewriting local history. The two content conflicts
+were PyEO `panels/options/options.jsx` and its mounted test.
+
+- **Resolution.** Keep origin's repeatability, cumulative and From/To detection thresholds, defaults, More/Less
+  controls and compatibility with saved `minConsecutiveDetections`. Keep the shared readiness/candidate reads,
+  disabled Require drop controls for unusable or unreadable Classification inputs, fresh index choices and the
+  Asset -> Stack -> Classification index derivation. Minimum drop remains visible and disabled while Require drop
+  is off or unusable, as in origin's layout. No copied-band validator is restored.
+- **Coverage.** The mounted Options file retains all 19 existing readiness/Stack cases and the six new upstream
+  threshold cases, plus one combined regression: thresholds remain editable and survive Apply after an upstream
+  Classification repair releases Require drop. All 26 pass. The merge also preserves origin's export-submission
+  notifications, task submission changes and unsettled-save leave warning.
+- **Checks.** GUI 39 files / 525 tests (two workers), covering PyEO, Time Series, CCDC/CCDC Slice, export submission,
+  autosave, recipe feedback and locale; shared 264 cases (`output/readiness`, `analysisPrerequisites`,
+  `classifiedOutputTraining`, `pyeoTrainingReadiness`); gee 194 cases (PyEO params, baseline index, AOI, index gate,
+  gate readiness, Time Series and CCDC/image asset exports). ESLint on the two resolved files and
+  `git diff --check` pass. The full GUI suite and browser were not rerun for the merge.
+- **Release boundary unchanged.** S5's ownership audit/implementation and S6's validation/chart agreement remain
+  before push. Run final verification on the resulting tree. Nothing has been pushed.
+
 **F5/F6. Make settings ownership explicit instead of automatically overwriting groups.**
 
 - Audit each Sources and PRC field from producer through monitoring execution, not just matching property names.

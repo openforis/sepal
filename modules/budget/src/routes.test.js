@@ -41,7 +41,7 @@ const expected = [
     ['post', '/budget', requireAdmin, 'updateBudget'],
     ['post', '/budget/requestUpdate', requireAuth, 'requestUpdate'],
     ['get', '/budget/spending/:username', requireAdmin, 'spending'],
-    ['get', '/budget/check/:username', requireAdmin, 'check'],
+    ['post', '/budget/check/:username', requireAdmin, 'check'],
 ]
 
 test('registers exactly 5 routes', () => {
@@ -150,24 +150,24 @@ test('GET /budget/spending/:username hit by an admin → handler called', async 
     assert.equal(api.spending.mock.callCount(), 1)
 })
 
-test('GET /budget/check/:username with no sepal-user header → 401, handler not called', async () => {
-    const route = find(router.routes, 'get', '/budget/check/:username')
+test('POST /budget/check/:username with no sepal-user header → 401, handler not called', async () => {
+    const route = find(router.routes, 'post', '/budget/check/:username')
     const c = ctx()
     await runChain(route, c)
     assert.equal(c.status, 401)
     assert.equal(api.check.mock.callCount(), 0)
 })
 
-test('GET /budget/check/:username hit by a plain user → 403, handler not called', async () => {
-    const route = find(router.routes, 'get', '/budget/check/:username')
+test('POST /budget/check/:username hit by a plain user → 403, handler not called', async () => {
+    const route = find(router.routes, 'post', '/budget/check/:username')
     const c = ctx(userHeader([]))
     await runChain(route, c)
     assert.equal(c.status, 403)
     assert.equal(api.check.mock.callCount(), 0)
 })
 
-test('GET /budget/check/:username hit by an admin → handler called', async () => {
-    const route = find(router.routes, 'get', '/budget/check/:username')
+test('POST /budget/check/:username hit by an admin → handler called', async () => {
+    const route = find(router.routes, 'post', '/budget/check/:username')
     const c = ctx(userHeader(['application_admin']))
     await runChain(route, c)
     assert.equal(api.check.mock.callCount(), 1)

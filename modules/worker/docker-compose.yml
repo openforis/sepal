@@ -9,15 +9,6 @@ services:
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/worker:${SEPAL_VERSION:-latest}"
     container_name: worker
     init: true
-    # The hosting provider provisions sandbox containers and, as a side effect, creates each user's
-    # per-instance tmp dir under /data/home/{username}/tmp/{id} (chmod 1777) — so the worker needs the
-    # SEPAL data dir mounted at /data and must run as root, exactly like the Java sepal-server it replaces.
-    user: root
-    volumes:
-      - "${SEPAL_DATA_DIR}/sepal:/data"
-      # The SANDBOX worker type reads each user's public SSH key from
-      # /var/lib/sepal/user/home/{username}/.ssh/id_rsa.pub to inject USER_PUBLIC_KEY (workerTypes.js).
-      - "${SEPAL_DATA_DIR}/user/home:/var/lib/sepal/user/home"
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       MYSQL_HOST: "mysql"

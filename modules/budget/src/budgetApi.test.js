@@ -11,8 +11,10 @@ const makeCommands = () => ({
     requestBudgetUpdate: mock.fn(async () => undefined),
 })
 
-const makeApi = (commands, userSpending = mock.fn(), verdict = mock.fn()) =>
-    createBudgetApi({budgetManager: {commands, userSpending, verdict}})
+const makeApi = (commands, userSpending = mock.fn(), verdict = mock.fn(), openSessionUse = makeOpenSessionUse()) =>
+    createBudgetApi({budgetManager: {commands, userSpending, verdict}, openSessionUse})
+
+const makeOpenSessionUse = () => ({openSession: mock.fn(async () => undefined)})
 
 const ctx = ({body = {}, currentUser = {username: 'alice', roles: []}, params = {}} = {}) => ({
     request: {body},
@@ -236,7 +238,7 @@ describe('GET /budget/spending/:username', () => {
     })
 })
 
-describe('GET /budget/check/:username', () => {
+describe('POST /budget/check/:username', () => {
     test('returns budgetManager.verdict(username) verbatim', async () => {
         const verdict = mock.fn(async () => ({
             username: 'bob',
@@ -258,5 +260,25 @@ describe('GET /budget/check/:username', () => {
         const c = ctx({params: {username: 'alice'}})
         await makeApi(makeCommands(), mock.fn(), verdict).check(c)
         assert.deepEqual(c.body, {username: 'alice', exceeded: false, reason: null})
+    })
+
+    test('the worker\'s open sessions count before their WorkerSessionRequested event arrives', async () => {
+        const recorded = []
+        const openSessionUse = {openSession: mock.fn(async row => {recorded.push(row)})}
+        const verdict = mock.fn(async username => recorded.length
+            ? {username, exceeded: true, reason: 'INSTANCE_BUDGET'}
+            : {username, exceeded: false, reason: null})
+        const openSession = {sessionId: 's-1', instanceType: 'T3aSmall', creationTime: '2026-01-01T12:00:00.000Z'}
+        const c = ctx({params: {username: 'bob'}, body: {openSessions: [openSession]}})
+
+        await makeApi(makeCommands(), mock.fn(), verdict, openSessionUse).check(c)
+
+        assert.deepEqual(recorded, [{
+            sessionId: openSession.sessionId,
+            username: 'bob',
+            instanceType: openSession.instanceType,
+            from: new Date(openSession.creationTime),
+        }])
+        assert.equal(c.body.exceeded, true)
     })
 })

@@ -1,4 +1,5 @@
 import {get$, post$, postJson$} from '~/http-client'
+import {uuid} from '~/uuid'
 
 import {moduleWebSocket$} from './ws.js'
 
@@ -8,9 +9,10 @@ export default {
     loadDetails$: taskId =>
         get$(`/api/tasks/task/${taskId}/details`),
 
+    // The id makes a retry after a failed response return the task already created instead of creating another.
     submit$: task =>
         postJson$('/api/tasks', {
-            body: task
+            body: {id: uuid(), ...task}
         }),
 
     restart$: taskId =>

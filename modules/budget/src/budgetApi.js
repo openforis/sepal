@@ -24,7 +24,7 @@ const reportToMap = report => {
     return map
 }
 
-const createBudgetApi = ({budgetManager, publishSpending = null}) => {
+const createBudgetApi = ({budgetManager, openSessionUse, publishSpending = null}) => {
     const commands = budgetManager.commands
 
     // GET /budget/report [ADMIN] — the cached spending report as the report JSON map.
@@ -88,11 +88,17 @@ const createBudgetApi = ({budgetManager, publishSpending = null}) => {
         ctx.body = await budgetManager.userSpending(ctx.params.username)
     }
 
-    // GET /budget/check/:username [ADMIN, internal] — {username, exceeded, reason}. The worker
+    // POST /budget/check/:username [ADMIN, internal] — {username, exceeded, reason}. The worker
     // calls this synchronously before granting a session, so the verdict is computed live rather
-    // than read from the hourly-refreshed report.
+    // than read from the hourly-refreshed report. Body {openSessions: [{sessionId, instanceType,
+    // creationTime}]}: the user's open sessions, opened here as WorkerSessionRequested would open
+    // them, because that event may not have arrived yet for a session requested moments ago.
     const check = async ctx => {
-        ctx.body = await budgetManager.verdict(ctx.params.username)
+        const {username} = ctx.params
+        for (const {sessionId, instanceType, creationTime} of ctx.request.body?.openSessions ?? []) {
+            await openSessionUse.openSession({sessionId, username, instanceType, from: new Date(creationTime)})
+        }
+        ctx.body = await budgetManager.verdict(username)
     }
 
     return {

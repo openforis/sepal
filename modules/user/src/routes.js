@@ -39,6 +39,7 @@ export const createRoutes = ({userApi, sshKeyApi}) => router => router
     .post('/unlock', requireAdmin, ctx => userApi.unlock(ctx))
     .get('/info', requireAdmin, ctx => userApi.info(ctx))
     .get('/list', requireAdmin, ctx => userApi.list(ctx))
+    .get('/sandbox-public-key', requireAdmin, ctx => sshKeyApi.sandboxPublicKey(ctx))
     .get('/mostRecentLogin', requireAdmin, ctx => userApi.mostRecentLogin(ctx))
     .get('/mostRecentLoginByUser', requireAdmin, ctx => userApi.mostRecentLoginByUser(ctx))
     .get('/email-notifications-enabled/:email', requireAdmin, ctx => userApi.emailNotificationsEnabled(ctx))

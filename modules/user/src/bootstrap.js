@@ -39,7 +39,7 @@ export const createBootstrap = ({repository, provision, hashPassword, readSecret
         // idempotent and re-writing the same key is harmless).
         const sshPublicKey = await provision(username, uid, gid)
         await repository.updateSshPublicKey(username, sshPublicKey)
-        await repository.updatePassword(username, hashPassword(secret))
+        await repository.updatePassword(username, await hashPassword(secret))
         log.info(`Bootstrap: established credentials and home for '${username}'`)
     }
     return async () => {

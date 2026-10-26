@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import {test} from 'node:test'
 
-import {toClassifierBands, toUolParams} from './params.js'
+import {toClassifierBands, toUolParams} from '#sepal/ee/pyeo/params'
 
 test('passes change classes through', () => {
     const p = toUolParams({changeFromClasses: [1], changeToClasses: [2, 3]})
@@ -9,9 +9,21 @@ test('passes change classes through', () => {
     assert.deepEqual(p.changeToClasses, [2, 3])
 })
 
-test('maps minConsecutiveDetections to the validated-detections threshold', () => {
+test('maps minCumulativeDetections to the validated-detections threshold', () => {
+    const p = toUolParams({minCumulativeDetections: 4})
+    assert.equal(p.minRequiredValidatedDetectionsThreshold, 4)
+})
+
+test('reads the cumulative detections of a recipe saved as minConsecutiveDetections', () => {
     const p = toUolParams({minConsecutiveDetections: 4})
     assert.equal(p.minRequiredValidatedDetectionsThreshold, 4)
+})
+
+test('maps the repeatability and From/To detection thresholds', () => {
+    const p = toUolParams({minRepeatability: 70, minFromDetections: 3, minToDetections: 4})
+    assert.equal(p.percentageProbabilityThreshold, 70)
+    assert.equal(p.minRequiredFromDetectionsThreshold, 3)
+    assert.equal(p.minRequiredToDetectionsThreshold, 4)
 })
 
 test('applies UoL default thresholds', () => {

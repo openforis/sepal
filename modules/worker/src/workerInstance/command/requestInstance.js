@@ -45,10 +45,7 @@ const requestInstance = async ({workerType, instanceType, username, sessionId}, 
             try {
                 const reserved = reserve(candidate, reservation)
                 await provider.reserve(reserved)
-                // Re-pin the reservation: awaitHost hands back what the hosting service reports,
-                // and tags that have not propagated read as an empty reservation or none at all.
-                // The locally built one is the authority.
-                const ready = reserve(await provider.awaitHost(reserved), reservation)
+                const ready = await provider.awaitHost(reserved)
                 emitInstancePendingProvisioning(ready)
                 log.info(`Reserved idle ${instanceTag(ready)} for ${userTag(username)} (${workerType})`)
                 return ready
@@ -88,7 +85,7 @@ const startPooledInstance = async ({instanceType, reservation}, {claims, provide
     try {
         // Provisioned from here, like a reserved idle instance: the started-instance poll would
         // cost up to its interval. Its Docker check rides out the rest of the boot.
-        const ready = reserve(await provider.awaitHost(started), reservation)
+        const ready = await provider.awaitHost(started)
         emitInstancePendingProvisioning(ready)
         log.info(`Started pooled ${instanceTag(ready)} for ${userTag(reservation.username)} (${reservation.workerType})`)
         return ready
@@ -111,7 +108,7 @@ const launchInstance = async ({instanceType, reservation}, {claims, provider}) =
     } catch (err) {
         log.error(`Failed to record claim on ${instanceTag(instance)}: ${err.message}`)
     }
-    const ready = reserve(await provider.awaitHost(instance), reservation)
+    const ready = await provider.awaitHost(instance)
     emitInstanceLaunched(ready)
     log.info(`Launched new ${instanceTag(ready)} for ${userTag(username)} (${workerType})`)
     return ready

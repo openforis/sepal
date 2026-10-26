@@ -543,8 +543,6 @@ describe('launchReserved', () => {
 
         const inst = await provider.launchReserved('T3aSmall', RESERVATION)
         const describeCallsBeforeAwait = ec2Mock.commandCalls(DescribeInstancesCommand).length
-        // The re-read awaitHost does derives the reservation from tags, which carry no SessionId —
-        // the caller re-pins its own reservation afterwards.
         const ready = await provider.awaitHost(inst)
         provider.stop()
 
@@ -1115,6 +1113,26 @@ describe('awaitHost', () => {
         provider.stop()
 
         assert.equal(ready.host, '5.6.7.8')
+    })
+
+    // EC2 reads are eventually consistent: right after startPooled, DescribeInstances can still
+    // report the warm-up type and the pooled tags.
+    test('keeps the type and reservation of the instance it was given', async () => {
+        ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-abc'}]})
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
+
+        const provider = createAwsInstanceProvider(CONFIG)
+        await provider.start()
+        ec2Mock.reset()
+        ec2Mock.on(DescribeInstancesCommand).resolves(describeResponse([
+            makePooledAwsInstance({InstanceId: 'i-started', InstanceType: 't3a.small', State: {Name: 'running'}, PublicIpAddress: '5.6.7.8'}),
+        ]))
+
+        const started = {id: 'i-started', type: 'G52xlarge', host: null, running: false, reservation: RESERVATION}
+        const ready = await provider.awaitHost(started)
+        provider.stop()
+
+        assert.deepEqual(ready, {...started, host: '5.6.7.8', running: true})
     })
 })
 

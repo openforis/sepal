@@ -208,18 +208,18 @@ const close = async ({session, instanceType, running, repo, policy, releaseInsta
 }
 
 const closedEmail = ({instanceType, running, name}) => ({
-    subject: 'Your SEPAL instance was stopped',
+    subject: 'Your SEPAL session was stopped',
     content: `
         ${instanceText({name, instanceType})} had not been used for a while, and
         was <b>stopped</b> to avoid unnecessary cost.
         ${running ? `<br><br><b>${running}</b> ${plural(running) ? 'were' : 'was'} running on it and ${plural(running) ? 'have' : 'has'} been closed.` : ''}
         <br><br>
         Your files are untouched: everything in your home directory is preserved, and
-        you can start a new instance at any time.
+        you can start a new session at any time.
     `,
 })
 
-// instanceText — "Instance <b>crazy-banana</b> (t1, $0.02/h)". The name is derived from the
+// instanceText — "Session <b>crazy-banana</b> (t1, $0.02/h)". The name is derived from the
 // session id (instanceName.js) and is the same one the GUI, the management page and the SSH menu
 // show, so every interface names the machine identically. The price is what makes "keep it
 // running" a real decision rather than a reflex. The ordinal is not printed here: it is what a
@@ -231,23 +231,23 @@ const instanceText = ({name, instanceType}) => {
     ].filter(Boolean)
     const suffix = parts.length ? ` (${parts.join(', ')})` : ''
     return name
-        ? `Instance <b>${name}</b>${suffix}`
-        : `One of your instances${suffix}`
+        ? `Session <b>${name}</b>${suffix}`
+        : `One of your sessions${suffix}`
 }
 
 const expiryEmail = ({instanceType, policy, url, running, name}) => ({
-    subject: 'Your SEPAL instance is about to be stopped',
+    subject: 'Your SEPAL session is about to be stopped',
     content: `
         ${instanceText({name, instanceType})} has not been used for a while, and
         will be <b>stopped in about ${policy.graceMinutes} minutes</b> unless you keep it.
         ${running ? `<br><br><b>${running}</b> ${plural(running) ? 'are' : 'is'} running on it.` : ''}
         <br><br>
         ${manageLink(url)}
-        Simply using the instance — typing in a notebook, an app or a terminal — keeps it running
+        Simply interacting with a notebook, app or terminal running in that session keeps it running
         too, and no action is needed.
         <br><br>
         Your files are untouched either way: everything in your home directory is preserved, and
-        you can start a new instance at any time.
+        you can start a new session at any time.
     `,
 })
 
@@ -257,7 +257,7 @@ const expiryEmail = ({instanceType, policy, url, running, name}) => ({
 // goes out, and using the instance rescues it just as well as the link would have.
 const manageLink = url =>
     url
-        ? `<a href="${url}">Manage your instance</a>
+        ? `<a href="${url}">Manage your session</a>
         <br><br>`
         : ''
 

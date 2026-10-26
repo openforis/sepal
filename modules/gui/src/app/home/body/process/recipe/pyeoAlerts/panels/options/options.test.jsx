@@ -22,6 +22,7 @@ import widgetStyles from '~/widget/widget.module.css'
 // turning the gate off. The indexes offered follow the same rule over the evidence held now: changing only the
 // Classification changes them. Opening OPT edits nothing. The panel, form, store, source runtime and recipe types are
 // real; storage answers the classification as a test says, Earth Engine an asset's bands at once.
+// Detection thresholds keep the upstream defaults, persistence and From/To controls behind More unless set.
 
 const stored = vi.hoisted(() => ({classification: null}))
 vi.mock('~/apiRegistry', () => ({default: {
@@ -82,7 +83,7 @@ describe('OPT over a Classification the monitoring data cannot feed', () => {
     it('leaves the other detection rules editable', async () => {
         await open({input: RADAR_INPUT, gate: {index: 'nbr', threshold: 0.3}})
 
-        expect(isDisabled(CONSECUTIVE_LABEL)).toBe(false)
+        expect(isDisabled(CUMULATIVE_LABEL)).toBe(false)
     })
 
     it('restores the gate\'s settings, as they were, once the classification is repaired', async () => {
@@ -106,7 +107,7 @@ describe('OPT over a Classification of more than one input image', () => {
         expect(selectedGateIndex()).toBe('NBR')
         expect(errorsOf(INDEX_LABEL)).toEqual([])
         expect(shown()).not.toContain(DEPENDS_ON_SOURCES)
-        expect(isDisabled(CONSECUTIVE_LABEL)).toBe(false)
+        expect(isDisabled(CUMULATIVE_LABEL)).toBe(false)
 
         await holdInput(OPTICAL_INPUT)
 
@@ -283,12 +284,90 @@ describe('a gate turned on with no index saved', () => {
     })
 })
 
+describe('the minimum drop', () => {
+    it('stays in place, disabled, while no drop is required', async () => {
+        await open({input: OPTICAL_INPUT, gate: undefined})
+
+        expect(field(THRESHOLD_LABEL)).not.toBeNull()
+        expect(field(THRESHOLD_LABEL).className).toMatch(/disabled/)
+
+        await press('process.pyeoAlerts.panel.options.form.useIndexGate.on')
+
+        expect(field(THRESHOLD_LABEL).className).not.toMatch(/disabled/)
+    })
+})
+
+describe('detection thresholds', () => {
+    it('offer UoL\'s defaults to a recipe with none saved', async () => {
+        await open({input: OPTICAL_INPUT, options: {}})
+
+        await press('button.more')
+
+        expect(shownThresholds()).toEqual({minRepeatability: 50, minCumulativeDetections: 2, minFromDetections: 2, minToDetections: 2})
+    })
+
+    it('keep the From/To detections behind More while both hold the default', async () => {
+        await open({input: OPTICAL_INPUT, options: {minFromDetections: 2, minToDetections: 2}})
+
+        expect(shownThresholds()).not.toHaveProperty('minFromDetections')
+        expect(shownThresholds()).not.toHaveProperty('minToDetections')
+    })
+
+    it('show the From/To detections at once when one is set', async () => {
+        await open({input: OPTICAL_INPUT, options: {minFromDetections: 3}})
+
+        expect(shownThresholds()).toMatchObject({minFromDetections: 3, minToDetections: 2})
+    })
+
+    it('are kept when another option is applied', async () => {
+        const thresholds = {minRepeatability: 70, minCumulativeDetections: 3, minFromDetections: 1, minToDetections: 4}
+        await open({input: OPTICAL_INPUT, options: thresholds})
+
+        await press('process.pyeoAlerts.panel.options.form.useIndexGate.on')
+        await press('button.apply')
+
+        expect(savedOptions()).toMatchObject(thresholds)
+    })
+
+    it('save the cumulative detections of a recipe saved as minConsecutiveDetections under the new name', async () => {
+        await open({input: OPTICAL_INPUT, options: {minConsecutiveDetections: 4}})
+        expect(shownThresholds().minCumulativeDetections).toBe(4)
+
+        await press('process.pyeoAlerts.panel.options.form.useIndexGate.on')
+        await press('button.apply')
+
+        expect(savedOptions().minCumulativeDetections).toBe(4)
+        expect(savedOptions()).not.toHaveProperty('minConsecutiveDetections')
+    })
+})
+
+describe('detection thresholds through an upstream repair', () => {
+    it('keeps the thresholds editable and preserves them when Require drop becomes usable again', async () => {
+        const thresholds = {minRepeatability: 70, minCumulativeDetections: 3, minFromDetections: 1, minToDetections: 4}
+        await open({input: RADAR_INPUT, gate: {index: 'nbr', threshold: 0.3}, options: thresholds})
+
+        expect(gateControls()).toEqual({useIndexGate: DISABLED, gateIndex: DISABLED, gateThreshold: DISABLED})
+        expect(shownThresholds()).toEqual(thresholds)
+        for (const name of Object.keys(thresholds)) {
+            expect(isDisabled(`process.pyeoAlerts.panel.options.form.${name}.label`)).toBe(false)
+        }
+
+        await holdInput(OPTICAL_INPUT)
+        expect(gateControls()).toEqual({useIndexGate: ENABLED, gateIndex: ENABLED, gateThreshold: ENABLED})
+        await press(GATE_OFF)
+        await press('button.apply')
+
+        expect(savedOptions()).toMatchObject(thresholds)
+        expect(savedOptions().indexGate).toBeUndefined()
+    })
+})
+
 const PYEO = 'pyeo-1'
 const CLASSIFICATION = 'classification-1'
 const INDEX_LABEL = 'process.pyeoAlerts.panel.options.form.gateIndex.label'
 const GATE_LABEL = 'process.pyeoAlerts.panel.options.form.useIndexGate.label'
 const THRESHOLD_LABEL = 'process.pyeoAlerts.panel.options.form.gateThreshold.label'
-const CONSECUTIVE_LABEL = 'process.pyeoAlerts.panel.options.form.minConsecutiveDetections.label'
+const CUMULATIVE_LABEL = 'process.pyeoAlerts.panel.options.form.minCumulativeDetections.label'
 const GATE_ON = 'process.pyeoAlerts.panel.options.form.useIndexGate.on'
 const GATE_OFF = 'process.pyeoAlerts.panel.options.form.useIndexGate.off'
 const DEPENDS_ON_SOURCES = 'process.pyeoAlerts.panel.options.form.useIndexGate.dependsOnSources'
@@ -345,7 +424,7 @@ const holdStack = async bands => {
     await settled()
 }
 
-const pyeoRecipe = ({gate}) => ({
+const pyeoRecipe = ({gate, options = {minCumulativeDetections: 2}}) => ({
     id: PYEO,
     type: 'PYEO_ALERTS',
     title: 'Alerts',
@@ -354,7 +433,7 @@ const pyeoRecipe = ({gate}) => ({
         dates: {monitoringStart: '2024-01-01', monitoringEnd: '2024-06-01'},
         sources: {classification: CLASSIFICATION, dataSets: {LANDSAT: ['LANDSAT_8']}, cloudPercentageThreshold: 75, changeFromClasses: [1], changeToClasses: [2]},
         options: {corrections: ['SR']},
-        pyeoAlertsOptions: {minConsecutiveDetections: 2, ...(gate && {indexGate: gate})}
+        pyeoAlertsOptions: {...options, ...(gate && {indexGate: gate})}
     },
     ui: {initialized: true}
 })
@@ -421,6 +500,25 @@ const selectedGateIndex = () => {
     return input.value || input.placeholder
 }
 
+const THRESHOLD_VALUE = /^process\.pyeoAlerts\.panel\.options\.form\.(minRepeatability|minCumulativeDetections|minFromDetections|minToDetections)\.value (\{.*\})$/
+
+// The thresholds the panel shows, by name, as their sliders say their values.
+const shownThresholds = () => Object.fromEntries(
+    texts()
+        .map(text => text.match(THRESHOLD_VALUE))
+        .filter(Boolean)
+        .map(([, name, values]) => [name, JSON.parse(values).value])
+)
+
+const texts = () => {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+    const found = []
+    while (walker.nextNode()) {
+        found.push(walker.currentNode.textContent)
+    }
+    return found
+}
+
 const chooseGateIndex = async label => {
     await act(async () => field(INDEX_LABEL).querySelector('input').click())
     await settled()
@@ -433,7 +531,7 @@ const chooseGateIndex = async label => {
 // `classification`: what storage answers for the classification, which the session then does not hold - by default,
 // the session holds it over `input`.
 // `stack`: the bands a Stack the Classification's input names maps, `renamed` as stackRecipe takes it.
-async function open({input, gate, classification, stack, renamed}) {
+async function open({input, gate, classification, stack, renamed, options}) {
     stored.classification = classification
     const held = [
         ...classification ? [] : [classificationRecipe(input)],
@@ -443,7 +541,7 @@ async function open({input, gate, classification, stack, renamed}) {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: Object.fromEntries([pyeoRecipe({gate}), ...held].map(record => [record.id, record])),
+            loadedRecipes: Object.fromEntries([pyeoRecipe({gate, options}), ...held].map(record => [record.id, record])),
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},

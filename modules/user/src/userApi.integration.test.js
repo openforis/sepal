@@ -102,7 +102,7 @@ describe('UserApi', () => {
     const givenActiveUser = async () => {
         await testDb.query('INSERT INTO sepal_user SET ?', [{
             username: USERNAME, name: 'Bob', email: EMAIL, admin: 0, system_user: 0, status: 'ACTIVE',
-            uid: 10001, gid: 10001, password_hash: hashPassword(PASSWORD)
+            uid: 10001, gid: 10001, password_hash: await hashPassword(PASSWORD)
         }])
     }
 

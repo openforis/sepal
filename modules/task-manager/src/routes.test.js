@@ -55,10 +55,12 @@ before(async () => {
 after(() => server.close())
 
 test('a user submits a task as themselves', async () => {
-    const response = await post('/tasks', {user: ALICE, body: {operation: 'image.GEE', params: {title: 'Mosaic'}}})
+    const body = {id: 't-1', operation: 'image.GEE', params: {title: 'Mosaic'}}
+
+    const response = await post('/tasks', {user: ALICE, body})
 
     assert.equal(response.status, 200)
-    assert.partialDeepStrictEqual(callsOf(tasks.submit), [[{username: 'alice', operation: 'image.GEE'}]])
+    assert.partialDeepStrictEqual(callsOf(tasks.submit), [[{id: body.id, username: 'alice', operation: body.operation}]])
 })
 
 test('a request without a user is refused', async () => {

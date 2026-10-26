@@ -27,4 +27,5 @@ Owns the `message` MySQL schema (`message.message`, `message.notification`).
 - `GET /ws` — gateway virtual-websocket endpoint (module `message`): pushes the current
   user's full `{notifications}` list to GUI subscribers on subscribe, on `{refresh: true}`, and on
   every change (`changed.js` feed: admin message save/remove → all subscribed users; own
-  read-state change → that user's tabs). Replaced the GUI's 60s polling loop.
+  read-state change → that user's tabs and every admin's, whose lists carry the acknowledged
+  count; non-admin lists omit it). Replaced the GUI's 60s polling loop.

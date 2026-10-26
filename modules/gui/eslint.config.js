@@ -8,7 +8,7 @@ export default [
     {
         files: ['**/*.test.js', '**/*.test.jsx', '**/*.spec.js', '**/*.spec.jsx'],
         languageOptions: {
-            globals: globals.jest,
+            globals: globals.vitest,
         }
     },
     {

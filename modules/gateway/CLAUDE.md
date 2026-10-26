@@ -93,6 +93,9 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
   `sepal-session` (`{sessionId, workerType}` — never the key, never a role). `sepal-session` is
   request-local: `userStore.userMiddleware` strips whatever the client sent, only successful key
   authentication sets it, and `src/proxy.js` forwards it on authenticated endpoints only.
+- **Metrics are admin-only**: `src/metricsAccess.js` answers 403 to any `/api/<module>/metrics[.json]` request
+  from a user without `application_admin` (Prometheus scrapes as `sepaladmin`). Every Koa module serves
+  `/metrics` behind its catch-all proxy, so the guard matches the path pattern, case-insensitively, not a list.
 - `src/googleAccessToken.js`: Background token refresh monitor. Refreshes 10 min before expiry with exponential backoff retry.
 
 ### RabbitMQ
