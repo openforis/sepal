@@ -43,6 +43,8 @@ and test-support modules are exempt.
   in place.
 - `testSupport/mock.js` — `callsOf(fn)` lists the arguments of each call to a `node:test` mock;
   `inSequence(implementations, otherwise)` answers successive calls in turn.
+- `testSupport/worker/threadJob.js` — a job on a `SchedulerTest` scheduler the test initializes; with `crash`
+  it takes its worker thread down mid-job.
 - `testSupport/assert.js` — `assertMatches(actual, pattern)` checks only the properties the pattern names,
   but arrays element for element; `assert.partialDeepStrictEqual` also accepts an array that merely contains
   the pattern's elements in order.
