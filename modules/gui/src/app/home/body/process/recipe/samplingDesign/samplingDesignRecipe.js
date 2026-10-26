@@ -1,8 +1,8 @@
 import _ from 'lodash'
 
-import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {getTaskInfo} from '~/app/home/body/process/recipe/recipeOutputPath'
+import {submitExportTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 import {publishEvent} from '~/eventPublisher'
 import {select} from '~/store'
 import {msg} from '~/translate'
@@ -134,5 +134,5 @@ export const submitRetrieveRecipeTask = (recipe, capability) => {
         recipe_type: taskRecipe.type,
         destination
     })
-    return api.tasks.submit$(task).subscribe()
+    return submitExportTask(task)
 }

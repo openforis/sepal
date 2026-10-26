@@ -12,19 +12,30 @@ import {describe, expect, it, vi} from 'vitest'
 
 const state = vi.hoisted(() => ({
     submitted: [],
+    submissionError: null,
     recipeType: null,
-    events: []
+    events: [],
+    notifications: []
 }))
 
-vi.mock('~/apiRegistry', () => ({
-    default: {
-        tasks: {
-            submit$: task => {
-                state.submitted.push(task)
-                return {subscribe: () => ({unsubscribe: () => {}})}
+vi.mock('~/apiRegistry', async () => {
+    const {of, throwError} = await import('rxjs')
+    return {
+        default: {
+            tasks: {
+                submit$: task => {
+                    state.submitted.push(task)
+                    return state.submissionError
+                        ? throwError(() => state.submissionError)
+                        : of(task)
+                }
             }
         }
     }
+})
+
+vi.mock('~/widget/notifications', () => ({
+    Notifications: {error: notification => state.notifications.push(notification)}
 }))
 
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({
@@ -538,6 +549,34 @@ describe('submitRetrieveRecipeTask with resolved output and a migration fallback
 
 // The description decides what an export requires, so nothing is submitted without one - with or without a fallback
 // policy to apply to it.
+describe('submitRetrieveRecipeTask when the task service rejects the submission', () => {
+    it('notifies the user, with the reason the service gave', () => {
+        state.notifications = []
+        state.submissionError = {status: 400, response: {message: 'operation required'}}
+        try {
+            submit({id: 'SYNTHETIC'})
+        } finally {
+            state.submissionError = null
+        }
+        expect(state.notifications).toEqual([
+            {message: 'process.retrieve.error.submit', error: 'operation required'}
+        ])
+    })
+
+    it('notifies the user when the service gives no reason', () => {
+        state.notifications = []
+        state.submissionError = {status: 502, response: null}
+        try {
+            submit({id: 'SYNTHETIC'})
+        } finally {
+            state.submissionError = null
+        }
+        expect(state.notifications).toEqual([
+            {message: 'process.retrieve.error.submit', error: undefined}
+        ])
+    })
+})
+
 describe('submitRetrieveRecipeTask without a resolved image output', () => {
     it.each([
         ['alone', {}],
