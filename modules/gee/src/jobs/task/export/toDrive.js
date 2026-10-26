@@ -1,7 +1,7 @@
 import {concat, defer, last, map, of, switchMap} from 'rxjs'
 
 import ee from '#sepal/ee/ee'
-import {currentEEContext} from '#sepal/ee/eeContext'
+import {isServiceAccount} from '#sepal/ee/eeContext'
 
 import {exportFolderName, prepareDestination$} from '../storage/destination.js'
 import {castToLargest} from './castToLargest.js'
@@ -12,7 +12,7 @@ export const startImageToDriveExport$ = ({
     image, folder: requestedFolder, description, dimensions, region, scale, crs, crsTransform, maxPixels = 1e13, shardSize,
     fileDimensions, skipEmptyTiles, fileFormat, formatOptions
 }, {sepalUser}) => defer(() => {
-    if (currentEEContext().auth.type === 'serviceAccount') {
+    if (isServiceAccount()) {
         return of({eeTaskId: null})
     }
     // Earth Engine finds the Drive folder by name, so both are given the same one.
