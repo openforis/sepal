@@ -108,7 +108,7 @@ describe('T+notificationVisibleMinutes — email', () => {
         const sendEmail = mock.fn()
         await run(repo, {sendEmail})
         const {content} = sendEmail.mock.calls[0].arguments[0]
-        assert.ok(content.includes('Manage your instance'))
+        assert.ok(content.includes('Manage your session'))
     })
 
     // Without SEPAL_ENDPOINT there is no absolute URL worth putting in a mail. The mail still goes
@@ -313,7 +313,7 @@ describe('describing the instance', () => {
             sendEmail,
         })
         const {content} = sendEmail.mock.calls[0].arguments[0]
-        assert.ok(content.includes(`Instance <b>${instanceName('s-1')}</b> (t1, $0.02/h)`))
+        assert.ok(content.includes(`Session <b>${instanceName('s-1')}</b> (t1, $0.02/h)`))
         assert.ok(!content.includes('Your <b>'))
         assert.ok(content.includes('RStudio'))
     })

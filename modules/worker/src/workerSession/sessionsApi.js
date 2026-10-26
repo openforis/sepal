@@ -85,7 +85,7 @@ p.small {font-size: .9rem}
 <body>${body}</body>
 </html>`
 
-// instanceText — "Instance <b>crazy-banana</b> (t1, $0.02/h)", the same name the in-app
+// instanceText — "Session <b>crazy-banana</b> (t1, $0.02/h)", the same name the in-app
 // notification, the expiry email and the SSH menu give this machine (instanceName.js). A user with
 // two instances has to be able to tell which one a page is about before pressing anything on it,
 // and the price is what makes "keep it running" a real decision rather than a reflex.
@@ -99,8 +99,8 @@ const typeAndCost = ({typeName, hourlyCost}) => {
 
 const instanceText = description =>
     description?.name
-        ? `Instance <b>${description.name}</b>${typeAndCost(description)}`
-        : 'One of your instances'
+        ? `Session <b>${description.name}</b>${typeAndCost(description)}`
+        : 'One of your sessions'
 
 // Each button is its own form so the POST carries exactly one action and nothing is inferred from
 // which control happened to be focused. action="" posts back to the very URL that rendered the
@@ -129,11 +129,11 @@ const extendedPage = description => page(`
 const terminatedPage = description => page(`
 <h1>${instanceText(description)} was stopped</h1>
 <p>Your files are untouched — everything in your home directory is preserved, and you can start a
-new instance at any time. You can close this page.</p>`)
+new session at any time. You can close this page.</p>`)
 
 const expiredPage = () => page(`
 <h1>This link is no longer valid</h1>
-<p>Either it was already used, or the instance has since been stopped or kept running some other
+<p>Either it was already used, or the session has since been stopped or kept running some other
 way. Open SEPAL to check — your files are untouched either way.</p>`)
 
 const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Date(), expiryPolicy = {}, expiryTokens = null, sshHost = null}) => {
