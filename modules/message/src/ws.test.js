@@ -57,6 +57,21 @@ describe('message ws protocol', () => {
         assert.deepEqual(sent, [])
     })
 
+    it('multicasts a user-scoped change to every subscribed admin as well, and to no other user', async () => {
+        const {sent, messageChanged$, handler} = setup()
+        subscriptionUp(handler, {username: 'alice', clientId: 'c1', subscriptionId: 's1'})
+        subscriptionUp(handler, {username: 'bob', clientId: 'c2', subscriptionId: 's2'})
+        subscriptionUp(handler, {username: 'admin', roles: ['application_admin'], clientId: 'c3', subscriptionId: 's3'})
+        await flush()
+        sent.length = 0
+        messageChanged$.next({username: 'alice'})
+        await flush()
+        assert.deepEqual(new Set(sent), new Set([
+            {username: 'alice', data: {notifications: notificationsFor('alice')}},
+            {username: 'admin', data: {notifications: notificationsFor('admin')}}
+        ]))
+    })
+
     it('multicasts to every subscribed user on a message-scoped change', async () => {
         const {sent, messageChanged$, handler} = setup()
         subscriptionUp(handler, {username: 'alice', clientId: 'c1', subscriptionId: 's1'})

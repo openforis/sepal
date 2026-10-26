@@ -1,9 +1,8 @@
 // changed.js — in-process change feed from the REST mutation handlers to the ws push layer
 // (see ws.js). Emissions:
-//   {}           — the message set or any read state changed; every user's list is affected
-//                  (read-state changes broadcast too, because they move the per-message
-//                  acknowledged count every subscriber displays)
-//   {username}   — supported by the ws layer for user-scoped changes; currently unused
+//   {}           — the message set changed; every user's list is affected
+//   {username}   — that user's read state changed; affects their list and every admin's, whose
+//                  lists carry the per-message acknowledged count
 import {Subject} from 'rxjs'
 
 const messageChanged$ = new Subject()
@@ -11,4 +10,7 @@ const messageChanged$ = new Subject()
 const publishMessagesChanged = () =>
     messageChanged$.next({})
 
-export {messageChanged$, publishMessagesChanged}
+const publishReadStateChanged = username =>
+    messageChanged$.next({username})
+
+export {messageChanged$, publishMessagesChanged, publishReadStateChanged}

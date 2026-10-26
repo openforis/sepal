@@ -49,16 +49,12 @@ const createMessageWsProtocol = ({userNotifications, messageChanged$}) =>
             }
         }
 
-        const onChanged = ({username}) => {
-            const users = subscribedUsers()
-            if (username) {
-                if (users.has(username)) {
-                    sendUpdate(username, users.get(username))
+        const onChanged = ({username}) =>
+            subscribedUsers().forEach((isAdmin, subscribedUsername) => {
+                if (!username || subscribedUsername === username || isAdmin) {
+                    sendUpdate(subscribedUsername, isAdmin)
                 }
-            } else {
-                users.forEach((isAdmin, subscribedUsername) => sendUpdate(subscribedUsername, isAdmin))
-            }
-        }
+            })
 
         const onSubscriptionUp = ({user, clientId, subscriptionId}) => {
             const {username} = user

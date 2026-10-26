@@ -34,7 +34,7 @@ const messageToMap = message => ({
 })
 
 // Top-level `username` is the requesting user (the per-user notification row owner);
-// message.username is the author.
+// message.username is the author. Only admins' rows carry an acknowledged count.
 const notificationToMap = row => ({
     message: messageToMap({
         id: row.messageId,
@@ -48,7 +48,7 @@ const notificationToMap = row => ({
     }),
     username: row.username,
     state: row.state,
-    acknowledged: row.acknowledged ?? 0
+    ...(row.acknowledged != null && {acknowledged: row.acknowledged})
 })
 
 export {messageToMap, notificationToMap, rowToMessage, toISOString}
