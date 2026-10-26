@@ -1,4 +1,13 @@
-import {gunzipSync} from 'node:zlib'
+import {promisify} from 'node:util'
+import {gunzip} from 'node:zlib'
+
+import {ClientException} from '#sepal/exception'
+
+// Bounds both the upload and the document it decompresses to, so neither a large body nor a gzip bomb can
+// exhaust memory. Stays below MySQL's max_allowed_packet (128M), which caps what the contents column stores.
+export const MAX_RECIPE_BYTES = 100 * 1024 * 1024
+
+const gunzip$ = promisify(gunzip)
 
 const createRoutes = ({recipeService, requireAuth}) => router => router
     .get('/healthcheck', ctx => {
@@ -105,18 +114,34 @@ const parseExpectedRevision = value => {
 
 // Read the raw request stream (the GUI posts application/octet-stream, which koa-bodyparser leaves
 // untouched) and gunzip it to the recipe document.
-const gzippedJsonBody = ctx => new Promise((resolve, reject) => {
-    const chunks = []
-    ctx.req.on('data', chunk => chunks.push(chunk))
-    ctx.req.on('end', () => {
-        try {
-            resolve(JSON.parse(gunzipSync(Buffer.concat(chunks)).toString('utf8')))
-        } catch (error) {
-            reject(error)
-        }
+const gzippedJsonBody = async ctx => {
+    const compressed = await rawBody(ctx.req, MAX_RECIPE_BYTES)
+    const json = await gunzip$(compressed, {maxOutputLength: MAX_RECIPE_BYTES}).catch(error => {
+        throw error.code === 'ERR_BUFFER_TOO_LARGE' ? recipeTooLarge() : error
     })
-    ctx.req.on('error', reject)
+    return JSON.parse(json.toString('utf8'))
+}
+
+// Past the limit the remaining upload is left to drain unread, so the 413 still reaches the client.
+const rawBody = (req, limit) => new Promise((resolve, reject) => {
+    const chunks = []
+    let length = 0
+    const onData = chunk => {
+        length += chunk.length
+        if (length > limit) {
+            req.off('data', onData)
+            reject(recipeTooLarge())
+        } else {
+            chunks.push(chunk)
+        }
+    }
+    req.on('data', onData)
+    req.on('end', () => resolve(Buffer.concat(chunks)))
+    req.on('error', reject)
 })
+
+const recipeTooLarge = () =>
+    new ClientException(`Recipe exceeds ${MAX_RECIPE_BYTES} bytes`, {statusCode: 413, errorCode: 'RECIPE_TOO_LARGE'})
 
 const noStore = ctx => ctx.set('Cache-Control', 'no-store')
 
