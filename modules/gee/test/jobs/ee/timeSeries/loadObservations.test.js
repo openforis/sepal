@@ -18,7 +18,8 @@ const CLASSIFIED = 'probability_1'
 const UNTRAINABLE = [
     ['stores no points', () => ({[CLASSIFICATION]: trainable({points: []})}), 'NO_TRAINING_DATA'],
     ['reuses a recipe without input imagery', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, images: []})}), 'MISSING_ROLE'],
-    ['reuses a recipe sampling fewer features', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, included: ['red']})}), 'MISSING_TRAINING_FEATURES']
+    ['reuses a recipe whose imagery lacks a feature it trains on', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, images: [RED_ONLY_INPUT]})}), 'MISSING_TRAINING_FEATURES'],
+    ['has two input images', () => ({[CLASSIFICATION]: trainable({images: [trainable().model.inputImagery.images[0], {...RED_ONLY_INPUT, imageId: 'i-2'}]})}), 'MULTIPLE_CLASSIFIER_INPUTS']
 ]
 
 describe('loading the observations of a Time Series pixel', () => {
@@ -353,6 +354,9 @@ const planetAlerts = assets => ({
 
 const PROVIDER = 'provider-1'
 const TRAINABLE_FEATURES = ['red', 'nir', 'ndvi']
+const RED_ONLY_ASSET = 'users/x/red-only'
+// An input over imagery holding red alone.
+const RED_ONLY_INPUT = {imageId: 'i-1', type: 'ASSET', id: RED_ONLY_ASSET, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['red']}]}
 const RADAR_FEATURES = ['VV_mean', 'VH_med']
 const POINTS = [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]
 
@@ -473,6 +477,6 @@ mock.module('#gee/jobs/executionReadiness', {
 beforeEach(() => {
     Object.assign(state, {
         catalogue: {}, recipeReads: [], pixels: [], collections: [], evaluations: [], selected: [], recipeImages: [], observed: [], judged: [],
-        assetBands: {[`users/x/${CLASSIFICATION}`]: TRAINABLE_FEATURES, [`users/x/${PROVIDER}`]: TRAINABLE_FEATURES}
+        assetBands: {[`users/x/${CLASSIFICATION}`]: TRAINABLE_FEATURES, [`users/x/${PROVIDER}`]: TRAINABLE_FEATURES, [RED_ONLY_ASSET]: ['red']}
     })
 })

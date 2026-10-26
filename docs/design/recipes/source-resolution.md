@@ -2979,7 +2979,7 @@ contract can change the split; they must not silently expand it.
 | S1: Chart layout on tab return | Implemented: defer graph drawing while disabled and make Panel visibility follow the enabled context in the same render. | F8 layout | Focused tests and independent review passed; user reported "Looks good" after the manual checklist and approved committing on 2026-10-23. Detailed per-case browser results were not supplied; see below. |
 | S2: Feedback where repairs happen | Consistent Classification/Regression training-data feedback, item-editor explanations and replacement/removal; visible Classification selection in Time Series/CCDC Sources; classifier-input attribution at Classification; repair-oriented PyEO SRC/OPT feedback; correct the empty Retrieve warning. | F1, F2, F10, F8 warning | The single-input selection check passes. Confirmed findings now hold Apply while replacement, Cancel and unchanged Close remain available; the user confirmed Classification's browser recheck passed. The separate Stack Require drop fix passed the user's actual-preview and remove/restore browser check on 2026-10-24. Empty-Provider refinement and S3/S4 remain separate. |
 | S3: One selected-Classification validity contract | Require a selected usable Classification for Time Series/CCDC base operations, independently of requested/breakpoint bands; common SRC explanation/action hold; remove redundant band-training stage/watch/messages/server settling. | F9; consumes S2 presentation | Implemented and independently reviewed. User confirmed Retrieve closure/reopen and the already-broken CCDC/count-preview repair checks passed on 2026-10-25. Shared analysis prerequisites cover every operation and named map product. The timing-dependent keyboard check was not attempted in the browser; automated coverage passed. No requested browser recheck remains. |
-| S4: Reused samples with Consumer features | Sample each contributing Provider's imagery at its points using Consumer's feature definition; preserve sampling scale, nesting/order and Consumer normalisation; update shared readiness to the same derivability contract. | F4 | Trace the feature-plan/readiness identity before coding; do not split execution from its corresponding refusals. Depends on the S3 base contract for consumer coverage. Whole-row numeric and controlled live checks plus a one-scene/many-scene witness of no per-scene sampling; recheck S2 repair feedback against the new semantics. |
+| S4: Reused samples with Consumer features | Sample each contributing Provider's imagery at its points using Consumer's feature definition; preserve sampling scale, nesting/order and Consumer normalisation; update shared readiness to the same derivability contract. | F4 | Implemented 2026-10-26; sampling and feedback corrections pass independent review, including unsupported requested operations and neutral unknown-reason fallback. No remaining S4 review findings. User confirmed the CCDC explanation and selection-recovery browser recheck passed on 2026-10-26; see the result after "S4 use-restriction fallback: independent review". Final full GUI campaign remains pending. |
 | S5: Change Alerts settings ownership | Audit Sources/PRC fields, then implement source-owned read-only required matches versus consumer-owned editable values; replace whole-group observation syncing and define initial/explicit copying. | F5, F6 | Audit first; agree the editable-copy policy below. UI and backend use the same effective values for recipe and asset references. Fresh reopen, overrides, reference replacement, Cancel, late metadata and asset metadata are mandatory cases. No automatic overwrite of editable settings. |
 | S6: Change Alerts validation and chart agreement | Retain invalid applied choices with field explanations; hold Retrieve and close/disable the analysis chart for an incompatible configured monitoring band; remove redundant panel validation. | F3 | Build on S5's ownership/effective-values contract so the form and operations judge the same configuration. Reproduce Optical-to-Radar, repair, cancellation, valid native controls and recipe/asset reference cases. Preserve operation scope rather than installing full image readiness on the chart. |
 
@@ -4064,6 +4064,979 @@ automated checkpoint follows the completed correction set.
   missing/unavailable evidence. Compare one-scene and many-scene construction to show no per-scene resampling, then
   extend the controlled live numerical check to the new contract and retain its whole-row/prediction comparisons.
 
+**S4 design assessment and numeric witness (2026-10-25, from 6ccb604f6; no production change).**
+
+**Current proposal (2026-10-25, named-feature contract; design only, no production change).** The Consumer requests
+named training features; each point-contributing Provider supplies every one of them from its own imagery at its
+own points - located by name, or derived with the Consumer's own rule - or the Consumer gets a located finding.
+Input counts and saved order do not matter; a requested name supplied by no input, or by more than one, is refused,
+never resolved by first input or generated suffix. No `role`, binding or mapping field is added; source roles,
+bindings and positional matching are withdrawn. Users give names consistent meanings and units; S4 establishes no
+scientific comparability. The trace and witnesses below are evidence about current execution and simulations.
+
+- **Traced today.** Classification reuse calls each Provider's `getSamples$()`
+  (`lib/js/ee/src/classification/classification.js`): the Provider's own `features$` - its input images through
+  `addCovariates` with *its* band sets and auxiliary imagery, masked by the image mask - sampled at its own points and
+  `scale`, its nested reuse first, recursively, each over its own features; nothing scaled. The Consumer sets
+  `band_order` to its own feature names, scales reused rows once with its own statistics (`scaledSamples`) where it
+  normalises, and trains. Regression reuse calls each Provider's `getTrainingData$()` (`regression/regression.js`),
+  likewise over the Provider's own image, then sets the Consumer's `band_order`; it never normalises. Classification
+  reuses only Classification and Regression only Regression (`recipeSection.jsx`). Time Series/CCDC/PyEO obtain the
+  Classification's training data once, outside the per-scene map (`collection.js`), and apply its band sets to each
+  scene (`classifyImage`). Readiness: `trainingFeaturesRequirement` compares the Consumer's `sampledFeatures` with each
+  point-storing Provider's *own* `sampledFeatures`, and Provider `TRAINING_DATA` also applies its own
+  `inputBandSetRequirements`; `sampledFeatures` establishes nothing for several input images.
+- **Numeric witness** (temporary probe over `test/ee/classification/numericEarthEngine.js`, removed; "intended" ran the
+  real execution with each point-storing Provider carrying the Consumer's band sets and auxiliary imagery; rows are
+  whole training rows, Provider rows first):
+  - Provider selects `red` over imagery `red,nir`, Random Forest Consumer needs `red,nir`. Current Provider rows are
+    `{class, red}` only (no `nir`, while `band_order` names it); intended `{class:1, red:100, nir:1000}`,
+    `{1, 300, 3000}`, `{2, 500, 9000}`, `{2, 900, 17000}`, then the Consumer's own rows unchanged.
+  - Normalising SVM Consumer: intended Provider rows scaled once by the Consumer's statistics (`red` 0, 0.5, 1, 2;
+    `nir` 0, 0.25, 1, 2); current lacks `nir`. `normalize: NO`: raw, as Random Forest.
+  - Provider imagery genuinely lacks `nir`: rows lack `nir` either way - readiness must refuse it, located.
+  - Nested: Consumer `red,nir` reuses a middle recipe selecting `swir1` (storing points) that reuses a `red`-only
+    Provider. Current rows `{red}` x4, `{swir1}` x4, own; intended `red,nir` from each recipe's own imagery, in
+    configured order (nested before middle's own), then own.
+  - Index: Consumer `red,ndvi`, `red`-only Provider over `red,nir`: current lacks `ndvi`; intended derives `ndvi` from
+    the Provider's own `red`/`nir` (0.818, 0.818, 0.895, 0.899).
+  - Regression, same `red`-only Provider: current `{value, red}`; intended `{value, red, nir}` from the Provider's
+    imagery, unnormalised.
+  - No-reuse controls (Random Forest, SVM, Regression): current equals intended.
+  The stand-in establishes row content, order, label, scaling and derivation arithmetic, and that the change is local
+  to Provider sampling. It does not establish Earth Engine's handling of a missing training property (the stand-in
+  yields `undefined`; Earth Engine's behaviour - dropped rows or a training error - needs the live check), masks,
+  real index scaling, or evaluation counts.
+- **Promise.** Reusing training data gives the Consumer a shared training basis: each Provider's labelled points,
+  sampled from the Provider's own imagery, carrying the features the Consumer trains on. It covers a standalone 2021
+  Classification reusing a 2020 one with one or several inputs, a Classification applied to a sensor collection, and
+  Regression. Fixed-model reuse, probability calibration and units/encoding/measurement compatibility are outside S4.
+- **Established facts (code and UI).** An input is saved as `{imageId, type, id, bandSetSpecs, …}` in
+  `model.inputImagery.images`; `imageId` is generated per recipe (`uuid()` in the input editor). The editor
+  (`panels/inputImageryWithDerived`, shared by Classification and Regression) edits an input in place - its source can
+  be replaced, keeping `imageId` - adds and removes inputs, and offers no reordering. Nothing names what an input
+  represents. A reuse data set is `{dataSetId, type: 'RECIPE', name, recipe}`, with nothing per input. Execution
+  builds each input's features separately (auxiliary covariates added per input) and concatenates them in saved
+  order, a repeated name suffixed (`red_1`, `latitude_1`); `band_order` then matches rows by those names.
+- **Correction: position is not a correspondence.** Two inputs can expose identical bands while measuring different
+  things, so a reversed pair passes every feature check. Probe (temporary, removed): Consumer inputs dry-season and
+  wet-season, both `red,nir`; Provider saved wet, dry. By position the Provider's first row is `{class:1, red:11,
+  nir:101, red_1:101, nir_1:1001}` - wet-season values under the Consumer's dry-season features (its own first row
+  `red:100, nir:1000`) - with no missing feature; associated by meaning it is `red:101, nir:1001, red_1:11, nir_1:101`.
+  The previous revision's statement that missing-feature validation exposes reversed inputs was wrong: it exposes only
+  inputs whose bands differ. Position, `imageId`s of independent recipes, titles, equal counts and overlapping bands are
+  therefore not used to associate inputs.
+- **Earlier multiple-input witness (positional revision; its inputs were built to correspond, so it shows sampling,
+  not correspondence).** Over the real execution and stand-in: matched two-input selections unchanged
+  (`{class:1, red:120, nir:1200, red_1:130, nir_1:1300}`); a Provider selecting `red` from input 1 and `nir` from
+  input 2 gives today `{red:120, nir:1300}` - input 2's `nir` under input 1's name - against `red:120, nir:1200,
+  red_1:130, nir_1:1300` with per-input sampling; a `DIFFERENCE` over a permuted Provider input gives
+  `red_nir_difference = 130 - 1300 = -1170` ordered like the Consumer; `nir` missing from input 1 but present in input 2
+  is misattributed today and by naive per-input sampling alike, which the per-input selection refuses; an empty
+  intermediate forwards; Regression keeps `value`; unequal-count reuse runs today by flattened names; no-reuse rows
+  unchanged. From the single-input probe: copied band sets alone gave `nir_red_difference` = 900, 2700, 8500, 16100;
+  ordered like the Consumer, `red_nir_difference` = -900, -2700, -8500, -16100. The stand-in models a `_1` suffix rule,
+  not Earth Engine's own, nor masks, index scaling, a missing training property or evaluation counts.
+**Current named-feature design details (superseding the withdrawn source-association proposals).**
+
+- **What names identify (traced).**
+  - *Raw input band names*: an input's described bands - an asset's names, a recipe's output names (an optical
+    mosaic's include its indexes, `ndvi` among them, `selectableBands`), a Stack's chosen `outputName`s.
+  - *Derived names*: an index is named for itself and derived only from the standard band names it requires
+    (`REQUIRED_BANDS_BY_INDEX`, e.g. `ndvi` from `red` and `nir`); a combination is `${b1}_${b2}_${operation}`, `b1`
+    and `b2` taken in its input's band order (`combinePairwise`); auxiliary covariates (`latitude`, terrain, water)
+    are location functions added to every input (`addCovariates`).
+  - *Explicit renames*: a Stack's Band names panel maps `originalName` to `outputName` and refuses duplicate output
+    names (`DUPLICATE_BAND_NAME`). The Classification/Regression input editor selects bands but cannot rename them.
+  - *Generated names*: concatenating inputs suffixes a later input's repeated name (`red_1`, `latitude_1`).
+  - *The Consumer's `band_order`*: its concatenated names, generated ones included.
+- **Requested features.** The Consumer's per-input feature names before concatenation - what `featuresOf` gives for
+  each of its inputs - in its order. They must be unique across its inputs, so `band_order` holds them unchanged,
+  except the built-in auxiliary covariates `auxiliaryImagery` configures (not input bands merely named `latitude` or
+  `elevation`): one repeated per input (`latitude`, `latitude_1`) is the same raw location value, supplied once and
+  copied under each generated name, each output column then scaled by the Consumer's own carried statistics as any
+  column is (agreed by the user). Any other repeated requested name - two seasonal
+  inputs both requesting `red` - is `AMBIGUOUS_TRAINING_FEATURES` at the Consumer, reported only when it reuses
+  training data; its own-point training is unchanged. A generated suffix is never taken as meaning.
+- **Feature form.** Each requested feature has the form in which the Consumer itself produces it, decided by the
+  existing band-set rule over the Consumer's described input: a raw band (a provided index included, such as a
+  mosaic's stored `ndvi`); a calculated index - one the input can derive from its standard bands, which
+  `addCovariates` then calculates in physical units, overwriting any provided band of that name; a combination of two
+  raw bands; or a built-in covariate. The forms are not interchangeable: SEPAL stores a mosaic's indexes at
+  `OPTICAL_STORED_PER_UNIT` (10000, `encoding.scale` 1e-4), while a calculated index is physical - `ndvi` 0.818 against
+  8181 (review probe). The Consumer's form, and so its no-reuse representation, is unchanged.
+- **Supply rule, per point-storing Provider.** A requested feature from Consumer input *i* is supplied by Provider input
+  *j* only in the same form: a raw band where *j* holds that literal band, selected directly (a provided index included);
+  a calculated index where *j* holds the standard bands it needs; a combination where *j* holds both its bands,
+  operands in the Consumer's order (`orderLike`); a configured built-in covariate from its generator. An input holding
+  both a provided index and its spectral bands can supply either requested form, using the requested construction;
+  the extra spectral bands do not disqualify its literal provided band. A provided index alone never supplies a
+  calculated feature, and calculating an index never supplies a raw/provided feature when its literal band is absent:
+  such a feature is `MISSING_TRAINING_FEATURES`, its reason the form. Cross-form fallback is unsupported in S4, as no
+  equivalent representation is established. The Consumer's existing per-input rule establishes the requested form;
+  suppliers are checked against that form. Do not rerun a Provider-side rule that would overwrite a requested
+  provided index with a calculated one. No encoding is inferred from values.
+  Exactly one Provider input must supply each requested feature: none is `MISSING_TRAINING_FEATURES`, several is
+  `AMBIGUOUS_TRAINING_FEATURES`, both naming the Provider, the feature and the inputs. Two known suppliers establish
+  ambiguity even while another input is undescribed; no known supplier beside an undescribed input establishes nothing,
+  nor does one known supplier beside an undescribed input establish unique supply. Duplicates among Provider bands no requested feature uses are irrelevant.
+  Nothing is combined across inputs: `red` from one input and `nir` from another derive neither `ndvi` nor
+  `red_nir_*`; that is reported missing, with the reason. Operands and output names are the Consumer's, because the
+  derivation is the Consumer's over imagery ordered like its input. Auxiliary covariates are always supplied.
+- **Masks, projection, footprint.** Acceptance follows Earth Engine's `sampleRegions`: a pixel with a masked band is
+  excluded. Each supplied data feature keeps its supplying input's mask. Built-in covariates retain their generator's
+  native masks and coverage: a location function is not necessarily unmasked (terrain has missing edge values).
+  Repeated built-in columns copy the same raw value and intrinsic mask; they must not unmask required data or silently
+  expand eligible points, including an auxiliary-only request. Preserve the applicable Provider imagery support.
+  Inputs supplying nothing are not sampled and no longer remove rows. Keep the Provider's own `scale`. Specify an
+  explicit single Provider band for the sampling projection, tracing the current selected feature image's first band:
+  the first raw input's projection is not automatically identical, and a multi-projection image has no single
+  projection to read without selecting a band. Verify the anchor against existing valid controls and document any
+  intentional sampling-grid change when different bands are requested. Points are filtered by the assembled image's
+  footprint; check that assembly does not accidentally narrow or expand it. The live check verifies masks, projection
+  and footprint with mixed projections as well as a common-grid control; the stand-in proves none of them.
+- **API and data flow.** Shared rules, `lib/js/shared/src/recipe/bandSets.js`: `featuresOf(bandSetSpecs, auxiliaryImagery,
+  bands)` (today's per-input `sampledFeatures` body), `orderLike`, `requestedFeatures(model, describedInputs)` (per
+  input, with the Consumer-side ambiguity), and `featureSupply(requested, providerModel, describedInputs)` (per requested
+  feature, the supplying input, or missing/ambiguous/unknown). Execution, one shared function beside `addCovariates`
+  (the classification/regression copies consolidated): for each Consumer input *i* and Provider input *j*, the
+  candidate constructed in the Consumer's requested form, reusing the existing raw/index/combination helpers and
+  `orderLike(P_j, inputBands_i)`; blindly applying `addCovariates` is insufficient where its index overwrite would
+  change a raw/provided request into a calculated feature. Each requested feature is
+  selected from the one candidate holding it, chosen in Earth Engine by band presence
+  (`ee.ImageCollection(candidates).filter(ee.Filter.listContains('system:band_names', name))`), and the selections are
+  assembled in the Consumer's order under its `band_order` names, auxiliary duplicates copied. The Consumer passes its
+  definitions (`bandSetSpecs_i`, `inputBands_i` and the requested names as server-side lists) - nothing new evaluated on
+  the client. Classification `getSamples$(definitions)` and a new Regression `getSamples$(definitions)` (its reuse stops
+  calling a Provider's `getTrainingData$`) sample their own points at their own `scale` and forward the definitions
+  unchanged along reuse; the Consumer's own sampling, `band_order`, normalisation and the collection's
+  once-per-computation assembly are unchanged. Execution enforces the supply rule itself, since server preview gating
+  stays deferred: a candidate counts only if it can fulfill the Consumer's requested construction (literal band
+  present for a raw/provided request, required spectral bands present for a calculated request), determined from the
+  Consumer's band-set rule and both server-side band lists; the feature is taken only when exactly one candidate
+  counts, and zero or several fail the
+  evaluation with a message naming the feature, never falling back to the first.
+- **Operations and findings.** One reuse operation, `TRAINING_DATA`: inputs present and described (`INPUT_IMAGE:
+  IMAGE_OUTPUT`, `inputImageryRequirement`), nested `TRAINING_DATA`; its own band-set requirements dropped, its
+  selections not being what it samples; no association or naming rule. Consumer-side, in `trainingFeaturesRequirement`
+  (Classification `IMAGE_OUTPUT`/`CLASSIFIER`, Regression `IMAGE_OUTPUT`), for each point-storing recipe in its reuse:
+  `MISSING_TRAINING_FEATURES` (code and data-set location kept) and `AMBIGUOUS_TRAINING_FEATURES`; for the Consumer's
+  own inputs, `AMBIGUOUS_TRAINING_FEATURES` when it reuses. An input not yet described makes the features it could
+  supply unknown - no finding, ambiguity included - and erases no finding established elsewhere. An empty intermediate
+  is not judged here and forwards the definitions; a recipe building its own image validates the training data it
+  reuses as a Consumer. Collection application keeps its separate constraint: `CLASSIFIER` gains
+  `MULTIPLE_CLASSIFIER_INPUTS` (execution already throws); PyEO keeps its own finding.
+- **Unused inputs.** Sampling uses only supplying inputs; readiness stays conservative: `TRAINING_DATA` needs every
+  Provider input described and closure loading reads every input, so a broken input that supplies nothing still holds
+  the Consumer, located at that Provider. Narrowing that belongs with closure loading and executed-edge validity,
+  outside S4.
+- **Identity, memoization, acquisition.** Provider `TRAINING_DATA` is judged once per read, for nothing that depends on a
+  Consumer; each Consumer's supply check runs in its own visit from its own definitions, so two Consumers sharing a
+  Provider in one graph cannot share an answer, and execution carries definitions per call with no cache. Evidence
+  acquired: the Provider inputs' descriptions, as today. Execution constructs one candidate per Consumer input and
+  Provider input, but the same `sampleRegions` as today - one per recipe in the reuse, empty point collections included
+  - and assembly stays outside the scene map. No count of Earth Engine evaluations is claimed.
+- **Named-feature witness** (temporary probe, removed: current rows from the real execution; proposed simulated with the
+  real one-input derivation per Consumer input and Provider input, ordered like the Consumer's, each requested
+  feature taken from its unique supplier; first Provider rows):
+  1. `red`-only Provider over `red,nir`: current `{class:1, red:120}`; proposed `{class:1, red:120, nir:1200}`.
+  2. 2020 -> 2021, Consumer [optical `red,nir`, DEM `elevation`], Provider [DEM, optical selecting `red`]: current
+     `{elevation:5, red:120}`; proposed `{red:120, nir:1200, elevation:5}` - order irrelevant.
+  3. One-input Stack Provider holding `red,nir,elevation` for that two-input Consumer: both
+     `{red:120, nir:1200, elevation:5}`.
+  4. Unused duplicate (`red` in both Provider inputs, Consumer requesting `nir, elevation`): proposed
+     `{nir:1200, elevation:5}`, no finding. Requested `red` held by both: `AMBIGUOUS` (`p0`, `p1`) - today `red` from
+     the first input and `red_1` ignored. Stack-renamed `dry_*`/`wet_*` over a Provider listing wet first: current
+     lacks `dry_nir`; proposed `{dry_red:120, dry_nir:1200, wet_red:11, wet_nir:101}`.
+  5. Two seasonal inputs with identical bands, Provider saved wet then dry: current `{red:11, nir:101, red_1:120,
+     nir_1:1200}` - wet values under the Consumer's dry names, nothing missing; proposed: `AMBIGUOUS` at the Consumer.
+  6. `ndvi` and `DIFFERENCE` of `red, nir` over Provider imagery `[nir, red]` selecting `red`: current `{red:120}`;
+     proposed `{red:120, ndvi:0.818, red_nir_difference:-1080}` (`120 - 1200`). The same combination with `red` and
+     `nir` in two Provider inputs: missing (today also absent). Review probe: a provided-only SEPAL-style `ndvi` gives
+     `ndvi:8181` where the calculated form is `0.818`, and nothing under `INDEXES: [ndvi]`; under the supply rule it
+     does not supply a calculated `ndvi`.
+  7. Requested `swir1` absent: missing. 8. `latitude` on two Consumer inputs: `band_order` carries `latitude` and
+     `latitude_1`; the Provider supplies the location covariate for both. 9. Regression `red`-only Provider:
+     `{value:10, red:120}` becomes `{value:10, red:120, nir:1200}`.
+  The stand-in establishes row content, labels, derivation and its `_1` suffix rule; not Earth Engine's own suffixing,
+  masks, the `system:band_names` selection, index scaling or evaluation counts.
+- **Repair for indistinguishable names.** Build a Stack over the inputs whose names repeat - e.g. the dry and wet
+  mosaics - and give its output bands distinct names in the Band names panel (`dry_red`, `dry_nir`, `wet_red`,
+  `wet_nir`); use that Stack as the input in both Provider and Consumer. Renaming spectral bands stops automatic index
+  derivation, which needs the standard names: to keep NDVI per season, select the mosaic's own `ndvi` output in the
+  Stack and name it `dry_ndvi`/`wet_ndvi` (Band Math is the alternative for other expressions). Traced in code and
+  saved settings; not exercised in a browser this round.
+- **Supported cases.**
+
+  | Case | Result |
+  | --- | --- |
+  | Standalone Classification, own points only (any inputs, duplicates) | Unchanged |
+  | 2020 -> 2021 with distinguishable names, any counts or order | Supported; Consumer features from Provider imagery |
+  | Provider selection narrower than its imagery | Supported where derivable |
+  | Requested feature missing, derivable only across inputs, or only in another form (provided vs calculated index) | `MISSING_TRAINING_FEATURES` |
+  | Requested feature in several Provider inputs | `AMBIGUOUS_TRAINING_FEATURES` |
+  | Consumer requesting one name from several of its inputs, reusing | `AMBIGUOUS_TRAINING_FEATURES` at the Consumer |
+  | Classification applied to a collection | One applied input (`CLASSIFIER`); Providers of any shape supply by name |
+  | Regression | Same contract; label `value`, no normalisation |
+  | Intermediate storing no points | Forwards; not judged |
+
+- **Compatibility effects.** No saved-structure, task-payload or no-reuse change. Reuse whose requested features are
+  each supplied once keeps running, its rows now carrying the Consumer's features (different where the Provider's
+  selection, order or derivation differed, or today's concatenation took a value from the wrong input). Newly refused,
+  with a located finding: a reusing Consumer requesting one name from several of its own inputs (today trained by
+  position, correct only when the two recipes list them alike), and a requested feature found in several Provider
+  inputs (today the first input's). Repair as above. Multiple-input Classifications applied to collections already
+  failed; they get a finding.
+- **Regression plan.** Shared rules: `requestedFeatures` (Consumer ambiguity, auxiliary duplicates), `featureSupply`
+  (raw by name across inputs, index derived or provided, combination within one input, missing, ambiguous, unused
+  duplicate, unknown while undescribed), `orderLike` JavaScript and Earth Engine forms agreeing. Numeric whole labelled
+  rows: the witness cases; normalisation on/off once; labels, `scale` and supplying masks; nested and empty
+  intermediates forwarding; a trained input image starting its own definition; no-reuse controls, including duplicate
+  names on own points. Shared readiness: each finding at its location, undescribed inputs finding nothing, two
+  Consumers sharing a Provider in one graph, the broken-unused-input conservative result, repair. Callers: Time Series
+  and CCDC held with SRC explaining, training-data feedback, gee guards before product work. One-scene versus
+  three-scene collection: identical `sampleRegions` constructions. Index forms, with the real calculator: calculated-only,
+  provided-only and both present, on each side, `IMAGE_BANDS` and `INDEXES`; a provided index never supplying a
+  calculated one or the reverse; no-reuse representations unchanged. Execution-level supplier count: a duplicate
+  supplier and a missing one each fail the evaluation with readiness bypassed. Built-in covariates: shared under
+  generated names and scaled per column, an input band named `latitude` not treated as one. Live check
+  (`verify/classifierNormalisation.mjs`): a one-input pair with a narrower Provider selection, and a two-input pair in
+  different orders with `ndvi`, a combination and `latitude` on both inputs; whole rows, predictions, footprint,
+  projection, and a masked required band excluding its point.
+- **Smallest coherent boundary.** One slice: the shared rules and sampling function, `TRAINING_DATA` and the Consumer
+  findings, `getSamples$(definitions)` for both types, feedback and messages, tests. Execution and readiness land
+  together.
+- **Case matching and diagnostic amendment (user agreed 2026-10-26).** Reuse resolves requested feature names
+  case-insensitively only when the result is unique, keeping the Consumer's exact output spelling. Do not prefer an
+  exact-case candidate over another case-equivalent candidate: `red` and `Red` are an ambiguity, even within one input.
+  Apply the same rule to required operands for calculated indexes and combinations, in shared readiness and Earth
+  Engine execution, including the bypassed-readiness guard. Do not change persisted names, no-reuse feature
+  construction or feature-form/encoding rules; perform any necessary aliasing only in the reuse construction.
+  Case leniency introduces no fuzzy spelling, source ranking, band-coverage scoring, first-match choice or
+  arbitrary selection among inputs with identical band sets. Unknown evidence keeps the existing supply semantics.
+  Consumer-side duplicate requests are also compared without case when reuse is configured.
+
+  Findings must name the requested feature, Provider and relevant source inputs, retaining original spellings for
+  case collisions, and give a concrete repair. Missing derived features name the required operands; ambiguous ones
+  explain how distinct names in a Stack's Band names can be used consistently in both recipes. Use the existing
+  error location and message, without an extra blue repair paragraph. Add regressions for a unique case-only match,
+  exact plus differently cased collisions within/across inputs, missing and ambiguous derivation operands,
+  Consumer spelling retained, unchanged no-reuse behavior, and readiness/execution agreement.
+
+- **Remaining decision.** None. The built-in covariate exception is agreed; provided-to-calculated index fallbacks are
+  left unsupported in S4 rather than converted.
+
+**Final named-feature amendments: review (2026-10-25).** The Consumer-form and exactly-one-supplier corrections
+resolve the preceding review's core concerns. The implementation can proceed under this contract with the following
+bounded corrections, now reflected above: an input holding both an index band and its spectral bands can satisfy
+the requested provided form by literal selection; built-in covariates preserve intrinsic masks; and the sampling
+projection must be anchored to an explicit Provider band and checked against the actual old feature-image grid,
+not assumed from an arbitrary raw image. These are implementation/acceptance requirements, not new source roles,
+bindings or product decisions. Add the both-forms raw-request regression, a masked terrain covariate, an
+auxiliary-only case and a mixed-projection control to the existing plan.
+
+The official [terrain reference](https://developers.google.com/earth-engine/apidocs/ee-terrain-products) documents
+missing edge values, and [Image.projection](https://developers.google.com/earth-engine/apidocs/ee-image-projection)
+throws when a multi-band image's projections differ. Current `addCovariates` selects/derives features before adding
+auxiliary imagery and applying the input mask, so neither unmasked covariates nor equality with a whole raw input's
+projection is established by the current code. This review changed documentation only and ran no live Earth Engine
+check. Verification remains the planned numeric, shared, mounted/route and controlled live campaign.
+
+**Named-feature proposal: independent review (2026-10-25; focused correction required).** The feature-name contract
+is the agreed direction. The built-in auxiliary-covariate exception is reasonable as raw-value reuse, subject to
+preserving sampling masks and scaling each output column with the Consumer's own carried statistics. It applies to
+the covariates actually configured by `auxiliaryImagery`, not arbitrary input bands coincidentally named `latitude`
+or `elevation`. Keep no-reuse construction and output unchanged.
+
+- **Provided and calculated indexes are not interchangeable merely by name.** Current Classification
+  `addCovariates` calls `calculateIndex` without storing the result at a new scale; `optical/indexes.js` computes in
+  physical units. Optical Mosaic `addIndexes` explicitly multiplies by `OPTICAL_STORED_PER_UNIT=10000` and stores
+  int16. A read-only numeric probe of the real Classification over the committed stand-in, with identical
+  `IMAGE_BANDS: [ndvi]`, produced `{class:1, ndvi:0.8181818181818181}` from `{red:120,nir:1200}`, but
+  `{class:1, ndvi:8181}` from a provided-only SEPAL-style NDVI input. With `INDEXES: [ndvi]`, the provided-only input
+  produced no feature at all. Therefore the proposed provided-index supply outcome is not established by applying
+  today's per-input derivation. Define supplied-versus-calculated precedence and representation consistently for
+  readiness and execution. Do not accept a stored index as a fallback for a calculated feature in different units,
+  infer encoding from value ranges, or silently change the Consumer's/no-reuse feature representation. For a bounded
+  S4, leave a fallback unsupported where equivalent representation is not established; a universal units/encoding
+  framework remains outside scope. Add real-calculator numeric coverage for provided-only, calculated-only and both
+  forms together. The probe used standard input, left no scratch file and made no external call.
+- **Ambiguity must not fall back to the first candidate in execution.** Filtering candidates by band presence and
+  then taking the first would silently choose when more than one candidate supplies the feature. Require exactly one
+  candidate for both the missing and ambiguous cases, even when readiness is bypassed (server preview gating remains
+  deferred). Keep the shared readiness finding for normal GUI and guarded routes; add an execution-level duplicate
+  supplier regression. Two known suppliers establish ambiguity even while another input is unknown; zero known plus
+  an unknown input does not establish missing, and one known plus an unknown does not establish unique supply.
+- **Masks have a documented expected result.** Earth Engine's
+  [sampleRegions reference](https://developers.google.com/earth-engine/apidocs/ee-image-sampleregions) says a pixel
+  with a masked band is excluded. Use that as the acceptance criterion for required sampled features, then verify
+  that the new assembly actually preserves it in the controlled live check. Copying a built-in covariate must not
+  accidentally unmask required data or expand the eligible point set. The reference also documents first-band
+  projection defaults; explicitly trace the sampling projection/footprint when assembling features from different
+  Provider inputs and preserve Provider sampling scale. Do not claim numeric stand-ins prove masks or projections.
+
+This is a review of the proposal and current code, not verification of a new implementation. No production source
+was changed and no live Earth Engine run occurred. The earlier statement deferring units checks does not justify a
+known factor-of-10000 mismatch between SEPAL's own index paths. Resolve the index supply rule before implementation;
+the remaining points are focused implementation and verification requirements, not a new source-mapping design.
+
+**Independent S4 assessment review (2026-10-25; proposal corrections needed before production implementation).**
+
+- **Scope recommendations:** a single-input first slice is sensible; leave units/encoding compatibility outside S4
+  and record that it is not established. These are reviewer recommendations, not evidence of a multi-input mapping
+  or a new units guarantee. Keep each Provider point's stored `class`/`value` unchanged; Consumer owns the requested
+  features and its transformation, not a relabeling of Provider rows.
+- **Legacy fallback and validation must remain paired.** The proposal cannot both retain current sampling for
+  multiple-input cases and unconditionally remove Provider `TRAINING_DATA` band-set requirements. A read-only
+  readiness witness used a two-input Consumer and a Provider selecting `red,nir` over imagery containing only `red`:
+  current readiness was `NOT_READY` with the Provider's `MISSING_INPUT_BAND`; simulating the proposed removal of those
+  rules yielded `READY`, while the Consumer feature comparison remained unknown for multiple inputs. Specify the
+  fallback boundary, including mixed and nested branches, and preserve its applicable guards alongside its execution.
+  An intermediate recipe must not replace the original Consumer definition when forwarding to descendants. Define
+  the consumer-dependent versus consumer-independent validation split before claiming the existing identities suffice.
+- **The effective feature definition includes combination ordering.** `extensions/image.js`'s `selectExisting` keeps
+  source-image band order, and `combinePairwise` uses it for both operands and output names. A shared-rule witness
+  with identical `PAIR_WISE_EXPRESSION` settings (`included: [red, nir]`, `RATIO`) produced `red_nir_ratio` from source
+  order `[red, nir]` and `nir_red_ratio` from `[nir, red]`. Execution also reverses the ratio operands in those two
+  orders. Therefore `featureDefinition(model) = {bandSetSpecs, auxiliaryImagery}` alone does not establish equivalent
+  Consumer-defined combination features over another image. Define how Consumer's effective ordering/names are
+  carried and applied, using the same rule in readiness and execution, while keeping no-reuse results unchanged.
+  Include numeric tests with permuted Provider band order, asymmetric combinations, auxiliary features and existing
+  collision/unknown cases. Do not treat a provided raw band as absent just because its input position differs.
+- **Cost evidence:** count constructed sampling expressions in the actual paths, including empty contributors;
+  current code can construct `sampleRegions` for an empty local point collection too. The collection invariant is
+  that sampling/training assembly is outside per-scene prediction, not an unmeasured claim of exactly one expression
+  per point-storing recipe or one Earth Engine evaluation.
+
+Only this roadmap was changed by the reviewer. Both witnesses ran directly against synthetic records using the
+shared code; no files were swapped, no production code changed, and no external service or live Earth Engine work
+was performed. Amend the proposal for fallback and effective feature ordering before implementing execution and
+readiness as one contract. The remaining acceptance and live-check plan still applies.
+
+**Amended S4 proposal: independent design review (2026-10-25; ready for implementation).** The effective feature
+definition now carries Consumer input ordering, and `orderLike` preserves all Provider bands while ordering shared
+ones consistently for asymmetric combinations. `TRAINING_POINTS` is justified as a distinct, generic sampling
+contract with Consumer-independent Provider requirements; it is not a per-feature operation or a second validator.
+`TRAINING_DATA` retains the legacy production and guards, resolving the previous multi-input fallback finding.
+Consumer-specific feature derivability remains in the actual training Consumer's requirement, so Provider readiness
+can still be shared across feature definitions without storing them in a validity flag or cache.
+
+Implement the propagation exactly as proposed: the input-count condition selects a mode for a recipe starting its
+own training; `TRAINING_POINTS` then recurses as `TRAINING_POINTS`, and legacy `TRAINING_DATA` as `TRAINING_DATA`.
+An intermediate's own input count determines only how its own points are sampled and guarded; it does not change
+the inherited mode or definition for descendants. Separately trained imagery referenced as an input starts its own
+Consumer definition, rather than inheriting the outer recipe's sampling definition. Keep this distinction in the
+memoization/identity tests, including a shared Provider reached from more than one training Consumer in one graph.
+Preserve each point's stored label, no-reuse output, unknown/collision behavior and matching JS/EE ordering rules.
+
+No further design blocker is established by the amended proposal. Single-input-first and deferring units/encoding
+checks are the review recommendations; multiple-input correspondence remains open. This is approval of the design,
+not verification of an implementation or a live Earth Engine result. Only the roadmap changed; `git diff --check`
+is the applicable check for this review update. Execution, readiness, tests and message changes should land together
+under the amended S4 acceptance plan.
+
+**Superseded in part (2026-10-25, user clarification):** the legacy fallback and `TRAINING_POINTS` above are withdrawn,
+and so, later, is the single-input restriction that replaced them. Positional matching is also withdrawn; the current
+proposal under F4 recommends named input roles with `TRAINING_DATA` as the single reuse operation. The ordering, recursion, label, identity and one-graph
+requirements of this review still apply.
+
+**User scope clarification (2026-10-25): single-input support for reused Classification training in Time Series.**
+The user clarifies that the aim is useful leniency, not support for every case, and that multiple input images should
+not be supported in the workflow of reusing Classification training data to classify a Time Series. This supersedes
+the proposed multi-input fallback for that workflow: use one Consumer-feature sampling contract, and refuse an
+unsupported multi-input Classification or point-contributing Provider through shared readiness before product work.
+Do not retain a second Provider-feature sampling path merely to accommodate that case. One input image may itself
+be a Stack containing many bands; neither multiple bands nor several reused Providers is the same restriction.
+
+The next S4 proposal/implementation brief must reflect this boundary and reassess whether both sampling operations
+are still necessary. Define the affected collection-classification contract once and let generic gates locate its
+findings; no Time Series panel-specific validator or runtime-only throw. The clarification concerns this workflow:
+standalone generation from a recipe's own multiple inputs and Regression's separate contract are not silently banned
+by it. Trace and state any broader compatibility effect before implementation. Multi-input correspondence is outside
+the supported Time Series workflow rather than a reason to invent or carry a fallback there. The earlier design
+reviews above describe their then-current proposal; they do not override this later scope decision.
+
+**User rationale for the supported reuse workflow (2026-10-25).** The aim is to reuse a Classification's training
+points for classification of a sensor-backed Time Series (Landsat, Sentinel-2, Sentinel-1 or Planet), with useful
+leniency when the source Classification's selected bands differ. The samples derived from the source imagery must
+still represent measurements comparable to those of the monitored scenes: compatible feature meaning, scaling,
+units and processing. Matching feature names or successful derivation alone does not establish this. Values may
+vary by location/date; the measurement contract must remain meaningful.
+
+The single-input boundary is a deliberately limited supported workflow, avoiding arbitrary multiple-input fusion
+and its unresolved correspondence; it is not a scientific guarantee of similarity. A Stack that selects or renames
+bands from suitable imagery can be one input, while wrapping incompatible data in a Stack does not establish
+comparability. Only the features Consumer actually uses need that correspondence; unused Provider bands or a
+different Provider band selection need not invalidate reuse. S4 should be lenient about selection and derivation,
+preserve measurement semantics, and refuse known structural incompatibilities through shared readiness. No automatic
+sensor-similarity test, new units/encoding validator, or universal guarantee of training suitability is approved by
+this rationale; those checks remain outside the agreed scope unless separately established from reliable metadata.
+
+**Standalone year-to-year reuse (user clarification, 2026-10-25).** The same leniency is required when a regular
+Classification for 2021 reuses a Classification for 2020. This belongs to training-data reuse itself, including
+standalone Classification, rather than a special Time Series path. The Provider's 2020 labels stay attached to
+features sampled from its 2020 imagery at its own points; the Consumer requests its feature definition there and
+applies the trained classifier to its 2021 imagery. A different Provider band selection is acceptable when its
+imagery can derive those features. The supported single-input reuse contract above covers this case too.
+
+Current execution already preserves Provider imagery, points and labels and applies the Consumer's normalisation,
+but still samples the Provider's own feature selection. Thus existing reuse works where those sampled features
+supply the Consumer's requirements; the broader derivation leniency remains proposed S4 work. Keep the standalone
+2020-to-2021 case in the regression plan alongside collection classification. Shared training data supports the
+comparison; it does not itself establish matching class meanings, feature definitions or model settings across
+recipes, or guarantee comparable probability estimates.
+
+**Review of the single-input S4 proposal (2026-10-25; superseded by the multiple-input clarification below).** One Consumer-feature
+sampling contract and the single `TRAINING_DATA` operation fit standalone Classification, collection classification
+and Regression. The reviewer supports the documented compatibility tightening for multiple-input reuse across these
+callers: reject it through the shared finding, keep multiple-input own-point classification unchanged, and carry no
+fallback. A Stack may explicitly assemble one image with suitable output names; wrapping imagery does not establish
+scientific comparability. No new operation context, per-feature operation or second sampling responsibility is needed.
+
+Keep these invariants explicit in implementation and regressions:
+
+- A Provider used only to forward nested points is judged as a Provider, not as an independently training Consumer.
+  Its two inputs do not trigger the Consumer-side multiple-input reuse finding when it stores no points. It forwards
+  the original definition unchanged; its own missing-imagery prerequisites remain as declared. Independently building
+  that recipe's own trained image still judges it as its own Consumer.
+- Input counts and whether a recipe stores configured points are facts of the held model. A known unsupported count
+  produces its finding even while band evidence is pending or unavailable. Unknown band evidence establishes no
+  missing-feature finding; it does not erase an independently confirmed structural finding.
+- Cover the standalone 2020-to-2021 reuse case as well as collection classification. Labels stay with their Provider
+  imagery and Consumer normalisation stays Consumer-owned. This gives a shared training basis, not a fixed-model or
+  calibrated-probability guarantee; a new model-reuse/cache contract is outside S4.
+
+Review was by tracing current operations, requirement ownership, sampling callers and the revised proposal. No
+production changes or new test results are claimed by this design approval. Earlier reviewer additions to
+`behavior-contracts.md` and `source-resolution.md` remain part of the documentation working tree.
+
+**Multiple-input reuse must remain supported (user correction, 2026-10-25; assessment required).** A standalone
+Classification with two input images must be usable as a training-data Provider for another standalone Classification
+with two input images. The reviewer approved a restriction broader than the user's collection-classification scope
+justified; that approval is withdrawn. Do not implement the proposed blanket `MULTIPLE_TRAINING_INPUTS` refusals or
+require users to replace their existing multi-input Classifications with Stacks. Standalone multiple-input reuse and
+the existing one-input limit when applying a classifier to a sensor collection are different contracts. Regression
+must not acquire a broader reuse prohibition merely to share the Classification implementation.
+
+A read-only numeric probe of the real committed Classification over `numericEarthEngine.js` confirms that matched
+two-input reuse runs today. The Consumer selects `red,nir` from input 1 and `red` from input 2; a Provider with the
+same selections gives `band_order=[red,nir,red_1]` and its first reused row is
+`{class:1, red:100, nir:1000, red_1:10}`. Changing only the Provider's selections to `red` from input 1 and `red,nir`
+from input 2 gives the same names but `nir:20000`, from input 2, although input 1 still contains `nir:1000`. Applying
+the Consumer's selections to the corresponding Provider inputs restores `nir:1000`. This last case simulates a
+proposed per-input definition using the existing execution, not an implemented new API. It establishes numeric row
+content over the stand-in, not Earth Engine evaluation, real masks or scientific comparability. The probe ran from
+standard input, left no scratch file and made no external call.
+
+**Next design assessment:** generalise the Consumer definition to an ordered list of input definitions, preserving
+which input supplies each feature before concatenation. Assess matching Consumer input 1 to Provider input 1, input 2
+to input 2, and so on: execution already uses saved input order to assemble the feature image and assign duplicate
+name suffixes. Single-input reuse is then the one-entry case of the same algorithm, not a fallback or second sampling
+implementation. Input ids from independent year-specific recipes are not established semantic correspondence keys.
+Position matching is a reviewer proposal to assess, not a user-approved automatic mapping. Equal counts alone do not
+prove that corresponding inputs represent comparable measurements; do not guess correspondence from flattened band
+names, especially when they repeat.
+
+Before implementation, state the matching rule and its user-visible meaning, behaviour for unequal input counts or
+unmatched inputs, and the compatibility effects for existing Classification and Regression reuse. Preserve Consumer
+operand/band order within each matched input, current assembly/name semantics for unchanged cases, Provider imagery
+and point labels, sampling scale/masks, nesting, Consumer normalisation once, and collection sampling outside the
+scene map. Empty intermediates forward the original complete definition; trained recipes used as input imagery
+still start their own definition. Keep Consumer-dependent derivability in the Consumer's shared requirement and
+Provider-independent prerequisites in its reuse operation; reassess operation identities with the input list.
+
+Required evidence includes an unchanged working two-input-to-two-input reuse case, different selections deriving the
+Consumer's features from the correct Provider inputs, duplicate names and asymmetric combinations, missing bands in
+one input despite their presence in another, nested/shared Providers, Regression compatibility, single-input
+collection controls and no-reuse controls. This amendment changes documentation only; the production design remains
+pending the revised assessment.
+
+**Named-role proposal: independent review (2026-10-25; product choices pending, not implementation approval).**
+Named roles are a viable way for users to declare correspondence, independent of order and overlapping band names.
+The proposed optional field is a persisted Classification/Regression model change and must be presented as such.
+The one-input exception in F4 already preserves unnamed pairs while refusing two explicitly conflicting names;
+keep that distinction in the shared rule and tests.
+
+Required corrections or limitations before implementation:
+
+- **Bindings are not inherently unable to handle nesting.** Per-edge composition is one representation, not the only
+  one. A Consumer can instead bind its input ids directly to the input ids of each point-contributing Provider reached
+  through its data set. That handles empty intermediates but requires more configuration, contributor discovery and
+  maintenance when the reuse graph changes. Compare roles and bindings on ownership and complexity, not a claim of
+  impossibility. Roles require edit access to each Provider needing names; renaming a shared Provider role affects its
+  Consumers. An unnamed read-only multi-input Provider cannot be repaired by a Consumer using this proposal.
+- **Empty intermediates must remain association-independent.** Adding `DUPLICATE_INPUT_ROLE` unconditionally to
+  Provider `TRAINING_DATA` would reject an empty intermediate despite the proposed guarantee that it needs no roles.
+  Apply association-related role checks only where relevant to point contribution, preserving independently declared
+  input-existence/source prerequisites. Cover an empty intermediate with duplicate roles and an independently
+  trained image of that same recipe as separate cases. Do not accidentally add role-related holds to unchanged
+  own-point/no-reuse workflows.
+- **Unused sampling inputs are not yet excluded from readiness.** `TRAINING_DATA` still declares all `INPUT_IMAGE`
+  edges as `IMAGE_OUTPUT`; the current `describedInputs(INPUT_IMAGE, provider)` API resolves all inputs in that role,
+  and closure validity also reaches unused references. Thus an unrequested Provider input's broken recipe, missing
+  source or unavailable observation may still hold the Consumer, even if its mask no longer affects sampled rows.
+  State this conservative limitation if closure/acquisition changes stay deferred. Do not claim that unrequested
+  inputs cannot block or are never read. Add a regression recording the intended result for a broken unused input,
+  and distinguish the confirmed sampling-mask change from evidence/closure behavior.
+
+Reviewer recommendations for the pending product choices, subject to the user's decision: prefer roles if editing
+Provider input names is acceptable; allow a one-input collection Classification to request exactly one explicitly
+associated input from a multi-input Provider (the Provider contributes points, its multi-input classifier is not
+applied to the collection); and use normal located findings to repair unnamed existing reuse rather than a separate
+one-time prompt. None of these recommendations claims automatic measurement compatibility or approves a new mapping
+UI. The collection's own applied Classification still has one input. Roles need to be configurable on a Provider
+even when it itself uses no reused training data.
+
+This review traced the proposed rules against the existing input extraction, `TRAINING_DATA` declarations and
+readiness input-acquisition/traversal APIs. No production changes, new probes, test results or live Earth Engine
+verification are claimed. The outstanding choice is the ownership/cost of association, not a requirement to carry
+two sampling implementations.
+
+**S4 implementation (2026-10-26; named-feature contract with the case-insensitive amendment; browser checks pending).**
+Execution, shared readiness, feedback and regressions landed together; nothing is staged or committed.
+
+- **Shared rules** (`lib/js/shared/src/recipe/bandSets.js`). `featuresOf(bandSetSpecs, auxiliaryImagery, bands)` gives
+  each input's features once, with the form execution builds: `RAW` (a band as it is, a provided index included),
+  `CALCULATED` (an index of its standard bands, overwriting a band of its name), `COMBINED` (operands in the input's
+  band order, operation), `COVARIATE` (configured `auxiliaryImagery` only). `requestedFeatures` gives the Consumer's
+  features per input - unknown for an undescribed input - and the names its inputs give more than once, whatever their
+  case, covariates excepted. `featureSupply` judges each requested feature against each Provider input's described
+  bands: an input supplies it where it holds every band the feature is built of (`requiredBands`) exactly once,
+  whatever its case (`matchingBands`), and collides where it holds one of them more than once (`red` beside `Red`,
+  whichever matches the spelling asked). Nothing is ranked or combined across inputs. Provider band sets play no
+  part. `sampledFeatures` keeps its role (a recipe's own one-input features) over `featuresOf`.
+- **Readiness** (`trainingData.js`). `trainingFeaturesRequirements` replaces the single requirement: for each recipe
+  storing points in a data set's reuse, `MISSING_TRAINING_FEATURES` (no supplier, no input unknown; `requires` names
+  each derived feature's bands) and `AMBIGUOUS_TRAINING_FEATURES` (several suppliers, or a collision, whatever is
+  unknown; `conflicts` gives each input's matching bands as spelled), at the data set; and, while the recipe reuses
+  training data, `AMBIGUOUS_TRAINING_FEATURES` at each of its own input images giving a repeated name. An undescribed
+  input establishes no missing feature and no unique supply; two known suppliers still establish ambiguity. A recipe
+  storing no points is not judged and forwards the definition; a recipe used as input imagery is judged by its own.
+  A Provider without input images is refused for that alone, with no feature finding. Classification's
+  `TRAINING_DATA` no longer carries its own band-set refusals (they stay for `CLASSIFIER`, which applies its band
+  sets to scenes); Regression's carries none. Inputs-described and nested `TRAINING_DATA` needs are unchanged.
+- **Execution** (`lib/js/ee/src/classification/features.js`, used by both types). `addCovariates` is consolidated
+  there. A Consumer passes `featureDefinition(inputs, auxiliaryImagery)` - per input its band sets, input band names and
+  feature names, as Earth Engine lists - to each reused recipe's `getSamples$(definition)`; Regression gains
+  `getSamples$` and no longer reuses `getTrainingData$`. A Provider storing points samples `definedFeatures(images,
+  definition, provider)` of its own inputs at its own points and `scale`; one storing none builds and samples nothing
+  of its own and forwards the definition along its reuse, nested before own, in configured order. For each Consumer
+  input and Provider input a candidate is built in the Consumer's form - bands matched case-insensitively and aliased to
+  the Consumer's spelling, an index calculated only where its standard bands are all present, combinations ordered
+  like the Consumer's input, no covariates - and each feature is taken from the one candidate holding it, in the
+  Consumer's order and names; concatenation names repeats as the Consumer's does (`latitude_1`). None, several, or a
+  collision fails the evaluation with an actionable error naming the feature, the Provider, the conflicting inputs or
+  spellings, and an index's required bands; a Consumer repeating a name, whatever its case, fails too. Errors are
+  carried by a missing-key `Dictionary.get`, as Earth Engine refuses a computed image id outright. Covariates are
+  generated once per definition input under their names, keep intrinsic masks and are masked by the supporting
+  Provider inputs (those supplying that input's features; all, for a covariate-only input). Inputs supplying nothing
+  are not sampled. The sampling projection is explicit: the first defined non-covariate feature as supplied - what a
+  Provider's own first band would have been for matching selections - or the first input's first band for
+  covariates alone. Consumer sampling, normalisation once with its own statistics, `band_order`, no-reuse construction
+  and the collection's once-per-computation training assembly are unchanged; the collection classifier keeps its
+  one-input `classifyImage` constraint, separately.
+- **Feedback.** Data-set items and their editors say missing features with the derived feature's bands, and
+  ambiguity with each input's conflicting bands, both ending "Give the bands distinct names in a Stack's Band names
+  panel, and use that Stack in both recipes"; the editor appends the existing repair instruction and holds Apply as
+  before, with isolation and unchanged Close kept. Consumer ambiguity is said at Input imagery
+  (`AMBIGUOUS_INPUT_FEATURES`). No blue paragraph, no new action. Execution keys
+  `process.classification.trainingFeatures.*` are untranslated on purpose: the GUI shows the server's detailed
+  message as the default (`userError.js`).
+- **Compatibility.** No saved-structure, task-payload or no-reuse change. Reuse whose requested features are each
+  supplied once runs, rows now carrying the Consumer's features (different where the Provider's selection, order or
+  derivation differed, or concatenation took a value from the wrong input); a Provider selection narrower than its
+  imagery is newly accepted. Newly refused with a located finding: a requested name supplied by several inputs or
+  matched twice by case, a reusing Consumer giving one name from several inputs, and a provided/calculated index form
+  mismatch. Readiness-only reads no longer observe the inputs of a Provider storing no points, which execution no
+  longer builds.
+- **Regressions.** Shared: `bandSets.test.js` (forms, requests, supply, case-only matches, within/across-input
+  collisions), `trainingFeatures.test.js` (77: narrower selection, reordered and Stack inputs, requested versus unused
+  duplicates, Consumer ambiguity, covariates and an input merely named latitude, index forms, combinations, nested,
+  empty and shared Providers, a trained input image, unknown/unavailable evidence, repair, required bands and
+  conflicts), and updated `trainingDataReadiness`, `classifiedOutputTraining` and `pyeoTrainingReadiness`. gee:
+  `consumerFeatures.test.js` (whole labelled rows for the cases above, Regression, normalisation once, masks,
+  covariate support, scale and projection anchor, one versus three scenes, execution failures with readiness bypassed,
+  case aliasing under the Consumer's spelling, and readiness/execution agreement over ten scenarios), updated
+  `reusedSamples` and guard fixtures (`loadObservations`, export `timeSeries`, `imageAssetExport`), over a numeric
+  stand-in now modelling masks, lazy failures, a computed image id's refusal and band-less arithmetic. GUI: data-set
+  marks, editor holds and Input imagery ambiguity, both types.
+- **Witnesses.** With the `HEAD` shared rules, 44 of 111 shared readiness cases fail; with `HEAD` execution, 37 of 82
+  numeric cases; controls pass. The live run found three execution faults the stand-in then learned to refuse: a
+  computed image id (40 numeric cases fail when restored), an index calculated over a band-less image (1) and a
+  band-less mask (9).
+- **Verification.** Shared `test/recipe` 1424; gee unit tests 1396; GUI Classification, Regression, PyEO, Time Series,
+  CCDC, Phenology, Remapping, Masking, Stack, Band Math, Unsupervised Classification, process panels and related, 90
+  files and 1155 tests (two workers). ESLint and `git diff --check` clean. Live, read-only, no exports
+  (`verify/classifierNormalisation.mjs`, service account): 35 checks pass - the existing whole-row, prediction,
+  footprint and mask comparisons; one-input reuse with the Provider selecting one band; two-input reuse in reversed
+  order over a Stack spelling `Red` and SRTM, whole rows against an independent construction (calculated NDVI,
+  difference, duplicated latitude, elevation on another projection), the point outside the Provider's scene excluded;
+  and a `red`/`Red` collision failing with the decoded message. The full GUI suite was not run.
+- **Limitations.** An execution error for a missing combination does not list its operands (readiness does). Masks
+  are verified live by footprint exclusion and the existing masked-scene checks, not by an in-scene masked required
+  band. Measurement comparability, units and encoding are not established by names; multiple-input collection
+  classification is still refused only in execution (`classifyImage`), with no shared finding.
+
+**S4 implementation: independent review (2026-10-26; corrections required before commit).** The main flow follows
+the named-feature ownership and normalisation contract, but targeted checks establish the following findings:
+
+1. **[P1] Candidate construction rejects collisions in data that cannot supply the requested feature.**
+   `classification/features.js` constructs candidates from all original Consumer band sets and calls `aliased`
+   before establishing whether the complete requested construction can be supplied. A Consumer requesting only
+   calculated `ndvi` has exactly one supplier when Provider input A has `red,nir` and input B has `red,Red` but no
+   `nir`: shared `featureSupply` reports supplied, yet numeric execution and live Earth Engine both refuse B's
+   irrelevant case collision. The same happens for a `red,nir` difference. Two more supplied cases also fail live:
+   a configured latitude covariate overwriting a raw latitude selection, with Provider bands `latitude,Latitude`;
+   and a combination overwriting a raw band of its output name, with Provider bands `red_nir_difference`,
+   `RED_NIR_DIFFERENCE`, `red`, `nir`. These raw collisions are not part of the final requested feature. Construct
+   effective requested features in their final form, and determine complete supplier eligibility before raising
+   operand collisions. Do not make readiness reject these valid requests merely to match execution. Add all four
+   regressions, retaining controls where a complete supplier is genuinely ambiguous.
+2. **[P1] Two distinct combination operands differing only in case can bind to the same Provider band.**
+   `bandSets.js` checks each required operand independently but does not require distinct requested operands to
+   retain distinct sources. Consumer `DIFFERENCE` of `red,Red` over values `100,20` gives
+   `red_Red_difference=80` for its own samples. A Provider holding only `red=120` is accepted as a unique supplier
+   twice, so its reused rows train on `red_Red_difference=0`. Actual shared readiness is `READY` with no findings;
+   both numeric execution and live Earth Engine confirm the zero. Reject case-colliding requested operands through
+   shared readiness and the bypassed-readiness execution guard; preserve the no-reuse native calculation. Add the
+   same-name-alias regression for combinations and a valid distinctly named operand control.
+3. **[P2] The agreed multiple-input application finding is still missing.** A trainable two-input Classification
+   over optical `red,nir` and a DEM is `READY` for both `IMAGE_OUTPUT` and `CLASSIFIER`, with no findings, while
+   `classifyImage` still throws on more than one input. The omission is disclosed in the implementation report but
+   was not an agreed deferral: F4 and the implementation packet require `MULTIPLE_CLASSIFIER_INPUTS` in shared
+   readiness. Add it for `CLASSIFIER` only, attributed to the Classification input imagery, so dependent collection
+   operations refuse before building. Keep standalone multiple-input `IMAGE_OUTPUT` and Provider sampling supported.
+
+**Independent verification.** Actual per-file Node runs passed 132 shared tests (`bandSets`, `trainingFeatures`,
+`output/trainingDataReadiness`) and 100 gee tests (`consumerFeatures`, `featureNormalisation`, `reusedSamples`,
+`sampledFeatures`). Mounted GUI `reusedTrainingDataEditor` and `reusedTrainingDataFeedback` passed 58 tests in the
+musl GUI container with two workers. These are passing existing regressions, not evidence against the new findings.
+The read-only live probes used small constant images through the real feature construction and no production file
+swaps. They confirm all four failures in finding 1 and the incorrect arithmetic in finding 2. A separate in-scene
+mask control passed: of two Provider points, one where required `nir` was masked was excluded, the other retained,
+even though an unused input was masked in the opposite area. Add that control to the permanent live check so its
+evidence covers the originally planned masked-required-band case. Full GUI and the 35-check verification command
+were not rerun; targeted live checks addressed the uncovered concerns. No exports or asset writes were started.
+
+Only documentation was edited by the reviewer. Probes ran from standard input, created no scratch source file and
+made no saved-recipe changes. No production fix, staging, commit or push was performed. `git diff --check` passed.
+
+**S4 review corrections (2026-10-26; browser checks pending).** The three findings above are corrected; nothing is
+staged or committed.
+
+1. **Effective requests, eligibility before collisions** (`features.js`). Execution no longer builds candidates per
+   Consumer band set. It derives the Consumer's requests in their final form - per band set a raw band, a calculated
+   index or a combination named as the Consumer's input names it - and keeps only those that are effective: given
+   by the Consumer's input, among its feature names, and not overwritten by a later band set of the same name.
+   Configured covariates are no request. For each effective request, an input is eligible where it matches every
+   band the request is built of at least once; only an eligible input holding one of them more than once collides.
+   None eligible fails as missing (a derived feature names the bands one input must hold), several or a collision as
+   ambiguous, naming each eligible input's matching bands as spelled. Readiness already judged supply this way; it is
+   unchanged for these cases and its agreement is regressed.
+2. **Case-only operands** (`bandSets.js`, `features.js`). A Consumer combination whose operands differ only in case
+   is refused while the Consumer reuses training data: readiness reports `AMBIGUOUS_TRAINING_FEATURES` at that
+   input image (shown at Input imagery), and execution, readiness bypassed, fails before matching any Provider band. Without reuse the native
+   calculation (`red_Red_difference = red - Red`) is unchanged.
+3. **`MULTIPLE_CLASSIFIER_INPUTS`** (`type/classification.js`). A `CLASSIFIER`-only finding at the Classification's
+   `model.inputImagery.images`, carrying the count, so Time Series and CCDC operations over it refuse before building
+   and the GUI names it at their classification field. `IMAGE_OUTPUT` of a multi-input Classification and its sampling
+   as a Provider stay supported.
+
+- **Live faults found by the extended check.** `ee.Number(false)` is refused client-side, and `Number.and`/`or`/`not`
+  refuse the Boolean `List.contains` and `String.equals` return. Conditions now pass through one coercion
+  (`truth`). The numeric stand-in learned both: it refuses a boolean `Number` and Boolean operands, and returns
+  Booleans from `contains` and `equals`.
+- **Regressions.** Shared (`trainingFeatures`, `classifiedOutputTraining`): an index or a combination beside an input
+  lacking a band of it that holds another twice, covariate and combination overwrites, case-only operands refused at
+  the input with a distinct-operand control, the two-input refusal at input imagery, and a two-input Provider still
+  allowed. gee: the same cases as whole rows, including the no-reuse `red_Red_difference` and a genuinely ambiguous
+  control, readiness/execution agreement, and the two-input guard in `loadObservations` and export `timeSeries`. GUI:
+  a CCDC over a two-input Classification names it and holds Retrieve until one input is left.
+- **Witnesses.** Collisions judged before eligibility: 3 numeric cases fail; overwritten requests built: 1; covariate
+  names requested: 1; no case-only refusal in execution: 1, in readiness: 2; partial inputs eligible in readiness: 2;
+  no multi-input finding: 11 shared, 4 gee and the CCDC GUI case. The previous condition helpers fail 64 of 133 numeric
+  cases under the stand-in's Boolean rules.
+- **Verification.** Shared `test/recipe` 1454; gee unit tests 1496; GUI Classification, Regression, PyEO, Time Series,
+  CCDC, Phenology, process panels and locale, 49 files and 546 tests (two workers). ESLint and `git diff --check`
+  clean. Live, read-only, no exports (`verify/classifierNormalisation.mjs`): 38 checks pass, now including, through
+  the real feature construction over constant images, the in-scene control (of two Provider points the one where
+  required `nir` is masked is no sample and the other is, an unused input masked at the other), an index supplied
+  beside an input lacking a band of it that holds `red` and `Red`, and a Consumer combining `red` with `Red` refused.
+  The full GUI suite was not run.
+- **Limitations.** Measurement comparability, units and encoding are still not established by names. The live check
+  covers the irrelevant-collision case for an index, not the overwrite cases, which the numeric suite covers.
+
+**S4 review corrections: independent review (2026-10-26; one correction remaining).** The three original findings
+are resolved. The four previously failing valid constructions now succeed in live Earth Engine: the index and
+combination beside an irrelevant partial input, the covariate overwrite, and the combination overwrite. The
+case-only combination is refused with its decoded actionable message. A separate shared read confirms a two-input
+Classification is `READY` for `IMAGE_OUTPUT` and `NOT_READY` for `CLASSIFIER`, with the new finding at its input
+imagery. The focused shared and mounted regressions retain multiple-input Provider support.
+
+**[P2] A configured covariate name is also removed when it is a combination operand.** In `features.js`,
+`requestsOf` filters `included` by `covariateNames` before dispatching on the band-set type. This correctly avoids
+requesting a raw latitude feature overwritten by the generated covariate, but incorrectly removes a raw input band
+used inside a different output. A Consumer combining its input's `red` and `latitude` into
+`red_latitude_difference`, while also configuring `LATITUDE`, should request both that combination and the separate
+generated latitude feature. Shared readiness is `READY`, with one complete Provider supplier and no ambiguity.
+Execution instead constructs no combination request and fails selecting `red_latitude_difference`. Both the numeric
+stand-in and live Earth Engine reproduce this; the no-reuse control correctly produces the combination and the
+covariate together. This also affects any other combination operand sharing a configured covariate's name.
+
+Keep operand names when deriving combinations. Exclude only requests whose final output is overwritten by a
+configured covariate; do not exclude operands from an otherwise effective request. Add a readiness/execution
+agreement regression for a combination using such an input band with that covariate enabled. Retain the existing
+raw-covariate overwrite and no-reuse controls. This needs no change to the agreed sampling contract or persisted
+settings.
+
+**Independent verification.** Per-file Node runs passed 292 shared tests (`bandSets`, `trainingFeatures`,
+`output/trainingDataReadiness`, `classifiedOutputTraining`) and 109 gee tests (`consumerFeatures`,
+`featureNormalisation`, `reusedSamples`, `sampledFeatures`). Mounted GUI `reusedTrainingDataEditor`,
+`reusedTrainingDataFeedback` and CCDC `classificationFeedback` passed 65 tests in the musl container with two
+workers. Six read-only live evaluations cover the four repaired valid cases, the case-only refusal, and the new
+covariate-operand failure. The author's full 38-check live command was not repeated. No exports, asset writes or
+saved-recipe changes were made. Only this roadmap was edited by the reviewer; `git diff --check` passed. The full
+GUI suite and browser checks remain pending.
+
+**S4 covariate-operand correction (2026-10-26; browser checks pending).** `requestsOf` no longer filters band-set
+names by configured covariates, so operands keep every input band. Covariates now take part in `effectiveRequests`:
+a request whose output a configured covariate overwrites is not effective, beside the existing later-band-set rule. A
+Consumer combining `red` with its input's `latitude` while configuring `LATITUDE` requests `red_latitude_difference`
+and generates `latitude` beside it.
+
+- **Regression.** `consumerFeatures.test.js`: for that Consumer, readiness gives no ambiguity and one supplier without
+  collision, and execution trains on the Provider's `red - latitude` with the generated latitude, as whole rows. Before
+  the fix it fails alone, selecting the missing `red_latitude_difference`. The raw-covariate and combination overwrite
+  controls are kept; without the new exclusion the raw-covariate control fails.
+- **Verification.** gee unit tests 1497. Live (`verify/classifierNormalisation.mjs`, read-only, no exports): 39
+  checks pass, adding the same Consumer over a constant Provider (difference 117, latitude at each point). That live
+  case was not run against the previous code here; the review above reproduced the failure live. No shared or GUI
+  code changed, so those suites were not rerun. ESLint and `git diff --check` clean.
+
+**Independent verification of the covariate-operand correction (2026-10-26).** No remaining S4 review findings.
+The exclusion now applies to a request's final output name, preserving combination operands. Per-file Node runs
+passed 110 gee numeric tests (`consumerFeatures` 51, `featureNormalisation` 26, `reusedSamples` 15,
+`sampledFeatures` 18). Two read-only live Earth Engine evaluations independently confirm the repaired combination
+(`red_latitude_difference=117`, with the generated latitude beside it) and the raw-covariate overwrite control
+(the Provider's colliding `latitude`/`Latitude` bands are irrelevant to the generated covariate). The full 39-check
+live command was not repeated. Shared and GUI code are unchanged since the previous review's passing runs, so
+those suites were not repeated. Focused browser checks and the final full GUI campaign remain pending. Only this
+roadmap was edited by the reviewer; `git diff --check` passed. Nothing staged, committed or pushed.
+
+**S4 browser feedback (2026-10-26; partial, user reported).** In response to the new/edited data-set entry check,
+the user confirms that adding `nir` back makes everything work again. The missing-band recovery check passes.
+This report does not separately establish Apply/Enter refusal, completed export output, or the remaining S4
+browser cases; those results have not yet been reported.
+
+**S4 reduced browser checkpoint (2026-10-26).** The earlier five-part manual script is broader than needed for
+the pre-commit checkpoint. The missing-band repair is already user-verified. Only two further checks are requested:
+
+1. Use the repaired Consumer: Provider imagery holds `red,nir` while Provider selects only `red`, and Consumer
+   selects both and reuses Provider. Obtain an actual Consumer preview and one completed Retrieve output. Count this
+   as done if the user already obtained both; do not repeat it merely for this revised list.
+2. Select an existing two-input Classification under SRC in either Time Series or CCDC. Confirm SRC explains the
+   single-input constraint, charts and Retrieve are disabled, and no layer-error notification appears. Removing the
+   extra Classification input releases the hold. The Classification's own standalone multi-input preview should
+   remain supported.
+
+No separate manual collision, covariate-operand, Regression-repeat or multi-input-reuse construction is required for
+this checkpoint. Their detailed rules and arithmetic have focused automated coverage, with live Earth Engine checks
+for the documented constructions. This reduces manual repetition; it does not claim unreported browser cases passed
+or close S5/S6. The final full GUI campaign remains pending.
+
+**S4 browser feedback: application-specific restriction (2026-10-26; explanation correction required).** The user
+added a radar input to the Provider Classification and selected it under SRC in an optical CCDC. The field says
+"classification_provider needs attention", while the Classification still renders correctly on its own. The hold
+is appropriate: `CLASSIFIER` cannot apply a multiple-input Classification to each collection image. The standalone
+`IMAGE_OUTPUT` is valid, and this Provider can still contribute training samples to a suitable single-input Consumer.
+Do not imply that the Provider is intrinsically broken or needs its own standalone settings repaired.
+
+- **Cause confirmed in code.** `classificationReferenceFeedback` uses the shared `referenceFeedback`, which reduces
+  the finding to recipe/origin names and emits `recipeNeedsAttention`. The CCDC multiple-input mounted case explicitly
+  expects that generic message, so its passing result did not establish actionable wording.
+- **Required correction.** Preserve the operation-specific reason through the existing finding/feedback path and
+  explain it beside the consumer's Classification field: the selected Classification has two input images, while
+  application to a collection requires one. Offer selecting a single-input Classification as the repair; it can reuse
+  this multi-input Provider's training data. Keep the existing shared rule and operation scope, without a separate GUI
+  input-count validator, new status flag, or restriction on standalone images/Provider sampling.
+- **Coverage.** Time Series and CCDC should explain the existing `MULTIPLE_CLASSIFIER_INPUTS` finding and count,
+  hold the affected operations and recover after a suitable selection. The same Classification's standalone image
+  remains usable. Keep ordinary upstream-failure feedback covered separately; a consumer-specific limitation must
+  not be presented as a defect that can be found by opening the Provider alone.
+- **Verification status.** The user confirms the standalone two-input Provider renders. This report establishes
+  the misleading SRC message, not every chart/Retrieve hold or recovery step. No production change was made by the
+  reviewer; this feedback correction is still to implement.
+
+**S4 feedback scope amendment (2026-10-26; caller audit required).** The first correction packet explicitly covers
+`MULTIPLE_CLASSIFIER_INPUTS` wherever Classification-reference feedback presents it. The user also asks to cover
+other places where an otherwise valid recipe cannot fulfil a consumer's particular request. Do not assume fixing
+the first Classification message establishes the whole presentation contract.
+
+- **Inspection evidence.** `sourceRequirements.refusedReferences` currently reduces readiness findings to direct
+  reference and origin IDs, discarding their codes, details and requested operation; `referenceFeedback` then emits
+  generic "needs attention" prose. Its three caller families are Classification references (Time Series, CCDC,
+  Phenology and PyEO), reused training-data references (Classification and Regression), and input-image references
+  (Stack, Band Math, Remapping, Classification, Regression and Unsupervised Classification).
+- **Audit those families, direct and nested.** Identify findings that can refuse the requested use while the
+  referenced recipe's standalone image remains valid. Preserve enough structured information through the shared
+  bridge to explain the actual use restriction at the selecting field. Do not infer a second validity answer by
+  loading or judging the Provider's standalone image again. Multiple reasons must not be silently replaced by an
+  arbitrary first finding; recipe/origin identities and deduplication remain intact.
+- **Check equivalent selectors too.** PyEO already has a contextual single-input message; CCDC Slice and Change
+  Alerts have segment-capability feedback through a separate path. Inspect these and other reference selectors for
+  the same false implication, documenting unaffected paths rather than rewriting them automatically. This inspection
+  establishes shared risk, not additional reproduced defects in every caller.
+- **Acceptance.** Confirmed use restrictions name what the consumer needs and how to repair its selection, without
+  claiming the Provider's own recipe is broken. Unknown-reason fallbacks make no stronger validity claim than the
+  held evidence supports. Genuine upstream failures, pending/unavailable evidence, editor policy and operation gates
+  keep their existing semantics. Add shared direct/nested coverage plus focused affected-caller regressions, and
+  report a small caller inventory with outcome and coverage. Reuse the existing feedback mechanism; this is not a
+  new validation framework or an expansion into S5/S6 settings ownership.
+
+**S4 use-restriction feedback correction (2026-10-26; browser recheck pending).** A finding that makes a referenced
+recipe unsuitable for what its consumer asks of it, while the recipe stays valid by itself, is now explained as the
+consumer's requirement wherever reference feedback presents it. Validation, operation gates, readiness and execution
+are unchanged.
+
+- **Mechanism, in the existing bridge.** `refusedReferences` (`sourceRequirements.js`) now carries each reference's
+  findings, with their codes and details (`count`), beside its origins. `referenceFeedback.js` keys use restrictions by
+  finding code (`isUnsuitability`; today `MULTIPLE_CLASSIFIER_INPUTS`). The origin of such a finding is the recipe
+  asking for the operation (`recipePath.at(-2)`), not the recipe it is found in. Directly selected, it is the selecting
+  recipe itself, so no recipe further up is named. Each distinct restriction is explained ("{recipe} has {count} input
+  images. This recipe requires a Classification with one input image. Select a single-input Classification."; further
+  up, "{consumer} cannot run because {recipe} has {count} input images, while {consumer} requires a Classification with
+  one input image. Select a single-input Classification in {consumer}."). Genuine causes beside them keep the existing
+  "needs attention"/"cannot run because" wording; nothing is dropped for a first finding. The map layer's `refusedBy`
+  uses the same origin. A Time Series layer shown elsewhere now says to review its Sources, not the Classification;
+  reached through a Stack, it names the Time Series. The reused training-data editor, which replaced the message with
+  "Fix the problem in …", shows the explanation instead, keeping the repair for genuine causes.
+- **Inventory.** Among configuration requirements, only `MULTIPLE_CLASSIFIER_INPUTS` excludes the recipe's own
+  image; the others on operations requested of references also refuse `IMAGE_OUTPUT`. This did not cover structural
+  readiness findings: `UNDECLARED_OPERATION` (and `NON_IMAGE_OUTPUT`, `UNCLASSIFIED_ROLE`) can refuse a use while
+  the recipe's image runs. Corrected in "S4 use-restriction fallback correction".
+
+  | Caller | Outcome | Explanation | Coverage |
+  |---|---|---|---|
+  | Time Series, CCDC classification | Affected, fixed | Direct restriction at the field and SRC; Retrieve (and the TS chart) held | Mounted TS and CCDC: explanation and hold, recovery by selecting a single-input Classification reusing the two-input one's training data |
+  | Phenology classification, classified band | Affected, fixed | As above; a band of the images reads no classifier and is unaffected | Mounted Phenology: classified band explained and held, `ndvi` control |
+  | PyEO classification | Unaffected | Requests `IMAGE_OUTPUT`; its own `MULTIPLE_CLASSIFICATION_INPUTS` already says PyEO needs exactly one input | Existing |
+  | Input images (Stack, Band Math, Remapping, Classification, Regression, Unsupervised Classification) | Affected when the input reads such a Classification, fixed | Nested restriction naming the recipe that selects it | Bridge: one and two levels down, mixed with a genuine cause, genuine nested control |
+  | Reused training data (Classification, Regression) | Affected when the Provider's input reads one, fixed; editor override corrected | Nested restriction in the data set and its editor | Bridge: data set editor message |
+  | CCDC Slice, Change Alerts, BAYTS segment/source requirements | Unaffected | Separate capability path, already worded as what the selected source cannot provide | Existing |
+  | Map layer held upstream | Affected, fixed | Names the recipe to review by the same origin | Bridge: `refusedBy` direct, nested and genuine |
+
+- **Regressions.** `outputRequirements.test.js`: direct (Time Series), one and two levels down (Stack), mixed with a
+  genuine cause and a duplicated route, the reused data set editor, and a genuine nested failure keeping
+  `recipeBlockedBy` and its `refusedBy`. Mounted `timeSeries`, `ccdc` and `phenology/classificationFeedback.test.jsx`
+  replace the generic two-input expectation. Recovery selects a single-input Classification reusing the two-input
+  Provider's training data, applied and reopened (the open form judges its draft). The Time Series case watches
+  its output and pixel operations as Retrieve and the chart do, so the Provider's radar asset is read. Standalone
+  multi-input `IMAGE_OUTPUT` and multi-input Provider sampling keep their shared coverage.
+- **Witnesses.** With `sourceRequirements.js` and `referenceFeedback.js` from `HEAD` and the editor's previous
+  message, 8 of 62 targeted tests fail - every new explanation case - while the genuine, recovery and band-of-the-images
+  controls pass. Reverting only the editor override fails its case alone.
+- **Verification.** GUI, two workers: Classification, Regression, Time Series, CCDC, CCDC Slice, Phenology, PyEO,
+  Stack, Band Math, Remapping, Unsupervised Classification, Change Alerts and BAYTS directories, the process recipe
+  top-level tests, process panels, map layer source and locale - 131 files, 2045 tests pass. Shared
+  `classifiedOutputTraining` and `trainingFeatures` 237 pass. ESLint, translations JSON and `git diff --check` clean.
+  The full GUI suite and a live probe were not run.
+- **Remaining.** The restriction table holds one code. A future operation-scoped finding needs its own entry, or it
+  falls back to the generic wording.
+
+**S4 use-restriction feedback: independent review (2026-10-26; one audit correction remaining).** The direct and
+nested `MULTIPLE_CLASSIFIER_INPUTS` explanations, repair attribution and editor override follow the requested
+contract. Independent mounted/bridge tests passed 143 cases in seven files: `outputRequirements`, Time Series,
+CCDC and Phenology `classificationFeedback`, the reused training-data editor and feedback files, and Remapping
+requirements (two workers). `git diff --check` passed. No readiness or execution change was introduced by this
+presentation correction.
+
+**[P2] The audit misses an existing unsupported-use finding, and unknown reasons still imply an intrinsically
+broken Provider.** `referenceFeedback.isUnsuitability` recognises only `MULTIPLE_CLASSIFIER_INPUTS`; everything else
+is treated as a genuine standalone failure. The existing `UNDECLARED_OPERATION` can also refuse a consumer's
+requested use while leaving the Provider's own `IMAGE_OUTPUT` ready. For example, a valid optical Mosaic named
+"Working mosaic" referenced as a Classification's training-data source is refused for `TRAINING_DATA`, which it
+does not provide. A shared readiness probe confirms the Mosaic's standalone image is `READY` and the Consumer is
+`NOT_READY` with `{code: 'UNDECLARED_OPERATION', operation: 'TRAINING_DATA'}`. The unmodified feedback formatter,
+run with a translation stub, nevertheless returns `recipeNeedsAttention` for "Working mosaic"; the editor then
+directs the user to fix that Mosaic. This is a wrong reference selection, not something to repair in the Mosaic.
+The shared `output/trainingDataReadiness` suite already covers this refusal, so it is not only a hypothetical future
+restriction. The normal selector may prevent making that choice; persisted/requested references still receive this
+supported refusal and need truthful feedback.
+
+Explain unsupported requested operations as a restriction of the consumer's use, retaining the refusal and naming
+the appropriate selection as the repair. Also complete the explicitly requested neutral fallback: an unknown reason
+must not automatically assert that the Provider itself is broken. Keep genuinely established upstream-defect
+feedback, nested identity and deduplication, and gate behaviour. Add bridge/editor regressions for this existing
+operation refusal and a neutral unknown-reason control; no new validator or execution support is required. Correct
+the inventory's claim of complete coverage to include structural readiness findings as well as configuration
+requirements. Full GUI and live probes were not repeated. Only this roadmap was edited by the reviewer; nothing
+staged, committed or pushed.
+
+**S4 use-restriction fallback correction (2026-10-26).** Reference feedback now distinguishes three kinds of finding
+reached through a reference, so that only an established defect says a recipe needs attention. Readiness statuses,
+gates, validation and sampling are unchanged.
+
+- **The distinction is shared.** `configurationFindings` (`output/readiness.js`) now gives a finding of a
+  requirement that does not refuse the recipe's image the `operation` it refuses alone, as `UNDECLARED_OPERATION`
+  already did. `UNCLASSIFIED_ROLE` found for an operation other than `IMAGE_OUTPUT` does the same
+  (`resolveImageOutput.js`). Findings judging an image, and those of rules refusing it too, keep their exact shape.
+- **Presentation** (`referenceFeedback.js`):
+  - **Known use restrictions** are explained as the consumer's requirement with a selection repair:
+    `MULTIPLE_CLASSIFIER_INPUTS`; `UNDECLARED_OPERATION` for `TRAINING_DATA` ("{recipe} provides no training data.
+    Select a Classification or Regression with training data instead.") and for `CLASSIFIER` ("{recipe} has no
+    classifier to apply. Select a Classification instead."); and `NON_IMAGE_OUTPUT` ("{recipe} makes no image.
+    Select an image instead."). Each has an upstream form naming the recipe that selects it.
+  - **Established defects** - no `operation`, or a band-set refusal, which the image's description also makes -
+    keep "needs attention"/"cannot run because".
+  - **Any other finding** refusing the use alone is neutral: "This recipe cannot use {recipe}. Select another
+    recipe." or "{consumer} cannot use {recipe}. Review {consumer}, or select another recipe."
+  - The bridge and the map layer's `refusedBy` attribute everything but established defects to the recipe asking
+    for the use. The reused training-data editor shows the explanation, keeping its repair for established causes.
+- **Regressions.**
+  - Shared `classifiedOutputTraining`: `MULTIPLE_CLASSIFIER_INPUTS` names `CLASSIFIER`, `NO_TRAINING_DATA` names
+    none.
+  - GUI `outputRequirements`: the reviewer's Mosaic reused as training data, at the data set and in its editor,
+    with no `refusedBy`; a Time Series selecting a Mosaic, reached through a Stack; a non-image selection; and
+    neutral unknown reasons, direct and nested.
+  - The existing genuine-defect cases are unchanged, including the inner Stack whose band names are refused.
+- **Witnesses.**
+  - The previous `readiness.js` fails the shared case in all 11 parameterised groups.
+  - The reviewed `referenceFeedback.js` and `sourceRequirements.js` fail the 5 new GUI cases.
+  - Treating nothing as established fails 32 genuine-defect cases.
+- **Verification.**
+  - Shared `test/recipe` 1465 and gee unit tests 1497.
+  - GUI over the audited callers' directories, the process recipe top-level tests, panels, map layer source and
+    locale: 131 files, 2050 tests (two workers).
+  - ESLint, translations JSON and `git diff --check` clean. The full GUI suite and live probes were not run.
+
+**S4 use-restriction fallback: independent review (2026-10-26).** No remaining S4 review findings. The additive
+readiness metadata is a reasonable bounded change: use-only declarations identify the operation their finding
+refuses, while the requirement predicates, execution needs and readiness statuses stay unchanged. Shared image
+requirements retain their old shape. Presentation retains the band-set exception because those refusals also
+invalidate the image's description. Structural unsupported-operation findings and known non-image selections now
+give a selection repair; an unfamiliar use-only finding has a neutral direct/nested fallback.
+
+- **Independent checks.** Per-file Node runs passed 361 shared cases in `output/readiness`, `resolveImageOutput`,
+  `readImageOutput`, `analysisPrerequisites`, `trainingDataReadiness` and `classifiedOutputTraining`. Mounted/bridge
+  GUI tests passed 150 cases in eight files, with two workers: `outputRequirements`, Time Series, CCDC and Phenology
+  `classificationFeedback`, reused training-data editor and feedback, Remapping requirements and translations.
+- **Targeted probes.** The unmodified formatter with a translation stub now explains the original
+  `UNDECLARED_OPERATION/TRAINING_DATA` Mosaic finding as `providesNoTrainingData`, gives an unknown use-only finding
+  `recipeUnusable`, and retains `recipeNeedsAttention` for an established `NO_TRAINING_DATA` defect. A separate
+  `configurationFindings` assertion confirms a use-only requirement gains its operation while a requirement also
+  applying to `IMAGE_OUTPUT` does not. No source file was swapped or changed for these probes.
+- **Remaining verification.** The short CCDC field/SRC explanation and selection-recovery browser check remains
+  pending, as does the final full GUI campaign. No further live arithmetic probe is needed for this presentation
+  correction; the sampling code is unchanged. Only this roadmap was edited by the reviewer; `git diff --check`
+  passed. Nothing staged, committed or pushed.
+
+**S4 browser result (2026-10-26; user reported).** Responding to the short CCDC recheck, the user says "All good".
+This confirms the two-input Provider gets the specific explanation and Retrieve is held, and selecting the
+single-input Consumer clears the explanation and makes Retrieve available. The requested explanation/recovery
+recheck is passed; do not ask for it again unless later changes affect the path. This is user-reported browser
+evidence, not an agent-observed run or proof of a completed export. Build details and per-case task IDs were not
+supplied. The final full GUI campaign remains pending. No staging, commit or push was performed for this record.
+
 **F5/F6. Make settings ownership explicit instead of automatically overwriting groups.**
 
 - Audit each Sources and PRC field from producer through monitoring execution, not just matching property names.
@@ -4296,6 +5269,14 @@ separate decision changes it. Broader coverage listed under "Deferred beyond thi
 
 **Verification checkpoint before push:**
 
+- **Release scope reaffirmed 2026-10-26.** S4 can be committed as a separate reviewed checkpoint before starting
+  S5. S5 (Change Alerts settings ownership and unwanted overwrites) and S6 (validation/editor/chart agreement)
+  remain required before pushing this robustness round. A passing final GUI run alone does not complete that work;
+  neither item has been scoped out. Start S5 with its ownership audit and the concrete editable-copy recommendation,
+  which is still awaiting a product decision.
+- Integrate origin safely and run the final full GUI campaign on the resulting tree after the remaining slices.
+  Keep the focused S5/S6 browser rechecks bounded to the changed paths; do not repeat already accepted S1-S4 cases
+  without a change that affects them. Committing S4 does not authorise a push.
 - The Classification outline regression recorded under "Verification status" is corrected. The full GUI suite at
   `8d04b160b` passed all 316 files and 4547 tests with two workers (2026-10-21, 310 s, exit 0). The earlier
   `remapping/panelActivation.test.jsx` timeout did not recur; its historical result is preserved above.

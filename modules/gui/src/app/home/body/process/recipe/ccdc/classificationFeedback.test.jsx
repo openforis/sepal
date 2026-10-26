@@ -16,14 +16,14 @@ import {PortalContainer, PortalContext} from '~/widget/portal'
 // where it cannot be trained - it stores no training points - the Sources panel names it beside the classification
 // field, whose own sections say why, and Retrieve is held, without holding the panel's Apply - for a breakpoint band it
 // computes, which trains it, and for breakpoint bands of the images alike. The panel, store, source runtime and recipe types are real; the recipe reads answer from stored
-// records, Earth Engine the bands of a recipe's image at once.
+// records, Earth Engine the bands of a recipe's image or an asset at once - a radar asset's VV and VH.
 
 const stored = vi.hoisted(() => ({records: {}}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
-        bands$: ({recipe}) => of(recipe?.type === 'CCDC'
+        bands$: ({recipe, asset}) => of(recipe?.type === 'CCDC'
             ? ['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb', 'ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude']
-            : ['red', 'nir'].map(name => ({name, arrayDimensions: 0}))),
+            : (asset === 'users/x/radar' ? ['VV', 'VH'] : ['red', 'nir']).map(name => ({name, arrayDimensions: 0}))),
         assetMetadata$: () => of({bandNames: ['red', 'nir'], properties: {}}),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
     },
@@ -100,6 +100,29 @@ describe.each([
 })
 
 // Selecting none needs nothing of any.
+// Applied to each image of the collection, a Classification is applied by the band sets of one input image: one of
+// several is valid by itself, and unsuitable here, so the repair is selecting another - which may reuse its training data.
+describe('a CCDC over a trainable Classification of two input images', () => {
+    it('says beside the classification field that it needs a Classification of one input image, and holds Retrieve', async () => {
+        await open({breakpointBands: ['ndvi'], classifier: RANDOM_FOREST, points: true, inputs: 2})
+
+        expect(errorsOf(CLASSIFICATION_LABEL)).toEqual([TWO_INPUTS])
+        expect(retrieveGate()).toMatchObject({code: 'SOURCE_UNSUITABLE', section: SOURCES_BUTTON})
+    })
+
+    it('says nothing beside it, and can be retrieved, once it selects a Classification of one input image reusing its training data', async () => {
+        await open({breakpointBands: ['ndvi'], classifier: RANDOM_FOREST, points: true, inputs: 2})
+
+        await act(async () => actionBuilder('SELECT_CLASSIFICATION')
+            .set(['process.loadedRecipes', CCDC, 'model.sources.classification'], REUSING)
+            .dispatch())
+        await reopen()
+
+        expect(errorsOf(CLASSIFICATION_LABEL)).toEqual([])
+        expect(retrieveGate()).toBe(null)
+    })
+})
+
 describe('a CCDC selecting no Classification', () => {
     it('says nothing beside the classification field, and can be retrieved', async () => {
         await open({breakpointBands: ['ndvi'], classifier: RANDOM_FOREST, points: false, classification: null})
@@ -121,11 +144,13 @@ describe('a CCDC saved fitting a regression its trainable Classification\'s SVM 
 
 const CCDC = 'ccdc-1'
 const CLASSIFICATION = 'classification-1'
+const REUSING = 'classification-2'
 const MOSAIC = 'mosaic-1'
 const SOURCES_BUTTON = 'process.ccdc.panel.sources.button'
 const CLASSIFICATION_LABEL = 'process.ccdc.panel.sources.form.classification.label'
 const BREAKPOINT_BANDS_LABEL = 'process.ccdc.panel.sources.form.breakpointBands.label'
 const NEEDS_ATTENTION = 'process.source.status.recipeNeedsAttention {"recipe":"Classification"}'
+const TWO_INPUTS = 'process.source.status.multipleClassifierInputs {"recipe":"Classification","count":2}'
 const LANDSAT_7 = 'sources.dataSets.LANDSAT_7.label'
 const RANDOM_FOREST = {type: 'RANDOM_FOREST'}
 const C_SVC = {type: 'SVM', svmType: 'C_SVC'}
@@ -134,6 +159,7 @@ const COLLECTED = {dataSetId: 'collected', type: 'COLLECTED', name: 'Collected',
 const LISTING = [
     {id: CCDC, name: 'CCDC', type: 'CCDC', revision: 1},
     {id: CLASSIFICATION, name: 'Classification', type: 'CLASSIFICATION', revision: 1},
+    {id: REUSING, name: 'Reusing', type: 'CLASSIFICATION', revision: 1},
     {id: MOSAIC, name: 'Mosaic', type: 'MOSAIC', revision: 1}
 ]
 
@@ -169,18 +195,34 @@ const mosaicRecipe = () => ({
     ui: {initialized: true}
 })
 
-const classificationRecipe = ({classifier, points}) => ({
+const MOSAIC_INPUT = {imageId: 'i-1', type: 'RECIPE_REF', id: MOSAIC, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red', 'nir']}]}
+
+const RADAR_INPUT = {imageId: 'i-2', type: 'ASSET', id: 'users/x/radar', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['VV']}]}
+
+// Over the mosaic, and with `inputs` 2 a radar asset too.
+const classificationRecipe = ({classifier, points, inputs = 1}) => ({
     id: CLASSIFICATION,
     type: 'CLASSIFICATION',
     title: 'Classification',
     revision: 1,
     model: {
-        inputImagery: {images: [{imageId: 'i-1', type: 'RECIPE_REF', id: MOSAIC, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red', 'nir']}]}]},
+        inputImagery: {images: [MOSAIC_INPUT, RADAR_INPUT].slice(0, inputs)},
         legend: {entries: [{id: 'a', value: 1, label: 'A', color: '#000000'}, {id: 'b', value: 2, label: 'B', color: '#ffffff'}]},
         classifier,
         trainingData: {dataSets: points ? [COLLECTED] : []}
     },
     ui: {initialized: true}
+})
+
+// Over the mosaic alone, trained on the Classification's points.
+const reusingRecipe = () => ({
+    ...classificationRecipe({classifier: RANDOM_FOREST, points: false}),
+    id: REUSING,
+    title: 'Reusing',
+    model: {
+        ...classificationRecipe({classifier: RANDOM_FOREST, points: false}).model,
+        trainingData: {dataSets: [{dataSetId: 'reused', type: 'RECIPE', name: 'Classification', recipe: CLASSIFICATION}]}
+    }
 })
 
 // Why Retrieve of the CCDC is held, as far as what its type declares decides it.
@@ -212,8 +254,8 @@ const RuntimeProbe = withSourceRuntime()(({sourceRuntime}) => {
     return null
 })
 
-async function open({breakpointBands, classifier, points, classification}) {
-    const records = [ccdcRecipe({breakpointBands, classification}), classificationRecipe({classifier, points}), mosaicRecipe()]
+async function open({breakpointBands, classifier, points, classification, inputs}) {
+    const records = [ccdcRecipe({breakpointBands, classification}), classificationRecipe({classifier, points, inputs}), reusingRecipe(), mosaicRecipe()]
     stored.records = Object.fromEntries(records.map(record => [record.id, record]))
     const initialState = {
         dimensions: {width: 1024, height: 768},
@@ -229,6 +271,17 @@ async function open({breakpointBands, classifier, points, classification}) {
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     initStore(store)
+    await render()
+}
+
+// The Sources panel opened again, its form holding what is now applied.
+async function reopen() {
+    await act(async () => root.unmount())
+    container.remove()
+    await render()
+}
+
+async function render() {
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

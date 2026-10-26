@@ -2437,6 +2437,7 @@
             "input": "Some bands or indexes are unavailable. Open this image to review them.",
             "inputs": "Some bands or indexes are unavailable. Review Input imagery."
           },
+          "ambiguousFeatures": "More than one band of the input images gives {features}, whatever its case. To reuse training data, give the bands distinct names in a Stack's Band names panel, and use that Stack in both recipes.",
           "loadingBands": "Loading available bands",
           "loadingBandsError": "Failed to load from Google Earth Engine",
           "noImagery": "Please add at least one image to classify.",
@@ -2651,7 +2652,11 @@
             }
           },
           "missing": "Collect points on the map or add a training data set.",
-          "missingFeatures": "{recipe} samples no {features}, which this recipe is trained on.",
+          "missingFeatures": "No input image of {recipe} supplies {features}, which this recipe trains on.",
+          "derivedFeature": "{feature} is built of {bands}, which one input image of it must hold.",
+          "ambiguousFeatures": "In {recipe}, more than one band matches {conflicts}. Give the bands distinct names in a Stack's Band names panel, and use that Stack in both recipes.",
+          "conflict": "{feature} ({inputs})",
+          "conflictInput": "input image {input}: {bands}",
           "noDataSet": "No training data set added",
           "remove": {
             "confirmationMessage": "Are you sure you want to remove {name} from your training data?",
@@ -5818,6 +5823,16 @@
       "status": {
         "checking": "Checking the selected source…",
         "recipeNeedsAttention": "{recipe} needs attention.",
+        "multipleClassifierInputs": "{recipe} has {count} input images. This recipe requires a Classification with one input image. Select a single-input Classification.",
+        "multipleClassifierInputsUpstream": "{consumer} cannot run because {recipe} has {count} input images, while {consumer} requires a Classification with one input image. Select a single-input Classification in {consumer}.",
+        "providesNoTrainingData": "{recipe} provides no training data. Select a Classification or Regression with training data instead.",
+        "providesNoTrainingDataUpstream": "{consumer} cannot run because {recipe} provides no training data. Select a Classification or Regression with training data in {consumer}.",
+        "providesNoClassifier": "{recipe} has no classifier to apply. Select a Classification instead.",
+        "providesNoClassifierUpstream": "{consumer} cannot run because {recipe} has no classifier to apply. Select a Classification in {consumer}.",
+        "providesNoImage": "{recipe} makes no image. Select an image instead.",
+        "providesNoImageUpstream": "{consumer} cannot run because {recipe} makes no image. Select an image in {consumer}.",
+        "recipeUnusable": "This recipe cannot use {recipe}. Select another recipe.",
+        "recipeUnusableUpstream": "{consumer} cannot use {recipe}. Review {consumer}, or select another recipe.",
         "recipeBlockedBy": "{recipe} cannot run because {origins} needs attention.",
         "recipeBlockedByOrigins": "{recipe} cannot run because {origins} need attention.",
         "recipeAlsoDependsOn": "{recipe} needs attention. It also depends on {origins}, which needs attention.",

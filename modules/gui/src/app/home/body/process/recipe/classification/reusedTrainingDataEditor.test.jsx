@@ -22,10 +22,12 @@ import {PortalContainer, PortalContext} from '~/widget/portal'
 
 // `answers`: what storage answers for a recipe, where not at once.
 const stored = vi.hoisted(() => ({records: {}, answers: {}}))
+// What Earth Engine answers an asset holding, where not red and nir.
+const evidence = vi.hoisted(() => ({'users/x/red': ['red']}))
 const editing = vi.hoisted(() => ({dataSetId: null}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
-        bands$: () => of(['red', 'nir'].map(name => ({name, arrayDimensions: 0}))),
+        bands$: ({asset}) => of((evidence[asset] || ['red', 'nir']).map(name => ({name, arrayDimensions: 0}))),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
     },
     recipe: {load$: id => stored.answers[id] || of(stored.records[id]), loadAll$: () => of(listing()), save$: () => of()}
@@ -242,8 +244,8 @@ const OTHER_NAME = 'Other'
 const SPARE_NAME = 'Spare'
 const REUSED_ID = 'reused'
 const HEALTHY_ID = 'healthy'
-// Earth Engine answers every asset with red and nir alone.
-const SELECTING_RED = {imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red']}]}
+// An input over an asset of red alone.
+const SELECTING_RED = {imageId: 'i-1', type: 'ASSET', id: 'users/x/red', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red']}]}
 const RECIPE_LABEL = 'widget.recipeInput.label'
 const ASSET_IMAGE = {imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red', 'nir']}]}
 const POINTS = [{x: 1, y: 1, class: 1, value: 1}, {x: 2, y: 2, class: 2, value: 2}]

@@ -6,6 +6,7 @@ import {firstValueFrom} from 'rxjs'
 import {
     classificationOf,
     collected,
+    image,
     IMAGERY,
     input,
     MINIMUM_DISTANCE,
@@ -17,8 +18,11 @@ import {
     SVM
 } from './numericEarthEngine.js'
 
+const {addCovariates, featureDefinition} = await import('#sepal/ee/classification/features')
+
 // A Classification reusing another recipe's training data trains on that recipe's samples (getSamples$): its points
-// sampled over its raw features, after the samples it reuses in turn. Where the Classification normalises, it scales
+// sampled over the features the Classification defines, of that recipe's own imagery, unscaled, after the samples it
+// reuses in turn. Where the Classification normalises, it scales
 // the samples it reuses by its own statistics, as it scales its own imagery, so each is scaled once, by the range the
 // classifier is later applied with. Reused samples come first, in configured order, then its own. Earth Engine is the
 // numeric stand-in of numericEarthEngine.js; the rows trained on are compared whole and in order.
@@ -72,7 +76,7 @@ describe('a normalising Classification reusing training data', () => {
         assert.equal(state.reductions, 1)
     })
 
-    it('leaves a reused feature it does not train on raw, and trains only on its own features', async () => {
+    it('trains only on its own features, whatever else the recipe it reuses selects', async () => {
         const bandSetSpecs = [{type: 'IMAGE_BANDS', included: ['red', 'nir', 'swir1']}]
         await reusable('provider', {...PROVIDER_IMAGERY, swir1: [4, 3, 2, 1]}, {bandSetSpecs})
         const recipe = await consumer({classifier: SVM, dataSets: [reused('provider'), collected()]})
@@ -80,7 +84,7 @@ describe('a normalising Classification reusing training data', () => {
         await firstValueFrom(recipe.getImage$())
 
         assert.deepEqual(state.trained[0].bandOrder, ['red', 'nir'])
-        assert.deepEqual(state.trained[0].rows, [...rows({...PROVIDER_SCALED, swir1: [4, 3, 2, 1]}), ...rows(OWN_SCALED)])
+        assert.deepEqual(state.trained[0].rows, [...rows(PROVIDER_SCALED), ...rows(OWN_SCALED)])
     })
 
     describe('where its own imagery has a band constant at 0', () => {
@@ -98,22 +102,18 @@ describe('a normalising Classification reusing training data', () => {
             assert.deepEqual(state.trained[0].rows, [...rows({red: PROVIDER_SCALED.red, water: [0, 0, 0, 0]}), ...rows(own)])
         })
 
-        it('leaves a reused sample lacking that band without it', async () => {
-            await reusable('provider', {red: PROVIDER_IMAGERY.red}, {bandSetSpecs: [{type: 'IMAGE_BANDS', included: ['red']}]})
-            const recipe = await consumer({classifier: SVM, images, dataSets: [reused('provider'), collected()]}, imagery)
-
-            await firstValueFrom(recipe.getImage$())
-
-            assert.deepEqual(state.trained[0].rows, [...rows({red: PROVIDER_SCALED.red}), ...rows(own)])
-        })
-
-        it('leaves a reused sample holding null for that band null', async () => {
+        // Sampled as Earth Engine samples, a point where a feature is masked is no sample.
+        it('trains on no reused sample at a point where that band is masked', async () => {
             await reusable('provider', {red: PROVIDER_IMAGERY.red, water: [null, 3, null, 6]}, {bandSetSpecs: redAndWater})
             const recipe = await consumer({classifier: SVM, images, dataSets: [reused('provider'), collected()]}, imagery)
 
             await firstValueFrom(recipe.getImage$())
 
-            assert.deepEqual(state.trained[0].rows, [...rows({red: PROVIDER_SCALED.red, water: [null, 0, null, 0]}), ...rows(own)])
+            assert.deepEqual(state.trained[0].rows, [
+                {class: 1, red: PROVIDER_SCALED.red[1], water: 0},
+                {class: 2, red: PROVIDER_SCALED.red[3], water: 0},
+                ...rows(own)
+            ])
         })
     })
 
@@ -178,10 +178,10 @@ describe('a Classification reusing no training data', () => {
 
 describe('the samples a Classification offers for reuse', () => {
     for (const [name, classifier] of [['SVM', SVM], ['RANDOM_FOREST', RANDOM_FOREST]]) {
-        it(`of a ${name} are its points over its raw features, without band order or statistics, constructing no reduction`, async () => {
+        it(`of a ${name} are its points over the features defined, unscaled, without band order or statistics, constructing no reduction`, async () => {
             const recipe = await classificationOf(model({classifier}))
 
-            const samples = await firstValueFrom(recipe.getSamples$())
+            const samples = await firstValueFrom(recipe.getSamples$(definitionOf(image(IMAGERY), [{type: 'IMAGE_BANDS', included: ['red', 'nir']}])))
 
             assert.deepEqual(samples.items.map(({properties}) => properties), rows(IMAGERY))
             assert.equal(samples.get('band_order'), undefined)
@@ -201,6 +201,10 @@ const consumer = (modelOptions, imagery = {training: IMAGERY}) =>
     classificationOf(model(modelOptions), imagery, {selection: ['class']})
 
 const reused = recipe => ({type: 'RECIPE', recipe})
+
+// What a recipe over one input of `inputImage`, selecting `bandSetSpecs`, defines.
+const definitionOf = (inputImage, bandSetSpecs) =>
+    featureDefinition([{image: inputImage, bandSetSpecs, features: addCovariates(inputImage, bandSetSpecs, [])}], [])
 
 // A training row per point of collected(), with its class and the values of `bands` at its pixel.
 const rows = bands => [1, 1, 2, 2].map((value, pixel) => ({

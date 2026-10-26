@@ -27,6 +27,7 @@ import {
     READY as OUTPUT_READY,
     UNAVAILABLE as OUTPUT_UNAVAILABLE
 } from './recipeOutput'
+import {establishesOwnDefect} from './referenceFeedback'
 import {OBSERVED, sourceEdgeOf, sourceKeyOf} from './sourceEvidence'
 import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 
@@ -123,9 +124,10 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 //
 // A presentation-only declaration may name `outputDiagnostics.upstreamReferences`: the roles whose directly
 // referenced recipes need attention according to confirmed readiness findings. Each reported recipe path's first
-// hop is matched to the recipe's declared edges, and `itemOf` receives that edge's path and reference. The original
-// diagnosis remains upstream. Such a declaration has no operations and no editor binding: it marks the reference
-// without changing gates, acquisition or draft validity. Nothing is read for it without a located finding.
+// hop is matched to the recipe's declared edges, and `itemOf` receives that edge's path and reference, the origins and
+// the findings routed through it. The original diagnosis remains upstream. Such a declaration has no operations and no
+// editor binding: it marks the reference without changing gates, acquisition or draft validity. Nothing is read for it
+// without a located finding.
 //
 // Where that read holds no refusal a declaration states but is no description either - still being read, unreadable,
 // refused for something else, or over dependencies known unsound - one read without an item says so for the
@@ -560,24 +562,36 @@ const refusedReferences = (output, recipe, roles) => {
         return []
     }
     const refused = new Map()
-    ;(output.readiness?.findings || []).forEach(({recipePath = []}) => {
+    ;(output.readiness?.findings || []).forEach(finding => {
+        const {recipePath = []} = finding
         if (!Array.isArray(recipePath) || recipePath[0] !== recipe.id || recipePath.length < 2) {
             return
         }
         const reference = recipePath[1]
-        const origins = refused.get(reference) || new Set()
-        const origin = recipePath.at(-1)
+        const {origins, findings} = refused.get(reference) || {origins: new Set(), findings: []}
+        const origin = originOf(finding)
         if (typeof origin === 'string' && origin.trim()) {
             origins.add(origin)
         }
-        refused.set(reference, origins)
+        refused.set(reference, {origins, findings: [...findings, finding]})
     })
     if (!refused.size) {
         return []
     }
     return directSourceEdges(recipe).edges
         .filter(({role, reference}) => roles.includes(role) && reference.type === 'RECIPE_REF' && refused.has(reference.id))
-        .map(({role, path, reference}) => ({role, path, reference, origins: [...refused.get(reference.id)], recipePath: [recipe.id]}))
+        .map(({role, path, reference}) => {
+            const {origins, findings} = refused.get(reference.id)
+            return {role, path, reference, origins: [...origins], findings, recipePath: [recipe.id]}
+        })
+}
+
+// The recipe a finding says is to review: where it is found, where it establishes that recipe unsound by itself, or else
+// the recipe referencing it, which cannot use it so - none when that is the recipe reading it, whose own selection it is.
+const originOf = finding => {
+    const {recipePath} = finding
+    const origin = establishesOwnDefect(finding) ? recipePath.at(-1) : recipePath.at(-2)
+    return origin === recipePath[0] ? null : origin
 }
 
 // The sources the recipe's own edges in the `references` roles name that are found gone, each located at its edge.
@@ -655,7 +669,10 @@ const findingsOf = output => {
 
 // The recipe further up the closure whose own refusal refuses this one, if one does: where its repair lies.
 const upstreamRefuser = (diagnostics = []) =>
-    diagnostics.find(({recipePath = []}) => recipePath.length > 1)?.recipePath.at(-1) || null
+    diagnostics
+        .filter(({recipePath = []}) => recipePath.length > 1)
+        .map(originOf)
+        .find(Boolean) || null
 
 // Names by recipe id from the listing, once per listing and shared by everything naming recipes from it: read, never
 // changed.

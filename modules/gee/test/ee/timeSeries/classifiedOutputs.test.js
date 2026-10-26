@@ -57,7 +57,7 @@ mock.module('#sepal/ee/radar/collection', {exports: {createCollection: collectio
 mock.module('#sepal/ee/planet/collection', {exports: {createCollection: collectionOfOne}})
 mock.module('#sepal/ee/optical/addTasseledCap', {exports: {default: image => image}})
 mock.module('#sepal/ee/optical/indexes', {exports: {calculateIndex: () => expression, supportedIndexes: () => []}})
-mock.module('#sepal/ee/validate', {exports: {validateEEImageCollection: ({imageCollection}) => imageCollection}})
+mock.module('#sepal/ee/validate', {exports: {validateEEImage: ({image}) => image, validateEEImageCollection: ({imageCollection}) => imageCollection}})
 mock.module('#sepal/ee/imageFactory', {exports: {default: () => ({getImage$: () => of(expression)})}})
 
 const {default: classificationOf} = await import('#sepal/ee/classification/classification')

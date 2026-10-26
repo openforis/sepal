@@ -94,6 +94,24 @@ describe('a Phenology analysing a band its Classification computes, by whether t
     })
 })
 
+// Applied to each image of the collection, a Classification is applied by the band sets of one input image: one of
+// several is valid by itself, and unsuitable for a band it computes alone.
+describe('a Phenology over a trainable Classification of two input images', () => {
+    it('says beside the classification field that a band it computes needs a Classification of one input image, and holds Retrieve', async () => {
+        await open({band: 'probability_1', classifier: RANDOM_FOREST, points: true, inputs: 2})
+
+        expect(errorsOf(CLASSIFICATION_LABEL)).toEqual([TWO_INPUTS])
+        expect(retrieveGate()).toMatchObject({code: 'SOURCE_UNSUITABLE', section: SOURCES_BUTTON})
+    })
+
+    it('says nothing beside it, and can be retrieved, analysing a band of the images', async () => {
+        await open({band: 'ndvi', classifier: RANDOM_FOREST, points: true, inputs: 2})
+
+        expect(errorsOf(CLASSIFICATION_LABEL)).toEqual([])
+        expect(retrieveGate()).toBe(null)
+    })
+})
+
 describe('a Phenology analysing a band of the images', () => {
     it('says nothing beside the classification field, and can be retrieved, though its Classification stores no points', async () => {
         await open({band: 'ndvi', classifier: RANDOM_FOREST, points: false})
@@ -120,6 +138,7 @@ const SOURCES_BUTTON = 'process.changeAlerts.panel.sources.button'
 const CLASSIFICATION_LABEL = 'process.phenology.panel.sources.form.classification.label'
 const BAND_LABEL = 'process.phenology.panel.sources.form.band.label'
 const NEEDS_ATTENTION = 'process.source.status.recipeNeedsAttention {"recipe":"Classification"}'
+const TWO_INPUTS = 'process.source.status.multipleClassifierInputs {"recipe":"Classification","count":2}'
 const LANDSAT_9 = 'sources.dataSets.LANDSAT_9.label'
 const RANDOM_FOREST = {type: 'RANDOM_FOREST'}
 const C_SVC = {type: 'SVM', svmType: 'C_SVC'}
@@ -160,13 +179,16 @@ const mosaicRecipe = () => ({
     ui: {initialized: true}
 })
 
-const classificationRecipe = ({classifier, points}) => ({
+const MOSAIC_INPUT = {imageId: 'i-1', type: 'RECIPE_REF', id: MOSAIC, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red', 'nir']}]}
+
+// Over the mosaic, or twice over it, `inputs` saying how many times.
+const classificationRecipe = ({classifier, points, inputs = 1}) => ({
     id: CLASSIFICATION,
     type: 'CLASSIFICATION',
     title: 'Classification',
     revision: 1,
     model: {
-        inputImagery: {images: [{imageId: 'i-1', type: 'RECIPE_REF', id: MOSAIC, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red', 'nir']}]}]},
+        inputImagery: {images: [MOSAIC_INPUT, {...MOSAIC_INPUT, imageId: 'i-2'}].slice(0, inputs)},
         legend: {entries: [{id: 'a', value: 1, label: 'A', color: '#000000'}, {id: 'b', value: 2, label: 'B', color: '#ffffff'}]},
         classifier,
         trainingData: {dataSets: points ? [COLLECTED] : []}
@@ -202,8 +224,8 @@ const RuntimeProbe = withSourceRuntime()(({sourceRuntime}) => {
     return null
 })
 
-async function open({band, classifier, points}) {
-    const records = [phenologyRecipe({band}), classificationRecipe({classifier, points}), mosaicRecipe()]
+async function open({band, classifier, points, inputs}) {
+    const records = [phenologyRecipe({band}), classificationRecipe({classifier, points, inputs}), mosaicRecipe()]
     stored.records = Object.fromEntries(records.map(record => [record.id, record]))
     const initialState = {
         dimensions: {width: 1024, height: 768},

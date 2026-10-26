@@ -201,6 +201,14 @@ analyze the interaction, not a ban on neutral setup guidance, progress or genuin
 Name the actual origin of a nested problem. Scope an item editor to the item it edits; a healthy item must not show
 another item's Provider error. Keep the finding's identity and path separate from its translated prose.
 
+Distinguish a recipe's own validity from its suitability for the operation requesting it. A Classification of several
+input images is valid by itself, yet its classifier cannot be applied to each image of a collection. Explain that
+beside the consumer's selection as the consumer's requirement, with selecting a suitable recipe as the repair; do not
+say the selected recipe "needs attention", since opening it shows nothing to repair. Where the unsuitable recipe is
+further up, name the recipe that selects it as the one to review. Genuine upstream defects keep naming their origin.
+Where the evidence establishes only that a use is refused, for a reason feedback cannot explain, say so neutrally; do
+not fall back to claiming the referenced recipe is broken.
+
 Repair guidance must describe an action that works in the current interface. Opening another recipe from a modal
 requires correct modal ownership; a special navigation button is not a substitute for that missing contract.
 
@@ -246,6 +254,17 @@ Each physical or semantic constraint needs one owner. Shared declarations expres
 findings to fields; the runtime acquires evidence; execution consumes the same decision. UI and routes should not
 reconstruct a second validator from recipe shapes or old copied settings.
 An output's name or container type alone does not establish its units, feature space or derivability.
+
+Selection flexibility must preserve measurement meaning. Reusing training points may derive Consumer features from
+Provider imagery despite a different Provider band selection, but those features still need comparable scaling,
+units and processing to the imagery being classified. Check the features actually used; unrelated extra bands do
+not determine suitability. A single input or a Stack wrapper is a structural fact, not proof of scientific
+comparability. Enforce known constraints through shared rules and state clearly what evidence does not establish.
+
+Use the smallest correspondence contract the computation actually needs. A classifier consumes named features;
+structural compatibility by unambiguous feature names does not require proving equivalence of whole source recipes
+or introducing source-role metadata. State ambiguity explicitly and use meaningful names where needed. Do not
+resolve it through incidental list order, or mistake matching names for proof of matching measurement semantics.
 
 A map product's description and permission to compute it are separate contracts. Knowing the bands of a count or
 another visualization from configuration does not establish that its configured analysis is usable. State which

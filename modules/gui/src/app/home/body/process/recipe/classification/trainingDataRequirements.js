@@ -1,21 +1,24 @@
 import _ from 'lodash'
 
-import {MISSING_TRAINING_FEATURES, NO_TRAINING_DATA} from '#sepal/recipe/trainingData'
+import {AMBIGUOUS_TRAINING_FEATURES, MISSING_TRAINING_FEATURES, NO_TRAINING_DATA} from '#sepal/recipe/trainingData'
 import {TRAINING_DATA_SOURCE} from '#sepal/recipe/type/classification'
 import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
 import {msg} from '~/translate'
 
 import {listed} from '../fieldRequirement'
-import {referenceFeedback} from '../referenceFeedback'
+import {causesOf, referenceFeedback, unsuitabilityOf} from '../referenceFeedback'
 
 // What Classification and Regression need of their training data, as their shared output declarations refuse it
 // (lib/js/shared/src/recipe/trainingData.js): a classifier that is trained has something to train on. The output read
 // judges it (sourceRequirements.js), so the Training data section and the operations over the output say what that read
 // establishes, of the training data as a whole - and, where a data set reuses another recipe's training data, which
 // that recipe cannot produce (TRAINING_DATA), at that data set, naming the recipe whose own sections say why; and where
-// a recipe in its reuse samples without features this recipe trains on, at that data set, naming that recipe and them.
-// Those two are said in the data set's editor too, beside the recipe it reuses (REUSED_RECIPE_EDITOR), as one
-// instruction naming the recipes at fault (`referenceFeedback`) - after what they lack, where that is known.
+// a recipe in its reuse storing points has no input image supplying a feature this recipe trains on, or more than one
+// band matching it, at that data set, naming that recipe, the features, the bands a missing derived one is built of and
+// the bands in conflict. Those are said in the data set's editor too, beside the recipe it reuses
+// (REUSED_RECIPE_EDITOR), as one instruction naming the recipes at fault (`referenceFeedback`) - after what is wrong,
+// where that is known. A name this recipe's own input images give more than once is said at those images
+// (inputImageryRequirements.js).
 //
 // No training data at all is set-up not yet done rather than a data set that cannot be used: it holds the operations as
 // any finding does, and the Training data panel says how to add some (`missing`, a message key), but its toolbar button
@@ -39,12 +42,18 @@ const REUSED_RECIPE_EDITOR = {
         ...recipe,
         model: {...recipe.model, trainingData: {...recipe.model.trainingData, dataSets: [dataSet]}}
     }),
-    message: ({referenceFeedback}) => repairMessage(referenceFeedback)
+    // A recipe unsuitable for this use is explained with its repair (referenceFeedback.js); one that needs attention by
+    // itself gets the repair alone.
+    message: ({referenceFeedback}) => {
+        const unsuitability = unsuitabilityOf(referenceFeedback)
+        const causes = causesOf(referenceFeedback)
+        return [unsuitability, (causes.length || !unsuitability) && repairMessage({origins: causes})].filter(Boolean).join(' ')
+    }
 }
 
-// The features a reused recipe samples without are said before the repair; that a reused recipe needs attention, the
-// repair says itself.
-const MISSING_FEATURES_EDITOR = {
+// What a reused recipe lacks, or holds more than once, is said before the repair; that a reused recipe needs attention,
+// the repair says itself.
+const FEATURES_EDITOR = {
     ...REUSED_RECIPE_EDITOR,
     message: ({message, referenceFeedback}) => `${message} ${repairMessage(referenceFeedback)}`
 }
@@ -86,28 +95,72 @@ function trainingDataRequirements(missing) {
         outputDiagnostics: {
             codes: [MISSING_TRAINING_FEATURES],
             itemOf: ({path}, recipe, {recipeNames}) => {
-                const item = dataSetItem(recipe, path?.[3])
+                const item = dataSetItem(recipe, path)
                 return item && {...item, recipeNames}
             }
         },
-        editor: MISSING_FEATURES_EDITOR,
+        editor: FEATURES_EDITOR,
+        operations: [IMAGE_OUTPUT]
+    },
+    {
+        id: AMBIGUOUS_TRAINING_FEATURES,
+        section: TRAINING_DATA,
+        requirement: {
+            id: AMBIGUOUS_TRAINING_FEATURES,
+            describe: ({diagnostics, item}) => ({
+                message: ambiguousFeaturesMessage(diagnostics, item),
+                details: [],
+                referenceFeedback: providersOf(diagnostics, item)
+            })
+        },
+        summary: reads => reads.map(({ownVerdict: {diagnostic}}) => ambiguousFeaturesMessage(diagnostic.diagnostics, diagnostic.item)).join(' '),
+        outputDiagnostics: {
+            codes: [AMBIGUOUS_TRAINING_FEATURES],
+            itemOf: ({path}, recipe, {recipeNames}) => {
+                const item = dataSetItem(recipe, path)
+                return item && {...item, recipeNames}
+            }
+        },
+        editor: FEATURES_EDITOR,
         operations: [IMAGE_OUTPUT]
     },
     {
         ...referenceFeedback({
             section: TRAINING_DATA,
             roles: [TRAINING_DATA_SOURCE],
-            itemOf: ({path}, recipe) => dataSetItem(recipe, path?.[3])
+            itemOf: ({path}, recipe) => dataSetItem(recipe, path)
         }),
         editor: REUSED_RECIPE_EDITOR
     }]
 }
 
-// Each recipe reused through a data set whose samples lack features, by name, and those features.
+// Each recipe reused through a data set whose samples lack features, by name, those features, and the bands each derived
+// one is built of.
 const missingFeaturesMessage = (diagnostics, {recipeNames}) => diagnostics
-    .map(({provider, features}) => msg('process.classification.panel.trainingData.missingFeatures', {
+    .map(({provider, features, requires = {}}) => [
+        msg('process.classification.panel.trainingData.missingFeatures', {
+            recipe: recipeNames[provider] || provider,
+            features: listed(features, 'process.source.segments.andMore')
+        }),
+        ...Object.entries(requires).map(([feature, bands]) => msg('process.classification.panel.trainingData.derivedFeature', {
+            feature,
+            bands: bands.join(', ')
+        }))
+    ].join(' '))
+    .join(' ')
+
+// Each recipe reused through a data set more than one band of whose input images matches a feature, by name, each such
+// feature and the bands matching it, input by input, as that recipe spells them.
+const ambiguousFeaturesMessage = (diagnostics, {recipeNames}) => diagnostics
+    .map(({provider, conflicts = []}) => msg('process.classification.panel.trainingData.ambiguousFeatures', {
         recipe: recipeNames[provider] || provider,
-        features: listed(features, 'process.source.segments.andMore')
+        conflicts: conflicts.map(({feature, inputs}) => msg('process.classification.panel.trainingData.conflict', {
+            feature,
+            inputs: inputs.map(({imageIndex, bands}) => msg('process.classification.panel.trainingData.conflictInput', {
+                input: imageIndex + 1,
+                bands: bands.join(', ')
+            })).join('; ')
+        })).join('; ')
     }))
     .join(' ')
 
@@ -123,9 +176,11 @@ const providersOf = (diagnostics, {recipeNames}) => {
     return {reference: providers[0], origins: providers}
 }
 
-// The data set at an index, by its dataSetId, named as the training data list names it.
-const dataSetItem = (recipe, index) => {
-    const dataSet = index >= 0 ? recipe.model?.trainingData?.dataSets?.[index] : null
+// The data set a path locates, by its dataSetId, named as the training data list names it.
+const dataSetItem = (recipe, path) => {
+    const [model, trainingData, dataSets, index] = path || []
+    const located = model === 'model' && trainingData === 'trainingData' && dataSets === 'dataSets' && index >= 0
+    const dataSet = located ? recipe.model?.trainingData?.dataSets?.[index] : null
     return dataSet
         ? {id: dataSet.dataSetId, path: ['model', 'trainingData', 'dataSets', index], label: dataSet.name}
         : null

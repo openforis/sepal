@@ -98,7 +98,7 @@ mock.module('#sepal/ee/bandEvidence', {
             state.observed.push(id)
             return state.unreadable.includes(id)
                 ? throwError(() => new Error(`Asset unreadable: ${id}`))
-                : of(['red', 'nir', 'ndvi'].map(name => ({name, arrayDimensions: 0})))
+                : of((id === RED_ONLY_ASSET ? ['red'] : ['red', 'nir', 'ndvi']).map(name => ({name, arrayDimensions: 0})))
         },
         imageBandEvidence$: recipe => throwError(() => new Error(`Image described: ${recipe.id}`))
     }
@@ -137,6 +137,10 @@ const PROVIDER = 'provider-1'
 const CLASSIFIED = 'probability_1'
 const POINTS = [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]
 const classifiedImage = {...image, recipe: {...recipe, model: {...recipe.model, sources: {...recipe.model.sources, classification: CLASSIFICATION}}}}
+
+// Every asset holds red, nir and ndvi but this one, red alone.
+const RED_ONLY_ASSET = 'users/x/red-only'
+const RED_ONLY_INPUT = {imageId: 'i-1', type: 'ASSET', id: RED_ONLY_ASSET, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['red']}]}
 
 // A Classification over an asset of its own, selecting `included` of it, trained on its points and the recipes it reuses.
 const trainable = ({id = CLASSIFICATION, included = ['red', 'nir', 'ndvi'], images, points = POINTS, reuses = [], classifier = {type: 'RANDOM_FOREST'}} = {}) => ({
@@ -266,7 +270,8 @@ describe('a time-series download over a Classification that cannot be trained', 
     for (const [_case, catalogue, code] of [
         ['stores no points', () => ({[CLASSIFICATION]: trainable({points: []})}), 'NO_TRAINING_DATA'],
         ['reuses a recipe without input imagery', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, images: []})}), 'MISSING_ROLE'],
-        ['reuses a recipe sampling fewer features', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, included: ['red']})}), 'MISSING_TRAINING_FEATURES']
+        ['reuses a recipe whose imagery lacks a feature it trains on', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, images: [RED_ONLY_INPUT]})}), 'MISSING_TRAINING_FEATURES'],
+        ['has two input images', () => ({[CLASSIFICATION]: trainable({images: [trainable().model.inputImagery.images[0], {...RED_ONLY_INPUT, imageId: 'i-2'}]})}), 'MULTIPLE_CLASSIFIER_INPUTS']
     ]) {
         for (const indicators of [[CLASSIFIED], ['ndvi']]) {
             it(`refuses the tile ids of ${indicators.join(', ')}, tiling nothing, where the Classification ${_case}`, async () => {

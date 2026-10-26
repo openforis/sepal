@@ -1,6 +1,7 @@
 import {bandSetLocation} from '#sepal/recipe/bandSets'
 import {INSUFFICIENT_INPUT_BANDS, UNDERIVABLE_INPUT_INDEX} from '#sepal/recipe/bandSets'
 import {MISSING_INPUT_BAND} from '#sepal/recipe/output/diagnostic'
+import {AMBIGUOUS_TRAINING_FEATURES} from '#sepal/recipe/trainingData'
 import {inputRecipeFeedback, missingInputImageryRequirement} from '~/app/home/body/process/panels/inputImagery/inputImageryRequirements'
 import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
 import {msg} from '~/translate'
@@ -10,11 +11,15 @@ import {msg} from '~/translate'
 // what its source's current description provides. The output read judges it (sourceRequirements.js), so the input,
 // its section and the operations over the output all say what that read establishes - the input and the section in
 // one sentence each; the editor of one input judges its values by the same rule before they are applied, the input
-// alone, and says what each band set and selection lacks (imageForm.jsx).
+// alone, and says what each band set and selection lacks (imageForm.jsx). Where Classification or Regression reuses training
+// data, a feature name its input images give more than once, whatever its case, is said at each of those images
+// (trainingData.js AMBIGUOUS_TRAINING_FEATURES): a recipe reusing it cannot tell which band a reused sample's carries.
 
 export const INPUT_IMAGERY = {id: 'inputImagery', label: 'process.classification.panel.inputImagery.button'}
 
 export const INPUT_BAND_SETS = 'INPUT_BAND_SETS'
+
+export const AMBIGUOUS_INPUT_FEATURES = 'AMBIGUOUS_INPUT_FEATURES'
 
 export const inputImageryRequirements = [
     missingInputImageryRequirement(INPUT_IMAGERY),
@@ -34,8 +39,39 @@ export const inputImageryRequirements = [
             candidate: (recipe, image) => ({...recipe, model: {...recipe.model, inputImagery: {images: [image]}}})
         },
         operations: [IMAGE_OUTPUT]
+    },
+    {
+        id: AMBIGUOUS_INPUT_FEATURES,
+        section: INPUT_IMAGERY,
+        requirement: {id: AMBIGUOUS_INPUT_FEATURES, describe: ({diagnostics}) => ({message: ambiguousMessage(diagnostics), details: []})},
+        summary: reads => ambiguousMessage(reads.flatMap(({verdict}) => verdict.diagnostic.diagnostics)),
+        outputDiagnostics: {
+            codes: [AMBIGUOUS_TRAINING_FEATURES],
+            itemOf: ({path, provider}, recipe, {recipeNames}) => provider ? null : imageItemOf(path, recipe, recipeNames)
+        },
+        operations: [IMAGE_OUTPUT]
     }
 ]
+
+const ambiguousMessage = diagnostics => msg('process.classification.panel.inputImagery.ambiguousFeatures', {
+    features: [...new Set(diagnostics.flatMap(({features}) => features))].join(', ')
+})
+
+// The input image a path locates as a whole, named as the inputs list names it.
+const imageItemOf = (path, recipe, recipeNames) => {
+    const [model, inputImagery, images, imageIndex] = path || []
+    const image = model === 'model' && inputImagery === 'inputImagery' && images === 'images'
+        ? recipe.model?.inputImagery?.images?.[imageIndex]
+        : null
+    return image
+        ? {
+            id: image.imageId,
+            path: ['model', 'inputImagery', 'images', imageIndex],
+            label: image.type === 'RECIPE_REF' ? recipeNames[image.id] || image.id : image.id,
+            image
+        }
+        : null
+}
 
 // The input image a refusal is about, by its imageId, named as the inputs list names it.
 const itemOf = ({path}, recipe, recipeNames) => {

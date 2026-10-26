@@ -13,16 +13,19 @@ import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
 // A Classification or Regression trained on another recipe's training data, which that recipe cannot produce - it has
-// no input imagery to sample its points over, or selects a band its input does not have (TRAINING_DATA): the data set
-// reusing it is marked in the Training data panel, naming that recipe, whose own sections say why; the data sets beside
-// it are not. The TRN button of either says what holds its training data. No training data at all is set-up not yet done:
-// the panel says how to add some, while the button marks nothing wrong. The panels, store, source runtime and recipe types
-// are real; Earth Engine answers an asset's bands at once.
+// no input imagery to sample its points over (TRAINING_DATA) - or whose imagery lacks a feature it trains on, or matches
+// one more than once: the data set reusing it is marked in the Training data panel, naming that recipe; the data sets
+// beside it are not. What that recipe's own band sets select plays no part: its points are sampled with the features
+// the recipe reusing them defines. A name the recipe's own input images give twice is said at Input imagery. The TRN
+// button of either says what holds its training data. No training data at all is set-up not yet done: the panel says how
+// to add some, while the button marks nothing wrong. The panels, store, source runtime and recipe types are real; Earth
+// Engine answers an asset's bands at once - red and nir, unless `evidence` says otherwise.
 
 const stored = vi.hoisted(() => ({records: {}}))
+const evidence = vi.hoisted(() => ({'users/x/red': ['red'], 'users/x/case': ['red', 'Red', 'nir'], 'users/x/again': ['red']}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
-        bands$: () => of(['red', 'nir'].map(name => ({name, arrayDimensions: 0}))),
+        bands$: ({asset}) => of((evidence[asset] || ['red', 'nir']).map(name => ({name, arrayDimensions: 0}))),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
     },
     recipe: {load$: id => of(stored.records[id]), loadAll$: () => of(LISTING)}
@@ -71,13 +74,17 @@ describe.each([
     ['CLASSIFICATION', ClassificationTrainingData, 'process.classification.panel.trainingData.missing'],
     ['REGRESSION', RegressionTrainingData, 'process.regression.panel.trainingData.missing']
 ])('a %s trained on a recipe that cannot produce its training data', (type, TrainingData, missing) => {
-    it.each([
-        ['has no input imagery', []],
-        ['selects a band its input does not have', [SELECTING_MISSING_BAND]]
-    ])('marks the data set reusing it, naming that recipe, and no other, where that recipe %s', async (_case, images) => {
-        await open(type, TrainingData, {images})
+    it('marks the data set reusing it, naming that recipe, and no other, where that recipe has no input imagery', async () => {
+        await open(type, TrainingData, {images: []})
 
         expect(marked()).toEqual([{item: REUSED, message: expect.stringContaining('"recipe":"Provider"')}])
+    })
+
+    it('marks nothing where that recipe selects a band its input does not have, its points sampled as this recipe defines', async () => {
+        await open(type, TrainingData, {images: [SELECTING_MISSING_BAND]})
+
+        expect(marked()).toEqual([])
+        expect(toolbarProblems()).toEqual({})
     })
 
     it('says so on its training data button, naming that recipe, as no guidance to add training data', async () => {
@@ -87,11 +94,8 @@ describe.each([
         expect(shown()).not.toContain(missing)
     })
 
-    it.each([
-        ['given input imagery', []],
-        ['selecting what its input has', [SELECTING_MISSING_BAND]]
-    ])('marks nothing once that recipe is repaired, %s', async (_case, images) => {
-        await open(type, TrainingData, {images})
+    it('marks nothing once that recipe is given input imagery', async () => {
+        await open(type, TrainingData, {images: []})
 
         await act(async () => actionBuilder('REPAIR')
             .set(['process.loadedRecipes', PROVIDER, 'model.inputImagery.images'], [ASSET_IMAGE])
@@ -155,21 +159,21 @@ describe.each([
     })
 })
 
-// The recipe it reuses samples only red, while it trains on red and nir: the data set reusing it is marked, naming that
-// recipe and nir, and the operations over its image are held, until that recipe samples nir too.
+// The imagery of the recipe it reuses holds only red, while it trains on red and nir: the data set reusing it is marked,
+// naming that recipe and nir, and the operations over its image are held, until that recipe's imagery holds nir too.
 describe.each([
     ['CLASSIFICATION', ClassificationTrainingData],
     ['REGRESSION', RegressionTrainingData]
-])('a %s trained on a recipe sampling fewer features than it trains on', (type, TrainingData) => {
+])('a %s trained on a recipe whose imagery lacks a feature it trains on', (type, TrainingData) => {
     it('marks the data set reusing it, naming that recipe and the feature it lacks, and holds its Retrieve', async () => {
-        await open(type, TrainingData, {images: [SELECTING_RED]})
+        await open(type, TrainingData, {images: [RED_ONLY]})
 
         expect(marked()).toEqual([{item: REUSED, message: 'process.classification.panel.trainingData.missingFeatures {"recipe":"Provider","features":"nir"}'}])
         expect(retrieveGate()).toMatchObject({code: 'CONFIGURATION_UNMET'})
     })
 
-    it('marks nothing, and can be retrieved, once that recipe samples it', async () => {
-        await open(type, TrainingData, {images: [SELECTING_RED]})
+    it('marks nothing, and can be retrieved, once that recipe\'s imagery holds it', async () => {
+        await open(type, TrainingData, {images: [RED_ONLY]})
 
         await act(async () => actionBuilder('REPAIR')
             .set(['process.loadedRecipes', PROVIDER, 'model.inputImagery.images'], [ASSET_IMAGE])
@@ -181,6 +185,35 @@ describe.each([
     })
 })
 
+describe.each([
+    ['CLASSIFICATION', ClassificationTrainingData],
+    ['REGRESSION', RegressionTrainingData]
+])('a %s trained on a recipe whose imagery matches a feature it trains on more than once', (type, TrainingData) => {
+    it('marks the data set reusing it, naming the bands as that recipe spells them and how to tell them apart', async () => {
+        await open(type, TrainingData, {images: [{...RED_ONLY, id: 'users/x/case'}]})
+
+        const [{item, message}] = marked()
+        expect(item).toBe(REUSED)
+        expect(message).toMatch(/^process\.classification\.panel\.trainingData\.ambiguousFeatures .*"recipe":"Provider"/)
+        expect(message).toContain('trainingData.conflictInput')
+        expect(message).toContain('red, Red')
+        expect(retrieveGate()).toMatchObject({code: 'CONFIGURATION_UNMET'})
+    })
+})
+
+describe.each([
+    ['CLASSIFICATION', ClassificationTrainingData],
+    ['REGRESSION', RegressionTrainingData]
+])('a %s two of whose input images give one feature, reusing training data', (type, TrainingData) => {
+    it('says so at Input imagery, marking no data set, and holds its Retrieve', async () => {
+        await open(type, TrainingData, {images: [ASSET_IMAGE], consumerImages: [ASSET_IMAGE, {...RED_ONLY, imageId: 'i-2', id: 'users/x/again'}]})
+
+        expect(marked()).toEqual([])
+        expect(toolbarProblems()).toEqual({inputImagery: 'process.classification.panel.inputImagery.ambiguousFeatures {"features":"red"}'})
+        expect(retrieveGate()).toMatchObject({code: 'CONFIGURATION_UNMET'})
+    })
+})
+
 const CONSUMER = 'consumer-1'
 const PROVIDER = 'provider-1'
 const REUSED = 'Reused'
@@ -188,7 +221,8 @@ const COLLECTED = 'Collected'
 const ASSET_IMAGE = {imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red', 'nir']}]}
 // Earth Engine answers every asset with red and nir alone.
 const SELECTING_MISSING_BAND = {...ASSET_IMAGE, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red', 'swir']}]}
-const SELECTING_RED = {...ASSET_IMAGE, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red']}]}
+// An input over an asset of red alone.
+const RED_ONLY = {...ASSET_IMAGE, id: 'users/x/red', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red']}]}
 const POINTS = [{x: 1, y: 1, class: 1, value: 1}, {x: 2, y: 2, class: 2, value: 2}]
 
 const LISTING = [
@@ -213,8 +247,8 @@ const recipeOf = (type, id, {images = [ASSET_IMAGE], dataSets}) => ({
 // The consumer, trained on its own points and on the provider's, which is over `images`. `points` false: neither stores
 // a point of its own - a Classification keeping the data set its map collects into, empty. `reuse` false: the consumer
 // reuses nothing.
-const recipesOf = (type, {images, points = true, reuse = true}) => [
-    recipeOf(type, CONSUMER, {dataSets: [
+const recipesOf = (type, {images, consumerImages, points = true, reuse = true}) => [
+    recipeOf(type, CONSUMER, {images: consumerImages, dataSets: [
         ...(points ? [{dataSetId: 'collected', type: 'COLLECTED', name: COLLECTED, referenceData: POINTS}] : []),
         ...(!points && type === 'CLASSIFICATION' ? [{dataSetId: 'collected', type: 'COLLECTED', name: COLLECTED, referenceData: []}] : []),
         ...(reuse ? [{dataSetId: 'reused', type: 'RECIPE', name: REUSED, recipe: PROVIDER}] : [])
@@ -242,7 +276,7 @@ const marked = () => [...container.querySelectorAll('[data-tooltip]')]
     .filter(({message}) => message)
     .map(({element, message}) => ({item: describedAs(element), message}))
 
-const ITEM_PROBLEMS = ['process.source.status.', 'process.classification.panel.trainingData.missingFeatures']
+const ITEM_PROBLEMS = ['process.source.status.', 'process.classification.panel.trainingData.missingFeatures', 'process.classification.panel.trainingData.ambiguousFeatures']
 
 const DESCRIPTIONS = [REUSED, COLLECTED, 'process.classification.panel.trainingData.type.COLLECTED.label']
 
@@ -261,8 +295,8 @@ const RuntimeProbe = withSourceRuntime()(({sourceRuntime}) => {
     return null
 })
 
-async function open(type, TrainingData, {images, points, reuse}) {
-    const records = recipesOf(type, {images, points, reuse})
+async function open(type, TrainingData, {images, consumerImages, points, reuse}) {
+    const records = recipesOf(type, {images, consumerImages, points, reuse})
     stored.records = Object.fromEntries(records.map(record => [record.id, record]))
     const initialState = {
         dimensions: {width: 1024, height: 768},

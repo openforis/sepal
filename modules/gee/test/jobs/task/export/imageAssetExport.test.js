@@ -722,13 +722,14 @@ describe('exporting a Classification reusing training data that stores no point'
 
 // A classifier trains on every sample by its own band names, so points reused from a recipe sampling fewer features
 // than it trains on lack one: known from the recipes' band sets and their inputs' bands before anything is built.
-describe('exporting a Classification reusing training data that samples fewer features than it trains on', () => {
+describe('exporting a Classification reusing training data whose imagery lacks a feature it trains on', () => {
     const POINTS = [{x: 1, y: 1, class: 1}, {x: 1, y: 2, class: 1}, {x: 2, y: 1, class: 2}, {x: 2, y: 2, class: 2}]
-    const classificationOf = (id, {included, points = [], reuses = []}) => ({
+    const ELEVATION_ASSET = 'users/x/elevation'
+    const classificationOf = (id, {included, asset = DEM_ASSET, points = [], reuses = []}) => ({
         id,
         type: 'CLASSIFICATION',
         model: {
-            inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: DEM_ASSET, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]},
+            inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: asset, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]},
             legend: {entries: [{value: 1}, {value: 2}]},
             trainingData: {dataSets: [
                 ...(points.length ? [{type: 'COLLECTED', referenceData: points}] : []),
@@ -740,16 +741,17 @@ describe('exporting a Classification reusing training data that samples fewer fe
 
     beforeEach(() => {
         state.assets[DEM_ASSET] = {bands: [{name: 'elevation', arrayDimensions: 0}, {name: 'slope', arrayDimensions: 0}], properties: {}}
+        state.assets[ELEVATION_ASSET] = {bands: [{name: 'elevation', arrayDimensions: 0}], properties: {}}
     })
 
-    it('fails the export, saying why, and exports once the provider samples the missing band', async () => {
+    it('fails the export, saying why, and exports once the provider\'s imagery holds the missing band', async () => {
         const recipe = classificationOf('consumer-1', {included: ['elevation', 'slope'], reuses: ['provider-1']})
-        state.catalogue = {'provider-1': classificationOf('provider-1', {included: ['elevation'], points: POINTS})}
+        state.catalogue = {'provider-1': classificationOf('provider-1', {included: ['elevation'], asset: ELEVATION_ASSET, points: POINTS})}
 
         await assert.rejects(submit({recipe, bands: ['class']}), /cannot run: MISSING_TRAINING_FEATURES$/)
         assert.deepEqual(state.exported, [])
 
-        state.catalogue['provider-1'] = classificationOf('provider-1', {included: ['elevation', 'slope'], points: POINTS})
+        state.catalogue['provider-1'] = classificationOf('provider-1', {included: ['elevation'], points: POINTS})
         await submit({recipe, bands: ['class']})
     })
 })

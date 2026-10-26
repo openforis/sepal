@@ -23,6 +23,22 @@
 // the consumer's own rows: both blocks non-empty, each compared as whole rows, in that order. Prediction, footprint and
 // mask are checked for the reusing consumers too.
 //
+// Reuse samples the consumer's features of the provider's own imagery, whatever the provider selects
+// (lib/js/ee/src/classification/features.js): a provider selecting one band of its scene gives the same rows as one
+// selecting all three. Over two inputs each - consumer [Stack of its scene as red, nir, swir1; SRTM elevation],
+// provider [SRTM; Stack of its scene spelling red as Red] - on the standalone path (getTrainingData$, never the
+// collection's classifyImage, which stays one-input), each training row must equal an independent construction: red,
+// nir, ndvi calculated of them as the index calculator does, red - nir, latitude, elevation and latitude again, sampled
+// at each recipe's points on the grid of its optical band at its scale, scaled by the consumer's statistics where it
+// normalises. A provider point outside its scene, where SRTM still has values, is no sample. A provider whose Stack
+// holds red beside Red fails the evaluation, naming both.
+//
+// The feature construction itself (definedFeatures), over constant images: of two provider points, the one where a
+// required band is masked is no sample and the other is, an input supplying nothing masked at the other; an index is
+// supplied by the input holding all its bands though another, lacking one, holds red beside Red; a band named as a
+// configured covariate still combines with another, the covariate generated beside it; and a consumer combining red
+// with Red is refused rather than given red - red.
+//
 // A comparison without samples or jointly valid pixels fails. Read-only: the recipes are held in memory and read
 // through a RecipeScope of the run's own, nothing is saved and no asset is written. Authenticates with the service
 // account:
@@ -35,6 +51,7 @@ import {firstValueFrom, map, of, timeout, zip} from 'rxjs'
 import {googleProjectId, serviceAccountCredentials} from '#gee/config'
 import ee from '#sepal/ee/ee'
 import ImageFactory from '#sepal/ee/imageFactory'
+import {addCovariates, definedFeatures, featureDefinition, samplingProjection} from '#sepal/ee/classification/features'
 import {RecipeScope, withRecipeScope} from '#sepal/ee/recipeScope'
 
 import {sameRows} from './featureRows.mjs'
@@ -233,7 +250,7 @@ const verify = async name => {
 
 // A consumer reusing a normalising provider's training data: the provider's rows first, raw features of its own scene
 // at its own points scaled by the consumer's statistics, or raw; then the consumer's own.
-const verifyReuse = async (name, providerInput) => {
+const verifyReuse = async (name, providerInput, providerSelection = 'selecting its scene\'s bands') => {
     const classifier = CLASSIFIERS[name]
     const recipe = classification(classifier, {reuses: [PROVIDER]})
     const provider = classification(CLASSIFIERS['SVM, normalised'], {id: PROVIDER, input: providerInput, points: PROVIDER_POINTS})
@@ -251,10 +268,10 @@ const verifyReuse = async (name, providerInput) => {
                 && sameRows(features.trained.slice(reused.length), features.expected, TOLERANCE)
                 && Boolean(features.statistics) === normalising
                 && _.isEqual(features.bandOrder, FEATURES),
-            `${name} reusing a normalising provider: its rows are the provider's own features ${normalising ? 'scaled by the consumer\'s statistics' : 'raw'}, then its own`,
+            `${name} reusing a normalising provider ${providerSelection}: its rows are the provider's own features ${normalising ? 'scaled by the consumer\'s statistics' : 'raw'}, then its own`,
             features
         )
-        await verifyApplication(`${name} reusing a normalising provider`, recipe, bands, {ownImage, applied})
+        await verifyApplication(`${name} reusing a normalising provider ${providerSelection}`, recipe, bands, {ownImage, applied})
     })
 }
 
@@ -289,6 +306,193 @@ const providerSceneId = async () => `${COLLECTION}/${await read('provider scene'
     .first()
     .get('system:index'))}`
 
+// What a provider selecting one band of its scene is configured with: what it samples for a consumer is the consumer's.
+const selectingOne = id => ({...inputOf(id), bandSetSpecs: [{type: 'IMAGE_BANDS', included: [SCENE_BANDS[0]]}]})
+
+const DEM = 'USGS/SRTMGL1_003'
+const CONSUMER_STACK = 'classifier-normalisation-consumer-stack'
+const PROVIDER_STACK = 'classifier-normalisation-provider-stack'
+// Inside the provider's path and row only through SRTM: far outside the scene.
+const OUTSIDE = point(-50, -10, 5)
+const MULTI_FEATURES = ['red', 'nir', 'ndvi', 'red_nir_difference', 'latitude', 'elevation', 'latitude_1']
+
+const stack = (id, scene, outputs) => ({
+    id,
+    type: 'STACK',
+    model: {
+        inputImagery: {images: [{imageId: 's-1', type: 'ASSET', id: scene}]},
+        bandNames: {bandNames: [{imageId: 's-1', bands: outputs.map(([originalName, outputName]) => ({originalName, outputName}))}]}
+    }
+})
+
+const stackInput = (id, bandSetSpecs) => ({imageId: `image-${id}`, type: 'RECIPE_REF', id, bandSetSpecs})
+const demInput = {imageId: 'image-dem', type: 'ASSET', id: DEM, bandSetSpecs: [{type: 'IMAGE_BANDS', included: ['elevation']}]}
+
+const multiInput = (classifier, {id, inputs, points, reuses = []}) => {
+    const recipe = classification(classifier, {id, points, reuses})
+    return {...recipe, model: {...recipe.model, inputImagery: {images: inputs}}}
+}
+
+// A recipe's features as the consumer defines them, built here independently of execution: of `scene`'s red and nir,
+// the index as the calculator computes it - of stored values divided by ten thousand - their difference, latitude, then
+// SRTM's elevation and latitude again; sampled at `points` on the grid of `scene`'s red band, scaled by `statistics`.
+const expectedMultiRows = (scene, points, statistics) => {
+    const image = ee.Image(scene)
+    const red = image.select('SR_B4').rename('red')
+    const nir = image.select('SR_B5').rename('nir')
+    const ndvi = nir.divide(1e4).subtract(red.divide(1e4)).divide(nir.divide(1e4).add(red.divide(1e4))).rename('ndvi')
+    const latitude = ee.Image.pixelLonLat().select('latitude').float()
+    const raw = ee.Image.cat([
+        red, nir, ndvi, red.subtract(nir).rename('red_nir_difference'), latitude.rename('latitude'),
+        ee.Image(DEM).select('elevation'), latitude.rename('latitude_1')
+    ]).updateMask(image.select('SR_B4').mask())
+    const features = ee.Image(ee.Algorithms.If(ee.Algorithms.IsEqual(statistics, null), raw, scaledBands(raw, ee.Dictionary(statistics), MULTI_FEATURES)))
+    const collection = ee.FeatureCollection(points.map(({x, y, class: value}) => ee.Feature(ee.Geometry.Point([x, y]), {class: value})))
+    return features.sampleRegions({collection, properties: ['class'], scale: SCALE, projection: image.select('SR_B4').projection()})
+        .reduceColumns({reducer: ee.Reducer.toList(MULTI_FEATURES.length + 1), selectors: ['class', ...MULTI_FEATURES]}).get('list')
+}
+
+const scaledBands = (image, statistics, bands) => ee.Image(bands.map(band => {
+    const min = statistics.getNumber(`${band}_min`)
+    const max = statistics.getNumber(`${band}_max`)
+    return ee.Image(ee.Algorithms.If(
+        min.eq(max),
+        image.select(band).divide(max),
+        image.select(band).subtract(min).divide(max.subtract(min))
+    )).rename(band)
+}))
+
+// A consumer over two inputs reusing a provider over two others, in another order: whole rows, provider's first.
+const verifyMultiInputReuse = async (name, providerScene) => {
+    const classifier = CLASSIFIERS[name]
+    const consumerInputs = [
+        stackInput(CONSUMER_STACK, [
+            {type: 'IMAGE_BANDS', included: ['red', 'nir', 'ndvi']},
+            {type: 'PAIR_WISE_EXPRESSION', included: ['red', 'nir'], operation: 'DIFFERENCE'}
+        ]),
+        demInput
+    ]
+    const consumer = multiInput(classifier, {id: 'classifier-normalisation-multi', inputs: consumerInputs, points: REFERENCE_DATA, reuses: [PROVIDER]})
+    const provider = multiInput(CLASSIFIERS['SVM, normalised'], {
+        id: PROVIDER,
+        inputs: [demInput, stackInput(PROVIDER_STACK, [{type: 'IMAGE_BANDS', included: ['Red']}])],
+        points: [...PROVIDER_POINTS, OUTSIDE]
+    })
+    const catalogue = {
+        [PROVIDER]: provider,
+        [CONSUMER_STACK]: stack(CONSUMER_STACK, SCENE, [['SR_B4', 'red'], ['SR_B5', 'nir'], ['SR_B6', 'swir1']]),
+        [PROVIDER_STACK]: stack(PROVIDER_STACK, providerScene, [['SR_B4', 'Red'], ['SR_B5', 'nir'], ['SR_B6', 'swir1']])
+    }
+    await inScope(catalogue, async () => {
+        const trainingData = await firstValueFrom(ImageFactory(consumer).getTrainingData$().pipe(timeout(READ_TIMEOUT_MS)))
+        const statistics = trainingData.get('feature_statistics')
+        const rows = await read('multi-input rows', ee.Dictionary({
+            bandOrder: trainingData.get('band_order'),
+            statistics,
+            trained: trainingData.reduceColumns({reducer: ee.Reducer.toList(MULTI_FEATURES.length + 1), selectors: ['class', ...MULTI_FEATURES]}).get('list'),
+            reused: expectedMultiRows(providerScene, [...PROVIDER_POINTS, OUTSIDE], statistics),
+            own: expectedMultiRows(SCENE, REFERENCE_DATA, statistics)
+        }))
+        const reused = rows.reused || []
+        report(
+            _.isEqual(rows.bandOrder, MULTI_FEATURES)
+                && reused.length === PROVIDER_POINTS.length && rows.own?.length > 0
+                && rows.trained?.length === reused.length + rows.own.length
+                && sameRows(rows.trained.slice(0, reused.length), reused, TOLERANCE)
+                && sameRows(rows.trained.slice(reused.length), rows.own, TOLERANCE)
+                && Boolean(rows.statistics) === NORMALISING.includes(name),
+            `${name} over two inputs reusing a provider over two others in another order: each row is the consumer's features of the provider's imagery at its points, the point outside its scene none, then its own`,
+            rows
+        )
+    })
+}
+
+// A provider whose Stack holds red beside Red: neither is taken, and the evaluation says why.
+const verifyCaseCollision = async providerScene => {
+    const consumer = classification(CLASSIFIERS['Random Forest'], {id: 'classifier-normalisation-collision', reuses: [PROVIDER]})
+    const collidingConsumer = {...consumer, model: {...consumer.model, auxiliaryImagery: [], inputImagery: {images: [
+        stackInput(CONSUMER_STACK, [{type: 'IMAGE_BANDS', included: ['red', 'nir']}])
+    ]}}}
+    const provider = multiInput(CLASSIFIERS['Random Forest'], {
+        id: PROVIDER,
+        inputs: [stackInput(PROVIDER_STACK, [{type: 'IMAGE_BANDS', included: ['red']}])],
+        points: PROVIDER_POINTS
+    })
+    const catalogue = {
+        [PROVIDER]: provider,
+        [CONSUMER_STACK]: stack(CONSUMER_STACK, SCENE, [['SR_B4', 'red'], ['SR_B5', 'nir']]),
+        [PROVIDER_STACK]: stack(PROVIDER_STACK, providerScene, [['SR_B4', 'red'], ['SR_B3', 'Red'], ['SR_B5', 'nir']])
+    }
+    await inScope(catalogue, async () => {
+        const trainingData = await firstValueFrom(ImageFactory(collidingConsumer).getTrainingData$().pipe(timeout(READ_TIMEOUT_MS)))
+        const outcome = await read('colliding rows', trainingData.size()).then(size => ({size}), error => ({error: error.message}))
+        report(
+            /matches red \(input image 1: red, Red\)/.test(outcome.error || ''),
+            'a provider whose input holds red beside Red fails the evaluation, naming both',
+            outcome
+        )
+    })
+}
+
+// Constant images of named bands, masked where `masked` - a longitude half-plane, east or west of MASKED_EAST_OF - says.
+const constant = (bands, masked = {}) => ee.Image(Object.entries(bands).map(([name, value]) => {
+    const image = ee.Image.constant(value).rename(name).float()
+    const longitude = ee.Image.pixelLonLat().select('longitude')
+    return masked[name] === 'east' ? image.updateMask(longitude.lte(MASKED_EAST_OF))
+        : masked[name] === 'west' ? image.updateMask(longitude.gt(MASKED_EAST_OF))
+            : image
+}))
+
+// One point west of MASKED_EAST_OF and one east of it.
+const PROBE_POINTS = [point(-60.30, -2.80, 1), point(-60.00, -3.05, 2)]
+
+// What a provider over `providerImages` supplies a consumer over one constant input selecting `bandSetSpecs`, sampled at
+// PROBE_POINTS as reuse samples them: its rows, or the evaluation's error.
+const probe = (consumerBands, bandSetSpecs, providerImages, selectors, auxiliaryImagery = []) => {
+    const consumerImage = constant(consumerBands)
+    const features = addCovariates(consumerImage, bandSetSpecs, auxiliaryImagery)
+    const definition = featureDefinition([{image: consumerImage, bandSetSpecs, features}], auxiliaryImagery)
+    const supplied = definedFeatures(providerImages, definition, 'probe')
+    const collection = ee.FeatureCollection(PROBE_POINTS.map(({x, y, class: value}) => ee.Feature(ee.Geometry.Point([x, y]), {class: value})))
+    const samples = supplied.sampleRegions({collection, properties: ['class'], scale: SCALE, projection: samplingProjection(supplied, providerImages, definition)})
+    return read('probe rows', samples.reduceColumns({reducer: ee.Reducer.toList(selectors.length + 1), selectors: ['class', ...selectors]}).get('list'))
+        .then(rows => ({rows}), error => ({error: error.message}))
+}
+
+const verifyFeatureConstruction = async () => {
+    const masked = await probe({red: 100, nir: 1000}, [{type: 'IMAGE_BANDS', included: ['red', 'nir']}], [
+        constant({red: 120, nir: 1200}, {nir: 'east'}),
+        constant({swir: 5}, {swir: 'west'})
+    ], ['red', 'nir'])
+    report(_.isEqual(masked.rows, [[1, 120, 1200]]), 'a provider point where a required band is masked is no sample, the other is, whatever an unused input masks', masked)
+
+    const ndvi = (1200 / 1e4 - 120 / 1e4) / (1200 / 1e4 + 120 / 1e4)
+    const unused = await probe({red: 100, nir: 1000}, [{type: 'IMAGE_BANDS', included: ['ndvi']}], [
+        constant({red: 120, nir: 1200}),
+        constant({red: 7, Red: 8})
+    ], ['ndvi'])
+    report(
+        unused.rows?.length === 2 && unused.rows.every(([_class, value]) => Math.abs(value - ndvi) < TOLERANCE),
+        'an index is supplied by the input holding its bands, whatever another input lacking one holds twice by case',
+        unused
+    )
+
+    const covariateOperand = await probe({red: 100, latitude: 7}, [{type: 'PAIR_WISE_EXPRESSION', included: ['red', 'latitude'], operation: 'DIFFERENCE'}], [
+        constant({red: 120, latitude: 3})
+    ], ['red_latitude_difference', 'latitude'], ['LATITUDE'])
+    report(
+        covariateOperand.rows?.length === 2 && covariateOperand.rows.every(([pointClass, difference, latitude]) =>
+            Math.abs(difference - 117) < TOLERANCE && Math.abs(latitude - PROBE_POINTS[pointClass - 1].y) < 0.01),
+        'a band named as a configured covariate combines with another, the covariate generated beside it',
+        covariateOperand
+    )
+
+    const caseless = await probe({red: 100, Red: 20}, [{type: 'PAIR_WISE_EXPRESSION', included: ['red', 'Red'], operation: 'DIFFERENCE'}], [
+        constant({red: 120})
+    ], ['red_Red_difference'])
+    report(/combines red and Red into red_Red_difference, which differ only in case/.test(caseless.error || ''), 'a consumer combining red with Red is refused, not given red - red', caseless)
+}
+
 const main = async () => {
     await authenticate()
     for (const name of Object.keys(CLASSIFIERS)) {
@@ -298,7 +502,11 @@ const main = async () => {
     console.info(`Provider scene: ${providerScene}`)
     for (const name of REUSING) {
         await verifyReuse(name, inputOf(providerScene))
+        await verifyReuse(name, selectingOne(providerScene), 'selecting one band of its scene')
+        await verifyMultiInputReuse(name, providerScene)
     }
+    await verifyCaseCollision(providerScene)
+    await verifyFeatureConstruction()
     if (failures) {
         throw new Error(`${failures} check(s) failed`)
     }
