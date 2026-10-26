@@ -35,7 +35,7 @@ sepal eslint gui                           # Run GUI ESLint
 - API calls return observables (suffix `$`), subscribed in components
 
 ### Routing
-- React Router 7 (`react-router-dom`)
+- React Router 7 (`react-router`)
 - Route tree defined in `src/app/` directory structure
 
 ### Internationalization
