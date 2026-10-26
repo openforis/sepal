@@ -8,7 +8,7 @@
 // Payloads:
 //   WorkerSessionRequested  { username, session }   (session has its api_key STRIPPED)
 //   WorkerSessionActivated  { username, session }   (session has its api_key STRIPPED)
-//   WorkerSessionClosed     { username, sessionId }
+//   WorkerSessionClosed     { username, sessionId, closeTime }   (closeTime: ISO-8601 UTC)
 
 import {Subject} from 'rxjs'
 
@@ -65,8 +65,10 @@ const emitWorkerSessionActivated = ({username, session}) => {
     emitSessionChanged({username})
 }
 
+// closeTime is stamped here, right after the close committed, so a consumer that processes the
+// event late (budget after an outage, with the message still queued) bills up to the real close.
 const emitWorkerSessionClosed = ({username, sessionId}) => {
-    const payload = {username, sessionId}
+    const payload = {username, sessionId, closeTime: new Date().toISOString()}
     log.debug(`Emitting WorkerSessionClosed ${sessionTag(sessionId)}`)
     workerSessionClosed$.next(payload)
     emitSessionChanged({username})

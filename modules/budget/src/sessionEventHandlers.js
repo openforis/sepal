@@ -17,8 +17,9 @@ export const createSessionEventHandlers = ({openSessionUse, budgetCommands}) => 
     const onWorkerSessionRequested = openUse
     const onWorkerSessionActivated = openUse
 
-    const onWorkerSessionClosed = ({sessionId}, now = new Date()) =>
-        openSessionUse.closeSession({sessionId, to: now})
+    // closeTime is absent only from a worker that predates it.
+    const onWorkerSessionClosed = ({sessionId, closeTime}, now = new Date()) =>
+        openSessionUse.closeSession({sessionId, to: closeTime ? new Date(closeTime) : now})
 
     const onUserStorageSize = async ({username, size}) => {
         if (username == null || size == null) {

@@ -1,7 +1,9 @@
 # RabbitMQ — the `sepal.topic` exchange
 
 All asynchronous inter-service messaging goes through a single topic exchange, `sepal.topic`.
-Messages are JSON objects, published with `persistent: true`. Consumers bind a **durable queue**
+Messages are JSON objects, published with `persistent: true` on a confirm channel. A publisher holds
+each message until the broker confirms it, including while the broker is unreachable, and publishes
+unconfirmed ones again after reconnecting, so delivery is at-least-once. Consumers bind a **durable queue**
 (named `<consumer-module>.<purpose>`) to a routing-key pattern; a handler that resolves acks the
 message, a handler that throws nacks it (the message is redelivered).
 
@@ -100,9 +102,11 @@ apiKey: null}`.
   one of the logged-in user's sessions changes
   ([sessionEvents.js](modules/ssh-gateway/src/sessionEvents.js))
 
-### `workerSession.WorkerSessionClosed` — `{username, sessionId}`
+### `workerSession.WorkerSessionClosed` — `{username, sessionId, closeTime}`
 - **pub:** worker — when a session is closed (user request, timeout, budget lock, instance failure)
 - **sub:** budget (queue `budget.workerSessionClosed`) — closes the session's `open_session_use` row
+  at `closeTime` (ISO-8601 UTC, stamped by the worker when the session closed), so an event
+  processed late is not billed up to its processing time
 - **sub:** storage (queue `storage.workerSession`) — marks the session inactive, schedules
   an inactivity check and a storage re-scan
 - **sub:** gateway (queue `gateway.workerSession`) — tears down the session's cached sandbox proxy
