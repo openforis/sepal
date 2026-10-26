@@ -5091,6 +5091,13 @@
         "error": ""
       }
     },
+    "userBudget": {
+      "editDetails": {
+        "label": "",
+        "tooltip": ""
+      },
+      "title": ""
+    },
     "userDetails": {
       "form": {
         "email": {

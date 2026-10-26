@@ -6366,6 +6366,13 @@
       },
       "title": "SSH keys"
     },
+    "userBudget": {
+      "editDetails": {
+        "label": "User details",
+        "tooltip": "Edit the user's details and role"
+      },
+      "title": "User budget"
+    },
     "userDetails": {
       "form": {
         "email": {
@@ -6430,14 +6437,14 @@
           "required": "Intended use is required"
         },
         "usage": {
-          "label": "Resource usage — last {days} days",
+          "label": "Resource usage",
           "avgMax": "{metric} (avg/max)",
           "cost": "Cost",
           "hours": "Hours",
           "instanceType": "Instance type",
+          "month": "Month",
           "network": "Network",
-          "overall": "All instances",
-          "noData": "No usage data recorded yet",
+          "noData": "No usage recorded",
           "error": "Could not load usage data"
         },
         "username": {

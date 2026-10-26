@@ -14,7 +14,6 @@
 .table th:first-child,
 .table td:first-child {
     text-align: left;
-    padding-left: 0;
 }
 
 .table th {
@@ -27,25 +26,38 @@
     border-bottom: 1px solid var(--wireframe-color);
 }
 
-.table tr.total {
-    border-top: 1px solid var(--wireframe-color);
+.table th {
+    padding-bottom: .5rem;
 }
 
-.table th,
-.table tr:has(+ tr.total) td {
-    padding-bottom: .75rem;
+/* A spacer row rather than padding on the first row, so a highlighted row stops short of the line. */
+.table tbody::before {
+    content: '';
+    display: table-row;
+    height: .75rem;
 }
 
-.table tbody tr:first-child td,
-.table tr.total td {
-    padding-top: .75rem;
+/* Hovering a month shows its usage per instance type. */
+.table tr.month {
+    cursor: default;
 }
 
-.table tr.total td {
-    font-weight: bold;
+.table tr.month:hover td {
+    /* color: var(--text-color); */
+    background-color: var(--wireframe-color);
 }
 
 .message {
     font-size: .8rem;
     opacity: .6;
+}
+
+.instanceTypes {
+    /* --vertical-margin-from-element: .25rem; */
+    /* background-color: var(--panel-default-background-color); */
+    background-color: var(--well-background-color);
+    border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
+    box-shadow: 0 0 1rem 1rem var(--shadow-soft-color);
+    margin: var(--vertical-margin-from-element) 0;
+    padding: .5rem;
 }
