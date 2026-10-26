@@ -79,12 +79,13 @@ const start = (websocket, req) => {
         )
     } catch(error) {
         log.error('Cannot start session', error)
+        websocket.close()
     }
 }
 
 const resize = (req, res) => {
     try {
-        const session = Session.find(req.params.sessionId)
+        const session = Session.find(req)
         if (!session) {
             log.warn(`Cannot resize missing session: ${req.params.sessionId}`)
             res.status(404).end()

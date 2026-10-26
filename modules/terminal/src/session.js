@@ -11,7 +11,8 @@ const log = getLogger('session')
 
 const sessions = {}
 
-const getUsername = sepalUser => {
+const getUsername = req => {
+    const sepalUser = req.headers['sepal-user'] && JSON.parse(req.headers['sepal-user'])
     if (sepalUser) {
         const username = sepalUser.username
         if (username) {
@@ -60,18 +61,16 @@ const getTerminal = ({id, username, keyFile, tempKeyFile, cols, rows}) => {
     return terminal
 }
 
-const create = (id, req) => {
+const create = (id, username, req) => {
     const cols = parseInt(req.query.cols)
     const rows = parseInt(req.query.rows)
-    const sepalUser = JSON.parse(req.headers['sepal-user'])
-
-    const username = getUsername(sepalUser)
     const keyFile = getKeyFile(username)
     const tempKeyFile = getTempKeyFile(username, id)
     const terminal = getTerminal({id, username, keyFile, tempKeyFile, cols, rows})
 
     const session = {
         id,
+        username,
         terminal,
         tempKeyFile
     }
@@ -81,14 +80,19 @@ const create = (id, req) => {
 
 const get = req => {
     const id = req.params.sessionId
+    const username = getUsername(req)
     if (!sessions[id]) {
-        sessions[id] = create(id, req)
+        sessions[id] = create(id, username, req)
+    } else if (sessions[id].username !== username) {
+        throw Error(`Session ${id} does not belong to ${username}`)
     }
     return sessions[id]
 }
 
-const find = id =>
-    sessions[id]
+const find = req => {
+    const session = sessions[req.params.sessionId]
+    return session?.username === getUsername(req) ? session : undefined
+}
 
 const remove = id => {
     if (sessions[id]) {
