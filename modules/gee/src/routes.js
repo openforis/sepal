@@ -48,6 +48,7 @@ import taskSamplingDesignStep$ from '#gee/jobs/task/samplingDesignStep'
 import taskShareAsset$ from '#gee/jobs/task/shareAsset'
 import taskTimeSeriesChunks$ from '#gee/jobs/task/timeSeriesChunks'
 import taskTimeSeriesTiles$ from '#gee/jobs/task/timeSeriesTiles'
+import {requireTaskSession} from '#gee/taskSession'
 import {stream} from '#sepal/httpServer'
 
 export default router =>
@@ -88,20 +89,20 @@ export default router =>
         .post('/samplingDesign/probabilityPerStratum', stream(ctx => probabilityPerStratum$(ctx)))
         .get('/datasets', stream(ctx => datasets$(ctx)))
         .get('/landsatProductId', stream(ctx => landsatProductId$(ctx)))
-        .post('/task/operation/status', stream(ctx => taskOperationStatus$(ctx)))
-        .post('/task/operation/cancel', stream(ctx => taskOperationCancel$(ctx)))
-        .post('/task/export/ccdc/asset', stream(ctx => taskExportCcdcToAsset$(ctx)))
-        .post('/task/export/collection/prepare', stream(ctx => taskExportCollectionPrepare$(ctx)))
-        .post('/task/export/collection/tile', stream(ctx => taskExportCollectionTile$(ctx)))
-        .post('/task/export/image/asset', stream(ctx => taskExportImageToAsset$(ctx)))
-        .post('/task/export/image/drive', stream(ctx => taskExportImageToDrive$(ctx)))
-        .post('/task/export/image/sepal', stream(ctx => taskExportImageToSepal$(ctx)))
-        .post('/task/export/timeseries/chunk', stream(ctx => taskExportTimeSeriesChunk$(ctx)))
-        .post('/task/timeseries/tiles', stream(ctx => taskTimeSeriesTiles$(ctx)))
-        .post('/task/timeseries/chunks', stream(ctx => taskTimeSeriesChunks$(ctx)))
-        .post('/task/download/files', stream(ctx => taskDownloadFiles$(ctx)))
-        .post('/task/download/cleanup', stream(ctx => taskDownloadCleanup$(ctx)))
-        .post('/task/samplingDesign/step', stream(ctx => taskSamplingDesignStep$(ctx)))
-        .post('/task/samplingDesign/cleanup', stream(ctx => taskSamplingDesignCleanup$(ctx)))
-        .post('/task/asset/share', stream(ctx => taskShareAsset$(ctx)))
+        .post('/task/operation/status', requireTaskSession, stream(ctx => taskOperationStatus$(ctx)))
+        .post('/task/operation/cancel', requireTaskSession, stream(ctx => taskOperationCancel$(ctx)))
+        .post('/task/export/ccdc/asset', requireTaskSession, stream(ctx => taskExportCcdcToAsset$(ctx)))
+        .post('/task/export/collection/prepare', requireTaskSession, stream(ctx => taskExportCollectionPrepare$(ctx)))
+        .post('/task/export/collection/tile', requireTaskSession, stream(ctx => taskExportCollectionTile$(ctx)))
+        .post('/task/export/image/asset', requireTaskSession, stream(ctx => taskExportImageToAsset$(ctx)))
+        .post('/task/export/image/drive', requireTaskSession, stream(ctx => taskExportImageToDrive$(ctx)))
+        .post('/task/export/image/sepal', requireTaskSession, stream(ctx => taskExportImageToSepal$(ctx)))
+        .post('/task/export/timeseries/chunk', requireTaskSession, stream(ctx => taskExportTimeSeriesChunk$(ctx)))
+        .post('/task/timeseries/tiles', requireTaskSession, stream(ctx => taskTimeSeriesTiles$(ctx)))
+        .post('/task/timeseries/chunks', requireTaskSession, stream(ctx => taskTimeSeriesChunks$(ctx)))
+        .post('/task/download/files', requireTaskSession, stream(ctx => taskDownloadFiles$(ctx)))
+        .post('/task/download/cleanup', requireTaskSession, stream(ctx => taskDownloadCleanup$(ctx)))
+        .post('/task/samplingDesign/step', requireTaskSession, stream(ctx => taskSamplingDesignStep$(ctx)))
+        .post('/task/samplingDesign/cleanup', requireTaskSession, stream(ctx => taskSamplingDesignCleanup$(ctx)))
+        .post('/task/asset/share', requireTaskSession, stream(ctx => taskShareAsset$(ctx)))
         .get('/healthcheck', stream(ctx => check$(ctx)))
