@@ -17,7 +17,7 @@ credentials that can create databases and accounts. `src/gdal` shells out to Pyt
 |--------|---------|
 | `httpServer.js` | Koa 3 server: error handling, Prometheus, request id, body parsing, WebSocket via `ws` |
 | `httpClient.js` | RxJS HTTP client (`get$`, `post$`, `postJson$`, `delete$`). Retries with exponential backoff; retry limits, delays and timeout are options with defaults in the module. `responseType` selects how the body is read (`text`, `json`, `arrayBuffer`, `blob`); error bodies are always text. With `json`, an empty body yields `undefined` and a malformed one fails without retrying, carrying the request context, `statusCode` and the raw `body`. |
-| `messageQueue.js` | RabbitMQ via amqplib, exchange `sepal.topic`. `initMessageQueue(amqpUri, {publishers, subscribers, handler})`, auto-reconnecting. Subscribers assert durable named queues unless `queueOptions` says otherwise. |
+| `messageQueue.js` | RabbitMQ via amqplib, exchange `sepal.topic`. `initMessageQueue(amqpUri, {publishers, subscribers, handler})`, auto-reconnecting. Publishers hold messages until the broker confirms them and publish unconfirmed ones again after a reconnect (at-least-once). Subscribers assert durable named queues unless `queueOptions` says otherwise. |
 | `service.js` | Request/response over RxJS, local or remote transport |
 | `log.js` | log4js wrapper. `configureServer(config)`, then `getLogger(name)`; arguments may be lazy (`log.debug(() => …)`). `configureNoLogging()` silences everything, for CLIs whose stdout is the user's terminal |
 | `metrics.js` | prom-client wrapper: `createCounter`, `createGauge`, `createHistogram`, `createSummary` |
