@@ -264,14 +264,9 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
     }
 
     // ── per-user usage report (self: Usage panel; admin: user details) ──────────
-    const DEFAULT_USAGE_DAYS = 30
     const userUsage = resolve => async ctx => {
         const {username} = resolve(ctx)
-        const parsed = parseInt(ctx.query.days)
-        const days = Number.isFinite(parsed)
-            ? Math.min(365, Math.max(1, parsed))
-            : DEFAULT_USAGE_DAYS
-        ctx.body = await sessionManager.generateUserUsageReport({username, days})
+        ctx.body = await sessionManager.generateUserUsageReport({username})
     }
 
     // userSessions — {sessions} for the SELF report, no Koa ctx, for the session ws (./ws.js).

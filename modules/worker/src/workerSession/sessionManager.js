@@ -63,6 +63,8 @@ const log = getLogger('worker/sessionManager')
 //   terminals        — the sampler's live terminal-session count per session
 //                       (../instanceUsage/terminalRegistry.js), so an expiry notification can say
 //                       what is running. Optional; absent reads as zero.
+//   usageHourlyRetentionDays — how long the hourly usage rollups are kept; the usage report offers
+//                       the months it keeps whole.
 //   verdicts         — the sampler's latest busy verdict per session
 //                       (../instanceUsage/busyRegistry.js); the report labels each session with it.
 //                       Optional; absent reads as 'unknown'.
@@ -77,6 +79,7 @@ const createSessionManager = ({
     budgetClient = null,
     lockedUsers,
     usageRepo,
+    usageHourlyRetentionDays = 365,
     expiryPolicy,
     terminals = null,
     verdicts = null,
@@ -292,7 +295,7 @@ const createSessionManager = ({
     const generateUserSessionReport = query =>
         _generateUserSessionReport(query, {repo, appRepo, instanceManager, usageRepo, terminals, verdicts})
     const generateUserUsageReport = query =>
-        _generateUserUsageReport(query, {usageRepo, instanceManager, clock})
+        _generateUserUsageReport(query, {usageRepo, instanceManager, clock, hourlyRetentionDays: usageHourlyRetentionDays})
     const findSessionByApiKey = apiKey => _findSessionByApiKey(apiKey, {repo})
     const allOpenSessions = () => _allOpenSessions(null, {repo})
 
