@@ -1,12 +1,12 @@
 import {filter, map, of, switchMap, take, throwError} from 'rxjs'
 
 import {OPTICAL_COLLECTION_DEFAULTS} from '#sepal/recipe/capability/opticalCollectionDefaults'
+import {selectableBands} from '#sepal/recipe/optical/opticalBands'
 import {
     completeRecipeClosure$,
     DEFAULT_RECIPE_CLOSURE_LIMITS
 } from '#sepal/recipe/source/completeRecipeClosure'
 import {ASSET} from '#sepal/recipe/source/reference'
-import {getDataSetBands} from '~/app/home/body/process/recipe/opticalMosaic/sources'
 import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import {selectFrom} from '~/stateUtils'
 
@@ -85,10 +85,11 @@ const NOTHING_PROPOSED = {defaults: null, restriction: null}
 
 const notDerivable = {defaults: null, restriction: NOT_DERIVABLE}
 
-// A record answers about its bands whether or not it states a collection to derive defaults from.
+// A record answers about its bands whether or not it states a collection to derive defaults from: the bands execution
+// can ask it for by name, its indexes too.
 const bandsOf = record => {
     const dataSets = selectFrom(record, 'model.sources.dataSets')
-    return dataSets ? getDataSetBands(record) : undefined
+    return dataSets ? selectableBands(record.model) : undefined
 }
 
 const recipeDefaults = (record, declaredProducer) => {

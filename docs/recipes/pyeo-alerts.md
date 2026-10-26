@@ -132,8 +132,9 @@ shows the From/To counts at once when either differs from its default. Recipes s
 The Options panel offers NDVI, NDMI and NBR, filtered by the rules readiness judges the applied gate by
 (`monitoringSuppliesIndex`, `baselineSuppliesIndex` in `lib/js/shared/src/recipe/type/pyeoAlerts.js`): the monitoring
 scenes must compute the index, and the Classification's input must supply it as execution obtains it - its spectral
-bands for an asset, the index itself by name for a recipe. The input's bands are what Sources last read of it, kept
-with the classification and input kind they are of (`ui.classificationBands`); bands read for another classification
+bands for an asset, the index itself by name for a recipe. The input's bands are what Sources last read of it - for a
+mosaic recipe, every band execution can ask it for, its indexes included (`selectableBands`) - kept with the
+classification and input kind they are of (`ui.classificationBands`); bands read for another classification
 than the one applied, or not read yet, rule nothing out. Matching is case-sensitive. A new recipe's default model has
 the gate on NDVI, which nobody has chosen: while the recipe is being set up, applying Sources with a classification
 read gives the gate NDVI where it can read NDVI, otherwise the first index it can (`gateIndexes.js`), in the same
