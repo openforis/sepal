@@ -5,6 +5,6 @@ const registerBudgetRoutes = (router, api) => router
     .post('/budget', requireAdmin, api.updateBudget)
     .post('/budget/requestUpdate', requireAuth, api.requestUpdate)
     .get('/budget/spending/:username', requireAdmin, api.spending)
-    .get('/budget/check/:username', requireAdmin, api.check)
+    .post('/budget/check/:username', requireAdmin, api.check)
 
 export {registerBudgetRoutes}

@@ -170,8 +170,11 @@ Instances of any other version are therefore stale, newer ones included, and are
 
 ## Budget enforcement
 `POST /sessions/instance-type/:type` asks the budget module for a LIVE verdict first
-(`GET /budget/check/:username`, `src/workerSession/budgetClient.js`) and throws the matching typed
+(`POST /budget/check/:username`, `src/workerSession/budgetClient.js`) and throws the matching typed
 error from `budgetErrors.js` when the user is over budget. `BUDGET_URL` configures the base URL.
+The check sends the user's open sessions, which budget counts before their WorkerSessionRequested
+event arrives, and `sessionManager` runs one request per user at a time, so concurrent requests
+cannot all pass the same check.
 The event-fed `lockedUsers` set is only the FALLBACK for when that call fails — it is empty after a
 restart, so it must not be the authoritative gate. It remains what closes an over-budget user's
 running sessions, via the `budget.UserBudgetExceeded` subscriber in `main.js`.
