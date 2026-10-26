@@ -106,7 +106,12 @@ export class UserApi {
             ctx.body = {status: 'failure', token, reason: 'expired', message: 'Token is expired'}
             return
         }
-        ctx.body = {status: 'success', token, user: userToMap(user), message: 'Token is valid'}
+        if (user.status === 'LOCKED') {
+            ctx.body = {status: 'failure', token, reason: 'locked', message: 'Account locked'}
+            return
+        }
+        // Unauthenticated: anyone holding the link sees this, so Google tokens stay out.
+        ctx.body = {status: 'success', token, user: userToMap(user, false), message: 'Token is valid'}
     }
 
     // Deliberately publishes no event and sets no refresh header.
