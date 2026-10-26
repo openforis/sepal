@@ -27,7 +27,7 @@ vi.mock('~/widget/notifications', () => ({Notifications: {error: vi.fn()}}))
 
 const {actionBuilder} = await import('~/action-builder')
 const {initStore} = await import('~/store')
-const {forgetRecipeSaveState, openRecipeRevision, recipePath, sessionRecipeCache} = await import('./recipe')
+const {forgetRecipeSaveState, hasUnsavedWork, openRecipeRevision, recipePath, sessionRecipeCache} = await import('./recipe')
 const {draftAgreement} = await import('./draftAgreement')
 const {RecipeCacheClaimant} = await import('./recipeCacheClaims')
 
@@ -277,6 +277,34 @@ describe('a recipe closed while it is saving', () => {
         await vi.waitFor(() => expect(saveState().status).toBe('CONFLICT'))
 
         expect(draft().model.bands).toEqual(['VV', 'VH'])
+    })
+})
+
+describe('leaving the page', () => {
+    it('is held back while an edit is saving, until storage acknowledges it', async () => {
+        edit(['VV', 'VH'])
+
+        expect(hasUnsavedWork(store.getState())).toBe(true)
+
+        acknowledge(0, 2)
+        await vi.waitFor(() => expect(saveState().status).toBe('SAVED'))
+
+        expect(hasUnsavedWork(store.getState())).toBe(false)
+    })
+
+    it('is held back by an edit whose save was refused', async () => {
+        edit(['VV', 'VH'])
+
+        server.requests[0].response.error({status: 400})
+        await vi.waitFor(() => expect(saveState().status).toBe('FAILED'))
+
+        expect(hasUnsavedWork(store.getState())).toBe(true)
+    })
+
+    it('is held back by a recipe never saved', () => {
+        actionBuilder('CREATE_RECIPE').set(recipePath('new'), {id: 'new', ui: {unsaved: true}}).dispatch()
+
+        expect(hasUnsavedWork(store.getState())).toBe(true)
     })
 })
 
