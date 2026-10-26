@@ -81,7 +81,9 @@ export class Tasks {
 
     async resubmit({taskId, username}) {
         const task = await this.#finishedTask({taskId, username}, 'resubmitted')
-        await this.#repository.remove(task)
+        if (!await this.#repository.remove(task)) {
+            return null
+        }
         return this.submit({username, operation: task.operation, params: task.params, recipeId: task.recipeId})
     }
 

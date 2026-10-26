@@ -197,6 +197,19 @@ describe('resubmitting and removing', () => {
         assert.deepEqual((await repository.userTasks('alice')).map(({id}) => id), [again.id])
     })
 
+    test('resubmitting a finished task twice at once runs it again only once', async () => {
+        const {tasks, repository} = setup()
+        const task = await tasks.submit({username: 'alice', operation: 'image.GEE'})
+        await tasks.cancel({taskId: task.id, username: 'alice'})
+
+        await Promise.all([
+            tasks.resubmit({taskId: task.id, username: 'alice'}),
+            tasks.resubmit({taskId: task.id, username: 'alice'})
+        ])
+
+        assert.equal((await repository.userTasks('alice')).length, 1)
+    })
+
     test('an unfinished task can be neither resubmitted nor removed', async () => {
         const {tasks} = setup()
         const task = await tasks.submit({username: 'alice', operation: 'image.GEE'})
