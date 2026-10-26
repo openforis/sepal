@@ -115,7 +115,7 @@ const recipe = ({aoi}) => ({
             monitoringStart: '2022-01-01',
             monitoringEnd: '2023-01-01'
         },
-        pyeoAlertsOptions: {minConsecutiveDetections: 2, indexGate: {index: 'ndvi', threshold: 0.2}}
+        pyeoAlertsOptions: {minCumulativeDetections: 2, indexGate: {index: 'ndvi', threshold: 0.2}}
     }
 })
 
