@@ -15,7 +15,7 @@
 //   7. return requestedSession
 //
 // api-key race: the row is INSERTED after requestInstance returns. The provisioner's later
-// apiKeyForInstance lookup polls because the InstanceProvisioned event may fire before this
+// apiKeyForSession lookup polls because the InstanceProvisioned event may fire before this
 // insert commits — keep the ordering (request instance → insert); do NOT insert first.
 
 import crypto from 'node:crypto'

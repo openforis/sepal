@@ -338,8 +338,8 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
 
     // provisionInstance — full provision sequence:
     //   1. waitUntilDockerIsAvailable
-    //   2. removeInstanceContainers (containers and /tmp volume)
-    //   3. apiKeyForInstance (with retry)
+    //   2. apiKeyForSession (with retry)
+    //   3. removeInstanceContainers (containers and /tmp volume)
     //   4. createWorkerType → get images
     //   5. createTmpVolume, on tmpDevice when there is one (the session's scratch disk)
     //   6. for each image: createContainer, startContainer
@@ -348,16 +348,19 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
         const instance = normalizeInstance(rawInstance)
         log.debug(`Provisioning ${instanceTag(instance)} (workerType=${instance.reservation?.workerType})...`)
         await waitUntilDockerIsAvailable(instance)
-        await removeInstanceContainers(instance)
 
-        const apiKey = await sandboxSessionApiKey.apiKeyForInstance(instance.id)
+        const apiKey = await sandboxSessionApiKey.apiKeyForSession(instance.id, instance.reservation?.sessionId)
         log.debug(`ApiKey for ${instanceTag(instance)}: ${apiKey ? '[obtained]' : '[null]'}`)
 
         // A worker authenticates everything it sends back to SEPAL with this key, so it is never
         // started without one. The caller's retry covers a lookup that was merely too early.
+        // Looked up before anything is deleted: the key only comes back while the instance is
+        // still this session's, so a provision that outlived its session leaves the next one's
+        // containers alone.
         if (!apiKey) {
             throw new DockerProvisionerError(instance, `No session api key for instance: ${instance.id}`)
         }
+        await removeInstanceContainers(instance)
 
         const instanceType = instanceTypeById[instance.type]
         if (!instanceType) {

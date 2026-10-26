@@ -25,7 +25,7 @@ const {instanceName} = await import('../instanceName.js')
 
 // Provisioning refuses without a key, so this stands in for the session lookup wherever the key
 // itself is not the subject.
-const SESSION_API_KEY = {apiKeyForInstance: async () => 'session-key'}
+const SESSION_API_KEY = {apiKeyForSession: async () => 'session-key'}
 
 const CONFIG = {
     workerAmiVersion: '5.1.0',
@@ -721,7 +721,7 @@ describe('apiKey retry', () => {
 
         let callCount = 0
         const mockApiKeyImpl = {
-            apiKeyForInstance: mock.fn(async () => {
+            apiKeyForSession: mock.fn(async () => {
                 callCount++
                 if (callCount < 5) return null
                 return 'my-api-key'
@@ -737,7 +737,7 @@ describe('apiKey retry', () => {
         await provisioner.provisionInstance(makeInstance())
 
         assert.ok(capturedEnv.includes('SEPAL_API_KEY=my-api-key'))
-        assert.equal(mockApiKeyImpl.apiKeyForInstance.mock.callCount(), 5)
+        assert.equal(mockApiKeyImpl.apiKeyForSession.mock.callCount(), 5)
     })
 
     test('no container is created when the key is never found', async () => {
@@ -753,44 +753,63 @@ describe('apiKey retry', () => {
         await assert.rejects(provisioner.provisionInstance(makeInstance()), /api key/)
         assert.equal(created, false)
     })
+
+    // A provision that outlived its session must leave the next session's sandbox standing.
+    test('deletes nothing when the instance is no longer the session\'s', async () => {
+        const methods = []
+        globalThis.fetch = mock.fn(async (url, opts) => {
+            methods.push(opts?.method ?? 'GET')
+            return {ok: true, status: 200, text: async () => JSON.stringify([{Id: 'bob-id', Names: ['/sandbox.bob.inst-abc123']}])}
+        })
+        const sandboxSessionApiKey = {
+            apiKeyForSession: mock.fn(async (_instanceId, sessionId) => sessionId === 'sess-bob' ? 'bobs-key' : null)
+        }
+        const provisioner = createDockerInstanceProvisioner({config: CONFIG, instanceTypes: INSTANCE_TYPES, sandboxSessionApiKey})
+        const instance = makeInstance()
+
+        await assert.rejects(provisioner.provisionInstance(instance), /api key/)
+
+        assert.deepEqual(callsOf(sandboxSessionApiKey.apiKeyForSession), [[instance.id, instance.reservation.sessionId]])
+        assert.deepEqual(methods.filter(method => method !== 'GET'), [])
+    })
 })
 
 describe('createApiKeyRetryWrapper', () => {
     test('returns null when impl always returns null (all retries exhausted)', async () => {
-        const impl = {apiKeyForInstance: mock.fn(async () => null)}
+        const impl = {apiKeyForSession: mock.fn(async () => null)}
         const wrapper = createApiKeyRetryWrapper(impl, {retries: 5, delayMs: 0})
-        const result = await wrapper.apiKeyForInstance('i-001')
+        const result = await wrapper.apiKeyForSession('i-001')
         assert.equal(result, null)
-        assert.equal(impl.apiKeyForInstance.mock.callCount(), 5)
+        assert.equal(impl.apiKeyForSession.mock.callCount(), 5)
     })
 
     test('returns value on 3rd attempt when first 2 return null', async () => {
         let count = 0
         const impl = {
-            apiKeyForInstance: mock.fn(async () => {
+            apiKeyForSession: mock.fn(async () => {
                 count++
                 return count < 3 ? null : 'api-key-value'
             })
         }
         const wrapper = createApiKeyRetryWrapper(impl, {retries: 5, delayMs: 0})
-        const result = await wrapper.apiKeyForInstance('i-002')
+        const result = await wrapper.apiKeyForSession('i-002')
         assert.equal(result, 'api-key-value')
-        assert.equal(impl.apiKeyForInstance.mock.callCount(), 3)
+        assert.equal(impl.apiKeyForSession.mock.callCount(), 3)
     })
 
     test('returns value on first attempt when immediately available', async () => {
-        const impl = {apiKeyForInstance: mock.fn(async () => 'immediate-key')}
+        const impl = {apiKeyForSession: mock.fn(async () => 'immediate-key')}
         const wrapper = createApiKeyRetryWrapper(impl, {retries: 5, delayMs: 0})
-        const result = await wrapper.apiKeyForInstance('i-003')
+        const result = await wrapper.apiKeyForSession('i-003')
         assert.equal(result, 'immediate-key')
-        assert.equal(impl.apiKeyForInstance.mock.callCount(), 1)
+        assert.equal(impl.apiKeyForSession.mock.callCount(), 1)
     })
 
     test('sleeps delayMs between retries, and not after the successful attempt', async () => {
         const slept = []
         let count = 0
         const impl = {
-            apiKeyForInstance: mock.fn(async () => {
+            apiKeyForSession: mock.fn(async () => {
                 count++
                 return count < 3 ? null : 'key'
             })
@@ -800,15 +819,15 @@ describe('createApiKeyRetryWrapper', () => {
             delayMs: 50,
             _sleep: async ms => { slept.push(ms) },
         })
-        const result = await wrapper.apiKeyForInstance('i-004')
+        const result = await wrapper.apiKeyForSession('i-004')
         assert.equal(result, 'key')
-        assert.equal(impl.apiKeyForInstance.mock.callCount(), 3)
+        assert.equal(impl.apiKeyForSession.mock.callCount(), 3)
         // Two failed attempts → two sleeps; the third succeeds and returns without sleeping.
         assert.deepEqual(slept, [50, 50])
     })
 
     test('NULL_API_KEY_IMPL always returns null', async () => {
-        const result = await NULL_API_KEY_IMPL.apiKeyForInstance('any-id')
+        const result = await NULL_API_KEY_IMPL.apiKeyForSession('any-id')
         assert.equal(result, null)
     })
 })
@@ -883,7 +902,7 @@ const makeProvisioner = ({defaultDaemonHost = 'daemon-host'} = {}) =>
     createDockerInstanceProvisioner({
         config: ORPHAN_CONFIG,
         instanceTypes: [],
-        sandboxSessionApiKey: {apiKeyForInstance: async () => null},
+        sandboxSessionApiKey: {apiKeyForSession: async () => null},
         defaultDaemonHost,
     })
 

@@ -486,6 +486,50 @@ describe('provisionInstance', () => {
         assert.equal(inProcPayloads.length, 1)
         assert.equal(inProcPayloads[0].i, inst)
     })
+
+    // Releasing the instance hands it to the next session: a provision that kept retrying would
+    // rebuild it, and giving up would close that session.
+    test('stops quietly once its session no longer holds the instance', async () => {
+        const failures = []
+        const {instanceEvents: ev} = await import('./events.js')
+        const onFailure = i => failures.push(i)
+        ev.on('FailedToProvisionInstance', onFailure)
+        let current = true
+        const provisioner = {
+            provisionInstance: mock.fn(async () => {
+                current = false
+                throw new Error('docker unreachable')
+            })
+        }
+
+        await provisionInstance(makeReservedInstance(), {
+            provider: noScratchVolume, provisioner, isCurrent: () => current, _delayFn: noDelay
+        })
+        ev.off('FailedToProvisionInstance', onFailure)
+
+        assert.equal(provisioner.provisionInstance.mock.callCount(), 1)
+        assert.deepEqual(failures, [])
+    })
+
+    test('does not report success when its session lost the instance during the attempt', async () => {
+        const provisioned = []
+        const {instanceEvents: ev} = await import('./events.js')
+        const onProvisioned = i => provisioned.push(i)
+        ev.on('InstanceProvisioned', onProvisioned)
+        let current = true
+        const provisioner = {
+            provisionInstance: mock.fn(async () => {
+                current = false
+            })
+        }
+
+        await provisionInstance(makeReservedInstance(), {
+            provider: noScratchVolume, provisioner, isCurrent: () => current, _delayFn: noDelay
+        })
+        ev.off('InstanceProvisioned', onProvisioned)
+
+        assert.deepEqual(provisioned, [])
+    })
 })
 
 describe('releaseInstance', () => {

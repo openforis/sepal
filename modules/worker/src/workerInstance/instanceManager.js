@@ -120,8 +120,8 @@ const createInstanceManager = ({claims, provider, provisioner, instanceTypes, pr
     // emits InstanceProvisioned, so the session is activated through the one existing hook.
     // Resolves false when a provision for that instance was already in flight.
     const _reprovisionInstance = session =>
-        provisioning.run(session.instance.id, session.id, () =>
-            provisionInstance(instanceFromSession(session), {provider, provisioner}))
+        provisioning.run(session.instance.id, session.id, isCurrent =>
+            provisionInstance(instanceFromSession(session), {provider, provisioner, isCurrent}))
 
     return {
         requestInstance: _requestInstance,
