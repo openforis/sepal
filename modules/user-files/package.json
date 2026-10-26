@@ -4,8 +4,8 @@
     "description": "",
     "main": "main.js",
     "scripts": {
-        "test": "node --test \"**/*.test.js\"",
-        "testWatch": "node --test --watch \"**/*.test.js\""
+        "test": "node --experimental-test-module-mocks --test \"**/*.test.js\"",
+        "testWatch": "node --experimental-test-module-mocks --test --watch \"**/*.test.js\""
     },
     "author": "",
     "license": "ISC",

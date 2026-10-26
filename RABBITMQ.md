@@ -31,7 +31,7 @@ publishers are `{key, publish$}` (an RxJS stream per routing key), subscribers a
 | `storage.size` | storage | budget |
 | `email.sendToAddress` | user | email |
 | `email.sendToUser` | storage, worker | email |
-| `files.FilesDeleted` | *(none — legacy)* | storage |
+| `files.FilesDeleted` | user-files | storage |
 | `systemEvent` | gateway | storage |
 
 ---
@@ -215,8 +215,8 @@ always forces delivery.
 ## `files.FilesDeleted` — file deletion
 
 ### `files.FilesDeleted` — `{username}`
-- **pub:** none in the current codebase — the publisher was the decomposed Groovy sepal-server's
-  `files` component, and user-files (which absorbed it) does not publish it
+- **pub:** user-files — after a WebSocket `remove` deletes a path from the user's home
+  ([watcher.js](modules/user-files/src/watcher.js))
 - **sub:** storage (queue `storage.files`, bound to `files.#`) — schedules a debounced
   storage re-scan for the user
 
