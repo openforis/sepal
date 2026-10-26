@@ -127,7 +127,7 @@ describe('GET /auth/authorized-keys', () => {
     test('lists the SEPAL key, then each user key as its type and key only', async () => {
         const alice = anActiveUser('alice', {sshPublicKey: SEPAL_KEY})
         await api.add(request(alice, {body: {name: 'Laptop', publicKey: `ssh-ed25519 ${ED25519} alice@laptop`}}))
-        const ctx = authorizedKeysRequest(alice.username)
+        const ctx = usernameQuery(alice.username)
 
         await api.authorizedKeys(ctx)
 
@@ -138,7 +138,7 @@ describe('GET /auth/authorized-keys', () => {
     test('lists the user keys when there is no SEPAL key', async () => {
         const alice = anActiveUser('alice', {sshPublicKey: null})
         await api.add(request(alice, {body: {publicKey: `ssh-ed25519 ${ED25519}`}}))
-        const ctx = authorizedKeysRequest(alice.username)
+        const ctx = usernameQuery(alice.username)
 
         await api.authorizedKeys(ctx)
 
@@ -149,7 +149,7 @@ describe('GET /auth/authorized-keys', () => {
         const alice = anActiveUser('alice', {sshPublicKey: SEPAL_KEY})
         await api.add(request(alice, {body: {publicKey: `ssh-ed25519 ${ED25519}`}}))
         users.set('alice', {...alice, status: 'LOCKED'})
-        const ctx = authorizedKeysRequest(alice.username)
+        const ctx = usernameQuery(alice.username)
 
         await api.authorizedKeys(ctx)
 
@@ -157,11 +157,41 @@ describe('GET /auth/authorized-keys', () => {
     })
 
     test('lists nothing for an unknown user', async () => {
-        const ctx = authorizedKeysRequest('nobody')
+        const ctx = usernameQuery('nobody')
 
         await api.authorizedKeys(ctx)
 
         assert.equal(ctx.body, '')
+    })
+})
+
+describe('GET /sandbox-public-key', () => {
+    test('serves the SEPAL key as plain text, without the user\'s own keys', async () => {
+        const alice = anActiveUser('alice', {sshPublicKey: SEPAL_KEY})
+        await api.add(request(alice, {body: {publicKey: `ssh-ed25519 ${ED25519}`}}))
+        const ctx = usernameQuery(alice.username)
+
+        await api.sandboxPublicKey(ctx)
+
+        assert.equal(ctx.type, 'text/plain')
+        assert.equal(ctx.body, SEPAL_KEY)
+    })
+
+    test('is not found for a user without a SEPAL key', async () => {
+        const alice = anActiveUser('alice', {sshPublicKey: null})
+        const ctx = usernameQuery(alice.username)
+
+        await api.sandboxPublicKey(ctx)
+
+        assert.equal(ctx.status, 404)
+    })
+
+    test('is not found for an unknown user', async () => {
+        const ctx = usernameQuery('nobody')
+
+        await api.sandboxPublicKey(ctx)
+
+        assert.equal(ctx.status, 404)
     })
 })
 
@@ -241,7 +271,7 @@ const request = (user, {body = {}, params = {}} = {}) => ({
     query: {}
 })
 
-const authorizedKeysRequest = username => ({query: {username}, state: {}, request: {}, params: {}})
+const usernameQuery = username => ({query: {username}, state: {}, request: {}, params: {}})
 
 const ED25519 = 'AAAAC3NzaC1lZDI1NTE5AAAAIFTTtG0hPe95rIxeTXi4nSx4CHf59bz6WQ6e8K0fhOWn'
 const ED25519_FINGERPRINT = 'SHA256:UU+gcLVF9cusf1SG79CcIIz41VI08llkOadj4V5fyTM'

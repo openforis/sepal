@@ -42,7 +42,7 @@ mkfs.xfs -q -f -K "$1"`
 // host blocks on the OS TCP timeout while the next 1-minute sweep is already firing.
 const PROBE_TIMEOUT_MS = 10_000
 
-const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionApiKey, extraHosts = [], defaultDaemonHost = null, _dockerRetries = 60, _dockerRetryDelayMs = 1000}) => {
+const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionApiKey, userPublicKeys, extraHosts = [], defaultDaemonHost = null, _dockerRetries = 60, _dockerRetryDelayMs = 1000}) => {
     const {dockerPort, dockerEntryPoint, dockerRegistryHost, workerAmiVersion, syslogAddress} = config
 
     // normalizeInstance — heal instances that arrive without daemonHost (reconstructed from
@@ -339,11 +339,12 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
     // provisionInstance — full provision sequence:
     //   1. waitUntilDockerIsAvailable
     //   2. apiKeyForSession (with retry)
-    //   3. removeInstanceContainers (containers and /tmp volume)
-    //   4. createWorkerType → get images
-    //   5. createTmpVolume, on tmpDevice when there is one (the session's scratch disk)
-    //   6. for each image: createContainer, startContainer
-    //   7. for each image: waitUntilInitialized
+    //   3. the user's SSH public key
+    //   4. removeInstanceContainers (containers and /tmp volume)
+    //   5. createWorkerType → get images
+    //   6. createTmpVolume, on tmpDevice when there is one (the session's scratch disk)
+    //   7. for each image: createContainer, startContainer
+    //   8. for each image: waitUntilInitialized
     const provisionInstance = async (rawInstance, {tmpDevice = null} = {}) => {
         const instance = normalizeInstance(rawInstance)
         log.debug(`Provisioning ${instanceTag(instance)} (workerType=${instance.reservation?.workerType})...`)
@@ -360,13 +361,14 @@ const createDockerInstanceProvisioner = ({config, instanceTypes, sandboxSessionA
         if (!apiKey) {
             throw new DockerProvisionerError(instance, `No session api key for instance: ${instance.id}`)
         }
+        const userPublicKey = await userPublicKeys.publicKey(instance.reservation.username)
         await removeInstanceContainers(instance)
 
         const instanceType = instanceTypeById[instance.type]
         if (!instanceType) {
             throw new DockerProvisionerError(instance, `Unknown instance type: ${instance.type}`)
         }
-        const workerType = createWorkerType(instance.reservation.workerType, instance, config, apiKey)
+        const workerType = createWorkerType(instance.reservation.workerType, instance, config, {apiKey, userPublicKey})
         await createTmpVolume(instance, workerType.images[0], tmpDevice)
 
         for (const image of workerType.images) {

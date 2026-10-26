@@ -9,12 +9,6 @@ services:
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/worker:${SEPAL_VERSION:-latest}"
     container_name: worker
     init: true
-    # Root, to read each user's public SSH key: provision-user leaves it owned by the user, mode 0400.
-    user: root
-    volumes:
-      # The SANDBOX worker type reads each user's public SSH key from
-      # /var/lib/sepal/user/home/{username}/.ssh/id_rsa.pub to inject USER_PUBLIC_KEY (workerTypes.js).
-      - "${SEPAL_DATA_DIR}/user/home:/var/lib/sepal/user/home"
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       MYSQL_HOST: "mysql"

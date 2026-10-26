@@ -71,6 +71,20 @@ export class SshKeyApi {
         ctx.body = lines.map(line => `${line}\n`).join('')
     }
 
+    // The public half of the keypair SEPAL generated for the user, which the worker authorizes in each of
+    // the user's sandboxes. The key file itself is readable only by the user.
+    async sandboxPublicKey(ctx) {
+        const username = ctx.query.username
+        const user = isText(username) ? await this.#users.findByUsername(username) : null
+        if (!user?.sshPublicKey) {
+            ctx.status = 404
+            ctx.body = {message: 'SSH public key not found'}
+            return
+        }
+        ctx.type = 'text/plain'
+        ctx.body = user.sshPublicKey
+    }
+
     // The key is stored and the user added it, so a notice that cannot be sent does not undo the add.
     async #notify(username, key) {
         try {
