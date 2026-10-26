@@ -42,6 +42,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # The library carries no lock of its own, so it is tested with the one most modules install it
+          # from. Its gdal wrapper shells out to the GDAL tools.
+          - module: lib/js/shared
+            lock: modules/worker/lib/shared/package-lock.json
+            packages: gdal-bin python3-gdal
           - module: modules/gui
           - module: modules/gee
             libs: lib/js/shared lib/js/ee
@@ -53,9 +58,13 @@ jobs:
             libs: lib/js/shared
           - module: modules/budget
             libs: lib/js/shared
+          - module: modules/email
+            libs: lib/js/shared
           - module: modules/gateway
             libs: lib/js/shared
           - module: modules/message
+            libs: lib/js/shared
+          - module: modules/r-proxy
             libs: lib/js/shared
           - module: modules/recipe
             libs: lib/js/shared
@@ -65,7 +74,13 @@ jobs:
             libs: lib/js/shared
           - module: modules/storage
             libs: lib/js/shared
+          - module: modules/terminal
+            libs: lib/js/shared
           - module: modules/user
+            libs: lib/js/shared
+          - module: modules/user-assets
+            libs: lib/js/shared
+          - module: modules/user-files
             libs: lib/js/shared
           - module: modules/worker
             libs: lib/js/shared
@@ -73,11 +88,17 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26
           cache: npm
           cache-dependency-path: |
-            ${{matrix.module}}/package-lock.json
+            ${{matrix.lock || format('{0}/package-lock.json', matrix.module)}}
             ${{matrix.module}}/lib/*/package-lock.json
+      - name: Install system packages
+        if: matrix.packages
+        run: sudo apt-get update && sudo apt-get install -y ${{matrix.packages}}
+      - name: Use the lock of a consuming module
+        if: matrix.lock
+        run: cp "${{matrix.lock}}" "${{matrix.module}}/package-lock.json"
       # With the module's own lock of each library, as its image installs it
       - name: Install shared libraries
         if: matrix.libs
@@ -112,6 +133,13 @@ jobs:
       - uses: actions/checkout@v7
       - run: sudo apt-get update && sudo apt-get install -y python3-gdal
       - run: /usr/bin/python3 -m unittest discover -s lib/python/shared -p 'test_*.py' -v
+
+  deploy:
+    name: deploy scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: python3 -m unittest discover -s hosting-services/aws/sepal/test -p '*_test.py' -v
 
   shell:
     name: shell
