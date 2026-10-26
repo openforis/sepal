@@ -209,7 +209,69 @@ describe('requestSession', () => {
         assert.equal(instanceManager.requestInstance.mock.callCount(), 0)
         assert.equal(repo.insert.mock.callCount(), 0)
     })
+
+    describe('naming the session', () => {
+        test('the session gets the requested id', async () => {
+            const {mgr} = build()
+
+            const requested = await mgr.requestSession(namedRequest())
+
+            assert.equal(requested.id, SESSION_ID)
+        })
+
+        test('a repeat, even one sent while the first is in flight, answers with the same session and launches nothing more', async () => {
+            const {repo} = repoStoringInserts()
+            const {mgr, instanceManager, events} = build({repo})
+
+            const [first, repeat] = await Promise.all([
+                mgr.requestSession(namedRequest()),
+                mgr.requestSession(namedRequest()),
+            ])
+
+            assert.equal(repeat.id, first.id)
+            assert.equal(instanceManager.requestInstance.mock.callCount(), 1)
+            assert.equal(events.emitWorkerSessionRequested.mock.callCount(), 1)
+        })
+
+        test('a repeat after the first attempt failed launches again', async () => {
+            const {repo} = repoStoringInserts()
+            const instanceManager = makeInstanceManager()
+            instanceManager.requestInstance.mock.mockImplementationOnce(async () => {
+                throw new Error('InsufficientInstanceCapacity')
+            })
+            const {mgr} = build({repo, instanceManager})
+            await assert.rejects(mgr.requestSession(namedRequest()))
+
+            const requested = await mgr.requestSession(namedRequest())
+
+            assert.equal(requested.id, SESSION_ID)
+            assert.equal(instanceManager.requestInstance.mock.callCount(), 2)
+        })
+
+        test('another user\'s session id → ClientException, no instance', async () => {
+            const {repo} = repoStoringInserts()
+            const {mgr, instanceManager} = build({repo})
+            await mgr.requestSession(namedRequest({username: 'bob'}))
+
+            await assert.rejects(mgr.requestSession(namedRequest({username: 'alice'})), ClientException)
+
+            assert.equal(instanceManager.requestInstance.mock.callCount(), 1)
+        })
+
+        test('an id that is not a UUID → ClientException, no instance', async () => {
+            const {mgr, instanceManager} = build()
+
+            await assert.rejects(mgr.requestSession(namedRequest({sessionId: 'not-a-uuid'})), ClientException)
+
+            assert.equal(instanceManager.requestInstance.mock.callCount(), 0)
+        })
+    })
 })
+
+const SESSION_ID = '0b9a4f1e-6c1d-4f5e-9a7b-3c2d1e0f9a8b'
+
+const namedRequest = overrides =>
+    ({username: 'alice', workerType: SANDBOX, instanceType: 'T3aSmall', sessionId: SESSION_ID, ...overrides})
 
 describe('activatePendingSessionOnInstance', () => {
     test('PENDING on instance → ACTIVE + WorkerSessionActivated with api_key NULL', async () => {
@@ -973,6 +1035,7 @@ const makeRepo = (canned = {}) => {
         calls,
         insert: mock.fn(async s => record('insert', s)),
         update: mock.fn(async s => { record('update', s); return true }),
+        findSession: mock.fn(async id => canned.findSession?.(id) ?? null),
         getSession: mock.fn(async id => {
             record('getSession', id)
             if (canned.getSession) return canned.getSession(id)
@@ -1036,7 +1099,10 @@ const makeRepo = (canned = {}) => {
 // A repo whose userSessions answers with the sessions inserted so far.
 const repoStoringInserts = () => {
     const inserted = []
-    const repo = makeRepo({userSessions: () => inserted})
+    const repo = makeRepo({
+        userSessions: () => inserted,
+        findSession: id => inserted.find(session => session.id === id),
+    })
     repo.insert = mock.fn(async session => {inserted.push(session)})
     return {repo, inserted}
 }

@@ -26,7 +26,7 @@ import {heartbeat as _heartbeat} from './command/heartbeat.js'
 import {reclaimStaleClaims as _reclaimStaleClaims} from './command/reclaimStaleClaims.js'
 import {reconcilePendingSessions as _reconcilePendingSessions} from './command/reconcilePendingSessions.js'
 import {releaseUnusedInstances as _releaseUnusedInstances} from './command/releaseUnusedInstances.js'
-import {requestSession as _requestSession} from './command/requestSession.js'
+import {repeatedRequest, requestSession as _requestSession} from './command/requestSession.js'
 import {setSessionTimeout as _setSessionTimeout} from './command/setSessionTimeout.js'
 import {emitSessionAppAssociated, emitSessionAppDissociated, emitSessionChanged, emitSessionExpiryClosed, emitSessionExpiryNotified, emitWorkerSessionActivated, emitWorkerSessionClosed, emitWorkerSessionRequested} from './events.js'
 import {allOpenSessions as _allOpenSessions} from './query/allOpenSessions.js'
@@ -109,12 +109,17 @@ const createSessionManager = ({
     // STARTING session immediately.
     //
     // One request per user at a time: each budget check must count the session the previous
-    // request inserted, or concurrent requests all pass the same check.
-    const requestSession = async command => {
-        const session = await oneRequestPerUser(command.username, () => _requestSession(command, {
+    // request inserted, or concurrent requests all pass the same check. A repeated request answers
+    // with the session it already created, and announces nothing.
+    const requestSession = command => oneRequestPerUser(command.username, async () =>
+        await repeatedRequest(command, {repo}) ?? await requestNewSession(command)
+    )
+
+    const requestNewSession = async command => {
+        const session = await _requestSession(command, {
             repo, budgetClient, lockedUsers, instanceManager, clock, apiKeyGenerator,
             startupLeaseMinutes: expiryPolicy.startupLeaseMinutes,
-        }))
+        })
         // Strip the apiKey — the event is serialised to RabbitMQ.
         emitRequested({username: session.username, session: withApiKey(session, null)})
         emitChanged({username: session?.username})

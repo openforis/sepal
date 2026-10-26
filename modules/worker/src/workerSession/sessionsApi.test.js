@@ -65,10 +65,10 @@ beforeEach(() => Object.values(sessionManager).forEach(fn => {
 
 test('requestSessionSelf → 201, uses currentUser (lowercased), self path, STARTING status', async () => {
     sessionManager.requestSession.mock.mockImplementation(async () => pendingSession())
-    const c = ctx({params: {instanceType: 'T3aSmall'}})
+    const c = ctx({params: {instanceType: 'T3aSmall'}, query: {sessionId: 's1'}})
     await api.requestSessionSelf(c)
     assert.deepEqual(callsOf(sessionManager.requestSession), [[{
-        instanceType: 'T3aSmall', workerType: 'sandbox', username: 'alice',
+        instanceType: 'T3aSmall', workerType: 'sandbox', username: 'alice', sessionId: 's1',
     }]])
     assert.equal(c.status, 201)
     assert.deepEqual(c.body, {
@@ -109,7 +109,7 @@ test('requestSessionOther → uses path username, admin path form', async () => 
     const c = ctx({params: {username: 'Bob', instanceType: 'M6aLarge'}})
     await api.requestSessionOther(c)
     assert.deepEqual(callsOf(sessionManager.requestSession), [[{
-        instanceType: 'M6aLarge', workerType: 'sandbox', username: 'bob',
+        instanceType: 'M6aLarge', workerType: 'sandbox', username: 'bob', sessionId: undefined,
     }]])
     assert.equal(c.status, 201)
     assert.deepEqual(c.body, {

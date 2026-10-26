@@ -394,8 +394,9 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
     const requestSession = resolve => async ctx => {
         const {username, forCurrentUser} = resolve(ctx)
         const instanceType = ctx.params.instanceType
+        const sessionId = ctx.query.sessionId
         try {
-            const session = await sessionManager.requestSession({instanceType, workerType: SANDBOX, username})
+            const session = await sessionManager.requestSession({instanceType, workerType: SANDBOX, username, sessionId})
             ctx.status = 201
             ctx.body = sessionResponse(session, username, forCurrentUser)
         } catch (error) {

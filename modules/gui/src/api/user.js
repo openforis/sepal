@@ -1,5 +1,6 @@
 import {delete$, get$, post$} from '~/http-client'
 import {launchFailureRetry} from '~/instanceLaunchFailure'
+import {uuid} from '~/uuid'
 
 import {moduleWebSocket$} from './ws.js'
 
@@ -115,8 +116,13 @@ export default {
             }
         }),
 
+    // Naming the session makes the request safe to retry: a gateway timeout does not mean the
+    // launch failed, and the worker answers a repeat with the session it already created.
     startCurrentUserSession$: instanceTypeId =>
-        post$(`/api/sessions/instance-type/${encodeURIComponent(instanceTypeId)}`, {retry: launchFailureRetry}),
+        post$(`/api/sessions/instance-type/${encodeURIComponent(instanceTypeId)}`, {
+            query: {sessionId: uuid()},
+            retry: launchFailureRetry
+        }),
 
     stopCurrentUserSession$: session =>
         delete$(`/api/sessions/session/${session.id}`),
