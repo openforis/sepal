@@ -50,6 +50,12 @@ describe('BudgetRepository', () => {
 
             assert.deepEqual(found, {instanceSpending: 5, storageSpending: 50, storageQuota: 500})
         })
+
+        test('gives a user with no budget a zero budget while no default is set', async () => {
+            const found = await repository.userBudget(OWNER)
+
+            assert.deepEqual(found, {instanceSpending: 0, storageSpending: 0, storageQuota: 0})
+        })
     })
 
     describe('userInstanceUses', () => {
@@ -200,6 +206,19 @@ describe('BudgetRepository', () => {
             assert.equal(report[ANOTHER_OWNER].instanceBudget, 1)
             assert.equal(report[ANOTHER_OWNER].storageQuota, 100)
             assert.equal(report[ANOTHER_OWNER].budgetUpdateRequest.message, 'more')
+        })
+
+        test('reports users with a zero budget while no default is set', async () => {
+            await repository.saveSpendingReport({
+                [OWNER]: spending({username: OWNER, instanceSpending: 3, storageSpending: 4, storageUsage: 5}),
+            })
+
+            const report = await repository.spendingReport()
+
+            assert.deepEqual(Object.keys(report), [OWNER])
+            assert.equal(report[OWNER].instanceSpending, 3)
+            assert.equal(report[OWNER].instanceBudget, 0)
+            assert.equal(report[OWNER].storageQuota, 0)
         })
     })
 
