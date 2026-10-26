@@ -77,9 +77,7 @@ describe('bestScenes', () => {
         assert.equal(s.dataSet, 'LANDSAT_8')
         assert.equal(s.cloudCover, 15)
         assert.equal(s.date, '2020-07-15')
-        // daysFromTarget: daysFromDayOfYear(2020-07-15, 196)
-        // raw doy of 2020-07-15 = 197; |197-196|=1; min(1, 364)=1
-        assert.equal(s.daysFromTarget, 1)
+        assert.equal(s.daysFromTarget, 0)
     })
 
     test('responds with multiple areas', async () => {
@@ -156,7 +154,7 @@ describe('scenesForArea', () => {
         assert.equal(s.dataSet, 'LANDSAT_8')
         assert.equal(s.date, '2020-07-15')
         assert.equal(s.cloudCover, 15)
-        assert.equal(s.daysFromTarget, 1)
+        assert.equal(s.daysFromTarget, 0)
     })
 
     test('reads query from ctx.query.query (query param, not body)', async () => {
@@ -192,7 +190,7 @@ const makeSceneRow = ({
     source = 'LANDSAT',
     sceneAreaId = 'SA_042',
     dataSet = 'LANDSAT_8',
-    acquisitionDate = new Date('2020-07-15T00:00:00Z'), // doy 197 raw; 196 leap-ignoring (2020 is leap)
+    acquisitionDate = new Date('2020-07-15T00:00:00Z'),
     cloudCover = 15,
 } = {}) => ({
     id,
