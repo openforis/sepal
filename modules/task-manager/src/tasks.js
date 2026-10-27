@@ -1,5 +1,6 @@
 import {randomUUID} from 'node:crypto'
 
+import {eeObjectWorkspacePath} from '#sepal/eeObjectExport'
 import {getLogger} from '#sepal/log'
 
 import {hashApiKey} from './apiKey.js'
@@ -36,7 +37,7 @@ export class Tasks {
             state: State.PENDING,
             username,
             operation,
-            params: typeof params === 'string' ? JSON.parse(params) : params,
+            params: normalizeParams(operation, params),
             recipeId,
             creationTime: now,
             updateTime: now
@@ -127,6 +128,19 @@ export class Tasks {
             throw new NotFound(`No such task: ${taskId}`)
         }
         return task
+    }
+}
+
+const normalizeParams = (operation, params) => {
+    const parsed = typeof params === 'string' ? JSON.parse(params) : params
+    if (operation !== 'ee.export' || parsed?.export?.destination !== 'SEPAL') {
+        return parsed
+    }
+    const workspacePath = eeObjectWorkspacePath(parsed.export, parsed.description)
+    return {
+        ...parsed,
+        export: {...parsed.export, workspacePath},
+        taskInfo: {...parsed.taskInfo, kind: parsed.export.kind, destination: 'SEPAL', outputPath: workspacePath}
     }
 }
 

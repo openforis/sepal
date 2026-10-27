@@ -37,6 +37,7 @@ import taskDownloadFiles$ from '#gee/jobs/task/downloadFiles'
 import taskExportCcdcToAsset$ from '#gee/jobs/task/exportCcdcToAsset'
 import taskExportCollectionPrepare$ from '#gee/jobs/task/exportCollectionPrepare'
 import taskExportCollectionTile$ from '#gee/jobs/task/exportCollectionTile'
+import taskExportEEObject$ from '#gee/jobs/task/exportEEObject'
 import taskExportImageToAsset$ from '#gee/jobs/task/exportImageToAsset'
 import taskExportImageToDrive$ from '#gee/jobs/task/exportImageToDrive'
 import taskExportImageToSepal$ from '#gee/jobs/task/exportImageToSepal'
@@ -94,6 +95,7 @@ export default router =>
         .post('/task/export/ccdc/asset', requireTaskSession, stream(ctx => taskExportCcdcToAsset$(ctx)))
         .post('/task/export/collection/prepare', requireTaskSession, stream(ctx => taskExportCollectionPrepare$(ctx)))
         .post('/task/export/collection/tile', requireTaskSession, stream(ctx => taskExportCollectionTile$(ctx)))
+        .post('/task/export/ee', requireTaskSession, stream(ctx => taskExportEEObject$(ctx)))
         .post('/task/export/image/asset', requireTaskSession, stream(ctx => taskExportImageToAsset$(ctx)))
         .post('/task/export/image/drive', requireTaskSession, stream(ctx => taskExportImageToDrive$(ctx)))
         .post('/task/export/image/sepal', requireTaskSession, stream(ctx => taskExportImageToSepal$(ctx)))

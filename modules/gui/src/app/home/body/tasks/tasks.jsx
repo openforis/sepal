@@ -21,6 +21,7 @@ import {Content, SectionLayout, TopBar} from '~/widget/sectionLayout'
 import {Shape} from '~/widget/shape'
 
 import {TaskDetails} from './taskDetails'
+import {exportOrigin, originName, originText, taskTitle} from './taskOrigin'
 import styles from './tasks.module.css'
 import {taskStatusDescription} from './taskStatusDescription'
 
@@ -137,7 +138,7 @@ class _Tasks extends React.Component {
                 onClick={() => this.showInfo(task)}>
                 <CrudItem
                     title={this.getTaskTitle(task)}
-                    description={this.getRecipePath(task)}
+                    description={this.getTaskDescription(task)}
                     highlight={this.getHighlightMatcher()}
                     icon={icon}
                     iconSize='lg'
@@ -225,12 +226,14 @@ class _Tasks extends React.Component {
             // Tasks made before the rename hold the old key.
             const folderId = task.taskInfo?.folderId ?? task.taskInfo?.projectId
             const folderName = locationLabel(folders, folderId)
+            const origin = exportOrigin(task.taskInfo)
             const searchable = [
                 task.name,
                 task.description,
                 recipeType && msg(`tasks.details.recipeTypeNames.${recipeType}`),
+                taskTitle(task.taskInfo),
                 destination && msg(`tasks.details.destination.${destination}`),
-                folderName
+                origin ? originText(origin) : folderName
             ].filter(Boolean).join(' ')
             return matchers.every(matcher => matcher.test(simplifyString(searchable)))
         })
@@ -245,7 +248,7 @@ class _Tasks extends React.Component {
 
     renderTaskList(tasks) {
         // Rows redraw only when their key changes, and a recipe's folders can load or change after its task.
-        const itemKey = task => `${task.id}|${this.getHighlightMatcher()}|${this.getRecipePath(task)}`
+        const itemKey = task => `${task.id}|${this.getHighlightMatcher()}|${this.getTaskDescription(task)}`
         return (
             <FastList
                 items={tasks}
@@ -346,12 +349,14 @@ class _Tasks extends React.Component {
     }
 
     getTaskTitle(task) {
-        const recipeType = task.taskInfo?.recipeType
-        const destination = task.taskInfo?.destination
-        if (recipeType && destination) {
-            return `${msg(`tasks.details.recipeTypeNames.${recipeType}`)} \u2192 ${msg(`tasks.details.destination.${destination}`)}`
-        }
-        return task.name
+        return taskTitle(task.taskInfo) ?? task.name
+    }
+
+    getTaskDescription(task) {
+        const origin = exportOrigin(task.taskInfo)
+        return origin
+            ? [task.description || task.name, originName(origin)].filter(Boolean).join(' · ')
+            : this.getRecipePath(task)
     }
 
     getRecipePath(task) {

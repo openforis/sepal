@@ -18,6 +18,7 @@ import {Widget} from '~/widget/widget'
 import {isTaskRunning, mergeTask} from './mergeTask'
 import styles from './taskDetails.module.css'
 import {updateTimeLabelKey} from './taskLabels'
+import {exportOrigin, originName, originType} from './taskOrigin'
 import {taskStatusDescription} from './taskStatusDescription'
 
 const mapStateToProps = (state, {taskId}) => ({
@@ -158,6 +159,11 @@ class _TaskDetails extends React.Component {
         const taskInfo = task.params?.taskInfo
         const image = task.params?.image
         const recipe = image?.recipe
+        const origin = exportOrigin(taskInfo)
+
+        if (origin) {
+            return this.renderExportConfiguration(taskInfo, origin)
+        }
 
         if (!recipe?.type && !taskInfo?.recipeType) {
             return null
@@ -175,7 +181,7 @@ class _TaskDetails extends React.Component {
                 </div>
                 {recipeName && (
                     <div className={styles.row}>
-                        <Label className={styles.fieldLabel} msg={msg('tasks.details.origin')}/>
+                        <Label className={styles.fieldLabel} msg={msg('tasks.details.originNames.RECIPE')}/>
                         <div className={styles.fieldValue}>{locationLabel(folders, folderId, recipeName)}</div>
                     </div>
                 )}
@@ -183,6 +189,21 @@ class _TaskDetails extends React.Component {
         )
     }
     
+    renderExportConfiguration(taskInfo, origin) {
+        return (
+            <Widget label={msg('tasks.details.section.exportConf')} framed>
+                <div className={styles.row}>
+                    <Label className={styles.fieldLabel} msg={msg('tasks.details.exportKind')}/>
+                    <div className={styles.fieldValue}>{msg(`tasks.details.kindNames.${taskInfo.kind}`)}</div>
+                </div>
+                <div className={styles.row}>
+                    <Label className={styles.fieldLabel} msg={originType(origin)}/>
+                    <div className={styles.fieldValue}>{originName(origin)}</div>
+                </div>
+            </Widget>
+        )
+    }
+
     renderLocation(task) {
         const taskInfo = task.params?.taskInfo
         
