@@ -6101,6 +6101,82 @@ safe. The general contract is recorded in `behavior-contracts.md`. Node's
 the mechanism, which the repository already uses at its service boundary. This remains a recommended small
 correction before push, with no new recipe format or user-facing policy.
 
+**Shared-read context ownership implementation (2026-10-27; uncommitted).** Implements the assessment above from
+`3fd364ce7`. Backend only: no GUI, recipe settings, request payloads or user-facing policy change.
+
+- **The guarantee.** Every read `RecipeScope` retains is stored and returned only as an observable that delivers
+  next, error and complete in the context its subscriber subscribed in, captured whole when it subscribes.
+  `read$`, `geoIdFeature$` and any later method using `#retain` inherit this; callers have nothing to opt into, and
+  the `ReplaySubject` never leaves the scope. This applies to these APIs. An independent cache or transport
+  elsewhere still needs its own boundary.
+- **The helper.** `inSubscriberContext` (`lib/js/shared/src/rxjs/subscriberContext.js`, Node only, imported by no
+  browser entry point) snapshots `AsyncLocalStorage` inside each subscription and forwards all three notification
+  kinds synchronously: no Promise, scheduler or reordering, and unsubscription reaches the source unchanged. The
+  service response bridge's private `inCallerContext` is replaced by it; its capture was already inside the
+  `defer` subscription and stays there.
+- **Removed machinery.** The `inCurrentPath` wrappers in `loadRecipe$` and `recipeRef`, and `inCurrentPath` itself,
+  which had no other caller. GeoID loading received no individual fix. `inPath`, `withPath`, image-factory ancestry
+  entry and exit, and cycle detection are unchanged.
+- **Sharing and teardown, unchanged:** one underlying read per key per operation; the same retained record for
+  every reader; eviction and a fresh read after a failure; one subscriber leaving does not cancel another's read;
+  closing the operation tears in-flight reads down; reads still start when they did, with the reader the scope
+  captured.
+- **Owner regressions.** `modules/gee/test/ee/recipeScope.test.js`, 14 cases parameterised over recipe and GeoID
+  reads. The reader answers from a context of its own, as a transport handler does. The cases cover:
+  - two branches sharing one delayed read, for next/complete and for error followed by a fresh read;
+  - completion-driven continuation (`toArray` then work);
+  - a read obtained in one branch and subscribed in another;
+  - replay of a completed read to a later branch;
+  - one branch leaving;
+  - scope close.
+
+  Each delivery asserts the branch's path, a second unrelated `AsyncLocalStorage` store and the operation.
+- **Witnesses** (two test processes at most):
+  - The unprotected scope at `HEAD` fails 10 of the 14; the replay and teardown controls pass.
+  - With the caller wrappers removed and `asObservable()` restored, 15 of 48 fail across the owner, observations
+    context and recipe-cycle files: the 10 owner cases, the 4 delayed and two-subscriber observation-context cases,
+    and "is resolved under the ancestry of the branch receiving it". Genuine self and two-recipe cycles keep their
+    full paths either way.
+  - Capturing at construction instead of subscription fails 16 of 34, the replay cases included.
+  - Removing the helper from the service bridge fails both service round-trip cases of `recipeOperation`. (Without
+    a test timeout the same mutation hangs `eeIsolation`; that run was stopped.)
+- **Verification** in the GEE container's Node runtime:
+  - **Baseline:** 111 of 111 named focused tests at `HEAD`.
+  - **Implementation:** 125 of 125 - those plus the 14 owner cases, the 8 observation-context cases among them with
+    both caller wrappers removed.
+  - **Every gee test file constructing a `RecipeScope`**, with `recipeOperation`, `eeIsolation` and the GeoID
+    operation integration test (a local HTTP stand-in): 259 of 259.
+  - **Shared service tests:** 6 of 6.
+  - ESLint on the changed JS and `git diff --check` pass. No full suite, GUI, browser or live Earth Engine check was
+    run; final integrated verification remains before push. The readiness-recording spy is untouched and still
+    returns the real observable.
+- **Remaining limits.** Notification context is restored for these shared reads and the service bridge only. The
+  helper is Node-only and must not reach a browser-shared module. The GeoID gap found by the adjacent audit is
+  closed by the owner, verified by the owner regressions and the GeoID integration controls, not by a GeoID browser
+  reproduction.
+
+Independent implementation review (2026-10-27): no remaining code-review finding. The snapshot is captured inside
+each subscription; the private retained-read owner is the mandatory return boundary for both read methods. The
+service bridge uses the same helper without a new scheduling hop. The two loader/reference wrappers and unused
+`inCurrentPath` implementation are removed; `inPath`, factory ancestry entry/exit and cycle detection are unchanged.
+Only the already-Node-only scope and service modules import the new helper.
+
+The reviewer independently passed **73 tests** in six GEE files: the 14 owner cases, eight observations-context
+regressions, 26 recipe-cycle cases, 12 operation cases, request-identity isolation and 12 local-HTTP GeoID controls.
+This run used at most two workers in the GEE container's Node runtime after verifying that all six production
+modules and the new owner-test file matched workspace SHA-256 hashes. The shared service limiter's six tests passed
+separately on the host. ESLint on all seven changed/new JS files and `git diff --check` passed. Logs:
+`/tmp/sepal-shared-context-gee-independent-review.log` and
+`/tmp/sepal-shared-context-service-independent-review.log`. An earlier generic GUI-image attempt could not resolve
+the EE package links and was a setup failure, not test evidence for those files; it was superseded by the
+checksum-verified GEE run. No production files were changed by the review, and nothing is staged or committed.
+
+**Shared-read refactor browser acceptance (2026-10-27; user-reported pass).** The user reported "Chart worked fine"
+after the requested Change Alerts smoke check for actual segments and observation points. This accepts the focused
+browser check for the refactor; the earlier S6 transition checklist remains accepted without repetition. No separate
+GeoID browser reproduction or new live Earth Engine probe is claimed. Final integrated verification remains before
+push.
+
 **Deferred S5 follow-up: "Use reference settings" action (agreed 2026-10-26; not implemented).** Add a deliberate
 action for an existing Change Alerts recipe to copy the current reference's consumer-owned editable monitoring
 defaults again. This is not part of required S5/S6 and does not block push.

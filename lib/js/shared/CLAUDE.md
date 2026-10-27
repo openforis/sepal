@@ -22,6 +22,7 @@ credentials that can create databases and accounts. `src/gdal` shells out to Pyt
 | `log.js` | log4js wrapper. `configureServer(config)`, then `getLogger(name)`; arguments may be lazy (`log.debug(() => …)`). `configureNoLogging()` silences everything, for CLIs whose stdout is the user's terminal |
 | `metrics.js` | prom-client wrapper: `createCounter`, `createGauge`, `createHistogram`, `createSummary` |
 | `rxjs.js` | Operators: `autoRetry`, `finalizeObservable`, `promise$`, `lastInWindow`, `repeating`, `swallow` |
+| `rxjs/subscriberContext.js` | `inSubscriberContext(source$)`: delivers next, error and complete in the async context each subscriber subscribed in. Used by `service.js` and `RecipeScope`'s shared reads. Node only: keep it out of modules browser code imports |
 | `exception.js` | `Exception` base with `ServerException` (500), `ClientException` (400), `NotFoundException` (404) |
 | `db/mysql.js` | mysql2/promise wrapper: `createConnection`, `createPool`, `createDb`, `initDb`, `migrateDb`. Postgrator schema versioning. Reads `MYSQL_HOST`, `MYSQL_USER`, `MYSQL_PASSWORD` from env |
 | `event/definitions.js` | System event constants used by gateway WebSocket routing |
