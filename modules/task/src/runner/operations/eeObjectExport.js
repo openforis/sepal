@@ -1,8 +1,7 @@
 import {mkdir, realpath} from 'node:fs/promises'
 import {dirname, isAbsolute, relative, resolve, sep} from 'node:path'
 
-import {sanitizeEarthEngineTaskName} from '#sepal/earthEngineExportNames'
-import {assertEEObjectExport} from '#sepal/eeObjectExport'
+import {assertEEObjectExport, eeObjectWorkspacePath} from '#sepal/eeObjectExport'
 
 import {followEEExport} from '../eeExport.js'
 import {exportToWorkspace} from '../workspaceExport.js'
@@ -13,7 +12,7 @@ export const eeObjectExport = async (params, context) => {
     const {sepal, report, signal, sleep} = context
     const start = () => sepal.startExport('task/export/ee', params)
     if (spec.destination === 'SEPAL') {
-        const downloadDir = await workspaceDirectory(spec.workspacePath, params.description)
+        const downloadDir = await workspaceDirectory(eeObjectWorkspacePath(spec, params.description))
         await mkdir(downloadDir, {recursive: true})
         await exportToWorkspace({...context, start, downloadDir})
     } else {
@@ -28,9 +27,8 @@ export const eeObjectExport = async (params, context) => {
     }
 }
 
-const workspaceDirectory = async (workspacePath, description) => {
+const workspaceDirectory = async path => {
     const home = resolve(process.env.HOME)
-    const path = workspacePath || `downloads/${sanitizeEarthEngineTaskName(description)}`
     const dir = resolve(home, path)
     if (isAbsolute(path) || relative(home, dir).split(sep)[0] === '..') {
         throw new Error('workspacePath must be relative to the SEPAL home directory')

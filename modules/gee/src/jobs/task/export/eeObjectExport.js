@@ -30,6 +30,10 @@ export const startEEObjectExport$ = ({export: spec, description}, context) => de
     if (kind === 'IMAGE') {
         output.image = ee.Image(object)
         output.region = region ? ee.Geometry(ee.Deserializer.decodeCloudApi(region)) : output.image.geometry()
+        // The exporters reduce regions to bounds. Without scaling, EE preserves the polygon mask.
+        if (region && options.scale == null && options.dimensions == null) {
+            output.image = output.image.clip(output.region)
+        }
         if (typeof output.pyramidingPolicy === 'string') {
             output.pyramidingPolicy = {'.default': output.pyramidingPolicy}
         }

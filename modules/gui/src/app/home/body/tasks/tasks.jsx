@@ -354,7 +354,7 @@ class _Tasks extends React.Component {
     getTaskDescription(task) {
         const origin = exportOrigin(task.taskInfo)
         return origin
-            ? originName(origin)
+            ? [task.description || task.name, originName(origin)].filter(Boolean).join(' · ')
             : this.getRecipePath(task)
     }
 
