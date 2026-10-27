@@ -44,7 +44,7 @@ export const ccdcAssetSource$ = ({image, description}) => {
                 pyramidingPolicy: {'.default': 'sample'},
                 maxPixels: 1e13,
                 properties: {
-                    formattedProperties,
+                    ...formattedProperties,
                     processing: JSON.stringify(processingOfProducer(built.model).record),
                     startDate: recipe.model.dates.startDate,
                     endDate: recipe.model.dates.endDate,

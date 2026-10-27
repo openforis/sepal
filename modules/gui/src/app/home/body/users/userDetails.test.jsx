@@ -1,6 +1,6 @@
-// Whether the lock/unlock button in a user's details is offered. The form is real; the panel, inputs
-// and surrounding widgets reach the store and the DOM in ways a unit test cannot serve, so they are
-// passthroughs — what is under test is the button state this component hands them.
+// What the user details form lets an admin change. The form is real; the panel, inputs and
+// surrounding widgets reach the store and the DOM in ways a unit test cannot serve, so they are
+// passthroughs — what is under test is the state this component hands them.
 
 import {act} from 'react'
 import {createRoot} from 'react-dom/client'
@@ -15,129 +15,73 @@ vi.mock('~/connect', () => ({
 }))
 vi.mock('~/store', () => ({select: () => null}))
 vi.mock('~/translate', () => ({msg: key => key}))
-const store = {currentUser: {username: 'admin'}}
-vi.mock('~/user', () => ({currentUser: () => store.currentUser, requestPasswordReset$: () => {}}))
 vi.mock('~/widget/confirm', () => ({Confirm: () => null}))
 vi.mock('~/widget/form', () => {
     const passthrough = ({children}) => <div>{children}</div>
     const Input = ({input, disabled}) => <input name={input?.name} disabled={disabled}/>
-    return {Form: {Field: FormField, Panel: passthrough, Input, Buttons: () => null, FieldSet: passthrough, PanelButtons: passthrough}}
+    return {Form: {Field: FormField, Panel: passthrough, Input, Buttons: Input, PanelButtons: passthrough}}
 })
-vi.mock('~/widget/input', () => ({Input: () => null}))
 vi.mock('~/widget/layout', () => ({Layout: ({children}) => <div>{children}</div>}))
-vi.mock('~/widget/notifications', () => ({Notifications: {success: () => {}}}))
-vi.mock('~/widget/panel/panel', () => ({Panel: {Header: () => null, Content: ({children}) => <div>{children}</div>}}))
-vi.mock('~/widget/modalConfirmationButton', () => ({
-    ModalConfirmationButton: ({label, disabled}) => <button data-label={label} disabled={disabled}/>
+vi.mock('~/widget/panel/panel', () => ({
+    Panel: {Header: ({label}) => <div>{label}</div>, Content: ({children}) => <div>{children}</div>}
 }))
-vi.mock('./userActivity', () => ({UserActivity: () => null}))
-vi.mock('./userUsage', () => ({UserUsage: () => null}))
-vi.mock('./userStatus', () => {
-    const UserStatus = () => null
-    UserStatus.isLocked = status => status === 'LOCKED'
-    return {UserStatus}
-})
 
 const {UserDetails} = await import('./userDetails')
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
-describe('lock and unlock buttons', () => {
-    let mounted
+let mounted
 
-    const render = (userDetails, props = {}) => {
-        const container = document.createElement('div')
-        document.body.appendChild(container)
-        const root = createRoot(container)
-        act(() => root.render(
-            <UserDetails userDetails={userDetails} onCancel={() => {}} onSave={() => {}} onLock={() => {}} onUnlock={() => {}} {...props}/>
-        ))
-        mounted.push(() => {
-            act(() => root.unmount())
-            container.remove()
-        })
-        return container
-    }
-
-    const button = (container, label) => container.querySelector(`button[data-label="${label}"]`)
-
-    beforeEach(() => mounted = [])
-    afterEach(() => mounted.forEach(unmount => unmount()))
-
-    it('offers to lock another user', () => {
-        const container = render(aUser({username: 'bob'}))
-
-        expect(button(container, 'user.userDetails.lock.label').disabled).toBe(false)
+const render = (userDetails, props = {}) => {
+    const container = document.createElement('div')
+    document.body.appendChild(container)
+    const root = createRoot(container)
+    act(() => root.render(
+        <UserDetails userDetails={userDetails} onCancel={() => {}} onSave={() => {}} {...props}/>
+    ))
+    mounted.push(() => {
+        act(() => root.unmount())
+        container.remove()
     })
+    return container
+}
 
-    it('does not offer to lock the current user', () => {
-        const container = render(aUser({username: store.currentUser.username}))
+const editableInputs = container => [...container.querySelectorAll('input')].filter(input => !input.disabled)
 
-        expect(button(container, 'user.userDetails.lock.label').disabled).toBe(true)
-    })
+beforeEach(() => mounted = [])
+afterEach(() => mounted.forEach(unmount => unmount()))
 
-    it('offers to unlock another user', () => {
-        const container = render(aUser({username: 'bob', status: 'LOCKED'}))
+describe('the user details form', () => {
+    it('lets the details and role be edited, not the budget', () => {
+        const container = render(aUser())
 
-        expect(button(container, 'user.userDetails.unlock.label').disabled).toBe(false)
-    })
-
-    it('does not offer to unlock the current user', () => {
-        const container = render(aUser({username: store.currentUser.username, status: 'LOCKED'}))
-
-        expect(button(container, 'user.userDetails.unlock.label').disabled).toBe(true)
+        expect(editableInputs(container).map(input => input.name).sort()).toEqual(
+            ['admin', 'email', 'intendedUse', 'name', 'organization']
+        )
     })
 })
 
-describe('a locked record', () => {
-    let mounted
-
-    const render = (userDetails, props = {}) => {
-        const container = document.createElement('div')
-        document.body.appendChild(container)
-        const root = createRoot(container)
-        act(() => root.render(
-            <UserDetails userDetails={userDetails} onCancel={() => {}} onSave={() => {}} onLock={() => {}} onUnlock={() => {}} {...props}/>
-        ))
-        mounted.push(() => {
-            act(() => root.unmount())
-            container.remove()
-        })
-        return container
-    }
-
-    const button = (container, label) => container.querySelector(`button[data-label="${label}"]`)
-
-    beforeEach(() => mounted = [])
-    afterEach(() => mounted.forEach(unmount => unmount()))
-
+describe('a locked user details form', () => {
     it('cannot be edited', () => {
-        const container = render(aUser({username: 'bob'}), {locked: true})
+        const container = render(aUser(), {locked: true})
 
-        const editable = [...container.querySelectorAll('input')].filter(input => !input.disabled)
-        expect(editable).toEqual([])
-    })
-
-    it('cannot be locked or have its password reset', () => {
-        const container = render(aUser({username: 'bob'}), {locked: true})
-
-        expect(button(container, 'user.userDetails.lock.label').disabled).toBe(true)
-        expect(button(container, 'user.userDetails.resetPassword.label').disabled).toBe(true)
+        expect(editableInputs(container)).toEqual([])
     })
 
     it('can be edited again once unlocked', () => {
-        const container = render(aUser({username: 'bob'}), {locked: false})
+        const container = render(aUser(), {locked: false})
 
         expect(container.querySelector('input[name="name"]').disabled).toBe(false)
     })
 })
 
-const aUser = ({username, status = 'ACTIVE'}) => ({
+const aUser = () => ({
     id: 1,
-    username,
+    revision: 1,
+    username: 'bob',
     name: 'A User',
-    email: `${username}@example.org`,
+    email: 'bob@example.org',
     organization: 'FAO',
-    status,
+    status: 'ACTIVE',
     quota: {budget: {instanceSpending: 1, storageSpending: 1, storageQuota: 1}}
 })

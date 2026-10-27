@@ -1,3 +1,9 @@
+/* Takes the width it is given rather than the table's, so a narrow panel scrolls the table sideways
+   instead of widening. */
+.months {
+    contain: inline-size;
+}
+
 .table {
     border-collapse: collapse;
     font-size: .8rem;
@@ -14,7 +20,6 @@
 .table th:first-child,
 .table td:first-child {
     text-align: left;
-    padding-left: 0;
 }
 
 .table th {
@@ -27,22 +32,25 @@
     border-bottom: 1px solid var(--wireframe-color);
 }
 
-.table tr.total {
-    border-top: 1px solid var(--wireframe-color);
+.table th {
+    padding-bottom: .5rem;
 }
 
-.table th,
-.table tr:has(+ tr.total) td {
-    padding-bottom: .75rem;
+/* A spacer row rather than padding on the first row, so a highlighted row stops short of the line. */
+.table tbody::before {
+    content: '';
+    display: table-row;
+    height: .75rem;
 }
 
-.table tbody tr:first-child td,
-.table tr.total td {
-    padding-top: .75rem;
+/* Hovering a month shows its usage per instance type. */
+.table tr.month {
+    cursor: default;
 }
 
-.table tr.total td {
-    font-weight: bold;
+.table tr.month:hover td {
+    color: var(--look-highlight-color);
+    background-color: var(--look-highlight-background-color);
 }
 
 .message {

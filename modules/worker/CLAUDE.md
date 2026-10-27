@@ -177,6 +177,9 @@ error from `budgetErrors.js` when the user is over budget. `BUDGET_URL` configur
 The check sends the user's open sessions, which budget counts before their WorkerSessionRequested
 event arrives, and `sessionManager` runs one request per user at a time, so concurrent requests
 cannot all pass the same check.
+A caller that retries names the session it asks for (`?sessionId=<uuid>`): a repeat answers with the
+session its first attempt created instead of launching another instance. The GUI's Usage panel relies
+on this to retry a start that timed out at the gateway.
 The event-fed `lockedUsers` set is only the FALLBACK for when that call fails — it is empty after a
 restart, so it must not be the authoritative gate. It remains what closes an over-budget user's
 running sessions, via the `budget.UserBudgetExceeded` subscriber in `main.js`.

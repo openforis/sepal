@@ -1,12 +1,3 @@
 .panel {
     width: 35rem;
 }
-
-.monthlyLimits input {
-    width: 6rem;
-}
-
-.message {
-    font-size: .9rem;
-    color: var(--info-color);
-}

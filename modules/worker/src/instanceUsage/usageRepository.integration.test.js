@@ -108,7 +108,7 @@ describe('UsageRepository', () => {
             await repository.insertSample(gpuSample({sampleTime: at('09:10'), gpuPct: 80}))
             await repository.rollupHours(2)
 
-            const rollup = await repository.userUsageRollup(USERNAME, FROM_TIME)
+            const rollup = await repository.userUsageRollup(USERNAME, FROM_TIME, TO_TIME)
 
             const cpuOnly = rollup.find(({instanceType}) => instanceType === INSTANCE_TYPE)
             const withGpu = rollup.find(({instanceType}) => instanceType === GPU_INSTANCE_TYPE)
@@ -122,19 +122,20 @@ describe('UsageRepository', () => {
             assert.equal(withGpu.gpuMax, 80)
         })
 
-        test('leaves out hours before the window and hours of other users', async () => {
+        test('leaves out hours outside the window and hours of other users', async () => {
             await givenRolledUpHour({hour: at('09:00')})
             await givenRolledUpHour({sessionId: 'old', hour: new Date('2026-06-01T00:00:00Z')})
+            await givenRolledUpHour({sessionId: 'later', hour: TO_TIME})
             await givenRolledUpHour({sessionId: 'x', username: ANOTHER_USERNAME, hour: at('09:00')})
 
-            const rollup = await repository.userUsageRollup(USERNAME, FROM_TIME)
+            const rollup = await repository.userUsageRollup(USERNAME, FROM_TIME, TO_TIME)
 
             assert.equal(rollup.length, 1)
             assert.partialDeepStrictEqual(rollup, [{instanceType: INSTANCE_TYPE, hours: 1}])
         })
 
         test('reports nothing for a user with no recorded hours', async () => {
-            const rollup = await repository.userUsageRollup('nobody', FROM_TIME)
+            const rollup = await repository.userUsageRollup('nobody', FROM_TIME, TO_TIME)
 
             assert.deepEqual(rollup, [])
         })
@@ -237,6 +238,7 @@ describe('UsageRepository', () => {
     // 2026-08-01T10:05:00Z — the rollup's two-hour heal window then covers 08:00 and 09:00.
     const NOW = new Date('2026-08-01T10:05:00Z')
     const FROM_TIME = new Date('2026-07-02T00:00:00Z')
+    const TO_TIME = new Date('2026-08-01T10:00:00Z')
     const SESSION_ID = 's1'
     const GPU_SESSION_ID = 'g1'
     const ANOTHER_SESSION_ID = 's2'

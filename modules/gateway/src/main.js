@@ -1,12 +1,10 @@
 import {createRequire} from 'node:module'
-import url from 'node:url'
 
 import {RedisStore as RedisSessionStore} from 'connect-redis'
 import express from 'express'
 import Session from 'express-session'
-import micromatch from 'micromatch'
 import {createClient} from 'redis'
-import {firstValueFrom, Subject} from 'rxjs'
+import {Subject} from 'rxjs'
 import {v4 as uuid} from 'uuid'
 import {WebSocketServer} from 'ws'
 
@@ -14,7 +12,6 @@ import logConfig from '#config/log.json' with {type: 'json'}
 import {configureServer, getLogger} from '#sepal/log'
 import {initMessageQueue} from '#sepal/messageQueue'
 
-import {webSocketPath} from '../config/endpoints.js'
 import modules from '../config/modules.json' with {type: 'json'}
 import {AuthMiddleware} from './authMiddleware.js'
 import {amqpUri, port, redisUri, sandboxDefaultInstanceType, sepalHost} from './config.js'
@@ -32,10 +29,9 @@ import {sessionExpiryClosedSubscriber} from './sandbox/sessionExpiryClosedSubscr
 import {sessionExpiryNotifiedSubscriber} from './sandbox/sessionExpiryNotifiedSubscriber.js'
 import {workerSessionClosedSubscriber} from './sandbox/workerSessionClosedSubscriber.js'
 import {SessionManager} from './session.js'
-import {urlTag, usernameTag} from './tag.js'
-import {getSessionUsername, removeRequestUser, setRequestUser} from './user.js'
 import {UserStore} from './userStore.js'
 import {initializeWebSocketServer} from './websocket.js'
+import {webSocketUpgradeHandler} from './webSocketUpgrade.js'
 
 const require = createRequire(import.meta.url)
 const apiMetrics = require('prometheus-api-metrics')
@@ -184,37 +180,6 @@ const main = async () => {
     // avoid MaxListenersExceededWarning
     server.setMaxListeners(30)
 
-    const webSocketAccessDenied = socket => {
-        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
-        socket.destroy()
-    }
-
-    const handleGlobalWebSocket = (requestPath, req, socket, head, username, sessionId) => {
-        log.debug(`Requesting WebSocket upgrade for ${requestPath}`)
-        wss.handleUpgrade(req, socket, head, ws =>
-            wss.emit('connection', ws, req, username, sessionId)
-        )
-    }
-
-    const handleProxiedWebSocket = (requestPath, req, socket, head, username) => {
-        // Dynamic sandbox ws upgrades (RStudio console, Jupyter kernel channels, Shiny) resolve their
-        // target per-user via the session manager — route them to the sandbox proxy, not the static
-        // proxies. sepal-user is already injected on req; pass the resolved username.
-        if (sandboxProxy.matches(requestPath)) {
-            log.debug(`${usernameTag(username)} Routing sandbox WebSocket upgrade for "${requestPath}"`)
-            sandboxProxy.upgrade(req, socket, head, username)
-            return
-        }
-        const {proxy, target} = proxies.find(({path}) => !path || requestPath === path || micromatch.isMatch(requestPath, `${path}/**`)) || {}
-        if (proxy) {
-            log.debug(`${usernameTag(username)} Requesting WebSocket upgrade for "${requestPath}" to target "${target}"`)
-            proxy.upgrade(req, socket, head)
-        } else {
-            log.warn(`${usernameTag(username)} No handler found for WebSocket upgrade "${requestPath}"`)
-            webSocketAccessDenied(socket)
-        }
-    }
-
     initializeGoogleAccessTokenRefresher({userStore, event$})
     initializeWebSocketServer({wss, userStore, event$})
 
@@ -231,38 +196,7 @@ const main = async () => {
     process.on('SIGTERM', () => shutdown('SIGTERM'))
     process.on('SIGINT', () => shutdown('SIGINT'))
 
-    // HACK: User has to be injected here as the session is not available in proxyRes and proxyResWsz
-    server.on('upgrade', (req, socket, head) => {
-        sessionParser(req, {}, () => { // Make sure we have access to session for the websocket
-            const username = getSessionUsername(req)
-            removeRequestUser(req)
-            if (username) {
-                const requestPath = url.parse(req.url).pathname
-                if (requestPath === webSocketPath) {
-                    handleGlobalWebSocket(requestPath, req, socket, head, username, req.sessionID)
-                } else {
-                    firstValueFrom(userStore.getUser$(username))
-                        .then(user => {
-                            if (user?.status === 'ACTIVE') {
-                                log.trace(`${usernameTag(username)} ${urlTag(requestPath)} Setting sepal-user header`)
-                                setRequestUser(req, user)
-                                handleProxiedWebSocket(requestPath, req, socket, head, username)
-                            } else {
-                                log.error(`${usernameTag(username)} User unavailable for websocket upgrade`)
-                                webSocketAccessDenied(socket)
-                            }
-                        })
-                        .catch(error => {
-                            log.error(`${usernameTag(username)} Error fetching user for websocket upgrade`, error)
-                            webSocketAccessDenied(socket)
-                        })
-                }
-            } else {
-                log.warn('Missing username for websocket upgrade')
-                webSocketAccessDenied(socket)
-            }
-        })
-    })
+    server.on('upgrade', webSocketUpgradeHandler({sessionParser, userStore, wss, sandboxProxy, proxies}))
     
     process.on('uncaughtException', error => {
         log.fatal('Uncaught exception', error)

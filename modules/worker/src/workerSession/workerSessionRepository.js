@@ -128,7 +128,16 @@ export class WorkerSessionRepository {
     }
 
     // getSession — throws if the row does not exist.
-    getSession(sessionId) {
+    async getSession(sessionId) {
+        const session = await this.findSession(sessionId)
+        if (!session) {
+            throw new Error(`Non-existing worker session: ${sessionId}`)
+        }
+        return session
+    }
+
+    // findSession — null if the row does not exist.
+    findSession(sessionId) {
         return this.#db.withConnection(async connection => {
             const [rows] = await connection.query(
                 `SELECT ${SESSION_COLUMNS}
@@ -136,11 +145,7 @@ export class WorkerSessionRepository {
                     WHERE id = ?`,
                 [sessionId]
             )
-            const row = rows[0]
-            if (!row) {
-                throw new Error(`Non-existing worker session: ${sessionId}`)
-            }
-            return toSession(row)
+            return rows[0] ? toSession(rows[0]) : null
         })
     }
 

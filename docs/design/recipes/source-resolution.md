@@ -5796,6 +5796,17 @@ short PRC ownership checklist, and authorised committing S5 and the bounded foll
 verification limits recorded above; this acceptance does not complete S6 or the final integrated verification before
 push. The copy-again action, BAYTS audit and broader preview-server follow-ups remain deferred as documented.
 
+**Origin integration after S5 (2026-10-27).** Merge `origin/sepal-server` at `16c306941` before S6.
+The one conflict was in the specialised CCDC asset export: keep upstream's top-level formatted properties and
+S5's server-derived canonical `processing` record, written after caller properties so they cannot override it.
+Older nested metadata remains readable; existing assets are not rewritten. Upstream's Band Math expression-name
+hardening, account/usage changes and other fixes are retained. One incoming trailing-whitespace line was removed.
+Focused integration checks passed 366 cases: 222 GUI, 133 gee export and 11 shared processing tests, with at most
+two workers. Export metadata round-trip and provenance protection, Band Math calculation/recovery and expression
+analysis, translations/error attribution, and incoming account/usage tests are included. ESLint on the resolved
+export files and whitespace-cleaned account panel, plus `git diff --check`, passed. No full suite, build, browser or
+live Earth Engine check was run for this merge. S6 and final integrated verification remain before push.
+
 **Deferred S5 follow-up: "Use reference settings" action (agreed 2026-10-26; not implemented).** Add a deliberate
 action for an existing Change Alerts recipe to copy the current reference's consumer-owned editable monitoring
 defaults again. This is not part of required S5/S6 and does not block push.

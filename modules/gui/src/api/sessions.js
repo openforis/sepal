@@ -5,11 +5,11 @@ import {moduleWebSocket$} from './ws.js'
 export default {
     ws: () => moduleWebSocket$('worker/session'),
 
-    usage$: (days = 30) =>
-        get$('/api/sessions/usage', {query: {days}}),
+    usage$: () =>
+        get$('/api/sessions/usage'),
 
-    userUsage$: (username, days = 30) =>
-        get$(`/api/sessions/${username}/usage`, {query: {days}}),
+    userUsage$: username =>
+        get$(`/api/sessions/${username}/usage`),
 
     // The Extend button on the expiry notification. Answers 409 when no ACTIVE session matched,
     // so the caller can tell "extended" from "there was nothing left to extend".

@@ -6,10 +6,11 @@ import {firstValueFrom} from 'rxjs'
 import {getLogger} from '#sepal/log'
 import {storedUsername} from '#sepal/username'
 
+import {isActive, relativeExpirationTime} from './activity.js'
 import {inactivityConcurrency, inactivityGracePeriod, inactivityInitialRetryDelay, inactivityMaxRetries, inactivityMaxSpread, inactivityNotificationDelay, inactivityTimeout, inactivityUserStorageThreshold, redisHost} from './config.js'
 import {sendEmail} from './email.js'
 import {eraseUserStorage} from './filesystem.js'
-import {getMostRecentAccess$, getMostRecentAccessByUser$, getUser$} from './http.js'
+import {getMostRecentAccessByUser$, getUser$} from './http.js'
 import {planJobNormalization} from './jobCase.js'
 import {DB, getInitialized, getUserStorage, setInitialized} from './kvstore.js'
 
@@ -276,10 +277,6 @@ export class InactivityCheck {
 const getDelay = (mostRecentTimestamp = new Date()) =>
     Math.max(0, relativeExpirationTime(mostRecentTimestamp))
 
-// positive: future, negative: past
-const relativeExpirationTime = mostRecentTimestamp =>
-    mostRecentTimestamp.getTime() + inactivityTimeout - Date.now()
-
 const jobId = (username, action) =>
     `job-${storedUsername(username)}-${action}`
 
@@ -298,11 +295,6 @@ const getStorageStatus = async username => {
             return STORAGE.INACTIVE_UNKNOWN
         }
     }
-}
-
-const isActive = async username => {
-    const mostRecentTimestamp = await firstValueFrom(getMostRecentAccess$(username))
-    return mostRecentTimestamp && relativeExpirationTime(mostRecentTimestamp) > 0
 }
 
 const notify = async username => {

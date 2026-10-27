@@ -1,5 +1,6 @@
 // RequestSession:
-//   0. reject an instance type outside the catalog — it would reach EC2 as-is and bill at $0
+//   0. reject an instance type outside the catalog — it would reach EC2 as-is and bill at $0, and a
+//      caller-named session id that is not a UUID
 //   1. budget check — throws the matching typed error when the user is over budget. The
 //      authoritative answer comes from the budget module LIVE (budgetClient.check), so a restart
 //      or a lost event cannot let an over-budget user through; the event-fed lockedUsers set
@@ -9,7 +10,7 @@
 //      count yet. The caller runs one request per user at a time (sessionManager).
 //   2. normalize username → the stored spelling (#sepal/username)
 //   3. apiKey = apiKeyGenerator.generate()
-//   4. build PENDING session (id=UUID, creationTime=updateTime=now)
+//   4. build PENDING session (id=the caller's or a new UUID, creationTime=updateTime=now)
 //   5. instance = instanceManager.requestInstance(session) → set instance {id, host}
 //   6. repo.insert(requestedSession)
 //   7. return requestedSession
@@ -54,19 +55,36 @@ const openSessions = async (username, repo) =>
     (await repo.userSessions(storedUsername(username), [State.PENDING, State.ACTIVE]))
         .map(({id, instanceType, creationTime}) => ({sessionId: id, instanceType, creationTime}))
 
+// A caller that may repeat a request names the session it asks for: a repeat finds the session its
+// first attempt created instead of launching another instance. The caller runs one request per user
+// at a time, so a repeat looks only after that attempt has inserted its row.
+const repeatedRequest = async ({username, sessionId}, {repo}) => {
+    if (!sessionId) {
+        return null
+    }
+    const session = await repo.findSession(sessionId)
+    if (session && session.username !== storedUsername(username)) {
+        throw new ClientException(`Session ${sessionId} belongs to another user`)
+    }
+    return session
+}
+
 const requestSession = async (
-    {username, workerType, instanceType},
+    {username, workerType, instanceType, sessionId},
     {repo, budgetClient, lockedUsers, instanceManager, clock, apiKeyGenerator, startupLeaseMinutes}
 ) => {
     if (!instanceManager.getInstanceTypes().some(({id}) => id === instanceType)) {
         throw new ClientException(`Unknown instance type: ${instanceType}`)
+    }
+    if (sessionId && !UUID.test(sessionId)) {
+        throw new ClientException(`Not a session id: ${sessionId}`)
     }
     const {exceeded, reason} = await budgetVerdict(username, {repo, budgetClient, lockedUsers})
     if (exceeded) throw budgetErrorFor(reason, username)
     const now = clock()
     const apiKey = apiKeyGenerator.generate()
     const session = createWorkerSession({
-        id: crypto.randomUUID(),
+        id: sessionId ?? crypto.randomUUID(),
         state: State.PENDING,
         username: storedUsername(username),
         workerType,
@@ -85,4 +103,6 @@ const requestSession = async (
     return requestedSession
 }
 
-export {requestSession}
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+
+export {repeatedRequest, requestSession}

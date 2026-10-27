@@ -15,7 +15,7 @@ import {Widget} from '~/widget/widget'
 
 import styles from './usage.module.css'
 import {UsageMenuButton} from './usageMenu'
-import {USAGE_DAYS, UsageStatistics} from './usageStatistics'
+import {UsageStatistics} from './usageStatistics'
 import {BudgetUpdateRequest} from './userBudgetUpdateRequest'
 import {UserResources} from './userResources'
 import {UserSessions} from './userSessions'
@@ -70,9 +70,7 @@ class _Usage extends React.Component {
 
     renderStatistics() {
         return (
-            <Widget label={msg('user.userDetails.form.usage.label', {days: USAGE_DAYS})} framed>
-                <UsageStatistics/>
-            </Widget>
+            <UsageStatistics/>
         )
     }
 

@@ -154,6 +154,7 @@ const main = async () => {
         budgetClient,
         lockedUsers,
         usageRepo: usageRepository,
+        usageHourlyRetentionDays: config.usageHourlyRetentionDays,
         expiryPolicy,
         instanceTypeById,
         sendEmail,

@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import memoizeOne from 'memoize-one'
 import React from 'react'
-import {catchError, finalize, forkJoin, map, of, switchMap, tap, timer} from 'rxjs'
+import {catchError, finalize, forkJoin, map, of, tap, timer} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
@@ -16,6 +16,7 @@ import {Icon} from '~/widget/icon'
 import {Notification} from '~/widget/notification'
 import {Notifications} from '~/widget/notifications'
 
+import {UserAccount} from './userAccount'
 import styles from './userBrowser.module.css'
 import {UserDetails} from './userDetails'
 import {UserList} from './userList'
@@ -57,6 +58,7 @@ const combineRows = memoizeOne((users, budgets, activities) =>
 class _UserBrowser extends React.Component {
     state = {
         userId: null,
+        editingDetails: false,
         // Rows held back until the admin asks for them, latest per user, each newer than shown.
         pending: {},
         saving: false,
@@ -67,7 +69,10 @@ class _UserBrowser extends React.Component {
         super(props)
         this.editUser = this.editUser.bind(this)
         this.cancelUser = this.cancelUser.bind(this)
+        this.editDetails = this.editDetails.bind(this)
+        this.closeDetails = this.closeDetails.bind(this)
         this.updateUser = this.updateUser.bind(this)
+        this.updateBudget = this.updateBudget.bind(this)
         this.lockUser = this.lockUser.bind(this)
         this.unlockUser = this.unlockUser.bind(this)
         this.applyUpdates = this.applyUpdates.bind(this)
@@ -151,12 +156,20 @@ class _UserBrowser extends React.Component {
         return this.rows().find(({id}) => id === userId)
     }
 
-    // The change waiting for the open record, if any. None while saving: the echo of the admin's
-    // own save is on its way and the response will settle it.
-    openRecordUpdate() {
-        const {pending, saving} = this.state
+    // The account panel shows the details read-only, so it takes a waiting change as it comes; only the
+    // details form, which edits them, holds it back.
+    latestOpenUser() {
+        const {pending} = this.state
         const user = this.openUser()
-        return user && !saving ? pending[user.username] : undefined
+        return user && {...user, ...pending[user.username]}
+    }
+
+    // The change waiting for the details form's record, if any. None while saving: the echo of the
+    // admin's own save is on its way and the response will settle it.
+    openRecordUpdate() {
+        const {pending, saving, editingDetails} = this.state
+        const user = this.openUser()
+        return user && editingDetails && !saving ? pending[user.username] : undefined
     }
 
     renderLoading() {
@@ -183,10 +196,33 @@ class _UserBrowser extends React.Component {
         return (
             <div className={styles.container}>
                 {stream('LOAD_USER_LIST').active ? this.renderLoading() : this.renderLoaded()}
-                {this.renderUserDetails()}
+                {this.renderUserPanel()}
                 {this.renderRecordChangedWarning()}
             </div>
         )
+    }
+
+    renderUserPanel() {
+        const {editingDetails} = this.state
+        return editingDetails
+            ? this.renderUserDetails()
+            : this.renderUserAccount()
+    }
+
+    renderUserAccount() {
+        const {saving} = this.state
+        const user = this.latestOpenUser()
+        return user ? (
+            <UserAccount
+                userDetails={user}
+                locked={saving}
+                onCancel={this.cancelUser}
+                onEditDetails={this.editDetails}
+                onLock={this.lockUser}
+                onSave={this.updateBudget}
+                onUnlock={this.unlockUser}
+            />
+        ) : null
     }
 
     renderUserDetails() {
@@ -196,10 +232,8 @@ class _UserBrowser extends React.Component {
             <UserDetails
                 userDetails={user}
                 locked={saving || !!this.openRecordUpdate()}
-                onCancel={this.cancelUser}
-                onLock={this.lockUser}
+                onCancel={this.closeDetails}
                 onSave={this.updateUser}
-                onUnlock={this.unlockUser}
             />
         ) : null
     }
@@ -227,44 +261,50 @@ class _UserBrowser extends React.Component {
     }
 
     editUser({id: userId}) {
-        this.setState({userId})
+        this.setState({userId, editingDetails: false})
     }
 
-    updateUser(userDetails) {
-        const updateUserDetails$ = ({username, name, email, organization, intendedUse, admin, revision}) =>
-            api.user.updateUser$({username, name, email, organization, intendedUse, admin, revision}).pipe(
-                tap(() => publishEvent('user_updated'))
-            )
+    // The details form starts from the record as it is now, not from a warning that it changed.
+    editDetails() {
+        const {pending} = this.state
+        const {username} = this.openUser()
+        pending[username] && this.applyUpdates([username])
+        this.setState({editingDetails: true})
+    }
 
-        const updateUserBudget$ = ({username, instanceSpending, storageSpending, storageQuota}) =>
-            api.user.updateUserBudget$({username, instanceSpending, storageSpending, storageQuota})
+    closeDetails() {
+        this.setState({editingDetails: false})
+    }
 
-        // Details first: a save rejected as stale must not write the budget either.
-        const update$ = userDetails =>
-            updateUserDetails$(userDetails).pipe(
-                switchMap(updatedDetails =>
-                    updateUserBudget$(userDetails).pipe(
-                        map(budget => ({updatedDetails, budget}))
-                    )
-                )
-            )
-
-        // Handed to the details panel, which waits on it: the list takes the saved row from the
-        // response, never ahead of it.
+    // Handed to the details form, which waits on it: the list takes the saved row from the response,
+    // never ahead of it.
+    updateUser({username, name, email, organization, intendedUse, admin, revision}) {
         this.setState({saving: true})
-        return update$(userDetails).pipe(
+        return api.user.updateUser$({username, name, email, organization, intendedUse, admin, revision}).pipe(
             tap({
-                next: ({updatedDetails, budget}) => this.onUpdated(updatedDetails, budget),
+                next: updatedDetails => {
+                    publishEvent('user_updated')
+                    this.writeRows([updatedDetails])
+                },
                 error: error => this.onUpdateFailed(error)
             }),
             finalize(() => this.setState({saving: false}))
         )
     }
 
-    onUpdated(updatedDetails, budget) {
+    updateBudget({username, instanceSpending, storageSpending, storageQuota}) {
+        this.setState({saving: true})
+        return api.user.updateUserBudget$({username, instanceSpending, storageSpending, storageQuota}).pipe(
+            tap({
+                next: budget => this.onBudgetUpdated(username, budget),
+                error: error => Notifications.error({message: msg('user.userDetails.update.error'), error})
+            }),
+            finalize(() => this.setState({saving: false}))
+        )
+    }
+
+    onBudgetUpdated(username, budget) {
         const {budgets} = this.props
-        const {username} = updatedDetails
-        this.writeRows([updatedDetails])
         this.setStored({
             budgets: {...budgets, [username]: {...budgets[username], budget, budgetUpdateRequest: null}}
         })
@@ -306,10 +346,10 @@ class _UserBrowser extends React.Component {
         )
     }
 
+    // The account panel's form cancels itself as it unmounts, which it also does when the details form
+    // replaces it.
     cancelUser() {
-        this.setState({
-            userId: null
-        })
+        this.state.editingDetails || this.setState({userId: null})
     }
 }
 

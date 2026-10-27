@@ -7,6 +7,9 @@ const ADMIN_ROLE = 'application_admin'
 // Express routes match case-insensitively, so /api/worker/METRICS reaches the worker's /metrics.
 const METRICS_PATH = /^\/api\/[^/]+\/+metrics(\.json)?(\/|$)/i
 
+export const isMetricsPath = path =>
+    METRICS_PATH.test(path)
+
 export const restrictMetricsToAdmins = (app, authMiddleware) =>
     app.use(METRICS_PATH, authMiddleware, requireAdmin)
 
