@@ -15,6 +15,7 @@ vi.mock('~/widget/userAgent', () => ({isMobile: () => false}))
 import {CopyButton} from './copyButton'
 import {CrudItem} from './crudItem'
 import styles from './crudItem.module.css'
+import {FastListContext} from './fastList'
 import {LegendItem} from './legend/legendItem'
 import {RemoveButton} from './removeButton'
 
@@ -22,11 +23,15 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let mounted
 
-const mount = props => {
+const mount = (props, {inFastList = false} = {}) => {
     const container = document.createElement('div')
     document.body.appendChild(container)
     const root = createRoot(container)
-    act(() => root.render(<CrudItem {...props}/>))
+    act(() => root.render(
+        <FastListContext.Provider value={inFastList}>
+            <CrudItem {...props}/>
+        </FastListContext.Provider>
+    ))
     mounted.push(() => {
         act(() => root.unmount())
         container.remove()
@@ -172,4 +177,19 @@ describe('CrudItem error mark', () => {
 
     // The row's first element: what a reader meets first, at the row's start.
     const leadingElement = container => container.querySelector(`.${styles.content}`)
+})
+
+// A FastList places every row by one row's height, so a row there may not grow by wrapping a line.
+describe('CrudItem lines', () => {
+    const lines = container => container.querySelector('[class*="info"]')
+
+    it('keeps each line to one in a row of a FastList', () => {
+        const container = mount({title: 'Optical mosaic', description: 'nairobi_mosaic'}, {inFastList: true})
+        expect(lines(container).className).toMatch(/nowrap/)
+    })
+
+    it('lets a line wrap anywhere else', () => {
+        const container = mount({title: 'Optical mosaic', description: 'nairobi_mosaic'})
+        expect(lines(container).className).not.toMatch(/nowrap/)
+    })
 })

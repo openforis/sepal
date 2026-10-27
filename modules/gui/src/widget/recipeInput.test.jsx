@@ -6,7 +6,6 @@ import {of, Subject} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {NO_PROJECT_SYMBOL} from '~/app/home/body/process/recipeList/recipeListConstants'
 import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {Form} from '~/widget/form'
@@ -17,13 +16,21 @@ import {PortalContainer} from '~/widget/portal'
 // reads a selection triggers - the recipe read and the band read - so that whether a selection was acted on
 // is observable without a backend.
 
-const {bands$, load$} = vi.hoisted(() => ({bands$: vi.fn(), load$: vi.fn()}))
+const {bands$, load$, browsers} = vi.hoisted(() => ({bands$: vi.fn(), load$: vi.fn(), browsers: []}))
 vi.mock('~/apiRegistry', () => ({default: {gee: {bands$}, recipe: {load$}}}))
 vi.mock('~/translate', () => ({msg: key => key}))
 // Cuts an import cycle the barrel would otherwise enter from the wrong side: the asset combo reaches
 // `~/user`, which reaches a panel that reads `Form.Field` while the barrel is still evaluating. Nothing
 // here renders one.
 vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
+// The browser is its own component, with its own test; what it is handed and what it hands back is the
+// contract here.
+vi.mock('~/app/home/body/process/recipeList/recipeBrowser', () => ({
+    RecipeBrowser: props => {
+        browsers.push(props)
+        return <div data-browser/>
+    }
+}))
 // Eligibility as the production registrations state it: neither CCDC nor the table recipe is offered as an image.
 // What the segment declaration then says about CCDC is the real one.
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({
@@ -44,6 +51,7 @@ beforeEach(() => {
     loaded = []
     loading = []
     selected = []
+    browsers.length = 0
     bands$.mockReset().mockImplementation(() => of(['red', 'nir']))
     load$.mockReset().mockImplementation(recipeId => of(recipeOf(recipeId)))
 })
@@ -56,23 +64,31 @@ afterEach(async () => {
 })
 
 describe('the recipe an input belongs to', () => {
-    // Excluding the owner is on top of what the caller and the current project already leave out, not
-    // instead of either: the table recipe is ruled ineligible and the one in another project is elsewhere.
-    it('is not offered as its input, alongside what the caller and the project already exclude', async () => {
+    // Excluding the owner is on top of what the caller already leaves out, not instead of it: the table
+    // recipe is ruled ineligible.
+    it('is not offered as its input, alongside what the caller already excludes', async () => {
         show({filter: type => type.imageSource})
 
         const options = await offered()
 
-        expect(options).toEqual(['Another recipe'])
+        expect(options).toEqual(['Another recipe', 'In another folder'])
     })
 
-    it('is not offered in the ALL view either, where every project is', async () => {
+    // "The owner" holds the search as much as the two in both folders do; no folder heading holds it.
+    it('is not found by a search either, which reaches every folder', async () => {
         show()
 
-        await showAll()
-        const options = await offered()
+        const options = await search('the')
 
-        expect(options).toEqual(['Another recipe', 'A table recipe', 'A CCDC', 'In another project'])
+        expect(options).toEqual(['Another recipe', 'In another folder'])
+    })
+
+    it('is not handed to the browser', async () => {
+        show()
+
+        await browse()
+
+        expect(browsedRecipeIds()).toEqual([OTHER, 'table', 'ccdc', 'elsewhere'])
     })
 
     // The saved model is only rewritten when the panel is applied. Clearing the value here would edit a
@@ -223,32 +239,22 @@ describe('a caller that wants the record', () => {
 // Masking's own eligibility rule over the production CCDC declaration: a recipe with no canonical image
 // output is still offered as the image to mask when it declares it may produce segments.
 describe('a recipe that produces segments rather than an image', () => {
-    it('is offered as the image to mask in its own project, without the ALL view', async () => {
+    it('is offered as the image to mask, where what the caller cannot use still is not', async () => {
         show({filter: maskableImage})
 
         const options = await offered()
 
-        expect(options).toEqual(['Another recipe', 'A CCDC'])
-    })
-
-    it('is offered across projects in the ALL view, where what the caller cannot use still is not', async () => {
-        show({filter: maskableImage})
-
-        await showAll()
-        const options = await offered()
-
-        expect(options).toEqual(['Another recipe', 'A CCDC', 'In another project'])
+        expect(options).toEqual(['Another recipe', 'A CCDC', 'In another folder'])
     })
 })
 
-// ALL widens which projects are offered. It is not a second answer to what the caller can use.
-it('excludes what the caller rules out in the ALL view too', async () => {
+// A search reaches every folder. It is not a second answer to what the caller can use.
+it('excludes what the caller rules out from a search too', async () => {
     show({filter: type => type.imageSource})
 
-    await showAll()
-    const options = await offered()
+    const options = await search('a')
 
-    expect(options).toEqual(['Another recipe', 'In another project'])
+    expect(options).toEqual(['Another recipe', 'In another folder'])
 })
 
 // A filter can state an eligibility rule rather than a requirement, so a selection it excludes is shown under its own
@@ -259,8 +265,8 @@ describe('a selection the input does not offer', () => {
 
         const options = await offered()
 
-        expect(options).toEqual(['A table recipe', 'Another recipe'])
-        expect(headings()).toEqual(['widget.recipeInput.selection', 'Project one'])
+        expect(options).toEqual(['A table recipe', 'Another recipe', 'In another folder'])
+        expect(headings()).toEqual(['widget.recipeInput.selection', 'widget.recipeInput.recent'])
     })
 
     it('is shown as unlisted when the listing no longer names it', async () => {
@@ -272,71 +278,164 @@ describe('a selection the input does not offer', () => {
     it('is not shown to a caller that does not keep it', async () => {
         show({value: 'table', filter: type => type.imageSource})
 
-        expect(await offered()).toEqual(['Another recipe'])
+        expect(await offered()).toEqual(['Another recipe', 'In another folder'])
     })
 })
 
-describe('the headings of the projects on offer', () => {
-    it('leave none of a name behind when the view they belong to is left', async () => {
+describe('the recipes on offer', () => {
+    it('start with the ones changed last, from every folder, newest first', async () => {
         show({
             recipes: [
-                {id: OWNER, name: 'The owner', type: 'MOSAIC', projectId: 'p1'},
-                {id: OTHER, name: 'Another recipe', type: 'MOSAIC', projectId: 'p1'},
-                {id: 'far', name: 'Far away', type: 'MOSAIC', projectId: 'p2'},
-                {id: 'further', name: 'Further away', type: 'MOSAIC', projectId: 'p3'}
+                {id: 'eleventh', name: 'Changed eleventh', type: 'MOSAIC', folderId: 'p1', updateTime: '2026-09-01'},
+                {id: 'tenth', name: 'Changed tenth', type: 'MOSAIC', folderId: 'p1', updateTime: '2026-09-02'},
+                ...recentRecipes(RECENT_COUNT - 2),
+                {id: 'far', name: 'Changed last, far away', type: 'MOSAIC', folderId: 'p2', updateTime: '2026-10-15'}
+            ]
+        })
+
+        const options = await offered()
+
+        expect(headings()).toEqual(['widget.recipeInput.recent', '/Folder one'])
+        expect(options).toEqual([
+            'Changed last, far away',
+            ...recentRecipes(RECENT_COUNT - 2).map(({name}) => name),
+            'Changed tenth',
+            'Changed eleventh'
+        ])
+    })
+
+    it('are the rest under the path of the folder holding them', async () => {
+        show({
+            recipes: [
+                ...recentRecipes(),
+                {id: 'deep', name: 'Deep down', type: 'MOSAIC', folderId: 'p3'},
+                {id: 'unfiled', name: 'Filed under nothing', type: 'MOSAIC'},
+                {id: 'far', name: 'Far away', type: 'MOSAIC', folderId: 'p2'},
+                {id: 'here', name: 'Right here', type: 'MOSAIC', folderId: 'p1'}
             ],
-            projects: [
-                {id: 'p1', name: 'Zulu project'},
+            folders: [...DEFAULT_FOLDERS, {id: 'p3', name: 'Inner', parentId: 'p1'}]
+        })
+
+        const options = await offered()
+
+        expect(headings()).toEqual(['widget.recipeInput.recent', '/', '/Folder one', '/Folder oneInner', '/Folder two'])
+        expect(options).toEqual([
+            ...recentRecipes().map(({name}) => name),
+            'Filed under nothing', 'Right here', 'Deep down', 'Far away'
+        ])
+    })
+
+    it('are all under their folders while a search is typed, the ones changed last too', async () => {
+        show({recipes: [{id: 'fresh', name: 'Fresh', type: 'MOSAIC', folderId: 'p2', updateTime: '2026-10-15'}]})
+
+        const options = await search('fresh')
+
+        expect(headings()).toEqual(['/Folder two'])
+        expect(options).toEqual(['Fresh'])
+    })
+})
+
+describe('the browser', () => {
+    it('opens at the folder of the recipe being edited when nothing is selected', async () => {
+        show()
+
+        await browse()
+
+        expect(lastBrowser().folderId).toBe('p1')
+    })
+
+    it('opens at the folder of the selected recipe', async () => {
+        show({value: 'elsewhere', requests: {}})
+
+        await browse()
+
+        expect(lastBrowser().folderId).toBe('p2')
+    })
+
+    it('hands the field the recipe picked in it, and closes', async () => {
+        show()
+        await browse()
+
+        await act(async () => lastBrowser().onSelect('elsewhere'))
+
+        expect(selectedValue()).toBe('elsewhere')
+        expect(loaded).toEqual([{id: 'elsewhere', bandNames: ['red', 'nir']}])
+        expect(container.querySelector('[data-browser]')).toBeNull()
+    })
+})
+
+describe('the headings of the folders on offer', () => {
+    it('come back as they were, and none twice, when the search is cleared', async () => {
+        show({
+            recipes: [
+                ...recentRecipes(),
+                {id: OWNER, name: 'The owner', type: 'MOSAIC', folderId: 'p1'},
+                {id: OTHER, name: 'Another recipe', type: 'MOSAIC', folderId: 'p1'},
+                {id: 'far', name: 'Far away', type: 'MOSAIC', folderId: 'p2'},
+                {id: 'further', name: 'Further away', type: 'MOSAIC', folderId: 'p3'}
+            ],
+            folders: [
+                {id: 'p1', name: 'Zulu folder'},
                 {id: 'p2', name: 'Shared name'},
                 {id: 'p3', name: 'Shared name'}
             ]
         })
-        await open()
+        await search('far')
+        expect(headings()).toEqual(['/Shared name'])
 
-        await showAll()
-        expect(headings()).toEqual(['Shared name', 'Shared name', 'Zulu project'])
-        await showAll()
+        await search('')
 
-        expect(headings()).toEqual(['Zulu project'])
+        expect(headings()).toEqual(['widget.recipeInput.recent', '/Shared name', '/Shared name', '/Zulu folder'])
     })
 
-    // Three different things read as "[no project]": filed under nothing, filed under a project this
-    // session cannot resolve, and filed under the very symbol that stands for being unfiled.
-    it('leave none of the no-project label behind when what it stands for goes', async () => {
+    // Two different things read as the root: filed under nothing, and filed under a folder this session
+    // cannot resolve.
+    it('keep the root apart for each thing it stands for', async () => {
         show({
             recipes: [
-                {id: OWNER, name: 'The owner', type: 'MOSAIC', projectId: 'p1'},
-                {id: OTHER, name: 'Another recipe', type: 'MOSAIC', projectId: 'p1'},
+                ...recentRecipes(),
+                {id: OWNER, name: 'The owner', type: 'MOSAIC', folderId: 'p1'},
+                {id: OTHER, name: 'Another recipe', type: 'MOSAIC', folderId: 'p1'},
                 {id: 'unfiled', name: 'Filed under nothing', type: 'MOSAIC'},
-                {id: 'symbol', name: 'Filed under the symbol', type: 'MOSAIC', projectId: NO_PROJECT_SYMBOL},
-                {id: 'unknown', name: 'Filed under a stranger', type: 'MOSAIC', projectId: 'unknown-a'}
+                {id: 'unknown', name: 'Filed under a stranger', type: 'MOSAIC', folderId: 'unknown-a'}
             ],
-            projects: [{id: 'p1', name: 'Zulu project'}]
+            folders: [{id: 'p1', name: 'Zulu folder'}]
+        })
+
+        await offered()
+
+        expect(headings()).toEqual(['widget.recipeInput.recent', NO_FOLDER, NO_FOLDER, '/Zulu folder'])
+    })
+
+    it('are found by any folder in their path, the top ones too, which a narrow heading leaves out', async () => {
+        show({
+            recipes: [{id: 'deep', name: 'Deep down', type: 'MOSAIC', folderId: 'p3'}],
+            folders: [
+                {id: 'p1', name: 'Top'},
+                {id: 'p2', name: 'Middle', parentId: 'p1'},
+                {id: 'p3', name: 'Lower', parentId: 'p2'}
+            ]
         })
         await open()
 
-        await showAll()
-        expect(headings()).toEqual([NO_PROJECT, NO_PROJECT, NO_PROJECT, 'Zulu project'])
-        await showAll()
+        const options = await search('top')
 
-        expect(headings()).toEqual(['Zulu project'])
+        expect(options).toEqual(['Deep down'])
     })
 
-    it('put the unfiled recipes first and the named projects in case-insensitive order', async () => {
+    it('put the unfiled recipes first and the named folders in case-insensitive order', async () => {
         show({
             recipes: [
                 {id: OWNER, name: 'The owner', type: 'MOSAIC'},
                 {id: OTHER, name: 'Another recipe', type: 'MOSAIC'},
-                {id: 'far', name: 'Far away', type: 'MOSAIC', projectId: 'p1'},
-                {id: 'further', name: 'Further away', type: 'MOSAIC', projectId: 'p2'}
+                {id: 'far', name: 'Far away', type: 'MOSAIC', folderId: 'p1'},
+                {id: 'further', name: 'Further away', type: 'MOSAIC', folderId: 'p2'}
             ],
-            projects: [{id: 'p1', name: 'Zebra project'}, {id: 'p2', name: 'antelope project'}]
+            folders: [{id: 'p1', name: 'Zebra folder'}, {id: 'p2', name: 'antelope folder'}]
         })
-        await open()
+        await search('a')
 
-        await showAll()
-
-        expect(headings()).toEqual([NO_PROJECT, 'antelope project', 'Zebra project'])
+        expect(headings()).toEqual([NO_FOLDER, '/antelope folder', '/Zebra folder'])
     })
 })
 
@@ -345,12 +444,11 @@ describe('a large recipe listing', () => {
         id: `recipe-${index}`,
         name: `Recipe ${String(index).padStart(4, '0')}`,
         type: 'MOSAIC',
-        projectId: index < 1000 ? 'p1' : 'p2'
+        folderId: index < 1000 ? 'p1' : 'p2'
     }))
 
-    it('renders a window and reaches a recipe in the last project with End and Enter', async () => {
+    it('renders a window and reaches a recipe in the last folder with End and Enter', async () => {
         show({recipes, requests: {}})
-        await showAll()
         await open()
 
         expect(optionElements().length).toBeGreaterThan(0)
@@ -358,7 +456,7 @@ describe('a large recipe listing', () => {
 
         await act(async () => combo().dispatchEvent(new KeyboardEvent('keydown', {key: 'End', bubbles: true})))
 
-        expect(headings()).toContain('Project two')
+        expect(headings()).toContain('/Folder two')
         expect(optionElements().map(option => option.textContent)).toContain('Recipe 1999')
         expect(optionElements().length).toBeLessThan(50)
 
@@ -369,7 +467,7 @@ describe('a large recipe listing', () => {
         expect(load$).not.toHaveBeenCalled()
     })
 
-    it('opens on a saved recipe far down the current project without rendering the whole listing', async () => {
+    it('opens on a saved recipe far down the current folder without rendering the whole listing', async () => {
         show({recipes, value: 'recipe-999', requests: {}})
         await open()
 
@@ -382,17 +480,20 @@ describe('a large recipe listing', () => {
 
 const OWNER = 'owner'
 const OTHER = 'other'
-const NO_PROJECT = 'process.project.noProjectOption'
+const NO_FOLDER = '/'
+const RECENT_COUNT = 10
+// Before any recipe a scenario dates, so a recipe it leaves undated is never among the ones changed last.
+const LONG_AGO = '2020-01-01'
 
 const DEFAULT_RECIPES = [
-    {id: OWNER, name: 'The owner', type: 'MOSAIC', projectId: 'p1'},
-    {id: OTHER, name: 'Another recipe', type: 'MOSAIC', projectId: 'p1'},
-    {id: 'table', name: 'A table recipe', type: 'TABLE_ONLY', projectId: 'p1'},
-    {id: 'ccdc', name: 'A CCDC', type: 'CCDC', projectId: 'p1'},
-    {id: 'elsewhere', name: 'In another project', type: 'MOSAIC', projectId: 'p2'}
+    {id: OWNER, name: 'The owner', type: 'MOSAIC', folderId: 'p1'},
+    {id: OTHER, name: 'Another recipe', type: 'MOSAIC', folderId: 'p1'},
+    {id: 'table', name: 'A table recipe', type: 'TABLE_ONLY', folderId: 'p1'},
+    {id: 'ccdc', name: 'A CCDC', type: 'CCDC', folderId: 'p1'},
+    {id: 'elsewhere', name: 'In another folder', type: 'MOSAIC', folderId: 'p2'}
 ]
 
-const DEFAULT_PROJECTS = [{id: 'p1', name: 'Project one'}, {id: 'p2', name: 'Project two'}]
+const DEFAULT_FOLDERS = [{id: 'p1', name: 'Folder one'}, {id: 'p2', name: 'Folder two'}]
 
 const fields = {recipe: new Form.Field()}
 
@@ -418,14 +519,14 @@ const Host = withForm({fields})(({form: theForm, inputs: {recipe}, allowOwnRecip
 
 const show = ({
     value, allowOwnRecipe, filter, keepSelection, requests = bandsRequested,
-    recipes = DEFAULT_RECIPES, projects = DEFAULT_PROJECTS
+    recipes = DEFAULT_RECIPES, folders = DEFAULT_FOLDERS
 } = {}) => {
     const initialState = {
         dimensions: {width: 1024, height: 768},
         process: {
-            loadedRecipes: {[OWNER]: {id: OWNER, type: 'MOSAIC', projectId: 'p1', model: {}}},
-            recipes,
-            projects,
+            loadedRecipes: {[OWNER]: {id: OWNER, type: 'MOSAIC', folderId: 'p1', model: {}}},
+            recipes: recipes.map(recipe => ({updateTime: LONG_AGO, ...recipe})),
+            folders,
             // No open tab: autosave is triggered from here and is not what a selector exercises.
             tabs: []
         }
@@ -491,6 +592,28 @@ const choose = async label => act(async () => {
     option.click()
 })
 
-const showAll = () => act(async () =>
-    [...document.querySelectorAll('button')].find(button => button.textContent === 'ALL').click()
+// Typing is what Combo hears through the input's own value setter; React ignores a plain assignment.
+const search = async text => {
+    await act(async () => {
+        const input = combo()
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, text)
+        input.dispatchEvent(new Event('input', {bubbles: true}))
+    })
+    return optionElements().map(option => option.textContent)
+}
+
+const browse = () => act(async () =>
+    document.querySelector('[data-icon="folder-open"]').closest('button').click()
 )
+
+const lastBrowser = () => browsers[browsers.length - 1]
+
+const browsedRecipeIds = () => lastBrowser().recipes.map(({id}) => id)
+
+// Filed under nothing and changed in the last days, newest first: the recipes a scenario adds are offered after them.
+const recentRecipes = (count = RECENT_COUNT) => Array.from({length: count}, (_, index) => ({
+    id: `recent-${index}`,
+    name: `Recent ${index}`,
+    type: 'MOSAIC',
+    updateTime: `2026-10-${String(14 - index).padStart(2, '0')}`
+}))

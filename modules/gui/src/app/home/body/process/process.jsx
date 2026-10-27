@@ -12,10 +12,12 @@ import {Tabs} from '~/widget/tabs/tabs'
 
 import {CloseRecipe} from './closeRecipe'
 import {registerImageLayerSources} from './imageLayerSources'
+import {MoveRecipe} from './moveRecipe'
 import {ProcessMenu} from './processMenu'
-import {hasUnsavedWork, loadProjects$, loadRecipes$, recipePath, saveRecipe} from './recipe'
+import {hasUnsavedWork, loadFolders$, loadRecipes$, recipePath, saveRecipe} from './recipe'
 import {RecipeHome} from './recipeHome'
 import {registerRecipeImageLayers} from './recipeImageLayers'
+import {RecipeTabTooltip} from './recipeLocation'
 import {getRecipeType} from './recipeTypeRegistry'
 import {registerRecipeTypes} from './recipeTypes'
 import {SaveRecipe} from './saveRecipe'
@@ -27,6 +29,8 @@ class _Process extends React.Component {
         this.isLandingTab = this.isLandingTab.bind(this)
         this.renderMenu = this.renderMenu.bind(this)
         this.renderTab = this.renderTab.bind(this)
+        this.renderLabel = this.renderLabel.bind(this)
+        this.renderTabTooltip = this.renderTabTooltip.bind(this)
         this.onCloseTab = this.onCloseTab.bind(this)
         registerRecipeTypes()
         registerRecipeImageLayers()
@@ -40,6 +44,8 @@ class _Process extends React.Component {
                     label={msg('home.sections.process')}
                     statePath='process'
                     isLandingTab={this.isLandingTab}
+                    selectedLabel={this.renderLabel}
+                    tabTooltip={this.renderTabTooltip}
                     tabActions={this.renderMenu}
                     onTitleChanged={saveRecipe}
                     onClose={this.onCloseTab}>
@@ -47,6 +53,7 @@ class _Process extends React.Component {
                 </Tabs>
                 <CloseRecipe/>
                 <SaveRecipe/>
+                <MoveRecipe/>
             </React.Fragment>
         )
     }
@@ -61,6 +68,18 @@ class _Process extends React.Component {
                 {this.renderRecipe(id, type)}
             </Recipe>
         )
+    }
+
+    renderLabel({type}) {
+        return type
+            ? getRecipeType(type)?.labels.name
+            : msg('process.recipeList.title')
+    }
+
+    renderTabTooltip({id, type, title, placeholder}) {
+        return type
+            ? <RecipeTabTooltip recipeId={id} name={title || placeholder}/>
+            : undefined
     }
 
     renderMenu(recipeId) {
@@ -105,12 +124,12 @@ class _Process extends React.Component {
     }
 
     componentDidMount() {
-        const {projects, recipes, stream} = this.props
-        if (!projects) {
-            stream('LOAD_PROJECTS',
-                loadProjects$(),
+        const {folders, recipes, stream} = this.props
+        if (!folders) {
+            stream('LOAD_FOLDERS',
+                loadFolders$(),
                 null,
-                () => Notifications.error({message: msg('process.project.loadingError'), timeout: -1})
+                () => Notifications.error({message: msg('process.folder.loadingError'), timeout: -1})
             )
         }
         if (!recipes) {

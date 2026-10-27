@@ -1,0 +1,53 @@
+.hiddenClone.hiddenClone {
+    display: none;
+}
+
+.preview {
+    position: fixed;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    box-sizing: border-box;
+    max-width: min(20rem, calc(100vw - 16px));
+    padding: .5rem .75rem;
+    border: 1px solid var(--floating-border-color);
+    border-radius: var(--button-border-radius);
+    background: var(--popover-background-color);
+    color: var(--text-color);
+    box-shadow: 0 .2rem .6rem var(--shadow-medium-color);
+    user-select: none;
+}
+
+/* The global portal enables pointer events on its direct children. */
+.preview.preview,
+.preview * {
+    pointer-events: none;
+}
+
+.preview > svg {
+    flex-shrink: 0;
+}
+
+.valid {
+    border-color: var(--info-color);
+}
+
+.labels {
+    min-width: 0;
+}
+
+.name,
+.destination {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.destination {
+    min-height: 1.25em;
+    line-height: 1.25;
+    margin-top: .2rem;
+    font-size: .85rem;
+    color: var(--text-secondary-color);
+}

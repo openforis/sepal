@@ -4440,37 +4440,10 @@
       },
       "tabPlaceholder": ""
     },
-    "projects": {
-      "title": "",
-      "label": "",
-      "tooltip": "",
-      "noProjects": "",
-      "search.placeholder": "",
-      "selected": "",
-      "add": "Añadir"
-    },
-    "project": {
-      "title": "",
-      "description": "",
+    "folder": {
       "form": {
-        "name.label": "",
-        "name.required": "El nombre es obligatorio",
-        "name.unique": ""
-      },
-      "edit": {
-        "tooltip": ""
-      },
-      "remove": {
-        "tooltip": "",
-        "title": "",
-        "confirm": "",
-        "error": ""
-      },
-      "update": {
-        "error": ""
-      },
-      "noProject": "",
-      "noProjectOption": ""
+        "name.required": "El nombre es obligatorio"
+      }
     },
     "recipe": {
       "lastUpdate": "Última actualización",
@@ -5502,10 +5475,7 @@
     },
     "recipeInput": {
       "label": "",
-      "placeholder": "Selecciona un flujo de trabajo...",
-      "all": {
-        "tooltip": ""
-      }
+      "placeholder": "Selecciona un flujo de trabajo..."
     },
     "safetyButton": {
       "label": "Continuar"

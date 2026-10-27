@@ -63,9 +63,44 @@ afterEach(async () => {
     root = null
     container?.remove()
     vi.useRealTimers()
+    vi.unstubAllGlobals()
 })
 
 describe('a dragged item', () => {
+    it('reports viewport coordinates when a drag starts on a scrolled page', async () => {
+        vi.stubGlobal('scrollX', 100)
+        vi.stubGlobal('scrollY', 200)
+        await mount()
+
+        await pan('panstart', {x: 10, y: 10})
+
+        expect(told[0]).toEqual(expect.objectContaining({coords: {x: 10, y: 10}}))
+    })
+
+    it('keeps the drag cursor when another item unmounts', async () => {
+        await mount()
+        const otherContainer = document.createElement('div')
+        document.body.appendChild(otherContainer)
+        const otherRoot = createRoot(otherContainer)
+        await act(async () => otherRoot.render(<ListItem onDragStart={() => {}}>Other</ListItem>))
+        await pan('panstart', {x: 100, y: 62})
+
+        await act(async () => otherRoot.unmount())
+        otherContainer.remove()
+
+        expect(document.body.className).toContain('dragCursor')
+    })
+
+    it('resets the drag cursor when the dragged item unmounts', async () => {
+        await mount()
+        await pan('panstart', {x: 100, y: 62})
+
+        await act(async () => root.unmount())
+        root = null
+
+        expect(document.body.className).not.toContain('dragCursor')
+    })
+
     it('is held where it was pressed, however far the pointer had moved when the drag was recognised', async () => {
         await mount()
 

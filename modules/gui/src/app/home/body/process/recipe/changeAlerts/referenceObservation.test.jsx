@@ -380,7 +380,7 @@ const sync = ({selection, sources = {}}) => {
                 }
             },
             recipes: [],
-            projects: [],
+            folders: [],
             tabs: [{id: ALERTS}]
         },
         assets: {user: [{id: SEGMENTS_ASSET, updateTime: 'v0'}], other: []}
