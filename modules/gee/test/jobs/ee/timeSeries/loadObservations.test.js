@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {beforeEach, describe, it, mock} from 'node:test'
+import {before, beforeEach, describe, it, mock} from 'node:test'
 
 import {lastValueFrom, of, throwError} from 'rxjs'
 
@@ -526,19 +526,24 @@ mock.module('#sepal/ee/imageFactory', {
 // The real readiness, recording each operation a request is judged by: loaded as a module of its own, which this mock
 // does not replace.
 const REAL_READINESS = new URL('../../../../src/jobs/executionReadiness.js?recorded', import.meta.url).href
-const {requireExecutable$} = await import(REAL_READINESS)
-mock.module('#gee/jobs/executionReadiness', {
-    exports: {
-        requireExecutable$: args => {
-            state.judged.push(args.operation)
-            return requireExecutable$(args)
+let recipeRef
+
+// Await setup in a hook: a top-level await here lets the runner start the suites above before their hooks and
+// readiness spy are registered. Every test must wait for both the real implementation and its recording wrapper.
+before(async () => {
+    const {requireExecutable$} = await import(REAL_READINESS)
+    mock.module('#gee/jobs/executionReadiness', {
+        exports: {
+            requireExecutable$: args => {
+                state.judged.push(args.operation)
+                return requireExecutable$(args)
+            }
         }
-    }
+    })
+    recipeRef = (await import('#sepal/ee/recipeRef')).default
 })
 
-let recipeRef
-beforeEach(async () => {
-    recipeRef ||= (await import('#sepal/ee/recipeRef')).default
+beforeEach(() => {
     Object.assign(state, {
         catalogue: {}, properties: {}, referenceBands: null, bandFailure: null, builtImages: [], recipeReads: [], pixels: [], collections: [], evaluations: [], selected: [], recipeImages: [], observed: [], judged: [],
         assetBands: {[`users/x/${CLASSIFICATION}`]: TRAINABLE_FEATURES, [`users/x/${PROVIDER}`]: TRAINABLE_FEATURES, [RED_ONLY_ASSET]: ['red']}

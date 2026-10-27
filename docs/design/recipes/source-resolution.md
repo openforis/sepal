@@ -6488,6 +6488,20 @@ The automated evidence retains its recorded scope: full integrated results for t
 tests/lint/build after origin's app-picker merge. No additional implementation slice or manual batch is required
 before committing these notes and pushing.
 
+**Post-push CI test-setup correction (2026-10-27).** Run `40557889954` at `07ef14641` passed every job except GEE.
+The user supplied its failing observations-test log: the first cases found uninitialized fixture state, and later
+operation assertions bypassed the recording spy. `loadObservations.test.js` registered its root `beforeEach` and
+readiness spy after a top-level awaited import, letting Node start the already-declared suites before setup finished.
+
+The asynchronous imports and spy installation now run in a root `before` hook; the synchronous `beforeEach` resets
+the fixture. Production code, assertions and the spy's direct observable return are unchanged. An isolated copy
+with a 25 ms import delay reproduces the failure (45 of 45 fail before; all 45 pass after); the delay is not added
+to repository tests. The ordinary focused campaign passes **112 tests**, and the established GEE environment passes
+the full **1556 tests**, with at most two workers. ESLint and `git diff --check` pass. Logs:
+`/tmp/sepal-ci-observations-delayed-before.log`, `/tmp/sepal-ci-observations-delayed-after.log`,
+`/tmp/sepal-ci-observations-fixed-focused.log` and `/tmp/sepal-ci-gee-fixed-full.log`. GitHub CI after this correction
+is checked separately; the preceding local results do not claim a green remote rerun.
+
 **Deferred S5 follow-up: "Use reference settings" action (agreed 2026-10-26; not implemented).** Add a deliberate
 action for an existing Change Alerts recipe to copy the current reference's consumer-owned editable monitoring
 defaults again. This is not part of required S5/S6 and does not block push.
