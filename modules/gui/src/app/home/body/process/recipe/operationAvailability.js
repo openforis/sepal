@@ -4,6 +4,7 @@ import {Subscription} from 'rxjs'
 import {READY} from '#sepal/recipe/output/readImageOutput'
 import {judgesMapProduct, NOT_READY} from '#sepal/recipe/output/readiness'
 import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
+import {CHARTABLE_SEGMENTS} from '#sepal/recipe/requirement/ccdcSegments'
 import {INVALID, VALID} from '#sepal/recipe/source/dependencyValidity'
 
 import {getRecipeType} from '../recipeTypeRegistry'
@@ -34,7 +35,7 @@ import {
 export const pixelChartAvailability = ({state, recipe, evidenceOwnerOf, heldFor, now}) => {
     const reads = readSourceRequirements({state, recipe, evidenceOwnerOf, heldFor, now})
     const gate = requestGateOf(reads, PIXEL_SEGMENTS)
-    const chartable = establishedIn(reads, PIXEL_SEGMENTS)
+    const chartable = establishedIn(reads.filter(({declaration}) => declaration.requirement?.id === CHARTABLE_SEGMENTS.id), PIXEL_SEGMENTS)
     const bands = chartable ? chartBands(recipe, chartable.measures) : []
     const noChartableBand = Boolean(chartable) && !bands.length
     return {available: !gate && !noChartableBand, gate, chartable, bands, noChartableBand}
@@ -57,10 +58,13 @@ export const pixelOperationsAvailability = ({state, recipe, heldFor, operations}
     const reads = operations.map(operation => readOperationReadiness({recipe, operation, loadedRecipes, heldFor}))
     const [{computation}] = reads
     const gates = reads.map(({readiness, dependencyValidity}) => operationGate(recipe, readiness, dependencyValidity)).filter(Boolean)
-    const gate = gates.find(({withdraw}) => withdraw) || gates[0] || draftGate(state, recipe, computation)
+    const gate = combineOperationGates(...gates) || draftGate(state, recipe, computation)
     const recordOf = id => reads.map(read => read.recordOf(id)).find(Boolean) || null
     return {available: !gate, gate, computation, recordOf}
 }
+
+// A confirmed refusal takes precedence over another prerequisite still being read.
+export const combineOperationGates = (...gates) => gates.find(gate => gate?.withdraw) || gates.find(Boolean) || null
 
 // A named map product - CCDC's count - is held to its own readiness, read as an operation by its name: the analysis
 // prerequisites of its type and whatever the product adds (#sepal/recipe/output/readiness), as an image is held to its

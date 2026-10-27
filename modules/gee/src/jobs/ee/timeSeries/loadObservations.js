@@ -7,7 +7,7 @@ import {requireRequestedBands$} from '#gee/jobs/requestedBands'
 import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import {getCollection$} from '#sepal/ee/timeSeries/collection'
-import {effectiveChangeAlerts, segmentSourceFacts$} from '#sepal/ee/timeSeries/segmentSource'
+import {effectiveChangeAlerts, requireMonitoredMeasure$, segmentSourceFacts$} from '#sepal/ee/timeSeries/segmentSource'
 import {ClientException} from '#sepal/exception'
 import {fileName} from '#sepal/path'
 import {observedCollection} from '#sepal/recipe/changeAlerts/observedCollection'
@@ -85,7 +85,8 @@ const observed$ = recipe => {
         ? segmentSourceFacts$(recipe.model.reference).pipe(
             map(({processing}) => effectiveChangeAlerts(recipe, processing)),
             switchMap(effective => requireExecutable$({recipe: effective, operation: PIXEL_OBSERVATIONS}).pipe(
-                map(() => observedCollection(effective))
+                switchMap(() => requireMonitoredMeasure$(effective)),
+                map(observedCollection)
             ))
         )
         : of(recipe)

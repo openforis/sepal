@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import {beforeEach, describe, it, mock} from 'node:test'
 
-import {from, lastValueFrom, of, switchMap, throwError} from 'rxjs'
+import {lastValueFrom, of, throwError} from 'rxjs'
 
 // The observations a pixel chart loads. A Time Series' or a CCDC's chart reads a band of the collection, not the recipe's
 // image, and is held to what its type declares its observations require - the collection's classifier inputs, and the
@@ -206,6 +206,31 @@ describe('loading the observations of a Change Alerts pixel', () => {
             sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands: ['ndvi']}, options: {corrections: []}
         }}
     })
+    it('refuses a missing configured monitoring band even when the request asks for a different available band, then permits repair', async () => {
+        const broken = {...CHANGE_ALERTS, model: {...CHANGE_ALERTS.model, sources: {...CHANGE_ALERTS.model.sources, band: 'nbr'}}}
+        state.referenceBands = ['ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude']
+        await assert.rejects(load({recipe: broken, bands: ['ndvi']}), /MONITORED_MEASURE_ABSENT/)
+        assertNoChartWork()
+        await load({recipe: CHANGE_ALERTS, bands: ['ndvi']})
+        assert.equal(state.collections.length, 1)
+        assert.deepEqual(state.builtImages, [])
+    })
+
+    it('refuses an unobserved configured band before chart work, using effective reference processing', async () => {
+        const reference = state.catalogue['ccdc-unreadable']
+        state.catalogue['ccdc-unreadable'] = {...reference, model: {...reference.model, options: {corrections: ['SR']}}}
+        state.referenceBands = ['cirrus_coefs', 'cirrus_rmse', 'ndvi_coefs', 'ndvi_rmse']
+        const broken = {...CHANGE_ALERTS, model: {...CHANGE_ALERTS.model, options: {corrections: []}, sources: {...CHANGE_ALERTS.model.sources, band: 'cirrus'}}}
+        await assert.rejects(load({recipe: broken, bands: ['ndvi']}), /MONITORED_MEASURE_UNOBSERVED/)
+        assertNoChartWork()
+    })
+
+    it('passes on an unavailable band catalogue without inventing a monitoring finding', async () => {
+        state.bandFailure = new Error('Reference catalogue temporarily unavailable')
+        await assert.rejects(load({recipe: CHANGE_ALERTS, bands: ['ndvi']}), error => error === state.bandFailure && !error.errorCode)
+        assertNoChartWork()
+    })
+
     it('reads reference processing and readiness but neither segments nor a stale consumer Classification', async () => {
         const result = await load({recipe: CHANGE_ALERTS, bands: ['ndvi']})
 
@@ -217,7 +242,8 @@ describe('loading the observations of a Change Alerts pixel', () => {
         assert.deepEqual(CHANGE_ALERTS.model.options.corrections, ['SR'])
         // Facts and authorization both read the selected producer; the job's real request scope shares the record.
         assert.deepEqual([...new Set(state.recipeReads)], ['ccdc-unreadable'])
-        assert.deepEqual(state.recipeImages, [])
+        assert.deepEqual(state.recipeImages, ['ccdc-unreadable']) // Catalogue only; no getImage or segments.
+        assert.deepEqual(state.builtImages, [])
     })
 
     it('refuses a confirmed problem in the referenced CCDC before chart work, and recovers after repair', async () => {
@@ -492,7 +518,7 @@ mock.module('#sepal/ee/imageFactory', {
     exports: {
         default: recipe => recipe.type === 'RECIPE_REF' ? recipeRef(recipe) : (state.recipeImages.push(recipe.id), {
             getImage$: () => (state.builtImages.push(recipe.id), of({})),
-            getBands$: () => of(['ndvi'])
+            getBands$: () => state.bandFailure ? throwError(() => state.bandFailure) : of(state.referenceBands || ['ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude', 'blue_coefs', 'blue_rmse'])
         })
     }
 })
@@ -500,11 +526,12 @@ mock.module('#sepal/ee/imageFactory', {
 // The real readiness, recording each operation a request is judged by: loaded as a module of its own, which this mock
 // does not replace.
 const REAL_READINESS = new URL('../../../../src/jobs/executionReadiness.js?recorded', import.meta.url).href
+const {requireExecutable$} = await import(REAL_READINESS)
 mock.module('#gee/jobs/executionReadiness', {
     exports: {
         requireExecutable$: args => {
             state.judged.push(args.operation)
-            return from(import(REAL_READINESS)).pipe(switchMap(({requireExecutable$}) => requireExecutable$(args)))
+            return requireExecutable$(args)
         }
     }
 })
@@ -513,7 +540,7 @@ let recipeRef
 beforeEach(async () => {
     recipeRef ||= (await import('#sepal/ee/recipeRef')).default
     Object.assign(state, {
-        catalogue: {}, properties: {}, builtImages: [], recipeReads: [], pixels: [], collections: [], evaluations: [], selected: [], recipeImages: [], observed: [], judged: [],
+        catalogue: {}, properties: {}, referenceBands: null, bandFailure: null, builtImages: [], recipeReads: [], pixels: [], collections: [], evaluations: [], selected: [], recipeImages: [], observed: [], judged: [],
         assetBands: {[`users/x/${CLASSIFICATION}`]: TRAINABLE_FEATURES, [`users/x/${PROVIDER}`]: TRAINABLE_FEATURES, [RED_ONLY_ASSET]: ['red']}
     })
 })

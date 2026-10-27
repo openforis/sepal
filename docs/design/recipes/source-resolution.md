@@ -2980,8 +2980,8 @@ contract can change the split; they must not silently expand it.
 | S2: Feedback where repairs happen | Consistent Classification/Regression training-data feedback, item-editor explanations and replacement/removal; visible Classification selection in Time Series/CCDC Sources; classifier-input attribution at Classification; repair-oriented PyEO SRC/OPT feedback; correct the empty Retrieve warning. | F1, F2, F10, F8 warning | The single-input selection check passes. Confirmed findings now hold Apply while replacement, Cancel and unchanged Close remain available; the user confirmed Classification's browser recheck passed. The separate Stack Require drop fix passed the user's actual-preview and remove/restore browser check on 2026-10-24. Empty-Provider refinement and S3/S4 remain separate. |
 | S3: One selected-Classification validity contract | Require a selected usable Classification for Time Series/CCDC base operations, independently of requested/breakpoint bands; common SRC explanation/action hold; remove redundant band-training stage/watch/messages/server settling. | F9; consumes S2 presentation | Implemented and independently reviewed. User confirmed Retrieve closure/reopen and the already-broken CCDC/count-preview repair checks passed on 2026-10-25. Shared analysis prerequisites cover every operation and named map product. The timing-dependent keyboard check was not attempted in the browser; automated coverage passed. No requested browser recheck remains. |
 | S4: Reused samples with Consumer features | Sample each contributing Provider's imagery at its points using Consumer's feature definition; preserve sampling scale, nesting/order and Consumer normalisation; update shared readiness to the same derivability contract. | F4 | Implemented 2026-10-26; sampling and feedback corrections pass independent review, including unsupported requested operations and neutral unknown-reason fallback. No remaining S4 review findings. User confirmed the CCDC explanation and selection-recovery browser recheck passed on 2026-10-26; see the result after "S4 use-restriction fallback: independent review". Final full GUI campaign remains pending. |
-| S5: Change Alerts settings ownership | Audit Sources/PRC fields, then implement source-owned read-only required matches versus consumer-owned editable values; replace whole-group observation syncing and define initial/explicit copying. | F5, F6 | Implemented in the working tree; the radar details-dialog loop and live-reference readiness/REF submission corrections are documented below (see "S5 corrections"). Browser/metadata checks remain pending. The explicit "Use reference settings" action is captured separately as deferred; it does not block S5 or push. |
-| S6: Change Alerts validation and chart agreement | Retain invalid applied choices with field explanations; hold Retrieve and close/disable the analysis chart for an incompatible configured monitoring band; remove redundant panel validation. | F3 | Build on S5's ownership/effective-values contract so the form and operations judge the same configuration. Reproduce Optical-to-Radar, repair, cancellation, valid native controls and recipe/asset reference cases. Preserve operation scope rather than installing full image readiness on the chart. |
+| S5: Change Alerts settings ownership | Audit Sources/PRC fields, then implement source-owned read-only required matches versus consumer-owned editable values; replace whole-group observation syncing and define initial/explicit copying. | F5, F6 | Committed as `6fc9e5874`, then integrated with origin at `78642988e`. The user accepted the PRC ownership browser recheck on 2026-10-27. The live legacy-metadata verification limit is recorded below. The explicit "Use reference settings" action remains deferred and does not block S5 or push. |
+| S6: Change Alerts validation and chart agreement | Retain invalid applied choices with field explanations; hold Retrieve and close/disable the analysis chart for an incompatible configured monitoring band; remove redundant panel validation. | F3 | Implemented and user browser-accepted on 2026-10-27 after the chart fixture and shared recipe-read context corrections. The baseline chart, upstream Optical-to-Radar withdrawal, Cancel and applied Radar/VV repair all passed, including actual segments and observations. Chart scope stays operation-specific. The separate shared-read API correction and final integrated verification remain before push. |
 
 **S1: Chart layout on tab return (implemented 2026-10-23; user feedback received).**
 
@@ -5806,6 +5806,300 @@ two workers. Export metadata round-trip and provenance protection, Band Math cal
 analysis, translations/error attribution, and incoming account/usage tests are included. ESLint on the resolved
 export files and whitespace-cleaned account panel, plus `git diff --check`, passed. No full suite, build, browser or
 live Earth Engine check was run for this merge. S6 and final integrated verification remain before push.
+
+**S6 implementation: Change Alerts monitoring validation and chart agreement (2026-10-27; uncommitted).**
+
+The failing mounted witnesses reproduced both reported defects: a saved native `nbr` disappeared from Sources on
+opening, and changing a usable optical CCDC producer to radar marked Sources but left its open analysis chart alive.
+The applied consumer model was not repaired by opening the editor; the choice widget was normalising an unoffered
+native value out of the draft. Only missing classified choices had previously been retained.
+
+- Sources now offers the union of valid choices and the selected draft band, native or classified. The selected
+  missing band stays highlighted with the existing translated field error. Opening remains unedited, explicit
+  changes follow the draft, and Cancel preserves the applied choice and operation holds. Type/data-set defaults
+  resulting from an explicit user family change keep their existing behavior; no upstream edit silently chooses
+  another family or band.
+- The existing `MONITORED_MEASURE` Sources declaration holds `IMAGE_OUTPUT`, `PIXEL_SEGMENTS` and
+  `PIXEL_OBSERVATIONS`. The existing classified-monitored-band configuration finding applies to those same
+  operations. No second compatibility predicate or stored validity flag is introduced. REF retains originating
+  reference/upstream failures; Sources names only its own repairable settings. Processing facts remain S5's.
+- Native monitoring scopes live in shared `changeAlerts/monitoringMeasures.js`, reusing CCDC's native optical
+  catalogue, the radar measures and the established temporal Planet choices. The old family memoization moves
+  with it; there is no new selector cache. Parity tests compare all offered datasets for TOA/SR and a multi-dataset
+  intersection against the previous GUI catalogue. Planet's choice constant moves to its existing shared band
+  module; neither its execution schema nor its offered choices is expanded.
+- The chart watches both actual operations. A confirmed capability/Sources refusal takes precedence over a pending
+  execution read. Chartable bands are read specifically from `CHARTABLE_SEGMENTS`, instead of whichever requirement
+  happens to precede it. An exploratory chart-band choice cannot bypass an invalid configured monitoring band.
+- Change Alerts consumes the common `pixelChartUpdate` lifecycle. Confirmed invalidity disables the action, closes
+  the panel and cancels both streams; late answers cannot redraw. Repair offers the action without reopening the
+  panel automatically. Initial chart selection uses the configured band where available; later deliberate chart-band
+  exploration and chartability-based replacement remain possible for a valid analysis. Pending/unavailable states
+  hold requests without inventing a configuration error. CCDC Slice's operation policy remains unchanged.
+- Removed coordination: Change Alerts' `segmentsHeld` flag, bespoke model/reference-build comparisons and band
+  replacement method, the independent observation request that could run while segment prerequisites were held,
+  and the blue withheld explanation inside the chart. A combined gate and common lifecycle replace these. Required
+  form fields, source/capability evidence checks, requested-band guards, Retrieve's current-state submission check,
+  stream cancellation and server execution guards remain necessary; they are not duplicate compatibility rules.
+
+Server boundary: two failing observation witnesses established that a request for a healthy exploratory band could
+bypass an invalid configured monitoring band. After effective processing and ordinary shared execution readiness,
+the existing source catalogue is read and judged by `MONITORED_MEASURE` with the same native scope. A failed
+catalogue read is passed on as unavailable, not manufactured into a missing-band finding. Settings-only acquisition
+is unchanged: `segmentSourceFacts$` still builds no segments and loads no unrelated training dependencies. The
+native monitoring collection omits the legacy copied Classification; segment assets need no private producer.
+
+The alert-image path applies the same rule to its already-resolved source before building segmentation or monitoring
+observations, covering the actual image construction used by previews and exports. Its fixed output description
+stays available without those reads. A real image-factory witness, with only external EE/collection boundaries
+substituted, proves refusal before either collection or alert algebra and a working result after producer repair.
+Existing export-route readiness/refusal controls remain passing. Period mosaics do not acquire a monitoring-band
+requirement they do not read, and an image-only requirement does not hold an otherwise valid chart.
+
+Limits: `/ccdc/loadSegments` still receives the selected source alone, not the Change Alerts consumer, and therefore
+can authorize that producer but cannot assess a consumer monitoring choice. The GUI cancels/holds both streams and
+the sibling Change Alerts observations route enforces that consumer choice. No request-schema expansion is made.
+The previously recorded broader `/image/preview` server-readiness gap remains; this packet's image-construction
+monitoring guard is not evidence of full upstream readiness coverage on that route. Legacy malformed monitoring
+periods and broader date-policy cleanup remain separate as recorded in the recipe notes.
+
+Verification: 862 focused cases passed with at most two test workers total: 315 GUI in 11 files, 298 shared in six
+files, and 249 gee in six files. Coverage includes S5 ownership and REF submission, pending/failed/superseded source
+reads, asset refresh recovery without editing, invalid-draft Enter/direct submission and Cancel, applied repair,
+late-answer cancellation, unrelated image-only holds, CCDC Slice and Time Series/CCDC chart controls, the native
+catalogue parity, server pre-computation refusal and existing asset exports. ESLint on changed JS/JSX and
+`git diff --check` pass. No full suite, build, browser or live Earth Engine verification was run. The scoped mocked
+proofs establish wiring and cancellation, not live numerical results or performance. Final integrated verification
+and the short browser recheck remain before push.
+
+S6 browser recheck (normal UI; no repeat of accepted S1-S5 checks):
+1. Start with a usable optical CCDC and Change Alerts monitoring `nbr`. Open its chart and obtain a real response.
+2. In CCDC, explicitly select radar imagery and a valid radar breakpoint band, then Apply. Keep the producer otherwise
+   valid (no broken Classification). Return to Change Alerts: SRC should be marked, Retrieve/chart disabled and the
+   old chart closed. Opening SRC must keep `nbr` visible and explain the affected family/band setting.
+3. Choose radar and `VV` in SRC. Before Apply the applied holds remain; Cancel leaves the error. Reopen, make the
+   same repair and Apply: SRC clears and Retrieve/chart become available. Open the chart and select a pixel; verify
+   actual segments and monitoring observations, not just enabled buttons.
+4. Alternatively restore the producer's original optical settings while the saved consumer still monitors optical
+   `nbr`. Without editing the consumer, its warning should clear; reopening the chart should work. Neither recovery
+   should rewrite independently editable monitoring choices or PRC copies.
+
+**S6 independent review (2026-10-27; chart fixture correction required).**
+
+Reviewed the production diff against the F3 and S5 contracts. Retaining the selected native/classified monitoring band
+does not relax the shared rule or rewrite the applied model. Sources' existing `MONITORED_MEASURE` declaration now
+applies to both pixel operations, and confirmed refusal wins over an unanswered execution read. The chart consumes
+the common lifecycle, cancelling both streams together; the added computation inputs retain external-description
+and pixel-generation changes. The server uses the same monitoring rule before building observations or the alert
+image. Its catalogue read does not evaluate segments. Asset references remain independent, CCDC Slice keeps its
+scope, and the known direct-segment/preview-server limitations remain explicit. No production defect was identified.
+
+- **[P2] Update the existing chart fixture to S5 processing evidence.**
+  `changeAlerts/panels/chartPixel.test.jsx` publishes `ui.sourceEvidence` with segments but no processing facts.
+  `loadCCDCSegments$` has required those facts since committed S5 and consequently refuses those fixtures with
+  "Reference processing settings are not available". Five of the file's six tests fail; their error notification
+  path also reports six unhandled `window.gtag` errors. A read-only container overlay of the committed chart produced
+  the same five failures, so replacing the chart lifecycle is not their cause.
+- A temporary copy supplying `assetProcessing({dateFormat})` for asset evidence and
+  `processingOfProducer({options: {}})` for recipe evidence passed all six existing assertions, with no unhandled
+  errors. Keep those assertions for description changes, cancellation, unchanged evidence, asset-token changes,
+  request payloads and applied monitoring edits. Correct the fixture rather than weakening the production guard
+  or deleting those controls. No production change is requested by this finding.
+- **Independent verification:** 73 shared cases and 83 gee cases passed. The GUI review ran eight files: seven
+  files passed (210 cases), while the unchanged chart file had one passing and five failing cases. The temporary
+  evidence-only fixture correction then passed all six. The mounted Optical-to-Radar, draft repair/Cancel,
+  late-answer cancellation, asset refresh, unrelated image-only requirement and other chart controls passed.
+  This is not a clean passing GUI campaign for the current tree until the original fixture is corrected.
+- **Evidence:** `/tmp/sepal-s6-review-gui.log`, `/tmp/sepal-s6-review-head-chart.log`,
+  `/tmp/sepal-s6-review-fixture.log`, `/tmp/sepal-s6-review-shared.log` and `/tmp/sepal-s6-review-gee.log`.
+  The removed temporary test is retained at `/tmp/sepal-s6-review-chart-fixture.test.jsx`. The committed chart was
+  overlaid read-only inside the comparison container; the working tree's production files were never swapped.
+  No full suite, build, browser or live Earth Engine check was run. Reviewer changes are this review record only;
+  nothing staged, committed or pushed. The normal-UI S6 browser recheck above remains pending.
+
+**S6 chart-fixture review correction (2026-10-27; uncommitted).** The existing chart lifecycle fixture now
+supplies S5 processing facts: `assetProcessing({dateFormat})` for asset evidence and
+`processingOfProducer({options: {}})` for recipe evidence. No production code or lifecycle assertions changed.
+All six tests in `changeAlerts/panels/chartPixel.test.jsx` pass in the GUI container with at most two workers and
+no unhandled errors. ESLint on the corrected test and `git diff --check` pass. Evidence:
+`/tmp/sepal-s6-chart-fixture-final.log`. This resolves the independent review's fixture finding. The four-step S6
+browser recheck above remains sufficient; final integrated verification remains before push. No full suite, build,
+browser or live Earth Engine check was run for this correction. Nothing staged, committed or pushed.
+
+Independent recheck (2026-10-27): the original test file now differs only by its processing-helper import and the
+processing facts in `sourceEvidence`; all lifecycle assertions are unchanged. All six cases passed again, with no
+unhandled errors, in `/tmp/sepal-s6-review-fixture-final.log`. `git diff --check` passed. The S6 code review is closed
+with no remaining findings; browser acceptance and final integrated verification remain outstanding.
+
+**S6 browser failure: false observations self-cycle (2026-10-27; correction required).**
+
+The first browser baseline failed while opening a working optical Change Alerts chart: "Failed to load observations.
+Bad request", with `Recipe dependencies form a cycle: 016c106c-e7ba-4ae4-90ca-61ebec12819b ->
+016c106c-e7ba-4ae4-90ca-61ebec12819b`. The user supplied `.vscode/ccdc.json` and `.vscode/change_alerts.json`, then
+the CCDC AOI provider and its input in `.vscode/classification_provider.json` and `.vscode/stack_radar.json`.
+Those records form an acyclic chain: Change Alerts -> CCDC -> Classification (AOI) -> Stack -> radar asset.
+The CCDC has no selected Classification. No saved configuration change is indicated by this failure.
+
+- **[P1] Shared cached record completion leaks the first reader's execution ancestry.** An asynchronous CCDC
+  record read starts during segment-facts acquisition. Its value lets Change Alerts start readiness while that
+  retained read is still completing. The closure loader subscribes to the same retained record. Its completion
+  notification arrives in the original CCDC reader's context, so readiness emits under `[ccdcId]` rather than the
+  calling operation's path. The subsequent, legitimate catalogue read is rejected as `ccdcId -> ccdcId`.
+- The trace establishes readiness entry at `[]` and its asynchronous answer at `[ccdcId]`. Synchronous record reads
+  pass. The real factory, recipe-reference ancestry, recipe scope and direct readiness path reproduce the error both
+  with a minimal valid model and with all four supplied records, without Earth Engine or external service calls.
+- The existing observations test's readiness-recording wrapper used `from(import(...)).pipe(switchMap(...))`.
+  That extra asynchronous boundary hides the problematic timing. Its image-factory substitution also removes
+  ancestry wrappers. "Real readiness" inside those substitutions was insufficient coverage of this integration.
+  Retain an end-to-end wiring regression with actual factory, scope and readiness boundaries and delayed recipe
+  reads. Any operation-recording spy must return the real observable directly, without introducing a Promise hop.
+- **Bounded proposed correction, proved but not applied:** preserve the subscribing caller's execution path when
+  delivering retained recipe records, including `next`, `error` and `complete`. The existing `inCurrentPath` helper
+  already implements that policy. A temporary replacement identical to `recipe.js`'s `loadRecipe$` except for
+  wrapping `scope.read$(id)` in `inCurrentPath(...)` made all six probe cases pass. They cover synchronous and delayed
+  valid reads for minimal/supplied records, plus genuine self and two-recipe cycles, which remain refused with their
+  full paths. Do not clear ancestry, suppress a repeated id or special-case Change Alerts to make this pass.
+- The running GEE service's relevant source-file checksums match the workspace. The failure and correction proof
+  were run in its Node 26 runtime in isolated mocked test processes, without changing the service's configuration
+  or production files. The earlier host-only probes used Node 24; both versions reproduce after removing the
+  Promise-wrapped readiness spy. An initial isolated-container attempt lacked package links and was not evidence
+  for the correction; the successful proof used the service container's existing dependency installation.
+- **Handoff:** `/tmp/sepal-s6-observations-cycle.review.test.js`, baseline
+  `/tmp/sepal-s6-cycle-baseline-final.log` (four controls pass, two valid asynchronous cases fail), and
+  `/tmp/sepal-s6-cycle-context-proof.log` (six pass with the temporary boundary correction). Earlier path trace:
+  `/tmp/sepal-s6-cycle-path-trace.log`. The temporary test was removed from the repository. Production code and saved
+  recipes remain unchanged; nothing staged, committed or pushed. After implementation, rerun the actual browser
+  baseline before the remaining S6 steps and final integrated verification.
+
+**S6 shared recipe-read context correction (2026-10-27; uncommitted).** `loadRecipe$` now wraps the scoped
+retained read in the existing `inCurrentPath` helper. Each subscriber receives `next`, `error` and `complete`
+under its own execution ancestry. The scope still reads each record once per operation; no ancestry is cleared,
+no Change Alerts exception is introduced, and the existing recipe-reference cycle checks are unchanged.
+
+- Added `loadObservationsContext.test.js`, using the actual factory, recipe scope and direct readiness path with
+  external services mocked. Its minimal CCDC and reduced supplied AOI-chain fixtures pass with synchronous reads
+  and reproduce the false self-cycle with delayed reads before the fix. Genuine self/two-recipe cycles remain
+  refused with their full paths. Two additional controls verify separate subscribers' next/complete and error
+  paths on one retained read. Before the correction four of eight cases failed; afterwards all eight pass.
+- The existing observations readiness-recording spy now returns the real observable directly; it no longer adds
+  a Promise/import hop that could mask the notification timing. Existing assertions are retained.
+- Focused verification in the running GEE container's Node 26 runtime: **154 tests pass across seven files**
+  (8 new context cases, 45 observations, 23 alert/reference, 33 segment-readiness, 26 recipe-cycle, 12 operation
+  and 7 identity cases), with at most two test processes concurrently. ESLint on the three changed JS files and
+  `git diff --check` pass. Evidence: `/tmp/sepal-s6-context-before.log`,
+  `/tmp/sepal-s6-context-computation-tests.log` and `/tmp/sepal-s6-context-scope-tests.log`.
+- No full suite, build, browser or live Earth Engine check was run for this correction. The supplied JSON records
+  are unchanged. Retry opening the baseline optical chart first, then continue the four-step S6 browser recheck
+  above; final integrated verification remains before push. Nothing staged, committed or pushed.
+
+Independent correction review (2026-10-27): the shared loader uses the existing context helper without changing
+scope ownership or cycle detection, and the observations spy now preserves the real observable's timing. The exact
+six-case reproduction passed against the actual fixed loader with no substitute loader/readiness wrapper; all eight
+permanent context regressions passed separately in GEE's Node 26 runtime. Logs:
+`/tmp/sepal-s6-cycle-fix-independent.log` and `/tmp/sepal-s6-context-independent.log`. Temporary probe removed;
+`git diff --check` passed. No remaining code-review finding; actual browser recovery remains unverified.
+
+**S6 browser acceptance (2026-10-27; user-reported pass).** After the recipe-read correction, the user completed
+the four-step recheck and reported "All good": the optical CCDC without a Classification and its Change Alerts
+consumer monitoring `nbr` loaded real segments and observations without the previous error; changing the producer
+to valid radar closed the chart, held Retrieve/charting and retained the consumer's optical/`nbr` choice with SRC
+feedback; cancelling a Radar/VV draft kept the applied error; applying that repair cleared it, and a reopened chart
+loaded real VV segments and observations. This accepts the current S6 slice and cycle correction. It does not claim
+the optional producer-restoration variant, a full automated campaign or the separate shared-read redesign below.
+The agreed sequence is to commit this slice, implement the bounded shared-read API correction separately, then
+integrate origin changes and complete final integrated verification before push.
+
+**Adjacent shared-context audit (2026-10-27; GeoID correction outstanding).** The user asked whether the false-cycle
+class could occur elsewhere. Inspected both consumers of `RecipeScope` retained reads, recipe/factory ancestry
+wrappers, service response delivery, shared EE initialization, the two image delegates using `shareReplay`, and the
+observations readiness-recording spy. This is a bounded execution-context audit, not a guarantee about every shared
+observable in the repository.
+
+| Path | Result |
+| --- | --- |
+| `recipe.js` / `recipeRef.js` | The corrected recipe loader and reference/factory wrappers preserve each subscriber's execution path across next, error and completion. The exact browser reproduction and genuine-cycle controls passed the earlier independent recheck. |
+| `geoIdFeature.js` | **Confirmed sibling gap:** `loadGeoIdFeature$` returns `scope.geoIdFeature$(geoId)` without restoring the subscriber path. It shares the same `RecipeScope.#retain` mechanism as recipe records. Two branches waiting on one delayed GeoID lookup receive notifications under the first branch's ancestry. |
+| Shared service response bridge | `service.js` snapshots caller context inside the subscription and restores it for all three notification kinds. Existing operation/round-trip tests cover the bridge; no new defect established in this audit. |
+| EE initialization | `restRuntime.js` shares a Promise and creates each waiting caller's `from(...)` subscription inside `defer`, explicitly preserving independent waiting contexts. No equivalent replay-subject gap identified. |
+| Change Alerts / BAYTS image delegates | Their shared delegates are inside image-factory accessors whose existing `inAncestry` / `inPath` boundary restores the receiving caller's path. No additional defect established by inspection; these paths were not newly exercised end to end in this audit. |
+| Readiness-recording spy | The removed `from(import(...))` boundary is no longer present; the spy returns the preloaded real observable directly. A timing-changing spy can hide this class, whereas a shared Promise intentionally used to resume independent callers is not itself an error. |
+
+GeoID proof: two temporary tests used the actual GeoID loader, recipe scope and ancestry helpers with a delayed
+in-memory GeoID reader. Both failed: the second subscriber's next/complete or error callback saw `[first]` instead
+of `[second]`, while only one lookup was performed. Wrapping the delivered observable in existing `inCurrentPath`
+made both pass. No GeoID service, Earth Engine or browser call was made. This establishes the notification-context
+defect, not a particular GeoID browser failure. It can contaminate downstream recipe ancestry for branches sharing a
+lookup; do not claim every GeoID lookup is currently failing.
+
+Recommended before push: give the GeoID read boundary the same subscriber-context guarantee, using the existing
+helper and retaining one lookup per operation, retry-after-failure and cancellation. Add next/complete/error and
+shared delayed-read controls; preserve real cycle detection. No new cache, scheduling delay or feature-specific
+exception is needed. The reviewer has not applied that production correction.
+
+Evidence: `/tmp/sepal-geoid-context-audit.log` (two failures), `/tmp/sepal-geoid-context-proof.log` (two pass with
+the temporary wrapper) and `/tmp/sepal-geoid-context.review.test.js`. The temporary repository test was removed;
+reviewer edits are documentation only. No full suite or live verification was run for this audit.
+
+**Shared-read API design assessment (2026-10-27; recommendation, not implemented).** The user asked to prevent this
+class structurally instead of adding another loader fix and remembering more checks. This supersedes the preceding
+recommendation to add an individual GeoID wrapper. The common owner already exists: `RecipeScope.#retain` creates
+both kinds of retained read, and its private subjects need never escape.
+
+Recommended boundary:
+
+- Always return an observable that restores each subscriber's context from the private retaining mechanism. Store
+  that safe observable in the retained map; keep the raw subject private. Recipe reads, GeoID reads and further
+  read methods using this primitive then have the guarantee without any caller opting in.
+- Capture context **inside each subscription**, never when constructing the observable, starting the first read or
+  filling the cache. Restore it for next, error and completion, including synchronous replay of completed reads.
+- Use a small Node-only observable helper backed by `AsyncLocalStorage.snapshot()`, capturing the whole current
+  context rather than enumerating ancestry, recipe scope and EE context separately. The service response bridge
+  already uses this mechanism; extract its notification forwarding into the same helper, with capture moved inside
+  the subscription. Do not put a Node import in a browser-shared RxJS entry point.
+- Remove redundant `inCurrentPath` wrappers from `loadRecipe$` and `recipeRef`, and remove that helper if no caller
+  remains. Keep `inPath`, factory ancestry entry/exit and cycle detection: entering a child dependency and returning
+  to the parent remain separate from delivering a shared external answer to its subscriber.
+- Keep one underlying read per operation, failure eviction/retry, subscriber independence and operation-owned
+  teardown. Do not add a Promise/scheduler hop, clear ancestry, change reader authority or create another cache.
+
+Alternatives assessed:
+
+| Approach | Assessment |
+| --- | --- |
+| Add a wrapper to each loader | Corrects today's paths but leaves raw scope methods unsafe and requires each new caller to remember the rule. Not recommended. |
+| Make the private retained-read primitive safe | Protects both read kinds and direct scope callers, with one mandatory owner. Recommended. |
+| Extract a helper but let each caller choose whether to use it | Reduces duplicated code without preventing omission. Insufficient on its own. |
+| Pass explicit context through every recipe/factory/accessor | A much broader API migration; sharing would still need to separate producer context from each continuation. Not justified for this defect. |
+| Change RxJS subjects/operators globally | Changes unrelated stream semantics and increases risk. Not recommended. |
+
+Prototype evidence, with production files unchanged:
+
+- A temporary variant of the actual `RecipeScope` replaced `value$.asObservable()` with per-subscription snapshot
+  delivery. Ten low-level cases covered both read kinds, next/complete/error, retry, replay, construction versus
+  subscription, a second independent async-local store, one reader shared by two callers, subscriber cancellation
+  and scope close. The unprotected scope failed eight cases; the protected variant passed all ten. Replay controls
+  passed before as well, so their pass alone does not establish the concurrency guarantee.
+- The existing eight context integration regressions were run with the prototype scope and **both** local
+  `inCurrentPath` wrappers disabled. All eight passed: synchronous/delayed baseline and supplied dependency chain,
+  next/complete/error delivery, and genuine self/two-recipe cycles with complete ancestry. Child-path entry/exit and
+  the real readiness implementation were retained.
+- Evidence: `/tmp/sepal-context-boundary-analysis.test.mjs`, `/tmp/sepal-context-boundary-baseline.log`,
+  `/tmp/sepal-context-boundary-central.log`, `/tmp/sepal-context-boundary-scope.review.js`,
+  `/tmp/sepal-context-boundary-integration.review.test.js` and `/tmp/sepal-context-boundary-integration.log`.
+  Temporary repository modules were removed. These are bounded design probes, not a production implementation or
+  final regression campaign; no browser, full suite or live Earth Engine check was run.
+
+Implementation acceptance should live primarily at this owner, parameterized over both read methods, plus the
+existing false-cycle reproduction, genuine-cycle controls and service round-trip/context controls. Verify no
+upstream subscription/teardown or operation isolation changes when extracting the service helper. A few production
+modules should suffice; do not expand this into a recipe-wide context rewrite.
+
+The enforceable claim is that **callers of these shared-read APIs cannot omit context restoration**. A new independent
+cache or transport can still bypass the architecture; do not claim all arbitrary observables in JavaScript become
+safe. The general contract is recorded in `behavior-contracts.md`. Node's
+[snapshot documentation](https://nodejs.org/api/async_context.html#static-method-asynclocalstoragesnapshot) supports
+the mechanism, which the repository already uses at its service boundary. This remains a recommended small
+correction before push, with no new recipe format or user-facing policy.
 
 **Deferred S5 follow-up: "Use reference settings" action (agreed 2026-10-26; not implemented).** Add a deliberate
 action for an existing Change Alerts recipe to copy the current reference's consumer-owned editable monitoring

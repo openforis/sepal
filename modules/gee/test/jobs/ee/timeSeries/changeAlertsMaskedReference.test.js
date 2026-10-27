@@ -34,7 +34,7 @@ const eeImage = (source, masks = []) => ({
     },
     clip: () => eeImage(source, masks),
     reduceRegion: () => ({source, masks}),
-    bandNames: () => [`${source}:band`],
+    bandNames: () => assets[source]?.bands || (source === SEGMENTS_ASSET ? ['ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude'] : [`${source}:band`]),
     updateMask: mask => {
         const maskedImage = eeImage(source, [...masks, mask.source])
         maskApplications.push({source: maskedImage.source, masks: maskedImage.masks})
@@ -289,6 +289,22 @@ describe('the imagery Change Alerts monitors', () => {
         assert.equal(monitoringRecipes[0].model.options.brdfMultiplier, 3)
         assert.equal(monitoringRecipes[0].model.options.snowMasking, 'OFF')
         assert.deepEqual(recipe.model.options, {corrections: ['SR'], brdfMultiplier: 12, snowMasking: 'OFF'})
+    })
+
+    inOperation('refuses an incompatible monitoring choice before building segments or observations, then executes after producer repair', async () => {
+        const original = catalogue['ccdc-1']
+        catalogue['ccdc-1'] = {...original, model: {...original.model, sources: {dataSets: {SENTINEL_1: ['SENTINEL_1']}, breakpointBands: ['VV']}}}
+        await assert.rejects(alertImage$({type: 'RECIPE_REF', id: 'masking-1'}), error => error.code === 'NO_AVAILABLE_MEASURE')
+        assert.deepEqual(collectionRequests, [])
+        assert.deepEqual(alertAlgebra, [])
+        catalogue['ccdc-1'] = original
+        const repaired = new RecipeScope(readRecipe$)
+        try {
+            await withRecipeScope(repaired, () => alertImage$({type: 'RECIPE_REF', id: 'masking-1'}))
+        } finally {
+            repaired.close()
+        }
+        assert.equal(alertAlgebra.length, 1)
     })
 
     inOperation('uses recorded asset processing and dates instead of consumer copies', async () => {

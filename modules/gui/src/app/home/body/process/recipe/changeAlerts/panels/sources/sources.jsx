@@ -9,7 +9,7 @@ import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
-import {groupedBandOptions, toSources, withChosenClassifiedOutputs} from '~/sources'
+import {groupedBandOptions, toSources} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {select} from '~/store'
 import {msg} from '~/translate'
@@ -154,7 +154,10 @@ class _Sources extends React.Component {
             .map(group => group
                 .filter(({value}) => ccdcBands.includes(value))
             )
-        const options = withChosenClassifiedOutputs(offered, band.value)
+        // Keep saved native and classified choices visible; only the shared requirement judges their validity.
+        const chosen = band.value && !offered.flat().some(({value}) => value === band.value)
+            ? [[{value: band.value, label: band.value}]] : []
+        const options = [...offered, ...chosen]
             .filter(group => group.length)
             .map(group => ({options: group}))
         return (

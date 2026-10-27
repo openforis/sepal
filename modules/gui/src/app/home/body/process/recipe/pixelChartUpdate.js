@@ -2,7 +2,7 @@ import _ from 'lodash'
 
 import {resolveChartBand} from './chartBandSelection'
 
-// What an open Time Series or CCDC chart does with what it reads at its pixel on an update, from its props now and
+// What an open Time Series, CCDC or Change Alerts chart does with what it reads at its pixel on an update, from its props now and
 // before (`prevProps`, absent on mount): `latLng`, the pixel charted; `operationsGate`, why its operations may not be
 // requested (pixelOperationsAvailability); `computation`, what they are computed from; and its `selectedBand` input.
 // `bands` are those it offers. The answer, {close, clear, select, load}: close the chart; let go of what it reads and

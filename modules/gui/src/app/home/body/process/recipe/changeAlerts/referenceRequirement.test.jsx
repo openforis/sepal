@@ -360,6 +360,7 @@ describe('Earth Engine requests that read the reference\'s segments', () => {
         await act(async () => store.dispatch(set(['process', 'loadedRecipes', ALERTS, 'model', 'reference'], ref('masking-ccdc'))))
         await settled()
 
+        await act(async () => actionBuilder('REOPEN_CHART').set(['process.loadedRecipes', ALERTS, 'ui.chartPixel'], {lat: 0, lng: 0}).dispatch())
         expect(fake.segmentRequests).toEqual([ref('masking-ccdc')])
         expect(gate('IMAGE_OUTPUT')).toBe(null)
     })
@@ -1096,7 +1097,7 @@ describe('the band a segment chart plots', () => {
 
         expect(fake.cancelledObservations).toEqual(['ndvi'])
         expect(fake.graphs.filter(({band}) => !band)).toEqual([])
-        expect(chartText()).toContain('process.ccdc.chartPixel.noChartableBand')
+        expect(alertsRecipe().ui.chartPixel).toBe(null)
         fake.graphs = []
         await act(async () => fake.heldObservations.forEach(answer => answer()))
         expect(fake.graphs).toEqual([])
@@ -1113,6 +1114,8 @@ describe('the band a segment chart plots', () => {
         await act(async () => replaceCredentials())
         await settled()
 
+        expect(alertsRecipe().ui.chartPixel).toBe(null)
+        await act(async () => actionBuilder('REOPEN_CHART').set(['process.loadedRecipes', ALERTS, 'ui.chartPixel'], {lat: 0, lng: 0}).dispatch())
         expect(fake.segmentBands).toEqual(['ndvi'])
         expect(fake.graphs.at(-1)).toMatchObject({band: 'ndvi'})
         expect(chartText()).not.toContain('process.ccdc.chartPixel.noChartableBand')
@@ -1197,14 +1200,14 @@ describe('the chart and Retrieve actions', () => {
         expect(await opens('retrieve')).toBe(true)
     })
 
-    it('hold back only Retrieve while Sources monitors a measure the reference lacks, which the chart does not plot', async () => {
+    it('hold back Retrieve and the chart while Sources monitors a measure the reference lacks', async () => {
         await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, actions: true})
 
         await act(async () => store.dispatch(set(['process', 'loadedRecipes', ALERTS, 'model', 'sources', 'band'], 'nbr')))
         await settled()
 
         expect(await opens('retrieve')).toBe(false)
-        expect(await opens('chart')).toBe(true)
+        expect(await opens('chart')).toBe(false)
     })
 
     // NDVI the alerts monitor, but only VV, which optical monitoring does not observe, plotted.
@@ -1220,6 +1223,125 @@ describe('the chart and Retrieve actions', () => {
         await settled()
 
         expect(await opens('chart')).toBe(true)
+    })
+})
+
+describe('S6 configured monitoring choices', () => {
+    it('keeps an invalid draft isolated, refuses Enter and direct submission, and leaves Cancel available', async () => {
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, panels: ['sources'], actions: true})
+        const saved = alertsRecipe().model
+        await chooseButton(RADAR_TYPE)
+        expect(applyEnabled()).toBe(false)
+        expect(errorsOf(DATA_SET_TYPE)).toEqual([expect.stringContaining('process.source.segments.noAvailableMeasure')])
+        expect(buttonNamed(field(BAND), 'ndvi')?.classList.contains(lookStyles.highlight)).toBe(true)
+        await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', code: 'Enter', bubbles: true})))
+        await act(async () => field(BAND).closest('form').dispatchEvent(new Event('submit', {bubbles: true, cancelable: true})))
+        expect(alertsRecipe().model).toBe(saved)
+        expect(actionButton('chart').disabled).toBe(false)
+        expect(actionButton('retrieve').disabled).toBe(false)
+        expect(panelButton('button.cancel').disabled).toBe(false)
+        await cancel()
+        expect(alertsRecipe().model).toBe(saved)
+    })
+
+    it('clears an asset-band finding after refresh without editing Sources and charts the configured band on reopening', async () => {
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, chart: true, chartBand: '', actions: true, panels: ['sources'],
+            sources: {...alertsModel().sources, band: 'nbr'}})
+        const saved = alertsRecipe().model
+        expect(alertsRecipe().ui.chartPixel).toBe(null)
+        expect(errorsOf(BAND)).toEqual([expect.stringContaining('process.source.segments.measureAbsent')])
+        expect(fake.segmentBands).toEqual([])
+        fake.assets[SEGMENTS_ASSET] = segmentsAsset([...SEGMENT_BANDS, ...measureBands('ndvi'), ...measureBands('nbr')])
+        await act(async () => runtime.refreshOutput({recipeId: ALERTS, product: {name: 'IMAGE_OUTPUT'}}))
+        await settled()
+        expect(alertsRecipe().model).toBe(saved)
+        expect(errorsOf(BAND)).toEqual([])
+        expect(sourceProblems()).toEqual({})
+        expect(buttonNamed(field(BAND), 'nbr')?.classList.contains(lookStyles.highlight)).toBe(true)
+        expect(panelButton('button.apply')).toBeUndefined()
+        expect(actionButton('chart').disabled).toBe(false)
+        await act(async () => actionBuilder('REOPEN_CHART').set(['process.loadedRecipes', ALERTS, 'ui.chartPixel'], {lat: 1, lng: 2}).dispatch())
+        expect(fake.segmentBands).toEqual(['nbr'])
+        expect(fake.observationBands).toEqual(['nbr'])
+    })
+
+    it('keeps a valid chart independent of an unrelated image-only requirement', async () => {
+        const original = registry.CHANGE_ALERTS.sourceRequirements
+        registry.CHANGE_ALERTS.sourceRequirements = [...original, {
+            id: 'EXPORT_ONLY_TEST', section: {id: 'retrieve', label: 'retrieve'}, operations: ['IMAGE_OUTPUT'],
+            localFacts: () => [{id: 'destination'}],
+            requirement: {id: 'EXPORT_ONLY_TEST', evaluate: () => ({status: 'UNSUPPORTED', diagnostic: {code: 'EXPORT_ONLY_TEST'}}),
+                describe: () => ({message: 'Repair the export destination', details: []})}
+        }]
+        try {
+            await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, actions: true, chart: true})
+            expect(actionButton('retrieve').disabled).toBe(true)
+            expect(actionButton('chart').disabled).toBe(false)
+            expect(fake.segmentBands).toEqual(['ndvi'])
+            expect(fake.observationBands).toEqual(['ndvi'])
+        } finally {
+            registry.CHANGE_ALERTS.sourceRequirements = original
+        }
+    })
+
+    it('keeps a missing native monitoring band selected on opening, unedited and explained', async () => {
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, panels: ['sources'], actions: true,
+            sources: {...alertsModel().sources, band: 'nbr'}})
+        const saved = alertsRecipe().model.sources
+        expect(buttonNamed(field(BAND), 'nbr')?.classList.contains(lookStyles.highlight)).toBe(true)
+        expect(errorsOf(BAND)).toEqual([expect.stringContaining('process.source.segments.measureAbsent')])
+        expect(panelButton('button.apply')).toBeUndefined()
+        expect(panelButton('button.close')).toBeDefined()
+        expect(actionButton('chart').disabled).toBe(true)
+        expect(actionButton('retrieve').disabled).toBe(true)
+        expect(alertsRecipe().model.sources).toBe(saved)
+    })
+
+    it('withdraws both chart streams after an Optical-to-Radar producer update, keeps the saved choice, and repairs through Sources Apply', async () => {
+        fake.heldSegments = []
+        fake.heldObservations = []
+        await editor({selection: ref('ccdc-optical'), chart: true, actions: true, panels: ['sources'],
+            sources: {...alertsModel().sources, band: 'nbr'}})
+        const saved = alertsRecipe().model.sources
+        expect(actionButton('chart').disabled).toBe(false)
+        expect(fake.segmentBands).toEqual(['ndvi'])
+        await editRecord('ccdc-optical', {sources: {dataSets: {SENTINEL_1: ['SENTINEL_1']}}})
+        expect(sourceProblems().sources).toContain('process.source.segments.noAvailableMeasure')
+        expect(sourceProblems().reference).toBeUndefined()
+        expect(alertsRecipe().ui.chartPixel).toBe(null)
+        expect(actionButton('chart').disabled).toBe(true)
+        expect(actionButton('retrieve').disabled).toBe(true)
+        expect(fake.cancelledSegments).toEqual(['ndvi'])
+        expect(fake.cancelledObservations).toEqual(['ndvi'])
+        expect(buttonNamed(field(BAND), 'nbr')?.classList.contains(lookStyles.highlight)).toBe(true)
+        fake.graphs = []
+        await act(async () => [...fake.heldSegments, ...fake.heldObservations].forEach(answer => answer()))
+        expect(fake.graphs).toEqual([])
+
+        await chooseButton(RADAR_TYPE)
+        await chooseButton('VV')
+        expect(errorsOf(BAND)).toEqual([])
+        expect(applyEnabled()).toBe(true)
+        expect(alertsRecipe().model.sources).toBe(saved)
+        expect(actionButton('chart').disabled).toBe(true)
+        await cancel()
+        expect(alertsRecipe().model.sources).toBe(saved)
+        expect(actionButton('chart').disabled).toBe(true)
+        await reopen('sources')
+        await chooseButton(RADAR_TYPE)
+        await chooseButton('VV')
+        await apply()
+        expect(alertsRecipe().model.sources).toMatchObject({band: 'VV', dataSetType: 'RADAR'})
+        expect(sourceProblems()).toEqual({})
+        expect(actionButton('chart').disabled).toBe(false)
+        expect(actionButton('retrieve').disabled).toBe(false)
+        expect(alertsRecipe().ui.chartPixel).toBe(null)
+        fake.heldSegments = null
+        fake.heldObservations = null
+        await act(async () => actionBuilder('REOPEN_CHART').set(['process.loadedRecipes', ALERTS, 'ui.chartPixel'], {lat: 1, lng: 2}).dispatch())
+        expect(fake.segmentBands.at(-1)).toBe('VV')
+        expect(fake.observationBands.at(-1)).toBe('VV')
+        expect(fake.graphs.at(-1)).toMatchObject({band: 'VV'})
     })
 })
 
@@ -1409,14 +1531,14 @@ describe('the segment chart over a reference recipe built as its own image', () 
         expect(fake.segmentRequests).toHaveLength(1)
     })
 
-    it('is offered whatever the alerts monitor, though that keeps Retrieve back', async () => {
+    it('is held to the configured monitoring choice, as Retrieve is', async () => {
         await editor({selection: ref('masking-ccdc'), actions: true})
 
         await act(async () => store.dispatch(set(['process', 'loadedRecipes', ALERTS, 'model', 'sources', 'band'], 'probability_1')))
         await settled()
 
         expect(await opens('retrieve')).toBe(false)
-        expect(await opens('chart')).toBe(true)
+        expect(await opens('chart')).toBe(false)
     })
 
     // The action is read rather than pressed: the panel open shields what lies outside it.
@@ -2210,7 +2332,7 @@ function alertsModel(selection) {
     }
 }
 
-const editor = async ({selection, owner = true, chart = false, layer = false, actions = false, panels = [], unloaded, initialized = true, wizard = false, options, records, sources}) => {
+const editor = async ({selection, owner = true, chart = false, chartBand = 'ndvi', layer = false, actions = false, panels = [], unloaded, initialized = true, wizard = false, options, records, sources}) => {
     const initialState = sessionState({selection, tabs: [{id: ALERTS}], unloaded, records})
     initialState.process.loadedRecipes[ALERTS].ui.initialized = initialized
     if (options) initialState.process.loadedRecipes[ALERTS].model.options = options
@@ -2272,7 +2394,7 @@ const editor = async ({selection, owner = true, chart = false, layer = false, ac
                             <>
                                 <PortalContainer id='chart-panel'/>
                                 <PortalContext id='chart-panel'>
-                                    <ChartPixel values={{selectedBand: 'ndvi'}}/>
+                                    <ChartPixel values={{selectedBand: chartBand}}/>
                                 </PortalContext>
                             </>
                         )

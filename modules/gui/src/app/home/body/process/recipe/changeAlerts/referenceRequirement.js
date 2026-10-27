@@ -74,7 +74,7 @@ export const referenceRequirements = [
             available: availableMeasures(recipe.model.sources?.dataSetType),
             observed: settingsOf(recipe).model ? observedMeasures(settingsOf(recipe).model) : null
         }),
-        operations: [IMAGE_OUTPUT]
+        operations: [IMAGE_OUTPUT, PIXEL_SEGMENTS, PIXEL_OBSERVATIONS]
     },
     {
         role: PRIMARY_IMAGE,

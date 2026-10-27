@@ -154,6 +154,15 @@ otherwise it remains a read-only summary without an action affordance. Change Al
 strong-scatterer toggle that its observed time-series collection does not read; the thresholds actually used by that
 collection retain their reference ownership or explicit unrecorded fallback. Ordinary radar controls are unchanged.
 
+Change Alerts' configured monitoring band is part of its alerts and analysis chart, independently of the band
+currently explored in that chart. The existing monitored-measure rule must explain an incompatible choice in Sources
+and hold retrieval and both chart streams. Keep missing native as well as classified selections visible in the draft;
+opening must not normalize a broken applied choice into a different one or make it appear repaired. A valid draft
+repair is applicable; Cancel and unsaved edits leave applied findings and gates unchanged. Confirmed invalidity closes
+an open chart and cancels both streams, and repair makes reopening available without reopening it automatically.
+An unrelated image-only/export requirement is not a chart prerequisite. Metadata acquisition remains separate from
+computation authorization; the same semantic rule can judge current catalogue facts at a guarded server boundary.
+
 New computing-segment exports record bounded, server-derived `processing` metadata and their date representation.
 Readers distinguish complete canonical/recognised producer records from partial imports and apply precedence per
 field; malformed governing metadata cannot silently fall through. This is additive: existing assets and saved
@@ -366,6 +375,12 @@ Cancel obsolete requests, release watches when their owners leave, and reject st
 must withdraw the authority to continue the affected operation; a later repair uses current evidence. Save agreement
 and source currency remain part of that decision.
 
+Shared reads and transport boundaries own notification context. Share the answer, but deliver each subscriber's
+next, error and completion in the context captured when that subscriber subscribes. Enforce this inside the private
+sharing mechanism, so callers cannot accidentally omit a wrapper. Keep producer authority, operation lifetime and
+dependency ancestry intact. Test concurrent subscribers and completion-driven continuations with delayed reads;
+instrumentation must not add an asynchronous hop that hides the actual delivery behavior.
+
 Draw a chart only when its container can be measured. Keep data received while hidden and display it on return
 without a second request just to repair layout. Fix a shared lifecycle defect in its owning component and verify
 unrelated users, rather than adding per-chart delays or unconditional rebuilding.
@@ -410,10 +425,10 @@ distinction between a reported pass, an independently observed result and an unt
 These principles narrow the decisions; they do not settle every product policy:
 
 - How to present an explicitly selected empty Provider, especially when other data supplies points.
-- When optional Change Alerts defaults are initially copied, and how explicit copying is offered. The recommendation
-  is initialization during creation plus explicit copying later; it is not continuous synchronization.
-- Which processing settings must match a reference, how Consumer features map over multiple Provider inputs, and
-  what metadata existing assets provide. These need technical evidence before their ownership can be implemented.
+- How the deferred explicit "Use reference settings" action presents proposed edits. S5 has already settled
+  first-Reference-Apply seeding and required processing ownership; this is not permission to resume continuous copying.
+- What scientific comparability and additional legacy asset metadata establish beyond the implemented processing
+  ownership contract. Unknown provenance must not silently acquire an invented producer snapshot.
 - Whether a particular configuration editor may Apply unresolved evidence. Applying configuration and starting a
   computation must remain distinct decisions.
 

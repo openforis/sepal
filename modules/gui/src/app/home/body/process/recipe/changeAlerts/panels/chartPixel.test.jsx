@@ -5,6 +5,7 @@ import {legacy_createStore as createStore} from 'redux'
 import {finalize, of, Subject} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {assetProcessing, processingOfProducer} from '#sepal/recipe/changeAlerts/processing'
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {initStore} from '~/store'
@@ -154,6 +155,7 @@ const observe = evidence => act(() => actionBuilder('OBSERVED')
 const sourceEvidence = ({dateFormat, source = SOURCE}) => ({
     sourceKey: source,
     status: 'OBSERVED',
+    processing: source.startsWith('ASSET:') ? assetProcessing({dateFormat}) : processingOfProducer({options: {}}),
     segments: {bands: ['ndvi_rmse'], baseBands: [{name: 'ndvi', measures: ['value']}], dateFormat}
 })
 

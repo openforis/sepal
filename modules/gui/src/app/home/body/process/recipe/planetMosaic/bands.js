@@ -1,4 +1,5 @@
 import {IMAGE_OUTPUT} from '#sepal/recipe/output/product'
+import {TEMPORAL_PLANET_BANDS} from '#sepal/recipe/planet/planetBands'
 import {
     PLANET_MOSAIC_INDEXES,
     PLANET_MOSAIC_SPECTRAL_BANDS,
@@ -25,10 +26,7 @@ export const groupedBandPresentation = () =>
 // The Planet bands temporal recipes offer as choices, and the presets CCDC offers over them. A choice list kept as it
 // always was, not the Planet collection's schema: the collection also computes kndvi, and PSB.SD-only Daily imagery
 // carries more bands, as shared CCDC declares its measures (lib/js/shared/src/recipe/type/ccdc.js).
-export const TEMPORAL_PLANET_BANDS = [
-    ['blue', 'green', 'red', 'nir'],
-    ['ndvi', 'ndwi', 'evi', 'evi2', 'savi']
-]
+export {TEMPORAL_PLANET_BANDS}
 
 export const temporalPlanetBandOptions = () =>
     toOptions(TEMPORAL_PLANET_BANDS)
