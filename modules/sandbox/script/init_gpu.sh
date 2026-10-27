@@ -24,10 +24,18 @@ apt-get update
 export CUDA_VERSION=12.8
 
 # tensorflow 2.19 requires CUDA<13 and R torch require CUDA<12.9
-# apt-get -y install cuda-toolkit=12.9.1-1
-# apt-get -y install cudnn9-cuda-12 cuda-cudart-12.9
-apt-get -y install cuda-toolkit=12.8.1-1
-apt-get -y install cudnn9-cuda-12 cuda-cudart-12.8
+# cuda-toolkit without its visual tools (Nsight, nvvp), documentation and GDS tools.
+# cuDNN without its static libraries.
+apt-get -y install \
+    cuda-compiler-12-8 \
+    cuda-libraries-12-8 \
+    cuda-libraries-dev-12-8 \
+    cuda-command-line-tools-12-8 \
+    cuda-nvml-dev-12-8
+apt-get -y install libcudnn9-cuda-12 libcudnn9-dev-cuda-12 cuda-cudart-12.8
+
+# Static libraries take gigabytes; nvcc links libcudart_static.a by default, so keep it.
+find /usr/local/cuda-${CUDA_VERSION} -name '*_static*.a' ! -name libcudart_static.a -delete
 
 
 # tensorflow 2.20.0 crashes, pinning an older version

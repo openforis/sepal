@@ -9,6 +9,10 @@ ARG PIP_BREAK_SYSTEM_PACKAGES=1
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
 ENV UV_BREAK_SYSTEM_PACKAGES=1
 
+# Build-time only: package caches would otherwise stay in the image layers
+ARG UV_NO_CACHE=1
+ARG PIP_NO_CACHE_DIR=1
+
 
 # Use specific Java version
 ARG JAVA_VERSION=11.0.32-tem

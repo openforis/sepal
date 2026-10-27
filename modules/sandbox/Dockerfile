@@ -1,5 +1,9 @@
 FROM openforis/sandbox-base
 
+# Build-time only: package caches would otherwise stay in the image layers
+ARG UV_NO_CACHE=1
+ARG PIP_NO_CACHE_DIR=1
+
 ENV MODULE_NAME sandbox
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     JAVA_HOME=/usr/local/lib/sdkman/candidates/java/current \
