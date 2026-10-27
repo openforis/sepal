@@ -70,7 +70,7 @@ class _Usage extends React.Component {
 
     renderStatistics() {
         return (
-            <UsageStatistics framed/>
+            <UsageStatistics/>
         )
     }
 
