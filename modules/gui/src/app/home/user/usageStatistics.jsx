@@ -8,6 +8,7 @@ import {connect} from '~/connect'
 import format from '~/format'
 import {msg} from '~/translate'
 import {Icon} from '~/widget/icon'
+import {Scrollable} from '~/widget/scrollable'
 import {Tooltip} from '~/widget/tooltip'
 import {Widget} from '~/widget/widget'
 
@@ -57,12 +58,14 @@ class _UsageStatistics extends React.Component {
     renderMonths(months) {
         const hasGpu = months.some(({overall: {gpu}}) => gpu)
         return (
-            <table className={styles.table}>
-                {this.renderHeader(msg('user.userDetails.form.usage.month'), hasGpu)}
-                <tbody>
-                    {months.map(month => this.renderMonth(month, hasGpu))}
-                </tbody>
-            </table>
+            <Scrollable direction='x' containerClassName={styles.months}>
+                <table className={styles.table}>
+                    {this.renderHeader(msg('user.userDetails.form.usage.month'), hasGpu)}
+                    <tbody>
+                        {months.map(month => this.renderMonth(month, hasGpu))}
+                    </tbody>
+                </table>
+            </Scrollable>
         )
     }
 

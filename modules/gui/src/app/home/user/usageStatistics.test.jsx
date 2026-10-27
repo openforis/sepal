@@ -1,6 +1,6 @@
 // Whose usage the statistics show, and how. connect() is mocked away, so the stream prop it would inject
-// subscribes directly. The label is a passthrough, and each tooltip renders its content beside the
-// page, in the order of the months.
+// subscribes directly. The label and the sideways scrolling are passthroughs, and each tooltip renders
+// its content beside the page, in the order of the months.
 
 import {act} from 'react'
 import {createPortal} from 'react-dom'
@@ -11,6 +11,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 vi.mock('~/connect', () => ({connect: () => component => component}))
 vi.mock('~/apiRegistry', () => ({default: {sessions: {usage$: vi.fn(), userUsage$: vi.fn()}}}))
 vi.mock('~/widget/icon', () => ({Icon: ({name}) => <span className={name}/>}))
+vi.mock('~/widget/scrollable', () => ({Scrollable: ({children}) => <div>{children}</div>}))
 vi.mock('~/widget/widget', () => ({
     Widget: ({label, children}) => <div><label>{label}</label><div className='content'>{children}</div></div>
 }))

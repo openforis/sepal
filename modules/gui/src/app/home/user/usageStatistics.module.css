@@ -1,3 +1,9 @@
+/* Takes the width it is given rather than the table's, so a narrow panel scrolls the table sideways
+   instead of widening. */
+.months {
+    contain: inline-size;
+}
+
 .table {
     border-collapse: collapse;
     font-size: .8rem;
