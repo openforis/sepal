@@ -8,12 +8,13 @@ import {State} from './workerSession.js'
 import {createWorkerSessionApiKey} from './workerSessionApiKey.js'
 
 describe('createWorkerSessionApiKey (single lookup, no internal retry)', () => {
-    test('returns the api_key of a PENDING/ACTIVE session on the instance', async () => {
+    test('returns the api_key of the session when it is PENDING/ACTIVE on the instance', async () => {
         const sessionOnInstance = mock.fn(async () => ({
+            id: 's-1',
             apiKey: 'the-key'
         }))
         const apiKey = createWorkerSessionApiKey({sessionOnInstance})
-        assert.equal(await apiKey.apiKeyForInstance('i-1'), 'the-key')
+        assert.equal(await apiKey.apiKeyForSession('i-1', 's-1'), 'the-key')
         assert.equal(sessionOnInstance.mock.callCount(), 1)
         assert.deepEqual(callsOf(sessionOnInstance), [['i-1', [State.PENDING, State.ACTIVE]]])
     })
@@ -21,13 +22,23 @@ describe('createWorkerSessionApiKey (single lookup, no internal retry)', () => {
     test('returns null when no session exists on the instance', async () => {
         const sessionOnInstance = mock.fn(async () => null)
         const apiKey = createWorkerSessionApiKey({sessionOnInstance})
-        assert.equal(await apiKey.apiKeyForInstance('i-none'), null)
+        assert.equal(await apiKey.apiKeyForSession('i-none', 's-1'), null)
+    })
+
+    // A provision that outlived its session must not start a sandbox with the next user's key.
+    test('returns null when another session holds the instance', async () => {
+        const sessionOnInstance = mock.fn(async () => ({
+            id: 's-bob',
+            apiKey: 'bobs-key'
+        }))
+        const apiKey = createWorkerSessionApiKey({sessionOnInstance})
+        assert.equal(await apiKey.apiKeyForSession('i-1', 's-alice'), null)
     })
 
     test('does a SINGLE repo lookup — no internal retry (the 4b wrapper supplies the retry)', async () => {
         const sessionOnInstance = mock.fn(async () => null)
         const apiKey = createWorkerSessionApiKey({sessionOnInstance})
-        await apiKey.apiKeyForInstance('i-1')
+        await apiKey.apiKeyForSession('i-1', 's-1')
         assert.equal(sessionOnInstance.mock.callCount(), 1)
     })
 })
@@ -36,6 +47,7 @@ describe('composed with the 4b createApiKeyRetryWrapper (5×50ms end-to-end)', (
     test('wrapper retries the single-lookup impl: null then value → resolves to the value', async () => {
         // First lookup misses (row not committed yet), second lookup finds the session.
         const sessionOnInstance = mock.fn(inSequence([async () => null, async () => ({
+            id: 's-1',
             apiKey: 'raced-key'
         })]))
         // delayMs=0 keeps the test fast; the composition (one lookup per attempt) is what matters.
@@ -43,7 +55,7 @@ describe('composed with the 4b createApiKeyRetryWrapper (5×50ms end-to-end)', (
             createWorkerSessionApiKey({sessionOnInstance}),
             {retries: 5, delayMs: 0}
         )
-        assert.equal(await wrapped.apiKeyForInstance('i-1'), 'raced-key')
+        assert.equal(await wrapped.apiKeyForSession('i-1', 's-1'), 'raced-key')
         // Exactly one lookup per attempt — no double-retry.
         assert.equal(sessionOnInstance.mock.callCount(), 2)
     })
@@ -54,7 +66,7 @@ describe('composed with the 4b createApiKeyRetryWrapper (5×50ms end-to-end)', (
             createWorkerSessionApiKey({sessionOnInstance}),
             {retries: 5, delayMs: 0}
         )
-        assert.equal(await wrapped.apiKeyForInstance('i-1'), null)
+        assert.equal(await wrapped.apiKeyForSession('i-1', 's-1'), null)
         assert.equal(sessionOnInstance.mock.callCount(), 5)
     })
 })

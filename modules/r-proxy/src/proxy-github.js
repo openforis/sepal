@@ -1,24 +1,16 @@
-import fs from 'node:fs'
-import {mkdir} from 'node:fs/promises'
-import Path from 'node:path'
-
 import httpProxy from 'http-proxy'
 
 import {getLogger} from '#sepal/log'
 
 import {getGitHubPackageInfo, getGitHubRepoPath, getGitHubTarget} from './github.js'
-import {checkTarget, serveError, serveFile} from './proxy-utils.js'
+import {checkTarget, forwardAndCache, serveError, serveFailure, serveFile} from './proxy-utils.js'
 import {enqueueBuildGitHubPackage} from './queue.js'
 
 const log = getLogger('proxy/github')
 
-const buildBinaryPackage = req => {
-    const requestData = getGitHubPackageInfo(req.url)
-    if (requestData) {
-        const {name, path} = requestData
-        enqueueBuildGitHubPackage(name, path)
-    }
-}
+const buildBinaryPackage = ({name, path}) =>
+    enqueueBuildGitHubPackage(name, path)
+        .catch(error => log.error(`Cannot enqueue build of ${name}:`, error))
 
 const proxy = httpProxy.createProxyServer({
     secure: false,
@@ -28,50 +20,31 @@ const proxy = httpProxy.createProxyServer({
     followRedirects: true
 })
 
-proxy.on('proxyRes', (proxyRes, req, res, _options) => {
+proxy.on('proxyRes', async (proxyRes, req, res, _options) => {
     const requestData = getGitHubPackageInfo(req.url)
-    if (requestData) {
-        const {path} = requestData
-        const repoPath = getGitHubRepoPath('src', path)
-        const tmpPath = `${repoPath}.tmp`
-        const repoDir = Path.dirname(repoPath)
-        if (proxyRes.statusCode === 200) {
-            mkdir(repoDir, {recursive: true})
-                .then(() => {
-                    const stream = fs.createWriteStream(tmpPath)
-                    stream.on('finish', () => {
-                        log.trace('Moving to', repoPath)
-                        fs.renameSync(tmpPath, repoPath)
-                        buildBinaryPackage(req)
-                        log.debug('Proxied', req.url)
-                    })
-                    log.trace('Saving to', tmpPath)
-                    proxyRes.pipe(stream)
-                    proxyRes.pipe(res)
-                })
-                .catch(error => log.error('Cannot create dir:', error))
-        } else {
-            log.debug(`Failed proxy request (${proxyRes.statusCode}):`, req.url)
-            res.writeHead(500, {
-                'Content-Type': 'text/plain'
-            })
-            res.end('Something went wrong.')
+    if (!requestData) {
+        log.warn('Failed proxy request (unknown path):', req.url)
+        proxyRes.resume()
+        serveFailure(res)
+    } else if (proxyRes.statusCode === 200) {
+        try {
+            await forwardAndCache({proxyRes, res, path: getGitHubRepoPath('src', requestData.path)})
+            buildBinaryPackage(requestData)
+            log.debug('Proxied', req.url)
+        } catch (error) {
+            log.warn('Failed proxy request:', req.url, error.message)
+            serveFailure(res)
         }
     } else {
-        log.warn('Failed proxy request (unknown path):', req.url)
-        res.writeHead(500, {
-            'Content-Type': 'text/plain'
-        })
-        res.end('Something went wrong.')
+        log.debug(`Failed proxy request (${proxyRes.statusCode}):`, req.url)
+        proxyRes.resume()
+        serveFailure(res)
     }
 })
 
 proxy.on('error', (error, req, res) => {
     log.error('proxy error', error)
-    res.writeHead(500, {
-        'Content-Type': 'text/plain'
-    })
-    res.end('Something went wrong.')
+    serveFailure(res)
 })
 
 const serveCachedBinary = async (req, res, path) =>

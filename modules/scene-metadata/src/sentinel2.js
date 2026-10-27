@@ -1,6 +1,6 @@
-import {getDayOfYear} from 'date-fns'
-
 import {getLogger} from '#sepal/log'
+
+import {dayOfYearIgnoringLeapDay} from './sceneSearch.js'
 
 const log = getLogger('sentinel2')
 
@@ -67,7 +67,7 @@ const scene = ({id, productUri, acquiredTimestamp, cloudCover}) =>
         dataset: 'SENTINEL_2',
         sceneAreaId: getSceneAreaId(productUri),
         acquiredTimestamp,
-        dayOfYear: getDayOfYear(acquiredTimestamp),
+        dayOfYear: dayOfYearIgnoringLeapDay(new Date(acquiredTimestamp)),
         cloudCover: getCloudCover(cloudCover),
         sunAzimuth: 0,
         sunElevation: 0

@@ -157,4 +157,4 @@ const startStorageCheck = async () => {
     })
 }
 
-export {scanComplete$, scheduleStorageCheck, startStorageCheck}
+export {scanComplete$, scheduleRescan, startStorageCheck}

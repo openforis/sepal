@@ -1,31 +1,20 @@
 import assert from 'node:assert/strict'
-import fs from 'node:fs'
 import {afterEach, beforeEach, describe, it, mock, test} from 'node:test'
 import {isDeepStrictEqual} from 'node:util'
 
 import {assertMatches} from '#sepal/testSupport/assert'
 import {callsOf} from '#sepal/testSupport/mock'
 
-// Mock node:fs so pubKeyPath reads don't touch the real filesystem. The mock also reaches CommonJS
-// dependencies, so everything else stays real.
-const mockReadFileSync = mock.fn(() => 'ssh-rsa AAAAB3NzaC1yc2E test-key\n')
-
-mock.module('node:fs', {
-    exports: {
-        ...fs,
-        default: {...fs, readFileSync: mockReadFileSync},
-        readFileSync: mockReadFileSync
-    }
-})
-
-// Import the modules AFTER mocking (ESM: dynamic import after mock.module).
-const {createDockerInstanceProvisioner} = await import('./dockerInstanceProvisioner.js')
-const {createApiKeyRetryWrapper, NULL_API_KEY_IMPL} = await import('./sandboxSessionApiKey.js')
-const {instanceName} = await import('../instanceName.js')
+import {instanceName} from '../instanceName.js'
+import {createDockerInstanceProvisioner} from './dockerInstanceProvisioner.js'
+import {createApiKeyRetryWrapper, NULL_API_KEY_IMPL} from './sandboxSessionApiKey.js'
 
 // Provisioning refuses without a key, so this stands in for the session lookup wherever the key
 // itself is not the subject.
-const SESSION_API_KEY = {apiKeyForInstance: async () => 'session-key'}
+const SESSION_API_KEY = {apiKeyForSession: async () => 'session-key'}
+
+const userPublicKey = username => `ssh-rsa AAAAB3NzaC1yc2E Sandbox key for ${username}`
+const USER_PUBLIC_KEYS = {publicKey: async username => userPublicKey(username)}
 
 const CONFIG = {
     workerAmiVersion: '5.1.0',
@@ -101,7 +90,6 @@ describe('buildContainerBody — SANDBOX', () => {
     let capturedBody
 
     beforeEach(() => {
-        mockReadFileSync.mock.mockImplementation(() => 'ssh-rsa AAAAB3NzaC1yc2E test-key\n')
         setupFetchMock({captureCreate: body => { capturedBody = body }})
     })
 
@@ -110,6 +98,7 @@ describe('buildContainerBody — SANDBOX', () => {
             config: cfg,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: SESSION_API_KEY,
+            userPublicKeys: USER_PUBLIC_KEYS,
         })
         return provisioner.provisionInstance(makeInstance())
     }
@@ -129,9 +118,9 @@ describe('buildContainerBody — SANDBOX', () => {
         assert.deepEqual(capturedBody.Cmd, ['/script/init_container.sh'])
     })
 
-    test('Env contains USER_PUBLIC_KEY', async () => {
+    test('Env contains the public key of the reservation\'s user', async () => {
         await runProvision()
-        assert.equal(capturedBody.Env.some(e => e.startsWith('USER_PUBLIC_KEY=')), true)
+        assert.ok(capturedBody.Env.includes(`USER_PUBLIC_KEY=${userPublicKey('alice')}`))
     })
 
     test('Env contains the session api key', async () => {
@@ -197,6 +186,7 @@ describe('buildContainerBody — SANDBOX', () => {
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: SESSION_API_KEY,
+            userPublicKeys: USER_PUBLIC_KEYS,
         })
         await provisioner.provisionInstance(makeInstance({type: 'G5Xlarge'}))
         assert.deepEqual(capturedBody.HostConfig.Devices, [
@@ -255,6 +245,7 @@ describe('buildContainerBody — SANDBOX', () => {
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: SESSION_API_KEY,
+            userPublicKeys: USER_PUBLIC_KEYS,
         })
         await provisioner.provisionInstance(makeInstance({type: 'G5Xlarge'}))
         assert.ok(capturedBody.Env.includes('SEPAL_INSTANCE_TYPE=g5.xlarge'))
@@ -278,6 +269,7 @@ describe('buildContainerBody — SANDBOX', () => {
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: SESSION_API_KEY,
+            userPublicKeys: USER_PUBLIC_KEYS,
             extraHosts: ['sepal.example.com:host-gateway'],
         })
         await provisioner.provisionInstance(makeInstance())
@@ -290,7 +282,6 @@ describe('provisionInstance sequence', () => {
 
     beforeEach(() => {
         calls.length = 0
-        mockReadFileSync.mock.mockImplementation(() => 'ssh-rsa test')
 
         globalThis.fetch = mock.fn(async (url, opts) => {
             if (url.endsWith('/wait')) return dockerWaitExit(0)
@@ -313,6 +304,7 @@ describe('provisionInstance sequence', () => {
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: SESSION_API_KEY,
+            userPublicKeys: USER_PUBLIC_KEYS,
         })
         await provisioner.provisionInstance(makeInstance())
         const paths = calls.map(c => `${c.method} ${new URL(c.url).pathname}`)
@@ -356,6 +348,7 @@ describe('provisionInstance on a scratch device', () => {
         config: CONFIG,
         instanceTypes: INSTANCE_TYPES,
         sandboxSessionApiKey: SESSION_API_KEY,
+        userPublicKeys: USER_PUBLIC_KEYS,
     })
 
     const formatName = 'sandbox.format-tmp.inst-abc123'
@@ -446,9 +439,6 @@ describe('provisionInstance on a scratch device', () => {
 })
 
 describe('provisionInstance deletes .worker containers only', () => {
-    beforeEach(() => {
-        mockReadFileSync.mock.mockImplementation(() => 'ssh-rsa test')
-    })
 
     test('deletes .worker container but not other containers', async () => {
         const deletedIds = []
@@ -480,6 +470,7 @@ describe('provisionInstance deletes .worker containers only', () => {
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: SESSION_API_KEY,
+            userPublicKeys: USER_PUBLIC_KEYS,
         })
         await provisioner.provisionInstance(makeInstance())
 
@@ -489,9 +480,6 @@ describe('provisionInstance deletes .worker containers only', () => {
 })
 
 describe('undeploy', () => {
-    beforeEach(() => {
-        mockReadFileSync.mock.mockImplementation(() => 'ssh-rsa test')
-    })
 
     test('calls GET containers/json then DELETE for .worker containers', async () => {
         const deletedIds = []
@@ -631,9 +619,6 @@ describe('undeploy', () => {
 })
 
 describe('instanceStatus', () => {
-    beforeEach(() => {
-        mockReadFileSync.mock.mockImplementation(() => 'ssh-rsa test')
-    })
 
     const probe = () => createDockerInstanceProvisioner({
         config: CONFIG,
@@ -711,9 +696,6 @@ describe('instanceStatus', () => {
 })
 
 describe('apiKey retry', () => {
-    beforeEach(() => {
-        mockReadFileSync.mock.mockImplementation(() => 'ssh-rsa test')
-    })
 
     test('apiKey is passed to SANDBOX Env when non-null', async () => {
         let capturedEnv = null
@@ -721,7 +703,7 @@ describe('apiKey retry', () => {
 
         let callCount = 0
         const mockApiKeyImpl = {
-            apiKeyForInstance: mock.fn(async () => {
+            apiKeyForSession: mock.fn(async () => {
                 callCount++
                 if (callCount < 5) return null
                 return 'my-api-key'
@@ -733,11 +715,12 @@ describe('apiKey retry', () => {
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: retryWrapper,
+            userPublicKeys: USER_PUBLIC_KEYS,
         })
         await provisioner.provisionInstance(makeInstance())
 
         assert.ok(capturedEnv.includes('SEPAL_API_KEY=my-api-key'))
-        assert.equal(mockApiKeyImpl.apiKeyForInstance.mock.callCount(), 5)
+        assert.equal(mockApiKeyImpl.apiKeyForSession.mock.callCount(), 5)
     })
 
     test('no container is created when the key is never found', async () => {
@@ -753,44 +736,83 @@ describe('apiKey retry', () => {
         await assert.rejects(provisioner.provisionInstance(makeInstance()), /api key/)
         assert.equal(created, false)
     })
+
+    // A provision that outlived its session must leave the next session's sandbox standing.
+    test('deletes nothing when the instance is no longer the session\'s', async () => {
+        const methods = []
+        globalThis.fetch = mock.fn(async (url, opts) => {
+            methods.push(opts?.method ?? 'GET')
+            return {ok: true, status: 200, text: async () => JSON.stringify([{Id: 'bob-id', Names: ['/sandbox.bob.inst-abc123']}])}
+        })
+        const sandboxSessionApiKey = {
+            apiKeyForSession: mock.fn(async (_instanceId, sessionId) => sessionId === 'sess-bob' ? 'bobs-key' : null)
+        }
+        const provisioner = createDockerInstanceProvisioner({config: CONFIG, instanceTypes: INSTANCE_TYPES, sandboxSessionApiKey})
+        const instance = makeInstance()
+
+        await assert.rejects(provisioner.provisionInstance(instance), /api key/)
+
+        assert.deepEqual(callsOf(sandboxSessionApiKey.apiKeyForSession), [[instance.id, instance.reservation.sessionId]])
+        assert.deepEqual(methods.filter(method => method !== 'GET'), [])
+    })
+})
+
+describe('user public key', () => {
+    test('a key that cannot be fetched fails the provision before any container is touched', async () => {
+        const methods = []
+        globalThis.fetch = mock.fn(async (url, opts) => {
+            methods.push(opts?.method ?? 'GET')
+            return {ok: true, status: 200, text: async () => '[]'}
+        })
+        const provisioner = createDockerInstanceProvisioner({
+            config: CONFIG,
+            instanceTypes: INSTANCE_TYPES,
+            sandboxSessionApiKey: SESSION_API_KEY,
+            userPublicKeys: {publicKey: async () => { throw new Error('user module unavailable') }},
+        })
+
+        await assert.rejects(provisioner.provisionInstance(makeInstance()), /user module unavailable/)
+
+        assert.deepEqual(methods.filter(method => method !== 'GET'), [])
+    })
 })
 
 describe('createApiKeyRetryWrapper', () => {
     test('returns null when impl always returns null (all retries exhausted)', async () => {
-        const impl = {apiKeyForInstance: mock.fn(async () => null)}
+        const impl = {apiKeyForSession: mock.fn(async () => null)}
         const wrapper = createApiKeyRetryWrapper(impl, {retries: 5, delayMs: 0})
-        const result = await wrapper.apiKeyForInstance('i-001')
+        const result = await wrapper.apiKeyForSession('i-001')
         assert.equal(result, null)
-        assert.equal(impl.apiKeyForInstance.mock.callCount(), 5)
+        assert.equal(impl.apiKeyForSession.mock.callCount(), 5)
     })
 
     test('returns value on 3rd attempt when first 2 return null', async () => {
         let count = 0
         const impl = {
-            apiKeyForInstance: mock.fn(async () => {
+            apiKeyForSession: mock.fn(async () => {
                 count++
                 return count < 3 ? null : 'api-key-value'
             })
         }
         const wrapper = createApiKeyRetryWrapper(impl, {retries: 5, delayMs: 0})
-        const result = await wrapper.apiKeyForInstance('i-002')
+        const result = await wrapper.apiKeyForSession('i-002')
         assert.equal(result, 'api-key-value')
-        assert.equal(impl.apiKeyForInstance.mock.callCount(), 3)
+        assert.equal(impl.apiKeyForSession.mock.callCount(), 3)
     })
 
     test('returns value on first attempt when immediately available', async () => {
-        const impl = {apiKeyForInstance: mock.fn(async () => 'immediate-key')}
+        const impl = {apiKeyForSession: mock.fn(async () => 'immediate-key')}
         const wrapper = createApiKeyRetryWrapper(impl, {retries: 5, delayMs: 0})
-        const result = await wrapper.apiKeyForInstance('i-003')
+        const result = await wrapper.apiKeyForSession('i-003')
         assert.equal(result, 'immediate-key')
-        assert.equal(impl.apiKeyForInstance.mock.callCount(), 1)
+        assert.equal(impl.apiKeyForSession.mock.callCount(), 1)
     })
 
     test('sleeps delayMs between retries, and not after the successful attempt', async () => {
         const slept = []
         let count = 0
         const impl = {
-            apiKeyForInstance: mock.fn(async () => {
+            apiKeyForSession: mock.fn(async () => {
                 count++
                 return count < 3 ? null : 'key'
             })
@@ -800,23 +822,20 @@ describe('createApiKeyRetryWrapper', () => {
             delayMs: 50,
             _sleep: async ms => { slept.push(ms) },
         })
-        const result = await wrapper.apiKeyForInstance('i-004')
+        const result = await wrapper.apiKeyForSession('i-004')
         assert.equal(result, 'key')
-        assert.equal(impl.apiKeyForInstance.mock.callCount(), 3)
+        assert.equal(impl.apiKeyForSession.mock.callCount(), 3)
         // Two failed attempts → two sleeps; the third succeeds and returns without sleeping.
         assert.deepEqual(slept, [50, 50])
     })
 
     test('NULL_API_KEY_IMPL always returns null', async () => {
-        const result = await NULL_API_KEY_IMPL.apiKeyForInstance('any-id')
+        const result = await NULL_API_KEY_IMPL.apiKeyForSession('any-id')
         assert.equal(result, null)
     })
 })
 
 describe('waitUntilDockerIsAvailable', () => {
-    beforeEach(() => {
-        mockReadFileSync.mock.mockImplementation(() => 'ssh-rsa test')
-    })
 
     test('succeeds after transient errors then success', async () => {
         let callCount = 0
@@ -837,6 +856,7 @@ describe('waitUntilDockerIsAvailable', () => {
             config: CONFIG,
             instanceTypes: INSTANCE_TYPES,
             sandboxSessionApiKey: SESSION_API_KEY,
+            userPublicKeys: USER_PUBLIC_KEYS,
         })
         assert.equal(await provisioner.provisionInstance(makeInstance()), undefined)
     })
@@ -883,7 +903,7 @@ const makeProvisioner = ({defaultDaemonHost = 'daemon-host'} = {}) =>
     createDockerInstanceProvisioner({
         config: ORPHAN_CONFIG,
         instanceTypes: [],
-        sandboxSessionApiKey: {apiKeyForInstance: async () => null},
+        sandboxSessionApiKey: {apiKeyForSession: async () => null},
         defaultDaemonHost,
     })
 

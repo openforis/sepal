@@ -10,11 +10,11 @@ import styles from './tag.module.css'
 
 class _Tag extends React.Component {
     render() {
-        const {shape, size, upperCase, tooltip, tooltipPlacement} = this.props
+        const {shape, look, size, upperCase, tooltip, tooltipPlacement} = this.props
         return (
             <Shape
                 shape={shape}
-                look='transparent'
+                look={look}
                 size={size}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
@@ -44,6 +44,7 @@ export const Tag = compose(
     _Tag,
     asFunctionalComponent({
         shape: 'pill',
+        look: 'transparent',
         size: 'normal',
         upperCase: true
     })
@@ -54,6 +55,7 @@ Tag.propTypes = {
     shape: PropTypes.any,
     icon: PropTypes.any,
     label: PropTypes.any,
+    look: PropTypes.string,
     size: PropTypes.any,
     tooltip: PropTypes.any,
     tooltipPlacement: PropTypes.string,

@@ -24,5 +24,5 @@ const sendApps = async ctx => {
 export default router =>
     router
         .get('/list', sendApps)
-        .get('/images/:filename', ctx => sendFile(ctx, `/var/lib/sepal/app-manager/images/${ctx.params.filename}`))
+        .get('/images/:filename', ctx => sendFile(ctx, '/var/lib/sepal/app-manager/images', ctx.params.filename))
         .get('/labextensions/:app_name/{*path}', staticLabextensionsMiddleware)

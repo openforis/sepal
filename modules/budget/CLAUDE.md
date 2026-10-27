@@ -14,11 +14,14 @@ instance + storage spending and enforces monthly budgets; owns the `budget` MySQ
 ## Routes
 - `GET /budget/report` [admin], `POST /budget` [admin], `POST /budget/requestUpdate` [user]
 - `GET /budget/spending/:username` [admin] — internal 8-field Spending DTO (used by the ssh-gateway menu)
-- `GET /budget/check/:username` [admin] — internal live over-budget verdict
+- `POST /budget/check/:username` [admin] — internal live over-budget verdict
   `{username, exceeded, reason}`, `reason` ∈ `INSTANCE_BUDGET | STORAGE_BUDGET | STORAGE_QUOTA | null`.
   The worker calls this before granting a session (`workerSession/budgetClient.js`); the reason
   strings are a cross-module contract mapped back to typed errors in `workerSession/budgetErrors.js`.
   Same short-circuit order as `budgetManager.check`: instance budget → storage budget → storage quota.
+  Body `{openSessions: [{sessionId, instanceType, creationTime}]}` — the user's open sessions,
+  opened in `open_session_use` before the verdict, since a just-requested session's
+  WorkerSessionRequested event may not have arrived yet.
 - `GET /ws` — gateway virtual-websocket endpoint (module `budget`): pushes
   `{spending, budgetUpdateRequest}` to GUI subscribers on subscribe, on `{refresh: true}`, and on
   every `spending$` emission (session/storage/budget changes + hourly rebuild)

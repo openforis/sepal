@@ -172,8 +172,9 @@ export class TaskRepository {
         return row ? toTask(row) : null
     }
 
+    // Answers whether this call removed the task, so concurrent resubmits of it run it again only once.
     remove(task) {
-        return this.#change(task, 'UPDATE task SET removed = TRUE WHERE id = ?', [task.id])
+        return this.#change(task, 'UPDATE task SET removed = TRUE WHERE id = ? AND removed = FALSE', [task.id])
     }
 
     async removeFinishedUserTasks(username, taskIds) {

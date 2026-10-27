@@ -124,6 +124,15 @@ export const openRecipeRevision = loaded => {
 export const forgetRecipeSaveState = recipeId =>
     saveCoordinator.forget(recipeId)
 
+// Leaving the page loses a recipe never saved, and any edit storage has not acknowledged: one still saving, or one
+// whose save was refused, conflicted or went unresolved - whether or not its recipe is still open.
+export const hasUnsavedWork = state => {
+    const loadedRecipes = selectFrom(state, 'process.loadedRecipes') || {}
+    const saves = selectFrom(state, 'process.saveStates') || {}
+    return Object.values(loadedRecipes).some(recipe => recipe.ui?.unsaved)
+        || Object.values(saves).some(({status}) => status !== SAVED)
+}
+
 export const closeRecipe = id =>
     closeTab(id, 'process')
 

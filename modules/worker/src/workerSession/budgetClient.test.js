@@ -12,7 +12,7 @@ describe('createBudgetClient.check', () => {
 
     const okResponse = verdict => ({ok: true, status: 200, json: async () => verdict})
 
-    test('GETs <budgetUrl>/budget/check/<username> with an admin sepal-user header', async () => {
+    test('POSTs <budgetUrl>/budget/check/<username> with an admin sepal-user header', async () => {
         const fetchMock = mock.fn(async () => okResponse({username: 'alice', exceeded: false, reason: null}))
         global.fetch = fetchMock
         const client = createBudgetClient({budgetUrl: 'http://budget', sepalUser: 'sepaladmin'})
@@ -22,9 +22,23 @@ describe('createBudgetClient.check', () => {
         assert.equal(fetchMock.mock.callCount(), 1)
         const [url, init] = fetchMock.mock.calls[0].arguments
         assert.equal(url, 'http://budget/budget/check/alice')
+        assert.equal(init.method, 'POST')
         assertMatches(JSON.parse(init.headers['sepal-user']), {
             username: 'sepaladmin',
             roles: ['application_admin'],
+        })
+    })
+
+    test('sends the open sessions as JSON, creation times in ISO-8601', async () => {
+        global.fetch = mock.fn(async () => okResponse({exceeded: false, reason: null}))
+        const openSession = {sessionId: 's-1', instanceType: 'T3aSmall', creationTime: new Date('2026-01-01T12:00:00Z')}
+
+        await createBudgetClient({}).check('alice', [openSession])
+
+        const init = global.fetch.mock.calls[0].arguments[1]
+        assert.equal(init.headers['Content-Type'], 'application/json')
+        assert.deepEqual(JSON.parse(init.body), {
+            openSessions: [{sessionId: 's-1', instanceType: 'T3aSmall', creationTime: '2026-01-01T12:00:00.000Z'}],
         })
     })
 

@@ -2,6 +2,10 @@
 // (attempt 0 → 1s, 1 → 2s, 2 → 4s … 9 → 512s; ~17 min total). Success emits
 // InstanceProvisioned; after 10 failures it emits FailedToProvisionInstance and rethrows the
 // last error.
+//
+// isCurrent() — does the session this provision was started for still hold the instance? Once it
+// does not, the instance may already be another session's: stop without touching it again and
+// without emitting either event, since both act on whichever session is on the instance now.
 
 import {getLogger} from '#sepal/log'
 
@@ -15,14 +19,20 @@ const DEFAULT_DELAY_FN = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 // _delayFn is injectable so tests don't sleep through the real 17 minutes.
 
-const provisionInstance = async (instance, {provider, provisioner, _delayFn = DEFAULT_DELAY_FN}) => {
+const provisionInstance = async (instance, {provider, provisioner, isCurrent = () => true, _delayFn = DEFAULT_DELAY_FN}) => {
     log.debug(`Provisioning ${instanceTag(instance)}...`)
 
     let lastError
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        if (!isCurrent()) {
+            return abandon(instance)
+        }
         try {
             const tmpDevice = await provider.attachScratchVolume(instance)
             await provisioner.provisionInstance(instance, {tmpDevice})
+            if (!isCurrent()) {
+                return abandon(instance)
+            }
             emitInstanceProvisioned(instance)
             log.info(`Provisioned ${instanceTag(instance)} on attempt ${attempt + 1}`)
             return
@@ -36,8 +46,14 @@ const provisionInstance = async (instance, {provider, provisioner, _delayFn = DE
         }
     }
 
+    if (!isCurrent()) {
+        return abandon(instance)
+    }
     emitFailedToProvisionInstance(instance, lastError)
     throw lastError
 }
+
+const abandon = instance =>
+    log.info(`Stopped provisioning ${instanceTag(instance)} - session ${instance.reservation?.sessionId} no longer holds it`)
 
 export {provisionInstance}

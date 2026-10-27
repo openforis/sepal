@@ -1,7 +1,13 @@
 import assert from 'node:assert/strict'
 import {mock, test} from 'node:test'
 
-import {smtpFromDomain} from './config.js'
+const smtpFromDomain = 'sepal.test'
+
+// The real configuration parses process arguments at import and exits the process when a mandatory
+// one is missing, which under a test runner they all are.
+mock.module('./config.js', {
+    exports: {smtpFromDomain, smtpHost: 'smtp.test', smtpPort: 25, smtpSecure: false, smtpUser: 'user', smtpPassword: 'password'}
+})
 
 const sendMail = mock.fn(async () => ({}))
 mock.module('nodemailer', {

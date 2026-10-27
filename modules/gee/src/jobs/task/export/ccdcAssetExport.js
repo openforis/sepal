@@ -37,7 +37,7 @@ export const ccdcAssetSource$ = ({image, description}) => {
                 pyramidingPolicy: {'.default': 'sample'},
                 maxPixels: 1e13,
                 properties: {
-                    formattedProperties,
+                    ...formattedProperties,
                     startDate: recipe.model.dates.startDate,
                     endDate: recipe.model.dates.endDate,
                     dateFormat: recipe.model.ccdcOptions.dateFormat,

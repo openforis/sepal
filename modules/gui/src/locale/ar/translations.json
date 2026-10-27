@@ -5059,6 +5059,13 @@
         "error": ""
       }
     },
+    "userAccount": {
+      "editDetails": {
+        "label": "",
+        "tooltip": ""
+      },
+      "title": ""
+    },
     "userDetails": {
       "form": {
         "email": {

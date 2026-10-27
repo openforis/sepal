@@ -45,7 +45,7 @@ const getMostRecentLogin$ = username => {
             maxRetries: -1
         }
     }).pipe(
-        map(({body}) => body ?? {})
+        map(({body}) => toTimestamp(body, 'user/mostRecentLogin'))
     )
 }
 
@@ -76,9 +76,25 @@ const getMostRecentSession$ = username => {
             maxRetries: -1
         }
     }).pipe(
-        map(({body}) => body ?? {})
+        map(({body}) => toTimestamp(body, 'sessions/mostRecentlyClosed'))
     )
 }
+
+// An empty body means no access was ever recorded. Any other body must carry a readable timestamp: a
+// reshaped response would otherwise read as no access, and the user's storage would be erased.
+const toTimestamp = (body, endpoint) => {
+    if (isEmptyObject(body ?? {})) {
+        return null
+    }
+    const timestamp = typeof body.timestamp === 'string' ? new Date(body.timestamp) : null
+    if (!timestamp || isNaN(timestamp.getTime())) {
+        throw new Error(`Unexpected response from ${endpoint}: ${JSON.stringify(body)}`)
+    }
+    return timestamp
+}
+
+const isEmptyObject = value =>
+    typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0
 
 const getMostRecentAccessByUser$ = () =>
     forkJoin([
@@ -95,11 +111,11 @@ const getMostRecentAccess$ = username =>
         getMostRecentLogin$(username),
         getMostRecentSession$(username)
     ]).pipe(
-        map(([mostRecentLoginByUser, mostRecentSessionByUser]) =>
-            mergeMostRecent(mostRecentLoginByUser, mostRecentSessionByUser)
-        ),
-        map(({timestamp}) => timestamp)
+        map(timestamps => latest(timestamps))
     )
+
+const latest = timestamps =>
+    timestamps.filter(Boolean).reduce((acc, timestamp) => timestamp > acc ? timestamp : acc, null)
 
 const getUser$ = username => {
     log.debug(() => `Getting user: ${username}`)

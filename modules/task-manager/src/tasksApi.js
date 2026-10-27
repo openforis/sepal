@@ -23,8 +23,8 @@ export const createTasksApi = tasks => {
 
     return {
         submit: ctx => run(ctx, async () => {
-            const {operation, params, recipeId} = ctx.request.body ?? {}
-            ctx.body = taskAsDetails(await tasks.submit({username: username(ctx), operation, params, recipeId}))
+            const {id, operation, params, recipeId} = ctx.request.body ?? {}
+            ctx.body = taskAsDetails(await tasks.submit({id, username: username(ctx), operation, params, recipeId}))
         }),
         getTask: ctx => run(ctx, async () => {
             ctx.body = await tasks.getTask({taskId: taskId(ctx), username: username(ctx)})

@@ -1,4 +1,7 @@
 import crypto from 'node:crypto'
+import {promisify} from 'node:util'
+
+const scrypt = promisify(crypto.scrypt)
 
 const SHA1_DIGEST_BYTES = 20
 
@@ -42,19 +45,20 @@ const verifySSHA = (plain, value) => {
 const verifySHA = (plain, value) =>
     safeEqual(Buffer.from(value, 'base64'), sha1(Buffer.from(plain)))
 
+// Async so the key derivation (tens of milliseconds) runs on the libuv threadpool, not the event loop.
 const scryptKey = (plain, salt, n, r, p, keyLength) =>
-    crypto.scryptSync(Buffer.from(plain), salt, keyLength, {N: n, r, p, maxmem: SCRYPT_MAXMEM})
+    scrypt(Buffer.from(plain), salt, keyLength, {N: n, r, p, maxmem: SCRYPT_MAXMEM})
 
 // {SCRYPT}N$r$p$saltBase64$keyBase64
-const verifyScrypt = (plain, value) => {
+const verifyScrypt = async (plain, value) => {
     const [n, r, p, saltBase64, keyBase64] = value.split('$')
     const salt = Buffer.from(saltBase64, 'base64')
     const expected = Buffer.from(keyBase64, 'base64')
-    const actual = scryptKey(plain, salt, Number(n), Number(r), Number(p), expected.length)
+    const actual = await scryptKey(plain, salt, Number(n), Number(r), Number(p), expected.length)
     return safeEqual(expected, actual)
 }
 
-const verifyPassword = (plain, stored) => {
+const verifyPassword = async (plain, stored) => {
     if (!stored) {
         return false
     }
@@ -76,9 +80,9 @@ const verifyPassword = (plain, stored) => {
 // Produces a memory-hard {SCRYPT} hash for newly set passwords. Legacy {SSHA}/{SHA}
 // hashes migrated from LDAP remain verifiable (see verifyPassword) and should be
 // upgraded to {SCRYPT} on the next successful login via needsRehash.
-const hashPassword = plain => {
+const hashPassword = async plain => {
     const salt = crypto.randomBytes(SCRYPT_SALT_BYTES)
-    const key = scryptKey(plain, salt, SCRYPT_N, SCRYPT_R, SCRYPT_P, SCRYPT_KEY_BYTES)
+    const key = await scryptKey(plain, salt, SCRYPT_N, SCRYPT_R, SCRYPT_P, SCRYPT_KEY_BYTES)
     const params = [SCRYPT_N, SCRYPT_R, SCRYPT_P, salt.toString('base64'), key.toString('base64')].join('$')
     return `{${SCRYPT_SCHEME}}${params}`
 }

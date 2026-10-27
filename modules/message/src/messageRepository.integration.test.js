@@ -58,12 +58,12 @@ describe('MessageRepository', () => {
         await repository.updateNotification({username: 'Reader', messageId: message.id, state: 'READ'})
 
         const [notification] = await repository.listNotifications('READER')
-        assert.partialDeepStrictEqual(notification, {state: 'READ', acknowledged: 1})
+        assert.partialDeepStrictEqual(notification, {state: 'READ'})
 
         await repository.updateNotification({username: 'reader', messageId: message.id, state: 'UNREAD'})
 
         const [updated] = await repository.listNotifications('Reader')
-        assert.partialDeepStrictEqual(updated, {state: 'UNREAD', acknowledged: 0})
+        assert.partialDeepStrictEqual(updated, {state: 'UNREAD'})
     })
 
     test('keeps the priority a message was saved with, in the message and in its notification', async () => {
@@ -90,10 +90,12 @@ describe('MessageRepository', () => {
         await repository.saveMessage({...message, subject: 'Edited subject'})
 
         const [notification] = await repository.listNotifications('reader')
-        assert.partialDeepStrictEqual(notification, {subject: 'Edited subject', state: 'UNREAD', acknowledged: 0})
+        const [forAdmin] = await repository.listNotifications('admin', true)
+        assert.partialDeepStrictEqual(notification, {subject: 'Edited subject', state: 'UNREAD'})
+        assert.partialDeepStrictEqual(forAdmin, {acknowledged: 0})
     })
 
-    test('reports a message read only to the user who read it, and counts it for everyone', async () => {
+    test('reports a message read only to the user who read it, and counts it for admins only', async () => {
         const message = aMessage()
         await repository.saveMessage(message)
 
@@ -101,8 +103,10 @@ describe('MessageRepository', () => {
 
         const [forReader] = await repository.listNotifications('reader')
         const [forAnother] = await repository.listNotifications('another')
-        assert.partialDeepStrictEqual(forReader, {messageId: message.id, state: 'READ', acknowledged: 1})
-        assert.partialDeepStrictEqual(forAnother, {messageId: message.id, state: 'UNREAD', acknowledged: 1})
+        const [forAdmin] = await repository.listNotifications('admin', true)
+        assert.partialDeepStrictEqual(forReader, {messageId: message.id, state: 'READ', acknowledged: null})
+        assert.partialDeepStrictEqual(forAnother, {messageId: message.id, state: 'UNREAD', acknowledged: null})
+        assert.partialDeepStrictEqual(forAdmin, {messageId: message.id, state: 'UNREAD', acknowledged: 1})
     })
 
     test('replaces an earlier read state, so unreading a message takes it out of the count', async () => {
@@ -113,7 +117,9 @@ describe('MessageRepository', () => {
         await repository.updateNotification({username: 'reader', messageId: message.id, state: 'UNREAD'})
 
         const [notification] = await repository.listNotifications('reader')
-        assert.partialDeepStrictEqual(notification, {messageId: message.id, state: 'UNREAD', acknowledged: 0})
+        const [forAdmin] = await repository.listNotifications('admin', true)
+        assert.partialDeepStrictEqual(notification, {messageId: message.id, state: 'UNREAD'})
+        assert.partialDeepStrictEqual(forAdmin, {acknowledged: 0})
     })
 
     test('hides a removed message from the message list and from notifications', async () => {

@@ -100,6 +100,10 @@ test('daysFromDayOfYear: wrap-around, target at day 362, date at day 3', () => {
     assert.equal(daysFromDayOfYear('2021-01-03', 362), 6)
 })
 
+test('daysFromDayOfYear: counts a leap-year date by its non-leap day of year', () => {
+    assert.equal(daysFromDayOfYear('2020-07-15', dayOfYearIgnoringLeapDay('2021-07-15')), 0)
+})
+
 test('daysFromDayOfYear: exactly 182 apart -> 182', () => {
     // 182 is the max meaningful (half of 365), min(182, 183)=182
     assert.equal(daysFromDayOfYear('2021-01-01', 183), 182)

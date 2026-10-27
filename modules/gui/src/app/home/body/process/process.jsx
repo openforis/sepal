@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import React from 'react'
 
 import {Recipe, recipeActivationPath} from '~/app/home/body/process/recipeContext'
@@ -15,7 +14,7 @@ import {CloseRecipe} from './closeRecipe'
 import {registerImageLayerSources} from './imageLayerSources'
 import {MoveRecipe} from './moveRecipe'
 import {ProcessMenu} from './processMenu'
-import {loadFolders$, loadRecipes$, recipePath, saveRecipe} from './recipe'
+import {hasUnsavedWork, loadFolders$, loadRecipes$, recipePath, saveRecipe} from './recipe'
 import {RecipeHome} from './recipeHome'
 import {registerRecipeImageLayers} from './recipeImageLayers'
 import {RecipeTabTooltip} from './recipeLocation'
@@ -143,20 +142,10 @@ class _Process extends React.Component {
     }
 }
 
-const mapStateToLeaveAlert = () => {
-    const loadedRecipes = select('process.loadedRecipes') || {}
-    const unsavedRecipeCount = _(loadedRecipes)
-        .values()
-        .map(recipe => recipe.ui && recipe.ui.unsaved)
-        .filter(unsaved => unsaved)
-        .size()
-    return unsavedRecipeCount > 0
-}
-
 const ProcessContent = compose(
     _Process,
     withActivationContext(),
-    withLeaveAlert(mapStateToLeaveAlert)
+    withLeaveAlert(hasUnsavedWork)
 )
 
 // Process owns the source runtime. Wrapping here rather than in Body keeps source resolution out of what Body

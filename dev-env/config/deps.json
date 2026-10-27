@@ -251,7 +251,8 @@
         ],
         "build": {},
         "run": [
-            "logger"
+            "logger",
+            "rabbitmq"
         ]
     },
     "user-storage-backup": {

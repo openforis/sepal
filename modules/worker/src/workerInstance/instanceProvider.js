@@ -37,6 +37,7 @@
 //     a worker restart; AWS implements it as a no-op because EC2 is authoritative.
 //   awaitHost(instance)                       → Promise<WorkerInstance>
 //     Resolves once the instance has an address; returns it unchanged if it already has one.
+//     Only the address and running state change: the type and reservation are the caller's.
 //     Required after launchReserved before the instance's address can be used.
 //   sweep()                                   → Promise<void>
 //     Terminates old idle and untagged instances, pooled instances that are of an old version or

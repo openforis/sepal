@@ -5,17 +5,16 @@
 //   @1min:  ReconcilePendingSessions → CloseTimedOutSessions (one job, in that order),
 //           ExpireSessions, CloseSessionsWithoutInstance, ReleaseUnusedInstances(5, MINUTES),
 //           ReclaimStaleClaims
-//   @12min: RemoveOrphanedTmpDirs, RemoveOrphanedContainers (local-daemon container sweep;
-//           the first run is immediate, so a worker restart cleans up at startup)
+//   @12min: RemoveOrphanedContainers (local-daemon container sweep; the first run is immediate,
+//           so a worker restart cleans up at startup)
 //   @5min:  RefreshGoogleTokens
 //
 // Closing the sessions of an over-budget user is event-driven, not scheduled: main.js's
 // budget.UserBudgetExceeded subscriber calls lockedUsers.onExceeded(...), which on a NEW lock
 // fire-and-forgets closeUserSessions. See ../lockedUsers.js.
 //
-// RemoveOrphanedTmpDirs + RefreshGoogleTokens are NOT bound on sessionManager (they need the
-// googleOAuthGateway / homeDir collaborators, which are lifecycle concerns) — this component
-// binds them directly to their handlers.
+// RefreshGoogleTokens is NOT bound on sessionManager (it needs the googleOAuthGateway
+// collaborator, a lifecycle concern) — this component binds it directly to its handler.
 //
 // The user.UserLocked subscription is exposed as `userSubscriber` — a {queue, topic, handler}
 // that main.js passes into initMessageQueue's subscribers (the message queue is owned by main.js).
@@ -28,7 +27,6 @@ import {createScheduler} from '../scheduler.js'
 import {userTag} from '../tag.js'
 import {MINUTE_MS} from '../time.js'
 import {refreshGoogleTokens as _refreshGoogleTokens} from './command/refreshGoogleTokens.js'
-import {removeOrphanedTmpDirs as _removeOrphanedTmpDirs} from './command/removeOrphanedTmpDirs.js'
 import {WORKER_SESSION_PUBLISHERS} from './events.js'
 import {createMissingInstanceTracker} from './missingInstanceTracker.js'
 
@@ -47,11 +45,9 @@ const createSessionComponent = ({
     repo,
     googleOAuthGateway,
     instanceManager,
-    homeDir,
     clock = () => new Date(),
 }) => {
-    // Handlers not bound on sessionManager (lifecycle-only collaborators).
-    const removeOrphanedTmpDirs = () => _removeOrphanedTmpDirs({repo, ...(homeDir ? {homeDir} : {})})
+    // Handler not bound on sessionManager (lifecycle-only collaborator).
     const refreshGoogleTokens = () => _refreshGoogleTokens({repo, googleOAuthGateway})
 
     const scheduler = createScheduler(log)
@@ -100,8 +96,7 @@ const createSessionComponent = ({
             () => sessionManager.expireSessions(),
             MINUTE_MS)
 
-        // @12min: remove orphaned tmp dirs + orphaned containers on the shared local daemon.
-        scheduler.schedule('RemoveOrphanedTmpDirs', removeOrphanedTmpDirs, 12 * MINUTE_MS)
+        // @12min: remove orphaned containers on the shared local daemon.
         scheduler.schedule(
             'RemoveOrphanedContainers', () => sessionManager.removeOrphanedContainers(), 12 * MINUTE_MS)
 

@@ -17,10 +17,13 @@ const initializeDownlink = ({servers, clients, wss, userStore, event$}) => {
     const client$ = new Subject()
 
     heartbeatResponse$.pipe(
-        groupBy(({clientId}) => clientId),
+        groupBy(({clientId}) => clientId, {
+            duration: clientId$ => clientDisconnected$(clientId$.key)
+        }),
         mergeMap(clientId$ =>
             clientId$.pipe(
                 debounceTime(HEARTBEAT_INTERVAL_MS * 2),
+                // Unsubscribes before the duration completes the group, which would flush a pending timeout.
                 takeUntil(clientDisconnected$(clientId$.key))
             )
         )
@@ -170,7 +173,10 @@ const initializeDownlink = ({servers, clients, wss, userStore, event$}) => {
 
     const onHeartbeat = (username, clientId, hb) => {
         log.trace('Heartbeat reply received', hb)
-        heartbeatResponse$.next({username, clientId})
+        // A reply racing the disconnect would open a heartbeat group no disconnect ever ends.
+        if (clients.has(clientId)) {
+            heartbeatResponse$.next({username, clientId})
+        }
     }
 
     const onSubscribed = (username, clientId, subscriptionId, module) => {

@@ -56,6 +56,25 @@ describe('sessionChanged$', () => {
     })
 })
 
+describe('WorkerSessionClosed', () => {
+    // Consumers such as budget may process the event long after it was published (a consumer
+    // outage leaves it queued), so the close time travels with the event.
+    it('publishes {username, sessionId, closeTime} stamped when the session closed', () => {
+        const publisher = WORKER_SESSION_PUBLISHERS
+            .find(({key}) => key === 'workerSession.WorkerSessionClosed')
+        const published = []
+        const subscription = publisher.publish$.subscribe(value => published.push(value))
+        const before = Date.now()
+        emitWorkerSessionClosed({username: 'alice', sessionId: 's-1'})
+        const after = Date.now()
+        subscription.unsubscribe()
+        const [{closeTime, ...rest}] = published
+        assert.deepEqual(rest, {username: 'alice', sessionId: 's-1'})
+        assert.equal(closeTime, new Date(closeTime).toISOString())
+        assert.ok(Date.parse(closeTime) >= before && Date.parse(closeTime) <= after)
+    })
+})
+
 describe('SessionExpiryClosed', () => {
     it('carries the instance name and type through to the bus', () => {
         const publisher = WORKER_SESSION_PUBLISHERS

@@ -139,7 +139,7 @@ export class UsageRepository {
     // Per-metric weighted sums with per-metric denominators: a metric's weight counts only the
     // sample_counts of rows where that metric was measured, which is what keeps GPU averages
     // weighted over GPU-instance hours alone.
-    userUsageRollup(username, fromTime) {
+    userUsageRollup(username, fromTime, toTime) {
         return this.#db.withConnection(async connection => {
             const [rows] = await connection.query(
                 `SELECT instance_type,
@@ -156,10 +156,10 @@ export class UsageRepository {
                     SUM(CASE WHEN net_avg_bytes_per_s IS NOT NULL THEN sample_count END) AS net_weight,
                     SUM(net_avg_bytes_per_s * sample_count) AS net_sum
                     FROM instance_usage_hourly
-                    WHERE username = ? AND hour >= ?
+                    WHERE username = ? AND hour >= ? AND hour < ?
                     GROUP BY instance_type
                     ORDER BY hours DESC`,
-                [username, fromTime]
+                [username, fromTime, toTime]
             )
             return rows.map(row => ({
                 instanceType: row.instance_type,

@@ -59,7 +59,7 @@ const main = async () => {
 
     const spending$ = new Subject()
     component = createBudgetComponent({budgetManager, handlers, enforcement, reconciler, spending$})
-    const budgetApi = createBudgetApi({budgetManager, publishSpending: component.publishSpending})
+    const budgetApi = createBudgetApi({budgetManager, openSessionUse, publishSpending: component.publishSpending})
     const budgetWs$ = createBudgetWs({budgetManager, spending$})
 
     await initMessageQueue(amqpUri, {

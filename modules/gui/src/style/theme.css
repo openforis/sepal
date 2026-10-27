@@ -159,6 +159,9 @@ html {
     --swatch-border-color: white;
     --shadow-soft-color: rgba(0, 0, 0, .25);
     --shadow-medium-color: hsla(0, 0%, 0%, .5);
+    --tooltip-background-color: #373737;
+    --tooltip-text-color: #fff;
+    --tooltip-border-color: hsl(0, 0%, 25%);
 
     /* progress */
     --progress-track-color: rgba(255, 255, 255, 0.05);
@@ -379,6 +382,9 @@ html[data-theme=light] {
     --swatch-border-color: hsla(40, 10%, 10%, .35);
     --shadow-soft-color: hsla(40, 25%, 15%, .14);
     --shadow-medium-color: hsla(40, 25%, 15%, .2);
+    --tooltip-background-color: hsl(39, 40%, 96.5%);
+    --tooltip-text-color: hsl(40, 7%, 22%);
+    --tooltip-border-color: hsl(40, 10%, 84%);
 
     /* progress */
     --progress-track-color: hsla(40, 15%, 20%, .06);

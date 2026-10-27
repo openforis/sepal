@@ -121,7 +121,7 @@ describe('a credential that is not a string', () => {
 
             const stored = await repository.findByUsername(USERNAME)
             assert.equal(response.status, 200)
-            assert.equal(verifyPassword(NEW_PASSWORD, stored.passwordHash), true)
+            assert.equal(await verifyPassword(NEW_PASSWORD, stored.passwordHash), true)
             assert.equal(stored.token, null)
         })
 
@@ -166,7 +166,7 @@ describe('a credential that is not a string', () => {
 
             const stored = await repository.findByUsername(USERNAME)
             assert.equal(response.body.status, 'success')
-            assert.equal(verifyPassword(NEW_PASSWORD, stored.passwordHash), true)
+            assert.equal(await verifyPassword(NEW_PASSWORD, stored.passwordHash), true)
         })
     })
 
@@ -222,7 +222,7 @@ describe('a credential that is not a string', () => {
     const givenActiveUser = async () => {
         await givenPendingUser()
         await repository.updateStatus(USERNAME, 'ACTIVE')
-        await repository.updatePassword(USERNAME, hashPassword(PASSWORD))
+        await repository.updatePassword(USERNAME, await hashPassword(PASSWORD))
         return await repository.findByUsername(USERNAME)
     }
 

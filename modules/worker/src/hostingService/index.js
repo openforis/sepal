@@ -4,7 +4,7 @@ import {createAwsInstanceProvider} from './aws/awsInstanceProvider.js'
 import {INSTANCE_TYPES} from './instanceTypes.js'
 import {createLocalInstanceProvider, LOCAL_HOST} from './local/localInstanceProvider.js'
 
-const createHostingService = (config, {sandboxSessionApiKey} = {}) => {
+const createHostingService = (config, {sandboxSessionApiKey, userPublicKeys} = {}) => {
     const {hostingService} = config
 
     const instanceTypes = INSTANCE_TYPES
@@ -37,6 +37,7 @@ const createHostingService = (config, {sandboxSessionApiKey} = {}) => {
         config,
         instanceTypes,
         sandboxSessionApiKey: resolvedApiKey,
+        userPublicKeys,
         extraHosts,
         defaultDaemonHost,
     })

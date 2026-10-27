@@ -41,10 +41,10 @@ const handlers = {
             logError(key, msg)
         }
     },
-    'user.emailNotificationsEnabled': async (key, msg) => {
-        const {username, enabled} = msg
-        if (username) {
-            await setEmailNotificationsEnabled(username, enabled)
+    'user.UserUpdated': async (key, msg) => {
+        const {email, emailNotificationsEnabled} = msg
+        if (email) {
+            await setEmailNotificationsEnabled(email, emailNotificationsEnabled)
         } else {
             logError(key, msg)
         }

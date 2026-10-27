@@ -239,6 +239,13 @@ program
             .default('http://user/google/')
     )
 
+    // ─── User ───────────────────────────────────────────────────────────────
+    .addOption(
+        new Option('--user-url <url>', 'user-module base URL (users\' SSH public keys for their sandboxes)')
+            .env('USER_URL')
+            .default('http://user')
+    )
+
     // ─── Budget ─────────────────────────────────────────────────────────────
     .addOption(
         new Option('--budget-url <url>', 'budget-module base URL (live over-budget check on session request)')
@@ -338,6 +345,7 @@ const {
     googleOAuthEndpoint,
     cartoDbBasemapKey,
     budgetUrl,
+    userUrl,
     rabbitmqHost,
     rabbitmqPort,
     region,
@@ -396,6 +404,7 @@ export {
     usageHourlyRetentionDays,
     usageSampleRetentionDays,
     usageSamplingIntervalSeconds,
+    userUrl,
     volumeInitializationRate,
     workerAmiVersion,
 }

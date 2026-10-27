@@ -1,8 +1,10 @@
-// BudgetClient — createBudgetClient(config) → { check(username) }.
+// BudgetClient — createBudgetClient(config) → { check(username, openSessions) }.
 //
-// check issues a GET to `${budgetUrl}/budget/check/{username}` (default base `http://budget`) and
-// returns the budget module's live verdict: {exceeded, reason}. requestSession consults it before
-// granting a session, so the decision is computed from current spending rather than read from the
+// check POSTs the user's open sessions, [{sessionId, instanceType, creationTime}], to
+// `${budgetUrl}/budget/check/{username}` (default base `http://budget`) and returns the budget
+// module's live verdict: {exceeded, reason}. Budget counts those sessions even before their
+// WorkerSessionRequested event has reached it. requestSession consults it before granting a
+// session, so the decision is computed from current spending rather than read from the
 // hourly-refreshed report. The event-fed lockedUsers set alone cannot provide that: it is empty
 // after a worker restart until the next budget cycle.
 //
@@ -29,14 +31,16 @@ const createBudgetClient = config => {
     // systemUser marks this as an inter-service call, matching the budget module's own workerClient.
     const sepalUser = JSON.stringify({username: adminUsername, roles: [ADMIN_ROLE], systemUser: true})
 
-    const check = async username => {
+    const check = async (username, openSessions = []) => {
         const url = `${baseUrl}/budget/check/${encodeURIComponent(username)}`
         const response = await fetch(url, {
-            method: 'GET',
+            method: 'POST',
             headers: {
                 'Accept': 'application/json',
+                'Content-Type': 'application/json',
                 'sepal-user': sepalUser,
             },
+            body: JSON.stringify({openSessions}),
         })
         if (!response.ok) {
             const text = await response.text().catch(() => '')

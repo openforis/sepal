@@ -46,9 +46,27 @@ const setEmailNotificationsEnabled = async (emailAddress, enabled) => {
     await redis.set(emailNotificationsEnabledKey(emailAddress), fromBoolean(enabled))
 }
 
+// A preference fetched from the user module must not overwrite one set by a concurrent user update.
+const setEmailNotificationsEnabledIfAbsent = async (emailAddress, enabled) => {
+    log.debug(() => `Caching email notifications preference for address <${emailAddress}>: ${enabled}`)
+    await redis.set(emailNotificationsEnabledKey(emailAddress), fromBoolean(enabled), 'NX')
+}
+
 const getEmailNotificationsEnabled = async emailAddress => {
     log.debug(() => `Getting email notifications preference for address <${emailAddress}>`)
     return toBoolean(await redis.get(emailNotificationsEnabledKey(emailAddress)))
 }
 
-export {getEmailNotificationsEnabled, setEmailNotificationsEnabled}
+const clearEmailNotificationsEnabled = async () => {
+    let cursor = '0'
+    do {
+        const [nextCursor, keys] = await redis.scan(cursor, 'MATCH', emailNotificationsEnabledKey('*'), 'COUNT', 1000)
+        if (keys.length) {
+            await redis.del(...keys)
+        }
+        cursor = nextCursor
+    } while (cursor !== '0')
+    log.debug('Cleared email notifications preferences')
+}
+
+export {clearEmailNotificationsEnabled, getEmailNotificationsEnabled, setEmailNotificationsEnabled, setEmailNotificationsEnabledIfAbsent}

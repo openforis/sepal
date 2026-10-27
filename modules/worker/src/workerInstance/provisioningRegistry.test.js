@@ -92,6 +92,28 @@ test('a forgotten instance may be provisioned again while the abandoned provisio
     assert.equal(registry.isProvisioning('i-1'), false)
 })
 
+// The abandoned provision keeps running after forget(); isCurrent is how it learns to stop.
+test('a provision stops being current when its instance is forgotten, and stays so for the successor', async () => {
+    const registry = createProvisioningRegistry()
+    const abandoned = deferred()
+    let isCurrent
+
+    const first = registry.run('i-1', 's-1', current => {
+        isCurrent = current
+        return abandoned.promise
+    })
+    assert.equal(isCurrent(), true)
+
+    registry.forget('i-1')
+    assert.equal(isCurrent(), false)
+
+    const second = registry.run('i-1', 's-2', async () => {})
+    assert.equal(isCurrent(), false)
+
+    abandoned.resolve()
+    await Promise.all([first, second])
+})
+
 test('forgetting an instance nobody is provisioning is harmless', () => {
     const registry = createProvisioningRegistry()
 

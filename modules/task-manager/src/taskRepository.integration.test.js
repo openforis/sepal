@@ -123,6 +123,14 @@ describe('TaskRepository', () => {
         assert.equal((await repository.getTask(task.id)).state, State.CANCELING)
     })
 
+    test('removes a task once', async () => {
+        const task = aTask()
+        await repository.insert(task)
+
+        assert.equal(await repository.remove(task), true)
+        assert.equal(await repository.remove(task), false)
+    })
+
     test('lists a user\'s tasks until removed, and removes only the given finished ones in bulk', async () => {
         const running = aTask({id: 't-1'})
         const done = aTask({id: 't-2'})

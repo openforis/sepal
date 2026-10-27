@@ -3,8 +3,6 @@
 // containerName(instance) comes from ../containerName.js, which needs both the session id the
 // two-word name derives from (carried on the reservation) and the instance id.
 
-import fs from 'node:fs'
-
 import {containerName} from '../containerName.js'
 
 const SANDBOX = 'sandbox'
@@ -42,12 +40,9 @@ const makeImage = ({name, exposedPorts = [], publishedPorts = {}, volumes = {}, 
 })
 
 // publishedPorts is {hostPort: containerPort}; the waitCommand covers sshd only.
-const createSandboxWorkerType = (instance, config, apiKey) => {
+const createSandboxWorkerType = (instance, config, {apiKey, userPublicKey}) => {
     const username = instance.reservation.username
     const userHome = `${config.sepalHostDataDir}/sepal/home/${username}`
-    const pubKeyPath = `/var/lib/sepal/user/home/${username}/.ssh/id_rsa.pub`
-    // No .trim(): the raw file contents, trailing newline included.
-    const userPublicKey = fs.readFileSync(pubKeyPath, 'utf8')
 
     const publishedPorts = {222: 22, 8787: 8787, 3838: 3838, 8888: 8888}
     // Only sshd is started at boot. rstudio/shiny/jupyter are started on first use
@@ -70,7 +65,7 @@ const createSandboxWorkerType = (instance, config, apiKey) => {
                     [tmpVolumeName(instance.id)]: tmpMounts,
                 },
                 environment: {
-                    USER_PUBLIC_KEY: userPublicKey,
+                    USER_PUBLIC_KEY: userPublicKey ?? '',
                     SEPAL_API_KEY: apiKey ?? '',
                     SEPAL_HOST: config.sepalHost,
                     CARTODB_BASEMAP_KEY: config.cartoDbBasemapKey ?? '',
@@ -84,10 +79,11 @@ const createSandboxWorkerType = (instance, config, apiKey) => {
     }
 }
 
-// createWorkerType — throws if workerTypeId is unknown.
-const createWorkerType = (workerTypeId, instance, config, apiKey = null) => {
+// createWorkerType — throws if workerTypeId is unknown. The session's credentials are needed only to
+// create its containers, not to find them.
+const createWorkerType = (workerTypeId, instance, config, {apiKey = null, userPublicKey = null} = {}) => {
     if (workerTypeId === SANDBOX) {
-        return createSandboxWorkerType(instance, config, apiKey)
+        return createSandboxWorkerType(instance, config, {apiKey, userPublicKey})
     }
     throw new Error(`No worker type with id: ${workerTypeId}`)
 }

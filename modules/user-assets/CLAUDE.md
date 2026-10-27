@@ -5,7 +5,7 @@ Manages Google Earth Engine assets for authenticated users. Monitors asset trees
 ## Commands
 
 ```bash
-npm test              # Node test runner (no test files currently exist)
+npm test              # Node test runner (module mocks enabled)
 npm run testWatch     # Node test runner watch mode
 ```
 
