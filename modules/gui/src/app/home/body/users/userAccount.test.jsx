@@ -1,4 +1,4 @@
-// What the user panel lets an admin change, and which account actions it offers. The form is real;
+// What the account panel lets an admin change, and which account actions it offers. The form is real;
 // the panel, inputs and surrounding widgets reach the store and the DOM in ways a unit test cannot
 // serve, so they are passthroughs — what is under test is the state this component hands them.
 
@@ -42,7 +42,7 @@ vi.mock('./userStatus', () => {
     return {UserStatus}
 })
 
-const {UserBudget} = await import('./userBudget')
+const {UserAccount} = await import('./userAccount')
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -53,7 +53,7 @@ const render = (userDetails, props = {}) => {
     document.body.appendChild(container)
     const root = createRoot(container)
     act(() => root.render(
-        <UserBudget
+        <UserAccount
             userDetails={userDetails}
             onCancel={() => {}}
             onEditDetails={() => {}}
@@ -76,7 +76,7 @@ const editableInputs = container => [...container.querySelectorAll('input')].fil
 beforeEach(() => mounted = [])
 afterEach(() => mounted.forEach(unmount => unmount()))
 
-describe('the user panel', () => {
+describe('the account panel', () => {
     it('shows the user details', () => {
         const user = aUser({username: 'bob'})
 
@@ -97,7 +97,7 @@ describe('the user panel', () => {
         const onEditDetails = vi.fn()
         const container = render(aUser({username: 'bob'}), {onEditDetails})
 
-        act(() => button(container, 'user.userBudget.editDetails.label').click())
+        act(() => button(container, 'user.userAccount.editDetails.label').click())
 
         expect(onEditDetails).toHaveBeenCalled()
     })
@@ -129,7 +129,7 @@ describe('lock and unlock buttons', () => {
     })
 })
 
-describe('a locked user panel', () => {
+describe('a locked account panel', () => {
     it('cannot be edited', () => {
         const container = render(aUser({username: 'bob'}), {locked: true})
 
@@ -139,7 +139,7 @@ describe('a locked user panel', () => {
     it('offers no account actions', () => {
         const container = render(aUser({username: 'bob'}), {locked: true})
 
-        expect(button(container, 'user.userBudget.editDetails.label').disabled).toBe(true)
+        expect(button(container, 'user.userAccount.editDetails.label').disabled).toBe(true)
         expect(button(container, 'user.userDetails.lock.label').disabled).toBe(true)
         expect(button(container, 'user.userDetails.resetPassword.label').disabled).toBe(true)
     })

@@ -6366,12 +6366,12 @@
       },
       "title": "SSH keys"
     },
-    "userBudget": {
+    "userAccount": {
       "editDetails": {
         "label": "User details",
         "tooltip": "Edit the user's details and role"
       },
-      "title": "User budget"
+      "title": "User account"
     },
     "userDetails": {
       "form": {
@@ -6437,7 +6437,7 @@
           "required": "Intended use is required"
         },
         "usage": {
-          "label": "Resource usage",
+          "label": "Computing resources usage",
           "avgMax": "{metric} (avg/max)",
           "cost": "Cost",
           "hours": "Hours",

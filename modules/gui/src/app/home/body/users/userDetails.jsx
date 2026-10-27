@@ -42,7 +42,7 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
-// The user module's side of a user: details and role. Opened from the user panel, and saved on its
+// The user module's side of a user: details and role. Opened from the account panel, and saved on its
 // own, so it never carries the budget along.
 class _UserDetails extends React.Component {
     // Returns the save observable: the panel waits for the backend, spinning its Apply button, and

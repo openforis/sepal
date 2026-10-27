@@ -16,8 +16,8 @@ import {Icon} from '~/widget/icon'
 import {Notification} from '~/widget/notification'
 import {Notifications} from '~/widget/notifications'
 
+import {UserAccount} from './userAccount'
 import styles from './userBrowser.module.css'
-import {UserBudget} from './userBudget'
 import {UserDetails} from './userDetails'
 import {UserList} from './userList'
 import {conflictingRecord, createUserWsHandler, newerRows, withoutStale, withPending, withRows} from './userListLive'
@@ -156,7 +156,7 @@ class _UserBrowser extends React.Component {
         return this.rows().find(({id}) => id === userId)
     }
 
-    // The user panel shows the details read-only, so it takes a waiting change as it comes; only the
+    // The account panel shows the details read-only, so it takes a waiting change as it comes; only the
     // details form, which edits them, holds it back.
     latestOpenUser() {
         const {pending} = this.state
@@ -206,14 +206,14 @@ class _UserBrowser extends React.Component {
         const {editingDetails} = this.state
         return editingDetails
             ? this.renderUserDetails()
-            : this.renderUserBudget()
+            : this.renderUserAccount()
     }
 
-    renderUserBudget() {
+    renderUserAccount() {
         const {saving} = this.state
         const user = this.latestOpenUser()
         return user ? (
-            <UserBudget
+            <UserAccount
                 userDetails={user}
                 locked={saving}
                 onCancel={this.cancelUser}
@@ -346,7 +346,7 @@ class _UserBrowser extends React.Component {
         )
     }
 
-    // The user panel's form cancels itself as it unmounts, which it also does when the details form
+    // The account panel's form cancels itself as it unmounts, which it also does when the details form
     // replaces it.
     cancelUser() {
         this.state.editingDetails || this.setState({userId: null})

@@ -15,8 +15,8 @@ import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 import {Tag} from '~/widget/tag'
 
+import styles from './userAccount.module.css'
 import {UserActivity} from './userActivity'
-import styles from './userBudget.module.css'
 import {UserStatus} from './userStatus'
 
 const fields = {
@@ -50,10 +50,10 @@ const mapStateToProps = (state, ownProps) => {
     }
 }
 
-// The user panel: the user's details read-only, and the budget module's side of the user — limits
+// The account panel: the user's details read-only, and the budget module's side of the user — limits
 // and any pending budget update request — editable. Applying saves the budget alone; the details are
 // edited in their own form, opened from the footer.
-class _UserBudget extends React.Component {
+class _UserAccount extends React.Component {
     constructor(props) {
         super(props)
         this.onChangeInstanceSpending = this.onChangeInstanceSpending.bind(this)
@@ -87,12 +87,12 @@ class _UserBudget extends React.Component {
                 placement='modal'
                 form={form}
                 locked={locked}
-                statePath='userBudget'
+                statePath='userAccount'
                 onApply={budget => this.save(budget)}
                 onClose={() => this.cancel()}>
                 <Panel.Header
                     icon='user'
-                    title={msg('user.userBudget.title')}
+                    title={msg('user.userAccount.title')}
                     label={this.renderHeaderPills()}
                 />
                 <Panel.Content>
@@ -211,9 +211,9 @@ class _UserBudget extends React.Component {
         const {form, onEditDetails} = this.props
         return (
             <Button
-                label={msg('user.userBudget.editDetails.label')}
+                label={msg('user.userAccount.editDetails.label')}
                 icon='pen-to-square'
-                tooltip={msg('user.userBudget.editDetails.tooltip')}
+                tooltip={msg('user.userAccount.editDetails.tooltip')}
                 disabled={this.isLocked() || form.isDirty()}
                 onClick={onEditDetails}
             />
@@ -408,12 +408,12 @@ class _UserBudget extends React.Component {
     }
 }
 
-export const UserBudget = compose(
-    _UserBudget,
+export const UserAccount = compose(
+    _UserAccount,
     withForm({fields, mapStateToProps})
 )
 
-UserBudget.propTypes = {
+UserAccount.propTypes = {
     userDetails: PropTypes.object.isRequired,
     onCancel: PropTypes.func.isRequired,
     onEditDetails: PropTypes.func.isRequired,
