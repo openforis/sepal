@@ -656,8 +656,6 @@ describe.each([
     ['a LandTrendr', () => LANDTRENDR, 'mag', 'mean'],
     ['a BAYTS alerts recipe', () => BAYTS_ALERTS, 'flag', 'sample'],
     ['a BAYTS alerts recipe', () => BAYTS_ALERTS, 'change_probability', 'sample'],
-    ['a Change Alerts recipe', () => CHANGE_ALERTS, 'confidence', 'sample'],
-    ['a Change Alerts recipe', () => CHANGE_ALERTS, 'detection_count', 'sample'],
     ['a point-in-time Radar Mosaic', () => RADAR_POINT_IN_TIME, 'VV', 'mean'],
     ['a point-in-time Radar Mosaic', () => RADAR_POINT_IN_TIME, 'orbit', 'mode'],
     ['a point-in-time Radar Mosaic', () => RADAR_POINT_IN_TIME, 'dayOfYear', 'sample'],
@@ -679,8 +677,30 @@ describe.each([
     })
 })
 
+// Change Alerts runs only over a reference that can itself run (type/changeAlerts.js), so its reference segments asset
+// is described before anything is submitted - and that is all Earth Engine is asked: neither the asset's producer nor
+// any Classification is read. Its own changes keep their declared policies.
 describe('retrieving from Masking over a Change Alerts recipe', () => {
-    it('exports to Drive with no pyramiding policy, reading nothing', async () => {
+    it.each([
+        ['confidence', 'sample'],
+        ['detection_count', 'sample']
+    ])('exports its %s band to Earth Engine under %s, reading only its reference asset\'s bands', async (band, policy) => {
+        observed.answer = referenceSegmentBands
+        const masked = maskingOver(CHANGE_ALERTS)
+
+        await open({recipes: [masked, CHANGE_ALERTS], id: masked.id})
+        await click(band)
+        await click('process.retrieve.form.destination.GEE')
+        await click('process.retrieve.apply')
+
+        expect(submitted).toHaveLength(1)
+        expect(submitted[0].params.image.bands).toEqual({selection: [band]})
+        expect(submitted[0].params.image.pyramidingPolicy).toEqual({[band]: policy})
+        expect(geeReads).toEqual([REFERENCE_BANDS_READ])
+    })
+
+    it('exports to Drive with no pyramiding policy, reading only its reference asset\'s bands', async () => {
+        observed.answer = referenceSegmentBands
         const masked = maskingOver(CHANGE_ALERTS)
 
         await open({recipes: [masked, CHANGE_ALERTS], id: masked.id})
@@ -691,7 +711,18 @@ describe('retrieving from Masking over a Change Alerts recipe', () => {
         expect(submitted).toHaveLength(1)
         expect(submitted[0].params.image.bands).toEqual({selection: ['confirmation_date']})
         expect(submitted[0].params.image).not.toHaveProperty('pyramidingPolicy')
-        expect(geeReads).toEqual([])
+        expect(geeReads).toEqual([REFERENCE_BANDS_READ])
+    })
+    it('submits nothing while its reference asset cannot be described', async () => {
+        const masked = maskingOver(CHANGE_ALERTS)
+
+        await open({recipes: [masked, CHANGE_ALERTS], id: masked.id})
+        await click('confirmation_date')
+        await click('process.retrieve.form.destination.DRIVE')
+        await click('process.retrieve.apply')
+
+        expect(submitted).toEqual([])
+        expect(geeReads).toEqual([REFERENCE_BANDS_READ])
     })
 })
 
@@ -1008,6 +1039,13 @@ const CHANGE_ALERTS = {
         changeAlertsOptions: {}
     }
 }
+
+// The reference segments asset as Earth Engine describes it; any other read is unanswered.
+const REFERENCE_BANDS_READ = {asset: 'users/x/segments', includeDataTypes: true}
+
+const referenceSegmentBands = ({asset}) => asset === REFERENCE_BANDS_READ.asset
+    ? [{name: 'tStart', arrayDimensions: 1}, {name: 'tEnd', arrayDimensions: 1}, {name: 'ndvi_coefs', arrayDimensions: 2}, {name: 'ndvi_rmse', arrayDimensions: 1}]
+    : null
 
 const maskingOver = source => ({
     id: `masked-${source.id}`,

@@ -15,8 +15,79 @@ Structured dependency edges, authorized operation-scoped recipe reads and declar
 are implemented. The explicit live/bundled graph API, coherent execution bundles, generalized capability discovery
 and versioned provenance verification below describe the target design, not guarantees of current execution.
 
-For the remaining classifier/readiness work, start with the [current delivery plan](#current-delivery-plan-2026-10-21).
+For the current release decision, start with the [release checkpoint](#current-release-checkpoint).
 The detailed audits and completed packet history below retain evidence and boundaries; they are not an open task list.
+
+## Current release checkpoint
+
+**Status reconciled 2026-10-27, against `12129ad9b`.** S1-S6 are implemented, reviewed and browser-accepted within
+their recorded scopes. S5 is committed as `6fc9e5874`, S6 as `eaba8f54f`, and the subsequent shared-read context
+correction as `12129ad9b`. Origin was integrated at `3fd364ce7` before that correction. The implementation histories
+retain their original pending/failure statements as evidence of those earlier checkpoints; they are not additional
+unfinished slices.
+
+Pushing this work releases it. The user agreed that the remaining release gates are:
+
+| Gate | Current evidence / action |
+| --- | --- |
+| Final integrated verification and resolution of its findings | The 36 GUI failures and the hidden-local-refusal defect are corrected, uncommitted on `12129ad9b`. That tree passed all 4778 GUI tests and refreshed shared, GEE, Task, build and static checks. Subsequent independent review found one small regression in the new projection: a missing/null model threw during processing removal. That guard is corrected and covered, and the refreshed full GUI suite passes 4780 of 4780 with the GUI build and lint. See "Final verification corrections", its independent review and "Projection guard correction". Commit exactly that tree. |
+| Focused CCDC asset compatibility check | Pending. The user explicitly confirmed that the latest Change Alerts checks used recipe references only. S5's legacy metadata forms have fixture coverage; the attempted read-only live check found no asset to inspect. Check an existing segments asset and a small completed new CCDC export used as a reference, as described below. |
+
+**Release decision:** once both gates pass and any findings are resolved, push/release is the next step. No further
+implementation slice is required by this roadmap. Optional improvements below can wait for another release. A newly
+confirmed release defect can require a bounded correction; finding a historical proposal or an explicitly deferred
+item does not by itself expand the release scope.
+
+**Focused asset check.** Use compatible monitoring imagery and a native measure actually held by the segments asset.
+An existing CCDC asset must remain usable in Change Alerts: select it under REF, verify recorded processing/date
+values and genuinely unrecorded editable fallbacks, and obtain an actual preview and chart segments/observations.
+The asset path must not require opening or reading its producer or Classification. Complete one small CCDC export
+under the current build and use the resulting asset as a reference to exercise the new processing-metadata
+writer/reader round trip. Record the asset/build and actual outcome; an enabled button, a mocked metadata round trip
+or a running export is insufficient. No repeat of the complete S1-S6 manual batch is requested.
+
+**Release communication, not another implementation gate.** Explain the intentional behavior/result changes in
+the release summary or recipe documentation:
+
+- A selected untrainable Classification holds Time Series and CCDC native operations too; repair or explicitly
+  deselect it. This is the S3 configured-analysis policy, not a claim that native execution trains a classifier.
+- Reused samples use the Consumer's features over each Provider's own imagery. Results can change, narrower
+  Provider selections can now work, and ambiguous names require repair. Matching names does not establish matching
+  units/encoding or probability calibration across separately trained models.
+- Change Alerts follows reference-owned processing while preserving its consumer-owned monitoring choices.
+  Malformed governing metadata is held; genuinely absent asset metadata retains labelled editable fallbacks.
+- These changes do not migrate saved recipes. Existing task payload compatibility is preserved; new CCDC exports
+  add processing metadata. Do not describe the release as having identical results to the previous behavior.
+
+**Optional small improvements, ranked by containment.** These are recommendations for later selection, not newly
+scheduled release requirements. Make no production changes while the integrated campaign is establishing its
+baseline. If a later improvement is included, refresh its affected automated/build/browser checks rather than
+claiming the earlier campaign tested that later tree.
+
+| Priority | Follow-up | Boundary / regression risk |
+| --- | --- | --- |
+| 1 | Stack Band names layout | Best contained polish candidate: a local responsive two-column grid, one column in a narrow viewport. Keep shared Layout and input widths unchanged; check short/long names, validation and scrolling. |
+| 2 | CCDC Sources family/view heights | Implement the agreed Optical/Radar/Planet and More/Less heights locally, preserving viewport caps and body scrolling. Late evidence must not resize the shell. Needs real visual checks; no shared Panel sizing change. |
+| 3 | CCDC Slice chart labels | Use readable labels from current evidence where available, preserving raw request identities and asset-name fallbacks. Do not restore copied source snapshots to obtain labels. |
+| 4 | Consecutive keyboard band addition | Useful but more sensitive: narrow the behavior to the stay-open band-add flow in the shared picker. Retain filters, mouse and arrow behavior, and prevent the final Enter from activating All bands. |
+
+**Functional follow-ups deserving a separate round.** Neither is a confirmed regression introduced by the current
+corrections, and both remain explicitly deferred for this release:
+
+- **Server preview readiness:** `modules/gee/src/jobs/ee/image/preview.js` still constructs imagery without the shared
+  readiness guard. GUI layers withdraw correctly, but a direct or stale preview request can reach an execution
+  error. Extending declaration-based operation/product authorization needs its own scope and cost assessment;
+  do not claim all server preview paths are guarded.
+- **BAYTS settings ownership:** `baytsAlerts/referenceObservation.js` still merges observed producer options into
+  the consumer through `applyAccepted`. Audit which values must match versus belong to the consumer before changing
+  it; simply deleting the copying is insufficient. This is substantive work, not a one-line equivalent of S5.
+
+Other deferred work remains deferred: the explicit Use reference settings action, visualization Copy/Paste, chart
+map markers, AOI redraw optimization, WebSocket updates, broader request propagation/dependency loading, execution
+bundles and CCDC array-file destination compatibility. Explicitly selected empty-Provider feedback remains a separate
+product decision; an empty branch does not invalidate a Consumer that has adequate data elsewhere, while total
+training absence continues to hold operations. No new confirmed implementation blocker was established by this
+bounded roadmap/code audit; this does not dispose of the separate final-verification findings recorded below.
 
 ## Responsibilities
 
@@ -751,7 +822,7 @@ assessment's current scope.
 
 Implemented for declared `IMAGE_OUTPUT`, `PIXEL_OBSERVATIONS`, `PIXEL_SEGMENTS` and `TRAINING_DATA` operations
 (`lib/js/shared/src/recipe/output/readiness.js`). Coverage is operation- and recipe-specific; the
-[current delivery plan](#current-delivery-plan-2026-10-21) separates remaining work from completed migrations.
+[current release checkpoint](#current-release-checkpoint) separates remaining work from completed migrations.
 It closes the gap [dependency-scoped descriptions](gui-source-runtime.md#reading-a-recipes-own-output)
 leave open: a description that is `READY` over a `VALID` closure is not permission to run. One rule produces findings,
 shared readiness combines them, and GUI declarations explain them; no rule is copied. It adds no validation framework:
@@ -1426,9 +1497,10 @@ and keep `REFERENCE` for native bands.
     - `imageAssetExport.test.js`: refused, then exported once points are added;
     - `pyeoAlerts/sourcesRequirements.test.js`: its Classification fixtures are now trainable;
     - `modelDerivedOutput.test.js`: PyEO's output read waits for a Classification not yet loaded, naming it.
-- **Remaining work and decisions.** The collection consumers below are part of the
-  [current delivery plan](#current-delivery-plan-2026-10-21); native-band policy and multi-input expansion remain
-  outside that plan.
+- **Original remaining work and decisions (2026-10-21).** The collection consumers below belonged to the initial
+  request-dependent readiness packet; native-band policy and multi-input expansion were outside that packet.
+  S3 and S4 subsequently implemented those changes. The list below retains the former stage design as history;
+  use the [current release checkpoint](#current-release-checkpoint) for unfinished work.
   - **The collection consumers** train only for requested classified bands. Readiness has no requested-band input,
     and a static need would refuse configurations that never train.
     - Phenology's `band` and CCDC's `breakpointBands` now select a conditional `CLASSIFIER` need (see "Phenology's
@@ -2945,27 +3017,28 @@ Coverage checks proposed, each detecting a class of drift rather than one case:
 
 #### Next steps from browser feedback (updated 2026-10-23)
 
-These follow-ups come from the partial manual results above and the subsequent discussion. They are the next work,
-not completed fixes or a reason to reopen every deferred architecture item. The user's direction is Provider imagery
-with Consumer features, sampling outside the collection's per-scene loop, visible repair paths, and less implicit
-settings syncing. Remaining product choices are called out below instead of being treated as accepted designs.
+These follow-ups came from the manual results above and the subsequent discussion. **Status reconciled 2026-10-27:**
+the required corrections are implemented through S1-S6; the current release gates are in the
+[release checkpoint](#current-release-checkpoint). The user's direction remains Provider imagery with Consumer
+features, sampling outside the collection's per-scene loop, visible repair paths and less implicit settings syncing.
+The detailed records preserve the earlier proposals, decisions and verification limits.
 
 | Order | Follow-up | Status / boundary |
 | --- | --- | --- |
-| F1 | Training-data toolbar marks and item-editor explanations/repair | Concrete GUI fixes; both Classification and Regression. |
-| F2 | CCDC Sources: expose the selected Classification and locate incompatibility beside it | Concrete GUI fixes; retain the shared compatibility rule. |
-| F3 | Change Alerts: consistent applied/editor diagnostics and monitoring-band chart hold | Reproduce the reported Optical-to-Radar case; reuse the existing monitored-measure requirement. |
-| F4 | Reused training samples: Consumer features over Provider imagery, once per collection computation | Agreed semantic direction; execution and shared readiness must change together after tracing the sampling contract. |
-| F5 | Audit ownership of Change Alerts Sources/PRC settings | Technical prerequisite: identify, with reasons, which fields actually must match the reference. No mandatory-field list is established yet. |
-| F6 | Replace whole-group automatic syncing with explicit ownership | Depends on F5. Agreed 2026-10-26: required matches are source-owned/read-only; seed editable defaults only at the first Reference Apply during creation, then preserve them. The explicit "Use reference settings" action is a recorded deferred follow-up, not part of required S5. |
-| F7 | Copy/paste visualization parameters between layers | Separate requested feature; independent of the readiness corrections. |
-| F8 | Chart layout after tab return; Time Series Retrieve's unconditional empty unavailable-bands warning | Concrete browser bugs to reproduce and fix independently of the source-validity policy. |
-| F9 | Treat a selected Classification as required for Time Series and CCDC, including native requests | User-proposed direction, recommended for assessment; explicitly changes the previous native-control policy and should remove redundant request-stage coordination. |
-| F10 | PyEO: put incompatibility feedback in a section that can repair it | Trace the reported SRC/OPT combination; retain genuine local index-gate validation. |
+| F1 | Training-data toolbar marks and item-editor explanations/repair | Implemented in S2 for Classification and Regression, with confirmed findings blocking edited submissions. Empty-Provider feedback remains a separate policy decision. |
+| F2 | CCDC Sources: expose the selected Classification and locate incompatibility beside it | Implemented in S2 through the shared compatibility binding and selected-Classification opening view. |
+| F3 | Change Alerts: consistent applied/editor diagnostics and monitoring-band chart hold | Implemented in S6; Optical-to-Radar, retained choice, Cancel and applied repair passed the user's browser recheck. |
+| F4 | Reused training samples: Consumer features over Provider imagery, once per collection computation | Implemented in S4: named-feature supply, case-insensitive unique matching, shared readiness/execution and actionable feedback. Sampling remains outside the scene map. |
+| F5 | Audit ownership of Change Alerts Sources/PRC settings | Audit and agreed ownership contract completed in S5; required settings follow current producer/asset facts. |
+| F6 | Replace whole-group automatic syncing with explicit ownership | Implemented in S5: seed editable defaults at the first Reference Apply during creation, then preserve them. The explicit "Use reference settings" action and BAYTS ownership audit remain deferred. |
+| F7 | Copy/paste visualization parameters between layers | Separate requested feature; not a release gate. |
+| F8 | Chart layout after tab return; Time Series Retrieve's unconditional empty unavailable-bands warning | Implemented in S1 and S2 respectively, with their recorded browser acceptance. |
+| F9 | Treat a selected Classification as required for Time Series and CCDC, including native requests | Implemented in S3 through shared analysis prerequisites; redundant request-dependent training stages and holds were removed. |
+| F10 | PyEO: put incompatibility feedback in a section that can repair it | Implemented in S2 and its Stack Require drop correction; shared derivation/readiness and the user's actual-preview recovery check passed. |
 
-Prioritise reproducing the concrete F8 failures and assessing F9 before further work on request-band gates. F9 may
-supersede some of that machinery; do not implement another band-highlighting system first. F1/F2 and the independent
-chart/feedback corrections remain useful. F4 and F5 still need their technical contract/ownership reviews.
+The original sequencing prioritised F8 and F9 before extending request-band gates, and required the F4 sampling and
+F5 ownership assessments before their implementation. Those assessments and corrections are complete. Do not
+restart them from an older proposal or introduce another band-highlighting/training-hold mechanism.
 
 **Implementation grouping after reviewing the complete feedback so far (2026-10-23).**
 
@@ -2979,9 +3052,9 @@ contract can change the split; they must not silently expand it.
 | S1: Chart layout on tab return | Implemented: defer graph drawing while disabled and make Panel visibility follow the enabled context in the same render. | F8 layout | Focused tests and independent review passed; user reported "Looks good" after the manual checklist and approved committing on 2026-10-23. Detailed per-case browser results were not supplied; see below. |
 | S2: Feedback where repairs happen | Consistent Classification/Regression training-data feedback, item-editor explanations and replacement/removal; visible Classification selection in Time Series/CCDC Sources; classifier-input attribution at Classification; repair-oriented PyEO SRC/OPT feedback; correct the empty Retrieve warning. | F1, F2, F10, F8 warning | The single-input selection check passes. Confirmed findings now hold Apply while replacement, Cancel and unchanged Close remain available; the user confirmed Classification's browser recheck passed. The separate Stack Require drop fix passed the user's actual-preview and remove/restore browser check on 2026-10-24. Empty-Provider refinement and S3/S4 remain separate. |
 | S3: One selected-Classification validity contract | Require a selected usable Classification for Time Series/CCDC base operations, independently of requested/breakpoint bands; common SRC explanation/action hold; remove redundant band-training stage/watch/messages/server settling. | F9; consumes S2 presentation | Implemented and independently reviewed. User confirmed Retrieve closure/reopen and the already-broken CCDC/count-preview repair checks passed on 2026-10-25. Shared analysis prerequisites cover every operation and named map product. The timing-dependent keyboard check was not attempted in the browser; automated coverage passed. No requested browser recheck remains. |
-| S4: Reused samples with Consumer features | Sample each contributing Provider's imagery at its points using Consumer's feature definition; preserve sampling scale, nesting/order and Consumer normalisation; update shared readiness to the same derivability contract. | F4 | Implemented 2026-10-26; sampling and feedback corrections pass independent review, including unsupported requested operations and neutral unknown-reason fallback. No remaining S4 review findings. User confirmed the CCDC explanation and selection-recovery browser recheck passed on 2026-10-26; see the result after "S4 use-restriction fallback: independent review". Final full GUI campaign remains pending. |
+| S4: Reused samples with Consumer features | Sample each contributing Provider's imagery at its points using Consumer's feature definition; preserve sampling scale, nesting/order and Consumer normalisation; update shared readiness to the same derivability contract. | F4 | Implemented 2026-10-26; sampling and feedback corrections pass independent review, including unsupported requested operations and neutral unknown-reason fallback. No remaining S4 review findings. User confirmed the CCDC explanation and selection-recovery browser recheck passed on 2026-10-26; see the result after "S4 use-restriction fallback: independent review". The final full GUI campaign ran on 2026-10-27; see "Final integrated verification". |
 | S5: Change Alerts settings ownership | Audit Sources/PRC fields, then implement source-owned read-only required matches versus consumer-owned editable values; replace whole-group observation syncing and define initial/explicit copying. | F5, F6 | Committed as `6fc9e5874`, then integrated with origin at `78642988e`. The user accepted the PRC ownership browser recheck on 2026-10-27. The live legacy-metadata verification limit is recorded below. The explicit "Use reference settings" action remains deferred and does not block S5 or push. |
-| S6: Change Alerts validation and chart agreement | Retain invalid applied choices with field explanations; hold Retrieve and close/disable the analysis chart for an incompatible configured monitoring band; remove redundant panel validation. | F3 | Implemented and user browser-accepted on 2026-10-27 after the chart fixture and shared recipe-read context corrections. The baseline chart, upstream Optical-to-Radar withdrawal, Cancel and applied Radar/VV repair all passed, including actual segments and observations. Chart scope stays operation-specific. The separate shared-read API correction and final integrated verification remain before push. |
+| S6: Change Alerts validation and chart agreement | Retain invalid applied choices with field explanations; hold Retrieve and close/disable the analysis chart for an incompatible configured monitoring band; remove redundant panel validation. | F3 | Implemented and user browser-accepted on 2026-10-27 after the chart fixture and shared recipe-read context corrections. The baseline chart, upstream Optical-to-Radar withdrawal, Cancel and applied Radar/VV repair all passed, including actual segments and observations. Chart scope stays operation-specific. The shared-read correction is committed as `12129ad9b` and browser-accepted. Final integrated verification ran on 2026-10-27 and is blocked by stale GUI tests; see "Final integrated verification". |
 
 **S1: Chart layout on tab return (implemented 2026-10-23; user feedback received).**
 
@@ -6177,6 +6250,180 @@ browser check for the refactor; the earlier S6 transition checklist remains acce
 GeoID browser reproduction or new live Earth Engine probe is claimed. Final integrated verification remains before
 push.
 
+**Final integrated verification (2026-10-27; blocked by stale GUI tests).** Tested `12129ad9b` (`sepal-server`,
+clean working tree, origin integrated at `3fd364ce7`, unpushed range `88dee11a3..12129ad9b`, 53 commits). Each
+service ran through `docker compose run` from the `sepal-dev` dev-env, with sources mounted from the workspace;
+SHA-256 of `recipeScope.js` and `service.js` inside the containers matched the workspace. Runtimes: Node 26.12.0
+(dev-env, gee, gui), Node 26.12.1 (task), npm 11.20.0, ESLint 10.0.3. At most two test workers throughout; groups
+ran one after another. Logs are under `/tmp/claude-1000/-home-ec2-user-sepal/104518d4-761f-48f9-83df-9fef860fa264/scratchpad/final-verification/`.
+
+| Group | Command | Result | Duration | Log |
+|---|---|---|---|---|
+| 1. Full GUI suite | `sepal npm-test gui -- --run --maxWorkers=2` | **Exit 1.** 329 files, 7 failed; 4771 tests, **36 failed**, 4735 passed, none skipped, no unhandled errors | 371.6 s | `1-gui-full.log`, `1-gui-full.plain.log` |
+| 1b. Reproduction | The seven failing files alone, two workers | Same 36 failures (deterministic) | - | `1b-gui-failing-files.log` |
+| 2. Shared library | `node --experimental-test-module-mocks --test-concurrency=2 --test` over 87 files in the dev-env: all recipe tests, beside-source tests, service limiter, worker scheduler/pool, HTTP server and stream lifecycle, message queue (mocked), GeoID, GDAL | 1890 / 1890, none skipped | 17 s | `2-shared.log` |
+| 3. GEE | `node --experimental-test-module-mocks --test-concurrency=2 --test "**/*.test.js"` in the gee container (115 files) | 1556 / 1556, none skipped | 42 s | `3-gee.log` |
+| 4. Task | Same command in the task container (16 files) | 100 / 100, none skipped | 3 s | `4-task.log` |
+| 5. GUI build | `npm run build -- --outDir /tmp/gui-build-verification --emptyOutDir` in the gui container | Exit 0, 3058 modules, only Vite's generic chunk-size notice | 7 s | `5-gui-build.log` |
+| 6. Static | ESLint over the 236 existing JS/JSX/MJS files changed in the range (139 under the GUI config, 97 under the root config); `git diff --check` for the range and the tree | Clean | - | `6-lint.log` |
+
+- **Coverage confirmed by test name in the GEE log:** the shared-read owner cases (recipe and GeoID), the
+  observations-context reproduction, genuine self and two-recipe cycles, operation identity, EE request isolation,
+  service round trips, both local-protocol operation controls (`geoIdOperation`, `recipeOperationLifecycle`, local
+  HTTP stand-ins only) and the `test/verify` helper tests.
+- **Browser-graph check:** the production bundle contains no `async_hooks`, `AsyncLocalStorage` or
+  `subscriberContext`, and Vite externalised no Node built-in, so the Node-only helper has not leaked. The build
+  wrote to a container path, leaving the workspace `dist` untouched.
+- **Exclusions:** only the shared library's two MySQL integration files (`src/db/mysql.db.integration.test.js`,
+  `src/testSupport/db/testDb.integration.test.js`). They need `MYSQL_*` credentials able to create databases and
+  accounts; the dev-env configures none. The range changes nothing under `src/db`, `src/testSupport/db` or GDAL, so
+  this does not affect this release. The other database tests use fake pools and ran.
+- **No live Earth Engine request, export, service restart or image build.**
+
+*Finding (blocks push): 36 GUI tests in seven files encode contracts that S5 deliberately changed.*
+
+- **Failing files and counts:**
+  - `modelDerivedOutput.test.js` (16, Change Alerts);
+  - `changeAlerts/changeAlertsImageLayer.test.js` (7);
+  - `recipeImageLayer.test.js` (6, Change Alerts collection mosaic);
+  - `masking/panels/retrieve/retrieveBandChoice.test.jsx` (3, Masking over Change Alerts);
+  - `selfManagedLayerSelection.test.js` (2, Change Alerts layer form);
+  - `changeAlerts/visualizations.test.js` (1);
+  - `pyeoAlerts/panels/sources/sourcesCompatibility.test.jsx` (1).
+- **Not run since the change.** None of these files changed in the range's S5/S6 commits. The S5 record states that
+  no full GUI suite ran, and later runs were focused. The S4 row's last full-suite pass was at `8d04b160b`.
+- **Classified as stale test fixtures for 14 cases, by direct evidence:**
+  - Since S5, a Change Alerts operation needs the reference's processing facts (`changeAlerts/processing.js`:
+    `effectiveSettings` treats absent facts as `PENDING`) and the reference's `IMAGE_OUTPUT` as an analysis
+    prerequisite. The failing Change Alerts fixtures supply the pre-S5 evidence shape: none of the six files
+    mentions `processing`, while the S5-updated observation, chart and REF tests do and pass. A temporary copy of
+    `modelDerivedOutput.test.js` that added only `processing: assetProcessing({})` to its asset evidence made 13 of
+    its 16 cases pass, including all mosaic descriptions and the period refusals. The copy was removed.
+  - The PyEO case selects an untrainable Classification (no training data or classifier) as the "feedable" draft.
+    The `blocksApply` audit made confirmed Classification reference findings hold Apply at the user's request, and
+    the panel now shows `recipeNeedsAttention` there. The fixture predates that policy.
+- **Probable, not proven, for the other 22:** the three Change Alerts Retrieve cases in `modelDerivedOutput`
+  (the read supplies no runtime answers, so the new reference prerequisite stays pending), collection-mosaic
+  acquisition stages and preview requests in `recipeImageLayer`, layer style selection and visualization options,
+  and Masking over Change Alerts Retrieve. They share the same mechanism and no production regression was shown. But
+  these flows - asset-reference Retrieve, period-mosaic layers in another recipe's map, Masking over Change Alerts -
+  were not part of the accepted S5/S6 browser checks, so each needs to be confirmed while updating.
+- **Required correction (not made here; this packet authorises verification only):**
+  - Update each failing test to the current contract, with S5-shaped processing evidence and the held reference
+    the operation now needs, or a trainable Classification for PyEO, without weakening the behaviour asserted.
+  - Confirm per case that production meets the test's intent once complete evidence is present.
+  - Decide deliberately whether a Change Alerts configuration refusal (missing period, Planet source without a
+    collection) should be reported while reference processing is still pending. Today it appears only once
+    processing is known; the failing tests assumed it independently.
+- **After that correction:** rerun the seven files and then the full GUI suite once. If only GUI tests change, the
+  shared, GEE, Task, build and static results above stay valid; a production change also requires the build, lint
+  and the groups for the changed module.
+
+*Accepted browser and live evidence (not repeated):*
+- S1-S6 targeted browser checks as recorded, including S5's PRC ownership checklist and S6's four-step chart and
+  Retrieve recheck.
+- The shared-read refactor's chart smoke check ("Chart worked fine").
+- Live Earth Engine evidence keeps its earlier scope: the normalisation witnesses and the S4 checks at their
+  recorded baselines, and S5's legacy-metadata verification limit.
+
+*Recommendation:* **not ready for push.** Blocked by the 36 failing GUI tests above. The backend, shared, Task,
+build and static groups are green on this tree. No other unresolved release requirement was found. The deferred
+items (the "Use reference settings" action, the BAYTS audit, preview-server gating and request propagation,
+dependency loading, Drive/SEPAL CCDC array compatibility, and the layout and visualization-copy features) remain
+deferred and are not blockers.
+
+**Final verification corrections (2026-10-27; uncommitted on `12129ad9b`).** All 36 failures are resolved without
+weakening their behaviour: 33 were test fixtures or harnesses predating S5 or the Classification-blocking policy, and
+3 came from harnesses that could not represent S5's acquisition. Adding pending controls exposed one production
+defect, now corrected. Logs are in the same directory as above.
+
+| Failing group | Outcome | What now makes the valid case runnable | Behaviour still asserted |
+|---|---|---|---|
+| `modelDerivedOutput` - 13 mosaic, period and presentation cases | Fixture correction | The asset evidence carries `processing` from `assetProcessing` over the same metadata properties its segments come from, as `referenceObservation.js` derives them | Optical/radar/Planet mosaic bands, encodings, presentation and styles; period and Planet-source refusals as `INVALID` over otherwise complete evidence |
+| `modelDerivedOutput` - 3 Retrieve cases | Harness/acquisition correction | The Retrieve read is given the runtime's `DESCRIBE` answer: the real image-output observer over the held closure, Earth Engine answering only for the segments asset the evidence describes, and the closure's `dependencyValidity`. Nothing else is answered | Change band order and `sample` pyramiding to Earth Engine; Drive without a pyramiding policy; Retrieve reads the canonical output, not a map product |
+| `changeAlerts/changeAlertsImageLayer` (7) and `selfManagedLayerSelection` (2) | Fixture and harness correction | The same observed-asset evidence and `DESCRIBE` answer (`changeAlerts/observedReference.test.fixtures.js`, shared). An unresolved recipe reference stays unobserved | Mosaic styles refused for impossible dates or a Planet source without a collection; first-style selection per mode; preview; in another recipe's map. "Selects nothing while unresolved" remains a real pending control |
+| `recipeImageLayer` - 6 collection-mosaic cases | Harness/acquisition correction, moved to `changeAlerts/collectionMosaicLayer.test.jsx` (8 cases) | The real Change Alerts and CCDC registrations, a real store, the runtime `SourceRuntimeProvider` builds, and the layer's own `mapStateToProps` (captured from `connect`). Only storage, Earth Engine and the drawn preview are substituted | Storage is asked only for the CCDC record and Earth Engine for nothing before the preview is requested with the editor's arguments; the same preview in another recipe's map; view changes and restyles redraw without reading again; the pending read is not torn down by a view change; an edit draws the changed record, never the previous drawing; replacing the reference with an unread CCDC draws nothing until it is read; an unreadable CCDC is withheld |
+| `masking/.../retrieveBandChoice` (3) | Fixture and assertion correction | Earth Engine describes the reference segments asset; the two Change Alerts rows moved from the shared table into their own block | Band selection, `sample` policies to Earth Engine, Drive without a policy. "Reading nothing" became "the only read is that asset's band description" (no producer or Classification). A new control: an undescribable asset submits nothing |
+| `changeAlerts/visualizations` (1) | Fixture correction | A typed Change Alerts recipe with an observed asset reference | Optical monitoring-mosaic options include `ndvi`; a new control offers none while processing is pending |
+| `pyeoAlerts/.../sourcesCompatibility` (1) | Fixture correction | The feedable draft is a genuinely trained Classification: a Random Forest, collected points, and input bands Earth Engine describes as its band set selects | Apply enabled and the draft applied; the radar draft still refused with its explanation |
+
+- **Production defect, confirmed and corrected.**
+  - **Defect:** while the reference's processing was pending, a collection mosaic read `NEEDS_EVIDENCE` with no
+    diagnostics, even for an impossible period or a Planet source without a collection - refusals that do not depend
+    on processing. This contradicts "a confirmed configuration finding remains visible while unrelated evidence is
+    pending".
+  - **Correction, at the owner:** the shared declaration exports `collectionMosaicRefusals`, its period and source
+    refusals, and uses it itself. Change Alerts' GUI projection (`changeAlerts/bands.js`) reports them while
+    processing is pending, from the recipe without its saved processing copies; otherwise the mosaic still waits.
+  - **Witness:** the new pending controls in `modelDerivedOutput` - the period refusal, the Planet-source refusal,
+    and the wait for a valid mosaic - failed 2 of 3 before the change (the wait already held) and pass after it.
+- **Observation, not changed:** the real runtime reads the CCDC record twice concurrently, once for the reference
+  observation and once for the dependency closure. This predates S5 (`watchOutput$` always watches evidence) and costs
+  a duplicate read, not correctness. The new tests assert reads by meaning, not by count.
+- **Verification on the corrected tree:**
+  - The eight changed and new test files: 310 of 310 (`7-corrected-files.log`).
+  - **Full GUI suite, once:** 330 files, 4778 of 4778, no skips or unhandled errors, 348 s, exit 0
+    (`8-gui-full-corrected.log`). The count is the earlier 4771 less 6 moved, plus 8 moved-and-extended, 1
+    visualization control, 1 Masking control and 3 pending controls.
+  - **Refreshed because the shared declaration changed:** shared 1890 of 1890 (`9-shared-refresh.log`), GEE 1556 of
+    1556 (`10-gee-refresh.log`), Task 100 of 100 (`11-task-refresh.log`) and the GUI build with no Node built-in in
+    the bundle (`12-gui-build-refresh.log`).
+  - ESLint on the 11 changed or new JS/JSX files and `git diff --check` pass. Two workers at most throughout.
+- **Remaining release gate:** the focused CCDC asset compatibility browser check (checkpoint above) is still pending.
+  No live Earth Engine request, export or service restart was made.
+
+**Final verification corrections: independent review (2026-10-27; one small guard correction required).** The shared
+period/source-refusal extraction and the pending-processing behavior follow the agreed contract. Valid mosaics still
+wait without saved processing fallbacks. The moved layer tests use the real runtime, source-evidence acquisition,
+store and layer selector; the fixture helpers derive evidence and description answers through production code.
+The reviewer independently passed all **310 tests in the eight affected GUI files**, the **60 shared Change Alerts
+declaration cases**, ESLint on all 11 changed/new JS/JSX files and `git diff --check`. No full suite or live/browser
+check was repeated during this review.
+
+- **[P2] The new refusal projection throws for a missing/null model.** `changeAlerts/bands.js`, `mapProducts.project`,
+  calls `withoutProcessing(recipe.model)` when the shared rule establishes missing period/source settings. The
+  helper destructures its argument without normalizing it. With `model: undefined` or `model: null`, the actual
+  `readRecipeOutput` path now throws a TypeError instead of returning a configuration diagnosis; the projection
+  runs outside the description's try/catch. The empty-object model control correctly returns `INVALID`.
+- **Required bounded correction:** normalize the missing/null model before stripping processing, preserving the
+  shared refusal and valid-mosaic wait. A default parameter alone handles undefined but not null; cover both. Keep
+  saved processing copies unavailable and do not change the general resolver to swallow exceptions.
+- **Independent witness:** a temporary three-case test of the actual output read failed for undefined and null and
+  passed for `{}`. Substituting only the previous projection form avoided all three exceptions (returning the former
+  pending result); normalizing the missing model in the temporary projection made all three return `INVALID`.
+  No production file was changed. The temporary repository test was removed and retained at
+  `/tmp/sepal-final-corrections-missing-model.review.test.js`.
+- **Evidence:** `/tmp/sepal-final-corrections-review-gui.log`,
+  `/tmp/sepal-final-corrections-review-shared.log`, `/tmp/sepal-final-corrections-missing-model-review.log`,
+  `/tmp/sepal-final-corrections-missing-model-previous.log` and
+  `/tmp/sepal-final-corrections-missing-model-guard.log`. Refresh the focused tests, GUI build/lint and final GUI
+  checkpoint after the guard fix; unchanged shared/GEE/Task verification need not be repeated for a GUI-only guard.
+  The CCDC asset compatibility gate also remains pending. Nothing staged or committed.
+
+**Projection guard correction (2026-10-27; uncommitted on `12129ad9b`).** Resolves the independent review's finding.
+`withoutProcessing` (`changeAlerts/bands.js`) now normalises the model with `model ?? {}` before removing the
+processing copies.
+
+- **Regressions:** two cases in `modelDerivedOutput`'s pending-processing block read a collection mosaic for a Change
+  Alerts recipe with no model and with a `null` model. Each must be refused as `INVALID` with its incomplete period
+  (`monitoringEnd`) and sources (`dataSetType`), not throw. Before the guard both failed with the reviewer's
+  `TypeError`; after it both pass.
+- **Verification:**
+  - `modelDerivedOutput` and the Change Alerts directory: 341 of 341.
+  - **Full GUI suite, once:** 330 files, 4780 of 4780 (the earlier 4778 plus the two cases), no skips or unhandled
+    errors, 351 s, exit 0 (`14-gui-full-guard.log`).
+  - GUI production build passes with no Node built-in in the bundle (`15-gui-build-guard.log`).
+  - ESLint on the two changed files and `git diff --check` pass. Logs are in `/tmp/claude-1000/-home-ec2-user-sepal/104518d4-761f-48f9-83df-9fef860fa264/scratchpad/final-verification/`.
+  - No shared, GEE or Task code changed since their last green run, so those groups stand.
+- **Remaining release gate:** the focused CCDC asset compatibility browser check.
+
+Independent guard recheck (2026-10-27): the nullish normalization is at the processing-removal helper, preserving
+the shared diagnostics and valid-mosaic wait. Both new regressions assert `INVALID` with missing period/source
+fields. All **142 `modelDerivedOutput` tests** passed independently, with ESLint on the two changed files and
+`git diff --check` clean. The reviewer also inspected the recorded full GUI log: 330 files, 4780 tests, exit 0.
+No remaining code-review finding. Evidence: `/tmp/sepal-projection-guard-final-review.log`. This is a checkpoint
+commit of the reviewed correction tree; the asset compatibility browser gate still prevents release.
+
 **Deferred S5 follow-up: "Use reference settings" action (agreed 2026-10-26; not implemented).** Add a deliberate
 action for an existing Change Alerts recipe to copy the current reference's consumer-owned editable monitoring
 defaults again. This is not part of required S5/S6 and does not block push.
@@ -6250,7 +6497,7 @@ defaults again. This is not part of required S5/S6 and does not block push.
   deselection recover; choices survive repair; controls with no Classification and a valid one work. Replace the old
   native-bypass assertions intentionally, record the behavioural cost, and verify the new shared declarations allow
   deletion of the extra training-only paths without losing capability errors or submission-race protection.
-- **Status:** implemented as S3 (2026-10-24); see its record. Browser check pending.
+- **Status:** implemented as S3, with focused browser acceptance recorded through 2026-10-25. No outstanding S3 browser check; see its record.
 
 **F10. PyEO feedback must lead to a useful repair.**
 
@@ -6329,18 +6576,19 @@ defaults again. This is not part of required S5/S6 and does not block push.
 **Verification and boundaries:** use focused regressions for each changed contract and combine browser rechecks over
 the existing fixtures. Update old manual expectations when F4/F6 change the behaviour they describe; do not silently
 relabel the earlier results as evidence of the new contract. Continue recording the user's remaining browser results.
-The initial request-dependent readiness packet below is complete, but its clean automated run does not cover these
-unimplemented follow-ups. F9 may replace part of that packet's request-dependent training design; its historical
-verification remains evidence of the former contract. Broader preview gating, propagated request contexts and
-executed-edge closure work remain deferred. No implementation slice count is asserted until the F4 contract, F5
-ownership audit and F9 policy assessment establish the scope.
+The initial request-dependent readiness packet below is historical. S1-S6 implement the required corrections;
+S3 replaced its request-dependent training stages, and S4 completed the named-feature sampling contract. Earlier
+verification remains evidence of the contract tested then, not of every later tree. Broader preview gating,
+propagated request contexts, executed-edge closure work and the independent UI improvements remain deferred.
+The current release checkpoint owns the remaining verification gates.
 
 #### Current delivery plan (updated 2026-10-23)
 
-The table below records the completed initial classifier/readiness packet. The active follow-ups are F1-F10 in
-"Next steps from browser feedback" above; the packet's completion does not mean the reported browser issues are
-resolved. The completed histories that follow are reference material, not additional slices to implement. A shared
-backend helper accepting a Classification is not, by itself, a reason to expand a recipe's validation or GUI.
+**Historical initial packet.** The table below records the 2026-10-21 classifier/readiness rollout. Its stage names
+and native-band policy describe that checkpoint; S3 and S4 superseded parts of them. The F1-F10 and S1-S6 tables
+above show subsequent completion, and the [current release checkpoint](#current-release-checkpoint) owns the remaining
+gates. These histories are reference material, not additional slices to implement. A shared backend helper accepting
+a Classification is not, by itself, a reason to expand a recipe's validation or GUI.
 
 | Order | Remaining work | Status and next step | Estimated implementation slices |
 | --- | --- | --- | --- |
@@ -6349,20 +6597,25 @@ backend helper accepting a Classification is not, by itself, a reason to expand 
 | 3 | Training readiness for classified bands requested by Time Series charts/downloads and CCDC charts/exports. | Complete (2026-10-21): Time Series pixel observations ("Time Series' classified chart band"); CCDC's chart, with the stage generalised as `CLASSIFIED_COLLECTION` and the server sequence and band hold shared ("CCDC's requested chart bands"); Time Series Retrieve ("Time Series Retrieve's classified indicators"); CCDC export bands, to assets ("CCDC's requested export bands") and to Drive and SEPAL ("CCDC's Drive and SEPAL image exports"); CCDC Retrieve's preflight ("CCDC Retrieve's classified measures"). Remaining, deferred: direct previews (which could use the same root stage) and wrappers asking a CCDC source for classified measures (which need a propagated context). | 0 |
 | 4 | Change Alerts' observation request needs an explicit server-side operation boundary. | Complete (2026-10-21): the chart sends the applied recipe; the job derives the observed collection (`observedCollection`) and holds it to Time Series' `PIXEL_OBSERVATIONS`; untyped requests are refused. See "Pixel observations". | 0 |
 
-**Initial packet:** no implementation slice remains in its planned request-dependent readiness rollout. Browser
-verification has now produced the concrete follow-ups F1-F10 above; they are not covered by that completion statement.
-Reassess their implementation split after the sampling-contract review, settings-ownership audit and selected-source
-policy assessment. Design reports,
-review corrections and focused refactoring are not independently counted rollout items.
+**Initial packet:** no implementation slice remains in its original rollout. Its browser feedback was addressed by
+the later S1-S6 corrections and supporting shared-read fix. Their remaining release verification is distinct from
+the initial packet's completion; optional follow-ups are not extra required slices.
 
-**Finish this round when:** the reviewed dependencies and requirements cover the training and collection work these
-operations actually run,
-pending and unavailable evidence stay distinct from findings, repairs recover through the existing runtime, and the
-focused regressions and browser checks pass. Preserve the current native-band classifier-input policy unless a
-separate decision changes it. Broader coverage listed under "Deferred beyond this round" is not required to finish.
+**Finish this round when:** final integrated verification is clean after its findings are resolved, and the focused
+CCDC asset compatibility check passes. The S3 selected-Classification policy is implemented, including native
+Time Series/CCDC operations; the former native training bypass is not an outstanding policy choice. Broader coverage
+listed under "Deferred beyond this round" is not required to finish.
 
 **Verification checkpoint before push:**
 
+- **Current status (2026-10-27).** S5 (`6fc9e5874`), S6 (`eaba8f54f`) and the shared-read correction (`12129ad9b`)
+  are committed and browser-accepted, and origin is integrated (`3fd364ce7`). The final integrated campaign at
+  `12129ad9b` found 36 failing GUI tests in seven files; push is blocked until they are corrected and the full GUI
+  suite passes. See "Final integrated verification". The bullets below are the history leading here.
+- **Asset gate added and agreed (2026-10-27).** The latest user checks covered recipe references only. Existing CCDC
+  asset compatibility and a small new-export metadata round trip remain required before release; see the current
+  release checkpoint. Passing the corrected GUI suite alone does not close this gate. Once both gates pass, no
+  optional polish or additional implementation slice is required before push.
 - **Release scope reaffirmed 2026-10-26.** S4 can be committed as a separate reviewed checkpoint before starting
   S5. S5 (Change Alerts settings ownership and unwanted overwrites) and S6 (validation/editor/chart agreement)
   remain required before pushing this robustness round. A passing final GUI run alone does not complete that work;
@@ -6395,23 +6648,28 @@ separate decision changes it. Broader coverage listed under "Deferred beyond thi
 - PyEO's Classification image dependency and its training checks;
 - consistent normalisation for prediction imagery and reused Classification samples, with live numerical witnesses;
 - removal of incidental Change Alerts Classification dependencies, stale deselected capabilities, and the bounded
-  operation/lifecycle/field-binding consolidations.
+  operation/lifecycle/field-binding consolidations;
+- the S3 selected-Classification policy for native and classified Time Series/CCDC operations and count products;
+- S4 Consumer-owned named-feature sampling, ambiguity handling and collection-classifier input-count validation;
+- S5 Change Alerts settings ownership, S6 monitoring-choice/chart agreement and their recorded targeted browser checks;
+- subscriber-context restoration in shared recipe/GeoID reads and the service bridge.
 
 **Deferred beyond this round:**
 
-- multiple-input sampled-feature names, suffix collisions and collection-classifier input-count validation;
-- sampling-scale, raw value encoding and legend/value compatibility, and sample survival/sufficiency after masking;
-- changing the native-band classifier-input policy;
-- geometry, named map products and other unguarded routes, asset segment-layout validation, and the cost assessment
-  before server-side Preview checks; LandTrendr remains outside the classifier rollout;
-- `REFERENCE` closure over-reading and runtime refresh-policy changes: not needed for classified requests, whose stage
-  reads the subgraph that executes (see the architecture checkpoint);
-- server gating of direct map previews, which could then use the root training stage;
+- further sampling-scale, raw value encoding and legend/value compatibility checks, and training-sample sufficiency
+  after masking; the implemented mask/footprint controls do not prove adequacy for every classifier;
+- extending or changing S3's selected-source policy for other recipe families;
+- readiness for still-uncovered geometry/map-product/server routes, broader asset-layout work and the cost assessment
+  before server-side Preview checks; CCDC count prerequisites are already implemented and LandTrendr remains outside
+  the classifier rollout;
+- conservative `REFERENCE` closure over-reading, executed-edge acquisition and runtime refresh-policy changes;
+- server gating of direct map previews through the existing operation/product readiness declarations, without
+  reintroducing the retired request-dependent training stage;
 - destination compatibility at the Drive and SEPAL execution boundaries: they judge a CCDC's readiness for the bands
   requested, but neither refuse array bands nor establish that a raster file can hold them (see "CCDC's Drive and
   SEPAL image exports");
-- a propagated request context for wrappers asking a CCDC source for classified measures (CCDC Slice base bands,
-  Masking, Stack, Band Math);
+- a propagated request context for additional requested-output checks through wrappers (CCDC Slice base bands,
+  Masking, Stack, Band Math); this is distinct from the shared training prerequisites S3 already propagates;
 - shared form defaults, duplicated input editors, generic reference-feedback navigation beyond F1's targeted training
   item repair path, and tab-indicator experiments.
 

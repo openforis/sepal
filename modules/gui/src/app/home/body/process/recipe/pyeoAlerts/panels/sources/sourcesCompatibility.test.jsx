@@ -16,11 +16,13 @@ import {PortalContainer, PortalContext} from '~/widget/portal'
 // and asset reads are the substitutes.
 
 const assetMetadata$ = vi.fn()
+const bands$ = vi.fn()
 const loadRecipe$ = vi.fn()
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         assetMetadata$: (...args) => assetMetadata$(...args),
-        assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
+        assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
+        bands$: (...args) => bands$(...args)
     },
     recipe: {load$: (...args) => loadRecipe$(...args), save$: () => of()}
 }}))
@@ -80,24 +82,36 @@ const OPTICAL = 'classification-optical'
 const OTHER_OPTICAL = 'classification-other-optical'
 const RADAR = 'classification-radar'
 
-const classificationOver = (id, included) => ({
+// Over an asset holding the bands it selects. Only a trained one - a classifier and points to train it on - is a
+// Classification PyEO can run.
+const classificationOver = (id, included, {trained = false} = {}) => ({
     id,
     type: 'CLASSIFICATION',
     model: {
         legend: {entries: [{value: 1, label: 'Forest'}, {value: 2, label: 'Non-forest'}]},
-        inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: `users/x/${id}`, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]}
+        inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: `users/x/${id}`, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]},
+        ...(trained && {
+            classifier: {type: 'RANDOM_FOREST'},
+            trainingData: {dataSets: [{dataSetId: 'collected', type: 'COLLECTED', name: 'Collected', referenceData: [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]}]}
+        })
     }
 })
 
 const CLASSIFICATIONS = [
     classificationOver(OPTICAL, ['red', 'nir']),
-    classificationOver(OTHER_OPTICAL, ['red', 'nir', 'swir1']),
+    classificationOver(OTHER_OPTICAL, ['red', 'nir', 'swir1'], {trained: true}),
     classificationOver(RADAR, ['VV_mean', 'VH_med'])
 ]
+
+// Earth Engine's description of each Classification's input asset: the bands its band set selects.
+const inputBandsOf = asset => CLASSIFICATIONS
+    .find(({model}) => model.inputImagery.images[0].id === asset)
+    ?.model.inputImagery.images[0].bandSetSpecs[0].included
 
 async function open() {
     loadRecipe$.mockImplementation(id => of(CLASSIFICATIONS.find(record => record.id === id)))
     assetMetadata$.mockImplementation(() => of({bandNames: ['B1'], properties: {}}))
+    bands$.mockImplementation(({asset}) => of((inputBandsOf(asset) || ['B1']).map(name => ({name, arrayDimensions: 0}))))
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},

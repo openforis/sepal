@@ -32,6 +32,7 @@ const {ChangeAlertsImageLayer} = await import('./changeAlerts/changeAlertsImageL
 const {LandTrendrImageLayer} = await import('./landTrendr/landTrendrImageLayer')
 const {buildMapDependencyGraph} = await import('./mapDependencyGraph')
 const {layerProduct, readRecipeOutput} = await import('./recipeOutput')
+const {describedByRuntime, observedSegmentsAsset, segmentsAssetMetadata} = await import('./changeAlerts/observedReference.test.fixtures')
 
 const DRAWN_AOI = {type: 'POLYGON', path: [[-60.1, -3.1], [-60, -3.1], [-60, -3], [-60.1, -3.1]]}
 
@@ -58,10 +59,15 @@ const FORMS = [
     {
         name: 'Change Alerts',
         Form: ChangeAlertsImageLayer,
+        // A segments asset it has observed, as its evidence lifecycle publishes it; a recipe reference not yet resolved
+        // has nothing observed.
         recipe: ({initialized = true, reference = {type: 'ASSET', id: 'users/x/segments'}} = {}) => ({
             id: 'change-alerts-1',
             type: 'CHANGE_ALERTS',
-            ui: {initialized},
+            ui: {
+                initialized,
+                ...(reference.type === 'ASSET' && {sourceEvidence: observedSegmentsAsset(reference, segmentsAssetMetadata({band: 'ndvi'}))})
+            },
             model: {
                 reference,
                 date: {
@@ -175,7 +181,7 @@ const area = (Form, {recipe, layerConfig, inAnotherRecipe = false}) => {
             recipe,
             product: layerProduct(recipe, layerConfig),
             graph: buildMapDependencyGraph({recipe, loadedRecipes: {[recipe.id]: recipe}}),
-            heldFor: () => null
+            heldFor: key => key.kind === 'DESCRIBE' ? describedByRuntime([recipe]) : null
         }),
         mapArea: {updateLayerConfig: changes => pending.push(changes)}
     })

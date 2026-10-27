@@ -67,7 +67,7 @@ const {visualizationOptions: changeAlertsVisualizationOptions} = await import('.
 const {groupedBandPresentation: radarMosaicRetrieveGroups} = await import('./radarMosaic/bands')
 const {groupedBandPresentation: planetMosaicRetrieveGroups} = await import('./planetMosaic/bands')
 const {renderableVisualizations} = await import('./visualizationMatching')
-const {typedSegmentsAssetDescription} = await import('./ccdc/segmentsAsset')
+const {describedByRuntime, observedSegmentsAsset, segmentsAssetMetadata} = await import('./changeAlerts/observedReference.test.fixtures')
 const {declaredSelections, sourceKeyOf} = await import('./sourceEvidence')
 const {historicalStatsOf} = await import('./baytsAlerts/historicalStatistics')
 
@@ -838,6 +838,50 @@ describe('a Change Alerts recipe', () => {
         })
     })
 
+    // The mosaic is built with processing the reference owns, so it waits for that to be read rather than being built from
+    // the copies this recipe saved. What its own period and sources refuse needs none of it, and is said meanwhile.
+    describe('while its reference\'s processing is still being read', () => {
+        const layerConfig = {visualizationType: 'monitoring', mosaicType: 'latest'}
+
+        it('waits to describe its mosaic, which cannot be previewed', () => {
+            const {output} = layerRead(unobserved(changeAlertsOf()), layerConfig)
+
+            expect(output.status).toBe('NEEDS_EVIDENCE')
+            expect(canPreview(output)).toBe(false)
+        })
+
+        it('is already refused before a period is chosen', () => {
+            const {output} = layerRead(unobserved(changeAlertsOf({date: {...PERIOD, monitoringEnd: undefined}})), layerConfig)
+
+            expect(output).toMatchObject({
+                status: 'INVALID',
+                diagnostics: [expect.objectContaining({code: 'INCOMPLETE_IMAGE_OUTPUT', path: ['model', 'date', 'monitoringEnd']})]
+            })
+        })
+
+        it.each([
+            ['no model', undefined],
+            ['a null model', null]
+        ])('is refused, not thrown, for a recipe with %s yet', (_case, model) => {
+            const {output} = layerRead({id: ID, type: 'CHANGE_ALERTS', title: 'Alerts', model}, layerConfig)
+
+            expect(output).toMatchObject({status: 'INVALID'})
+            expect(output.diagnostics).toEqual(expect.arrayContaining([
+                expect.objectContaining({code: 'INCOMPLETE_IMAGE_OUTPUT', path: ['model', 'date', 'monitoringEnd']}),
+                expect.objectContaining({code: 'INCOMPLETE_IMAGE_OUTPUT', path: ['model', 'sources', 'dataSetType']})
+            ]))
+        })
+
+        it('is already refused for a Planet source with no Planet collection', () => {
+            const {output} = layerRead(unobserved(changeAlertsOf({sources: {...PLANET_SOURCES, dataSets: {}}})), layerConfig)
+
+            expect(output).toMatchObject({
+                status: 'INVALID',
+                diagnostics: [expect.objectContaining({code: 'INCOMPLETE_IMAGE_OUTPUT', path: ['model', 'sources', 'dataSets', 'PLANET']})]
+            })
+        })
+    })
+
     // A latest radar mosaic stands at the period's end or start, and a median one scans the period.
     it.each([
         ['monitoring', 'latest', RADAR_POINT_IN_TIME, ['VV', 'VH', 'ratio_VV_VH']],
@@ -1346,19 +1390,10 @@ const changeAlertsOf = ({reference = {type: 'ASSET', id: 'users/x/segments'}, da
 })
 
 // An image asset's segments as the observation reads them from its metadata: each band's grid, and its array rank.
-const segmentsObserved = (reference, band) => {
-    const bands = [['tStart', 1], ['tEnd', 1], [`${band}_coefs`, 2], [`${band}_rmse`, 1]]
-    return {
-        status: 'OBSERVED',
-        sourceKey: sourceKeyOf(reference),
-        segments: typedSegmentsAssetDescription({
-            type: 'Image',
-            bandNames: bands.map(([name]) => name),
-            bands: bands.map(([id, dimensions]) => ({id, dimensions: [5015, 3093], data_type: {type: 'PixelType', precision: 'double', dimensions}})),
-            properties: {dateFormat: 1}
-        }, {assetId: reference.id})
-    }
-}
+const segmentsObserved = (reference, band) => observedSegmentsAsset(reference, segmentsAssetMetadata({band}))
+
+// The recipe as it is before its reference has been observed.
+const unobserved = ({ui: {sourceEvidence: _observed, ...ui} = {}, ...recipe}) => ({...recipe, ui})
 
 const RADAR_POINT_IN_TIME = ['VV', 'VH', 'ratio_VV_VH', 'orbit', 'dayOfYear', 'daysFromTarget']
 
@@ -1451,7 +1486,7 @@ const read = recipe => readAll([recipe, COVARIATES, LAND_COVER])
 
 // The read a Retrieve panel makes of the first recipe, with the others loaded beside it and nothing retained. What a
 // recipe's evidence lifecycle published on it was observed on a basis current for this read, and the asset it was read
-// from was just checked.
+// from was just checked; the runtime has described what that asset's evidence describes (describedByRuntime).
 const readAll = ([recipe, ...others]) => {
     const owners = {}
     const records = [recipe, ...others].map(record => observedNow(record, owners))
@@ -1462,7 +1497,7 @@ const readAll = ([recipe, ...others]) => {
             assetEvidence: {generation: 0, assets: Object.fromEntries(records.flatMap(checkedAssets))}
         }},
         recipeId: recipe.id,
-        heldFor: () => null,
+        heldFor: key => key.kind === 'DESCRIBE' ? describedByRuntime(records) : null,
         evidenceOwnerOf: id => owners[id] || null
     })
 }
