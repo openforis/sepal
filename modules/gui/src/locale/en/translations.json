@@ -6437,7 +6437,7 @@
           "required": "Intended use is required"
         },
         "usage": {
-          "label": "Computing resources usage",
+          "label": "Computing resource usage",
           "avgMax": "{metric} (avg/max)",
           "cost": "Cost",
           "hours": "Hours",
