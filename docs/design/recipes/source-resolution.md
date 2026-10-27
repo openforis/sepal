@@ -20,21 +20,25 @@ The detailed audits and completed packet history below retain evidence and bound
 
 ## Current release checkpoint
 
-**Status reconciled 2026-10-27, against `12129ad9b`.** S1-S6 are implemented, reviewed and browser-accepted within
+**Status reconciled 2026-10-27, against `8c0976ff9`.** S1-S6 are implemented, reviewed and browser-accepted within
 their recorded scopes. S5 is committed as `6fc9e5874`, S6 as `eaba8f54f`, and the subsequent shared-read context
 correction as `12129ad9b`. Origin was integrated at `3fd364ce7` before that correction. The implementation histories
 retain their original pending/failure statements as evidence of those earlier checkpoints; they are not additional
 unfinished slices.
 
-Pushing this work releases it. The user agreed that the remaining release gates are:
+Origin's app-instance recommendation change (`15dd7f07e`) was subsequently merged as `8c0976ff9`, without
+conflicts or recipe-code changes. Its focused post-merge verification is recorded below; the complete integrated
+campaign remains evidence for the preceding `d075ce7ec` recipe tree, not a repeated full-suite run after this merge.
+
+Pushing this work releases it. Both agreed release gates are now satisfied:
 
 | Gate | Current evidence / action |
 | --- | --- |
-| Final integrated verification and resolution of its findings | The 36 GUI failures and the hidden-local-refusal defect are corrected, uncommitted on `12129ad9b`. That tree passed all 4778 GUI tests and refreshed shared, GEE, Task, build and static checks. Subsequent independent review found one small regression in the new projection: a missing/null model threw during processing removal. That guard is corrected and covered, and the refreshed full GUI suite passes 4780 of 4780 with the GUI build and lint. See "Final verification corrections", its independent review and "Projection guard correction". Commit exactly that tree. |
-| Focused CCDC asset compatibility check | Pending. The user explicitly confirmed that the latest Change Alerts checks used recipe references only. S5's legacy metadata forms have fixture coverage; the attempted read-only live check found no asset to inspect. Check an existing segments asset and a small completed new CCDC export used as a reference, as described below. |
+| Final integrated verification and resolution of its findings | Complete within the recorded verification scopes. The 36 GUI failures, hidden-local-refusal defect and missing/null-model guard are corrected and committed as `d075ce7ec`. The final full GUI suite passed 4780 of 4780; shared, GEE, Task, build and static groups are green as recorded. Origin's subsequent app-picker change is merged as `8c0976ff9`; 114 focused GUI tests, changed-file lint and the production build pass on that merge. Independent review has no remaining finding. See "Final verification corrections", "Projection guard correction", the independent recheck and "Origin integration after asset checks". |
+| Focused CCDC asset compatibility check | Complete. Existing radar and optical assets work with the intended editable fallbacks, confirmed by user chart/preview results and independent metadata inspection. The user then completed a fresh radar CCDC Segments export, confirmed that PRC applies the recorded properties and disables the appropriate controls, and explicitly confirmed that both preview and chart work using that same new asset. See "Fresh export browser acceptance". |
 
-**Release decision:** once both gates pass and any findings are resolved, push/release is the next step. No further
-implementation slice is required by this roadmap. Optional improvements below can wait for another release. A newly
+**Release decision:** both gates passed and the findings are resolved; commit the verification notes and push/release.
+No further implementation slice is required by this roadmap. Optional improvements below can wait for another release. A newly
 confirmed release defect can require a bounded correction; finding a historical proposal or an explicitly deferred
 item does not by itself expand the release scope.
 
@@ -6424,6 +6428,66 @@ fields. All **142 `modelDerivedOutput` tests** passed independently, with ESLint
 No remaining code-review finding. Evidence: `/tmp/sepal-projection-guard-final-review.log`. This is a checkpoint
 commit of the reviewed correction tree; the asset compatibility browser gate still prevents release.
 
+**Existing CCDC asset compatibility (2026-10-27; user browser result and independent live metadata read).** The user
+reports that chart and preview work for `users/wiell/ayeyarwadi_ccdc_radar`, but no PRC controls are disabled. After
+the user made that asset public, the reviewer fetched its metadata through Earth Engine's `getAsset`, authenticated
+with the existing service account. No image computation, export or asset mutation was performed.
+
+- The image carries segment timing bands and coefficient/RMSE/magnitude arrays for `VV`, `VH` and `ratio_VV_VH`.
+  Recorded properties include `dateFormat: 1`, `scale: 30`, coverage dates and visualizations.
+- It has no `processing`, `recipe_options`, `recipe_sources`, `formattedProperties` or `recipe_type` property.
+  The actual workspace `assetProcessing` parser agrees with the container's result: date format is `RECORDED`
+  with value 1; all radar-processing fields are `NOT_RECORDED`.
+- PRC remaining editable is therefore the intended older-asset fallback, not a confirmed lock/presentation defect.
+  Date representation belongs to REF. Absence of recorded radar settings does not establish what processing made
+  the original pixels; the consumer's labelled editable fallback remains explicit.
+- Evidence: `/tmp/sepal-ayeyarwadi-ccdc-radar-inspection.parsed.json`. The first inspection attempt failed before
+  authentication because the SDK was sought in the service package rather than its EE library; the corrected
+  read-only attempt succeeded. This real asset verifies the missing-processing-metadata case. It does not verify
+  the nested legacy metadata form, which this asset lacks, or a new canonical `processing` record.
+
+**Existing optical collection follow-up (2026-10-27).** The user also reports working chart and preview, with Retrieve
+enabled and PRC editable, for `projects/wiell-testing/assets/costa-rica/ccdc`. Independent read-only metadata inspection
+finds an ImageCollection whose version timestamp is 2025-06-10, predating this work. Its collection metadata and the
+three inspected tiles (`0`, `1`, `10`; not the entire collection) contain no `processing`, `recipe_options`,
+`recipe_sources`, `formattedProperties` or `surfaceReflectance` setting. The workspace parser returns `NOT_RECORDED`
+for SR, BRDF and the multiplier, and `RECORDED` for `dateFormat: 1`. Editable optical PRC is the intended fallback,
+not evidence of a lock defect. This extends the existing-asset acceptance to an optical tiled collection; it does
+not exercise the new metadata writer. Evidence: `/tmp/sepal-costa-rica-ccdc-inspection.parsed.json` and
+`/tmp/sepal-costa-rica-ccdc-tiles.parsed.json`. No image computation, export or asset mutation was performed.
+
+The existing-asset check is accepted on this combined evidence. The only remaining release check is a completed
+small CCDC export under the current build, used as a Change Alerts reference with matching read-only recorded
+processing and working preview/chart. Nothing has been pushed; no broader manual batch is reopened.
+
+**Origin integration after asset checks (2026-10-27).** At the user's request, fetched origin and merged its one
+incoming commit, `15dd7f07e` ("let users pick instances below an app's requirements", PR #463), as `8c0976ff9`.
+The merge was clean, including the English translations. The pre-existing uncommitted roadmap notes were verified
+byte-for-byte unchanged by the merge. The incoming code lists lower-specification app instances with a warning
+instead of disabling them and makes Label's warning tooltip tappable; recipe/export/readiness code is unchanged.
+
+- Post-merge workspace verification: the app directory, related widgets and translations passed **114 tests in
+  16 files**, with at most two workers. ESLint on the six changed JS/JSX files and `git diff --check` pass.
+- The merged GUI production build passes (only the existing chunk-size notice); output went to a temporary
+  directory in the disposable container, leaving the workspace `dist` untouched.
+- Evidence: `/tmp/sepal-origin-15dd7f07e-gui.log` and `/tmp/sepal-origin-15dd7f07e-build.log`. No full-suite,
+  backend or browser rerun is claimed for this app-only merge. The preceding integrated results keep their
+  recorded scope. No push was performed; the fresh CCDC export metadata/browser check remains pending.
+
+**Fresh export browser acceptance (2026-10-27; final release gate passed).** The user completed a new radar CCDC
+Segments asset export using the current implementation and used it as the Change Alerts reference. They report
+that the recorded properties are applied correctly and the corresponding PRC controls are disabled. Asked
+specifically whether execution also works using that same newly exported asset, they confirmed: "Yes, preview
+and chart works fine". This is acceptance of the real new-export writer/reader round trip and actual preview/chart,
+not merely enabled actions or an export still running.
+
+The fresh asset ID was not supplied, so no independent metadata read of this new asset is claimed. The earlier
+independent reads cover the existing radar and optical assets only. This user-reported browser result closes the
+last agreed release gate for the reviewed code at `8c0976ff9`; the final updates are verification notes only.
+The automated evidence retains its recorded scope: full integrated results for the recipe tree and the focused
+tests/lint/build after origin's app-picker merge. No additional implementation slice or manual batch is required
+before committing these notes and pushing.
+
 **Deferred S5 follow-up: "Use reference settings" action (agreed 2026-10-26; not implemented).** Add a deliberate
 action for an existing Change Alerts recipe to copy the current reference's consumer-owned editable monitoring
 defaults again. This is not part of required S5/S6 and does not block push.
@@ -6609,13 +6673,15 @@ listed under "Deferred beyond this round" is not required to finish.
 **Verification checkpoint before push:**
 
 - **Current status (2026-10-27).** S5 (`6fc9e5874`), S6 (`eaba8f54f`) and the shared-read correction (`12129ad9b`)
-  are committed and browser-accepted, and origin is integrated (`3fd364ce7`). The final integrated campaign at
-  `12129ad9b` found 36 failing GUI tests in seven files; push is blocked until they are corrected and the full GUI
-  suite passes. See "Final integrated verification". The bullets below are the history leading here.
-- **Asset gate added and agreed (2026-10-27).** The latest user checks covered recipe references only. Existing CCDC
-  asset compatibility and a small new-export metadata round trip remain required before release; see the current
-  release checkpoint. Passing the corrected GUI suite alone does not close this gate. Once both gates pass, no
-  optional polish or additional implementation slice is required before push.
+  are committed and browser-accepted. The final-verification failures and follow-up defects are corrected in
+  `d075ce7ec`, with 4780 full GUI tests and the recorded shared/GEE/Task/build/static groups green. Origin is
+  integrated through `8c0976ff9`, with 114 focused tests, lint and build passing after the app-picker merge.
+  Existing-asset compatibility and the fresh radar export's PRC/preview/chart check are now accepted. Both agreed
+  release gates pass; commit the verification notes and push. The bullets below retain the earlier scope/history.
+- **Asset gate added and completed (2026-10-27).** Recipe-reference checks were supplemented with existing radar
+  and optical assets, plus a completed fresh radar CCDC Segments export used in Change Alerts. See "Fresh export
+  browser acceptance" and the current release checkpoint. No optional polish or additional implementation slice
+  is required before push.
 - **Release scope reaffirmed 2026-10-26.** S4 can be committed as a separate reviewed checkpoint before starting
   S5. S5 (Change Alerts settings ownership and unwanted overwrites) and S6 (validation/editor/chart agreement)
   remain required before pushing this robustness round. A passing final GUI run alone does not complete that work;
