@@ -71,6 +71,7 @@ vi.mock('~/apiRegistry', async () => {
         // Storage holds the recipes the session does.
         recipe: {
             load$: id => {
+                fake.calls.push(['load', id])
                 if (!fake.stored[id]) {
                     return throwError(() => new Error(`Recipe ${id} not found`))
                 }
@@ -133,7 +134,7 @@ vi.mock('../ccdc/ccdcGraph', () => ({
 const {SourceEvidenceSync} = await import('../sourceEvidenceSync')
 const {sliceObservation} = await import('./sliceObservation')
 const {sliceRequirements} = await import('./sourceRequirement')
-const {describeSegments$} = await import('../ccdc/segmentDescription')
+const {describeSegments$, segmentBandLabels} = await import('../ccdc/segmentDescription')
 const {Source} = await import('./panels/source/source')
 const {CHART_OPERATIONS, ChartPixel} = await import('./panels/chartPixel')
 const {ChartPixelButton} = await import('../chartPixelButton')
@@ -148,7 +149,7 @@ const {CHECKING_SOURCE, selectedSourceStatusOfState, UNSUITABLE_SOURCE} = await 
 const {requestGate} = await import('../sourceRequirements')
 
 registry.CCDC_SLICE = {sourceRequirements: sliceRequirements, sourceObservation: sliceObservation}
-registry.CCDC = {id: 'CCDC', describeSegments$}
+registry.CCDC = {id: 'CCDC', describeSegments$, segmentBandLabels}
 registry.MASKING = {id: 'MASKING'}
 registry.MOSAIC = {id: 'MOSAIC'}
 
@@ -502,6 +503,71 @@ describe('the segment chart over a recipe it builds as that recipe\'s own image'
     })
 })
 
+// Which bands the chart offers is the source's to say (pixelChartAvailability); how they are labelled is the producer's
+// (segmentBandLabels), from the records the chart's operation resolved. A band is chosen, requested and plotted by name.
+describe('the segment chart\'s band choices', () => {
+    it('are labelled as the CCDC labels them, and the band chosen is requested and plotted by name', async () => {
+        await editor({selection: ref('ccdc-classified'), chart: true})
+
+        const choices = await bandChoices()
+        expect(choices).toEqual(expect.arrayContaining(['ndvi', 'blue', REGRESSION, FOREST, WATER]))
+        expect(choices).not.toContain('regression')
+        expect(choices).not.toContain('probability_1')
+
+        await chooseBand(FOREST)
+
+        expect(fake.segmentBands.at(-1)).toBe('probability_1')
+        expect(fake.graphs.at(-1)).toMatchObject({band: 'probability_1'})
+    })
+
+    it('name a probability band by its class as the Classification labels it now, keeping the band chosen', async () => {
+        await editor({selection: ref('ccdc-classified'), chart: true})
+        await chooseBand(FOREST)
+
+        await editRecord('classification-1', {legend: legend('Primary forest', 'Water')})
+
+        const choices = await bandChoices()
+        expect(choices).toContain(PRIMARY_FOREST)
+        expect(choices).not.toContain(FOREST)
+        expect(chosenBandLabel()).toBe(PRIMARY_FOREST)
+        expect(fake.segmentBands.at(-1)).toBe('probability_1')
+        expect(fake.graphs.at(-1)).toMatchObject({band: 'probability_1'})
+    })
+
+    it('keep bands apart whose classes are labelled alike', async () => {
+        await editor({selection: ref('ccdc-classified'), chart: true})
+        await editRecord('classification-1', {legend: legend('Forest', 'Forest')})
+
+        expect((await bandChoices()).filter(choice => choice === FOREST)).toHaveLength(2)
+
+        await chooseBand(FOREST, 1)
+
+        expect(fake.segmentBands.at(-1)).toBe('probability_2')
+        expect(fake.graphs.at(-1)).toMatchObject({band: 'probability_2'})
+    })
+
+    // `constructor` is a name an object inherits a value for, so no label is found for it either.
+    it.each(['probability_1', 'constructor'])('are named as an asset names its bands, in its order, with no recipe read for them: %s', async band => {
+        fake.assets[SEGMENTS_ASSET] = segmentsAsset([...VALID_BANDS, ...measureBands(band)])
+        await editor({selection: ASSET, chart: true})
+
+        expect(await bandChoices()).toEqual(['ndvi', band])
+
+        await chooseBand(band)
+
+        expect(chosenBandLabel()).toBe(band)
+        expect(fake.segmentBands.at(-1)).toBe(band)
+        expect(fake.graphs.at(-1)).toMatchObject({band})
+        expect(fake.calls.filter(([call, id]) => call === 'load' && id !== SLICE)).toEqual([])
+    })
+})
+
+const REGRESSION = 'process.classification.bands.regression'
+const probabilityOf = label => `process.classification.bands.probability ${JSON.stringify({class: label})}`
+const FOREST = probabilityOf('Forest')
+const WATER = probabilityOf('Water')
+const PRIMARY_FOREST = probabilityOf('Primary forest')
+
 const ASSET = {type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 1}
 
 const SEGMENT_BANDS = [['tStart', 1], ['tEnd', 1], ['tBreak', 1], ['numObs', 1], ['changeProb', 1]]
@@ -522,6 +588,33 @@ const RECORDS = [
     {id: 'masking-ccdc', name: 'Masked CCDC', type: 'MASKING', model: {imageToMask: ref('ccdc-1'), imageMask: ref('mosaic-1')}},
     {id: 'masking-mosaic', name: 'Forest mask', type: 'MASKING', model: {imageToMask: ref('mosaic-1'), imageMask: ref('mosaic-1')}},
     {id: 'mosaic-1', name: 'Sentinel 2021', type: 'MOSAIC', model: {}},
+    // Described from its configuration, so what a Classification over it is trained on is known.
+    {
+        id: 'mosaic-s2', name: 'Sentinel 2023', type: 'MOSAIC',
+        model: {
+            dates: {targetDate: '2023-07-01', seasonStart: '2023-01-01', seasonEnd: '2024-01-01', yearsBefore: 0, yearsAfter: 0},
+            sources: {dataSets: {SENTINEL_2: ['SENTINEL_2']}, cloudPercentageThreshold: 100},
+            compositeOptions: {corrections: ['SR'], compose: 'MEDIAN'}
+        }
+    },
+    {
+        id: 'ccdc-classified', name: 'Classified CCDC', type: 'CCDC',
+        model: {
+            sources: {dataSets: {LANDSAT: ['LANDSAT_9']}, classification: 'classification-1'},
+            options: {corrections: []},
+            ccdcOptions: {dateFormat: 1},
+            dates: {startDate: '2017-01-01', endDate: '2021-01-01'}
+        }
+    },
+    {
+        id: 'classification-1', name: 'Land cover', type: 'CLASSIFICATION',
+        model: {
+            inputImagery: {images: [{imageId: 'i-1', type: 'RECIPE_REF', id: 'mosaic-s2', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red', 'nir']}]}]},
+            legend: legend('Forest', 'Water'),
+            classifier: {type: 'RANDOM_FOREST'},
+            trainingData: {dataSets: [{dataSetId: 'collected', type: 'COLLECTED', name: 'Collected', referenceData: [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]}]}
+        }
+    },
     {
         id: 'ccdc-1', name: 'CCDC', type: 'CCDC',
         model: {
@@ -532,6 +625,11 @@ const RECORDS = [
         }
     }
 ].map(record => ({...record, revision: 1}))
+
+// A Classification's legend: a class for each label, valued from 1.
+function legend(...labels) {
+    return {entries: labels.map((label, index) => ({id: `class-${index + 1}`, value: index + 1, label, color: '#000000'}))}
+}
 
 const LISTING = [
     {id: SLICE, name: 'Slice', type: 'CCDC_SLICE', revision: 1},
@@ -658,12 +756,13 @@ const render = () => act(async () => root.render(
                     : null}
                 {mounted.chart
                     ? (
-                        <>
+                        <EventShield>
+                            <PortalContainer/>
                             <PortalContainer id='chart-panel'/>
                             <PortalContext id='chart-panel'>
                                 <ChartPixel/>
                             </PortalContext>
-                        </>
+                        </EventShield>
                     )
                     : null}
             </Recipe>
@@ -829,6 +928,26 @@ const editRecord = async (id, model) => {
     await act(async () => actionBuilder('EDIT_RECORD').assign(['process.loadedRecipes', id, 'model'], model).dispatch())
     await settled()
 }
+
+// The chart's band choices, as its band selector offers them once opened.
+const bandChoices = async () => {
+    await act(async () => bandSelector().click())
+    const choices = offered()
+    await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true})))
+    return choices
+}
+
+// A band chosen in the chart's band selector by the label it is offered under; `nth` of several offered alike.
+const chooseBand = async (label, nth = 0) => {
+    await act(async () => bandSelector().click())
+    await act(async () => [...document.querySelectorAll('[data-hook="option"]')].filter(element => element.textContent === label)[nth].click())
+    await settled()
+}
+
+const bandSelector = () => document.getElementById('chart-panel').querySelector('input')
+
+// What the band selector shows as chosen while closed: its placeholder.
+const chosenBandLabel = () => bandSelector().placeholder
 
 const answerHeldSegments = async () => {
     const held = fake.heldSegments

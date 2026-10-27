@@ -23,7 +23,9 @@ import {resolveChartBand} from '../../chartBandSelection'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
 import {pixelChartAvailability, pixelOperationsAvailability, watchOperations} from '../../operationAvailability'
 import {pixelGenerationOfState} from '../../pixelGeneration'
+import {segmentBandLabelsOf} from '../../segmentCapability'
 import {segmentDescription} from '../../segmentEvidence'
+import {selectedSourceOf} from '../../sourceEvidence'
 import {PIXEL_SEGMENTS} from '../../sourceRequirements'
 import {loadCCDCSegments$, RecipeActions} from '../ccdcSliceRecipe'
 import {dateFormatOf} from '../sliceEvidence'
@@ -235,10 +237,12 @@ class _ChartPixel extends React.Component {
         )
     }
 
-    // The measures the source's segments can be plotted for (pixelChartAvailability).
+    // The measures the source's segments can be plotted for (pixelChartAvailability), labelled as their producer labels
+    // them where it does; by name otherwise - a name like `constructor` included, which the labels only inherit. The
+    // name is what is selected and requested.
     bandOptions() {
-        const {chartBands} = this.props
-        return chartBands.map(name => ({value: name, label: name}))
+        const {chartBands, bandLabels} = this.props
+        return chartBands.map(name => ({value: name, label: (Object.hasOwn(bandLabels, name) && bandLabels[name]) || name}))
     }
 
     // A band no longer offered is replaced by one that is - but only once what can be plotted is established: checking
@@ -266,7 +270,8 @@ class _ChartPixel extends React.Component {
 
 // What the chart's pixels were read from beyond the recipe: a change means they may have moved, which no comparison of
 // what the source DESCRIBES would show (pixelGeneration.js). And, assessed as the toolbar's action assesses it, whether
-// its segments may be read, which bands it can plot, and whether the source can run.
+// its segments may be read, which bands it can plot, and whether the source can run - with how the bands are labelled,
+// from the records that assessment resolved.
 const mapStateToProps = (state, {recipe, recipeId, sourceRuntime}) => {
     const heldFor = key => sourceRuntime?.heldFor(key)
     const {gate, chartable, bands, noChartableBand} = pixelChartAvailability({
@@ -280,6 +285,7 @@ const mapStateToProps = (state, {recipe, recipeId, sourceRuntime}) => {
         computation: operations.computation,
         chartable,
         chartBands: bands,
+        bandLabels: segmentBandLabelsOf(selectedSourceOf(recipe, PRIMARY_IMAGE), operations.recordOf),
         noChartableBand
     }
 }

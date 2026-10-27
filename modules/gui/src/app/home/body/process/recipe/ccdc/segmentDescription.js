@@ -2,8 +2,9 @@ import {of} from 'rxjs'
 
 import {CLASSIFICATION_SOURCE} from '#sepal/recipe/source/collectionSources'
 import {SEGMENT_BANDS} from '#sepal/recipe/type/ccdc'
-import {getAvailableBands} from '~/sources'
+import {flatBandOptions, getAvailableBands} from '~/sources'
 
+import {selectedSourceOf} from '../sourceEvidence'
 import {getAllVisualizations} from './ccdcRecipe'
 
 // What a CCDC recipe says about the segments image it produces. CCDC owns this description: which base
@@ -30,19 +31,7 @@ export const FITTED_MEASURES = [
 export {SEGMENT_BANDS}
 
 export const describeSegments = (ccdc, {classification} = {}) => {
-    const baseBandNames = getAvailableBands({
-        dataSets: Object.values(ccdc.model.sources?.dataSets || {}).flat(),
-        corrections: ccdc.model.options?.corrections,
-        classification: classification
-            ? {
-                id: classification.id,
-                classifierType: classification.model.classifier?.type,
-                classifier: classification.model.classifier,
-                classificationLegend: classification.model.legend,
-                include: ['regression', 'probabilities']
-            }
-            : {}
-    })
+    const baseBandNames = getAvailableBands(bandSetting(ccdc, classification))
     const baseBands = baseBandNames.map(name => ({name, measures: FITTED_MEASURES}))
     return {
         bands: physicalBands(baseBandNames),
@@ -54,6 +43,21 @@ export const describeSegments = (ccdc, {classification} = {}) => {
         visualizations: getAllVisualizations(ccdc)
     }
 }
+
+// What CCDC fits bands from: its images' data sets and corrections, and the outputs of the Classification it is given.
+const bandSetting = (ccdc, classification) => ({
+    dataSets: Object.values(ccdc.model.sources?.dataSets || {}).flat(),
+    corrections: ccdc.model.options?.corrections,
+    classification: classification
+        ? {
+            id: classification.id,
+            classifierType: classification.model.classifier?.type,
+            classifier: classification.model.classifier,
+            classificationLegend: classification.model.legend,
+            include: ['regression', 'probabilities']
+        }
+        : {}
+})
 
 // The physical bands of the segments image: per base band a coefficient array, an rmse and a magnitude,
 // then the timing bands - the order lib/js/ee/src/timeSeries/ccdc.js writes them in.
@@ -71,4 +75,16 @@ const classificationOf = (ccdc, graph, recipesById) => {
     const edge = (graph?.edges || []).find(({sourceRecipeId, role}) =>
         sourceRecipeId === ccdc.id && role === CLASSIFICATION_SOURCE)
     return edge ? recipesById.get(edge.reference.id) : undefined
+}
+
+// How CCDC labels the base bands it fits, by name, as its own chart does (flatBandOptions): its Classification's
+// outputs by their classes, the images' bands by name. Registered for a reader holding current records (`recordOf`):
+// the Classification is the one its Sources select, as those records hold it; one they do not hold labels none of its
+// outputs. Labels are presentation; segments are still read by name.
+export const segmentBandLabels = ({recipe, recordOf}) => {
+    const classificationId = selectedSourceOf(recipe, CLASSIFICATION_SOURCE)?.id
+    const classification = classificationId ? recordOf(classificationId) : null
+    return Object.fromEntries(
+        flatBandOptions(bandSetting(recipe, classification)).map(({value, label}) => [value, label])
+    )
 }

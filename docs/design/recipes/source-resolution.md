@@ -72,7 +72,7 @@ claiming the earlier campaign tested that later tree.
 | --- | --- | --- |
 | 1 | Stack Band names layout | **Implemented and browser-accepted (2026-10-27).** Cause, confirmed in Chromium: each field took the browser's default `<input size=20>` width (202px) in a wrapping horizontal `Layout` with 1rem margins, so two never fit the 352px group of the 29rem panel and every band took its own row. Each input-image group is now a local grid of two equal columns, one where two would each be narrower than 10rem; fields shrink to their column and long original names wrap with their feedback icon in view. Shared Layout, Panel, form and input widths are unchanged. Checked in Chromium on a harness build of the real Stack toolbar and panel: 1/2/3/4/many bands, three groups, long names and values, a duplicate name, 400px and 320px viewports, scrolling, Tab order, rename then Apply or Cancel. Independent review found no issue; all 41 Stack tests, lint and `git diff --check` pass. The user confirmed the running-app layout works, including small windows, and renaming works. Browser acceptance is complete; the browser was not named, so no separate Firefox/Safari pass is claimed. Renaming behavior is unchanged; additional manual renaming checks were unnecessary for this layout-only change. |
 | 2 | CCDC Sources family/view heights | **Implemented and browser-accepted (2026-10-27).** The height follows the draft's family and the rendered view: Optical 46/58rem, Radar 30/42rem and Planet 36/48rem for Less/More. Less fits its usual controls with about 2rem to spare. Following the user's browser feedback, More adds 6rem beyond the original proposal to reserve two extra breakpoint-band rows with breathing room; its height still depends only on family/view. The original content measurements in Chromium were (Optical 620/700px with Landsat, Radar 397/477px, Planet 477/557px with its asset field). Planet is sized for Custom Basemaps and Daily Imagery's asset field, leaving NICFI Less about 107px spare; Sentinel-2-only Optical Less scrolls about 15px. Classification choices, the Classification field shown in Less for an error, and validation messages scroll in the body; the shared viewport cap and width are unchanged. Checked in Chromium on a harness build of the real Sources panel in a real recipe context, with reads answered by the harness: all six views; family and More/Less changes resize; a Classification chosen after opening whose 16 long classes arrived 2s later left the outer height unchanged before, during and after; an untrained Classification and an empty breakpoint selection in Less; 700/560/440px-tall and 800/480px-wide windows keep header and footer in view and the last choice reachable by scrolling. Independent review confirmed the 21 CCDC-related test files (232 tests), lint and `git diff --check` pass. After adding More's extra space, a fresh Chromium harness build confirms two probability rows fit in every family with 35–39px to spare at an uncapped viewport; Less keeps its previous heights, and short windows keep the shared cap and scrolling. Evidence: `/tmp/sepal-ccdc-headroom-review/browser.log`. The user confirmed the adjusted More spacing looks good in the running app; browser acceptance is complete. |
-| 3 | CCDC Slice chart labels | Use readable labels from current evidence where available, preserving raw request identities and asset-name fallbacks. Do not restore copied source snapshots to obtain labels. |
+| 3 | CCDC Slice chart labels | **Implemented and browser-accepted (2026-10-27).** Segment descriptions carry no labels, so the Slice chart asks the producer its source resolves to. CCDC registers `segmentBandLabels` beside `describeSegments$`, labelling bands as its own chart does (`flatBandOptions`) from the same data sets, corrections and Classification its description uses. The records are those the chart's operation already resolved (`recordOf`), so nothing extra is loaded, saved or copied, and `ui.classification` copies are not used. Native names agree with the CCDC chart, `regression` and `probability_<value>` are named by the Classification's current class labels, and a band without a label (an asset, an unresolved producer or Classification) keeps its raw name. Choices, their order and values, requests and readiness are unchanged; options are keyed by name, so alike labels stay distinct. Mounted Slice regressions cover labelled choices with requests by name, a class relabelled while chosen, two classes labelled alike and an asset's probability-named band with no recipe read; witnessed by reverting to raw labels, by labels as values and by dropping unlabelled bands. 21 CCDC/Slice and segment test files (234 tests), lint and `git diff --check` pass. After the own-property fallback correction, all 37 mounted Slice tests pass independently. The user confirmed that Classification band labels appear in the chart and accepted the change; the browser check is complete. The broader presentation review remains deferred. |
 | 4 | Consecutive keyboard band addition | Useful but more sensitive: narrow the behavior to the stay-open band-add flow in the shared picker. Retain filters, mouse and arrow behavior, and prevent the final Enter from activating All bands. |
 
 **Functional follow-ups deserving a separate round.** Neither is a confirmed regression introduced by the current
@@ -86,9 +86,10 @@ corrections, and both remain explicitly deferred for this release:
   the consumer through `applyAccepted`. Audit which values must match versus belong to the consumer before changing
   it; simply deleting the copying is insufficient. This is substantive work, not a one-line equivalent of S5.
 
-Other deferred work remains deferred: the explicit Use reference settings action, visualization Copy/Paste, chart
-map markers, AOI redraw optimization, WebSocket updates, broader request propagation/dependency loading, execution
-bundles and CCDC array-file destination compatibility. Explicitly selected empty-Provider feedback remains a separate
+Other deferred work remains deferred: the explicit Use reference settings action, visualization Copy/Paste,
+[consistent band presentation across recipes](#future-consistent-band-presentation-across-recipes), chart map markers,
+AOI redraw optimization, WebSocket updates, broader request propagation/dependency loading, execution bundles and
+CCDC array-file destination compatibility. Explicitly selected empty-Provider feedback remains a separate
 product decision; an empty branch does not invalidate a Consumer that has adequate data elsewhere, while total
 training absence continues to hold operations. No new confirmed implementation blocker was established by this
 bounded roadmap/code audit; this does not dispose of the separate final-verification findings recorded below.
@@ -6646,12 +6647,66 @@ defaults again. This is not part of required S5/S6 and does not block push.
   change is needed. This is recorded, not implemented in S2.
 - CCDC Slice chart labels should use human-readable band names when available, including recipe references. Keep raw
   names for request identity and a fallback for asset measures without labels; test that labels do not alter requests.
+  **Implemented (2026-10-27);** see the optional-improvements table.
+  **Independent review correction required (2026-10-27):** `bandLabels[name] || name` also reads inherited object
+  properties. In a temporary copy of the mounted asset case, replacing `probability_1` with `constructor` produces
+  a blank choice instead of the raw name. Use an own-property lookup for label fallback and cover the custom band
+  in the existing mounted regression. The submitted 234 tests, lint and whitespace checks pass independently;
+  this additional case fails. Evidence: `/tmp/sepal-slice-label-prototype-review.log`. The probe was removed and
+  production files were not changed during review. This is an automated correction, not another manual test request.
+  **Corrected (2026-10-27):** a choice takes its label only where the labels hold one of its own, otherwise its raw
+  name. The mounted asset regression now runs for `probability_1` and `constructor`, each offered, chosen, shown,
+  requested and plotted by its raw name with no recipe read; the `constructor` case failed with a blank choice before
+  the correction. All 37 tests in `sourceRequirement.test.jsx`, lint and `git diff --check` pass.
+  **Browser-accepted (2026-10-27):** the user confirmed Classification band labels appear in the chart and accepted
+  this bounded consistency improvement. The broader review below remains deferred.
 - Investigate AOI-layer redraws on unrelated recipe edits. Base updates on effective geometry/source changes; preserve
   real geometry changes and pending-read cancellation. Measure which updates trigger work before adding caching.
 - Mark the charted pixel on the corresponding map. Follow the actual recipe/pixel, update when it changes, and avoid
   stale markers on another tab or after chart closure. Define the marker interaction separately from chart validity.
 - Upstream recipe-update notification over WebSockets remains a separate future feature. The reported stale-copy
   tests passed; it is not a prerequisite for this correction round and does not replace existing revision currency.
+
+#### Future: consistent band presentation across recipes
+
+**Deferred by the user (2026-10-27), for a substantially later round.** This is a coordinated review and design task,
+not another small fix or a requirement for the current release. The current CCDC Slice chart-label change remains
+bounded; no wider audit, implementation or manual campaign is requested now.
+
+**Review all affected places first.** Inventory where bands are displayed, chosen, renamed or referenced across
+recipes and shared controls. Include Classification/Regression input imagery; Remapping and Masking; Stack source
+captions and output-name fields; Band Math inputs, pass-through bands, expressions and output names; Sources,
+charts and legends, layer/visualization controls, and Retrieve. Record current label sources, fallbacks, shared
+builders and exceptions. Native and classified bands, derived features, custom/renamed bands, recipe references
+and assets must be considered together. The review covers all recipes; it must establish which actually need changes.
+
+**Agreed presentation direction:**
+
+- When viewing or choosing a band, show its reliable display label, falling back to its raw name. Native labels may
+  remain familiar short names such as NDVI; labels need not expand every name into a long description.
+- When editing or referencing the identifier, show the actual name. This includes expressions and editable output-name
+  fields, not just Band Math expressions. A Stack source caption can show its display label while the output-name
+  input contains the actual output name. Show the raw source name alongside its label where understanding a mapping
+  or constructing an expression requires it.
+- Preserve raw identifiers in saved selections, option values/keys, requests, expressions and exported data. Duplicate
+  labels must remain distinct and be disambiguated when necessary. Relabelling must not change a selection or computation.
+
+**Make the shared path do the right thing by default.** Review the existing band-description, presentation and picker
+APIs before choosing the implementation. Aim for one reusable way to obtain and carry presentation by stable band
+identity, with consistent label/raw-name fallback in shared controls and an explicit mode for identifier editing.
+Recipe code should provide domain metadata; each caller should not have to reconstruct labels, remember a fallback
+or special-case producer types. Establish ownership and propagation through transformations in the review, including
+which labels remain meaningful after a rename. Prefer extending existing contracts over parallel label registries,
+copied producer snapshots or per-panel lookup code. Label acquisition must respect reference access boundaries;
+an independent exported asset must not require access to its producer merely to display a band choice.
+
+**Acceptance and delivery:** label absence or pending/unavailable label metadata must never remove a valid band,
+hold operations or add a readiness requirement. Cover raw-name fallback (including custom names), duplicate labels,
+renames and current class labels, localization, filtering/keyboard behavior and accessibility; review casing/styles
+that obscure the difference between names and labels. Verify unchanged identities and exports. Plan coherent slices
+after the inventory: shared ownership/API and defaults first, then affected consumer groups, with shared regressions
+and representative recipe checks rather than a separate presentation implementation or exhaustive manual campaign
+for every recipe. No persisted recipe-format change is assumed by this roadmap entry.
 
 **Verification and boundaries:** use focused regressions for each changed contract and combine browser rechecks over
 the existing fixtures. Update old manual expectations when F4/F6 change the behaviour they describe; do not silently

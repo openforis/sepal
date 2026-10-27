@@ -14,7 +14,7 @@ import {classificationReferenceFeedback, classifiedOutputRequirements, collectio
 import {bandPresentation, mapProducts} from './bands'
 import {dateRange, defaultModel, RecipeActions} from './ccdcRecipe'
 import {CcdcToolbar} from './panels/ccdcToolbar'
-import {describeSegments$} from './segmentDescription'
+import {describeSegments$, segmentBandLabels} from './segmentDescription'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -98,6 +98,7 @@ export default () => ({
     imageSource: false,
     geometrySource: true,
     describeSegments$,
+    segmentBandLabels,
     getDateRange: recipe => dateRange(recipe.model.dates),
     mapProducts,
     bandPresentation,
