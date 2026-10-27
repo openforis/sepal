@@ -104,8 +104,10 @@ on every file save. Four mechanisms carry instance management across it:
   provisioning nobody is driving any more. Provisioning is deduplicated by instance id in an
   in-process registry (`workerInstance/provisioningRegistry.js`), because `provisionInstance`
   opens by deleting the instance's containers — re-entering it destroys the work in flight.
-  `releaseInstance` forgets the entry, so an instance back in the pool cannot drop the next
-  session's provisioning as a duplicate. Re-provisioning re-reads the instance's PENDING session
+  `releaseInstance` forgets the entry first, so an instance back in the pool cannot drop the next
+  session's provisioning as a duplicate, and the forgotten provision stops at its next check
+  instead of rebuilding, or closing, the next session's sandbox. The api key is looked up by
+  session, before any container is deleted, so a provision mid-attempt also leaves it alone. Re-provisioning re-reads the instance's PENDING session
   first: the probe verdict it acts on is a batch snapshot, and the invariant above holds here too.
 - **`releaseInstance` undeploys before dropping the claim.** The invariant is *claim row absent ⇒
   container definitely gone*: die mid-release and the claim survives, so `ReclaimStaleClaims`
@@ -170,8 +172,14 @@ Instances of any other version are therefore stale, newer ones included, and are
 
 ## Budget enforcement
 `POST /sessions/instance-type/:type` asks the budget module for a LIVE verdict first
-(`GET /budget/check/:username`, `src/workerSession/budgetClient.js`) and throws the matching typed
+(`POST /budget/check/:username`, `src/workerSession/budgetClient.js`) and throws the matching typed
 error from `budgetErrors.js` when the user is over budget. `BUDGET_URL` configures the base URL.
+The check sends the user's open sessions, which budget counts before their WorkerSessionRequested
+event arrives, and `sessionManager` runs one request per user at a time, so concurrent requests
+cannot all pass the same check.
+A caller that retries names the session it asks for (`?sessionId=<uuid>`): a repeat answers with the
+session its first attempt created instead of launching another instance. The GUI's Usage panel relies
+on this to retry a start that timed out at the gateway.
 The event-fed `lockedUsers` set is only the FALLBACK for when that call fails — it is empty after a
 restart, so it must not be the authoritative gate. It remains what closes an over-budget user's
 running sessions, via the `budget.UserBudgetExceeded` subscriber in `main.js`.

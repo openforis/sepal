@@ -16,7 +16,7 @@ import styles from './notifications.module.css'
 import {setNotificationsContainer} from './notificationsContainer'
 import {Scrollable} from './scrollable'
 
-const PUBLISH_ANIMATION_DURATION_MS = 300
+const PUBLISH_ANIMATION_DURATION_MS = 500
 const DISMISS_ANIMATION_DURATION_MS = 500
 
 const publish$ = new Subject()

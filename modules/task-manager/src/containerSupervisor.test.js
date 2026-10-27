@@ -54,6 +54,17 @@ describe('launching', () => {
         )
     })
 
+    test('a task whose container cannot be started has its workspace removed, even when Docker fails', async () => {
+        const {supervisor, repository, docker, workspace} = setup()
+        docker.failRun = true
+        docker.failRemove = true
+        await repository.add(aTask())
+
+        await supervisor.dispatch()
+
+        assert.deepEqual(workspace.removed, ['t-1'])
+    })
+
     test('a task whose container cannot be started does not take a slot from the next pending task', async () => {
         const {supervisor, repository, docker} = setup({maxConcurrent: 1})
         docker.failingRuns.add('task.alice.t-1')
@@ -528,6 +539,7 @@ class FakeDocker {
     failRun = false
     failingRuns = new Set()
     failWaits = false
+    failRemove = false
     #waiters = new Map()
     #gate = null
     #open = null
@@ -593,6 +605,9 @@ class FakeDocker {
     }
 
     async remove(name) {
+        if (this.failRemove) {
+            throw new Error('socket hang up')
+        }
         this.containers.delete(name)
     }
 

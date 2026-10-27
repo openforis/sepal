@@ -5,7 +5,7 @@ R package repository proxy. Caches CRAN and GitHub packages, checks for updates,
 ## Commands
 
 ```bash
-npm test              # Node test runner (no test files currently exist)
+npm test              # Node test runner
 npm run testWatch     # Node test runner watch mode
 ```
 

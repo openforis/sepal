@@ -185,7 +185,7 @@ MySQL (`scene_metadata` schema — **not** the old `sdms` schema):
 
 - **Dual role**: background ingester + HTTP server run in the same Node process
 - **`scene_metadata` schema**: table is `scene_meta_data`; ingester owns writes; read repo queries it
-- **Leap-day-ignoring day-of-year**: The ingester writes raw day-of-year (date-fns `getDayOfYear`) into the `day_of_year` column. The reader's `target` param uses `dayOfYearIgnoringLeapDay` (if leap year and dayOfYear > 60, subtract 1), matching the Java reader for consistent scoring. The `daysFromTarget` response field uses raw DOY (not leap-ignoring) to compute the circular day difference.
+- **Leap-day-ignoring day-of-year**: Every day of year — the stored `day_of_year` column, the season bounds, the scoring target and the `daysFromTarget` response field — uses `dayOfYearIgnoringLeapDay` (UTC; in a leap year, days after Feb 29 subtract 1), so a calendar date has the same value in every year. This deliberately departs from the Java ingester, which stored raw day of year and so shifted season edges in leap years; a catalogue ingested before the change must be rebuilt.
 - **MIN_HOURS_PUBLISHED**: Only loads scenes published at least 24 hours ago (configurable)
 - **Timer with initial delay**: 10 seconds before first update cycle
 - **Parallel downloads, sequential loads**: downloads drain on failure; loads must all finish before publication

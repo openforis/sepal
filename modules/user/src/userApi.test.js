@@ -7,6 +7,7 @@ const users = new Map()
 
 const repository = {
     findByUsername: async username => users.get(username) ?? null,
+    findByToken: async token => [...users.values()].find(user => user.token === token) ?? null,
     updateStatus: async (username, status) => users.set(username, {...users.get(username), status}),
     updateToken: async (username, token) => users.set(username, {...users.get(username), token}),
     // The conditional write of the real repository: nothing happens on a stale revision.
@@ -121,6 +122,30 @@ describe('POST /unlock', () => {
     })
 })
 
+describe('POST /validate/token', () => {
+    test('a valid token answers with the user but not their Google tokens', async () => {
+        const user = withResetToken(anActiveUser({username: 'bob'}))
+        users.set(user.username, {...user, googleTokens: {accessToken: 'access', refreshToken: 'refresh'}})
+        const ctx = anonymousRequest({token: user.token})
+
+        await api.validateToken(ctx)
+
+        assert.equal(ctx.body.status, 'success')
+        assert.equal(ctx.body.user.username, user.username)
+        assert.equal(ctx.body.user.googleTokens, null)
+    })
+
+    test('a locked user\'s token is refused without the user', async () => {
+        const user = withResetToken(aLockedUser({username: 'bob'}))
+        const ctx = anonymousRequest({token: user.token})
+
+        await api.validateToken(ctx)
+
+        assert.equal(ctx.body.status, 'failure')
+        assert.equal(ctx.body.user, undefined)
+    })
+})
+
 describe('GET /google/associate-account', () => {
     test('links nothing when the sign-in was started by another user', async () => {
         const googleOAuth = new GoogleOAuth({fetchFn: async () => assert.fail('tokens requested')})
@@ -153,6 +178,12 @@ const aLockedUser = ({username}) => {
     return user
 }
 
+const withResetToken = user => {
+    const withToken = {...user, token: `${user.username}-token`, tokenGenerationTime: Date.now()}
+    users.set(user.username, withToken)
+    return withToken
+}
+
 const detailsOf = ({username, name, email}) => ({username, name, email, organization: 'FAO', admin: false})
 
 const collect = observable$ => {
@@ -169,4 +200,10 @@ const adminRequest = (admin, body) => ({
     request: {body},
     query: {},
     set: () => {}
+})
+
+const anonymousRequest = body => ({
+    state: {},
+    request: {body},
+    query: {}
 })

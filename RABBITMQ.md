@@ -1,7 +1,9 @@
 # RabbitMQ — the `sepal.topic` exchange
 
 All asynchronous inter-service messaging goes through a single topic exchange, `sepal.topic`.
-Messages are JSON objects, published with `persistent: true`. Consumers bind a **durable queue**
+Messages are JSON objects, published with `persistent: true` on a confirm channel. A publisher holds
+each message until the broker confirms it, including while the broker is unreachable, and publishes
+unconfirmed ones again after reconnecting, so delivery is at-least-once. Consumers bind a **durable queue**
 (named `<consumer-module>.<purpose>`) to a routing-key pattern; a handler that resolves acks the
 message, a handler that throws nacks it (the message is redelivered).
 
@@ -14,9 +16,8 @@ publishers are `{key, publish$}` (an RxJS stream per routing key), subscribers a
 
 | Routing key | Published by | Consumed by |
 |---|---|---|
-| `user.UserUpdated` | user | ssh-gateway |
+| `user.UserUpdated` | user | ssh-gateway, email |
 | `user.UserLocked` | user | gateway, worker |
-| `user.emailNotificationsEnabled` | *(none — legacy)* | email |
 | `workerSession.WorkerSessionRequested` | worker | budget, storage, ssh-gateway |
 | `workerSession.WorkerSessionActivated` | worker | budget, storage, ssh-gateway |
 | `workerSession.WorkerSessionClosed` | worker | budget, storage, gateway, ssh-gateway |
@@ -30,7 +31,7 @@ publishers are `{key, publish$}` (an RxJS stream per routing key), subscribers a
 | `storage.size` | storage | budget |
 | `email.sendToAddress` | user | email |
 | `email.sendToUser` | storage, worker | email |
-| `files.FilesDeleted` | *(none — legacy)* | storage |
+| `files.FilesDeleted` | user-files | storage |
 | `systemEvent` | gateway | storage |
 
 ---
@@ -54,6 +55,9 @@ the full user map:
 - **sub:** ssh-gateway (queue `ssh-gateway.userUpdated`) — re-fetches the NSS passwd/group snapshot
   from the user module so sandbox POSIX identities stay current
   ([nssSync.js](modules/ssh-gateway/src/nssSync.js))
+- **sub:** email (queue `email.userUpdated`) — stores the user's `emailNotificationsEnabled` under
+  their `email` in its notification-preference cache, so a changed preference takes effect for the
+  next email ([messageHandler.js](modules/email/src/messageHandler.js))
 
 ### `user.UserLocked`
 - **pub:** user — when an admin locks a user (`POST /lock`)
@@ -62,11 +66,6 @@ the full user map:
 - **sub:** worker (queue `workersession.user`, bound to `user.*`) — closes all of the user's
   sandbox sessions; other `user.*` keys are ignored
   ([workerSession/index.js](modules/worker/src/workerSession/index.js))
-
-### `user.emailNotificationsEnabled` — `{username, enabled}`
-- **pub:** none in the current codebase (legacy key)
-- **sub:** email (queue `email.emailNotificationsEnabled`) — updates its notification-preference
-  cache ([messageHandler.js](modules/email/src/messageHandler.js))
 
 > The `user` module was formerly named `user-node`; the legacy Java `user` module it replaced
 > (which published the same keys via `RabbitMQTopic('user', …)`) has been deleted.
@@ -100,9 +99,11 @@ apiKey: null}`.
   one of the logged-in user's sessions changes
   ([sessionEvents.js](modules/ssh-gateway/src/sessionEvents.js))
 
-### `workerSession.WorkerSessionClosed` — `{username, sessionId}`
+### `workerSession.WorkerSessionClosed` — `{username, sessionId, closeTime}`
 - **pub:** worker — when a session is closed (user request, timeout, budget lock, instance failure)
 - **sub:** budget (queue `budget.workerSessionClosed`) — closes the session's `open_session_use` row
+  at `closeTime` (ISO-8601 UTC, stamped by the worker when the session closed), so an event
+  processed late is not billed up to its processing time
 - **sub:** storage (queue `storage.workerSession`) — marks the session inactive, schedules
   an inactivity check and a storage re-scan
 - **sub:** gateway (queue `gateway.workerSession`) — tears down the session's cached sandbox proxy
@@ -214,8 +215,8 @@ always forces delivery.
 ## `files.FilesDeleted` — file deletion
 
 ### `files.FilesDeleted` — `{username}`
-- **pub:** none in the current codebase — the publisher was the decomposed Groovy sepal-server's
-  `files` component, and user-files (which absorbed it) does not publish it
+- **pub:** user-files — after a WebSocket `remove` deletes a path from the user's home
+  ([watcher.js](modules/user-files/src/watcher.js))
 - **sub:** storage (queue `storage.files`, bound to `files.#`) — schedules a debounced
   storage re-scan for the user
 

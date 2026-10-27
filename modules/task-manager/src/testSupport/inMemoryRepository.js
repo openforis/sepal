@@ -118,7 +118,11 @@ export class InMemoryRepository {
     }
 
     async remove(task) {
-        this.#tasks.set(task.id, {...this.#tasks.get(task.id), removed: true})
+        const stored = this.#tasks.get(task.id)
+        if (!stored || stored.removed) {
+            return false
+        }
+        this.#tasks.set(task.id, {...stored, removed: true})
         return true
     }
 

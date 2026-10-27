@@ -4,7 +4,7 @@ import _ from 'lodash'
 import {catchError, concat, defer, EMPTY, from, ignoreElements, last, map, mergeMap, of, switchMap, throwError, toArray} from 'rxjs'
 
 import ee from '#sepal/ee/ee'
-import {currentEEContext} from '#sepal/ee/eeContext'
+import {isServiceAccount} from '#sepal/ee/eeContext'
 import tile from '#sepal/ee/tile'
 import {ClientException} from '#sepal/exception'
 import {
@@ -157,7 +157,7 @@ export const startCollectionTileExport$ = ({
 })
 
 const assertUserAccount = () => {
-    if (currentEEContext().auth.type === 'serviceAccount') {
+    if (isServiceAccount()) {
         throw new Error('Cannot export to asset using service account.')
     }
 }

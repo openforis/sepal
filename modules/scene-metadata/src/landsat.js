@@ -1,4 +1,4 @@
-import {getDayOfYear} from 'date-fns/getDayOfYear'
+import {dayOfYearIgnoringLeapDay} from './sceneSearch.js'
 
 const DATASET_BY_PREFIX = {
     LT04: 'LANDSAT_TM',
@@ -35,7 +35,7 @@ const scene = ({id, dataset, wrsPath, wrsRow, acquiredTimestamp, cloudCover, sun
         dataset,
         sceneAreaId: getSceneAreaId(wrsPath, wrsRow),
         acquiredTimestamp,
-        dayOfYear: getDayOfYear(acquiredTimestamp),
+        dayOfYear: dayOfYearIgnoringLeapDay(new Date(acquiredTimestamp)),
         cloudCover: getCloudCover(cloudCover, dataset),
         sunAzimuth: parseFloat(sunAzimuth),
         sunElevation: parseFloat(sunElevation)

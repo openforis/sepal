@@ -17,7 +17,7 @@ describe('requestSession', () => {
 
         const result = await mgr.requestSession({username: 'Alice', workerType: SANDBOX, instanceType: 'T3aSmall'})
 
-        assert.deepEqual(callsOf(budgetClient.check), [['Alice']])
+        assert.deepEqual(callsOf(budgetClient.check), [['Alice', []]])
         assert.equal(instanceManager.requestInstance.mock.callCount(), 1)
         assert.equal(repo.insert.mock.callCount(), 1)
         const inserted = repo.insert.mock.calls[0].arguments[0]
@@ -134,6 +134,69 @@ describe('requestSession', () => {
         assert.equal(repo.insert.mock.callCount(), 0)
     })
 
+    test('the budget check counts the user\'s open sessions, which budget may not have heard of yet', async () => {
+        const open = session()
+        const repo = makeRepo({
+            userSessions: (username, states) =>
+                username === 'alice' && states.includes(State.PENDING) && states.includes(State.ACTIVE) ? [open] : [],
+        })
+        const {mgr, budgetClient} = build({repo})
+
+        await mgr.requestSession({username: 'Alice', workerType: SANDBOX, instanceType: 'T3aSmall'})
+
+        assert.deepEqual(budgetClient.check.mock.calls[0].arguments[1], [{
+            sessionId: open.id,
+            instanceType: open.instanceType,
+            creationTime: open.creationTime,
+        }])
+    })
+
+    test('concurrent requests by one user are judged one at a time, each counting the sessions before it', async () => {
+        const {repo, inserted} = repoStoringInserts()
+        const roomForOneSession = makeBudgetClient({
+            check: mock.fn(async (_username, openSessions) =>
+                ({exceeded: openSessions.length > 0, reason: 'INSTANCE_BUDGET'})),
+        })
+        const {mgr} = build({repo, budgetClient: roomForOneSession})
+
+        const results = await Promise.allSettled([
+            mgr.requestSession({username: 'alice', workerType: SANDBOX, instanceType: 'T3aSmall'}),
+            mgr.requestSession({username: 'alice', workerType: SANDBOX, instanceType: 'T3aSmall'}),
+        ])
+
+        assert.deepEqual(results.map(({status}) => status), ['fulfilled', 'rejected'])
+        assert.ok(results[1].reason instanceof InstanceBudgetExceeded)
+        assert.equal(inserted.length, 1)
+    })
+
+    test('a failed request does not hold up the user\'s next one', async () => {
+        const instanceManager = makeInstanceManager()
+        instanceManager.requestInstance.mock.mockImplementationOnce(async () => {
+            throw new Error('InsufficientInstanceCapacity')
+        })
+        const {mgr} = build({instanceManager})
+
+        const results = await Promise.allSettled([
+            mgr.requestSession({username: 'alice', workerType: SANDBOX, instanceType: 'T3aSmall'}),
+            mgr.requestSession({username: 'alice', workerType: SANDBOX, instanceType: 'T3aSmall'}),
+        ])
+
+        assert.deepEqual(results.map(({status}) => status), ['rejected', 'fulfilled'])
+    })
+
+    test('one user\'s slow request does not hold up another user\'s', async () => {
+        const instanceManager = makeInstanceManager({
+            requestInstance: mock.fn(session =>
+                session.username === 'alice' ? new Promise(() => {}) : Promise.resolve({id: 'i-2', host: 'host-2'})),
+        })
+        const {mgr} = build({instanceManager})
+
+        mgr.requestSession({username: 'alice', workerType: SANDBOX, instanceType: 'T3aSmall'})
+        const bobs = await mgr.requestSession({username: 'bob', workerType: SANDBOX, instanceType: 'T3aSmall'})
+
+        assert.equal(bobs.username, 'bob')
+    })
+
     test('instance type outside the catalog → ClientException, no budget check, instance or insert', async () => {
         const {mgr, repo, instanceManager, budgetClient} = build()
 
@@ -146,7 +209,69 @@ describe('requestSession', () => {
         assert.equal(instanceManager.requestInstance.mock.callCount(), 0)
         assert.equal(repo.insert.mock.callCount(), 0)
     })
+
+    describe('naming the session', () => {
+        test('the session gets the requested id', async () => {
+            const {mgr} = build()
+
+            const requested = await mgr.requestSession(namedRequest())
+
+            assert.equal(requested.id, SESSION_ID)
+        })
+
+        test('a repeat, even one sent while the first is in flight, answers with the same session and launches nothing more', async () => {
+            const {repo} = repoStoringInserts()
+            const {mgr, instanceManager, events} = build({repo})
+
+            const [first, repeat] = await Promise.all([
+                mgr.requestSession(namedRequest()),
+                mgr.requestSession(namedRequest()),
+            ])
+
+            assert.equal(repeat.id, first.id)
+            assert.equal(instanceManager.requestInstance.mock.callCount(), 1)
+            assert.equal(events.emitWorkerSessionRequested.mock.callCount(), 1)
+        })
+
+        test('a repeat after the first attempt failed launches again', async () => {
+            const {repo} = repoStoringInserts()
+            const instanceManager = makeInstanceManager()
+            instanceManager.requestInstance.mock.mockImplementationOnce(async () => {
+                throw new Error('InsufficientInstanceCapacity')
+            })
+            const {mgr} = build({repo, instanceManager})
+            await assert.rejects(mgr.requestSession(namedRequest()))
+
+            const requested = await mgr.requestSession(namedRequest())
+
+            assert.equal(requested.id, SESSION_ID)
+            assert.equal(instanceManager.requestInstance.mock.callCount(), 2)
+        })
+
+        test('another user\'s session id → ClientException, no instance', async () => {
+            const {repo} = repoStoringInserts()
+            const {mgr, instanceManager} = build({repo})
+            await mgr.requestSession(namedRequest({username: 'bob'}))
+
+            await assert.rejects(mgr.requestSession(namedRequest({username: 'alice'})), ClientException)
+
+            assert.equal(instanceManager.requestInstance.mock.callCount(), 1)
+        })
+
+        test('an id that is not a UUID → ClientException, no instance', async () => {
+            const {mgr, instanceManager} = build()
+
+            await assert.rejects(mgr.requestSession(namedRequest({sessionId: 'not-a-uuid'})), ClientException)
+
+            assert.equal(instanceManager.requestInstance.mock.callCount(), 0)
+        })
+    })
 })
+
+const SESSION_ID = '0b9a4f1e-6c1d-4f5e-9a7b-3c2d1e0f9a8b'
+
+const namedRequest = overrides =>
+    ({username: 'alice', workerType: SANDBOX, instanceType: 'T3aSmall', sessionId: SESSION_ID, ...overrides})
 
 describe('activatePendingSessionOnInstance', () => {
     test('PENDING on instance → ACTIVE + WorkerSessionActivated with api_key NULL', async () => {
@@ -910,6 +1035,7 @@ const makeRepo = (canned = {}) => {
         calls,
         insert: mock.fn(async s => record('insert', s)),
         update: mock.fn(async s => { record('update', s); return true }),
+        findSession: mock.fn(async id => canned.findSession?.(id) ?? null),
         getSession: mock.fn(async id => {
             record('getSession', id)
             if (canned.getSession) return canned.getSession(id)
@@ -968,6 +1094,17 @@ const makeRepo = (canned = {}) => {
             async (...args) => canned.redeemTermination ? canned.redeemTermination(...args) : true
         ),
     }
+}
+
+// A repo whose userSessions answers with the sessions inserted so far.
+const repoStoringInserts = () => {
+    const inserted = []
+    const repo = makeRepo({
+        userSessions: () => inserted,
+        findSession: id => inserted.find(session => session.id === id),
+    })
+    repo.insert = mock.fn(async session => {inserted.push(session)})
+    return {repo, inserted}
 }
 
 const makeInstanceManager = (overrides = {}) => {

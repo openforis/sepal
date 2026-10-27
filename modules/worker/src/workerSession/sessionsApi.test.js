@@ -65,10 +65,10 @@ beforeEach(() => Object.values(sessionManager).forEach(fn => {
 
 test('requestSessionSelf → 201, uses currentUser (lowercased), self path, STARTING status', async () => {
     sessionManager.requestSession.mock.mockImplementation(async () => pendingSession())
-    const c = ctx({params: {instanceType: 'T3aSmall'}})
+    const c = ctx({params: {instanceType: 'T3aSmall'}, query: {sessionId: 's1'}})
     await api.requestSessionSelf(c)
     assert.deepEqual(callsOf(sessionManager.requestSession), [[{
-        instanceType: 'T3aSmall', workerType: 'sandbox', username: 'alice',
+        instanceType: 'T3aSmall', workerType: 'sandbox', username: 'alice', sessionId: 's1',
     }]])
     assert.equal(c.status, 201)
     assert.deepEqual(c.body, {
@@ -109,7 +109,7 @@ test('requestSessionOther → uses path username, admin path form', async () => 
     const c = ctx({params: {username: 'Bob', instanceType: 'M6aLarge'}})
     await api.requestSessionOther(c)
     assert.deepEqual(callsOf(sessionManager.requestSession), [[{
-        instanceType: 'M6aLarge', workerType: 'sandbox', username: 'bob',
+        instanceType: 'M6aLarge', workerType: 'sandbox', username: 'bob', sessionId: undefined,
     }]])
     assert.equal(c.status, 201)
     assert.deepEqual(c.body, {
@@ -789,55 +789,24 @@ test('timeoutHours counts down the stored deadline and never goes negative', () 
     assert.equal(past.sessions[0].timeoutHours, 0)
 })
 
-test('userUsageOther → admin path user (lowercased), default days 30, body passthrough', async () => {
-    sessionManager.generateUserUsageReport.mock.mockImplementation(async () => ({
-        days: 30,
-        overall: null,
-        byInstanceType: []
-    }))
+test('userUsageOther → admin path user (lowercased), body passthrough', async () => {
+    const report = {months: []}
+    sessionManager.generateUserUsageReport.mock.mockImplementation(async () => report)
     const c = ctx({params: {username: 'Bob'}})
     await api.userUsageOther(c)
     assert.deepEqual(
         callsOf(sessionManager.generateUserUsageReport),
-        [[{username: 'bob', days: 30}]]
+        [[{username: 'bob'}]]
     )
-    assert.deepEqual(c.body, {days: 30, overall: null, byInstanceType: []})
+    assert.deepEqual(c.body, report)
 })
 
 test('userUsageSelf → currentUser (lowercased), never a path param', async () => {
-    sessionManager.generateUserUsageReport.mock.mockImplementation(async () => ({
-        days: 30,
-        overall: null,
-        byInstanceType: []
-    }))
+    sessionManager.generateUserUsageReport.mock.mockImplementation(async () => ({}))
     await api.userUsageSelf(ctx({params: {username: 'bob'}}))
     assert.deepEqual(
         callsOf(sessionManager.generateUserUsageReport),
-        [[{username: 'alice', days: 30}]]
-    )
-})
-
-test('userUsage → days parsed and clamped to 1..365', async () => {
-    sessionManager.generateUserUsageReport.mock.mockImplementation(async () => ({}))
-    await api.userUsageOther(ctx({params: {username: 'bob'}, query: {days: '90'}}))
-    assert.deepEqual(
-        callsOf(sessionManager.generateUserUsageReport).at(-1),
-        [{username: 'bob', days: 90}]
-    )
-    await api.userUsageOther(ctx({params: {username: 'bob'}, query: {days: '9999'}}))
-    assert.deepEqual(
-        callsOf(sessionManager.generateUserUsageReport).at(-1),
-        [{username: 'bob', days: 365}]
-    )
-    await api.userUsageOther(ctx({params: {username: 'bob'}, query: {days: '0'}}))
-    assert.deepEqual(
-        callsOf(sessionManager.generateUserUsageReport).at(-1),
-        [{username: 'bob', days: 1}]
-    )
-    await api.userUsageOther(ctx({params: {username: 'bob'}, query: {days: 'nope'}}))
-    assert.deepEqual(
-        callsOf(sessionManager.generateUserUsageReport).at(-1),
-        [{username: 'bob', days: 30}]
+        [[{username: 'alice'}]]
     )
 })
 

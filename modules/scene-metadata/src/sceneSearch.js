@@ -50,9 +50,7 @@ const dayOfYearIgnoringLeapDay = date => {
 // Distance in days around the year: min(diff, 365 - diff).
 
 const daysFromDayOfYear = (date, dayOfYear) => {
-    const {year, month, day} = toUtcParts(date)
-    const doy = getDayOfYearUTC(year, month, day)
-    const diff = Math.abs(doy - dayOfYear)
+    const diff = Math.abs(dayOfYearIgnoringLeapDay(date) - dayOfYear)
     return Math.min(diff, 365 - diff)
 }
 

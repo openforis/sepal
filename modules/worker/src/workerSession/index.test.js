@@ -67,7 +67,6 @@ const build = clock => {
         repo,
         googleOAuthGateway: {refreshTokens: mock.fn(async () => {})},
         instanceManager,
-        homeDir: '/nonexistent-scratch-home', // listDirs() yields [] — no filesystem side effects
         clock,
     })
     return {component, repo, events, instanceManager}

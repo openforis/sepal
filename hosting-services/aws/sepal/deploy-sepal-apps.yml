@@ -72,8 +72,10 @@
         group: "root"
         mode: "0755"
 
-    - file: path="/data/sepal/etc" state=directory
-    - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
+    - name: Remove unused aws.properties
+      file:
+        path: "/data/sepal/etc/aws.properties"
+        state: absent
 
     # rsyslog
     - name: Copy rsyslog.conf

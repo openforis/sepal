@@ -8,6 +8,7 @@ import {Tasks} from './tasks.js'
 import {InMemoryRepository} from './testSupport/inMemoryRepository.js'
 
 const GRANTED = new Date('2026-10-15T08:00:00.000Z')
+const TASK_ID = '3f2b8c1e-6d4a-4f7e-9b2c-1a5d8e7f6c3b'
 
 describe('submitting', () => {
     test('stores a pending task for the user and asks for it to be launched', async () => {
@@ -32,6 +33,39 @@ describe('submitting', () => {
 
     test('refuses a task without an operation', async () => {
         await assert.rejects(setup().tasks.submit({username: 'alice', params: {}}), InvalidCommand)
+    })
+
+    test('stores a task under the id the client named', async () => {
+        const {tasks} = setup()
+
+        const task = await tasks.submit({id: TASK_ID, username: 'alice', operation: 'image.GEE'})
+
+        assert.equal(task.id, TASK_ID)
+    })
+
+    test('a repeated submission returns the task it already created, without storing another', async () => {
+        const {tasks, repository} = setup()
+        const submission = {id: TASK_ID, username: 'alice', operation: 'image.GEE'}
+        const task = await tasks.submit(submission)
+
+        const repeated = await tasks.submit(submission)
+
+        assert.deepEqual(repeated, await repository.getTask(task.id))
+        assert.deepEqual((await repository.userTasks('alice')).map(({id}) => id), [task.id])
+    })
+
+    test('refuses an id that another user\'s task has', async () => {
+        const {tasks} = setup()
+        await tasks.submit({id: TASK_ID, username: 'alice', operation: 'image.GEE'})
+
+        await assert.rejects(tasks.submit({id: TASK_ID, username: 'bob', operation: 'image.GEE'}), Unauthorized)
+    })
+
+    test('refuses an id that is not a UUID', async () => {
+        await assert.rejects(
+            setup().tasks.submit({id: '../alice', username: 'alice', operation: 'image.GEE'}),
+            InvalidCommand
+        )
     })
 })
 
@@ -195,6 +229,19 @@ describe('resubmitting and removing', () => {
         )
         assert.notEqual(again.id, task.id)
         assert.deepEqual((await repository.userTasks('alice')).map(({id}) => id), [again.id])
+    })
+
+    test('resubmitting a finished task twice at once runs it again only once', async () => {
+        const {tasks, repository} = setup()
+        const task = await tasks.submit({username: 'alice', operation: 'image.GEE'})
+        await tasks.cancel({taskId: task.id, username: 'alice'})
+
+        await Promise.all([
+            tasks.resubmit({taskId: task.id, username: 'alice'}),
+            tasks.resubmit({taskId: task.id, username: 'alice'})
+        ])
+
+        assert.equal((await repository.userTasks('alice')).length, 1)
     })
 
     test('an unfinished task can be neither resubmitted nor removed', async () => {

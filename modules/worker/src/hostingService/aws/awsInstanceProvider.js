@@ -404,6 +404,10 @@ const createAwsInstanceProvider = (config, {instanceTypes = INSTANCE_TYPES} = {}
     // A just-launched instance has no public IP yet, and EC2 does not always list it at all, so
     // neither a missing IP nor a failed read is an event: one line before, one when it resolves
     // either way. The last error rides on the throw — nothing else records why EC2 never answered.
+    //
+    // Only the address and running state are taken from the read: EC2 answers eventually
+    // consistently, so a pooled instance just modified and started can still read as its warm-up
+    // type, and tags written moments ago as an empty reservation.
     const waitForPublicIpToBecomeAvailable = async (instance, instanceTypeName, reservation) => {
         log.debug(`Waiting for public IP on ${instanceTag(instance)}, EC2 type: ${instanceTypeName}, reservation: ${JSON.stringify(reservation)}...`)
         let current = instance
@@ -423,7 +427,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = INSTANCE_TYPES} = {}
             throw new Error(`FailedToLaunchInstance: Unable to get public IP of instance ${instance.id}, type: ${instanceTypeName}, reservation: ${JSON.stringify(reservation)}, after ${retries} attempts${cause}`)
         }
         log.info(`Public IP ${current.host} assigned to ${instanceTag(current)}`)
-        return current
+        return {...instance, host: current.host, running: current.running}
     }
 
     const awaitHost = async instance =>

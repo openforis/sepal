@@ -69,10 +69,10 @@ const eraseUserStorage = async username => {
         await command(
             () => spawn('sudo', ['find', userPath, '-mindepth', '1', '-delete'])
         )
-        log.info(`Erased storage for user ${username} at path ${userPath}`)
     } catch (error) {
-        log.warn(`Cannot erase storage for user ${username} at path ${userPath}`, error)
+        throw new Error(`Cannot erase storage for user ${username} at path ${userPath}: ${error}`, {cause: error})
     }
+    log.info(`Erased storage for user ${username} at path ${userPath}`)
 }
 
 export {

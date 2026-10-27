@@ -302,10 +302,15 @@ export class ContainerSupervisor {
         await this.#discard(task)
     }
 
+    // A reconcile removes a container left behind by a failed removal, but nothing else would remove its workspace
+    // once the task has ended.
     async #discard(task) {
-        await this.#docker.remove(containerName(task))
-        await this.#workspace.remove(task.id)
-        await this.#forgetSlot(task)
+        try {
+            await this.#docker.remove(containerName(task))
+        } finally {
+            await this.#workspace.remove(task.id)
+            await this.#forgetSlot(task)
+        }
     }
 
     // A task that ended still holds its slot until its container is gone, so every slot is released, and logged, here.

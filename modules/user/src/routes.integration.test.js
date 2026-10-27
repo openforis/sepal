@@ -34,9 +34,11 @@ describe('the user routes', () => {
     let url
     let users
     let keys
+    let passwordHash
 
     before(async () => {
         configureNoLogging()
+        passwordHash = await hashPassword(PASSWORD)
         running = await startServer()
         url = path => `http://127.0.0.1:${running.address().port}${path}`
     })
@@ -203,7 +205,7 @@ describe('the user routes', () => {
         status: 'ACTIVE', roles: [], systemUser: false, admin: false,
         creationTime: '2026-01-01T00:00:00.000Z', updateTime: '2026-01-01T00:00:00.000Z',
         lastLoginTime: null, token: null, tokenGenerationTime: null,
-        passwordHash: hashPassword(PASSWORD), sshPublicKey: null, ...over
+        passwordHash, sshPublicKey: null, ...over
     })
 
     const PASSWORD = 'a-long-enough-password'

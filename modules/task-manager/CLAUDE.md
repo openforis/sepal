@@ -54,7 +54,8 @@ and tasks the user had removed are skipped. The worker's `task` table is only th
 - `sepal build task-manager` / `sepal start task-manager` / `sepal logs task-manager -r`
 
 ## Routes (served without the `/api/tasks` gateway prefix)
-- `POST /tasks`, `GET /tasks/task/:id`, `GET /tasks/task/:id/details` (auth)
+- `POST /tasks`, `GET /tasks/task/:id`, `GET /tasks/task/:id/details` (auth). `POST /tasks` takes an optional
+  client-chosen UUID `id`; resubmitting an id the user already owns returns that task, so the GUI can retry safely.
 - `POST /tasks/task/:id/{cancel,remove,execute}`, `POST /tasks/remove` (auth)
 - `POST /tasks/task/:id/progress` (task key)
 - `POST /tasks/task/:id/local-processing`, `POST /tasks/task/:id/local-processing/release` (task key)

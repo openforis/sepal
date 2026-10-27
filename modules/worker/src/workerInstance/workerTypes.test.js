@@ -1,16 +1,8 @@
 import assert from 'node:assert/strict'
-import {describe, it, mock} from 'node:test'
+import {describe, it} from 'node:test'
 
-mock.module('node:fs', {
-    exports: {
-        default: {
-            readFileSync: mock.fn(() => 'ssh-rsa PUBLIC-KEY\n'),
-        }
-    }
-})
-
-const {createWorkerType, SANDBOX} = await import('./workerTypes.js')
-const {instanceName} = await import('../instanceName.js')
+import {instanceName} from '../instanceName.js'
+import {createWorkerType, SANDBOX} from './workerTypes.js'
 
 const SESSION_ID = '25a02f1c-9e59-491e-b5ac-80b95dcc274e'
 
@@ -66,7 +58,7 @@ describe('createWorkerType SANDBOX readiness', () => {
             SANDBOX,
             {...instance, reservation: {username: 'admin', workerType: SANDBOX}},
             config(),
-            'api-key'
+            {apiKey: 'api-key'}
         )
         const [image] = workerType.images
         assert.deepEqual(image.waitCommand, ['/script/wait_until_initialized.sh', '22'])

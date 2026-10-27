@@ -142,6 +142,7 @@ const endpoints = [
         prefix: true,
         path: '/api/app-launcher',
         target: `http://${sepalAppsHost || modules.appLauncher}`,
+        ws: true,
         authenticate: true,
         rewrite: false
     },

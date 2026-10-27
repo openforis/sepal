@@ -17,6 +17,7 @@ import {ClaimRepository} from './workerInstance/claimRepository.js'
 import {createDockerSandboxServerControl} from './workerInstance/dockerSandboxServerControl.js'
 import {createWorkerInstanceComponent} from './workerInstance/index.js'
 import {instanceFromSession} from './workerInstance/instanceFromSession.js'
+import {createUserPublicKeyClient} from './workerInstance/userPublicKeyClient.js'
 import {createBudgetClient} from './workerSession/budgetClient.js'
 import {closeUserSessions as _closeUserSessions} from './workerSession/command/closeUserSessions.js'
 import {email$, sendEmail} from './workerSession/email.js'
@@ -60,7 +61,8 @@ const main = async () => {
 
     // Constructing the hosting service NEVER calls live AWS; that only happens on
     // provider.start()/launch.
-    const hostingService = createHostingService(config, {sandboxSessionApiKey})
+    const userPublicKeys = createUserPublicKeyClient(config)
+    const hostingService = createHostingService(config, {sandboxSessionApiKey, userPublicKeys})
     const {instanceProvider, instanceProvisioner, instanceTypes} = hostingService
 
     const claimRepository = new ClaimRepository(db)
@@ -152,6 +154,7 @@ const main = async () => {
         budgetClient,
         lockedUsers,
         usageRepo: usageRepository,
+        usageHourlyRetentionDays: config.usageHourlyRetentionDays,
         expiryPolicy,
         instanceTypeById,
         sendEmail,

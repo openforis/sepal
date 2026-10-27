@@ -76,6 +76,12 @@ describe('WorkerSessionRepository', () => {
         })
     })
 
+    describe('findSession', () => {
+        test('answers null for a session that does not exist', async () => {
+            assert.equal(await repository.findSession('nope'), null)
+        })
+    })
+
     describe('update', () => {
         test('records the state, stamped with the current time, keeping the api key of an open session', async () => {
             await repository.insert(aSession({apiKey: 'keep-me'}))

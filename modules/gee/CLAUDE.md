@@ -72,6 +72,10 @@ thread serves any user. Calls pass the `EERestLimiter` tiers `taskUser` → `tas
 
 ## Task endpoints
 
+The task runner's `POST /task/...` endpoints refuse any request not authenticated with a task container's key
+(`requireTaskSession`, `src/taskSession.js`): a user calling them directly would bypass task-manager's task limits
+and the limiter's task tiers. `GET /task/listCompleted` is a GUI endpoint and stays open.
+
 Task containers keep the image of the release that started them while gee is redeployed, so the `/task/...`
 endpoints must accept the previous release's requests: add fields, never rename or remove them within one
 release.

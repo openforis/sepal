@@ -218,7 +218,7 @@ export class BudgetRepository {
                     SELECT username FROM user_budget
                 ) AS u
                 LEFT JOIN user_spending s ON s.username = u.username
-                JOIN default_user_budget d
+                LEFT JOIN default_user_budget d ON TRUE
                 LEFT JOIN user_budget b ON b.username = u.username`
             )
             for (const row of rows) {
@@ -298,8 +298,10 @@ const toBudgetUpdateRequest = row => budgetUpdateRequestDto({
 
 const toDate = value => value ? new Date(value) : null
 
+// Only the legacy import writes a default_user_budget row, so a fresh install has none. Users without their
+// own budget then get a zero budget, the "no default budget" policy the legacy schema settled on.
 const toBudget = row => budgetDto({
-    instanceSpending: row.monthly_instance,
-    storageSpending: row.monthly_storage,
-    storageQuota: row.storage_quota,
+    instanceSpending: row?.monthly_instance ?? 0,
+    storageSpending: row?.monthly_storage ?? 0,
+    storageQuota: row?.storage_quota ?? 0,
 })

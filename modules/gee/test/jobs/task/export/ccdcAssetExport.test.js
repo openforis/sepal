@@ -222,7 +222,7 @@ describe('the surface reflectance flag, which Slice does not read', () => {
 })
 
 describe('the formatted recipe properties', () => {
-    it('passes strings and numbers through and serializes everything else', async () => {
+    it('writes them as top-level properties, passing strings and numbers through and serializing everything else', async () => {
         const {properties} = await submit({
             scale: 30,
             properties: {
@@ -234,22 +234,13 @@ describe('the formatted recipe properties', () => {
             }
         })
 
-        assert.deepEqual(properties.formattedProperties, {
-            recipe_id: 'ccdc-1',
-            recipe_title: 'My CCDC',
-            recipe_dates: '{"startDate":"2015-01-01"}',
-            recipe_bands: '["ndvi"]',
-            'system:time_start': 1420070400000,
-            scale: 30
-        })
-    })
-
-    // A nested object, not flattened property keys: a reader has to JSON.parse it back.
-    it('nests them under a single property rather than at the top level', async () => {
-        const {properties} = await submit({properties: {recipe_id: 'ccdc-1'}})
-
-        assert.equal(properties.recipe_id, undefined)
-        assert.equal(properties.formattedProperties.recipe_id, 'ccdc-1')
+        assert.equal(properties.recipe_id, 'ccdc-1')
+        assert.equal(properties.recipe_title, 'My CCDC')
+        assert.equal(properties.recipe_dates, '{"startDate":"2015-01-01"}')
+        assert.equal(properties.recipe_bands, '["ndvi"]')
+        assert.equal(properties['system:time_start'], 1420070400000)
+        assert.equal(properties.scale, 30)
+        assert.equal(properties.formattedProperties, undefined)
     })
 })
 

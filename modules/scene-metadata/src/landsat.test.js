@@ -16,6 +16,12 @@ describe('scene', () => {
         assert.partialDeepStrictEqual(result, {id: csvScene().id, cloudCover: 0})
     })
 
+    test('gives a leap-year scene the day of year of the same date in a non-leap year', () => {
+        const result = scene(stacScene({acquiredTimestamp: '2024-08-31T03:12:45.000Z'}))
+
+        assert.equal(result.dayOfYear, 243)
+    })
+
     for (const cloudCover of [undefined, null, '']) {
         test(`rejects a scene with cloud cover ${cloudCover}`, () => {
             assert.equal(scene(stacScene({cloudCover})), null)

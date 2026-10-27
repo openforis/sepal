@@ -21,13 +21,18 @@ export class Tasks {
         this.#newId = newId
     }
 
-    async submit({username, operation, params = {}, recipeId = null}) {
+    // A client names its task, so a submission it repeats after a failed response returns the task already created.
+    async submit({id, username, operation, params = {}, recipeId = null}) {
         if (!operation) {
             throw new InvalidCommand('operation required')
         }
+        const existing = id === undefined ? null : await this.#repository.getTask(taskIdOf(id))
+        if (existing) {
+            return ownedTask(existing, {taskId: id, username})
+        }
         const now = this.#clock()
         const task = createTask({
-            id: this.#newId(),
+            id: id ?? this.#newId(),
             state: State.PENDING,
             username,
             operation,
@@ -42,14 +47,7 @@ export class Tasks {
     }
 
     async getTask({taskId, username}) {
-        const task = await this.#repository.getTask(taskId)
-        if (!task) {
-            throw new NotFound(`No such task: ${taskId}`)
-        }
-        if (task.username !== username) {
-            throw new Unauthorized(`Task not owned by user: ${taskId}`)
-        }
-        return task
+        return ownedTask(await this.#repository.getTask(taskId), {taskId, username})
     }
 
     userTasks(username) {
@@ -81,7 +79,9 @@ export class Tasks {
 
     async resubmit({taskId, username}) {
         const task = await this.#finishedTask({taskId, username}, 'resubmitted')
-        await this.#repository.remove(task)
+        if (!await this.#repository.remove(task)) {
+            return null
+        }
         return this.submit({username, operation: task.operation, params: task.params, recipeId: task.recipeId})
     }
 
@@ -129,6 +129,26 @@ export class Tasks {
         return task
     }
 }
+
+const ownedTask = (task, {taskId, username}) => {
+    if (!task) {
+        throw new NotFound(`No such task: ${taskId}`)
+    }
+    if (task.username !== username) {
+        throw new Unauthorized(`Task not owned by user: ${taskId}`)
+    }
+    return task
+}
+
+// The id names the task's workspace directory and container.
+const taskIdOf = value => {
+    if (!UUID.test(value)) {
+        throw new InvalidCommand(`Not a task id: ${value}`)
+    }
+    return value
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 const slotOf = value => {
     const slot = new Date(value ?? NaN)
