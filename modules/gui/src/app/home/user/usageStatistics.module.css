@@ -43,8 +43,8 @@
 }
 
 .table tr.month:hover td {
-    /* color: var(--text-color); */
-    background-color: var(--wireframe-color);
+    color: var(--look-highlight-color);
+    background-color: var(--look-highlight-background-color);
 }
 
 .message {
