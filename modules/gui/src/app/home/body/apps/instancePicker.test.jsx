@@ -12,9 +12,8 @@ vi.mock('~/subscription', () => ({withSubscriptions: () => component => componen
 vi.mock('~/apps', () => ({appList: () => []}))
 vi.mock('~/apiRegistry', () => ({default: {user: {loadCurrentUserReport$: vi.fn()}}}))
 vi.mock('~/widget/combo', () => ({
-    Combo: ({options, value, warningMessage, onChange}) =>
+    Combo: ({options, value, onChange}) =>
         <div className='combo' data-value={value}>
-            {warningMessage ? <p className='warning'>{warningMessage}</p> : null}
             {options.map(({label, options}) =>
                 <section key={label} data-label={label}>
                     {options.map(option =>
@@ -23,6 +22,9 @@ vi.mock('~/widget/combo', () => ({
                 </section>
             )}
         </div>
+}))
+vi.mock('~/widget/message', () => ({
+    Message: ({type, text}) => <p className='message' data-type={type}>{text}</p>
 }))
 vi.mock('~/widget/panel/panel', () => {
     const Panel = ({children}) => <div>{children}</div>
@@ -120,7 +122,7 @@ describe('the instance picker', () => {
             const container = render({app})
 
             expect(dimmed(container)).toEqual([])
-            expect(container.querySelector('.warning')).toBeNull()
+            expect(warning(container)).toBeNull()
         })
     })
 
@@ -145,7 +147,7 @@ describe('the instance picker', () => {
             const container = render({app})
 
             expect(container.querySelector('.combo').dataset.value).toBe('type:M6aXlarge')
-            expect(container.querySelector('.warning')).toBeNull()
+            expect(warning(container)).toBeNull()
         })
 
         it('lets the user confirm an instance below the requirements, with a warning', () => {
@@ -155,7 +157,7 @@ describe('the instance picker', () => {
             act(() => option(container, 'session:s1').click())
             act(() => container.querySelector('.confirm').click())
 
-            expect(container.querySelector('.warning').textContent).toBe('This app recommends an instance with at least 4 CPU · 16 GB.')
+            expect(warning(container)).toBe('This app recommends an instance with at least 4 CPU · 16 GB.')
             expect(onConfirm).toHaveBeenCalledWith({sessionId: 's1'})
         })
 
@@ -163,7 +165,7 @@ describe('the instance picker', () => {
             const container = render({app: {...app, requirements: {minRamGiB: 4096}}})
 
             expect(container.querySelector('.combo').dataset.value).toBe('session:s1')
-            expect(container.querySelector('.warning').textContent).toBe('This app recommends an instance with at least 4096 GB.')
+            expect(warning(container)).toBe('This app recommends an instance with at least 4096 GB.')
         })
     })
 })
@@ -179,3 +181,6 @@ const option = (container, value) =>
 
 const dimmed = container =>
     [...container.querySelectorAll('.option[data-dimmed="true"]')].map(({textContent}) => textContent)
+
+const warning = container =>
+    container.querySelector('.message[data-type="warning"]')?.textContent ?? null

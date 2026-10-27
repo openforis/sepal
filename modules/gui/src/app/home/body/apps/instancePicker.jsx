@@ -8,6 +8,8 @@ import {connect} from '~/connect'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {Combo} from '~/widget/combo'
+import {Layout} from '~/widget/layout'
+import {Message} from '~/widget/message'
 import {Panel} from '~/widget/panel/panel'
 
 import {InstanceSpecsTag} from '../../instanceSpecs'
@@ -123,16 +125,21 @@ class _InstancePicker extends React.Component {
                 <div>{msg('apps.instancePicker.noInstanceType')}</div>
             )
         }
+        const warning = this.belowRequirementsMessage(options)
         return (
-            <Combo
-                label={msg('apps.instancePicker.instance')}
-                placeholder={msg('apps.instancePicker.placeholder')}
-                options={options}
-                value={value}
-                busyMessage={!report}
-                warningMessage={this.belowRequirementsMessage(options)}
-                onChange={this.onChange}
-            />
+            <Layout type='vertical'>
+                <Combo
+                    label={msg('apps.instancePicker.instance')}
+                    placeholder={msg('apps.instancePicker.placeholder')}
+                    options={options}
+                    value={value}
+                    busyMessage={!report}
+                    onChange={this.onChange}
+                />
+                {warning
+                    ? <Message type='warning' icon='triangle-exclamation' text={warning}/>
+                    : null}
+            </Layout>
         )
     }
 
