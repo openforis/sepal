@@ -1,7 +1,9 @@
 // Whose usage the statistics show, and how. connect() is mocked away, so the stream prop it would inject
-// subscribes directly. The label is a passthrough, and the floating box renders in place.
+// subscribes directly. The label is a passthrough, and each tooltip renders its content beside the
+// page, in the order of the months.
 
 import {act} from 'react'
+import {createPortal} from 'react-dom'
 import {createRoot} from 'react-dom/client'
 import {of, throwError} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
@@ -12,8 +14,12 @@ vi.mock('~/widget/icon', () => ({Icon: ({name}) => <span className={name}/>}))
 vi.mock('~/widget/widget', () => ({
     Widget: ({label, children}) => <div><label>{label}</label><div className='content'>{children}</div></div>
 }))
-vi.mock('~/widget/floatingBox', () => ({
-    FloatingBox: ({children}) => <div className='floatingBox'>{children}</div>
+vi.mock('~/widget/tooltip', () => ({
+    Tooltip: ({msg, children}) =>
+        <>
+            {children}
+            {createPortal(<div data-tooltip>{msg}</div>, document.body)}
+        </>
 }))
 
 import api from '~/apiRegistry'
@@ -62,17 +68,13 @@ describe('the usage statistics', () => {
     })
 
     // By tag, as the user picks a type everywhere else; an untagged type by its name.
-    it('shows a month\'s usage per instance type while it is hovered', () => {
-        const container = render()
+    it('shows a month\'s usage per instance type when it is hovered', () => {
+        render()
 
-        hover(monthRow(container, 'Aug 2026'))
-        expect(rows(floatingBox(container))).toEqual([
+        expect(rows(tooltips()[0])).toEqual([
             ['t1', '10', '$0.20', '12% / 96%', '35% / 50%', '1.00 kB/s'],
             ['m3.medium', '2', '—', '50% / 80%', '60% / 70%', '—']
         ])
-
-        unhover(monthRow(container, 'Aug 2026'))
-        expect(floatingBox(container)).toBeNull()
     })
 
     it('heads each column', () => {
@@ -131,8 +133,5 @@ const usage = {
 
 const rows = element => [...element.querySelector('table').querySelectorAll(':scope > tbody > tr')]
     .map(row => [...row.querySelectorAll('td')].map(({textContent}) => textContent))
-const monthRow = (container, month) => [...container.querySelectorAll('tr')].find(row => row.firstChild.textContent === month)
-const floatingBox = container => container.querySelector('.floatingBox')
-const hover = element => act(() => element.dispatchEvent(new MouseEvent('mouseover', {bubbles: true, relatedTarget: document.body})))
-const unhover = element => act(() => element.dispatchEvent(new MouseEvent('mouseout', {bubbles: true, relatedTarget: document.body})))
+const tooltips = () => [...document.querySelectorAll('[data-tooltip]')]
 const content = container => container.querySelector('.content').textContent

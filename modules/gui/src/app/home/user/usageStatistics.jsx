@@ -7,24 +7,18 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import format from '~/format'
 import {msg} from '~/translate'
-import {FloatingBox} from '~/widget/floatingBox'
 import {Icon} from '~/widget/icon'
+import {Tooltip} from '~/widget/tooltip'
 import {Widget} from '~/widget/widget'
 
 import styles from './usageStatistics.module.css'
 
 // Resource usage month by month, newest first: the given user's (admin), or the current user's own
 // when no username is given. Months are UTC calendar months, the ones the budget limits run on;
-// hovering one shows its usage per instance type in a box below it. Types go by their tag ("t1"), as everywhere else
-// a user picks one; a type without a tag by its name.
+// hovering one shows its usage per instance type in a tooltip. Types go by their tag ("t1"), as
+// everywhere else a user picks one; a type without a tag by its name.
 class _UsageStatistics extends React.Component {
-    // hovered: the month row under the pointer, {month, element}
-    state = {usage: null, failed: false, hovered: null}
-
-    constructor(props) {
-        super(props)
-        this.unhover = this.unhover.bind(this)
-    }
+    state = {usage: null, failed: false}
 
     componentDidMount() {
         const {username, stream} = this.props
@@ -42,7 +36,6 @@ class _UsageStatistics extends React.Component {
         return (
             <Widget label={msg('user.userDetails.form.usage.label')} framed={framed}>
                 {this.renderContent()}
-                {this.renderHoveredMonth()}
             </Widget>
         )
     }
@@ -73,29 +66,20 @@ class _UsageStatistics extends React.Component {
         )
     }
 
-    renderMonth(month, hasGpu) {
-        return this.renderRow(moment.utc(month.month, 'YYYY-MM').format('MMM YYYY'), month.overall, hasGpu, {
-            className: styles.month,
-            onMouseEnter: e => this.hover(month, e.currentTarget),
-            onMouseLeave: this.unhover
-        })
+    renderMonth({month, overall, byInstanceType}, hasGpu) {
+        return (
+            <Tooltip
+                key={month}
+                msg={this.renderMonthBreeakdown(byInstanceType)}
+                placement='bottom'
+                delay={250}
+                styles={{root: {pointerEvents: 'none'}, body: {maxWidth: 'none'}}}>
+                {this.renderRow(moment.utc(month, 'YYYY-MM').format('MMM YYYY'), overall, hasGpu, {className: styles.month})}
+            </Tooltip>
+        )
     }
 
-    renderHoveredMonth() {
-        const {hovered} = this.state
-        return hovered ? (
-            <FloatingBox
-                className={styles.instanceTypes}
-                element={hovered.element}
-                vPlacement='below-or-above'
-                hPlacement='over'
-                onBlur={this.unhover}>
-                {this.renderInstanceTypes(hovered.month.byInstanceType)}
-            </FloatingBox>
-        ) : null
-    }
-
-    renderInstanceTypes(byInstanceType) {
+    renderMonthBreeakdown(byInstanceType) {
         const hasGpu = byInstanceType.some(({gpu}) => gpu)
         return (
             <table className={styles.table}>
@@ -137,14 +121,6 @@ class _UsageStatistics extends React.Component {
                 <td>{netBytesPerS !== null ? `${format.fileSize(netBytesPerS)}/s` : '—'}</td>
             </tr>
         )
-    }
-
-    hover(month, element) {
-        this.setState({hovered: {month, element}})
-    }
-
-    unhover() {
-        this.setState({hovered: null})
     }
 }
 

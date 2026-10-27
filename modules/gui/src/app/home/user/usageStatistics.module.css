@@ -51,13 +51,3 @@
     font-size: .8rem;
     opacity: .6;
 }
-
-.instanceTypes {
-    /* --vertical-margin-from-element: .25rem; */
-    /* background-color: var(--panel-default-background-color); */
-    background-color: var(--well-background-color);
-    border: var(--selected-panel-border-width) solid var(--selected-panel-border-color);
-    box-shadow: 0 0 1rem 1rem var(--shadow-soft-color);
-    margin: var(--vertical-margin-from-element) 0;
-    padding: .5rem;
-}
