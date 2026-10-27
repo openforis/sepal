@@ -93,6 +93,7 @@ class _Label extends React.Component {
                 tooltip={warning}
                 tooltipPlacement='right'
                 tooltipDelay={0}
+                tooltipClickTrigger
             />
         ) : null
     }
