@@ -21,6 +21,18 @@ const resolvePath = (baseDir, path) => {
     }
 }
 
+// Resolves links in the parent only, so removing a link removes the link rather than its target
+const resolvePathForRemove = async (baseDir, path) => {
+    const realBaseDir = await realpath(baseDir)
+    const joinedPath = Path.join(realBaseDir, path)
+    const absolutePath = Path.join(await realpath(Path.dirname(joinedPath)), Path.basename(joinedPath))
+    const relativePath = Path.relative(realBaseDir, absolutePath)
+    if (!relativePath || relativePath === '..' || relativePath.startsWith(`..${Path.sep}`)) {
+        throw new Error(`Path outside base directory: ${path}`)
+    }
+    return absolutePath
+}
+
 const getUserInfo = async username => {
     if (!username || typeof username !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(username)) {
         throw new Error('Invalid username')
@@ -425,5 +437,5 @@ const listFiles = async (homeDir, ctx) => {
     }
 }
 
-export {createFolder, download, listFiles, resolvePath, setFile}
+export {createFolder, download, listFiles, resolvePath, resolvePathForRemove, setFile}
 

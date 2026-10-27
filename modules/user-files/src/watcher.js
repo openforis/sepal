@@ -7,7 +7,7 @@ import {getLogger} from '#sepal/log'
 import {minDuration$} from '#sepal/rxjs'
 
 import {homeDir, pollIntervalMilliseconds} from './config.js'
-import {resolvePath} from './filesystem.js'
+import {resolvePath, resolvePathForRemove} from './filesystem.js'
 import {clientTag, subscriptionTag} from './tag.js'
 
 const log = getLogger('watcher')
@@ -209,7 +209,7 @@ const createWatcher = async ({send, stop$}) => {
         } else {
             unmonitor({username, clientId, subscriptionId, path})
             try {
-                const {absolutePath} = resolvePath(await userHomeDir(username), path)
+                const absolutePath = await resolvePathForRemove(await userHomeDir(username), path)
                 await rm(absolutePath, {recursive: true})
                 log.debug(`${subscriptionTag({username, clientId, subscriptionId})} removed path: ${path}`)
             } catch (error) {
