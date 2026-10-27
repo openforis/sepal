@@ -33,6 +33,49 @@ describe('submitting', () => {
     test('refuses a task without an operation', async () => {
         await assert.rejects(setup().tasks.submit({username: 'alice', params: {}}), InvalidCommand)
     })
+
+    for (const kind of ['IMAGE', 'TABLE']) {
+        for (const workspacePath of [undefined, '', 'module_results/my export']) {
+            test(`stores the actual ${kind} workspace destination for path ${JSON.stringify(workspacePath)}`, async () => {
+                const {tasks, repository} = setup()
+                const origin = {type: 'NOTEBOOK', path: 'analysis.ipynb'}
+                const params = {
+                    description: 'my export',
+                    export: {kind, destination: 'SEPAL', workspacePath, filenamePrefix: 'output'},
+                    taskInfo: {kind, destination: 'SEPAL', outputPath: 'output', source: 'pysepal-api', origin}
+                }
+
+                const task = await tasks.submit({username: 'alice', operation: 'ee.export', params})
+                const stored = await repository.getTask(task.id)
+                const expectedPath = workspacePath || 'downloads/my_export'
+
+                assert.equal(stored.params.export.workspacePath, expectedPath)
+                assert.equal(stored.params.taskInfo.outputPath, expectedPath)
+                assert.deepEqual(stored.params.taskInfo.origin, origin)
+                assert.equal(stored.params.export.filenamePrefix, 'output')
+                assert.equal(params.taskInfo.outputPath, 'output')
+            })
+        }
+    }
+
+    test('normalizes workspace exports received as JSON without task metadata', async () => {
+        const {tasks} = setup()
+        const task = await tasks.submit({username: 'alice', operation: 'ee.export', params: JSON.stringify({
+            description: '../my export', export: {kind: 'IMAGE', destination: 'SEPAL'}
+        })})
+
+        assert.equal(task.params.export.workspacePath, 'downloads/_my_export')
+        assert.deepEqual(task.params.taskInfo, {kind: 'IMAGE', destination: 'SEPAL', outputPath: 'downloads/_my_export'})
+    })
+
+    for (const [operation, destination] of [['ee.export', 'GEE'], ['ee.export', 'DRIVE'], ['image.SEPAL', 'SEPAL']]) {
+        test(`preserves other task parameters for ${operation} to ${destination}`, async () => {
+            const {tasks} = setup()
+            const params = {description: 'ndvi', export: {destination}, taskInfo: {outputPath: 'original'}}
+            const task = await tasks.submit({username: 'alice', operation, params})
+            assert.deepEqual(task.params, params)
+        })
+    }
 })
 
 describe('cancelling', () => {

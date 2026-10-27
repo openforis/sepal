@@ -30,7 +30,7 @@ before(initializeOfflineEE)
 
 test('the real Earth Engine decoder accepts Cloud API image and region dictionaries', async () => {
     await lastValueFrom(startEEObjectExport$({description: 'image', export: {
-        kind: 'IMAGE', destination: 'GEE', assetId: 'projects/p/assets/out',
+        kind: 'IMAGE', destination: 'GEE', assetId: 'projects/p/assets/out', scale: 30,
         expression: {result: '0', values: {'0': {functionInvocationValue: {
             functionName: 'Image.load', arguments: {id: {constantValue: 'projects/p/assets/input'}}
         }}}},
@@ -59,3 +59,37 @@ test('the real Earth Engine decoder accepts Cloud API table dictionaries', async
     assert.ok(exported.collection instanceof ee.FeatureCollection)
     assert.equal(exported.collection.args.tableId, 'projects/p/assets/input')
 })
+
+for (const destination of ['GEE', 'DRIVE', 'SEPAL']) {
+    test(`${destination} retains a polygon mask when exporting on an explicit pixel grid`, async () => {
+        const image = ee.Image('projects/p/assets/input')
+        const region = ee.Geometry.Polygon([[[0, 0], [1, 0], [1, 1], [0, 0]]])
+        const crsTransform = [0.01, 0, 0, 0, -0.01, 1]
+
+        await lastValueFrom(startEEObjectExport$({description: 'triangle', export: {
+            kind: 'IMAGE', destination, assetId: 'projects/p/assets/out',
+            expression: JSON.parse(image.serialize()), region: JSON.parse(region.serialize()),
+            crs: 'EPSG:4326', crsTransform
+        }}))
+
+        assert.equal(exported.image.func.getSignature().name, 'Image.clip')
+        assert.equal(exported.image.args.input.serialize(), image.serialize())
+        assert.equal(exported.image.args.geometry.serialize(), region.serialize())
+        assert.deepEqual(exported.crsTransform, crsTransform)
+    })
+}
+
+for (const scaling of [{scale: 30}, {dimensions: '100x100'}]) {
+    test(`keeps native bounding-box clipping with ${Object.keys(scaling)[0]}`, async () => {
+        const image = ee.Image('projects/p/assets/input')
+        const region = ee.Geometry.Polygon([[[0, 0], [1, 0], [1, 1], [0, 0]]])
+
+        await lastValueFrom(startEEObjectExport$({description: 'triangle', export: {
+            kind: 'IMAGE', destination: 'DRIVE',
+            expression: JSON.parse(image.serialize()), region: JSON.parse(region.serialize()), ...scaling
+        }}))
+
+        assert.equal(exported.image.serialize(), image.serialize())
+        assert.equal(exported.region.serialize(), region.serialize())
+    })
+}

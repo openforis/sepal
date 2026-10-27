@@ -48,6 +48,7 @@ const algorithm = (name, returnType, args) => ({
 
 const ALGORITHMS = [
     algorithm('Image.load', 'Image', [['id', 'String'], ['version', 'Long', true]]),
+    algorithm('Image.clip', 'Image', [['input', 'Image'], ['geometry', 'Object']]),
     algorithm('Image.clipToBoundsAndScale', 'Image', [
         ['input', 'Image'], ['geometry', 'Geometry', true], ['width', 'Integer', true], ['height', 'Integer', true],
         ['maxDimension', 'Integer', true], ['scale', 'Float', true]

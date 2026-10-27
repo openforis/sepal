@@ -42,6 +42,25 @@ describe('Tasks', () => {
 
         expect(descriptions()).toEqual(['/ Amazon / Brazil / Mosaic 2024'])
     })
+
+    it('distinguishes named exports from the same notebook', () => {
+        const taskInfo = {kind: 'IMAGE', destination: 'SEPAL', origin: {type: 'NOTEBOOK', path: 'analysis.ipynb'}}
+        renderTasks({folders: [], tasks: [
+            {id: 'ndvi', name: 'Export NDVI to SEPAL', description: 'NDVI', status: 'COMPLETED', taskInfo},
+            {id: 'evi', name: 'Export EVI to SEPAL', description: 'EVI', status: 'COMPLETED', taskInfo}
+        ]})
+
+        expect(descriptions()).toEqual(['NDVI · ~/analysis.ipynb', 'EVI · ~/analysis.ipynb'])
+    })
+
+    it('keeps the task name when an export has no description or recorded origin', () => {
+        renderTasks({folders: [], tasks: [{
+            id: 'legacy', name: 'Export plots to SEPAL', status: 'COMPLETED',
+            taskInfo: {kind: 'TABLE', destination: 'SEPAL'}
+        }]})
+
+        expect(descriptions()).toEqual(['Export plots to SEPAL · tasks.details.originNotRecorded'])
+    })
 })
 
 let container
