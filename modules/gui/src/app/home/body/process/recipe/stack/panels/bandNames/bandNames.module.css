@@ -2,3 +2,27 @@
     /* min-height: 40rem; */
     max-width: 29rem;
 }
+
+/* Two equal columns, or one where two would each be narrower than 10rem. Inputs line up across a row whose labels
+   wrap differently. */
+.bands {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, max(10rem, calc(50% - 1rem))), 1fr));
+    align-items: end;
+    gap: 1rem;
+}
+
+/* A field takes its column's width, not its input's default width or its label's length. Its label, the band's
+   original name, wraps instead, keeping all of the name and its feedback icon in view. */
+.bands > .band {
+    min-width: 0;
+}
+
+.bands > .band > :first-child {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.bands > .band > :first-child > :first-child {
+    flex-shrink: 1;
+}

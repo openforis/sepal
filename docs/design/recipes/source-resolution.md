@@ -70,7 +70,7 @@ claiming the earlier campaign tested that later tree.
 
 | Priority | Follow-up | Boundary / regression risk |
 | --- | --- | --- |
-| 1 | Stack Band names layout | Best contained polish candidate: a local responsive two-column grid, one column in a narrow viewport. Keep shared Layout and input widths unchanged; check short/long names, validation and scrolling. |
+| 1 | Stack Band names layout | **Implemented and browser-accepted (2026-10-27).** Cause, confirmed in Chromium: each field took the browser's default `<input size=20>` width (202px) in a wrapping horizontal `Layout` with 1rem margins, so two never fit the 352px group of the 29rem panel and every band took its own row. Each input-image group is now a local grid of two equal columns, one where two would each be narrower than 10rem; fields shrink to their column and long original names wrap with their feedback icon in view. Shared Layout, Panel, form and input widths are unchanged. Checked in Chromium on a harness build of the real Stack toolbar and panel: 1/2/3/4/many bands, three groups, long names and values, a duplicate name, 400px and 320px viewports, scrolling, Tab order, rename then Apply or Cancel. Independent review found no issue; all 41 Stack tests, lint and `git diff --check` pass. The user confirmed the running-app layout works, including small windows, and renaming works. Browser acceptance is complete; the browser was not named, so no separate Firefox/Safari pass is claimed. Renaming behavior is unchanged; additional manual renaming checks were unnecessary for this layout-only change. |
 | 2 | CCDC Sources family/view heights | Implement the agreed Optical/Radar/Planet and More/Less heights locally, preserving viewport caps and body scrolling. Late evidence must not resize the shell. Needs real visual checks; no shared Panel sizing change. |
 | 3 | CCDC Slice chart labels | Use readable labels from current evidence where available, preserving raw request identities and asset-name fallbacks. Do not restore copied source snapshots to obtain labels. |
 | 4 | Consecutive keyboard band addition | Useful but more sensitive: narrow the behavior to the stay-open band-add flow in the shared picker. Retain filters, mouse and arrow behavior, and prevent the final Enter from activating All bands. |
@@ -6614,7 +6614,8 @@ defaults again. This is not part of required S5/S6 and does not block push.
   and margins, inside a panel capped at 29rem; short text does not itself determine field width. Prefer a local two-column
   grid for these fields, falling back to one column in a narrow viewport, over changes to shared `Layout` or global
   input widths. Confirm the rendered cause and check 1/2/3/4/many fields, long names, errors and scrolling. Recorded
-  as an independent small UI fix, not reproduced in a browser or implemented with S2.
+  as an independent small UI fix, not reproduced in a browser or implemented with S2. **Implemented and browser-accepted (2026-10-27);** see the
+  optional-improvements table.
 - **CCDC Sources height:** the user reports an excessively tall panel after choosing Radar and asks about stable
   sizing versus content-based sizing. `ccdc/panels/sources/sources.module.css` explicitly sets `height: 46rem`, unlike
   Time Series Sources, which only caps width. Blame dates the 46rem rule to `b166296a1` (2022-03-17); it is not caused
