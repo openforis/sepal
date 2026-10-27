@@ -12,11 +12,14 @@ vi.mock('~/subscription', () => ({withSubscriptions: () => component => componen
 vi.mock('~/apps', () => ({appList: () => []}))
 vi.mock('~/apiRegistry', () => ({default: {user: {loadCurrentUserReport$: vi.fn()}}}))
 vi.mock('~/widget/combo', () => ({
-    Combo: ({options, value}) =>
+    Combo: ({options, value, warningMessage, onChange}) =>
         <div className='combo' data-value={value}>
+            {warningMessage ? <p className='warning'>{warningMessage}</p> : null}
             {options.map(({label, options}) =>
                 <section key={label} data-label={label}>
-                    {options.map(({value}) => <div key={value} className='option'>{value}</div>)}
+                    {options.map(option =>
+                        <div key={option.value} className='option' data-dimmed={!!option.dimmed} onClick={() => onChange(option)}>{option.value}</div>
+                    )}
                 </section>
             )}
         </div>
@@ -112,6 +115,56 @@ describe('the instance picker', () => {
             expect(sectionLabels(container)).toEqual(['Running instances', 'New instance without SSD'])
             expect(container.querySelector('.combo').dataset.value).toBe('session:s1')
         })
+
+        it('dims nothing when the app has no requirements', () => {
+            const container = render({app})
+
+            expect(dimmed(container)).toEqual([])
+            expect(container.querySelector('.warning')).toBeNull()
+        })
+    })
+
+    describe('for an app with requirements', () => {
+        const app = {path: '/sandbox/jupyter/voila/big', label: 'Big', endpoint: 'jupyter', requirements: {minRamGiB: 16, minCpuCount: 4}}
+
+        beforeEach(() => {
+            vi.mocked(api.user.loadCurrentUserReport$).mockReturnValue(of({
+                sessions: [{id: 's1', instanceType: T3, apps: []}],
+                instanceTypes: [M6, T3]
+            }))
+        })
+
+        it('lists every instance, dimming the ones below the requirements', () => {
+            const container = render({app})
+
+            expect(options(container)).toEqual(['session:s1', 'type:M6aXlarge', 'type:T3aSmall'])
+            expect(dimmed(container)).toEqual(['session:s1', 'type:T3aSmall'])
+        })
+
+        it('preselects an instance that meets the requirements, without a warning', () => {
+            const container = render({app})
+
+            expect(container.querySelector('.combo').dataset.value).toBe('type:M6aXlarge')
+            expect(container.querySelector('.warning')).toBeNull()
+        })
+
+        it('lets the user confirm an instance below the requirements, with a warning', () => {
+            const onConfirm = vi.fn()
+            const container = render({app, onConfirm})
+
+            act(() => option(container, 'session:s1').click())
+            act(() => container.querySelector('.confirm').click())
+
+            expect(container.querySelector('.warning').textContent).toBe('This app recommends an instance with at least 4 CPU · 16 GB.')
+            expect(onConfirm).toHaveBeenCalledWith({sessionId: 's1'})
+        })
+
+        it('preselects as if there were no requirements, with a warning, when no instance meets them', () => {
+            const container = render({app: {...app, requirements: {minRamGiB: 4096}}})
+
+            expect(container.querySelector('.combo').dataset.value).toBe('session:s1')
+            expect(container.querySelector('.warning').textContent).toBe('This app recommends an instance with at least 4096 GB.')
+        })
     })
 })
 
@@ -120,3 +173,9 @@ const sectionLabels = container =>
 
 const options = container =>
     [...container.querySelectorAll('.option')].map(({textContent}) => textContent)
+
+const option = (container, value) =>
+    [...container.querySelectorAll('.option')].find(({textContent}) => textContent === value)
+
+const dimmed = container =>
+    [...container.querySelectorAll('.option[data-dimmed="true"]')].map(({textContent}) => textContent)

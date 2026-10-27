@@ -61,7 +61,7 @@
     "running": "App is running",
     "noInstanceRequired": "Instant",
     "noInstanceRequiredTooltip": "This app doesn't require a dedicated instance to run.",
-    "gpuRequiredTooltip": "This app requires an instance with at least {count, plural, one {# GPU} other {# GPUs}}.",
+    "gpuRequiredTooltip": "This app recommends an instance with at least {count, plural, one {# GPU} other {# GPUs}}.",
     "sessionTakenOver": "{app} was closed in this window because it was opened in another browser window",
     "confirmReopen": {
       "title": "App already open",
@@ -82,7 +82,7 @@
       "newSsdSection": "New instance with SSD",
       "newInstanceTitle": "Start new instance",
       "noInstanceType": "No instance type is available. Contact your administrator.",
-      "noSuitableInstance": "No available instance type satisfies this app's requirements ({cpu} CPU / {ram} GB RAM{gpu}). Contact your administrator.",
+      "belowRequirements": "This app recommends an instance with at least {specs}.",
       "alreadyRunning": "This app was already running on another instance — it opened there."
     },
     "admin": {

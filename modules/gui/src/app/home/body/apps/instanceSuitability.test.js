@@ -1,8 +1,8 @@
 import {describe, expect, it} from 'vitest'
 
 import {
-    appRequirements, buildPickerOptions, cheapestSuitableInstanceType,
-    defaultPickerValue, hasSuitableOption, isSuitableInstanceType, sessionNumber, suitableInstanceTypes
+    appRequirements, buildPickerOptions, cheapestSuitableInstanceType, defaultPickerValue,
+    isSuitableInstanceType, requirementSpecs, sessionNumber, suitableInstanceTypes
 } from './instanceSuitability'
 
 const T3 = {id: 'T3aSmall', name: 't3a.small', tag: 't1', cpuCount: 1, ramGiB: 2, hourlyCost: 0.0204, gpuCount: 0, description: '1 CPU, 2 GB'}
@@ -18,6 +18,13 @@ describe('appRequirements', () => {
     it('defaults missing requirements to zero', () => {
         expect(appRequirements({})).toEqual({minRamGiB: 0, minCpuCount: 0, minGpuCount: 0})
         expect(appRequirements({requirements: {minRamGiB: 8}})).toEqual({minRamGiB: 8, minCpuCount: 0, minGpuCount: 0})
+    })
+})
+
+describe('requirementSpecs', () => {
+    it('lists the set floors the way the specs pill lists capacity', () => {
+        expect(requirementSpecs({minRamGiB: 16, minCpuCount: 4, minGpuCount: 1})).toBe('4 CPU · 1 GPU · 16 GB')
+        expect(requirementSpecs(appRequirements({requirements: {minRamGiB: 16}}))).toBe('16 GB')
     })
 })
 
@@ -64,14 +71,18 @@ describe('sessionNumber', () => {
 })
 
 describe('buildPickerOptions', () => {
-    it('builds two sections: running instances (unsuitable disabled) and suitable types', () => {
+    it('lists every running instance and new type, dimming the ones below the requirements', () => {
         const sessions = [session('s-1', T3), session('s-2', M6)]
         const options = buildPickerOptions({sessions, instanceTypes: TYPES, requirements: {minRamGiB: 8, minCpuCount: 2, minGpuCount: 0}})
         expect(options).toHaveLength(2)
         const [running, fresh] = options
-        expect(running.options.map(({value, disabled}) => ({value, disabled: !!disabled})))
-            .toEqual([{value: 'session:s-1', disabled: true}, {value: 'session:s-2', disabled: false}])
-        expect(fresh.options.map(({value}) => value)).toEqual(['type:M6aXlarge', 'type:G5Xlarge'])
+        expect(running.options.map(({value, dimmed}) => ({value, dimmed})))
+            .toEqual([{value: 'session:s-1', dimmed: true}, {value: 'session:s-2', dimmed: false}])
+        expect(fresh.options.map(({value, dimmed}) => ({value, dimmed}))).toEqual([
+            {value: 'type:M6aXlarge', dimmed: false},
+            {value: 'type:T3aSmall', dimmed: true},
+            {value: 'type:G5Xlarge', dimmed: false}
+        ])
     })
 
     it('lists the hosted apps separately from the label, but keeps them searchable', () => {
@@ -96,15 +107,16 @@ describe('buildPickerOptions', () => {
         expect(options[1].options[0]).toMatchObject({title: 'm4', instanceType: M6})
     })
 
-    it('prefixes running instances with their 1-based report position, disabled ones included', () => {
+    it('prefixes running instances with their 1-based report position', () => {
         const sessions = [session('s-1', T3), session('s-2', M6)]
         const options = buildPickerOptions({sessions, instanceTypes: TYPES, requirements: {minRamGiB: 8, minCpuCount: 2, minGpuCount: 0}})
         expect(options[0].options.map(({label}) => label)).toEqual(['1: t1', '2: m4'])
         // new-instance types are not numbered
-        expect(options[1].options.map(({label}) => label)).toEqual(['m4', 'g4'])
+        expect(options[1].options.map(({label}) => label)).toEqual(['m4', 't1', 'g4'])
         // the filter still matches what the right-hand column says
         expect(options[1].options.map(({searchableText}) => searchableText)).toEqual([
             'm4 — 4 CPU · 16 GB · $0.19/h',
+            't1 — 1 CPU · 2 GB · $0.02/h',
             'g4 — 4 CPU · 1 GPU · 16 GB · $1.12/h'
         ])
     })
@@ -147,19 +159,10 @@ describe('buildPickerOptions', () => {
         ])
     })
 
-    it('omits a new-instance section none of whose types is suitable', () => {
+    it('omits a new-instance section without types', () => {
         const M6D = {id: 'M6idXlarge', name: 'm6id.xlarge', tag: 'm4d', cpuCount: 4, ramGiB: 16, hourlyCost: 0.2646, gpuCount: 0, ssdGB: 237}
         const onlySsd = buildPickerOptions({sessions: [], instanceTypes: [M6D], requirements: {minRamGiB: 0, minCpuCount: 0, minGpuCount: 0}})
         expect(onlySsd.map(({label}) => label)).toEqual(['New instance with SSD'])
-    })
-})
-
-describe('hasSuitableOption', () => {
-    it('is false when neither running sessions nor types satisfy the requirements', () => {
-        expect(hasSuitableOption({sessions: [session('s-1', T3)], instanceTypes: TYPES, requirements: {minRamGiB: 4096, minCpuCount: 0, minGpuCount: 0}}))
-            .toBe(false)
-        expect(hasSuitableOption({sessions: [], instanceTypes: TYPES, requirements: {minRamGiB: 8, minCpuCount: 2, minGpuCount: 0}}))
-            .toBe(true)
     })
 })
 
@@ -177,8 +180,16 @@ describe('defaultPickerValue', () => {
             .toBe('type:T3aSmall')
     })
 
-    it('returns null when nothing is suitable', () => {
-        expect(defaultPickerValue({sessions: [], instanceTypes: TYPES, requirements: {minRamGiB: 4096, minCpuCount: 0, minGpuCount: 0}}))
+    it('ignores the requirements when nothing meets them', () => {
+        const requirements = {minRamGiB: 4096, minCpuCount: 0, minGpuCount: 0}
+        expect(defaultPickerValue({sessions: [session('s-1', T3)], instanceTypes: TYPES, requirements}))
+            .toBe('session:s-1')
+        expect(defaultPickerValue({sessions: [], instanceTypes: TYPES, requirements}))
+            .toBe('type:T3aSmall')
+    })
+
+    it('returns null when there is nothing to pick', () => {
+        expect(defaultPickerValue({sessions: [], instanceTypes: [LEGACY], requirements: {minRamGiB: 0, minCpuCount: 0, minGpuCount: 0}}))
             .toBeNull()
     })
 
@@ -203,8 +214,8 @@ describe('defaultPickerValue', () => {
         })).toBe('session:s-1')
     })
 
-    // The option would be disabled in the list, and moving the group is genuinely required.
-    it('skips a group instance that cannot host this app', () => {
+    // The default stays within the requirements; the group instance is still listed, dimmed.
+    it('skips a group instance that does not meet the requirements', () => {
         const sessions = [session('s-1', M6), session('s-2', T3)]
         expect(defaultPickerValue({
             sessions, instanceTypes: TYPES,
