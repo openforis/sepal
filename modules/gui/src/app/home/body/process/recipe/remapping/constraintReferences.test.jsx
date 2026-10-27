@@ -241,10 +241,11 @@ describe('upstream feedback across shared input editors', () => {
         ['CLASSIFICATION', DerivedInputs],
         ['REGRESSION', DerivedInputs],
         ['UNSUPERVISED_CLASSIFICATION', DerivedInputs]
-    ])('%s explains the draft selection without changing Apply policy or the applied model', async (type, Inputs) => {
+    ])('%s blocks committing an unusable draft selection, while preserving Close, Cancel, repair and removal', async (type, Inputs) => {
         const upstream = {...sourceRecipe('upstream'), title: 'Broken source'}
         upstream.model.legend.entries[0].constraints = [constraintOf('broken', 'removed', 'class', '>', 0)]
         const replacement = {...sourceRecipe('replacement'), title: 'Healthy replacement'}
+        const otherBroken = {...upstream, id: 'other-broken', title: 'Other broken source'}
         const image = {
             ...inputOf('input', 'upstream', 'class', 'RECIPE_REF'), name: 'i1', bands: Inputs === DerivedInputs ? ['class'] : {class: {}},
             includedBands: [{id: 'class', name: 'class', band: 'class', type: 'continuous', legendEntries: []}],
@@ -260,20 +261,40 @@ describe('upstream feedback across shared input editors', () => {
                 clusterer: {type: 'KMEANS', numberOfClusters: 5}
             }
         }
-        await open(saved, <PanelWizard panels={['inputImagery']} initialized><Inputs/><Toolbar><SectionButton id='inputImagery' label={IMAGERY} panel/></Toolbar></PanelWizard>, [upstream, replacement])
+        await open(saved, <PanelWizard panels={['inputImagery']} initialized><Inputs/><Toolbar><SectionButton id='inputImagery' label={IMAGERY} panel/></Toolbar></PanelWizard>, [upstream, otherBroken, replacement])
         expect(inError(IMAGERY)).toBe(true)
         await press(IMAGERY)
         await click(innermost('Broken source'))
         expect(errorsOf('widget.recipeInput.label')).toEqual(['process.source.status.recipeNeedsAttention {"recipe":"Broken source"}'])
         expect(applyEnabled()).toBe(false)
         expect(model()).toEqual(saved.model)
+        // An unchanged invalid editor can still close. A changed unusable selection must refuse the actual form submit.
+        await press('button.close')
+        await click(innermost('Broken source'))
+        await choose('widget.recipeInput.label', 'Other broken source')
+        expect(button('button.apply').disabled).toBe(true)
+        await click(document.querySelector('form').querySelector('[type="submit"]'))
+        await act(async () => document.querySelector('form').dispatchEvent(new Event('submit', {bubbles: true, cancelable: true})))
+        expect(model()).toEqual(saved.model)
+        await act(async () => store.dispatch({type: 'REPAIR_DRAFT_SOURCE', reduce: state => ({...state, process: {
+            ...state.process, loadedRecipes: {...state.process.loadedRecipes,
+                'other-broken': {...state.process.loadedRecipes['other-broken'], model: {...otherBroken.model, legend: {...otherBroken.model.legend,
+                    entries: otherBroken.model.legend.entries.map(entry => ({...entry, constraints: []}))}}}}
+        }})}))
+        await settled()
+        expect(errorsOf('widget.recipeInput.label')).toEqual([])
+        expect(applyEnabled()).toBe(true)
+        await press('button.cancel')
+        expect(model()).toEqual(saved.model)
+        await click(innermost('Broken source'))
         await choose('widget.recipeInput.label', 'Healthy replacement')
         expect(errorsOf('widget.recipeInput.label')).toEqual([])
         expect(applyEnabled()).toBe(true)
         expect(inError(IMAGERY)).toBe(true)
-        await press('button.cancel')
-        expect(model()).toEqual(saved.model)
-        expect(inError(IMAGERY)).toBe(true)
+        await press('button.apply')
+        expect(model().inputImagery.images[0].id).toBe('replacement')
+        await removeInput('Healthy replacement')
+        expect(model().inputImagery.images).toEqual([])
     })
 })
 

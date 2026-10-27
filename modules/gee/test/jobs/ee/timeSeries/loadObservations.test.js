@@ -196,26 +196,60 @@ describe('loading the observations of a CCDC pixel', () => {
     })
 })
 
-// Change Alerts' chart observes the collection of its own Sources over its calibration and monitoring periods, judged
+// Change Alerts' chart now resolves reference processing before observing the collection of its own Sources over its calibration and monitoring periods, judged
 // as that Time Series collection is (observedCollection): its reference, whose segments the chart plots beside them,
 // and a Classification its Sources copied from the reference's producer, are no part of it.
 describe('loading the observations of a Change Alerts pixel', () => {
-    it('answers them for the collection it monitors, reading neither its reference nor a Classification its Sources copied', async () => {
+    beforeEach(() => {
+        state.catalogue['ccdc-unreadable'] = {...CCDC, id: 'ccdc-unreadable', model: {
+            ...CCDC.model, aoi: {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]},
+            sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands: ['ndvi']}, options: {corrections: []}
+        }}
+    })
+    it('reads reference processing and readiness but neither segments nor a stale consumer Classification', async () => {
         const result = await load({recipe: CHANGE_ALERTS, bands: ['ndvi']})
 
         assert.deepEqual(result, {features: OBSERVATIONS.map(([value, date]) => ({properties: {date: {value: date}, value}}))})
-        assert.deepEqual(state.collections, [{recipe: OBSERVED, bands: ['ndvi'], geometry: PIXEL}])
-        assert.deepEqual(state.recipeReads, [])
+        assert.equal(state.collections.length, 1)
+        assert.deepEqual(state.collections[0].recipe.model.sources, OBSERVED.model.sources)
+        assert.deepEqual(state.collections[0].recipe.model.dates, OBSERVED.model.dates)
+        assert.deepEqual(state.collections[0].recipe.model.options.corrections, [])
+        assert.deepEqual(CHANGE_ALERTS.model.options.corrections, ['SR'])
+        // Facts and authorization both read the selected producer; the job's real request scope shares the record.
+        assert.deepEqual([...new Set(state.recipeReads)], ['ccdc-unreadable'])
         assert.deepEqual(state.recipeImages, [])
     })
 
-    it('answers them whatever its reference\'s own segments would need', async () => {
-        const recipe = {...CHANGE_ALERTS, model: {...CHANGE_ALERTS.model, reference: {type: 'RECIPE_REF'}}}
-
-        const result = await load({recipe, bands: ['ndvi']})
-
+    it('refuses a confirmed problem in the referenced CCDC before chart work, and recovers after repair', async () => {
+        const reference = state.catalogue['ccdc-unreadable']
+        state.catalogue['ccdc-unreadable'] = {...reference, model: {...reference.model, sources: {...reference.model.sources, classification: CLASSIFICATION}}}
+        state.catalogue[CLASSIFICATION] = trainable({images: [trainable().model.inputImagery.images[0], {...RED_ONLY_INPUT, imageId: 'i-2'}]})
+        await assert.rejects(load({recipe: CHANGE_ALERTS, bands: ['ndvi']}), /cannot run: MULTIPLE_CLASSIFIER_INPUTS$/)
+        assertNoChartWork()
+        state.catalogue[CLASSIFICATION] = trainable()
+        const result = await load({recipe: CHANGE_ALERTS, bands: ['ndvi']})
         assert.equal(result.features.length, OBSERVATIONS.length)
+        assert.deepEqual(state.builtImages, [])
+    })
+
+    it('holds observations when its required reference cannot be read, without fabricating a finding', async () => {
+        delete state.catalogue['ccdc-unreadable']
+        await assert.rejects(load({recipe: CHANGE_ALERTS, bands: ['ndvi']}), /Recipe could not be read: ccdc-unreadable/)
+        assertNoChartWork()
+    })
+
+    it('reads asset processing without its private producer and refuses malformed governing metadata', async () => {
+        const recipe = {...CHANGE_ALERTS, model: {...CHANGE_ALERTS.model, reference: {type: 'ASSET', id: 'segments'}}}
+        state.properties = {recipe_options: JSON.stringify({corrections: []}), recipe_id: 'private-producer', dateFormat: 1}
+        await load({recipe, bands: ['ndvi']})
         assert.deepEqual(state.recipeReads, [])
+        assert.deepEqual(state.collections[0].recipe.model.options.corrections, [])
+        state.collections = []
+        state.pixels = []
+        state.evaluations = []
+        state.properties.processing = '{broken'
+        await assert.rejects(load({recipe, bands: ['ndvi']}), /processing settings cannot be read/)
+        assertNoChartWork()
     })
 
     it('is refused, starting no chart work, where the collection it monitors cannot run, and answered once repaired', async () => {
@@ -421,6 +455,7 @@ mock.module('#sepal/ee/ee', {
         }
     }
 })
+mock.module('#sepal/ee/asset', {exports: {assetProperties$: () => of(state.properties || {})}})
 mock.module('#sepal/ee/aoi', {
     exports: {
         toGeometry$: aoi => (state.pixels.push(aoi), of(PIXEL))
@@ -455,9 +490,9 @@ mock.module('#sepal/ee/bandEvidence', {
 })
 mock.module('#sepal/ee/imageFactory', {
     exports: {
-        default: recipe => (state.recipeImages.push(recipe.id), {
-            getImage$: () => of({}),
-            getBands$: () => of(['count'])
+        default: recipe => recipe.type === 'RECIPE_REF' ? recipeRef(recipe) : (state.recipeImages.push(recipe.id), {
+            getImage$: () => (state.builtImages.push(recipe.id), of({})),
+            getBands$: () => of(['ndvi'])
         })
     }
 })
@@ -474,9 +509,11 @@ mock.module('#gee/jobs/executionReadiness', {
     }
 })
 
-beforeEach(() => {
+let recipeRef
+beforeEach(async () => {
+    recipeRef ||= (await import('#sepal/ee/recipeRef')).default
     Object.assign(state, {
-        catalogue: {}, recipeReads: [], pixels: [], collections: [], evaluations: [], selected: [], recipeImages: [], observed: [], judged: [],
+        catalogue: {}, properties: {}, builtImages: [], recipeReads: [], pixels: [], collections: [], evaluations: [], selected: [], recipeImages: [], observed: [], judged: [],
         assetBands: {[`users/x/${CLASSIFICATION}`]: TRAINABLE_FEATURES, [`users/x/${PROVIDER}`]: TRAINABLE_FEATURES, [RED_ONLY_ASSET]: ['red']}
     })
 })

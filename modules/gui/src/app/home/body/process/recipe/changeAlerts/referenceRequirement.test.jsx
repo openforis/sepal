@@ -50,9 +50,12 @@ vi.mock('~/apiRegistry', async () => {
                 return read$(asset, {held: fake.heldMetadata, failing: fake.failing})
             },
             datasets$: () => of({community: {datasets: [], matchingResults: 0}, gee: {datasets: [], matchingResults: 0}}),
-            bands$: ({asset}) => {
-                fake.calls.push(['bands', asset])
-                return throwError(() => new Error('Unexpected band request'))
+            bands$: ({asset, recipe, includeDataTypes}) => {
+                fake.calls.push(['bands', asset || recipe?.id])
+                const metadata = fake.assets[asset || recipe?.model?.assetDetails?.assetId]
+                return metadata ? of(metadata.bands.map(({id, data_type}) => ({name: id, arrayDimensions: data_type?.dimensions || 0})))
+                    : recipe ? of(includeDataTypes ? [{name: 'ndvi', arrayDimensions: 0}] : ['ndvi'])
+                        : throwError(() => new Error(`Asset ${asset} unavailable`))
             },
             // A pixel's segments as Earth Engine answers for them: the segment bands and, per band asked for, its fit.
             loadCCDCSegments$: ({recipe, bands}) => {
@@ -126,7 +129,7 @@ vi.mock('~/apiRegistry', async () => {
         }
     }}
 })
-vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
+vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : Array.isArray(key) ? key.join('.') : key}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 // The editor's panels open with it, and close as they do when cancelled or applied; how they get opened is not what
 // this exercises.
@@ -135,7 +138,7 @@ vi.mock('~/widget/activation/activatable', async () => {
     const {useState} = await import('react')
     return {
         withActivatable: ({id} = {}) => Component => props => {
-            const [active, setActive] = useState(true)
+            const [active, setActive] = useState(!['spatialSpeckleFilterOptions', 'multitemporalSpeckleFilterOptions'].includes(id))
             panelActivations[id] = () => setActive(true)
             return active
                 ? <Component {...props} activatable={{active, activate: () => setActive(true), deactivate: () => setActive(false)}}/>
@@ -153,7 +156,11 @@ vi.mock('~/widget/activation/activator', () => ({
             .filter(id => id && typeof id === 'object' && !Array.isArray(id))
             .flatMap(Object.entries)
             .map(([key, idOf]) => [key, {active: false, canActivate: true, toggle: () => opened.push(idOf(props))}]))
-        return <Component {...props} activator={{activatables}}/>
+        ids.filter(id => typeof id === 'string').forEach(id => activatables[id] = {active: false, activate: () => panelActivations[id]?.()})
+        if (props.panels) {
+            props.panels.forEach((id, index) => activatables[id] = {active: index === 0, activate: () => panelActivations[id]?.()})
+        }
+        return <Component {...props} activator={{activatables, updateActivatables: updates => updates.filter(({active}) => active).forEach(({id}) => panelActivations[id]?.())}}/>
     }
 }))
 const registry = vi.hoisted(() => ({}))
@@ -163,7 +170,7 @@ vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => msg && !disabled && typeof msg !== 'function'
-        ? <span data-tooltip={JSON.stringify([msg].flat().filter(Boolean))}>{children}</span>
+        ? <span data-tooltip={JSON.stringify([msg].flat().filter(value => typeof value === 'string'))}>{children}</span>
         : children
 }))
 // The graph renderer is the chart's output boundary: what it is given to draw is recorded.
@@ -211,6 +218,16 @@ const {VisualizationSelector} = await import('~/app/home/map/imageLayerSource/vi
 const {MapAreaContext} = await import('~/app/home/map/mapAreaContext')
 const {Reference} = await import('./panels/reference/reference')
 const {Sources} = await import('./panels/sources/sources')
+const {PanelWizard} = await import('~/widget/panelWizard')
+const {createCompositeOptions} = await import('../opticalMosaic/panels/compositeOptions/compositeOptions')
+const {presentProcessingInputs, preserveProcessingCopies, settingsOf} = await import('./processingSettings')
+const {defaultModel} = await import('./changeAlertsRecipe')
+const {Options: RadarOptions} = await import('../mosaic/panels/radarMosaicOptions/options')
+const OpticalOptions = createCompositeOptions({id: 'options'})
+const ProcessingOptions = compose(({settings, radar}) => radar
+    ? <RadarOptions showStrongScatterers={false} presentInputs={presentProcessingInputs(settings)} modelToApply={preserveProcessingCopies(settings)}/>
+    : <OpticalOptions forCollection title='Processing' presentInputs={presentProcessingInputs(settings)} modelToApply={preserveProcessingCopies(settings)}/>,
+withRecipe(recipe => ({settings: settingsOf(recipe), radar: !!recipe.model.sources?.dataSets?.SENTINEL_1})))
 const {EventShield} = await import('~/widget/eventShield')
 const {ChartPixelButton} = await import('../chartPixelButton')
 const {RetrieveButton} = await import('../retrieveButton')
@@ -287,11 +304,11 @@ describe('a reference that supplies the segments Change Alerts reads', () => {
         expect(decision()).toBe('RETRIEVABLE')
     })
 
-    it('is judged from its asset\'s metadata alone, with no band request', async () => {
+    it('uses shared asset metadata and band evidence without reading its producer', async () => {
         await editor({selection: ref('asset-mosaic-1')})
 
         expect(decision()).toBe('RETRIEVABLE')
-        expect(fake.calls.filter(([name]) => name === 'bands')).toEqual([])
+        expect(fake.calls.filter(([name, id]) => name === 'loadRecipe' && id !== ALERTS)).toEqual([])
         expect(metadataReads()).toBe(1)
     })
 })
@@ -303,7 +320,7 @@ describe('a reference that cannot supply them', () => {
         expect(referenceStatus()).toMatchObject({state: UNSUITABLE_SOURCE})
         expect(referenceStatus().message).toContain('"way":"MASKING \'Forest mask\' → "')
         expect(referenceStatus().message).toContain('"source":"MOSAIC \'Sentinel 2021\'"')
-        expect(sourceProblemsOfState(store.getState(), ALERTS, id => runtime.evidenceOwnerOf(id)).reference)
+        expect(sourceProblemsOfState(store.getState(), ALERTS, id => runtime.evidenceOwnerOf(id), Date.now(), key => runtime.heldFor(key)).reference)
             .toBe(referenceStatus().message)
         expect(alertsRecipe().model.reference).toEqual(ref('masking-mosaic'))
         expect(decision()).toBe('BLOCKED')
@@ -556,7 +573,7 @@ describe('a reference edited in REF', () => {
 
     // The asset picker reads the asset too, and prefills its date representation from what it reads: the edit changes
     // again while the reference is checked.
-    it('settles once its date representation is prefilled while it is checked, replacing a recipe the alerts held', async () => {
+    it('settles on the recorded date representation without copying it into the saved reference', async () => {
         await editor({selection: ref('masking-ccdc'), panels: ['reference']})
         fake.heldVersions = []
         fake.heldPickerMetadata = []
@@ -569,7 +586,7 @@ describe('a reference edited in REF', () => {
         expect(isBusy(ASSET_INPUT)).toBe(false)
         expect(isChecking(ASSET_INPUT)).toBe(false)
         await apply()
-        expect(committedReference()).toEqual({type: 'ASSET', id: RADAR_ASSET, dateFormat: 1})
+        expect(committedReference()).toEqual({type: 'ASSET', id: RADAR_ASSET, dateFormat: undefined})
     })
 
     // As CCDC Slice's source does: what the user configured is kept, not claimed to match the asset.
@@ -590,7 +607,8 @@ describe('a reference edited in REF', () => {
         await selectAsset(RADAR_ASSET)
         await apply()
 
-        expect(committedReference()).toEqual({type: 'ASSET', id: RADAR_ASSET, dateFormat: 0})
+        expect(committedReference()).toEqual({type: 'ASSET', id: RADAR_ASSET, dateFormat: 2})
+        expect(alertsRecipe().ui.sourceEvidence.processing.fields.dateFormat.value).toBe(0)
     })
 
     it('leaves the date representation unset, held back, where neither the asset chosen nor the panel has one', async () => {
@@ -677,7 +695,8 @@ describe('a reference edited in REF', () => {
     })
 
     // The configured date representation is part of the selection: evidence read for one is not the other's.
-    it('is read again for another date representation of the same asset, and not for the one the alerts hold', async () => {
+    it('is read again for an unrecorded date fallback edited for the same asset', async () => {
+        fake.assets[SEGMENTS_ASSET] = segmentsAsset(VALID_BANDS, {})
         await editor({selection: {...ASSET, dateFormat: 1}, panels: ['reference']})
         const reads = metadataReads()
 
@@ -1010,9 +1029,9 @@ describe('a band saved monitored that a Classification computes', () => {
 // in REF as a warning beside - never instead of - what the alerts need.
 describe('a reference the alerts can use but a segment chart cannot plot', () => {
     it('is accepted, with the chart\'s problem a warning in REF, and gates the chart alone', async () => {
-        fake.assets[SEGMENTS_ASSET] = segmentsAsset(SLICEABLE_ONLY_BANDS)
+        fake.assets[SEGMENTS_ASSET] = segmentsAsset(SLICEABLE_ONLY_BANDS, {})
 
-        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, panels: ['reference']})
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 1}, panels: ['reference']})
 
         expect(errorsOf(ASSET_INPUT)).toEqual([])
         expect(warningsOf(ASSET_INPUT)).toEqual([expect.stringContaining('process.source.operation.PIXEL_SEGMENTS')])
@@ -1204,6 +1223,109 @@ describe('the chart and Retrieve actions', () => {
     })
 })
 
+describe('a reference whose selected Classification cannot classify its collection', () => {
+    it('marks REF, holds the layer, Retrieve and chart, then recovers when the Classification has one input', async () => {
+        await editor({selection: ref('ccdc-optical'), records: classifiedReference(true), layer: true, actions: true})
+        expect(decision()).not.toBe('RETRIEVABLE')
+        expect(previews.constructed).toEqual([])
+        expect(actionButton('retrieve').disabled).toBe(true)
+        expect(actionButton('chart').disabled).toBe(true)
+        expect(sourceProblems().reference).toContain('multipleClassifierInputsUpstream')
+        expect(sourceProblems().reference).toContain('Optical CCDC')
+        expect(sourceProblems().reference).toContain('Classification provider')
+        expect(sourceProblems().sources).toBeUndefined()
+        expect(fake.segmentRequests).toEqual([])
+        expect(fake.observationBands).toEqual([])
+
+        await editRecord('classification-provider', {inputImagery: {images: [CLASSIFIER_INPUT]}})
+        expect(sourceProblems().reference).toBeUndefined()
+        expect(decision()).toBe('RETRIEVABLE')
+        expect(previews.constructed).toHaveLength(1)
+        expect(actionButton('retrieve').disabled).toBe(false)
+        expect(actionButton('chart').disabled).toBe(false)
+    })
+
+    it.each([
+        ['alert image', true, 'multiple inputs', {inputImagery: {images: [CLASSIFIER_INPUT, {...CLASSIFIER_INPUT, imageId: 'i-2'}]}}, 'multipleClassifierInputsUpstream'],
+        ['period mosaic', {visualizationType: 'monitoring', mosaicType: 'latest', visParams: {type: 'rgb', bands: ['red', 'green', 'blue']}}, 'missing training', {trainingData: {dataSets: []}}, 'recipeBlockedBy']
+    ])('withdraws the displayed %s and an open chart on upstream failure, and offers them after repair', async (_product, layer, _failure, broken, message) => {
+        const trainingData = {dataSets: [{dataSetId: 'points', type: 'COLLECTED', referenceData: [{x: 0, y: 0, class: 1}, {x: 1, y: 1, class: 2}]}]}
+        const records = classifiedReference(false).map(record => record.id === 'classification-provider'
+            ? {...record, model: {...record.model, classifier: {type: 'RANDOM_FOREST'}, trainingData}} : record)
+        fake.heldSegments = []
+        fake.heldObservations = []
+        await editor({selection: ref('ccdc-optical'), records, layer, chart: true, actions: true})
+        expect(alertsRecipe().ui.chartPixel).not.toBe(null)
+        expect(previews.constructed).toHaveLength(1)
+        const applied = alertsRecipe().model
+        await editRecord('classification-provider', broken)
+        expect(alertsRecipe().ui.chartPixel).toBe(null)
+        expect(fake.cancelledSegments).toEqual(['ndvi'])
+        expect(fake.cancelledObservations).toEqual(['ndvi'])
+        expect(previews.shown).toBe(null)
+        expect(actionButton('retrieve').disabled).toBe(true)
+        expect(actionButton('chart').disabled).toBe(true)
+        expect(sourceProblems().reference).toContain(message)
+        expect(sourceProblems().sources).toBeUndefined()
+        expect(alertsRecipe().model).toBe(applied)
+        await editRecord('classification-provider', {inputImagery: {images: [CLASSIFIER_INPUT]}, trainingData})
+        expect(sourceProblems().reference).toBeUndefined()
+        expect(decision()).toBe('RETRIEVABLE')
+        expect(actionButton('chart').disabled).toBe(false)
+        expect(previews.constructed).toHaveLength(2)
+        expect(alertsRecipe().ui.chartPixel).toBe(null)
+    })
+
+    it('holds Apply, Enter and direct submission for a broken draft, then permits a usable replacement without reseeding', async () => {
+        await editor({selection: ref('masking-ccdc'), records: classifiedReference(true), panels: ['reference']})
+        const applied = alertsRecipe().model
+        await selectRecipe('Optical CCDC')
+        expect(applyEnabled()).toBe(false)
+        expect(panelButton('button.cancel').disabled).toBe(false)
+        await apply()
+        await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', bubbles: true})))
+        await act(async () => container.querySelector('form').dispatchEvent(new Event('submit', {bubbles: true, cancelable: true})))
+        expect(alertsRecipe().model).toBe(applied)
+        await selectRecipe('CCDC')
+        expect(applyEnabled()).toBe(true)
+        await apply()
+        expect(committedReference()).toEqual(ref('ccdc-1'))
+        expect(alertsRecipe().model.sources).toBe(applied.sources)
+        expect(alertsRecipe().model.options).toBe(applied.options)
+    })
+
+    it('rechecks an upstream finding at submission before the runtime and form have rendered it', async () => {
+        await editor({selection: ref('masking-ccdc'), records: classifiedReference(false), panels: ['reference']})
+        await selectRecipe('Optical CCDC')
+        const applied = alertsRecipe().model
+        expect(applyEnabled()).toBe(true)
+        act(() => beforeTheRuntimeReacts(
+            () => store.dispatch(set(['process', 'loadedRecipes', 'classification-provider', 'model', 'inputImagery', 'images'],
+                [CLASSIFIER_INPUT, {...CLASSIFIER_INPUT, imageId: 'i-2'}])),
+            () => container.querySelector('form').dispatchEvent(new Event('submit', {bubbles: true, cancelable: true}))
+        ))
+        expect(alertsRecipe().model).toBe(applied)
+        await settled()
+        expect(applyEnabled()).toBe(false)
+        await editRecord('classification-provider', {inputImagery: {images: [CLASSIFIER_INPUT]}})
+        expect(applyEnabled()).toBe(true)
+        await apply()
+        expect(committedReference()).toEqual(ref('ccdc-optical'))
+    })
+
+    it('explains the reference in REF, follows a healthy draft replacement and preserves the applied warning on Cancel', async () => {
+        await editor({selection: ref('ccdc-optical'), records: classifiedReference(true), panels: ['reference']})
+        const applied = alertsRecipe().model
+        expect(errorsOf(RECIPE_INPUT).join(' ')).toContain('multipleClassifierInputsUpstream')
+        expect(panelButton('button.apply')).toBeUndefined()
+        await selectRecipe('Radar CCDC')
+        expect(errorsOf(RECIPE_INPUT)).toEqual([])
+        await cancel()
+        expect(alertsRecipe().model).toBe(applied)
+        expect(sourceProblems().reference).toContain('multipleClassifierInputsUpstream')
+    })
+})
+
 // /ccdc/loadSegments builds a recipe reference as that recipe's own image, over its own AOI (PIXEL_SEGMENTS of
 // CHANGE_ALERTS), so the segment chart is held to what running it needs - the reference's own requirements and those of
 // what it builds - beside what its segments need, and never to the alerts' own configuration. A Masking needs its mask.
@@ -1224,7 +1346,7 @@ describe('the segment chart over a reference recipe built as its own image', () 
         await editRecord('masking-ccdc', {imageMask: ref('mosaic-1')})
 
         expect(await opens('chart')).toBe(true)
-        expect(fake.calls.filter(([name]) => name === 'bands')).toEqual([])
+        expect(fake.calls.filter(([name, id]) => name === 'bands' && id !== 'ccdc-1')).toEqual([])
     })
 
     it('lets go of its request while what the reference builds is read, and requests once it can run', async () => {
@@ -1299,6 +1421,8 @@ describe('the segment chart over a reference recipe built as its own image', () 
 
     // The action is read rather than pressed: the panel open shields what lies outside it.
     it('is held to the reference applied, not to one selected in REF and cancelled', async () => {
+        // Settings observation no longer retains the wrapper's mask. Execution may reload it after a candidate releases it.
+        fake.stored = storedRecords(['mosaic-1'])
         await editor({selection: ref('masking-ccdc'), actions: true, panels: ['reference']})
         await editRecord('masking-mosaic', {imageMask: null})
 
@@ -1314,18 +1438,18 @@ describe('the segment chart over a reference recipe built as its own image', () 
         await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, chart: true, actions: true})
 
         expect(fake.segmentRequests).toEqual([expect.objectContaining({type: 'ASSET', id: SEGMENTS_ASSET})])
-        expect(fake.calls.filter(([name]) => name === 'loadRecipe' || name === 'bands')).toEqual([])
+        expect(fake.calls.filter(([name]) => name === 'loadRecipe')).toEqual([])
     })
 })
 
 describe('a mosaic of the period, shown with the editor closed', () => {
     const MOSAIC = {visualizationType: 'monitoring', mosaicType: 'latest', visParams: {type: 'rgb', bands: ['red', 'green', 'blue']}}
 
-    it('asks nothing of the segments it does not read', async () => {
+    it('reads processing metadata, without requiring sliceable segment bands', async () => {
         await onAnotherMap({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, layers: [MOSAIC]})
 
         expect(gate('COLLECTION_MOSAIC')).toBe(null)
-        expect(metadataReads()).toBe(0)
+        expect(metadataReads()).toBe(1)
     })
 
     it('is held while the records of a chain the session does not hold are read, and refused once they show it leads to no segments', async () => {
@@ -1356,7 +1480,7 @@ describe('the reference watched by several consumers', () => {
     it('is read once for two layers and the editor', async () => {
         fake.assets[SEGMENTS_ASSET] = segmentsAsset(VALID_BANDS, {})
 
-        await onAnotherMap({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, layers: [CHANGES, CHANGES_AGAIN], editor: true})
+        await onAnotherMap({selection: {type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 1}, layers: [CHANGES, CHANGES_AGAIN], editor: true})
 
         expect(metadataReads()).toBe(1)
         expect(previews.constructed).toHaveLength(2)
@@ -1391,6 +1515,247 @@ describe('the reference watched by several consumers', () => {
     })
 })
 
+describe('reference-owned PRC values and consumer drafts', () => {
+    const ownOptions = () => ({...defaultModel.options, corrections: ['SR'], brdfMultiplier: 12})
+    const correctionField = () => document.querySelector('[data-label^="process.mosaic.panel.composite.form.corrections.label"]')
+
+    it('shows producer corrections read-only, keeps an open masking draft on producer edit, and applies no reference copies', async () => {
+        const options = ownOptions()
+        await editor({selection: ref('ccdc-optical'), panels: ['options'], options})
+        expect(correctionField().textContent).not.toContain('process.changeAlerts.processing.REFERENCE')
+        expect(correctionField().querySelector('[data-tooltip]').dataset.tooltip).toContain('process.changeAlerts.processing.REFERENCE')
+        expect([...correctionField().querySelectorAll('button')].every(button => button.disabled)).toBe(true)
+        // The producer has SR off, despite the consumer's saved SR copy.
+        expect(buttonNamed(correctionField(), 'process.mosaic.panel.composite.form.corrections.surfaceReflectance.label').classList.contains(lookStyles.highlight)).toBe(false)
+        expect(alertsRecipe().model.options).toBe(options)
+        await chooseButton('process.mosaic.panel.composite.form.cloudMasking.aggressive.label')
+        await editRecord('ccdc-optical', {options: {corrections: ['BRDF'], brdfMultiplier: 3}})
+        expect(alertsRecipe().model.options).toBe(options)
+        expect(buttonNamed(correctionField(), 'process.mosaic.panel.composite.form.corrections.brdf.label').classList.contains(lookStyles.highlight)).toBe(true)
+        expect(buttonNamed(correctionField(), 'process.mosaic.panel.composite.form.corrections.surfaceReflectance.label').classList.contains(lookStyles.highlight)).toBe(false)
+        expect(applyEnabled()).toBe(true)
+        await apply()
+        expect(alertsRecipe().model.options.corrections).toEqual(['SR'])
+        expect(alertsRecipe().model.options.brdfMultiplier).toBe(12)
+        expect(alertsRecipe().model.options.sepalCloudScoreMaxCloudProbability).toBe(25)
+        expect(settingsOf(alertsRecipe()).model.options.corrections).toEqual(['BRDF'])
+    })
+
+    it('labels unrecorded asset settings as editable, preserves them on Cancel and saves an explicit fallback', async () => {
+        const options = ownOptions()
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, panels: ['options'], options})
+        expect(correctionField().textContent).not.toContain('process.changeAlerts.processing.NOT_RECORDED')
+        expect(correctionField().querySelector('[data-tooltip]').dataset.tooltip).toContain('process.changeAlerts.processing.NOT_RECORDED')
+        const sr = buttonNamed(correctionField(), 'process.mosaic.panel.composite.form.corrections.surfaceReflectance.label')
+        expect(sr.disabled).toBe(false)
+        await act(async () => sr.click())
+        await cancel()
+        expect(alertsRecipe().model.options).toBe(options)
+    })
+
+    it('keeps SR recorded and BRDF editable when an asset records only SR', async () => {
+        fake.assets[SEGMENTS_ASSET] = segmentsAsset(VALID_BANDS, {dateFormat: 1, surfaceReflectance: false})
+        const options = ownOptions()
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, panels: ['options'], options})
+        const sr = buttonNamed(correctionField(), 'process.mosaic.panel.composite.form.corrections.surfaceReflectance.label')
+        const brdf = buttonNamed(correctionField(), 'process.mosaic.panel.composite.form.corrections.brdf.label')
+        expect(sr.disabled).toBe(true)
+        expect(brdf.disabled).toBe(false)
+        expect(correctionField().textContent).not.toContain('process.changeAlerts.processing.MIXED')
+        expect(correctionField().querySelector('[data-tooltip]').dataset.tooltip).toContain('process.changeAlerts.processing.MIXED')
+        await act(async () => brdf.click())
+        await apply()
+        expect(alertsRecipe().model.options.corrections).toEqual(['BRDF', 'SR'])
+        expect(settingsOf(alertsRecipe()).model.options.corrections).toEqual(['BRDF'])
+    })
+
+    it('keeps radar labels unchanged, shows selected read-only settings, and offers no details editor for reference-owned speckle settings', async () => {
+        const original = {...defaultModel.options, advanced: true, spatialSpeckleFilter: 'SNIC', kernelSize: 17, strongScatterers: 'FILTER'}
+        const producer = RECORDS.find(({id}) => id === 'ccdc-radar')
+        await editor({selection: ref(producer.id), panels: ['options'], options: original,
+            sources: {dataSetType: 'RADAR', dataSets: {SENTINEL_1: ['SENTINEL_1']}, band: 'VV'},
+            records: [{...producer, model: {...producer.model, options: {
+                spatialSpeckleFilter: 'LEE_SIGMA', kernelSize: 7, sigma: 0.9,
+                multitemporalSpeckleFilter: 'QUEGAN', numberOfImages: 4
+            }}}]})
+        const filterLabel = 'process.radarMosaic.panel.options.form.spatialSpeckleFilter.label'
+        expect(field(filterLabel)).not.toBe(null)
+        expect([...field(filterLabel).querySelectorAll('button')].every(button => button.disabled)).toBe(true)
+        expect([...field(filterLabel).querySelectorAll('button')].filter(button => button.className.includes('highlight')).map(button => button.textContent))
+            .toEqual(['process.radarMosaic.panel.options.form.spatialSpeckleFilter.leeSigma.label'])
+        const kernelLabel = 'process.radarMosaic.panel.options.form.spatialSpeckleFilterOptions.kernelSize.label'
+        const kernel = [...document.querySelectorAll('div')].find(element => element.textContent === kernelLabel)
+        expect(kernel).toBeDefined()
+        expect(container.textContent).not.toContain('process.changeAlerts.processing.REFERENCE')
+        expect(container.textContent).not.toContain('process.radarMosaic.panel.options.form.spatialSpeckleFilterOptions.strongScatterers.label')
+        await act(async () => kernel.click())
+        expect(container.textContent).not.toContain('process.radarMosaic.panel.options.form.spatialSpeckleFilterOptions.title')
+        const countLabel = 'process.radarMosaic.panel.options.form.multitemporalSpeckleFilterOptions.numberOfImages.label'
+        const count = [...document.querySelectorAll('div')].find(element => element.textContent === countLabel)
+        expect(count).toBeDefined()
+        await act(async () => count.click())
+        expect(container.textContent).not.toContain('process.radarMosaic.panel.options.form.multitemporalSpeckleFilterOptions.title')
+        await chooseButton('process.radarMosaic.panel.options.form.orbits.ascending.label')
+        await apply()
+        expect(alertsRecipe().model.options).toMatchObject({
+            spatialSpeckleFilter: 'SNIC', kernelSize: 17, strongScatterers: 'FILTER', orbits: ['ASCENDING', 'DESCENDING']
+        })
+    })
+
+    it('does not offer details for a fallback that the selected filter does not use', async () => {
+        fake.assets[RADAR_ASSET] = segmentsAsset(VALID_BANDS, {dateFormat: 1, recipe_options: JSON.stringify({
+            spatialSpeckleFilter: 'LEE', kernelSize: 7, strongScattererValues: [0, -5]
+        })})
+        await editor({selection: {type: 'ASSET', id: RADAR_ASSET}, panels: ['options'],
+            options: {...defaultModel.options, advanced: true},
+            sources: {dataSetType: 'RADAR', dataSets: {SENTINEL_1: ['SENTINEL_1']}, band: 'VV'}})
+        const label = 'process.radarMosaic.panel.options.form.spatialSpeckleFilterOptions.kernelSize.label'
+        const summary = [...document.querySelectorAll('div')].find(element => element.textContent === label)
+        expect(summary).toBeDefined()
+        await act(async () => summary.click())
+        expect(field(label)).toBe(null)
+        expect(container.textContent).not.toContain('process.radarMosaic.panel.options.form.spatialSpeckleFilterOptions.title')
+    })
+
+    it.each(['Apply', 'Cancel'])('keeps unrecorded radar details editable with unchanged labels, then %s preserves reference copies', async action => {
+        fake.assets[RADAR_ASSET] = segmentsAsset(VALID_BANDS, {dateFormat: 1, recipe_options: JSON.stringify({
+            spatialSpeckleFilter: 'LEE', kernelSize: 7
+        })})
+        const original = {...defaultModel.options, advanced: true, kernelSize: 17, strongScatterers: 'FILTER', strongScattererValues: [8, 3]}
+        await editor({selection: {type: 'ASSET', id: RADAR_ASSET}, panels: ['options'], options: original,
+            sources: {dataSetType: 'RADAR', dataSets: {SENTINEL_1: ['SENTINEL_1']}, band: 'VV'}})
+        const label = 'process.radarMosaic.panel.options.form.spatialSpeckleFilterOptions.kernelSize.label'
+        const summary = [...document.querySelectorAll('div')].find(element => element.textContent === label)
+        await act(async () => summary.click())
+        expect(field(label)).not.toBe(null)
+        expect(field(label).classList.contains(widgetStyles.disabled)).toBe(true)
+        const thresholdLabel = 'process.radarMosaic.panel.options.form.spatialSpeckleFilterOptions.strongScattererValue1.label'
+        const threshold = field(thresholdLabel)
+        expect(threshold.querySelector('input').disabled).toBe(false)
+        expect(explanationOf(thresholdLabel)).toContain('process.changeAlerts.processing.NOT_RECORDED')
+        expect(container.textContent).not.toContain('process.radarMosaic.panel.options.form.spatialSpeckleFilterOptions.strongScatterers.label')
+        await act(async () => type(threshold.querySelector('input'), '6'))
+        expect(threshold.querySelector('input').value).toBe('6')
+        expect(buttonNamed(threshold.closest('form'), 'button.apply').disabled).toBe(false)
+        expect(alertsRecipe().model.options).toBe(original)
+        await act(async () => buttonNamed(threshold.closest('form'), action === 'Apply' ? 'button.apply' : 'button.cancel').click())
+        expect(field(label)).toBe(null)
+        const processingForm = field('process.radarMosaic.panel.options.form.spatialSpeckleFilter.label').closest('form')
+        if (action === 'Apply') {
+            expect(buttonNamed(processingForm, 'button.apply').disabled).toBe(false)
+            await act(async () => buttonNamed(processingForm, 'button.apply').click())
+            expect(alertsRecipe().model.options).toMatchObject({kernelSize: 17, strongScatterers: 'FILTER', strongScattererValues: [6, 3]})
+        } else {
+            await act(async () => buttonNamed(processingForm, 'button.close').click())
+            expect(alertsRecipe().model.options).toBe(original)
+        }
+    })
+
+    it('marks unreadable metadata at REF and holds operations until refreshed metadata is repaired', async () => {
+        fake.assets[SEGMENTS_ASSET] = segmentsAsset(VALID_BANDS, {dateFormat: 1, processing: '{broken'})
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, panels: ['reference']})
+        expect(errorsOf(ASSET_INPUT)).toContainEqual(expect.stringContaining('process.changeAlerts.processing.unreadable'))
+        expect(gate('IMAGE_OUTPUT')).toMatchObject({code: 'SOURCE_UNSUITABLE'})
+        expect(gate('COLLECTION_MOSAIC')).toMatchObject({code: 'SOURCE_UNSUITABLE'})
+        expect(gate('PIXEL_OBSERVATIONS')).toMatchObject({code: 'SOURCE_UNSUITABLE'})
+        const model = alertsRecipe().model
+        fake.assets[SEGMENTS_ASSET] = segmentsAsset(VALID_BANDS, {dateFormat: 1, processing: '{"options":{}}'})
+        await act(async () => runtime.refreshOutput({recipeId: ALERTS, product: {name: 'IMAGE_OUTPUT'}}))
+        await settled()
+        expect(gate('IMAGE_OUTPUT')).toBe(null)
+        expect(errorsOf(ASSET_INPUT)).toEqual([])
+        expect(alertsRecipe().model).toBe(model)
+    })
+})
+
+describe('consumer ownership at the first Reference Apply', () => {
+    const defaults = {
+        dataSetType: 'RADAR', dataSets: {SENTINEL_1: ['SENTINEL_1']}, cloudPercentageThreshold: 22,
+        classification: 'private', breakpointBands: ['VV']
+    }
+    beforeEach(() => {
+        fake.assets[RADAR_ASSET] = segmentsAsset(VALID_BANDS, {
+            dateFormat: 1, recipe_sources: JSON.stringify(defaults),
+            recipe_options: JSON.stringify({orbits: ['DESCENDING'], corrections: ['SR'], spatialSpeckleFilter: 'LEE', harmonics: 8})
+        })
+    })
+
+    it.each(['Apply', 'Enter', 'Next'])('seeds once, atomically, through %s', async submission => {
+        await editor({selection: {}, initialized: false, panels: submission === 'Next' ? ['reference', 'sources'] : ['reference'], wizard: submission === 'Next'})
+        const original = alertsRecipe().model
+        await selectAsset(RADAR_ASSET)
+        expect(alertsRecipe().model).toBe(original)
+        const published = []
+        const unsubscribe = store.subscribe(() => {
+            if (alertsRecipe().model !== original) {
+                published.push(alertsRecipe().model)
+            }
+        })
+        if (submission === 'Apply') {
+            await apply()
+        } else if (submission === 'Enter') {
+            await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', bubbles: true})))
+        } else {
+            await act(async () => panelButton('button.next').click())
+        }
+        unsubscribe()
+        expect(published.length).toBeGreaterThan(0)
+        published.forEach(model => {
+            expect(model.reference.id).toBe(RADAR_ASSET)
+            expect(model.sources).toMatchObject({dataSets: defaults.dataSets, cloudPercentageThreshold: 22})
+            expect(model.options.orbits).toEqual(['DESCENDING'])
+            expect(model.sources).not.toHaveProperty('classification')
+            expect(model.sources).not.toHaveProperty('breakpointBands')
+            expect(model.options).not.toHaveProperty('spatialSpeckleFilter')
+            expect(model.options).not.toHaveProperty('harmonics')
+            expect(model.options.corrections).toEqual(original.options.corrections)
+        })
+    })
+
+    it('seeds consumer defaults at first Apply without copying Classification', async () => {
+        await editor({selection: {}, initialized: false, panels: ['reference']})
+        await editRecord('ccdc-optical', {sources: {dataSets: {LANDSAT: ['LANDSAT_9']}, classification: 'private-classification', cloudPercentageThreshold: 26}})
+        await selectRecipe('Optical CCDC')
+        await apply()
+        expect(alertsRecipe().model.sources).toMatchObject({dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_9']}, cloudPercentageThreshold: 26})
+        expect(alertsRecipe().model.sources).not.toHaveProperty('classification')
+    })
+
+    it('seeds only the latest draft selection when an older answer arrives late', async () => {
+        await editor({selection: {}, initialized: false, panels: ['reference']})
+        fake.heldMetadata = []
+        await selectAsset(RADAR_ASSET)
+        await selectRecipe('Optical CCDC')
+        await answerHeldReads()
+        await apply()
+        expect(alertsRecipe().model.reference).toEqual(ref('ccdc-optical'))
+        expect(alertsRecipe().model.sources.dataSets).toEqual({LANDSAT: ['LANDSAT_9']})
+        expect(alertsRecipe().model.options).not.toHaveProperty('orbits')
+    })
+
+    it('does not seed from pending or cancelled candidate evidence', async () => {
+        await editor({selection: {}, initialized: false, panels: ['reference']})
+        const original = alertsRecipe().model
+        fake.heldMetadata = []
+        await selectAsset(RADAR_ASSET)
+        await apply()
+        expect(alertsRecipe().model).toBe(original)
+        await cancel()
+        await answerHeldReads()
+        expect(alertsRecipe().model).toBe(original)
+    })
+
+    it('never reseeds a reference already applied, even before wizard completion', async () => {
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, initialized: false, panels: ['reference']})
+        const {sources, options} = alertsRecipe().model
+        await selectAsset(RADAR_ASSET)
+        await apply()
+        expect(alertsRecipe().model.reference.id).toBe(RADAR_ASSET)
+        expect(alertsRecipe().model.sources).toBe(sources)
+        expect(alertsRecipe().model.options).toBe(options)
+    })
+})
+
 describe('the editor opened over evidence a map already obtained', () => {
     const ASSET = {type: 'ASSET', id: SEGMENTS_ASSET}
 
@@ -1398,23 +1763,24 @@ describe('the editor opened over evidence a map already obtained', () => {
         fake.assets[SEGMENTS_ASSET] = segmentsAsset(VALID_BANDS, {dateFormat: 2, recipe_sources: JSON.stringify(EXPORTED_SOURCES)})
     })
 
-    it('applies the monitoring settings it proposes, without reading the reference again', async () => {
+    it('preserves monitoring settings without reading the reference again', async () => {
         await onAnotherMap({selection: ref('asset-mosaic-1')})
 
         await show({editor: true})
 
-        expect(alertsRecipe().model.sources.dataSets).toEqual(EXPORTED_SOURCES.dataSets)
+        expect(alertsRecipe().model.sources.dataSets).toEqual({LANDSAT: ['LANDSAT_9']})
         expect(metadataReads()).toBe(1)
     })
 
     // Configured beside an asset selection, the representation is the selection's own; the editor seeds it as it would
     // on the first answer it saw.
-    it('seeds the date representation of an asset it had no answer for', async () => {
+    it('displays the recorded date representation without writing a saved fallback', async () => {
         await onAnotherMap({selection: ASSET})
 
         await show({editor: true})
 
-        expect(alertsRecipe().model.reference.dateFormat).toBe(2)
+        expect(alertsRecipe().model.reference.dateFormat).toBeUndefined()
+        expect(alertsRecipe().ui.sourceEvidence.processing.fields.dateFormat.value).toBe(2)
     })
 
     it('leaves what the user edited since alone when it is opened again', async () => {
@@ -1427,7 +1793,7 @@ describe('the editor opened over evidence a map already obtained', () => {
         expect(alertsRecipe().model.sources.band).toBe('nbr')
     })
 
-    it('writes them once, however the store is notified while they are applied', async () => {
+    it('writes no configuration when an editor begins watching existing evidence', async () => {
         await onAnotherMap({selection: ref('asset-mosaic-1')})
         const models = [alertsRecipe().model]
         const unsubscribe = store.subscribe(() => {
@@ -1441,8 +1807,8 @@ describe('the editor opened over evidence a map already obtained', () => {
         await show({editor: true})
         unsubscribe()
 
-        expect(models).toHaveLength(2)
-        expect(models[1].sources.dataSets).toEqual(EXPORTED_SOURCES.dataSets)
+        expect(models).toHaveLength(1)
+        expect(models[0].sources.dataSets).toEqual({LANDSAT: ['LANDSAT_9']})
         expect(metadataReads()).toBe(1)
     })
 })
@@ -1572,7 +1938,8 @@ describe('evidence and the observation it was read by', () => {
         const recipe = alertsRecipe()
         const owner = runtime.evidenceOwnerOf(ALERTS)
         const read = evidenceOwner =>
-            readSourceRequirements({state: store.getState(), recipe, evidenceOwnerOf: () => evidenceOwner, now: Date.now()})[0]
+            readSourceRequirements({state: store.getState(), recipe, evidenceOwnerOf: () => evidenceOwner,
+                heldFor: key => runtime.heldFor(key), now: Date.now()})[0]
 
         expect(read(owner).acquisition).toBe(CHECKED)
         expect(read({...owner, observationId: 'another observation'}).acquisition).toBe(CHECKING)
@@ -1604,7 +1971,7 @@ describe('a source runtime replaced while the store keeps the evidence', () => {
         // An asset stating no date representation is observed once, so the previous runtime's evidence is its first
         // observation's - the one a replacement would reach again if it counted from where the previous one began.
         fake.assets[SEGMENTS_ASSET] = segmentsAsset(VALID_BANDS, {})
-        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 1}})
         expect(decisionAtApply()).toBe('RETRIEVABLE')
         fake.assets[SEGMENTS_ASSET] = segmentsAsset(bands, {})
         fake.heldMetadata = []
@@ -1769,6 +2136,19 @@ const RECORDS = [
     }
 ].map(record => ({...record, revision: 1}))
 
+const CLASSIFIER_INPUT = {imageId: 'i-1', type: 'RECIPE_REF', id: 'mosaic-1', bandSetSpecs: [{id: 'red', type: 'IMAGE_BANDS', included: ['red']}]}
+const classifiedReference = multiple => [
+    {...RECORDS.find(({id}) => id === 'ccdc-optical'), model: {
+        ...RECORDS.find(({id}) => id === 'ccdc-optical').model,
+        sources: {dataSets: {LANDSAT: ['LANDSAT_9']}, classification: 'classification-provider'}
+    }},
+    {...RECORDS.find(({id}) => id === 'mosaic-1'), model: {sources: {dataSets: {LANDSAT: ['LANDSAT_9']}}, compositeOptions: {corrections: []}}},
+    {id: 'classification-provider', name: 'Classification provider', type: 'CLASSIFICATION', revision: 1, model: {
+        inputImagery: {images: multiple ? [CLASSIFIER_INPUT, {...CLASSIFIER_INPUT, imageId: 'i-2'}] : [CLASSIFIER_INPUT]},
+        classifier: {type: 'DECISION_TREE', decisionTree: '1) root 9 0 0 (0 1) *'}, legend: {entries: [{value: 1}]}
+    }}
+]
+
 const LISTING = [
     {id: ALERTS, name: 'Alerts', type: 'CHANGE_ALERTS', revision: 1},
     ...RECORDS.map(({id, name, type}) => ({id, name, type, revision: 1}))
@@ -1801,16 +2181,17 @@ const RuntimeProbe = compose(props => {
 // The session as it stands when the alerts are shown: their record and the recipes they may read, less any the session
 // does not hold, and with any closed while a save of theirs is still settling - towards a revision the listing
 // already names.
-const sessionState = ({selection, tabs, unloaded = [], saving = {}}) => ({
+const sessionState = ({selection, tabs, unloaded = [], saving = {}, records = []}) => ({
     user: {currentUser: {googleTokens: {accessToken: 'token'}}},
     process: {
         loadedRecipes: {
             [ALERTS]: {id: ALERTS, type: 'CHANGE_ALERTS', revision: 1, model: alertsModel(selection), ui: {initialized: true}},
             [HOST]: {id: HOST, type: 'MOSAIC', revision: 1, model: {}, ui: {initialized: true}},
             ...Object.fromEntries(RECORDS.filter(({id}) => !unloaded.includes(id)).map(record => [record.id, record])),
-            ...saving
+            ...saving,
+            ...Object.fromEntries(records.map(record => [record.id, record]))
         },
-        recipes: LISTING.map(summary => saving[summary.id] ? {...summary, revision: 2} : summary),
+        recipes: [...LISTING, ...records.filter(record => !LISTING.some(({id}) => id === record.id))].map(summary => saving[summary.id] ? {...summary, revision: 2} : summary),
         recipeListing: {checkedAt: Date.now()},
         saveStates: Object.fromEntries(Object.keys(saving).map(id => [id, {status: 'SAVING', revision: 2, model: saving[id].model}])),
         projects: [],
@@ -1829,8 +2210,11 @@ function alertsModel(selection) {
     }
 }
 
-const editor = async ({selection, owner = true, chart = false, layer = false, actions = false, panels = [], unloaded}) => {
-    const initialState = sessionState({selection, tabs: [{id: ALERTS}], unloaded})
+const editor = async ({selection, owner = true, chart = false, layer = false, actions = false, panels = [], unloaded, initialized = true, wizard = false, options, records, sources}) => {
+    const initialState = sessionState({selection, tabs: [{id: ALERTS}], unloaded, records})
+    initialState.process.loadedRecipes[ALERTS].ui.initialized = initialized
+    if (options) initialState.process.loadedRecipes[ALERTS].model.options = options
+    if (sources) initialState.process.loadedRecipes[ALERTS].model.sources = sources
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     store.subscribe(() => firstListener())
     initStore(store)
@@ -1850,7 +2234,9 @@ const editor = async ({selection, owner = true, chart = false, layer = false, ac
                                 <PortalContainer/>
                                 <PortalContainer id='panels'/>
                                 <PortalContext id='panels'>
-                                    {panels.map(id => <SectionPanel key={id} id={id}/>)}
+                                    {wizard
+                                        ? <PanelWizard panels={panels} initialized={false}>{panels.map(id => <SectionPanel key={id} id={id}/>)}</PanelWizard>
+                                        : panels.map(id => <SectionPanel key={id} id={id}/>)}
                                 </PortalContext>
                             </EventShield>
                         )
@@ -1860,7 +2246,7 @@ const editor = async ({selection, owner = true, chart = false, layer = false, ac
                             <TabContext id={ALERTS} busyIn$={new Subject()}>
                                 <RecipeImageLayer
                                     source={{id: ALERTS, sourceConfig: {recipeId: ALERTS}}}
-                                    layerConfig={{visualizationType: 'changes', mosaicType: 'latest', visParams: {type: 'continuous', bands: ['confidence']}}}
+                                    layerConfig={typeof layer === 'object' ? layer : {visualizationType: 'changes', mosaicType: 'latest', visParams: {type: 'continuous', bands: ['confidence']}}}
                                     map={{}}
                                 />
                             </TabContext>
@@ -1942,7 +2328,7 @@ const startTouchPress = action => act(() => actionButton(action).dispatchEvent(
 const offersCoordinates = () => Boolean(document.querySelector('input[type="search"]'))
 
 // The editor's own REF and Sources panels, opened as their buttons open them.
-const SECTION_PANELS = {reference: Reference, sources: Sources}
+const SECTION_PANELS = {reference: Reference, sources: Sources, options: ProcessingOptions}
 
 const SectionPanel = ({id}) => {
     const Panel = SECTION_PANELS[id]
@@ -2228,13 +2614,13 @@ const alertsRecipe = () => selectFrom(store.getState(), ['process.loadedRecipes'
 
 // Whether a new request for an operation over the alerts may start, read from the store as it stands.
 const gate = operation =>
-    requestGate({state: store.getState(), recipe: alertsRecipe(), operation, evidenceOwnerOf: id => runtime.evidenceOwnerOf(id), now: Date.now()})
+    requestGate({state: store.getState(), recipe: alertsRecipe(), operation, evidenceOwnerOf: id => runtime.evidenceOwnerOf(id), now: Date.now(), heldFor: key => runtime.heldFor(key)})
 
 const sourceProblems = () =>
-    sourceProblemsOfState(store.getState(), ALERTS, id => runtime.evidenceOwnerOf(id))
+    sourceProblemsOfState(store.getState(), ALERTS, id => runtime.evidenceOwnerOf(id), Date.now(), key => runtime.heldFor(key))
 
 const referenceStatus = () =>
-    selectedSourceStatusOfState(store.getState(), ALERTS, 'reference', id => runtime.evidenceOwnerOf(id))
+    selectedSourceStatusOfState(store.getState(), ALERTS, 'reference', id => runtime.evidenceOwnerOf(id), Date.now(), key => runtime.heldFor(key))
 
 const decide = ({output, pending}) =>
     retrieveDecision({output, pending, names: output.bands.map(({name}) => name), destination: 'GEE'}).status

@@ -14,7 +14,7 @@ import {PortalContainer, PortalContext} from '~/widget/portal'
 
 // A PyEO Alerts whose selected Classification cannot itself run - it stores no training points: its baseline is that
 // recipe's image, so the Sources panel names that recipe beside the classification field, whose own sections say why,
-// and Retrieve is held, without holding the panel's Apply. The panel, store, source runtime and recipe types are real;
+// and Retrieve is held, while holding the panel's Apply. The panel, store, source runtime and recipe types are real;
 // the recipe reads answer from stored records, Earth Engine an asset's bands at once.
 
 const stored = vi.hoisted(() => ({records: {}}))
@@ -71,13 +71,19 @@ describe('a PyEO Alerts, by whether its Classification stores training points', 
         await open({points: false})
 
         expect(errorsOf(CLASSIFICATION_LABEL)).toEqual([NEEDS_ATTENTION])
+        expect(buttonLabelled('button.apply')).toBeUndefined()
+        expect(buttonLabelled('button.close').disabled).toBe(false)
         expect(retrieveGate()).toMatchObject({code: 'SOURCE_UNSUITABLE', section: SOURCES_BUTTON})
 
         await act(async () => buttonLabelled(LANDSAT_9).click())
         await settled()
 
         expect(errorsOf(CLASSIFICATION_LABEL)).toEqual([NEEDS_ATTENTION])
-        expect(buttonLabelled('button.apply').disabled).toBe(false)
+        expect(buttonLabelled('button.apply').disabled).toBe(true)
+        const applied = store.getState().process.loadedRecipes[PYEO].model
+        await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', bubbles: true})))
+        await act(async () => document.querySelector('form').dispatchEvent(new Event('submit', {bubbles: true, cancelable: true})))
+        expect(store.getState().process.loadedRecipes[PYEO].model).toBe(applied)
     })
 
     it('says nothing beside it, and can be retrieved, once the Classification stores points', async () => {

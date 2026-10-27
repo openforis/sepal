@@ -353,6 +353,7 @@ export class EvidenceRegistry {
             switchMap(rootRecipe => completeRecipeClosure$({
                 rootRecipe,
                 seedRecipesById: seeds,
+                sourcesOf: entry.observation.sourcesOf,
                 loadRecipesById$,
                 limits: DEFAULT_RECIPE_CLOSURE_LIMITS
             }).pipe(

@@ -6,6 +6,8 @@ import {bandPresentation as opticalBandPresentation} from '~/app/home/body/proce
 import {planetBandTable} from '~/app/home/body/process/recipe/planetMosaic/bands'
 import {radarBandTable} from '~/app/home/body/process/recipe/radarMosaic/bands'
 
+import {settingsOf} from './processingSettings'
+
 const typeFloat = {precision: 'float'}
 const typeInt = {precision: 'int'}
 
@@ -42,6 +44,7 @@ const MOSAIC_TYPES = ['latest', 'median']
 
 // The changes are the output; a layer may instead show the mosaic a period is compared on.
 export const mapProducts = {
+    project: recipe => settingsOf(recipe).model,
     defaults: {visualizationType: 'changes', mosaicType: 'latest'},
     productOf: ({visualizationType, mosaicType}) => {
         if (visualizationType === 'changes') {

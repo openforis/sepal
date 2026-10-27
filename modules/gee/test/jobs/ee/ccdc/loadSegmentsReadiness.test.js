@@ -144,6 +144,12 @@ describe('the segments of a CCDC charted itself', () => {
 describe('the segments of a CCDC charted itself over a Classification that cannot be trained', () => {
     for (const [_case, catalogue, code] of [
         ['stores no points', () => ({[CLASSIFICATION]: trainable({points: []})}), 'NO_TRAINING_DATA'],
+        ['has multiple input images', () => {
+            const recipe = trainable()
+            const input = recipe.model.inputImagery.images[0]
+            recipe.model.inputImagery.images.push({...input, imageId: 'i-2'})
+            return {[CLASSIFICATION]: recipe}
+        }, 'MULTIPLE_CLASSIFIER_INPUTS'],
         ['reuses a recipe without input imagery', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, images: []})}), 'MISSING_ROLE'],
         ['reuses a recipe sampling fewer features', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, included: ['red']})}), 'MISSING_TRAINING_FEATURES']
     ]) {

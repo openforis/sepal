@@ -16,6 +16,7 @@ let catalogue = {}
 let loaded = []
 let maskApplications = []
 let collectionRequests = []
+let monitoringRecipes = []
 let selections = []
 let assets = {}
 let assetsRead = []
@@ -63,6 +64,7 @@ mock.module('#sepal/ee/ee', {
 mock.module('#sepal/ee/timeSeries/collection', {
     exports: {
         getCollection$: ({recipe, bands}) => {
+            if (recipe.type !== 'CCDC') monitoringRecipes.push(recipe)
             collectionRequests.push({type: recipe.type, bands, classification: recipe.model.sources?.classification})
             return of(eeImage('collection'))
         }
@@ -218,6 +220,7 @@ beforeEach(() => {
     loaded = []
     maskApplications = []
     collectionRequests = []
+    monitoringRecipes = []
 })
 
 describe('the image Change Alerts monitors', () => {
@@ -275,6 +278,35 @@ describe('the imagery Change Alerts monitors', () => {
         await firstValueFrom(changeAlerts(alertsMonitoring({classification: 'copied-classification'})).getImage$())
 
         assert.deepEqual(monitoringRequests().map(({bands, classification}) => ({bands, classification})), [{bands: ['ndvi'], classification: undefined}])
+    })
+
+    inOperation('uses the current producer processing while retaining consumer masks and saved copies', async () => {
+        catalogue['ccdc-1'] = {...ccdcRecipe, model: {...ccdcRecipe.model, options: {corrections: ['BRDF'], brdfMultiplier: 3}}}
+        const recipe = alertsMonitoring({})
+        recipe.model.options = {corrections: ['SR'], brdfMultiplier: 12, snowMasking: 'OFF'}
+        await firstValueFrom(changeAlerts(recipe).getImage$())
+        assert.deepEqual(monitoringRecipes[0].model.options.corrections, ['BRDF'])
+        assert.equal(monitoringRecipes[0].model.options.brdfMultiplier, 3)
+        assert.equal(monitoringRecipes[0].model.options.snowMasking, 'OFF')
+        assert.deepEqual(recipe.model.options, {corrections: ['SR'], brdfMultiplier: 12, snowMasking: 'OFF'})
+    })
+
+    inOperation('uses recorded asset processing and dates instead of consumer copies', async () => {
+        assets[SEGMENTS_ASSET] = {properties: {dateFormat: 0, processing: JSON.stringify({options: {corrections: ['BRDF'], brdfMultiplier: 6}})}}
+        const recipe = alertsOver({type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 2})
+        recipe.model.options = {corrections: ['SR'], snowMasking: 'OFF'}
+        await firstValueFrom(changeAlerts(recipe).getImage$())
+        assert.deepEqual(monitoringRecipes[0].model.options.corrections, ['BRDF'])
+        assert.equal(monitoringRecipes[0].model.options.brdfMultiplier, 6)
+        assert.equal(alertAlgebraCall().dateFormat, 0)
+        assert.deepEqual(recipe.model.options.corrections, ['SR'])
+    })
+
+    inOperation('refuses unreadable reference processing before constructing a producer collection', async () => {
+        catalogue['ccdc-1'] = {...ccdcRecipe, model: {...ccdcRecipe.model, options: {corrections: 'invalid'}}}
+        await assert.rejects(firstValueFrom(changeAlerts(alertsMonitoring({})).getImage$()), error => error.errorCode === 'UNREADABLE_REFERENCE_PROCESSING')
+        assert.deepEqual(collectionRequests, [])
+        assert.deepEqual(alertAlgebra, [])
     })
 
     inOperation('is not built for a band a Classification computes, which is refused', async () => {

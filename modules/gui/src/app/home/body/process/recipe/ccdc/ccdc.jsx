@@ -96,6 +96,7 @@ export default () => ({
         classificationReferenceFeedback(SOURCES)
     ],
     imageSource: false,
+    geometrySource: true,
     describeSegments$,
     getDateRange: recipe => dateRange(recipe.model.dates),
     mapProducts,

@@ -3,6 +3,8 @@ import {beforeEach, describe, it, mock} from 'node:test'
 
 import {lastValueFrom, of, throwError} from 'rxjs'
 
+import {assetProcessing, effectiveSettings} from '#sepal/recipe/changeAlerts/processing'
+
 // What an existing CCDC Segments asset contains. These are characterization tests: they pin the format already
 // written into every asset users hold, so that anything reading one later can be held to the same shape.
 //
@@ -620,5 +622,20 @@ describe('the band vocabulary a visualization is admitted against', () => {
 
     it('rejects a multi-band template when only some of its bands are selected', async () => {
         assert.equal(await admitted({...NDVI, bands: ['ndvi', 'swir1'], name: 'mixed'}), false)
+    })
+})
+
+describe('executed processing metadata', () => {
+    it('records the specialized CCDC computation even when the request claims another type or provenance', async () => {
+        const executed = {...recipe({corrections: ['BRDF']}), type: 'MOSAIC'}
+        executed.model.sources = {dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_8']}, cloudPercentageThreshold: 31}
+        executed.model.options.brdfMultiplier = 3
+        const {properties} = await submit({model: executed, properties: {processing: '{"options":{"corrections":["SR"]}}', recipe_options: {corrections: ['SR']}}})
+        const read = effectiveSettings({options: {corrections: ['SR']}}, assetProcessing(properties))
+        assert.deepEqual(read.model.options.corrections, ['BRDF'])
+        assert.equal(read.model.options.brdfMultiplier, 3)
+        assert.equal(read.fields.dateFormat.value, 1)
+        assert.equal(read.fields.SR.state, 'RECORDED')
+        assert.deepEqual(JSON.parse(properties.processing).dataSets, executed.model.sources.dataSets)
     })
 })

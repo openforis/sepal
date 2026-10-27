@@ -12,7 +12,7 @@ export class FormButtons extends React.Component {
 
     render() {
         const {chromeless, look, shape, size, air, className, input, label, labelButtons, multiple, options, tooltip, tooltipPlacement,
-            layout, alignment, spacing, groupSpacing, framed, disabled, tabIndex, width, errorMessage
+            layout, alignment, spacing, groupSpacing, framed, disabled, readOnly, tabIndex, width, errorMessage
         } = this.props
         return (
             <Buttons
@@ -36,6 +36,7 @@ export class FormButtons extends React.Component {
                 groupSpacing={groupSpacing}
                 framed={framed}
                 disabled={disabled}
+                readOnly={readOnly}
                 tabIndex={tabIndex}
                 width={width}
                 errorMessage={errorMessage}
@@ -50,7 +51,10 @@ export class FormButtons extends React.Component {
     }
 
     componentDidUpdate() {
-        const {multiple, input, options} = this.props
+        const {multiple, input, options, readOnly} = this.props
+        if (readOnly) {
+            return
+        }
         if (_.isUndefined(input.value) || _.isNull(input.value) || !input.value.length) {
             return
         }
@@ -90,6 +94,7 @@ FormButtons.propTypes = {
     layout: PropTypes.string,
     look: PropTypes.string,
     multiple: PropTypes.any,
+    readOnly: PropTypes.bool,
     options: PropTypes.array,
     shape: PropTypes.string,
     size: PropTypes.string,

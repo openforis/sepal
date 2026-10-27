@@ -405,7 +405,7 @@
       }
     },
     "error": {
-      "earthEngineException": "{earthEngineMessage}",
+      "earthEngineException": "Google Earth Engine: {earthEngineMessage}",
       "failedToLoadRecipe": "Failed to load recipe",
       "title": "Google Earth Engine error"
     },
@@ -2070,7 +2070,18 @@
           "loadError": "Failed to load recipe"
         }
       },
-      "tabPlaceholder": "Change_alerts"
+      "tabPlaceholder": "Change_alerts",
+      "processing": {
+        "REFERENCE": "from reference (read-only)",
+        "RECORDED": "recorded by the asset (read-only)",
+        "NOT_RECORDED": "not recorded by the asset — check it matches",
+        "MIXED": "recorded settings are read-only — check that editable settings match",
+        "UNREADABLE": "recorded settings cannot be read",
+        "PENDING": "checking reference settings",
+        "UNAVAILABLE": "could not read reference settings",
+        "unreadable": "The reference’s recorded processing settings cannot be read. Repair the metadata or select another reference.",
+        "dateFormatRequired": "The asset does not record its date format. Select the format used by its segments."
+      }
     },
     "classification": {
       "bands": {

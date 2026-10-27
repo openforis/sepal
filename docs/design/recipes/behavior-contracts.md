@@ -128,7 +128,36 @@ an entire group of consumer settings. Disabling an input while continuing to use
 establish ownership.
 
 Defaults are proposals at a defined user action, not a continuous synchronization rule. A late proposal must not
-overwrite edits. The exact initial-copy policy for Change Alerts remains a decision in the roadmap.
+overwrite edits. Change Alerts seeds consumer-owned monitoring defaults only at the first Reference Apply during
+new creation (`!ui.initialized` and no previously applied reference). Apply, Enter and wizard Next use current,
+authorised candidate facts and publish the reference and defaults atomically. Later reference changes, reopen,
+Refresh and producer edits never reseed; Cancel writes nothing. The separate "Use reference settings" action remains
+deferred in the roadmap.
+
+Change Alerts derives required processing matches from the actual segment producer, with its execution defaults,
+or from asset metadata. Recorded values are read-only; genuinely unrecorded asset values are labelled editable
+consumer fallbacks. Pending and failed acquisition supply no effective fallback, and malformed governing metadata
+is explained at REF and holds affected work. Displaying effective values does not change saved consumer copies or
+an open editable draft. Observations now acquire these processing facts before projecting the observed collection;
+that facts read neither builds segments nor loads the producer's Classification/training dependencies. Separately,
+Change Alerts declares the live reference's `IMAGE_OUTPUT` readiness as an analysis prerequisite of its images,
+period mosaics and pixel operations. Confirmed upstream findings mark REF and block REF Apply/Next/Done through the
+normal output candidate; submission rechecks blocking candidates against current values and state. Back and Cancel
+retain their existing behavior. Operation gates withdraw affected layers and open operation panels; repair releases
+the holds. An exported asset remains independent of its private producer and Classification. CCDC Slice retains its
+own date-format policy.
+
+Reference ownership must preserve the normal processing-form labels and layout. Explain ownership and unverified
+asset fallbacks through the standard label help tooltip. Read-only choice groups keep their selected value
+highlighted. A speckle-details summary opens an editor only when a currently displayed parameter is editable;
+otherwise it remains a read-only summary without an action affordance. Change Alerts does not offer the legacy
+strong-scatterer toggle that its observed time-series collection does not read; the thresholds actually used by that
+collection retain their reference ownership or explicit unrecorded fallback. Ordinary radar controls are unchanged.
+
+New computing-segment exports record bounded, server-derived `processing` metadata and their date representation.
+Readers distinguish complete canonical/recognised producer records from partial imports and apply precedence per
+field; malformed governing metadata cannot silently fall through. This is additive: existing assets and saved
+recipes are not migrated. Matching processing settings does not establish scientific comparability.
 
 A reference must state what it reuses. Reusing an image, training points, metadata and processing settings are
 different relationships. For reused training data, Provider owns its imagery, points and sampling location; the
@@ -136,6 +165,19 @@ agreed S4 direction gives Consumer ownership of the required feature definition 
 That does not authorize sampling Provider's points on Consumer's imagery or dropping Consumer's features.
 
 For an asset reference, use evidence recorded on the asset; do not require access to its private producer recipe.
+
+A confirmed shared finding that makes the selection being edited unusable must both explain the problem and block
+committing that selection. Reference-editor errors are not decorative: Apply, wizard Next/Done and keyboard/direct
+submission use the same candidate finding and recheck current values and state before writing or advancing. Valid
+replacement and upstream repair release the hold. Unchanged Close, Cancel, Back and removal keep their existing exit
+paths. Apply policy is never inferred from translated message text. A presentation-only declaration can opt out of
+its own blocking only where an existing field rule supplies that behavior; record that reason beside the declaration.
+Operation scope remains authoritative: Phenology analysing a native band does not acquire a classifier requirement.
+
+List panels that apply entries individually may declare `valuesToModel: null`. Completing their wizard step must
+close or advance without serializing over those entries; optional form serialization hooks must preserve that opt-out.
+AOI recipe eligibility is distinct from image-input eligibility: the GUI's optional `geometrySource` declaration
+defaults to `imageSource`, and CCDC opts into geometry selection while remaining excluded from ordinary image inputs.
 If a persisted setting or format must change, describe compatibility explicitly. Transient UI state cannot supply
 a guarantee that must survive saving, reopening or importing a recipe.
 
@@ -230,6 +272,12 @@ replace the saved retrieval settings, even though no task was submitted. Button 
 
 Blocking Apply for a confirmed bad selection must leave choosing a replacement, Cancel and Close available. Removal
 must remain reachable. An error must not trap the user inside the editor.
+
+A confirmed finding that makes the selection being edited unusable must block committing that selection through
+Apply, wizard Next/Done and keyboard submission. An explanation may opt out of candidate blocking only when an
+identified field or form rule already refuses the same invalid state. Document that guard and test both the button
+and direct submission; calling feedback "presentation only" does not establish that committing it is acceptable.
+Read the shared finding and form validity, rather than inferring blocking from an error message or its color.
 
 Refreshing a source must update offered choices and validation from current evidence. The two must not disagree
 because one uses the runtime and the other uses an old UI copy. A late answer for an earlier selection must not

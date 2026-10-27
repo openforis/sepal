@@ -7,8 +7,8 @@ import {MULTIPLE_CLASSIFIER_INPUTS} from '#sepal/recipe/type/classification'
 import {msg} from '~/translate'
 
 // Presentation of confirmed upstream readiness findings at the selections that declare those dependencies.
-// No operations: the existing output read still decides gates. Callers may bind this explanation to an editor
-// without using it to change draft validity. A recipe not established unsound by itself (establishesOwnDefect) is not
+// No operations: the existing output read still decides gates. A caller binding the selected reference's editor uses
+// the same finding to block committing an unusable selection. A recipe not established unsound by itself (establishesOwnDefect) is not
 // said to need attention: what the recipe using it cannot do with it is, as that recipe's requirement, whether it is the
 // one selected or one further up.
 export const referenceFeedback = ({section, roles, itemOf}) => ({

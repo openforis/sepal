@@ -2957,7 +2957,7 @@ settings syncing. Remaining product choices are called out below instead of bein
 | F3 | Change Alerts: consistent applied/editor diagnostics and monitoring-band chart hold | Reproduce the reported Optical-to-Radar case; reuse the existing monitored-measure requirement. |
 | F4 | Reused training samples: Consumer features over Provider imagery, once per collection computation | Agreed semantic direction; execution and shared readiness must change together after tracing the sampling contract. |
 | F5 | Audit ownership of Change Alerts Sources/PRC settings | Technical prerequisite: identify, with reasons, which fields actually must match the reference. No mandatory-field list is established yet. |
-| F6 | Replace whole-group automatic syncing with explicit ownership | Depends on F5. Required matches are source-owned/read-only. Recommend copying editable defaults on initial creation only, preserving them on replacement, with an explicit copy action; not yet agreed. |
+| F6 | Replace whole-group automatic syncing with explicit ownership | Depends on F5. Agreed 2026-10-26: required matches are source-owned/read-only; seed editable defaults only at the first Reference Apply during creation, then preserve them. The explicit "Use reference settings" action is a recorded deferred follow-up, not part of required S5. |
 | F7 | Copy/paste visualization parameters between layers | Separate requested feature; independent of the readiness corrections. |
 | F8 | Chart layout after tab return; Time Series Retrieve's unconditional empty unavailable-bands warning | Concrete browser bugs to reproduce and fix independently of the source-validity policy. |
 | F9 | Treat a selected Classification as required for Time Series and CCDC, including native requests | User-proposed direction, recommended for assessment; explicitly changes the previous native-control policy and should remove redundant request-stage coordination. |
@@ -2980,7 +2980,7 @@ contract can change the split; they must not silently expand it.
 | S2: Feedback where repairs happen | Consistent Classification/Regression training-data feedback, item-editor explanations and replacement/removal; visible Classification selection in Time Series/CCDC Sources; classifier-input attribution at Classification; repair-oriented PyEO SRC/OPT feedback; correct the empty Retrieve warning. | F1, F2, F10, F8 warning | The single-input selection check passes. Confirmed findings now hold Apply while replacement, Cancel and unchanged Close remain available; the user confirmed Classification's browser recheck passed. The separate Stack Require drop fix passed the user's actual-preview and remove/restore browser check on 2026-10-24. Empty-Provider refinement and S3/S4 remain separate. |
 | S3: One selected-Classification validity contract | Require a selected usable Classification for Time Series/CCDC base operations, independently of requested/breakpoint bands; common SRC explanation/action hold; remove redundant band-training stage/watch/messages/server settling. | F9; consumes S2 presentation | Implemented and independently reviewed. User confirmed Retrieve closure/reopen and the already-broken CCDC/count-preview repair checks passed on 2026-10-25. Shared analysis prerequisites cover every operation and named map product. The timing-dependent keyboard check was not attempted in the browser; automated coverage passed. No requested browser recheck remains. |
 | S4: Reused samples with Consumer features | Sample each contributing Provider's imagery at its points using Consumer's feature definition; preserve sampling scale, nesting/order and Consumer normalisation; update shared readiness to the same derivability contract. | F4 | Implemented 2026-10-26; sampling and feedback corrections pass independent review, including unsupported requested operations and neutral unknown-reason fallback. No remaining S4 review findings. User confirmed the CCDC explanation and selection-recovery browser recheck passed on 2026-10-26; see the result after "S4 use-restriction fallback: independent review". Final full GUI campaign remains pending. |
-| S5: Change Alerts settings ownership | Audit Sources/PRC fields, then implement source-owned read-only required matches versus consumer-owned editable values; replace whole-group observation syncing and define initial/explicit copying. | F5, F6 | Audit first; agree the editable-copy policy below. UI and backend use the same effective values for recipe and asset references. Fresh reopen, overrides, reference replacement, Cancel, late metadata and asset metadata are mandatory cases. No automatic overwrite of editable settings. |
+| S5: Change Alerts settings ownership | Audit Sources/PRC fields, then implement source-owned read-only required matches versus consumer-owned editable values; replace whole-group observation syncing and define initial/explicit copying. | F5, F6 | Implemented in the working tree; the radar details-dialog loop and live-reference readiness/REF submission corrections are documented below (see "S5 corrections"). Browser/metadata checks remain pending. The explicit "Use reference settings" action is captured separately as deferred; it does not block S5 or push. |
 | S6: Change Alerts validation and chart agreement | Retain invalid applied choices with field explanations; hold Retrieve and close/disable the analysis chart for an incompatible configured monitoring band; remove redundant panel validation. | F3 | Build on S5's ownership/effective-values contract so the form and operations judge the same configuration. Reproduce Optical-to-Radar, repair, cancellation, valid native controls and recipe/asset reference cases. Preserve operation scope rather than installing full image readiness on the chart. |
 
 **S1: Chart layout on tab return (implemented 2026-10-23; user feedback received).**
@@ -3938,9 +3938,10 @@ shape and compatibility separately before implementation; no migration is approv
    native bands. Confirm that full consequence before retiring the additional band-training gate. Apply it to these
    two families first; do not silently change native Phenology or every recipe that happens to hold a reference.
    **Status:** confirmed by the S3 request and implemented for Time Series and CCDC (2026-10-24); Phenology unchanged.
-2. **S5's editable defaults.** Recommend copying on the first reference Apply during new-recipe creation only,
-   preserving editable values on replacement/reopen/refresh, and offering explicit copying through the normal form's
-   Apply/Cancel flow. This recommendation is still not agreed. Required matches are separately source-owned/read-only.
+2. **S5's editable defaults.** Agreed 2026-10-26: seed on the first reference Apply during new-recipe creation only,
+   preserving editable values on replacement/reopen/refresh. Explicit copying through the normal form's Apply/Cancel
+   flow is a deferred follow-up. Required matches are separately source-owned/read-only; unknown asset values remain
+   labelled and editable, and recorded/reference speckle settings are followed.
 
 Which PRC fields must match, how to derive Consumer features over multiple inputs, and what optional/required metadata
 existing assets actually contain are technical discovery tasks, not arbitrary user preferences. Return with evidence
@@ -5072,11 +5073,12 @@ were PyEO `panels/options/options.jsx` and its mounted test.
   settings without loading a private producer. Treat unavailable required metadata explicitly; do not assume a match,
   fetch inaccessible history, or silently invent a value. State any storage/import compatibility implications before
   changing persisted fields; existing editable overrides must not be silently discarded on opening a recipe.
-- **Recommendation after code assessment, not yet agreed:** seed editable defaults when the first reference is applied
+- **Product policy, agreed 2026-10-26:** seed editable defaults when the first reference is applied
   while creating a new Change Alerts recipe. State in the creation flow that Sources/PRC defaults came from that
   reference; the following panels show the actual editable values. Thereafter they belong to Change Alerts. Replacing
   a reference preserves these settings by default and may expose incompatibilities through normal shared readiness.
-  Offer an explicit "Use reference settings" action for a user who wants to copy the new reference's editable defaults.
+  An explicit "Use reference settings" action for copying the new reference's editable defaults is deferred; see the
+  dedicated follow-up after "S5 product decisions, agreed".
   Metadata refreshes and reopening a recipe are never requests to replace settings. Do not turn this into automatic
   Optical-to-Radar switching for fields the audit classifies as editable.
 - **Acceptance:** editing producer property A cannot reset consumer override B; re-observing unchanged evidence and
@@ -5117,6 +5119,695 @@ were PyEO `panels/options/options.jsx` and its mounted test.
   radar with/without explicit copying; cancel the replacement/copy; edit while metadata is pending; re-export the same
   asset; and open an asset with no optional configuration metadata. Assert both the displayed values and applied model
   and keep relevant operation holds, avoiding tests that only prove one callback was called.
+
+**S5 ownership audit and proposal (2026-10-26; audit only, no production change).** Traced from the producer and
+its segments export, through `referenceObservation.js`, to Change Alerts' applied model, editors, shared readiness,
+`observedCollection` and execution, on the merged branch (`5365cbc71`).
+
+*How it behaves today.*
+
+- **Whole groups are merged.** `changeAlertsObservation.applyAccepted` (`changeAlerts/referenceObservation.js`)
+  merges the producer's `model.sources` (less `classification` and `breakpointBands`) and its whole `model.options`
+  into the consumer. It does this whenever the selected source differs from, or the producer's settings differ from,
+  the last evidence the policy processed (`ui.sourceEvidenceApplied`). The write happens in the evidence action, while
+  an editor is open (`sourceRuntime/evidenceRegistry.js`, `#applied`). `merge: true` keeps only keys the producer
+  lacks, so `sources.band` and `changeAlertsOptions` survive; every other key is overwritten. Editing producer
+  setting A therefore rewrites consumer setting B.
+- **Reopening overwrites saved overrides.** `ui` is never saved (`recipe.jsx`, `NON_CONTENT = ['ui', 'revision']`).
+  A loaded or duplicated recipe gets only `ui: {initialized: true}` (`recipeCache.js`, `initializeRecipe`;
+  `recipe.jsx`). So `previous` is undefined at the first observation of every session, and the producer's settings
+  are merged over the saved ones. `assetDateFormat` has the same flaw: a corrected asset `dateFormat` is reset to the
+  asset's on reopen.
+- **A late observation is lost or silent.** A form initialises its values once, when it mounts (`recipe.jsx`,
+  `initValues`). A merge that lands while Sources or PRC is open is discarded by that form's Apply; with the form
+  closed, it changes the model without the user seeing it. This includes the creation wizard's Sources step when the
+  reference evidence answers late.
+- **Asset references copy nothing.** The CCDC segments export writes the GUI's `recipe_<key>` properties nested
+  under one `formattedProperties` property (`gee/src/jobs/task/export/ccdcAssetExport.js`, unchanged since at least
+  2023, and pinned by `ccdcAssetExport.test.js` "nests them under a single property"). The observation reads
+  top-level `recipe_sources` and `recipe_options`, which that export never writes. The observation tests' asset
+  fixtures assume top-level properties.
+  - Whether Earth Engine keeps a dictionary-valued property on an exported image asset is not established. One
+    read-only metadata read of a real segments asset would settle it.
+  - What is recorded at top level: `dateFormat`, `startDate`, `endDate`, `visualization_*`, the segment band names,
+    and `surfaceReflectance` (`1`, `false`, or absent - absent on one of two real assets, per that test file).
+- **All readers agree, on the consumer's copy.** The Sources and PRC editors, readiness's `MONITORED_MEASURE`
+  (`observedMeasures` reads `options.corrections`), the chart's `observedCollection`, the collection mosaic
+  (`mosaicRecipe`) and execution (`timeSeries/changeAlerts.js`, `getObservations$` → `getCollection$`) all read the
+  consumer's applied `model.sources` and `model.options`. No rule compares a required setting with the reference.
+- **The algorithm decides what must match.** `analyzeChanges` takes the segment's prediction minus the observation at
+  that date and divides it by the band's `_rmse` (`changeAlertsAlgorithm.js`). The producer fits through the same
+  `getCollection$` (`timeSeries/ccdc.js`). So a setting that changes the monitored band's values or units must match
+  the fit; one that only selects, masks or deduplicates observations need not.
+
+*Field ownership.* "Today" is who effectively owns the value now; "Proposed" is the S5 owner.
+
+| Field | Today | Proposed | Must match? | Evidence | Effective-value reader | Asset metadata |
+|---|---|---|---|---|---|---|
+| `reference.dateFormat` (asset) | REF field, prefilled and reset by observation | Asset when recorded; consumer only when not | Yes | Slices segment dates (`sliceSegments`); `segmentSource.js` uses it for assets | REF, execution | `dateFormat` |
+| Segment date format (recipe) | Producer | Producer (unchanged) | Yes | `segmentSource.js`: `declared.dateFormat(record.model)` | Execution | - |
+| `sources.dataSetType` | Copied | Consumer | No; must observe the band | `MONITORED_MEASURE` (`NO_AVAILABLE_MEASURE`) | Sources, readiness, mosaic, execution | Only inferable from band names |
+| `sources.dataSets` | Copied | Consumer | No; selects scenes, must observe the band | `NO_OBSERVED_MEASURE` | Same | Not at top level |
+| `sources.cloudPercentageThreshold` | Copied | Consumer | No; scene filter | Optical collection filter | Same | Not at top level |
+| `sources.assets` (Planet) | Copied | Consumer | No; the imagery monitored | `SOURCE_IMAGERY` dependency | Same | Not at top level |
+| `sources.band` | Consumer | Consumer, validated | Must be a fitted band | `MONITORED_MEASURE_ABSENT` / `_UNOBSERVED` | Sources, readiness, execution | Band names |
+| `sources.classification`, `breakpointBands` | Not copied, ignored | None | No | `type/changeAlerts.js` | None | - |
+| `options.corrections` `SR` | Copied | Reference | Yes: TOA or SR scale | `collection.js` `reflectance` | PRC, readiness band options, chart, mosaic, execution | `surfaceReflectance` (three-valued) |
+| `options.corrections` `BRDF`, `brdfMultiplier` | Copied | Reference | Yes: transforms values | Optical collection `brdfCorrect` | Same | Not recorded |
+| `options.histogramMatching` (Planet) | Copied | Reference | Yes: transforms values | `planet/collection.js` `mergedCollection` (optical ignores it) | Same | Not recorded |
+| Radar `geometricCorrection` | Copied | Reference | Yes: changes backscatter | `radar/collection.js` | Same | Not recorded |
+| Radar speckle filters and their parameters | Copied | Reference (recommended) | Yes: transforms values and their variance, which the `_rmse` describes | `radar/collection.js` | Same | Not recorded |
+| Optical masks: cloud, shadow, snow, buffer, holes, cloud-mask thresholds; `orbitOverlap`, `tileOverlap` | Copied | Consumer | No; mask or deduplicate | Optical collection | Same | Not recorded |
+| Radar `orbits`, `orbitNumbers`, `outlierRemoval`, `mask`, `minAngle`, `maxAngle`, `minObservations` | Copied | Consumer | No; select or mask | `radar/collection.js` | Same | Not recorded |
+| Planet `cloudThreshold`, `shadowThreshold`, `cloudBuffer` | Copied | Consumer | No; masks | `planet/collection.js` | Same | Not recorded |
+| Optical `compose`, percentiles, `filters` | Copied | None for monitoring | No; composite-only, not read by `getCollection$` | `collection.js` | None | - |
+| `date`, `changeAlertsOptions` | Consumer | Consumer | No | - | Date, Options, execution | - |
+
+*Proposed contract.*
+
+- **Reference-owned settings are read, never copied.** The value-transforming settings above have one effective value:
+  - the producer's current value, for a recipe reference (followed through a wrapper, as today);
+  - the asset's recorded value, for an asset reference;
+  - the consumer's saved value only where the asset records none. That case is shown as "not recorded by the asset",
+    never treated as a match.
+
+  One pure shared function (`lib/js/shared/src/recipe/changeAlerts/`) answers the effective Sources/options and each
+  field's provenance, from the applied model and the reference's settings. The editors show the reference-owned
+  fields read-only and labelled; `MONITORED_MEASURE`, `observedCollection`, `mosaicRecipe` and execution all use the
+  same function. Execution already loads the producer record (`withSegmentSource$`) and can read asset properties.
+  While the reference is not yet read, the value is pending, not a finding.
+- **Consumer-owned settings are never written by observation after creation.** Reopening, refreshing, producer edits
+  and reference replacement leave them alone. Whether the first reference may seed them is decision 1 below.
+- **No persisted format change.** Saved copies of reference-owned fields stay in `model.options` untouched, and are
+  ignored where the reference states the value. No migration and no "copied once" flag: a recipe is being created
+  exactly while `!ui.initialized`, which no loaded or duplicated recipe ever is, and a new recipe is not saved before
+  its wizard finishes.
+- **Visible consequences.**
+  - An existing recipe whose copied SR, BRDF, Planet histogram matching or radar correction/speckle settings drifted
+    from its producer will compute with the producer's values: results can change.
+  - Existing observation tests encoding the old policy ("supplies refreshed datasets and corrections when it
+    changes", "re-export refreshes monitoring settings") are rewritten.
+  - BAYTS Alerts' `applyAccepted` (`processingOptions`) has the same reopen pattern. It is left out of S5 and needs
+    its own audit.
+
+*The creation-only recommendation, against the actual lifecycle.*
+
+| Case | Today | With creation-only copying |
+|---|---|---|
+| Saved overrides, fresh reopen | Overwritten by the first observation | Kept; reference-owned fields show the producer's current values |
+| Producer edits an editable field | Consumer field overwritten | Unchanged |
+| Producer edits a reference-owned field | Copied when the consumer's editor next processes the evidence; stale in the meantime | Effective everywhere immediately; no write |
+| Reference replaced after creation | Whole groups replaced | Editable values kept. A family mismatch (optical settings against a radar reference) is refused at Sources by the existing `MONITORED_MEASURE` until repaired or explicitly copied. Reference-owned values follow the new reference. |
+| Reference draft cancelled | Nothing written | Nothing written |
+| Metadata answers while Sources is open | Lost on Apply, or silent if closed | After creation: nothing to write. During creation: the same race unless seeding moves into the reference Apply (see S5b). |
+| Asset with no settings metadata | Nothing copied, consumer defaults kept | Same, stated as "not recorded"; never assumed compatible |
+
+Without any seeding, a radar or Planet reference starts from optical defaults that Sources refuses until rebuilt by
+hand. Seeding once at creation avoids that without surprising an existing configuration.
+
+*Remaining product decisions, with recommendations.*
+
+1. **Seed editable defaults from the first reference during creation:** recommended yes. The alternative is never.
+   Either way, nothing is copied after creation.
+2. **An asset reference that does not record a reference-owned setting** - the specialised CCDC export records none
+   of BRDF, histogram matching or the radar settings at top level (narrowed in "S5 revised proposal"): recommended to
+   use the consumer's value, shown as not recorded, without refusing. Refusing would retire such assets. Pair it with recording these settings at top level
+   in new segments exports (additive metadata; older assets stay "not recorded").
+3. **Radar speckle filtering as reference-owned:** recommended yes, because the residuals the confidence divides by
+   describe filtered values. Making it consumer-owned trades that comparability for flexibility.
+4. **An explicit "Use reference settings" action after creation:** recommended, in a later slice.
+
+*Slices.*
+
+- **S5a, the smallest coherent slice.** Stopping copies alone would leave a replaced reference's required settings
+  stale, so S5a has to land the read-only effective values with it:
+  - the shared effective-settings function, with provenance;
+  - reference-owned fields read-only in PRC and the band options, with readiness, chart, mosaic and execution on the
+    same values;
+  - for assets, only `dateFormat` and `surfaceReflectance` (`1` → SR, `false` → TOA, absent → not recorded);
+  - `applyAccepted` writing consumer-owned settings only while `!ui.initialized`, for a newly selected source, and
+    asset `dateFormat` never written once the asset records it.
+- **S5b, later.** Seeding as part of the reference Apply, so the creation race goes away; the explicit
+  copy action; and recording settings at top level in segments exports.
+
+*S5a acceptance tests* - focused, asserting both the displayed values and the applied model:
+
+- A saved recipe with editable overrides, reopened fresh: unchanged after the observation answers.
+- A producer edit of an editable field leaves the consumer alone. An edit of SR → TOA shows TOA read-only "from
+  reference", and `observedCollection`, the band options and execution (gee unit test with a stub reference) use TOA,
+  while the saved `model.options` stays as it was.
+- Replacing optical with radar after creation keeps editable values, refuses Sources with the existing
+  `MONITORED_MEASURE` finding, and shows the radar reference's corrections.
+- During creation, the first reference seeds editable values once; a refresh does not seed again. Optionally, a
+  replacement inside the wizard, per decision 1.
+- An asset recording `surfaceReflectance: 1` and `dateFormat`: both read-only. An asset recording neither: the
+  consumer's values are used, marked not recorded, and a corrected `dateFormat` survives reopening.
+- A reference draft cancelled writes nothing.
+
+*Contract S6 consumes.* S6's field validation, its retained invalid choices, and its Retrieve and chart holds judge
+the effective settings from the S5 function, never the saved copy. The monitored band's options, `MONITORED_MEASURE`
+and the chart's observed collection use the same SR value, and "pending" means the reference's settings are not yet
+read. S5 changes neither validation messages nor chart lifecycle.
+
+**S5 ownership audit: independent review (2026-10-26; proposal corrections before implementation).** The main
+ownership direction is supported by the traced code: `referenceObservation.applyAccepted` writes whole groups
+from transient previous evidence, and the confidence calculation compares observed values with the reference fit
+and RMSE. Reference-owned value transformations and consumer-owned observation selection are a useful bounded
+policy. Matching processing parameters is not itself proof of scientific comparability; keep that limitation clear.
+No production code or tests were changed or run in this design review.
+
+1. **The creation race belongs in the required S5 correction.** Restricting `applyAccepted` writes to
+   `!ui.initialized` still lets late evidence overwrite a wizard's applied settings, or be overwritten by the Sources
+   form already open. The audit explicitly reproduces the mechanism and its proposed lifecycle table leaves it in
+   S5a. If creation seeding is chosen, do it at the first explicit reference Apply with the selected reference's
+   evidence, preserving edits and Cancel and rejecting stale responses. Observation should not write configuration
+   even during creation. This is part of fixing S5, not an optional later enhancement. Required work may land in
+   several commits; only the convenience copy-again action can be deferred on that basis.
+2. **Make unknown asset settings editable and distinguish effective defaults.** A value actually recorded by the
+   reference may be read-only. When an asset records no value, the Consumer fallback must remain editable and be
+   labelled as not recorded/unverified; otherwise the user has no way to configure an older asset correctly. Pending
+   or failed metadata reads must not silently become this fallback. Missing producer keys in a recipe reference
+   instead follow that producer's execution defaults (for example, radar `ELLIPSOID`/`NONE`), not the Consumer's stale
+   copies. State those states and the precedence explicitly in the effective-settings contract.
+3. **Narrow the metadata claim and complete the writer/reader contract.** The specialised `ccdcAssetExport.js`
+   does nest `formattedProperties`, and `toAsset.js` does not flatten that property. But generic
+   `imageAssetExport.js` already spreads formatted properties at top level and supports CCDC roots. Imported or
+   manually annotated assets may also carry the expected properties. Thus "every existing asset lacks" these settings
+   is not established. State the supported top-level and legacy nested forms, precedence and parsing behaviour;
+   inspect an available real asset read-only before claiming what Earth Engine retained. Recording required
+   processing metadata in new exports belongs to the completed S5 asset contract, even if a separate commit.
+   Canonical processing facts must describe the recipe actually executed, not merely caller-supplied provenance.
+4. **Show how every reader acquires the same reference facts.** `withSegmentSource$` already reads them for the
+   Change Alerts image, but `loadObservations.js` projects to a Time Series before readiness and never calls that
+   loader. The chart cannot gain reference-owned values by changing a pure `observedCollection` function alone.
+   Add a reader/acquisition table for readiness, Sources/PRC drafts, observations, period mosaics and alert execution.
+   Read producer settings/asset metadata through existing acquisition and request-scope facilities without building
+   segments, requiring the producer's unrelated training dependencies, or fetching a private producer behind an
+   asset. Record the intentional change to the previous reference-independent observations contract, including its
+   regression updates. Keep pending/unavailable states and cancellation aligned with the effective settings.
+
+**Recommendations on the open product choices (not user approval).** Seed editable defaults once on the first
+reference Apply during genuinely new creation; preserve them after that. Permit explicitly labelled, editable
+Consumer fallbacks for unrecorded asset values. Keep radar speckle-filter settings reference-owned when known,
+without claiming this proves full measurement comparability. Defer an explicit "Use reference settings" convenience
+action. BAYTS' similar mechanism needs a recorded follow-up audit rather than silently broadening S5. Also tighten
+the field table to actual monitoring arguments: Planet `shadowThreshold` is currently passed by `getCollection$`
+but not consumed by `planet/collection.createCollection`, so it is unused here rather than an effective mask setting.
+
+The review changes documentation only. The implementation packet should incorporate these corrections and the
+user's choices; no migration or production behaviour is authorised merely by recording this proposal. Nothing
+staged, committed or pushed.
+
+**S5 revised proposal (2026-10-26; after review, no production change).** It supersedes the S5a/S5b split above. All
+of it belongs to completed S5, possibly across several commits; only the "Use reference settings" action is deferred.
+The user agreed these product choices on 2026-10-26:
+- seed editable defaults once, at the first Reference Apply of a new recipe;
+- show labelled, editable fallbacks for settings an asset does not record;
+- follow the reference's speckle settings when known.
+
+Matching processing settings is a precondition for comparing observations with the fit, not proof of scientific
+comparability.
+
+*Corrections to the audit table.*
+- **Planet `shadowThreshold`:** not a monitored-collection setting. `getCollection$` passes it, but
+  `planet/collection.createCollection` ignores it; only the Planet period mosaic (`planet/mosaic.js`) uses it, so it
+  stays consumer-owned there.
+- **Planet `histogramMatching`:** transforms values only for daily imagery (`planet/daily.js`, `ENABLED`).
+- **Asset `dateFormat`:** execution currently prefers the date format configured in REF over the asset's recorded
+  one (`segmentSource.js`, `assetSourceFacts$`). S5 reverses that, as the nested-asset path already does.
+
+*Effective-settings contract.* For each reference-owned field (corrections `SR`/`BRDF` and `brdfMultiplier`, Planet
+`histogramMatching`, radar `geometricCorrection`, the speckle filters and their parameters, and an asset's
+`dateFormat`), one pure shared function answers a value and a state:
+
+| State | When | Value | Editor | Operations |
+|---|---|---|---|---|
+| `REFERENCE` | A recipe reference is resolved to its producer | The producer's value; a key the producer lacks takes the producer's execution default (radar `ELLIPSOID`/`NONE`, no `SR` means TOA, no `BRDF`, multiplier 4, Planet matching disabled) - never the consumer's copy | Read-only, labelled as the reference's | Use the value |
+| `RECORDED` | An asset records the field (forms below) | The recorded value | Read-only, labelled | Use the value |
+| `NOT_RECORDED` | The asset was read and no recognised form governs the field | The consumer's saved value | Editable, labelled "not recorded by the asset - check it matches" | Use the value |
+| `UNREADABLE` | The highest-precedence form governing the field is present but malformed or invalid | None; never a lower form or the consumer's value | REF says the recorded processing settings cannot be read | Held through the existing hold path until repaired |
+| `PENDING` | The reference's settings are still being read | None | Shown as checking; no fallback shown as effective | Wait (a need, not a finding) |
+| `UNAVAILABLE` | The read failed | None | "Could not read the reference's settings", with Refresh | Held as unavailable; never the fallback |
+
+Consumer-owned settings are always the consumer's applied values. The consumer's saved copies of reference-owned
+fields stay in the model and are used only in `NOT_RECORDED`, so no migration is needed.
+
+*Asset metadata contract.*
+- **Reader, by precedence per field:**
+  1. A canonical `processing` property (top-level JSON) written by new exports.
+  2. Top-level `recipe_options` / `recipe_sources` JSON: written flat by the generic `image.GEE` export
+     (`imageAssetExport.js`, which also exports CCDC roots), or by imports and manual annotation.
+  3. The legacy nested `formattedProperties.recipe_options` written by the specialised `ccdc.GEE` export, if Earth
+     Engine retained it.
+  4. `surfaceReflectance`, for `SR` alone: `1` means SR, `false` means TOA, absent means not recorded.
+
+  `dateFormat` is read at top level.
+- **Parsing.** The highest-precedence form present governs the fields it covers.
+  - A malformed or invalid governing form makes those fields `UNREADABLE`. They do not fall through to a lower form or
+    to the consumer's settings.
+  - A valid governing form is not rejected for a malformed lower one.
+  - A failed asset read is `UNAVAILABLE`, never `NOT_RECORDED`.
+- **Completeness:**
+  - **Complete forms:** `processing`, complete by construction, and a `recipe_options` object that SEPAL wrote for a
+    segment producer (beside a `recipe_type` naming one) record the whole producer options. A key absent from them
+    takes the producer's execution default (`RECORDED`), not the consumer's old copy.
+  - **Partial forms:** `recipe_options` without that producer marker - imported or annotated - records only its
+    stated keys; any other key is `NOT_RECORDED`. `surfaceReflectance` covers `SR` alone.
+  - Completeness and equivalence are never inferred from arbitrary properties.
+- **Writer:** both segment-capable exports (`ccdcAssetExport.js` and `imageAssetExport.js` for a segments source)
+  write a top-level `processing` property, derived server-side from the recipe actually executed - the segment
+  producer the export resolved - not from caller-supplied `recipe_*` properties. It holds `dataSetType`, `dataSets`
+  and the options `getCollection$` reads, well within the 16,384-byte property limit. Existing assets stay as they
+  are: additive metadata, no rewrite.
+- **Prerequisite:** read one real asset from each export, read-only, before relying on form 3. No real segments asset
+  was available to this audit.
+
+*Acquisition, per reader.* Every reader acquires the same reference facts without building segments, without loading
+the producer's own dependencies (Classification, training data), and without loading a private producer behind an
+asset.
+
+| Reader | Acquisition | Pending / failure / cancellation |
+|---|---|---|
+| Sources, PRC, REF (`dateFormat`), monitored-band options | The applied recipe's evidence (`ui.sourceEvidence`) from `changeAlertsObservation`. It already reads the producer record (`resolveSegmentProducer`) or the asset's metadata, and it carries `processing` instead of `monitoring` | Evidence states; nothing is written into the model |
+| GUI readiness (`MONITORED_MEASURE`) | `parameters(recipe)` already receives the recipe and its evidence; it reads the effective corrections | Pending is a need |
+| Period mosaic description (`COLLECTION_MOSAIC`) | The caller projects the recipe with the effective settings, then describes the product from that configuration, as today; SR decides the optical band set | Waits while pending |
+| Alert execution (`timeSeries/changeAlerts.js`) | `withSegmentSource$` facts gain `processing`: the producer record already loaded (`recipeRef.withRecord$` loads that record alone), or `assetProperties$` | Request scope and cancellation unchanged |
+| Period mosaic execution | Same facts; `collectionMosaic` already resolves the segment source for its geometry | Same |
+| Observations (`/timeSeries/loadObservations`) | **Changed contract:** for Change Alerts, the facts loader runs first (records only, under the request's scope), then the projection, then `observedCollection`, readiness (`requireRequestedBands$`) and the collection. Today this endpoint reads no reference | An unreadable reference refuses the request as unavailable instead of observing with the consumer's copy |
+
+*Creation seeding at the first Reference Apply.*
+- **When:** while `!ui.initialized` and no reference was applied before.
+- **How:** the REF panel's Apply publishes, in the same action (`additionalUpdates`, `recipeFormPanel.jsx`), the
+  seeded consumer-owned Sources/PRC defaults. They come from the evidence its `SourceCandidate` already holds for
+  that draft selection: the producer's settings, or an asset's recorded forms.
+  - **The guard already exists (confirmed in review):** `SourceCandidate.refused()` blocks the form, and
+    `Form.Panel.apply()` refuses a blocked form before any write; `referenceRequirement.test.jsx` covers Apply while
+    asset metadata is pending. Seeding reuses it, extending the evidence it needs if necessary.
+  - The new accessor returns the current, authorised candidate facts, not any cached answer.
+  - Candidate evidence belongs to the current edit, so a stale response cannot seed.
+  - Cancel publishes nothing.
+  - An edit made in Sources or PRC is never overwritten: only this Apply writes, before those steps open.
+- **What is seeded:** the consumer-owned monitoring fields of the audit table, as one coherent set. Never
+  Classification, breakpoint bands, CCDC fitting, dates or `changeAlertsOptions`. Reference-owned fields are not
+  seeded; they are read.
+- **When no settings are recorded:** an asset without recorded settings seeds nothing, and Sources shows Change Alerts'
+  defaults.
+- **Observation stops writing configuration.** `applyAccepted` (`monitoringSettings`, `assetDateFormat`) is removed
+  for Change Alerts.
+- **A later reference change** - in the wizard after the first Apply, or in an existing recipe - seeds nothing. A
+  family mismatch is then refused by the existing `MONITORED_MEASURE` until repaired.
+
+*Required work (S5), in commit-sized parts.*
+1. Seeding at the first Reference Apply, and removing `applyAccepted` for Change Alerts.
+2. The shared effective-settings function, with its states and asset forms, adopted by every reader in the
+   acquisition table: editors read-only, readiness, mosaic description and execution, alert execution, and
+   observations.
+3. The `processing` metadata in both segment-capable exports.
+
+Deferred: the "Use reference settings" action. Recorded follow-up: BAYTS Alerts' `applyAccepted`
+(`processingOptions`) needs its own audit.
+
+*Acceptance tests*, asserting displayed values, the applied model and operation holds:
+- **Seeding:**
+  - A new recipe's first Reference Apply seeds editable values in the same action. With Sources opened afterwards,
+    the evidence answering again writes nothing.
+  - A reference draft cancelled writes nothing. A second reference applied in the wizard seeds nothing.
+  - Enter/Next submission seeds exactly as Apply does.
+  - A selection or evidence change at the last moment seeds from the current selection only.
+- **Reopen and producer edits:**
+  - A saved recipe with overrides, reopened fresh, is unchanged.
+  - A producer edit of an editable field changes nothing. An edit of `SR` → TOA shows TOA read-only, and band
+    options, `MONITORED_MEASURE`, the mosaic bands, alert execution and observations all use TOA. The saved model is
+    unchanged.
+  - A radar producer without speckle keys is effective `NONE`/`ELLIPSOID`, whatever the consumer saved.
+- **Assets:**
+  - One case for each form: top-level `processing`, top-level `recipe_options`, nested `formattedProperties`, and
+    `surfaceReflectance` alone.
+  - An asset recording nothing: the field is editable and labelled not recorded, and execution uses the consumer's
+    value.
+  - Missing metadata is the editable fallback.
+  - A malformed governing form is unreadable and holds operations; it does not fall through.
+  - A valid higher form wins over a malformed lower one.
+  - Repairing or re-exporting the asset releases the hold.
+  - A complete legacy `recipe_options` lacking radar keys is effective `ELLIPSOID`/`NONE`; a partial imported one
+    leaves those keys not recorded.
+  - A pending read shows checking and holds; a failed read is unavailable and does not fall back.
+  - A recorded `dateFormat` is read-only and wins in execution. An unrecorded one survives reopening.
+- **Observations (gee):** a Change Alerts request reads the producer record or the asset's properties and builds the
+  collection with its `SR`. An unreadable reference is refused as unavailable. A producer's Classification is never
+  loaded. The existing reference-independent `loadObservations` cases are rewritten to the new contract.
+- **Exports (gee):** both exports write `processing` from the executed producer, matching what `getCollection$`
+  reads, and it reads back through the asset contract.
+
+**S5 revised proposal: independent review (2026-10-26).** The revised ownership, first-Apply seeding, editable
+unrecorded-asset fallback, export metadata and per-reader acquisition address the previous review. No further broad
+ownership audit is requested before implementation. The following metadata correction can be incorporated directly
+in the implementation packet rather than requiring another standalone proposal round.
+
+- **Absent and malformed metadata are different evidence.** `NOT_RECORDED` must mean that the applicable setting is
+  actually unrecorded, not that a present authoritative form could not be parsed or validated. A malformed canonical
+  `processing` property must not silently fall through to stale `recipe_options` or Consumer settings and label
+  them "not recorded". Report the affected processing facts as unreadable/unavailable through the existing hold
+  path, with clear REF feedback. Valid higher-priority facts need not be rejected for irrelevant lower-priority
+  metadata. Retain lenient editable fallbacks for genuinely absent older-asset metadata. Regress the missing,
+  malformed, valid-priority and repair cases.
+- **Normalise recognised metadata according to its contract.** A complete legacy producer-options record may omit
+  parameters that execution defaults (for example radar geometric correction and speckle settings); where that
+  legacy form establishes those defaults, do not accidentally replace them with the Consumer's old copies. State
+  how complete recognised forms and genuinely partial metadata are distinguished. Do not infer completeness or
+  scientific equivalence from arbitrary imported properties.
+- **Reference Apply already has the relevant guard.** `SourceCandidate.refused()` reads the current section status,
+  `recipeFormPanel` exposes it through the form's blocked callback, and `Form.Panel.apply()` refuses an invalid
+  form before any writes. Existing `changeAlerts/referenceRequirement.test.jsx`, "shows itself busy while it is
+  checked ... held back until it is known to suit", checks Apply while asset metadata is pending. Reuse that
+  mechanism, extending the evidence needed for seeding if necessary; retain first-wizard-Apply, Enter/Next,
+  last-moment selection/evidence changes and Cancel coverage. An accessor must return current, authorised candidate
+  facts, rather than merely any cached answer.
+
+The review continues to recommend the four product choices: first-Reference-Apply seeding once, editable labelled
+fallbacks for truly unrecorded asset settings, reference-owned speckle settings when known, and a deferred copy-again
+button. These recommendations are not a record of user approval. Shared observation scope deliberately changes only
+to acquire the required processing facts; it must still avoid executing segments or loading unrelated training data.
+Code and existing regressions were inspected; no tests were run and no production code changed in this design-only
+review. `git diff --check` passed. Nothing staged, committed or pushed.
+
+**S5 proposal ready for implementation packet (2026-10-26; final design review).** The in-place revised proposal
+now distinguishes missing, malformed and failed-read metadata, defines recognised complete versus partial legacy
+forms and their defaults, and reuses the existing current-candidate submission guard. No further technical design
+correction is requested. Carry the documented round-trip, seeding/race, per-reader agreement and evidence-state
+regressions into implementation. The nested legacy asset form remains subject to the stated read-only metadata
+check; a `recipe_type` marker identifies a declared format, not independent proof of origin or scientific
+comparability. The four product recommendations still await the user's agreement; this review does not record
+that agreement. Only documentation was reviewed/edited; no tests were rerun, no production code changed and
+`git diff --check` passed. Nothing staged, committed or pushed.
+
+**S5 product decisions, agreed (2026-10-26).** The user says "Agreed, but make sure we capture the deferred button.
+Implementation prompt." This approves first-Reference-Apply seeding once during creation, labelled editable
+fallbacks for truly unrecorded asset settings, reference-owned speckle settings when known, and deferring the
+explicit copy-again button. The earlier audit/review records' pending-decision notes are historical; the current
+"S5 revised proposal" and its acceptance criteria are ready for implementation without asking these choices again.
+S5 and S6 remain required before push. No implementation or commit is claimed by this decision record.
+
+**S5 implementation (2026-10-26; uncommitted, browser recheck pending).**
+
+The revised proposal and agreed product decisions above are implemented; the earlier S5a/S5b alternatives remain
+historical. Change Alerts' observation has no `applyAccepted` configuration writes. It publishes processing facts
+only, using the declared segment-provider chain rather than the producer's full dependency closure. The existing
+closure loader accepts a scoped edge reader; other observers retain the default full closure. Asset references read
+their metadata without looking up a private producer.
+
+- `changeAlerts/processing.js` is the shared pure derivation. Each required field carries `REFERENCE`, `RECORDED`,
+  `NOT_RECORDED`, `UNREADABLE`, `PENDING` or `UNAVAILABLE`. It normalises producer execution defaults, retains consumer
+  scene/filter/mask/band choices, and supplies no effective fallback for unreadable or unresolved facts.
+- REF seeds only consumer-owned fields on the first Apply of genuinely new creation. The current SourceCandidate
+  accessor verifies its observation owner, basis and acquisition state. The existing blocked form and final Apply
+  guard cover clicks, Enter and Next; the reference and defaults are one action. Family is derived from the producer
+  collection when seeding, so a missing/stale producer `dataSetType` label cannot make those initial defaults incoherent.
+  No later family or monitored-band choice is silently repaired.
+- Sources' band options, monitored-measure checks, PRC fields, REF date format, period-mosaic descriptions and
+  visualizations, alert collections, period-mosaic execution and observations use the effective settings. PRC uses
+  the shared controls with presentation-only inputs; Apply preserves reference-owned saved copies, including absent
+  keys. A partially recorded correction locks only that correction. Editable drafts and Cancel remain independent
+  of incoming reference facts. The legacy radar `strongScatterers` toggle is not read by the time-series collection;
+  this packet does not change that execution policy. The speckle filters and threshold/size parameters actually read
+  by the collection follow the producer.
+- Recorded asset dates take precedence in Change Alerts, including its chart interpretation. CCDC Slice keeps its
+  previous date policy via the existing facts loader's default scope. The processing requirement uses the existing
+  REF/operation-hold path; malformed metadata is a confirmed refusal, failed acquisition remains unavailable.
+- Observations intentionally acquire reference processing before `observedCollection` and existing requested-band
+  readiness. The processing facts read builds no segments and loads no producer Classification/training dependencies.
+  The execution authorization added by the correction below separately follows the live reference prerequisites.
+  The former reference-independent tests now assert this contract.
+- Both computing-segment export paths write top-level JSON `processing` from the actual executed producer. The
+  specialized endpoint remains CCDC even if the submitted type says otherwise; generic exports follow declared
+  preserving edges and use that producer's date format. Unrelated exports discard caller-supplied `processing`.
+  Existing segments of unknown provenance cannot acquire an invented complete producer record merely by being
+  re-exported. No existing asset is rewritten.
+
+Compatibility: results can change where a consumer's saved processing copies drifted from its reference. Saved
+copies stay untouched and remain fallbacks only for genuinely unrecorded asset settings. A present malformed
+metadata form holds the affected operation instead of falling through. An asset with no recorded date format still
+needs the consumer to select its date representation. Existing legacy complete CCDC option records establish
+execution defaults for omitted keys; unmarked partial imports establish only their stated fields.
+
+Verification uses mounted editors and the actual form/candidate lifecycle, plus pure metadata round trips and
+server tests recording real collection arguments behind substituted external services. Coverage includes atomic
+first Apply/Enter/Next, pending/late/Cancel, subsequent-reference preservation, a live producer change during an
+open PRC draft, partial ownership, malformed metadata and repair, scoped observations, both export routes, and
+unchanged CCDC Slice behavior. Focused verification passed 721 tests: 346 GUI, 141 shared and 234 gee tests, with at
+most two workers. The shared form and evidence/output-requirement tests and unchanged BAYTS consumers are included.
+No full GUI suite or build was run.
+
+Read-only live check: authentication with the existing GEE service account succeeded, but `getAssetRoots` returned
+an empty list. No real segment-export asset was available to verify legacy `formattedProperties`; nested shapes are
+covered by fixtures only. This is not live metadata-shape or pixel verification.
+
+Combined browser recheck (no repeat of accepted S1–S4 cases):
+1. Create Change Alerts over a CCDC and advance REF. Verify the proposed monitoring defaults; edit masking/data
+   choices, finish creation, reopen and Refresh. Those consumer edits must remain.
+2. Keep PRC open with an editable mask change. Change the producer's SR/BRDF or radar processing, then return.
+   Read-only values must follow it, the editable draft must remain, and Apply must save only consumer choices.
+3. Replace the reference (also try going back in the wizard). Monitoring choices must not be reset. Cancel must
+   leave the applied reference and availability unchanged.
+4. Use a recorded segments asset and, separately, one missing processing metadata. Check read-only recorded fields,
+   labelled editable fallbacks and recorded date precedence. If a disposable asset already has malformed metadata,
+   check REF's explanation/holds and recovery after its metadata is repaired/refreshed; no asset rewrite is automatic.
+5. Compare a period mosaic, alert preview and observations after a producer processing change. Required settings
+   must agree; this does not establish pixel-level scientific equivalence.
+
+S6 remains required before push. Its monitoring-choice validation and remaining chart lifecycle agreement are not
+implemented here. The copy-again action and BAYTS audit below remain separate follow-ups.
+
+**S5 implementation: independent review (2026-10-26; correction required before commit).**
+
+The final `recipeFormPanel.jsx` change was reviewed after implementation finished. Its presentation and serialization
+hooks are optional and currently used only by Change Alerts. The candidate accessor exposes the existing candidate;
+the final submission check updates that candidate before authorizing Apply/Enter/Next. No unrelated caller opts into
+the presentation hooks. The review found no defect in those shared-form changes, and mounted ordinary input-panel,
+BAYTS, form-submission and Change Alerts controls passed. This does not replace the pending browser checks.
+
+- **[P1] Radar details dialog repeatedly resets its local form.**
+  `mosaic/panels/radarMosaicOptions/modalSubformPanel.jsx`, `componentDidUpdate`, calls
+  `inputs[name].setInitialValue(source.value)` for every reference-owned field on every update, including when its
+  value has not changed. `withForm.setInitialValue` always sets state, which renders the child again and calls the
+  same update handler. A mounted probe using the actual subform HOC and actual form reproduced React's
+  "Maximum update depth exceeded" error with recorded `kernelSize` and an editable second field; the same dialog
+  with no reference-owned fields passed. Activation and panel chrome were substituted in this small probe, while
+  the form and the update lifecycle ran unchanged. Partial asset metadata can produce that mixed ownership; a
+  radar spatial-details dialog also retains its ordinary `strongScatterers` input, so complete processing ownership
+  does not by itself make every details action unavailable.
+- **Required correction:** update a local read-only baseline only when necessary, or remove the redundant local
+  synchronization where the field already reads its parent. Keep editable drafts and Cancel independent. Do not
+  change shared form dirtiness/state semantics to fix this loop. Add a mounted regression for opening the mixed
+  dialog, a reference change while an editable detail is being edited, and the ordinary radar control. Verify that
+  applying editable fallbacks still preserves recorded saved copies.
+- **Independent checks:** 378 existing GUI tests passed across Change Alerts, BAYTS, ordinary process input panels,
+  form submission and output requirements; 90 shared tests and 211 gee tests passed. A separate two-case temporary
+  probe had one passing ordinary control and one failing reference-owned case. The first attempts at that disposable
+  probe required test-store/field setup corrections; the stated failure is the final React update-loop reproduction.
+  An initial shared command named one test at the wrong path; the corrected source-adjacent test and the remaining
+  shared files passed. No full suite, build, browser or live asset check was run during this review.
+- **Handoff evidence:** the removed probe is retained at `/tmp/sepal-s5-review-radar-probe.test.jsx`, with its final
+  failure/control and ordinary-panel results in `/tmp/sepal-s5-review-form.log`. No production file was changed or
+  swapped by the reviewer. The temporary test was removed from the repository. Nothing staged, committed or pushed.
+
+**S5 corrections: live-reference readiness and radar details (2026-10-26; uncommitted).**
+
+The user reproduced Change Alerts running a CCDC whose selected Classification had two input images. Shared
+`MULTIPLE_CLASSIFIER_INPUTS` already refused that CCDC; Change Alerts' image declaration required only reference
+resolution. A failing mounted reproduction still offered Retrieve and omitted REF feedback, and server observations
+and export probes accepted it. Change Alerts now declares the reference's `IMAGE_OUTPUT` as its shared analysis
+prerequisite. This covers its image, period-mosaic map products and both pixel operations; the segment chart already
+required the reference image and keeps that behavior. No input-count rule or exception-to-validation translation is
+added. Missing training points provide a separate propagation control. Known output descriptions remain separate.
+
+REF uses the existing `referenceFeedback` and output-candidate binding, including the upstream computation's existing
+repair wording. Confirmed findings block REF Apply, Next and Done; Enter/direct submission use the same form path,
+which updates and rechecks all blocking output candidates against current values and state before publishing. A usable
+replacement or upstream repair releases the form. An unchanged editor remains unedited; Back and Cancel retain their
+existing behavior. Other sections do not acquire duplicate diagnoses. Selected-source and output-candidate feedback
+can share one field without hiding each other; each candidate keeps its own declared submission policy.
+
+The settings observation remains scoped to processing facts. Operation authorization separately uses the ordinary
+readiness traversal, which may read the referenced computation's Classification and training evidence. Observations
+check that prerequisite before building their projected collection. Shared asset references still read only the asset,
+without its producer or Classification. Generic asset exports previously built beside their readiness check; they now construct the requested image only
+after the existing resolver passes, as the specialized CCDC export already does. Asset exports and segment/observation
+chart routes refuse before product construction. The direct `/image/preview` route still constructs `ImageFactory` without a shared readiness
+guard: GUI layers now withdraw correctly, but a direct/stale preview request can still reach an execution error. This
+existing server-preview gap remains explicit; no new preview-route guard is part of this correction.
+
+Radar details now synchronize reference-owned modal values only when their value differs. The unconditional
+`setInitialValue` call caused a render/update loop. Mounted mixed-ownership cases preserve the editable draft through
+incoming reference updates, Apply/Cancel behavior and saved processing copies; an ordinary editable radar control is
+included. No additional S6 monitoring-choice validation, copy-again action or BAYTS changes are made.
+
+**Shared reference-editor policy correction (subsequent user decision).** The previous presentation-only exceptions
+for shared input references (`inputRecipeFeedback`) and selected Classifications (`classificationReferenceFeedback`)
+are removed. A confirmed shared finding that makes the edited selection unusable now blocks committing it through
+the existing output candidate, just as REF does. The first audit had treated their explicit presentation-only comments
+as intended policy; the user has superseded that policy. Old tests expecting enabled Apply despite confirmed
+Classification errors are updated. No new validator, wizard-specific predicate or form framework is introduced.
+Phenology keeps its conditional operation scope: a native band still needs no classifier, so an unrelated Classification
+finding does not block that valid alternative.
+
+The remaining opt-outs duplicate existing field rules, and their reasons are recorded beside the declarations:
+- Masking's missing mask selection: the active recipe/asset selector's `.notBlank()` already blocks submission.
+- Class Change's missing source legend: `legendEntries.notEmpty()` already blocks submission.
+- PyEO's empty FROM/TO classes: `changeFromClasses.notEmpty()` and `changeToClasses.notEmpty()` already block submission.
+
+Mounted checks exercise their existing form rules, plus Classification selectors, actual creation wizards and the
+shared input editors for Stack, Band Math, Classification, Regression and Unsupervised Classification. Confirmed
+failures hold Apply/Next/Done and Enter/direct submission without changing the applied model or advancing; repair or
+replacement releases them. Unchanged Close, Cancel, Back, input removal and valid alternatives retain their normal
+behavior. The shared finding determines feedback and blocking; translated message text is never parsed for validity.
+
+Compatibility: existing saved recipes are not rewritten. Editing a confirmed unusable recipe selection now requires
+repair, replacement or removal before committing; leaving an unchanged editor with Close is still possible. Pending
+or temporarily failed evidence adds no confirmed selection error. Existing source/form acquisition holds remain in
+force. Shared findings determine the decision independently of their translated wording.
+
+Correction verification: 969 focused tests passed: 422 GUI tests across 19 files, 301 shared tests across 6 files and
+246 gee tests across 6 files. At most two test workers ran concurrently; services were substituted. The regressions
+include the actual Change Alerts and CCDC creation wizards (Next/Done, Enter/direct submission, repair/replacement and
+last-moment state changes), open chart/Retrieve withdrawal, alert and period-mosaic layers, missing training points,
+asset independence, refused export construction, all five input-editor families, Phenology native alternatives,
+remaining field-rule exceptions and radar mixed ownership/ordinary controls. ESLint passed for all 57 changed JS/JSX
+files in the uncommitted packet and `git diff --check` passed. No full suite, build, browser check or new live Earth
+Engine verification was run for these corrections. The earlier read-only asset-metadata verification limit remains.
+
+Browser recheck: start from a usable CCDC/Classification and Change Alerts, open an alert or period-mosaic layer and a
+chart/Retrieve. Add a second Classification input, and separately remove its training points: REF must explain the
+reference, layers withdraw, actions disable and open operation panels close. Repair and reopen them. During creation,
+select the broken CCDC: Next/Done must stay disabled and Enter must neither apply nor seed; Back/Cancel retain their
+normal exit paths. Finally open mixed recorded/fallback radar details, edit a fallback and refresh the reference;
+verify no loop, preserved draft, Cancel and saved copies. Automated coverage is recorded in the handoff; no browser
+check is claimed.
+
+**Full `blocksApply: false` audit: independent review (2026-10-26).**
+
+The user reproduced CCDC Sources explaining a two-input Classification while still allowing Apply, and requested
+an audit of every exception. A repository-wide search found six declarations in five production files at the audit's
+start. The two consumers of this flag are the editor's invalid-form wrapper and its current-state submission guard
+in `recipeFormPanel.jsx`; both deliberately ignore a candidate refusal when the declaration sets the flag false.
+Next and Done use the same form validity and Apply path, so there is no separate wizard validator missing here.
+
+The earlier S5 corrections paragraph accepted collection/input-reference feedback merely because its declared
+policy said "presentation only". That conclusion is superseded: the user requires a confirmed finding against the
+selection being committed to block that commit. Existing Classification-feedback tests explicitly asserted enabled
+Apply despite the finding, so a passing suite did not establish the desired interaction.
+
+| Exception at audit start | Callers and other guards | Audit result |
+| --- | --- | --- |
+| `collectionClassifierRequirements.js`: Classification reference feedback | CCDC, Time Series, Phenology and PyEO; generic reference failures have no corresponding local field predicate | Inappropriate exception. Its own findings must block the candidate through the existing form binding, retaining each type's operation scope and valid native controls. |
+| `panels/inputImagery/inputImageryRequirements.js`: input recipe feedback | Stack, Band Math, Remapping, Classification, Regression and Unsupervised Classification; presence, band and duplicate-source rules do not establish upstream executability | Same inappropriate exception. Scope the candidate to the edited input and block its confirmed upstream findings. A healthy item must remain editable independently of a different broken input. |
+| `masking/maskRequirements.js`: missing mask | Masking's `imageMask` editor; the active recipe/asset selector has a non-skipped `notBlank` rule, while the inactive selector is skipped | Justified duplicate explanation. Empty selection already invalidates the form; actual wizard Next/Done refusal and selection repair are covered by the mounted mask-editor tests. |
+| `classChange/legendRequirements.js`: missing legend | Both From and To use the same exported `fields`; `legendEntries.notEmpty()` checks the list independently of whether its error has been displayed | Justified duplicate explanation. Actual field definitions mounted in `FormPanel` refuse Apply, Next, Done and direct submission, then permit submission after a legend is supplied. |
+| `pyeoAlerts/sourcesRequirements.js`: empty FROM classes | Sources uses `changeFromClasses.notEmpty(...)`, with no skip; clearing the list cannot pass the form | Justified duplicate explanation. The actual mounted Sources panel holds Apply and direct submit, preserves the applied model, and accepts the repaired list. |
+| `pyeoAlerts/sourcesRequirements.js`: empty TO classes | Sources uses `changeToClasses.notEmpty(...)`, with no skip, plus its separate overlap rule | Same result as FROM; independently exercised in the mounted panel. |
+
+During this audit the implementor removed the two inappropriate flags; those production edits are the implementor's.
+A final repository search leaves only the four duplicate-explanation exceptions above. Change Alerts REF's flag was
+already removed before this audit started. Reused training-data editors already use the default blocking policy.
+This completes the exception inventory; it does not claim that every unrelated form or validation policy was audited.
+Review the implementor's full correction and its affected-caller regressions separately when they finish.
+
+Independent verification used one worker: 53 unique focused cases passed across the existing Masking editor and form
+submission tests, the PyEO Sources fixture, and five temporary audit cases. The new cases were two mounted PyEO
+empty-list/refusal/repair checks and three Class Change field-guard checks for Apply/Next/Done. The Class Change checks
+used the actual exported fields and real form/panel, with panel contents and wizard context reduced to the guard
+under audit; they were not browser or complete Class Change editor tests. An initial PyEO probe assertion forgot
+the extra class deliberately selected to make the repaired form dirty; correcting that expectation left both
+empty-list cases passing. The 21 existing PyEO cases were not repeated in that targeted rerun.
+
+No production code was changed by the reviewer. Both temporary files were removed from the repository and retained
+as `/tmp/sepal-blocks-apply-class-change.review.test.jsx` and `/tmp/sepal-blocks-apply-pyeo.review.test.jsx`.
+Logs: `/tmp/sepal-blocks-apply-audit.log` and `/tmp/sepal-blocks-apply-audit-pyeo.log`. No full suite or browser run.
+The behavior contract now requires each nonblocking explanation to identify the actual guard enforcing the same
+invalidity, with button and direct-submission evidence; a comment declaring intent alone is insufficient.
+
+**Creation/AOI browser feedback corrections (2026-10-27; uncommitted).**
+
+The user found Stack IMG's Done inert and CCDC unavailable as another recipe's AOI source. Both were reproduced
+through mounted real controls before editing production code: six IMG Done/Enter cases failed with
+`valuesToModel is not a function`, and the AOI picker omitted CCDC.
+
+- `recipeFormPanel` now preserves a deliberate `valuesToModel: null`. List panels apply their entries separately;
+  the S5 serialization hook had wrapped null as a function and attempted to serialize when finishing the list's
+  wizard step. Done/Enter now close the step and call the wizard's completion without rewriting its applied model.
+  Mounted controls cover shared Stack/Remapping, Classification-family and Band Math input lists. The existing
+  processing serialization hook and confirmed-reference submission guards remain covered.
+- The AOI source picker now uses separate geometry eligibility in the existing GUI type registry. Optional
+  `geometrySource` defaults to `imageSource`; CCDC opts in explicitly, since its `getGeometry$` reads its configured
+  AOI. Image-input eligibility remains false for CCDC. The selector keeps self-reference and project filtering and
+  reads bounds without requesting bands or the selected recipe's image. Other excluded types receive no implicit opt-in.
+
+Verification: 262 focused GUI tests passed across nine files, at most two workers, including the failing witnesses,
+ordinary image-picker controls, AOI serialization, existing reference blocking/creation wizards and processing
+ownership, removal and form submission. ESLint passed for the six changed JS/JSX files and `git diff --check` passed.
+No full suite, build, live Earth Engine geometry check or browser check was run. Recheck by finishing a new Stack's
+IMG step with Done (also Enter), then selecting a CCDC in another recipe's AOI → Asset/Recipe → Recipe selector.
+
+**S5 PRC presentation correction (2026-10-27; uncommitted).** Restore the original optical, radar and Planet
+processing labels. Ownership, including genuinely unrecorded editable asset fallbacks, uses the standard label
+help tooltip instead of appended label text. Existing explanatory help is retained. An explicit shared choice-widget
+`readOnly` option preserves the highlighted selection while preventing changes; ordinary disabled groups keep
+their previous behavior. This adds no custom CSS.
+
+Spatial and multitemporal speckle summaries open details only if a displayed parameter is editable. A known
+reference's parameters therefore remain visible without a redundant disabled editor. An unrelated unrecorded
+parameter that the current filter does not use cannot make the summary actionable. Partially recorded asset
+settings still allow their actual fallback fields to be edited beside read-only parameters. Change Alerts hides the
+legacy `strongScatterers` toggle: the time-series collection does not consume it and continues to use its existing
+retention default. Its thresholds follow the existing ownership derivation. The hidden saved toggle, other
+reference-owned copies, editable drafts and Cancel are preserved. Other radar consumers retain their toggle.
+
+Mounted regressions cover unchanged labels, selected read-only choices, non-actionable spatial/multitemporal
+summaries, relevant fallback fields, nested Apply/Cancel and preservation of saved reference copies. The existing
+mixed-ownership update-loop regression and ordinary editable control remain included. Before-correction probes
+reproduced the missing highlight and changed label. Focused GUI verification passed 166 tests in four files with
+at most two workers; ESLint on the 12 affected JS/JSX files and `git diff --check` passed. No full suite or build was
+run. Browser appearance still needs a recheck; mounted DOM tests do not establish visual spacing.
+
+Browser recheck: in radar Change Alerts, open both simple and advanced PRC. Confirm the familiar labels, highlighted
+read-only filter/correction choices and help tooltip explaining ownership. Known-reference speckle summaries must
+not open a dialog. Check that consumer orbit/masking controls still work, and that a genuinely unrecorded asset
+fallback can be edited and cancelled without changing the saved reference-owned copies. In ordinary Radar Mosaic,
+speckle details and its strong-scatterer toggle must remain editable. Optical/Planet PRC should retain their original
+labels and selected read-only values too.
+
+**PRC user recheck and separate error-wording correction (2026-10-27).** The user reports that labels,
+disabled controls and selected highlights look correct, and that an open PRC form follows producer changes only
+for the disabled/reference-owned properties. This confirms those browser cases, not the remaining S5/S6 cases.
+The remaining short ownership recheck is an editable orbit/masking change through Apply/reopen and Cancel,
+plus reference replacement preserving the consumer's monitoring choices.
+
+A separate reported layer failure displayed only "User memory limit exceeded." The shared English
+`gee.error.earthEngineException` translation was discarding the backend's Earth Engine attribution. It now renders
+"Google Earth Engine: {earthEngineMessage}", so all consumers of that descriptor, including layers and task status,
+retain the origin. French and Spanish already identify Earth Engine; direct tile failures already name it too.
+This changes wording only, without relabeling ordinary SEPAL errors or changing validation, holds or retry behavior.
+Real-translation mounted probes reproduced the layer/task omission before the correction; 47 focused tests in
+seven files then passed with at most two workers, along with ESLint and `git diff --check`. No full suite, build or
+live Earth Engine error request was used. The new error wording has not been browser-checked.
+
+**S5 acceptance before commit (2026-10-27).** The user subsequently reported "All good" after the remaining
+short PRC ownership checklist, and authorised committing S5 and the bounded follow-up corrections. Preserve the
+verification limits recorded above; this acceptance does not complete S6 or the final integrated verification before
+push. The copy-again action, BAYTS audit and broader preview-server follow-ups remain deferred as documented.
+
+**Deferred S5 follow-up: "Use reference settings" action (agreed 2026-10-26; not implemented).** Add a deliberate
+action for an existing Change Alerts recipe to copy the current reference's consumer-owned editable monitoring
+defaults again. This is not part of required S5/S6 and does not block push.
+
+- Propose the editable values in the normal form and show what will change; Apply commits and Cancel preserves
+  the applied model. Reference-owned values remain derived rather than copied.
+- Use current recipe/asset evidence; unavailable optional metadata makes copying unavailable, never a guess or a
+  lookup of a private producer. A stale answer or changed selection cannot overwrite edits.
+- No automatic copying on replacement, reopen, Refresh or producer edits. Exclude Classification, breakpoint bands,
+  CCDC fitting settings, monitoring dates and Change Alerts' detection thresholds.
+- Acceptance: explicit copy changes only the proposed editable monitoring fields; Cancel changes nothing; unrelated
+  settings survive; missing metadata and a last-moment reference change have clear, non-destructive outcomes.
 
 **F7. Copy/paste layer visualization parameters.**
 
@@ -5294,8 +5985,8 @@ separate decision changes it. Broader coverage listed under "Deferred beyond thi
 - **Release scope reaffirmed 2026-10-26.** S4 can be committed as a separate reviewed checkpoint before starting
   S5. S5 (Change Alerts settings ownership and unwanted overwrites) and S6 (validation/editor/chart agreement)
   remain required before pushing this robustness round. A passing final GUI run alone does not complete that work;
-  neither item has been scoped out. Start S5 with its ownership audit and the concrete editable-copy recommendation,
-  which is still awaiting a product decision.
+  neither item has been scoped out. S5's ownership audit is complete and the user agreed its four product choices
+  on 2026-10-26; implement the revised proposal. Only the explicit "Use reference settings" button is deferred.
 - Integrate origin safely and run the final full GUI campaign on the resulting tree after the remaining slices.
   Keep the focused S5/S6 browser rechecks bounded to the changed paths; do not repeat already accepted S1-S4 cases
   without a change that affects them. Committing S4 does not authorise a push.

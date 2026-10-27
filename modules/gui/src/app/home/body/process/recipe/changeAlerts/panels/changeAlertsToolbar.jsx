@@ -16,6 +16,7 @@ import {Toolbar} from '~/widget/toolbar/toolbar'
 import {RetrieveButton} from '../../retrieveButton'
 import {withSourceProblems} from '../../selectedSource'
 import {RecipeActions} from '../changeAlertsRecipe'
+import {presentProcessingInputs, preserveProcessingCopies, settingsOf} from '../processingSettings'
 import {hasSegmentDescription} from '../referenceEvidence'
 import styles from './changeAlertsToolbar.module.css'
 import {CHART_OPERATIONS, ChartPixel} from './chartPixel'
@@ -26,6 +27,7 @@ import {Retrieve} from './retrieve/retrieve'
 import {Sources} from './sources/sources'
 
 const mapRecipeToProps = recipe => ({
+    processing: settingsOf(recipe),
     initialized: selectFrom(recipe, 'ui.initialized'),
     describedSource: hasSegmentDescription(recipe),
     sources: selectFrom(recipe, 'model.sources'),
@@ -38,8 +40,9 @@ class _ChangeAlertsToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, initialized, describedSource, sources, sourceProblems} = this.props
+        const {recipeId, initialized, describedSource, sources, sourceProblems, processing} = this.props
         const dataSets = Object.keys(sources.dataSets)
+        const presentation = {presentInputs: presentProcessingInputs(processing), modelToApply: preserveProcessingCopies(processing)}
         return (
             <PanelWizard
                 panels={['reference', 'date', 'sources']}
@@ -51,14 +54,16 @@ class _ChangeAlertsToolbar extends React.Component {
                 <Date/>
                 <Sources/>
                 {dataSets.includes('SENTINEL_1')
-                    ? <RadarOptions/>
+                    ? <RadarOptions {...presentation} showStrongScatterers={false}/>
                     : dataSets.includes('PLANET')
                         ? <PlanetOptions
+                            {...presentation}
                             title={msg('process.timeSeries.panel.preprocess.title')}
                             source={sources.dataSets['PLANET'][0]}
                             forCollection
                         />
                         : <OpticalOptions
+                            {...presentation}
                             title={msg('process.timeSeries.panel.preprocess.title')}
                             forCollection
                         />

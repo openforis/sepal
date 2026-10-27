@@ -40,8 +40,8 @@ export const classifiedOutputRequirements = (sources, field) => sourcesFieldRequ
 // The Classification a recipe's Sources select, where what the recipe does with it needs that Classification to run
 // (lib/js/shared/src/recipe/type/pyeoAlerts.js, phenology.js, ccdc.js, timeSeries.js) - for Time Series and CCDC, trained,
 // whatever bands are asked: its readiness findings, which stay that recipe's, are named beside the classification field,
-// whose own sections say why, and mark Sources. Presentation alone: the output read holds the
-// operations, and a draft is not held back for it.
+// whose own sections say why, and mark Sources. The same confirmed finding blocks committing the draft selection;
+// its operation scope remains the shared declaration's, including Phenology's native-band alternative.
 export const classificationReferenceFeedback = sources => ({
     ...referenceFeedback({
         section: sources,
@@ -51,7 +51,6 @@ export const classificationReferenceFeedback = sources => ({
     editor: {
         panel: sources.id,
         input: 'classification',
-        blocksApply: false,
         explain: true,
         candidate: (recipe, values) => ({...recipe, model: {...recipe.model, sources: values}})
     }

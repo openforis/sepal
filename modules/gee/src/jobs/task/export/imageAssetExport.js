@@ -5,7 +5,7 @@ import {withOutputBands} from '#sepal/ee/outputBands'
 import {formatProperties} from '#sepal/formatProperties'
 import {encodingOfBands} from '#sepal/recipe/output/bandEncoding'
 
-import {judgesRequest, resolveImageOutput$, resolveRequestedImageOutput$, selectedBandEncoding} from './imageOutput.js'
+import {resolveRequestedImageOutput$, selectedBandEncoding} from './imageOutput.js'
 import {startImageToAssetExport$} from './toAsset.js'
 import {toVisualizationProperties} from './visualizations.js'
 
@@ -25,7 +25,8 @@ const source$ = ({recipe, bands, visualizations, scale, properties, ...retrieveO
     built$(recipe, withOutputBands(bands)).pipe(
         map(({image, geometry, imageOutput}) => {
             const encoding = encodingOfBands(selectedBandEncoding(imageOutput, bands.selection))
-            const formattedProperties = formatProperties({...properties, scale})
+            const {processing: _processing, ...submittedProperties} = properties || {}
+            const formattedProperties = formatProperties({...submittedProperties, scale})
             const visualizationProperties = toVisualizationProperties(visualizations, bands)
             return {
                 ...retrieveOptions,
@@ -33,20 +34,19 @@ const source$ = ({recipe, bands, visualizations, scale, properties, ...retrieveO
                 region: geometry.bounds(scale),
                 scale,
                 bandEncoding: encoding,
-                properties: {...formattedProperties, ...visualizationProperties}
+                properties: {...formattedProperties, ...visualizationProperties,
+                    ...(imageOutput.processing && {processing: JSON.stringify(imageOutput.processing),
+                        ...(imageOutput.segmentDateFormat !== undefined && {dateFormat: imageOutput.segmentDateFormat})})}
             }
         })
     )
 
-// A CCDC asked for measures its Classification computes trains that Classification for them, so it is built only once
-// what its image output requires, and then what those measures add, is known to be met: judged with what it is built
-// with (resolveRequestedImageOutput$). Any other recipe is built beside its check (imageOutput.js).
+// Authorize every exported product before constructing it. CCDC's requested measures can add requirements beyond
+// its canonical output; the existing resolver checks those after shared readiness too.
 const built$ = (recipe, request) =>
-    judgesRequest(recipe)
-        ? resolveRequestedImageOutput$(recipe, request).pipe(
-            switchMap(imageOutput => build$(recipe, request, of(imageOutput)))
-        )
-        : build$(recipe, request, resolveImageOutput$(recipe))
+    resolveRequestedImageOutput$(recipe, request).pipe(
+        switchMap(imageOutput => build$(recipe, request, of(imageOutput)))
+    )
 
 const build$ = (recipe, request, imageOutput$) => {
     const factory = ImageFactory(recipe, request)

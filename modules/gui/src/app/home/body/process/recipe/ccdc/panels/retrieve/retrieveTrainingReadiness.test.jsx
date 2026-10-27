@@ -34,7 +34,7 @@ vi.mock('~/apiRegistry', () => ({default: {
     },
     recipe: {
         load$: id => of(fake.stored[id]),
-        loadAll$: () => of(LISTING),
+        loadAll$: () => of(fake.creation ? Object.values(fake.stored).map(({id, type, revision, projectId}) => ({id, type, revision, projectId, name: id})) : LISTING),
         save$: request => saveRecipe$(request)
     },
     project: {
@@ -73,20 +73,28 @@ vi.mock('~/widget/assetDestination', () => ({
 
 const {addRecipeType} = await import('../../../../recipeTypeRegistry')
 const {default: ccdc} = await import('../../ccdc')
+const {default: changeAlerts} = await import('../../../changeAlerts/changeAlerts')
+const {Retrieve: AlertsRetrieve} = await import('../../../changeAlerts/panels/retrieve/retrieve')
+const {Reference} = await import('../../../changeAlerts/panels/reference/reference')
+const {Date: AlertsDate} = await import('../../../changeAlerts/panels/date/date')
 const {default: classification} = await import('../../../classification/classification')
 const {default: opticalMosaic} = await import('../../../opticalMosaic/opticalMosaic')
 const {RetrieveButton} = await import('../../../retrieveButton')
 const {withSourceProblems} = await import('../../../selectedSource')
 const {Retrieve} = await import('./retrieve')
+const {Sources: CcdcSources} = await import('../sources/sources')
+const {Dates: CcdcDates} = await import('../dates/dates')
 const {forgetRecipeSaveState} = await import('~/app/home/body/process/recipe')
 
 addRecipeType(ccdc())
+addRecipeType(changeAlerts())
 addRecipeType(classification())
 addRecipeType(opticalMosaic())
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let root, store
+let firstListener = () => {}
 
 beforeEach(() => {
     vi.useFakeTimers({toFake: ['setTimeout', 'clearTimeout']})
@@ -95,6 +103,9 @@ beforeEach(() => {
     fake.submitted = []
     fake.projects = []
     fake.assetId = null
+    fake.creation = false
+    firstListener = () => {}
+    fake.wizardDone = 0
     watched.length = 0
 })
 
@@ -110,6 +121,129 @@ afterEach(async () => {
 // Read as the suites are defined.
 const CLASSIFIED_MEASURE = 'regression'
 const NATIVE_MEASURE = 'ndvi'
+
+describe('the actual CCDC Classification selection wizard', () => {
+    it.each([
+        [['sources', 'dates'], 'button.next', true, true],
+        [['sources'], 'button.done', true, true],
+        [['sources', 'dates'], 'button.next', false, false],
+        [['sources'], 'button.done', false, false]
+    ])('refuses the unusable Classification in %j before saving or advancing, and proceeds after repair', async (panels, forward, multiple, hasPoints) => {
+        const trainingData = hasPoints ? [COLLECTED] : []
+        await open({selected: [NATIVE], creation: panels, sourcesWizard: true, multiple, trainingData})
+        const original = select(['process.loadedRecipes', CCDC, 'model'])
+        await selectInField('process.ccdc.panel.sources.form.classification.label', CLASSIFICATION)
+        expect(button(forward).disabled).toBe(true)
+        expect(document.querySelector('[data-label="process.ccdc.panel.sources.form.classification.label"] [data-feedback="error"]')).not.toBe(null)
+        await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', bubbles: true})))
+        await act(async () => requestSubmit())
+        await settled()
+        expect(select(['process.loadedRecipes', CCDC, 'model'])).toBe(original)
+        expect(fake.wizardDone).toBe(0)
+        await holdInput(MOSAIC_INPUT)
+        await holdTrainingData([COLLECTED])
+        expect(button(forward).disabled).toBe(false)
+        await click(forward)
+        expect(select(['process.loadedRecipes', CCDC, 'model.sources.classification'])).toBe(CLASSIFICATION)
+        expect(document.querySelector('[data-label="process.ccdc.panel.sources.form.classification.label"]')).toBe(null)
+    })
+
+    it('accepts a usable Classification replacement for the refused one', async () => {
+        await open({selected: [NATIVE], creation: ['sources'], sourcesWizard: true, multiple: true})
+        await selectInField('process.ccdc.panel.sources.form.classification.label', CLASSIFICATION)
+        expect(button('button.done').disabled).toBe(true)
+        await selectInField('process.ccdc.panel.sources.form.classification.label', 'healthy-classification')
+        expect(button('button.done').disabled).toBe(false)
+        await click('button.done')
+        expect(select(['process.loadedRecipes', CCDC, 'model.sources.classification'])).toBe('healthy-classification')
+        expect(fake.wizardDone).toBe(1)
+    })
+})
+
+describe('the actual Change Alerts creation wizard', () => {
+    it.each([
+        [['reference', 'date'], 'button.next'],
+        [['reference'], 'button.done']
+    ])('blocks a confirmed broken reference in %j through buttons, Enter and direct submission, then proceeds after repair', async (panels, forward) => {
+        await open({selected: ['confidence'], alerts: true, creation: panels, multiple: true})
+        const original = select(['process.loadedRecipes', CCDC, 'model'])
+        await selectReference()
+        expect(button(forward).disabled).toBe(true)
+        expect(marked()).toEqual([]) // The draft has not changed the applied recipe's marks.
+        expect(document.querySelector('[data-label="widget.recipeInput.label"] [data-feedback="error"]')).not.toBe(null)
+        await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', bubbles: true})))
+        await act(async () => requestSubmit())
+        await settled()
+        expect(select(['process.loadedRecipes', CCDC, 'model'])).toBe(original)
+        expect(fake.wizardDone).toBe(0)
+        expect(document.querySelector('[data-label="widget.recipeInput.label"]')).not.toBe(null)
+        await holdInput(MOSAIC_INPUT)
+        expect(button(forward).disabled).toBe(false)
+        await click(forward)
+        expect(select(['process.loadedRecipes', CCDC, 'model.reference'])).toEqual({type: 'RECIPE_REF', id: 'reference-ccdc'})
+        expect(document.querySelector('[data-label="widget.recipeInput.label"]')).toBe(null)
+        expect(fake.wizardDone).toBe(forward === 'button.done' ? 1 : 0)
+    })
+
+    it('releases Next after selecting a usable replacement for the broken draft', async () => {
+        await open({selected: ['confidence'], alerts: true, creation: ['reference', 'date'], multiple: true})
+        await selectReference()
+        expect(button('button.next').disabled).toBe(true)
+        await selectReference('healthy-ccdc')
+        expect(button('button.next').disabled).toBe(false)
+        await click('button.next')
+        expect(select(['process.loadedRecipes', CCDC, 'model.reference'])).toEqual({type: 'RECIPE_REF', id: 'healthy-ccdc'})
+        expect(document.querySelector('[data-label="widget.recipeInput.label"]')).toBe(null)
+    })
+
+    it('rechecks an upstream change at direct submission before the wizard renders it, seeding and advancing nothing', async () => {
+        await open({selected: ['confidence'], alerts: true, creation: ['reference', 'date']})
+        await selectReference()
+        expect(button('button.next').disabled).toBe(false)
+        const original = select(['process.loadedRecipes', CCDC, 'model'])
+        firstListener = () => {
+            firstListener = () => {}
+            requestSubmit()
+        }
+        await act(async () => actionBuilder('BREAK_BEFORE_SUBMISSION')
+            .set(['process.loadedRecipes', CLASSIFICATION, 'model.inputImagery.images'], [MOSAIC_INPUT, {...MOSAIC_INPUT, imageId: 'i-2'}])
+            .dispatch())
+        await settled()
+        expect(select(['process.loadedRecipes', CCDC, 'model'])).toBe(original)
+        expect(fake.wizardDone).toBe(0)
+        expect(button('button.next').disabled).toBe(true)
+    })
+
+    it('allows Back from an invalid REF step without applying or seeding it', async () => {
+        await open({selected: ['confidence'], alerts: true, creation: ['date', 'reference'], multiple: true})
+        await click('button.next')
+        const original = select(['process.loadedRecipes', CCDC, 'model'])
+        await selectReference()
+        expect(button('button.done').disabled).toBe(true)
+        expect(button('button.back').disabled).toBe(false)
+        await click('button.back')
+        expect(select(['process.loadedRecipes', CCDC, 'model'])).toBe(original)
+        expect(document.querySelector('[data-label="widget.recipeInput.label"]')).toBe(null)
+    })
+})
+
+describe('an open Change Alerts Retrieve over a live CCDC', () => {
+    it('closes and marks REF when the referenced computation loses its training data, then opens after repair', async () => {
+        await open({selected: ['confidence'], alerts: true})
+        await openRetrieve()
+        expect(panelOpen()).toBe(true)
+        await holdTrainingData([])
+        expect(panelOpen()).toBe(false)
+        expect(retrieveButton().disabled).toBe(true)
+        expect(marked()).toEqual(['reference'])
+        expect(fake.submitted).toEqual([])
+        await holdTrainingData([COLLECTED])
+        expect(retrieveButton().disabled).toBe(false)
+        expect(marked()).toEqual([])
+        await openRetrieve()
+        expect(panelOpen()).toBe(true)
+    })
+})
 
 describe('an open CCDC Retrieve whose Classification loses its points', () => {
     it.each([['one it computes', CLASSIFIED_MEASURE], ['one of the scenes', NATIVE_MEASURE]])('closes over %s, submitting nothing, its action disabled while SRC says why', async (_case, selected) => {
@@ -443,6 +577,25 @@ const classificationRecipe = ({input, trainingData}) => ({
     ui: {initialized: true}
 })
 
+const selectReference = (name = 'reference-ccdc') => selectInField('widget.recipeInput.label', name)
+const selectInField = async (label, name) => {
+    if (!document.querySelector(`[data-label="${label}"]`) && button('button.more')) await click('button.more')
+    const input = document.querySelector(`[data-label="${label}"] input`)
+    expect(input).not.toBe(null)
+    await act(async () => input.click())
+    await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, name)
+        input.dispatchEvent(new Event('input', {bubbles: true}))
+        vi.advanceTimersByTime(500)
+    })
+    await settled()
+    const option = [...document.querySelectorAll('[data-hook="option"]')].find(element => element.textContent === name)
+    expect(option).toBeDefined()
+    await act(async () => option.click())
+    await settled()
+}
+const button = label => buttons().find(button => button.textContent === label)
+
 const buttons = () => [...document.querySelectorAll('button')]
 
 const click = async label => {
@@ -567,8 +720,31 @@ const saving = () => Object.entries(select('process.saveStates') || {})
 
 // `classificationOpen`: the Classification is open in a tab of its own, where it is edited and saved (saveRecipe$).
 // Retrieve is offered beside the toolbar's marks within its set-up wizard, done, as the toolbar offers it, and is closed.
-const open = async ({selected, breakpointBands = [NATIVE], input = MOSAIC_INPUT, trainingData = [COLLECTED], classificationOpen = false}) => {
+const open = async ({selected, breakpointBands = [NATIVE], input = MOSAIC_INPUT, trainingData = [COLLECTED], classificationOpen = false, alerts = false, creation = null, multiple = false, sourcesWizard = false}) => {
     const records = [ccdcRecipe({selected, breakpointBands}), classificationRecipe({input, trainingData}), mosaicRecipe()]
+    fake.creation = Boolean(creation)
+    if (multiple) records[1].model.inputImagery.images.push({...input, imageId: 'i-2'})
+    if (alerts) {
+        const reference = {...records[0], id: 'reference-ccdc'}
+        records[0] = {...records[0], type: 'CHANGE_ALERTS', model: {
+            reference: creation ? {} : {type: 'RECIPE_REF', id: reference.id},
+            sources: {dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_8']}, band: 'ndvi'}, options: {corrections: ['SR']},
+            date: {monitoringEnd: '2024-01-01', monitoringDuration: 1, monitoringDurationUnit: 'months', calibrationDuration: 2, calibrationDurationUnit: 'months'}
+        }}
+        records[0].ui.initialized = !creation
+        records.push(reference)
+        if (creation) {
+            const {classification: _classification, ...sources} = reference.model.sources
+            records.push({...reference, id: 'healthy-ccdc', model: {...reference.model, sources}})
+        }
+    }
+    if (creation) records.forEach(record => record.projectId = PROJECT)
+    if (sourcesWizard) {
+        records[0].ui.initialized = false
+        records[0].model.sources = {...records[0].model.sources, classification: null}
+        records.push({...classificationRecipe({input, trainingData: [COLLECTED]}), id: 'healthy-classification', projectId: PROJECT})
+    }
+    const RetrievePanel = alerts ? AlertsRetrieve : Retrieve
     fake.stored = Object.fromEntries(records.map(record => [record.id, record]))
     const initialState = {
         dimensions: {width: 1024, height: 768},
@@ -577,12 +753,13 @@ const open = async ({selected, breakpointBands = [NATIVE], input = MOSAIC_INPUT,
             loadedRecipes: Object.fromEntries(records.map(record => [record.id, record])),
             tabs: [{id: CCDC}, ...(classificationOpen ? [{id: CLASSIFICATION}] : [])],
             saveStates: classificationOpen ? {[CLASSIFICATION]: {status: 'SAVED', revision: 1, model: records[1].model}} : {},
-            recipes: LISTING,
+            recipes: records.map(({id, type, revision, projectId}) => ({id, type, revision, projectId, name: id})),
             recipeListing: {checkedAt: Date.now()},
             projects: [{id: PROJECT, name: 'Project', defaultAssetFolder: 'projects/p/assets/earlier'}]
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
+    store.subscribe(() => firstListener())
     initStore(store)
     const container = document.createElement('div')
     document.body.appendChild(container)
@@ -597,10 +774,10 @@ const open = async ({selected, breakpointBands = [NATIVE], input = MOSAIC_INPUT,
                         <SourceRuntimeProvider>
                             <RecordingWatches>
                                 <Recipe id={CCDC}>
-                                    <PanelWizard panels={['aoi', 'dates', 'sources']} initialized>
+                                    <PanelWizard panels={creation || ['aoi', 'dates', 'sources']} initialized={!creation} onDone={() => fake.wizardDone++}>
                                         <SectionMarks/>
-                                        <RetrieveButton/>
-                                        <Retrieve/>
+                                        {sourcesWizard ? <><CcdcSources/><CcdcDates/></>
+                                            : creation ? <><Reference/><AlertsDate/></> : <><RetrieveButton/><RetrievePanel/></>}
                                     </PanelWizard>
                                 </Recipe>
                             </RecordingWatches>

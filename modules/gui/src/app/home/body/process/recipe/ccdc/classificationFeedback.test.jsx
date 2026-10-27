@@ -14,7 +14,7 @@ import {PortalContainer, PortalContext} from '~/widget/portal'
 
 // The Classification a CCDC's Sources select is part of its analysis, whatever its breakpoint bands (type/ccdc.js):
 // where it cannot be trained - it stores no training points - the Sources panel names it beside the classification
-// field, whose own sections say why, and Retrieve is held, without holding the panel's Apply - for a breakpoint band it
+// field, whose own sections say why, and Retrieve is held, while holding the panel's Apply - for a breakpoint band it
 // computes, which trains it, and for breakpoint bands of the images alike. The panel, store, source runtime and recipe types are real; the recipe reads answer from stored
 // records, Earth Engine the bands of a recipe's image or an asset at once - a radar asset's VV and VH.
 
@@ -77,13 +77,19 @@ describe.each([
         await open({breakpointBands, classifier: RANDOM_FOREST, points: false})
 
         expect(errorsOf(CLASSIFICATION_LABEL)).toEqual([NEEDS_ATTENTION])
+        expect(buttonLabelled('button.apply')).toBeUndefined()
+        expect(buttonLabelled('button.close').disabled).toBe(false)
         expect(retrieveGate()).toMatchObject({code: 'SOURCE_UNSUITABLE', section: SOURCES_BUTTON})
 
         await act(async () => buttonLabelled(LANDSAT_7).click())
         await settled()
 
         expect(errorsOf(CLASSIFICATION_LABEL)).toEqual([NEEDS_ATTENTION])
-        expect(buttonLabelled('button.apply').disabled).toBe(false)
+        expect(buttonLabelled('button.apply').disabled).toBe(true)
+        const applied = store.getState().process.loadedRecipes[CCDC].model
+        await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', bubbles: true})))
+        await act(async () => document.querySelector('form').dispatchEvent(new Event('submit', {bubbles: true, cancelable: true})))
+        expect(store.getState().process.loadedRecipes[CCDC].model).toBe(applied)
     })
 
     it('says nothing beside it, and can be retrieved, once the Classification stores points', async () => {
@@ -107,6 +113,9 @@ describe('a CCDC over a trainable Classification of two input images', () => {
         await open({breakpointBands: ['ndvi'], classifier: RANDOM_FOREST, points: true, inputs: 2})
 
         expect(errorsOf(CLASSIFICATION_LABEL)).toEqual([TWO_INPUTS])
+        await act(async () => buttonLabelled(LANDSAT_7).click())
+        await settled()
+        expect(buttonLabelled('button.apply').disabled).toBe(true)
         expect(retrieveGate()).toMatchObject({code: 'SOURCE_UNSUITABLE', section: SOURCES_BUTTON})
     })
 

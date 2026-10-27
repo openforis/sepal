@@ -8,6 +8,8 @@ import {visualizationOptions as radarVisualizationOptions} from '~/app/home/body
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {msg} from '~/translate'
 
+import {settingsOf} from './processingSettings'
+
 const DATE_FORMAT = 'YYYY-MM-DD'
 
 // Which helper presents a mosaic, keyed by the recipe type its projection names.
@@ -41,7 +43,8 @@ export const visualizationOptions = (recipe, visualizationType, mosaicType) => {
 // from the same projection the executor builds it from. The layer form asks only for a mosaic its read describes,
 // which the projection can build.
 const getMosaicVisualizations = (recipe, visualizationType, mosaicType) => {
-    const mosaic = mosaicRecipe({model: recipe.model, period: visualizationType, mosaicType})
+    const model = settingsOf(recipe).model
+    const mosaic = model && mosaicRecipe({model, period: visualizationType, mosaicType})
     const visualizations = mosaic && MOSAIC_VISUALIZATIONS[mosaic.type]
     return visualizations ? visualizations(mosaic) : []
 }

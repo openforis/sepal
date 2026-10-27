@@ -27,6 +27,7 @@ import {pixelGenerationOfState} from '../../pixelGeneration'
 import {dateFormatOf, segmentDescription} from '../../segmentEvidence'
 import {PIXEL_SEGMENTS} from '../../sourceRequirements'
 import {loadCCDCObservations$, loadCCDCSegments$, RecipeActions} from '../changeAlertsRecipe'
+import {settingsOf} from '../processingSettings'
 import styles from './chartPixel.module.css'
 
 // What the chart runs at its pixel: the reference's segments, built as the reference's own image. It and its action are
@@ -42,7 +43,7 @@ const fields = {
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
     latLng: selectFrom(recipe, 'ui.chartPixel'),
-    dateFormat: dateFormatOf(recipe, PRIMARY_IMAGE),
+    dateFormat: settingsOf(recipe).model && dateFormatOf({...recipe, model: settingsOf(recipe).model}, PRIMARY_IMAGE),
     // Samples are interpreted with the description they were taken under, so another one supersedes them - and the
     // description lives in ui, which recipe.model cannot see.
     description: segmentDescription(recipe, PRIMARY_IMAGE).description,

@@ -17,20 +17,23 @@ const _MultitemporalSpeckleFilterOptions = ({
     inputs,
     activator: {activatables: {multitemporalSpeckleFilterOptions}}
 }) => {
-    const fields = filterFields({spatialSpeckleFilter, multitemporalSpeckleFilter, inputs}).map(name => ({
+    const names = filterFields({spatialSpeckleFilter, multitemporalSpeckleFilter})
+    const editable = names.some(name => !inputs[name].referenceOwned)
+    const fields = names.map(name => ({
         label: msg(['process.radarMosaic.panel.options.form.multitemporalSpeckleFilterOptions', name, 'label']),
+        tooltip: inputs[name].presentation?.(msg(['process.radarMosaic.panel.options.form.multitemporalSpeckleFilterOptions', name, 'label'])).tooltip,
         value: inputs[name].value
     }))
     return (
         <React.Fragment>
             <SubformDetails
                 fields={fields}
-                onClick={() => multitemporalSpeckleFilterOptions.activate()}/>
-            <MultitemporalSpeckleFilterOptionsPanel
+                onClick={editable ? () => multitemporalSpeckleFilterOptions.activate() : undefined}/>
+            {editable ? <MultitemporalSpeckleFilterOptionsPanel
                 spatialSpeckleFilter={spatialSpeckleFilter}
                 multitemporalSpeckleFilter={multitemporalSpeckleFilter}
                 inputsToUpdate={inputs}
-            />
+            /> : null}
         </React.Fragment>
     )
 }
@@ -78,6 +81,7 @@ class _MultitemporalSpeckleFilterOptionsPanel extends React.Component {
             <Form.Slider
                 label={msg('process.radarMosaic.panel.options.form.multitemporalSpeckleFilterOptions.numberOfImages.label')}
                 input={numberOfImages}
+                {...numberOfImages.presentation?.(msg('process.radarMosaic.panel.options.form.multitemporalSpeckleFilterOptions.numberOfImages.label'))}
                 minValue={2}
                 maxValue={100}
                 ticks={[1, 2, 5, 10, 20, 50, 100]}

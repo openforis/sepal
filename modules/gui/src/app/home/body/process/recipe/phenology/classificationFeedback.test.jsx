@@ -14,7 +14,7 @@ import {PortalContainer, PortalContext} from '~/widget/portal'
 
 // A Phenology analysing a band its selected Classification computes trains that Classification's classifier: where it
 // cannot be trained - it stores no training points - the Sources panel names it beside the classification field, whose
-// own sections say why, and Retrieve is held, without holding the panel's Apply. A band of the images needs nothing of
+// own sections say why, and Retrieve is held, while holding the panel's Apply. A band of the images needs nothing of
 // it. The panel, store, source runtime and recipe types are real; the recipe reads answer from stored records, Earth
 // Engine an asset's bands at once.
 
@@ -72,13 +72,19 @@ describe('a Phenology analysing a band its Classification computes, by whether t
         await open({band: 'probability_1', classifier: RANDOM_FOREST, points: false})
 
         expect(errorsOf(CLASSIFICATION_LABEL)).toEqual([NEEDS_ATTENTION])
+        expect(buttonLabelled('button.apply')).toBeUndefined()
+        expect(buttonLabelled('button.close').disabled).toBe(false)
         expect(retrieveGate()).toMatchObject({code: 'SOURCE_UNSUITABLE', section: SOURCES_BUTTON})
 
         await act(async () => buttonLabelled(LANDSAT_9).click())
         await settled()
 
         expect(errorsOf(CLASSIFICATION_LABEL)).toEqual([NEEDS_ATTENTION])
-        expect(buttonLabelled('button.apply').disabled).toBe(false)
+        expect(buttonLabelled('button.apply').disabled).toBe(true)
+        const applied = store.getState().process.loadedRecipes[PHENOLOGY].model
+        await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', bubbles: true})))
+        await act(async () => document.querySelector('form').dispatchEvent(new Event('submit', {bubbles: true, cancelable: true})))
+        expect(store.getState().process.loadedRecipes[PHENOLOGY].model).toBe(applied)
     })
 
     it('says nothing beside it, and can be retrieved, once the Classification stores points', async () => {
@@ -101,11 +107,17 @@ describe('a Phenology over a trainable Classification of two input images', () =
         await open({band: 'probability_1', classifier: RANDOM_FOREST, points: true, inputs: 2})
 
         expect(errorsOf(CLASSIFICATION_LABEL)).toEqual([TWO_INPUTS])
+        await act(async () => buttonLabelled(LANDSAT_9).click())
+        await settled()
+        expect(buttonLabelled('button.apply').disabled).toBe(true)
         expect(retrieveGate()).toMatchObject({code: 'SOURCE_UNSUITABLE', section: SOURCES_BUTTON})
     })
 
     it('says nothing beside it, and can be retrieved, analysing a band of the images', async () => {
         await open({band: 'ndvi', classifier: RANDOM_FOREST, points: true, inputs: 2})
+        await act(async () => buttonLabelled(LANDSAT_9).click())
+        await settled()
+        expect(buttonLabelled('button.apply').disabled).toBe(false)
 
         expect(errorsOf(CLASSIFICATION_LABEL)).toEqual([])
         expect(retrieveGate()).toBe(null)
@@ -115,6 +127,9 @@ describe('a Phenology over a trainable Classification of two input images', () =
 describe('a Phenology analysing a band of the images', () => {
     it('says nothing beside the classification field, and can be retrieved, though its Classification stores no points', async () => {
         await open({band: 'ndvi', classifier: RANDOM_FOREST, points: false})
+        await act(async () => buttonLabelled(LANDSAT_9).click())
+        await settled()
+        expect(buttonLabelled('button.apply').disabled).toBe(false)
 
         expect(errorsOf(CLASSIFICATION_LABEL)).toEqual([])
         expect(retrieveGate()).toBe(null)

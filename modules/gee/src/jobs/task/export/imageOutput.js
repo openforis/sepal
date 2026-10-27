@@ -1,6 +1,9 @@
 import {map, of, switchMap, throwError} from 'rxjs'
 
 import {requireCcdcRequestedOutputs$} from '#gee/jobs/requestedBands'
+import {CCDC_SEGMENTS} from '#sepal/recipe/capability/ccdcSegments'
+import {discoverProvider, FOUND} from '#sepal/recipe/capability/discoverProvider'
+import {processingOfProducer} from '#sepal/recipe/changeAlerts/processing'
 import {INVALID, READY, settledImageOutput$} from '#sepal/recipe/output/observeImageOutput'
 import {dependencyValidity, VALID} from '#sepal/recipe/source/dependencyValidity'
 import ccdcType from '#sepal/recipe/type/ccdc'
@@ -14,8 +17,8 @@ import {dependencyError, imageOutputAcquisition, readinessError, recipeClosure$}
 // run. A closure whose dependencies are not structurally sound fails the export before anything is described,
 // whether or not the description would have read the broken part; and an output that cannot run - its own
 // configuration, or any recipe whose image running it builds, failing a requirement (readiness.js) - fails it too.
-// An asset export builds the image beside this check, so a refused one may already have started Earth Engine work -
-// except a CCDC's, built only once resolveRequestedImageOutput$ has passed (imageAssetExport.js).
+// Asset exports construct their product only after this check passes (imageAssetExport.js); evidence needed to
+// establish readiness is distinct from the product being exported.
 
 export const resolveImageOutput$ = recipe =>
     describe$(recipe)
@@ -45,17 +48,19 @@ const describe$ = recipe => recipeClosure$(recipe).pipe(
     switchMap(closure => {
         const validity = dependencyValidity(closure)
         return validity.status === VALID
-            ? settledImageOutput$({graph: closure.graph, ...imageOutputAcquisition})
+            ? settledImageOutput$({graph: closure.graph, ...imageOutputAcquisition}).pipe(
+                map(result => ({...result, processing: executedProcessing(recipe, closure.graph)}))
+            )
             : throwError(() => dependencyError(recipe, validity))
     }),
-    map(({status, description, diagnostics, error, readiness}) => {
+    map(({status, description, diagnostics, error, readiness, processing}) => {
         if (status !== READY) {
             throw outputError(recipe, {status, diagnostics, error})
         }
         if (readiness.status !== READY) {
             throw readinessError(recipe, readiness)
         }
-        return description
+        return processing ? {...description, ...processing} : description
     })
 )
 
@@ -67,4 +72,13 @@ const outputError = (recipe, {status, diagnostics, error}) => {
         ? `${outcome} (${diagnostics.map(({code}) => code).join(', ')})`
         : error ? `${outcome}: ${error.message}` : outcome
     return new Error(`Could not describe the output of recipe ${recipe.id}: ${cause}`, {cause: error})
+}
+
+// Only the declared computing segment producer can establish a complete processing record. Wrappers retain that
+// producer's values; unrelated outputs and assets of unknown provenance acquire no invented processing metadata.
+const executedProcessing = (recipe, graph) => {
+    const records = new Map(graph.recipes.map(record => [record.id, record]))
+    const {status, provider} = discoverProvider({type: 'RECIPE_REF', id: recipe.id}, records, CCDC_SEGMENTS)
+    return status === FOUND && provider.record && !provider.declared.segmentsAsset
+        ? {processing: processingOfProducer(provider.record.model).record, segmentDateFormat: provider.declared.dateFormat?.(provider.record.model)} : null
 }

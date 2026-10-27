@@ -4,6 +4,7 @@ import {format} from 'node:util'
 
 import {defer, lastValueFrom, of, throwError} from 'rxjs'
 
+import {assetProcessing, effectiveSettings} from '#sepal/recipe/changeAlerts/processing'
 import {assertMatches} from '#sepal/testSupport/assert'
 
 // Recipe reads, image construction, Earth Engine evaluation and the exporter are substituted. Resolution,
@@ -42,6 +43,11 @@ describe('exporting an optical mosaic', () => {
         })
 
         assert.deepEqual(bandEncoding, {red: REFLECTANCE})
+    })
+
+    it('does not tag an unrelated export with caller-supplied processing', async () => {
+        const {properties} = await submit({recipe: landsatMosaic(), bands: ['red'], properties: {processing: '{"options":{}}'}})
+        assert.equal(properties.processing, undefined)
     })
 
     it('leaves a band it does not declare an encoding for unknown', async () => {
@@ -174,6 +180,20 @@ describe('exporting a masked CCDC', () => {
         const {image} = await submit({recipe, bands: ['red_coefs', 'tStart']})
 
         assert.deepEqual(image, {builtFrom: 'masking-1'})
+    })
+
+    it('records the actual segment producer processing through a wrapper, disregarding request provenance', async () => {
+        const recipe = maskedCcdc()
+        const producer = state.catalogue['ccdc-1']
+        producer.model.options = {corrections: ['BRDF'], brdfMultiplier: 7}
+        producer.model.ccdcOptions = {dateFormat: 2}
+        recipe.model.options = {corrections: ['SR']}
+        const {properties} = await submit({recipe, bands: ['red_coefs'], properties: {processing: '{"options":{"corrections":["SR"]}}', dateFormat: 0}})
+        const read = effectiveSettings({options: {corrections: ['SR']}}, assetProcessing(properties))
+        assert.deepEqual(read.model.options.corrections, ['BRDF'])
+        assert.equal(read.model.options.brdfMultiplier, 7)
+        assert.equal(read.fields.dateFormat.value, 2)
+        assert.deepEqual(JSON.parse(properties.processing).dataSets, producer.model.sources.dataSets)
     })
 
     it('records no encoding, because CCDC states none', async () => {
@@ -1132,6 +1152,26 @@ describe('exporting a Change Alerts', () => {
             error => error.message === `Recipe could not be read: ${INACCESSIBLE}`
         )
         assert.deepEqual(state.exported, [])
+    })
+
+    it('refuses the referenced CCDC with a multiple-input classifier, and exports after repair', async () => {
+        const ccdc = {id: 'ccdc-1', type: 'CCDC', model: {
+            sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands: ['ndvi'], classification: 'classifier'}, options: {}
+        }}
+        const input = {imageId: 'i-1', type: 'RECIPE_REF', id: 'mosaic-1', bandSetSpecs: [{type: 'IMAGE_BANDS', included: ['red']}]}
+        const classifier = {id: 'classifier', type: 'CLASSIFICATION', model: {
+            inputImagery: {images: [input, {...input, imageId: 'i-2'}]},
+            classifier: {type: 'DECISION_TREE'}, legend: {entries: [{value: 1}]}
+        }}
+        state.catalogue = {[ccdc.id]: ccdc, classifier, 'mosaic-1': landsatMosaic()}
+        state.recipeBands[ccdc.id] = ['ndvi']
+        const recipe = alerts({reference: {type: 'RECIPE_REF', id: ccdc.id}})
+        await assert.rejects(submit({recipe, bands: ['confidence']}), /cannot run: MULTIPLE_CLASSIFIER_INPUTS$/)
+        assert.deepEqual(state.exported, [])
+        assert.deepEqual(state.built, [])
+        state.catalogue.classifier = {...classifier, model: {...classifier.model, inputImagery: {images: [input]}}}
+        await submit({recipe, bands: ['confidence']})
+        assert.equal(state.exported.length, 1)
     })
 
     it('is refused at its band where that is one a Classification computes', async () => {

@@ -67,6 +67,8 @@ const GATE_PREREQUISITES = [
 
 export const sourcesRequirements = [
     {...sourcesField('classification', MISSING_ROLE, required('classification')), wizardStepMark: false},
+    // The Sources form's changeFromClasses/changeToClasses .notEmpty() rules already block submission. These
+    // declarations repeat that feedback with the agreed interaction timing; they need no second blocking predicate.
     {
         ...sourcesField('changeFromClasses', NO_CHANGE_CLASSES, required('changeFromClasses'), {blocksApply: false, quietWhileEdited: true}),
         wizardStepMark: false

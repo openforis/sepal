@@ -1,11 +1,13 @@
 import _ from 'lodash'
 import {defer, map, mergeMap, of, switchMap, toArray} from 'rxjs'
 
+import {requireExecutable$} from '#gee/jobs/executionReadiness'
 import {job} from '#gee/jobs/job'
 import {requireRequestedBands$} from '#gee/jobs/requestedBands'
 import {toGeometry$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import {getCollection$} from '#sepal/ee/timeSeries/collection'
+import {effectiveChangeAlerts, segmentSourceFacts$} from '#sepal/ee/timeSeries/segmentSource'
 import {ClientException} from '#sepal/exception'
 import {fileName} from '#sepal/path'
 import {observedCollection} from '#sepal/recipe/changeAlerts/observedCollection'
@@ -39,7 +41,7 @@ const worker$ = ({
             .get('array'), 'Extract chunk'
         )
     
-    return defer(() => of(observed(requested))).pipe(
+    return defer(() => observed$(requested)).pipe(
         switchMap(recipe => ready$(recipe, aoi, bands).pipe(map(() => recipe))),
         switchMap(recipe => toGeometry$(aoi).pipe(map(geometry => ({recipe, geometry})))),
         switchMap(({recipe, geometry}) => getCollection$({recipe, bands, geometry}).pipe(
@@ -75,11 +77,18 @@ const ready$ = (recipe, pixel, bands) =>
 
 // What a request observes: a Time Series' or a CCDC's own collection, or the one a Change Alerts recipe monitors
 // (observedCollection). Settings naming no recipe type are no recipe anything here can hold to what it requires.
-const observed = recipe => {
+const observed$ = recipe => {
     if (!recipe?.type) {
         throw new ClientException('Observations are loaded for a recipe of a type', {statusCode: 400})
     }
-    return recipe.type === 'CHANGE_ALERTS' ? observedCollection(recipe) : recipe
+    return recipe.type === 'CHANGE_ALERTS'
+        ? segmentSourceFacts$(recipe.model.reference).pipe(
+            map(({processing}) => effectiveChangeAlerts(recipe, processing)),
+            switchMap(effective => requireExecutable$({recipe: effective, operation: PIXEL_OBSERVATIONS}).pipe(
+                map(() => observedCollection(effective))
+            ))
+        )
+        : of(recipe)
 }
 
 const atPixel = (recipe, pixel) =>

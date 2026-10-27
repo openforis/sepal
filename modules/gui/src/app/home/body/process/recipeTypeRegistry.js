@@ -1,7 +1,7 @@
 const registry = []
 
 // Every registration states whether its recipes are offered as images by the pickers that offer recipes as images -
-// input imagery, a map layer's source, an area of interest. That is eligibility for those pickers, stated per type
+// input imagery and a map layer's source. That is eligibility for those pickers, stated per type
 // apart from what the type declares it outputs; it proves nothing about whether a recipe can be executed, and a type's
 // capabilities, such as segments or historical statistics, are asked of separately.
 export const addRecipeType = recipeType => {
@@ -19,3 +19,7 @@ export const getRecipeType = id =>
 
 export const isImageSource = recipeType =>
     recipeType.imageSource
+
+// AOI selection reads geometry, not image bands. Types excluded from image inputs may opt into that picker alone.
+export const isGeometrySource = recipeType =>
+    recipeType.geometrySource ?? recipeType.imageSource

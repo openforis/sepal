@@ -139,13 +139,18 @@ export const recipeFormPanel = (
                             id,
                             evaluatedPath: path(this.props),
                             form,
+                            sourceCandidate: this.sourceCandidate,
+                            outputEditors: this.outputEditors,
                             statePath,
-                            valuesToModel,
+                            // List panels deliberately have no serializer: their entries are already applied.
+                            valuesToModel: valuesToModel && this.props.modelToApply
+                                ? values => this.props.modelToApply(valuesToModel(values), this.props.model) : valuesToModel,
                             deactivate,
                             prevValues: this.prevValues
                         }}>
                             <FormContext form={form}>
-                                {React.createElement(WrappedComponent, {...this.props, form})}
+                                {React.createElement(WrappedComponent, {...this.props, form, sourceCandidate: this.sourceCandidate,
+                                    inputs: this.props.presentInputs ? this.props.presentInputs(this.props.inputs, modelToValues) : this.props.inputs})}
                             </FormContext>
                         </Context.Provider>
                     )
@@ -199,7 +204,7 @@ export const recipeFormPanel = (
                             : feedback
                     }, {})
                     return withInputFeedback(form, {
-                        feedbackOf: name => name === sourceInput ? sourceFeedback : outputFeedback[name] || null,
+                        feedbackOf: name => _.mergeWith({}, name === sourceInput ? sourceFeedback : null, outputFeedback[name], combineFeedback),
                         blocked: () => Boolean(sourceCandidate?.refused() || outputEditors.some(({declaration, candidate}) =>
                             declaration.editor.blocksApply !== false && candidate?.refused()
                         ))
@@ -219,7 +224,7 @@ export const recipeFormPanel = (
 
 export const RecipeFormPanel = ({className, placement, isActionForm, additionalUpdates, accepts, onApply, onCancel, onClose, children}) =>
     <Context.Consumer>
-        {({id, evaluatedPath, form, statePath, valuesToModel, deactivate, prevValues}) => {
+        {({id, evaluatedPath, form, sourceCandidate, outputEditors, statePath, valuesToModel, deactivate, prevValues}) => {
             const wrappedOnApply = values => {
                 if (isActionForm) {
                     setValues({evaluatedPath, statePath, values})
@@ -239,7 +244,14 @@ export const RecipeFormPanel = ({className, placement, isActionForm, additionalU
                     className={className}
                     placement={placement}
                     form={form}
-                    accepts={accepts}
+                    accepts={values => {
+                        // Recheck the submitted draft, including Enter/Next and changes since the last render.
+                        sourceCandidate?.update(values)
+                        outputEditors.forEach(({candidate}) => candidate?.update(values))
+                        return !sourceCandidate?.refused()
+                            && !outputEditors.some(({declaration, candidate}) => declaration.editor.blocksApply !== false && candidate?.refused())
+                            && (!accepts || accepts(values))
+                    }}
                     isActionForm={isActionForm}
                     onApply={values => {
                         wrappedOnApply(values)
