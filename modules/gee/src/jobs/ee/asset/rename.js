@@ -5,8 +5,12 @@ import ee from '#sepal/ee/ee'
 import {fileName} from '#sepal/path'
 
 const worker$ = ({
-    requestArgs: {sourceId, destinationId}
+    requestArgs: {sourceId, destinationId},
+    credentials: {sepalUser: {googleTokens}}
 }) => {
+    if (!googleTokens) {
+        throw Error('Requires a connected Google Account')
+    }
     return ee.renameAsset$(sourceId, destinationId)
 }
 

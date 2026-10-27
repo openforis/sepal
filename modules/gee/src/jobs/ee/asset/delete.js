@@ -5,8 +5,12 @@ import ee from '#sepal/ee/ee'
 import {fileName} from '#sepal/path'
 
 const worker$ = ({
-    requestArgs: {id}
+    requestArgs: {id},
+    credentials: {sepalUser: {googleTokens}}
 }) => {
+    if (!googleTokens) {
+        throw Error('Requires a connected Google Account')
+    }
     return ee.deleteAssetRecursive$(id)
 }
 
