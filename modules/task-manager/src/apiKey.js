@@ -7,6 +7,3 @@ export const generateApiKey = () =>
 
 export const hashApiKey = apiKey =>
     createHash('sha256').update(apiKey).digest('hex')
-
-export const isTaskApiKey = apiKey =>
-    typeof apiKey === 'string' && apiKey.startsWith(PREFIX)
