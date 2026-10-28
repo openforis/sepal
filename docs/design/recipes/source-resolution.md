@@ -91,9 +91,15 @@ image readiness.
    its own and Apply validates. All review findings are corrected. The user accepted the final header layout and
    confirmed unsaved Copy / source Cancel / destination Paste; browser acceptance is complete. Final full GUI
    verification passed 4860 tests in 335 files. See F7 for the implementation, corrections and acceptance evidence.
-3. **[Recipe-scoped modals](data-sources.md#recipe-scoped-modals).** Inspect the shared scoping/lifecycle first, then
-   try the proposed visualization-editor pilot in two recipe tabs. Preserve drafts and isolate active-tab interaction;
-   opening selected recipes follows the accepted modal work, rather than broadening the first pilot.
+3. **[Recipe-scoped modals](data-sources.md#recipe-scoped-modals).** The visualization-panel pilot is implemented,
+   independently reviewed and browser-accepted (2026-10-28), including the hidden-popup, covered-shortcut and
+   section-flash corrections. The user confirmed nested import, narrow layout and the background tab's × close
+   guard, and chose to keep requiring Apply or Cancel with "panel" in its message. Physical middle-click is covered
+   by mounted tests and Chromium/Firefox, not a manual trackpad check. Full GUI verification passed 4881 tests in
+   337 files; the production build, lint and whitespace checks passed. A final wording-only change passed 24
+   locale/modal tests and another production build. The checkpoint is on `feat/recipe-scoped-modals`, from
+   `77e4e8f89`. Next: establish recipe scope once at the recipe boundary, inheriting it for ordinary panels and
+   nested dialogs with explicit application-wide exceptions. Opening selected recipes follows that migration.
 
 This order records the user's priorities and adds no release gates to already accepted work. Visualization
 Copy/Paste is next after the BAYTS slice is committed. The copy-settings action remains dropped.

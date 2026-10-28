@@ -17,6 +17,7 @@ import {currentUser} from '~/user'
 import {uuid} from '~/uuid'
 import {Button} from '~/widget/button'
 import {ElementResizeDetector} from '~/widget/elementResizeDetector'
+import {ModalScope} from '~/widget/panel/modalScope'
 import {Content, SectionLayout} from '~/widget/sectionLayout'
 import {SplitView} from '~/widget/split/splitView'
 import {getTabsInfo} from '~/widget/tabs/tabs'
@@ -784,7 +785,9 @@ export class _Map extends React.Component {
                     <MapRendering/>
                     <MapToolbar statePath={[recipeStatePath, 'ui']}/>
                     <MapInfo/>
-                    <LegendImport/>
+                    <ModalScope scope='recipe'>
+                        <LegendImport/>
+                    </ModalScope>
                     {children}
                 </Content>
             </SectionLayout>
@@ -832,7 +835,10 @@ export class _Map extends React.Component {
                     className={styles.map}
                     ref={refCallback}
                 />
-                <VisParamsPanel area={area} updateLayerConfig={updateLayerConfig}/>
+                {/* The recipe's visualization editor, and what it opens, are the recipe's dialogs. */}
+                <ModalScope scope='recipe'>
+                    <VisParamsPanel area={area} updateLayerConfig={updateLayerConfig}/>
+                </ModalScope>
                 <FeatureLayerOptionsPanel area={area}/>
                 <AoiLayerOptionsPanel area={area}/>
                 <LabelsLayerOptionsPanel area={area}/>

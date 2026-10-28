@@ -1265,6 +1265,466 @@ These are follow-ups, not additions to the current suitability packet. Coordinat
 
 ### Recipe-scoped modals
 
+**Visual study first (user direction, 2026-10-28).** The user paused the implementation assessment to judge the
+appearance before changing behavior. Left-hand application-section buttons and recipe tabs should remain above
+the modal/backdrop. Start with a non-functional visualization-panel preview, showing the existing full-screen and
+proposed recipe-workspace backdrop at normal and smaller sizes. Draft lifetimes, focus, keyboard and activation
+work below remain an assessment/pilot after that appearance is accepted; a visual prototype establishes none of
+those guarantees. The isolated comparison is at `/tmp/sepal-modal-visual-preview/preview.html`, with screenshots in
+the same directory. It shows the real menu, tabs, visualization panel and app styles over a schematic map at
+1280px, 900px and 360px widths. The page switches between captured views; navigation and save actions in them are
+illustrative. Chromium confirmed that section buttons and recipe tabs are above the proposed backdrop at all three
+sizes, and the comparison page works offline. No application behavior has been changed by the prototype.
+
+**Visual direction accepted (2026-10-28).** The user reviewed the preview and reported "Looks good". Keep section
+navigation and recipe tabs above the recipe modal/backdrop. Resume the shared-scoping and lifecycle assessment,
+then review the bounded visualization-editor pilot proposal before production implementation. Appearance approval
+does not establish draft retention, focus, keyboard, nested-dialog or tab-close behavior.
+
+**Scoping and lifecycle assessment; visualization-editor pilot proposal (2026-10-28; not implemented).** Traced
+from `77e4e8f89`. The user clarified that modals belonging to a recipe workflow inherit its scope automatically,
+nested dialogs and confirmations included. Genuinely application-wide dialogs keep global scope through an explicit
+override, and recipe callers do not opt in one by one. That rule is the target. The pilot below enables it for the
+visualization editor only.
+
+- **Current owners.**
+  - **Lifetime.** A Section stays mounted once visited and is only disabled (`section.jsx`, `Enabled`). Every recipe
+    tab stays mounted (`TabContent`), with `Enabled enabled={selected}`. So an open editor, its activation entry and
+    its draft already survive tab switches and section changes. Nothing in navigation applies, cancels or resets
+    them.
+    - The visualization editor keeps its draft in its own `withForm` and component state: fields, `paletteText`,
+      legend rows. It is not a `RecipeFormPanel`, so it never reports dirty to `recipe.ui`.
+    - It sets its fields with `set()` on mount, so its form is dirty as soon as it opens. Form dirtiness cannot tell
+      an edited draft from an untouched one.
+  - **Identity.** Activatables live per activation context. Each recipe has its own (`Recipe` →
+    `recipeActivationId`), so `visParams-<area>` and `legendImport` never collide between recipes or within a
+    recipe's areas.
+    - Policies see parents, children and own entries, never a sibling recipe's. Only a root-level collection merges
+      the recipes' same-named ids, and nothing at the root reads these.
+  - **Visibility.** `Panel placement='modal'` always portals to the single global container in `home.jsx`, and its
+    `modalWrapper` backdrop covers the whole application: menu, tab bar and every section. Its tab's `Enabled` hides
+    only the inner `.panel` (`display: none`); the wrapper stays.
+    - Each tab already has its own portal container (`portal_tab_<id>`, the nearest `PortalContext` inside a
+      recipe), which section-placed panels and toolbars use.
+    - Unselected tabs are only `opacity: 0; pointer-events: none`. The portal container's `> * {pointer-events: all}`
+      makes anything portalled there clickable again while invisible.
+  - **Interaction.**
+    - `Keybinding` already follows `Enabled` (`withEnableDetector`), so a disabled tab's Escape and Enter are inert.
+    - `BlurDetector` keeps one module-level stack, and only the last mounted detector reacts. Any mousedown, touch
+      or focus outside its element is treated as a backdrop click, so the editor's `onBackdropClick={deactivate}`
+      discards the draft.
+  - **Tab closure.** Every user close goes through `Tabs.onClose` → `Process.onCloseTab`: the close button,
+    middle-click (`TabHandle.onAuxClick`) and Ctrl+Shift+W. It checks only `recipe.ui.unsaved`, then opens
+    `closeRecipeDialog` or closes. Deleting or duplicating recipes from the landing tab closes tabs directly; that is
+    a deletion path, not a user close.
+- **Failure mechanism once navigation is uncovered.** Placing tabs and menu above an unchanged global modal would
+  break in four ways:
+  - a click on a tab or menu button counts as outside the editor and discards its draft;
+  - a hidden recipe's editor, mounted later, owns the blur stack, so the visible editor stops reacting and the
+    hidden one is dismissed by the next click;
+  - the hidden editor's backdrop stays in the global layer;
+  - closing a tab silently drops an open editor's unapplied draft, because only saved-recipe state is consulted.
+- **Proposed shared change.** Separate ownership from visibility from interaction, in the existing owners.
+  - **Scope (ownership).** A `ModalScope` context, `'application'` by default, carrying the owning recipe and its
+    tab's portal.
+    - `Panel` resolves `placement='modal'` from it: recipe scope portals to the owner's tab container
+      (`Portal type='context'`); application scope stays global.
+    - A nested modal, such as `Confirm`, `DatePicker` or a destination browser, inherits whatever scope its opener's
+      tree provides. The only per-caller choice is the override `scope='application'`.
+    - The pilot places the recipe-scope provider around the two editors the pilot needs. Later migration moves it to
+      the recipe root (`Process.renderTab`), so every recipe workflow inherits it at once.
+  - **Visibility.** A scoped `Panel` hides its wrapper as well as its content while its `Enabled` context is false.
+    Only the active owner's editor and backdrop exist on screen.
+    - The wrapper fills the tab's content area below the tab bar, with the accepted menu clearance and
+      container-relative limits (`max-width`/`max-height: calc(100% - 1rem)`).
+    - It sits above the tab's own toolbars and section panels, which portal into the same container at z-index 2–3.
+  - **Interaction.**
+    - `BlurDetector` skips detectors whose `Enabled` is false, when choosing the top-most and when reacting.
+    - A recipe-scoped detector treats only events inside its scope's container as outside the panel. Tabs, menu,
+      footer, other sections and notifications are navigation, never dismissal.
+    - Keybindings need no change.
+  - **Close guard.** A scoped `Panel` registers while mounted in a small module-level registry keyed by recipe id. It
+    adds no store state and no subscriptions.
+    - `Process.onCloseTab` consults it first. A recipe with an open scoped editor is selected, and its editor shown,
+      instead of closed.
+    - Otherwise the existing unsaved-recipe dialog and pending-save retention apply unchanged.
+    - Because the guard sits on `onClose`, the button, middle-click and Ctrl+Shift+W all get it.
+  - **Cost.** One context read per `Panel` and `BlurDetector` mount, and a registry lookup only on close. There is no
+    new selector, store write or source acquisition.
+- **Pilot contract.** Two recipe tabs, each with a visualization editor open.
+  1. **Open, switch, leave, return.** Opening behaves as today. Switching tabs or leaving Process hides an editor
+     without deactivating it, and returning shows it as it was.
+  2. **Drafts.** Raw fields, palette HEX text, legend rows (unfinished ones included), F7 clipboard contents and Copy
+     acknowledgement state are retained. Nothing is applied, cancelled, reset or revalidated by navigation. F7 Copy
+     and Paste between the two editors works across tabs.
+  3. **Visibility.** Only the active owner's editor and backdrop are shown.
+  4. **Focus.** Opening behaves as today. Leaving drops focus from the hidden editor. Returning restores the element
+     that had focus in it, if still present, else the panel. Closing behaves as today. Covered recipe content stays
+     keyboard-reachable, as it is under today's global modal.
+  5. **Hidden editors.** They receive no pointer input, focus, Escape, Enter or blur events.
+  6. **Backdrop.** It covers the owner tab's content area only. Clicking it is Cancel, as today; clicks on
+     navigation are not.
+  7. **Nested dialogs.** The replacement confirmation already renders inside the editor and inherits its scope.
+     Legend import is mounted beside the map (`map.jsx`) under the same pilot provider, so it shares the editor's
+     scope, hides with its tab, and delivers its rows only to its own recipe (`ui.importedLegendEntries`).
+  8. **Tab closure.** A tab with an open editor, including a background tab closed by middle-click, is revealed, not
+     closed.
+     - Without an open editor, closing behaves as today: the unsaved-recipe dialog, or retention of a closed draft
+       whose save has not settled.
+     - Navigation never triggers either.
+  9. **Pending reads.** Histogram and distinct-value requests continue while hidden and deliver to the still-mounted
+     editor. Paste's request abandonment, the per-band cancellation and the layer/product closure rule are unchanged.
+- **Inventory: the later migration boundary, not this slice.**
+  - **Recipe workflows that would inherit recipe scope:**
+    - map layers: layer options for AOI, features and labels, map layout and its rename, plus the asset, Planet and
+      recipe selectors;
+    - input imagery: both input-image editors and Band Math's input image and calculation;
+    - Classification and Regression training data;
+    - the Historical and Radar subform modals;
+    - scene selection and scene preview;
+    - image constraints;
+    - the legend editor;
+    - the Retrieve destination browsers.
+  - **Nested and inherited, with no caller change:** `Confirm` (`Confirm` in `confirm.jsx`), `DatePicker`, legend
+    import and the destination browsers.
+  - **Needing map interaction.** No modal does: AOI drawing, scene areas and map inspection are non-modal overlays and
+    stay so.
+  - **Application-wide:**
+    - outside any recipe, and so global without an override: users and account, messages, privacy, apps, tasks;
+      create, save and close recipe, which Process mounts beside the tabs;
+    - inside a recipe tree but needing an explicit decision when the provider moves to the recipe root: the landing
+      tab's projects and project dialogs, which affect the shared project selection, and the CEO login, a user-level
+      credential prompt.
+- **Remaining product decisions.**
+  1. **Closing a tab with an open editor.** Recommended: reveal it and require Apply or Cancel. The alternative is
+     a "discard the open editor's changes?" confirmation.
+  2. **Background content under a visible editor.** Whether it becomes `inert`. Today's global modal does not do
+     this; recommended later.
+  3. **Landing-tab and CEO-login scope** at migration.
+- **Focused acceptance.** A mounted harness with real `Tabs`/`TabContent`, `Enabled`, `Panel`, `BlurDetector`,
+  `Keybinding`, activation and store, and two recipes with an editor open in each. It checks:
+  - independent drafts kept across tab switches and a Section disable and enable, with field, HEX and legend rows
+    intact;
+  - only the selected tab's wrapper is displayed, and a hidden editor gets no click, Escape or Enter;
+  - a tab mousedown dismisses neither editor, and a backdrop click cancels only the visible one;
+  - Apply and Cancel in B leave A's draft and applied style unchanged;
+  - the replacement confirmation and legend import are scoped and hidden with their tab;
+  - the button, middle-click and Ctrl+Shift+W close paths reveal an open editor, and without one the existing dialog
+    appears;
+  - a histogram answered while hidden is applied, with existing obsolete-response tests unchanged;
+  - `scope='application'` inside a recipe still portals globally.
+- **Browser checklist.**
+  - Open an editor in two recipes, edit both partially, switch between them, visit Browse and Tasks and return.
+  - Copy in one, Paste in the other, then Cancel and Apply in each.
+  - Open legend import and the replacement confirmation, then switch tabs.
+  - Escape and Enter on the visible editor only.
+  - Middle-click a background tab with an open editor.
+  - Check at 1280, 900 and 360px.
+- **Material risks.**
+  - Layering against toolbars and panels in the same tab container.
+  - BlurDetector filtering affects every overlay, so dropdowns, tooltips and global modals opened over a recipe
+    modal need regression checks.
+  - Hiding the wrapper changes behavior for any existing modal in a disabled section.
+  - Focus restoration could fight a field's own autofocus.
+  - `beforeunload` (`hasUnsavedWork`) still ignores unapplied editor drafts, as it does today.
+  - Moving the provider to the recipe root later changes every recipe modal at once, so that migration needs its own
+    review and browser pass.
+
+**Pilot proposal review (2026-10-28).** Reviewed the proposal against `Panel`, `Portal`, `TabContent`, `Enabled`,
+`BlurDetector`, `Keybinding`, Process tab closure and the visualization editor. No production changes or new test
+runs were needed for this design review. The existing retained tab/editor lifetime supports a bounded pilot;
+there is no need for a second draft store or a general panel framework. Two amendments are recommended before
+implementation:
+
+- **Include keyboard isolation in the pilot.** The proposal currently leaves covered recipe content reachable by
+  Tab. `BlurDetector` treats focus moving outside its panel as dismissal, and its existing focus test confirms
+  that behavior. A user tabbing into a covered recipe control could therefore cancel the draft. Keep covered
+  controls out of keyboard focus and interaction while the modal is visible; navigation must remain available.
+  Do not make the whole active tab inert, since its portal also contains the modal. Nested dialogs must isolate
+  their covered parent editor, and any registered portalled popup must remain usable. Verify Tab/Shift+Tab in a
+  real browser as well as testing focus events; neither should discard a draft or reach covered controls.
+- **Resolve scope for the entire dialog subtree.** An explicit application override must govern the dialog's
+  portal, dismissal boundary and nested dialogs, not merely its portal target. Conversely, ordinary nested
+  recipe dialogs must stay with their owner. Add an application-override-with-nested-dialog control, alongside
+  the proposed recipe nesting and visibility cases. Scope visibility must follow current context changes,
+  rather than only the context value at mount.
+
+For tab closure, the review recommends the proposal's conservative pilot behavior: reveal the owning editor,
+preserve its draft, and explain that it must be applied or cancelled before the tab can close. This applies even
+to an untouched editor; avoid adding dirty-state detection in this slice. Preserve the existing unsaved-recipe and
+pending-save handling once no editor remains. Landing-tab/CEO scope and browser-unload draft detection remain
+later work. Broad modal migration is not part of the pilot. These are review recommendations, not recorded user
+approval of the remaining product choices.
+
+**Scope follows ownership (user clarification, 2026-10-28).** Modals opened as part of a recipe workflow should
+inherit that recipe's scope by default, including nested editors and confirmations. Application-wide workflows
+keep application scope, even if their entry point is reachable while a recipe is open. Use the shared ownership
+context so ordinary recipe callers do not each need to remember a scope option; an application-wide override
+must be explicit and justified by the operation. The caller audit identifies those exceptions and panels needing
+map interaction; it is not a separate decision about scope for every recipe editor.
+
+**Reuse constraint (user clarification, 2026-10-28).** Start with the portal already provided by `TabContent`.
+The intended change is to route existing modal panels through their owner's tab and preserve existing forms,
+activation, drafts, Apply/Cancel and keybindings. Limit additional shared changes to demonstrated gaps:
+document-level outside-event handling and its global detector stack, hidden-wrapper/focus isolation, and
+unapplied-editor protection on tab close. A separate sibling modal portal is justified only where needed to
+isolate covered content without making its dialog inert; it reuses `PortalContainer`/`Portal`. Do not introduce
+a parallel modal manager, draft store or replacement lifecycle. Keep each added mechanism tied to one of those
+requirements and prefer the smallest change to the existing owner.
+
+**Pilot proposal amended after review (2026-10-28; not implemented).** These amendments adopt the review's two
+recommendations and its tab-closure recommendation. The rest of the proposal above stands.
+
+- **Keyboard isolation is part of the pilot.**
+  - **Modal layer.** Each `TabContent` gets a modal layer: a portal container rendered after its existing one.
+    Recipe-scoped dialogs portal there.
+  - **Covered content.** While the layer holds an open dialog, `TabContent` sets `inert` on its content wrapper and
+    its existing portal container (toolbars, section panels, map controls). Covered controls take no focus, clicks
+    or keys. The active tab is not made inert as a whole, since its modal layer holds the dialog.
+  - **Navigation.** Recipe tabs, the menu, the footer and other sections are outside `TabContent` and stay
+    reachable by pointer and keyboard.
+  - **Nested dialogs.** Within a layer, dialogs stack in open order, and every dialog below the top one is `inert`.
+    For example, legend import covers and isolates the editor that opened it. The replacement confirmation replaces
+    the editor's own render, as today.
+  - **Popups.** Portalled popups, such as Combo lists, tooltips and date and color pickers, render in the global
+    portal, outside any inert subtree. Detectors registered with `BlurDetector.excludeElement` keep counting them as
+    inside their dialog.
+  - **Focus and dismissal.** Tab and Shift+Tab move through the top dialog and then on to navigation, never into
+    covered controls. Focus reaching navigation is not dismissal, because a recipe-scoped detector only treats
+    events inside its owner's tab as outside its panel. Focus restoration on return, and opening and closing
+    behaviour, are as proposed.
+  - **Cost.** Layer occupancy comes from the module-level registry, with a per-tab subscription held by that tab's
+    `TabContent`. There is no store state and no per-notification work.
+  - **Support.** `inert` is supported by the evergreen browsers the GUI targets.
+- **Scope resolves for the whole dialog subtree.**
+  - `Panel` resolves its scope once per render: its explicit `scope` prop, else the nearest `ModalScope`.
+  - It provides the result to its subtree, so the same resolution governs its portal target, its BlurDetector's
+    dismissal boundary and stacking, and every nested dialog.
+  - An application override therefore keeps its nested dialogs and dismissal global. An ordinary nested recipe dialog
+    stays in its owner's layer.
+  - Visibility follows the current `Enabled` context at each render, never a value captured at mount.
+  - An open dialog's owner never changes, so its portal target, resolved when it mounts, stays valid. Changing the
+    provider's placement is a later migration, never a live change.
+- **Tab closure: reveal and explain.**
+  - Closing a tab with an open recipe-scoped dialog (button, middle-click or Ctrl+Shift+W) selects that tab and shows
+    the dialog with its draft intact. A notification explains that it must be applied or cancelled before the tab can
+    close.
+  - This applies to an untouched editor too; there is no dirty-state detection.
+  - Once no dialog remains, closing works as today: the unsaved-recipe dialog, and retention of a closed draft whose
+    save has not settled.
+- **Additional acceptance.**
+  - Mounted:
+    - focus moved by Tab or programmatically never reaches covered controls, and never cancels the draft;
+    - covered toolbars and map controls ignore clicks;
+    - legend import makes the editor below it inert, and the editor is restored when import closes;
+    - an application-override dialog inside a recipe renders globally, and so do its nested dialog and its dismissal;
+    - a Combo list opened from the editor stays usable;
+    - closing reveals the editor and shows the explanation.
+  - Browser: Tab and Shift+Tab through the editor and on to the tabs and menu, in Chromium and in a second engine.
+- **Unchanged deferrals.** Landing-tab and CEO-login scope, browser-unload draft detection and other modal migrations
+  remain later work.
+
+**Visualization-editor pilot implemented (2026-10-28; review and browser acceptance pending).** It follows the amended
+proposal and the reuse constraint. `Portal`, `Panel`, activation, forms and keybindings are reused. The only new
+pieces are the scope context, one dialog layer per tab and the tab-close guard.
+
+- **Changed shared components.**
+  - **`widget/panel/modalScope.jsx` (new).** A `ModalScope` context, `'recipe'` or `'application'`, and its consumer.
+  - **`widget/panel/panel.jsx` and its CSS.** A modal panel resolves `scope` (prop, else `ModalScope`, else
+    application) at each render and provides the result to its subtree.
+    - A recipe-scoped modal inside a tab portals to the tab's dialog layer through the existing
+      `Portal type='context'`. It registers itself as open there while mounted.
+    - Its wrapper is hidden with its tab (`.modalWrapper.disabled`) and is `inert` while a later dialog of the tab
+      covers it.
+    - It gives its BlurDetector the tab as the boundary, remembers the focused element and restores it on return
+      (not on mobile, see below).
+    - Its wrapper keeps the accepted menu clearance and container-relative size limits.
+    - Application-scoped modals render exactly as before.
+  - **`widget/blurDetector.jsx`.** It reads `Enabled`. A detector in what is not shown neither reacts nor counts when
+    choosing the top-most one. An optional `boundary` limits outside events to an element.
+  - **`widget/tabs/tabContent.jsx` and its CSS.**
+    - The tab's content and its existing portal container sit in a `covered` wrapper: an isolated stacking context,
+      `inert` while the tab has an open dialog.
+    - The tab's dialog layer is a `PortalContainer` after that wrapper.
+    - An unselected tab is `inert` as a whole. Before, hidden tabs were only transparent and stayed reachable by Tab;
+      the browser check found this.
+  - **`widget/tabs/tabs.jsx` and `tabContext.jsx`.** `Tabs` keeps the dialogs open in each tab, in opening order,
+    from registrations provided through a `TabDialogs` context. Its `onClose` covers the button, middle-click and
+    Ctrl+Shift+W: a tab holding a dialog is selected, not closed, with the notification "Apply or cancel the open
+    editor before closing this tab." Otherwise the section's `onClose` (the unsaved-recipe dialog) runs as before.
+  - **Migrated caller.** `app/home/map/map.jsx` puts the visualization editor and legend import in
+    `ModalScope scope='recipe'`. Their nested dialogs (the replacement confirmation, pickers) inherit it. No other
+    caller changes, and application-wide dialogs are untouched.
+- **Verification.**
+  - **Mounted** (`widget/tabs/tabDialogs.test.jsx`, real Tabs, TabContent, Panel, BlurDetector and store), checking
+    ownership and state:
+    - a recipe dialog renders in its own tab's layer, is hidden with its tab and covers only that tab;
+    - its draft input is the same, with its value, after leaving and returning;
+    - a nested dialog makes the one below it inert until it closes;
+    - an application override renders globally, with its nested dialog;
+    - a list (`Combo`) opened from it renders outside anything inert, and choosing from it is not dismissal;
+    - focus is restored on return;
+    - a tab handle press is not dismissal, and a press within the tab outside the dialog is;
+    - a hidden dialog neither reacts nor blocks the shown one;
+    - the close button and middle-click show and keep a tab holding a dialog, with the explanation;
+    - closing works as before once the dialog is gone.
+  - **Witnesses.** The original BlurDetector fails the two dismissal cases, and removing the guard fails the two close
+    cases.
+  - **Focused runs.** Widgets, map, close-recipe, map layout, Remapping, apps and input-imagery panels, with two
+    workers: 108 files, 1353 tests, rerun on `77e4e8f89` with the list case added. ESLint and `git diff --check` pass.
+  - **Browser harness.** A Vite build of the real Tabs, two recipes each with the real visualization editor and legend
+    import, covered recipe controls and stand-in section navigation, with app styles. Playwright ran it in Chromium and
+    Firefox at 1280 and 360px: 60 checks pass.
+    - Only the selected recipe's editor is shown.
+    - The backdrop starts below the tabs, navigation is above it and covered controls are under it.
+    - Covered controls refuse programmatic focus.
+    - 30 presses of Tab and of Shift+Tab never reach covered or hidden controls, reach navigation, and leave the
+      draft open.
+    - Switching tabs hides, keeps and returns each draft, with focus restored at 1280px.
+    - Leaving the section and returning keeps the editor.
+    - Escape cancels only the shown editor.
+    - Middle-clicking a tab holding an editor shows it.
+    - Legend import opens in the recipe's layer, makes its editor inert, and keeps focus out of it.
+    - On a second page: a band chosen from the editor's list, outside anything inert, keeps the editor; Copy in A and
+      Paste in B after switching tabs carries the band and range; Enter applies only B, the editor shown, and A
+      returns with its draft. An invalid draft (an empty max) keeps Apply, and so Enter, disabled, as before.
+    - The screenshots match the accepted layout.
+    - Evidence: the implementor's session scratchpad, `scopeharness/browser.log` and its screenshots.
+- **Remaining limits.**
+  - **Mobile.** Below 500px or on a touch device, leaving a tab already blurs the focused element to close the
+    keyboard (`enabled.jsx`). Returning therefore does not restore focus.
+  - **Harness only.** The browser check ran in a harness, not the signed-in app: the real menu, map and toolbars were
+    stand-ins, and pending reads while hidden were checked only by the existing tests.
+  - **Notification.** The close explanation uses the ordinary info notification.
+  - **Hidden tabs.** A hidden tab's connected components still do not update until shown, as before.
+  - **Deferred.** Other modals, landing-tab and CEO-login scope, and browser-unload draft detection remain later
+    work. The full GUI suite is still due before commit.
+
+**Independent pilot review (2026-10-28; two interaction gaps open).** The portal/layer approach reuses the existing
+owners as intended. Tracking open dialogs in Tabs state and guarding its shared close path are reasonable changes
+from the proposal. Review reproduced two remaining failures before running-app acceptance:
+
+- **Hidden-owner popups remain visible and usable.** Open the visualization editor's band Combo in recipe A,
+  switch to B with Ctrl+Shift+ArrowRight, then choose green from the still-visible list. A's dialog is hidden,
+  but the global `FloatingBox` has no inert ancestor and its options remain clickable. Returning to A shows
+  green selected in its draft. `BlurDetector` becoming inactive suppresses dismissal handling; it does not hide
+  the globally portalled popup. Fix visibility/interaction at the shared popup owner when its tab or section
+  becomes inactive, preserving the editor's draft. Include a keyboard-navigation control, since a mouse press
+  on navigation normally dismisses the popup first.
+- **Covered content's document shortcuts remain enabled.** `TabContent` makes covered DOM inert, but `Keybinding`
+  dispatches from a document listener and does not consult that inert state. A covered recipe Delete binding
+  fires while typing in its visualization editor. The review browser harness uses a recording handler rather
+  than deleting data; Classification's collection panel is a real caller with Delete/Backspace bindings. Make
+  effective modal interaction govern shared shortcut dispatch as well as native focus/pointer events, keeping
+  dialog and navigation shortcuts available. Avoid per-recipe guards or disabling the modal through its React
+  ancestry. Cover the lower dialog under a nested dialog as well.
+
+**Evidence.** The implementor's 11 mounted cases pass; two added review probes fail at the expected assertions
+(the hidden Combo calls `onChange`, and the covered shortcut fires). Chromium and Firefox reproduce both with
+native keys/clicks in a copy of the real Tabs/visualization-editor harness, with no page errors. Files and logs are
+under `/tmp/sepal-modal-independent-review/`, including `probes.log`, `browser.log` and the archived probe source.
+The temporary test file was removed from the repository; no production code was changed by this review. No full
+suite was run. Correct these two gaps through the existing shared owners, then resume browser acceptance.
+
+**Pilot interaction corrections (2026-10-28; implemented, running-app acceptance pending).** The reviewer took
+over the two fixes at the user's invitation, preserving the implementor's pilot. Both corrections use the
+existing modal/tab ownership and portal components; no recipe-specific guard, draft store or new registry was added.
+
+- **One interaction decision.** `ModalScope` now carries its dialog id alongside its scope. The shared
+  `withModalInteraction` adapter reads the existing tab's open-dialog order and current Enabled context. Only
+  the top recipe dialog can interact; covered recipe content and lower dialogs cannot. Navigation outside the
+  tab stays available, and an explicit application override remains usable.
+- **Shortcuts.** `Keybinding` checks that live decision at dispatch, including its initial disabled state. It no
+  longer uses the Redux connection or the separate enable callback that could leave its initial state enabled;
+  it consumed no store data or actions. Native inertness and document shortcuts now agree.
+- **Popups.** `FloatingBox` uses the same decision to hide and make its global DOM inert, and to exclude its
+  inactive detector from outside-event handling. The popup stays mounted; returning restores its state without
+  altering the editor draft. Ownership is consumed inside the existing connected component's update guard so
+  tab/section context changes reach an already-open popup. A nested dialog opened from a covered popup remains
+  enabled: the correction does not disable the popup's whole React subtree.
+- **Regressions.** Seven cases were added to the implementor's mounted suite, now 18 cases. They cover keyboard
+  tab switching with a Combo open, section departure/return, covered shortcuts and their recovery, a shortcut
+  first mounted in a hidden tab, lower dialogs and their popups, an application override, and a dialog opened
+  from a popup. The original 11 cases remain.
+- **Witnesses.** Temporarily restoring the pre-correction `Keybinding` fails three of the 18 tests; restoring
+  `FloatingBox` fails four. Both files were restored automatically and verified byte for byte.
+- **Focused verification.** 1326 tests in 106 files pass with two workers: widgets, map, tab closure, map layout,
+  Remapping, apps and both input-imagery paths. ESLint passes on all ten changed JS/JSX files and
+  `git diff --check` is clean. The run includes React `act` warnings from Notifications/AppInstance tests.
+- **Browser.** Chromium and Firefox confirm that the previously usable hidden dropdown is invisible, inert and
+  refuses a native click; returning keeps the original draft and restores the popup. Covered Delete bindings
+  remain quiet. Section navigation hides the popup too. The implementor's full 60-check harness campaign also
+  passes again at 1280px and 360px, including Copy/Paste, Enter, nested import, navigation and Tab traversal.
+- **Evidence and limits.** Updated sources, witnesses and logs are in `/tmp/sepal-modal-independent-review/`.
+  These remain harness checks, not acceptance in the signed-in app. The full GUI suite remains for final
+  verification after running-app acceptance. No files were staged, committed or pushed.
+
+**Default scope clarified again by the user (2026-10-28).** Recipe ownership should establish the modal default
+once at the recipe boundary; callers should not need individual opt-ins. The later migration audits explicit
+application-wide exceptions rather than hunting down all recipe modals to configure them. The current pilot
+retains its two call-site providers solely to bound verification before that shared boundary is enabled.
+
+**Section exit flash: user finding and correction (2026-10-28; running-app accepted).** The user checked
+independent drafts and reported a brief clear map when switching from Process to Browse, before Browse appeared.
+Recipe-tab switching did not flash. The user accepted the dropdown behavior (hidden in B, still open on return
+to A) and reported no concerning Tab/Shift+Tab behavior; broader focus indication and tab-order polish are not
+part of this slice. Nested-dialog, tab-close and narrow-window acceptance remain outstanding.
+
+- **Cause.** Section already fades its content over 200 ms. The pilot independently removed the modal and its
+  backdrop immediately when Enabled became false, leaving the outgoing recipe map visible during that fade.
+  A harness using the real Section, router, Tabs and visualization editor reproduced 12 exposed frames in
+  Chromium and 10 in Firefox.
+- **Correction.** A recipe dialog now inherits visual visibility from its containing tab and section. The extra
+  disabled hide classes were removed for this path, including the redundant wrapper CSS rule. The dialog is
+  inert immediately on disable, and the shared Section root is inert while inactive, including during its exit
+  animation. Existing Enabled/interaction checks still stop shortcuts and popups immediately. No timer, new
+  transition or animation state was added; other Panel placements and application-scoped visibility retain
+  their existing behavior.
+- **Regression evidence.** The real-section browser capture now records zero exposed or interactive exit frames
+  in both engines and keeps the draft on return. All 60 pilot browser checks pass with the real Section included
+  at 1280px and 360px. Their visibility check now reads effective ancestor visibility, which is what hides a
+  portalled dialog in its owner, rather than assuming a separate display rule on the modal wrapper.
+- **Permanent cases.** `section.test.jsx` verifies immediate inertness and retained input state on route departure
+  and return. The existing modal section-navigation case now verifies that inactive interaction does not remove
+  the dialog's paint before the owner finishes its transition. Restoring the two pre-correction production files
+  makes exactly these two cases fail; both files were restored byte for byte.
+- **Focused verification.** 1340 tests in 109 files pass with two workers, including the shared widgets, map,
+  actual Section, Browse, apps, tab closure and the prior pilot's representative callers. ESLint passes on all
+  twelve changed JS/JSX files and `git diff --check` is clean.
+- **Evidence.** `/tmp/sepal-modal-section-flash/` contains the before/after frame captures, the updated pilot
+  harness, targeted test and witness logs. The user subsequently confirmed in the running app: "Flashing is gone."
+  The section-transition fix is accepted. Nested-dialog, background-tab closure and narrow-window acceptance,
+  followed by final full GUI verification, remain. Nothing was staged, committed or pushed.
+
+**Running-app acceptance update (2026-10-28).** The user confirmed that legend import remains with its recipe
+across navigation and that the narrow layout looks good. The user has a MacBook trackpad and cannot exercise a
+physical middle mouse button; no manual middle-click claim is made. That path passes both the mounted tests and
+the Chromium/Firefox harness, and shares `Tabs.onClose` with the tab's close button. A background tab's × button
+was offered as the remaining manual substitute: reveal its open editor and retain the tab/draft. That result is
+pending. The final full GUI run has started with two workers; no code was changed for this acceptance update.
+
+**Pilot final acceptance and verification (2026-10-28).** The user confirmed that the background tab's × selects
+the owning recipe and shows its still-open panel/draft. The user then explicitly chose to retain the Apply/Cancel
+close guard, using "panel" in its message, with possible reconsideration later. The public English text is now
+"Apply or cancel the open panel before closing this tab." No changed-versus-untouched tracking was introduced.
+Running-app acceptance is complete within the recorded hardware limits: physical middle-click was not tried on
+the user's trackpad; mounted tests and the Chromium/Firefox harness cover it through the same close handler.
+
+- **Full GUI.** 4881 tests in 337 files passed with two workers, exit 0, in 380.47 s. The 15 changed GUI source,
+  data and style files remained byte-identical throughout the run. Logs retain the existing test warnings.
+- **Final wording.** The only GUI change after that full run was "editor" → "panel" in the English notification.
+  The locale suite and 18 modal tests then passed together, 24 tests in three files. The production build passed
+  again with that text. No broad test rerun was needed for this wording-only update.
+- **Other checks.** ESLint on the twelve changed JS/JSX files and `git diff --check` passed. The production build
+  used `/tmp/sepal-modal-final-verification/build`, leaving the workspace's build output untouched. The build's
+  standard chunk-size notice is unchanged.
+- **Evidence.** `/tmp/sepal-modal-final-verification/` holds the full GUI, final locale/modal and build logs and
+  source fingerprints. The earlier focused, mutation and native-browser records above retain their scope.
+- **Checkpoint and next slice.** At the user's request, `feat/recipe-scoped-modals` was created from `77e4e8f89`
+  to checkpoint this accepted pilot before broader migration. Establish the default once at the recipe boundary,
+  with explicit application-wide exceptions; do not opt ordinary recipe panels in one by one. Only visualization
+  panels and legend import are migrated in this checkpoint. Opening selected recipes remains subsequent work.
+
 Separate UI workstream, starting with inspection. On 2026-10-27 the user selected this after BAYTS settings
 ownership/consistency and visualization Copy/Paste, following the current keyboard band-addition slice; see the
 [agreed next sequence](source-resolution.md#current-release-checkpoint). No implementation is claimed yet.
@@ -1279,7 +1739,7 @@ blocking. Do not convert every panel to a non-modal floating panel: overlapping 
 editing crowded. Scene-area selection is acceptable as it stands and is not a reported layout defect.
 
 Inspect the shared Panel, activation, portal, backdrop, focus and keyboard mechanisms. Prefer a small shared scoping
-change with an explicit caller choice over per-recipe exceptions or a new panel framework. Reuse existing layout
+change that inherits ownership, with explicit overrides for genuine exceptions, over per-recipe fixes or a new panel framework. Reuse existing layout
 components and styling. Check hidden-tab behaviour and selector costs; scope changes must not add repeated work to
 every store notification or leave hidden panels handling input.
 

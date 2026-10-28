@@ -6941,6 +6941,7 @@
       "addTab": {
         "tooltip": "New tab"
       },
+      "closeWithOpenDialog": "Apply or cancel the open panel before closing this tab.",
       "newTab": "New_Tab"
     }
   },

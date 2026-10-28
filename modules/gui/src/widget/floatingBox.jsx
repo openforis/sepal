@@ -8,6 +8,7 @@ import {connect} from '~/connect'
 import {withContext} from '~/context'
 import {selectFrom} from '~/stateUtils'
 import {BlurDetector} from '~/widget/blurDetector'
+import {withModalInteraction} from '~/widget/panel/modalScope'
 import {Portal} from '~/widget/portal'
 
 import styles from './floatingBox.module.css'
@@ -66,11 +67,12 @@ class _FloatingBox extends React.Component {
     }
 
     render() {
-        const {className, onBlur} = this.props
+        const {className, onBlur, interactionEnabled} = this.props
         const {left, right, maxWidth, hPlacement, flipped} = this.getCorrectedHorizontalPosition()
         const {top, bottom, maxHeight, vPlacement} = this.getCorrectedVerticalPosition()
 
         const style = {
+            display: interactionEnabled ? undefined : 'none',
             '--top': Math.round(top),
             '--bottom': Math.round(bottom),
             '--max-height': Math.round(maxHeight),
@@ -86,6 +88,8 @@ class _FloatingBox extends React.Component {
                     removeElement: this.removeElement
                 }}>
                     <BlurDetector
+                        disabled={!interactionEnabled}
+                        inert={!interactionEnabled}
                         onClick={this.onClick}
                         onBlur={onBlur}
                         exclude={this.getExcludedElements()}
@@ -426,6 +430,8 @@ class _FloatingBox extends React.Component {
 
 export const FloatingBox = compose(
     _FloatingBox,
+    // Consume ownership inside connect's update guard, so hiding a tab also hides an already-open global popup.
+    withModalInteraction(),
     connect(mapStateToProps),
     withFloatingBox(),
     asFunctionalComponent({
