@@ -127,6 +127,8 @@ const main = async () => {
 
     const app = express()
     app.disable('x-powered-by')
+    // Caddy, the one hop in front, sets X-Forwarded-For to the client's address: req.ip is what logins are throttled by.
+    app.set('trust proxy', 1)
     
     const secret = await getSecret()
 

@@ -17,6 +17,8 @@ import {withRecaptcha} from '~/widget/recaptcha'
 
 import styles from './login.module.css'
 
+const TOO_MANY_REQUESTS = 429
+
 const fields = {
     username: new Form.Field()
         .notBlank('landing.login.username.required'),
@@ -147,8 +149,12 @@ class _Login extends React.Component {
             user => {
                 credentialsPosted(user)
             },
-            () => {
-                Notifications.error({message: msg('landing.login.error')})
+            error => {
+                Notifications.error({
+                    message: error?.status === TOO_MANY_REQUESTS
+                        ? msg('landing.login.throttled')
+                        : msg('landing.login.error')
+                })
             }
         )
     }

@@ -591,6 +591,7 @@
         "required": "Password is required"
       },
       "sign-up": "Sign up",
+      "throttled": "Too many failed logins. Try again in 15 minutes.",
       "username": {
         "label": "Username",
         "placeholder": "Enter your username",

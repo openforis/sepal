@@ -1,11 +1,11 @@
-import {NEVER, of} from 'rxjs'
+import {NEVER, of, throwError} from 'rxjs'
 import {describe, expect, it, vi} from 'vitest'
 
 // Retrying a login must not keep showing the previous attempt's error while reCAPTCHA is still answering. The
 // assertion is on the invalid-credentials flag, which is what the password field renders from. `compose` is
 // mocked to the identity so the exported component is the class; nothing renders.
 
-const state = vi.hoisted(() => ({invalidCredentials: false, loginArgs: []}))
+const state = vi.hoisted(() => ({invalidCredentials: false, loginArgs: [], login$: null, notifiedErrors: []}))
 
 vi.mock('~/compose', () => ({
     compose: Component => Component,
@@ -14,7 +14,7 @@ vi.mock('~/compose', () => ({
 
 vi.mock('~/translate', () => ({msg: key => key}))
 
-vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
+vi.mock('~/widget/notifications', () => ({Notifications: {error: ({message}) => state.notifiedErrors.push(message)}}))
 
 // The panel builds its field descriptors at module load.
 vi.mock('~/widget/form', () => {
@@ -30,7 +30,7 @@ vi.mock('~/user', () => ({
     resetInvalidCredentials: () => state.invalidCredentials = false,
     login$: (...args) => {
         state.loginArgs.push(args)
-        return NEVER
+        return state.login$
     }
 }))
 
@@ -38,9 +38,11 @@ const {Login} = await import('./login')
 
 const CREDENTIALS = {username: 'someone', password: 'correct-horse'}
 
-const submitLogin = ({invalidCredentials, recaptcha$ = () => NEVER}) => {
+const submitLogin = ({invalidCredentials = false, recaptcha$ = () => NEVER, login$ = NEVER}) => {
     state.invalidCredentials = invalidCredentials
     state.loginArgs = []
+    state.login$ = login$
+    state.notifiedErrors = []
     const stream = Object.assign(
         (_name, stream$, next, error) => stream$ && stream$.subscribe({next, error}),
         {}
@@ -67,5 +69,25 @@ describe('starting another login attempt', () => {
         const {loginArgs} = submitLogin({invalidCredentials: true, recaptcha$: () => of('a-token')})
 
         expect(loginArgs).toEqual([[CREDENTIALS, 'a-token']])
+    })
+})
+
+describe('a failed login', () => {
+    it('tells a throttled user to wait', () => {
+        const {notifiedErrors} = submitLogin({
+            recaptcha$: () => of('a-token'),
+            login$: throwError(() => ({status: 429}))
+        })
+
+        expect(notifiedErrors).toEqual(['landing.login.throttled'])
+    })
+
+    it('reports any other failure as an authentication error', () => {
+        const {notifiedErrors} = submitLogin({
+            recaptcha$: () => of('a-token'),
+            login$: throwError(() => ({status: 500}))
+        })
+
+        expect(notifiedErrors).toEqual(['landing.login.error'])
     })
 })

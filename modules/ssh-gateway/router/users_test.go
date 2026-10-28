@@ -13,7 +13,7 @@ import (
 func TestCheckPasswordAcceptsTheUsersPassword(t *testing.T) {
 	users := userModuleWith(t, passwordHandler("alice", "secret"))
 
-	ok, err := users.checkPassword("alice", []byte("secret"))
+	ok, err := users.checkPassword("alice", []byte("secret"), "192.0.2.1")
 
 	if err != nil || !ok {
 		t.Fatalf("checkPassword = %v, %v; want true, nil", ok, err)
@@ -23,17 +23,40 @@ func TestCheckPasswordAcceptsTheUsersPassword(t *testing.T) {
 func TestCheckPasswordRefusesAWrongPassword(t *testing.T) {
 	users := userModuleWith(t, passwordHandler("alice", "secret"))
 
-	ok, err := users.checkPassword("alice", []byte("guess"))
+	ok, err := users.checkPassword("alice", []byte("guess"), "192.0.2.1")
 
 	if err != nil || ok {
 		t.Fatalf("checkPassword = %v, %v; want false, nil", ok, err)
 	}
 }
 
+func TestCheckPasswordRefusesAThrottledLogin(t *testing.T) {
+	users := userModuleWith(t, statusHandler(http.StatusTooManyRequests))
+
+	ok, err := users.checkPassword("alice", []byte("secret"), "192.0.2.1")
+
+	if err != nil || ok {
+		t.Fatalf("checkPassword = %v, %v; want false, nil", ok, err)
+	}
+}
+
+func TestCheckPasswordNamesTheClientAddress(t *testing.T) {
+	var clientIP string
+	users := userModuleWith(t, http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		clientIP = r.PostFormValue("clientIp")
+	}))
+
+	_, _ = users.checkPassword("alice", []byte("secret"), "192.0.2.1")
+
+	if clientIP != "192.0.2.1" {
+		t.Fatalf("clientIp = %q; want 192.0.2.1", clientIP)
+	}
+}
+
 func TestCheckPasswordFailsWhenTheUserModuleFails(t *testing.T) {
 	users := userModuleWith(t, statusHandler(http.StatusInternalServerError))
 
-	if _, err := users.checkPassword("alice", []byte("secret")); err == nil {
+	if _, err := users.checkPassword("alice", []byte("secret"), "192.0.2.1"); err == nil {
 		t.Fatal("checkPassword succeeded against a failing user module")
 	}
 }

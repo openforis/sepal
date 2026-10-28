@@ -27,6 +27,7 @@ const INTERNAL_ADMIN_HEADER = {
 
 const OK = 200
 const UNAUTHORIZED = 401
+const TOO_MANY_REQUESTS = 429
 const INTERNAL_SERVER_ERROR = 500
 
 const AuthMiddleware = (userStore, ensureSessionFor) => {
@@ -100,15 +101,16 @@ const AuthMiddleware = (userStore, ensureSessionFor) => {
                 } else if (username) {
                     log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Authenticating user`)
                     return post$(AUTHENTICATION_URL, {
-                        body: {username, password},
+                        body: {username, password, clientIp: req.ip},
                         responseType: 'json',
-                        validStatuses: [OK, UNAUTHORIZED]
+                        validStatuses: [OK, UNAUTHORIZED, TOO_MANY_REQUESTS]
                     }).pipe(
                         switchMap(response => {
                             const {statusCode} = response
                             switch (statusCode) {
                                 case OK: return authorized$(username, response)
                                 case UNAUTHORIZED: return unauthorized$(username)
+                                case TOO_MANY_REQUESTS: return of(TOO_MANY_REQUESTS)
                                 default: return failure$(username, response)
                             }
                         })

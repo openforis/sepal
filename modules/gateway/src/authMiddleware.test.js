@@ -5,15 +5,18 @@ import {of} from 'rxjs'
 
 // Credentials presented on a request win over the user the session holds: a login submitted from a
 // browser logged in as someone else must authenticate the submitted account, not pass as the old one.
-// The user module's authenticate call is faked to accept `accounts`.
+// The user module's authenticate call is faked to accept `accounts`, and to throttle `throttledClients`.
 
 const accounts = {alice: 'alice-pw', bob: 'bob-pw'}
+const throttledClients = ['192.0.2.1']
 mock.module('#sepal/httpClient', {
     exports: {
-        post$: (_url, {body: {username, password}}) =>
-            of(accounts[username] === password
-                ? {statusCode: 200, body: {username, status: 'ACTIVE', roles: []}}
-                : {statusCode: 401, body: {}}),
+        post$: (_url, {body: {username, password, clientIp}}) =>
+            of(throttledClients.includes(clientIp)
+                ? {statusCode: 429, body: {}}
+                : accounts[username] === password
+                    ? {statusCode: 200, body: {username, status: 'ACTIVE', roles: []}}
+                    : {statusCode: 401, body: {}}),
 
         get$: () => of({statusCode: 401, body: {}})
     }
@@ -42,6 +45,15 @@ describe('a gui request carrying credentials', () => {
 
         assert.equal(status, 401)
     })
+
+    test('is refused as too many requests when the user module throttles its client address', async () => {
+        const req = guiRequestOf({credentials: ['bob', 'bob-pw'], ip: throttledClients[0]})
+        const {authMiddleware} = middlewareFor(req)
+
+        const {status} = await run(authMiddleware, req)
+
+        assert.equal(status, 429)
+    })
 })
 
 describe('a gui request without credentials', () => {
@@ -66,7 +78,7 @@ describe('a gui request without credentials', () => {
 })
 
 // The request as it reaches authMiddleware: userMiddleware has already injected the session's user.
-const guiRequestOf = ({session, credentials}) => {
+const guiRequestOf = ({session, credentials, ip = '198.51.100.1'}) => {
     const headers = {'no-auth-challenge': 'true'}
     if (session) {
         headers['sepal-user'] = JSON.stringify({username: session, status: 'ACTIVE', roles: []})
@@ -76,6 +88,7 @@ const guiRequestOf = ({session, credentials}) => {
     }
     return {
         originalUrl: '/api/user/login',
+        ip,
         session: {username: session},
         headers,
         get: name => headers[name.toLowerCase()],

@@ -87,6 +87,9 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
 
 ### Authentication
 - `src/authMiddleware.js`: HTTP Basic credentials, when present, are authenticated via POST to `http://user/authenticate` and win over the session's `sepal-user` (a login from a browser logged in as someone else must switch account); otherwise the injected `sepal-user` passes. A GUI login on a session held by another user replaces the session (`ensureSessionFor` in `session.js`)
+- **Login throttling**: the user module throttles failed password logins per username at a client address and per client address (see
+  `modules/user/src/loginThrottle.js`). The gateway sends `req.ip` as `clientIp` (`trust proxy` is 1: Caddy sets
+  `X-Forwarded-For`) and passes the user module's 429 on to the client.
 - **Worker-session API keys**: Basic auth with an *empty* username treats the password as a worker-session
   api key, authenticated via `POST http://worker/sessions/api-key-authenticate`. The key resolves to
   `{username, sessionId, workerType}`; a key whose owner is not `ACTIVE` (e.g. locked) is refused

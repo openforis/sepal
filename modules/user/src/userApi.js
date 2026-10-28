@@ -4,6 +4,7 @@ import {storedUsername} from '#sepal/username'
 import {hashPassword, needsRehash, verifyPassword} from './crypto.js'
 import {sendInvite, sendPasswordReset} from './email.js'
 import {publishUserLocked, publishUserUnlocked, publishUserUpdated} from './events.js'
+import {LoginThrottle} from './loginThrottle.js'
 import {renderGroup, renderPasswd, snapshotVersion} from './nss.js'
 import {recaptcha} from './recaptcha.js'
 import {generateToken, getOrGenerateToken, isExpired} from './tokens.js'
@@ -25,18 +26,26 @@ export class UserApi {
     #googleService
     #googleOAuth
     #ensureProvisioned
+    #loginThrottle
 
-    constructor({repository, googleService, googleOAuth, ensureProvisioned}) {
+    constructor({repository, googleService, googleOAuth, ensureProvisioned, loginThrottle = new LoginThrottle()}) {
         this.#repository = repository
         this.#googleService = googleService
         this.#googleOAuth = googleOAuth
         this.#ensureProvisioned = ensureProvisioned
+        this.#loginThrottle = loginThrottle
     }
 
+    // clientIp is the address the caller saw the login come from.
     async authenticate(ctx) {
-        const {username, password} = readBody(ctx)
+        const {username, password, clientIp} = readBody(ctx)
+        if (!this.#loginThrottle.tryAttempt({username, clientIp})) {
+            refuseThrottled(ctx)
+            return
+        }
         const user = isText(username) ? await this.#repository.findByUsername(username) : null
         if (await authenticates(user, password)) {
+            this.#loginThrottle.succeeded({username, clientIp})
             await this.#repository.setLastLoginTime(user.username)
             await this.#maybeRehashPassword(user, password)
             try {
@@ -397,9 +406,14 @@ export class UserApi {
     // Backs the ssh-gateway's PAM module, which verifies against this database rather than LDAP.
     // ACTIVE users only.
     async authPassword(ctx) {
-        const {username, password} = readBody(ctx)
+        const {username, password, clientIp} = readBody(ctx)
+        if (!this.#loginThrottle.tryAttempt({username, clientIp})) {
+            refuseThrottled(ctx)
+            return
+        }
         const user = isText(username) ? await this.#repository.findByUsername(username) : null
         if (await authenticates(user, password)) {
+            this.#loginThrottle.succeeded({username, clientIp})
             await this.#maybeRehashPassword(user, password)
             ctx.body = {status: 'success'}
         } else {
@@ -510,6 +524,11 @@ const suppliedUsername = ctx => {
 // a value of any other type into bytes of its own rather than refusing it.
 const verifies = async (user, password) =>
     Boolean(user?.passwordHash) && isText(password) && await verifyPassword(password, user.passwordHash)
+
+const refuseThrottled = ctx => {
+    ctx.status = 429
+    ctx.body = {message: 'Too many failed logins, try again later'}
+}
 
 // What both password endpoints mean by a successful login.
 const authenticates = async (user, password) =>
