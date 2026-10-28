@@ -154,11 +154,6 @@ const main = async () => {
     app.post('/api/user/logout', logout)
     app.post('/api/user/invalidateOtherSessions', invalidateOtherSessions)
 
-    // Internal-only user-module endpoints — the ssh-gateway calls the user module directly (module-to-module),
-    // so these must NOT be reachable through the public /api/user proxy. Block them before the
-    // catch-all proxy below would otherwise forward /api/user/auth/* and /api/user/nss/* to it.
-    app.use(['/api/user/auth', '/api/user/nss'], (_req, res) => res.sendStatus(404))
-
     restrictMetricsToAdmins(app, authMiddleware)
     app.use('/api/gateway/metrics', apiMetrics({metricsPath: '/api/gateway/metrics'}))
 

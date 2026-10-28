@@ -3,7 +3,7 @@ import {catchError, EMPTY, mergeMap, Subject} from 'rxjs'
 
 import {getLogger} from '#sepal/log'
 
-import {endpoints} from '../config/endpoints.js'
+import {endpoints, internalPaths} from '../config/endpoints.js'
 import {sepalHost} from './config.js'
 import {rewriteLocation} from './rewrite.js'
 import {urlTag, usernameTag} from './tag.js'
@@ -138,7 +138,10 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
             return {path, target, ws, proxy: proxyMiddleware}
         }
         
-    const proxyEndpoints = app => endpoints.map(proxy(app))
+    const proxyEndpoints = app => {
+        app.use(internalPaths, (_req, res) => res.sendStatus(404))
+        return endpoints.map(proxy(app))
+    }
 
     return {proxyEndpoints}
 }

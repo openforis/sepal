@@ -23,6 +23,7 @@ const SANDBOX_SESSION = {sessionId: 's-sandbox', username: 'bob', workerType: 's
 const LOCKED_SESSION = {sessionId: 's-locked', username: 'carol', workerType: 'sandbox'}
 
 const FORGED = JSON.stringify({sessionId: 's-forged', workerType: 'sandbox'})
+const FORGED_USER = JSON.stringify({username: 'admin', roles: ['application_admin'], status: 'ACTIVE'})
 
 const parse = value => (value ? JSON.parse(value) : null)
 
@@ -117,6 +118,19 @@ describe('a request to an unauthenticated endpoint', () => {
         assert.equal(status, 200)
         assert.equal(body.session, null)
     })
+
+    test('reaches the module with no user, whatever user the caller claimed', async () => {
+        const {status, body} = await probeUnauthenticated(undefined, FORGED_USER)
+
+        assert.equal(status, 200)
+        assert.equal(body.user, null)
+    })
+})
+
+describe('a request without credentials', () => {
+    test('is refused, whatever user the caller claimed', async () => {
+        assert.equal((await probe({claimedUser: FORGED_USER})).status, 401)
+    })
 })
 
 describe('a request authenticated the ordinary way', () => {
@@ -152,13 +166,13 @@ const startGateway = async () => {
 
 // /api/tasks is the authenticated endpoint the executor callbacks travel over; /api/sessions/expiry
 // is the one endpoint that is deliberately unauthenticated.
-const probe = ({apiKey, username = '', password, claimedSession}) =>
-    request('/api/tasks/echo', {apiKey, username, password, claimedSession})
+const probe = ({apiKey, username = '', password, claimedSession, claimedUser}) =>
+    request('/api/tasks/echo', {apiKey, username, password, claimedSession, claimedUser})
 
-const probeUnauthenticated = claimedSession =>
-    request('/api/sessions/expiry/echo', {claimedSession})
+const probeUnauthenticated = (claimedSession, claimedUser) =>
+    request('/api/sessions/expiry/echo', {claimedSession, claimedUser})
 
-const request = async (path, {apiKey, username = '', password, claimedSession}) => {
+const request = async (path, {apiKey, username = '', password, claimedSession, claimedUser}) => {
     const credentials = apiKey === undefined ? `${username}:${password}` : `:${apiKey}`
     const response = await fetch(`${gatewayUrl}${path}`, {
         headers: {
@@ -166,7 +180,8 @@ const request = async (path, {apiKey, username = '', password, claimedSession}) 
                 ? {}
                 : {'Authorization': `Basic ${Buffer.from(credentials).toString('base64')}`}),
             'No-auth-challenge': 'true',
-            ...(claimedSession ? {'sepal-session': claimedSession} : {})
+            ...(claimedSession ? {'sepal-session': claimedSession} : {}),
+            ...(claimedUser ? {'sepal-user': claimedUser} : {})
         }
     })
     return {

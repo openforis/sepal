@@ -100,6 +100,9 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
 - **Metrics are admin-only**: `src/metricsAccess.js` answers 403 to any `/api/<module>/metrics[.json]` request
   from a user without `application_admin` (Prometheus scrapes as `sepaladmin`). Every Koa module serves
   `/metrics` behind its catch-all proxy, so the guard matches the path pattern, case-insensitively, not a list.
+- **Internal user-module endpoints**: `/api/user/auth/*` and `/api/user/nss/*` (`internalPaths` in `config/endpoints.js`)
+  answer 404; only the ssh-gateway calls them, directly. `proxyEndpoints` registers the block itself, so it always
+  precedes the `/api/user` proxy.
 - **Websocket upgrades bypass Express**, so `src/webSocketUpgrade.js` repeats the guards for them: it strips
   `sepal-user` and `sepal-session`, refuses metrics paths, and proxies only endpoints marked `ws: true` in
   `config/endpoints.js` (plus `/api/ws` and the sandbox proxy); anything else is answered 404.

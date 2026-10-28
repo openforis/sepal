@@ -207,4 +207,8 @@ const webSocketEndpoints = [
 
 const webSocketPath = '/api/ws'
 
+// User-module endpoints only the ssh-gateway may call, module-to-module: the /api/user endpoint
+// would otherwise forward them to anyone.
+export const internalPaths = ['/api/user/auth', '/api/user/nss']
+
 export {endpoints, webSocketEndpoints, webSocketPath}
