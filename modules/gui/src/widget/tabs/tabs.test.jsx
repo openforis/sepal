@@ -97,6 +97,30 @@ describe('Tabs new tab', () => {
     })
 })
 
+describe('Tabs close', () => {
+    it('closes a middle-clicked tab and keeps the selection', async () => {
+        const otherTab = {id: 'tab-2', title: 'Other tab', placeholder: 'New tab'}
+        mountTabs({}, [TAB, otherTab])
+
+        act(() => middleClick(tabHandle(otherTab)))
+
+        await act(() => vi.waitFor(() =>
+            expect(select('section.tabs').map(({id}) => id)).toEqual([TAB.id])
+        ))
+        expect(select('section.selectedTabId')).toBe(TAB.id)
+    })
+
+    it('routes a middle click through the section\'s close hook', () => {
+        const onClose = vi.fn()
+        mountTabs({onClose})
+
+        act(() => middleClick(tabHandle(TAB)))
+
+        expect(onClose).toHaveBeenCalledWith(expect.objectContaining({id: TAB.id}), expect.any(Function))
+        expect(select('section.tabs.0.id')).toBe(TAB.id)
+    })
+})
+
 const mountTabs = (props, tabs = [TAB]) => {
     const store = createStore(
         (state = {dimensions: {width: 1024, height: 768}, section: {tabs, selectedTabId: tabs[0]?.id}}, action) =>
@@ -122,6 +146,12 @@ const titleInput = () =>
 
 const addTabButton = () =>
     container.querySelector('svg[data-icon="plus"]').closest('button')
+
+const tabHandle = ({title}) =>
+    [...container.querySelectorAll('input')].find(input => input.value === title)
+
+const middleClick = element =>
+    element.dispatchEvent(new MouseEvent('auxclick', {button: 1, bubbles: true}))
 
 const typeInto = (input, value) => {
     const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set
