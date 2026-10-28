@@ -58,11 +58,48 @@ describe('Tabs title', () => {
 
         expect(input.readOnly).toBe(true)
     })
+
+    it('keeps a landing tab\'s title read-only', () => {
+        mountTabs({isLandingTab: () => true})
+        const input = titleInput()
+
+        act(() => input.click())
+
+        expect(input.readOnly).toBe(true)
+    })
+
+    it('lets a section with a landing tab rename its other tabs', () => {
+        mountTabs({isLandingTab: () => false})
+        const input = titleInput()
+
+        act(() => input.click())
+
+        expect(input.readOnly).toBe(false)
+    })
 })
 
-const mountTabs = props => {
+describe('Tabs new tab', () => {
+    it('names the section\'s first tab with the section\'s placeholder', () => {
+        const newTabPlaceholder = 'Apps'
+
+        mountTabs({newTabPlaceholder}, [])
+
+        expect(select('section.tabs.0.placeholder')).toBe(newTabPlaceholder)
+    })
+
+    it('names an added tab with the section\'s placeholder', () => {
+        const newTabPlaceholder = 'Apps'
+        mountTabs({newTabPlaceholder})
+
+        act(() => addTabButton().click())
+
+        expect(select('section.tabs.1.placeholder')).toBe(newTabPlaceholder)
+    })
+})
+
+const mountTabs = (props, tabs = [TAB]) => {
     const store = createStore(
-        (state = {dimensions: {width: 1024, height: 768}, section: {tabs: [TAB], selectedTabId: TAB.id}}, action) =>
+        (state = {dimensions: {width: 1024, height: 768}, section: {tabs, selectedTabId: tabs[0]?.id}}, action) =>
             action.reduce ? action.reduce(state) : state
     )
     initStore(store)
@@ -82,6 +119,9 @@ const mountTabs = props => {
 
 const titleInput = () =>
     container.querySelector('input')
+
+const addTabButton = () =>
+    container.querySelector('svg[data-icon="plus"]').closest('button')
 
 const typeInto = (input, value) => {
     const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set
