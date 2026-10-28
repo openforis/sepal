@@ -247,7 +247,7 @@ describe('requestInstance', () => {
         })
 
         await assert.rejects(requestInstance(REQUEST, {claims, provider}), /tagging failed/)
-        assert.deepEqual(callsOf(claims.release), [['i-idle']])
+        assert.deepEqual(callsOf(claims.release), [['i-idle', REQUEST.sessionId]])
     })
 
     // A failed launch-path claim costs the instance its protection from ReleaseUnusedInstances,
@@ -342,7 +342,7 @@ describe('requestInstance', () => {
 
         const result = await requestInstance(REQUEST, {claims, provider})
 
-        assert.deepEqual(callsOf(claims.release), [['i-pooled']])
+        assert.deepEqual(callsOf(claims.release), [['i-pooled', REQUEST.sessionId]])
         assert.equal(result.id, 'i-new')
     })
 
@@ -540,6 +540,11 @@ describe('releaseInstance', () => {
         events = await import('./events.js')
     })
 
+    const SESSION_ID = 's-1'
+
+    const reservedForSession = (overrides = {}) =>
+        makeReservedInstance({reservation: {username: 'alice', workerType: 'SANDBOX', sessionId: SESSION_ID}, ...overrides})
+
     const makeClaims = (overrides = {}) => ({
         release: mock.fn(async () => true),
         ...overrides,
@@ -548,7 +553,7 @@ describe('releaseInstance', () => {
     const makeDeps = (overrides = {}) => ({
         claims: makeClaims(),
         provider: {
-            getInstance: mock.fn(async () => makeReservedInstance()),
+            getInstance: mock.fn(async () => reservedForSession()),
             release: mock.fn(async () => undefined),
             terminate: mock.fn(async () => undefined),
             deleteScratchVolume: mock.fn(async () => undefined),
@@ -564,7 +569,7 @@ describe('releaseInstance', () => {
         events.instanceReleased$.subscribe(v => released.push(v))
 
         const deps = makeDeps()
-        await releaseInstance('i-001', deps)
+        await releaseInstance('i-001', SESSION_ID, deps)
 
         assert.equal(deps.provisioner.undeploy.mock.callCount(), 1)
         assert.deepEqual(callsOf(deps.provider.release), [['i-001']])
@@ -581,9 +586,9 @@ describe('releaseInstance', () => {
         const deps = makeDeps()
         deps.provider.getInstance = mock.fn(async () => null)
 
-        await releaseInstance('i-missing', deps)
+        await releaseInstance('i-missing', SESSION_ID, deps)
 
-        assert.deepEqual(callsOf(deps.claims.release), [['i-missing']])
+        assert.deepEqual(callsOf(deps.claims.release), [['i-missing', SESSION_ID]])
         assert.equal(deps.provisioner.undeploy.mock.callCount(), 0)
         assert.equal(released.length, 0)
     })
@@ -602,7 +607,7 @@ describe('releaseInstance', () => {
             return true
         })
 
-        await releaseInstance('i-001', deps)
+        await releaseInstance('i-001', SESSION_ID, deps)
 
         assert.deepEqual(order, ['undeploy', 'claim'])
     })
@@ -619,7 +624,7 @@ describe('releaseInstance', () => {
             return true
         })
 
-        await releaseInstance('i-001', deps)
+        await releaseInstance('i-001', SESSION_ID, deps)
 
         assert.deepEqual(callsOf(deps.provider.deleteScratchVolume), [['i-001']])
         assert.deepEqual(order, ['undeploy', 'scratch', 'claim'])
@@ -635,10 +640,10 @@ describe('releaseInstance', () => {
         const deps = makeDeps()
         deps.claims.release = mock.fn(async () => false)
 
-        await releaseInstance('i-raced', deps)
+        await releaseInstance('i-raced', SESSION_ID, deps)
 
         assert.equal(deps.provisioner.undeploy.mock.callCount(), 1)
-        assert.deepEqual(callsOf(deps.claims.release), [['i-raced']])
+        assert.deepEqual(callsOf(deps.claims.release), [['i-raced', SESSION_ID]])
         assert.deepEqual(callsOf(deps.provider.release), [['i-raced']])
         assert.ok(released.length >= 1)
         const payload = released[released.length - 1]
@@ -654,14 +659,14 @@ describe('releaseInstance', () => {
             throw new Error('ssh error')
         })
 
-        await releaseInstance('i-fail', deps)
+        await releaseInstance('i-fail', SESSION_ID, deps)
 
         assert.ok(failed.length >= 1)
         const payload = failed[failed.length - 1]
         assert.equal(payload.instanceId, 'i-fail')
         assert.equal(typeof payload.error, 'string')
         assert.deepEqual(callsOf(deps.provider.terminate), [['i-fail']])
-        assert.deepEqual(callsOf(deps.claims.release), [['i-fail']])
+        assert.deepEqual(callsOf(deps.claims.release), [['i-fail', SESSION_ID]])
     })
 
     test('failure path: terminate failure is swallowed (does not throw)', async () => {
@@ -673,7 +678,7 @@ describe('releaseInstance', () => {
             throw new Error('terminate fail')
         })
 
-        assert.equal(await releaseInstance('i-cascade', deps), undefined)
+        assert.equal(await releaseInstance('i-cascade', SESSION_ID, deps), undefined)
     })
 
     test('instance with no host: skips undeploy but still releases', async () => {
@@ -681,13 +686,58 @@ describe('releaseInstance', () => {
         events.instanceReleased$.subscribe(v => released.push(v))
 
         const deps = makeDeps()
-        deps.provider.getInstance = mock.fn(async () => makeReservedInstance({host: null}))
+        deps.provider.getInstance = mock.fn(async () => reservedForSession({host: null}))
 
-        await releaseInstance('i-nohost', deps)
+        await releaseInstance('i-nohost', SESSION_ID, deps)
 
         assert.equal(deps.provisioner.undeploy.mock.callCount(), 0)
         assert.equal(deps.provider.release.mock.callCount(), 1)
         assert.ok(released.length >= 1)
+    })
+
+    // A release that runs late — ReclaimStaleClaims acting on a claim it read before the Stop
+    // finished — must not undeploy, or tag idle, the instance of the session it went to next.
+    test('leaves an instance reserved for another session alone, dropping only its own claim', async () => {
+        const deps = makeDeps()
+        deps.provider.getInstance = mock.fn(async () =>
+            reservedForSession({reservation: {username: 'bob', workerType: 'SANDBOX', sessionId: 's-next'}}))
+
+        await releaseInstance('i-001', SESSION_ID, deps)
+
+        assert.equal(deps.provisioner.undeploy.mock.callCount(), 0)
+        assert.equal(deps.provider.release.mock.callCount(), 0)
+        assert.equal(deps.provider.terminate.mock.callCount(), 0)
+        assert.deepEqual(callsOf(deps.claims.release), [['i-001', SESSION_ID]])
+    })
+
+    test('leaves an instance already back in the pool alone', async () => {
+        const deps = makeDeps()
+        deps.provider.getInstance = mock.fn(async () => makeInstance())
+
+        await releaseInstance('i-001', SESSION_ID, deps)
+
+        assert.equal(deps.provisioner.undeploy.mock.callCount(), 0)
+        assert.equal(deps.provider.release.mock.callCount(), 0)
+        assert.deepEqual(callsOf(deps.claims.release), [['i-001', SESSION_ID]])
+    })
+
+    // Stop and ReclaimStaleClaims both release a closed session's instance. Run side by side,
+    // the slower one re-tagged the instance idle after the next session had reserved it.
+    test('a second release of the same session joins the one in flight', async () => {
+        let finishUndeploy
+        const deps = {...makeDeps(), releasing: new Map()}
+        deps.provisioner.undeploy = mock.fn(() => new Promise(resolve => {
+            finishUndeploy = resolve
+        }))
+
+        const first = releaseInstance('i-001', SESSION_ID, deps)
+        const second = releaseInstance('i-001', SESSION_ID, deps)
+        await new Promise(resolve => setImmediate(resolve))
+        finishUndeploy()
+        await Promise.all([first, second])
+
+        assert.equal(deps.provisioner.undeploy.mock.callCount(), 1)
+        assert.equal(deps.provider.release.mock.callCount(), 1)
     })
 })
 
@@ -922,7 +972,7 @@ describe('reclaimStaleClaims', () => {
         }
         const reclaimed = await reclaimStaleClaims(['s-1'], GRACE_MS, {claims, provider: makeProvider()})
 
-        assert.deepEqual(callsOf(claims.release), [['i-gone']])
+        assert.deepEqual(callsOf(claims.release), [['i-gone', 's-1']])
         assert.equal(reclaimed, 1)
     })
 
@@ -942,7 +992,7 @@ describe('reclaimStaleClaims', () => {
         const provisioner = {undeploy: mock.fn(async () => undefined)}
 
         assert.equal(await reclaimStaleClaims([], GRACE_MS, {claims, provider, provisioner}), 1)
-        assert.deepEqual(callsOf(claims.release), [['i-1']])
+        assert.deepEqual(callsOf(claims.release), [['i-1', 's-missing']])
         assert.equal(provisioner.undeploy.mock.callCount(), 1)
         assert.deepEqual(callsOf(provider.release), [['i-1']])
     })
@@ -1033,7 +1083,7 @@ describe('reclaimStaleClaims', () => {
 
         const reclaimed = await reclaimStaleClaims([], GRACE_MS, {claims, provider: makeProvider()})
 
-        assert.deepEqual(callsOf(claims.release), [['i-1'], ['i-2'], ['i-3']])
+        assert.deepEqual(callsOf(claims.release), [['i-1', 's-1'], ['i-2', 's-2'], ['i-3', 's-3']])
         assert.equal(reclaimed, 2)
     })
 })
@@ -1433,7 +1483,7 @@ describe('surviving a worker restart', () => {
         })
         await component.start()
 
-        await component.instanceManager.releaseInstance('i-1')
+        await component.instanceManager.releaseInstance('i-1', openSession.id)
         component.stop()
 
         assert.equal(provisioner.undeploy.mock.callCount(), 1)

@@ -192,7 +192,7 @@ const close = async ({session, instanceType, running, repo, policy, releaseInsta
         return false
     }
     log.info(`${sessionTag(session)} (${session.instanceType}) expired past grace - closed`)
-    await releaseInstance(session.instance.id)
+    await releaseInstance(session.instance.id, session.id)
     emitWorkerSessionClosed({username: session.username, sessionId: session.id})
     emitSessionExpiryClosed({
         username: session.username,

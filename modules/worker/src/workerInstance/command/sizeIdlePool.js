@@ -108,7 +108,7 @@ const underClaim = async (instance, operation, {claims}) => {
         await operation()
         return true
     } finally {
-        await claims.release(instance.id)
+        await claims.release(instance.id, POOL_CYCLE_CLAIM)
     }
 }
 
