@@ -54,6 +54,10 @@ const fetchStub = routes => {
     return fn
 }
 
+// A worker call that never answers: it settles only when the caller's signal gives up on it.
+const unanswered = ({signal}) => new Promise((_resolve, reject) =>
+    signal?.addEventListener('abort', () => reject(signal.reason)))
+
 // A legacy (no appPath) start is associated under '/sandbox/<endpoint>' like any other app, so
 // what the worker holds for it — and hands back to a restarted gateway — is an ordinary
 // GET /sessions/app-sessions row.
@@ -67,13 +71,14 @@ const associateBody = fetch => callsOf(fetch)
     .filter(([url, options]) => url.endsWith('/app') && options?.method === 'POST')
     .map(([, options]) => JSON.parse(options.body))
 
-const createManager = ({fetch, defaultInstanceType = 'T3aSmall'} = {}) =>
+const createManager = ({fetch, defaultInstanceType = 'T3aSmall', ...options} = {}) =>
     createSandboxSessionManager({
         workerBaseUrl: 'http://worker',
         defaultInstanceType,
         heartbeatIntervalMs: 999999,
         log: noopLog,
-        fetch
+        fetch,
+        ...options
     })
 
 describe('toClientStatus', () => {
@@ -329,6 +334,43 @@ describe('heartbeat', () => {
         assert.equal(fetch.mock.calls[0].arguments[0], 'http://worker/sessions/session/s1')
         assert.equal(fetch.mock.calls[0].arguments[1].method, 'POST')
         assert.equal(mgr._cache.get('leo').get('/sandbox/rstudio').status, 'ACTIVE')
+    })
+
+    test('a hung heartbeat times out instead of holding back the sessions after it', {timeout: 1000}, async () => {
+        const routes = fetchStub({
+            'GET /sessions/app-sessions': [
+                legacyAppSession({endpoint: 'rstudio', sessionId: 'hung', host: 'h1'}),
+                legacyAppSession({endpoint: 'shiny', sessionId: 's2', host: 'h2'})
+            ],
+            'POST /sessions/session/s2': {id: 's2', host: 'h2', status: 'ACTIVE'}
+        })
+        const fetch = (url, options = {}) =>
+            url.endsWith('/sessions/session/hung') ? unanswered(options) : routes(url, options)
+        const mgr = createManager({fetch, heartbeatTimeoutMs: 10})
+        await mgr.status('leo', 'rstudio')
+        await mgr.status('leo', 'shiny')
+
+        await mgr.heartbeatOnce()
+
+        assert.equal(routes.requested('POST /sessions/session/s2'), true)
+    })
+
+    test('a timer tick while a heartbeat is still running starts no second one', async t => {
+        t.mock.timers.enable({apis: ['setInterval']})
+        const routes = fetchStub({
+            'GET /sessions/app-sessions': [legacyAppSession({endpoint: 'rstudio', sessionId: 'hung', host: 'h1'})]
+        })
+        const fetch = mock.fn((url, options = {}) =>
+            url.endsWith('/sessions/session/hung') ? unanswered(options) : routes(url, options))
+        const mgr = createManager({fetch, heartbeatIntervalMs: 1000})
+        await mgr.status('leo', 'rstudio')
+        mgr.start()
+        t.after(() => mgr.stop())
+
+        t.mock.timers.tick(1000)
+        t.mock.timers.tick(1000)
+
+        assert.equal(heartbeatBodies(fetch).length, 1)
     })
 
     test('dedupes multiple endpoints sharing one session into a single heartbeat', async () => {
