@@ -45,7 +45,12 @@
     },
     "googleAccountRequired": "Certaines applications ne sont pas disponibles. Pour les activer, connectez votre compte SEPAL à votre compte Google.",
     "info": "Afficher les informations de cette application",
-    "initializing": "Démarrer une session...",
+    "landingTab": "Applications",
+    "launch": {
+      "startingSession": "",
+      "startingServer": "",
+      "startingApp": ""
+    },
     "loading": {
       "error": "Échec de chargement. Recharger la page.",
       "progress": "Chargement..."
@@ -57,6 +62,30 @@
     "running": "L'app est lancée",
     "noInstanceRequired": "",
     "noInstanceRequiredTooltip": "",
+    "gpuRequiredTooltip": "",
+    "sessionTakenOver": "",
+    "confirmReopen": {
+      "title": "",
+      "instance": "",
+      "unknownInstance": "",
+      "otherBrowser": "",
+      "otherInstance": "",
+      "group": "",
+      "alsoClosing": "",
+      "releaseFailed": ""
+    },
+    "instancePicker": {
+      "title": "",
+      "instance": "",
+      "placeholder": "",
+      "runningSection": "",
+      "newSection": "",
+      "newSsdSection": "",
+      "newInstanceTitle": "",
+      "noInstanceType": "",
+      "belowRequirements": "",
+      "alreadyRunning": ""
+    },
     "admin": {
       "title": "",
       "logs": {
@@ -338,10 +367,12 @@
     "lessThan": "Doit être inférieur à {maxValue}.",
     "match": "Doit correspondre à {regex}",
     "max": "La valeur maximale est {maxValue}",
+    "maxLength": "",
     "min": "La valeur minimale est {valeur minimale}",
     "notBlank": "Ne peut être laissé blanc",
     "notEmpty": "Ne peut être vide",
-    "number": "Doit être un nombre"
+    "number": "Doit être un nombre",
+    "username": ""
   },
   "footer": {
     "buildNumber": "Numero de compilation",
@@ -364,7 +395,9 @@
   "gee": {
     "asset": {
       "error": {
-        "wrongType": ""
+        "wrongType": "",
+        "invalidIds": "",
+        "notFound": ""
       }
     },
     "classification": {
@@ -373,9 +406,21 @@
       }
     },
     "error": {
-      "earthEngineException": "Erreur de Google Earth Engine : {earthEngineMessage}",
+      "earthEngineException": "",
       "failedToLoadRecipe": "Echec du chargement de la formule",
       "title": "Erreur Google Earth Engine"
+    },
+    "geoId": {
+      "error": {
+        "invalidBuffer": "",
+        "invalidGeometry": "",
+        "notFound": "",
+        "rateLimited": "",
+        "rejected": "",
+        "serviceError": "",
+        "unreachable": "",
+        "unusableResponse": ""
+      }
     },
     "image": {
       "error": {
@@ -395,8 +440,10 @@
     "connectivityError": "Vous ne pouvez actuellement pas vous connecter au serveur SEPAL.",
     "versionMismatch": {
       "title": "",
-      "message": "",
-      "reloadNow": ""
+      "message": ""
+    },
+    "loginSession": {
+      "switched": ""
     },
     "sections": {
       "account": "Paramètres du compte",
@@ -405,16 +452,16 @@
       "collapse": "Réduire le menu",
       "expand": "Étendre le menu",
       "help": "Ouvrez la documentation de SEPAL dans un nouvel onglet/fenêtre",
-      "logout": "Déconnexion",
+      "logout": "",
       "process": "Traitement",
       "tasks": "Tâches de fond",
       "terminal": "Console",
       "user": {
-        "messages": "Afficher messages utilisateur",
+        "messages": "",
         "profile": "Gérer le profil utilisateur",
         "report": {
           "budgetExceeded": "Dépassé",
-          "tooltip": "Afficher rapport utilisateur"
+          "tooltip": ""
         }
       },
       "users": "Utilisateurs"
@@ -516,7 +563,7 @@
         "label": "Email",
         "placeholder": "Entrez votre adresse email",
         "required": "Email requis",
-        "format": "Merci de saisir une adresse e-mail valide",
+        "format": "",
         "duplicate": "Cet e-mail n'est pas disponible, veuillez en choisir un autre",
         "cannotValidate": "Impossible de valider l'email"
       },
@@ -689,7 +736,8 @@
           "duplicateColor": "Il y a plus d'une entrée avec cette couleur",
           "duplicateLabel": "Il y a plus d'une entrée avec ce label",
           "duplicateValue": "Il y a plus d'une entrée avec cette valeur",
-          "invalidColor": "Une autre classe a la même couleur"
+          "invalidColor": "Une autre classe a la même couleur",
+          "invalidValue": ""
         },
         "remove": {
           "tooltip": "Supprimer cette entrée de la légende"
@@ -790,7 +838,26 @@
             }
           },
           "Recipe": {
-            "description": "Ajouter une formule de SEPAL"
+            "description": "Ajouter une formule de SEPAL",
+            "form": {
+              "name": {
+                "label": "Nom",
+                "placeholder": ""
+              }
+            }
+          }
+        }
+      },
+      "editImageLayerSource": {
+        "types": {
+          "Asset": {
+            "description": ""
+          },
+          "Planet": {
+            "description": ""
+          },
+          "Recipe": {
+            "description": ""
           }
         }
       },
@@ -802,16 +869,37 @@
         }
       },
       "layer": {
+        "edit": {
+          "tooltip": ""
+        },
         "remove": {
           "tooltip": "Supprimer la couche"
+        },
+        "actions": {
+          "label": "",
+          "edit": "",
+          "rename": "",
+          "delete": "",
+          "deleteOwned": ""
+        },
+        "delete": {
+          "confirmation": ""
         }
       },
+      "legacySource": "",
+      "missingSources": "",
       "mode": {
         "grid": {
           "label": "Grille"
         },
         "stack": {
           "label": "Pile"
+        }
+      },
+      "renameImageLayerSource": {
+        "title": "",
+        "name": {
+          "label": "Label"
         }
       },
       "title": "Couches"
@@ -821,6 +909,17 @@
       "bands": {
         "loading": "Chargement des bandes...",
         "loadError": "Échec du chargement des bandes de l'image"
+      },
+      "draft": {
+        "copy": {
+          "label": "",
+          "tooltip": ""
+        },
+        "paste": {
+          "label": "",
+          "tooltip": "",
+          "empty": ""
+        }
       },
       "form": {
         "band": {
@@ -832,6 +931,7 @@
           "reverse.tooltip": "Inverser la bande.",
           "saturation.label": "Saturation",
           "select.placeholder": "Sélectionnez une bande...",
+          "unavailable": "",
           "value.label": "Valeur"
         },
         "gamma": {
@@ -858,7 +958,8 @@
           },
           "text": {
             "tooltip": "Afficher et modifier la palette comme du texte.",
-            "placeholder": "Entrez une liste de couleurs au format csv..."
+            "placeholder": "Entrez une liste de couleurs au format csv...",
+            "invalid": ""
           }
         },
         "min": {
@@ -894,6 +995,7 @@
     "visualizationSelector": {
       "label": "Bandes",
       "userDefined.label": "Défini par l'utilisateur",
+      "inherited.label": "",
       "add.tooltip": "Ajouter une visualisation",
       "edit.tooltip": "Modifier la visualisation sélectionnée",
       "clone.tooltip": "Dupliquer la visualisation prédéfinie sélectionnée",
@@ -905,6 +1007,18 @@
     },
     "interactionMode": {
       "chart": ""
+    },
+    "layerSource": {
+      "refresh": {
+        "tooltip": "",
+        "failed": ""
+      },
+      "checking": "",
+      "unavailable": "",
+      "failing": "",
+      "held": "",
+      "heldUpstream": "",
+      "checkingSection": ""
     }
   },
   "featureLayerSources": {
@@ -947,13 +1061,17 @@
   },
   "imageLayerSources": {
     "Asset": {
+      "refresh": {
+        "failed": ""
+      },
       "label": "Asset EE",
       "description": "Asset Earth Engine"
     },
     "Recipe": {
       "label": "Formule",
       "thisRecipeDescription": "cette formule",
-      "loadError": "Échec du chargement de la formule : {error}"
+      "notFound": "",
+      "loadFailed": ""
     },
     "Planet": {
       "label": "Planet",
@@ -966,6 +1084,9 @@
       "label": "Google Satellite",
       "description": "Imagerie satellite haute résolution de Google"
     }
+  },
+  "instanceLaunch": {
+    "unavailable": ""
   },
   "notifications": {
     "error": {
@@ -995,6 +1116,8 @@
             "label": "Légende"
           },
           "noBands": "",
+          "duplicateSource": "",
+          "missingBands": "",
           "noImagery": "",
           "recipe": {
             "label": "Formule",
@@ -1020,7 +1143,12 @@
         "sections": {
           "title": ""
         },
-        "title": ""
+        "title": "",
+        "tooltip": "",
+        "unavailableBands": {
+          "input": "",
+          "inputs": ""
+        }
       }
     },
     "mapZoom": {
@@ -1069,6 +1197,7 @@
         "loadFailed": "",
         "loadObservations.error": "",
         "loadSegments.error": "",
+        "noChartableBand": "",
         "start.tooltip": "Graphique des séries temporelles pour le pixel"
       },
       "create": "CCDC",
@@ -1439,23 +1568,17 @@
           "tooltip": "Récupérer séries temporelles"
         },
         "source": {
-          "asset": {
-            "label": "Asset Earth Engine CCDC",
-            "title": "Asset Earth Engine CCDC",
-            "notCcdc": "L'asset ne contient pas de segments CCDC"
-          },
           "button": "SRC",
           "form": {
             "asset": {
-              "invalid": "L'asset doit être un asset CCDC exporté",
               "label": "Asset CCDC",
               "placeholder": "Entrer l'ID de l'asset CCDC",
               "required": "Un ID d'asset doit être précisé"
+            },
+            "recipe": {
+              "label": "",
+              "required": ""
             }
-          },
-          "recipe": {
-            "label": "Formule CCDC de SEPAL sauvegardée",
-            "title": "Formule CCDC de SEPAL sauvegardée"
           },
           "title": "Source",
           "tooltip": "Sélectionnez l'asset EE avec les segments CCDC à découper"
@@ -1490,7 +1613,8 @@
       },
       "error": {
         "noImages": "",
-        "noChangeClasses": ""
+        "noChangeClasses": "",
+        "noAoi": ""
       },
       "panel": {
         "dates": {
@@ -1537,7 +1661,8 @@
             "dataSets": {
               "label": "",
               "tooltip": "",
-              "required": ""
+              "required": "",
+              "unsuppliedInputs": ""
             },
             "cloudPercentageThreshold": {
               "label": "",
@@ -1548,7 +1673,9 @@
               "label": "",
               "tooltip": "",
               "placeholder": "",
-              "required": ""
+              "required": "",
+              "unsuppliedInputs": "",
+              "multipleInputs": ""
             },
             "changeFromClasses": {
               "label": "",
@@ -1563,7 +1690,8 @@
             },
             "changeClasses": {
               "noClassification": ""
-            }
+            },
+            "andMore": ""
           }
         },
         "options": {
@@ -1576,12 +1704,24 @@
               "tooltip": "",
               "off": "Non",
               "on": "Oui",
-              "unavailable": ""
+              "unavailable": "",
+              "dependsOnSources": {
+                "CHECKING": "",
+                "UNAVAILABLE": ""
+              }
             },
             "gateIndex": {
               "label": "",
               "tooltip": "",
-              "required": ""
+              "required": "",
+              "unavailable": {
+                "BASELINE": "",
+                "MONITORING": ""
+              },
+              "noAlternative": {
+                "BASELINE": "",
+                "MONITORING": ""
+              }
             },
             "gateThreshold": {
               "label": "",
@@ -1589,7 +1729,22 @@
               "required": "",
               "value": ""
             },
-            "minConsecutiveDetections": {
+            "minRepeatability": {
+              "label": "",
+              "tooltip": "",
+              "value": "{value}%"
+            },
+            "minCumulativeDetections": {
+              "label": "",
+              "tooltip": "",
+              "value": ""
+            },
+            "minFromDetections": {
+              "label": "",
+              "tooltip": "",
+              "value": ""
+            },
+            "minToDetections": {
               "label": "",
               "tooltip": "",
               "value": ""
@@ -1601,9 +1756,9 @@
         "loadError": "",
         "mosaicLoadError": "",
         "assetLoadError": "",
-        "singleInputRequired": "",
         "selectedScenesUnsupported": "",
-        "notDerivable": ""
+        "pending": "",
+        "unavailable": ""
       }
     },
     "changeAlerts": {
@@ -1716,8 +1871,7 @@
         "reference": {
           "asset": {
             "label": "Asset Earth Engine CCDC",
-            "title": "Asset Earth Engine CCDC",
-            "notCcdc": "L'Asset ne contient pas de segments CCDC"
+            "title": "Asset Earth Engine CCDC"
           },
           "button": "",
           "form": {
@@ -1726,6 +1880,9 @@
               "label": "Asset CCDC",
               "placeholder": "Entrer l'ID d'un Asset CCDC",
               "required": "Un ID d'asset doit être précisé"
+            },
+            "recipe": {
+              "required": ""
             }
           },
           "recipe": {
@@ -1928,7 +2085,18 @@
           "loadError": "Échec du chargement de la recette"
         }
       },
-      "tabPlaceholder": ""
+      "tabPlaceholder": "",
+      "processing": {
+        "REFERENCE": "",
+        "RECORDED": "",
+        "NOT_RECORDED": "",
+        "MIXED": "",
+        "UNREADABLE": "",
+        "PENDING": "",
+        "UNAVAILABLE": "",
+        "unreadable": "",
+        "dateFormatRequired": ""
+      }
     },
     "classification": {
       "bands": {
@@ -2034,7 +2202,8 @@
                       "label": "",
                       "tooltip": "Distance de Mahalanobis par rapport à la moyenne de la classe"
                     }
-                  }
+                  },
+                  "tooltip": ""
                 }
               },
               "label": "Distance min"
@@ -2105,7 +2274,8 @@
                 },
                 "degree": {
                   "label": "Degré du polynôme",
-                  "placeholder": "Degré..."
+                  "placeholder": "Degré...",
+                  "tooltip": ""
                 },
                 "gamma": {
                   "label": "Gamma",
@@ -2214,6 +2384,7 @@
             "indexes": {
               "label": "Index"
             },
+            "insufficientBands": "",
             "pairWiseExpression": {
               "ANGLE": {
                 "label": "Angle"
@@ -2230,7 +2401,9 @@
               "RATIO": {
                 "label": "Ratio"
               }
-            }
+            },
+            "unavailableBands": "",
+            "underivableIndexes": ""
           },
           "button": "IMG",
           "derivedBands": {
@@ -2285,6 +2458,9 @@
               "placeholder": "Entrer une ID d'asset...",
               "required": "Vous devez entrer une Id d'asset"
             },
+            "bandSetSpecs": {
+              "required": "Sélectionnez au moins une bande"
+            },
             "includedBands": {
               "label": "Bandes incluses"
             },
@@ -2297,6 +2473,12 @@
               "required": "Une image doit être sélectionnée"
             }
           },
+          "unavailableSelections": {
+            "incompleteCombination": "",
+            "input": "",
+            "inputs": ""
+          },
+          "ambiguousFeatures": "",
           "loadingBands": "Chargement des bandes disponibles",
           "loadingBandsError": "Echec du chargement depuis Google Earth Engine",
           "noImagery": "Veuillez ajouter au moins une image à classifier",
@@ -2410,17 +2592,11 @@
             },
             "sampleClassification": {
               "typeToSample": {
-                "label": "",
-                "ASSET": "Asset EE",
-                "RECIPE": "Formule"
+                "label": ""
               },
               "assetToSample": {
-                "label": "EE asset ID de la classification",
                 "placeholder": "Entrez un ID d'asset...",
                 "required": "Vous devez entrer un ID d'asset"
-              },
-              "recipeToSample": {
-                "label": ""
               },
               "sampleScale": {
                 "label": "Échelle de l'échantillonnage (m)",
@@ -2516,6 +2692,12 @@
               }
             }
           },
+          "missing": "",
+          "missingFeatures": "",
+          "derivedFeature": "",
+          "ambiguousFeatures": "",
+          "conflict": "",
+          "conflictInput": "",
           "noDataSet": "Aucune donnée d'entraînement ajoutée",
           "remove": {
             "confirmationMessage": "Êtes-vous sûr de vouloir supprimer {name} de vos données d'entraînement ?",
@@ -2556,6 +2738,9 @@
               "title": "",
               "tooltip": ""
             }
+          },
+          "reusedRecipe": {
+            "repair": ""
           }
         }
       },
@@ -2577,6 +2762,7 @@
       "description": "",
       "panel": {
         "trainingData": {
+          "missing": "",
           "form": {
             "eeTable": {
               "valueColumn": {
@@ -2831,12 +3017,33 @@
           "title": "",
           "tooltip": "",
           "duplicateBand": "",
-          "invalidFormat": ""
+          "invalidFormat": "",
+          "problem": {
+            "duplicate": "",
+            "blank": "",
+            "unmapped": "",
+            "invalidFormat": ""
+          }
         }
       },
       "tabPlaceholder": "Pile"
     },
     "bandMath": {
+      "requirement": {
+        "syntaxError": "",
+        "unknownVariable": "",
+        "unknownBand": "",
+        "forwardReference": "",
+        "selfReference": "",
+        "missingImage": "",
+        "invalidArgCount": "",
+        "invalidBandCount": "",
+        "missingInputBands": "",
+        "noOutputBands": "",
+        "noOutputImages": "",
+        "invalidOutputName": "",
+        "duplicateOutputName": ""
+      },
       "create": "",
       "description": "",
       "duplicateName": "",
@@ -2956,6 +3163,10 @@
           "invalidFormat": "",
           "noImages": "",
           "noBands": "",
+          "missingBands": "",
+          "resetName": {
+            "tooltip": ""
+          },
           "addImage": {
             "label": "Ajouter",
             "tooltip": "",
@@ -2991,8 +3202,7 @@
         "inputImage": {
           "asset": {
             "label": "Id de l'asset Earth Engine",
-            "placeholder": "Entrer une ID d'Asset...",
-            "title": "Asset Earth Engine"
+            "placeholder": "Entrer une ID d'Asset..."
           },
           "changeBand": {
             "label": ""
@@ -3006,10 +3216,9 @@
           },
           "legend": {
             "label": "Légende",
-            "tooLong": "La légende est trop longue. Elle ne peut pas contenir plus de {max} entrées."
-          },
-          "recipe": {
-            "title": ""
+            "tooLong": "La légende est trop longue. Elle ne peut pas contenir plus de {max} entrées.",
+            "missing": "",
+            "required": ""
           },
           "to": {
             "button": {
@@ -3017,6 +3226,9 @@
               "tooltip": ""
             },
             "title": ""
+          },
+          "image": {
+            "label": ""
           }
         },
         "legend": {
@@ -3055,9 +3267,7 @@
       "panel": {
         "inputImage": {
           "asset": {
-            "label": "Id de l'Asset Earth Engine",
-            "placeholder": "Entrer une ID d'Asset...",
-            "title": "Asset Earth Engine"
+            "placeholder": "Entrer une ID d'Asset..."
           },
           "changeBand": {
             "label": ""
@@ -3074,8 +3284,7 @@
           },
           "recipe": {
             "label": "Formule",
-            "placeholder": "Selectionner une formule...",
-            "title": "Formule SEPAL enregistrée"
+            "placeholder": "Selectionner une formule..."
           },
           "to": {
             "button": {
@@ -3083,6 +3292,9 @@
               "tooltip": ""
             },
             "title": ""
+          },
+          "image": {
+            "label": ""
           }
         },
         "legend": {
@@ -3251,15 +3463,14 @@
       "panel": {
         "inputImage": {
           "asset": {
-            "label": "Id de l'asset Earth Engine",
-            "placeholder": "Entrer une ID d'asset...",
-            "title": "Asset Earth Engine"
+            "placeholder": "Entrer une ID d'asset..."
           },
           "imageMask": {
             "button": {
               "label": "",
               "tooltip": ""
             },
+            "missing": "",
             "title": ""
           },
           "imageToMask": {
@@ -3271,8 +3482,10 @@
           },
           "recipe": {
             "label": "Formule",
-            "placeholder": "Selectionner une formule...",
-            "title": ""
+            "placeholder": "Selectionner une formule..."
+          },
+          "image": {
+            "label": ""
           }
         }
       },
@@ -3440,6 +3653,30 @@
                 "required": "Une ligne doit être sélectionnée"
               },
               "title": "Sélectionner à partir d'une table de fusion"
+            },
+            "geoId": {
+              "about": "",
+              "checking": "",
+              "label": "",
+              "lookUp": "",
+              "multiple": "",
+              "none": "",
+              "notChecked": "",
+              "placeholder": "",
+              "title": "",
+              "tooltip": ""
+            },
+            "bufferMeters": {
+              "defaultPlaceholder": "",
+              "invalid": "",
+              "label": "",
+              "square": "",
+              "tooltip": {
+                "point": "",
+                "polygon": "",
+                "unknown": ""
+              },
+              "unit": ""
             },
             "polygon": {
               "description": "Dessiner un polygone sur la carte.",
@@ -4370,23 +4607,17 @@
           "tooltip": "Configurer le prétraitement des images"
         },
         "reference": {
-          "asset": {
-            "label": "Asset Earth Engine",
-            "title": "Asset Earth Engine",
-            "notBayTSHistorical": ""
-          },
           "button": "",
           "form": {
             "asset": {
-              "invalid": "",
               "label": "",
               "placeholder": "",
               "required": "Un ID d'asset doit être précisé"
+            },
+            "recipe": {
+              "label": "",
+              "required": ""
             }
-          },
-          "recipe": {
-            "label": "Sauvegarde de la formule SEPAL",
-            "title": "Sauvegarde de la formule SEPAL"
           },
           "title": "Source",
           "tooltip": ""
@@ -4400,15 +4631,17 @@
         "loading": "Chargement {loaded} de {count} tuiles",
         "tilesFailed": "Echec de {failed}"
       },
-      "reference": {
-        "asset": {
-          "loadError": "Échec du chargement de l'asset"
-        },
-        "recipe": {
-          "loadError": "Echec du chargement de la formule"
-        }
-      },
-      "tabPlaceholder": ""
+      "tabPlaceholder": "",
+      "processing": {
+        "REFERENCE": "",
+        "RECORDED": "",
+        "NOT_RECORDED": "",
+        "MIXED": "",
+        "UNREADABLE": "",
+        "PENDING": "",
+        "UNAVAILABLE": "",
+        "unreadable": ""
+      }
     },
     "baytsHistorical": {
       "create": "",
@@ -4456,7 +4689,8 @@
                 "label": "Descendante",
                 "tooltip": "Inclure les scènes des orbites descendantes"
               },
-              "label": "Orbites"
+              "label": "Orbites",
+              "required": ""
             },
             "outlierRemoval": {
               "aggressive": {
@@ -4722,6 +4956,7 @@
     },
     "project": {
       "title": "",
+      "loadingError": "",
       "description": "",
       "form": {
         "name.label": "Nom",
@@ -4744,6 +4979,7 @@
       "noProjectOption": "[aucun projet]"
     },
     "recipe": {
+      "landingTab": "",
       "lastUpdate": "Dernière mise à jour",
       "loading": "Chargement des formules",
       "loadingError": "",
@@ -4813,6 +5049,11 @@
           "title": ""
         }
       },
+      "requirement": {
+        "bandNotIncluded": "",
+        "missingInput": "",
+        "sourceBandMissing": ""
+      },
       "tabPlaceholder": ""
     },
     "retrieve": {
@@ -4836,7 +5077,10 @@
         },
         "bands": {
           "atLeastOne": "Au moins une bande doit être récupérée",
-          "label": "Bandes à récupérer"
+          "checking": "",
+          "label": "Bandes à récupérer",
+          "loading": "",
+          "unavailable": ""
         },
         "crs": {
           "label": "",
@@ -4861,6 +5105,13 @@
           "suffix": "",
           "tooLarge": "",
           "tooltip": ""
+        },
+        "additionalOutputs": {
+          "label": "",
+          "SITS": {
+            "label": "",
+            "tooltip": ""
+          }
         },
         "scale": {
           "label": "Échelle",
@@ -4907,9 +5158,26 @@
         }
       },
       "title": "Récupérer",
-      "tooltip": ""
+      "tooltip": "",
+      "error": {
+        "imageOutput": "",
+        "submit": ""
+      },
+      "assets": {
+        "checking": "",
+        "unavailable": "",
+        "failing": "",
+        "expired": "",
+        "retry": ""
+      },
+      "source": {
+        "checking": "",
+        "unavailable": "",
+        "expired": ""
+      }
     },
     "saveRecipe": {
+      "conflict": "",
       "error": "Désolé, mais quelque chose s'est mal passé lorsque vous avez essayé d'enregistrer votre formule. Si vous fermez la fenêtre/l'onglet, vous perdrez toutes les modifications apportées depuis le dernier enregistrement réussi. Pour être sûr de pouvoir enregistrer les données de cette recette, vous pouvez l'exporter. Allez dans le menu des formules en haut à droite et sélectionnez \"Exporter la formule\".",
       "form": {
         "name": {
@@ -5588,6 +5856,107 @@
         "easeGrid2North": "",
         "easeGrid2South": ""
       }
+    },
+    "requirement": {
+      "inputImage": {
+        "field": {
+          "missingAsset": "",
+          "missingRecipe": "",
+          "unavailableBand": ""
+        },
+        "missingAsset": "",
+        "missingRecipe": "",
+        "unavailableBands": ""
+      },
+      "itemProblem": "",
+      "output": "",
+      "prerequisiteUnmet": ""
+    },
+    "source": {
+      "status": {
+        "checking": "",
+        "recipeNeedsAttention": "",
+        "multipleClassifierInputs": "",
+        "multipleClassifierInputsUpstream": "",
+        "providesNoTrainingData": "",
+        "providesNoTrainingDataUpstream": "",
+        "providesNoClassifier": "",
+        "providesNoClassifierUpstream": "",
+        "providesNoImage": "",
+        "providesNoImageUpstream": "",
+        "recipeUnusable": "",
+        "recipeUnusableUpstream": "",
+        "recipeBlockedBy": "",
+        "recipeBlockedByOrigins": "",
+        "recipeAlsoDependsOn": "",
+        "recipeAlsoDependsOnOrigins": "",
+        "unavailable": "",
+        "assetUnavailable": "",
+        "assetMissing": "",
+        "expired": "",
+        "refresh": "",
+        "missing": "",
+        "notAProducer": "",
+        "unfilledRole": "",
+        "cyclic": "",
+        "unsuitable": "",
+        "withheld": "",
+        "advisory": "",
+        "sectionsIncompatible": ""
+      },
+      "operation": {
+        "PIXEL_SEGMENTS": ""
+      },
+      "capability": {
+        "baytsHistoricalStats": "",
+        "ccdcSegments": ""
+      },
+      "historicalStats": {
+        "incompatible": "",
+        "missingBand": "",
+        "arrayBand": "",
+        "unexpectedBand": "",
+        "misordered": "",
+        "undetermined": "",
+        "noPass": "",
+        "passAbsent": "",
+        "malformedPasses": "",
+        "passAbsentNoAlternative": ""
+      },
+      "classifierInputs": {
+        "classification": "",
+        "dataSets": ""
+      },
+      "classifiedOutputs": {
+        "band": "",
+        "breakpointBands": ""
+      },
+      "segments": {
+        "incompatible": "",
+        "incompatibleSlice": "",
+        "notSegments": "",
+        "notSliceSegments": "",
+        "missingBand": "",
+        "scalarBand": "",
+        "wrongDimensions": "",
+        "misordered": "",
+        "undetermined": "",
+        "andMore": "",
+        "measureAbsent": "",
+        "measureClassified": "",
+        "measureUnobserved": "",
+        "noMonitorableMeasure": "",
+        "noAvailableMeasure": "",
+        "noObservedMeasure": "",
+        "noMeasures": "",
+        "noMeasure": "",
+        "noSliceMeasure": "",
+        "noChartableMeasure": ""
+      }
+    },
+    "sourceType": {
+      "ASSET": "Asset",
+      "RECIPE": "Formule"
     }
   },
   "sources": {
@@ -5649,6 +6018,8 @@
         "asset": {
           "createFolder": "",
           "delete": "",
+          "encodingConflict": "",
+          "encodingTooLarge": "",
           "prepareImageCollection": "",
           "startExport": "",
           "sharing": "",
@@ -5753,7 +6124,14 @@
     },
     "removeAll": {
       "label": "",
-      "tooltip": "Supprimer toutes les tâches finalisées, arrêtées ou en échec"
+      "tooltip": "Supprimer toutes les tâches finalisées, arrêtées ou en échec",
+      "filteredTooltip": {
+        "search": "",
+        "completed": "",
+        "completedSearch": "",
+        "failed": "",
+        "failedSearch": ""
+      }
     },
     "stop": {
       "tooltip": "Arrêter la tâche"
@@ -5771,6 +6149,9 @@
       }
     },
     "samplingDesign": {
+      "progress": {
+        "prepare": ""
+      },
       "grid": {
         "unsupportedArrangementCrs": "",
         "invalidStratificationCrs": "",
@@ -5844,12 +6225,18 @@
       "completed": "Terminé !",
       "EEException": "",
       "executing": "En cours d'execution...",
+      "exitedUnexpectedly": "",
       "failed": "",
       "failedGeneric": "",
-      "initializing": "Initialisation..."
+      "initializing": "Initialisation...",
+      "interrupted": "",
+      "launchFailed": "",
+      "stalled": "",
+      "waitingForLocalProcessing": ""
     }
   },
   "terminal": {
+    "menuTab": "",
     "server": {
       "error": "Échec du démarrage de la console"
     }
@@ -5931,6 +6318,7 @@
     },
     "report": {
       "resources": {
+        "info": "",
         "max": "",
         "instanceSpending": "",
         "storageSpending": "",
@@ -5941,8 +6329,8 @@
         "used%": "Utilisé"
       },
       "sessions": {
+        "active": "",
         "cost": "Coût",
-        "earliestTimeoutHours": "Maintenir actif",
         "hourlyCost": "Coût horaire",
         "instanceDescription": "Description de l'instance",
         "instanceType": "Type d'instance",
@@ -5950,7 +6338,7 @@
         "time": "Date/heure démarrage",
         "title": ""
       },
-      "title": "Rapport utilisateur",
+      "title": "",
       "usage": "Utilisation de {percentage}% du quota alloué",
       "updateQuota": ""
     },
@@ -5999,22 +6387,81 @@
         "error": ""
       }
     },
+    "sshKeys": {
+      "add": {
+        "error": {
+          "DUPLICATE_KEY": "",
+          "failed": "",
+          "INVALID_KEY": "",
+          "KEY_TOO_WEAK": "",
+          "PRIVATE_KEY": "",
+          "TOO_MANY_KEYS": "",
+          "UNSUPPORTED_TYPE": ""
+        },
+        "form": {
+          "file": {
+            "dropOrClick": "",
+            "label": "",
+            "notPub": "",
+            "tooLarge": ""
+          },
+          "name": {
+            "label": "Nom",
+            "placeholder": ""
+          },
+          "publicKey": {
+            "label": "",
+            "placeholder": "",
+            "privateKeyHidden": "",
+            "required": ""
+          }
+        },
+        "howTo": "",
+        "label": "Ajouter",
+        "success": "",
+        "title": ""
+      },
+      "intro": "",
+      "label": "",
+      "load": {
+        "error": ""
+      },
+      "none": "",
+      "remove": {
+        "error": "",
+        "message": "",
+        "tooltip": ""
+      },
+      "title": ""
+    },
+    "userAccount": {
+      "editDetails": {
+        "label": "Détails de l'utilisateur",
+        "tooltip": ""
+      },
+      "title": ""
+    },
     "userDetails": {
       "form": {
         "email": {
           "label": "",
           "required": "Email requis",
+          "format": "",
           "unique": ""
         },
         "emailNotifications": {
           "disabled.label": "Désactivé",
+          "disabled.tooltip": "",
           "enabled.label": "Activé",
+          "enabled.tooltip": "",
           "label": "Notifications par courriel",
           "tooltip": "Activer ou désactiver les notifications facultatives par courriel (par exemple, tâche terminée, tâche échouée, etc.)"
         },
         "manualMapRendering": {
           "disabled.label": "Désactivé",
+          "disabled.tooltip": "",
           "enabled.label": "Activé",
+          "enabled.tooltip": "",
           "label": "",
           "tooltip": ""
         },
@@ -6057,6 +6504,17 @@
           "label": "",
           "required": ""
         },
+        "usage": {
+          "label": "",
+          "avgMax": "",
+          "cost": "Coût",
+          "hours": "",
+          "instanceType": "Type d'instance",
+          "month": "",
+          "network": "",
+          "noData": "",
+          "error": ""
+        },
         "username": {
           "format": "Le nom d'utilisateur doit commencer par une lettre et ne peut contenir que des lettres et des chiffres",
           "label": "Nom utilisateur",
@@ -6089,7 +6547,8 @@
       "switchingToSEPALGoogleAccount": "Passage au compte Google de SEPAL",
       "title": "Détails de l'utilisateur",
       "update": {
-        "error": ""
+        "error": "",
+        "conflict": ""
       },
       "confirmation": {
         "message": ""
@@ -6105,12 +6564,34 @@
           "label": "Nom de l'instance"
         }
       },
+      "start": {
+        "error": "",
+        "label": "Début"
+      },
       "stop": {
         "error": "La session n'a pu être arrêtée",
         "label": "Arrêter",
-        "message": "Arrêter la session ?",
+        "message": "",
+        "messageWithRunning": "",
         "success": "Session arrêtée.",
         "tooltip": "Arrêter la session courante. Les sessions interrompues sont perdues"
+      },
+      "expiry": {
+        "currentlyRunning": "",
+        "extend": "",
+        "extendFailed": "",
+        "extendUnknown": "",
+        "idle": "",
+        "idleClosed": "",
+        "instance": "",
+        "instanceUnnamed": "",
+        "runningClosed": "",
+        "terminate": ""
+      },
+      "stopAll": {
+        "error": "",
+        "label": "",
+        "message": ""
       },
       "suspend": {
         "error": "Impossible de suspendre la session.",
@@ -6122,52 +6603,71 @@
         "error": "Echec de la mise à jour de la session",
         "success": "La session a été mise à jour",
         "tooltip": "Éditer la session."
+      },
+      "sshLogin": {
+        "tooltip": ""
+      },
+      "deadline": {
+        "expired": "",
+        "label": "",
+        "stopping": "",
+        "value": ""
+      },
+      "usage": {
+        "cpu": "",
+        "gpu": "",
+        "net": "",
+        "ram": ""
       }
     }
   },
-  "userMessage": {
+  "message": {
+    "acknowledged": "",
+    "from": "",
     "form": {
       "contents": {
-        "label": "Contenu",
-        "required": "Contenu requis"
+        "label": "",
+        "required": ""
       },
       "subject": {
-        "label": "Sujet",
-        "required": "Sujet requis"
+        "label": "",
+        "required": ""
       },
       "preview": {
-        "label": "Aperçu"
+        "label": "Prévisualisation"
+      },
+      "priority": {
+        "unpublished": "",
+        "normal": "",
+        "urgent": ""
       }
     },
-    "publish": {
-      "error": "Impossible de publier le message",
-      "success": "Le message a été publié"
-    },
     "remove": {
-      "error": "Impossible de supprimer le message",
-      "success": "Le message a été supprimé"
+      "error": "",
+      "success": ""
     },
-    "title": "Message",
+    "title": "",
     "update": {
-      "error": "Impossible de mettre à jour le message",
-      "success": "Le message a été mis à jour"
+      "error": "",
+      "published.success": "",
+      "unpublished.success": ""
     },
     "updateState": {
-      "error": "Impossible de mettre à jour le statut du message",
-      "success": "Le statut du message a été mis à jour"
+      "error": "",
+      "success": ""
     }
   },
-  "userMessages": {
-    "author": "Message de {author}",
-    "edit": "Editer le message",
-    "noMessages": "Pas de messages",
-    "post": "Publier le message",
-    "remove": "Supprimer le message",
+  "messages": {
+    "author": "",
+    "edit": "",
+    "noMessages": "",
+    "post": "",
+    "remove": "",
     "state": {
-      "READ": "Marquer comme lu",
-      "UNREAD": "Marquer comme non-lu"
+      "READ": "",
+      "UNREAD": ""
     },
-    "title": "Messages utilisateur"
+    "title": ""
   },
   "users": {
     "count": "",
@@ -6216,7 +6716,15 @@
         }
       }
     },
-    "page": "Page {pageNumber} de {pageCount}"
+    "page": "Page {pageNumber} de {pageCount}",
+    "record": {
+      "changed": "",
+      "update": ""
+    },
+    "update": {
+      "label": "",
+      "tooltip": ""
+    }
   },
   "widget": {
     "assetDestination": {
@@ -6226,6 +6734,7 @@
       },
       "loadError": "Impossible de charger l'Asset",
       "invalidAssetId": "",
+      "insideNonContainer": "",
       "taskPending": "",
       "validating": "",
       "replace": {
@@ -6243,7 +6752,20 @@
     "workspaceDestination": {
       "taskPending": "",
       "notEmpty": "",
-      "loadError": ""
+      "loadError": "",
+      "browser": {
+        "tooltip": "",
+        "title": "",
+        "path": "Récupérer vers",
+        "home": "",
+        "filter.placeholder": "",
+        "createFolder": {
+          "label": "",
+          "placeholder": "",
+          "existing.error": "",
+          "error": ""
+        }
+      }
     },
     "assetInput": {
       "loadError": "Impossible de charger l'Asset"
@@ -6302,6 +6824,7 @@
       },
       "band": {
         "label": "Bande",
+        "notOffered": "",
         "notSelected": "[Aucune bande sélectionnée]"
       },
       "booleanOperator": {
@@ -6314,6 +6837,7 @@
       },
       "image": {
         "label": "Image",
+        "notOffered": "",
         "notSelected": "[Aucune image sélectionnée]"
       },
       "logicalAnd": {
@@ -6398,7 +6922,13 @@
       "placeholder": "Selectionner une formule...",
       "all": {
         "tooltip": "Afficher toutes les formules ou seulement les formules dans le projet en cours"
-      }
+      },
+      "ownRecipe": {
+        "invalid": ""
+      },
+      "loadError": "",
+      "selection": "",
+      "unlisted": ""
     },
     "safetyButton": {
       "label": "Poursuivre"
@@ -6414,5 +6944,15 @@
       "newTab": "Nouvel_onglet"
     }
   },
-  "chromeOnHighResDisplayWarning": ""
+  "chromeOnHighResDisplayWarning": "",
+  "theme": {
+    "label": "",
+    "dark": "",
+    "light": "",
+    "system": "",
+    "systemTooltip": ""
+  },
+  "language": {
+    "label": ""
+  }
 }
