@@ -83,28 +83,29 @@ See "Band Math empty-output setup feedback". The separate map-area menu correcti
 independently reviewed and browser-accepted on 2026-10-28; it reuses shared menu/overlay behavior without changing
 image readiness.
 
-1. **BAYTS settings ownership and consistency.** Start with the field/reader audit below, then scope the correction
-   using the established ownership and form contracts. This is selected first as a consistency fix; do not assume
-   Change Alerts' exact field policy applies to BAYTS or remove copying without replacing required ownership.
+1. **BAYTS settings ownership and consistency.** Implemented, independently reviewed and browser-accepted
+   (2026-10-28). The ownership audit, implementation and corrections are recorded below. Final full GUI verification
+   passed: 4823 tests in 334 files. No further implementation finding is open.
 2. **Visualization Copy/Paste.** Implement F7 as a separate feature in the existing layer/visualization UI, preserving
    destination identity and validating the transferred parameters.
 3. **[Recipe-scoped modals](data-sources.md#recipe-scoped-modals).** Inspect the shared scoping/lifecycle first, then
    try the proposed visualization-editor pilot in two recipe tabs. Preserve drafts and isolate active-tab interaction;
    opening selected recipes follows the accepted modal work, rather than broadening the first pilot.
 
-This order records the user's priorities; it does not claim these items are implemented or add release gates to
-already accepted work. Complete and review the current keyboard slice first. The copy-settings action remains dropped.
+This order records the user's priorities and adds no release gates to already accepted work. Visualization
+Copy/Paste is next after the BAYTS slice is committed. The copy-settings action remains dropped.
 
-**Functional follow-ups.** Neither is a confirmed regression introduced by the current corrections. BAYTS is now
-selected for the next round above; server preview readiness remains deferred:
+**Functional follow-ups.** The BAYTS ownership correction below is now browser-accepted; server preview readiness
+remains deferred:
 
 - **Server preview readiness:** `modules/gee/src/jobs/ee/image/preview.js` still constructs imagery without the shared
   readiness guard. GUI layers withdraw correctly, but a direct or stale preview request can reach an execution
   error. Extending declaration-based operation/product authorization needs its own scope and cost assessment;
   do not claim all server preview paths are guarded.
-- **BAYTS settings ownership:** `baytsAlerts/referenceObservation.js` still merges observed producer options into
-  the consumer through `applyAccepted`. Audit which values must match versus belong to the consumer before changing
-  it; simply deleting the copying is insufficient. This is substantive work, not a one-line equivalent of S5.
+- **BAYTS settings ownership:** implemented, independently reviewed and browser-accepted (2026-10-28). Reference-owned
+  processing is derived, editable monitoring choices are seeded once, and background copying is removed. See the
+  audit, implementation, corrections and acceptance records below. Server-derived historical metadata remains
+  a separate follow-up.
 
 Other deferred work remains deferred:
 [consistent band presentation across recipes](#future-consistent-band-presentation-across-recipes), chart map markers,
@@ -118,6 +119,467 @@ The separate **Use reference settings** action was dropped on 2026-10-27. First-
 reference-owned processing already cover the important needs; copying the remaining editable defaults offers too
 little convenience to justify another potentially confusing control. Earlier deferral statements are historical;
 see "S5 follow-up: Use reference settings action" for the decision and withdrawn proposal.
+
+**BAYTS settings ownership audit and proposal (2026-10-28; assessment only, no production change).** Traced on
+`4a3576742` from BAYTS Historical's execution and exports, through `baytsAlerts/referenceObservation.js`, to BAYTS
+Alerts' editors, GUI requirements, alert execution and the radar-observation product. It applies the S5 principles
+to BAYTS's own algorithm.
+
+*Confirmed behaviour.*
+
+- **Copying.** `baytsAlertsObservation.applyAccepted` → `processingOptions` merges the producer's whole `options`
+  into the consumer's `model.options` (`merge: true`). It does this whenever the selected source changes or the
+  producer's options differ from `ui.sourceEvidenceApplied`, in the evidence action, while an editor watches
+  (`evidenceRegistry.js`).
+  - Producer options are the historical recipe's `model.options`, or an asset's top-level `recipe_options`.
+  - `seeding()` drops unparseable options, or ones stating unusable orbits; these then seed nothing.
+- **Lifecycle.**
+  - **Creation:** the wizard is REF → Date; PRC is not a step. After REF Apply, the observation answers
+    asynchronously and merges, whichever step is open.
+  - **Reopen:** `ui` is not saved (`recipe.jsx`, `NON_CONTENT`), so `previous` is empty. The first observation in a
+    session merges the producer's options over saved choices: orbits, masks and angles.
+  - **Producer edit:** any change rewrites every consumer key the producer holds. An unchanged Refresh writes
+    nothing.
+  - **Replacement:** the new reference's options are merged.
+  - **REF Cancel:** writes nothing.
+  - **Open PRC, or a late answer:** PRC's values are initialised once at mount (`initValues`). A merge landing while
+    PRC is open is undone by its Apply; one landing while it is closed is silent.
+  - **Pinned:** the existing tests pin all of this (`referenceObservation.test.jsx`: "supplies refreshed options
+    when its own change"; `sourceRequirement.test.jsx`: "the editor opened afterwards seeds the options once").
+- **PRC.** It is BAYTS Historical's options panel in `monitor` mode (`baytsAlerts/panels/preprocess/preprocess.jsx`),
+  writing every radar key (`valuesToModel`). Monitor mode hides the multitemporal parameters, outlier removal and
+  minimum observations, but still shows the multitemporal filter choice. `orbitNumbers` has no control in either mode.
+  - `reconcileOrbits` rewrites the open draft's passes whenever the supported passes answer. That is an evidence-
+    driven draft mutation, pinned by "follow the reference while PRC is open".
+- **Two different sets of execution defaults.**
+  - **History:** each pass is a Radar Mosaic of the producer's options (`bayts/baytsHistorical.js` →
+    `radar/mosaic.js` → `radar/collection.js`). A missing key takes the radar collection's defaults: speckle `NONE`,
+    `kernelSize` 5, `snicSize` 3, `orbitNumbers` `ALL`, `outlierRemoval` `NONE`, `minObservations` 1.
+  - **Alerts:** monitoring (`bayts/bayts.js`) fills a missing key with BAYTS's own: speckle `LEE`, `kernelSize` 9,
+    `snicSize` 5.
+  - Today, a producer missing speckle keys leaves the consumer's `LEE` copy in place, so the monitored values are
+    filtered differently from the history.
+- **How the alerts compare.** `bayts.js` scores each monitoring observation against the history's per-pass
+  `*_mean`/`*_std` (`pdf`, with `sd × 2 × sensitivity`).
+  - It keeps only observations whose relative orbit equals the history's `orbit` band (`maskOrbits`).
+  - It applies the history's multitemporal speckle ratio, `*_speckle` (`applyMultitemporalFilter`).
+  - It forces `outlierRemoval: 'NONE'`, `multitemporalSpeckleFilter: 'NONE'` and `minObservations: 1`, and never
+    passes `orbitNumbers`.
+  - A setting that transforms backscatter values must therefore equal the history's. Multitemporal consistency is
+    carried by the statistics themselves.
+- **The radar-observation product.** `radarObservationRecipe` (`type/baytsAlerts.js`) builds a Radar Mosaic of the
+  consumer's whole `options`, with `minObservations: 1`. Unlike the alerts, it honours the consumer's multitemporal
+  filter, outlier removal and `orbitNumbers`. Its description (`VV`, `VH`, ratio, orbit, dates) is the same whatever
+  the processing.
+- **Metadata actually written.**
+  - BAYTS Historical exports through the generic `image.GEE` path (`recipeTaskSubmitter.js` →
+    `imageAssetExport.js`). Since BAYTS Historical arrived (2023-04, after recipe properties in 2023-03), this writes
+    flat `recipe_*` properties, including `recipe_options` (the GUI's `model.options` as submitted) beside
+    `recipe_type: 'BAYTS_HISTORICAL'`. The old `modules/task` exporter was flat too.
+  - No server-derived `processing` property is written for BAYTS: S5's `executedProcessing` covers only CCDC segment
+    producers.
+  - Exports through Masking or Stack carry the wrapper's model, so no historical options.
+  - Evidence is code and fixtures only. As recorded under BAYTS Alerts' verification, no BAYTS Historical asset is
+    accessible for a live read.
+- **Readiness.**
+  - Shared readiness has no processing rule (`executionNeeds` `REFERENCE` only).
+  - The GUI holds the reference to `MONITORABLE_STATISTICS`, and the consumer's passes to `MONITORED_PASSES`
+    (`model.options.orbits`; `sourceRequirement.js`).
+
+*Field ownership*, from execution:
+
+| Field | Historical use | Alerts use | Execution defaults (history / alerts) | Proposed |
+|---|---|---|---|---|
+| `geometricCorrection` | Corrects the values the statistics summarise | Corrects the monitored values compared with them | `ELLIPSOID` / `ELLIPSOID` | **Reference-owned**: equality |
+| `spatialSpeckleFilter`, `kernelSize`, `sigma`, `strongScatterers`, `strongScattererValues`, `snicSize`, `snicCompactness` | Filters values before the mean and standard deviation | Filters monitored values scored against them | `NONE`, 5, 0.9, `RETAIN`, [0, -5], 3, 0.15 / `LEE`, 9, 0.9, `RETAIN`, [0, -5], 5, 0.15 | **Reference-owned**: equality (agreed: follow known speckle settings) |
+| `orbits` | The passes the statistics hold | The passes monitored | both / both | **Consumer-owned compatible subset**: within the reference's passes, already enforced by `MONITORED_PASSES` |
+| `mask`, `minAngle`, `maxAngle` | Exclude edge and angle observations from the statistics | Exclude monitored observations | `SIDES`/`FIRST_LAST`, 30.88, 45.35 / same | **Consumer-owned** observation selection (see decision 2) |
+| `multitemporalSpeckleFilter`, `numberOfImages` | Compute the `*_speckle` statistics | Unused: forced `NONE`, applied through the history's `*_speckle` | `NONE` / forced | **Unused by the alerts**; used only by the radar-observation product (decision 3) |
+| `outlierRemoval` | Removes outliers before the statistics | Unused: forced `NONE` | `NONE` / forced | **Unused by the alerts**; product only |
+| `orbitNumbers` | Chooses relative orbits (`handleOrbitOverlap`) | Unused; `maskOrbits` enforces the history's orbit | `ALL` / not passed | **Unused by the alerts**; product only |
+| `minObservations` | Masks pixels with too few observations | Unused: forced 1 | 1 / forced | **Unused** |
+| `advanced` | UI | UI | - | **Unused** (UI state) |
+
+*Readers and how each acquires the facts.*
+
+| Reader | Today | Proposed |
+|---|---|---|
+| PRC values and controls | Consumer's `model.options` | Effective settings from the applied evidence (`ui.sourceEvidence`; the observation already reads the producer record or asset metadata). Reference-owned fields read-only and labelled; unused fields hidden in monitor mode |
+| REF first Apply | - | Seeds consumer-owned defaults from `SourceCandidate.facts()` (the S5 accessor) under the existing blocked-form guard |
+| `MONITORED_PASSES`, supported passes | Consumer `orbits`; evidence | Unchanged: consumer-owned |
+| Processing hold (GUI) | None | Pending is a need; unavailable or `UNREADABLE` holds `IMAGE_OUTPUT` and `RADAR_OBSERVATION`, as S5's `changeAlertsProcessing` does |
+| Alert execution (`bayts/baytsAlerts.js`) | `...recipe.model.options` | Effective model from a server facts read: a records-only walk of the `BAYTS_HISTORICAL_STATS` provider chain (as `withSegmentSource$` does for segments), or `assetProperties$`. Client evidence is never authority |
+| Radar-observation execution | `radarObservationRecipe(recipe)` | The same effective model; the description is unchanged |
+| BAYTS Alerts Retrieve/export | Same execution; consumer `recipe_*` as provenance | Same effective execution; provenance unchanged, and no reader treats it as authority |
+| BAYTS Historical export (writer) | Flat GUI `recipe_options` | Read as below (decision 4 covers a server-derived record) |
+| `previousAlertsAsset` | Image only | Unchanged |
+
+*Recommended contract.*
+
+- **Reference-owned:** `geometricCorrection` and the spatial speckle filter with its parameters. Their effective
+  value is:
+  - for a recipe reference, the resolved producer's value, or its radar collection's execution default where the
+    key is absent - never the consumer's copy;
+  - for an asset, the value recorded in a complete form;
+  - `NOT_RECORDED` otherwise: the consumer's value, editable and labelled unverified.
+
+  Read-only wherever the value is known.
+- **Consumer-owned:** `orbits`, within the passes the reference supports, plus `mask`, `minAngle` and `maxAngle`.
+  They are seeded once at the first Reference Apply of a new recipe (`!ui.initialized`, no reference applied
+  before), atomically through `additionalUpdates`. After that, reopen, Refresh, replacement and producer edits never
+  write them.
+- **Unused by the alerts:** hidden from monitor-mode PRC. Saved copies stay untouched.
+- **Asset forms:**
+  - **Complete:** a top-level `recipe_options` beside `recipe_type: 'BAYTS_HISTORICAL'`. Its absent keys take the
+    history's execution defaults.
+  - **Partial:** a `recipe_options` without that marker, which records only its stated keys.
+  - **Malformed:** a present but malformed governing form is `UNREADABLE` and held; it never falls back to the
+    consumer.
+  - Pending and failed reads stay `PENDING` and `UNAVAILABLE`.
+  - A format marker proves neither origin nor scientific comparability.
+- **One derivation for every reader.** A pure shared derivation answers each field's state and value, and the
+  effective model, for the editors, GUI holds, alert execution and the radar product. The six evidence states and
+  the parsing and precedence helpers are those of S5.
+- **Removed:** `applyAccepted` for BAYTS Alerts.
+- **Intentional result changes:**
+  - Consumers whose copied geometric or speckle settings drifted from their history now follow the history.
+  - A producer without speckle keys is monitored with `NONE`, not `LEE`.
+  - Reopening no longer resets passes, masks or angles.
+  - A malformed asset record now holds the alerts instead of running on the consumer's options.
+
+*Smallest coherent scope.*
+
+1. **Shared:** move S5's evidence-state constants and parse/precedence helpers from
+   `recipe/changeAlerts/processing.js` to a neutral module, re-exported, so Change Alerts is unchanged. Add a BAYTS
+   field specification and effective-settings derivation (`recipe/bayts/processing.js`) with tests.
+2. **GUI:**
+   - **PRC adapter:** parameterise `changeAlerts/processingSettings.js` (`presentProcessingInputs`,
+     `preserveProcessingCopies`) by field set and move it to a shared location. Today it hard-codes `SR`/`BRDF` and
+     Change Alerts' field list. Callers: Change Alerts' toolbar and REF panel, then BAYTS PRC.
+   - **Observation and seeding:** the BAYTS observation carries `processing`. REF's first Apply seeds the
+     consumer-owned fields, and `applyAccepted` is removed.
+   - **Hold:** a processing hold declaration for BAYTS.
+3. **gee:** `bayts/baytsAlerts.js` derives the effective model from a server facts read for both the alerts and the
+   radar product.
+
+No persisted-format change, migration or new loader is needed. The rewritten tests are the pinned copying ones above.
+
+*Acceptance cases* (asserting displayed values, the applied model and holds):
+
+- **Creation:** the first REF Apply in a new recipe seeds passes, masks and angles once. Enter/Next behave alike.
+  Pending evidence blocks Apply; Cancel writes nothing; a replacement in the wizard seeds nothing.
+- **Reopen and producer edits:** a fresh reopen with overrides is unchanged. A producer edit to a mask changes
+  nothing; a producer edit to speckle `LEE` → `REFINED_LEE` shows read-only and is used by the alerts and the radar
+  product, while the saved copy is unchanged. A producer missing speckle keys is effective `NONE`.
+- **Replacement:** replacing the reference keeps consumer passes. An unsupported pass is still refused by
+  `MONITORED_PASSES`.
+- **Assets:** a complete `recipe_options` is read-only, with defaults for absent keys. A partial form leaves its
+  unstated fields editable and not recorded. A malformed form is `UNREADABLE` and held. Missing options give
+  editable fallbacks. Pending and failed reads stay distinct. A wrapper (Masking) export gives not-recorded
+  fallbacks.
+- **Server (gee):** alerts and the radar product use the producer's geometric and speckle values without loading
+  its unrelated dependencies, and refuse an unreadable record.
+
+*BAYTS-specific decisions still needed.*
+
+1. **`reconcileOrbits`:** keep its evidence-driven repair of the open PRC draft (convenience, Cancel reverts), or
+   remove it so passes change only by the user, with `MONITORED_PASSES` explaining an unsupported choice.
+   Recommendation: remove it, since it is the one remaining evidence-driven draft write.
+2. **Angle range:** the history's statistics cover its `minAngle`/`maxAngle`. Monitoring outside that range compares
+   other incidence angles. Recommendation: keep the range consumer-owned but seed it, without enforcing a subset; an
+   enforced compatibility rule would be a separate scientific decision.
+3. **Radar-observation processing:** keep honouring the consumer's multitemporal filter, outlier removal and
+   `orbitNumbers` in the product, or build it with the alerts' monitoring processing (`NONE`/forced, reference
+   speckle). Recommendation: build it as the alerts monitor, so the product shows what is compared. This is a
+   visible product change; otherwise PRC must keep showing controls that only the map uses.
+4. **Server-derived historical metadata:** add a canonical `processing` record to BAYTS Historical exports (and
+   through Masking/Stack, via `executedProcessing` over `BAYTS_HISTORICAL_STATS`). The concrete need is wrapper
+   exports, which today carry no historical options. Recommendation: a separate follow-up, not required for the
+   ownership correction.
+
+*Boundaries.* The missing-reference radar-preview issue (BAYTS Alerts open issue) and server preview readiness stay
+separate. The processing hold proposed here is independent of them, and does not fix a preview without a reference.
+
+**BAYTS ownership audit: independent review (2026-10-28; proposal amendments required before implementation).**
+
+The background copying, inconsistent absent-key speckle defaults and field/reader inventory were checked against
+the GUI, radar collection, BAYTS Historical and BAYTS Alerts execution. The core ownership recommendation is sound.
+This is a code/design review; no production code, probes or test campaign were run for this assessment.
+
+- **Pass retention needs more than removing `reconcileOrbits`.** Historical's `renderOrbits` disables unsupported
+  passes. `widget/form/buttons.jsx` then filters disabled values out of the input in `componentDidUpdate`, and a
+  disabled selected button cannot be deselected by the user. The revised design must preserve an unsupported draft
+  selection visibly, explain it through `MONITORED_PASSES`, allow explicit removal/repair and block unusable Apply.
+  Keep unavailable new choices unavailable without silently deleting existing choices. Cover the real form/widget
+  path on delayed evidence, producer pass changes, repair and Cancel; do not globally remove widget normalization
+  or consider the issue fixed just because the explicit reconciliation method is gone.
+- **The proposed radar-map equivalence is not established by settings alone.** `bayts.js` applies per-pass historical
+  `*_speckle` factors and per-pixel historical relative-orbit masking through `beforeGeometricCorrection`, plus
+  optional scene normalization through `afterDbConversion`. A Radar Mosaic built with the same `options` does none
+  of those. It also picks the nearest date per pixel in its existing window around the period endpoint, rather than
+  showing the exact first/last observations used for alerts. Supplying the same effective model does not by itself
+  remove the current spread of legacy multitemporal/outlier/orbit-number options into that product either.
+  **Recommended bounded direction, pending user decision:** share effective geometric/spatial settings, consumer
+  passes/masks/angles and the algorithm's forced/ignored option policy with the radar product, leaving its existing
+  contextual nearest-date-mosaic contract intact. Do not claim this shows the exact values/observations scored by
+  BAYTS. Extracting a genuine monitored-observation view would need the history-dependent transformations, altered
+  imagery/cost/dependency semantics and a separate explicit scope; it must not silently make a recipe reference's
+  radar map build all historical statistics. Clarify decision 3 and its acceptance before implementing it.
+- **Preserve unused saved options explicitly.** Hiding a control does not prevent Historical's `valuesToModel`
+  from serializing it. Include unchanged and absent unused keys in the preservation/Apply/Cancel acceptance cases,
+  as well as preserving saved reference-owned copies. No new persisted synchronization flag is needed.
+- **Reuse at the actual common boundary.** A neutral field adapter/parser is reasonable only for behavior the two
+  consumers share. Keep Change Alerts' optical corrections, date-format rules and legacy metadata precedence in
+  their domain specification. Preserve existing exports/imports and add focused Change Alerts controls if extracting
+  its helpers; a general form/processing framework or another shared form-lifecycle change is not justified here.
+- **Recommendations on decisions 1, 2 and 4:** stop evidence-driven draft rewrites; keep masks/angles consumer-owned
+  without a new scientific compatibility rule; keep server-derived BAYTS metadata as a separate recorded follow-up.
+  These are reviewer recommendations, not a record of the user's approval. Existing metadata provenance remains
+  the documented legacy contract; do not claim this audit makes GUI-supplied properties server-authoritative.
+
+**BAYTS ownership proposal: review amendments folded in (2026-10-28; no production change).** These supersede the
+corresponding parts of the proposal above. The four choices below are decided for implementation by the subsequent
+user direction recorded after the independent recheck; they do not need another confirmation round.
+
+- **Decision 1, passes: no evidence-driven change; unsupported choices kept visible.** Removing `reconcileOrbits`
+  is not enough. `Form.Buttons.componentDidUpdate` (`widget/form/buttons.jsx`) drops disabled values from the input,
+  and a disabled button cannot be deselected.
+  - **Fix, in monitor-mode `renderOrbits`, without changing the shared widget:** a pass the reference does not
+    support is disabled only while it is not selected. A selected unsupported pass stays enabled and selected, so the
+    widget keeps it, the user can deselect it, and `MONITORED_PASSES` explains it and holds Apply. Once it is
+    deselected, it cannot be chosen again.
+  - **Acceptance:** delayed evidence, a producer whose passes change, the repair by deselection, and Cancel, all
+    through the real form and widget path, asserting the draft, the applied model and the hold.
+- **Decision 2, masks and angles:** consumer-owned, editable, seeded once at the first Reference Apply. No new
+  compatibility rule.
+- **Decision 3, the radar map stays a contextual nearest-date mosaic.** It shares the alerts' effective settings
+  without claiming to show the values BAYTS scores. BAYTS also applies the history's `*_speckle` factors, per-pixel
+  relative-orbit masking and optional normalization, which need the historical statistics; reproducing them is
+  separate work, if wanted.
+  - **Shared with the alerts:** the reference-owned geometric correction and spatial speckle settings, the
+    consumer's passes, masks and angles, and the alerts' forced or ignored options (`outlierRemoval` and
+    `multitemporalSpeckleFilter` `NONE`, `orbitNumbers` not applied, `minObservations` 1).
+  - **Intentional change:** the map no longer honours legacy multitemporal, outlier or orbit-number copies.
+  - **Not added:** the product builds no historical statistics and gains no dependency.
+  - **Acceptance:** the product's effective radar options for a recipe reference and an asset, including
+    `NOT_RECORDED` fallbacks and holds. Its description, window and nearest-date selection are unchanged.
+- **Decision 4, server-derived metadata, deferred.** Assets without recorded settings keep the documented, labelled,
+  editable fallback. GUI-supplied `recipe_options` stays the documented legacy contract and does not become
+  server-authoritative.
+- **Unused and reference-owned saved values are preserved.** Hiding a control does not stop Historical's
+  `valuesToModel` from serialising it. PRC Apply keeps the saved values of hidden unused keys
+  (`multitemporalSpeckleFilter`, `numberOfImages`, `outlierRemoval`, `orbitNumbers`, `minObservations`) and of
+  reference-owned keys, including their absence, as S5's `preserveProcessingCopies` does for Change Alerts. Add
+  Apply and Cancel cases for unchanged, changed-elsewhere and absent keys.
+- **Extraction, kept to the common boundary.** Share only what both recipes do: the evidence states and the
+  per-field presentation and preservation adapter, parameterised by a field specification. Change Alerts' optical
+  corrections, `dateFormat` rules and legacy metadata precedence stay in its own specification. Existing exports and
+  imports are preserved, and focused Change Alerts controls cover the extraction. No general form or processing
+  framework, and no shared form-lifecycle change.
+
+**BAYTS amended proposal: independent recheck (2026-10-28).** The amendments above address the review: selected
+unsupported passes remain visible and removable through the real widget path; the radar product explicitly keeps
+its contextual nearest-date semantics; hidden/reference-owned saved keys are preserved; and shared extraction is
+limited to common behavior. No further design finding remains. The reviewer recommends all four choices as written;
+this is review acceptance, not a claim of user approval or implementation. No production change or additional test
+campaign was made for this documentation recheck.
+
+**BAYTS implementation authorized (2026-10-28).** After the amended proposal passed review, the user asked why
+implementation had not started. Proceed with the four reviewed choices: preserve pass selections with explicit
+repair; keep masks/angles editable and seed once during creation; retain the contextual radar mosaic while aligning
+its effective processing and forced options; defer server-derived historical metadata. This replaces the earlier
+audit-only packet's restriction on production changes. The audit, review and recheck records above retain their
+historical approval status; there are no outstanding confirmations for these four choices. Implement the bounded
+shared/GUI/gee correction and its acceptance tests together. Do not stage, commit or push during implementation.
+
+**BAYTS settings ownership implemented (2026-10-28; browser checks pending; nothing staged or committed).** The four
+approved choices and the folded-in review amendments are implemented.
+
+- **Shared** (`lib/js/shared`).
+  - `recipe/referenceProcessing.js` holds the evidence states and small parsers that both recipes use.
+    `changeAlerts/processing.js` re-exports its states from it, and its API and metadata precedence are unchanged.
+  - `recipe/bayts/processing.js` derives the effective settings:
+    - `processingOfProducer` gives a history's geometric correction and spatial speckle settings, with absent keys at
+      its radar collection's defaults (speckle `NONE`, `kernelSize` 5, `snicSize` 3).
+    - `assetProcessing` reads `recipe_options`: complete beside `recipe_type: 'BAYTS_HISTORICAL'`, partial otherwise,
+      `UNREADABLE` when present but unparseable or invalid, and `NOT_RECORDED` when absent.
+    - `effectiveSettings` returns per-field states and the monitoring model, with `FORCED_OPTIONS` (`outlierRemoval`
+      and `multitemporalSpeckleFilter` `NONE`, `orbitNumbers` `ALL`, `minObservations` 1). A pending, unavailable
+      or unreadable field leaves no model. An unrecorded field falls back to the alerts' own value, or BAYTS's
+      default.
+    - `seedMonitoring` gives valid passes, masks and angles only.
+  - `requirement/baytsAlertsProcessing.js` holds operations while the processing is pending and refuses an
+    unreadable one.
+  - `radarObservationRecipe` applies `FORCED_OPTIONS`.
+- **Server** (`lib/js/ee/src/bayts`).
+  - `historicalProcessing.js` follows the `BAYTS_HISTORICAL_STATS` provider chain one record at a time
+    (`recipeRef.withRecord$`), or reads `assetProperties$`. It builds no statistics and loads no dependency.
+  - `baytsAlerts.js` runs both the alerts and the contextual radar product on `effectiveBaytsAlerts`, which refuses
+    unreadable processing with a client error. The product keeps its window, nearest-date selection, geometry and
+    asset mask.
+- **GUI.**
+  - **Observation:** `referenceObservation.js` publishes `processing` beside `historicalStats`. `applyAccepted` is
+    removed, so observing configures nothing.
+  - **Seeding:** the REF panel seeds the consumer-owned fields through `additionalUpdates` at the first Reference
+    Apply of a new recipe (`!ui.initialized`, no reference applied before), from current `SourceCandidate.facts()`.
+    The existing blocked-form guard covers Apply, Enter and Next alike, since `Form.Panel` routes all three through
+    `apply`.
+  - **Shared presentation:** `recipe/referenceProcessing.js` (GUI) holds the extracted evidence reader, per-input
+    presentation and key preservation. Change Alerts' `processingSettings.js` keeps its corrections, labels and field
+    list on top of them. BAYTS's `processingSettings.js` presents the reference-owned inputs read-only, and preserves
+    unused and reference-owned keys, absence included, on PRC Apply.
+  - **Historical options panel, monitor mode:**
+    - the read-only presentation is spread onto the geometric correction and speckle controls;
+    - `SpatialSpeckleFilterOptions` gets the same editability handling Radar Mosaic's copy already has;
+    - the multitemporal selector is hidden;
+    - `reconcileOrbits` is removed, and an unsupported pass is disabled only while unselected, so `Form.Buttons`
+      keeps a chosen one for explicit deselection.
+  - **Requirements:** PRC's `MONITORED_PASSES` finding is said on the passes field. A processing declaration holds
+    `IMAGE_OUTPUT` and `RADAR_OBSERVATION`, with `process.baytsAlerts.processing.*` wording.
+- **Compatibility effects** (intentional):
+  - Alerts and radar observations follow the history's geometric and speckle processing instead of drifted copies.
+  - A history without speckle keys is monitored with `NONE`, not `LEE`.
+  - Reopening, Refresh, producer edits and replacement no longer change passes, masks or angles.
+  - A malformed asset record holds the alerts instead of running.
+  - The radar map no longer honours legacy multitemporal, outlier or orbit-number copies.
+  - The radar observation is now withheld where the reference holds no historical statistics, or none is selected,
+    because its processing is the reference's. This also holds a new recipe's radar layer without a reference, which
+    the open issue in `docs/recipes/bayts-alerts.md` described; server preview readiness remains separate.
+  - No persisted-format change or migration: saved copies stay as saved.
+- **Regressions.**
+  - Shared `test/recipe/bayts/processing.test.js` (11): producer defaults, complete, partial, malformed and absent
+    asset forms, invalid values, pending and unavailable, and seeding.
+  - gee `alertMapProducts.test.js`: the radar product's options for a recipe, a complete asset and an asset recording
+    nothing; unreadable refusals for both products; the alerts' `bayts` arguments, initial alerts included.
+    `alertRuntimeGeometry.test.js`'s BAYTS fixture now resolves to a historical record.
+  - GUI `referenceObservation.test.jsx` (9): processing from a recipe, a wrapper and an asset; a fresh reopen;
+    replacement; a producer edit; unreadable and recovered reads; a late answer - each leaving the saved options
+    untouched.
+  - GUI `sourceRequirement.test.jsx` (53):
+    - first Apply and Enter seeding; pending reads; the last-selected reference; Cancel; no reseeding;
+    - real-widget retention, explicit repair and the inability to add an unsupported pass;
+    - read-only and unverified presentation; hidden and absent key preservation;
+    - unreadable holds; the radar observation's holds; and an editor opened afterwards configuring nothing.
+  - GUI `changeAlerts/processingSettings.test.js` covers the extracted preservation.
+  - `modelDerivedOutput`'s BAYTS evidence fixture now publishes `processing`.
+- **Witnesses** (each targeted mutation restored):
+  - background copying put back: 8 GUI cases fail;
+  - the old pass disabling: 2;
+  - no seeding: 3;
+  - no preservation: 1;
+  - alerts on saved options: 1 gee;
+  - the radar product on saved options: 5 gee;
+  - an absent speckle key at the alerts' default: 1 shared and 1 gee;
+  - malformed falling back: 1 shared and 2 gee;
+  - the shared presentation showing drafts: 4 Change Alerts;
+  - the shared preservation keeping absent keys: the new Change Alerts case.
+- **Verification** (two workers):
+  - shared `test/recipe` 1497 and the gee suite 1561;
+  - GUI over BAYTS Alerts, BAYTS Historical, Change Alerts, Mosaic, Radar Mosaic, `modelDerivedOutput`,
+    `recipeImageLayer`, `recipeMapArea`, process panels and locale: 34 files, 680 tests;
+  - ESLint on changed files and `git diff --check` clean.
+
+  The full GUI suite and live probes were not run.
+- **Not covered:**
+  - No real BAYTS Historical asset was available; the asset forms rest on the exporter's code and fixtures.
+  - The wizard's Next is covered by the shared `Form.Panel.apply` route rather than a mounted wizard.
+- **Browser checklist:**
+  1. Create BAYTS Alerts and select a historical reference. Its passes, masks and angles appear in PRC; geometric
+     correction and speckle show read-only as the reference's.
+  2. Edit masks, Apply, reopen the recipe: they are kept.
+  3. Edit the historical recipe's speckle filter: PRC shows the new value read-only, and the alerts' preview follows.
+  4. Select an asset reference without recorded options: the fields are editable and labelled unverified.
+  5. Replace the reference with one lacking a chosen pass: the pass stays shown with the error until deselected,
+     and Apply then succeeds.
+  6. The first/last radar layer draws once the reference is read.
+
+**Independent review of BAYTS ownership implementation (2026-10-28; corrections required).** The shared extraction
+and main ownership path fit the agreed scope. Independent probes reproduced three remaining contract gaps:
+
+- **[P2] Partly recorded speckle parameters lose their ownership in the modal.**
+  `baytsHistorical/panels/options/spatialSpeckleFilterOptions.jsx` opens its modal when any visible parameter is
+  editable, but `modalSubformPanel` copies only values into independent form inputs. The modal does not carry
+  per-field presentation or reference ownership. With partial asset metadata recording `spatialSpeckleFilter: LEE`,
+  `strongScatterers: RETAIN` and `strongScattererValues: [4, -4]`, but no kernel size, the real strong-scatterer input
+  shows `4` and is neither disabled nor read-only. Its edits are then discarded by the outer read-only setter.
+  Keep recorded fields read-only inside a mixed dialog, while unrecorded fields remain editable; current reference
+  values must stay current without replacing editable drafts. The summary also passes tooltip information that
+  `SubformDetails` does not render, so verify that unrecorded parameters have their promised attribution.
+- **[P2] Unrecorded fallbacks shown in PRC can differ from execution.** With an asset recording no processing and
+  saved options containing only passes and minimum observations, shared `effectiveSettings` supplies monitoring's
+  `LEE` default, but PRC shows no selected filter. With saved `LEE` and `RETAIN`, but no scatterer values, the
+  parameter dialog shows the Historical editor's `7` instead of monitoring's `0` (the full defaults are `[7, 2]`
+  versus `[0, -5]`). `presentedInput` uses the raw editable draft, so the resolved defaults are never presented.
+  Initialise missing editable values from the same effective rule, retaining subsequent explicit draft edits,
+  Cancel semantics and the absence of background configuration writes. Check an unrelated Apply as well as opening.
+- **[P2] Valid reference compactness zero is replaced inside the algorithm.** A historical recipe with
+  `spatialSpeckleFilter: SNIC` and `snicCompactness: 0` is correctly resolved to zero, and the contextual radar
+  collection honours it. The actual `bayts.js` monitoring path then uses `args.snicCompactness || 0.15` and sends
+  `0.15` to `createCollection`. Preserve the resolved valid value through the final algorithm boundary; testing only
+  the arguments supplied to a substituted `bayts` function misses this discrepancy.
+
+The three GUI assertions and one backend collection-boundary assertion all fail against this implementation for
+the stated reasons. They used temporary test files, now removed from the repository and archived under
+`/tmp/sepal-bayts-ownership-review/`; production files and the implementor's tests were not modified.
+Independent existing-test checks passed: 206 GUI tests in five files (BAYTS requirements and observation, Change
+Alerts presentation, reference requirements and toolbar), and 17 backend map-product and geometry tests, with at
+most two workers. No full GUI suite, browser check or live Earth Engine probe was run by this review.
+
+**BAYTS ownership review corrections (2026-10-28).**
+
+- **Compactness zero.** `bayts.js` takes each processing value it is given (`??`), so a resolved SNIC compactness
+  of 0, or any other falsy valid value, reaches `createCollection`. Its own defaults apply only where nothing is
+  given. Masks and angles keep their existing fallbacks.
+- **Mixed speckle dialog.** Historical's `modalSubformPanel` now does what Radar Mosaic's does since S5. A
+  reference-owned parameter is the outer presented input: read-only, kept current with `setInitialValue` and never
+  written back. An editable one is the dialog's own draft, worded as the outer input words it. The dialog's controls
+  spread that presentation. `SubformDetails` renders each parameter's tooltip, so the summary says which values are
+  recorded and which are unverified.
+- **Fallbacks shown as executed.** `unrecordedValues(settings)` gives, per form input, the value
+  `effectiveSettings` resolves for each `NOT_RECORDED` field. Historical's options panel learns it once per field,
+  through `setInitialValue`, where the field is first offered without a value. Opening PRC therefore does not dirty
+  it: Close stays offered and nothing is written. A later edit, Cancel or clear is not overridden. An unrelated Apply
+  saves the values monitoring already ran with. Shared `effectiveSettings` now validates a saved fallback, so NaN or
+  null values take monitoring's default.
+- **Compatibility.** Historical's own editor previously showed strong-scatterer values `[7, 2]` where none were
+  saved. It now shows `[0, -5]`, which its radar collection executes. The `7` was only ever presented: the editor
+  saved it on its next Apply, which execution then honoured. Radar Mosaic's `SubformDetails` still drops tooltips;
+  that S5 gap is unchanged here.
+- **Verification.**
+  - Shared: `test/recipe` 1498.
+  - gee: 1563.
+  - GUI focused: 30 files / 598 tests (BAYTS Alerts and Historical, Change Alerts, Radar Mosaic, mosaic,
+    model-derived output, image layer, map area, reference processing, form, locale), with two workers.
+  - Witnesses each fail:
+    - `||` restored: the compactness test.
+    - HEAD `modalSubformPanel`, or the dialog without presentation spreads: the read-only case.
+    - No summary tooltip: the attribution case.
+    - No default learning, or the `[7, 2]` fallback: the filter, scatterer and Apply cases.
+    - No fallback validation: the shared case.
+  - The reviewer's archived probes pass when copied in temporarily (GUI 56, backend 1) and were removed again.
+  - Not run: the full GUI suite and browser checks.
+
+**Independent recheck of BAYTS corrections (2026-10-28).** The three review findings are resolved. The algorithm
+preserves compactness zero, the mixed speckle dialog projects ownership per field, and absent unrecorded values
+start from the effective monitoring defaults without writing the recipe on opening. The Historical editor's
+strong-scatterer default correction is consistent with its existing radar execution.
+
+Independent checks passed: 69 GUI tests in four files (BAYTS requirements and observation, Change Alerts
+presentation, and Radar Mosaic's modal boundary), plus 19 backend tests (the actual monitoring collection,
+map products and alert runtime geometry), with at most two workers. An additional temporary mounted case passed
+for editing and applying the speckle dialog while preserving PRC's passes, masks and angles; it was removed from
+the repository and archived under `/tmp/sepal-bayts-ownership-review/`. No further blocking finding from this
+review. Browser acceptance and the final full GUI suite remain pending. Radar Mosaic's separate summary-tooltip
+gap remains outside this slice, as recorded above. Nothing staged, committed or pushed.
+
+**BAYTS browser acceptance and final verification (2026-10-28).** The user reports that the recipe-reference
+checklist passes: initial seeding and read-only processing; monitoring choices surviving reopen; upstream speckle
+changes updating reference-owned fields without resetting choices; an unsupported pass retained, explained and
+repaired explicitly; and working alerts and contextual radar previews. No additional asset-metadata coverage is
+claimed from this report. The final full GUI suite passed 4823 tests in 334 files, exit 0, in 366.93 seconds with two
+workers (`/tmp/sepal-bayts-final-gui.log`). Fingerprints confirmed all 28 changed code/data files stayed unchanged
+through verification. Shared, gee and static results remain as recorded above. The accepted slice is ready for
+commit; this acceptance does not authorise a push.
 
 ## Responsibilities
 

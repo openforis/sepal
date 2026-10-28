@@ -5,12 +5,21 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
 
+import {presentProcessingInputs, preserveProcessingCopies, settingsOf, unrecordedValues} from '../../processingSettings'
 import {supportedPassesOf} from '../../sourceRequirement'
 
-// PRC: the radar processing BAYTS Historical's options panel edits, offering only the passes the reference is
-// established to support.
-const _Preprocess = ({supportedOrbits}) =>
-    <Options monitor supportedOrbits={supportedOrbits}/>
+// PRC: the radar processing BAYTS Historical's options panel edits, as monitoring uses it. The reference's processing is
+// shown as its own (processingSettings.js), and a setting the alerts own but saved no value for starts from the value
+// monitoring takes for it; passes the reference is not established to support cannot be added; what monitoring never
+// reads is not shown, and kept as saved.
+const _Preprocess = ({supportedOrbits, settings}) =>
+    <Options
+        monitor
+        supportedOrbits={supportedOrbits}
+        presentInputs={presentProcessingInputs(settings)}
+        modelToApply={preserveProcessingCopies(settings)}
+        defaults={unrecordedValues(settings)}
+    />
 
 export const Preprocess = compose(
     _Preprocess,
@@ -23,5 +32,5 @@ export const Preprocess = compose(
         })
     })),
     withSourceRuntime(),
-    withRecipe(recipe => ({recipeId: recipe.id}))
+    withRecipe(recipe => ({recipeId: recipe.id, settings: settingsOf(recipe)}))
 )

@@ -70,6 +70,7 @@ const {renderableVisualizations} = await import('./visualizationMatching')
 const {describedByRuntime, observedSegmentsAsset, segmentsAssetMetadata} = await import('./changeAlerts/observedReference.test.fixtures')
 const {declaredSelections, sourceKeyOf} = await import('./sourceEvidence')
 const {historicalStatsOf} = await import('./baytsAlerts/historicalStatistics')
+const {assetProcessing} = await import('#sepal/recipe/bayts/processing')
 
 addRecipeType(regression())
 addRecipeType(unsupervisedClassification())
@@ -1341,23 +1342,23 @@ const baytsAlertsOf = ({reference = {type: 'ASSET', id: 'users/x/bayts-historica
     ...(reference.type === 'ASSET' && {ui: {sourceEvidence: historicalStatsObserved(reference)}})
 })
 
-// An image asset's historical statistics as the observation reads them from its metadata: each band scalar.
+// An image asset's historical statistics as the observation reads them from its metadata: each band scalar, and no
+// processing recorded beside them.
 const historicalStatsObserved = reference => {
     const bands = ['asc', 'desc'].flatMap(suffix =>
         ['VV_mean', 'VV_std', 'VH_mean', 'VH_std', 'orbit', 'VV_speckle', 'VH_speckle'].map(statistic => `${statistic}_${suffix}`)
     )
+    const metadata = {
+        type: 'Image',
+        bandNames: bands,
+        bands: bands.map(id => ({id, dimensions: [5015, 3093], data_type: {type: 'PixelType', precision: 'float'}})),
+        properties: {}
+    }
     return {
         status: 'OBSERVED',
         sourceKey: sourceKeyOf(reference),
-        historicalStats: historicalStatsOf({
-            producer: {assetId: reference.id},
-            metadata: {
-                type: 'Image',
-                bandNames: bands,
-                bands: bands.map(id => ({id, dimensions: [5015, 3093], data_type: {type: 'PixelType', precision: 'float'}})),
-                properties: {}
-            }
-        })
+        processing: assetProcessing(metadata.properties),
+        historicalStats: historicalStatsOf({producer: {assetId: reference.id}, metadata})
     }
 }
 

@@ -4616,7 +4616,17 @@
         "loading": "Loading tiles: {pending}",
         "tilesFailed": "{failed} failed"
       },
-      "tabPlaceholder": "BAYTS_alerts"
+      "tabPlaceholder": "BAYTS_alerts",
+      "processing": {
+        "REFERENCE": "from the historical statistics (read-only)",
+        "RECORDED": "recorded by the asset (read-only)",
+        "NOT_RECORDED": "not recorded by the asset — check it matches the statistics",
+        "MIXED": "recorded settings are read-only — check that editable settings match",
+        "UNREADABLE": "recorded settings cannot be read",
+        "PENDING": "checking the processing of the historical statistics",
+        "UNAVAILABLE": "could not read the processing of the historical statistics",
+        "unreadable": "The processing the historical statistics were built with cannot be read. Repair the asset’s metadata or select another reference."
+      }
     },
     "baytsHistorical": {
       "create": "BAYTS Historical Layer",

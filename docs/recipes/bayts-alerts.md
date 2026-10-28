@@ -11,6 +11,22 @@ it. The form keeps a duration as the digits its number input holds, so a saved d
 `options` are the radar options monitoring observations are processed with, and `baytsAlertsOptions` the algorithm's,
 including `previousAlertsAsset`, whose alerts a run continues, and `wetlandMaskAsset`.
 
+The processing is split by what the algorithm compares (`lib/js/shared/src/recipe/bayts/processing.js`). Monitored
+backscatter is scored against the history's per-pass statistics, so the history owns the geometric correction and the
+spatial speckle filter with its parameters.
+- **From a historical recipe:** its own values, or its radar collection's defaults for what it leaves out (speckle
+  `NONE`).
+- **From an asset:** what a complete `recipe_options` records (`recipe_type: 'BAYTS_HISTORICAL'`), or what a partial
+  one states. An unrecorded value is the alerts' own, editable and labelled unverified. Where the alerts saved none,
+  or none monitoring takes, it is monitoring's default (`LEE`, kernel 9, scatterers `[0, -5]`, SNIC 5 and 0.15), and
+  PRC starts from that value. Unreadable options hold the alerts.
+
+PRC shows the reference's values read-only and never writes them. The alerts own their passes, masks and angles. A new
+recipe's first Reference Apply seeds them from the reference. After that, nothing the reference answers changes them.
+A pass the reference does not hold cannot be added, but a chosen one stays shown until deselected. Monitoring forces
+`outlierRemoval` and `multitemporalSpeckleFilter` to `NONE` and `minObservations` to 1, and applies no `orbitNumbers`.
+PRC hides those settings and keeps their saved values.
+
 ## Output
 
 The alerts are its canonical output, declared in `lib/js/shared/src/recipe/type/baytsAlerts.js` (see the
@@ -21,8 +37,9 @@ sampled, with no encoding. Retrieve, Masking and Task read only these. The layer
 ### Radar observation
 
 A layer can show the `RADAR_OBSERVATION` map product instead, with `{position: 'first' | 'last'}`. A position is
-required; anything else, and any other parameter, is refused. It is a point-in-time Radar Mosaic of the recipe's radar
-options with `minObservations: 1`, around a target date: the monitoring end for `last`, the end less the duration for
+required; anything else, and any other parameter, is refused. It is a point-in-time Radar Mosaic of the radar options
+the alerts monitor with - the reference's processing, the alerts' passes, masks and angles, and monitoring's forced
+options - around a target date: the monitoring end for `last`, the end less the duration for
 `first`. It is described by delegating to Radar Mosaic's declaration - `VV`, `VH`, `ratio_VV_VH` averaged, `orbit` by
 mode, `dayOfYear` and `daysFromTarget` sampled, all scalar, no encoding - from the recipe alone: its description
 resolves no geometry, builds no imagery and runs no BAYTS. It is never an export authority.
@@ -50,14 +67,13 @@ preview, histogram and distinct values - carries alike.
 - **An unknown mode is shown as the first observation.** Execution builds the `first` mosaic for any
   `visualizationType` other than `alerts` and `last`. The GUI never sends one: a layer naming no known mode shows no
   product.
-- **The radar observation of a recipe that has chosen no reference is not held back from preview.** The alerts are:
-  their reference requirement refuses a missing reference
-  ([BAYTS Alerts REF](../design/recipes/source-resolution.md#bayts-alerts-ref)). The radar observation reads the
-  reference's geometry, and a direct asset reference's mask, but none of its statistics, so it is not held to that
-  requirement, and no dependency is diagnosed when `reference` is absent, as it is in a new recipe, so the read's
-  dependency validity is `VALID` and it permits a preview wherever its dates are set. That does not establish that an uninitialized layer actually submits one. Execution asked for the radar
-  observation without a reference fails with `TypeError: Cannot read properties of undefined (reading 'type')`. A
-  reference selected without an id is diagnosed, `INCOMPLETE_REFERENCE`, and blocks preview.
+- **The radar observation of a recipe that has chosen no reference.** The radar observation is built with the
+  reference's processing, so the GUI holds it, like the alerts, while no reference is selected (`SOURCE_MISSING`).
+  Execution asked for it directly refuses with a client error (`HISTORICAL_PROCESSING_UNAVAILABLE`). Server preview
+  readiness in general remains separate work.
+- **The radar observation is contextual.** It is a nearest-date mosaic built with the alerts' processing settings. It
+  does not apply the history's speckle factors, per-pixel relative-orbit masking or normalization, so it is not the
+  observations BAYTS scores.
 - **Radar Mosaic's window is always ±183 days** (see [Radar Mosaic](radar-mosaic.md)).
 
 ## Verification

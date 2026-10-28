@@ -53,7 +53,7 @@ vi.mock('~/apiRegistry', async () => {
         }
     }}
 })
-vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
+vi.mock('~/translate', () => ({msg: (key, values) => [[key].flat().join('.'), ...values ? [JSON.stringify(values)] : []].join(' ')}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // The REF panel opens with the editor, and closes as it does when cancelled or applied.
@@ -120,6 +120,7 @@ const {PortalContainer, PortalContext} = await import('~/widget/portal')
 const {actionBuilder} = await import('~/action-builder')
 const {Subject} = await import('rxjs')
 const {IMAGE_OUTPUT} = await import('../recipeOutput')
+const {RADAR_OBSERVATION} = await import('#sepal/recipe/type/baytsAlerts')
 const {
     CHECKING_SOURCE, selectedSourceStatusOfState, sourceProblemsOfState, UNAVAILABLE_SOURCE, UNSUITABLE_SOURCE
 } = await import('../selectedSourceStatus')
@@ -184,13 +185,13 @@ describe('a reference BAYTS Alerts can monitor against', () => {
         expect(decision()).toBe('RETRIEVABLE')
     })
 
-    it('is judged by its statistics where the processing options it describes cannot be read, which then seed nothing', async () => {
+    it('is held, said in REF, where the processing options it records cannot be read, configuring nothing', async () => {
         fake.assets[STATS_ASSET] = statsAsset(ASCENDING, {recipe_options: '{broken'})
 
         await editor({selection: ASSET, actions: true})
 
-        expect(referenceStatus()).toBe(null)
-        expect(decision()).toBe('RETRIEVABLE')
+        expect(referenceStatus()).toMatchObject({state: UNSUITABLE_SOURCE, message: UNREADABLE_PROCESSING})
+        expect(decision()).toBe('BLOCKED')
         expect(alertsRecipe().model.options).toEqual(HISTORICAL_OPTIONS)
     })
 
@@ -226,35 +227,47 @@ describe('the passes the alerts monitor, set in PRC', () => {
         expect(decision()).toBe('BLOCKED')
     })
 
-    it('are seeded by a reference selected in REF that holds other passes, where it describes them', async () => {
-        fake.assets[OTHER_ASSET] = statsAsset(DESCENDING, {recipe_options: JSON.stringify({orbits: ['DESCENDING']})})
+    it('are kept when a reference holding other passes replaces the one selected, and PRC says the pass it no longer holds', async () => {
+        fake.assets[OTHER_ASSET] = statsAsset(DESCENDING, {recipe_type: 'BAYTS_HISTORICAL', recipe_options: JSON.stringify({orbits: ['DESCENDING']})})
         await editor({selection: ASSET, panel: 'reference'})
 
         await selectAsset(OTHER_ASSET)
         expect(applyEnabled()).toBe(true)
         await apply()
 
-        expect(alertsRecipe().model.options.orbits).toEqual(['DESCENDING'])
-        expect(sourceProblems()).toEqual({})
+        expect(alertsRecipe().model.options).toEqual(HISTORICAL_OPTIONS)
+        expect(sourceProblems().options).toContain('process.source.historicalStats.passAbsent')
     })
 })
 
 describe('the passes offered in PRC', () => {
-    it.each([
-        ['ascending', ASCENDING, ['ASCENDING', 'DESCENDING'], ASCENDING_PASS, DESCENDING_PASS, 'ASCENDING'],
-        ['descending', DESCENDING, ['ASCENDING'], DESCENDING_PASS, ASCENDING_PASS, 'DESCENDING']
-    ])('are only the %s pass of a reference holding only that, chosen for the alerts once applied', async (_case, bands, saved, offered, refused, pass) => {
-        fake.assets[STATS_ASSET] = statsAsset(bands)
+    it('keep a chosen pass the reference does not hold, said there and holding Apply, until it is deselected', async () => {
+        fake.assets[STATS_ASSET] = statsAsset(ASCENDING)
 
-        await editor({selection: ASSET, panel: 'options', options: {...HISTORICAL_OPTIONS, orbits: saved}})
+        await editor({selection: ASSET, panel: 'options', options: {...HISTORICAL_OPTIONS, orbits: ['ASCENDING', 'DESCENDING']}})
 
-        expect(choiceEnabled(offered)).toBe(true)
-        expect(choiceEnabled(refused)).toBe(false)
+        expect([chosen(ASCENDING_PASS), chosen(DESCENDING_PASS)]).toEqual([true, true])
+        expect(choiceEnabled(DESCENDING_PASS)).toBe(true)
+        expect(errorsOf(ORBITS).join('\n')).toContain('process.source.historicalStats.passAbsent')
+        expect(applyEnabled()).toBe(false)
+
+        await toggle(DESCENDING_PASS)
+        expect(choiceEnabled(DESCENDING_PASS)).toBe(false)
         await apply()
-        expect(alertsRecipe().model.options.orbits).toEqual([pass])
+
+        expect(alertsRecipe().model.options.orbits).toEqual(['ASCENDING'])
         expect(sourceProblems()).toEqual({})
         expect(gate(IMAGE_OUTPUT)).toBe(null)
         expect(metadataReads()).toBe(1)
+    })
+
+    it('cannot add a pass the reference does not hold, and keep the one chosen it does', async () => {
+        fake.assets[STATS_ASSET] = statsAsset(DESCENDING)
+
+        await editor({selection: ASSET, panel: 'options', options: {...HISTORICAL_OPTIONS, orbits: ['DESCENDING']}})
+
+        expect(choiceEnabled(ASCENDING_PASS)).toBe(false)
+        expect([chosen(ASCENDING_PASS), chosen(DESCENDING_PASS)]).toEqual([false, true])
     })
 
     it('are both passes of a reference holding both, keeping the one already chosen', async () => {
@@ -268,16 +281,18 @@ describe('the passes offered in PRC', () => {
         expect(alertsRecipe().model.options.orbits).toEqual(['DESCENDING'])
     })
 
-    it('are what the reference supports where none are chosen, once that is established', async () => {
+    it('stay none chosen once what the reference supports is established, until one is chosen', async () => {
         fake.assets[STATS_ASSET] = statsAsset([...ASCENDING, ...DESCENDING])
         fake.heldMetadata = []
         await editor({selection: ASSET, panel: 'options', options: {...HISTORICAL_OPTIONS, orbits: []}})
-        expect(applyEnabled()).toBe(false)
 
         await answerHeldReads()
-        await apply()
 
-        expect(alertsRecipe().model.options.orbits).toEqual(['ASCENDING', 'DESCENDING'])
+        expect([chosen(ASCENDING_PASS), chosen(DESCENDING_PASS)]).toEqual([false, false])
+        expect(applyEnabled()).toBe(false)
+        await toggle(DESCENDING_PASS)
+        await apply()
+        expect(alertsRecipe().model.options.orbits).toEqual(['DESCENDING'])
     })
 
     it.each([
@@ -307,44 +322,50 @@ describe('the passes offered in PRC', () => {
         expect(applyEnabled()).toBe(false)
     })
 
-    it('are what the reference supports where they were saved as something other than a list of passes', async () => {
+    it('saved as something other than a list of passes are none chosen until one is, and then applied as a list', async () => {
         await editor({selection: ASSET, panel: 'options', options: {...HISTORICAL_OPTIONS, orbits: 'ASCENDING'}})
 
+        expect([chosen(ASCENDING_PASS), chosen(DESCENDING_PASS)]).toEqual([false, false])
+        await toggle(ASCENDING_PASS)
         await apply()
 
         expect(alertsRecipe().model.options.orbits).toEqual(['ASCENDING'])
         expect(sourceProblems()).toEqual({})
     })
 
-    it('saved as something other than a list of passes are left so on Cancel', async () => {
+    it('saved as something other than a list of passes are left so when PRC is closed unedited', async () => {
         await editor({selection: ASSET, panel: 'options', options: {...HISTORICAL_OPTIONS, orbits: 'ASCENDING'}})
 
-        await cancel()
+        await close()
 
         expect(alertsRecipe().model.options.orbits).toBe('ASCENDING')
         expect(Object.keys(sourceProblems())).toEqual(['options'])
     })
 
-    it('follow the reference while PRC is open, when what it supports changes', async () => {
+    it('keep a chosen pass the reference stops supporting while PRC is open, until it is deselected', async () => {
         fake.assets[STATS_ASSET] = statsAsset([...ASCENDING, ...DESCENDING])
         await editor({selection: ASSET, panel: 'options', options: {...HISTORICAL_OPTIONS, orbits: ['ASCENDING', 'DESCENDING']}})
 
         fake.assets[STATS_ASSET] = statsAsset(DESCENDING)
         await assetUpdated(STATS_ASSET)
 
-        expect(choiceEnabled(ASCENDING_PASS)).toBe(false)
+        expect([chosen(ASCENDING_PASS), choiceEnabled(ASCENDING_PASS)]).toEqual([true, true])
+        await toggle(ASCENDING_PASS)
         await apply()
         expect(alertsRecipe().model.options.orbits).toEqual(['DESCENDING'])
     })
 
-    it('leave the alerts\' passes as they were on Cancel', async () => {
-        fake.assets[STATS_ASSET] = statsAsset(DESCENDING)
+    it('leave the alerts\' passes as they were when PRC is closed, and on Cancel of an edit', async () => {
+        fake.assets[STATS_ASSET] = statsAsset([...ASCENDING, ...DESCENDING])
         await editor({selection: ASSET, panel: 'options'})
 
-        await cancel()
+        await close()
+        expect(alertsRecipe().model.options).toEqual(HISTORICAL_OPTIONS)
 
-        expect(alertsRecipe().model.options.orbits).toEqual(['ASCENDING'])
-        expect(Object.keys(sourceProblems())).toEqual(['options'])
+        await editor({selection: ASSET, panel: 'options'})
+        await toggle(DESCENDING_PASS)
+        await cancel()
+        expect(alertsRecipe().model.options).toEqual(HISTORICAL_OPTIONS)
     })
 
     it('are offered as before in BAYTS Historical\'s own panel, whatever it computes', async () => {
@@ -357,6 +378,148 @@ describe('the passes offered in PRC', () => {
 
         expect(selectFrom(store.getState(), ['process.loadedRecipes', 'historical-1', 'model.options.orbits']))
             .toEqual(['DESCENDING'])
+    })
+})
+
+describe('the processing PRC shows', () => {
+    it('is a historical recipe\'s, read-only, what it leaves out as it executes it, whatever the alerts saved', async () => {
+        await editor({selection: ref('historical-1'), panel: 'options', options: {...HISTORICAL_OPTIONS, spatialSpeckleFilter: 'LEE'}})
+
+        expect([chosen(NO_SPECKLE_FILTER), chosen(LEE_FILTER)]).toEqual([true, false])
+        expect(choiceEnabled(LEE_FILTER)).toBe(false)
+        expect(errorsOrTooltips(SPECKLE_FILTER)).toContain(PROCESSING_REFERENCE)
+    })
+
+    it('is an asset\'s, read-only, where it records it, and editable, said unverified, where it does not', async () => {
+        fake.assets[STATS_ASSET] = statsAsset(ASCENDING, {recipe_options: JSON.stringify({geometricCorrection: 'TERRAIN'})})
+
+        await editor({selection: ASSET, panel: 'options'})
+
+        expect([chosen(TERRAIN_CORRECTION), choiceEnabled(TERRAIN_CORRECTION)]).toEqual([true, false])
+        expect(choiceEnabled(LEE_FILTER)).toBe(true)
+        expect(errorsOrTooltips(SPECKLE_FILTER)).toContain(PROCESSING_NOT_RECORDED)
+    })
+
+    it('keeps the parameters an asset records read-only in the speckle dialog, beside those it does not, which are said unverified', async () => {
+        fake.assets[STATS_ASSET] = statsAsset(ASCENDING, {recipe_options: JSON.stringify({
+            spatialSpeckleFilter: 'LEE', strongScatterers: 'RETAIN', strongScattererValues: [4, -4]
+        })})
+
+        await editor({selection: ASSET, panel: 'options'})
+        await toggle('button.more')
+
+        const recorded = field(STRONG_SCATTERER_VALUE_1).querySelector('input')
+        expect([recorded.value, recorded.disabled || recorded.readOnly]).toEqual(['4', true])
+        expect(field(KERNEL_SIZE).querySelector('[disabled]')).toBe(null)
+        expect(detailTooltip(KERNEL_SIZE)).toContain(PROCESSING_NOT_RECORDED)
+    })
+
+    it('shows, where the alerts saved none, the speckle filter and strong scatterer values monitoring runs with', async () => {
+        await editor({selection: ASSET, panel: 'options', options: {...HISTORICAL_OPTIONS, strongScatterers: 'RETAIN'}})
+        await toggle('button.more')
+
+        expect(chosen(LEE_FILTER)).toBe(true)
+        expect(field(STRONG_SCATTERER_VALUE_1).querySelector('input').value).toBe('0')
+        expect(field(STRONG_SCATTERER_VALUE_2).querySelector('input').value).toBe('-5')
+    })
+
+    it('saves, with another choice applied, what monitoring already ran with where the alerts saved none, and nothing when closed', async () => {
+        await editor({selection: ASSET, panel: 'options'})
+        await close()
+        expect(alertsRecipe().model.options).toEqual(HISTORICAL_OPTIONS)
+
+        await editor({selection: ASSET, panel: 'options'})
+        await toggle('button.more')
+        await toggle(SIDES_MASK)
+        await applyOptions()
+
+        expect(alertsRecipe().model.options).toMatchObject({
+            spatialSpeckleFilter: 'LEE', kernelSize: 9, sigma: 0.9, strongScattererValues: [0, -5], snicSize: 5, snicCompactness: 0.15
+        })
+    })
+
+    it('hides what monitoring never reads, and keeps it, and the reference\'s processing, as saved when another choice is applied', async () => {
+        const saved = {...HISTORICAL_OPTIONS, outlierRemoval: 'AGGRESSIVE', numberOfImages: 7, spatialSpeckleFilter: 'GAMMA_MAP'}
+        await editor({selection: ref('historical-1'), panel: 'options', options: saved})
+        expect(panelButton(MULTITEMPORAL_FILTER)).toBe(undefined)
+
+        await toggle('button.more')
+        await toggle(SIDES_MASK)
+        await apply()
+
+        const applied = alertsRecipe().model.options
+        expect(applied).toMatchObject({...saved, mask: ['SIDES']})
+        expect(applied).not.toHaveProperty('multitemporalSpeckleFilter')
+        expect(applied).not.toHaveProperty('geometricCorrection')
+    })
+})
+
+describe('a new recipe\'s first reference, applied in REF', () => {
+    it.each([
+        ['Apply', () => apply()],
+        ['Enter', () => submit()]
+    ])('seeds the passes, masks and angles the reference records, in the action applying it, on %s', async (_case, applying) => {
+        fake.assets[OTHER_ASSET] = statsAsset(DESCENDING, {recipe_type: 'BAYTS_HISTORICAL', recipe_options: JSON.stringify(RECORDED_OPTIONS)})
+        await editor({selection: {}, panel: 'reference', initialized: false})
+
+        await selectAsset(OTHER_ASSET)
+        await applying()
+
+        expect(alertsRecipe().model.reference).toEqual({type: 'ASSET', id: OTHER_ASSET})
+        expect(alertsRecipe().model.options).toEqual({...HISTORICAL_OPTIONS, orbits: ['DESCENDING'], mask: ['SIDES'], minAngle: 33, maxAngle: 43})
+    })
+
+    it('seeds nothing, and applies nothing, while the reference is still read', async () => {
+        fake.assets[OTHER_ASSET] = statsAsset(DESCENDING, {recipe_type: 'BAYTS_HISTORICAL', recipe_options: JSON.stringify(RECORDED_OPTIONS)})
+        await editor({selection: {}, panel: 'reference', initialized: false})
+        fake.heldMetadata = []
+
+        await selectAsset(OTHER_ASSET)
+        await submit()
+
+        expect(alertsRecipe().model.reference).toEqual({})
+        expect(alertsRecipe().model.options).toEqual(HISTORICAL_OPTIONS)
+    })
+
+    it('seeds from the reference selected last, once it is read', async () => {
+        fake.assets[OTHER_ASSET] = statsAsset(DESCENDING, {recipe_type: 'BAYTS_HISTORICAL', recipe_options: JSON.stringify(RECORDED_OPTIONS)})
+        fake.assets[STATS_ASSET] = statsAsset(ASCENDING, {recipe_type: 'BAYTS_HISTORICAL', recipe_options: JSON.stringify({orbits: ['ASCENDING'], minAngle: 31})})
+        await editor({selection: {}, panel: 'reference', initialized: false})
+        await selectAsset(OTHER_ASSET)
+        fake.heldMetadata = []
+
+        await selectAsset(STATS_ASSET)
+        expect(applyEnabled()).toBe(false)
+        await answerHeldReads()
+        await apply()
+
+        expect(alertsRecipe().model.options).toEqual({...HISTORICAL_OPTIONS, orbits: ['ASCENDING'], minAngle: 31})
+    })
+
+    it('writes nothing on Cancel', async () => {
+        fake.assets[OTHER_ASSET] = statsAsset(DESCENDING, {recipe_type: 'BAYTS_HISTORICAL', recipe_options: JSON.stringify(RECORDED_OPTIONS)})
+        await editor({selection: {}, panel: 'reference', initialized: false})
+
+        await selectAsset(OTHER_ASSET)
+        await cancel()
+
+        expect(alertsRecipe().model).toMatchObject({reference: {}, options: HISTORICAL_OPTIONS})
+    })
+
+    it('is the only one that seeds: a reference applied after it, still creating, leaves the alerts\' choices', async () => {
+        fake.assets[OTHER_ASSET] = statsAsset(DESCENDING, {recipe_type: 'BAYTS_HISTORICAL', recipe_options: JSON.stringify(RECORDED_OPTIONS)})
+        fake.assets[STATS_ASSET] = statsAsset(ASCENDING, {recipe_type: 'BAYTS_HISTORICAL', recipe_options: JSON.stringify({orbits: ['ASCENDING'], minAngle: 31})})
+        await editor({selection: {}, panel: 'reference', initialized: false})
+        await selectAsset(OTHER_ASSET)
+        await apply()
+        const seeded = alertsRecipe().model.options
+
+        await editor({selection: {}, panel: 'reference', initialized: false, options: seeded, reference: {type: 'ASSET', id: OTHER_ASSET}})
+        await selectAsset(STATS_ASSET)
+        await apply()
+
+        expect(alertsRecipe().model.reference).toEqual(ASSET)
+        expect(alertsRecipe().model.options).toEqual(seeded)
     })
 })
 
@@ -511,22 +674,40 @@ describe('alerts shown on another map with their editor closed', () => {
         expect(previews.constructed).toHaveLength(1)
     })
 
-    it('show the radar observation over a reference whose statistics do not suit, which it does not read', async () => {
-        await onAnotherMap({selection: ref('masked-radar'), layers: [FIRST_OBSERVATION_LAYER]})
+    it('show the radar observation once the processing it is built with is read', async () => {
+        fake.heldMetadata = []
+        await onAnotherMap({selection: ASSET, layers: [FIRST_OBSERVATION_LAYER]})
+        expect(previews.constructed).toEqual([])
+
+        await answerHeldReads()
 
         expect(previews.constructed).toHaveLength(1)
     })
 
-    it('configure nothing, and the editor opened afterwards seeds the options once, reading nothing again', async () => {
-        fake.assets[STATS_ASSET] = statsAsset(ASCENDING, {recipe_options: JSON.stringify({minObservations: 7})})
+    it('withhold the radar observation over a reference holding no historical statistics, whose processing it is built with', async () => {
+        await onAnotherMap({selection: ref('masked-radar'), layers: [FIRST_OBSERVATION_LAYER]})
+
+        expect(previews.constructed).toEqual([])
+        expect(gate(RADAR_OBSERVATION)).toMatchObject({withdraw: true})
+    })
+
+    it('withhold both where the processing the reference records cannot be read', async () => {
+        fake.assets[STATS_ASSET] = statsAsset(ASCENDING, {recipe_type: 'BAYTS_HISTORICAL', recipe_options: '{broken'})
+
+        await onAnotherMap({selection: ASSET, layers: [ALERT_LAYER, FIRST_OBSERVATION_LAYER]})
+
+        expect(previews.constructed).toEqual([])
+        expect(gate(IMAGE_OUTPUT)).toMatchObject({code: 'SOURCE_UNSUITABLE', withdraw: true})
+    })
+
+    it('configure nothing, and neither does the editor opened afterwards, reading nothing again', async () => {
+        fake.assets[STATS_ASSET] = statsAsset(ASCENDING, {recipe_type: 'BAYTS_HISTORICAL', recipe_options: JSON.stringify({minObservations: 7, orbits: ['DESCENDING']})})
         await onAnotherMap({selection: ASSET, layers: [ALERT_LAYER]})
-        const before = alertsRecipe().model
         expect(alertsRecipe().ui.sourceEvidence.status).toBe('OBSERVED')
 
         await showEditor()
 
-        expect(before.options.minObservations).toBe(20)
-        expect(alertsRecipe().model.options.minObservations).toBe(7)
+        expect(alertsRecipe().model.options).toEqual(HISTORICAL_OPTIONS)
         expect(metadataReads()).toBe(1)
     })
 })
@@ -609,7 +790,7 @@ const ALERT_LAYER = {
 }
 const FIRST_OBSERVATION_LAYER = {visualizationType: 'first', visParams: {type: 'continuous', bands: ['VV']}}
 
-const sessionState = ({selection, options = HISTORICAL_OPTIONS, tabs}) => ({
+const sessionState = ({selection, options = HISTORICAL_OPTIONS, tabs, initialized = true}) => ({
     user: {currentUser: {googleTokens: {accessToken: 'token'}}},
     process: {
         loadedRecipes: {
@@ -621,7 +802,7 @@ const sessionState = ({selection, options = HISTORICAL_OPTIONS, tabs}) => ({
                     options,
                     baytsAlertsOptions: {}
                 },
-                ui: {initialized: true}
+                ui: {initialized}
             },
             [HOST]: {id: HOST, type: 'MOSAIC', revision: 1, model: {}, ui: {initialized: true}},
             ...Object.fromEntries(RECORDS.map(record => [record.id, record]))
@@ -656,16 +837,21 @@ const LayerSources = compose(({usingRecipe}) => {
 let mounted
 
 // The alerts as their editor shows them - its watch, REF and Retrieve - and as another map shows their layers.
-const editor = async ({selection, panel = false, actions = false, options = HISTORICAL_OPTIONS}) => {
-    await mount({selection, options, tabs: [{id: ALERTS}], shown: {owner: true, panel, actions, layers: []}})
+// `initialized: false` is a recipe being created; `reference` replaces the selection already applied while it is.
+const editor = async ({selection, panel = false, actions = false, options = HISTORICAL_OPTIONS, initialized, reference}) => {
+    if (root) {
+        await act(async () => root.unmount())
+        container.remove()
+    }
+    await mount({selection: reference || selection, options, initialized, tabs: [{id: ALERTS}], shown: {owner: true, panel, actions, layers: []}})
 }
 
 const onAnotherMap = async ({selection, layers}) => {
     await mount({selection, tabs: [{id: HOST}], shown: {owner: false, panel: false, actions: false, layers}})
 }
 
-const mount = async ({selection, options, tabs, shown}) => {
-    const initialState = sessionState({selection, options, tabs})
+const mount = async ({selection, options, initialized, tabs, shown}) => {
+    const initialState = sessionState({selection, options, initialized, tabs})
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     initStore(store)
     container = document.createElement('div')
@@ -752,6 +938,24 @@ const DESCENDING_PASS = 'process.baytsHistorical.panel.options.form.orbits.desce
 const ORBITS = 'process.baytsHistorical.panel.options.form.orbits.label'
 const ORBITS_REQUIRED = 'process.baytsHistorical.panel.options.form.orbits.required'
 const TERRAIN_CORRECTION = 'process.baytsHistorical.panel.options.form.geometricCorrection.terrain.label'
+const SPECKLE_FILTER = 'process.baytsHistorical.panel.options.form.spatialSpeckleFilter.label'
+const NO_SPECKLE_FILTER = 'process.baytsHistorical.panel.options.form.spatialSpeckleFilter.none.label'
+const LEE_FILTER = 'process.baytsHistorical.panel.options.form.spatialSpeckleFilter.lee.label'
+const MULTITEMPORAL_FILTER = 'process.baytsHistorical.panel.options.form.multitemporalSpeckleFilter.none.label'
+const SIDES_MASK = 'process.baytsHistorical.panel.options.form.mask.sides.label'
+const SPECKLE_OPTION = 'process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions'
+const KERNEL_SIZE = `${SPECKLE_OPTION}.kernelSize.label`
+const STRONG_SCATTERER_VALUE_1 = `${SPECKLE_OPTION}.strongScattererValue1.label`
+const STRONG_SCATTERER_VALUE_2 = `${SPECKLE_OPTION}.strongScattererValue2.label`
+const PROCESSING_REFERENCE = 'process.baytsAlerts.processing.REFERENCE'
+const PROCESSING_NOT_RECORDED = 'process.baytsAlerts.processing.NOT_RECORDED'
+const UNREADABLE_PROCESSING = 'process.baytsAlerts.processing.unreadable'
+
+// What a BAYTS Historical asset records of the processing it was built with, and of the passes, masks and angles it
+// used.
+const RECORDED_OPTIONS = {
+    orbits: ['DESCENDING'], mask: ['SIDES'], minAngle: 33, maxAngle: 43, spatialSpeckleFilter: 'LEE', outlierRemoval: 'MODERATE'
+}
 
 const ASSET_INPUT = 'process.baytsAlerts.panel.reference.form.asset.label'
 const RECIPE_INPUT = 'process.baytsAlerts.panel.reference.form.recipe.label'
@@ -839,6 +1043,31 @@ const applyEnabled = () => panelButton('button.apply')?.disabled === false
 const apply = () => act(async () => panelButton('button.apply').click())
 
 const cancel = () => act(async () => panelButton('button.cancel').click())
+
+// PRC's own Apply, beside the speckle filter dialog's, which this harness keeps open.
+const applyOptions = () => act(async () => [...document.querySelectorAll('button')]
+    .find(button => button.textContent === 'button.apply' && button.closest('form').contains(panelButton(SIDES_MASK)))
+    .click())
+
+const close = () => act(async () => panelButton('button.close').click())
+
+// Enter in a field of the panel: its form submitted.
+const submit = () => act(async () => {
+    const form = panelButton('button.apply').closest('form')
+    form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', {cancelable: true}))
+})
+
+// Whether a choice of several is selected, as its button shows it.
+const chosen = label => panelButton(label).className.includes('highlight')
+
+// What PRC's summary of the speckle filter's parameters says of one of them.
+const detailTooltip = label => [...document.querySelectorAll('[data-tooltip]')]
+    .filter(element => element.parentElement?.textContent.includes(label) && !element.closest('[data-label]'))
+    .flatMap(element => JSON.parse(element.dataset.tooltip))
+    .join('\n')
+
+// What a field says of itself, errors and tooltips alike.
+const errorsOrTooltips = label => [...field(label).querySelectorAll('[data-tooltip]')].flatMap(element => JSON.parse(element.dataset.tooltip)).join('\n')
 
 const alertsRecipe = () => selectFrom(store.getState(), ['process.loadedRecipes', ALERTS])
 
