@@ -7,7 +7,7 @@ import {dirName} from '#sepal/path'
 import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 import {SessionAppRepository} from './sessionAppRepository.js'
-import {activate, close, createWorkerSession, NotificationState, State} from './workerSession.js'
+import {close, createWorkerSession, NotificationState, State} from './workerSession.js'
 import {WorkerSessionRepository} from './workerSessionRepository.js'
 
 // Session lifetime against real MySQL. Every deadline this repository writes comes from the database's
@@ -87,7 +87,7 @@ describe('WorkerSessionRepository', () => {
             await repository.insert(aSession({apiKey: 'keep-me'}))
             now = new Date('2026-06-01T12:34:00Z')
 
-            await repository.update(activate(await repository.getSession(SESSION_ID)))
+            await repository.update({...await repository.getSession(SESSION_ID), state: State.ACTIVE})
 
             const stored = await repository.getSession(SESSION_ID)
             assert.equal(stored.state, State.ACTIVE)
@@ -160,7 +160,7 @@ describe('WorkerSessionRepository', () => {
             await repository.insert(aSession())
             await sessionAppRepository.associate({username: USERNAME, appPath: '/app-one', sessionId: SESSION_ID, label: 'One'})
 
-            await repository.update(activate(await repository.getSession(SESSION_ID)))
+            await repository.update({...await repository.getSession(SESSION_ID), state: State.ACTIVE})
 
             const apps = await sessionAppRepository.appsForSessions([SESSION_ID])
             assert.equal(apps.get(SESSION_ID).length, 1)

@@ -613,9 +613,6 @@ const createAwsInstanceProvider = (config, {instanceTypes = INSTANCE_TYPES} = {}
         onInstanceLaunched,
         start,
         stop,
-        _launchTags: () => launchTags(environment, workerAmiVersion),
-        _idleTags: () => idleTags(environment),
-        _reserveTags: reservation => reserveTags(environment, reservation),
     }
 }
 
@@ -625,6 +622,5 @@ export {
     idleTags,
     launchTags,
     mkFilter,
-    mkTag,
     reserveTags,
 }
