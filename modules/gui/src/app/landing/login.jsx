@@ -150,11 +150,10 @@ class _Login extends React.Component {
                 credentialsPosted(user)
             },
             error => {
-                Notifications.error({
-                    message: error?.status === TOO_MANY_REQUESTS
-                        ? msg('landing.login.throttled')
-                        : msg('landing.login.error')
-                })
+                Notifications.error(error?.status === TOO_MANY_REQUESTS
+                    ? {message: msg('landing.login.throttled'), group: true}
+                    : {message: msg('landing.login.error')}
+                )
             }
         )
     }

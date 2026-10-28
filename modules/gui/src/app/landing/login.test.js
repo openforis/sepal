@@ -14,7 +14,7 @@ vi.mock('~/compose', () => ({
 
 vi.mock('~/translate', () => ({msg: key => key}))
 
-vi.mock('~/widget/notifications', () => ({Notifications: {error: ({message}) => state.notifiedErrors.push(message)}}))
+vi.mock('~/widget/notifications', () => ({Notifications: {error: notification => state.notifiedErrors.push(notification)}}))
 
 // The panel builds its field descriptors at module load.
 vi.mock('~/widget/form', () => {
@@ -73,13 +73,13 @@ describe('starting another login attempt', () => {
 })
 
 describe('a failed login', () => {
-    it('tells a throttled user to wait', () => {
+    it('tells a throttled user to wait, once however often they retry', () => {
         const {notifiedErrors} = submitLogin({
             recaptcha$: () => of('a-token'),
             login$: throwError(() => ({status: 429}))
         })
 
-        expect(notifiedErrors).toEqual(['landing.login.throttled'])
+        expect(notifiedErrors).toEqual([{message: 'landing.login.throttled', group: true}])
     })
 
     it('reports any other failure as an authentication error', () => {
@@ -88,6 +88,6 @@ describe('a failed login', () => {
             login$: throwError(() => ({status: 500}))
         })
 
-        expect(notifiedErrors).toEqual(['landing.login.error'])
+        expect(notifiedErrors).toEqual([{message: 'landing.login.error'}])
     })
 })
