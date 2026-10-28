@@ -149,6 +149,9 @@ const AuthMiddleware = (userStore, ensureSessionFor) => {
                     switch (statusCode) {
                         case OK: {
                             const user = response.body
+                            if (user.status !== 'ACTIVE') {
+                                return unauthorized$(username)
+                            }
                             workerSession && setRequestSession(req, workerSession)
                             return authenticatedNonGuiRequest$(username, user)
                         }

@@ -89,7 +89,8 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
 - `src/authMiddleware.js`: HTTP Basic credentials, when present, are authenticated via POST to `http://user/authenticate` and win over the session's `sepal-user` (a login from a browser logged in as someone else must switch account); otherwise the injected `sepal-user` passes. A GUI login on a session held by another user replaces the session (`ensureSessionFor` in `session.js`)
 - **Worker-session API keys**: Basic auth with an *empty* username treats the password as a worker-session
   api key, authenticated via `POST http://worker/sessions/api-key-authenticate`. The key resolves to
-  `{username, sessionId, workerType}`; the user is injected as `sepal-user` and the session as
+  `{username, sessionId, workerType}`; a key whose owner is not `ACTIVE` (e.g. locked) is refused
+  with 401, as task-container keys (`task_…`, via task-manager) are; otherwise the user is injected as `sepal-user` and the session as
   `sepal-session` (`{sessionId, workerType}` — never the key, never a role). `sepal-session` is
   request-local: `userStore.userMiddleware` strips whatever the client sent, only successful key
   authentication sets it, and `src/proxy.js` forwards it on authenticated endpoints only.
