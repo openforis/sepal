@@ -144,6 +144,16 @@ inside keyframes of an attached animation (bugzilla 1763376 et al.). */
     color: var(--text-header-color);
 }
 
+/* A read-only tab cannot be named, so its placeholder is its name: show it as one. */
+.tab.readOnly .title input::placeholder {
+    color: var(--tab-text-color);
+    opacity: 1;
+}
+
+.tab.readOnly.selected .title input::placeholder {
+    color: var(--text-header-color);
+}
+
 /*Fade-out overflow */
 .tab:not(.editing) .title:before {
     content: '';

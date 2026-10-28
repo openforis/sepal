@@ -45,7 +45,7 @@
     },
     "googleAccountRequired": "Some apps are unavailable. To enable them, connect your SEPAL account to your Google account.",
     "info": "Show information about this app",
-    "landingTab": "App list",
+    "landingTab": "Apps",
     "launch": {
       "startingSession": "Starting session...",
       "startingServer": "Starting server...",
@@ -6212,7 +6212,7 @@
     }
   },
   "terminal": {
-    "menuTab": "Instances",
+    "menuTab": "Sessions",
     "server": {
       "error": "Failed to start terminal"
     }

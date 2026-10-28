@@ -56,7 +56,7 @@ class _TabHandle extends React.Component {
     }
 
     render() {
-        const {selected, closing, dragging} = this.props
+        const {selected, closing, dragging, readOnlyTitle} = this.props
         const {busy, editing, animateAdd} = this.state
         return (
             <Layout
@@ -66,6 +66,7 @@ class _TabHandle extends React.Component {
                     styles.tab,
                     styles.regular,
                     selected ? styles.selected : null,
+                    readOnlyTitle ? styles.readOnly : null,
                     busy ? styles.busy : null,
                     closing ? styles.closing : null,
                     editing ? styles.editing : null,

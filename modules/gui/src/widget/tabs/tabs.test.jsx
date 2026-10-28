@@ -80,7 +80,7 @@ describe('Tabs title', () => {
 
 describe('Tabs new tab', () => {
     it('names the section\'s first tab with the section\'s placeholder', () => {
-        const newTabPlaceholder = 'App list'
+        const newTabPlaceholder = 'Apps'
 
         mountTabs({newTabPlaceholder}, [])
 
@@ -88,7 +88,7 @@ describe('Tabs new tab', () => {
     })
 
     it('names an added tab with the section\'s placeholder', () => {
-        const newTabPlaceholder = 'App list'
+        const newTabPlaceholder = 'Apps'
         mountTabs({newTabPlaceholder})
 
         act(() => addTabButton().click())
