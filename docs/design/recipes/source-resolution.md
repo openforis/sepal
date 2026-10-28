@@ -79,8 +79,9 @@ claiming the earlier campaign tested that later tree.
 
 **Band Math setup feedback completed and browser-accepted (2026-10-28).** An empty output leaves OUT unmarked,
 with neutral guidance; preview and Retrieve remain held and name OUT. Choosing an output releases the hold.
-See "Band Math empty-output setup feedback". The pre-existing map-area menu visibility inconsistency is agreed
-as a separate correction, outside this accepted setup/gate change.
+See "Band Math empty-output setup feedback". The separate map-area menu correction is also implemented,
+independently reviewed and browser-accepted on 2026-10-28; it reuses shared menu/overlay behavior without changing
+image readiness.
 
 1. **BAYTS settings ownership and consistency.** Start with the field/reader audit below, then scope the correction
    using the established ownership and form contracts. This is selected first as a consistency fix; do not assume
@@ -6659,7 +6660,7 @@ implementation proposal below when this item starts; no implementation is claime
   `/tmp/sepal-bandmath-gate-correction-review-lint.log`.
 - **Browser acceptance (2026-10-28):** the user confirmed the manual checks are good and accepted the setup/gate
   change. The map-area menu visibility observation below is pre-existing and will be addressed in a separate commit.
-- **Related map-area menu visibility observation (2026-10-28; separate correction agreed, not implemented):** the user sees
+- **Related map-area menu visibility observation (2026-10-28; implemented, independently reviewed and browser-accepted):** the user sees
   no map-area settings button before Band Math has outputs and asks that hiding versus disabling be consistent and
   centrally owned. `bandMathImageLayer.jsx` returns no `MapAreaLayout` when `outputImages` is empty, so its menu and
   feature overlays are absent; this is a recipe-specific condition, not the shared request gate. Stack, Remapping
@@ -6672,6 +6673,43 @@ implementation proposal below when this item starts; no implementation is claime
   the accepted setup/gate fix, using the shared map-area boundary rather than additional recipe-specific checks.
   Check empty/invalid output, repair and unaffected overlay access across representative recipes. No map-area
   production change is included in this setup/gate commit.
+  - **Shared ownership, as found.** `recipeImageLayer.jsx` already decides drawability. It passes `layer = null`
+    while the source gate (`requestGate`) or the map-product gate withdraws, or while the output cannot be previewed,
+    and keeps a drawing only while evidence is pending. `LayerSourceStatus` and `visualizationSelector` say what is
+    held. `MapAreaLayout` always renders `MapAreaMenu` and the feature overlays, and takes a withheld layer off the
+    map. No shared capability was missing.
+  - **Change.** `bandMathImageLayer.jsx` no longer returns null when nothing is output: it always renders the shared
+    `MapAreaLayout`, as Stack, Remapping and Masking do. Holding the image stays with the shared gates. The form
+    renders from the default model (`outputImages: []`, `availableBands` defaulting to `{}`).
+  - **Audit of the other `MapAreaLayout` wrappers.**
+    - None other drops the layout for a configuration fact.
+    - Classification (`canRender`), Optical Mosaic (`hasScenes`) and LandTrendr (`layerConfigChanges`) withhold only
+      the layer and keep the menu.
+    - BAYTS Alerts, Change Alerts and LandTrendr render no layout until `ui.initialized`, that is during their
+      creation wizard. That is a lifecycle boundary independent of configuration validity, so it is left as found.
+  - **Regression.** `recipe/recipeMapArea.test.jsx` mounts the recipe's own center area as `map.jsx` renders it: the
+    real layer source, recipe layer component, `MapAreaLayout`, `MapAreaMenu`, activation, store and source runtime,
+    with Earth Engine and the map faked.
+    - Band Math with imagery and nothing output keeps an enabled menu, its Labels overlay toggles, and no preview is
+      constructed.
+    - A configured duplicate output keeps the menu and the selected visualization, with no new preview; repair
+      draws again with the same selection.
+    - Stack with nothing stacked behaves the same.
+    - **Witness:** with `bandMathImageLayer.jsx` from `HEAD`, the empty-output case fails. The invalid/repair case is
+      a control: the old code kept the layout while any output existed.
+  - **Verification:** Band Math, the shared layer and its source, Stack, map layout, and `app/home/map` (including the
+    visualization selector): 64 files and 859 tests (two workers). ESLint on the changed files and `git diff --check`
+    are clean. a8061176b's behaviour is unchanged: OUT unmarked, the hold naming OUT, genuine errors marked.
+  - **Independent review (2026-10-28):** no remaining finding. Removing the Band Math exception reuses the existing
+    shared menu/overlay behavior without altering readiness or drawing gates. The wizard-only guards in BAYTS
+    Alerts, Change Alerts and LandTrendr are lifecycle boundaries, not configuration-validity checks; leave them
+    unchanged in this slice. The new mounted map-area file, Band Math's layer and section marks, and both shared
+    visualization-selector files pass independently: 64 tests in 5 files with two workers. Changed-file ESLint and
+    `git diff --check` pass. Evidence: `/tmp/sepal-map-area-menu-review-tests.log` and
+    `/tmp/sepal-map-area-menu-review-lint.log`.
+  - **Browser acceptance (2026-10-28):** after the brief running-app menu/overlay/output checklist and clarification
+    of the shared image-withholding behavior, the user confirmed "All works well". Browser acceptance is complete;
+    this correction is committed separately from the setup/gate change.
 
 **F8. Fix the concrete chart-layout and Retrieve-message regressions.**
 
