@@ -73,10 +73,24 @@ claiming the earlier campaign tested that later tree.
 | 1 | Stack Band names layout | **Implemented and browser-accepted (2026-10-27).** Cause, confirmed in Chromium: each field took the browser's default `<input size=20>` width (202px) in a wrapping horizontal `Layout` with 1rem margins, so two never fit the 352px group of the 29rem panel and every band took its own row. Each input-image group is now a local grid of two equal columns, one where two would each be narrower than 10rem; fields shrink to their column and long original names wrap with their feedback icon in view. Shared Layout, Panel, form and input widths are unchanged. Checked in Chromium on a harness build of the real Stack toolbar and panel: 1/2/3/4/many bands, three groups, long names and values, a duplicate name, 400px and 320px viewports, scrolling, Tab order, rename then Apply or Cancel. Independent review found no issue; all 41 Stack tests, lint and `git diff --check` pass. The user confirmed the running-app layout works, including small windows, and renaming works. Browser acceptance is complete; the browser was not named, so no separate Firefox/Safari pass is claimed. Renaming behavior is unchanged; additional manual renaming checks were unnecessary for this layout-only change. |
 | 2 | CCDC Sources family/view heights | **Implemented and browser-accepted (2026-10-27).** The height follows the draft's family and the rendered view: Optical 46/58rem, Radar 30/42rem and Planet 36/48rem for Less/More. Less fits its usual controls with about 2rem to spare. Following the user's browser feedback, More adds 6rem beyond the original proposal to reserve two extra breakpoint-band rows with breathing room; its height still depends only on family/view. The original content measurements in Chromium were (Optical 620/700px with Landsat, Radar 397/477px, Planet 477/557px with its asset field). Planet is sized for Custom Basemaps and Daily Imagery's asset field, leaving NICFI Less about 107px spare; Sentinel-2-only Optical Less scrolls about 15px. Classification choices, the Classification field shown in Less for an error, and validation messages scroll in the body; the shared viewport cap and width are unchanged. Checked in Chromium on a harness build of the real Sources panel in a real recipe context, with reads answered by the harness: all six views; family and More/Less changes resize; a Classification chosen after opening whose 16 long classes arrived 2s later left the outer height unchanged before, during and after; an untrained Classification and an empty breakpoint selection in Less; 700/560/440px-tall and 800/480px-wide windows keep header and footer in view and the last choice reachable by scrolling. Independent review confirmed the 21 CCDC-related test files (232 tests), lint and `git diff --check` pass. After adding More's extra space, a fresh Chromium harness build confirms two probability rows fit in every family with 35–39px to spare at an uncapped viewport; Less keeps its previous heights, and short windows keep the shared cap and scrolling. Evidence: `/tmp/sepal-ccdc-headroom-review/browser.log`. The user confirmed the adjusted More spacing looks good in the running app; browser acceptance is complete. |
 | 3 | CCDC Slice chart labels | **Implemented and browser-accepted (2026-10-27).** Segment descriptions carry no labels, so the Slice chart asks the producer its source resolves to. CCDC registers `segmentBandLabels` beside `describeSegments$`, labelling bands as its own chart does (`flatBandOptions`) from the same data sets, corrections and Classification its description uses. The records are those the chart's operation already resolved (`recordOf`), so nothing extra is loaded, saved or copied, and `ui.classification` copies are not used. Native names agree with the CCDC chart, `regression` and `probability_<value>` are named by the Classification's current class labels, and a band without a label (an asset, an unresolved producer or Classification) keeps its raw name. Choices, their order and values, requests and readiness are unchanged; options are keyed by name, so alike labels stay distinct. Mounted Slice regressions cover labelled choices with requests by name, a class relabelled while chosen, two classes labelled alike and an asset's probability-named band with no recipe read; witnessed by reverting to raw labels, by labels as values and by dropping unlabelled bands. 21 CCDC/Slice and segment test files (234 tests), lint and `git diff --check` pass. After the own-property fallback correction, all 37 mounted Slice tests pass independently. The user confirmed that Classification band labels appear in the chart and accepted the change; the browser check is complete. The broader presentation review remains deferred. |
-| 4 | Consecutive keyboard band addition | Useful but more sensitive: narrow the behavior to the stay-open band-add flow in the shared picker. Retain filters, mouse and arrow behavior, and prevent the final Enter from activating All bands. |
+| 4 | Consecutive keyboard band addition | **Implemented 2026-10-27; browser-accepted 2026-10-28.** Cause: after a stay-open choice the add flow removes the band; `Combo` then has no selected option (these pickers pass no `value`) and `ListContent` re-highlights the first selectable row, "All bands", so the next Enter added every band. Ownership is shared: `Combo` marks a stay-open choice and hands its key to `ListContent` with the options the parent next supplies (a typed filter or closing first ends it), and `ListContent` highlights the first selectable option that followed it, past headings and disabled rows, only when those options are what remained of the previous ones without the chosen option. Past the last, nothing is highlighted and Enter does nothing; arrows still reach every row, "All bands" included. Other changes of options, selections that keep their option, ordinary selectors and lists outside `Combo` highlight as before. Every stay-open caller is an equivalent add-and-remove flow: shared and Classification-derived input imagery, Band Math input imagery, output bands and function inputs, and training-data class mapping. Mounted regressions use the real Combo/List keyboard path (lifecycle: repeated Enter, filter, end of list, All bands; `combo.test.jsx`: skipped rows, options changed without a choice, a keeping picker filtered after a choice, a click, an ordinary selector), witnessed against the unchanged widgets. 85 widget, input imagery, Band Math, Classification and Slice test files (1068 tests), lint and `git diff --check` pass; a Chromium harness of the real input-image editor confirmed repeated Enter, filter, focus, visibility and the end of the list. The user accepted the brief running-app keyboard check on 2026-10-28 and authorised committing; browser acceptance is complete. |
 
-**Functional follow-ups deserving a separate round.** Neither is a confirmed regression introduced by the current
-corrections, and both remain explicitly deferred for this release:
+**Agreed next sequence after keyboard band addition (2026-10-27):**
+
+1. **BAYTS settings ownership and consistency.** Start with the field/reader audit below, then scope the correction
+   using the established ownership and form contracts. This is selected first as a consistency fix; do not assume
+   Change Alerts' exact field policy applies to BAYTS or remove copying without replacing required ownership.
+2. **Visualization Copy/Paste.** Implement F7 as a separate feature in the existing layer/visualization UI, preserving
+   destination identity and validating the transferred parameters.
+3. **[Recipe-scoped modals](data-sources.md#recipe-scoped-modals).** Inspect the shared scoping/lifecycle first, then
+   try the proposed visualization-editor pilot in two recipe tabs. Preserve drafts and isolate active-tab interaction;
+   opening selected recipes follows the accepted modal work, rather than broadening the first pilot.
+
+This order records the user's priorities; it does not claim these items are implemented or add release gates to
+already accepted work. Complete and review the current keyboard slice first. The copy-settings action remains dropped.
+
+**Functional follow-ups.** Neither is a confirmed regression introduced by the current corrections. BAYTS is now
+selected for the next round above; server preview readiness remains deferred:
 
 - **Server preview readiness:** `modules/gee/src/jobs/ee/image/preview.js` still constructs imagery without the shared
   readiness guard. GUI layers withdraw correctly, but a direct or stale preview request can reach an execution
@@ -86,13 +100,18 @@ corrections, and both remain explicitly deferred for this release:
   the consumer through `applyAccepted`. Audit which values must match versus belong to the consumer before changing
   it; simply deleting the copying is insufficient. This is substantive work, not a one-line equivalent of S5.
 
-Other deferred work remains deferred: the explicit Use reference settings action, visualization Copy/Paste,
+Other deferred work remains deferred:
 [consistent band presentation across recipes](#future-consistent-band-presentation-across-recipes), chart map markers,
 AOI redraw optimization, WebSocket updates, broader request propagation/dependency loading, execution bundles and
 CCDC array-file destination compatibility. Explicitly selected empty-Provider feedback remains a separate
 product decision; an empty branch does not invalidate a Consumer that has adequate data elsewhere, while total
 training absence continues to hold operations. No new confirmed implementation blocker was established by this
 bounded roadmap/code audit; this does not dispose of the separate final-verification findings recorded below.
+
+The separate **Use reference settings** action was dropped on 2026-10-27. First-creation seeding and automatic
+reference-owned processing already cover the important needs; copying the remaining editable defaults offers too
+little convenience to justify another potentially confusing control. Earlier deferral statements are historical;
+see "S5 follow-up: Use reference settings action" for the decision and withdrawn proposal.
 
 ## Responsibilities
 
@@ -3035,8 +3054,8 @@ The detailed records preserve the earlier proposals, decisions and verification 
 | F3 | Change Alerts: consistent applied/editor diagnostics and monitoring-band chart hold | Implemented in S6; Optical-to-Radar, retained choice, Cancel and applied repair passed the user's browser recheck. |
 | F4 | Reused training samples: Consumer features over Provider imagery, once per collection computation | Implemented in S4: named-feature supply, case-insensitive unique matching, shared readiness/execution and actionable feedback. Sampling remains outside the scene map. |
 | F5 | Audit ownership of Change Alerts Sources/PRC settings | Audit and agreed ownership contract completed in S5; required settings follow current producer/asset facts. |
-| F6 | Replace whole-group automatic syncing with explicit ownership | Implemented in S5: seed editable defaults at the first Reference Apply during creation, then preserve them. The explicit "Use reference settings" action and BAYTS ownership audit remain deferred. |
-| F7 | Copy/paste visualization parameters between layers | Separate requested feature; not a release gate. |
+| F6 | Replace whole-group automatic syncing with explicit ownership | Implemented in S5: seed editable defaults at the first Reference Apply during creation, then preserve them. The explicit "Use reference settings" action was dropped on 2026-10-27; the BAYTS ownership audit/correction is selected next after keyboard band addition. |
+| F7 | Copy/paste visualization parameters between layers | Selected after BAYTS ownership, before recipe-scoped modals (2026-10-27); separate feature, not a release gate. |
 | F8 | Chart layout after tab return; Time Series Retrieve's unconditional empty unavailable-bands warning | Implemented in S1 and S2 respectively, with their recorded browser acceptance. |
 | F9 | Treat a selected Classification as required for Time Series and CCDC, including native requests | Implemented in S3 through shared analysis prerequisites; redundant request-dependent training stages and holds were removed. |
 | F10 | PyEO: put incompatibility feedback in a section that can repair it | Implemented in S2 and its Stack Require drop correction; shared derivation/readiness and the user's actual-preview recovery check passed. |
@@ -3058,7 +3077,7 @@ contract can change the split; they must not silently expand it.
 | S2: Feedback where repairs happen | Consistent Classification/Regression training-data feedback, item-editor explanations and replacement/removal; visible Classification selection in Time Series/CCDC Sources; classifier-input attribution at Classification; repair-oriented PyEO SRC/OPT feedback; correct the empty Retrieve warning. | F1, F2, F10, F8 warning | The single-input selection check passes. Confirmed findings now hold Apply while replacement, Cancel and unchanged Close remain available; the user confirmed Classification's browser recheck passed. The separate Stack Require drop fix passed the user's actual-preview and remove/restore browser check on 2026-10-24. Empty-Provider refinement and S3/S4 remain separate. |
 | S3: One selected-Classification validity contract | Require a selected usable Classification for Time Series/CCDC base operations, independently of requested/breakpoint bands; common SRC explanation/action hold; remove redundant band-training stage/watch/messages/server settling. | F9; consumes S2 presentation | Implemented and independently reviewed. User confirmed Retrieve closure/reopen and the already-broken CCDC/count-preview repair checks passed on 2026-10-25. Shared analysis prerequisites cover every operation and named map product. The timing-dependent keyboard check was not attempted in the browser; automated coverage passed. No requested browser recheck remains. |
 | S4: Reused samples with Consumer features | Sample each contributing Provider's imagery at its points using Consumer's feature definition; preserve sampling scale, nesting/order and Consumer normalisation; update shared readiness to the same derivability contract. | F4 | Implemented 2026-10-26; sampling and feedback corrections pass independent review, including unsupported requested operations and neutral unknown-reason fallback. No remaining S4 review findings. User confirmed the CCDC explanation and selection-recovery browser recheck passed on 2026-10-26; see the result after "S4 use-restriction fallback: independent review". The final full GUI campaign ran on 2026-10-27; see "Final integrated verification". |
-| S5: Change Alerts settings ownership | Audit Sources/PRC fields, then implement source-owned read-only required matches versus consumer-owned editable values; replace whole-group observation syncing and define initial/explicit copying. | F5, F6 | Committed as `6fc9e5874`, then integrated with origin at `78642988e`. The user accepted the PRC ownership browser recheck on 2026-10-27. The live legacy-metadata verification limit is recorded below. The explicit "Use reference settings" action remains deferred and does not block S5 or push. |
+| S5: Change Alerts settings ownership | Audit Sources/PRC fields, then implement source-owned read-only required matches versus consumer-owned editable values; replace whole-group observation syncing and define initial/explicit copying. | F5, F6 | Committed as `6fc9e5874`, then integrated with origin at `78642988e`. The user accepted the PRC ownership browser recheck on 2026-10-27. The live legacy-metadata verification limit is recorded below. The explicit "Use reference settings" action was dropped on 2026-10-27; no additional copying control is planned. |
 | S6: Change Alerts validation and chart agreement | Retain invalid applied choices with field explanations; hold Retrieve and close/disable the analysis chart for an incompatible configured monitoring band; remove redundant panel validation. | F3 | Implemented and user browser-accepted on 2026-10-27 after the chart fixture and shared recipe-read context corrections. The baseline chart, upstream Optical-to-Radar withdrawal, Cancel and applied Radar/VV repair all passed, including actual segments and observations. Chart scope stays operation-specific. The shared-read correction is committed as `12129ad9b` and browser-accepted. Final integrated verification ran on 2026-10-27 and is blocked by stale GUI tests; see "Final integrated verification". |
 
 **S1: Chart layout on tab return (implemented 2026-10-23; user feedback received).**
@@ -6503,7 +6522,16 @@ the full **1556 tests**, with at most two workers. ESLint and `git diff --check`
 `/tmp/sepal-ci-observations-fixed-focused.log` and `/tmp/sepal-ci-gee-fixed-full.log`. GitHub CI after this correction
 is checked separately; the preceding local results do not claim a green remote rerun.
 
-**Deferred S5 follow-up: "Use reference settings" action (agreed 2026-10-26; not implemented).** Add a deliberate
+**S5 follow-up: "Use reference settings" action (dropped 2026-10-27; not implemented).**
+
+The user chose to skip this action after reconsidering its value and potential confusion. This supersedes the
+earlier agreement to defer it. Creation already seeds editable monitoring defaults, required processing stays
+reference-owned, and later editable choices deliberately belong to Change Alerts. Copying them again offers limited
+convenience, with no general accuracy or sensitivity benefit established by matching imagery/filtering choices.
+No copy-again button or replacement-reference confirmation is planned. Existing seeding, ownership and preservation
+behavior stays as implemented. Reconsider only if a concrete recurring user need emerges.
+
+**Withdrawn proposal (recorded 2026-10-26):** Add a deliberate
 action for an existing Change Alerts recipe to copy the current reference's consumer-owned editable monitoring
 defaults again. This is not part of required S5/S6 and does not block push.
 
@@ -6517,6 +6545,9 @@ defaults again. This is not part of required S5/S6 and does not block push.
   settings survive; missing metadata and a last-moment reference change have clear, non-destructive outcomes.
 
 **F7. Copy/paste layer visualization parameters.**
+
+Selected on 2026-10-27 after the BAYTS consistency work and before recipe-scoped modals. Establish the small
+implementation proposal below when this item starts; no implementation is claimed by the prioritization.
 
 - Add discoverable Copy/Paste actions for rendering parameters in the existing layer/visualization UI. Transfer the
   visualization only; do not replace the destination layer's identity, recipe/source, AOI or processing settings.
@@ -6644,7 +6675,17 @@ defaults again. This is not part of required S5/S6 and does not block push.
   as a band-add action. Keep filtering, mouse selection and arrow navigation, skip nonselectable rows, and define a
   safe end-of-list state that cannot accidentally activate "All bands". Cover repeated Enter over the real band-add
   flow, preserved filter text, the last available band and an unaffected ordinary selector. No persisted recipe-format
-  change is needed. This is recorded, not implemented in S2.
+  change is needed. This is recorded, not implemented in S2. **Implemented (2026-10-27);** see the optional-improvements
+  table.
+  **Independent review (2026-10-27):** no remaining finding for the audited callers. The shared choice/removal path
+  preserves identifiers and ordinary-selector behavior; the six current stay-open callers remove their choices
+  through their form updates. A focused independent run of Combo, List, windowed List, both shared input-imagery
+  paths, Classification and Band Math passed 469 tests in 37 files with two workers; changed-file ESLint and
+  `git diff --check` pass. Evidence: `/tmp/sepal-keyboard-picker-review-tests.log` and
+  `/tmp/sepal-keyboard-picker-review-lint.log`. Choice tracking is consumed by the next parent options update;
+  future delayed or choice-retaining callers are not covered by the current synchronous-removal contract.
+  **Browser-accepted (2026-10-28):** the user reported "Looks good" after the brief running-app keyboard checklist
+  and authorised committing. No additional recipe regression checklist is requested.
 - CCDC Slice chart labels should use human-readable band names when available, including recipe references. Keep raw
   names for request identity and a fallback for asset measures without labels; test that labels do not alter requests.
   **Implemented (2026-10-27);** see the optional-improvements table.
