@@ -1,4 +1,3 @@
-import {spawn} from 'node:child_process'
 import {createReadStream, createWriteStream, realpathSync} from 'node:fs'
 import {chmod, chown, lstat, mkdir, readdir, realpath, rm, stat, unlink} from 'node:fs/promises'
 import Path from 'node:path'
@@ -31,31 +30,12 @@ export const removeUserPath = async (userHomeDir, path) => {
     await rm(Path.join(parent, name), {recursive: true})
 }
 
-const getUserInfo = async username => {
-    if (!username || typeof username !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(username)) {
-        throw new Error('Invalid username')
-    }
-    // Get user uid and gid
+const getUserInfo = async userHomeDir => {
     try {
-        const {stdout} = await new Promise((resolve, reject) => {
-            const process = spawn('stat', ['-c', '%u %g', `/sepalUsers/${username}`])
-            let stdout = ''
-            
-            process.stdout.on('data', data => stdout += data)
-            process.on('close', code => {
-                if (code === 0) {
-                    resolve({stdout})
-                } else {
-                    reject(new Error('stat command failed'))
-                }
-            })
-            process.on('error', reject)
-        })
-        
-        const [uid, gid] = stdout.trim().split(' ').map(Number)
+        const {uid, gid} = await stat(userHomeDir)
         return {uid, gid}
     } catch (error) {
-        throw new Error(`User directory not found: ${username}`, {cause: error})
+        throw new Error(`User directory not found: ${userHomeDir}`, {cause: error})
     }
 }
 
@@ -73,15 +53,19 @@ const resolvePathSafe = (baseDir, path) => {
     }
 }
 
-async function resolvePathForWrite(baseDir, relPath, username, op, recursive = false) {
+async function resolvePathForWrite(homeDir, username, relPath, op, recursive = false) {
     if (!relPath || relPath === '.' || Path.isAbsolute(relPath)) {
         throw new Error('Path must be a non-empty relative path')
+    }
+    if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+        throw new Error('Invalid username')
     }
     const operation = op === 'writeFile' ? 'writeFile' : (op === 'mkdir' ? 'mkdir' : null)
     if (!operation) throw new Error('Invalid operation type')
 
-    const userInfo = await getUserInfo(username)
-    const baseAbs = await realpath(baseDir)
+    const userHomeDir = Path.join(homeDir, username)
+    const userInfo = await getUserInfo(userHomeDir)
+    const baseAbs = await realpath(userHomeDir)
     const targetAbs = Path.join(baseAbs, relPath)
 
     const relFromBase = Path.relative(baseAbs, targetAbs)
@@ -239,9 +223,8 @@ const setFile = async (homeDir, ctx) => {
     }
 
     try {
-        const joinedRel = Path.join(sepalUser.username, relPath)
         const {targetAbs, existed, userInfo} = await resolvePathForWrite(
-            homeDir, joinedRel, sepalUser.username, 'writeFile'
+            homeDir, sepalUser.username, relPath, 'writeFile'
         )
 
         if (existed && !allowOverwrite) {
@@ -307,10 +290,8 @@ const createFolder = async (homeDir, ctx) => {
     }
 
     try {
-        const joinedRel = Path.join(username, path)
-
         const {targetAbs, existed, userInfo, firstMissing} = await resolvePathForWrite(
-            homeDir, joinedRel, username, 'mkdir', recursive
+            homeDir, username, path, 'mkdir', recursive
         )
 
         if (existed) {
