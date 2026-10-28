@@ -1,4 +1,4 @@
-import {requireAdmin, requireAuth} from './currentUser.js'
+import {requireAdmin, requireAuth} from '#sepal/currentUser'
 
 const registerBudgetRoutes = (router, api) => router
     .get('/budget/report', requireAdmin, api.report)

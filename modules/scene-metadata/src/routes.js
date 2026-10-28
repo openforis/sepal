@@ -1,4 +1,4 @@
-import {requireAuth} from './currentUser.js'
+import {requireAuth} from '#sepal/currentUser'
 
 export const createRoutes = api => router => router
     .get('/healthcheck', ctx => {
