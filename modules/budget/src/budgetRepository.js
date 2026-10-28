@@ -10,6 +10,7 @@ import {
     storageUse as storageUseDto,
     userSpendingReport as userSpendingReportDto,
 } from './dto.js'
+import {STORAGE_COST_PER_GB_MONTH} from './pricing.js'
 
 export class BudgetRepository {
     #db
@@ -230,7 +231,7 @@ export class BudgetRepository {
                     instanceBudget: row.monthly_instance ?? 0,
                     storageBudget: row.monthly_storage ?? 0,
                     storageQuota: row.storage_quota ?? 0,
-                    costPerGbMonth: 0,
+                    costPerGbMonth: STORAGE_COST_PER_GB_MONTH,
                     budgetUpdateRequest: requests[row.username],
                 })
             }
