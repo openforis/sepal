@@ -501,6 +501,41 @@ describe('heartbeat', () => {
         })
     })
 
+    describe('state for a session the gateway no longer serves', () => {
+        const setup = async () => {
+            const fetch = fetchStub({
+                'GET /sessions/app-sessions': [legacyAppSession({endpoint: 'rstudio', sessionId: 's1', host: 'h1'})],
+                'POST /sessions/session/s1': {id: 's1', host: 'h1', status: 'ACTIVE'},
+            })
+            const mgr = createManager({fetch})
+            await mgr.status('leo', 'rstudio')
+            mgr.onAppDissociated({username: 'leo', appPath: '/sandbox/rstudio'})
+            return {fetch, mgr}
+        }
+
+        test('an interaction reported meanwhile is not carried once it is served again', async () => {
+            const {fetch, mgr} = await setup()
+            mgr.recordInteraction({username: 'leo', sessionId: 's1'})
+            await mgr.heartbeatOnce()
+
+            await mgr.status('leo', 'rstudio')
+            await mgr.heartbeatOnce()
+
+            assert.deepEqual(heartbeatBodies(fetch), [undefined])
+        })
+
+        test('an unobservable declaration made meanwhile does not survive', async () => {
+            const {fetch, mgr} = await setup()
+            mgr.recordInteraction({username: 'leo', sessionId: 's1', observable: false})
+            await mgr.heartbeatOnce()
+
+            await mgr.resolveTarget('leo', 'rstudio', pathUnder('rstudio'))
+            await mgr.heartbeatOnce()
+
+            assert.deepEqual(heartbeatBodies(fetch), [undefined])
+        })
+    })
+
     // A worker that is down must not look like a worker that closed the session: the cache has to
     // SURVIVE the outage so heartbeats — and any interaction they carry — resume when it is back.
     test('keeps the cache entry when the worker is unreachable', async () => {
@@ -738,6 +773,24 @@ describe('resolveTarget per app', () => {
         await manager.resolveTarget('bob', 'jupyter', '/api/sandbox/jupyter/api/kernels/k-9/channels')
         const probeCallsAfter = callsOf(fetch).filter(([url]) => url.includes('/api/kernels/k-9')).length
         assert.equal(probeCallsAfter, probeCallsBefore) // cached — no re-probe
+    })
+
+    it('probes a known kernel again once its session is no longer served', async () => {
+        const fetch = fetchStub({
+            'GET /sessions/app-sessions': [
+                {path: '/sandbox/jupyter/voila/render/a.ipynb', sessionId: 's-1', host: 'h1', status: 'ACTIVE', instanceType: 'T3aSmall'}
+            ],
+            'GET http://h1:8888/api/sandbox/jupyter/api/kernels/k-9': {id: 'k-9'}
+        })
+        const manager = createManager({fetch})
+        await manager.resolveTarget('bob', 'jupyter', '/api/sandbox/jupyter/api/kernels/k-9/channels')
+        manager.onAppDissociated({username: 'bob', appPath: '/sandbox/jupyter/voila/render/a.ipynb'})
+        await manager.heartbeatOnce()
+
+        await manager.resolveTarget('bob', 'jupyter', '/api/sandbox/jupyter/api/kernels/k-9/channels')
+
+        const probes = fetch.keys.filter(key => key === 'GET http://h1:8888/api/sandbox/jupyter/api/kernels/k-9')
+        assert.equal(probes.length, 2)
     })
 })
 
@@ -978,6 +1031,17 @@ describe('ensureServerStarted', () => {
         await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'jupyter'})
         manager.forgetServerStarted({sessionId: 's-1', endpoint: 'jupyter'})
         await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'jupyter'})
+        assert.equal(fetch.keys.filter(key => key === startKey).length, 2)
+    })
+
+    it('starts a server again once its session is no longer served', async () => {
+        const fetch = fetchStub({[startKey]: null})
+        const manager = createManager({fetch})
+        await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'jupyter'})
+        await manager.heartbeatOnce()
+
+        await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'jupyter'})
+
         assert.equal(fetch.keys.filter(key => key === startKey).length, 2)
     })
 
