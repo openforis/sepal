@@ -29,7 +29,8 @@ export class Terminal extends React.Component {
         return (
             <Tabs
                 label={msg('home.sections.terminal')}
-                statePath={STATE_PATH}>
+                statePath={STATE_PATH}
+                newTabPlaceholder={msg('terminal.menuTab')}>
                 {({id}) => <TerminalSession tabId={id}/>}
             </Tabs>
         )
@@ -141,7 +142,7 @@ class _TerminalSession extends React.Component {
         // ("1: lazy-paper"), and clears it on the way back to its menu — the only thing that
         // knows, from out here, which machine this tab is attached to.
         terminal.onTitleChange(
-            title => setTabPlaceholder(title, STATE_PATH, this.props.tabId)
+            title => setTabPlaceholder(title || msg('terminal.menuTab'), STATE_PATH, this.props.tabId)
         )
         this.enabled$.next(true)
         this.fit$.next()
