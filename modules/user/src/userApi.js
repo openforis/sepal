@@ -126,8 +126,13 @@ export class UserApi {
     // Deliberately publishes no event and sets no refresh header.
     async changePassword(ctx) {
         const {oldPassword, newPassword} = readBody(ctx)
+        if (!isValidPassword(newPassword)) {
+            ctx.status = 400
+            ctx.body = {message: 'Invalid request'}
+            return
+        }
         const user = await this.#repository.findByUsername(ctx.state.currentUser.username)
-        if (isText(newPassword) && await verifies(user, oldPassword)) {
+        if (await verifies(user, oldPassword)) {
             await this.#repository.updatePassword(user.username, await hashPassword(newPassword))
             ctx.body = {status: 'success', message: 'Password changed'}
         } else {
@@ -138,6 +143,11 @@ export class UserApi {
     // The admin flag comes from the caller's current status, so a self-update cannot self-elevate.
     async updateCurrentDetails(ctx) {
         const current = ctx.state.currentUser
+        if (!(await this.#confirmsEmailChange(ctx, current.username))) {
+            ctx.status = 403
+            ctx.body = {message: 'Invalid password'}
+            return
+        }
         const user = await this.#applyDetails(ctx, {targetUsername: current.username, adminValue: !!current.admin})
         if (user === INVALID_EMAIL) {
             ctx.status = 400
@@ -263,7 +273,6 @@ export class UserApi {
         const wasPending = user.status === 'PENDING'
         await this.#repository.updatePassword(user.username, await hashPassword(password))
         await this.#repository.updateStatus(user.username, 'ACTIVE')
-        await this.#repository.invalidateToken(token)
         // Leaving PENDING (covers unlock: LOCKED -> PENDING -> reset link) must guarantee complete
         // provisioning; a keyless user is healed too. Routine resets of provisioned users skip it —
         // provision recursively chowns the data home, too expensive for a request that needs neither.
@@ -328,8 +337,12 @@ export class UserApi {
             log.info(`Ignoring password reset request for locked user: ${user.username}`)
             return
         }
+        // An outstanding link is resent as it is: restarting its clock would let anyone who has seen it
+        // once keep it alive indefinitely.
         const token = getOrGenerateToken(user)
-        await this.#repository.updateToken(user.username, token)
+        if (token !== user.token) {
+            await this.#repository.updateToken(user.username, token)
+        }
         log.info(`Sending password reset email to '${user.username}'`)
         sendPasswordReset(user, token)
     }
@@ -448,6 +461,14 @@ export class UserApi {
                 log.warn(`Password hash upgrade failed for '${user.username}': ${error.message}`)
             }
         }
+    }
+
+    // Whoever controls the address can reset the password, so changing it takes the password too. An
+    // unknown user passes, to be answered as such by #applyDetails.
+    async #confirmsEmailChange(ctx, username) {
+        const {email, password} = readBody(ctx)
+        const user = await this.#repository.findByUsername(username)
+        return !user || email === user.email || await verifies(user, password)
     }
 
     // Shared detail-update core. adminValue forces the admin flag (self-update cannot self-elevate).

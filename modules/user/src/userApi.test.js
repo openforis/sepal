@@ -8,8 +8,11 @@ const users = new Map()
 const repository = {
     findByUsername: async username => users.get(username) ?? null,
     findByToken: async token => [...users.values()].find(user => user.token === token) ?? null,
+    findByEmail: async email => [...users.values()].find(user => user.email === email) ?? null,
+    updatePassword: async (username, passwordHash) => users.set(username, {...users.get(username), passwordHash}),
     updateStatus: async (username, status) => users.set(username, {...users.get(username), status}),
-    updateToken: async (username, token) => users.set(username, {...users.get(username), token}),
+    updateToken: async (username, token) =>
+        users.set(username, {...users.get(username), token, tokenGenerationTime: Date.now()}),
     // The conditional write of the real repository: nothing happens on a stale revision.
     updateUserDetails: async ({username, revision, ...details}) => {
         const user = users.get(username)
@@ -43,6 +46,7 @@ mock.module('./email.js', {
     }
 })
 
+const {hashPassword, verifyPassword} = await import('./crypto.js')
 const {UserApi} = await import('./userApi.js')
 const {GoogleOAuth} = await import('./googleOAuth.js')
 const {userChanged$} = await import('./events.js')
@@ -53,7 +57,7 @@ beforeEach(() => users.clear())
 describe('POST /lock', () => {
     test('an admin cannot lock their own account', async () => {
         const admin = anAdmin({username: 'admin'})
-        const ctx = adminRequest(admin, {username: admin.username})
+        const ctx = requestBy(admin, {username: admin.username})
 
         await api.lock(ctx)
 
@@ -64,7 +68,7 @@ describe('POST /lock', () => {
     test('an admin can lock another user', async () => {
         const admin = anAdmin({username: 'admin'})
         const other = anActiveUser({username: 'bob'})
-        const ctx = adminRequest(admin, {username: other.username})
+        const ctx = requestBy(admin, {username: other.username})
 
         await api.lock(ctx)
 
@@ -77,7 +81,7 @@ describe('POST /details', () => {
     test('writes the details when the caller holds the current revision', async () => {
         const admin = anAdmin({username: 'admin'})
         const bob = anActiveUser({username: 'bob'})
-        const ctx = adminRequest(admin, {...detailsOf(bob), name: 'Robert', revision: bob.revision})
+        const ctx = requestBy(admin, {...detailsOf(bob), name: 'Robert', revision: bob.revision})
 
         await api.updateDetails(ctx)
 
@@ -88,7 +92,7 @@ describe('POST /details', () => {
         const admin = anAdmin({username: 'admin'})
         const bob = anActiveUser({username: 'bob'})
         const changed = collect(userChanged$)
-        const ctx = adminRequest(admin, {...detailsOf(bob), name: 'Robert', revision: bob.revision - 1})
+        const ctx = requestBy(admin, {...detailsOf(bob), name: 'Robert', revision: bob.revision - 1})
 
         await api.updateDetails(ctx)
 
@@ -101,7 +105,7 @@ describe('POST /details', () => {
     test('writes the details unchecked when no revision is given', async () => {
         const admin = anAdmin({username: 'admin'})
         const bob = anActiveUser({username: 'bob'})
-        const ctx = adminRequest(admin, {...detailsOf(bob), name: 'Robert'})
+        const ctx = requestBy(admin, {...detailsOf(bob), name: 'Robert'})
 
         await api.updateDetails(ctx)
 
@@ -109,11 +113,74 @@ describe('POST /details', () => {
     })
 })
 
+describe('POST /current/password', () => {
+    test('refuses a new password the policy does not allow, keeping the old one', async () => {
+        const bob = await withPassword(anActiveUser({username: 'bob'}))
+        const ctx = requestBy(bob, {oldPassword: PASSWORD, newPassword: 'short'})
+
+        await api.changePassword(ctx)
+
+        assert.equal(ctx.status, 400)
+        assert.equal(await verifyPassword(PASSWORD, users.get('bob').passwordHash), true)
+    })
+})
+
+describe('POST /current/details', () => {
+    test('refuses an email change without the password, changing nothing', async () => {
+        const bob = await withPassword(anActiveUser({username: 'bob'}))
+        const ctx = requestBy(bob, {...detailsOf(bob), email: 'mallory@example.org'})
+
+        await api.updateCurrentDetails(ctx)
+
+        assert.equal(ctx.status, 403)
+        assert.equal(users.get('bob').email, bob.email)
+    })
+
+    test('changes the email when the password is given', async () => {
+        const bob = await withPassword(anActiveUser({username: 'bob'}))
+        const ctx = requestBy(bob, {...detailsOf(bob), email: 'robert@example.org', password: PASSWORD})
+
+        await api.updateCurrentDetails(ctx)
+
+        assert.equal(ctx.body.email, 'robert@example.org')
+    })
+
+    test('changes the other details without the password', async () => {
+        const bob = await withPassword(anActiveUser({username: 'bob'}))
+        const ctx = requestBy(bob, {...detailsOf(bob), name: 'Robert'})
+
+        await api.updateCurrentDetails(ctx)
+
+        assert.equal(ctx.body.name, 'Robert')
+    })
+})
+
+describe('POST /password/reset-request', () => {
+    // Otherwise anyone who has seen the link once could keep it alive by asking for a reset daily.
+    test('resends an outstanding link without extending its life', async () => {
+        const bob = withResetToken(anActiveUser({username: 'bob'}), {issuedAgoMs: HOURS_23})
+
+        await api.requestPasswordReset(anonymousRequest({email: bob.email}))
+
+        assert.partialDeepStrictEqual(users.get('bob'), {token: bob.token, tokenGenerationTime: bob.tokenGenerationTime})
+    })
+
+    test('issues a new link once the outstanding one has expired', async () => {
+        const bob = withResetToken(anActiveUser({username: 'bob'}), {issuedAgoMs: HOURS_25})
+
+        await api.requestPasswordReset(anonymousRequest({email: bob.email}))
+
+        const stored = users.get('bob')
+        assert.notEqual(stored.token, bob.token)
+        assert.ok(stored.tokenGenerationTime > bob.tokenGenerationTime)
+    })
+})
+
 describe('POST /unlock', () => {
     test('an unlock is published as a user change', async () => {
         const admin = anAdmin({username: 'admin'})
         const locked = aLockedUser({username: 'bob'})
-        const ctx = adminRequest(admin, {username: locked.username})
+        const ctx = requestBy(admin, {username: locked.username})
         const changed = collect(userChanged$)
 
         await api.unlock(ctx)
@@ -178,10 +245,16 @@ const aLockedUser = ({username}) => {
     return user
 }
 
-const withResetToken = user => {
-    const withToken = {...user, token: `${user.username}-token`, tokenGenerationTime: Date.now()}
+const withResetToken = (user, {issuedAgoMs = 0} = {}) => {
+    const withToken = {...user, token: `${user.username}-token`, tokenGenerationTime: Date.now() - issuedAgoMs}
     users.set(user.username, withToken)
     return withToken
+}
+
+const withPassword = async user => {
+    const withHash = {...user, passwordHash: await hashPassword(PASSWORD)}
+    users.set(user.username, withHash)
+    return withHash
 }
 
 const detailsOf = ({username, name, email}) => ({username, name, email, organization: 'FAO', admin: false})
@@ -195,8 +268,8 @@ const collect = observable$ => {
     }
 }
 
-const adminRequest = (admin, body) => ({
-    state: {currentUser: admin},
+const requestBy = (user, body) => ({
+    state: {currentUser: user},
     request: {body},
     query: {},
     set: () => {}
@@ -207,3 +280,7 @@ const anonymousRequest = body => ({
     request: {body},
     query: {}
 })
+
+const PASSWORD = 'a-long-enough-password'
+const HOURS_23 = 23 * 60 * 60 * 1000
+const HOURS_25 = 25 * 60 * 60 * 1000

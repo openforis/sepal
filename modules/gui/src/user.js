@@ -190,8 +190,9 @@ export const validateEmail$ = ({email, recaptchaToken}) =>
     )
 
 // Sent with the revision the user was loaded at: a save over a record changed since (from another
-// tab, say) is rejected, and the current record is loaded in place of the optimistic values.
-export const updateCurrentUserDetails$ = ({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}) => {
+// tab, say) is rejected, and the current record is loaded in place of the optimistic values. So is
+// an email change refused for a wrong password.
+export const updateCurrentUserDetails$ = ({name, email, password, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}) => {
     const {revision} = currentUser()
     actionBuilder('UPDATE_USER_DETAILS', {name, email, organization, intendedUse})
         .set('user.currentUser.name', name)
@@ -201,8 +202,8 @@ export const updateCurrentUserDetails$ = ({name, email, organization, intendedUs
         .set('user.currentUser.emailNotificationsEnabled', emailNotificationsEnabled)
         .set('user.currentUser.manualMapRenderingEnabled', manualMapRenderingEnabled)
         .dispatch()
-    return api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled, revision}).pipe(
-        catchError(error => error.status === 409
+    return api.user.updateCurrentUserDetails$({name, email, password, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled, revision}).pipe(
+        catchError(error => error.status === 409 || error.status === 403
             ? loadUser$().pipe(switchMap(() => throwError(() => error)))
             : throwError(() => error)
         )

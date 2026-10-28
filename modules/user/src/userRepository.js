@@ -137,11 +137,12 @@ export class UserRepository {
         })
     }
 
+    // A reset link issued before the change must not be able to undo it.
     async updatePassword(username, passwordHash) {
         requireSelector(username)
         return this.#db.withConnection(async connection => {
             await connection.query(
-                `UPDATE sepal_user SET password_hash = ?, ${BUMP} WHERE username = ?`,
+                `UPDATE sepal_user SET password_hash = ?, token = NULL, ${BUMP} WHERE username = ?`,
                 [passwordHash, username]
             )
         })
@@ -150,16 +151,20 @@ export class UserRepository {
     // With a `revision`, the write only happens if the row still has it — the check and the write
     // are one statement, so two callers holding the same revision cannot both get through. Returns
     // whether a row was written.
+    //
+    // A new address voids the reset link sent to the old one. MySQL assigns left to right, so the token
+    // is compared against the address before it is overwritten.
     async updateUserDetails({username, name, email, organization, intendedUse,
         emailNotificationsEnabled, manualMapRenderingEnabled, admin, revision}) {
         requireSelector(username)
         return this.#db.withConnection(async connection => {
             const [result] = await connection.query(
                 `UPDATE sepal_user
-                 SET name = ?, email = ?, organization = ?, intended_use = ?,
+                 SET token = IF(email <=> ?, token, NULL),
+                     name = ?, email = ?, organization = ?, intended_use = ?,
                      email_notifications_enabled = ?, manual_map_rendering_enabled = ?, admin = ?, ${BUMP}
                  WHERE username = ? AND (? IS NULL OR revision = ?)`,
-                [name, email, organization, intendedUse,
+                [email, name, email, organization, intendedUse,
                     emailNotificationsEnabled, manualMapRenderingEnabled, admin, username,
                     revision ?? null, revision ?? null]
             )
@@ -194,14 +199,6 @@ export class UserRepository {
                 `UPDATE sepal_user SET token = ?, token_generation_time = NOW(), ${BUMP} WHERE username = ?`,
                 [token, username]
             )
-        })
-    }
-
-    // token_generation_time is NOT NULL, so only the token itself can be cleared.
-    async invalidateToken(token) {
-        requireSelector(token)
-        return this.#db.withConnection(async connection => {
-            await connection.query(`UPDATE sepal_user SET token = NULL, ${BUMP} WHERE token = ?`, [token])
         })
     }
 

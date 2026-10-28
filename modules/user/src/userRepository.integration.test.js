@@ -117,17 +117,6 @@ describe('UserRepository', () => {
 
             assert.equal(stored.username, USERNAME)
         })
-
-        test('stops finding the user once the token is invalidated, keeping the user', async () => {
-            await repository.insertUser(aUser({token: 'the-token'}))
-
-            await repository.invalidateToken('the-token')
-
-            const byToken = await repository.findByToken('the-token')
-            const byUsername = await repository.findByUsername(USERNAME)
-            assert.equal(byToken, null)
-            assert.equal(byUsername.token, null)
-        })
     })
 
     describe('updateToken', () => {
@@ -331,6 +320,24 @@ describe('UserRepository', () => {
             assert.equal(updated, true)
             assert.partialDeepStrictEqual(stored, {name: 'Bobby', revision: 3})
         })
+
+        test('voids the reset token when the email changes', async () => {
+            await repository.insertUser(aUser({token: 'the-token'}))
+
+            await repository.updateUserDetails(details({email: 'renamed@example.org'}))
+
+            const byToken = await repository.findByToken('the-token')
+            assert.equal(byToken, null)
+        })
+
+        test('keeps the reset token when the email stays the same', async () => {
+            await repository.insertUser(aUser({token: 'the-token'}))
+
+            await repository.updateUserDetails(details({name: 'Robert'}))
+
+            const byToken = await repository.findByToken('the-token')
+            assert.equal(byToken.username, USERNAME)
+        })
     })
 
     describe('updatePassword', () => {
@@ -341,6 +348,17 @@ describe('UserRepository', () => {
 
             const stored = await repository.findByUsername(USERNAME)
             assert.equal(stored.passwordHash, '{SCRYPT}hash')
+        })
+
+        test('voids the reset token, keeping the user', async () => {
+            await repository.insertUser(aUser({token: 'the-token'}))
+
+            await repository.updatePassword(USERNAME, '{SCRYPT}hash')
+
+            const byToken = await repository.findByToken('the-token')
+            const byUsername = await repository.findByUsername(USERNAME)
+            assert.equal(byToken, null)
+            assert.equal(byUsername.token, null)
         })
     })
 
@@ -424,7 +442,6 @@ describe('UserRepository', () => {
             await assert.rejects(repository.updatePassword(NOT_A_STRING, '{SCRYPT}hash'), REFUSED)
             await assert.rejects(repository.updateStatus(NOT_A_STRING, 'ACTIVE'), REFUSED)
             await assert.rejects(repository.updateToken(NOT_A_STRING, 'new-token'), REFUSED)
-            await assert.rejects(repository.invalidateToken(NOT_A_STRING), REFUSED)
 
             const after = await repository.findByUsername(USERNAME)
             assert.deepEqual(after, before)

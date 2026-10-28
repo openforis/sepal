@@ -6496,7 +6496,8 @@
           "unique": "There is another user with this username"
         },
         "password": {
-          "label": "Password"
+          "label": "Password",
+          "required": "Enter your password to change the email"
         }
       },
       "resetPassword": {
@@ -6522,7 +6523,8 @@
       "title": "User details",
       "update": {
         "error": "Could not update user.",
-        "conflict": "This user was changed by someone else meanwhile. Review the changes and try again."
+        "conflict": "This user was changed by someone else meanwhile. Review the changes and try again.",
+        "incorrectPassword": "Incorrect password. Your details were not changed."
       },
       "confirmation": {
         "message": "User role will be changed to \"{role}\""
