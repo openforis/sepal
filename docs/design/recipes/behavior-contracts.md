@@ -131,8 +131,8 @@ Defaults are proposals at a defined user action, not a continuous synchronizatio
 overwrite edits. Change Alerts seeds consumer-owned monitoring defaults only at the first Reference Apply during
 new creation (`!ui.initialized` and no previously applied reference). Apply, Enter and wizard Next use current,
 authorised candidate facts and publish the reference and defaults atomically. Later reference changes, reopen,
-Refresh and producer edits never reseed; Cancel writes nothing. The separate "Use reference settings" action remains
-deferred in the roadmap.
+Refresh and producer edits never reseed; Cancel writes nothing. The separate "Use reference settings" action was
+dropped on 2026-10-27: its limited convenience does not justify another potentially confusing copying control.
 
 Change Alerts derives required processing matches from the actual segment producer, with its execution defaults,
 or from asset metadata. Recorded values are read-only; genuinely unrecorded asset values are labelled editable
@@ -221,6 +221,10 @@ Avoid using a red section mark as a generic instruction to start setup. A Classi
 completed by collecting them on the map or adding a data set; Regression offers a different set of actions.
 Operations requiring training remain held. Feedback for an explicitly selected empty Provider is a separate policy
 question; an empty branch does not by itself establish that the Consumer's total training data is empty.
+
+The same distinction applies to Band Math: no output chosen yet is setup guidance, while a configured output that
+references a missing band or has an invalid name is an error. An empty overall output selection still holds preview
+and Retrieve. Guidance must allow selecting input bands directly as outputs; creating a calculation is optional.
 
 Presence and sufficiency are different claims. Configured points do not prove that samples survive masking, cover
 the imagery or suffice for a particular classifier.
@@ -425,8 +429,6 @@ distinction between a reported pass, an independently observed result and an unt
 These principles narrow the decisions; they do not settle every product policy:
 
 - How to present an explicitly selected empty Provider, especially when other data supplies points.
-- How the deferred explicit "Use reference settings" action presents proposed edits. S5 has already settled
-  first-Reference-Apply seeding and required processing ownership; this is not permission to resume continuous copying.
 - What scientific comparability and additional legacy asset metadata establish beyond the implemented processing
   ownership contract. Unknown provenance must not silently acquire an invented producer snapshot.
 - Whether a particular configuration editor may Apply unresolved evidence. Applying configuration and starting a

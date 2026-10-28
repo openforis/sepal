@@ -18,16 +18,20 @@ const _SpatialSpeckleFilterOptions = ({
     inputs,
     activator: {activatables: {spatialSpeckleFilterOptions}}
 }) => {
-    const fields = filterFields({spatialSpeckleFilter, inputs}).map(name => ({
+    const names = filterFields({spatialSpeckleFilter, inputs})
+    // Settings the reference owns are shown as its own, and not edited here (BAYTS Alerts' PRC).
+    const editable = names.some(name => !inputs[name].referenceOwned)
+    const fields = names.map(name => ({
         label: msg(['process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions', name, 'label']),
+        tooltip: inputs[name].presentation?.(msg(['process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions', name, 'label'])).tooltip,
         value: inputs[name].value
     }))
     return (
         <React.Fragment>
             <SubformDetails
                 fields={fields}
-                onClick={() => spatialSpeckleFilterOptions.activate()}/>
-            <SpatialSpeckleFilterOptionsPanel spatialSpeckleFilter={spatialSpeckleFilter} inputsToUpdate={inputs}/>
+                onClick={editable ? () => spatialSpeckleFilterOptions.activate() : undefined}/>
+            {editable ? <SpatialSpeckleFilterOptionsPanel spatialSpeckleFilter={spatialSpeckleFilter} inputsToUpdate={inputs}/> : null}
         </React.Fragment>
     )
 }
@@ -103,6 +107,7 @@ class _SpatialSpeckleFilterOptionsPanel extends React.Component {
             <Form.Slider
                 label={msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.kernelSize.label')}
                 input={kernelSize}
+                {...kernelSize.presentation?.(msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.kernelSize.label'))}
                 minValue={KERNEL_SIZES[0]}
                 maxValue={KERNEL_SIZES[KERNEL_SIZES.length - 1]}
                 ticks={KERNEL_SIZES}
@@ -117,6 +122,7 @@ class _SpatialSpeckleFilterOptionsPanel extends React.Component {
             <Form.Slider
                 label={msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.sigma.label')}
                 input={sigma}
+                {...sigma.presentation?.(msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.sigma.label'))}
                 minValue={0.5}
                 maxValue={0.95}
                 ticks={[0.5, 0.6, 0.7, 0.8, 0.9, 0.95]}
@@ -144,6 +150,7 @@ class _SpatialSpeckleFilterOptionsPanel extends React.Component {
             <Form.Buttons
                 label={msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.strongScatterers.label')}
                 input={strongScatterers}
+                {...strongScatterers.presentation?.(msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.strongScatterers.label'))}
                 options={options}
             />
         )
@@ -157,11 +164,13 @@ class _SpatialSpeckleFilterOptionsPanel extends React.Component {
                     label={msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.strongScattererValue1.label')}
                     tooltip={msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.strongScattererValue1.tooltip')}
                     input={strongScattererValue1}
+                    {...strongScattererValue1.presentation?.(msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.strongScattererValue1.label'), msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.strongScattererValue1.tooltip'))}
                 />
                 <Form.Input
                     label={msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.strongScattererValue2.label')}
                     tooltip={msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.strongScattererValue2.tooltip')}
                     input={strongScattererValue2}
+                    {...strongScattererValue2.presentation?.(msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.strongScattererValue2.label'), msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.strongScattererValue2.tooltip'))}
                 />
             </Layout>
         )
@@ -175,6 +184,7 @@ class _SpatialSpeckleFilterOptionsPanel extends React.Component {
                     label={msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.snicSize.label')}
                     tooltip={msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.snicSize.tooltip')}
                     input={snicSize}
+                    {...snicSize.presentation?.(msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.snicSize.label'), msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.snicSize.tooltip'))}
                     minValue={3}
                     maxValue={15}
                     ticks={KERNEL_SIZES}
@@ -184,6 +194,7 @@ class _SpatialSpeckleFilterOptionsPanel extends React.Component {
                     label={msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.snicCompactness.label')}
                     tooltip={msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.snicCompactness.tooltip')}
                     input={snicCompactness}
+                    {...snicCompactness.presentation?.(msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.snicCompactness.label'), msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilterOptions.snicCompactness.tooltip'))}
                     minValue={0}
                     maxValue={2}
                     scale='log'

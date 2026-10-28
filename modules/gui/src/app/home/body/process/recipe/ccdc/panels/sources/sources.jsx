@@ -61,7 +61,7 @@ class _Sources extends React.Component {
         const {advanced} = this.state
         return (
             <RecipeFormPanel
-                className={styles.panel}
+                className={this.panelClassName()}
                 placement='bottom-right'>
                 <Panel.Header
                     icon='cog'
@@ -76,6 +76,14 @@ class _Sources extends React.Component {
                 </Form.PanelButtons>
             </RecipeFormPanel>
         )
+    }
+
+    // Sized for the family chosen in the draft and the view shown. What a Classification or a message adds scrolls,
+    // leaving the panel's height as it is.
+    panelClassName() {
+        const {inputs: {dataSetType}} = this.props
+        const {advanced} = this.state
+        return [styles.panel, styles[dataSetType.value?.toLowerCase()], advanced ? styles.more : null].join(' ')
     }
 
     renderAdvanced() {

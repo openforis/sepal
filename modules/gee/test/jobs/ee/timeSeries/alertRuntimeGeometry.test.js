@@ -17,15 +17,22 @@ const delegate = {
     getGeometry$: () => of(resolvedGeometry)
 }
 
-// The segments recipe the reference stands for. Its facts are not what this test is about; what it has
-// to be is a producer, so resolution reaches the image rather than rejecting the source.
-const segmentsRecord = {id: 'segments-recipe', type: 'CCDC', model: {ccdcOptions: {dateFormat: 1}}}
+// The recipe each reference stands for: segments for Change Alerts, historical statistics for BAYTS Alerts. Their facts
+// are not what this test is about; what each has to be is a producer, so resolution reaches the image rather than
+// rejecting the source.
+const records = {
+    'segments-recipe': {id: 'segments-recipe', type: 'CCDC', model: {ccdcOptions: {dateFormat: 1}}},
+    'bayts-historical-recipe': {id: 'bayts-historical-recipe', type: 'BAYTS_HISTORICAL', model: {options: {orbits: ['ASCENDING']}}}
+}
 
-const source = {
-    getImage$: () => of('source-image'),
-    getBands$: () => of(['source-band']),
-    getGeometry$: () => of(resolvedGeometry),
-    withRecord$: derive => of(derive(segmentsRecord, () => source))
+const sourceOf = reference => {
+    const source = {
+        getImage$: () => of('source-image'),
+        getBands$: () => of(['source-band']),
+        getGeometry$: () => of(resolvedGeometry),
+        withRecord$: derive => of(derive(records[reference.id], () => source))
+    }
+    return source
 }
 
 const imageFactory = mock.fn(recipe => {
@@ -33,7 +40,7 @@ const imageFactory = mock.fn(recipe => {
         syntheticRecipes.push(recipe)
         return delegate
     }
-    return source
+    return sourceOf(recipe)
 })
 
 mock.module('#sepal/ee/imageFactory', {

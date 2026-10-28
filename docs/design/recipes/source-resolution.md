@@ -70,28 +70,516 @@ claiming the earlier campaign tested that later tree.
 
 | Priority | Follow-up | Boundary / regression risk |
 | --- | --- | --- |
-| 1 | Stack Band names layout | Best contained polish candidate: a local responsive two-column grid, one column in a narrow viewport. Keep shared Layout and input widths unchanged; check short/long names, validation and scrolling. |
-| 2 | CCDC Sources family/view heights | Implement the agreed Optical/Radar/Planet and More/Less heights locally, preserving viewport caps and body scrolling. Late evidence must not resize the shell. Needs real visual checks; no shared Panel sizing change. |
-| 3 | CCDC Slice chart labels | Use readable labels from current evidence where available, preserving raw request identities and asset-name fallbacks. Do not restore copied source snapshots to obtain labels. |
-| 4 | Consecutive keyboard band addition | Useful but more sensitive: narrow the behavior to the stay-open band-add flow in the shared picker. Retain filters, mouse and arrow behavior, and prevent the final Enter from activating All bands. |
+| 1 | Stack Band names layout | **Implemented and browser-accepted (2026-10-27).** Cause, confirmed in Chromium: each field took the browser's default `<input size=20>` width (202px) in a wrapping horizontal `Layout` with 1rem margins, so two never fit the 352px group of the 29rem panel and every band took its own row. Each input-image group is now a local grid of two equal columns, one where two would each be narrower than 10rem; fields shrink to their column and long original names wrap with their feedback icon in view. Shared Layout, Panel, form and input widths are unchanged. Checked in Chromium on a harness build of the real Stack toolbar and panel: 1/2/3/4/many bands, three groups, long names and values, a duplicate name, 400px and 320px viewports, scrolling, Tab order, rename then Apply or Cancel. Independent review found no issue; all 41 Stack tests, lint and `git diff --check` pass. The user confirmed the running-app layout works, including small windows, and renaming works. Browser acceptance is complete; the browser was not named, so no separate Firefox/Safari pass is claimed. Renaming behavior is unchanged; additional manual renaming checks were unnecessary for this layout-only change. |
+| 2 | CCDC Sources family/view heights | **Implemented and browser-accepted (2026-10-27).** The height follows the draft's family and the rendered view: Optical 46/58rem, Radar 30/42rem and Planet 36/48rem for Less/More. Less fits its usual controls with about 2rem to spare. Following the user's browser feedback, More adds 6rem beyond the original proposal to reserve two extra breakpoint-band rows with breathing room; its height still depends only on family/view. The original content measurements in Chromium were (Optical 620/700px with Landsat, Radar 397/477px, Planet 477/557px with its asset field). Planet is sized for Custom Basemaps and Daily Imagery's asset field, leaving NICFI Less about 107px spare; Sentinel-2-only Optical Less scrolls about 15px. Classification choices, the Classification field shown in Less for an error, and validation messages scroll in the body; the shared viewport cap and width are unchanged. Checked in Chromium on a harness build of the real Sources panel in a real recipe context, with reads answered by the harness: all six views; family and More/Less changes resize; a Classification chosen after opening whose 16 long classes arrived 2s later left the outer height unchanged before, during and after; an untrained Classification and an empty breakpoint selection in Less; 700/560/440px-tall and 800/480px-wide windows keep header and footer in view and the last choice reachable by scrolling. Independent review confirmed the 21 CCDC-related test files (232 tests), lint and `git diff --check` pass. After adding More's extra space, a fresh Chromium harness build confirms two probability rows fit in every family with 35–39px to spare at an uncapped viewport; Less keeps its previous heights, and short windows keep the shared cap and scrolling. Evidence: `/tmp/sepal-ccdc-headroom-review/browser.log`. The user confirmed the adjusted More spacing looks good in the running app; browser acceptance is complete. |
+| 3 | CCDC Slice chart labels | **Implemented and browser-accepted (2026-10-27).** Segment descriptions carry no labels, so the Slice chart asks the producer its source resolves to. CCDC registers `segmentBandLabels` beside `describeSegments$`, labelling bands as its own chart does (`flatBandOptions`) from the same data sets, corrections and Classification its description uses. The records are those the chart's operation already resolved (`recordOf`), so nothing extra is loaded, saved or copied, and `ui.classification` copies are not used. Native names agree with the CCDC chart, `regression` and `probability_<value>` are named by the Classification's current class labels, and a band without a label (an asset, an unresolved producer or Classification) keeps its raw name. Choices, their order and values, requests and readiness are unchanged; options are keyed by name, so alike labels stay distinct. Mounted Slice regressions cover labelled choices with requests by name, a class relabelled while chosen, two classes labelled alike and an asset's probability-named band with no recipe read; witnessed by reverting to raw labels, by labels as values and by dropping unlabelled bands. 21 CCDC/Slice and segment test files (234 tests), lint and `git diff --check` pass. After the own-property fallback correction, all 37 mounted Slice tests pass independently. The user confirmed that Classification band labels appear in the chart and accepted the change; the browser check is complete. The broader presentation review remains deferred. |
+| 4 | Consecutive keyboard band addition | **Implemented 2026-10-27; browser-accepted 2026-10-28.** Cause: after a stay-open choice the add flow removes the band; `Combo` then has no selected option (these pickers pass no `value`) and `ListContent` re-highlights the first selectable row, "All bands", so the next Enter added every band. Ownership is shared: `Combo` marks a stay-open choice and hands its key to `ListContent` with the options the parent next supplies (a typed filter or closing first ends it), and `ListContent` highlights the first selectable option that followed it, past headings and disabled rows, only when those options are what remained of the previous ones without the chosen option. Past the last, nothing is highlighted and Enter does nothing; arrows still reach every row, "All bands" included. Other changes of options, selections that keep their option, ordinary selectors and lists outside `Combo` highlight as before. Every stay-open caller is an equivalent add-and-remove flow: shared and Classification-derived input imagery, Band Math input imagery, output bands and function inputs, and training-data class mapping. Mounted regressions use the real Combo/List keyboard path (lifecycle: repeated Enter, filter, end of list, All bands; `combo.test.jsx`: skipped rows, options changed without a choice, a keeping picker filtered after a choice, a click, an ordinary selector), witnessed against the unchanged widgets. 85 widget, input imagery, Band Math, Classification and Slice test files (1068 tests), lint and `git diff --check` pass; a Chromium harness of the real input-image editor confirmed repeated Enter, filter, focus, visibility and the end of the list. The user accepted the brief running-app keyboard check on 2026-10-28 and authorised committing; browser acceptance is complete. |
 
-**Functional follow-ups deserving a separate round.** Neither is a confirmed regression introduced by the current
-corrections, and both remain explicitly deferred for this release:
+**Agreed next sequence after keyboard band addition (2026-10-27):**
+
+**Band Math setup feedback completed and browser-accepted (2026-10-28).** An empty output leaves OUT unmarked,
+with neutral guidance; preview and Retrieve remain held and name OUT. Choosing an output releases the hold.
+See "Band Math empty-output setup feedback". The separate map-area menu correction is also implemented,
+independently reviewed and browser-accepted on 2026-10-28; it reuses shared menu/overlay behavior without changing
+image readiness.
+
+1. **BAYTS settings ownership and consistency.** Implemented, independently reviewed and browser-accepted
+   (2026-10-28). The ownership audit, implementation and corrections are recorded below. Final full GUI verification
+   passed: 4823 tests in 334 files. No further implementation finding is open.
+2. **Visualization Copy/Paste.** Implement F7 as a separate feature in the existing layer/visualization UI, preserving
+   destination identity and validating the transferred parameters.
+3. **[Recipe-scoped modals](data-sources.md#recipe-scoped-modals).** Inspect the shared scoping/lifecycle first, then
+   try the proposed visualization-editor pilot in two recipe tabs. Preserve drafts and isolate active-tab interaction;
+   opening selected recipes follows the accepted modal work, rather than broadening the first pilot.
+
+This order records the user's priorities and adds no release gates to already accepted work. Visualization
+Copy/Paste is next after the BAYTS slice is committed. The copy-settings action remains dropped.
+
+**Functional follow-ups.** The BAYTS ownership correction below is now browser-accepted; server preview readiness
+remains deferred:
 
 - **Server preview readiness:** `modules/gee/src/jobs/ee/image/preview.js` still constructs imagery without the shared
   readiness guard. GUI layers withdraw correctly, but a direct or stale preview request can reach an execution
   error. Extending declaration-based operation/product authorization needs its own scope and cost assessment;
   do not claim all server preview paths are guarded.
-- **BAYTS settings ownership:** `baytsAlerts/referenceObservation.js` still merges observed producer options into
-  the consumer through `applyAccepted`. Audit which values must match versus belong to the consumer before changing
-  it; simply deleting the copying is insufficient. This is substantive work, not a one-line equivalent of S5.
+- **BAYTS settings ownership:** implemented, independently reviewed and browser-accepted (2026-10-28). Reference-owned
+  processing is derived, editable monitoring choices are seeded once, and background copying is removed. See the
+  audit, implementation, corrections and acceptance records below. Server-derived historical metadata remains
+  a separate follow-up.
 
-Other deferred work remains deferred: the explicit Use reference settings action, visualization Copy/Paste, chart
-map markers, AOI redraw optimization, WebSocket updates, broader request propagation/dependency loading, execution
-bundles and CCDC array-file destination compatibility. Explicitly selected empty-Provider feedback remains a separate
+Other deferred work remains deferred:
+[consistent band presentation across recipes](#future-consistent-band-presentation-across-recipes), chart map markers,
+AOI redraw optimization, WebSocket updates, broader request propagation/dependency loading, execution bundles and
+CCDC array-file destination compatibility. Explicitly selected empty-Provider feedback remains a separate
 product decision; an empty branch does not invalidate a Consumer that has adequate data elsewhere, while total
 training absence continues to hold operations. No new confirmed implementation blocker was established by this
 bounded roadmap/code audit; this does not dispose of the separate final-verification findings recorded below.
+
+The separate **Use reference settings** action was dropped on 2026-10-27. First-creation seeding and automatic
+reference-owned processing already cover the important needs; copying the remaining editable defaults offers too
+little convenience to justify another potentially confusing control. Earlier deferral statements are historical;
+see "S5 follow-up: Use reference settings action" for the decision and withdrawn proposal.
+
+**BAYTS settings ownership audit and proposal (2026-10-28; assessment only, no production change).** Traced on
+`4a3576742` from BAYTS Historical's execution and exports, through `baytsAlerts/referenceObservation.js`, to BAYTS
+Alerts' editors, GUI requirements, alert execution and the radar-observation product. It applies the S5 principles
+to BAYTS's own algorithm.
+
+*Confirmed behaviour.*
+
+- **Copying.** `baytsAlertsObservation.applyAccepted` → `processingOptions` merges the producer's whole `options`
+  into the consumer's `model.options` (`merge: true`). It does this whenever the selected source changes or the
+  producer's options differ from `ui.sourceEvidenceApplied`, in the evidence action, while an editor watches
+  (`evidenceRegistry.js`).
+  - Producer options are the historical recipe's `model.options`, or an asset's top-level `recipe_options`.
+  - `seeding()` drops unparseable options, or ones stating unusable orbits; these then seed nothing.
+- **Lifecycle.**
+  - **Creation:** the wizard is REF → Date; PRC is not a step. After REF Apply, the observation answers
+    asynchronously and merges, whichever step is open.
+  - **Reopen:** `ui` is not saved (`recipe.jsx`, `NON_CONTENT`), so `previous` is empty. The first observation in a
+    session merges the producer's options over saved choices: orbits, masks and angles.
+  - **Producer edit:** any change rewrites every consumer key the producer holds. An unchanged Refresh writes
+    nothing.
+  - **Replacement:** the new reference's options are merged.
+  - **REF Cancel:** writes nothing.
+  - **Open PRC, or a late answer:** PRC's values are initialised once at mount (`initValues`). A merge landing while
+    PRC is open is undone by its Apply; one landing while it is closed is silent.
+  - **Pinned:** the existing tests pin all of this (`referenceObservation.test.jsx`: "supplies refreshed options
+    when its own change"; `sourceRequirement.test.jsx`: "the editor opened afterwards seeds the options once").
+- **PRC.** It is BAYTS Historical's options panel in `monitor` mode (`baytsAlerts/panels/preprocess/preprocess.jsx`),
+  writing every radar key (`valuesToModel`). Monitor mode hides the multitemporal parameters, outlier removal and
+  minimum observations, but still shows the multitemporal filter choice. `orbitNumbers` has no control in either mode.
+  - `reconcileOrbits` rewrites the open draft's passes whenever the supported passes answer. That is an evidence-
+    driven draft mutation, pinned by "follow the reference while PRC is open".
+- **Two different sets of execution defaults.**
+  - **History:** each pass is a Radar Mosaic of the producer's options (`bayts/baytsHistorical.js` →
+    `radar/mosaic.js` → `radar/collection.js`). A missing key takes the radar collection's defaults: speckle `NONE`,
+    `kernelSize` 5, `snicSize` 3, `orbitNumbers` `ALL`, `outlierRemoval` `NONE`, `minObservations` 1.
+  - **Alerts:** monitoring (`bayts/bayts.js`) fills a missing key with BAYTS's own: speckle `LEE`, `kernelSize` 9,
+    `snicSize` 5.
+  - Today, a producer missing speckle keys leaves the consumer's `LEE` copy in place, so the monitored values are
+    filtered differently from the history.
+- **How the alerts compare.** `bayts.js` scores each monitoring observation against the history's per-pass
+  `*_mean`/`*_std` (`pdf`, with `sd × 2 × sensitivity`).
+  - It keeps only observations whose relative orbit equals the history's `orbit` band (`maskOrbits`).
+  - It applies the history's multitemporal speckle ratio, `*_speckle` (`applyMultitemporalFilter`).
+  - It forces `outlierRemoval: 'NONE'`, `multitemporalSpeckleFilter: 'NONE'` and `minObservations: 1`, and never
+    passes `orbitNumbers`.
+  - A setting that transforms backscatter values must therefore equal the history's. Multitemporal consistency is
+    carried by the statistics themselves.
+- **The radar-observation product.** `radarObservationRecipe` (`type/baytsAlerts.js`) builds a Radar Mosaic of the
+  consumer's whole `options`, with `minObservations: 1`. Unlike the alerts, it honours the consumer's multitemporal
+  filter, outlier removal and `orbitNumbers`. Its description (`VV`, `VH`, ratio, orbit, dates) is the same whatever
+  the processing.
+- **Metadata actually written.**
+  - BAYTS Historical exports through the generic `image.GEE` path (`recipeTaskSubmitter.js` →
+    `imageAssetExport.js`). Since BAYTS Historical arrived (2023-04, after recipe properties in 2023-03), this writes
+    flat `recipe_*` properties, including `recipe_options` (the GUI's `model.options` as submitted) beside
+    `recipe_type: 'BAYTS_HISTORICAL'`. The old `modules/task` exporter was flat too.
+  - No server-derived `processing` property is written for BAYTS: S5's `executedProcessing` covers only CCDC segment
+    producers.
+  - Exports through Masking or Stack carry the wrapper's model, so no historical options.
+  - Evidence is code and fixtures only. As recorded under BAYTS Alerts' verification, no BAYTS Historical asset is
+    accessible for a live read.
+- **Readiness.**
+  - Shared readiness has no processing rule (`executionNeeds` `REFERENCE` only).
+  - The GUI holds the reference to `MONITORABLE_STATISTICS`, and the consumer's passes to `MONITORED_PASSES`
+    (`model.options.orbits`; `sourceRequirement.js`).
+
+*Field ownership*, from execution:
+
+| Field | Historical use | Alerts use | Execution defaults (history / alerts) | Proposed |
+|---|---|---|---|---|
+| `geometricCorrection` | Corrects the values the statistics summarise | Corrects the monitored values compared with them | `ELLIPSOID` / `ELLIPSOID` | **Reference-owned**: equality |
+| `spatialSpeckleFilter`, `kernelSize`, `sigma`, `strongScatterers`, `strongScattererValues`, `snicSize`, `snicCompactness` | Filters values before the mean and standard deviation | Filters monitored values scored against them | `NONE`, 5, 0.9, `RETAIN`, [0, -5], 3, 0.15 / `LEE`, 9, 0.9, `RETAIN`, [0, -5], 5, 0.15 | **Reference-owned**: equality (agreed: follow known speckle settings) |
+| `orbits` | The passes the statistics hold | The passes monitored | both / both | **Consumer-owned compatible subset**: within the reference's passes, already enforced by `MONITORED_PASSES` |
+| `mask`, `minAngle`, `maxAngle` | Exclude edge and angle observations from the statistics | Exclude monitored observations | `SIDES`/`FIRST_LAST`, 30.88, 45.35 / same | **Consumer-owned** observation selection (see decision 2) |
+| `multitemporalSpeckleFilter`, `numberOfImages` | Compute the `*_speckle` statistics | Unused: forced `NONE`, applied through the history's `*_speckle` | `NONE` / forced | **Unused by the alerts**; used only by the radar-observation product (decision 3) |
+| `outlierRemoval` | Removes outliers before the statistics | Unused: forced `NONE` | `NONE` / forced | **Unused by the alerts**; product only |
+| `orbitNumbers` | Chooses relative orbits (`handleOrbitOverlap`) | Unused; `maskOrbits` enforces the history's orbit | `ALL` / not passed | **Unused by the alerts**; product only |
+| `minObservations` | Masks pixels with too few observations | Unused: forced 1 | 1 / forced | **Unused** |
+| `advanced` | UI | UI | - | **Unused** (UI state) |
+
+*Readers and how each acquires the facts.*
+
+| Reader | Today | Proposed |
+|---|---|---|
+| PRC values and controls | Consumer's `model.options` | Effective settings from the applied evidence (`ui.sourceEvidence`; the observation already reads the producer record or asset metadata). Reference-owned fields read-only and labelled; unused fields hidden in monitor mode |
+| REF first Apply | - | Seeds consumer-owned defaults from `SourceCandidate.facts()` (the S5 accessor) under the existing blocked-form guard |
+| `MONITORED_PASSES`, supported passes | Consumer `orbits`; evidence | Unchanged: consumer-owned |
+| Processing hold (GUI) | None | Pending is a need; unavailable or `UNREADABLE` holds `IMAGE_OUTPUT` and `RADAR_OBSERVATION`, as S5's `changeAlertsProcessing` does |
+| Alert execution (`bayts/baytsAlerts.js`) | `...recipe.model.options` | Effective model from a server facts read: a records-only walk of the `BAYTS_HISTORICAL_STATS` provider chain (as `withSegmentSource$` does for segments), or `assetProperties$`. Client evidence is never authority |
+| Radar-observation execution | `radarObservationRecipe(recipe)` | The same effective model; the description is unchanged |
+| BAYTS Alerts Retrieve/export | Same execution; consumer `recipe_*` as provenance | Same effective execution; provenance unchanged, and no reader treats it as authority |
+| BAYTS Historical export (writer) | Flat GUI `recipe_options` | Read as below (decision 4 covers a server-derived record) |
+| `previousAlertsAsset` | Image only | Unchanged |
+
+*Recommended contract.*
+
+- **Reference-owned:** `geometricCorrection` and the spatial speckle filter with its parameters. Their effective
+  value is:
+  - for a recipe reference, the resolved producer's value, or its radar collection's execution default where the
+    key is absent - never the consumer's copy;
+  - for an asset, the value recorded in a complete form;
+  - `NOT_RECORDED` otherwise: the consumer's value, editable and labelled unverified.
+
+  Read-only wherever the value is known.
+- **Consumer-owned:** `orbits`, within the passes the reference supports, plus `mask`, `minAngle` and `maxAngle`.
+  They are seeded once at the first Reference Apply of a new recipe (`!ui.initialized`, no reference applied
+  before), atomically through `additionalUpdates`. After that, reopen, Refresh, replacement and producer edits never
+  write them.
+- **Unused by the alerts:** hidden from monitor-mode PRC. Saved copies stay untouched.
+- **Asset forms:**
+  - **Complete:** a top-level `recipe_options` beside `recipe_type: 'BAYTS_HISTORICAL'`. Its absent keys take the
+    history's execution defaults.
+  - **Partial:** a `recipe_options` without that marker, which records only its stated keys.
+  - **Malformed:** a present but malformed governing form is `UNREADABLE` and held; it never falls back to the
+    consumer.
+  - Pending and failed reads stay `PENDING` and `UNAVAILABLE`.
+  - A format marker proves neither origin nor scientific comparability.
+- **One derivation for every reader.** A pure shared derivation answers each field's state and value, and the
+  effective model, for the editors, GUI holds, alert execution and the radar product. The six evidence states and
+  the parsing and precedence helpers are those of S5.
+- **Removed:** `applyAccepted` for BAYTS Alerts.
+- **Intentional result changes:**
+  - Consumers whose copied geometric or speckle settings drifted from their history now follow the history.
+  - A producer without speckle keys is monitored with `NONE`, not `LEE`.
+  - Reopening no longer resets passes, masks or angles.
+  - A malformed asset record now holds the alerts instead of running on the consumer's options.
+
+*Smallest coherent scope.*
+
+1. **Shared:** move S5's evidence-state constants and parse/precedence helpers from
+   `recipe/changeAlerts/processing.js` to a neutral module, re-exported, so Change Alerts is unchanged. Add a BAYTS
+   field specification and effective-settings derivation (`recipe/bayts/processing.js`) with tests.
+2. **GUI:**
+   - **PRC adapter:** parameterise `changeAlerts/processingSettings.js` (`presentProcessingInputs`,
+     `preserveProcessingCopies`) by field set and move it to a shared location. Today it hard-codes `SR`/`BRDF` and
+     Change Alerts' field list. Callers: Change Alerts' toolbar and REF panel, then BAYTS PRC.
+   - **Observation and seeding:** the BAYTS observation carries `processing`. REF's first Apply seeds the
+     consumer-owned fields, and `applyAccepted` is removed.
+   - **Hold:** a processing hold declaration for BAYTS.
+3. **gee:** `bayts/baytsAlerts.js` derives the effective model from a server facts read for both the alerts and the
+   radar product.
+
+No persisted-format change, migration or new loader is needed. The rewritten tests are the pinned copying ones above.
+
+*Acceptance cases* (asserting displayed values, the applied model and holds):
+
+- **Creation:** the first REF Apply in a new recipe seeds passes, masks and angles once. Enter/Next behave alike.
+  Pending evidence blocks Apply; Cancel writes nothing; a replacement in the wizard seeds nothing.
+- **Reopen and producer edits:** a fresh reopen with overrides is unchanged. A producer edit to a mask changes
+  nothing; a producer edit to speckle `LEE` → `REFINED_LEE` shows read-only and is used by the alerts and the radar
+  product, while the saved copy is unchanged. A producer missing speckle keys is effective `NONE`.
+- **Replacement:** replacing the reference keeps consumer passes. An unsupported pass is still refused by
+  `MONITORED_PASSES`.
+- **Assets:** a complete `recipe_options` is read-only, with defaults for absent keys. A partial form leaves its
+  unstated fields editable and not recorded. A malformed form is `UNREADABLE` and held. Missing options give
+  editable fallbacks. Pending and failed reads stay distinct. A wrapper (Masking) export gives not-recorded
+  fallbacks.
+- **Server (gee):** alerts and the radar product use the producer's geometric and speckle values without loading
+  its unrelated dependencies, and refuse an unreadable record.
+
+*BAYTS-specific decisions still needed.*
+
+1. **`reconcileOrbits`:** keep its evidence-driven repair of the open PRC draft (convenience, Cancel reverts), or
+   remove it so passes change only by the user, with `MONITORED_PASSES` explaining an unsupported choice.
+   Recommendation: remove it, since it is the one remaining evidence-driven draft write.
+2. **Angle range:** the history's statistics cover its `minAngle`/`maxAngle`. Monitoring outside that range compares
+   other incidence angles. Recommendation: keep the range consumer-owned but seed it, without enforcing a subset; an
+   enforced compatibility rule would be a separate scientific decision.
+3. **Radar-observation processing:** keep honouring the consumer's multitemporal filter, outlier removal and
+   `orbitNumbers` in the product, or build it with the alerts' monitoring processing (`NONE`/forced, reference
+   speckle). Recommendation: build it as the alerts monitor, so the product shows what is compared. This is a
+   visible product change; otherwise PRC must keep showing controls that only the map uses.
+4. **Server-derived historical metadata:** add a canonical `processing` record to BAYTS Historical exports (and
+   through Masking/Stack, via `executedProcessing` over `BAYTS_HISTORICAL_STATS`). The concrete need is wrapper
+   exports, which today carry no historical options. Recommendation: a separate follow-up, not required for the
+   ownership correction.
+
+*Boundaries.* The missing-reference radar-preview issue (BAYTS Alerts open issue) and server preview readiness stay
+separate. The processing hold proposed here is independent of them, and does not fix a preview without a reference.
+
+**BAYTS ownership audit: independent review (2026-10-28; proposal amendments required before implementation).**
+
+The background copying, inconsistent absent-key speckle defaults and field/reader inventory were checked against
+the GUI, radar collection, BAYTS Historical and BAYTS Alerts execution. The core ownership recommendation is sound.
+This is a code/design review; no production code, probes or test campaign were run for this assessment.
+
+- **Pass retention needs more than removing `reconcileOrbits`.** Historical's `renderOrbits` disables unsupported
+  passes. `widget/form/buttons.jsx` then filters disabled values out of the input in `componentDidUpdate`, and a
+  disabled selected button cannot be deselected by the user. The revised design must preserve an unsupported draft
+  selection visibly, explain it through `MONITORED_PASSES`, allow explicit removal/repair and block unusable Apply.
+  Keep unavailable new choices unavailable without silently deleting existing choices. Cover the real form/widget
+  path on delayed evidence, producer pass changes, repair and Cancel; do not globally remove widget normalization
+  or consider the issue fixed just because the explicit reconciliation method is gone.
+- **The proposed radar-map equivalence is not established by settings alone.** `bayts.js` applies per-pass historical
+  `*_speckle` factors and per-pixel historical relative-orbit masking through `beforeGeometricCorrection`, plus
+  optional scene normalization through `afterDbConversion`. A Radar Mosaic built with the same `options` does none
+  of those. It also picks the nearest date per pixel in its existing window around the period endpoint, rather than
+  showing the exact first/last observations used for alerts. Supplying the same effective model does not by itself
+  remove the current spread of legacy multitemporal/outlier/orbit-number options into that product either.
+  **Recommended bounded direction, pending user decision:** share effective geometric/spatial settings, consumer
+  passes/masks/angles and the algorithm's forced/ignored option policy with the radar product, leaving its existing
+  contextual nearest-date-mosaic contract intact. Do not claim this shows the exact values/observations scored by
+  BAYTS. Extracting a genuine monitored-observation view would need the history-dependent transformations, altered
+  imagery/cost/dependency semantics and a separate explicit scope; it must not silently make a recipe reference's
+  radar map build all historical statistics. Clarify decision 3 and its acceptance before implementing it.
+- **Preserve unused saved options explicitly.** Hiding a control does not prevent Historical's `valuesToModel`
+  from serializing it. Include unchanged and absent unused keys in the preservation/Apply/Cancel acceptance cases,
+  as well as preserving saved reference-owned copies. No new persisted synchronization flag is needed.
+- **Reuse at the actual common boundary.** A neutral field adapter/parser is reasonable only for behavior the two
+  consumers share. Keep Change Alerts' optical corrections, date-format rules and legacy metadata precedence in
+  their domain specification. Preserve existing exports/imports and add focused Change Alerts controls if extracting
+  its helpers; a general form/processing framework or another shared form-lifecycle change is not justified here.
+- **Recommendations on decisions 1, 2 and 4:** stop evidence-driven draft rewrites; keep masks/angles consumer-owned
+  without a new scientific compatibility rule; keep server-derived BAYTS metadata as a separate recorded follow-up.
+  These are reviewer recommendations, not a record of the user's approval. Existing metadata provenance remains
+  the documented legacy contract; do not claim this audit makes GUI-supplied properties server-authoritative.
+
+**BAYTS ownership proposal: review amendments folded in (2026-10-28; no production change).** These supersede the
+corresponding parts of the proposal above. The four choices below are decided for implementation by the subsequent
+user direction recorded after the independent recheck; they do not need another confirmation round.
+
+- **Decision 1, passes: no evidence-driven change; unsupported choices kept visible.** Removing `reconcileOrbits`
+  is not enough. `Form.Buttons.componentDidUpdate` (`widget/form/buttons.jsx`) drops disabled values from the input,
+  and a disabled button cannot be deselected.
+  - **Fix, in monitor-mode `renderOrbits`, without changing the shared widget:** a pass the reference does not
+    support is disabled only while it is not selected. A selected unsupported pass stays enabled and selected, so the
+    widget keeps it, the user can deselect it, and `MONITORED_PASSES` explains it and holds Apply. Once it is
+    deselected, it cannot be chosen again.
+  - **Acceptance:** delayed evidence, a producer whose passes change, the repair by deselection, and Cancel, all
+    through the real form and widget path, asserting the draft, the applied model and the hold.
+- **Decision 2, masks and angles:** consumer-owned, editable, seeded once at the first Reference Apply. No new
+  compatibility rule.
+- **Decision 3, the radar map stays a contextual nearest-date mosaic.** It shares the alerts' effective settings
+  without claiming to show the values BAYTS scores. BAYTS also applies the history's `*_speckle` factors, per-pixel
+  relative-orbit masking and optional normalization, which need the historical statistics; reproducing them is
+  separate work, if wanted.
+  - **Shared with the alerts:** the reference-owned geometric correction and spatial speckle settings, the
+    consumer's passes, masks and angles, and the alerts' forced or ignored options (`outlierRemoval` and
+    `multitemporalSpeckleFilter` `NONE`, `orbitNumbers` not applied, `minObservations` 1).
+  - **Intentional change:** the map no longer honours legacy multitemporal, outlier or orbit-number copies.
+  - **Not added:** the product builds no historical statistics and gains no dependency.
+  - **Acceptance:** the product's effective radar options for a recipe reference and an asset, including
+    `NOT_RECORDED` fallbacks and holds. Its description, window and nearest-date selection are unchanged.
+- **Decision 4, server-derived metadata, deferred.** Assets without recorded settings keep the documented, labelled,
+  editable fallback. GUI-supplied `recipe_options` stays the documented legacy contract and does not become
+  server-authoritative.
+- **Unused and reference-owned saved values are preserved.** Hiding a control does not stop Historical's
+  `valuesToModel` from serialising it. PRC Apply keeps the saved values of hidden unused keys
+  (`multitemporalSpeckleFilter`, `numberOfImages`, `outlierRemoval`, `orbitNumbers`, `minObservations`) and of
+  reference-owned keys, including their absence, as S5's `preserveProcessingCopies` does for Change Alerts. Add
+  Apply and Cancel cases for unchanged, changed-elsewhere and absent keys.
+- **Extraction, kept to the common boundary.** Share only what both recipes do: the evidence states and the
+  per-field presentation and preservation adapter, parameterised by a field specification. Change Alerts' optical
+  corrections, `dateFormat` rules and legacy metadata precedence stay in its own specification. Existing exports and
+  imports are preserved, and focused Change Alerts controls cover the extraction. No general form or processing
+  framework, and no shared form-lifecycle change.
+
+**BAYTS amended proposal: independent recheck (2026-10-28).** The amendments above address the review: selected
+unsupported passes remain visible and removable through the real widget path; the radar product explicitly keeps
+its contextual nearest-date semantics; hidden/reference-owned saved keys are preserved; and shared extraction is
+limited to common behavior. No further design finding remains. The reviewer recommends all four choices as written;
+this is review acceptance, not a claim of user approval or implementation. No production change or additional test
+campaign was made for this documentation recheck.
+
+**BAYTS implementation authorized (2026-10-28).** After the amended proposal passed review, the user asked why
+implementation had not started. Proceed with the four reviewed choices: preserve pass selections with explicit
+repair; keep masks/angles editable and seed once during creation; retain the contextual radar mosaic while aligning
+its effective processing and forced options; defer server-derived historical metadata. This replaces the earlier
+audit-only packet's restriction on production changes. The audit, review and recheck records above retain their
+historical approval status; there are no outstanding confirmations for these four choices. Implement the bounded
+shared/GUI/gee correction and its acceptance tests together. Do not stage, commit or push during implementation.
+
+**BAYTS settings ownership implemented (2026-10-28; browser checks pending; nothing staged or committed).** The four
+approved choices and the folded-in review amendments are implemented.
+
+- **Shared** (`lib/js/shared`).
+  - `recipe/referenceProcessing.js` holds the evidence states and small parsers that both recipes use.
+    `changeAlerts/processing.js` re-exports its states from it, and its API and metadata precedence are unchanged.
+  - `recipe/bayts/processing.js` derives the effective settings:
+    - `processingOfProducer` gives a history's geometric correction and spatial speckle settings, with absent keys at
+      its radar collection's defaults (speckle `NONE`, `kernelSize` 5, `snicSize` 3).
+    - `assetProcessing` reads `recipe_options`: complete beside `recipe_type: 'BAYTS_HISTORICAL'`, partial otherwise,
+      `UNREADABLE` when present but unparseable or invalid, and `NOT_RECORDED` when absent.
+    - `effectiveSettings` returns per-field states and the monitoring model, with `FORCED_OPTIONS` (`outlierRemoval`
+      and `multitemporalSpeckleFilter` `NONE`, `orbitNumbers` `ALL`, `minObservations` 1). A pending, unavailable
+      or unreadable field leaves no model. An unrecorded field falls back to the alerts' own value, or BAYTS's
+      default.
+    - `seedMonitoring` gives valid passes, masks and angles only.
+  - `requirement/baytsAlertsProcessing.js` holds operations while the processing is pending and refuses an
+    unreadable one.
+  - `radarObservationRecipe` applies `FORCED_OPTIONS`.
+- **Server** (`lib/js/ee/src/bayts`).
+  - `historicalProcessing.js` follows the `BAYTS_HISTORICAL_STATS` provider chain one record at a time
+    (`recipeRef.withRecord$`), or reads `assetProperties$`. It builds no statistics and loads no dependency.
+  - `baytsAlerts.js` runs both the alerts and the contextual radar product on `effectiveBaytsAlerts`, which refuses
+    unreadable processing with a client error. The product keeps its window, nearest-date selection, geometry and
+    asset mask.
+- **GUI.**
+  - **Observation:** `referenceObservation.js` publishes `processing` beside `historicalStats`. `applyAccepted` is
+    removed, so observing configures nothing.
+  - **Seeding:** the REF panel seeds the consumer-owned fields through `additionalUpdates` at the first Reference
+    Apply of a new recipe (`!ui.initialized`, no reference applied before), from current `SourceCandidate.facts()`.
+    The existing blocked-form guard covers Apply, Enter and Next alike, since `Form.Panel` routes all three through
+    `apply`.
+  - **Shared presentation:** `recipe/referenceProcessing.js` (GUI) holds the extracted evidence reader, per-input
+    presentation and key preservation. Change Alerts' `processingSettings.js` keeps its corrections, labels and field
+    list on top of them. BAYTS's `processingSettings.js` presents the reference-owned inputs read-only, and preserves
+    unused and reference-owned keys, absence included, on PRC Apply.
+  - **Historical options panel, monitor mode:**
+    - the read-only presentation is spread onto the geometric correction and speckle controls;
+    - `SpatialSpeckleFilterOptions` gets the same editability handling Radar Mosaic's copy already has;
+    - the multitemporal selector is hidden;
+    - `reconcileOrbits` is removed, and an unsupported pass is disabled only while unselected, so `Form.Buttons`
+      keeps a chosen one for explicit deselection.
+  - **Requirements:** PRC's `MONITORED_PASSES` finding is said on the passes field. A processing declaration holds
+    `IMAGE_OUTPUT` and `RADAR_OBSERVATION`, with `process.baytsAlerts.processing.*` wording.
+- **Compatibility effects** (intentional):
+  - Alerts and radar observations follow the history's geometric and speckle processing instead of drifted copies.
+  - A history without speckle keys is monitored with `NONE`, not `LEE`.
+  - Reopening, Refresh, producer edits and replacement no longer change passes, masks or angles.
+  - A malformed asset record holds the alerts instead of running.
+  - The radar map no longer honours legacy multitemporal, outlier or orbit-number copies.
+  - The radar observation is now withheld where the reference holds no historical statistics, or none is selected,
+    because its processing is the reference's. This also holds a new recipe's radar layer without a reference, which
+    the open issue in `docs/recipes/bayts-alerts.md` described; server preview readiness remains separate.
+  - No persisted-format change or migration: saved copies stay as saved.
+- **Regressions.**
+  - Shared `test/recipe/bayts/processing.test.js` (11): producer defaults, complete, partial, malformed and absent
+    asset forms, invalid values, pending and unavailable, and seeding.
+  - gee `alertMapProducts.test.js`: the radar product's options for a recipe, a complete asset and an asset recording
+    nothing; unreadable refusals for both products; the alerts' `bayts` arguments, initial alerts included.
+    `alertRuntimeGeometry.test.js`'s BAYTS fixture now resolves to a historical record.
+  - GUI `referenceObservation.test.jsx` (9): processing from a recipe, a wrapper and an asset; a fresh reopen;
+    replacement; a producer edit; unreadable and recovered reads; a late answer - each leaving the saved options
+    untouched.
+  - GUI `sourceRequirement.test.jsx` (53):
+    - first Apply and Enter seeding; pending reads; the last-selected reference; Cancel; no reseeding;
+    - real-widget retention, explicit repair and the inability to add an unsupported pass;
+    - read-only and unverified presentation; hidden and absent key preservation;
+    - unreadable holds; the radar observation's holds; and an editor opened afterwards configuring nothing.
+  - GUI `changeAlerts/processingSettings.test.js` covers the extracted preservation.
+  - `modelDerivedOutput`'s BAYTS evidence fixture now publishes `processing`.
+- **Witnesses** (each targeted mutation restored):
+  - background copying put back: 8 GUI cases fail;
+  - the old pass disabling: 2;
+  - no seeding: 3;
+  - no preservation: 1;
+  - alerts on saved options: 1 gee;
+  - the radar product on saved options: 5 gee;
+  - an absent speckle key at the alerts' default: 1 shared and 1 gee;
+  - malformed falling back: 1 shared and 2 gee;
+  - the shared presentation showing drafts: 4 Change Alerts;
+  - the shared preservation keeping absent keys: the new Change Alerts case.
+- **Verification** (two workers):
+  - shared `test/recipe` 1497 and the gee suite 1561;
+  - GUI over BAYTS Alerts, BAYTS Historical, Change Alerts, Mosaic, Radar Mosaic, `modelDerivedOutput`,
+    `recipeImageLayer`, `recipeMapArea`, process panels and locale: 34 files, 680 tests;
+  - ESLint on changed files and `git diff --check` clean.
+
+  The full GUI suite and live probes were not run.
+- **Not covered:**
+  - No real BAYTS Historical asset was available; the asset forms rest on the exporter's code and fixtures.
+  - The wizard's Next is covered by the shared `Form.Panel.apply` route rather than a mounted wizard.
+- **Browser checklist:**
+  1. Create BAYTS Alerts and select a historical reference. Its passes, masks and angles appear in PRC; geometric
+     correction and speckle show read-only as the reference's.
+  2. Edit masks, Apply, reopen the recipe: they are kept.
+  3. Edit the historical recipe's speckle filter: PRC shows the new value read-only, and the alerts' preview follows.
+  4. Select an asset reference without recorded options: the fields are editable and labelled unverified.
+  5. Replace the reference with one lacking a chosen pass: the pass stays shown with the error until deselected,
+     and Apply then succeeds.
+  6. The first/last radar layer draws once the reference is read.
+
+**Independent review of BAYTS ownership implementation (2026-10-28; corrections required).** The shared extraction
+and main ownership path fit the agreed scope. Independent probes reproduced three remaining contract gaps:
+
+- **[P2] Partly recorded speckle parameters lose their ownership in the modal.**
+  `baytsHistorical/panels/options/spatialSpeckleFilterOptions.jsx` opens its modal when any visible parameter is
+  editable, but `modalSubformPanel` copies only values into independent form inputs. The modal does not carry
+  per-field presentation or reference ownership. With partial asset metadata recording `spatialSpeckleFilter: LEE`,
+  `strongScatterers: RETAIN` and `strongScattererValues: [4, -4]`, but no kernel size, the real strong-scatterer input
+  shows `4` and is neither disabled nor read-only. Its edits are then discarded by the outer read-only setter.
+  Keep recorded fields read-only inside a mixed dialog, while unrecorded fields remain editable; current reference
+  values must stay current without replacing editable drafts. The summary also passes tooltip information that
+  `SubformDetails` does not render, so verify that unrecorded parameters have their promised attribution.
+- **[P2] Unrecorded fallbacks shown in PRC can differ from execution.** With an asset recording no processing and
+  saved options containing only passes and minimum observations, shared `effectiveSettings` supplies monitoring's
+  `LEE` default, but PRC shows no selected filter. With saved `LEE` and `RETAIN`, but no scatterer values, the
+  parameter dialog shows the Historical editor's `7` instead of monitoring's `0` (the full defaults are `[7, 2]`
+  versus `[0, -5]`). `presentedInput` uses the raw editable draft, so the resolved defaults are never presented.
+  Initialise missing editable values from the same effective rule, retaining subsequent explicit draft edits,
+  Cancel semantics and the absence of background configuration writes. Check an unrelated Apply as well as opening.
+- **[P2] Valid reference compactness zero is replaced inside the algorithm.** A historical recipe with
+  `spatialSpeckleFilter: SNIC` and `snicCompactness: 0` is correctly resolved to zero, and the contextual radar
+  collection honours it. The actual `bayts.js` monitoring path then uses `args.snicCompactness || 0.15` and sends
+  `0.15` to `createCollection`. Preserve the resolved valid value through the final algorithm boundary; testing only
+  the arguments supplied to a substituted `bayts` function misses this discrepancy.
+
+The three GUI assertions and one backend collection-boundary assertion all fail against this implementation for
+the stated reasons. They used temporary test files, now removed from the repository and archived under
+`/tmp/sepal-bayts-ownership-review/`; production files and the implementor's tests were not modified.
+Independent existing-test checks passed: 206 GUI tests in five files (BAYTS requirements and observation, Change
+Alerts presentation, reference requirements and toolbar), and 17 backend map-product and geometry tests, with at
+most two workers. No full GUI suite, browser check or live Earth Engine probe was run by this review.
+
+**BAYTS ownership review corrections (2026-10-28).**
+
+- **Compactness zero.** `bayts.js` takes each processing value it is given (`??`), so a resolved SNIC compactness
+  of 0, or any other falsy valid value, reaches `createCollection`. Its own defaults apply only where nothing is
+  given. Masks and angles keep their existing fallbacks.
+- **Mixed speckle dialog.** Historical's `modalSubformPanel` now does what Radar Mosaic's does since S5. A
+  reference-owned parameter is the outer presented input: read-only, kept current with `setInitialValue` and never
+  written back. An editable one is the dialog's own draft, worded as the outer input words it. The dialog's controls
+  spread that presentation. `SubformDetails` renders each parameter's tooltip, so the summary says which values are
+  recorded and which are unverified.
+- **Fallbacks shown as executed.** `unrecordedValues(settings)` gives, per form input, the value
+  `effectiveSettings` resolves for each `NOT_RECORDED` field. Historical's options panel learns it once per field,
+  through `setInitialValue`, where the field is first offered without a value. Opening PRC therefore does not dirty
+  it: Close stays offered and nothing is written. A later edit, Cancel or clear is not overridden. An unrelated Apply
+  saves the values monitoring already ran with. Shared `effectiveSettings` now validates a saved fallback, so NaN or
+  null values take monitoring's default.
+- **Compatibility.** Historical's own editor previously showed strong-scatterer values `[7, 2]` where none were
+  saved. It now shows `[0, -5]`, which its radar collection executes. The `7` was only ever presented: the editor
+  saved it on its next Apply, which execution then honoured. Radar Mosaic's `SubformDetails` still drops tooltips;
+  that S5 gap is unchanged here.
+- **Verification.**
+  - Shared: `test/recipe` 1498.
+  - gee: 1563.
+  - GUI focused: 30 files / 598 tests (BAYTS Alerts and Historical, Change Alerts, Radar Mosaic, mosaic,
+    model-derived output, image layer, map area, reference processing, form, locale), with two workers.
+  - Witnesses each fail:
+    - `||` restored: the compactness test.
+    - HEAD `modalSubformPanel`, or the dialog without presentation spreads: the read-only case.
+    - No summary tooltip: the attribution case.
+    - No default learning, or the `[7, 2]` fallback: the filter, scatterer and Apply cases.
+    - No fallback validation: the shared case.
+  - The reviewer's archived probes pass when copied in temporarily (GUI 56, backend 1) and were removed again.
+  - Not run: the full GUI suite and browser checks.
+
+**Independent recheck of BAYTS corrections (2026-10-28).** The three review findings are resolved. The algorithm
+preserves compactness zero, the mixed speckle dialog projects ownership per field, and absent unrecorded values
+start from the effective monitoring defaults without writing the recipe on opening. The Historical editor's
+strong-scatterer default correction is consistent with its existing radar execution.
+
+Independent checks passed: 69 GUI tests in four files (BAYTS requirements and observation, Change Alerts
+presentation, and Radar Mosaic's modal boundary), plus 19 backend tests (the actual monitoring collection,
+map products and alert runtime geometry), with at most two workers. An additional temporary mounted case passed
+for editing and applying the speckle dialog while preserving PRC's passes, masks and angles; it was removed from
+the repository and archived under `/tmp/sepal-bayts-ownership-review/`. No further blocking finding from this
+review. Browser acceptance and the final full GUI suite remain pending. Radar Mosaic's separate summary-tooltip
+gap remains outside this slice, as recorded above. Nothing staged, committed or pushed.
+
+**BAYTS browser acceptance and final verification (2026-10-28).** The user reports that the recipe-reference
+checklist passes: initial seeding and read-only processing; monitoring choices surviving reopen; upstream speckle
+changes updating reference-owned fields without resetting choices; an unsupported pass retained, explained and
+repaired explicitly; and working alerts and contextual radar previews. No additional asset-metadata coverage is
+claimed from this report. The final full GUI suite passed 4823 tests in 334 files, exit 0, in 366.93 seconds with two
+workers (`/tmp/sepal-bayts-final-gui.log`). Fingerprints confirmed all 28 changed code/data files stayed unchanged
+through verification. Shared, gee and static results remain as recorded above. The accepted slice is ready for
+commit; this acceptance does not authorise a push.
 
 ## Responsibilities
 
@@ -3034,8 +3522,8 @@ The detailed records preserve the earlier proposals, decisions and verification 
 | F3 | Change Alerts: consistent applied/editor diagnostics and monitoring-band chart hold | Implemented in S6; Optical-to-Radar, retained choice, Cancel and applied repair passed the user's browser recheck. |
 | F4 | Reused training samples: Consumer features over Provider imagery, once per collection computation | Implemented in S4: named-feature supply, case-insensitive unique matching, shared readiness/execution and actionable feedback. Sampling remains outside the scene map. |
 | F5 | Audit ownership of Change Alerts Sources/PRC settings | Audit and agreed ownership contract completed in S5; required settings follow current producer/asset facts. |
-| F6 | Replace whole-group automatic syncing with explicit ownership | Implemented in S5: seed editable defaults at the first Reference Apply during creation, then preserve them. The explicit "Use reference settings" action and BAYTS ownership audit remain deferred. |
-| F7 | Copy/paste visualization parameters between layers | Separate requested feature; not a release gate. |
+| F6 | Replace whole-group automatic syncing with explicit ownership | Implemented in S5: seed editable defaults at the first Reference Apply during creation, then preserve them. The explicit "Use reference settings" action was dropped on 2026-10-27; the BAYTS ownership audit/correction is selected next after keyboard band addition. |
+| F7 | Copy/paste visualization parameters between layers | Selected after BAYTS ownership, before recipe-scoped modals (2026-10-27); separate feature, not a release gate. |
 | F8 | Chart layout after tab return; Time Series Retrieve's unconditional empty unavailable-bands warning | Implemented in S1 and S2 respectively, with their recorded browser acceptance. |
 | F9 | Treat a selected Classification as required for Time Series and CCDC, including native requests | Implemented in S3 through shared analysis prerequisites; redundant request-dependent training stages and holds were removed. |
 | F10 | PyEO: put incompatibility feedback in a section that can repair it | Implemented in S2 and its Stack Require drop correction; shared derivation/readiness and the user's actual-preview recovery check passed. |
@@ -3057,7 +3545,7 @@ contract can change the split; they must not silently expand it.
 | S2: Feedback where repairs happen | Consistent Classification/Regression training-data feedback, item-editor explanations and replacement/removal; visible Classification selection in Time Series/CCDC Sources; classifier-input attribution at Classification; repair-oriented PyEO SRC/OPT feedback; correct the empty Retrieve warning. | F1, F2, F10, F8 warning | The single-input selection check passes. Confirmed findings now hold Apply while replacement, Cancel and unchanged Close remain available; the user confirmed Classification's browser recheck passed. The separate Stack Require drop fix passed the user's actual-preview and remove/restore browser check on 2026-10-24. Empty-Provider refinement and S3/S4 remain separate. |
 | S3: One selected-Classification validity contract | Require a selected usable Classification for Time Series/CCDC base operations, independently of requested/breakpoint bands; common SRC explanation/action hold; remove redundant band-training stage/watch/messages/server settling. | F9; consumes S2 presentation | Implemented and independently reviewed. User confirmed Retrieve closure/reopen and the already-broken CCDC/count-preview repair checks passed on 2026-10-25. Shared analysis prerequisites cover every operation and named map product. The timing-dependent keyboard check was not attempted in the browser; automated coverage passed. No requested browser recheck remains. |
 | S4: Reused samples with Consumer features | Sample each contributing Provider's imagery at its points using Consumer's feature definition; preserve sampling scale, nesting/order and Consumer normalisation; update shared readiness to the same derivability contract. | F4 | Implemented 2026-10-26; sampling and feedback corrections pass independent review, including unsupported requested operations and neutral unknown-reason fallback. No remaining S4 review findings. User confirmed the CCDC explanation and selection-recovery browser recheck passed on 2026-10-26; see the result after "S4 use-restriction fallback: independent review". The final full GUI campaign ran on 2026-10-27; see "Final integrated verification". |
-| S5: Change Alerts settings ownership | Audit Sources/PRC fields, then implement source-owned read-only required matches versus consumer-owned editable values; replace whole-group observation syncing and define initial/explicit copying. | F5, F6 | Committed as `6fc9e5874`, then integrated with origin at `78642988e`. The user accepted the PRC ownership browser recheck on 2026-10-27. The live legacy-metadata verification limit is recorded below. The explicit "Use reference settings" action remains deferred and does not block S5 or push. |
+| S5: Change Alerts settings ownership | Audit Sources/PRC fields, then implement source-owned read-only required matches versus consumer-owned editable values; replace whole-group observation syncing and define initial/explicit copying. | F5, F6 | Committed as `6fc9e5874`, then integrated with origin at `78642988e`. The user accepted the PRC ownership browser recheck on 2026-10-27. The live legacy-metadata verification limit is recorded below. The explicit "Use reference settings" action was dropped on 2026-10-27; no additional copying control is planned. |
 | S6: Change Alerts validation and chart agreement | Retain invalid applied choices with field explanations; hold Retrieve and close/disable the analysis chart for an incompatible configured monitoring band; remove redundant panel validation. | F3 | Implemented and user browser-accepted on 2026-10-27 after the chart fixture and shared recipe-read context corrections. The baseline chart, upstream Optical-to-Radar withdrawal, Cancel and applied Radar/VV repair all passed, including actual segments and observations. Chart scope stays operation-specific. The shared-read correction is committed as `12129ad9b` and browser-accepted. Final integrated verification ran on 2026-10-27 and is blocked by stale GUI tests; see "Final integrated verification". |
 
 **S1: Chart layout on tab return (implemented 2026-10-23; user feedback received).**
@@ -6502,7 +6990,16 @@ the full **1556 tests**, with at most two workers. ESLint and `git diff --check`
 `/tmp/sepal-ci-observations-fixed-focused.log` and `/tmp/sepal-ci-gee-fixed-full.log`. GitHub CI after this correction
 is checked separately; the preceding local results do not claim a green remote rerun.
 
-**Deferred S5 follow-up: "Use reference settings" action (agreed 2026-10-26; not implemented).** Add a deliberate
+**S5 follow-up: "Use reference settings" action (dropped 2026-10-27; not implemented).**
+
+The user chose to skip this action after reconsidering its value and potential confusion. This supersedes the
+earlier agreement to defer it. Creation already seeds editable monitoring defaults, required processing stays
+reference-owned, and later editable choices deliberately belong to Change Alerts. Copying them again offers limited
+convenience, with no general accuracy or sensitivity benefit established by matching imagery/filtering choices.
+No copy-again button or replacement-reference confirmation is planned. Existing seeding, ownership and preservation
+behavior stays as implemented. Reconsider only if a concrete recurring user need emerges.
+
+**Withdrawn proposal (recorded 2026-10-26):** Add a deliberate
 action for an existing Change Alerts recipe to copy the current reference's consumer-owned editable monitoring
 defaults again. This is not part of required S5/S6 and does not block push.
 
@@ -6517,6 +7014,9 @@ defaults again. This is not part of required S5/S6 and does not block push.
 
 **F7. Copy/paste layer visualization parameters.**
 
+Selected on 2026-10-27 after the BAYTS consistency work and before recipe-scoped modals. Establish the small
+implementation proposal below when this item starts; no implementation is claimed by the prioritization.
+
 - Add discoverable Copy/Paste actions for rendering parameters in the existing layer/visualization UI. Transfer the
   visualization only; do not replace the destination layer's identity, recipe/source, AOI or processing settings.
 - Reuse the visualization model and existing validation. Show incompatible destination bands or invalid parameters
@@ -6525,6 +7025,153 @@ defaults again. This is not part of required S5/S6 and does not block push.
 - **Acceptance:** compatible layers can share a style, destination identity/source remain unchanged, incompatible
   bands have an understandable outcome, and existing visualization save/reopen behaviour is preserved. Define exact
   transferable fields and clipboard behaviour in the small implementation proposal before adding controls.
+
+**Band Math empty-output setup feedback (implemented, independently reviewed and browser-accepted 2026-10-28).**
+
+- **Report:** selecting input imagery in a new recipe marks OUT as an error before the user has started calculating
+  or choosing outputs. This conflicts with the existing setup-versus-invalidity contract.
+- **Confirmed code path:** `bandMathRequirements.js` declares `OUTPUT_IMAGES_REQUIREMENT` over `OUTPUT_PRESENCE`
+  without a toolbar-mark exception. `chainRequirements.js` reports `NO_OUTPUT_IMAGES` for the empty output list;
+  `sectionMarks.test.jsx` explicitly expects the red mark. Classification already uses `toolbarMark: false` for
+  its equivalent total absence of training data. This is a deliberate presentation-policy correction, not removal
+  of an execution prerequisite.
+- **Direction:** leave OUT unmarked for an empty overall output selection and provide neutral guidance in the
+  output panel, reusing its existing empty-state presentation where possible. Suggest choosing output bands;
+  calculations are optional because input bands can pass through directly. Apply the rule from current configuration,
+  without a persisted "started" flag or different behavior merely because the recipe was saved/reopened.
+- **Preserve:** preview/Retrieve holds and readiness; errors for invalid calculations, missing referenced images or
+  bands, invalid/duplicate output names and configured output items left without bands. Required-field validation
+  inside the form follows normal interaction/submission policy. Do not suppress all OUT findings or weaken Apply.
+- **Scope/acceptance:** prefer the existing declaration-level presentation control, not a toolbar-specific validator
+  or a new readiness state. Add a mounted empty-setup control proving neutral OUT with operations still held, then
+  show that choosing a direct input band or calculation output releases the hold and genuine configured errors still
+  mark the appropriate section/item. No browser reproduction or production change is claimed by this code trace.
+- **Implemented.**
+  - `OUTPUT_IMAGES_REQUIREMENT` (`bandMathRequirements.js`) takes `toolbarMark: false`, the declaration-level
+    control Classification uses for `NO_TRAINING_DATA`. `NO_OUTPUT_IMAGES` still refuses the image output, so preview
+    and Retrieve stay held; only OUT's button no longer reports it.
+  - The rule follows the current configuration: there is no flag, and a reopened recipe behaves the same.
+  - The panel's existing empty-list message (`outputBands.noImages`, English) now says: "Choose the bands to output:
+    press Add to pick an input image or a calculation, then its bands. Input bands can be output directly; a
+    calculation is optional." No paragraph was added.
+  - The form's `notEmpty` validation, Apply policy and every other OUT finding are unchanged: missing or invalid
+    bands, duplicate or invalid names, and an output image without bands. Other locales keep their translations of the
+    older text, which remains true.
+- **Regressions** (`sectionMarks.test.jsx`, the real toolbar, Output bands panel, store and source runtime):
+  - Imagery with nothing output leaves OUT unmarked, with the guidance shown, the configuration gate refusing and the
+    image output withdrawn, also after reopening.
+  - Applying a direct input band output, with no calculation, clears the configuration refusal and the guidance.
+  - The "nothing output" case of the description-refused table now expects OUT unmarked while the input is still
+    marked once read.
+  - The unreadable-source case asserts the hold instead of the OUT mark.
+  - Existing genuine-error cases still mark their sections and rows: an output image without bands, duplicate and
+    invalid names, an unmet calculation, and an input lacking a band.
+  - **Witness:** without the flag, the two empty-output cases fail and the rest pass.
+- **Verification:** all Band Math tests and the locale checks, 23 files and 280 tests (two workers). ESLint on the
+  changed files, the translations JSON and `git diff --check` are clean.
+- **Gate attribution corrected (2026-10-28, shared).** A held preview or Retrieve used to name Calculations whenever
+  the output read refused. That was the generic output state of the first output declaration, Calculations, which
+  found nothing of its own. It happened with nothing output and also for configured output errors such as duplicate
+  names.
+  - **Rule:** `requestGateOf` (`sourceRequirements.js`) now gives that generic fallback only where no stated refusal
+    holds the same operation. A stated refusal is a local requirement, a located finding or a selected source's
+    requirement.
+  - Pending generic reads still wait. A generic refusal still holds any operation no stated refusal covers, and is
+    the reason beside a met requirement or one stated for another operation. The read list is unchanged, and so are
+    `locatedRefusals`, the toolbar marks and the declaration order.
+  - **Result:** an empty output and configured output errors hold naming OUT; calculation errors still name CALC.
+- **Regressions for the gate:**
+  - `outputRequirements.test.js`: a generic output refusal declared and read before a stated local refusal. The
+    stated one is the reason for its operation. The generic one still holds another operation only it holds, and is
+    the reason where the requirement covers another operation or is met.
+  - `sectionMarks.test.jsx`: the empty output, the description-refused table, the unreadable source, an output image
+    without bands and duplicate or invalid names all hold naming OUT; the unmet calculation still names CALC.
+  - **Witness:** the previous gate fails the two "stated refusal is the reason" bridge cases and 5 of 11 mounted cases.
+    The controls pass both ways.
+- **Missed by the first verification:** the bridge test "of type BAND_MATH keeps its Output bands marked for having
+  none" (`outputRequirements.test.js`) still pinned the old OUT mark. The first run covered only the Band Math
+  directory and locales. It now expects only Input imagery marked.
+- **Verification (gate correction):** the affected callers' directories (Classification, Regression, Time Series,
+  CCDC, CCDC Slice, Phenology, PyEO, Stack, Band Math, Remapping, Unsupervised Classification, Change Alerts, BAYTS
+  Alerts, Masking), the process recipe top-level tests, process panels, map layer source and locale: 143 files and
+  2266 tests (two workers). ESLint on the changed files and `git diff --check` are clean.
+- **Independent review (2026-10-28; correction required before acceptance):** the declaration-level toolbar change
+  is appropriately scoped, but the incorrect repair target should be corrected within this setup-feedback slice.
+  A temporary copy of the mounted empty-output test expecting the full image-output gate to name OUT fails:
+  it returns `SOURCE_UNSUITABLE` at Calculations instead of the explicit `CONFIGURATION_UNMET` at Output bands.
+  The local configuration gate already has the correct owner. Evidence:
+  `/tmp/sepal-bandmath-empty-attribution-review.log`; the probe was removed and production code was not changed.
+  The generic output-state fallback currently wins over a concrete section-level local refusal. This does not by
+  itself establish that all shared reasons should be reordered: inspect the existing generic-versus-located
+  suppression and operation scopes, then correct the owning mechanism without Band Math-specific gate logic or
+  declaration-order workarounds. Retain generic holds where no explicit requirement explains them or where they
+  cover another operation, and preserve real calculation errors. Include configured OUT errors as ownership
+  controls. Cover the complete gate/consumer-facing target, not only the local configuration gate. The earlier
+  suggestion to defer this target mismatch is not accepted. Independently, the submitted Band Math and translation
+  tests pass: 276 tests in 22 files with two workers; changed-file ESLint and `git diff --check` pass. This passing
+  campaign does not include the additional failing attribution assertion above.
+- **Correction independently verified (2026-10-28):** no remaining review finding. `requestGateOf` selects explicit
+  unsupported requirement reasons for the requested operation over confirmed generic `outputState` fallbacks.
+  It changes neither declaration order nor the read list, and retains generic reasons for operations without an
+  explicit refusal; pending/unavailable handling and withdrawal stay intact. The mounted empty-output and genuine
+  OUT-error cases now assert the full gate names OUT, and the genuine calculation case still names CALC. An
+  independent run of all Band Math tests, source/output requirement tests, operation availability, section status,
+  both Time Series/CCDC Retrieve lifecycle files and translations passed 390 tests in 28 files with two workers.
+  Changed-file ESLint and `git diff --check` pass. Evidence:
+  `/tmp/sepal-bandmath-gate-correction-review-tests.log` and
+  `/tmp/sepal-bandmath-gate-correction-review-lint.log`.
+- **Browser acceptance (2026-10-28):** the user confirmed the manual checks are good and accepted the setup/gate
+  change. The map-area menu visibility observation below is pre-existing and will be addressed in a separate commit.
+- **Related map-area menu visibility observation (2026-10-28; implemented, independently reviewed and browser-accepted):** the user sees
+  no map-area settings button before Band Math has outputs and asks that hiding versus disabling be consistent and
+  centrally owned. `bandMathImageLayer.jsx` returns no `MapAreaLayout` when `outputImages` is empty, so its menu and
+  feature overlays are absent; this is a recipe-specific condition, not the shared request gate. Stack, Remapping
+  and Masking render that layout even without a drawable layer. The shared `MapAreaMenu` itself renders its button;
+  Retrieve likewise retains its button and uses shared availability to disable it. This predates the current
+  toolbar/gate correction. Review other layer wrappers when implementing the shared capability-versus-readiness policy.
+  The menu also controls overlays, so an unusable recipe image does not necessarily make the whole menu useless:
+  the user agreed the direction of retaining applicable controls and centrally gating only operations whose
+  prerequisites are missing, preserving independent overlay functions. Implement the correction separately from
+  the accepted setup/gate fix, using the shared map-area boundary rather than additional recipe-specific checks.
+  Check empty/invalid output, repair and unaffected overlay access across representative recipes. No map-area
+  production change is included in this setup/gate commit.
+  - **Shared ownership, as found.** `recipeImageLayer.jsx` already decides drawability. It passes `layer = null`
+    while the source gate (`requestGate`) or the map-product gate withdraws, or while the output cannot be previewed,
+    and keeps a drawing only while evidence is pending. `LayerSourceStatus` and `visualizationSelector` say what is
+    held. `MapAreaLayout` always renders `MapAreaMenu` and the feature overlays, and takes a withheld layer off the
+    map. No shared capability was missing.
+  - **Change.** `bandMathImageLayer.jsx` no longer returns null when nothing is output: it always renders the shared
+    `MapAreaLayout`, as Stack, Remapping and Masking do. Holding the image stays with the shared gates. The form
+    renders from the default model (`outputImages: []`, `availableBands` defaulting to `{}`).
+  - **Audit of the other `MapAreaLayout` wrappers.**
+    - None other drops the layout for a configuration fact.
+    - Classification (`canRender`), Optical Mosaic (`hasScenes`) and LandTrendr (`layerConfigChanges`) withhold only
+      the layer and keep the menu.
+    - BAYTS Alerts, Change Alerts and LandTrendr render no layout until `ui.initialized`, that is during their
+      creation wizard. That is a lifecycle boundary independent of configuration validity, so it is left as found.
+  - **Regression.** `recipe/recipeMapArea.test.jsx` mounts the recipe's own center area as `map.jsx` renders it: the
+    real layer source, recipe layer component, `MapAreaLayout`, `MapAreaMenu`, activation, store and source runtime,
+    with Earth Engine and the map faked.
+    - Band Math with imagery and nothing output keeps an enabled menu, its Labels overlay toggles, and no preview is
+      constructed.
+    - A configured duplicate output keeps the menu and the selected visualization, with no new preview; repair
+      draws again with the same selection.
+    - Stack with nothing stacked behaves the same.
+    - **Witness:** with `bandMathImageLayer.jsx` from `HEAD`, the empty-output case fails. The invalid/repair case is
+      a control: the old code kept the layout while any output existed.
+  - **Verification:** Band Math, the shared layer and its source, Stack, map layout, and `app/home/map` (including the
+    visualization selector): 64 files and 859 tests (two workers). ESLint on the changed files and `git diff --check`
+    are clean. a8061176b's behaviour is unchanged: OUT unmarked, the hold naming OUT, genuine errors marked.
+  - **Independent review (2026-10-28):** no remaining finding. Removing the Band Math exception reuses the existing
+    shared menu/overlay behavior without altering readiness or drawing gates. The wizard-only guards in BAYTS
+    Alerts, Change Alerts and LandTrendr are lifecycle boundaries, not configuration-validity checks; leave them
+    unchanged in this slice. The new mounted map-area file, Band Math's layer and section marks, and both shared
+    visualization-selector files pass independently: 64 tests in 5 files with two workers. Changed-file ESLint and
+    `git diff --check` pass. Evidence: `/tmp/sepal-map-area-menu-review-tests.log` and
+    `/tmp/sepal-map-area-menu-review-lint.log`.
+  - **Browser acceptance (2026-10-28):** after the brief running-app menu/overlay/output checklist and clarification
+    of the shared image-withholding behavior, the user confirmed "All works well". Browser acceptance is complete;
+    this correction is committed separately from the setup/gate change.
 
 **F8. Fix the concrete chart-layout and Retrieve-message regressions.**
 
@@ -6614,7 +7261,8 @@ defaults again. This is not part of required S5/S6 and does not block push.
   and margins, inside a panel capped at 29rem; short text does not itself determine field width. Prefer a local two-column
   grid for these fields, falling back to one column in a narrow viewport, over changes to shared `Layout` or global
   input widths. Confirm the rendered cause and check 1/2/3/4/many fields, long names, errors and scrolling. Recorded
-  as an independent small UI fix, not reproduced in a browser or implemented with S2.
+  as an independent small UI fix, not reproduced in a browser or implemented with S2. **Implemented and browser-accepted (2026-10-27);** see the
+  optional-improvements table.
 - **CCDC Sources height:** the user reports an excessively tall panel after choosing Radar and asks about stable
   sizing versus content-based sizing. `ccdc/panels/sources/sources.module.css` explicitly sets `height: 46rem`, unlike
   Time Series Sources, which only caps width. Blame dates the 46rem rule to `b166296a1` (2022-03-17); it is not caused
@@ -6631,7 +7279,8 @@ defaults again. This is not part of required S5/S6 and does not block push.
   sizing, fit-then-freeze measurement state or another shared Panel mechanism. Content-based sizing with a reserved
   band area was considered but not selected. This decision is not implemented yet. Check Optical/Radar/Planet,
   More/Less, short/long legends, slow Classification loading, validation messages and
-  small-viewport scrolling before choosing final dimensions.
+  small-viewport scrolling before choosing final dimensions. **Implemented and browser-accepted (2026-10-27);** see the optional-improvements
+  table.
 - **Keyboard band addition:** in a Classification input image's Add bands popup, pressing Enter should add the
   highlighted band and move the keyboard highlight to the next available band in the displayed order. The next Enter
   adds that band; it must not add the next one immediately or jump back to the "All bands" entry after each addition.
@@ -6641,15 +7290,79 @@ defaults again. This is not part of required S5/S6 and does not block push.
   as a band-add action. Keep filtering, mouse selection and arrow navigation, skip nonselectable rows, and define a
   safe end-of-list state that cannot accidentally activate "All bands". Cover repeated Enter over the real band-add
   flow, preserved filter text, the last available band and an unaffected ordinary selector. No persisted recipe-format
-  change is needed. This is recorded, not implemented in S2.
+  change is needed. This is recorded, not implemented in S2. **Implemented (2026-10-27);** see the optional-improvements
+  table.
+  **Independent review (2026-10-27):** no remaining finding for the audited callers. The shared choice/removal path
+  preserves identifiers and ordinary-selector behavior; the six current stay-open callers remove their choices
+  through their form updates. A focused independent run of Combo, List, windowed List, both shared input-imagery
+  paths, Classification and Band Math passed 469 tests in 37 files with two workers; changed-file ESLint and
+  `git diff --check` pass. Evidence: `/tmp/sepal-keyboard-picker-review-tests.log` and
+  `/tmp/sepal-keyboard-picker-review-lint.log`. Choice tracking is consumed by the next parent options update;
+  future delayed or choice-retaining callers are not covered by the current synchronous-removal contract.
+  **Browser-accepted (2026-10-28):** the user reported "Looks good" after the brief running-app keyboard checklist
+  and authorised committing. No additional recipe regression checklist is requested.
 - CCDC Slice chart labels should use human-readable band names when available, including recipe references. Keep raw
   names for request identity and a fallback for asset measures without labels; test that labels do not alter requests.
+  **Implemented (2026-10-27);** see the optional-improvements table.
+  **Independent review correction required (2026-10-27):** `bandLabels[name] || name` also reads inherited object
+  properties. In a temporary copy of the mounted asset case, replacing `probability_1` with `constructor` produces
+  a blank choice instead of the raw name. Use an own-property lookup for label fallback and cover the custom band
+  in the existing mounted regression. The submitted 234 tests, lint and whitespace checks pass independently;
+  this additional case fails. Evidence: `/tmp/sepal-slice-label-prototype-review.log`. The probe was removed and
+  production files were not changed during review. This is an automated correction, not another manual test request.
+  **Corrected (2026-10-27):** a choice takes its label only where the labels hold one of its own, otherwise its raw
+  name. The mounted asset regression now runs for `probability_1` and `constructor`, each offered, chosen, shown,
+  requested and plotted by its raw name with no recipe read; the `constructor` case failed with a blank choice before
+  the correction. All 37 tests in `sourceRequirement.test.jsx`, lint and `git diff --check` pass.
+  **Browser-accepted (2026-10-27):** the user confirmed Classification band labels appear in the chart and accepted
+  this bounded consistency improvement. The broader review below remains deferred.
 - Investigate AOI-layer redraws on unrelated recipe edits. Base updates on effective geometry/source changes; preserve
   real geometry changes and pending-read cancellation. Measure which updates trigger work before adding caching.
 - Mark the charted pixel on the corresponding map. Follow the actual recipe/pixel, update when it changes, and avoid
   stale markers on another tab or after chart closure. Define the marker interaction separately from chart validity.
 - Upstream recipe-update notification over WebSockets remains a separate future feature. The reported stale-copy
   tests passed; it is not a prerequisite for this correction round and does not replace existing revision currency.
+
+#### Future: consistent band presentation across recipes
+
+**Deferred by the user (2026-10-27), for a substantially later round.** This is a coordinated review and design task,
+not another small fix or a requirement for the current release. The current CCDC Slice chart-label change remains
+bounded; no wider audit, implementation or manual campaign is requested now.
+
+**Review all affected places first.** Inventory where bands are displayed, chosen, renamed or referenced across
+recipes and shared controls. Include Classification/Regression input imagery; Remapping and Masking; Stack source
+captions and output-name fields; Band Math inputs, pass-through bands, expressions and output names; Sources,
+charts and legends, layer/visualization controls, and Retrieve. Record current label sources, fallbacks, shared
+builders and exceptions. Native and classified bands, derived features, custom/renamed bands, recipe references
+and assets must be considered together. The review covers all recipes; it must establish which actually need changes.
+
+**Agreed presentation direction:**
+
+- When viewing or choosing a band, show its reliable display label, falling back to its raw name. Native labels may
+  remain familiar short names such as NDVI; labels need not expand every name into a long description.
+- When editing or referencing the identifier, show the actual name. This includes expressions and editable output-name
+  fields, not just Band Math expressions. A Stack source caption can show its display label while the output-name
+  input contains the actual output name. Show the raw source name alongside its label where understanding a mapping
+  or constructing an expression requires it.
+- Preserve raw identifiers in saved selections, option values/keys, requests, expressions and exported data. Duplicate
+  labels must remain distinct and be disambiguated when necessary. Relabelling must not change a selection or computation.
+
+**Make the shared path do the right thing by default.** Review the existing band-description, presentation and picker
+APIs before choosing the implementation. Aim for one reusable way to obtain and carry presentation by stable band
+identity, with consistent label/raw-name fallback in shared controls and an explicit mode for identifier editing.
+Recipe code should provide domain metadata; each caller should not have to reconstruct labels, remember a fallback
+or special-case producer types. Establish ownership and propagation through transformations in the review, including
+which labels remain meaningful after a rename. Prefer extending existing contracts over parallel label registries,
+copied producer snapshots or per-panel lookup code. Label acquisition must respect reference access boundaries;
+an independent exported asset must not require access to its producer merely to display a band choice.
+
+**Acceptance and delivery:** label absence or pending/unavailable label metadata must never remove a valid band,
+hold operations or add a readiness requirement. Cover raw-name fallback (including custom names), duplicate labels,
+renames and current class labels, localization, filtering/keyboard behavior and accessibility; review casing/styles
+that obscure the difference between names and labels. Verify unchanged identities and exports. Plan coherent slices
+after the inventory: shared ownership/API and defaults first, then affected consumer groups, with shared regressions
+and representative recipe checks rather than a separate presentation implementation or exhaustive manual campaign
+for every recipe. No persisted recipe-format change is assumed by this roadmap entry.
 
 **Verification and boundaries:** use focused regressions for each changed contract and combine browser rechecks over
 the existing fixtures. Update old manual expectations when F4/F6 change the behaviour they describe; do not silently

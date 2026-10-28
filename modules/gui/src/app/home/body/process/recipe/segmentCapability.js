@@ -70,6 +70,16 @@ export const describeProducer$ = (producer, {graph, recipesById}) => {
         ))
 }
 
+// How the producer of a source's segments labels the bands it fits, by name, from records the caller holds current
+// (`recordOf`): what its type registers (segmentBandLabels), or nothing - for an asset, a producer those records do not
+// resolve, or a type registering none. Nothing is read for it.
+export const segmentBandLabelsOf = (reference, recordOf) => {
+    const producer = reference ? resolveSegmentProducer(reference, {get: recordOf}) : {}
+    return producer.record && segmentsAssetOf(producer) === null
+        ? getRecipeType(producer.record.type)?.segmentBandLabels?.({recipe: producer.record, recordOf}) || {}
+        : {}
+}
+
 // Where a producer's segments live, from the terms it declared. Null for one that computes them.
 export const segmentsAssetOf = ({assetId, record, declared}) =>
     assetId !== undefined

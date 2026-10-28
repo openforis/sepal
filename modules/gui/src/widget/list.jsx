@@ -76,6 +76,9 @@ ScrollableList.propTypes = {
     ).isRequired,
     onSelect: PropTypes.func.isRequired,
     air: PropTypes.any,
+    // The key of the option a choice was made from, given with the options that follow from it: one it removed has what
+    // followed it highlighted.
+    advanceFrom: PropTypes.any,
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
     autoCenter: PropTypes.any,
     autoHighlight: PropTypes.any,
@@ -438,10 +441,33 @@ export class ListContent extends React.Component {
     }
 
     componentDidUpdate({options: prevOptions, selectedValue: prevSelectedValue}) {
-        const {options, selectedValue} = this.props
-        if (selectedValue !== prevSelectedValue || !isEqual(options, prevOptions)) {
+        const {options, selectedValue, advanceFrom} = this.props
+        const optionsChanged = !isEqual(options, prevOptions)
+        if (optionsChanged && advanceFrom !== undefined && this.isRemovedByChoice(advanceFrom, prevOptions)) {
+            this.highlightSuccessor(advanceFrom, prevOptions)
+        } else if (selectedValue !== prevSelectedValue || optionsChanged) {
             this.highlightSelectedOption()
         }
+    }
+
+    // Options given with `advanceFrom` follow from choosing that option where it stays open (combo.jsx). The choice
+    // removed it - one added, no longer to add - when they are what remained of those it was chosen from, and no others.
+    isRemovedByChoice(chosenKey, prevOptions) {
+        const {options} = this.props
+        const prevKeys = new Set(prevOptions.map(option => this.getOptionKey(option)))
+        return !this.getOption(chosenKey) && options.every(option => prevKeys.has(this.getOptionKey(option)))
+    }
+
+    // What follows the option removed by a choice is highlighted, so the next Enter chooses it, never one before it. With
+    // nothing selectable following, nothing is: Enter then chooses nothing until the highlight is moved.
+    highlightSuccessor(chosenKey, prevOptions) {
+        const remaining = new Set(this.props.options.filter(option => this.isSelectable(option)).map(option => this.getOptionKey(option)))
+        const following = prevOptions.slice(prevOptions.findIndex(option => this.getOptionKey(option) === chosenKey) + 1)
+        const successorKey = following.map(option => this.getOptionKey(option)).find(key => remaining.has(key))
+        this.setState({
+            highlightedOptionKey: successorKey ?? null,
+            keyboardNavigation: true
+        }, () => successorKey !== undefined && this.scrollHighlightedOption())
     }
 }
 

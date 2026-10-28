@@ -348,11 +348,17 @@ export const requestGate = ({state, recipe, operation, evidenceOwnerOf, heldFor,
     requestGateOf(readSourceRequirements({state, recipe, evidenceOwnerOf, heldFor, now}), operation)
 
 // The same, judged from the recipe's reads (readSourceRequirements), for a caller asking more than one question of them.
-// A finding withdraws it whatever another requirement is still to establish.
+// A finding withdraws it whatever another requirement is still to establish. A refusal a requirement states - local,
+// located or of a selected source - is the reason where it holds the operation: the output read refused, said for a
+// declaration that found nothing of its own (`outputState`), is the reason only where none does, for that operation.
 export const requestGateOf = (reads, operation) => {
     const reasons = reasonsIn(reads, operation)
         .map(reason => ({...reason, withdraw: WITHDRAWING.includes(reason.code)}))
-    return reasons.find(({withdraw}) => withdraw) || firstReason(reasons)
+    const stated = reasons.some(({read}) => !read.outputState && read.verdict.status === UNSUPPORTED)
+    const given = stated
+        ? reasons.filter(({read}) => !(read.outputState && read.acquisition === CHECKED))
+        : reasons
+    return given.find(({withdraw}) => withdraw) || firstReason(given)
 }
 
 // Why the recipe's own configuration refuses an operation, if it does: {wait, withdraw, code, section, read}, decided

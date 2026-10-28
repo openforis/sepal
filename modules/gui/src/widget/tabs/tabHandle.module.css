@@ -144,6 +144,13 @@ inside keyframes of an attached animation (bugzilla 1763376 et al.). */
     color: var(--text-header-color);
 }
 
+/* A read-only tab cannot be named, so its placeholder stands in for the name and takes the
+   title's colour (as combo's fakePlaceholder does); opacity: 1 undoes Firefox's dimming. */
+.tab.readOnly .title input::placeholder {
+    color: inherit;
+    opacity: 1;
+}
+
 /*Fade-out overflow */
 .tab:not(.editing) .title:before {
     content: '';

@@ -45,6 +45,7 @@
     },
     "googleAccountRequired": "Some apps are unavailable. To enable them, connect your SEPAL account to your Google account.",
     "info": "Show information about this app",
+    "landingTab": "Apps",
     "launch": {
       "startingSession": "Starting session...",
       "startingServer": "Starting server...",
@@ -3147,7 +3148,7 @@
           "tooltip": "Select bands to output and their corresponding names.",
           "duplicateBand": "Duplicate band name",
           "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters",
-          "noImages": "No images/calculations added to output",
+          "noImages": "Choose the bands to output: press Add to pick an input image or a calculation, then its bands. Input bands can be output directly; a calculation is optional.",
           "noBands": "No bands added to output",
           "missingBands": "An image or calculation outputs no bands.",
           "resetName": {
@@ -4617,7 +4618,17 @@
         "loading": "Loading tiles: {pending}",
         "tilesFailed": "{failed} failed"
       },
-      "tabPlaceholder": "BAYTS_alerts"
+      "tabPlaceholder": "BAYTS_alerts",
+      "processing": {
+        "REFERENCE": "from the historical statistics (read-only)",
+        "RECORDED": "recorded by the asset (read-only)",
+        "NOT_RECORDED": "not recorded by the asset — check it matches the statistics",
+        "MIXED": "recorded settings are read-only — check that editable settings match",
+        "UNREADABLE": "recorded settings cannot be read",
+        "PENDING": "checking the processing of the historical statistics",
+        "UNAVAILABLE": "could not read the processing of the historical statistics",
+        "unreadable": "The processing the historical statistics were built with cannot be read. Repair the asset’s metadata or select another reference."
+      }
     },
     "baytsHistorical": {
       "create": "BAYTS Historical Layer",
@@ -4955,6 +4966,7 @@
       "noProjectOption": "[no project]"
     },
     "recipe": {
+      "landingTab": "Recipes",
       "lastUpdate": "Last update",
       "loading": "Loading recipes",
       "loadingError": "Failed to load recipes. Please reload page to try again.",
@@ -6211,6 +6223,7 @@
     }
   },
   "terminal": {
+    "menuTab": "Sessions",
     "server": {
       "error": "Failed to start terminal"
     }

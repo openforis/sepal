@@ -55,7 +55,7 @@ const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry
 const {default: bandMath} = await import('./bandMath')
 const {BandMathToolbar} = await import('./panels/bandMathToolbar')
 const {Sync} = await import('./sync/sync')
-const {requestGate} = await import('../sourceRequirements')
+const {configurationGate, requestGate} = await import('../sourceRequirements')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
 
@@ -94,6 +94,7 @@ describe('an output image left without bands by unselecting the band it output',
         expect(inError(OUTPUT_BANDS)).toBe(true)
         expect(buttonTooltip(OUTPUT_BANDS)).toEqual(expect.stringContaining('process.bandMath.requirement.noOutputBands'))
         expect(outputRowsInError()).toEqual(['i1'])
+        expect(imageOutputGate()).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET', section: OUTPUT_BANDS})
 
         await setModel(model => ({
             ...model,
@@ -108,16 +109,34 @@ describe('an output image left without bands by unselecting the band it output',
     })
 })
 
+// Nothing output yet is setup still to do, as Classification without training points is: Output bands is not marked,
+// its list says how to begin, and the image stays held until something is output.
 describe('Output bands without any output image', () => {
-    it('is marked until an image is output again', async () => {
+    it('is not marked, guides choosing output bands, and holds the image output naming it, as after reopening', async () => {
         await open(recipe({images: [input('i-1', 'i1', ['red'])], outputImages: []}))
 
-        expect(inError(OUTPUT_BANDS)).toBe(true)
-        expect(buttonTooltip(OUTPUT_BANDS)).toEqual(expect.stringContaining('process.bandMath.requirement.noOutputImages'))
+        expect(inError(OUTPUT_BANDS)).toBe(false)
+        expect(buttonTooltip(OUTPUT_BANDS)).not.toEqual(expect.stringContaining('process.bandMath.requirement.noOutputImages'))
+        expect(document.body.textContent).toContain(OUTPUT_GUIDANCE)
+        expect(ownConfigurationGate()).toMatchObject({code: 'CONFIGURATION_UNMET'})
+        expect(imageOutputGate()).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET', section: OUTPUT_BANDS})
 
-        await setModel(model => ({...model, outputBands: {outputImages: [outputImage('i-1', ['red'])]}}))
+        await reopen()
 
         expect(inError(OUTPUT_BANDS)).toBe(false)
+        expect(imageOutputGate()).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET', section: OUTPUT_BANDS})
+    })
+
+    it('releases the image output once an input band is output directly, with no calculation', async () => {
+        await open(recipe({images: [input('i-1', 'i1', ['red'])], outputImages: []}))
+
+        await setModel(model => ({...model, outputBands: {outputImages: [outputImage('i-1', ['red'])]}}))
+        await reopen()
+
+        expect(ownConfigurationGate()).toBe(null)
+        expect(imageOutputGate()).toMatchObject({withdraw: false})
+        expect(inError(OUTPUT_BANDS)).toBe(false)
+        expect(document.body.textContent).not.toContain(OUTPUT_GUIDANCE)
     })
 })
 
@@ -162,6 +181,7 @@ describe('output bands named as Output bands refuses to apply', () => {
         expect(inError(OUTPUT_BANDS)).toBe(true)
         expect(buttonTooltip(OUTPUT_BANDS)).toEqual(expect.stringContaining(`process.bandMath.requirement.${message}`))
         expect(outputRowsInError()).toEqual(rows)
+        expect(imageOutputGate()).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET', section: OUTPUT_BANDS})
     })
 })
 
@@ -183,16 +203,17 @@ describe('an input lacking a band beside an output image without bands', () => {
 // The description refuses these before reading any input; the editor reads them to say what else needs repair.
 describe('an input lacking a band beside a configuration the description refuses', () => {
     it.each([
-        ['output names repeated', [{...outputImage('i-1', ['red'], 'same'), outputBands: [outputBand('i-1', 'red', 'same'), {...outputBand('i-1', 'red', 'same'), id: 'copy'}]}]],
-        ['nothing output', []]
-    ])('with %s marks Output bands at once, and the input once its source is read', async (_case, outputImages) => {
+        ['output names repeated', [{...outputImage('i-1', ['red'], 'same'), outputBands: [outputBand('i-1', 'red', 'same'), {...outputBand('i-1', 'red', 'same'), id: 'copy'}]}], true],
+        ['nothing output, which is setup and leaves Output bands unmarked', [], false]
+    ])('with %s holds the image at once, and marks the input once its source is read', async (_case, outputImages, outputMarked) => {
         await open(recipe({images: [input('i-1', 'i1', ['red', 'nir'])], outputImages}))
-        expect(inError(OUTPUT_BANDS)).toBe(true)
+        expect(inError(OUTPUT_BANDS)).toBe(outputMarked)
         expect(inError(INPUT_IMAGERY)).toBe(false)
+        expect(imageOutputGate()).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET', section: OUTPUT_BANDS})
 
         await answer({[ASSET]: ['red']})
 
-        expect(inError(OUTPUT_BANDS)).toBe(true)
+        expect(inError(OUTPUT_BANDS)).toBe(outputMarked)
         expect(inError(INPUT_IMAGERY)).toBe(true)
         expect(buttonTooltip(INPUT_IMAGERY)).toBe(UNAVAILABLE_BANDS)
         expect(imageObservations()).toEqual([])
@@ -203,7 +224,7 @@ describe('an input lacking a band beside a configuration the description refuses
 
         await answer({})
 
-        expect(inError(OUTPUT_BANDS)).toBe(true)
+        expect(imageOutputGate()).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET', section: OUTPUT_BANDS})
         expect(inError(INPUT_IMAGERY)).toBe(false)
     })
 })
@@ -214,6 +235,7 @@ const INPUT_IMAGERY = 'process.panels.inputImagery.button'
 const UNAVAILABLE_BANDS = 'process.panels.inputImagery.unavailableBands.inputs'
 const CALCULATIONS = 'process.bandMath.panel.calculations.button'
 const OUTPUT_BANDS = 'process.bandMath.panel.outputBands.button'
+const OUTPUT_GUIDANCE = 'process.bandMath.panel.outputBands.noImages'
 
 const band = (imageId, name) => ({id: `${imageId}-${name}`, name})
 
@@ -341,6 +363,9 @@ const buttonTooltip = label => [...document.querySelectorAll('[data-tooltip]')]
 // The output images whose rows in Output bands are marked in error, by the name of the image each is taken from.
 // Why Band Math's own requirements refuse its image output, if they do.
 const imageOutputGate = () => requestGate({state: store.getState(), recipe: selectFrom(store.getState(), ['process.loadedRecipes', ID]), operation: 'IMAGE_OUTPUT', heldFor: () => undefined})
+
+// Why Band Math's own configuration refuses its image output, whatever its sources answer.
+const ownConfigurationGate = () => configurationGate({recipe: selectFrom(store.getState(), ['process.loadedRecipes', ID]), operation: 'IMAGE_OUTPUT'})
 
 const outputRowsInError = () => {
     const recipe = selectFrom(store.getState(), ['process.loadedRecipes', ID])
