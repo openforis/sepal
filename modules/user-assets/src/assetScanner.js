@@ -16,8 +16,7 @@ const USER_CONCURRENCY = 2
 
 const userLimiter$ = Limiter({
     name: 'user',
-    concurrency: USER_CONCURRENCY,
-    group: ({username}) => username
+    concurrency: USER_CONCURRENCY
 })
 
 const globalLimiter$ = Limiter({
@@ -101,10 +100,8 @@ const scanTree$ = username => {
     )
 }
 
-const limiter$ = fn$ =>
-    userLimiter$(() =>
-        globalLimiter$(fn$)
-    )
+const limiter$ = (username, fn$) =>
+    userLimiter$(() => globalLimiter$(fn$), username)
 
 const loadNodeValidUser$ = (user, path, id) => {
     const t0 = Date.now()
@@ -127,7 +124,7 @@ const loadNodeMissingUser$ = (username, path) =>
     )
 
 const loadNode$ = (username, path = [], node = {}) =>
-    limiter$(() => from(getUser(username, {allowMissing: true})).pipe(
+    limiter$(username, () => from(getUser(username, {allowMissing: true})).pipe(
         tap(() => increaseProgress(username)),
         switchMap(user => user
             ? loadNodeValidUser$(user, path, node.id)
