@@ -20,7 +20,7 @@ test('worker-open session missing from the table gets opened (missed Activated)'
     assert.deepEqual(callsOf(openSessionUse.openSession), [[{
         sessionId: 's3', username: 'bob', instanceType: 'm5.large', from: new Date('2026-07-02T00:00:00Z'),
     }]])
-    assert.equal(openSessionUse.closeSession.mock.callCount(), 0)
+    assert.equal(openSessionUse.closeStaleSession.mock.callCount(), 0)
 })
 
 test('table row not reported open by the worker gets closed (missed Closed); still-open rows are left alone', async () => {
@@ -38,8 +38,8 @@ test('table row not reported open by the worker gets closed (missed Closed); sti
     assert.deepEqual(callsOf(openSessionUse.openSession), [[{
         sessionId: 's1', username: 'alice', instanceType: 'm5.large', from: new Date('2026-07-01T00:00:00Z'),
     }]])
-    assert.equal(openSessionUse.closeSession.mock.callCount(), 1)
-    assert.deepEqual(callsOf(openSessionUse.closeSession), [[{sessionId: 's2', to: now}]])
+    assert.equal(openSessionUse.closeStaleSession.mock.callCount(), 1)
+    assert.deepEqual(callsOf(openSessionUse.closeStaleSession), [[{sessionId: 's2', to: now}]])
 })
 
 test('combined: opens the missing session, keeps the still-open one, closes the stale one', async () => {
@@ -55,8 +55,8 @@ test('combined: opens the missing session, keeps the still-open one, closes the 
     await reconciler.reconcile()
 
     assert.equal(openSessionUse.openSession.mock.callCount(), 1)
-    assert.equal(openSessionUse.closeSession.mock.callCount(), 1)
-    assert.deepEqual(callsOf(openSessionUse.closeSession), [[{sessionId: 's2', to: now}]])
+    assert.equal(openSessionUse.closeStaleSession.mock.callCount(), 1)
+    assert.deepEqual(callsOf(openSessionUse.closeStaleSession), [[{sessionId: 's2', to: now}]])
 })
 
 test('session requested while the worker is queried is not closed', async () => {
@@ -71,14 +71,14 @@ test('session requested while the worker is queried is not closed', async () => 
     const reconciler = createReconciler({workerClient, openSessionUse, clock: () => new Date('2026-07-03T00:00:00Z')})
     await reconciler.reconcile()
 
-    assert.equal(openSessionUse.closeSession.mock.callCount(), 0)
+    assert.equal(openSessionUse.closeStaleSession.mock.callCount(), 0)
 })
 
 const createMockOpenSessionUse = (openSessionIds = []) => {
     const ids = [...openSessionIds]
     return {
         openSession: mock.fn(),
-        closeSession: mock.fn(),
+        closeStaleSession: mock.fn(),
         openSessionIds: mock.fn(async () => [...ids]),
         requested: sessionId => ids.push(sessionId),
     }
