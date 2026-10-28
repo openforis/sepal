@@ -6,7 +6,7 @@ import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 import {createTestDb} from '#sepal/testSupport/db/testDb'
 
-import {UserRepository} from './userRepository.js'
+import {DuplicateUserError, UserRepository} from './userRepository.js'
 
 // Rows are written directly only where no operation can produce them: the POSIX identities, system
 // accounts and creation times that came from the legacy import, which several reads select on.
@@ -56,6 +56,17 @@ describe('UserRepository', () => {
             assert.equal(stored.id, id)
             assert.equal(stored.uid, id)
             assert.equal(stored.gid, id)
+        })
+
+        test('refuses an email another user has, whatever its case', async () => {
+            await repository.insertUser(aUser())
+
+            await assert.rejects(
+                repository.insertUser(aUser({username: 'alice', email: EMAIL.toUpperCase()})),
+                DuplicateUserError
+            )
+
+            assert.equal(await repository.findByUsername('alice'), null)
         })
     })
 
@@ -319,6 +330,19 @@ describe('UserRepository', () => {
             const stored = await repository.findByUsername(USERNAME)
             assert.equal(updated, true)
             assert.partialDeepStrictEqual(stored, {name: 'Bobby', revision: 3})
+        })
+
+        test('refuses an email another user has, leaving the details as they were', async () => {
+            await repository.insertUser(aUser())
+            await repository.insertUser(aUser({username: 'alice', email: 'alice@example.org', token: 'alice-token'}))
+
+            await assert.rejects(
+                repository.updateUserDetails(details({name: 'Robert', email: 'Alice@Example.org'})),
+                DuplicateUserError
+            )
+
+            const stored = await repository.findByUsername(USERNAME)
+            assert.partialDeepStrictEqual(stored, {name: 'Bob', email: EMAIL, revision: 1})
         })
 
         test('voids the reset token when the email changes', async () => {

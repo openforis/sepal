@@ -7,6 +7,12 @@ import {isText} from './validation.js'
 // login stamp is the one exception: it records activity, not a change to the record.
 const BUMP = 'revision = revision + 1, update_time = NOW()'
 
+const DUPLICATE_ENTRY = 'ER_DUP_ENTRY'
+
+// A write that would give a user the username or email of another. The unique indexes decide, so two
+// concurrent writers cannot both take one.
+export class DuplicateUserError extends Error {}
+
 // insertUser is the only statement that writes `username`, so it is the only one that normalizes
 // (see #sepal/username). Every query below passes the caller's value through untouched: the column
 // is ascii_general_ci, so `WHERE username = ?` matches any case and still uses the unique index,
@@ -167,7 +173,7 @@ export class UserRepository {
                 [email, name, email, organization, intendedUse,
                     emailNotificationsEnabled, manualMapRenderingEnabled, admin, username,
                     revision ?? null, revision ?? null]
-            )
+            ).catch(rethrowDuplicate)
             return result.affectedRows > 0
         })
     }
@@ -223,7 +229,7 @@ export class UserRepository {
                   creation_time, update_time)
                  VALUES (?, ?, ?, ?, ?, 1, 0, ?, NOW(), 0, 0, 'PENDING', NOW(), NOW())`,
                 [storedUsername(username), name, email, organization, intendedUse ?? null, token]
-            )
+            ).catch(rethrowDuplicate)
             await this.#assignDerivedPosixIds(connection, result.insertId)
             return result.insertId
         })
@@ -255,4 +261,8 @@ const requireSelector = selector => {
     if (!isText(selector)) {
         throw new Error('Invalid selector')
     }
+}
+
+const rethrowDuplicate = error => {
+    throw error.code === DUPLICATE_ENTRY ? new DuplicateUserError(error.message) : error
 }

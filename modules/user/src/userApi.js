@@ -9,6 +9,7 @@ import {renderGroup, renderPasswd, snapshotVersion} from './nss.js'
 import {recaptcha} from './recaptcha.js'
 import {generateToken, getOrGenerateToken, isExpired} from './tokens.js'
 import {userToMap} from './user.js'
+import {DuplicateUserError} from './userRepository.js'
 import {isText, isValidEmail, isValidPassword, isValidUsername} from './validation.js'
 
 const log = getLogger('userApi')
@@ -16,6 +17,9 @@ const log = getLogger('userApi')
 // What #applyDetails answers with when the body carries an email the database would reject, so its
 // callers can tell that apart from an unknown user.
 const INVALID_EMAIL = Symbol('invalid-email')
+
+// What #applyDetails answers with when the body's email belongs to another user.
+const EMAIL_TAKEN = Symbol('email-taken')
 
 // What #applyDetails answers with when the body's revision is not the stored one — the caller edited
 // a record that has since changed.
@@ -154,6 +158,11 @@ export class UserApi {
             ctx.body = {message: 'Invalid email'}
             return
         }
+        if (user === EMAIL_TAKEN) {
+            ctx.status = 400
+            ctx.body = {message: 'Email already in use'}
+            return
+        }
         if (user === CONFLICT) {
             return this.#rejectConflict(ctx, current.username, true)
         }
@@ -175,6 +184,11 @@ export class UserApi {
         if (user === INVALID_EMAIL) {
             ctx.status = 400
             ctx.body = {message: 'Invalid email'}
+            return
+        }
+        if (user === EMAIL_TAKEN) {
+            ctx.status = 400
+            ctx.body = {message: 'Email already in use'}
             return
         }
         if (user === CONFLICT) {
@@ -312,7 +326,16 @@ export class UserApi {
             ctx.body = {message: 'Invalid request'}
             return
         }
-        await this.#createInvitedUser({username, name, email, organization, intendedUse: null})
+        try {
+            await this.#createInvitedUser({username, name, email, organization, intendedUse: null})
+        } catch (error) {
+            if (!(error instanceof DuplicateUserError)) {
+                throw error
+            }
+            ctx.status = 400
+            ctx.body = {message: 'Username or email already in use'}
+            return
+        }
         ctx.body = {status: 'success', message: 'Signup succeeded'}
     }
 
@@ -473,9 +496,9 @@ export class UserApi {
 
     // Shared detail-update core. adminValue forces the admin flag (self-update cannot self-elevate).
     // Returns the reloaded user, null when the request names no existing user, INVALID_EMAIL when
-    // the body carries an email the database would reject (malformed, or over EMAIL_MAX_LENGTH), or
-    // CONFLICT when the body's revision is not the stored one. Both callers funnel through here, so
-    // neither can skip the checks.
+    // the body carries an email the database would reject (malformed, or over EMAIL_MAX_LENGTH),
+    // EMAIL_TAKEN when another user has that email, or CONFLICT when the body's revision is not the
+    // stored one. Both callers funnel through here, so neither can skip the checks.
     async #applyDetails(ctx, {targetUsername, adminValue}) {
         if (!isText(targetUsername)) {
             return null
@@ -494,7 +517,10 @@ export class UserApi {
             manualMapRenderingEnabled: body.manualMapRenderingEnabled === true || body.manualMapRenderingEnabled === 'true',
             admin: adminValue,
             revision: toRevision(body.revision)
-        })
+        }).catch(error => error instanceof DuplicateUserError ? EMAIL_TAKEN : Promise.reject(error))
+        if (updated === EMAIL_TAKEN) {
+            return EMAIL_TAKEN
+        }
         const user = await this.#repository.findByUsername(targetUsername)
         if (!user) {
             return null

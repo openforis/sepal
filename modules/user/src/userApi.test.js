@@ -3,6 +3,8 @@ import {beforeEach, describe, mock, test} from 'node:test'
 
 import {assertMatches} from '#sepal/testSupport/assert'
 
+import {DuplicateUserError} from './userRepository.js'
+
 const users = new Map()
 
 const repository = {
@@ -13,16 +15,28 @@ const repository = {
     updateStatus: async (username, status) => users.set(username, {...users.get(username), status}),
     updateToken: async (username, token) =>
         users.set(username, {...users.get(username), token, tokenGenerationTime: Date.now()}),
+    insertUser: async ({username, ...details}) => {
+        if (users.has(username) || isEmailTaken(details.email)) {
+            throw new DuplicateUserError()
+        }
+        users.set(username, {...details, username, status: 'PENDING', revision: 1})
+    },
     // The conditional write of the real repository: nothing happens on a stale revision.
     updateUserDetails: async ({username, revision, ...details}) => {
         const user = users.get(username)
         if (!user || (revision != null && revision !== user.revision)) {
             return false
         }
+        if (isEmailTaken(details.email, username)) {
+            throw new DuplicateUserError()
+        }
         users.set(username, {...user, ...details, revision: user.revision + 1})
         return true
     }
 }
+// The case-insensitive unique email index of the real repository.
+const isEmailTaken = (email, exceptUsername) => [...users.values()].some(user =>
+    user.username !== exceptUsername && user.email?.toLowerCase() === email?.toLowerCase())
 // config.js parses argv at import time and exits on missing mandatory options
 mock.module('./config.js', {
     exports: {
@@ -111,6 +125,20 @@ describe('POST /details', () => {
 
         assert.partialDeepStrictEqual(ctx.body, {name: 'Robert'})
     })
+
+    test('refuses an email another user has, changing nothing', async () => {
+        const admin = anAdmin({username: 'admin'})
+        const alice = anActiveUser({username: 'alice'})
+        const bob = anActiveUser({username: 'bob'})
+        const changed = collect(userChanged$)
+        const ctx = requestBy(admin, {...detailsOf(bob), email: alice.email.toUpperCase()})
+
+        await api.updateDetails(ctx)
+
+        assert.equal(ctx.status, 400)
+        assert.equal(users.get('bob').email, bob.email)
+        assert.deepEqual(changed(), [])
+    })
 })
 
 describe('POST /current/password', () => {
@@ -145,6 +173,17 @@ describe('POST /current/details', () => {
         assert.equal(ctx.body.email, 'robert@example.org')
     })
 
+    test('refuses an email another user has, changing nothing', async () => {
+        const alice = anActiveUser({username: 'alice'})
+        const bob = await withPassword(anActiveUser({username: 'bob'}))
+        const ctx = requestBy(bob, {...detailsOf(bob), email: alice.email, password: PASSWORD})
+
+        await api.updateCurrentDetails(ctx)
+
+        assert.equal(ctx.status, 400)
+        assert.equal(users.get('bob').email, bob.email)
+    })
+
     test('changes the other details without the password', async () => {
         const bob = await withPassword(anActiveUser({username: 'bob'}))
         const ctx = requestBy(bob, {...detailsOf(bob), name: 'Robert'})
@@ -152,6 +191,18 @@ describe('POST /current/details', () => {
         await api.updateCurrentDetails(ctx)
 
         assert.equal(ctx.body.name, 'Robert')
+    })
+})
+
+describe('POST /signup', () => {
+    test('refuses an email another user has, creating no user', async () => {
+        const alice = anActiveUser({username: 'alice'})
+        const ctx = anonymousRequest({username: 'carol', name: 'Carol', email: alice.email})
+
+        await api.signup(ctx)
+
+        assert.equal(ctx.status, 400)
+        assert.equal(users.has('carol'), false)
     })
 })
 
