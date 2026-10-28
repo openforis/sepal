@@ -22,9 +22,17 @@
         - "LANG=en_US.utf-8"
         - "LC_ALL=en_US.utf-8"
 
+    # Production runs Amazon Linux 2, test runs AL2023: monit comes from EPEL on AL2 and from SPAL on AL2023
+    - name: Install epel
+      command: "amazon-linux-extras install epel -y"
+      args:
+        creates: /etc/yum.repos.d/epel.repo
+      when: ansible_distribution_major_version == '2'
+
     - name: Install spal-release
       dnf:
         name: 'spal-release'
+      when: ansible_distribution_major_version != '2'
 
     - name: Install monit
       yum:
