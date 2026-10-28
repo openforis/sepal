@@ -41,7 +41,8 @@ const {OutputRegistry} = await import('../sourceRuntime/outputRegistry')
 const {compatibleBasis, outputLoading} = await import('./recipeOutput')
 const {NEVER, Subject} = await import('rxjs')
 const {heldSourceStatusOfState, itemStatusesOf, itemStatusesOfState, sourceProblemsOfState} = await import('./selectedSourceStatus')
-const {readOutputRequirements, readOutputRequirementsOfState, requestGate, requestGateOf} = await import('./sourceRequirements')
+const {readLocalRequirements, readOutputRequirements, readOutputRequirementsOfState, requestGate, requestGateOf} = await import('./sourceRequirements')
+const {SUPPORTED, unsupported} = await import('#sepal/recipe/requirement/verdict')
 const {IMAGE_OUTPUT} = await import('./recipeOutput')
 
 addRecipeType(classification())
@@ -400,10 +401,11 @@ describe('a recipe without input imagery', () => {
         expect(retrieve(state).gate.section).toBe(section)
     })
 
-    it('of type BAND_MATH keeps its Output bands marked for having none, beside it', () => {
+    // Nothing output yet is setup still to do (bandMathRequirements.js): Output bands holds the output unmarked.
+    it('of type BAND_MATH leaves its Output bands unmarked for having none, beside it', () => {
         const state = sessionWith(emptyModels.BAND_MATH(), {type: 'BAND_MATH'})
 
-        expect(Object.keys(sourceProblems(state)).sort()).toEqual(['inputImagery', 'outputBands'])
+        expect(Object.keys(sourceProblems(state))).toEqual(['inputImagery'])
     })
 
     it('holds a Remapping over it and marks its input reference, keeping the diagnosis upstream', () => {
@@ -448,6 +450,30 @@ describe('a finding one declaration locates, beside another declaration', () => 
         expect(reads.filter(({outputState}) => outputState).map(({declaration}) => declaration.id)).toEqual(generic)
         expect(requestGateOf(reads, 'IMAGE_OUTPUT')).toMatchObject({code: 'CONFIGURATION_UNMET', section: 'located'})
         expect(Boolean(requestGateOf(reads, 'PIXEL_SEGMENTS'))).toBe(generic.length > 0)
+    })
+})
+
+// The output read refused for what no declaration locates is said, for a declaration finding nothing of its own, only
+// where no requirement states a refusal of the same operation: a stated refusal is the reason, operation by operation.
+describe('an output refusal no declaration locates, beside a requirement of the configuration', () => {
+    it.each([
+        ['refusing the operation, gives way to that refusal', 'STATES_IMAGE', ['IMAGE_OUTPUT'], true, ['IMAGE_OUTPUT'],
+            {code: 'CONFIGURATION_UNMET', section: 'stated'}, null],
+        ['refusing the operation, still holds another it alone holds', 'STATES_IMAGE_ALSO_SEGMENTS', ['IMAGE_OUTPUT'], true,
+            ['IMAGE_OUTPUT', 'PIXEL_SEGMENTS'], {code: 'CONFIGURATION_UNMET', section: 'stated'}, {code: 'SOURCE_UNSUITABLE', section: 'other'}],
+        ['refusing only another operation, is the reason for the one it holds', 'STATES_SEGMENTS', ['PIXEL_SEGMENTS'], true,
+            ['IMAGE_OUTPUT'], {code: 'SOURCE_UNSUITABLE', section: 'other'}, {code: 'CONFIGURATION_UNMET', section: 'stated'}],
+        ['met, is the reason', 'STATES_NOTHING', ['IMAGE_OUTPUT'], false, ['IMAGE_OUTPUT'],
+            {code: 'SOURCE_UNSUITABLE', section: 'other'}, null]
+    ])('%s', (_case, type, stated, refuses, generic, imageGate, segmentsGate) => {
+        // Declared, and read, before the requirement, so that order alone would make it the reason.
+        addRecipeType({id: type, imageSource: true, sourceRequirements: [{...OTHER, operations: generic}, stating(stated, refuses)]})
+        const recipe = {id: 'stated-1', type, model: {}}
+
+        const reads = [...readOutputRequirements({recipe, output: UNLOCATED_FINDING}), ...readLocalRequirements(recipe)]
+
+        expect(requestGateOf(reads, 'IMAGE_OUTPUT')).toMatchObject({withdraw: true, ...imageGate})
+        expect(requestGateOf(reads, 'PIXEL_SEGMENTS')).toEqual(segmentsGate && expect.objectContaining({withdraw: true, ...segmentsGate}))
     })
 })
 
@@ -502,6 +528,25 @@ const LOCATED_FINDING = {
         findings: [{code: 'LOCATED_CODE', path: ['model', 'located'], recipePath: ['located-1']}],
         needs: {records: [], observations: []}
     }
+}
+
+// A requirement of the recipe's own configuration over `operations`, refusing it or met.
+const stating = (operations, refuses) => ({
+    id: 'STATED',
+    section: {id: 'stated', label: 'stated'},
+    requirement: {
+        id: 'STATED',
+        evaluate: () => refuses ? unsupported({code: 'STATED_CODE'}) : {status: SUPPORTED},
+        describe: () => ({message: 'STATED', details: []})
+    },
+    localFacts: () => ({}),
+    operations
+})
+
+// An output described and kept from running by what no declaration locates.
+const UNLOCATED_FINDING = {
+    ...LOCATED_FINDING,
+    readiness: {...LOCATED_FINDING.readiness, findings: [{code: 'UNLOCATED_CODE', path: ['model'], recipePath: ['stated-1']}]}
 }
 
 const ID = 'classification-1'

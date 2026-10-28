@@ -3146,7 +3146,7 @@
           "tooltip": "Select bands to output and their corresponding names.",
           "duplicateBand": "Duplicate band name",
           "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters",
-          "noImages": "No images/calculations added to output",
+          "noImages": "Choose the bands to output: press Add to pick an input image or a calculation, then its bands. Input bands can be output directly; a calculation is optional.",
           "noBands": "No bands added to output",
           "missingBands": "An image or calculation outputs no bands.",
           "resetName": {

@@ -222,6 +222,10 @@ completed by collecting them on the map or adding a data set; Regression offers 
 Operations requiring training remain held. Feedback for an explicitly selected empty Provider is a separate policy
 question; an empty branch does not by itself establish that the Consumer's total training data is empty.
 
+The same distinction applies to Band Math: no output chosen yet is setup guidance, while a configured output that
+references a missing band or has an invalid name is an error. An empty overall output selection still holds preview
+and Retrieve. Guidance must allow selecting input bands directly as outputs; creating a calculation is optional.
+
 Presence and sufficiency are different claims. Configured points do not prove that samples survive masking, cover
 the imagery or suffice for a particular classifier.
 

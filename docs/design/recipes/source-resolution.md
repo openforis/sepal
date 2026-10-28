@@ -77,6 +77,11 @@ claiming the earlier campaign tested that later tree.
 
 **Agreed next sequence after keyboard band addition (2026-10-27):**
 
+**Band Math setup feedback completed and browser-accepted (2026-10-28).** An empty output leaves OUT unmarked,
+with neutral guidance; preview and Retrieve remain held and name OUT. Choosing an output releases the hold.
+See "Band Math empty-output setup feedback". The pre-existing map-area menu visibility inconsistency is agreed
+as a separate correction, outside this accepted setup/gate change.
+
 1. **BAYTS settings ownership and consistency.** Start with the field/reader audit below, then scope the correction
    using the established ownership and form contracts. This is selected first as a consistency fix; do not assume
    Change Alerts' exact field policy applies to BAYTS or remove copying without replacing required ownership.
@@ -6557,6 +6562,116 @@ implementation proposal below when this item starts; no implementation is claime
 - **Acceptance:** compatible layers can share a style, destination identity/source remain unchanged, incompatible
   bands have an understandable outcome, and existing visualization save/reopen behaviour is preserved. Define exact
   transferable fields and clipboard behaviour in the small implementation proposal before adding controls.
+
+**Band Math empty-output setup feedback (implemented, independently reviewed and browser-accepted 2026-10-28).**
+
+- **Report:** selecting input imagery in a new recipe marks OUT as an error before the user has started calculating
+  or choosing outputs. This conflicts with the existing setup-versus-invalidity contract.
+- **Confirmed code path:** `bandMathRequirements.js` declares `OUTPUT_IMAGES_REQUIREMENT` over `OUTPUT_PRESENCE`
+  without a toolbar-mark exception. `chainRequirements.js` reports `NO_OUTPUT_IMAGES` for the empty output list;
+  `sectionMarks.test.jsx` explicitly expects the red mark. Classification already uses `toolbarMark: false` for
+  its equivalent total absence of training data. This is a deliberate presentation-policy correction, not removal
+  of an execution prerequisite.
+- **Direction:** leave OUT unmarked for an empty overall output selection and provide neutral guidance in the
+  output panel, reusing its existing empty-state presentation where possible. Suggest choosing output bands;
+  calculations are optional because input bands can pass through directly. Apply the rule from current configuration,
+  without a persisted "started" flag or different behavior merely because the recipe was saved/reopened.
+- **Preserve:** preview/Retrieve holds and readiness; errors for invalid calculations, missing referenced images or
+  bands, invalid/duplicate output names and configured output items left without bands. Required-field validation
+  inside the form follows normal interaction/submission policy. Do not suppress all OUT findings or weaken Apply.
+- **Scope/acceptance:** prefer the existing declaration-level presentation control, not a toolbar-specific validator
+  or a new readiness state. Add a mounted empty-setup control proving neutral OUT with operations still held, then
+  show that choosing a direct input band or calculation output releases the hold and genuine configured errors still
+  mark the appropriate section/item. No browser reproduction or production change is claimed by this code trace.
+- **Implemented.**
+  - `OUTPUT_IMAGES_REQUIREMENT` (`bandMathRequirements.js`) takes `toolbarMark: false`, the declaration-level
+    control Classification uses for `NO_TRAINING_DATA`. `NO_OUTPUT_IMAGES` still refuses the image output, so preview
+    and Retrieve stay held; only OUT's button no longer reports it.
+  - The rule follows the current configuration: there is no flag, and a reopened recipe behaves the same.
+  - The panel's existing empty-list message (`outputBands.noImages`, English) now says: "Choose the bands to output:
+    press Add to pick an input image or a calculation, then its bands. Input bands can be output directly; a
+    calculation is optional." No paragraph was added.
+  - The form's `notEmpty` validation, Apply policy and every other OUT finding are unchanged: missing or invalid
+    bands, duplicate or invalid names, and an output image without bands. Other locales keep their translations of the
+    older text, which remains true.
+- **Regressions** (`sectionMarks.test.jsx`, the real toolbar, Output bands panel, store and source runtime):
+  - Imagery with nothing output leaves OUT unmarked, with the guidance shown, the configuration gate refusing and the
+    image output withdrawn, also after reopening.
+  - Applying a direct input band output, with no calculation, clears the configuration refusal and the guidance.
+  - The "nothing output" case of the description-refused table now expects OUT unmarked while the input is still
+    marked once read.
+  - The unreadable-source case asserts the hold instead of the OUT mark.
+  - Existing genuine-error cases still mark their sections and rows: an output image without bands, duplicate and
+    invalid names, an unmet calculation, and an input lacking a band.
+  - **Witness:** without the flag, the two empty-output cases fail and the rest pass.
+- **Verification:** all Band Math tests and the locale checks, 23 files and 280 tests (two workers). ESLint on the
+  changed files, the translations JSON and `git diff --check` are clean.
+- **Gate attribution corrected (2026-10-28, shared).** A held preview or Retrieve used to name Calculations whenever
+  the output read refused. That was the generic output state of the first output declaration, Calculations, which
+  found nothing of its own. It happened with nothing output and also for configured output errors such as duplicate
+  names.
+  - **Rule:** `requestGateOf` (`sourceRequirements.js`) now gives that generic fallback only where no stated refusal
+    holds the same operation. A stated refusal is a local requirement, a located finding or a selected source's
+    requirement.
+  - Pending generic reads still wait. A generic refusal still holds any operation no stated refusal covers, and is
+    the reason beside a met requirement or one stated for another operation. The read list is unchanged, and so are
+    `locatedRefusals`, the toolbar marks and the declaration order.
+  - **Result:** an empty output and configured output errors hold naming OUT; calculation errors still name CALC.
+- **Regressions for the gate:**
+  - `outputRequirements.test.js`: a generic output refusal declared and read before a stated local refusal. The
+    stated one is the reason for its operation. The generic one still holds another operation only it holds, and is
+    the reason where the requirement covers another operation or is met.
+  - `sectionMarks.test.jsx`: the empty output, the description-refused table, the unreadable source, an output image
+    without bands and duplicate or invalid names all hold naming OUT; the unmet calculation still names CALC.
+  - **Witness:** the previous gate fails the two "stated refusal is the reason" bridge cases and 5 of 11 mounted cases.
+    The controls pass both ways.
+- **Missed by the first verification:** the bridge test "of type BAND_MATH keeps its Output bands marked for having
+  none" (`outputRequirements.test.js`) still pinned the old OUT mark. The first run covered only the Band Math
+  directory and locales. It now expects only Input imagery marked.
+- **Verification (gate correction):** the affected callers' directories (Classification, Regression, Time Series,
+  CCDC, CCDC Slice, Phenology, PyEO, Stack, Band Math, Remapping, Unsupervised Classification, Change Alerts, BAYTS
+  Alerts, Masking), the process recipe top-level tests, process panels, map layer source and locale: 143 files and
+  2266 tests (two workers). ESLint on the changed files and `git diff --check` are clean.
+- **Independent review (2026-10-28; correction required before acceptance):** the declaration-level toolbar change
+  is appropriately scoped, but the incorrect repair target should be corrected within this setup-feedback slice.
+  A temporary copy of the mounted empty-output test expecting the full image-output gate to name OUT fails:
+  it returns `SOURCE_UNSUITABLE` at Calculations instead of the explicit `CONFIGURATION_UNMET` at Output bands.
+  The local configuration gate already has the correct owner. Evidence:
+  `/tmp/sepal-bandmath-empty-attribution-review.log`; the probe was removed and production code was not changed.
+  The generic output-state fallback currently wins over a concrete section-level local refusal. This does not by
+  itself establish that all shared reasons should be reordered: inspect the existing generic-versus-located
+  suppression and operation scopes, then correct the owning mechanism without Band Math-specific gate logic or
+  declaration-order workarounds. Retain generic holds where no explicit requirement explains them or where they
+  cover another operation, and preserve real calculation errors. Include configured OUT errors as ownership
+  controls. Cover the complete gate/consumer-facing target, not only the local configuration gate. The earlier
+  suggestion to defer this target mismatch is not accepted. Independently, the submitted Band Math and translation
+  tests pass: 276 tests in 22 files with two workers; changed-file ESLint and `git diff --check` pass. This passing
+  campaign does not include the additional failing attribution assertion above.
+- **Correction independently verified (2026-10-28):** no remaining review finding. `requestGateOf` selects explicit
+  unsupported requirement reasons for the requested operation over confirmed generic `outputState` fallbacks.
+  It changes neither declaration order nor the read list, and retains generic reasons for operations without an
+  explicit refusal; pending/unavailable handling and withdrawal stay intact. The mounted empty-output and genuine
+  OUT-error cases now assert the full gate names OUT, and the genuine calculation case still names CALC. An
+  independent run of all Band Math tests, source/output requirement tests, operation availability, section status,
+  both Time Series/CCDC Retrieve lifecycle files and translations passed 390 tests in 28 files with two workers.
+  Changed-file ESLint and `git diff --check` pass. Evidence:
+  `/tmp/sepal-bandmath-gate-correction-review-tests.log` and
+  `/tmp/sepal-bandmath-gate-correction-review-lint.log`.
+- **Browser acceptance (2026-10-28):** the user confirmed the manual checks are good and accepted the setup/gate
+  change. The map-area menu visibility observation below is pre-existing and will be addressed in a separate commit.
+- **Related map-area menu visibility observation (2026-10-28; separate correction agreed, not implemented):** the user sees
+  no map-area settings button before Band Math has outputs and asks that hiding versus disabling be consistent and
+  centrally owned. `bandMathImageLayer.jsx` returns no `MapAreaLayout` when `outputImages` is empty, so its menu and
+  feature overlays are absent; this is a recipe-specific condition, not the shared request gate. Stack, Remapping
+  and Masking render that layout even without a drawable layer. The shared `MapAreaMenu` itself renders its button;
+  Retrieve likewise retains its button and uses shared availability to disable it. This predates the current
+  toolbar/gate correction. Review other layer wrappers when implementing the shared capability-versus-readiness policy.
+  The menu also controls overlays, so an unusable recipe image does not necessarily make the whole menu useless:
+  the user agreed the direction of retaining applicable controls and centrally gating only operations whose
+  prerequisites are missing, preserving independent overlay functions. Implement the correction separately from
+  the accepted setup/gate fix, using the shared map-area boundary rather than additional recipe-specific checks.
+  Check empty/invalid output, repair and unaffected overlay access across representative recipes. No map-area
+  production change is included in this setup/gate commit.
 
 **F8. Fix the concrete chart-layout and Retrieve-message regressions.**
 
