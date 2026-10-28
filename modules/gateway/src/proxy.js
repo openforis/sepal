@@ -5,7 +5,6 @@ import {getLogger} from '#sepal/log'
 
 import {endpoints, internalPaths} from '../config/endpoints.js'
 import {sepalHost} from './config.js'
-import {rewriteLocation} from './rewrite.js'
 import {urlTag, usernameTag} from './tag.js'
 import {getRequestSession, getRequestUser, SEPAL_SESSION_HEADER, SEPAL_USER_HEADER, SEPAL_USER_UPDATED_HEADER} from './user.js'
 
@@ -30,7 +29,7 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
     })
 
     const proxy = app =>
-        ({path, target, proxyTimeout = 60 * 1000, timeout = 61 * 1000, authenticate, cache, noCache, rewrite, ws = false}) => {
+        ({path, target, proxyTimeout = 60 * 1000, timeout = 61 * 1000, authenticate, noCache, ws = false}) => {
             // http-proxy-middleware v4 (httpxy) re-injects '/' when the request URL has no path
             // component, producing a stray slash when target.pathname is joined with a query-only
             // request. Compose the upstream path here and send only target.origin so httpxy has
@@ -84,10 +83,6 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
                         } else {
                             proxyReq.removeHeader(SEPAL_SESSION_HEADER)
                         }
-                        if (cache) {
-                            log.isTrace() && log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Enabling caching`)
-                            proxyReq.setHeader('Cache-Control', 'public, max-age=31536000')
-                        }
                         if (noCache) {
                             log.isTrace() && log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Disabling caching`)
                             proxyReq.removeHeader('If-None-Match')
@@ -96,14 +91,6 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
                         }
                     },
                     proxyRes: (proxyRes, _req, _res) => {
-                        if (rewrite) {
-                            const location = proxyRes.headers['location']
-                            if (location) {
-                                const rewritten = rewriteLocation({path, target, location})
-                                log.debug(() => `Rewriting location header from "${location}" to "${rewritten}"`)
-                                proxyRes.headers['location'] = rewritten
-                            }
-                        }
                         proxyRes.headers['Content-Security-Policy'] = `connect-src 'self' https://${sepalHost} wss://${sepalHost} https://*.googleapis.com https://apis.google.com https://*.google-analytics.com https://*.google.com https://*.planet.com https://registry.npmjs.org; frame-ancestors 'self' https://${sepalHost} https://*.googleapis.com https://apis.google.com https://*.google-analytics.com https://registry.npmjs.org`
                         proxyRes.headers['X-Content-Type-Options'] = 'nosniff'
                         proxyRes.headers['Strict-Transport-Security'] = 'max-age=16000000; includeSubDomains; preload'
