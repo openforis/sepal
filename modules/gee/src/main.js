@@ -16,6 +16,8 @@ const main = async () => {
     await server.start({
         port,
         routes,
+        // Requests carry whole recipes, which can embed large training data and drawn geometries.
+        bodyLimit: '100mb',
         requestTag: (username, requestId, sepalUser) =>
             `<${username}:${requestId}> ${eeAccountTag(sepalUser, googleProjectId)}`
     })
