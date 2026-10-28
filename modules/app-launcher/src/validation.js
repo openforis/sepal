@@ -1,5 +1,3 @@
-import path from 'node:path'
-
 import {ClientException} from '#sepal/exception'
 
 const validateBranchName = branch => {
@@ -23,41 +21,6 @@ const validateBranchName = branch => {
     return branch
 }
 
-const validateRepository = repository => {
-    if (!repository || typeof repository !== 'string') {
-        throw new ClientException('Repository URL is required')
-    }
-    
-    // Allow HTTPS URLs
-    if (repository.startsWith('https://')) {
-        try {
-            const url = new URL(repository)
-            // Only allow known git hosting domains or validate URL structure
-            if (!url.hostname || url.hostname.length === 0) {
-                throw new ClientException('Invalid repository URL: missing hostname')
-            }
-            if (url.search || url.hash) {
-                throw new ClientException('Invalid repository URL: query strings and fragments not allowed')
-            }
-            // Ensure path doesn't contain shell metacharacters
-            if (/[;&|`$(){}[\]<>!#*?\\]/.test(url.pathname)) {
-                throw new ClientException('Invalid repository URL: contains disallowed characters')
-            }
-            return repository
-        } catch (err) {
-            if (err instanceof ClientException) throw err
-            throw new ClientException('Invalid repository URL format')
-        }
-    }
-    
-    // Allow git@ SSH URLs (e.g., git@github.com:user/repo.git)
-    if (/^git@[a-zA-Z0-9.-]+:[a-zA-Z0-9._/-]+\.git$/.test(repository)) {
-        return repository
-    }
-    
-    throw new ClientException('Invalid repository URL: must be HTTPS or git@ SSH URL')
-}
-
 const validateAppName = appName => {
     if (!appName || typeof appName !== 'string') {
         throw new ClientException('App name is required')
@@ -76,18 +39,4 @@ const validateAppName = appName => {
     return appName
 }
 
-const validatePath = (basePath, filePath) => {
-    const resolvedPath = path.resolve(basePath, filePath)
-    
-    if (!resolvedPath.startsWith(basePath)) {
-        throw new ClientException('Invalid path: path traversal detected')
-    }
-    
-    return resolvedPath
-}
-
-export {
-    validateAppName,
-    validateBranchName,
-    validatePath,
-    validateRepository}
+export {validateAppName, validateBranchName}
