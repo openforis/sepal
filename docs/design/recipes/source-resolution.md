@@ -86,8 +86,11 @@ image readiness.
 1. **BAYTS settings ownership and consistency.** Implemented, independently reviewed and browser-accepted
    (2026-10-28). The ownership audit, implementation and corrections are recorded below. Final full GUI verification
    passed: 4823 tests in 334 files. No further implementation finding is open.
-2. **Visualization Copy/Paste.** Implement F7 as a separate feature in the existing layer/visualization UI, preserving
-   destination identity and validating the transferred parameters.
+2. **Visualization Copy/Paste.** Implemented and independently reviewed (2026-10-28): copy the current draft,
+   including incomplete values, through controls only inside the visualization panel. Destination identity stays
+   its own and Apply validates. All review findings are corrected. The user accepted the final header layout and
+   confirmed unsaved Copy / source Cancel / destination Paste; browser acceptance is complete. Final full GUI
+   verification passed 4860 tests in 335 files. See F7 for the implementation, corrections and acceptance evidence.
 3. **[Recipe-scoped modals](data-sources.md#recipe-scoped-modals).** Inspect the shared scoping/lifecycle first, then
    try the proposed visualization-editor pilot in two recipe tabs. Preserve drafts and isolate active-tab interaction;
    opening selected recipes follows the accepted modal work, rather than broadening the first pilot.
@@ -7025,6 +7028,499 @@ implementation proposal below when this item starts; no implementation is claime
 - **Acceptance:** compatible layers can share a style, destination identity/source remain unchanged, incompatible
   bands have an understandable outcome, and existing visualization save/reopen behaviour is preserved. Define exact
   transferable fields and clipboard behaviour in the small implementation proposal before adding controls.
+
+**F7 implementation proposal (2026-10-28; amended for panel-only draft copying; implemented the same day, see the
+implementation record below).**
+The user clarified that Copy and Paste belong only inside the visualization panel. Copy captures what is currently
+in that panel, including unfinished or invalid entries. Paste fills the destination panel's draft. Applying a style
+remains a separate, validated action. This replaces the earlier applied-style/selector-button proposal.
+
+- **Current owners.**
+  - `VisualizationSelector.editorContext()` supplies the destination recipe, source id, scalar band choices and
+    product arguments when opening `VisParamsPanel` through the existing Add/Edit/Clone actions.
+  - `VisParamsPanel` owns the editable channel fields, palette and categorical legend rows. Its existing Apply
+    path normalizes, saves and selects a locally owned visualization; it asks before replacing another style over
+    the same bands. `showsEditedLayer` closes without saving if the area changes layer or product.
+- **Controls and interaction.**
+  - Put both Copy and Paste in the shared visualization panel. The layer selector gets no new controls.
+  - Copy takes a snapshot of the panel's current editable draft, including blanks, invalid numeric or color text,
+    missing bands, and unfinished or duplicate legend rows. It does not require Apply to be enabled, apply the draft,
+    change the preview, or substitute the previously applied style.
+  - Copy is acknowledged locally. Cancel after Copy discards the source panel's edits but leaves the copied snapshot
+    available for another panel.
+  - Paste replaces the destination panel's rendering draft with that snapshot. It does not apply, save or select a
+    visualization. An empty clipboard disables Paste with its explanation; a copied empty draft is distinct from
+    having copied nothing.
+  - Apply and Cancel retain their ordinary meanings: Apply saves only an acceptable destination draft, while Cancel,
+    Escape and the backdrop leave applied styles and layer configuration unchanged.
+- **Transferable draft.** Reuse the editor's actual draft owners, keeping raw field values and row associations rather
+  than running a renderer-oriented serializer over incomplete input.
+
+  | Type | Draft content |
+  | --- | --- |
+  | Continuous | Type, one channel's band/min/max/inversion, and palette entries |
+  | RGB, HSV | Type, three channels in order, each band's min/max/inversion/gamma |
+  | Categorical | Type, band, and legend rows containing value, label and color together |
+
+  - Preserve incomplete slots, raw text, duplicate entries and row order. Copy/Paste must not parse partially typed
+    numbers, fill blanks, discard invalid colors, sort rows or lose the association between a category and its label
+    and color. The existing successful Apply path may canonicalize, including sorting categorical rows by value.
+  - Band names remain raw identifiers, with no automatic remapping by position or label. Form-only row ids are
+    regenerated for the destination and are not visualization identity.
+  - Exclude source visualization id, ownership, layer/source ids, recipe, AOI, product arguments, processing,
+    histograms, request state and validation messages. Destination errors are recomputed, not copied.
+  - `dataType` remains recommended for exclusion: it is a source value-format hint, not a color/range choice. No
+    date semantics are inferred for a destination from a copied style. The legacy server-only `stretch` is excluded.
+- **Clipboard: application-local (recommended).**
+  - Hold one independent draft snapshot in session state outside `process.loadedRecipes`; never persist it with a
+    recipe or write it to the system clipboard. It spans recipe panels and map areas until the next Copy or reload.
+  - This needs no browser permission or external interchange format. It does not transfer between browser windows
+    or people. The earlier system-clipboard helper defect is outside this scope.
+  - Reuse the local acknowledgement of `CopyButton` through a small writer extension if suitable; preserve its
+    default behavior for existing callers. A later Copy never changes an already-pasted draft.
+- **Validity and repair.**
+  - Copy and Paste do not require a renderable or valid style. `normalize` is not a draft serializer: use it at the
+    existing Apply boundary after acceptance, rather than letting it coerce or refuse a draft during transfer.
+  - Reuse existing field and legend validation, adding destination band applicability at that same editor boundary.
+    One acceptance decision governs the Apply button and submission before confirmation or saving.
+  - An unavailable band stays selected, visibly explained and repairable, in continuous, RGB/HSV and categorical
+    controls. Preserve the other draft values. No histogram, Stretch or distinct-value request may name an absent
+    or undrawable band. A blank slot remains unfinished setup under ordinary field interaction/submission policy.
+  - Pending evidence does not prove incompatibility. Opening the panel still uses the existing destination-context
+    guard; this feature introduces no evidence loader, cache or readiness rule.
+  - Separate a malformed clipboard envelope from an invalid editor draft. Reject only a payload the panel cannot
+    safely read as its draft shape; missing fields and invalid field values are ordinary editable content.
+  - Category meaning is not established by pasting a legend. The user reviews it against the destination.
+- **Identity and lifecycle.**
+  - Paste preserves the destination panel's context and existing Add/Edit/Clone mode. A new destination visualization
+    receives its own id through the normal save path; an edited destination visualization retains its own identity.
+    The source's identity is never transferred.
+  - Reuse the panel's existing destination-change closure. Copy/Paste adds no navigation or modal-scoping behavior.
+- **Affected components.**
+  - A small `visParams/visualizationClipboard.js` owns the allowlisted draft snapshot and app-local clipboard access.
+  - `visParamsPanel.jsx` owns the buttons, draft capture/restore, unavailable-band presentation and acceptance guard.
+  - Existing channel, palette or legend draft ownership may need a bounded adjustment if their displayed input is
+    not yet represented by the panel's draft. Trace this before claiming every visible edit is copied.
+  - `widget/copyButton.jsx` only if a writer extension is needed; English translations for the controls and feedback.
+  - Keep rendering, layer ownership, band labels and recipe-scoped modals outside this slice.
+- **Focused acceptance.** Use the real shared editor and store, substituting external image requests only:
+  - Copy unsaved edits rather than the previously applied style, then Cancel the source and paste into another panel.
+  - Copy/Paste an incomplete RGB channel, invalid range/color and unfinished categorical row without data loss.
+    Apply stays held until repair, including keyboard submission; transfer itself remains available.
+  - Preserve categorical value/label/color associations and raw row order in the draft, with normal sorting on Apply.
+  - Preserve destination identity, recipe/source, AOI, product, processing and applied selection until Apply; Cancel
+    after Paste changes no applied state. Cover both Add and Edit modes.
+  - A missing destination band stays visible and produces no image request; choosing a usable replacement repairs it.
+  - Copy/Paste are snapshots; a later Copy cannot alter a pasted draft. Layer/product changes close without saving.
+  - The applied destination style still saves and reopens normally. Keep existing selector/editor, legend-builder
+    and copy-button checks; reserve the full GUI suite for final readiness.
+- **Remaining recommendations:** app-local clipboard and exclusion of source `dataType`, as above. The user has
+  decided the draft semantics and panel-only placement. No production code or tests changed in this proposal.
+
+**F7 proposal: independent review (2026-10-28).** The proposed shared-selector/editor boundary is appropriate.
+Application-local copying is a reasonable first scope for transfer between recipe tabs; excluding the source's
+`dataType` keeps value semantics out of a style transfer. The date-formatting limitation is explicit, and future
+destination-derived formatting belongs to the broader visualization/band metadata work rather than a recipe-specific
+F7 exception. These remain recommendations for the user's product decision.
+
+Implementation clarifications from the code trace:
+
+- `normalize` canonicalizes a definition; it does not enforce the expected channel count or aligned categorical
+  arrays. The clipboard's small transfer rule must explicitly check the structural promises above, without claiming
+  the normalizer already validates them. Respect representations the existing normalizer supports; keep repairable
+  form-value errors in the editor as proposed.
+- One editor acceptance decision must cover ordinary form/legend validity and band applicability, and govern both
+  the Apply button and `check()` before confirmation or saving. Keep unavailable bands selected for repair in both
+  continuous/RGB/HSV controls and the categorical band's control. All histogram and distinct-value entry points must
+  avoid requesting an unavailable band, including explicit Stretch and Load from image values actions.
+- Categorical value/label/color associations must survive transfer. The existing save path sorts entries by value;
+  acceptance should preserve that canonical behavior rather than require an unsorted source legend to retain its
+  input order after Apply. Include an unsorted-legend control.
+
+No production change or test run was needed for this bounded proposal review.
+
+**F7 user clarification (2026-10-28).** The user rejected restricting Copy to an applied, valid visualization and
+explicitly limited both Copy and Paste to the visualization panel. The current proposal above now follows the
+visible editable draft, including incomplete input. Its draft-transfer rules supersede the earlier recommendations
+to normalize/refuse a style at Copy/Paste or to add controls to the layer selector. Structural safety of the local
+payload remains distinct from field validity, which belongs to Apply.
+
+**F7 implementation (2026-10-28; independent review and browser acceptance pending).** It follows the draft-transfer
+contract above.
+
+- **Controls.**
+  - Copy and Paste are two round icon buttons in `VisParamsPanel`'s footer, after Stretch or the legend's Add menu.
+    The layer selector is unchanged.
+  - Copy is always enabled, an empty or invalid draft included. It is acknowledged on the button, through
+    `CopyButton`'s new optional `write`; the default system-clipboard write is unchanged for its existing callers.
+  - Paste is disabled, with a tooltip saying why, only while no readable draft is held.
+  - Neither saves, applies, selects or changes the map. Cancel, Escape and the backdrop keep their meaning, and
+    closing a panel leaves the clipboard as it is.
+- **Clipboard.** `visParams/visualizationClipboard.js` holds one draft at `visualizationClipboard` in the session
+  store, outside `process.loadedRecipes`. It is shared by every recipe panel and map area, replaced by the next Copy
+  and gone on reload. It is never persisted with a recipe or written to the system clipboard.
+- **Draft content.** The draft has an allowlisted shape per type. It holds values only, built fresh at Copy and again
+  at Paste, so a copied draft and a pasted one never share objects.
+
+  | Type | Content |
+  | --- | --- |
+  | Continuous | One channel's band, min, max and inversion; the palette colors; the HEX text while it is open |
+  | RGB, HSV | Three channels in order, each with band, min, max, inversion and gamma |
+  | Categorical | The band, and the legend rows' value, label and color, in row order |
+
+  - Raw form values are kept: blanks, an inverted range, invalid HEX colors, unfinished or duplicate rows. `normalize`
+    still runs only at a successful Apply, which also sorts categorical rows by value.
+  - Paste regenerates palette and row ids. Fields the pasted type does not use start as in a new style.
+  - Excluded: the visualization id and ownership, `dataType`, recipe and layer identity, product arguments,
+    histograms, request state and validation messages.
+  - A held value that is not that shape (a wrong channel count, objects where values belong) makes Paste
+    unavailable. Invalid field values are ordinary editable content.
+- **Draft ownership adjustment.** The palette's HEX text was local to `Palette`, which kept only the colors it could
+  parse. It is now the panel's `paletteText` form field, so Copy carries what the HEX input shows. Legend rows were
+  already the panel's state.
+- **Identity.**
+  - Paste leaves the editor's Add, Edit or Clone mode and its captured context alone. A new style gets a
+    destination id at Apply; an edited style keeps its id and its own `dataType`.
+  - The existing replacement confirmation and save/reopen paths are unchanged.
+- **Validation and requests.**
+  - The panel's form now holds the bands it was opened with (`bands`). A band choice it cannot draw fails that field,
+    with its error. The choice stays selected, shown as an unavailable option, in every channel and in the
+    categorical band.
+  - A single `acceptable()` governs the Apply button, the Enter binding, `check()` and the save after a replacement
+    confirmation.
+  - Histograms are asked only for drawable, non-blank bands, and Load from image values is disabled and refused for
+    the others. Paste abandons the replaced draft's pending histogram and distinct-value requests, and reads the
+    pasted bands without stretching them.
+  - A cached histogram no longer forces a stretch. Every existing caller already asked for one, so their behaviour is
+    unchanged.
+- **Shared legend correction.** `LegendBuilder` used `_.pickBy` with an id array, which never keeps an entry, so it
+  remembered only the most recent row's validity. Fixing one invalid row could then enable Apply while another row
+  was still invalid, including in Classification, Remapping, Index Change and Class Change legends. It now uses
+  `_.pick`.
+- **Verification.**
+  - New mounted `visParams/visualizationDraftTransfer.test.jsx`: 16 tests over the real panel, form, palette, legend
+    builder, Combo, copy button and store, with two recipes' layers and only activation, map bounds and Earth Engine
+    substituted. It covers:
+    - unsaved edits copied instead of the applied style, then the source cancelled and the draft pasted elsewhere;
+    - a range that is not one, an inversion and invalid HEX colors transferred, then repaired and applied;
+    - an empty copied draft versus an empty clipboard, and an unreadable held value;
+    - Cancel after Paste keeping the applied style and the clipboard;
+    - Add and Edit identity, without the source's `dataType`, and save then reopen;
+    - the replacement confirmation;
+    - categorical associations and row order, sorted on Apply, and unfinished or duplicate rows holding Apply until
+      each is repaired;
+    - missing bands in RGB and categorical, holding Apply and Enter with no image request until replaced;
+    - snapshot independence;
+    - obsolete histogram and distinct-value responses, and a cached histogram not stretching pasted ranges.
+  - `copyButton.test.jsx`: a caller's own write is acknowledged, or not, without the system clipboard.
+  - Witnesses, each failing at least one case:
+    - no request abandonment;
+    - a cached histogram forcing a stretch;
+    - no band predicate;
+    - histograms for any band;
+    - the legend's `_.pickBy`;
+    - palette text kept local;
+    - no shape check;
+    - distinct values for any band;
+    - unavailable bands not shown.
+
+    Two candidate guards were removed after surviving: a histogram stretch reset and defensive deep clones.
+  - Focused runs with two workers: 45 files, 673 tests (map, copy button, form, clipboard, locale, the legend users
+    above, visualization matching, recipe image layer). ESLint on the changed files and `git diff --check` pass.
+  - Pending: independent review, browser acceptance and the final full GUI suite.
+- **Remaining limits.**
+  - The clipboard does not reach other browser windows or people. A pasted date style shows numbers unless its
+    destination owns a date `dataType`.
+  - The HEX text's invalid colors are kept in the draft. As before, Apply saves only the colors that parse.
+  - A replacement band still re-stretches from its histogram, as any band change does.
+  - Category meaning is not checked against the destination's values.
+
+**F7 implementation: independent review and button-placement feedback (2026-10-28; corrections required).** The
+panel-local clipboard, destination identity and cancellation approach fit the agreed boundary. The user reports
+that the feature appears to work but the footer placement is poor. Copy/Paste are actions on the whole draft;
+the review recommends grouping them together in the panel header, with a narrow-window visual check rather than
+mixing them with Stretch or the legend's Add menu. Final placement acceptance is still pending.
+
+Two functional findings remain:
+
+- **[P2] Invalid palette text is silently discarded on Apply.** `paletteText` has no validation, and
+  `Palette.updateText` keeps only tokens it can parse in the palette used by `save()`. With valid band/range values,
+  copying and pasting `#ff0000, banana, #0000ff` leaves Apply enabled. The new transfer test explicitly expects the
+  `banana` token to disappear from the saved palette after only the range is repaired. Copying incomplete/invalid
+  input is agreed; silently applying a filtered subset is not. Keep the text copyable and repairable, report its
+  field error and hold Apply and Enter until the whole active palette is valid. Remove the test expectation that
+  endorses dropping the invalid token. This older editor behavior cannot remain a limitation of the new contract.
+- **[P2] Categorical numeric edits are parsed before the draft is copied, and blank values can be saved as NaN.**
+  `LegendBuilder.Entry.notifyChange` immediately uses `parseInt`: entering `1e3` becomes `1` before Copy, and clearing
+  a value becomes NaN in the row state. The value field has only `notBlank`, which does not reject that NaN. A pasted
+  row displays an empty value, yet Apply is enabled; an independent Enter case actually saved a categorical style
+  containing `[1, NaN]`. Preserve the raw numeric draft and validate it at the legend owner, converting only at an
+  appropriate successful-commit boundary. Audit the existing shared legend callers so that preserving raw edits does
+  not silently change their persisted numeric representation. Keep the existing multi-row validity correction.
+
+Four temporary mounted assertions reproduce these findings: invalid HEX text does not hold Apply; a cleared category
+does not hold Apply; `1e3` is changed before Copy; and Enter saves the blank category as NaN. The temporary file is
+removed from the repository and archived at `/tmp/sepal-f7-review/visualizationDraftTransfer.review.test.jsx`;
+the run is `/tmp/sepal-f7-review-probes.log`. Production code and the implementor's tests were not changed by the
+review. The existing visualization/editor and CopyButton suites passed 54 tests in five files, with two workers
+(`/tmp/sepal-f7-review-existing-tests.log`). The full GUI suite and final browser acceptance remain pending.
+
+**F7 review corrections (2026-10-28; re-review and browser acceptance pending).** These are bounded corrections to
+the implementation above. The draft-transfer contract, the application-local clipboard, snapshots, destination
+identity, missing-band repair and request abandonment are unchanged.
+
+- **Placement.**
+  - Copy and Paste are now one button group in the panel header, beside the type selector, as actions on the whole
+    draft. The footer keeps Stretch or the legend's Add menu, and Cancel and Apply.
+  - The header uses `Panel.Header`'s existing `children` slot. Its default `label` slot shrinks alongside the title
+    and would clip the group in a narrow panel. Local `visParamsPanel.module.css` rules keep the type and the group
+    at full width (`flex: 0 0 auto`) while the title gives way (`min-width: 0`, no wrapping). Shared header styles
+    are unchanged.
+  - Both buttons now have accessible names ("Copy settings", "Paste settings"). Their tooltips, the disabled Paste's
+    explanation and Copy's acknowledgement on the button are unchanged.
+- **Invalid palette text.**
+  - The `paletteText` field now refuses a HEX text naming anything that is not a color. Its error lists the
+    offending tokens ("Not a color: banana"), shown on the palette.
+  - Through the form, that refusal holds Apply, Enter and the save after confirmation, all through the editor's
+    `acceptable()`.
+  - It is skipped for every type but continuous. The check and `Palette.updateText` share one parse rule
+    (`invalidPaletteColors`), so every color input the palette already read stays valid, and empty tokens name
+    nothing.
+  - The HEX view cannot be closed while it holds an invalid color. Closing would otherwise keep only the colors
+    that parse.
+  - The transfer test that expected `banana` to disappear now expects Apply and Enter to be held after the range is
+    repaired. It then repairs the text and checks that all three intended colors are saved.
+- **Raw categorical values.**
+  - `LegendBuilder.Entry` keeps a row's value as entered while it is edited and transferred: `1e3` stays `1e3`, and a
+    cleared value stays blank, not NaN.
+  - The legend owner's value field adds a whole-number rule (`Enter a whole number`) to `notBlank`. A blank,
+    non-numeric or fractional value is refused, where parsing had truncated or ignored it before.
+  - Duplicate values are compared by the number each states, so `1` and `1.0` are duplicates. Global form blankness
+    is unchanged, and the `_.pick` multi-row validity correction stays.
+- **Commit boundary.** `legendBuilder.jsx` now exports two rules.
+  - `legendEntriesToModel` converts each row to the number it states and sorts by it.
+  - `nextLegendValue` gives an added row one above the highest stated value. It replaces `max.value + 1`, which would
+    concatenate a raw string.
+  - Every caller uses them:
+    - Classification, Remapping and Index Change for both rules;
+    - Class Change, which adds no rows, for the commit;
+    - the visualization panel's categorical save and Add.
+  - Persisted legends remain numeric and sorted by value. Computed numeric rows are unchanged; an imported row's
+    textual value is now committed as its number too.
+- **Verification.**
+  - Transfer test, now 20 cases:
+    - the header group, its accessible names and the disabled Paste's explanation;
+    - invalid HEX text that stays copyable, holds Apply and Enter, then saves every intended color once repaired;
+    - a HEX view that cannot close on an invalid color;
+    - `1e3` carried as entered and saved as 1000;
+    - a cleared value carried blank that saves nothing on Enter, with `1.0` refused as a duplicate of `1` before a
+      repair releases Apply.
+  - Shared caller boundary, in the Remapping legend's mounted `panelActivation.test.jsx`: an entered `1e1` is saved
+    as 10, ordered numerically after 2, and `1.0` beside `1` holds Apply.
+  - Each new case fails against the pre-correction files, and the header case against the footer placement.
+  - The reviewer's archived probes are covered by these permanent cases. No temporary copy was added to the
+    repository.
+  - Focused runs, with two workers: 52 files, 772 tests (map, form, panel, copy button, clipboard, locale,
+    Classification, Remapping, Class Change, Index Change, visualization matching, recipe image layer). ESLint on the
+    changed files and `git diff --check` pass.
+  - Pending: re-review, the narrow-width browser check, and the final full GUI suite.
+- **Remaining limits.**
+  - Legend CSV export writes values as entered. A raw `1e3` is exported as such, and the existing importer reads only
+    its leading integer.
+  - A legend saved with fractional values, which only the distinct image values of a non-integer band could produce,
+    now shows those rows as needing a whole number before Apply.
+  - The limits recorded above otherwise stand. The HEX-text limitation is superseded: invalid text now holds Apply
+    instead of being dropped.
+
+**F7 corrections: independent re-review (2026-10-28; two bounded corrections remain).** All four original review
+assertions now pass: invalid HEX text holds Apply, a cleared categorical value stays unfinished and held, raw `1e3`
+survives transfer, and Enter saves nothing for the blank category. Header grouping and accessible naming are in
+place; the narrow-width running-browser check is still pending.
+
+- **[P2] The shared whole-number restriction is stronger than the requested fix.** Rejecting blank, non-numeric
+  and non-finite values is required; rejecting every finite fraction is a new compatibility policy. A saved
+  visualization with category values `[3.5, 1.5]` now cannot be applied. The existing categorical renderer indexes
+  its padded palette by `value - minimum` (`gee/jobs/ee/image/preview.js` and GUI `cursorValue.jsx`), so that example
+  has integer positions 2 and 0; a blanket integer rule is not established by the indexing alone. Keep shared
+  validation at finite numeric values and preserve raw edits. Any actual caller-specific whole-number constraint
+  belongs to that caller, rather than being introduced globally by Copy/Paste. Numeric duplicate checks, deferred
+  conversion and numeric sorting remain appropriate.
+- **[P2] CSV column discovery rejects distinct supported exponent values.** The reported limitation is not exactly
+  a value being truncated by import: `LegendImport.save` retains the raw cell, and the new commit rule reads its
+  full number. The remaining prefix parser is in `legendImportDefaults.getValidMappings`. A value column containing
+  `1e1` and `1e2` is rejected as though both were `1`; the equivalent `10` and `100` column is accepted. Thus the
+  editor can export a valid draft that its import UI cannot map. Use compatible full-value numeric rules for column
+  discovery and numeric uniqueness, and add an export/import boundary control. No broader CSV redesign is needed.
+
+Independent checks: 82 existing tests in seven files pass, including transfer, CopyButton, CSV defaults and the
+Remapping legend. Of six targeted review assertions, the four original cases and the ordinary-decimal CSV control
+pass, while the exponent CSV case fails; the separate existing-fractional-legend control fails too. Temporary files
+were removed and archived under `/tmp/sepal-f7-review/corrections/`. Logs are
+`/tmp/sepal-f7-correction-review-probes.log`, `/tmp/sepal-f7-fractional-review.log` and
+`/tmp/sepal-f7-correction-review-existing-tests.log`. At most two workers were used. No production file changed in
+this review; full GUI verification and final browser acceptance remain pending.
+
+**F7 header browser feedback (2026-10-28).** The user reports the implemented header is misaligned and rejects
+placing Copy/Paste at the far right, which belongs to the type switch. The requested order is: layer icon, grouped
+Copy and Paste, title, then the type switch anchored at the far right. At narrow widths, shorten the title before
+shrinking or clipping the action buttons or type switch. Keep this a local visualization-panel layout correction
+and check the actual alignment in a browser at normal, 360px and 320px widths; mounted placement assertions alone
+did not establish a usable layout. This supersedes the earlier recommendation to group Copy/Paste beside the type
+selector. The footer keeps Stretch/Add and Cancel/Apply.
+
+**F7 re-review corrections and header order (2026-10-28; re-review and user browser acceptance pending).**
+
+- **Legend values are finite numbers, not whole numbers.**
+  - The shared rule now lives in a pure `app/home/map/legendValue.js` (`legendValue`). It reads a value whole
+    (`1e3` is 1000, blank is NaN), and the legend row's value field accepts any finite number it states.
+  - Existing fractional legends such as `[3.5, 1.5]` apply again. A fraction entered while editing is saved as
+    entered, never truncated.
+  - Blank, non-numeric and non-finite values are still refused. The message is now "Enter a number".
+  - Numeric duplicates (`1`, `1.0`), deferred conversion (`legendEntriesToModel`), numeric ordering and
+    `nextLegendValue` are unchanged.
+  - No caller is known to require whole numbers: legend import already accepted fractional cells. None adds that
+    constraint here; one that does should add it in its own validation.
+- **CSV value-column detection.**
+  - `legendImportDefaults.getValidMappings` offers a value column only when every row states a finite number by the
+    same `legendValue` rule, all of them numerically distinct. `1e1` and `1e2` are offered as 10 and 100, and `1.5`
+    beside `1.7` is no longer rejected as two 1s.
+  - Blanks, text that is no number, and one number written twice are not offered. Color-channel detection keeps its
+    integer rule.
+  - Exported legend CSVs already reach detection typed by Papa (`dynamicTyping`), so an unquoted `1e1` arrived as 10.
+    The fractional and textual cases were the real round-trip gaps.
+- **Header order (user browser feedback above).**
+  - The header now reads: layer icon, the Copy/Paste group, the title, then the type switch anchored at the far
+    right. The title shrinks and ellipsizes first (`min-width: 0`); the icon, buttons and type switch do not shrink.
+  - This is a local `visParamsPanel.module.css` layout through `Panel.Header`'s children.
+- **Verification.**
+  - New cases:
+    - a fractional legend applies, and an entered `2.25` saves as 2.25;
+    - pasted values `seven` and `Infinity` hold Apply and Enter;
+    - CSV detection offers exponent, numeric-fraction and textual-fraction columns, and rejects a duplicate written
+      differently, non-numeric text and a blank;
+    - a boundary control parses an exported-format CSV through the real `parseCsvFile$` and confirms its value
+      column is offered with values `[10, 1.5, 1.7]`;
+    - the header placement assertion checks the new child order.
+  - The fractional, CSV and boundary cases fail against this round's starting files.
+  - Focused runs, with two workers: 52 files, 783 tests. ESLint and `git diff --check` pass.
+  - **Chromium harness:** a Vite build of the real panel in a real recipe, store and activation context, measured with
+    Playwright. All four types at 1280, 360 and 320px pass:
+    - the order icon, Copy, Paste, title, type;
+    - no clipped button or type label;
+    - vertical centres within 1px;
+    - the panel inside the viewport;
+    - the title truncated only at 320px for Continuous and Categorical;
+    - the disabled Paste's tooltip at 1280px;
+    - Copy's check-mark acknowledgement, after which Paste is enabled.
+
+    Below 500px the app disables hover tooltips everywhere (`isMobile`), so none shows there. Evidence is in the
+    implementor's session scratchpad (`f7harness/browser.log` and its header screenshots).
+  - Pending: re-review, the user's running-app check and the final full GUI suite.
+- **Remaining limits.** The earlier whole-number limit is withdrawn. Legend CSV export still writes values as entered.
+  Detection and commit now read them whole, so a round trip keeps their numbers. Other limits recorded above stand.
+
+**F7 final correction re-review (2026-10-28).** The remaining review findings are resolved. Legend editing,
+duplicate checks, numeric commit and CSV value-column discovery now use the same finite-number interpretation.
+The CSV boundary test clarifies the earlier report: ordinary unquoted exponent cells were already converted by
+the CSV parser; fractional and textual inputs exposed the remaining discovery gap. Existing fractional legends
+are accepted again, without losing raw edits or allowing blank/non-finite values to save.
+
+The reviewer inspected the supplied 1280px and 320px header screenshots: the icon and Copy/Paste lead, the title
+follows and shortens at narrow width, and the type switch stays at the right. This is inspection of the implementor's
+Chromium-harness evidence, not another running-app browser check.
+
+Independent focused verification passed 92 tests in seven files: visualization transfer/editor/normalization and
+palette presets, CSV defaults and parsing, the Remapping legend boundary and CopyButton. At most two workers;
+`git diff --check` is clean. Log: `/tmp/sepal-f7-final-review-focused.log`. No new finding and no production change
+from this re-review. Remaining acceptance can be brief: the user checks the header in the running app at normal and
+narrow widths, and an unsaved Copy / source Cancel / destination Paste smoke check. Numeric and CSV edge cases
+have automated coverage and need no repeated manual batch. The full GUI suite remains for final readiness.
+Nothing staged, committed or pushed.
+
+**F7 visual acceptance remains open (2026-10-28).** After the functional re-review, the user reiterated that the
+Copy/Paste icons still need fixing. The functional result and the harness screenshots do not close that visual
+issue. Establish whether the remaining problem is placement/alignment, icon appearance or both, and correct it
+before treating the running-app header as accepted or committing the slice.
+
+**F7 header icon correction (2026-10-28; the user's running-app visual acceptance is pending).**
+
+- **Not a stale build.**
+  - The running `gui` container serves the mounted working tree through Vite's dev server (`npm start`). Its
+    served `visParamsPanel.jsx` and `.module.css` held the current header (`renderHeader`, `headerStart`,
+    `headerTitle`, `headerType`), and serve the corrected file now.
+  - A browser tab opened before the latest update may still need a reload.
+- **Cause.** The header order was right, but the spacing around Copy and Paste was not. They were grouped in a
+  `ButtonGroup` with `spacing='tight'`, whose horizontal Layout rule gives every child but the last a 3px right
+  margin and a 3px bottom margin. Copy got that margin and Paste did not. With the round buttons' own padding, the
+  icons were unevenly spaced:
+
+  | Measured in Chromium | Layer icon to Copy | Copy to Paste | Paste to title |
+  | --- | --- | --- | --- |
+  | Glyph-centre pitch | 27.1px | 30.8px | |
+  | Visible gap between glyphs | 15.3px | 19.0px | 14.5px |
+
+  Copy sat closer to the layer icon than to Paste. Vertical centres were already within 0.3px. Copy's acknowledgement
+  shifted nothing, since its button keeps its 27.7px circle.
+- **Fix.** `visParamsPanel.jsx` only.
+  - Copy and Paste now sit edge to edge in a `Layout` with `spacing='none'`. ButtonGroup's own `none` would join
+    the buttons and change their shape.
+  - The existing `.5rem` gap after the layer icon and the round buttons' padding now space all three icons alike:
+    pitch 27.1px and 27.8px; visible gaps 15.3px, 16.0px and 14.5px to the title. Both buttons have identical
+    zero margins.
+  - Icons, sizes, colors, order, the narrow-width rule, the footer and all behavior are unchanged. The unused
+    ButtonGroup import is gone.
+- **Verification.** The running app sits behind sign-in, and no browser session or credentials were available to
+  this check, so the evidence comes from a Chromium harness.
+  - **Harness.** A Vite production build of the same working tree, with the app's global, theme and look styles.
+    The real `VisParamsPanel` sits in a real store, recipe, activation and portal context, opened as the layer
+    selector opens it, and Playwright measured it.
+  - At 1280, 360 and 320px, for Continuous, Categorical (the longer label), RGB and HSV:
+    - the order icon, Copy, Paste, title, type, with the type switch flush right;
+    - nothing clipped or overlapping;
+    - vertical centres within 1px;
+    - an unchanged 42.7px header height;
+    - the title shortening only at 320px for the two longer labels.
+  - Copy's check-mark acknowledgement moves neither button. Paste is disabled with its tooltip at 1280px (below
+    500px the app disables hover tooltips everywhere), then enabled after Copy.
+  - The type selector opens at every width, and choosing RGB updates the header and the form.
+  - The visualization editor and CopyButton tests pass (61 in five files, two workers). ESLint and
+    `git diff --check` pass.
+  - Before and after evidence is in `/tmp/claude-1000/-home-ec2-user-sepal/104518d4-761f-48f9-83df-9fef860fa264/scratchpad/f7harness/`:
+    - `geometry-before.log` and `geometry-after.log`;
+    - the `before-*.png` and `after-*.png` screenshots (complete header with the panel body, 2x), including
+      Paste-enabled and open-type-menu captures;
+    - `browser-after.log`.
+- **Remaining.** The user's own running-app check. Visual acceptance is not claimed here.
+
+**F7 header placement accepted (2026-10-28).**
+
+- **Final header.** The user iterated the header in the running app and accepted:
+
+  `[layer icon] Visualization … [Copy][Paste] [type switch]`
+
+  - Copy and Paste sit edge to edge, immediately left of the type switch. Each is a small chromeless round button
+    (`size='small'`, `air='less'`, 19.7px).
+  - The title shrinks first at narrow widths.
+  - This supersedes the placements before and after the title recorded above.
+- **Change.** Local to `visParamsPanel.jsx` and `visParamsPanel.module.css`. The pair's group takes the free space
+  (`margin-left: auto`), and the type switch keeps its place at the far right.
+- **Tests.** The mounted header-order assertion was removed. Layout is checked visually, not by tests.
+- **Remaining.** The unsaved Copy, source Cancel, destination Paste smoke check in the running app, and the final
+  full GUI suite before commit.
+
+**F7 browser acceptance and final verification (2026-10-28).** The user accepted the final header layout above and
+explicitly confirmed that Copy of an unsaved visualization edit survives cancelling its source panel and pastes
+into another panel. Browser acceptance is complete within that scope. Numeric, invalid-input and CSV edge cases
+retain their automated evidence rather than requiring another manual batch. The final full GUI result is recorded
+below. Fingerprints of the 17 changed code/data/style files were captured before the run and confirmed unchanged
+afterwards. No backend or shared-library code changed in this slice.
+
+**F7 final verification passed (2026-10-28).** The full GUI suite completed with exit 0: 4860 tests in 335 files,
+370.30 seconds, at most two workers (`/tmp/sepal-f7-final-gui.log`). Browser acceptance and independent review are
+complete within their recorded scopes. ESLint passed for all 15 changed JS/JSX files
+(`/tmp/sepal-f7-final-lint.log`), and `git diff --check` is clean. No backend/shared-library rerun is required for
+this GUI-only slice. The final staged whitespace check removed one extra blank EOF line in the new transfer test;
+no executable text changed after verification. The verified tree is ready for commit; no push is included in this step.
 
 **Band Math empty-output setup feedback (implemented, independently reviewed and browser-accepted 2026-10-28).**
 

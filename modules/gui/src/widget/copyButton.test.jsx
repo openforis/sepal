@@ -175,6 +175,29 @@ describe('a write that outlives the button', () => {
     })
 })
 
+describe('a copy the caller writes itself', () => {
+    it('is acknowledged once its write succeeds, the system clipboard left alone', async () => {
+        const written = []
+        render({icon: 'copy', write: () => written.push('draft') > 0})
+
+        click()
+        await act(() => Promise.resolve())
+
+        expect(written).toEqual(['draft'])
+        expect(icon()).toBe('circle-check')
+        expect(clipboard.calls).toEqual([])
+    })
+
+    it('is not acknowledged when its write does not succeed', async () => {
+        render({icon: 'copy', write: () => false})
+
+        click()
+        await act(() => Promise.resolve())
+
+        expect(icon()).toBe('copy')
+    })
+})
+
 describe('the caller presentation', () => {
     it('reaches the button untouched, and the value is not one of its props', () => {
         render({

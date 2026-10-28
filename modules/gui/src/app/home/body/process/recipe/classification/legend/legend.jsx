@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {LegendBuilder} from '~/app/home/map/legendBuilder'
+import {LegendBuilder, legendEntriesToModel, nextLegendValue} from '~/app/home/map/legendBuilder'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -113,8 +113,7 @@ class _Legend extends React.Component {
     addEntry() {
         const {inputs: {entries}} = this.props
         const id = uuid()
-        const max = _.maxBy(entries.value, 'value')
-        const value = max ? max.value + 1 : 1
+        const value = nextLegendValue(entries.value)
         const color = defaultColor(entries.value.length)
         const label = ''
         entries.set([...entries.value, {id, value, color, label}])
@@ -145,7 +144,7 @@ class _Legend extends React.Component {
 }
 
 const valuesToModel = ({entries}) => ({
-    entries: _.sortBy(entries, 'value')
+    entries: legendEntriesToModel(entries)
 })
 
 const additionalPolicy = () => ({

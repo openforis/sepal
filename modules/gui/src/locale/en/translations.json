@@ -737,7 +737,8 @@
           "duplicateColor": "There are more than one entry with this color",
           "duplicateLabel": "There are more than one entry with this label",
           "duplicateValue": "There are more than one entry with this value",
-          "invalidColor": "Another entry has the same color"
+          "invalidColor": "Another entry has the same color",
+          "invalidValue": "Enter a number"
         },
         "remove": {
           "tooltip": "Remove this legend entry"
@@ -910,6 +911,17 @@
         "loading": "Loading bands...",
         "loadError": "Failed to load image bands"
       },
+      "draft": {
+        "copy": {
+          "label": "Copy settings",
+          "tooltip": "Copy these settings as they are, unapplied changes included, to paste into another visualization."
+        },
+        "paste": {
+          "label": "Paste settings",
+          "tooltip": "Replace these settings with the copied ones. Nothing is saved until you apply.",
+          "empty": "Copy the settings of a visualization first, to paste them here."
+        }
+      },
       "form": {
         "band": {
           "band.label": "Band",
@@ -920,6 +932,7 @@
           "reverse.tooltip": "Reverse the band",
           "saturation.label": "Saturation",
           "select.placeholder": "Select band...",
+          "unavailable": "This layer has no band {band} it can draw. Choose another band.",
           "value.label": "Value"
         },
         "gamma": {
@@ -946,7 +959,8 @@
           },
           "text": {
             "tooltip": "Show and edit palette as text.",
-            "placeholder": "Enter comma-separated list of colors..."
+            "placeholder": "Enter comma-separated list of colors...",
+            "invalid": "Not a color: {colors}"
           }
         },
         "min": {

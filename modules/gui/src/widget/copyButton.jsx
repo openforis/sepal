@@ -16,6 +16,8 @@ const ACKNOWLEDGEMENT_MS = 1000
 // Two things can invalidate an in-flight write: another click, and a new value. Both bump `copyId`, so only the
 // newest write may acknowledge - a slow first write resolving after a second click, or after the value changed
 // beneath it, is ignored rather than confirming something that is no longer true.
+//
+// The write is the system clipboard's, unless the caller gives its own (`write`), which says whether it succeeded.
 class _CopyButton extends React.Component {
     copyId = 0
     timeout = null
@@ -28,7 +30,7 @@ class _CopyButton extends React.Component {
     }
 
     render() {
-        const {value: _value, failureMessage: _failureMessage, ...buttonProps} = this.props
+        const {value: _value, failureMessage: _failureMessage, write: _write, ...buttonProps} = this.props
         const {acknowledged} = this.state
         return (
             <React.Fragment>
@@ -64,10 +66,13 @@ class _CopyButton extends React.Component {
     }
 
     copy() {
-        const {value, failureMessage} = this.props
+        const {value, failureMessage, write} = this.props
         this.reset()
         const copyId = this.copyId
-        copyToClipboard(value, {failureMessage}).then(
+        const written = write
+            ? Promise.resolve(write())
+            : copyToClipboard(value, {failureMessage})
+        written.then(
             success => success && copyId === this.copyId && this.acknowledge()
         )
     }
@@ -104,5 +109,6 @@ export const CopyButton = _CopyButton
 CopyButton.propTypes = {
     // Optional: a control can be disabled precisely because it has nothing to copy yet.
     value: PropTypes.any,
-    failureMessage: PropTypes.string
+    failureMessage: PropTypes.string,
+    write: PropTypes.func
 }

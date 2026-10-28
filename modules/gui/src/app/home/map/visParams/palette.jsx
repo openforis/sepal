@@ -15,13 +15,14 @@ import {Widget} from '~/widget/widget'
 import styles from './palette.module.css'
 import {PalettePreSets} from './palettePreSets'
 
+// The colors are `input`'s. The HEX text, while it is shown, is `textInput`'s, as {text} - invalid colors and all, so
+// that it is part of the draft its form holds, and its form can refuse it (invalidPaletteColors). It cannot be closed
+// while it names a color that is not one: closing it would keep only those that are.
 export class Palette extends React.Component {
     ref = React.createRef()
 
     state = {
-        text: null,
-        edit: null,
-        showTextInput: false
+        edit: null
     }
 
     constructor(props) {
@@ -30,12 +31,13 @@ export class Palette extends React.Component {
     }
 
     render() {
-        const {showTextInput} = this.state
+        const {showTextInput} = this.textState()
         return (
             <Layout type='vertical'>
                 <Widget
                     label={msg('map.visParams.form.palette.label')}
                     tooltip={msg('map.visParams.form.palette.tooltip')}
+                    errorMessage={showTextInput ? this.props.textInput.error : undefined}
                     labelButtons={[
                         this.renderInputModeButton()
                     ]}
@@ -52,7 +54,7 @@ export class Palette extends React.Component {
     }
 
     renderTextInput() {
-        const {text} = this.state
+        const {text} = this.textState()
         return (
             <Textarea
                 value={text}
@@ -119,7 +121,7 @@ export class Palette extends React.Component {
         )
     }
     renderAddPaletteColorButton() {
-        const {showTextInput} = this.state
+        const {showTextInput} = this.textState()
         return (
             <Button
                 key='add'
@@ -135,10 +137,11 @@ export class Palette extends React.Component {
     }
 
     renderInputModeButton() {
-        const {showTextInput} = this.state
+        const {showTextInput, text} = this.textState()
         return (
             <Button
                 key='showHexColorCode'
+                disabled={showTextInput && invalidPaletteColors(text).length > 0}
                 look={showTextInput ? 'selected' : 'default'}
                 size='small'
                 shape='pill'
@@ -156,14 +159,19 @@ export class Palette extends React.Component {
         return colors.length === 0
     }
 
+    textState() {
+        const {textInput} = this.props
+        return {showTextInput: !!textInput.value, text: textInput.value?.text ?? null}
+    }
+
     showTextInput() {
         const {input} = this.props
-        this.setText(input.value || [])
-        this.setState({showTextInput: true})
+        this.setText(input.value || [], {show: true})
     }
 
     showPalette() {
-        this.setState({showTextInput: false})
+        const {textInput} = this.props
+        textInput.set(null)
     }
 
     createColor(color = '#000000', edit) {
@@ -209,11 +217,19 @@ export class Palette extends React.Component {
         this.setText(colors)
     }
 
-    setText(colors) {
+    setText(colors, {show} = {}) {
         const text = colors
             .map(({color}) => color)
             .join(', ')
-        this.setState({text, edit: null})
+        this.setState({edit: null})
+        this.setRawText(text, {show})
+    }
+
+    setRawText(text, {show} = {}) {
+        const {textInput} = this.props
+        if (show || textInput.value) {
+            textInput.set({text})
+        }
     }
 
     applyPreset(colors) {
@@ -222,26 +238,36 @@ export class Palette extends React.Component {
 
     updateText(value) {
         const {input} = this.props
-        this.setState({text: value})
-        if (value) {
-            const colors = value
-                .replace(/[^\w,#]/g, '')
-                .split(',')
-                .map(color => {
-                    try {
-                        return this.createColor(Color(color.trim()).hex())
-                    } catch(_error) {
-                        return null // Malformatted color
-                    }
-                })
-                .filter(color => color)
-            input.set(colors)
-        } else {
-            input.set([])
-        }
+        this.setRawText(value)
+        input.set(textColors(value)
+            .filter(({hex}) => hex)
+            .map(({hex}) => this.createColor(hex)))
+    }
+}
+
+// What a HEX text names that is not a color.
+export const invalidPaletteColors = text =>
+    textColors(text)
+        .filter(({hex}) => !hex)
+        .map(({token}) => token)
+
+// Each comma-separated color of a HEX text, with what is not part of a color name removed: its hex code, or none.
+// An empty one names nothing.
+const textColors = text => (text || '')
+    .replace(/[^\w,#]/g, '')
+    .split(',')
+    .filter(token => token)
+    .map(token => ({token, hex: hexOf(token)}))
+
+const hexOf = token => {
+    try {
+        return Color(token).hex()
+    } catch (_error) {
+        return null
     }
 }
 
 Palette.propTypes = {
-    input: PropTypes.object.isRequired
+    input: PropTypes.object.isRequired,
+    textInput: PropTypes.object.isRequired
 }
