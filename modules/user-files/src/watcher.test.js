@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import {existsSync, mkdtempSync} from 'node:fs'
-import {mkdir, rm, writeFile} from 'node:fs/promises'
+import {mkdir, rm, symlink, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {after, afterEach, before, beforeEach, describe, mock, test} from 'node:test'
@@ -18,19 +18,55 @@ mock.module('./config.js', {
 const {filesDeleted$} = await import('./events.js')
 const {createWatcher} = await import('./watcher.js')
 
-describe('removing a path', () => {
-    let stop$
+let stop$
+let sent$
 
-    before(() => configureNoLogging())
+before(() => configureNoLogging())
 
-    beforeEach(() => {
-        stop$ = new Subject()
+beforeEach(() => {
+    stop$ = new Subject()
+    sent$ = new Subject()
+})
+
+afterEach(() => stop$.next())
+
+after(() => rm(homeDir, {recursive: true, force: true}))
+
+describe('monitoring a path', () => {
+    test('reports the files and directories it contains', async () => {
+        await aFile('dave', 'project/data.csv', 'a,b')
+        await mkdir(join(homeDir, 'dave', 'project', 'results'))
+        const watcher = await createWatcher({send: sent, stop$})
+        const scanned = firstSent()
+
+        watcher.monitor({username: 'dave', clientId: 'client', subscriptionId: 'subscription', path: '/project'})
+
+        const {data: {path, items}} = await scanned
+        assert.equal(path, '/project')
+        assert.deepEqual(Object.keys(items).sort(), ['data.csv', 'results'])
+        assert.equal(items['data.csv'].file, true)
+        assert.equal(items['data.csv'].size, 3)
+        assert.equal(items.results.dir, true)
     })
 
-    afterEach(() => stop$.next())
+    test('reports symlinks within the path and omits those leading outside it or nowhere', async () => {
+        await aFile('erin', 'project/data.csv', 'a,b')
+        await aFile('erin', 'other/secret')
+        await symlink('data.csv', join(homeDir, 'erin', 'project', 'inside'))
+        await symlink('../other', join(homeDir, 'erin', 'project', 'outside'))
+        await symlink('missing', join(homeDir, 'erin', 'project', 'dangling'))
+        const watcher = await createWatcher({send: sent, stop$})
+        const scanned = firstSent()
 
-    after(() => rm(homeDir, {recursive: true, force: true}))
+        watcher.monitor({username: 'erin', clientId: 'client', subscriptionId: 'subscription', path: '/project'})
 
+        const {data: {items}} = await scanned
+        assert.deepEqual(Object.keys(items).sort(), ['data.csv', 'inside'])
+        assert.equal(items.inside.size, 3)
+    })
+})
+
+describe('removing a path', () => {
     test('announces the deletion for the user once the path is gone', async () => {
         await aFile('alice', 'project/file')
         const watcher = await createWatcher({send: () => null, stop$})
@@ -55,8 +91,12 @@ describe('removing a path', () => {
     })
 })
 
-const aFile = async (username, path) => {
+const aFile = async (username, path, content = '') => {
     const file = join(homeDir, username, path)
     await mkdir(join(file, '..'), {recursive: true})
-    await writeFile(file, '')
+    await writeFile(file, content)
 }
+
+const sent = message => sent$.next(message)
+
+const firstSent = () => firstValueFrom(sent$)
