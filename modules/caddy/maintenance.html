@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#000000">
+    <meta name="robots" content="noindex">
+    <!-- Reloading picks up SEPAL again as soon as maintenance mode is switched off -->
+    <meta http-equiv="refresh" content="60">
+    <title>S E P A L - Maintenance</title>
+
+    <script>
+        (function () {
+            var preference = 'dark'
+            try {
+                var stored = localStorage.getItem('sepal:theme')
+                if (stored === 'light' || stored === 'system') preference = stored
+            } catch (e) {}
+            var theme = preference === 'system'
+                ? (window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+                : preference
+            document.documentElement.setAttribute('data-theme', theme)
+        })()
+    </script>
+
+    <style>
+        :root {
+            --background-color: #111215;
+            --text-color: #fff;
+            --secondary-text-color: #c7cacc;
+            --glow1-color: hsla(150, 22%, 26%, .55);
+            --glow2-color: hsla(28, 30%, 24%, .45);
+            --accent-color: #c5b397;
+        }
+
+        html[data-theme=light] {
+            --background-color: hsl(38, 16%, 91%);
+            --text-color: hsl(40, 12%, 10%);
+            --secondary-text-color: hsl(40, 6%, 26%);
+            --glow1-color: hsla(150, 25%, 70%, .45);
+            --glow2-color: hsla(28, 40%, 72%, .45);
+            --accent-color: hsl(25, 28%, 36%);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-weight: 300;
+            letter-spacing: .5px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .backdrop {
+            position: fixed;
+            inset: -25%;
+            z-index: -1;
+            background:
+                radial-gradient(ellipse at 70% 35%, var(--glow1-color), transparent 55%),
+                radial-gradient(ellipse at 25% 75%, var(--glow2-color), transparent 50%);
+            animation: drift 28s ease-in-out infinite alternate;
+        }
+
+        @keyframes drift {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(-3deg); }
+            100% { transform: scale(1.05) rotate(2deg) translateX(3%); }
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            max-width: 50rem;
+            padding: 25vh 5% 2rem;
+        }
+
+        .title {
+            font-family: "Source Sans Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 3.5rem;
+            font-weight: 300;
+            line-height: 3.5rem;
+            letter-spacing: .3rem;
+            text-transform: uppercase;
+            animation: title 1000ms ease-in-out both;
+        }
+
+        .title hr {
+            width: 4rem;
+            height: 1px;
+            margin: 1rem 0 0 0;
+            border: none;
+            background-color: var(--text-color);
+        }
+
+        .tagline {
+            font-family: Merriweather, Georgia, "Times New Roman", Times, serif;
+            font-style: italic;
+            font-size: 1rem;
+            line-height: 1.5rem;
+            color: var(--secondary-text-color);
+            animation: tagline 500ms 250ms ease-in-out both;
+        }
+
+        .notice {
+            animation: notice 500ms 500ms ease-in-out both;
+        }
+
+        .notice h1 {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            margin: 0 0 .5rem;
+            font-size: 1.5rem;
+            font-weight: 400;
+            color: var(--accent-color);
+        }
+
+        .notice h1::before {
+            content: '';
+            width: .6rem;
+            height: .6rem;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            animation: pulse 2000ms ease-out infinite;
+        }
+
+        .notice p {
+            margin: 0;
+            font-size: 1.1rem;
+            line-height: 1.8rem;
+        }
+
+        @keyframes title {
+            0% { opacity: 0; transform: translateX(100%); }
+        }
+
+        @keyframes tagline {
+            0% { opacity: 0; transform: translateY(-100%); }
+        }
+
+        @keyframes notice {
+            0% { opacity: 0; transform: translateY(50%); }
+        }
+
+        @keyframes pulse {
+            0%, 10% { opacity: 1; }
+            100% { opacity: .3; }
+        }
+
+        @media (max-width: 600px) {
+            main {
+                padding-top: 15vh;
+            }
+
+            .title {
+                font-size: 3rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before {
+                animation: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="backdrop"></div>
+    <main>
+        <div class="title">
+            SEPAL
+            <hr>
+        </div>
+        <div class="tagline">
+            System for earth observations, data access, processing &amp; analysis for land monitoring.
+        </div>
+        <div class="notice">
+            <h1>Under maintenance</h1>
+            <p>SEPAL is currently undergoing maintenance and will be back soon.</p>
+            <p>This page refreshes automatically once SEPAL is available again.</p>
+        </div>
+    </main>
+</body>
+
+</html>

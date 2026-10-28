@@ -16,6 +16,24 @@
     display: none; /* Hides scrollbars in Chrome/Safari */
 }
 
+/* DraggableList wrapper around each tab handle: layout-neutral (flex, content-sized),
+   carrying the positional rules that lived on .tab before the handles were wrapped
+   (a wrapped .tab is always its wrapper's only child, so :first-child stopped working). */
+.tabHandleItem {
+    --tab-spacing: .3rem;
+    display: flex;
+    flex-shrink: 0; /* keep natural width when the window narrows — overflow scrolls instead */
+}
+
+.tabHandleItem:first-child {
+    /* align tabs to the right */
+    margin-left: auto;
+}
+
+.tabHandleItem:not(:last-child) {
+    margin-right: var(--tab-spacing);
+}
+
 .tabActions {
     display: flex;
     align-items: center;

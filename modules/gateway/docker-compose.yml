@@ -5,6 +5,10 @@ services:
       service: logger
     image: "redis:6"
     container_name: gateway-redis
+    # Holds sessions and the authoritative user records: evicting a key logs users out or breaks
+    # authentication.
+    # maxmemory is a guard rail, not a cache budget: with noeviction, reaching it makes writes fail.
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "noeviction"]
     volumes:
       - "${SEPAL_DATA_DIR}/gateway-redis:/data"
     healthcheck:
@@ -26,7 +30,7 @@ services:
       context: ../..
       dockerfile: ./modules/gateway/Dockerfile
       args:
-        BUILD_NUMBER: "${BUILD_NUMBER}"
+        BUILD_NUMBER: "${BUILD_NUMBER:-}"
       ulimits:
         nofile:
           soft: 65536
@@ -40,8 +44,11 @@ services:
       SEPAL_APPS_HOST: "${SEPAL_APPS_HOST}"
       RABBITMQ_HOST: "rabbitmq"
       REDIS_HOST: "gateway-redis"
+      SANDBOX_DEFAULT_INSTANCE_TYPE: "${SANDBOX_DEFAULT_INSTANCE_TYPE:-T3aSmall}"
     networks:
-      - sepal
+      sepal:
+      sepal-task:
+        ipv4_address: 172.29.0.2 # outside the task containers' range; the task firewall admits only its port 80
     extra_hosts:
       - 'host.docker.internal:${SEPAL_IP:-host-gateway}' # expose docker host ip address to container
     ulimits:
@@ -65,4 +72,6 @@ services:
 
 networks:
   sepal:
+    external: true
+  sepal-task:
     external: true

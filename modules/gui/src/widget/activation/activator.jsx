@@ -5,6 +5,7 @@ import React from 'react'
 import {actionBuilder} from '~/action-builder'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
+import {select} from '~/store'
 import {uuid} from '~/uuid'
 
 import {collectActivatables} from './activation'
@@ -32,13 +33,7 @@ class _Activator extends React.Component {
 
     activate(id, activationProps) {
         const {activationContext: {pathList}} = this.props
-        actionBuilder('ACTIVATE', {id, pathList})
-            .assign(this.activatablePath(id), {
-                active: true,
-                justActivated: true,
-                activationProps
-            })
-            .dispatch()
+        dispatchActivation({id, pathList, path: this.activatablePath(id), activationProps})
     }
 
     deactivate (id) {
@@ -130,6 +125,28 @@ Activator.propTypes = {
     children: PropTypes.func.isRequired,
     ids: PropTypes.array
 }
+
+// Activates `id` as an Activator in the context at `pathList` would: allowed by what that context sees - its own
+// activatables, its ancestors' and its descendants' - and not by contexts beside it. A dialog about one recipe, opened
+// from outside it, is so held back by that recipe's panels alone, not by those another recipe keeps open. Whether it
+// was activated.
+export const activateIn = (pathList, id, activationProps) => {
+    const activatables = collectActivatables(select(), pathList)
+    if (!activationAllowed(id, activatables)) {
+        return false
+    }
+    dispatchActivation({id, pathList, path: activatables[id].path, activationProps})
+    return true
+}
+
+const dispatchActivation = ({id, pathList, path, activationProps}) =>
+    actionBuilder('ACTIVATE', {id, pathList})
+        .assign(path, {
+            active: true,
+            justActivated: true,
+            activationProps
+        })
+        .dispatch()
 
 export const withActivators = (...ids) =>
     WrappedComponent =>

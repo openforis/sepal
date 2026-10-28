@@ -65,6 +65,8 @@ ScrollableList.propTypes = {
             alias: PropTypes.any,
             disabled: PropTypes.any,
             group: PropTypes.any,
+            icon: PropTypes.string,
+            iconType: PropTypes.string,
             indent: PropTypes.any,
             key: PropTypes.any,
             label: PropTypes.any,
@@ -74,6 +76,9 @@ ScrollableList.propTypes = {
     ).isRequired,
     onSelect: PropTypes.func.isRequired,
     air: PropTypes.any,
+    // The key of the option a choice was made from, given with the options that follow from it: one it removed has what
+    // followed it highlighted.
+    advanceFrom: PropTypes.any,
     alignment: PropTypes.oneOf(['left', 'center', 'right']),
     autoCenter: PropTypes.any,
     autoHighlight: PropTypes.any,
@@ -87,7 +92,8 @@ ScrollableList.propTypes = {
     onCancel: PropTypes.func
 }
 
-class _List extends React.Component {
+// What a list of options renders and how it is navigated: extended by the windowed list (windowedList.jsx).
+export class ListContent extends React.Component {
     autoCenter$ = new Subject()
     mouseOption$ = new Subject()
 
@@ -191,8 +197,9 @@ class _List extends React.Component {
         ) : null
     }
 
+    // A disabled option may say why it is.
     renderNonSelectableOption(option, index) {
-        const {alignment, air} = this.props
+        const {tooltipPlacement, alignment, air} = this.props
         return (
             <li key={option.key || option.value || index} style={this.getOptionStyle(option)}>
                 <Button
@@ -200,7 +207,15 @@ class _List extends React.Component {
                     chromeless
                     look='transparent'
                     air={air}
+                    icon={option.icon}
+                    iconType={option.iconType}
+                    iconAttributes={{
+                        fixedWidth: true
+                    }}
                     label={option.render ? option.render() : option.label}
+                    tooltip={option.tooltip}
+                    tooltipPlacement={tooltipPlacement}
+                    tooltipAllowedWhenDisabled={!!option.tooltip}
                     width='max'
                     alignment={alignment}
                     disabled
@@ -233,6 +248,11 @@ class _List extends React.Component {
                     look={selected ? 'selected' : 'highlight'}
                     air={air}
                     dimmed={option.dimmed}
+                    icon={option.icon}
+                    iconType={option.iconType}
+                    iconAttributes={{
+                        fixedWidth: true
+                    }}
                     label={option.render ? null : option.label}
                     tooltip={option.tooltip}
                     tooltipPlacement={tooltipPlacement}
@@ -240,6 +260,7 @@ class _List extends React.Component {
                     width='max'
                     alignment={alignment}
                     disableTransitions
+                    hook='option'
                     onMouseEnter={() => this.mouseOption$.next(key)}
                     onClick={() => this.selectOption(key)}>
                     {option.render ? option.render() : null}
@@ -420,14 +441,37 @@ class _List extends React.Component {
     }
 
     componentDidUpdate({options: prevOptions, selectedValue: prevSelectedValue}) {
-        const {options, selectedValue} = this.props
-        if (selectedValue !== prevSelectedValue || !isEqual(options, prevOptions)) {
+        const {options, selectedValue, advanceFrom} = this.props
+        const optionsChanged = !isEqual(options, prevOptions)
+        if (optionsChanged && advanceFrom !== undefined && this.isRemovedByChoice(advanceFrom, prevOptions)) {
+            this.highlightSuccessor(advanceFrom, prevOptions)
+        } else if (selectedValue !== prevSelectedValue || optionsChanged) {
             this.highlightSelectedOption()
         }
+    }
+
+    // Options given with `advanceFrom` follow from choosing that option where it stays open (combo.jsx). The choice
+    // removed it - one added, no longer to add - when they are what remained of those it was chosen from, and no others.
+    isRemovedByChoice(chosenKey, prevOptions) {
+        const {options} = this.props
+        const prevKeys = new Set(prevOptions.map(option => this.getOptionKey(option)))
+        return !this.getOption(chosenKey) && options.every(option => prevKeys.has(this.getOptionKey(option)))
+    }
+
+    // What follows the option removed by a choice is highlighted, so the next Enter chooses it, never one before it. With
+    // nothing selectable following, nothing is: Enter then chooses nothing until the highlight is moved.
+    highlightSuccessor(chosenKey, prevOptions) {
+        const remaining = new Set(this.props.options.filter(option => this.isSelectable(option)).map(option => this.getOptionKey(option)))
+        const following = prevOptions.slice(prevOptions.findIndex(option => this.getOptionKey(option) === chosenKey) + 1)
+        const successorKey = following.map(option => this.getOptionKey(option)).find(key => remaining.has(key))
+        this.setState({
+            highlightedOptionKey: successorKey ?? null,
+            keyboardNavigation: true
+        }, () => successorKey !== undefined && this.scrollHighlightedOption())
     }
 }
 
 const List = compose(
-    _List,
+    ListContent,
     withSubscriptions()
 )

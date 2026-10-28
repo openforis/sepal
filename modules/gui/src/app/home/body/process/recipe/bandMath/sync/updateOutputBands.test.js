@@ -1,3 +1,5 @@
+import {outputNameOf} from '../panels/outputBands/outputImages'
+import {findChanges} from './findChanges'
 import {updateOutputBands} from './updateOutputBands'
 
 it('removing calculations when no outputs returns []', () => {
@@ -115,6 +117,144 @@ it('adding calculation when one already exists results in two images with unique
         {...calculation2, outputBands: outputBands2},
     ])
 })
+
+// An input's bands deliberately unselected, as its panel applies the edit and the sync follows it. Saved recipes can
+// hold a pass-through output copied under an id other than its input band's.
+describe('deliberately removing an input band', () => {
+    it('removes its pass-through output, copied under another id', () => {
+        const red = band('red-id', 'red')
+        const nir = band('nir-id', 'nir')
+        const prevImages = [input('i1', [red, nir])]
+        const images = [input('i1', [nir])]
+        const outputImages = [output('i1', [{...copied(red, 'legacy-red-id'), outputName: 'my_red'}, copied(nir)])]
+
+        const updated = updateOutputBands({changes: findChanges({prevImages, images, prevCalculations: [], calculations: []}), outputImages})
+
+        expect(outputNames(updated)).toEqual({i1: ['nir']})
+    })
+
+    it('leaves a band of the same name output from another image', () => {
+        const red = band('red-id', 'red')
+        const otherRed = band('other-red-id', 'red')
+        const prevImages = [input('i1', [red]), input('i2', [otherRed])]
+        const images = [input('i1', []), input('i2', [otherRed])]
+        const outputImages = [output('i1', [copied(red, 'legacy-red-id')]), output('i2', [copied(otherRed, 'legacy-other-red-id')])]
+
+        const updated = updateOutputBands({changes: findChanges({prevImages, images, prevCalculations: [], calculations: []}), outputImages})
+
+        expect(outputNames(updated)).toEqual({i1: [], i2: ['red']})
+    })
+
+    it('matches the band an output was copied from, not the name it is output under', () => {
+        const red = band('red-id', 'red')
+        const nir = band('nir-id', 'nir')
+        const prevImages = [input('i1', [red, nir])]
+        const images = [input('i1', [nir])]
+        const nirOutputAsRed = {...copied(nir, 'legacy-nir-id'), defaultOutputName: 'red', outputName: 'red'}
+        const outputImages = [output('i1', [nirOutputAsRed])]
+
+        const updated = updateOutputBands({changes: findChanges({prevImages, images, prevCalculations: [], calculations: []}), outputImages})
+
+        expect(updated[0].outputBands).toEqual([nirOutputAsRed])
+    })
+
+    it('removes every output of the band, the one copied under its id and one copied under a legacy id alike', () => {
+        const vv = band('vv-id', 'VV')
+        const vh = band('vh-id', 'VH')
+        const ratio = band('ratio-id', 'ratio_VV_VH')
+        const prevImages = [input('i1', [vv, vh, ratio])]
+        const images = [input('i1', [vv, vh])]
+        const outputImages = [output('i1', [
+            copied(vv), copied(ratio, 'legacy-ratio-id'), {...copied(vh), outputName: 'cross'}, {...copied(ratio), defaultOutputName: 'ratio_VV_VH_1'}
+        ])]
+
+        const updated = updateOutputBands({changes: findChanges({prevImages, images, prevCalculations: [], calculations: []}), outputImages})
+
+        expect(updated[0].outputBands).toEqual([copied(vv), {...copied(vh), outputName: 'cross'}])
+    })
+
+    it('keeps the replacement where a band is removed and another of its name added in one edit', () => {
+        const red = band('red-id', 'red')
+        const replacement = band('replacement-id', 'red')
+        const prevImages = [input('i1', [red])]
+        const images = [input('i1', [replacement])]
+        const outputImages = [output('i1', [copied(red, 'legacy-red-id')])]
+
+        const updated = updateOutputBands({changes: findChanges({prevImages, images, prevCalculations: [], calculations: []}), outputImages})
+
+        expect(updated[0].outputBands.map(({id}) => id)).toEqual([replacement.id])
+    })
+})
+
+describe('naming the output bands a band change gives', () => {
+    it('lets bands of a calculation trade names, none held back by a name another is leaving', () => {
+        const a = band('a-id', 'a')
+        const b = band('b-id', 'b')
+        const prevCalculations = [input('c1', [a, b])]
+        const calculations = [input('c1', [{...a, name: 'b'}, {...b, name: 'a'}])]
+        const outputImages = [output('c1', [copied(a), copied(b)])]
+
+        const updated = updateOutputBands({changes: findChanges({prevImages: [], images: [], prevCalculations, calculations}), outputImages})
+
+        expect(updated[0].outputBands.map(outputNameOf)).toEqual(['b', 'a'])
+    })
+
+    it('names a renamed band apart from the custom name of another band renamed with it, which keeps it', () => {
+        const a = band('a-id', 'a')
+        const b = band('b-id', 'b')
+        const prevCalculations = [input('c1', [a, b])]
+        const calculations = [input('c1', [{...a, name: 'y'}, {...b, name: 'x'}])]
+        const outputImages = [output('c1', [{...copied(a), outputName: 'x'}, copied(b)])]
+
+        const updated = updateOutputBands({changes: findChanges({prevImages: [], images: [], prevCalculations, calculations}), outputImages})
+
+        expect(updated[0].outputBands.map(outputNameOf)).toEqual(['x', 'x_1'])
+        expect(updated[0].outputBands[0].outputName).toBe('x')
+    })
+
+    it('lets an input band and a calculation band trade names in one change', () => {
+        const a = band('a-id', 'a')
+        const b = band('b-id', 'b')
+        const changes = findChanges({
+            prevImages: [input('i1', [a])], images: [input('i1', [{...a, name: 'b'}])],
+            prevCalculations: [input('c1', [b])], calculations: [input('c1', [{...b, name: 'a'}])]
+        })
+        const outputImages = [output('i1', [copied(a)]), output('c1', [copied(b)])]
+
+        const updated = updateOutputBands({changes, outputImages})
+
+        expect(updated.flatMap(({outputBands}) => outputBands.map(outputNameOf))).toEqual(['b', 'a'])
+    })
+
+    it('names a band added to a calculation apart from another image\'s outputs', () => {
+        const red = band('red-id', 'red')
+        const x = band('x-id', 'x')
+        const prevCalculations = [input('c1', [x])]
+        const calculations = [input('c1', [x, red])]
+        const outputImages = [output('i1', [copied(red)]), output('c1', [copied(x)])]
+
+        const updated = updateOutputBands({changes: findChanges({prevImages: [], images: [], prevCalculations, calculations}), outputImages})
+
+        expect(updated.flatMap(({outputBands}) => outputBands.map(outputNameOf))).toEqual(['red', 'x', 'red_1'])
+    })
+
+    it('names each band of a calculation added apart from those named before it in the same change', () => {
+        const vh = band('vh-id', 'VH')
+        const calculation = input('c1', [band('c-vh-id', 'VH'), band('c-vh-1-id', 'VH_1')])
+        const outputImages = [output('i1', [copied(vh)])]
+
+        const updated = updateOutputBands({changes: changes({addedCalculations: [calculation]}), outputImages})
+
+        expect(updated.flatMap(({outputBands}) => outputBands.map(outputNameOf))).toEqual(['VH', 'VH_1', 'VH_1_1'])
+    })
+})
+
+const band = (id, name) => ({id, name})
+const input = (imageId, includedBands) => ({imageId, name: imageId, includedBands})
+const copied = (source, id = source.id) => ({...source, id, defaultOutputName: source.name})
+const output = (imageId, outputBands) => ({imageId, outputBands})
+const outputNames = outputImages =>
+    Object.fromEntries(outputImages.map(({imageId, outputBands}) => [imageId, outputBands.map(({name}) => name)]))
 
 const image = {imageId: 'some-image-id', includedBands: [{id: 'id1', name: 'b1'}]}
 const calculation = {imageId: 'some-calculation-id', includedBands: [{id: 'id1', name: 'b1'}]}

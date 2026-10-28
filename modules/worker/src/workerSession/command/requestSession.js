@@ -1,0 +1,108 @@
+// RequestSession:
+//   0. reject an instance type outside the catalog — it would reach EC2 as-is and bill at $0, and a
+//      caller-named session id that is not a UUID
+//   1. budget check — throws the matching typed error when the user is over budget. The
+//      authoritative answer comes from the budget module LIVE (budgetClient.check), so a restart
+//      or a lost event cannot let an over-budget user through; the event-fed lockedUsers set
+//      (../../lockedUsers.js) is only the fallback for when budget is unreachable. The check
+//      carries the user's open sessions: budget learns of a new one only from the asynchronous
+//      WorkerSessionRequested event, so without them the previous request's session would not
+//      count yet. The caller runs one request per user at a time (sessionManager).
+//   2. normalize username → the stored spelling (#sepal/username)
+//   3. apiKey = apiKeyGenerator.generate()
+//   4. build PENDING session (id=the caller's or a new UUID, creationTime=updateTime=now)
+//   5. instance = instanceManager.requestInstance(session) → set instance {id, host}
+//   6. repo.insert(requestedSession)
+//   7. return requestedSession
+//
+// api-key race: the row is INSERTED after requestInstance returns. The provisioner's later
+// apiKeyForSession lookup polls because the InstanceProvisioned event may fire before this
+// insert commits — keep the ordering (request instance → insert); do NOT insert first.
+
+import crypto from 'node:crypto'
+
+import {ClientException} from '#sepal/exception'
+import {getLogger} from '#sepal/log'
+import {storedUsername} from '#sepal/username'
+
+import {instanceTag, sessionTag, userTag} from '../../tag.js'
+import {budgetErrorFor} from '../budgetErrors.js'
+import {createWorkerSession, State, withInstance} from '../workerSession.js'
+
+const log = getLogger('worker/requestSession')
+
+// budgetVerdict — the live verdict from the budget module, falling back to the event-fed
+// locked-users set when budget is unreachable (or not wired at all).
+//
+// The fallback deliberately DEGRADES rather than blocks: budget being down must not stop everyone
+// in SEPAL from starting a session. Users already known to be over budget are still refused,
+// because lockedUsers holds the last verdicts the enforcement cycle published.
+const budgetVerdict = async (username, {repo, budgetClient, lockedUsers}) => {
+    if (budgetClient) {
+        try {
+            return await budgetClient.check(username, await openSessions(username, repo))
+        } catch (error) {
+            log.warn(`Budget check failed for ${userTag(username)}; falling back to the locked-users set`, error)
+        }
+    }
+    return {
+        exceeded: lockedUsers?.isLocked(username) === true,
+        reason: 'INSTANCE_BUDGET',
+    }
+}
+
+const openSessions = async (username, repo) =>
+    (await repo.userSessions(storedUsername(username), [State.PENDING, State.ACTIVE]))
+        .map(({id, instanceType, creationTime}) => ({sessionId: id, instanceType, creationTime}))
+
+// A caller that may repeat a request names the session it asks for: a repeat finds the session its
+// first attempt created instead of launching another instance. The caller runs one request per user
+// at a time, so a repeat looks only after that attempt has inserted its row.
+const repeatedRequest = async ({username, sessionId}, {repo}) => {
+    if (!sessionId) {
+        return null
+    }
+    const session = await repo.findSession(sessionId)
+    if (session && session.username !== storedUsername(username)) {
+        throw new ClientException(`Session ${sessionId} belongs to another user`)
+    }
+    return session
+}
+
+const requestSession = async (
+    {username, workerType, instanceType, sessionId},
+    {repo, budgetClient, lockedUsers, instanceManager, clock, apiKeyGenerator, startupLeaseMinutes}
+) => {
+    if (!instanceManager.getInstanceTypes().some(({id}) => id === instanceType)) {
+        throw new ClientException(`Unknown instance type: ${instanceType}`)
+    }
+    if (sessionId && !UUID.test(sessionId)) {
+        throw new ClientException(`Not a session id: ${sessionId}`)
+    }
+    const {exceeded, reason} = await budgetVerdict(username, {repo, budgetClient, lockedUsers})
+    if (exceeded) throw budgetErrorFor(reason, username)
+    const now = clock()
+    const apiKey = apiKeyGenerator.generate()
+    const session = createWorkerSession({
+        id: sessionId ?? crypto.randomUUID(),
+        state: State.PENDING,
+        username: storedUsername(username),
+        workerType,
+        instanceType,
+        creationTime: now,
+        updateTime: now,
+        // The startup lease. It is re-ratcheted from active_time on activation, so a slow
+        // provision does not eat into it; until then the PENDING 10-minute rule governs anyway.
+        timeoutTime: new Date(now.getTime() + startupLeaseMinutes * 60_000),
+        apiKey,
+    })
+    const instance = await instanceManager.requestInstance(session)
+    const requestedSession = withInstance(session, instance)
+    await repo.insert(requestedSession)
+    log.info(`Requested ${sessionTag(requestedSession)} (${workerType}) on ${instanceTag(instance)}`)
+    return requestedSession
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+
+export {repeatedRequest, requestSession}

@@ -1,0 +1,441 @@
+=== plain cache=false conda=false
+{
+  "argv": [
+    "@WORK@/ck/venv-testapp/venv/bin/python3",
+    "-m",
+    "ipykernel_launcher",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) Sampling Based Area Estimation",
+  "language": "python",
+  "env": {
+    "PYTHONNOUSERSITE": "1"
+  }
+}
+
+=== plain cache=false conda=true
+{
+  "argv": [
+    "@WORK@/ck/venv-testapp/venv/bin/python3",
+    "-m",
+    "ipykernel_launcher",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) Sampling Based Area Estimation",
+  "language": "python",
+  "env": {
+    "PYTHONNOUSERSITE": "1",
+    "PROJ_LIB": "@WORK@/ck/venv-testapp/venv/share/proj",
+    "PROJ_DATA": "@WORK@/ck/venv-testapp/venv/share/proj",
+    "GDAL_DATA": "@WORK@/ck/venv-testapp/venv/share/gdal"
+  }
+}
+
+=== plain cache=true conda=false
+{
+  "argv": [
+    "/bin/bash",
+    "/usr/local/share/jupyter/kernels/sepal-app-kernel",
+    "testapp",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) Sampling Based Area Estimation",
+  "language": "python",
+  "env": {}
+}
+
+=== plain cache=true conda=true
+{
+  "argv": [
+    "/bin/bash",
+    "/usr/local/share/jupyter/kernels/sepal-app-kernel",
+    "testapp",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) Sampling Based Area Estimation",
+  "language": "python",
+  "env": {}
+}
+
+=== accented cache=false conda=false
+{
+  "argv": [
+    "@WORK@/ck/venv-testapp/venv/bin/python3",
+    "-m",
+    "ipykernel_launcher",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) Área de Muestreo — Diseño",
+  "language": "python",
+  "env": {
+    "PYTHONNOUSERSITE": "1"
+  }
+}
+
+=== accented cache=false conda=true
+{
+  "argv": [
+    "@WORK@/ck/venv-testapp/venv/bin/python3",
+    "-m",
+    "ipykernel_launcher",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) Área de Muestreo — Diseño",
+  "language": "python",
+  "env": {
+    "PYTHONNOUSERSITE": "1",
+    "PROJ_LIB": "@WORK@/ck/venv-testapp/venv/share/proj",
+    "PROJ_DATA": "@WORK@/ck/venv-testapp/venv/share/proj",
+    "GDAL_DATA": "@WORK@/ck/venv-testapp/venv/share/gdal"
+  }
+}
+
+=== accented cache=true conda=false
+{
+  "argv": [
+    "/bin/bash",
+    "/usr/local/share/jupyter/kernels/sepal-app-kernel",
+    "testapp",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) Área de Muestreo — Diseño",
+  "language": "python",
+  "env": {}
+}
+
+=== accented cache=true conda=true
+{
+  "argv": [
+    "/bin/bash",
+    "/usr/local/share/jupyter/kernels/sepal-app-kernel",
+    "testapp",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) Área de Muestreo — Diseño",
+  "language": "python",
+  "env": {}
+}
+
+=== quote cache=false conda=false
+{
+  "argv": [
+    "@WORK@/ck/venv-testapp/venv/bin/python3",
+    "-m",
+    "ipykernel_launcher",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) He said \"hello\" twice",
+  "language": "python",
+  "env": {
+    "PYTHONNOUSERSITE": "1"
+  }
+}
+
+=== quote cache=false conda=true
+{
+  "argv": [
+    "@WORK@/ck/venv-testapp/venv/bin/python3",
+    "-m",
+    "ipykernel_launcher",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) He said \"hello\" twice",
+  "language": "python",
+  "env": {
+    "PYTHONNOUSERSITE": "1",
+    "PROJ_LIB": "@WORK@/ck/venv-testapp/venv/share/proj",
+    "PROJ_DATA": "@WORK@/ck/venv-testapp/venv/share/proj",
+    "GDAL_DATA": "@WORK@/ck/venv-testapp/venv/share/gdal"
+  }
+}
+
+=== quote cache=true conda=false
+{
+  "argv": [
+    "/bin/bash",
+    "/usr/local/share/jupyter/kernels/sepal-app-kernel",
+    "testapp",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) He said \"hello\" twice",
+  "language": "python",
+  "env": {}
+}
+
+=== quote cache=true conda=true
+{
+  "argv": [
+    "/bin/bash",
+    "/usr/local/share/jupyter/kernels/sepal-app-kernel",
+    "testapp",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) He said \"hello\" twice",
+  "language": "python",
+  "env": {}
+}
+
+=== backslash cache=false conda=false
+{
+  "argv": [
+    "@WORK@/ck/venv-testapp/venv/bin/python3",
+    "-m",
+    "ipykernel_launcher",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) C:\\path\\to\\thing",
+  "language": "python",
+  "env": {
+    "PYTHONNOUSERSITE": "1"
+  }
+}
+
+=== backslash cache=false conda=true
+{
+  "argv": [
+    "@WORK@/ck/venv-testapp/venv/bin/python3",
+    "-m",
+    "ipykernel_launcher",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) C:\\path\\to\\thing",
+  "language": "python",
+  "env": {
+    "PYTHONNOUSERSITE": "1",
+    "PROJ_LIB": "@WORK@/ck/venv-testapp/venv/share/proj",
+    "PROJ_DATA": "@WORK@/ck/venv-testapp/venv/share/proj",
+    "GDAL_DATA": "@WORK@/ck/venv-testapp/venv/share/gdal"
+  }
+}
+
+=== backslash cache=true conda=false
+{
+  "argv": [
+    "/bin/bash",
+    "/usr/local/share/jupyter/kernels/sepal-app-kernel",
+    "testapp",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) C:\\path\\to\\thing",
+  "language": "python",
+  "env": {}
+}
+
+=== backslash cache=true conda=true
+{
+  "argv": [
+    "/bin/bash",
+    "/usr/local/share/jupyter/kernels/sepal-app-kernel",
+    "testapp",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) C:\\path\\to\\thing",
+  "language": "python",
+  "env": {}
+}
+
+=== newline cache=false conda=false
+{
+  "argv": [
+    "@WORK@/ck/venv-testapp/venv/bin/python3",
+    "-m",
+    "ipykernel_launcher",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) first line\nsecond line",
+  "language": "python",
+  "env": {
+    "PYTHONNOUSERSITE": "1"
+  }
+}
+
+=== newline cache=false conda=true
+{
+  "argv": [
+    "@WORK@/ck/venv-testapp/venv/bin/python3",
+    "-m",
+    "ipykernel_launcher",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) first line\nsecond line",
+  "language": "python",
+  "env": {
+    "PYTHONNOUSERSITE": "1",
+    "PROJ_LIB": "@WORK@/ck/venv-testapp/venv/share/proj",
+    "PROJ_DATA": "@WORK@/ck/venv-testapp/venv/share/proj",
+    "GDAL_DATA": "@WORK@/ck/venv-testapp/venv/share/gdal"
+  }
+}
+
+=== newline cache=true conda=false
+{
+  "argv": [
+    "/bin/bash",
+    "/usr/local/share/jupyter/kernels/sepal-app-kernel",
+    "testapp",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) first line\nsecond line",
+  "language": "python",
+  "env": {}
+}
+
+=== newline cache=true conda=true
+{
+  "argv": [
+    "/bin/bash",
+    "/usr/local/share/jupyter/kernels/sepal-app-kernel",
+    "testapp",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) first line\nsecond line",
+  "language": "python",
+  "env": {}
+}
+
+=== tab cache=false conda=false
+{
+  "argv": [
+    "@WORK@/ck/venv-testapp/venv/bin/python3",
+    "-m",
+    "ipykernel_launcher",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) before\tafter",
+  "language": "python",
+  "env": {
+    "PYTHONNOUSERSITE": "1"
+  }
+}
+
+=== tab cache=false conda=true
+{
+  "argv": [
+    "@WORK@/ck/venv-testapp/venv/bin/python3",
+    "-m",
+    "ipykernel_launcher",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) before\tafter",
+  "language": "python",
+  "env": {
+    "PYTHONNOUSERSITE": "1",
+    "PROJ_LIB": "@WORK@/ck/venv-testapp/venv/share/proj",
+    "PROJ_DATA": "@WORK@/ck/venv-testapp/venv/share/proj",
+    "GDAL_DATA": "@WORK@/ck/venv-testapp/venv/share/gdal"
+  }
+}
+
+=== tab cache=true conda=false
+{
+  "argv": [
+    "/bin/bash",
+    "/usr/local/share/jupyter/kernels/sepal-app-kernel",
+    "testapp",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) before\tafter",
+  "language": "python",
+  "env": {}
+}
+
+=== tab cache=true conda=true
+{
+  "argv": [
+    "/bin/bash",
+    "/usr/local/share/jupyter/kernels/sepal-app-kernel",
+    "testapp",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) before\tafter",
+  "language": "python",
+  "env": {}
+}
+
+=== control cache=false conda=false
+{
+  "argv": [
+    "@WORK@/ck/venv-testapp/venv/bin/python3",
+    "-m",
+    "ipykernel_launcher",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) bell\u0007and\u000bvertical",
+  "language": "python",
+  "env": {
+    "PYTHONNOUSERSITE": "1"
+  }
+}
+
+=== control cache=false conda=true
+{
+  "argv": [
+    "@WORK@/ck/venv-testapp/venv/bin/python3",
+    "-m",
+    "ipykernel_launcher",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) bell\u0007and\u000bvertical",
+  "language": "python",
+  "env": {
+    "PYTHONNOUSERSITE": "1",
+    "PROJ_LIB": "@WORK@/ck/venv-testapp/venv/share/proj",
+    "PROJ_DATA": "@WORK@/ck/venv-testapp/venv/share/proj",
+    "GDAL_DATA": "@WORK@/ck/venv-testapp/venv/share/gdal"
+  }
+}
+
+=== control cache=true conda=false
+{
+  "argv": [
+    "/bin/bash",
+    "/usr/local/share/jupyter/kernels/sepal-app-kernel",
+    "testapp",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) bell\u0007and\u000bvertical",
+  "language": "python",
+  "env": {}
+}
+
+=== control cache=true conda=true
+{
+  "argv": [
+    "/bin/bash",
+    "/usr/local/share/jupyter/kernels/sepal-app-kernel",
+    "testapp",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": " (venv) bell\u0007and\u000bvertical",
+  "language": "python",
+  "env": {}
+}
+

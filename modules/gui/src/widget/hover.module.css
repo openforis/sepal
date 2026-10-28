@@ -8,5 +8,5 @@
 }
 
 .overlay.hover {
-    background: hsla(0, 0%, 0%, .7);
+    background: var(--hover-overlay-color);
 }

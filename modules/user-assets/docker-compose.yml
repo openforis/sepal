@@ -5,6 +5,10 @@ services:
       service: logger
     image: "redis:6"
     container_name: user-assets-redis
+    # Holds cached Earth Engine asset trees: evicting mid-scan leaves the asset manager reconciling a
+    # partial tree.
+    # maxmemory is a guard rail, not a cache budget: with noeviction, reaching it makes writes fail.
+    command: ["redis-server", "--maxmemory", "1gb", "--maxmemory-policy", "noeviction"]
     volumes:
       - "${SEPAL_DATA_DIR}/user-assets-redis:/data"
     healthcheck:

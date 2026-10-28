@@ -38,7 +38,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background-color: hsla(0, 0%, 0%, .05);
+    background-color: var(--subtle-shade-color);
     pointer-events: none;
 }
 
@@ -53,6 +53,12 @@
 
 .layout.vertical > .content {
     flex-direction: column;
+}
+
+/* Opt in for constrained lists whose rows handle truncation and keep controls visible. */
+.layout.vertical.shrink,
+.layout.vertical.shrink > .content {
+    min-width: 0;
 }
 
 /* vertical/spacing */

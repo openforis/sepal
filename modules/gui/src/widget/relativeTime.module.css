@@ -1,0 +1,4 @@
+/* List rows switch pointer events off on their content; the tooltip needs them back. */
+.relativeTime {
+    pointer-events: auto;
+}

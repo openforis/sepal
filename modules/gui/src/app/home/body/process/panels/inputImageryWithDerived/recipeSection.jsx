@@ -1,18 +1,21 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {isTakenSource} from '~/app/home/body/process/inputImages'
+import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
 import {RecipeInput} from '~/widget/recipeInput'
 
 export class RecipeSection extends React.Component {
     render() {
-        const {input, onLoading} = this.props
+        const {input, labelButtons, onLoading, otherSources} = this.props
         return (
             <RecipeInput
                 input={input}
-                filter={type => !type.noImageOutput}
+                labelButtons={labelButtons}
+                filter={(recipeType, recipe) => isImageSource(recipeType) && !isTakenSource(otherSources, 'RECIPE_REF', recipe.id)}
                 autoFocus
                 onLoading={onLoading}
-                onLoaded={value => this.onRecipeLoaded(value)}
+                onBandsLoaded={value => this.onRecipeLoaded(value)}
             />
         )
     }
@@ -28,4 +31,7 @@ export class RecipeSection extends React.Component {
 
 RecipeSection.propTypes = {
     input: PropTypes.object.isRequired,
+    labelButtons: PropTypes.array,
+    // The sources of the recipe's other inputs, which are not offered.
+    otherSources: PropTypes.array
 }

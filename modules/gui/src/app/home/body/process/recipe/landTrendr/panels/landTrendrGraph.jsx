@@ -4,7 +4,7 @@ import React from 'react'
 
 import format from '~/format'
 import {msg} from '~/translate'
-import {Graph} from '~/widget/graph'
+import {Graph, graphColor} from '~/widget/graph'
 import {isMobile} from '~/widget/userAgent'
 import {Widget} from '~/widget/widget'
 
@@ -38,7 +38,7 @@ export class LandTrendrGraph extends React.Component {
                         observations: {
                             drawPoints: true,
                             strokeWidth: 0,
-                            color: '#FFFFFF',
+                            color: graphColor('foreground'),
                             highlightCircleSize: 1
                         }
                     }}
@@ -46,7 +46,7 @@ export class LandTrendrGraph extends React.Component {
                         highlightCircleSize: 3
                     }}
                     highlightSeriesBackgroundAlpha={1}
-                    highlightSeriesBackgroundColor={'hsla(0, 0%, 0%, 1)'}
+                    highlightSeriesBackgroundColor={graphColor('highlightBackground')}
                     errorBars
                     sigma={1}
                     axes={{
@@ -55,12 +55,12 @@ export class LandTrendrGraph extends React.Component {
                         }
                     }}
                     showRangeSelector={!isMobile()}
-                    rangeSelectorPlotFillColor={'#1B1B1C'}
-                    rangeSelectorPlotFillGradientColor={'#1B1B1C'}
-                    rangeSelectorPlotStrokeColor={'#1B1B1C'}
+                    rangeSelectorPlotFillColor={graphColor('rangeSelectorPlot')}
+                    rangeSelectorPlotFillGradientColor={graphColor('rangeSelectorPlot')}
+                    rangeSelectorPlotStrokeColor={graphColor('rangeSelectorPlot')}
                     rangeSelectorAlpha={0.2}
-                    rangeSelectorBackgroundStrokeColor={'rgba(100%, 100%, 100%, .15)'}
-                    rangeSelectorForegroundStrokeColor={'rgba(100%, 100%, 100%, .15)'}
+                    rangeSelectorBackgroundStrokeColor={graphColor('rangeSelectorStroke')}
+                    rangeSelectorForegroundStrokeColor={graphColor('rangeSelectorStroke')}
                     highlightCallback={isMobile() ? undefined : this.highlightCallback}
                     unhighlightCallback={isMobile() ? undefined : unhighlightCallback}
                 />

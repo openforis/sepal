@@ -43,5 +43,6 @@ export const visualizations = {
         normalize({type: 'continuous', bands: ['evi'], min: [-10000], max: [10000], palette: ['#112040', '#1c67a0', '#6db6b3', '#fffccc', '#abac21', '#177228', '#172313']}),
         normalize({type: 'continuous', bands: ['evi2'], min: [-10000], max: [10000], palette: ['#112040', '#1c67a0', '#6db6b3', '#fffccc', '#abac21', '#177228', '#172313']}),
         normalize({type: 'continuous', bands: ['savi'], min: [-10000], max: [10000], palette: ['#112040', '#1c67a0', '#6db6b3', '#fffccc', '#abac21', '#177228', '#172313']}),
+        normalize({type: 'continuous', bands: ['kndvi'], min: [0], max: [10000], palette: ['#0034F5', '#1E7D83', '#4DA910', '#B3C120', '#FCC228', '#FF8410', '#FD3000']}),
     ]
 }

@@ -1,27 +1,29 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
-import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
+import {isTakenSource} from '~/app/home/body/process/inputImages'
+import {recipeVisualizationsNaming, sourceVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
 import {RecipeInput} from '~/widget/recipeInput'
 
 export class RecipeSection extends React.Component {
     render() {
-        const {input, onLoading} = this.props
+        const {input, labelButtons, onLoading, otherSources} = this.props
         return (
             <RecipeInput
                 input={input}
-                filter={type => !type.noImageOutput}
+                labelButtons={labelButtons}
+                filter={(recipeType, recipe) => isImageSource(recipeType) && !isTakenSource(otherSources, 'RECIPE_REF', recipe.id)}
                 autoFocus
                 onLoading={onLoading}
-                onLoaded={value => this.onRecipeLoaded(value)}
+                onBandsLoaded={value => this.onRecipeLoaded(value)}
             />
         )
     }
 
     onRecipeLoaded({recipe, bandNames}) {
         const {onLoaded} = this.props
-        const visualizations = getRecipeType(recipe.type).getPreSetVisualizations(recipe)
+        const visualizations = sourceVisualizations(recipe)
         onLoaded({
             id: recipe.id,
             bands: this.extractBands(recipe, bandNames),
@@ -35,7 +37,7 @@ export class RecipeSection extends React.Component {
 
     extractBands(recipe, bandNames) {
         const bands = {}
-        const categoricalVisualizations = getAllVisualizations(recipe)
+        const categoricalVisualizations = recipeVisualizationsNaming(recipe, bandNames)
             .filter(({type}) => type === 'categorical')
         bandNames
             .forEach(bandName => {
@@ -48,5 +50,8 @@ export class RecipeSection extends React.Component {
 }
 
 RecipeSection.propTypes = {
-    input: PropTypes.object.isRequired
+    input: PropTypes.object.isRequired,
+    labelButtons: PropTypes.array,
+    // The sources of the recipe's other inputs, which are not offered.
+    otherSources: PropTypes.array
 }

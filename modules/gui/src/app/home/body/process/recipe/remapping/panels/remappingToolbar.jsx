@@ -11,6 +11,7 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
+import {SectionButton} from '../../sectionButton'
 import {Legend} from '../legend/legend'
 import styles from './remappingToolbar.module.css'
 import {Retrieve} from './retrieve/retrieve'
@@ -44,7 +45,7 @@ class _RemappingToolbar extends React.Component {
                     vertical
                     placement='bottom-right'
                     className={styles.bottom}>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='inputImagery'
                         label={msg('process.panels.inputImagery.button')}
                         tooltip={msg('process.panels.inputImagery.tooltip')}
@@ -56,7 +57,7 @@ class _RemappingToolbar extends React.Component {
                         tooltip={msg('process.remapping.panel.legend.tooltip')}
                         disabled={!initialized}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='mapping'
                         label={msg('process.remapping.panel.mapping.button.label')}
                         tooltip={msg('process.remapping.panel.mapping.button.tooltip')}

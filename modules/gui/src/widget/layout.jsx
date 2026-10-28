@@ -11,7 +11,7 @@ const typeClassNames = (type = '') =>
 
 class _Layout extends React.Component {
     render() {
-        const {forwardedRef, type, spacing, alignment, framed, className, contentClassName, style, onClick, onMouseOver, onMouseOut, children} = this.props
+        const {forwardedRef, type, spacing, alignment, framed, shrink, className, contentClassName, style, onClick, onAuxClick, onMouseDown, onMouseOver, onMouseOut, children} = this.props
         return (
             <div
                 ref={forwardedRef}
@@ -21,10 +21,13 @@ class _Layout extends React.Component {
                     styles[`spacing-${spacing}`],
                     styles[`alignment-${alignment}`],
                     framed ? styles.framed : null,
+                    shrink ? styles.shrink : null,
                     className
                 ].join(' ')}
                 style={style}
                 onClick={onClick}
+                onAuxClick={onAuxClick}
+                onMouseDown={onMouseDown}
                 onMouseEnter={onMouseOver}
                 onMouseLeave={onMouseOut}>
                 <div className={[
@@ -53,10 +56,14 @@ Layout.propTypes = {
     className: PropTypes.string,
     contentClassName: PropTypes.string,
     framed: PropTypes.any,
+    // Allow a constrained vertical layout to shrink below its content's intrinsic width.
+    shrink: PropTypes.bool,
     spacing: PropTypes.oneOf(['loose', 'normal', 'normal-separated', 'compact', 'compact-separated', 'tight', 'none']),
     style: PropTypes.object,
     type: PropTypes.oneOf(['vertical', 'vertical-fill', 'vertical-scrollable', 'horizontal', 'horizontal-nowrap']),
+    onAuxClick: PropTypes.func,
     onClick: PropTypes.func,
+    onMouseDown: PropTypes.func,
     onMouseOut: PropTypes.func,
     onMouseOver: PropTypes.func
 }

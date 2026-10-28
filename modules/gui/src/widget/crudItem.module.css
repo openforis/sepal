@@ -8,6 +8,12 @@
 .content {
     flex-grow: 1;
     flex-shrink: 1;
+    overflow: hidden;
+}
+
+/* Allow constrained rows to shrink without hiding their intrinsic width from content-sized popups. */
+.container, .item, .content, .info {
+    min-width: 0;
 }
 
 .inline {
@@ -47,12 +53,25 @@
     flex-shrink: 0;
 }
 
+/* A layout clips what overflows it: room is kept for the focus ring of the error mark at the row's end. */
+.titleRow {
+    max-width: 100%;
+    padding-right: 2px;
+}
+
+/* A long title is cut short, its error mark kept beside it. */
+.titleRowContent > :first-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .title {
     font-size: .8rem;
     font-weight: 800;
     line-height: 1.5rem;
     text-transform: uppercase;
-    color: #808080;
+    color: var(--text-muted-color);
     white-space: nowrap;
 }
 
@@ -64,13 +83,19 @@
     text-align: left;
 }
 
-.metadata {
+.metadata, .timestamp {
     pointer-events: none;
     /* avoid interfering with click target */
     font-size: small;
     /* margin-right: 2rem; */
     color: gray;
     flex-shrink: 0;
+}
+
+.timestamp {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
 }
 
 @media screen and (max-width: 600px) {
@@ -83,7 +108,7 @@
 
 .highlight {
     font-weight: bolder;
-    color: #eebb00;
+    color: var(--attention-color);
     background-color: transparent;
 }
 

@@ -26,6 +26,7 @@ import {SearchBox} from '~/widget/searchBox'
 import {Content, SectionLayout} from '~/widget/sectionLayout'
 import {Tag} from '~/widget/tag'
 
+import {appRequirements} from '../instanceSuitability'
 import {AppAdmin} from './appAdmin'
 import {AppDetails} from './appDetails'
 import {AppItem} from './appItem'
@@ -292,6 +293,22 @@ class _AppList extends React.Component {
             : null
     }
 
+    renderGpuRequiredChip(app) {
+        const {minGpuCount} = appRequirements(app)
+        return minGpuCount
+            ? (
+                <Tag
+                    key={'gpuRequiredChip'}
+                    size='small'
+                    icon='microchip'
+                    label={minGpuCount > 1 ? `${minGpuCount}× GPU` : 'GPU'}
+                    tooltip={msg('apps.gpuRequiredTooltip', {count: minGpuCount})}
+                    tooltipPlacement='left'
+                />
+            )
+            : null
+    }
+
     renderAppAdminButton(app) {
         return this.isDockerApp(app) && this.isUserAdmin()
             ? (
@@ -323,6 +340,7 @@ class _AppList extends React.Component {
                     infoTooltip={msg('apps.info')}
                     tooltipPlacement='left'
                     inlineComponents={[
+                        this.renderGpuRequiredChip(app),
                         this.renderNoInstanceRequiredChip(app),
                         this.renderAppAdminButton(app),
                         this.renderGoogleAccountRequiredButton(app),

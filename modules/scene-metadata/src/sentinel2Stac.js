@@ -1,5 +1,14 @@
 import {getIdFromDatastripId, scene} from './sentinel2.js'
-import {updateFromStac} from './stac.js'
+import {updateFromStac$} from './stac.js'
+
+export const updateSentinel2$ = ({redis, database, timestamp}) => updateFromStac$({
+    source: 'sentinel-2',
+    dataset: 'SENTINEL_2',
+    sceneMapper,
+    redis,
+    database,
+    timestamp
+})
 
 const sceneMapper = ({
     properties: {
@@ -14,15 +23,3 @@ const sceneMapper = ({
         ? scene({id, productUri, acquiredTimestamp, cloudCover})
         : null
 }
-
-const updateSentinel2 = async ({redis, database, timestamp}) =>
-    await updateFromStac({
-        source: 'sentinel-2',
-        dataset: 'SENTINEL_2',
-        sceneMapper,
-        redis,
-        database,
-        timestamp
-    })
-
-export {updateSentinel2}

@@ -1,16 +1,12 @@
-import moment from 'moment'
+import {throwError} from 'rxjs'
 
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {defaultModel as defaultPlanetModel} from '~/app/home/body/process/recipe/planetMosaic/planetMosaicRecipe'
 import {defaultModel as defaultRadarModel} from '~/app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
-import {pyramidingPolicies, submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
-import {selectFrom} from '~/stateUtils'
 
-import {visualizationOptions} from './visualizations'
-
-const DATE_FORMAT = 'YYYY-MM-DD'
+import {settingsOf} from './processingSettings'
 
 export const defaultModel = {
     reference: {},
@@ -68,61 +64,16 @@ export const RecipeActions = id => {
                 .set('ui.chartPixel', latLng)
                 .dispatch()
         },
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_CHANGE_ALERTS_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions
-                })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .dispatch()
-        }
     }
 }
 
-export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
-    api.gee.loadCCDCSegments$({recipe: recipe.model.reference, latLng, bands})
-
-// TODO: Might need to tweak the recipe for this
-export const loadCCDCObservations$ = ({recipe, latLng, bands}) => {
-    const {monitoringEnd, calibrationStart} = toDates(recipe)
-    return api.gee.loadTimeSeriesObservations$({
-        recipe: {model: {
-            dates: {
-                startDate: calibrationStart,
-                endDate: monitoringEnd
-            },
-            sources: recipe.model.sources,
-            options: recipe.model.options
-        }},
-        latLng,
-        bands
-    })
+export const loadCCDCSegments$ = ({recipe, latLng, bands}) => {
+    const model = settingsOf(recipe).model
+    return model ? api.gee.loadCCDCSegments$({recipe: model.reference, latLng, bands})
+        : throwError(() => new Error('Reference processing settings are not available'))
 }
 
-export const toDates = recipe => {
-    const model = recipe.model
-    const monitoringEnd = model.date.monitoringEnd
-    const monitoringStart = moment(monitoringEnd, DATE_FORMAT).subtract(model.date.monitoringDuration, model.date.monitoringDurationUnit).format(DATE_FORMAT)
-    const calibrationStart = moment(monitoringStart, DATE_FORMAT).subtract(model.date.calibrationDuration, model.date.calibrationDurationUnit).format(DATE_FORMAT)
-    return {monitoringEnd, monitoringStart, calibrationStart}
-}
-
-export const getAllVisualizations = recipe => {
-    const changesVisualizations = visualizationOptions(recipe, 'changes')
-        .map(option => option.options ? option.options : option)
-        .flat()
-        .map(({visParams}) => visParams)
-    return recipe.ui.initialized
-        ? [
-            ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
-            ...changesVisualizations,
-            ...selectFrom(recipe, 'model.reference.visualizations') || []
-        ]
-        : []
-}
-
-const submitRetrieveRecipeTask = recipe =>
-    submitTask(recipe, {
-        pyramidingPolicy: pyramidingPolicies.sample
-    })
+// The monitoring imagery's observations of a band of its own: the server derives the collection this recipe observes,
+// and judges it, from the recipe as applied (observedCollection, lib/js/shared/src/recipe/changeAlerts).
+export const loadCCDCObservations$ = ({recipe, latLng, bands}) =>
+    api.gee.loadTimeSeriesObservations$({recipe, latLng, bands})

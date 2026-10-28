@@ -5,7 +5,7 @@ import {actionBuilder} from '~/action-builder'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {withContext} from '~/context'
-import {toPathList} from '~/stateUtils'
+import {selectFrom, toPathList} from '~/stateUtils'
 import {select} from '~/store'
 import {ActivationContext} from '~/widget/activation/activationContext'
 
@@ -21,11 +21,17 @@ const RecipeContext = ({recipeStatePath, children}) =>
  
 const withRecipeStatePath = withContext(Context, 'recipeStatePath')
 
+// Where a recipe's activatables are, within the activation context at `parentPathList`.
+export const recipeActivationPath = (parentPathList, id) =>
+    [...parentPathList, 'contexts', recipeActivationId(id)]
+
+const recipeActivationId = id => `recipe-${id}`
+
 export const Recipe = ({id, children}) =>
     id
         ? (
             <RecipeContext recipeStatePath={toPathList(['process.loadedRecipes', id])}>
-                <ActivationContext id={`recipe-${id}`}>
+                <ActivationContext id={recipeActivationId(id)}>
                     {children}
                 </ActivationContext>
             </RecipeContext>
@@ -34,9 +40,9 @@ export const Recipe = ({id, children}) =>
 
 export const withRecipe = (mapRecipeToProps = () => ({})) =>
     WrappedComponent => {
-        const mapStateToProps = (_state, ownProps) => {
+        const mapStateToProps = (state, ownProps) => {
             const {recipeStatePath} = ownProps
-            const recipe = {...select(recipeStatePath)}
+            const recipe = selectFrom(state, recipeStatePath)
             if (!_.isEmpty(recipe)) {
                 return {
                     recipeActionBuilder: recipeActionBuilder(recipe.id),

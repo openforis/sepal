@@ -1,6 +1,7 @@
 import moment from 'moment'
 import React from 'react'
 
+import {FROM_IMAGE, TO_IMAGE} from '#sepal/recipe/type/classChange'
 import {initializeLayers} from '~/app/home/body/process/recipe/recipeImageLayerSource'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
@@ -9,8 +10,10 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
-import {getAvailableBands} from './bands'
+import {changeImageRequirements} from '../changeImageRequirements'
+import {bandPresentation} from './bands'
 import {defaultModel} from './classChangeRecipe'
+import {legendRequirements} from './legendRequirements'
 import {ClassChangeToolbar} from './panels/classChangeToolbar'
 import {getPreSetVisualizations} from './visualizations'
 
@@ -43,6 +46,11 @@ const ClassChange = compose(
     recipe({defaultModel, mapRecipeToProps})
 )
 
+const IMAGES = [
+    {section: {id: 'fromImage', label: 'process.classChange.panel.inputImage.from.button.label'}, role: FROM_IMAGE, key: 'fromImage'},
+    {section: {id: 'toImage', label: 'process.classChange.panel.inputImage.to.button.label'}, role: TO_IMAGE, key: 'toImage'}
+]
+
 const getDateRange = recipe => {
     const {fromDate, toDate, targetDate} = recipe.model.dates
     const startDate = fromDate || targetDate
@@ -50,16 +58,10 @@ const getDateRange = recipe => {
     return [moment.utc(startDate, 'YYYY-MM-DD'), moment.utc(endDate, 'YYYY-MM-DD')]
 }
 
-const getDependentRecipeIds = recipe =>
-    [
-        (selectFrom(recipe, 'model.fromImage') || {}),
-        (selectFrom(recipe, 'model.toImage') || {}),
-    ]
-        .filter(({type}) => type === 'RECIPE_REF')
-        .map(({id}) => id)
-
 export default () => ({
     id: 'CLASS_CHANGE',
+    // The images it reads that the layout shows (mapLayout/dependencyLayerSources.js).
+    dependencyLayerRoles: [FROM_IMAGE, TO_IMAGE],
     labels: {
         name: msg('process.classChange.create'),
         creationDescription: msg('process.classChange.description'),
@@ -69,8 +71,9 @@ export default () => ({
     components: {
         recipe: ClassChange
     },
-    getDependentRecipeIds,
+    sourceRequirements: [...changeImageRequirements(IMAGES), ...legendRequirements(IMAGES)],
+    imageSource: true,
     getDateRange,
-    getAvailableBands,
+    bandPresentation,
     getPreSetVisualizations
 })

@@ -1,9 +1,24 @@
 import React, {useCallback, useEffect, useRef} from 'react'
+import {Subscription} from 'rxjs'
+
+// An rxjs Subscription is used as the teardown container: adding to an already-closed
+// container (a late add after unmount) tears the subscription down immediately instead of
+// leaking it, unsubscribing runs every teardown even if one throws, and completed rx
+// subscriptions remove themselves from the container instead of accumulating until unmount.
+const addToContainer = (container, subscription) => {
+    if (subscription) {
+        if (typeof subscription === 'function' || typeof subscription.unsubscribe === 'function') {
+            container.add(subscription)
+        } else {
+            console.error('Cannot add unsupported subscription', subscription)
+        }
+    }
+}
 
 export const withSubscriptions = () =>
     WrappedComponent =>
         class WithSubscriptionHOC extends React.Component {
-            subscriptions = []
+            subscriptions = new Subscription()
 
             constructor(props) {
                 super(props)
@@ -19,52 +34,34 @@ export const withSubscriptions = () =>
 
             addSubscription(...subscriptions) {
                 subscriptions.forEach(subscription =>
-                    subscription && this.subscriptions.push(subscription))
-            }
-
-            unsubscribe(subscription) {
-                if (typeof subscription === 'function') {
-                    return subscription()
-                }
-                if (subscription.unsubscribe) {
-                    return subscription.unsubscribe()
-                }
-                console.error('Cannot unsubscribe unsupported subscription', subscription)
+                    addToContainer(this.subscriptions, subscription)
+                )
             }
 
             componentWillUnmount() {
-                this.subscriptions.forEach(
-                    subscription => this.unsubscribe(subscription)
-                )
+                this.subscriptions.unsubscribe()
             }
         }
 
 export const useSubscriptions = () => {
-    const subscriptionsRef = useRef([])
+    const subscriptionsRef = useRef(null)
 
-    const addSubscription = useCallback(subscription =>
-        subscription && subscriptionsRef.current.push(subscription)
-    , [])
-
-    const addSubscriptions = useCallback((...currentSubscriptions) =>
-        currentSubscriptions.forEach(
-            subscription => addSubscription(subscription)
-        )
-    , [addSubscription])
-
-    const unsubscribe = subscription => {
-        if (typeof subscription === 'function') {
-            return subscription()
-        }
-        if (subscription.unsubscribe) {
-            return subscription.unsubscribe()
-        }
-        console.error('Cannot unsubscribe unsupported subscription', subscription)
+    if (!subscriptionsRef.current) {
+        subscriptionsRef.current = new Subscription()
     }
+
+    const addSubscriptions = useCallback((...subscriptions) =>
+        subscriptions.forEach(subscription =>
+            addToContainer(subscriptionsRef.current, subscription)
+        )
+    , [])
 
     useEffect(() => {
         return () => {
-            subscriptionsRef.current.forEach(subscription => unsubscribe(subscription))
+            subscriptionsRef.current.unsubscribe()
+            // a Subscription cannot be reopened — recreate the container so an effect
+            // re-run (e.g. StrictMode double-mount) doesn't instantly tear down later adds
+            subscriptionsRef.current = new Subscription()
         }
     }, [])
 

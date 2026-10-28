@@ -1,8 +1,9 @@
+import {stat} from 'node:fs/promises'
+import Path from 'node:path'
+
 import ansi from 'ansi'
 import chalk from 'chalk'
-import {stat} from 'fs/promises'
 import _ from 'lodash'
-import Path from 'path'
 
 import {compose} from './compose.js'
 import {deps, DEPS_COLUMN, EXCLUDE_PREFIX, GROUP_PREFIX, groups, NAME_COLUMN, SEPAL_SRC, STATUS_COLUMN} from './config.js'
@@ -11,29 +12,6 @@ import {hasComposeOverride, listModules} from './docker.js'
 import {log} from './log.js'
 
 const cursor = ansi(process.stdout)
-
-export const STATUS = {
-    UNDEFINED: 'UNDEFINED',
-    NON_RUNNABLE: 'NON_RUNNABLE',
-    BUILDING: 'BUILDING',
-    BUILT: 'BUILT',
-    STARTING: 'STARTING',
-    RUNNING: 'RUNNING',
-    STOPPING: 'STOPPING',
-    STOPPED: 'STOPPED',
-    ERROR: 'ERROR',
-    UPDATING_PACKAGES: 'UPDATING_PACKAGES',
-    UPDATED_PACKAGES: 'UPDATED_PACKAGES',
-    CLEANING_PACKAGES: 'CLEANING_PACKAGES',
-    INSTALLING_PACKAGES: 'INSTALLING_PACKAGES',
-    INSTALLING_SHARED_PACKAGES: 'INSTALLING_SHARED_PACKAGES',
-    INSTALLING_MODULE_PACKAGES: 'INSTALLING_MODULE_PACKAGES',
-    INSTALLED_PACKAGES: 'INSTALLED_PACKAGES',
-    AUDITING_PACKAGES: 'AUDITING_PACKAGES',
-    AUDITED_PACKAGES: 'AUDITED_PACKAGES',
-    REBUILDING_PACKAGES: 'REBUILDING_PACKAGES',
-    SKIPPED: 'SKIPPED'
-}
 
 export const MESSAGE = {
     UNDEFINED: chalk.grey('UNDEFINED'),
@@ -149,7 +127,7 @@ export const getModules = (modules, defaultModules = [':default']) => {
 export const modulePath = module =>
     `${SEPAL_SRC}/modules/${module}`
 
-export const getServices = async module => {
+const getServices = async module => {
     try {
         const ps = await compose({
             module,
@@ -176,9 +154,6 @@ export const getServices = async module => {
         return null
     }
 }
-
-export const isProductionMode = async module =>
-    allowsProductionMode(module) && !(await hasComposeOverride(module))
 
 export const getMode = async module =>
     allowsProductionMode(module)
@@ -207,11 +182,9 @@ const getBaseStatus = async modules => {
 
         return await Promise.all(
             base.map(async entry => {
-                // const productionMode = await isProductionMode(entry.module)
                 const mode = await getMode(entry.module)
                 return {
                     ...entry,
-                    // productionMode,
                     mode
                 }
             })
@@ -240,9 +213,7 @@ const getExtendedStatus = async modules =>
                     .sort()
                     .value()
                     .join(', ')
-                // const productionMode = await isProductionMode(module)
                 const mode = await getMode(module)
-                // return {module, services, status, productionMode}
                 return {module, services, status, mode}
             })
     )
@@ -318,9 +289,6 @@ export const isModule = name => {
 export const isRunnable = module =>
     isModule(module)?.run
 
-export const isGradleModule = module =>
-    isModule(module)?.gradle
-    
 export const isRunning = async (module, serviceName) => {
     const result = await getStatus([module], true)
     const services = _(result).get(['0', 'services'])
@@ -383,28 +351,3 @@ export const multi = async (items, iterator, sequential = false) =>
     sequential
         ? await iterateSequential(items, iterator)
         : await iterateParallel(items, iterator)
-
-export const progress = async (promise, callback) => {
-    const result = {}
-        
-    const complete = async () =>
-        new Promise((resolve, reject) => {
-            const check = (count = 0) => {
-                if (result.done) {
-                    resolve()
-                } else if (result.error) {
-                    reject(result.error)
-                } else {
-                    callback && callback(count)
-                    setTimeout(() => check(count + 1), 1000)
-                }
-            }
-            check()
-        })
-        
-    promise
-        .then(() => result.done = true)
-        .catch(error => result.error = error)
-        
-    await complete()
-}

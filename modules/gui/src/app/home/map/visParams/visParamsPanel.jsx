@@ -3,18 +3,22 @@ import React from 'react'
 import {filter, Subject, takeUntil} from 'rxjs'
 
 import api from '~/apiRegistry'
+import {productArgs} from '~/app/home/body/process/recipe/recipeOutput'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
-import {LegendBuilder} from '~/app/home/map/legendBuilder'
+import {LegendBuilder, legendEntriesToModel, nextLegendValue} from '~/app/home/map/legendBuilder'
 import {withMap} from '~/app/home/map/mapContext'
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {compose} from '~/compose'
+import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {uuid} from '~/uuid'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withActivators} from '~/widget/activation/activator'
+import {Button} from '~/widget/button'
 import {ButtonSelect} from '~/widget/buttonSelect'
 import {Confirm} from '~/widget/confirm'
+import {CopyButton} from '~/widget/copyButton'
 import {downloadCsv} from '~/widget/download'
 import {Form} from '~/widget/form'
 import {defaultColor} from '~/widget/form/colorInput'
@@ -26,15 +30,26 @@ import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
 
 import {Histogram, histogramStretch} from './histogram'
-import {Palette} from './palette'
+import {invalidPaletteColors, Palette} from './palette'
 import styles from './visParamsPanel.module.css'
+import {copiedVisualizationDraft, copyVisualizationDraft, draftOf, draftValues} from './visualizationClipboard'
 
 const fields = {
+    // The bands the layer can draw, as the editor was opened with them: what a band choice is judged by.
+    bands: new Form.Field(),
     type: new Form.Field()
         .notBlank(),
     palette: new Form.Field(),
+    paletteText: new Form.Field()
+        .skip((value, {type}) => type !== 'continuous')
+        .predicate(
+            paletteText => !invalidPaletteColors(paletteText?.text).length,
+            'map.visParams.form.palette.text.invalid',
+            ({paletteText}) => ({colors: invalidPaletteColors(paletteText?.text).join(', ')})
+        ),
     name1: new Form.Field()
-        .notBlank(),
+        .notBlank()
+        .predicate(drawableBand, 'map.visParams.form.band.unavailable', ({name1}) => ({band: name1})),
     min1: new Form.Field()
         .skip((value, {name1}) => !name1)
         .skip((value, {type}) => type === 'categorical')
@@ -54,7 +69,8 @@ const fields = {
 
     name2: new Form.Field()
         .skip((value, {type}) => !['rgb', 'hsv'].includes(type))
-        .notBlank(),
+        .notBlank()
+        .predicate(drawableBand, 'map.visParams.form.band.unavailable', ({name2}) => ({band: name2})),
     min2: new Form.Field()
         .skip((value, {name2}) => !name2)
         .skip((value, {type}) => !['rgb', 'hsv'].includes(type))
@@ -73,7 +89,8 @@ const fields = {
         .number(),
     name3: new Form.Field()
         .skip((value, {type}) => !['rgb', 'hsv'].includes(type))
-        .notBlank(),
+        .notBlank()
+        .predicate(drawableBand, 'map.visParams.form.band.unavailable', ({name3}) => ({band: name3})),
     min3: new Form.Field()
         .skip((value, {name3}) => !name3)
         .skip((value, {type}) => !['rgb', 'hsv'].includes(type))
@@ -92,15 +109,26 @@ const fields = {
         .number(),
 }
 
-const mapRecipeToProps = (recipe, {activatable: {imageLayerSourceId}}) => ({
+const mapStateToProps = state => ({
+    copiedDraft: copiedVisualizationDraft(state)
+})
+
+const mapRecipeToProps = (recipe, {area, activatable: {imageLayerSourceId}}) => ({
     visParamsSets: selectFrom(recipe, ['layers.userDefinedVisualizations', imageLayerSourceId]) || [],
+    areaImageLayer: selectFrom(recipe, ['layers.areas', area, 'imageLayer']),
     aoi: selectFrom(recipe, 'model.aoi'),
     importedLegendEntries: selectFrom(recipe, 'ui.importedLegendEntries')
 })
 
+// The editor works from the context its selector captured when it opened - the recipe, the band choices and the
+// arguments naming the product the layer shows - and asks about bands, histograms and values with that context
+// alone, never a newer recipe beside older choices. If its area stops showing that layer or that product, the
+// context no longer describes what a saved style would be applied to, and the editor closes without saving.
+//
+// Its draft can be copied, as it stands, and pasted into another editor's (visualizationClipboard.js). A paste is an edit
+// of the draft alone: the editor's mode, its visualization's identity and its context stay its own.
 class _VisParamsPanel extends React.Component {
     state = {
-        bands: null,
         histograms: {},
         askConfirmation: false,
         legendEntries: [],
@@ -108,12 +136,15 @@ class _VisParamsPanel extends React.Component {
     }
 
     cancelHistogram$ = new Subject()
+    draftReplaced$ = new Subject()
 
     constructor(props) {
         super(props)
         this.importLegend = this.importLegend.bind(this)
         this.loadDistinctBandValues = this.loadDistinctBandValues.bind(this)
         this.check = this.check.bind(this)
+        this.copyDraft = this.copyDraft.bind(this)
+        this.pasteDraft = this.pasteDraft.bind(this)
     }
 
     render() {
@@ -124,19 +155,13 @@ class _VisParamsPanel extends React.Component {
     }
 
     renderPanel() {
-        const {activatable: {deactivate}, form, inputs: {type}} = this.props
-        const {legendEntries, invalidLegendEntries} = this.state
-        const invalid = form.isInvalid() || (type.value === 'categorical' && (invalidLegendEntries || !legendEntries.length))
+        const {activatable: {deactivate}, inputs: {type}} = this.props
         return (
             <Panel
                 className={styles.panel}
                 placement='modal'
                 onBackdropClick={deactivate}>
-                <Panel.Header
-                    icon='layer-group'
-                    title={msg('map.visParams.title')}
-                    label={this.renderTypeButtons()}
-                />
+                {this.renderHeader()}
                 <Panel.Content>
                     {this.renderContent()}
                 </Panel.Content>
@@ -150,7 +175,7 @@ class _VisParamsPanel extends React.Component {
                             onClick={deactivate}
                         />
                         <Panel.Buttons.Apply
-                            disabled={invalid}
+                            disabled={!this.acceptable()}
                             keybinding='Enter'
                             onClick={this.check}
                         />
@@ -160,8 +185,61 @@ class _VisParamsPanel extends React.Component {
         )
     }
 
+    // The whole draft's Copy and Paste sit just before the type, which ends the header. The title is what gives way when
+    // the panel is narrow. Copy and Paste sit edge to edge: their round buttons' own padding spaces their icons.
+    renderHeader() {
+        return (
+            <Panel.Header>
+                <Icon name='layer-group' className={styles.headerIcon}/>
+                <div className={styles.headerTitle}>{msg('map.visParams.title')}</div>
+                <Layout type='horizontal-nowrap' spacing='none' className={styles.headerActions}>
+                    {this.renderCopyButton()}
+                    {this.renderPasteButton()}
+                </Layout>
+                <div className={styles.headerType}>{this.renderTypeButtons()}</div>
+            </Panel.Header>
+        )
+    }
+
+    renderCopyButton() {
+        return (
+            <CopyButton
+                key='copyDraft'
+                chromeless
+                shape='circle'
+                size='small'
+                air='less'
+                icon='copy'
+                ariaLabel={msg('map.visParams.draft.copy.label')}
+                tooltip={msg('map.visParams.draft.copy.tooltip')}
+                tooltipPlacement='bottom'
+                write={this.copyDraft}
+            />
+        )
+    }
+
+    renderPasteButton() {
+        const {copiedDraft} = this.props
+        return (
+            <Button
+                key='pasteDraft'
+                chromeless
+                shape='circle'
+                size='small'
+                air='less'
+                icon='paste'
+                ariaLabel={msg('map.visParams.draft.paste.label')}
+                disabled={!copiedDraft}
+                tooltip={msg(copiedDraft ? 'map.visParams.draft.paste.tooltip' : 'map.visParams.draft.paste.empty')}
+                tooltipPlacement='bottom'
+                tooltipAllowedWhenDisabled
+                onClick={this.pasteDraft}
+            />
+        )
+    }
+
     renderLegendBuilderButtons() {
-        const {stream} = this.props
+        const {stream, inputs: {name1}} = this.props
         const {legendEntries} = this.state
         const options = [
             {options: [
@@ -173,6 +251,7 @@ class _VisParamsPanel extends React.Component {
                 {
                     value: 'imageValues',
                     label: msg('map.legendBuilder.load.options.imageValues.label'),
+                    disabled: !this.drawable(name1.value),
                     onSelect: this.loadDistinctBandValues
                 }
             ]},
@@ -306,8 +385,8 @@ class _VisParamsPanel extends React.Component {
     }
 
     renderLegendBuilder() {
-        const {stream} = this.props
-        const {bands, legendEntries} = this.state
+        const {stream, activatable: {bands}} = this.props
+        const {legendEntries} = this.state
         const loading = stream('LOAD_DISTINCT_IMAGE_VALUES').active
         return (
             <Layout>
@@ -334,8 +413,7 @@ class _VisParamsPanel extends React.Component {
     }
 
     renderBandForm(i, label) {
-        const {inputs: {type}} = this.props
-        const {bands} = this.state
+        const {inputs: {type}, activatable: {bands}} = this.props
         return (
             <BandForm
                 bands={bands}
@@ -394,12 +472,9 @@ class _VisParamsPanel extends React.Component {
     }
 
     componentDidMount() {
-        const {stream, inputs, activatable: {recipe, visParams}} = this.props
-        stream('LOAD_BANDS',
-            api.gee.bands$({recipe}),
-            bands => this.setState({bands}),
-            error => Notifications.error({message: msg('map.visParams.bands.loadError'), error})
-        )
+        const {inputs, activatable: {bands, visParams}} = this.props
+        inputs.bands.set(bands)
+        inputs.paletteText.set(null)
         if (visParams) {
             inputs.type.set(visParams.type)
             visParams.palette && inputs.palette.set(visParams.palette.map(color => ({id: uuid(), color})))
@@ -438,7 +513,11 @@ class _VisParamsPanel extends React.Component {
     }
 
     componentDidUpdate(prevProps) {
-        const {importedLegendEntries, recipeActionBuilder} = this.props
+        const {importedLegendEntries, recipeActionBuilder, activatable: {deactivate}} = this.props
+        if (!this.closing && !this.showsEditedLayer()) {
+            this.closing = true
+            return deactivate()
+        }
         if (importedLegendEntries && !_.isEqual(importedLegendEntries, prevProps.importedLegendEntries)) {
             recipeActionBuilder('CLEAR_IMPORTED_LEGEND_ENTRIES', {importedLegendEntries})
                 .del('ui.importedLegendEntries')
@@ -447,18 +526,21 @@ class _VisParamsPanel extends React.Component {
         }
     }
 
+    showsEditedLayer() {
+        const {areaImageLayer, activatable: {recipe, imageLayerSourceId, productArgs: editedProductArgs}} = this.props
+        return areaImageLayer?.sourceId === imageLayerSourceId
+            && _.isEqual(productArgs(recipe, areaImageLayer.layerConfig), editedProductArgs)
+    }
+
     addLegendEntry() {
-        this.setState(({legendEntries}) => {
-            const max = _.maxBy(legendEntries, 'value')
-            return {
-                legendEntries: [...legendEntries, {
-                    id: uuid(),
-                    value: max ? max.value + 1 : 1,
-                    color: defaultColor(legendEntries.length),
-                    label: ''
-                }]
-            }
-        })
+        this.setState(({legendEntries}) => ({
+            legendEntries: [...legendEntries, {
+                id: uuid(),
+                value: nextLegendValue(legendEntries),
+                color: defaultColor(legendEntries.length),
+                label: ''
+            }]
+        }))
     }
 
     updateLegendEntries(legendEntries, invalidLegendEntries) {
@@ -480,14 +562,21 @@ class _VisParamsPanel extends React.Component {
         this.analyzeBand(name, {type: inputs.type.value, stretch: true})
     }
 
+    // Only a band the layer can draw is asked about: one left blank, or pasted from a layer that has bands this one does
+    // not, has no image to describe.
     analyzeBand(name, {type, stretch}) {
-        if (name && type !== 'categorical') {
+        if (this.drawable(name) && type !== 'categorical') {
             this.initHistogram(name, {stretch})
         }
     }
 
+    drawable(name) {
+        const {activatable: {bands}} = this.props
+        return !!name && (bands || []).includes(name)
+    }
+
     initHistogram(name, {stretch}) {
-        const {stream, activatable: {recipe}, aoi, map: {getBounds}} = this.props
+        const {stream, activatable: {recipe, productArgs: imageArgs}, aoi, map: {getBounds}} = this.props
         const {histograms} = this.state
         const histogram = histograms[name]
         const updateHistogram = (data, stretch) => this.setState(({histograms}) =>
@@ -499,14 +588,15 @@ class _VisParamsPanel extends React.Component {
             })
         )
         if (histogram) {
-            updateHistogram(histogram.data, true)
+            updateHistogram(histogram.data, stretch)
         } else if (!stream(`LOAD_HISTOGRAM_${name}`).active) {
             const mapBounds = getBounds()
             stream((`LOAD_HISTOGRAM_${name}`),
-                api.gee.histogram$({recipe, aoi, band: name, mapBounds}).pipe(
+                api.gee.histogram$({...imageArgs, recipe, aoi, band: name, mapBounds}).pipe(
                     takeUntil(this.cancelHistogram$.pipe(
                         filter(nameToCancel => nameToCancel === name)
-                    ))
+                    )),
+                    takeUntil(this.draftReplaced$)
                 ),
                 data => data
                     ? updateHistogram(data, stretch)
@@ -524,11 +614,23 @@ class _VisParamsPanel extends React.Component {
             max: inputs[`max${i + 1}`],
             inverted: inputs[`inverted${i + 1}`],
             palette: inputs['palette'],
+            paletteText: inputs['paletteText'],
             gamma: inputs[`gamma${i + 1}`]
         }
     }
 
+    // What Apply - its button, Enter, and the save a replacement confirmation leads to - accepts: the form's and the
+    // legend's validity, a band choice the layer cannot draw included.
+    acceptable() {
+        const {form, inputs: {type}} = this.props
+        const {legendEntries, invalidLegendEntries} = this.state
+        return !form.isInvalid() && !(type.value === 'categorical' && (invalidLegendEntries || !legendEntries.length))
+    }
+
     check() {
+        if (!this.acceptable()) {
+            return
+        }
         if (this.overridingVisParams()) {
             this.setState({askConfirmation: true})
         } else {
@@ -561,7 +663,10 @@ class _VisParamsPanel extends React.Component {
     }
 
     loadDistinctBandValues() {
-        const {activatable: {recipe}, aoi, stream, inputs: {name1}, map: {getBounds}} = this.props
+        const {activatable: {recipe, productArgs: imageArgs}, aoi, stream, inputs: {name1}, map: {getBounds}} = this.props
+        if (!this.drawable(name1.value)) {
+            return
+        }
         const toEntries = values => values.map(value => ({
             id: uuid(),
             value,
@@ -572,14 +677,46 @@ class _VisParamsPanel extends React.Component {
         if (!stream('LOAD_DISTINCT_IMAGE_VALUES').active) {
             const mapBounds = getBounds()
             stream('LOAD_DISTINCT_IMAGE_VALUES',
-                api.gee.distinctBandValues$({recipe, band: name1.value, aoi, mapBounds}),
+                api.gee.distinctBandValues$({...imageArgs, recipe, band: name1.value, aoi, mapBounds}).pipe(
+                    takeUntil(this.draftReplaced$)
+                ),
                 values => this.setState({legendEntries: toEntries(values)}),
                 () => Notifications.error({message: msg('map.legendBuilder.load.options.imageValues.loadError')})
             )
         }
     }
 
+    copyDraft() {
+        const {form} = this.props
+        const {legendEntries} = this.state
+        copyVisualizationDraft(draftOf({values: form.values(), legendEntries}))
+        return true
+    }
+
+    // The pasted draft replaces this one's, its ranges and colors as they were copied: what was being read about the
+    // image for the replaced draft is abandoned, and the pasted bands are read without stretching them.
+    pasteDraft() {
+        const {copiedDraft, inputs} = this.props
+        if (!copiedDraft) {
+            return
+        }
+        this.draftReplaced$.next()
+        const {values, legendEntries} = draftValues(copiedDraft)
+        Object.entries(values).forEach(([name, value]) =>
+            inputs[name].set(value, {validate: !isBlankValue(value)})
+        )
+        this.setState({legendEntries, invalidLegendEntries: false})
+        if (values.type !== 'categorical') {
+            [values.name1, values.name2, values.name3]
+                .forEach(name => this.analyzeBand(name, {type: values.type, stretch: false}))
+        }
+    }
+
     save() {
+        if (!this.acceptable()) {
+            this.setState({askConfirmation: false})
+            return
+        }
         const {recipeActionBuilder, activatable: {imageLayerSourceId, visParams: prevVisParams, deactivate}, inputs, updateLayerConfig} = this.props
         const type = inputs.type.value
         const bands = this.values('name')
@@ -611,7 +748,7 @@ class _VisParamsPanel extends React.Component {
     toCategoricalVisParams(id) {
         const {inputs: {name1}} = this.props
         const {legendEntries} = this.state
-        const sortedEntries = _.sortBy(legendEntries, 'value')
+        const sortedEntries = legendEntriesToModel(legendEntries)
         return {
             id,
             type: 'categorical',
@@ -643,6 +780,7 @@ const policy = () => ({
 export const VisParamsPanel = compose(
     _VisParamsPanel,
     withForm({fields}),
+    connect(mapStateToProps),
     withRecipe(mapRecipeToProps),
     withMap(),
     withActivatable({
@@ -669,8 +807,8 @@ class BandForm extends React.Component {
     }
 
     renderPalette() {
-        const {inputs: {palette}} = this.props
-        return <Palette input={palette}/>
+        const {inputs: {palette, paletteText}} = this.props
+        return <Palette input={palette} textInput={paletteText}/>
     }
 
     renderRange() {
@@ -707,8 +845,13 @@ class BandForm extends React.Component {
     }
 }
 
+// A band the layer cannot draw - one pasted from another layer - stays chosen, said so by its error, to be replaced.
 const Band = ({invertable, onBandSelected, bands, label, inputs: {name, inverted}}) => {
-    const options = (bands || []).map(band => ({value: band, label: band}))
+    const unavailable = name.value && bands && !bands.includes(name.value)
+    const options = [
+        ...(bands || []).map(band => ({value: band, label: band})),
+        ...(unavailable ? [{value: name.value, label: name.value, disabled: true}] : [])
+    ]
     const invertedWidget = (
         <Form.Buttons
             key={'inverted'}
@@ -739,6 +882,13 @@ const Band = ({invertable, onBandSelected, bands, label, inputs: {name, inverted
         />
     )
 }
+
+// Declared as a function: the form's fields, above, are built with it.
+function drawableBand(value, {bands}) {
+    return !value || !bands || bands.includes(value)
+}
+
+const isBlankValue = value => value === '' || value === null || value === undefined
 
 const isSingleBand = type =>
     ['continuous', 'categorical'].includes(type)

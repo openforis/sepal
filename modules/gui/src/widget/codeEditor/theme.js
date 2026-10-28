@@ -2,39 +2,28 @@ import {HighlightStyle, syntaxHighlighting} from '@codemirror/language'
 import {EditorView} from '@codemirror/view'
 import {tags as t} from '@lezer/highlight'
 
-export const theme = () => {
-    // https://github.com/vadimdemedes/thememirror/blob/main/source/themes/dracula.ts
-    const settings = {
-        // background: '#2d2f3f',
-        background: 'hsla(0, 0%, 0%, .9)',
-        foreground: '#f8f8f2',
-        caret: '#f8f8f0',
-        selection: '#44475a',
-        gutterBackground: '#282a36',
-        gutterForeground: 'rgb(144, 145, 148)',
-        lineHighlight: '#44475a',
-        dark: true
-    }
+export const theme = (themeName = 'dark') => {
+    const {settings, colors} = PALETTES[themeName] || PALETTES.dark
     const styles = [
         {
             tag: t.comment,
-            color: '#6272a4',
+            color: colors.comment,
         },
         {
             tag: [t.number, t.self, t.bool, t.null],
-            color: '#bd93f9',
+            color: colors.literal,
         },
         {
             tag: [t.keyword, t.operator],
-            color: '#ff79c6',
+            color: colors.keyword,
         },
         {
             tag: [t.definitionKeyword, t.typeName],
-            color: '#8be9fd',
+            color: colors.type,
         },
         {
             tag: t.definition(t.typeName),
-            color: '#f8f8f2',
+            color: colors.definition,
         },
         {
             tag: [
@@ -43,11 +32,11 @@ export const theme = () => {
                 t.function(t.variableName),
                 t.attributeName,
             ],
-            color: '#50fa7b',
+            color: colors.function,
         },
         {
             tag: [t.variableName, t.attributeName, t.self],
-            color: '#E62286',
+            color: colors.variable,
             fontWeight: 'bold',
         },
     ]
@@ -126,4 +115,50 @@ export const theme = () => {
     const extension = [codeMirrorTheme, syntaxHighlighting(highlightStyle)]
 
     return extension
+}
+
+const PALETTES = {
+    // https://github.com/vadimdemedes/thememirror/blob/main/source/themes/dracula.ts
+    dark: {
+        settings: {
+            background: 'hsla(0, 0%, 0%, .9)',
+            foreground: '#f8f8f2',
+            caret: '#f8f8f0',
+            selection: '#44475a',
+            gutterBackground: '#282a36',
+            gutterForeground: 'rgb(144, 145, 148)',
+            lineHighlight: '#44475a',
+            dark: true
+        },
+        colors: {
+            comment: '#6272a4',
+            literal: '#bd93f9',
+            keyword: '#ff79c6',
+            type: '#8be9fd',
+            definition: '#f8f8f2',
+            function: '#50fa7b',
+            variable: '#E62286'
+        }
+    },
+    light: {
+        settings: {
+            background: 'hsla(39, 40%, 96.5%, .95)',
+            foreground: '#24292e',
+            caret: '#24292e',
+            selection: '#d9d2c3',
+            gutterBackground: 'hsl(38, 24%, 92%)',
+            gutterForeground: 'hsl(40, 5%, 55%)',
+            lineHighlight: 'hsla(40, 40%, 85%, .45)',
+            dark: false
+        },
+        colors: {
+            comment: '#6a737d',
+            literal: '#005cc5',
+            keyword: '#d73a49',
+            type: '#6f42c1',
+            definition: '#24292e',
+            function: '#22863a',
+            variable: '#b31d74'
+        }
+    }
 }

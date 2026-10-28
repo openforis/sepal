@@ -10,11 +10,14 @@ import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {uuid} from '~/uuid'
 
+import {CopyButton} from './copyButton'
+import {Layout} from './layout'
 import styles from './notifications.module.css'
+import {setNotificationsContainer} from './notificationsContainer'
 import {Scrollable} from './scrollable'
 
-const PUBLISH_ANIMATION_DURATION_MS = 1000
-const DISMISS_ANIMATION_DURATION_MS = 1000
+const PUBLISH_ANIMATION_DURATION_MS = 500
+const DISMISS_ANIMATION_DURATION_MS = 500
 
 const publish$ = new Subject()
 const manualDismiss$ = new Subject()
@@ -81,11 +84,32 @@ class _Notifications extends React.Component {
         timeouts: {}
     }
 
-    renderTitle(title) {
+    renderHeader(notification) {
+        const {title, level, error} = notification
+        const copyable = level === 'error' || error
+        return title || copyable
+            ? (
+                <Layout type='horizontal-nowrap'>
+                    <div className={styles.title}>
+                        {title}
+                    </div>
+                    {copyable ? this.renderCopyButton(notification) : null}
+                </Layout>
+            )
+            : null
+    }
+
+    renderCopyButton(notification) {
         return (
-            <div className={styles.title}>
-                {title}
-            </div>
+            <CopyButton
+                value={getCopyableText(notification)}
+                air='none'
+                chromeless
+                icon='copy'
+                shape='circle'
+                tooltip={msg('button.copyToClipboard')}
+                tooltipPlacement='top'
+            />
         )
     }
 
@@ -106,10 +130,9 @@ class _Notifications extends React.Component {
     }
     
     renderError(error) {
-        const errorMessage = typeof error === 'string' ? error : error.message
         return (
             <div className={styles.error}>
-                {errorMessage}
+                {getErrorMessage(error)}
             </div>
         )
     }
@@ -151,7 +174,8 @@ class _Notifications extends React.Component {
             : null
     }
 
-    renderNotification({id, level, title, message, error, content, link, timeout, dismissable, adding, removing}) {
+    renderNotification(notification) {
+        const {id, level, message, error, content, link, timeout, dismissable, adding, removing} = notification
         const dismiss = () => manualDismiss$.next(id)
         return id
             ? (
@@ -173,7 +197,7 @@ class _Notifications extends React.Component {
                         }}
                         onClick={() => dismissable && dismiss()}
                     >
-                        {title ? this.renderTitle(title) : null}
+                        {this.renderHeader(notification)}
                         {message ? this.renderMessage(message) : null}
                         {error ? this.renderError(error) : null}
                         {content ? this.renderContent(content, dismiss) : null}
@@ -193,7 +217,7 @@ class _Notifications extends React.Component {
 
     render() {
         return (
-            <div className={styles.container}>
+            <div className={styles.container} ref={setNotificationsContainer}>
                 <Scrollable
                     direction='y'
                     className={styles.scrollable}
@@ -210,20 +234,23 @@ class _Notifications extends React.Component {
         return noGroup || uniqueGroup
     }
 
+    // A notification published under an id already on screen replaces that one in place, mid-
+    // animation included; a repeat of a grouped message is dropped, as before.
+    withPublished(notifications, notification) {
+        const shown = notifications[notification.id]
+        if (shown) {
+            return {...notifications, [notification.id]: {...notification, adding: shown.adding, removing: false}}
+        }
+        return this.isUniqueGroup(notifications, notification)
+            ? {...notifications, [notification.id]: notification}
+            : notifications
+    }
+
     componentDidMount() {
         const {addSubscription} = this.props
         addSubscription(
             publish$.subscribe(notification => {
-                this.setState(({notifications}) => {
-                    if (this.isUniqueGroup(notifications, notification)) {
-                        return {
-                            notifications: {
-                                ...notifications,
-                                [notification.id]: notification
-                            }
-                        }
-                    }
-                })
+                this.setState(({notifications}) => ({notifications: this.withPublished(notifications, notification)}))
             }),
             dismiss$.subscribe(id => {
                 this.setState(({notifications, timeouts}) => {
@@ -256,9 +283,12 @@ class _Notifications extends React.Component {
                     return {notifications}
                 })
             }),
+            // Only a notification still on its way out goes: one re-published meanwhile stays.
             removed$.subscribe(id =>
                 this.setState(({notifications}) => {
-                    delete notifications[id]
+                    if (notifications[id]?.removing) {
+                        delete notifications[id]
+                    }
                     return {notifications}
                 })
             )
@@ -266,6 +296,16 @@ class _Notifications extends React.Component {
     }
 
 }
+
+const getErrorMessage = error =>
+    typeof error === 'string' ? error : error.message
+
+const getCopyableText = ({title, message, error}) =>
+    [
+        title,
+        ...(message ? message.split('|') : []),
+        error ? getErrorMessage(error) : null
+    ].filter(Boolean).join('\n')
 
 // const publishRandomNotification = () => {
 //     const levels = ['info', 'success', 'warning', 'error']

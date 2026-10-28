@@ -6,8 +6,8 @@ import {getLogger} from '#sepal/log'
 const log = getLogger('apiService')
 
 const fetchCatalog$ = url =>
-    get$(url).pipe(
-        map(response => JSON.parse(response.body)),
+    get$(url, {responseType: 'json'}).pipe(
+        map(({body}) => body),
         catchError(error => {
             log.error(`Failed to fetch apps catalog from ${url}:`, error)
             return EMPTY

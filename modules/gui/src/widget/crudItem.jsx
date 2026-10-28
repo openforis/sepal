@@ -1,4 +1,3 @@
-import moment from 'moment'
 import PropTypes from 'prop-types'
 import React from 'react'
 import Highlight from 'react-highlighter'
@@ -7,12 +6,16 @@ import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
+import {CopyButton} from '~/widget/copyButton'
+import {RelativeTime} from '~/widget/relativeTime'
 import {RemoveButton} from '~/widget/removeButton'
 import {Tooltip} from '~/widget/tooltip'
 
 import {CheckButton} from './checkButton'
 import styles from './crudItem.module.css'
+import {ErrorIndicator} from './errorIndicator'
 import {Icon} from './icon'
+import {Layout} from './layout'
 
 class _CrudItem extends React.Component {
     render() {
@@ -32,16 +35,18 @@ class _CrudItem extends React.Component {
     renderContent() {
         const content = this.getContent()
         return content
-            ? <div className={styles.content}>{content}</div>
+            ? <div className={styles.content}>{this.renderWithError(<div>{content}</div>)}</div>
             : this.renderDefaultContent()
     }
 
     renderDefaultContent() {
+        const {title} = this.props
         return (
             <div className={styles.item}>
                 {this.renderIcon()}
                 {this.renderImage()}
                 {this.renderInfo()}
+                {title ? null : this.renderError()}
                 {this.renderMetadata()}
                 {this.renderTimestamp()}
                 {this.renderInline()}
@@ -50,7 +55,7 @@ class _CrudItem extends React.Component {
     }
 
     renderIcon() {
-        const {icon, iconSize, iconType, iconVariant, iconDimmed, iconTooltip, tooltipPlacement} = this.props
+        const {icon, iconSize, iconType, iconVariant, iconAttributes, iconDimmed, iconTooltip, tooltipPlacement} = this.props
         return icon
             ? (
                 <div className={styles.icon}>
@@ -59,6 +64,7 @@ class _CrudItem extends React.Component {
                         size={iconSize}
                         type={iconType}
                         variant={iconVariant}
+                        attributes={iconAttributes}
                         dimmed={iconDimmed}
                         tooltip={iconTooltip}
                         tooltipPlacement={tooltipPlacement}
@@ -90,13 +96,37 @@ class _CrudItem extends React.Component {
             </div>
         )
         // Opt-in full-title tooltip (e.g. for an ellipsized label). Default: no title tooltip, unchanged.
-        return titleTooltip
+        const tooltipped = titleTooltip
             ? (
                 <Tooltip msg={titleTooltip} placement={titleTooltipPlacement} disabled={titleTooltipDisabled}>
                     {titleElement}
                 </Tooltip>
             )
             : titleElement
+        return this.renderWithError(tooltipped)
+    }
+
+    renderWithError(content) {
+        const error = this.renderError()
+        return error
+            ? (
+                <Layout
+                    type='horizontal-nowrap'
+                    spacing='compact'
+                    alignment='left'
+                    className={styles.titleRow}
+                    contentClassName={styles.titleRowContent}>
+                    {content}
+                    {error}
+                </Layout>
+            )
+            : content
+    }
+
+    // Titles and custom content share the same adjacent diagnostic indicator.
+    renderError() {
+        const {error} = this.props
+        return error ? <ErrorIndicator error={error}/> : null
     }
 
     renderDescription() {
@@ -134,11 +164,11 @@ class _CrudItem extends React.Component {
     }
 
     renderTimestamp() {
-        const {timestamp} = this.props
+        const {timestamp, tooltipPlacement} = this.props
         return timestamp
             ? (
-                <div className={styles.metadata}>
-                    {moment(timestamp).fromNow()}
+                <div className={styles.timestamp}>
+                    <RelativeTime timestamp={timestamp} tooltipPlacement={tooltipPlacement}/>
                 </div>
             )
             : null
@@ -168,11 +198,13 @@ class _CrudItem extends React.Component {
     }
 
     renderButtons() {
+        const {buttonSpacing} = this.props
         return (
-            <ButtonGroup layout='horizontal-nowrap' className={styles.inline}>
+            <ButtonGroup layout='horizontal-nowrap' spacing={buttonSpacing} className={styles.inline}>
                 {this.renderInlineComponents()}
                 {this.renderInfoButton()}
                 {this.renderEditButton()}
+                {this.renderCopyButton()}
                 {this.renderDuplicateButton()}
                 {this.renderRemoveButton()}
                 {this.renderSelectButton()}
@@ -214,8 +246,25 @@ class _CrudItem extends React.Component {
                     icon='edit'
                     tooltip={editTooltip}
                     tooltipPlacement={tooltipPlacement}
-                    editDisabled={editDisabled}
+                    disabled={editDisabled}
                     onClick={onEdit}
+                />
+            )
+            : null
+    }
+
+    renderCopyButton() {
+        const {copyValue, copyDisabled, copyTooltip, tooltipPlacement} = this.props
+        return copyValue || copyDisabled
+            ? (
+                <CopyButton
+                    chromeless
+                    shape='circle'
+                    icon='copy'
+                    value={copyValue}
+                    tooltip={copyTooltip}
+                    tooltipPlacement={tooltipPlacement}
+                    disabled={copyDisabled}
                 />
             )
             : null
@@ -239,7 +288,7 @@ class _CrudItem extends React.Component {
     }
 
     renderRemoveButton() {
-        const {onRemove, removeTooltip, removeTitle, removeMessage, removeConfirmationLabel, removeDisabled, removeContent,
+        const {onRemove, removeTooltip, removeTitle, removeMessage, removeConfirmationLabel, removeDisabled, removePending, removeContent,
             tooltipPlacement, unsafeRemove} = this.props
         return onRemove
             ? (
@@ -252,6 +301,7 @@ class _CrudItem extends React.Component {
                     tooltip={removeTooltip}
                     tooltipPlacement={tooltipPlacement}
                     unsafe={unsafeRemove}
+                    pending={removePending}
                     disabled={removeDisabled}
                     onRemove={onRemove}
                 >
@@ -282,6 +332,7 @@ class _CrudItem extends React.Component {
 export const CrudItem = compose(
     _CrudItem,
     asFunctionalComponent({
+        buttonSpacing: 'compact',
         highlightDescription: true,
         highlightTitle: true,
         tooltipPlacement: 'left'
@@ -289,20 +340,27 @@ export const CrudItem = compose(
 )
 
 CrudItem.propTypes = {
+    buttonSpacing: PropTypes.string,
     children: PropTypes.any,
     className: PropTypes.string,
     content: PropTypes.any,
+    copyDisabled: PropTypes.any,
+    copyTooltip: PropTypes.any,
+    copyValue: PropTypes.string,
     description: PropTypes.any,
     descriptionClassName: PropTypes.string,
     duplicateDisabled: PropTypes.any,
     duplicateTooltip: PropTypes.any,
     editDisabled: PropTypes.any,
+    // What is wrong with the item, marked beside its title, or at the end of its content, and explained on hover and focus.
+    error: PropTypes.any,
     editTooltip: PropTypes.any,
     highlight: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     highlightClassName: PropTypes.string,
     highlightDescription: PropTypes.any,
     highlightTitle: PropTypes.any,
     icon: PropTypes.any,
+    iconAttributes: PropTypes.any,
     iconDimmed: PropTypes.any,
     iconSize: PropTypes.any,
     iconTooltip: PropTypes.any,
@@ -317,6 +375,7 @@ CrudItem.propTypes = {
     removeConfirmationLabel: PropTypes.string,
     removeDisabled: PropTypes.any,
     removeMessage: PropTypes.string,
+    removePending: PropTypes.any,
     removeTitle: PropTypes.string,
     removeTooltip: PropTypes.any,
     selectDisabled: PropTypes.any,

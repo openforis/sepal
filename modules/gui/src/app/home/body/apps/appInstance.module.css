@@ -10,6 +10,7 @@
     bottom: 0;
     left: 0;
     right: 0;
+    transition: opacity 250ms ease-in;
 }
 
 .content {
@@ -20,28 +21,48 @@
 
 .backdrop {
     position: absolute;
-    top: 10%;
-    bottom: 10%;
-    left: 10%;
-    right: 10%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    opacity: .12;
-    font-weight: bold;
-    font-size: 2.5rem;
-    line-height: 3rem;
-    text-align: center;
-}
-
-.status {
-    position: absolute;
-    bottom: 1rem;
+    top: 0;
+    bottom: 0;
     left: 0;
     right: 0;
     display: flex;
     justify-content: center;
     align-items: center;
-    color: gray;
-    text-transform: uppercase;
+}
+
+.loading {
+    background-color: var(--loading-background-color);
+    border-radius: 1rem;
+    padding: 1rem 2rem;
+    opacity: .5;
+    min-width: 20rem;
+    text-align: center;
+}
+
+/* The gradient image is three times the box's width, so the sheen band starts and ends each sweep
+outside the box. The sweep takes the first 40% of the cycle; the rest is the pause between passes. */
+.loading.launching {
+    background-image: linear-gradient(100deg, transparent 42%, var(--loading-sheen-color) 50%, transparent 58%);
+    background-size: 300% 100%;
+    background-repeat: no-repeat;
+    animation: sheen 3s ease-in-out infinite;
+}
+
+@keyframes sheen {
+    0% {
+        background-position: 100% 0;
+    }
+    30%, 100% {
+        background-position: 0% 0;
+    }
+}
+
+.appName {
+    font-size: 1.75rem;
+    line-height: 3rem;
+}
+
+.appStatus {
+    font-size: 1rem;
+    line-height: 3rem;
 }

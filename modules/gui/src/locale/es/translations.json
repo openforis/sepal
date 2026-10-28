@@ -393,8 +393,10 @@
     "connectivityError": "",
     "versionMismatch": {
       "title": "¡SEPAL ha sido actualizado!",
-      "message": "",
-      "reloadNow": "Recargar ahora"
+      "message": ""
+    },
+    "loginSession": {
+      "switched": ""
     },
     "sections": {
       "account": "Configuración de la cuenta",
@@ -408,7 +410,7 @@
       "tasks": "Tareas",
       "terminal": "Consola",
       "user": {
-        "messages": "Mostrar mensajes del usuario",
+        "messages": "Mostrar mensajes",
         "profile": "Gestionar el perfil del usuario",
         "report": {
           "budgetExceeded": "Límite superado",
@@ -856,8 +858,7 @@
     },
     "Recipe": {
       "label": "",
-      "thisRecipeDescription": "",
-      "loadError": ""
+      "thisRecipeDescription": ""
     },
     "Planet": {
       "label": "",
@@ -4906,7 +4907,14 @@
     },
     "removeAll": {
       "label": "",
-      "tooltip": "Eliminar todas las tareas completadas, fallidas o detenidas"
+      "tooltip": "Eliminar todas las tareas completadas, fallidas o detenidas",
+      "filteredTooltip": {
+        "search": "Eliminar las tareas que coinciden con el filtro actual",
+        "completed": "Eliminar las tareas completadas",
+        "completedSearch": "Eliminar las tareas completadas que coinciden con el filtro actual",
+        "failed": "Eliminar las tareas fallidas o canceladas",
+        "failedSearch": "Eliminar las tareas fallidas o canceladas que coinciden con el filtro actual"
+      }
     },
     "stop": {
       "tooltip": "Detener tarea"
@@ -5083,6 +5091,13 @@
         "error": ""
       }
     },
+    "userAccount": {
+      "editDetails": {
+        "label": "",
+        "tooltip": ""
+      },
+      "title": ""
+    },
     "userDetails": {
       "form": {
         "email": {
@@ -5173,7 +5188,8 @@
       "switchingToSEPALGoogleAccount": "",
       "title": "Datos del usuario",
       "update": {
-        "error": ""
+        "error": "",
+        "conflict": ""
       },
       "confirmation": {
         "message": ""
@@ -5209,7 +5225,9 @@
       }
     }
   },
-  "userMessage": {
+  "message": {
+    "acknowledged": "Visto por {count, plural, one {# usuario} other {# usuarios}}",
+    "from": "de: {username}",
     "form": {
       "contents": {
         "label": "Contenido",
@@ -5221,11 +5239,12 @@
       },
       "preview": {
         "label": "Vista previa"
+      },
+      "priority": {
+        "unpublished": "No publicado",
+        "normal": "Normal",
+        "urgent": "Urgente"
       }
-    },
-    "publish": {
-      "error": "Imposible publicar el mensaje del usuario",
-      "success": "El mensaje del usuario ha sido publicado"
     },
     "remove": {
       "error": "No se puede borrar el mensaje",
@@ -5234,14 +5253,15 @@
     "title": "Mensaje",
     "update": {
       "error": "No se puede actualizar el mensaje",
-      "success": "El mensaje ha sido actualizado"
+      "published.success": "El mensaje ha sido publicado",
+      "unpublished.success": "El mensaje ha sido despublicado"
     },
     "updateState": {
       "error": "No se puede actualizar el estado de los mensajes",
       "success": "Se ha actualizado el estado del mensaje"
     }
   },
-  "userMessages": {
+  "messages": {
     "author": "Mensaje de {author}",
     "edit": "Editar mensaje",
     "noMessages": "Ningún mensaje",
@@ -5251,7 +5271,7 @@
       "READ": "Marcar como no leído",
       "UNREAD": "Marcar como leído"
     },
-    "title": "Mensajes de los usuarios"
+    "title": "Mensajes"
   },
   "users": {
     "count": "",
@@ -5300,7 +5320,15 @@
         }
       }
     },
-    "page": "Página {pageNumber} de {pageCount}"
+    "page": "Página {pageNumber} de {pageCount}",
+    "record": {
+      "changed": "",
+      "update": ""
+    },
+    "update": {
+      "label": "",
+      "tooltip": ""
+    }
   },
   "widget": {
     "assetDestination": {
@@ -5493,5 +5521,15 @@
       "newTab": "Nueva_pestaña"
     }
   },
-  "chromeOnHighResDisplayWarning": ""
+  "chromeOnHighResDisplayWarning": "",
+  "theme": {
+    "label": "Tema",
+    "dark": "Oscuro",
+    "light": "Claro",
+    "system": "Sistema",
+    "systemTooltip": "Seguir la configuración del sistema operativo"
+  },
+  "language": {
+    "label": "Idioma"
+  }
 }

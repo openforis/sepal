@@ -19,7 +19,7 @@
     flex-grow: 1;
     width: 100%;
     border: none;
-    color: #fff;
+    color: var(--text-strong-color);
     background-color: transparent;
     transition: background-color 800ms ease-out;
 }
@@ -40,11 +40,13 @@
 .input input:-webkit-autofill:hover,
 .input input:-webkit-autofill:focus,
 .input input:-webkit-autofill:active {
-    transition: background-color 9999999999s ease-in-out 0s;
-    -webkit-text-fill-color: #fff;
+    /* The endless transition keeps the browser's autofill background from showing. !important keeps it
+       through a theme switch, which suspends all transitions for a frame. */
+    transition: background-color 9999999999s ease-in-out 0s !important;
+    -webkit-text-fill-color: var(--text-strong-color);
 }
 
 .input input::placeholder,
 .input textarea::placeholder {
-    color: hsl(0, 0%, 45%);
+    color: var(--text-placeholder-color);
 }

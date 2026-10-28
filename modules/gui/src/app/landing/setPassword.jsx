@@ -124,12 +124,14 @@ class _SetPassword extends React.Component {
                     <Form.Input
                         label={msg('landing.reset-password.username.label')}
                         input={username}
-                        disabled={true}
+                        readOnly
+                        autoComplete='username'
                     />
                     <Form.Input
                         label={msg('landing.reset-password.password.label')}
                         input={password}
                         type='password'
+                        autoComplete='new-password'
                         placeholder={msg('landing.reset-password.password.placeholder')}
                         autoFocus
                         tabIndex={1}
@@ -138,6 +140,7 @@ class _SetPassword extends React.Component {
                         label={msg('landing.reset-password.password2.label')}
                         input={password2}
                         type='password'
+                        autoComplete='new-password'
                         placeholder={msg('landing.reset-password.password2.placeholder')}
                         tabIndex={2}
                         errorMessage={[password2, 'passwordsMatch']}

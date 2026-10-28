@@ -5,6 +5,10 @@ services:
       service: logger
     image: "redis:6"
     container_name: email-redis
+    # Holds the BullMQ mail queue and per-address notification preferences: evicting a key drops
+    # outbound mail.
+    # maxmemory is a guard rail, not a cache budget: with noeviction, reaching it makes writes fail.
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "noeviction"]
     volumes:
       - "${SEPAL_DATA_DIR}/email-redis:/data"
     healthcheck:
@@ -34,7 +38,7 @@ services:
     init: true
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
-      SEPAL_ADMIN_USERNAME: "sepalAdmin"
+      SEPAL_ADMIN_USERNAME: "sepaladmin"
       SEPAL_ADMIN_PASSWORD: "${SEPAL_ADMIN_PASSWORD}"
       GATEWAY_HOST: "gateway"
       RABBITMQ_HOST: "rabbitmq"

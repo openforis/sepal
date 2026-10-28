@@ -1,6 +1,6 @@
 import React from 'react'
 
-import {hasError} from '~/app/home/body/process/recipe/indexChange/indexChangeRecipe'
+import {hasErrorBands} from '#sepal/recipe/type/indexChange'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
@@ -52,7 +52,7 @@ class _Options extends React.Component {
                     ticks={[0, 1, 2, 3, 5, 10, 20]}
                     scale='log'
                     info={value => msg('process.indexChange.panel.options.minConfidence.value', {value})}
-                    disabled={!hasError(recipe)}
+                    disabled={!hasErrorBands(recipe.model)}
                 />
             </Layout>
         )

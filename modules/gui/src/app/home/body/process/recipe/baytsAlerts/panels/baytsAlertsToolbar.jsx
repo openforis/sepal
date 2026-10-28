@@ -1,7 +1,6 @@
 import React from 'react'
 
 import {setInitialized} from '~/app/home/body/process/recipe'
-import {Options as Preprocess} from '~/app/home/body/process/recipe/baytsHistorical/panels/options/options'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -10,10 +9,12 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
+import {withSourceProblems} from '../../selectedSource'
 import {RecipeActions} from '../baytsAlertsRecipe'
 import styles from './baytsAlertsToolbar.module.css'
 import {Date} from './date/date'
 import {Options} from './options/options'
+import {Preprocess} from './preprocess/preprocess'
 import {Reference} from './reference/reference'
 import {Retrieve} from './retrieve/retrieve'
 
@@ -28,7 +29,7 @@ class _BaytsAlertsToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, initialized} = this.props
+        const {recipeId, initialized, sourceProblems} = this.props
 
         return (
             <PanelWizard
@@ -38,7 +39,7 @@ class _BaytsAlertsToolbar extends React.Component {
                 <Retrieve/>
                 <Reference/>
                 <Date/>
-                <Preprocess monitor/>
+                <Preprocess/>
                 <Options/>
 
                 <Toolbar
@@ -54,7 +55,8 @@ class _BaytsAlertsToolbar extends React.Component {
                     <Toolbar.ActivationButton
                         id='reference'
                         label={msg('process.baytsAlerts.panel.reference.button')}
-                        tooltip={msg('process.baytsAlerts.panel.reference.tooltip')}
+                        tooltip={sourceProblems.reference || msg('process.baytsAlerts.panel.reference.tooltip')}
+                        error={!!sourceProblems.reference}
                         disabled={!initialized}
                         panel/>
                     <Toolbar.ActivationButton
@@ -66,7 +68,8 @@ class _BaytsAlertsToolbar extends React.Component {
                     <Toolbar.ActivationButton
                         id='options'
                         label={msg('process.baytsAlerts.panel.preprocess.button')}
-                        tooltip={msg('process.baytsAlerts.panel.preprocess.tooltip')}
+                        tooltip={sourceProblems.options || msg('process.baytsAlerts.panel.preprocess.tooltip')}
+                        error={!!sourceProblems.options}
                         panel/>
                     <Toolbar.ActivationButton
                         id='baytsAlertsOptions'
@@ -81,6 +84,7 @@ class _BaytsAlertsToolbar extends React.Component {
 
 export const BaytsAlertsToolbar = compose(
     _BaytsAlertsToolbar,
+    withSourceProblems(),
     withRecipe(mapRecipeToProps)
 )
 

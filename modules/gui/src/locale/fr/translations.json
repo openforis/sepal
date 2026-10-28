@@ -393,8 +393,10 @@
     "connectivityError": "Vous ne pouvez actuellement pas vous connecter au serveur SEPAL.",
     "versionMismatch": {
       "title": "",
-      "message": "",
-      "reloadNow": ""
+      "message": ""
+    },
+    "loginSession": {
+      "switched": ""
     },
     "sections": {
       "account": "Paramètres du compte",
@@ -408,7 +410,7 @@
       "tasks": "Tâches de fond",
       "terminal": "Console",
       "user": {
-        "messages": "Afficher messages utilisateur",
+        "messages": "Afficher les messages",
         "profile": "Gérer le profil utilisateur",
         "report": {
           "budgetExceeded": "Dépassé",
@@ -856,8 +858,7 @@
     },
     "Recipe": {
       "label": "Formule",
-      "thisRecipeDescription": "cette formule",
-      "loadError": "Échec du chargement de la formule : {error}"
+      "thisRecipeDescription": "cette formule"
     },
     "Planet": {
       "label": "Planet",
@@ -4906,7 +4907,14 @@
     },
     "removeAll": {
       "label": "",
-      "tooltip": "Supprimer toutes les tâches finalisées, arrêtées ou en échec"
+      "tooltip": "Supprimer toutes les tâches finalisées, arrêtées ou en échec",
+      "filteredTooltip": {
+        "search": "Supprimer les tâches correspondant au filtre actuel",
+        "completed": "Supprimer les tâches finalisées",
+        "completedSearch": "Supprimer les tâches finalisées correspondant au filtre actuel",
+        "failed": "Supprimer les tâches en échec ou annulées",
+        "failedSearch": "Supprimer les tâches en échec ou annulées correspondant au filtre actuel"
+      }
     },
     "stop": {
       "tooltip": "Arrêter la tâche"
@@ -5083,6 +5091,13 @@
         "error": ""
       }
     },
+    "userAccount": {
+      "editDetails": {
+        "label": "",
+        "tooltip": ""
+      },
+      "title": ""
+    },
     "userDetails": {
       "form": {
         "email": {
@@ -5173,7 +5188,8 @@
       "switchingToSEPALGoogleAccount": "Passage au compte Google de SEPAL",
       "title": "Détails de l'utilisateur",
       "update": {
-        "error": ""
+        "error": "",
+        "conflict": ""
       },
       "confirmation": {
         "message": ""
@@ -5209,7 +5225,9 @@
       }
     }
   },
-  "userMessage": {
+  "message": {
+    "acknowledged": "Vu par {count, plural, one {# utilisateur} other {# utilisateurs}}",
+    "from": "de : {username}",
     "form": {
       "contents": {
         "label": "Contenu",
@@ -5221,11 +5239,12 @@
       },
       "preview": {
         "label": "Aperçu"
+      },
+      "priority": {
+        "unpublished": "Non publié",
+        "normal": "Normale",
+        "urgent": "Urgente"
       }
-    },
-    "publish": {
-      "error": "Impossible de publier le message",
-      "success": "Le message a été publié"
     },
     "remove": {
       "error": "Impossible de supprimer le message",
@@ -5234,14 +5253,15 @@
     "title": "Message",
     "update": {
       "error": "Impossible de mettre à jour le message",
-      "success": "Le message a été mis à jour"
+      "published.success": "Le message a été publié",
+      "unpublished.success": "Le message a été dépublié"
     },
     "updateState": {
       "error": "Impossible de mettre à jour le statut du message",
       "success": "Le statut du message a été mis à jour"
     }
   },
-  "userMessages": {
+  "messages": {
     "author": "Message de {author}",
     "edit": "Editer le message",
     "noMessages": "Pas de messages",
@@ -5251,7 +5271,7 @@
       "READ": "Marquer comme lu",
       "UNREAD": "Marquer comme non-lu"
     },
-    "title": "Messages utilisateur"
+    "title": "Messages"
   },
   "users": {
     "count": "",
@@ -5300,7 +5320,15 @@
         }
       }
     },
-    "page": "Page {pageNumber} de {pageCount}"
+    "page": "Page {pageNumber} de {pageCount}",
+    "record": {
+      "changed": "",
+      "update": ""
+    },
+    "update": {
+      "label": "",
+      "tooltip": ""
+    }
   },
   "widget": {
     "assetDestination": {
@@ -5493,5 +5521,15 @@
       "newTab": "Nouvel_onglet"
     }
   },
-  "chromeOnHighResDisplayWarning": ""
+  "chromeOnHighResDisplayWarning": "",
+  "theme": {
+    "label": "Thème",
+    "dark": "Sombre",
+    "light": "Clair",
+    "system": "Système",
+    "systemTooltip": "Suivre le réglage du système d'exploitation"
+  },
+  "language": {
+    "label": "Langue"
+  }
 }

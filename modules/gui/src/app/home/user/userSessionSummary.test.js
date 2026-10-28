@@ -1,0 +1,87 @@
+import {describe, expect, it} from 'vitest'
+
+import {instanceLabel, runningItems, usageMetrics} from './userSessionSummary'
+
+const session = ({gpuCount = 0, ...overrides} = {}) => ({
+    instanceType: {name: 't3a.small', tag: 't1', gpuCount, hourlyCost: 0.02},
+    apps: [],
+    terminals: 0,
+    usage: {cpuPct: 12.4, ramPct: 34.6, gpuPct: null, netBytesPerS: 1234},
+    ...overrides
+})
+
+describe('usageMetrics', () => {
+    it('reports cpu, ram and network, in that order', () => {
+        expect(usageMetrics(session())).toEqual([
+            {key: 'cpu', pct: 12.4},
+            {key: 'ram', pct: 34.6},
+            {key: 'net', bytesPerS: 1234}
+        ])
+    })
+
+    // A GPU reading on a CPU instance is meaningless; the list shows a dash there, not "0%".
+    it('reports gpu between cpu and ram, but only on GPU instances', () => {
+        const gpu = session({gpuCount: 1, usage: {cpuPct: 12.4, ramPct: 34.6, gpuPct: 80, netBytesPerS: 1234}})
+        expect(usageMetrics(gpu).map(({key}) => key)).toEqual(['cpu', 'gpu', 'ram', 'net'])
+        expect(usageMetrics(gpu)[1]).toEqual({key: 'gpu', pct: 80})
+    })
+
+    // The sampler reports no GPU percentage until nvidia-smi has answered once.
+    it('reports a GPU instance with no reading yet as zero', () => {
+        const gpu = session({gpuCount: 1, usage: {cpuPct: 1, ramPct: 2, gpuPct: null, netBytesPerS: 0}})
+        expect(usageMetrics(gpu)[1]).toEqual({key: 'gpu', pct: 0})
+    })
+
+    // Not measured is not the same as measured as zero, and a session with no sample at all has
+    // nothing honest to show.
+    it('omits network that was not measured', () => {
+        const noNet = session({usage: {cpuPct: 12.4, ramPct: 34.6, gpuPct: null, netBytesPerS: null}})
+        expect(usageMetrics(noNet).map(({key}) => key)).toEqual(['cpu', 'ram'])
+    })
+
+    it('has nothing to report without a usage sample', () => {
+        expect(usageMetrics(session({usage: null}))).toBeNull()
+        expect(usageMetrics(session({usage: {cpuPct: null, ramPct: null}}))).toBeNull()
+    })
+})
+
+describe('runningItems', () => {
+    it('lists the apps by label, falling back to the path', () => {
+        const apps = [{path: '/sandbox/jupyter', label: 'Jupyter'}, {path: '/sandbox/shiny/foo', label: null}]
+        expect(runningItems(session({apps}))).toEqual([
+            {type: 'app', key: '/sandbox/jupyter', label: 'Jupyter'},
+            {type: 'app', key: '/sandbox/shiny/foo', label: '/sandbox/shiny/foo'}
+        ])
+    })
+
+    // Terminal sessions are deliberately NOT listed. A count of open ptys says nothing a user can
+    // act on — it does not name what is running, and an idle shell counts the same as a build.
+    it('never lists terminal sessions, whatever the count', () => {
+        const apps = [{path: '/sandbox/jupyter', label: 'Jupyter'}]
+        expect(runningItems(session({apps, terminals: 2}))).toEqual([
+            {type: 'app', key: '/sandbox/jupyter', label: 'Jupyter'}
+        ])
+        expect(runningItems(session({terminals: 2}))).toEqual([])
+        expect(runningItems(session({terminals: 0}))).toEqual([])
+        expect(runningItems(session({terminals: undefined}))).toEqual([])
+    })
+})
+
+describe('instanceLabel', () => {
+    const session = overrides => ({name: 'humble-robin', instanceType: {name: 't3a.small', tag: 't1'}, ...overrides})
+
+    // The number leads: it is the position in the list AND the number the SSH menu accepts.
+    it('leads with the 1-based number, then the name, then the type tag', () => {
+        expect(instanceLabel(session(), 0)).toBe('1: humble-robin - t1')
+        expect(instanceLabel(session(), 2)).toBe('3: humble-robin - t1')
+    })
+
+    it('drops the separator when there is no name', () => {
+        expect(instanceLabel(session({name: null}), 0)).toBe('1: t1')
+    })
+
+    // Legacy types carry no tag; the AWS name is all there is to identify them by.
+    it('falls back to the AWS name for an untagged type', () => {
+        expect(instanceLabel(session({instanceType: {name: 'm3.medium'}}), 0)).toBe('1: humble-robin - m3.medium')
+    })
+})

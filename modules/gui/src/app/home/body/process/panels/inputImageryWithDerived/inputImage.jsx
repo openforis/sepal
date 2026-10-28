@@ -1,14 +1,16 @@
 import React from 'react'
 
+import {adoptOtherSources, DUPLICATE_SOURCE, inputSourceKey, isFreeSource} from '~/app/home/body/process/inputImages'
 import {getAvailableIndexes} from '~/app/home/body/process/opticalIndexes'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {SourceKind} from '~/app/home/body/process/sourceTypeButtons'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {uuid} from '~/uuid'
 import {ButtonSelect} from '~/widget/buttonSelect'
 import {Form} from '~/widget/form'
-import {PanelSections} from '~/widget/panelSections'
+import {Panel} from '~/widget/panel/panel'
 
 import {AssetSection} from './assetSection'
 import {BandSetSpec} from './bandSetSpec'
@@ -16,140 +18,140 @@ import {ImageForm} from './imageForm'
 import styles from './inputImage.module.css'
 import {getProfileBandSetSpecs, isProfileDisabled} from './profiles'
 import {RecipeSection} from './recipeSection'
-import {SectionSelection} from './sectionSelection'
+
+// A new input starts as an asset.
+const NEW_INPUT_KIND = 'ASSET'
 
 const fields = {
     imageId: new Form.Field(),
+    otherSources: new Form.Field(),
     section: new Form.Field()
         .notBlank('process.classification.panel.inputImagery.form.section.required'),
     recipe: new Form.Field()
         .skip((value, {section}) => section !== 'RECIPE_REF')
-        .notBlank('process.classification.panel.inputImagery.form.recipe.required'),
+        .notBlank('process.classification.panel.inputImagery.form.recipe.required')
+        .predicate(isFreeSource('RECIPE_REF'), DUPLICATE_SOURCE),
     asset: new Form.Field()
         .skip((value, {section}) => section !== 'ASSET')
-        .notBlank('process.classification.panel.inputImagery.form.asset.required'),
+        .notBlank('process.classification.panel.inputImagery.form.asset.required')
+        .predicate(isFreeSource('ASSET'), DUPLICATE_SOURCE),
     bands: new Form.Field()
         .notEmpty('process.classification.panel.inputImagery.form.bands.required'),
     bandSetSpecs: new Form.Field()
         .predicate((bandSetSpecs, {bands}) =>
             bandSetSpecs && bandSetSpecs.find(spec => !BandSetSpec.isEmpty(spec, bands)),
         'process.classification.panel.inputImagery.form.bandSetSpecs.required'),
+    // The source the band sets were chosen against, never saved: the one the input was saved with, until another answers.
+    bandsSource: new Form.Field(),
     metadata: new Form.Field(),
     visualizations: new Form.Field()
 }
 
 const mapRecipeToProps = recipe => ({
-    recipeId: recipe.id
+    recipeId: recipe.id,
+    images: selectFrom(recipe, 'model.inputImagery.images') || []
 })
 
 class _InputImage extends React.Component {
     constructor(props) {
         super(props)
-        this.updateImageLayerSources = this.updateImageLayerSources.bind(this)
     }
 
     render() {
         const {inputs} = this.props
-        const sections = [
-            {
-                component: <SectionSelection section={inputs.section}/>
-            },
-            {
-                value: 'RECIPE_REF',
-                label: msg('process.classification.panel.inputImagery.recipe.title'),
-                title: msg('SEPAL RECIPE'),
-                component: <ImageForm ${...this.props} inputComponent={RecipeSection} input={inputs.recipe}/>
-            },
-            {
-                value: 'ASSET',
-                label: msg('process.classification.panel.inputImagery.asset.title'),
-                title: msg('EARTH ENGINE ASSET'),
-                component: <ImageForm ${...this.props} inputComponent={AssetSection} input={inputs.asset}/>
-            }
-        ]
-
         return (
             <RecipeFormPanel
                 className={styles.panel}
-                placement='modal'
-                onApply={this.updateImageLayerSources}>
-                <PanelSections
-                    inputs={inputs}
-                    sections={sections}
-                    selected={inputs.section}
-                    icon='image'
-                    label={msg('process.classification.panel.inputImagery.sections.title')}
-                    defaultButtons={
-                        <Form.PanelButtons>
-                            <ButtonSelect
-                                label={msg('process.classification.panel.inputImagery.derivedBands.label')}
-                                tooltip={msg('process.classification.panel.inputImagery.derivedBands.tooltip')}
-                                look='add'
-                                icon='plus'
-                                placement='above'
-                                tooltipPlacement='bottom'
-                                disabled={!inputs.section.value || !inputs.bands.value || !inputs.bands.value.length}
-                                options={this.derivedBandsOptions()}
-                                onSelect={option => this.updateBandSetSpecs(option)}
-                            />
-                        </Form.PanelButtons>
-                    }
-                />
+                placement='modal'>
+                <Panel.Header icon='image' title={msg('process.classification.panel.inputImagery.sections.title')}/>
+                <Panel.Content>
+                    {this.renderImageForm()}
+                </Panel.Content>
+                <Form.PanelButtons>
+                    <ButtonSelect
+                        label={msg('process.classification.panel.inputImagery.derivedBands.label')}
+                        tooltip={msg('process.classification.panel.inputImagery.derivedBands.tooltip')}
+                        look='add'
+                        icon='plus'
+                        placement='above'
+                        tooltipPlacement='bottom'
+                        disabled={!inputs.section.value || !inputs.bands.value || !inputs.bands.value.length}
+                        options={this.derivedBandsOptions()}
+                        onSelect={option => this.updateBandSetSpecs(option)}
+                    />
+                </Form.PanelButtons>
             </RecipeFormPanel>
         )
     }
 
+    // The kind of source is chosen beside its picker, each kind showing its own draft.
+    renderImageForm() {
+        const {inputs} = this.props
+        return (
+            <SourceKind
+                input={inputs.section}
+                recipe='RECIPE_REF'
+                defaultKind={NEW_INPUT_KIND}
+                onChange={kind => this.switchKind(kind)}>
+                {({recipe, labelButtons}) =>
+                    <ImageForm
+                        key={inputs.section.value}
+                        {...this.props}
+                        inputComponent={recipe ? RecipeSection : AssetSection}
+                        input={recipe ? inputs.recipe : inputs.asset}
+                        labelButtons={labelButtons}
+                    />
+                }
+            </SourceKind>
+        )
+    }
+
     componentDidMount() {
+        this.setSection()
         this.initBandSetSpecs()
+        this.setOtherSources()
     }
 
     componentDidUpdate() {
         const {inputs, activatable: {imageId}} = this.props
         inputs.imageId.set(imageId)
         this.initBandSetSpecs()
+        this.setOtherSources()
     }
 
+    // Each kind of source keeps a draft of its own while the form is open - its band sets, derived ones included, and what
+    // its source was read to have - so switching back restores what was selected for that kind, and nothing crosses from
+    // one kind to the other. A kind not yet shown starts with nothing selected. The pickers keep their sources themselves.
+    switchKind(kind) {
+        const {inputs} = this.props
+        this.drafts = {...this.drafts, [this.shownKind]: draftOf(inputs)}
+        const {bands, bandSetSpecs, metadata, visualizations, bandsSource} = this.drafts[kind] || emptyDraft()
+        inputs.bands.set(bands)
+        inputs.bandSetSpecs.set(bandSetSpecs)
+        inputs.metadata.set(metadata)
+        inputs.visualizations.set(visualizations)
+        inputs.bandsSource.setInitialValue(bandsSource)
+        this.shownKind = kind
+    }
+
+    // The kind shown first: the one saved, or the one a new input starts as (SourceKind).
+    setSection() {
+        const {inputs: {section}} = this.props
+        this.shownKind = section.value || NEW_INPUT_KIND
+    }
+
+    // The sources of the recipe's other inputs, which this one may not take.
+    setOtherSources() {
+        const {images, activatable: {imageId}, inputs: {otherSources}} = this.props
+        adoptOtherSources(otherSources, images, imageId)
+    }
+
+    // A new input starts with an empty set of image bands: where its form starts, not an edit.
     initBandSetSpecs() {
         const {inputs: {bandSetSpecs}} = this.props
         if (!bandSetSpecs.value) {
-            bandSetSpecs.set([{id: uuid(), type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: []}])
+            bandSetSpecs.setInitialValue(emptyBandSetSpecs())
         }
-    }
-
-    updateImageLayerSources({section, asset, recipe: recipeId, metadata, visualizations}) {
-        const {recipeActionBuilder} = this.props
-
-        const toImageLayerSource = () => {
-            switch (section) {
-                case 'RECIPE_REF':
-                    return {
-                        id: recipeId,
-                        type: 'Recipe',
-                        sourceConfig: {
-                            recipeId
-                        }
-                    }
-                case 'ASSET':
-                    return {
-                        id: asset,
-                        type: 'Asset',
-                        sourceConfig: {
-                            description: asset,
-                            asset,
-                            metadata,
-                            visualizations
-                        }
-                    }
-                default:
-                    throw Error(`Unexpected section: ${section}`)
-            }
-        }
-
-        const source = toImageLayerSource()
-
-        recipeActionBuilder('UPDATE_INPUT_IMAGE_LAYER_SOURCE', {source})
-            .set(['layers.additionalImageLayerSources', {id: source.id}], source)
-            .dispatch()
     }
 
     addImage() {
@@ -241,12 +243,31 @@ class _InputImage extends React.Component {
     }
 }
 
+const draftOf = ({bands, bandSetSpecs, metadata, visualizations, bandsSource}) => ({
+    bands: bands.value,
+    bandSetSpecs: bandSetSpecs.value,
+    metadata: metadata.value,
+    visualizations: visualizations.value,
+    bandsSource: bandsSource.value
+})
+
+const emptyDraft = () => ({
+    bands: null,
+    bandSetSpecs: emptyBandSetSpecs(),
+    metadata: undefined,
+    visualizations: undefined,
+    bandsSource: null
+})
+
+const emptyBandSetSpecs = () => [{id: uuid(), type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: []}]
+
 const modelToValues = model => {
     const values = {
         imageId: model.imageId,
-        section: model.type || 'SELECTION',
+        section: model.type,
         bands: model.bands,
-        bandSetSpecs: model.bandSetSpecs
+        bandSetSpecs: model.bandSetSpecs,
+        bandsSource: inputSourceKey(model)
     }
     switch (model.type) {
         case 'RECIPE_REF':
@@ -275,7 +296,7 @@ const valuesToModel = values => {
     }
 }
 
-const policy = () => ({_: 'allow'})
+export const inputImagePolicy = () => ({_: 'allow'})
 const panelOptions = {
     id: 'inputImage',
     path: props => {
@@ -286,7 +307,7 @@ const panelOptions = {
     valuesToModel,
     modelToValues,
     mapRecipeToProps,
-    policy
+    policy: inputImagePolicy
 }
 
 export const InputImage = compose(

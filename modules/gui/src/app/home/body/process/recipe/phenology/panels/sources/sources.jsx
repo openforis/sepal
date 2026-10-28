@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import React from 'react'
+import {Subject, takeUntil} from 'rxjs'
 
 import {getDataSetOptions as opticalDataSetOptions, isOpticalDataSet} from '~/app/home/body/process/recipe/opticalMosaic/sources'
 import {RecipeActions} from '~/app/home/body/process/recipe/phenology/phenologyRecipe'
@@ -8,15 +9,15 @@ import {getDataSetOptions as radarDataSetOptions, isRadarDataSet} from '~/app/ho
 import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {groupedBandOptions, toSources} from '~/sources'
+import {groupedBandOptions, toSources, withChosenClassifiedOutputs} from '~/sources'
 import {selectFrom} from '~/stateUtils'
-import {select} from '~/store'
 import {msg} from '~/translate'
+import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
+import {RecipeInput} from '~/widget/recipeInput'
 
 import styles from './sources.module.css'
 
@@ -37,12 +38,6 @@ const fields = {
         .notBlank()
 }
 
-const mapStateToProps = () => {
-    return {
-        recipes: select('process.recipes')
-    }
-}
-
 const mapRecipeToProps = recipe => ({
     dates: selectFrom(recipe, 'model.dates'),
     bands: selectFrom(recipe, 'model.reference.bands'),
@@ -51,6 +46,8 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _Sources extends React.Component {
+    cancel$ = new Subject()
+
     state = {}
 
     constructor(props) {
@@ -60,6 +57,7 @@ class _Sources extends React.Component {
 
     render() {
         const {inputs: {dataSetType}} = this.props
+        const {advanced} = this.state
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -73,13 +71,23 @@ class _Sources extends React.Component {
                         {this.renderDataSets()}
                         {dataSetType.value === 'OPTICAL' ? this.renderCloudPercentageThreshold() : null}
                         {this.renderAssetId()}
-                        {this.renderClassification()}
+                        {advanced || this.classificationProblem() ? this.renderClassification() : null}
                         {this.renderBand()}
                     </Layout>
                 </Panel.Content>
-                <Form.PanelButtons/>
+                <Form.PanelButtons>
+                    <Button
+                        label={advanced ? msg('button.less') : msg('button.more')}
+                        onClick={() => this.setState(({advanced}) => ({advanced: !advanced}))}/>
+                </Form.PanelButtons>
             </RecipeFormPanel>
         )
+    }
+
+    // The classification is chosen under More; while what is selected there cannot be used, it shows anyway, saying why.
+    classificationProblem() {
+        const {form, inputs: {classification}} = this.props
+        return !!form.getErrorMessage(classification)
     }
 
     renderDataSetTypes() {
@@ -99,7 +107,7 @@ class _Sources extends React.Component {
     }
 
     renderDataSets() {
-        const {inputs: {dataSetType, dataSets}} = this.props
+        const {form, inputs: {dataSetType, dataSets}} = this.props
         if (!dataSetType.value) {
             return null
         }
@@ -109,6 +117,7 @@ class _Sources extends React.Component {
                 input={dataSets}
                 options={this.dataSetOptions()}
                 multiple={dataSetType.value === 'OPTICAL'}
+                errorMessage={form.getErrorMessage(dataSets)}
             />
         )
     }
@@ -132,43 +141,35 @@ class _Sources extends React.Component {
     }
 
     renderClassification() {
-        const {recipes, inputs: {classification}} = this.props
-        const options = recipes
-            .filter(({type}) => type === 'CLASSIFICATION')
-            .map(recipe => ({
-                value: recipe.id,
-                label: recipe.name
-            }))
+        const {inputs: {classification}} = this.props
         return (
-            <Form.Combo
+            <RecipeInput
                 label={msg('process.phenology.panel.sources.form.classification.label')}
                 tooltip={msg('process.phenology.panel.sources.form.classification.tooltip')}
                 placeholder={msg('process.phenology.panel.sources.form.classification.placeholder')}
                 input={classification}
-                options={options}
-                busyMessage={this.props.stream('LOAD_CLASSIFICATION_RECIPE').active && msg('widget.loading')}
-                onChange={selected => selected
-                    ? this.loadClassification(selected.value)
-                    : this.deselectClassification()}
+                filter={type => type.id === 'CLASSIFICATION'}
                 allowClear
+                busyMessage={this.props.stream('LOAD_CLASSIFICATION_RECIPE').active && msg('widget.loading')}
+                onChange={id => this.loadClassification(id)}
             />
         )
     }
 
     renderBand() {
-        const {corrections, inputs: {dataSets, band}} = this.props
-        const {classificationLegend, classifierType} = this.state
+        const {corrections, form, inputs: {dataSets, band}} = this.props
+        const {classificationLegend, classifierType, classifier} = this.state
         var dataSetArray = dataSets.value && _.isArray(dataSets.value)
             ? dataSets.value
             : [dataSets.value]
-        var classification = {classificationLegend, classifierType, include: ['regression', 'probabilities']}
+        var classification = {classificationLegend, classifierType, classifier, include: ['regression', 'probabilities']}
         const collectionGrouped = groupedBandOptions({
             dataSets: dataSetArray,
             corrections,
             classification
         })
         
-        const options = collectionGrouped
+        const options = withChosenClassifiedOutputs(collectionGrouped, band.value)
             .filter(group => group.length)
             .map(group => ({options: group}))
         return (
@@ -178,6 +179,7 @@ class _Sources extends React.Component {
                 options={options}
                 disabled={!options.length}
                 framed
+                errorMessage={form.getErrorMessage(band)}
             />
         )
     }
@@ -205,9 +207,11 @@ class _Sources extends React.Component {
         if (!dataSetType.value) {
             dataSetType.set('OPTICAL')
         }
-        if (classification.value) {
-            this.loadClassification(classification.value)
-        }
+        this.loadClassification(classification.value)
+    }
+
+    componentWillUnmount() {
+        this.cancel$.next()
     }
 
     componentDidUpdate(prevProps) {
@@ -240,14 +244,22 @@ class _Sources extends React.Component {
         }
     }
 
+    // Band options depend on what the classifier produces, so a selected classification is read for its
+    // legend and classifier type. The panel owns that read: the controls needing it are not always shown
+    // beside the selector, and an unrendered selector reads nothing.
     loadClassification(recipeId) {
         const {stream, loadRecipe$} = this.props
+        this.cancel$.next()
         this.deselectClassification()
+        if (!recipeId) {
+            return
+        }
         stream('LOAD_CLASSIFICATION_RECIPE',
-            loadRecipe$(recipeId),
+            loadRecipe$(recipeId).pipe(takeUntil(this.cancel$)),
             classification => this.setState({
                 classificationLegend: classification.model.legend,
-                classifierType: classification.model.classifier.type
+                classifierType: classification.model.classifier.type,
+                classifier: classification.model.classifier
             }),
             error => Notifications.error({
                 message: msg('process.phenology.panel.sources.classificationLoadError', {error}),
@@ -259,7 +271,8 @@ class _Sources extends React.Component {
     deselectClassification() {
         this.setState({
             classificationLegend: null,
-            classifierType: null
+            classifierType: null,
+            classifier: null
         })
     }
 }
@@ -297,7 +310,6 @@ const modelToValues = ({dataSetType, assets, dataSets, cloudPercentageThreshold,
 
 export const Sources = compose(
     _Sources,
-    connect(mapStateToProps),
     recipeFormPanel({id: 'sources', fields, mapRecipeToProps, modelToValues, valuesToModel}),
     recipeAccess()
 )

@@ -1,19 +1,33 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
+import {mayProvideSegments} from '#sepal/recipe/capability/ccdcSegments'
+import {sourceVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
+import {msg} from '~/translate'
 import {RecipeInput} from '~/widget/recipeInput'
+
+// Masking preserves what it masks, so a source of segments stays one through it, whether or not it is offered as an
+// image elsewhere.
+export const maskableImage = (type, recipe) =>
+    isImageSource(type) || mayProvideSegments(recipe.type)
+
+// A mask is read as an ordinary image. Standing for segments says nothing about being usable as one.
+export const maskImage = type =>
+    isImageSource(type)
 
 export class RecipeSection extends React.Component {
     render() {
-        const {input, onLoading} = this.props
+        const {input, filter, labelButtons, onLoading} = this.props
         return (
             <RecipeInput
+                label={msg('process.masking.panel.inputImage.image.label')}
+                labelButtons={labelButtons}
                 input={input}
-                filter={type => !type.noImageOutput}
+                filter={filter}
                 autoFocus
                 onLoading={onLoading}
-                onLoaded={value => this.onRecipeLoaded(value)}
+                onBandsLoaded={value => this.onRecipeLoaded(value)}
             />
         )
     }
@@ -23,11 +37,13 @@ export class RecipeSection extends React.Component {
         onLoaded({
             id: recipe.id,
             bands: bandNames,
-            visualizations: getRecipeType(recipe.type).getPreSetVisualizations(recipe)
+            visualizations: sourceVisualizations(recipe)
         })
     }
 }
 
 RecipeSection.propTypes = {
-    input: PropTypes.object.isRequired
+    input: PropTypes.object.isRequired,
+    filter: PropTypes.func,
+    labelButtons: PropTypes.array
 }

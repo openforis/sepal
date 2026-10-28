@@ -2,7 +2,7 @@ import Hammer from 'hammerjs'
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {animationFrames, debounceTime, delay, distinctUntilChanged, filter, fromEvent, map, Subject, switchMap, takeUntil, timer} from 'rxjs'
+import {animationFrameScheduler, auditTime, delay, filter, fromEvent, map, share, Subject, switchMap, take, takeUntil, timer} from 'rxjs'
 
 import {compose} from '~/compose'
 import lookStyles from '~/style/look.module.css'
@@ -13,6 +13,12 @@ import styles from './listItem.module.css'
 
 const EXPAND_DELAYED_TIMEOUT_MS = 1000
 const CLICKABLE_PAN_THRESHOLD_PX = 10
+
+const DragPreviewContext = React.createContext(false)
+
+// Whether this renders in the floating preview of a dragged item, which shows what is dragged rather than the controls
+// it offers: those stay on the item itself, and a preview keeps the room they take.
+export const useDragPreview = () => React.useContext(DragPreviewContext)
 
 class _ListItem extends React.Component {
     draggable = React.createRef()
@@ -137,6 +143,8 @@ class _ListItem extends React.Component {
         expansionClickable || e.stopPropagation()
     }
 
+    // The look, on the elements that show it: the item where its expansion is clickable, otherwise its main part and
+    // expansion.
     getSharedClassName(clickable) {
         const {expansionInteractive, hovered} = this.props
         return [
@@ -232,28 +240,30 @@ class _ListItem extends React.Component {
         if (position && size) {
             return (
                 <Portal type='global'>
-                    <div className={styles.draggableContainer}>
-                        <div
-                            className={[styles.draggableClone, dragCloneClassName].join(' ')}
-                            style={{
-                                '--x': position.x,
-                                '--y': position.y,
-                                '--width': size.width,
-                                '--height': size.height
-                            }}>
-                            <div className={this.getGhostClassName()}>
-                                <div className={styles.horizontalWrapper}>
-                                    <div className={this.getMainClassName()}>
-                                        {this.renderDragHandle()}
-                                        <div className={styles.content}>
-                                            {this.getMainContent()}
+                    <DragPreviewContext.Provider value={true}>
+                        <div className={styles.draggableContainer}>
+                            <div
+                                className={[styles.draggableClone, dragCloneClassName].join(' ')}
+                                style={{
+                                    '--x': position.x,
+                                    '--y': position.y,
+                                    '--width': size.width,
+                                    '--height': size.height
+                                }}>
+                                <div className={this.getGhostClassName()}>
+                                    <div className={styles.horizontalWrapper}>
+                                        <div className={this.getMainClassName()}>
+                                            {this.renderDragHandle()}
+                                            <div className={styles.content}>
+                                                {this.getMainContent()}
+                                            </div>
                                         </div>
+                                        {this.renderExpansion()}
                                     </div>
-                                    {this.renderExpansion()}
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </DragPreviewContext.Provider>
                 </Portal>
             )
         }
@@ -280,13 +290,17 @@ class _ListItem extends React.Component {
         ) : null
     }
 
+    // The item is held where it was pressed: a pan is recognised once the pointer has moved, so the press is where the
+    // pan began, less the distance it has moved since. Positions are the viewport's, as the pointer's and the item's
+    // are measured. The preview follows the latest position at most once an animation frame, and the position the
+    // pointer is released or cancelled at is delivered before the drag ends.
     initializeDraggable() {
         const {addSubscription, dragAxis, dragTarget} = this.props
         const draggable = this.draggable.current
         const gestureTarget = dragTarget === 'handle' ? this.dragHandle.current : draggable
 
         const hammer = new Hammer(gestureTarget)
-        
+
         hammer.get('pan').set({
             direction: dragAxis === 'vertical'
                 ? Hammer.DIRECTION_VERTICAL
@@ -296,55 +310,44 @@ class _ListItem extends React.Component {
             threshold: this.isClickable() ? CLICKABLE_PAN_THRESHOLD_PX : 0
         })
 
-        const pan$ = fromEvent(hammer, 'panstart panmove panend')
+        const pan$ = fromEvent(hammer, 'panstart panmove panend pancancel')
         const panStart$ = pan$.pipe(filter(e => e.type === 'panstart'))
         const panMove$ = pan$.pipe(filter(e => e.type === 'panmove'))
-        const panEnd$ = pan$.pipe(filter(e => e.type === 'panend'))
+        const panEnd$ = pan$.pipe(filter(e => e.type === 'panend' || e.type === 'pancancel'))
 
         const dragStart$ = panStart$.pipe(
-            map(({changedPointers}) => changedPointers[0]),
-            filter(({pageX, pageY} = {}) => pageX && pageY),
-            map(({pageX, pageY}) => {
-                const {x: clientX, y: clientY, width, height} = draggable.getBoundingClientRect()
-                const offset = {
-                    x: Math.round(pageX - clientX),
-                    y: Math.round(pageY - clientY)
-                }
+            filter(({center}) => center),
+            map(({center, deltaX, deltaY}) => {
+                const {left, top, width, height} = draggable.getBoundingClientRect()
+                const offset = {x: center.x - deltaX - left, y: center.y - deltaY - top}
+                const origin = {x: left - 1, y: top - 1}
                 return {
-                    coords: {
-                        x: pageX,
-                        y: pageY
-                    },
-                    position: {
-                        x: pageX - offset.x - 1,
-                        y: pageY - offset.y - 1
-                    },
-                    size: {
-                        width,
-                        height
-                    },
+                    coords: center,
+                    position: dragPosition({origin, offset, coords: center, dragAxis}),
+                    size: {width, height},
+                    origin,
                     offset
                 }
-            })
+            }),
+            share()
         )
 
         const dragMove$ = dragStart$.pipe(
-            switchMap(({offset, position: startPosition}) =>
-                animationFrames().pipe(
-                    switchMap(() =>
-                        panMove$.pipe(
-                            map(e => e.center)
-                        )
-                    ),
-                    debounceTime(10),
-                    distinctUntilChanged(),
-                    map(coords => ({
-                        coords,
-                        position: {
-                            x: dragAxis === 'vertical' ? startPosition.x : coords.x - offset.x - 1,
-                            y: dragAxis === 'horizontal' ? startPosition.y : coords.y - offset.y - 1
-                        }
-                    }))
+            switchMap(({origin, offset}) =>
+                panMove$.pipe(
+                    map(({center}) => center),
+                    auditTime(0, animationFrameScheduler),
+                    takeUntil(panEnd$),
+                    map(coords => ({coords, position: dragPosition({origin, offset, coords, dragAxis})}))
+                )
+            )
+        )
+
+        const dragRelease$ = dragStart$.pipe(
+            switchMap(({origin, offset}) =>
+                panEnd$.pipe(
+                    take(1),
+                    map(({center}) => ({coords: center, position: dragPosition({origin, offset, coords: center, dragAxis})}))
                 )
             )
         )
@@ -355,8 +358,10 @@ class _ListItem extends React.Component {
 
         addSubscription(
             dragStart$.subscribe(this.onDragStart),
+            dragRelease$.subscribe(this.onDragMove),
             dragMove$.subscribe(this.onDragMove),
-            dragEnd$.subscribe(this.onDragEnd)
+            dragEnd$.subscribe(this.onDragEnd),
+            () => hammer.destroy()
         )
     }
 
@@ -414,6 +419,13 @@ class _ListItem extends React.Component {
         }
     }
 }
+
+// Where the preview of an item held at `offset` is drawn with the pointer at `coords`: an item dragged along one axis
+// keeps its place on the other.
+const dragPosition = ({origin, offset, coords, dragAxis}) => ({
+    x: dragAxis === 'vertical' ? origin.x : coords.x - offset.x - 1,
+    y: dragAxis === 'horizontal' ? origin.y : coords.y - offset.y - 1
+})
 
 export const ListItem = compose(
     _ListItem,

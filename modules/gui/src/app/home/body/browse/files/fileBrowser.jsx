@@ -1,7 +1,6 @@
 import memoizeOne from 'memoize-one'
 import moment from 'moment'
 import {orderBy} from 'natural-orderby'
-import Path from 'path'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -9,7 +8,7 @@ import api from '~/apiRegistry'
 import {compose} from '~/compose'
 import {withEnableDetector} from '~/enabled'
 import format from '~/format'
-import {getLogger} from '~/log'
+import {extname} from '~/path'
 import lookStyles from '~/style/look.module.css'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
@@ -23,11 +22,9 @@ import {Content, SectionLayout} from '~/widget/sectionLayout'
 import {SortButtons} from '~/widget/sortButtons'
 import {ToggleButton} from '~/widget/toggleButton'
 
-import {FileTree} from './fileTree'
-
-const log = getLogger('browse')
-
 import styles from './fileBrowser.module.css'
+import {FileTree} from './fileTree'
+import {UserFilesMonitor} from './userFilesMonitor'
 
 const ANIMATION_DURATION_MS = 1000
 
@@ -76,7 +73,7 @@ const getSorter = memoizeOne((splitDirs, sortingOrder, sortingDirection) => {
 
 class _FileBrowser extends React.Component {
 
-    userFiles = api.userFiles.ws()
+    monitor = new UserFilesMonitor()
 
     state = {
         tree: FileTree.create(),
@@ -97,85 +94,45 @@ class _FileBrowser extends React.Component {
     }
 
     componentDidMount() {
-        const {enableDetector: {onChange}} = this.props
-        onChange(enabled => this.enabled(enabled))
-        this.subscribeToUpdates()
+        const {enableDetector: {onChange}, addSubscription} = this.props
+        onChange(() => this.updateMonitoring())
+        addSubscription(this.monitor.subscribe(this.onUpdate))
+        this.updateMonitoring()
     }
-    
-    subscribeToUpdates() {
-        const {addSubscription} = this.props
-        addSubscription(
-            this.userFiles.downstream$.subscribe({
-                next: msg => this.onMessage(msg),
-                error: error => log.error('downstream$ error', error),
-                complete: () => log.error('downstream$ complete')
-            })
+
+    componentDidUpdate(_prevProps, {tree: prevTree}) {
+        const {tree} = this.state
+        if (tree !== prevTree) {
+            this.updateMonitoring()
+        }
+    }
+
+    updateMonitoring() {
+        const {enableDetector: {isEnabled}} = this.props
+        const {tree} = this.state
+        this.monitor.watch(
+            isEnabled()
+                ? FileTree.getExpandedDirectories(tree).map(FileTree.toStringPath)
+                : []
         )
-    }
-
-    monitor(paths, options = {}) {
-        this.userFiles.upstream$.next({
-            monitor: paths.map(FileTree.toStringPath),
-            ...options
-        })
-    }
-
-    unmonitor(paths = [[]]) {
-        this.userFiles.upstream$.next({
-            unmonitor: paths.map(FileTree.toStringPath)
-        })
-    }
-
-    remove(paths) {
-        this.userFiles.upstream$.next({
-            remove: paths.map(FileTree.toStringPath)
-        })
     }
 
     reset() {
         this.setState({tree: FileTree.create()})
     }
 
-    onMessage({ready, data}) {
-        ready !== undefined && this.onReady(ready)
-        data !== undefined && this.onUpdate(data)
-    }
-
-    onReady(ready) {
-        const {enableDetector: {isEnabled}} = this.props
-        if (ready && isEnabled()) {
-            this.monitor([[]], {reset: true})
-        }
-    }
-
     onUpdate({path, items}) {
         this.setState(({tree}) => ({tree: FileTree.updateItem(tree, FileTree.fromStringPath(path), items)}))
     }
 
-    enabled(enabled) {
-        if (enabled) {
-            this.monitor(this.getOpenDirectories(), {reset: true})
-        } else {
-            this.unmonitor()
-        }
-    }
-
-    getOpenDirectories(path = []) {
-        const {tree} = this.state
-        return FileTree.getOpenDirectories(tree, path)
-    }
-
     expandDirectory(node) {
         const path = FileTree.getPath(node)
-        this.setState(({tree}) => ({tree: FileTree.expandDirectory(tree, path)}), () => {
-            this.monitor(this.getOpenDirectories(path))
-        })
+        this.setState(({tree}) => ({tree: FileTree.expandDirectory(tree, path)}))
     }
 
     collapseDirectory(node) {
         const path = FileTree.getPath(node)
         this.setState(({tree}) => ({tree: FileTree.collapseDirectory(tree, path)}))
-        this.unmonitor([path])
     }
 
     collapseAllDirectories() {
@@ -204,7 +161,7 @@ class _FileBrowser extends React.Component {
 
     removePaths(paths) {
         this.setState(({tree}) => ({tree: FileTree.setRemoving(tree, paths)}))
-        this.remove(paths)
+        this.monitor.remove(paths.map(FileTree.toStringPath))
     }
 
     removeSelected() {
@@ -348,7 +305,7 @@ class _FileBrowser extends React.Component {
     }
 
     renderFileIcon(key) {
-        const isImage = ['.shp', '.tif', '.tiff', '.vrt'].includes(Path.extname(key))
+        const isImage = ['.shp', '.tif', '.tiff', '.vrt'].includes(extname(key))
         return (
             <span className={styles.icon}>
                 <Icon name={isImage ? 'file-image' : 'file'}/>
@@ -417,7 +374,7 @@ class _FileBrowser extends React.Component {
         const {files: selectedFiles} = FileTree.getSelectedItems(tree)
         const selectedFile = selectedFiles.length === 1 && selectedFiles[0]
         const downloadUrl = selectedFile && api.userFiles.downloadUrl(FileTree.toStringPath(selectedFile))
-        const downloadFilename = selectedFiles.length === 1 && Path.basename(selectedFile)
+        const downloadFilename = selectedFiles.length === 1 && selectedFile.at(-1)
         return (
             <ButtonGroup layout='horizontal'>
                 <Button

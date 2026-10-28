@@ -1,0 +1,29 @@
+{
+    "name": "user",
+    "version": "1.0.0",
+    "description": "",
+    "main": "main.js",
+    "scripts": {
+        "test": "node --experimental-test-module-mocks --test \"**/*.test.js\"",
+        "testWatch": "node --experimental-test-module-mocks --test --watch \"**/*.test.js\""
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "commander": "^15.0.0",
+        "lodash": "^4.18.1",
+        "log4js": "^6.9.1",
+        "rxjs": "^7.8.2",
+        "sepal": "../../lib/js/shared",
+        "uuid": "^14.0.3"
+    },
+    "imports": {
+        "#sepal/*": "sepal/src/*.js",
+        "#sepal/*.json": "sepal/src/*.json",
+        "#config/*.json": "./config/*.json"
+    },
+    "type": "module",
+    "devDependencies": {
+        "amqplib": "^2.2.0"
+    }
+}

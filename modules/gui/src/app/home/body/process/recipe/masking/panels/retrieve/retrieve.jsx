@@ -1,41 +1,15 @@
-import React from 'react'
-
-import {getGroupedBandOptions} from '~/app/home/body/process/recipe/masking/bands'
-import {RecipeActions} from '~/app/home/body/process/recipe/masking/maskingRecipe'
+import {retrieveTask} from '~/app/home/body/process/recipe/masking/maskingRecipe'
 import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
-import {compose} from '~/compose'
 
-const mapRecipeToProps = recipe => ({recipe})
-
-class _Retrieve extends React.Component {
-    render() {
-        return (
-            <MosaicRetrievePanel
-                bandOptions={this.bandOptions()}
-                defaultScale={30}
-                toSepal
-                toEE
-                toDrive
-                onRetrieve={retrieveOptions => this.retrieve(retrieveOptions)}
-            />
-        )
-    }
-
-    bandOptions() {
-        const {recipe} = this.props
-        return getGroupedBandOptions(recipe)
-    }
-
-    retrieve(retrieveOptions) {
-        const {recipeId} = this.props
-        return RecipeActions(recipeId).retrieve(retrieveOptions)
-    }
-}
-
-export const Retrieve = compose(
-    _Retrieve,
-    withRecipe(mapRecipeToProps)
-)
+// What Masking offers and exports is its output as the common read answers it: its source's, through its
+// declaration, or - over a source that declares nothing - the names its evidence lifecycle observed.
+export const Retrieve = () =>
+    <MosaicRetrievePanel
+        defaultScale={30}
+        toSepal
+        toEE
+        toDrive
+        task={retrieveTask}
+    />
 
 Retrieve.propTypes = {}

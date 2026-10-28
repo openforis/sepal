@@ -1,92 +1,192 @@
 import React from 'react'
+import {catchError, forkJoin, interval, map, of} from 'rxjs'
 
-import {actionBuilder} from '~/action-builder'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
-import format from '~/format'
+import {launchFailureMessage} from '~/instanceLaunchFailure'
 import {select} from '~/store'
+import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
-import {stopCurrentUserSession$} from '~/user'
-import {CrudItem} from '~/widget/crudItem'
-import {ListItem} from '~/widget/listItem'
-import {NoData} from '~/widget/noData'
+import {startCurrentUserSession$, stopCurrentUserSession$} from '~/user'
+import {withActivatable} from '~/widget/activation/activatable'
+import {ModalConfirmationButton} from '~/widget/modalConfirmationButton'
 import {Notifications} from '~/widget/notifications'
-import {Scrollable} from '~/widget/scrollable'
+import {Panel} from '~/widget/panel/panel'
+import {refreshSessions} from '~/widget/sessionMonitor'
+
+import {InstancePicker} from '../body/apps/instancePicker'
+import {UserSession} from './userSession'
+import {UserSessionList} from './userSessionList'
+import styles from './userSessions.module.css'
+import {instanceTypeLabel, runningItems} from './userSessionSummary'
 
 const mapStateToProps = () => ({
+    selectedSessionId: select('ui.selectedSessionId'),
     sessions: select('user.currentUserReport.sessions')
 })
 
+// The report's costSinceCreation and timeoutHours are derived from elapsed time, so they
+// drift between the session ws's event-driven pushes. This panel is the only place they are shown,
+// and withActivatable unmounts it when closed, so the ticker costs nothing while it is shut.
+const REFRESH_INTERVAL_MS = 10000
+
 class _UserSessions extends React.Component {
-    stopSession(session) {
-        const {stream} = this.props
-        stream('STOP_USER_SESSION',
-            stopCurrentUserSession$(session),
-            () => {
-                Notifications.success({message: msg('user.userSession.stop.success')})
-            },
-            error => Notifications.error({message: msg('user.userSession.stop.error'), error})
-        )
+    state = {
+        picking: false
     }
 
-    selectSession(session) {
-        actionBuilder('SELECT_SESSION', {session})
-            .set('ui.selectedSessionId', session.id)
-            .dispatch()
+    constructor(props) {
+        super(props)
+        this.pickInstance = this.pickInstance.bind(this)
+        this.cancelPicking = this.cancelPicking.bind(this)
+        this.startSession = this.startSession.bind(this)
+        this.stopAllSessions = this.stopAllSessions.bind(this)
     }
 
-    renderNoSessions() {
-        return (
-            <NoData message={msg('user.report.sessions.noSessions')}/>
-        )
-    }
-
-    renderCost(session) {
-        return format.dollars(session.costSinceCreation)
-    }
-
-    renderHourlyCost(session) {
-        return format.dollarsPerHour(session.instanceType.hourlyCost)
-    }
-
-    renderSession(session) {
-        const title = `${session.instanceType.name} (${session.instanceType.description})`
-        const description = `${this.renderCost(session)} (${this.renderHourlyCost(session)})`
-        return (
-            <ListItem key={session.id}>
-                <CrudItem
-                    title={title}
-                    description={description}
-                    timestamp={session.creationTime}
-                    editTooltip={msg('user.userSession.update.tooltip')}
-                    removeMessage={msg('user.userSession.stop.message')}
-                    removeTooltip={msg('user.userSession.stop.tooltip')}
-                    onEdit={() => this.selectSession(session)}
-                    onRemove={() => this.stopSession(session)}
-                />
-            </ListItem>
-        )
-    }
-
-    renderSessions(sessions) {
-        return (
-            <Scrollable direction='y'>
-                {sessions.map(session => this.renderSession(session))}
-            </Scrollable>
+    componentDidMount() {
+        const {addSubscription} = this.props
+        addSubscription(
+            interval(REFRESH_INTERVAL_MS).subscribe(() => refreshSessions())
         )
     }
 
     render() {
+        const {selectedSessionId} = this.props
+        const {picking} = this.state
+        return picking
+            ? this.renderPicker()
+            : selectedSessionId
+                ? <UserSession/>
+                : this.renderSessions()
+    }
+
+    renderSessions() {
+        const {sessions, stream, activatable: {deactivate}} = this.props
+        return (
+            <Panel
+                className={styles.panel}
+                placement='modal'
+                onBackdropClick={deactivate}>
+                <Panel.Header
+                    icon='server'
+                    title={msg('user.report.sessions.title')}
+                    label={sessions?.length ? msg('user.report.sessions.active', {count: sessions.length}) : null}/>
+                <Panel.Content>
+                    <UserSessionList stoppingAll={stream('STOP_ALL_USER_SESSIONS').active}/>
+                </Panel.Content>
+                <Panel.Buttons>
+                    <Panel.Buttons.Main>
+                        <Panel.Buttons.Close
+                            keybinding={['Enter', 'Escape']}
+                            onClick={deactivate}
+                        />
+                    </Panel.Buttons.Main>
+                    <Panel.Buttons.Extra>
+                        <Panel.Buttons.Add
+                            label={msg('user.userSession.start.label')}
+                            busy={stream('START_USER_SESSION').active}
+                            onClick={this.pickInstance}
+                        />
+                        {this.renderStopAll()}
+                    </Panel.Buttons.Extra>
+                </Panel.Buttons>
+            </Panel>
+        )
+    }
+
+    renderStopAll() {
+        const {sessions, stream} = this.props
+        const count = sessions?.length ?? 0
+        return (
+            <ModalConfirmationButton
+                look='cancel'
+                icon='trash'
+                label={msg('user.userSession.stopAll.label')}
+                confirmLabel={msg('user.userSession.stopAll.label')}
+                message={msg('user.userSession.stopAll.message', {count})}
+                busy={stream('STOP_ALL_USER_SESSIONS').active}
+                disabled={!count}
+                onConfirm={this.stopAllSessions}>
+                {this.renderStopAllList()}
+            </ModalConfirmationButton>
+        )
+    }
+
+    // Each instance by the name the list titles it with, and what closes with it.
+    renderStopAllList() {
         const {sessions} = this.props
-        return sessions?.length
-            ? this.renderSessions(sessions)
-            : this.renderNoSessions()
+        return (
+            <ul>
+                {(sessions || []).map(session => {
+                    const apps = runningItems(session).map(({label}) => label)
+                    return (
+                        <li key={session.id}>
+                            {[session.name || instanceTypeLabel(session), apps.join(', ')].filter(Boolean).join(' — ')}
+                        </li>
+                    )
+                })}
+            </ul>
+        )
+    }
+
+    renderPicker() {
+        return (
+            <InstancePicker
+                onConfirm={this.startSession}
+                onCancel={this.cancelPicking}
+            />
+        )
+    }
+
+    pickInstance() {
+        this.setState({picking: true})
+    }
+
+    cancelPicking() {
+        this.setState({picking: false})
+    }
+
+    // One failed stop does not keep the others running: each is stopped on its own, and failures are
+    // reported once at the end. Stopped sessions leave the list as they go.
+    stopAllSessions() {
+        const {sessions, stream} = this.props
+        stream('STOP_ALL_USER_SESSIONS',
+            forkJoin(sessions.map(session =>
+                stopCurrentUserSession$(session).pipe(
+                    map(() => null),
+                    catchError(error => of(error))
+                )
+            )),
+            results => {
+                const [error] = results.filter(Boolean)
+                error && Notifications.error({message: msg('user.userSession.stopAll.error'), error})
+            }
+        )
+    }
+
+    // The picker offers no running instances without an app, so the pick is always a type. No
+    // success toast: the new session appears in the list.
+    startSession({instanceType}) {
+        const {stream} = this.props
+        this.setState({picking: false})
+        stream('START_USER_SESSION',
+            startCurrentUserSession$(instanceType),
+            null,
+            error => {
+                const launchFailure = launchFailureMessage(error)
+                Notifications.error(launchFailure
+                    ? {title: msg('user.userSession.start.error'), message: launchFailure}
+                    : {message: msg('user.userSession.start.error'), error})
+            }
+        )
     }
 }
 
 export const UserSessions = compose(
     _UserSessions,
-    connect(mapStateToProps)
+    connect(mapStateToProps),
+    withSubscriptions(),
+    withActivatable({id: 'userSessions', policy: () => ({_: 'disallow'}), alwaysAllow: true})
 )
 
 UserSessions.propTypes = {}

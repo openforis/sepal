@@ -116,6 +116,7 @@ class _Options extends React.Component {
                 label={msg('process.planetMosaic.panel.options.form.histogramMatching.label')}
                 tooltip={msg('process.planetMosaic.panel.options.form.histogramMatching.tooltip')}
                 input={histogramMatching}
+                {...histogramMatching.presentation?.(msg('process.planetMosaic.panel.options.form.histogramMatching.label'), msg('process.planetMosaic.panel.options.form.histogramMatching.tooltip'))}
                 options={options}
             />
         )

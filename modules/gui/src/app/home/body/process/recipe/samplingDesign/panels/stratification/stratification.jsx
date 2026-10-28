@@ -4,8 +4,9 @@ import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
 import api from '~/apiRegistry'
-import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {recipeVisualizationsNaming} from '~/app/home/body/process/recipe/visualizations'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -91,7 +92,7 @@ class _Stratification extends React.Component {
         this.onImageChanged = this.onImageChanged.bind(this)
         this.onImageLoading = this.onImageLoading.bind(this)
         this.onAssetLoaded = this.onAssetLoaded.bind(this)
-        this.onRecipeLoaded = this.onRecipeLoaded.bind(this)
+        this.onRecipeBandsLoaded = this.onRecipeBandsLoaded.bind(this)
         this.onBandChanged = this.onBandChanged.bind(this)
         this.onGridChanged = this.onGridChanged.bind(this)
         this.onEEStrategyChanged = this.onEEStrategyChanged.bind(this)
@@ -223,12 +224,12 @@ class _Stratification extends React.Component {
             <RecipeInput
                 label={msg('process.samplingDesign.panel.stratification.form.stratification.label')}
                 input={recipeId}
-                filter={type => !type.noImageOutput}
+                filter={isImageSource}
                 labelButtons={[this.renderType()]}
                 autoFocus
                 onChange={this.onImageChanged}
                 onLoading={this.onImageLoading}
-                onLoaded={this.onRecipeLoaded}
+                onBandsLoaded={this.onRecipeBandsLoaded}
             />
         )
     }
@@ -542,35 +543,17 @@ class _Stratification extends React.Component {
     }
 
     onAssetLoaded({metadata, visualizations}) {
-        const {inputs: {assetId}} = this.props
         const bands = metadata.bands.map(({id}) => id) || []
         // Carries each band's own CRS and nominal scale, which is what a band selection defaults the grid to.
         this.bandMetadata = metadata.bands
-
-        this.updateImageLayerSources({
-            id: assetId.value,
-            type: 'Asset',
-            sourceConfig: {
-                asset: assetId.value,
-                metadata,
-                visualizations
-            },
-        })
         this.onImageLoaded(bands, visualizations)
     }
 
-    onRecipeLoaded({bandNames: bands, recipe}) {
+    onRecipeBandsLoaded({bandNames: bands, recipe}) {
         // A recipe is a computed image: it reports Earth Engine's degree-scale default rather than a grid, so
         // there is nothing to derive and a band selection takes the plain default.
         this.bandMetadata = undefined
-        this.updateImageLayerSources({
-            id: recipe.id,
-            type: 'Recipe',
-            sourceConfig: {
-                recipeId: recipe.id
-            },
-        })
-        this.onImageLoaded(bands, getAllVisualizations(recipe))
+        this.onImageLoaded(bands, recipeVisualizationsNaming(recipe, bands))
     }
 
     onImageLoaded(bands, visualizations) {
@@ -752,13 +735,6 @@ class _Stratification extends React.Component {
                 strataCalculationError: toStrataCalculationError({error, strategy: eeStrategy.value})
             })
         )
-    }
-
-    updateImageLayerSources(source) {
-        const {recipeActionBuilder} = this.props
-        recipeActionBuilder('UPDATE_STRATIFICATION_IMAGE_LAYER_SOURCE', {source})
-            .set(['layers.additionalImageLayerSources', {id: source.id}], source)
-            .dispatch()
     }
     
     exportStratification() {

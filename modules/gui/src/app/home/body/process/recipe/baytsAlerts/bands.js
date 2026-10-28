@@ -1,30 +1,49 @@
-import {getAvailableBands as radarBands} from '~/app/home/body/process/recipe/radarMosaic/bands'
+import {ALERT_BANDS} from '#sepal/recipe/bayts/alertBands'
+import {IMAGE_OUTPUT} from '#sepal/recipe/output/product'
+import {RADAR_OBSERVATION} from '#sepal/recipe/type/baytsAlerts'
+import {POINT_IN_TIME, RADAR_MOSAIC_BANDS} from '#sepal/recipe/type/radarMosaic'
+import {radarBandTable} from '~/app/home/body/process/recipe/radarMosaic/bands'
 
 const typeFloat = {precision: 'float'}
 const typeInt = {precision: 'int'}
 
-export const getAvailableBands = (recipe, visualizationType) => {
-    return !visualizationType || visualizationType === 'alerts'
-        ? alertsBands()
-        : radarBands(recipe)
-}
+const ALERT_BAND_TYPES = {flag: typeInt, flag_orbit: typeInt}
 
-export const alertsBands = () => {
-    return {
-        non_forest_probability: {dataType: typeFloat},
-        change_probability: {dataType: typeFloat},
-        flag: {dataType: typeInt},
-        flag_orbit: {dataType: typeInt},
-        first_detection_date: {dataType: typeFloat},
-        confirmation_date: {dataType: typeFloat},
-        VV: {dataType: typeFloat},
-        VH: {dataType: typeFloat},
-        ratio_VV_VH: {dataType: typeFloat},
+// How the alert bands are shown; which of them exist is the declaration's to say.
+const alertBands = () =>
+    Object.fromEntries(
+        ALERT_BANDS.map(name => [name, {dataType: ALERT_BAND_TYPES[name] || typeFloat}])
+    )
+
+// The radar observation is a point-in-time radar mosaic, and is shown as one.
+export const bandPresentation = (_recipe, {name} = {}) => {
+    switch (name) {
+        case IMAGE_OUTPUT: return alertBands()
+        case RADAR_OBSERVATION: return radarBandTable(RADAR_MOSAIC_BANDS[POINT_IN_TIME])
+        default: return {}
     }
 }
-        
-export const getGroupedBandOptions = () => {
-    const toOption = band => ({value: band, label: band})
+
+const POSITIONS = ['first', 'last']
+
+// The alerts are the output; a layer may instead show the radar observation at the first or last date of the
+// monitoring period.
+export const mapProducts = {
+    defaults: {visualizationType: 'alerts', previouslyConfirmed: 'exclude', minConfidence: 'high'},
+    productOf: ({visualizationType}) => {
+        if (visualizationType === 'alerts') {
+            return {name: IMAGE_OUTPUT}
+        }
+        return POSITIONS.includes(visualizationType)
+            ? {name: RADAR_OBSERVATION, parameters: {position: visualizationType}}
+            : null
+    }
+}
+
+// The groups Retrieve offers the alert bands in.
+export const groupedBandPresentation = () => {
+    const presentation = alertBands()
+    const toOption = band => ({value: band, label: band, ...presentation[band]})
     return [
         ['non_forest_probability', 'change_probability', 'flag', 'flag_orbit'].map(toOption),
         ['first_detection_date', 'confirmation_date'].map(toOption)

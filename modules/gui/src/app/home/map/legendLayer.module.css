@@ -13,7 +13,7 @@
 .legend {
     position: relative;
     display: flex;
-    background-color: hsla(0, 0%, 0%, .35);
+    background-color: var(--map-chip-background-color);
     padding: .35rem;
     border-radius: .25rem;
     max-width: 40rem;
@@ -40,9 +40,9 @@
     font-size: .8rem;
     line-height: .8rem;
     text-align: left;
-    background-color: #373737;
+    background-color: var(--popover-background-color);
     border-radius: 6px;
-    box-shadow: 0 0 4px rgba(0, 0, 0, 0.17);
+    box-shadow: 0 0 4px var(--shadow-faint-color);
     align-items: center;
 }
 
@@ -60,7 +60,7 @@
     bottom: -4px;
     margin-left: -5px;
     border-width: 5px 5px 0;
-    border-top-color: #373737;
+    border-top-color: var(--popover-background-color);
 }
 
 .fullLegend {

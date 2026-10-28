@@ -1,13 +1,8 @@
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {msg} from '~/translate'
 
-import {getAvailableBands} from './bands'
-
-export const getPreSetVisualizations = recipe => {
-    const availableBands = getAvailableBands(recipe)
-    return Object.values(visualizations).flat()
-        .filter(({bands}) => bands.every(band => availableBands[band]))
-}
+export const getPreSetVisualizations = _recipe =>
+    Object.values(visualizations).flat()
 
 export const visualizationOptions = _recipe => {
     const visParamsToOption = visParams => ({

@@ -1,6 +1,8 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
+import {inputImageryRequirement, isInputImageryRequirement} from '#sepal/recipe/source/inputImagery'
 import api from '~/apiRegistry'
 import {compose} from '~/compose'
 import {withSubscriptions} from '~/subscription'
@@ -33,17 +35,20 @@ class _RecipeGeometryLayer extends React.Component {
         map.removeLayer(id)
     }
 
+    // A layer without geometry to show is taken off the map, which cancels the request of the one it replaces.
     setLayer() {
         const {id, map} = this.props
         const layer = this.createLayer()
         if (layer) {
             map.setLayer({id, layer})
+        } else {
+            map.removeLayer(id)
         }
     }
 
     createLayer() {
         const {recipe, color, fillColor, width, opacity, layerIndex, map, tab: {busy}} = this.props
-        return recipe.ui.initialized
+        return hasGeometry(recipe)
             ? new EarthEngineTableLayer({
                 map,
                 mapId$: api.gee.recipeGeometry$({
@@ -59,6 +64,16 @@ class _RecipeGeometryLayer extends React.Component {
             : null
     }
 }
+
+// The geometry of a recipe set up, where what it is read from is there. A recipe that requires input imagery reads its
+// geometry from its first input image (lib/js/ee/src/classification/classification.js getGeometry$, and alike), so it
+// has none while it lists no image - whatever else keeps it from running, such as missing training data.
+const hasGeometry = recipe =>
+    recipe.ui.initialized && !lacksInputImagery(recipe)
+
+const lacksInputImagery = recipe =>
+    (recipeType(recipe.type)?.configurationRequirements || []).some(isInputImageryRequirement)
+    && inputImageryRequirement.findings(recipe.model).length > 0
 
 export const RecipeGeometryLayer = compose(
     _RecipeGeometryLayer,

@@ -4,20 +4,19 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-        "testWatch": "NODE_OPTIONS=--experimental-vm-modules jest --watchAll"
+        "test": "node --test \"**/*.test.js\"",
+        "testWatch": "node --test --watch \"**/*.test.js\""
     },
     "author": "",
     "license": "ISC",
     "dependencies": {
         "commander": "^15.0.0",
-        "express": "^5.2.1",
+        "express": "^5.3.0",
         "express-ws": "^5.0.2",
         "node-pty": "^1.1.0",
         "rxjs": "^7.8.2",
         "sepal": "../../lib/js/shared"
     },
-    "devDependencies": {},
     "imports": {
         "#sepal/*": "sepal/src/*.js",
         "#sepal/*.json": "sepal/src/*.json",

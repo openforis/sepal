@@ -4,6 +4,8 @@ import {Option, program} from 'commander'
 
 import {build} from './build.js'
 import {buildRestart} from './buildRestart.js'
+import {deps} from './config.js'
+import {describeCycle, findDependencyCycles} from './depsValidation.js'
 import {eslint} from './eslint.js'
 import {log} from './log.js'
 import {logs} from './logs.js'
@@ -11,6 +13,7 @@ import {npmAudit} from './npm-audit.js'
 import {npmInstall} from './npm-install.js'
 import {npmTest} from './npm-test.js'
 import {npmUpdate} from './npm-update.js'
+import {prune} from './prune.js'
 import {restart} from './restart.js'
 import {shell} from './shell.js'
 import {start} from './start.js'
@@ -18,8 +21,18 @@ import {stop} from './stop.js'
 import {tail} from './tail.js'
 import {exit, showStatus} from './utils.js'
 
+const validateDeps = () => {
+    const cycles = findDependencyCycles(deps)
+    if (cycles.length) {
+        cycles.forEach(cycle => log.error(describeCycle(cycle)))
+        exit({error: 'Invalid config/deps.json: circular dependencies detected'})
+    }
+}
+
 const main = async () => {
     process.on('SIGINT', () => exit({interrupted: true}))
+
+    validateDeps()
 
     program.exitOverride()
 
@@ -144,7 +157,7 @@ const main = async () => {
         .action(npmInstall)
 
     program.command('npm-audit')
-        .description('Audit npm modules')
+        .description('Audit production npm dependencies')
         .option('-f, --fix', 'Fix')
         .argument('[module...]', 'Modules to audit')
         .action(npmAudit)
@@ -160,6 +173,11 @@ const main = async () => {
         .argument('[module...]', 'Modules to eslint')
         .option('-f, --fix', 'Fix autofixable ESLint errors.')
         .action(eslint)
+
+    program.command('prune')
+        .description('Remove dangling images, left behind when a rebuild moves their tag')
+        .option('-n, --dry-run', 'List the images without removing them')
+        .action(prune)
 
     try {
         await program.parseAsync(process.argv)

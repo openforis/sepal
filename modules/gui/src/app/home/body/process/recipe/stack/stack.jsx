@@ -1,14 +1,15 @@
 import React from 'react'
 
+import {INPUT_IMAGE} from '#sepal/recipe/source/inputImagery'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
+import {inputImageryRequirements} from '../../panels/inputImagery/inputImageryRequirements'
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
-import {getAvailableBands} from './bands'
 import {StackToolbar} from './panels/stackToolbar'
 import {getDefaultModel, RecipeActions} from './stackRecipe'
 import {getPreSetVisualizations} from './visualizations'
@@ -47,13 +48,10 @@ const Stack = compose(
     recipe({getDefaultModel, mapRecipeToProps})
 )
 
-const getDependentRecipeIds = recipe =>
-    (selectFrom(recipe, 'model.inputImagery.images') || [])
-        .filter(({type}) => type === 'RECIPE_REF')
-        .map(({id}) => id)
-
 export default () => ({
     id: 'STACK',
+    // The images it reads that the layout shows (mapLayout/dependencyLayerSources.js).
+    dependencyLayerRoles: [INPUT_IMAGE],
     labels: {
         name: msg('process.stack.create'),
         creationDescription: msg('process.stack.description'),
@@ -62,10 +60,14 @@ export default () => ({
     components: {
         recipe: Stack
     },
-    getDependentRecipeIds,
+    // A band an input maps is refused where it is mapped: at its band names entry, which knows its input by imageId.
+    sourceRequirements: inputImageryRequirements(({path}, recipe) => {
+        const entry = recipe.model?.bandNames?.bandNames?.[path[3]]
+        return (recipe.model?.inputImagery?.images || []).findIndex(({imageId}) => imageId === entry?.imageId)
+    }),
+    imageSource: true,
     getDateRange(_recipe) {
         return null
     },
-    getAvailableBands,
     getPreSetVisualizations
 })

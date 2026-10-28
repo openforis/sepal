@@ -9,11 +9,13 @@ import {fileName} from '#sepal/path'
 const MAX_PIXELS = 1e5
 const MAX_VALUE_COUNT = 256
 
+// The rest of the request names the product the layer shows, exactly as its preview sends it, so the image asked
+// about is the one on the map. The band asked about is selected last, so nothing else in the request can replace it.
 const worker$ = ({
-    requestArgs: {recipe, band, aoi, mapBounds}
+    requestArgs: {recipe, band, aoi, mapBounds, ...productArgs}
 }) => {
 
-    const {getImage$} = ImageFactory(recipe, {selection: [band]})
+    const {getImage$} = ImageFactory(recipe, {...productArgs, selection: [band]})
     // Resolve the AOI to an EE geometry up front: ASSET/RECIPE AOIs need an async lookup. ASSET_BOUNDS
     // can't be resolved without source-image context, so it's left to the mapBounds / image-geometry
     // fallback.

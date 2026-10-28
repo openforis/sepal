@@ -2,7 +2,7 @@ import _ from 'lodash'
 import moment from 'moment'
 
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
+import {pyramidingPolicies} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 import {selectFrom} from '~/stateUtils'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -105,23 +105,13 @@ export const RecipeActions = id => {
                 'ui.autoSelectScenes': {min, max},
             }, {min, max})
         },
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_MOSAIC_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions,
-                })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .dispatch()
-        }
     }
 }
 
-const submitRetrieveRecipeTask = recipe =>
-    submitTask(recipe, {
-        dataSetType: 'OPTICAL',
-        filterVisualizations: true
-    })
+export const retrieveTask = {
+    dataSetType: 'OPTICAL',
+    fallbackPyramidingPolicy: pyramidingPolicies.mean
+}
 
 export const inDateRange = (date, dates) => {
     date = moment(date, DATE_FORMAT)

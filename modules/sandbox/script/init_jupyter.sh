@@ -18,6 +18,7 @@ uv pip install --system \
     folium \
     ipyleaflet \
     jupyter-resource-usage \
+    'jupyter-server-proxy>=4.2.0' \
     ipyvuetify \
     geemap \
     ipecharts \

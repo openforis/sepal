@@ -7,7 +7,7 @@ export const updateCalculation = ({changes, calculations}) =>
         handleRenameImages(changes.renamedCalculations),
         handleUpdatedImages(changes.imagesWithChangedBands),
         handleUpdatedImages(changes.calculationsWithChangedBands)
-    ).map(calculation => ({...calculation, invalid: !!calculation.invalid}))
+    )
 
 const handleRenameImages = renamedImages =>
     calculations =>

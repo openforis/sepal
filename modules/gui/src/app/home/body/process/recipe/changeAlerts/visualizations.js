@@ -1,13 +1,23 @@
 import moment from 'moment'
 
+import {periodDates} from '#sepal/recipe/changeAlerts/monitoringDates'
+import {mosaicRecipe} from '#sepal/recipe/changeAlerts/mosaicRecipe'
 import {visualizationOptions as opticalVisualizationOptions} from '~/app/home/body/process/recipe/opticalMosaic/visualizations'
 import {visualizationOptions as planetVisualizationOptions} from '~/app/home/body/process/recipe/planetMosaic/visualizations'
 import {visualizationOptions as radarVisualizationOptions} from '~/app/home/body/process/recipe/radarMosaic/visualizations'
 import {normalize} from '~/app/home/map/visParams/visParams'
-import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
+import {settingsOf} from './processingSettings'
+
 const DATE_FORMAT = 'YYYY-MM-DD'
+
+// Which helper presents a mosaic, keyed by the recipe type its projection names.
+const MOSAIC_VISUALIZATIONS = {
+    MOSAIC: opticalVisualizationOptions,
+    RADAR_MOSAIC: radarVisualizationOptions,
+    PLANET_MOSAIC: planetVisualizationOptions
+}
 
 export const getPreSetVisualizations = recipe => getChangeVisualizations(recipe)
     .map(({options}) => options.map(({visParams}) => visParams))
@@ -29,80 +39,25 @@ export const visualizationOptions = (recipe, visualizationType, mosaicType) => {
         : getMosaicVisualizations(recipe, visualizationType, mosaicType)
 }
 
+// A mosaic mode presents the mosaic Earth Engine builds around the monitoring dates, so its options come
+// from the same projection the executor builds it from. The layer form asks only for a mosaic its read describes,
+// which the projection can build.
 const getMosaicVisualizations = (recipe, visualizationType, mosaicType) => {
-    const dataSetType = selectFrom(recipe, 'model.sources.dataSetType')
-    switch(dataSetType) {
-        case 'OPTICAL': return toOpticalVisualizations(recipe)
-        case 'RADAR': return toRadarVisualizations(recipe, visualizationType, mosaicType)
-        case 'PLANET': return toPlanetVisualizations(recipe)
-        default: return []
-    }
+    const model = settingsOf(recipe).model
+    const mosaic = model && mosaicRecipe({model, period: visualizationType, mosaicType})
+    const visualizations = mosaic && MOSAIC_VISUALIZATIONS[mosaic.type]
+    return visualizations ? visualizations(mosaic) : []
 }
 
-const toOpticalVisualizations = recipe => {
-    const opticalRecipe = {
-        model: {
-            sources: {
-                dataSets: selectFrom(recipe, 'model.sources.dataSets')
-            },
-            compositeOptions: {
-                corrections: selectFrom(recipe, 'model.options.corrections'),
-                compose: 'MEDIAN',
-            }
-        }
-    }
-    return opticalVisualizationOptions(opticalRecipe)
-}
-
-const toRadarVisualizations = (recipe, visualizationType, mosaicType) => {
-    const {
-        monitoringEnd,
-        monitoringDuration, monitoringDurationUnit,
-        calibrationDuration, calibrationDurationUnit
-    } = selectFrom(recipe, 'model.date')
-    const monitoringStart = moment(monitoringEnd, DATE_FORMAT)
-        .subtract(monitoringDuration, monitoringDurationUnit)
-        .format(DATE_FORMAT)
-    const calibrationStart = moment(monitoringStart, DATE_FORMAT)
-        .subtract(calibrationDuration, calibrationDurationUnit)
-        .format(DATE_FORMAT)
-    const radarRecipe = {
-        model: {
-            dates: {
-                targetDate: mosaicType === 'latest'
-                    ? visualizationType === 'monitoring'
-                        ? monitoringEnd
-                        : monitoringStart
-                    : undefined,
-                fromDate: mosaicType === 'latest'
-                    ? undefined
-                    : visualizationType === 'monitoring'
-                        ? monitoringStart
-                        : calibrationStart,
-                toDate: mosaicType === 'latest'
-                    ? undefined
-                    : visualizationType === 'monitoring'
-                        ? monitoringEnd
-                        : monitoringStart
-            },
-        }
-    }
-    return radarVisualizationOptions(radarRecipe)
-}
-
-const toPlanetVisualizations = () => {
-    const planetRecipe = {}
-    return planetVisualizationOptions(planetRecipe)
-}
-
+// The change bands are presented over the period they cover, so a recipe whose period cannot be computed - not stated
+// yet, or stated in terms no date follows from - is presented with nothing rather than failing for whoever consumes its
+// output.
 const getChangeVisualizations = recipe => {
-    const {
-        monitoringEnd,
-        monitoringDuration, monitoringDurationUnit,
-        calibrationDuration, calibrationDurationUnit
-    } = selectFrom(recipe, 'model.date')
-    const monitoringStart = moment(monitoringEnd, DATE_FORMAT).subtract(monitoringDuration, monitoringDurationUnit).format(DATE_FORMAT)
-    const calibrationStart = moment(monitoringStart, DATE_FORMAT).subtract(calibrationDuration, calibrationDurationUnit).format(DATE_FORMAT)
+    const {dates} = periodDates(recipe.model)
+    if (!dates) {
+        return []
+    }
+    const {monitoringEnd, calibrationStart} = dates
     const fractionalMonitoringEnd = toFractionalYear(monitoringEnd)
     const fractionalCalibrationStart = toFractionalYear(calibrationStart)
     const toOptions = visualizations => visualizations

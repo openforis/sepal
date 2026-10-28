@@ -8,23 +8,17 @@ import {select} from '~/store'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {withActivatable} from '~/widget/activation/activatable'
-import {withActivators} from '~/widget/activation/activator'
-import {Button} from '~/widget/button'
+import {hasBudget, hourlyInstanceSpending, isBudgetWarning} from '~/widget/budgetRules'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
 
 import styles from './usage.module.css'
+import {UsageMenuButton} from './usageMenu'
+import {UsageStatistics} from './usageStatistics'
 import {BudgetUpdateRequest} from './userBudgetUpdateRequest'
 import {UserResources} from './userResources'
-import {UserSession} from './userSession'
 import {UserSessions} from './userSessions'
-
-const mapStateToProps = () => ({
-    user: select('user.currentUser'),
-    userReport: select('user.currentUserReport'),
-    selectedSessionId: select('ui.selectedSessionId')
-})
 
 class _Usage extends React.Component {
     state = {
@@ -43,8 +37,8 @@ class _Usage extends React.Component {
                     title={msg('user.report.title')}/>
                 <Panel.Content>
                     <Layout>
-                        {this.renderResosurces()}
-                        {this.renderSessions()}
+                        {this.renderResources()}
+                        {this.renderStatistics()}
                     </Layout>
                 </Panel.Content>
                 <Panel.Buttons>
@@ -66,7 +60,7 @@ class _Usage extends React.Component {
         )
     }
 
-    renderResosurces() {
+    renderResources() {
         return (
             <Widget label={msg('user.report.resources.title')} framed>
                 <UserResources/>
@@ -74,17 +68,9 @@ class _Usage extends React.Component {
         )
     }
 
-    renderSessions() {
+    renderStatistics() {
         return (
-            <Widget label={msg('user.report.sessions.title')} framed>
-                <UserSessions/>
-            </Widget>
-        )
-    }
-
-    renderSession() {
-        return (
-            <UserSession/>
+            <UsageStatistics/>
         )
     }
 
@@ -95,13 +81,10 @@ class _Usage extends React.Component {
     }
 
     render() {
-        const {selectedSessionId} = this.props
         const {requestBudgetUpdate} = this.state
         return requestBudgetUpdate
             ? this.renderRequestBudgetUpdate()
-            : selectedSessionId
-                ? this.renderSession()
-                : this.renderOverview()
+            : this.renderOverview()
     }
 }
 
@@ -111,7 +94,6 @@ const policy = () => ({
 
 const Usage = compose(
     _Usage,
-    connect(mapStateToProps),
     withActivatable({id: 'userReport', policy, alwaysAllow: true})
 )
 
@@ -128,45 +110,33 @@ class _UsageButton extends React.Component {
         return (
             <React.Fragment>
                 <Usage/>
+                <UserSessions/>
                 {this.renderButton()}
             </React.Fragment>
         )
     }
 
     renderButton() {
-        const {userReport, hasBudget, budgetExceeded, budgetWarning, activator: {activatables: {userReport: {active, activate}}}} = this.props
+        const {userReport: {spending, sessions}, budgetExceeded} = this.props
         const {hint} = this.state
-        const hourlySpending = userReport.sessions
-            ? userReport.sessions.reduce((acc, session) => acc + session.instanceType.hourlyCost, 0)
-            : 0
-        const label = hasBudget && budgetExceeded
+        const hourlySpending = hourlyInstanceSpending(sessions)
+        const budgeted = hasBudget(spending)
+        const label = budgeted && budgetExceeded
             ? msg('home.sections.user.report.budgetExceeded')
             : format.unitsPerHour(hourlySpending)
-        const additionalClassName = hasBudget
+        const className = budgeted
             ? budgetExceeded
                 ? styles.budgetExceeded
-                : budgetWarning
+                : isBudgetWarning(spending, hourlySpending)
                     ? styles.budgetWarning
                     : null
             : null
-
         return (
-            <Button
-                chromeless
-                look='transparent'
-                size='large'
-                air='less'
-                additionalClassName={additionalClassName}
-                icon='dollar-sign'
+            <UsageMenuButton
+                className={className}
                 label={label}
-                disabled={active}
-                tooltip={msg('home.sections.user.report.tooltip')}
-                tooltipPlacement='top'
-                tooltipDisabled={active}
                 hint={hint}
-                onClick={activate}
             />
-
         )
     }
 
@@ -186,12 +156,9 @@ export const UsageButton = compose(
     _UsageButton,
     connect(state => ({
         userReport: (state.user && state.user.currentUserReport) || {},
-        hasBudget: select('user.hasBudget'),
         budgetExceeded: select('user.budgetExceeded'),
-        budgetWarning: select('user.budgetWarning'),
     })),
-    withSubscriptions(),
-    withActivators('userReport')
+    withSubscriptions()
 )
 
 export const usageHint = visible =>

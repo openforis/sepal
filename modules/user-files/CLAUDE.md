@@ -5,8 +5,8 @@ File management service for user workspaces. REST API for file operations and We
 ## Commands
 
 ```bash
-npm test              # Jest (no test files currently exist)
-npm run testWatch     # Jest watch mode
+npm test              # Node test runner
+npm run testWatch     # Node test runner watch mode
 ```
 
 ## Key Architecture
@@ -37,4 +37,4 @@ npm run testWatch     # Jest watch mode
 - **File permissions preserved**: Uses `chown`/`chmod` based on looked-up user info
 - **Path traversal protection**: `resolvePath()` validates all paths stay within user's home directory
 - **Polling interval configurable**: `--poll-interval-milliseconds` CLI arg for file watcher
-- **No RabbitMQ or database** - purely filesystem-based
+- **No database** - filesystem-based; RabbitMQ only to publish `files.FilesDeleted` (`{username}`) after a WebSocket `remove` deletes a path, so storage rescans the user's quota

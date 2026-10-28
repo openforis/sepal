@@ -18,7 +18,7 @@
 }
 
 .view {
-    background-color: #131314;
+    background-color: var(--map-background-color);
 }
 
 .map::before {

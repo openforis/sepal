@@ -1,4 +1,4 @@
-import {readFileSync} from 'fs'
+import {readFileSync} from 'node:fs'
 
 export const SEPAL_SRC = '/home/sepal/sepal'
 export const ENV_FILE = '/etc/sepal/config/env'

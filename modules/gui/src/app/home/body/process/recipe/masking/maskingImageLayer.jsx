@@ -6,6 +6,7 @@ import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 
+import {renderableVisualizations} from '../visualizationMatching'
 import {getPreSetVisualizations} from './visualizations'
 
 class _MaskingImageLayer extends React.Component {
@@ -20,11 +21,20 @@ class _MaskingImageLayer extends React.Component {
         )
     }
 
+    // The presets may have been copied from the source when it was selected, so they describe the bands it had
+    // then, not the bands the layer reads now. Offering one that names a band since gone puts a choice in the form
+    // the map cannot honour, and while the answer is still being acquired nothing is offered at all. Filtering the
+    // candidate list is all this does. Whether the selection can currently be drawn is not Masking's question:
+    // RecipeImageLayer withholds the layer when nothing matches, and FeatureLayers withholds the palette that would
+    // have described it. The saved selection itself is left alone by all three.
     renderImageLayerForm() {
-        const {recipe, source, layerConfig = {}} = this.props
-        const preSetOptions = getPreSetVisualizations(recipe)
+        const {recipe, source, layerConfig = {}, imageOutput: {availableBands}} = this.props
+        // Identified by id where the style has one. Two inherited styles can describe the same bands, and
+        // keying the option by its band list would collapse them into one choice the selection cannot tell
+        // apart. An unidentified preset still has only its bands to be known by.
+        const preSetOptions = renderableVisualizations(getPreSetVisualizations(recipe), availableBands)
             .map(visParams => ({
-                value: visParams.bands.join(', '),
+                value: visParams.id || visParams.bands.join(', '),
                 label: visParams.bands.join(', '),
                 visParams
             }))
@@ -37,6 +47,7 @@ class _MaskingImageLayer extends React.Component {
                 source={source}
                 recipe={recipe}
                 presetOptions={options}
+                availableBands={availableBands}
                 selectedVisParams={layerConfig.visParams}
             />
         )
@@ -50,6 +61,7 @@ export const MaskingImageLayer = compose(
 MaskingImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,
     source: PropTypes.object.isRequired,
+    imageOutput: PropTypes.object.isRequired,
     layer: PropTypes.object,
     layerConfig: PropTypes.object,
     map: PropTypes.object

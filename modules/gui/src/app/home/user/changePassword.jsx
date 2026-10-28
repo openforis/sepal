@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types'
 import React from 'react'
 import {EMPTY, switchMap, throwError} from 'rxjs'
 
@@ -6,8 +5,6 @@ import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {changeCurrentUserPassword$} from '~/user'
 import {withActivatable} from '~/widget/activation/activatable'
-import {withActivators} from '~/widget/activation/activator'
-import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Layout} from '~/widget/layout'
@@ -39,8 +36,8 @@ const mapStateToProps = () => ({values: {}})
 
 class _ChangePassword extends React.Component {
     close() {
-        const {activator: {activatables: {userDetails}}} = this.props
-        userDetails.activate()
+        const {activatable: {deactivate}} = this.props
+        deactivate()
     }
 
     changePassword$(userPasswords) {
@@ -112,30 +109,7 @@ const policy = () => ({
 export const ChangePassword = compose(
     _ChangePassword,
     withForm({fields, constraints, mapStateToProps}),
-    withActivators('userDetails'),
     withActivatable({id: 'changePassword', policy, alwaysAllow: true})
 )
 
 ChangePassword.propTypes = {}
-
-class _ChangePasswordButton extends React.Component {
-    render() {
-        const {disabled, activator: {activatables: {changePassword: {activate, canActivate}}}} = this.props
-        return (
-            <Button
-                icon={'key'}
-                label={msg('user.changePassword.label')}
-                disabled={!canActivate || disabled}
-                onClick={activate}/>
-        )
-    }
-}
-
-export const ChangePasswordButton = compose(
-    _ChangePasswordButton,
-    withActivators('changePassword')
-)
-
-ChangePasswordButton.propTypes = {
-    disabled: PropTypes.any
-}

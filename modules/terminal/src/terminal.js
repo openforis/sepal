@@ -1,4 +1,5 @@
-import {unlinkSync} from 'fs'
+import {unlinkSync} from 'node:fs'
+
 import {bufferTime, filter, interval, map, merge, Subject} from 'rxjs'
 
 import {getLogger} from '#sepal/log'
@@ -78,12 +79,18 @@ const start = (websocket, req) => {
         )
     } catch(error) {
         log.error('Cannot start session', error)
+        websocket.close()
     }
 }
 
 const resize = (req, res) => {
     try {
-        const session = Session.get(req)
+        const session = Session.find(req)
+        if (!session) {
+            log.warn(`Cannot resize missing session: ${req.params.sessionId}`)
+            res.status(404).end()
+            return
+        }
         const cols = parseInt(req.query.cols)
         const rows = parseInt(req.query.rows)
         session.terminal.resize(cols, rows)

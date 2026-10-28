@@ -9,24 +9,29 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {withEnableDetector} from '~/enabled'
 import {post$} from '~/http-client'
+import {themeManager} from '~/theme'
 import {msg} from '~/translate'
 import {uuid} from '~/uuid'
 import {ElementResizeDetector} from '~/widget/elementResizeDetector'
 import {Keybinding} from '~/widget/keybinding'
 import {Notifications} from '~/widget/notifications'
 import {ContentPadding} from '~/widget/sectionLayout'
+import {setTabPlaceholder} from '~/widget/tabs/tabActions'
 import {Tabs} from '~/widget/tabs/tabs'
 
 import styles from './terminal.module.css'
 import {TerminalWebSocket} from './terminalWebsocket'
+
+const STATE_PATH = 'terminal'
 
 export class Terminal extends React.Component {
     render() {
         return (
             <Tabs
                 label={msg('home.sections.terminal')}
-                statePath='terminal'>
-                {() => <TerminalSession/>}
+                statePath={STATE_PATH}
+                newTabPlaceholder={msg('terminal.menuTab')}>
+                {({id}) => <TerminalSession tabId={id}/>}
             </Tabs>
         )
     }
@@ -100,6 +105,7 @@ class _TerminalSession extends React.Component {
     }
 
     componentWillUnmount() {
+        this.themeSubscription?.unsubscribe()
         this.terminal.dispose()
         this.webSocket && this.webSocket.dispose()
     }
@@ -126,12 +132,17 @@ class _TerminalSession extends React.Component {
         terminal.options.bellStyle = 'both'
         terminal.open(terminalContainer.current)
         // for some reason theme must be defined after open...
-        terminal.options.theme = {
-            background: '#00000000',
-            foreground: '#ccc'
-        }
+        this.themeSubscription = themeManager.theme$.subscribe(
+            theme => terminal.options.theme = TERMINAL_THEMES[theme]
+        )
         terminal.onResize(
             dimensions => resize$.next({sessionId, dimensions})
+        )
+        // The ssh-gateway sets the terminal title to the session the user just entered
+        // ("1: lazy-paper"), and clears it on the way back to its menu — the only thing that
+        // knows, from out here, which machine this tab is attached to.
+        terminal.onTitleChange(
+            title => setTabPlaceholder(title || msg('terminal.menuTab'), STATE_PATH, this.props.tabId)
         )
         this.enabled$.next(true)
         this.fit$.next()
@@ -146,6 +157,36 @@ class _TerminalSession extends React.Component {
         })
         terminal.onData(data => this.webSocket.send(data))
         webSocket.onMessage(message => terminal.write(message.data))
+    }
+}
+
+const TERMINAL_THEMES = {
+    dark: {
+        background: '#00000000',
+        foreground: '#ccc'
+    },
+    light: {
+        background: '#00000000',
+        foreground: '#2b2926',
+        cursor: '#2b2926',
+        cursorAccent: '#f6f4f0',
+        selectionBackground: 'rgba(120, 100, 60, .25)',
+        black: '#2b2926',
+        red: '#b3261e',
+        green: '#2e7d32',
+        yellow: '#8a6100',
+        blue: '#1f5fa8',
+        magenta: '#8e3b8e',
+        cyan: '#0f6f7a',
+        white: '#6b6760',
+        brightBlack: '#5c5850',
+        brightRed: '#c62828',
+        brightGreen: '#388e3c',
+        brightYellow: '#9e7000',
+        brightBlue: '#2c6fbe',
+        brightMagenta: '#a04aa0',
+        brightCyan: '#16808c',
+        brightWhite: '#8a857c'
     }
 }
 

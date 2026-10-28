@@ -66,7 +66,10 @@ class _Icon extends React.Component {
     renderIcon() {
         const {name, type, size, attributes} = this.props
         const spin = this.isSpinner(name)
-        const filteredAttributes = _.omit({spin, ...attributes}, OMITTED_ATTRIBUTES)
+        // Font Awesome 7 makes every icon 1.25em wide by default; each icon takes its own width here
+        // instead, unless the attributes ask for `fixedWidth`, for icons stacked in a column.
+        const widthAuto = !attributes?.fixedWidth
+        const filteredAttributes = _.omit({spin, widthAuto, ...attributes}, OMITTED_ATTRIBUTES)
         const icon = [fontAwesomeCollection(type && !spin ? type : 'solid'), name]
         return (
             <span className={this.classNames()}>

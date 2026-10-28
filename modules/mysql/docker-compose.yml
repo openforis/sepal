@@ -13,7 +13,7 @@ services:
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/mysql:${SEPAL_VERSION:-latest}"
     container_name: mysql
     ports:
-      - "${SEPAL_IP}:3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - "${SEPAL_DATA_DIR}/mysql:/data"
       # Parent image volume
@@ -42,6 +42,8 @@ services:
     container_name: mysql-admin
     environment:
       PMA_HOST: mysql
+      # config.user.inc.php: $cfg['NavigationTreeEnableGrouping'] = false;
+      PMA_USER_CONFIG_BASE64: "PD9waHAKJGNmZ1snTmF2aWdhdGlvblRyZWVFbmFibGVHcm91cGluZyddID0gZmFsc2U7Cg=="
     ports:
       - "127.0.0.1:8980:80"
     healthcheck:

@@ -13,6 +13,7 @@
     display:grid;
     justify-content: center;
     align-content: center;
+    color: var(--text-on-accent-color);
 }
 
 .featureIcon.process {

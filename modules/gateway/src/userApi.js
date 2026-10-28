@@ -10,16 +10,17 @@ import {SEPAL_USER_HEADER} from './user.js'
 
 const log = getLogger('userApi')
 
-const CURRENT_USER_URL = `http://${modules.userNode}/current`
-const REFRESH_GOOGLE_ACCESS_TOKEN_URL = `http://${modules.userNode}/google/refresh-access-token`
-const REVOKE_GOOGLE_ACCESS_URL = `http://${modules.userNode}/google/revoke-access`
+const CURRENT_USER_URL = `http://${modules.user}/current`
+const REFRESH_GOOGLE_ACCESS_TOKEN_URL = `http://${modules.user}/google/refresh-access-token`
+const REVOKE_GOOGLE_ACCESS_URL = `http://${modules.user}/google/revoke-access`
 
 const loadUser$ = username => {
     log.trace(`${userTag(username)} Loading user...`)
     return get$(CURRENT_USER_URL, {
-        headers: {[SEPAL_USER_HEADER]: JSON.stringify({username})}
+        headers: {[SEPAL_USER_HEADER]: JSON.stringify({username})},
+        responseType: 'json'
     }).pipe(
-        map((({body}) => JSON.parse(body))),
+        map(({body}) => body),
         tap(() => log.debug(`${userTag(username)} Loaded user`))
     )
 }
@@ -29,9 +30,11 @@ const refreshGoogleAccessToken$ = ({username, googleTokens}) => {
     return postJson$(REFRESH_GOOGLE_ACCESS_TOKEN_URL, {
         headers: {
             [SEPAL_USER_HEADER]: JSON.stringify({username, googleTokens})
-        }
+        },
+        responseType: 'json'
     }).pipe(
-        map(({body, statusCode}) => ({googleTokens: body && JSON.parse(body), statusCode})),
+        // a 204 leaves an empty body, which `json` yields as undefined
+        map(({body, statusCode}) => ({googleTokens: body, statusCode})),
         tap(() => log.debug(`${userTag(username)} Refreshed Google access token`))
     )
 }
@@ -41,9 +44,10 @@ const revokeGoogleAccess$ = ({username, googleTokens}) => {
     return postJson$(REVOKE_GOOGLE_ACCESS_URL, {
         headers: {
             [SEPAL_USER_HEADER]: JSON.stringify({username, googleTokens})
-        }
+        },
+        responseType: 'json'
     }).pipe(
-        map(({body}) => JSON.parse(body)),
+        map(({body}) => body),
         map(({googleTokens: _googleTokens, ...user}) => user),
         tap(user => log.info(`${userTag(user?.username)} Revoked Google access token`))
     )

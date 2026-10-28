@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Reports how close a Redis container is to its maxmemory cap.
+#   exit 0 - below the warning threshold, or uncapped (nothing to measure)
+#   exit 1 - at or above WARN_PCT
+#   exit 2 - at or above CRIT_PCT
+#
+# Instances run with maxmemory-policy noeviction, so reaching the cap makes
+# writes fail rather than reclaiming memory. These thresholds are the only
+# warning before that happens.
+
+WARN_PCT=50
+CRIT_PCT=80
+
+# get own name, strip "redismemcheck-"
+SYMLINK_NAME="$(basename $0)"
+CONTAINER_NAME="${SYMLINK_NAME:14}"
+
+if [ -z "$CONTAINER_NAME" ]; then
+    echo "No container name given."
+    exit 2
+fi
+
+INFO=$(docker exec "$CONTAINER_NAME" redis-cli info memory 2>/dev/null | tr -d '\r')
+if [ -z "$INFO" ]; then
+    echo "Cannot read memory info from \"$CONTAINER_NAME\"."
+    exit 2
+fi
+
+USED=$(echo "$INFO" | awk -F: '/^used_memory:/ {print $2}')
+MAX=$(echo "$INFO" | awk -F: '/^maxmemory:/ {print $2}')
+
+if [ -z "$MAX" ] || [ "$MAX" -eq 0 ]; then
+    echo "Redis \"$CONTAINER_NAME\" is uncapped, using $((USED / 1048576))MB."
+    exit 0
+fi
+
+PCT=$((USED * 100 / MAX))
+MSG="Redis \"$CONTAINER_NAME\" is using $((USED / 1048576))MB of $((MAX / 1048576))MB (${PCT}%)"
+
+if [ "$PCT" -ge "$CRIT_PCT" ]; then
+    echo "$MSG, at or above ${CRIT_PCT}%."
+    exit 2
+elif [ "$PCT" -ge "$WARN_PCT" ]; then
+    echo "$MSG, at or above ${WARN_PCT}%."
+    exit 1
+else
+    echo "$MSG."
+    exit 0
+fi

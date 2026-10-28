@@ -1,0 +1,437 @@
+import assert from 'node:assert/strict'
+import {beforeEach, describe, it, mock} from 'node:test'
+
+import {firstValueFrom, of} from 'rxjs'
+
+import {ENCODING_PROPERTY, encodingPropertyKeys} from '#sepal/recipe/output/bandEncoding'
+
+let assetType = 'Image'
+let assetBands = []
+let assetProperties = {}
+let firstImageProperties = {}
+let collectionSize = 1
+let recipeBands = []
+let recipePhysicalBands = []
+let recipeProperties = {}
+const factoryCalls = []
+const toDictionaryCalls = []
+const getInfoCalls = []
+const bandTypesCalls = []
+const pixelTypeCalls = []
+const dimensionsCalls = []
+
+const serverList = (image, values) => ({
+    kind: 'LIST',
+    image,
+    values,
+    map: mapper => serverList(image, values.map(mapper))
+})
+
+const imageFor = (id, physicalBands, properties = {}) => {
+    const image = {
+        id,
+        bandNames: () => serverList(image, physicalBands.map(({name}) => name)),
+        // What Earth Engine answers for a property an image does not carry: an entry that is simply absent.
+        toDictionary: keys => {
+            toDictionaryCalls.push({image, keys})
+            return {
+                kind: 'DICTIONARY',
+                image,
+                values: Object.fromEntries(
+                    keys.filter(key => key in properties).map(key => [key, properties[key]])
+                )
+            }
+        },
+        bandTypes: () => {
+            bandTypesCalls.push(image)
+            return {
+                kind: 'BAND_TYPES',
+                image,
+                get: name => {
+                    const {arrayDimensions} = physicalBands.find(band => band.name === name)
+                    return {
+                        kind: 'PIXEL_TYPE',
+                        image,
+                        name,
+                        dimensions: () => {
+                            dimensionsCalls.push({image, name})
+                            return arrayDimensions
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return image
+}
+
+const materialize = value => {
+    if (value?.kind === 'LIST') {
+        return value.values.map(materialize)
+    }
+    if (value?.kind === 'DICTIONARY') {
+        return Object.fromEntries(Object.entries(value.values).map(([key, entry]) => [key, materialize(entry)]))
+    }
+    if (value?.kind) {
+        throw new Error(`Earth Engine expression was not normalized before evaluation: ${value.kind}`)
+    }
+    return value
+}
+
+// A collection answers what reading its schema and metadata needs. Mosaicking it or combining its geometry would
+// be a read of every member, which for a large collection exceeds Earth Engine's memory, so both refuse.
+const collectionFor = id => ({
+    merge: () => ({first: () => imageFor(`${id}/first`, assetBands, firstImageProperties)}),
+    limit: () => ({size: () => collectionSize}),
+    toDictionary: imageFor(id, [], assetProperties).toDictionary,
+    mosaic: () => {
+        throw new Error('mosaicked the whole collection')
+    },
+    geometry: () => {
+        throw new Error('combined the whole collection\'s geometry')
+    }
+})
+
+const ee = {
+    getAsset$: () => of({type: assetType}),
+    Image: id => imageFor(id, typeof id === 'string' ? assetBands : [], assetProperties),
+    ImageCollection: id => collectionFor(id),
+    mosaic: () => {
+        throw new Error('mosaicked the whole collection')
+    },
+    Dictionary: values => ({kind: 'DICTIONARY', values}),
+    PixelType: value => {
+        pixelTypeCalls.push(value)
+        return value
+    },
+    getInfo$: (value, description) => {
+        getInfoCalls.push({value, description})
+        return of(materialize(value))
+    }
+}
+
+mock.module('#sepal/ee/ee', {
+    exports: {
+        default: ee
+    }
+})
+mock.module('#gee/jobs/job', {
+    exports: {
+        job: config => config
+    }
+})
+// An asset is read directly, never as the image execution builds from it.
+mock.module('#sepal/ee/imageFactory', {
+    exports: {
+        default: source => {
+            factoryCalls.push(source)
+            if (source.type === 'ASSET') {
+                throw new Error('read an asset through the image execution builds')
+            }
+            return {
+                getBands$: () => of(recipeBands),
+                getImage$: () => of(imageFor(source.id, recipePhysicalBands, recipeProperties))
+            }
+        }
+    }
+})
+
+const {default: bandsJob} = await import('#gee/jobs/ee/image/bands')
+const {worker$} = bandsJob
+
+const run = requestArgs => firstValueFrom(worker$({requestArgs}))
+
+beforeEach(() => {
+    assetType = 'Image'
+    assetBands = []
+    assetProperties = {}
+    firstImageProperties = {}
+    collectionSize = 1
+    recipeBands = []
+    recipePhysicalBands = []
+    recipeProperties = {}
+    factoryCalls.length = 0
+    toDictionaryCalls.length = 0
+    getInfoCalls.length = 0
+    bandTypesCalls.length = 0
+    pixelTypeCalls.length = 0
+    dimensionsCalls.length = 0
+})
+
+describe('the existing response contract', () => {
+    it('keeps an ordinary asset request as an ordered string array', async () => {
+        assetBands = [
+            {name: 'array', arrayDimensions: 1},
+            {name: 'scalar', arrayDimensions: 0}
+        ]
+
+        assert.deepEqual(await run({asset: 'users/x/image'}), ['array', 'scalar'])
+    })
+
+    it('keeps an ordinary recipe request as the existing string array', async () => {
+        const recipe = {id: 'recipe-1', type: 'CCDC', model: {}}
+        recipeBands = ['tStart', 'ndvi_coefs']
+
+        assert.deepEqual(await run({recipe}), recipeBands)
+        assert.deepEqual(factoryCalls, [recipe])
+        assert.deepEqual(getInfoCalls, [])
+    })
+})
+
+describe('typed physical evidence', () => {
+    const physicalBands = [
+        {name: 'future_matrix', arrayDimensions: 2},
+        {name: 'scalar', arrayDimensions: 0},
+        {name: 'tStart', arrayDimensions: 1}
+    ]
+
+    it('returns ordered normalized dimensions for an asset', async () => {
+        assetBands = physicalBands
+
+        assert.deepEqual(await run({asset: 'users/x/image', includeDataTypes: true}), physicalBands)
+    })
+
+    it('returns the same typed contract for a recipe', async () => {
+        const recipe = {id: 'recipe-1', type: 'CCDC', model: {}}
+        recipeBands = physicalBands.map(({name}) => name)
+        recipePhysicalBands = physicalBands
+
+        assert.deepEqual(await run({recipe, includeDataTypes: true}), physicalBands)
+        assert.deepEqual(factoryCalls, [recipe])
+    })
+
+    it('normalizes PixelType.dimensions() before the single metadata evaluation', async () => {
+        assetBands = physicalBands
+
+        await run({asset: 'users/x/image', includeDataTypes: true})
+
+        assert.equal(getInfoCalls.length, 1)
+        assert.equal(bandTypesCalls.length, 1)
+        assert.equal(pixelTypeCalls.length, physicalBands.length)
+        assert.deepEqual(dimensionsCalls.map(({name}) => name), physicalBands.map(({name}) => name))
+        const evaluatedImage = getInfoCalls[0].value.values.bands.image
+        assert.equal(bandTypesCalls[0], evaluatedImage)
+        assert.equal(pixelTypeCalls.every(({image}) => image === evaluatedImage), true)
+    })
+
+    for (const [source, count] of [
+        ['asset', 1],
+        ['asset', 3],
+        ['asset', 8],
+        ['recipe', 1],
+        ['recipe', 3],
+        ['recipe', 8]
+    ]) {
+        it(
+            `uses exactly one complete metadata evaluation for a ${source} with ${count} bands`,
+            async () => {
+                const bands = Array.from({length: count}, (_value, index) => ({
+                    name: `b${index}`,
+                    arrayDimensions: index % 3
+                }))
+                const request = source === 'asset'
+                    ? {asset: 'users/x/image', includeDataTypes: true}
+                    : {recipe: {id: 'recipe-1', type: 'CCDC', model: {}}, includeDataTypes: true}
+                if (source === 'asset') {
+                    assetBands = bands
+                } else {
+                    recipePhysicalBands = bands
+                }
+
+                await run(request)
+
+                assert.equal(getInfoCalls.length, 1)
+                assert.equal(pixelTypeCalls.length, count)
+                assert.equal(dimensionsCalls.length, count)
+            }
+        )
+    }
+})
+
+describe('stored band encoding', () => {
+    const REFLECTANCE = {scale: 0.0001, offset: 0, unit: '1'}
+    const THERMAL = {scale: 0.1, offset: 0, unit: 'K'}
+
+    const storing = bands => ({[ENCODING_PROPERTY]: JSON.stringify({version: 1, bands})})
+
+    const readAsset = () => run({asset: 'users/x/image', includeDataTypes: true})
+
+    beforeEach(() => {
+        assetBands = [
+            {name: 'red', arrayDimensions: 0},
+            {name: 'thermal', arrayDimensions: 0}
+        ]
+    })
+
+    it('carries what the asset states, per band', async () => {
+        assetProperties = storing({red: REFLECTANCE, thermal: THERMAL})
+
+        assert.deepEqual(await readAsset(), [
+            {name: 'red', arrayDimensions: 0, encoding: REFLECTANCE},
+            {name: 'thermal', arrayDimensions: 0, encoding: THERMAL}
+        ])
+    })
+
+    it('reads a non-zero offset as stated', async () => {
+        const OFFSET = {scale: 0.0000275, offset: -0.2, unit: '1'}
+        assetProperties = storing({red: OFFSET})
+
+        const [red] = await readAsset()
+
+        assert.deepEqual(red.encoding, OFFSET)
+    })
+
+    it('completes an omitted offset rather than leaving it open', async () => {
+        assetProperties = storing({red: {scale: 0.0001, unit: '1'}})
+
+        const [red] = await readAsset()
+
+        assert.deepEqual(red.encoding, {scale: 0.0001, offset: 0, unit: '1'})
+    })
+
+    it('leaves a legacy asset with no metadata unknown', async () => {
+        assetProperties = {}
+
+        assert.deepEqual(await readAsset(), [
+            {name: 'red', arrayDimensions: 0},
+            {name: 'thermal', arrayDimensions: 0}
+        ])
+    })
+
+    for (const [scenario, stored] of [
+        ['unparseable', 'not json at all'],
+        ['not an object', JSON.stringify(['red'])],
+        ['an unsupported version', JSON.stringify({version: 9, bands: {red: REFLECTANCE}})],
+        ['explicitly empty', JSON.stringify({version: 1, bands: {}})],
+        ['a manifest whose parts are absent', JSON.stringify({version: 2, parts: 2})]
+    ]) {
+        it(
+            `leaves every band unknown when the property is ${scenario}, and still describes the asset`,
+            async () => {
+                assetProperties = {[ENCODING_PROPERTY]: stored}
+
+                assert.deepEqual(await readAsset(), [
+                    {name: 'red', arrayDimensions: 0},
+                    {name: 'thermal', arrayDimensions: 0}
+                ])
+            }
+        )
+    }
+
+    it('withholds only the bands it cannot read', async () => {
+        assetProperties = storing({red: {scale: 0}, thermal: THERMAL, absent: REFLECTANCE})
+
+        assert.deepEqual(await readAsset(), [
+            {name: 'red', arrayDimensions: 0},
+            {name: 'thermal', arrayDimensions: 0, encoding: THERMAL}
+        ])
+    })
+
+    describe('for bands named like object members', () => {
+        beforeEach(() => {
+            assetBands = [
+                {name: 'constructor', arrayDimensions: 0},
+                {name: 'toString', arrayDimensions: 0}
+            ]
+        })
+
+        it('leaves them unknown when the asset states nothing', async () => {
+            assetProperties = {}
+
+            assert.deepEqual(await readAsset(), assetBands)
+        })
+
+        it('carries what the asset states for them', async () => {
+            assetProperties = storing({constructor: REFLECTANCE, toString: THERMAL})
+
+            assert.deepEqual(await readAsset(), [
+                {name: 'constructor', arrayDimensions: 0, encoding: REFLECTANCE},
+                {name: 'toString', arrayDimensions: 0, encoding: THERMAL}
+            ])
+        })
+    })
+
+    it('carries what an asset states in several properties', async () => {
+        assetProperties = {
+            [ENCODING_PROPERTY]: JSON.stringify({version: 2, parts: 2}),
+            sepal_band_encoding_1: JSON.stringify({red: REFLECTANCE}),
+            sepal_band_encoding_2: JSON.stringify({thermal: THERMAL})
+        }
+
+        assert.deepEqual(await readAsset(), [
+            {name: 'red', arrayDimensions: 0, encoding: REFLECTANCE},
+            {name: 'thermal', arrayDimensions: 0, encoding: THERMAL}
+        ])
+    })
+
+    // However many properties the encoding occupies, they are named before the asset is read, so reading it
+    // stays the one evaluation that reads the bands.
+    it('reads every part in the one evaluation that reads the bands', async () => {
+        assetProperties = {
+            [ENCODING_PROPERTY]: JSON.stringify({version: 2, parts: 2}),
+            sepal_band_encoding_1: JSON.stringify({red: REFLECTANCE}),
+            sepal_band_encoding_2: JSON.stringify({thermal: THERMAL})
+        }
+
+        await readAsset()
+
+        assert.equal(getInfoCalls.length, 1)
+        assert.deepEqual(toDictionaryCalls, [
+            {image: getInfoCalls[0].value.values.bands.image, keys: encodingPropertyKeys()}
+        ])
+    })
+
+    it('is read from a collection\'s own properties, not its images\'', async () => {
+        assetType = 'ImageCollection'
+        assetProperties = storing({red: REFLECTANCE})
+        firstImageProperties = storing({red: THERMAL, thermal: THERMAL})
+
+        assert.deepEqual(await readAsset(), [
+            {name: 'red', arrayDimensions: 0, encoding: REFLECTANCE},
+            {name: 'thermal', arrayDimensions: 0}
+        ])
+    })
+
+    it('is never read from a recipe image', async () => {
+        recipePhysicalBands = [{name: 'red', arrayDimensions: 0}]
+        recipeProperties = storing({red: THERMAL})
+
+        const bands = await run({recipe: {id: 'recipe-1', type: 'MOSAIC', model: {}}, includeDataTypes: true})
+
+        assert.deepEqual(bands, [{name: 'red', arrayDimensions: 0}])
+        assert.deepEqual(toDictionaryCalls, [])
+    })
+})
+
+// A collection is described by its first image - an assumption that its members share one schema, not a scan of
+// them - so describing it reads neither a mosaic of it nor its combined geometry.
+describe('a collection asset', () => {
+    beforeEach(() => {
+        assetType = 'ImageCollection'
+        assetBands = [
+            {name: 'label', arrayDimensions: 0},
+            {name: 'probabilities', arrayDimensions: 1}
+        ]
+    })
+
+    it('is described by its first image\'s bands and their dimensionality, in one evaluation', async () => {
+        assert.deepEqual(
+            await run({asset: 'users/x/collection', includeDataTypes: true}),
+            assetBands
+        )
+        assert.equal(getInfoCalls.length, 1)
+    })
+
+    it('is named by its first image\'s bands', async () => {
+        assert.deepEqual(await run({asset: 'users/x/collection'}), ['label', 'probabilities'])
+    })
+
+    it('fails when it holds no images, rather than answering with no bands', async () => {
+        collectionSize = 0
+
+        await assert.rejects(
+            run({asset: 'users/x/collection', includeDataTypes: true}),
+            /holds no images/
+        )
+    })
+})

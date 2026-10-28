@@ -1,0 +1,39 @@
+import assert from 'node:assert/strict'
+import {execFile} from 'node:child_process'
+import {dirname} from 'node:path'
+import {describe, test} from 'node:test'
+import {fileURLToPath} from 'node:url'
+import {promisify} from 'node:util'
+
+// Compose hands an unset ${VAR} to the container as an empty string.
+describe('config', () => {
+    test('uses the default for an option whose variable is empty', async () => {
+        const config = await loadConfig({USAGE_SAMPLING_INTERVAL_SECONDS: ''})
+
+        assert.equal(config.usageSamplingIntervalSeconds, 60)
+    })
+
+    test('leaves an option without a default unset when its variable is empty', async () => {
+        const config = await loadConfig({SESSION_EXPIRY_SECRET: ''})
+
+        assert.ok(!('sessionExpirySecret' in Object(config)))
+    })
+
+    test('parses a variable that has a value', async () => {
+        const config = await loadConfig({USAGE_SAMPLING_INTERVAL_SECONDS: '30', SESSION_EXPIRY_SECRET: 'secret'})
+
+        assert.partialDeepStrictEqual(config, {usageSamplingIntervalSeconds: 30, sessionExpirySecret: 'secret'})
+    })
+})
+
+const MODULE_DIR = dirname(dirname(fileURLToPath(import.meta.url)))
+
+// The configuration is parsed from the environment when config.js is first imported.
+const loadConfig = async env => {
+    const script = 'const config = await import("./src/config.js"); console.log(JSON.stringify({...config}))'
+    const {stdout} = await promisify(execFile)(process.execPath, ['--input-type=module', '--eval', script], {
+        cwd: MODULE_DIR,
+        env: {PATH: process.env.PATH, ...env}
+    })
+    return JSON.parse(stdout.trim().split('\n').pop())
+}

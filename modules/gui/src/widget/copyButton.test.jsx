@@ -47,7 +47,6 @@ const settle = (index, success) => act(() => {
 
 const lastProps = () => rendered.props[rendered.props.length - 1]
 const icon = () => lastProps().icon
-const status = () => container.querySelector('[role="status"]').textContent
 const advance = ms => act(() => vi.advanceTimersByTime(ms))
 
 beforeEach(() => {
@@ -67,7 +66,7 @@ afterEach(() => {
 })
 
 describe('acknowledging a successful copy', () => {
-    it('shows a green check and announces it, then restores the caller icon', async () => {
+    it('shows a green check, then restores the caller icon', async () => {
         render({value: 'a-value', icon: 'copy', tooltip: 'copy this', tooltipVisible: false, tooltipDelay: 750})
         expect(icon()).toBe('copy')
 
@@ -82,7 +81,6 @@ describe('acknowledging a successful copy', () => {
             tooltipVisible: true,
             tooltipDelay: 0
         })
-        expect(status()).toBe('clipboard.copy.success')
 
         advance(ACKNOWLEDGEMENT_MS)
 
@@ -92,7 +90,6 @@ describe('acknowledging a successful copy', () => {
             tooltipVisible: false,
             tooltipDelay: 750
         })
-        expect(status()).toBe('')
     })
 
     it('restarts the acknowledgement rather than letting the first timer end it', async () => {
@@ -135,7 +132,6 @@ describe('when the acknowledgement no longer describes what is in hand', () => {
         await settle(0, true)
 
         expect(icon()).toBe('copy')
-        expect(status()).toBe('')
         expect(vi.getTimerCount()).toBe(0)
     })
 })
@@ -148,7 +144,6 @@ describe('before the write resolves', () => {
 
         expect(lastProps()).toMatchObject({icon: 'copy', tooltip: 'copy this', tooltipDelay: 750})
         expect(lastProps().tooltipVisible).toBeUndefined()
-        expect(status()).toBe('')
     })
 })
 
@@ -163,7 +158,6 @@ describe('when the copy does not succeed', () => {
         expect(lastProps().tooltipVisible).toBeUndefined()
 
         expect(icon()).toBe('copy')
-        expect(status()).toBe('')
         expect(vi.getTimerCount()).toBe(0)
     })
 })
@@ -178,6 +172,29 @@ describe('a write that outlives the button', () => {
 
         expect(vi.getTimerCount()).toBe(0)
         root = createRoot(container)
+    })
+})
+
+describe('a copy the caller writes itself', () => {
+    it('is acknowledged once its write succeeds, the system clipboard left alone', async () => {
+        const written = []
+        render({icon: 'copy', write: () => written.push('draft') > 0})
+
+        click()
+        await act(() => Promise.resolve())
+
+        expect(written).toEqual(['draft'])
+        expect(icon()).toBe('circle-check')
+        expect(clipboard.calls).toEqual([])
+    })
+
+    it('is not acknowledged when its write does not succeed', async () => {
+        render({icon: 'copy', write: () => false})
+
+        click()
+        await act(() => Promise.resolve())
+
+        expect(icon()).toBe('copy')
     })
 })
 

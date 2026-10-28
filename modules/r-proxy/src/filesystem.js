@@ -1,5 +1,5 @@
-import {readdir, stat} from 'fs/promises'
-import Path from 'path'
+import {readdir, stat} from 'node:fs/promises'
+import Path from 'node:path'
 
 const isChildOf = (parent, dir) => {
     const relative = Path.relative(parent, dir)

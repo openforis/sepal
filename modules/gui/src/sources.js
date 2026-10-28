@@ -1,11 +1,17 @@
+import {isClassifiedOutput} from '#sepal/recipe/classifiedOutputs'
+import {RADAR_MEASURES} from '#sepal/recipe/radar/collectionMeasures'
+import {supportProbability, supportRegression} from '#sepal/recipe/type/classification'
 import {getAvailableBands as getAvailableOpticalBands, getGroupedBandOptions as getGroupedOpticalBandOptions} from '~/app/home/body/process/recipe/opticalMosaic/bands'
 import {getDataSetOptions as opticalDataSetOptions, isOpticalDataSet, toSources as toOpticalSources} from '~/app/home/body/process/recipe/opticalMosaic/sources'
-import {getAvailableBands as getAvailablePlanetBands, getGroupedBandOptions as getGroupedPlanetBandOptions} from '~/app/home/body/process/recipe/planetMosaic/bands'
+import {TEMPORAL_PLANET_BANDS, temporalPlanetBandOptions} from '~/app/home/body/process/recipe/planetMosaic/bands'
 import {toSources as toPlanetSources} from '~/app/home/body/process/recipe/planetMosaic/sources'
-import {getAvailableBands as getAvailableRadarBands, getGroupedBandOptions as getGroupedRadarBandOptions} from '~/app/home/body/process/recipe/radarMosaic/bands'
-import {getDataSetOptions as radarDataSetOptions, isRadarDataSet, toSources as toRadarSources} from '~/app/home/body/process/recipe/radarMosaic/sources'
+import {
+    getDataSetOptions as radarDataSetOptions,
+    groupedMeasureOptions as groupedRadarMeasureOptions,
+    isRadarDataSet,
+    toSources as toRadarSources
+} from '~/app/home/body/process/recipe/radarMosaic/sources'
 
-import {supportProbability, supportRegression} from './app/home/body/process/recipe/classification/classificationRecipe'
 import {msg} from './translate'
 
 export const groupedDataSetOptions = ({dataSetIds, startDate, endDate}) => {
@@ -35,28 +41,22 @@ export const getAvailableBands = ({
     dataSets = [],
     corrections,
     classification: {
+        classifier,
         classifierType,
         classificationLegend,
         include = ['class', 'regression', 'class_probability', 'probabilities']
     } = {}
 }) => {
     const dataSetIds = dataSets || (dataSetId ? [dataSetId] : [])
-    const dataSetBands = Object.keys(
-        dataSetIds.find(dataSetId => isOpticalDataSet(dataSetId))
-            ? getAvailableOpticalBands(
-                toOpticalRecipe({dataSetIds, corrections}),
-                ['indexes', 'dataSetBands']
-            )
-            : dataSetIds.find(dataSetId => isRadarDataSet(dataSetId))
-                ? getAvailableRadarBands(
-                    toRadarRecipe(),
-                    ['indexes', 'dataSetBands']
-                )
-                : getAvailablePlanetBands(
-                    toPlanetRecipe(),
-                    ['indexes', 'dataSetBands'])
-    )
-    const classificationBands = getClassificationBands(classifierType, classificationLegend, include)
+    const dataSetBands = dataSetIds.find(dataSetId => isOpticalDataSet(dataSetId))
+        ? Object.keys(getAvailableOpticalBands(
+            toOpticalRecipe({dataSetIds, corrections}),
+            ['indexes', 'dataSetBands']
+        ))
+        : dataSetIds.find(dataSetId => isRadarDataSet(dataSetId))
+            ? RADAR_MEASURES
+            : TEMPORAL_PLANET_BANDS.flat()
+    const classificationBands = getClassificationBands(classifier || classifierType, classificationLegend, include)
     return [...dataSetBands, ...classificationBands]
 }
 
@@ -65,6 +65,7 @@ export const groupedBandOptions = ({
     dataSets = [],
     corrections,
     classification: {
+        classifier,
         classifierType,
         classificationLegend,
         include = ['class', 'regression', 'class_probability', 'probabilities']
@@ -82,19 +83,13 @@ export const groupedBandOptions = ({
         )
 
     const getRadarOptions = () =>
-        getGroupedRadarBandOptions(
-            toRadarRecipe(),
-            ['indexes', 'dataSetBands']
-        )
+        groupedRadarMeasureOptions()
 
     const getPlanetOptions = () =>
-        getGroupedPlanetBandOptions(
-            toPlanetRecipe(),
-            ['indexes', 'dataSetBands']
-        )
+        temporalPlanetBandOptions()
 
     const classificationOptions =
-        getClassificationOptions(classifierType, classificationLegend, include)
+        getClassificationOptions(classifier || classifierType, classificationLegend, include)
 
     const dataSetOptions = (isOptical() && getOpticalOptions() || isRadar() && getRadarOptions() || getPlanetOptions())
     
@@ -106,6 +101,7 @@ export const flatBandOptions = ({
     dataSets = [],
     corrections,
     classification: {
+        classifier,
         classifierType,
         classificationLegend,
         include = ['class', 'regression', 'class_probability', 'probabilities']
@@ -115,46 +111,48 @@ export const flatBandOptions = ({
     dataSets,
     corrections,
     classification: {
+        classifier,
         classifierType,
         classificationLegend,
         include
     }
 }).flat()
 
+// Grouped options with a group of their own for each classified output chosen that none offers - one the Classification
+// no longer provides, or not yet known to - so a choice saved is shown as made, where what it is refused for is said, and
+// can be taken back. A band of the images themselves that is no longer offered is not kept.
+export const withChosenClassifiedOutputs = (groupedOptions, chosen) => {
+    const offered = groupedOptions.flat().map(({value}) => value)
+    const unoffered = [].concat(chosen ?? []).filter(isClassifiedOutput).filter(band => !offered.includes(band))
+    return unoffered.length
+        ? [...groupedOptions, unoffered.map(band => ({value: band, label: band}))]
+        : groupedOptions
+}
+
 const toOpticalRecipe = ({dataSetIds, corrections}) =>
     ({model: {
         type: 'MOSAIC',
         sources: {dataSets: toSources(dataSetIds)},
-        classificationOptions: {
+        compositeOptions: {
             corrections,
             compose: 'MEDIAN'
         }
     }})
 
-const toRadarRecipe = () =>
-    ({model: {
-        type: 'RADAR_MOSAIC',
-        dates: {
-            targetDate: '9999-01-01'
-        }
-    }})
-const toPlanetRecipe = () =>
-    ({model: {
-        type: 'PLANET_MOSAIC'
-    }})
-
-const getClassificationBands = (classifierType, classificationLegend, include) => classifierType && classificationLegend
+// What the Classification offers, by what its classifier supports: its configuration (`classifier`, model.classifier) where a
+// caller has it, so its SVM type counts, otherwise its type alone (`classifierType`).
+const getClassificationBands = (classifier, classificationLegend, include) => classifier && classificationLegend
     ? [
         include.includes('class') ? ['class'] : [],
-        include.includes('regression') && supportRegression(classifierType) ? ['regression'] : [],
-        include.includes('class_probability') && supportProbability(classifierType) ? ['class_probability'] : [],
-        include.includes('probabilities') && supportProbability(classifierType)
+        include.includes('regression') && supportRegression(classifier) ? ['regression'] : [],
+        include.includes('class_probability') && supportProbability(classifier) ? ['class_probability'] : [],
+        include.includes('probabilities') && supportProbability(classifier)
             ? classificationLegend.entries.map(({value}) => `probability_${value}`)
             : []
     ].flat()
     : []
 
-const getClassificationOptions = (classifierType, classificationLegend, include) => classifierType && classificationLegend && classificationLegend.entries
+const getClassificationOptions = (classifier, classificationLegend, include) => classifier && classificationLegend && classificationLegend.entries
     ? [
         include.includes('class')
             ? [{
@@ -164,7 +162,7 @@ const getClassificationOptions = (classifierType, classificationLegend, include)
                 label: msg('process.classification.bands.class')
             }]
             : [],
-        include.includes('regression') && supportRegression(classifierType)
+        include.includes('regression') && supportRegression(classifier)
             ? [{
                 mosaicMultiplier: 100,
                 timeSeriesMultiplier: 100,
@@ -172,7 +170,7 @@ const getClassificationOptions = (classifierType, classificationLegend, include)
                 label: msg('process.classification.bands.regression')
             }]
             : [],
-        include.includes('class_probability') && supportProbability(classifierType)
+        include.includes('class_probability') && supportProbability(classifier)
             ? [{
                 mosaicMultiplier: 100,
                 timeSeriesMultiplier: 100,
@@ -180,7 +178,7 @@ const getClassificationOptions = (classifierType, classificationLegend, include)
                 label: msg('process.classification.bands.classProbability')
             }]
             : [],
-        include.includes('probabilities') && supportProbability(classifierType)
+        include.includes('probabilities') && supportProbability(classifier)
             ? classificationLegend.entries.map(({value, label}) => ({
                 mosaicMultiplier: 100,
                 timeSeriesMultiplier: 100,

@@ -9,8 +9,9 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
+import {describeSegmentsAsset$} from '../ccdc/segmentsAsset'
 import {defaultModel} from './assetRecipe'
-import {getAvailableBands} from './bands'
+import {bandPresentation} from './bands'
 import {AssetToolbar} from './panels/assetToolbar'
 import {getPreSetVisualizations} from './visualizations'
 
@@ -62,12 +63,11 @@ export default () => ({
     components: {
         recipe: Asset
     },
-    sourceRecipe: recipe => ({
-        type: 'ASSET',
-        id: recipe.model.assetDetails.assetId
-    }),
-    getDependentRecipeIds: () => [],
+    imageSource: true,
     getDateRange,
-    getAvailableBands,
-    getPreSetVisualizations
+    bandPresentation,
+    getPreSetVisualizations,
+    // An asset mosaic over a CCDC segments asset is that asset. Its metadata is read now rather than
+    // answered from the copy taken when it was selected, which an asset update leaves behind.
+    describeSegments$: ({recipe}) => describeSegmentsAsset$(recipe.model.assetDetails.assetId)
 })

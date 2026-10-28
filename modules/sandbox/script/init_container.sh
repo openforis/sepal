@@ -22,16 +22,20 @@ home_group_id=`stat -c '%g' /home/$sandbox_user`
 
 groupadd -g ${home_group_id} sepal-user
 useradd sepal-user -u ${sandbox_user_id} -g ${home_group_id} -s /usr/bin/bash
-mkdir -p /home/sepal-user/.ssh
-authorized_keys=/home/$sandbox_user/.ssh/authorized_keys
-echo $USER_PUBLIC_KEY > $authorized_keys
-chown $sandbox_user_id:$home_group_id /home/sepal-user/.ssh
-chown $sandbox_user_id:$home_group_id $authorized_keys
 
-mkdir -p /home/$sandbox_user/.log/shiny
-chown -R $sandbox_user_id:$home_group_id /home/$sandbox_user/.log
-mkdir -p /home/$sandbox_user/.shiny
-chown -R $sandbox_user_id:$home_group_id /home/$sandbox_user/.shiny
+# The user controls everything in their home, so root never writes there: chown -R does not follow
+# symlinks, and the files are created by the user.
+userHome=/home/$sandbox_user
+chown -R $sandbox_user_id:$home_group_id "$userHome"/{.ssh,.log,.shiny,.bashrc,.profile,.bash_logout} 2>/dev/null
+runuser -u $sandbox_user -- bash -c '
+    home=/home/$sandbox_user
+    mkdir -p $home/.ssh $home/.log/shiny $home/.shiny
+    rm -f $home/.ssh/authorized_keys
+    printf "%s\n" "$USER_PUBLIC_KEY" > $home/.ssh/authorized_keys
+    for file in .bashrc .profile .bash_logout; do
+        cp --update=none /etc/skel/$file $home && chmod g+w $home/$file
+    done
+'
 
 rm -rf /templates
 
@@ -44,6 +48,11 @@ if [ -n "$SEPAL_API_KEY" ]; then
     unset SEPAL_API_KEY
 fi
 
+# Must stay in the environment: pysepal reads it with os.getenv() at import time.
+if [ -n "$CARTODB_BASEMAP_KEY" ]; then
+    printf '%s\n' "CARTODB_BASEMAP_KEY=$CARTODB_BASEMAP_KEY" >> /etc/environment
+fi
+
 printf '%s\n' \
     "R_LIBS_USER=/home/$sandbox_user/.R/library" \
     "R_LIBS_SITE=/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library:/shiny/library" \
@@ -52,24 +61,11 @@ printf '%s\n' \
 cp /etc/environment /etc/R/Renviron.site
 sed -i -e 's/\/usr\/lib\/x86_64-linux-gnu/\/usr\/lib\/x86_64-linux-gnu:\/lib\/x86_64-linux-gnu/g' /usr/lib/R/etc/ldpaths
 
+# SSH logins get their environment from here, not from the container's.
 printf '%s\n' \
     "SEPAL_HOST=$SEPAL_HOST" \
+    "SEPAL_INSTANCE_TYPE=$SEPAL_INSTANCE_TYPE" \
     >> /etc/environment
 
-userHome=/home/$sandbox_user
-
-cp -n /etc/skel/.bashrc "$userHome"
-chown $sandbox_user_id:$home_group_id "$userHome/.bashrc"
-chmod g+w "$userHome/.bashrc"
-
-cp -n /etc/skel/.profile "$userHome"
-chown $sandbox_user_id:$home_group_id "$userHome/.profile"
-chmod g+w "$userHome/.profile"
-
-cp -n /etc/skel/.bash_logout "$userHome"
-chown $sandbox_user_id:$home_group_id "$userHome/.bash_logout"
-chmod g+w "$userHome/.bash_logout"
-
 exportEnvironment
-source /home/$sandbox_user/.bashrc
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

@@ -4,37 +4,14 @@
 .build/
 .eslintcache
 
-#docker-sync
-.docker-sync
 *.tmp
 
-#Maven
-target
-
-#Gradle
-.gradle
-#bin
-build
-
-
-#Eclipse
-.classpath
-.project
-.settings
-
 #Sepal binaries
-/common/bin
-/common-test/bin
-/modules/user/bin
-/modules/sepal-server/bin
-
-#Vagrant
-.vagrant
 
 #Ansible
 *.retry
 
-#JRE error
+#Logs
 *.log
 
 #Python
@@ -44,6 +21,8 @@ venv/
 
 #JavaScript
 node_modules/
+# Each module locks the libraries it installs: modules/<module>/lib/<library>/package-lock.json
+lib/js/*/package-lock.json
 
 #Visual Studio
 .vscode
@@ -51,16 +30,6 @@ node_modules/
 #IntelliJ
 *.iml
 .idea/
-/common/out/
-/common/out/production/classes/
-/common-test/out/
-/common-test/out/production/classes/
-/modules/sepal-server/out/
-/modules/sepal-server/out/production/classes/
-/modules/sepal-server/out/test/classes/
-/modules/user/out/
-/modules/user/out/production/classes/
-/modules/user/out/test/classes/
 
 # SEPAL data
 sepal-data/
@@ -73,3 +42,4 @@ TODO.md
 
 # Local planning/spec docs (superpowers) — not tracked
 docs/superpowers/
+.superpowers/

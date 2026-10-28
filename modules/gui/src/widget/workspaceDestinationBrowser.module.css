@@ -1,0 +1,8 @@
+.panel {
+    width: 30rem;
+    height: 80vh;
+}
+
+.createFolder {
+    min-width: 15rem;
+}

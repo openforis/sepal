@@ -1,6 +1,6 @@
 import {google} from 'googleapis'
 import moment from 'moment'
-import {catchError, from, map, of, switchMap, throwError} from 'rxjs'
+import {catchError, defer, EMPTY, expand, map, of, reduce, switchMap, throwError} from 'rxjs'
 
 import {NotFoundException} from '#sepal/exception'
 import {getLogger} from '#sepal/log'
@@ -33,6 +33,14 @@ export const drive = ({sepalUser}) => {
                     ? readFileById$(file.id)
                     : throwError(() => new NotFoundException(`No file found in path: '${path}'`))
             )
+        )
+
+    const listFiles$ = ({path}) =>
+        getFolderByPath$({path}).pipe(
+            switchMap(({id}) => getFilesByFolder$({id}).pipe(
+                expand(({nextPageToken}) => nextPageToken ? getFilesByFolder$({id, pageToken: nextPageToken}) : EMPTY),
+                reduce((files, page) => [...files, ...page.files], [])
+            ))
         )
 
     const removeFolder$ = ({path}) =>
@@ -130,7 +138,9 @@ export const drive = ({sepalUser}) => {
                     parents: [parentId]
                 },
                 fields: 'id'
-            })
+            }),
+        // Not retried: a create that failed after Drive applied it would leave a duplicate folder.
+        {maxRetries: 0}
         )
 
     /**
@@ -198,14 +208,13 @@ export const drive = ({sepalUser}) => {
         return oAuth2Client
     }
 
-    const drive$ = (message, op) => {
+    const drive$ = (message, op, retryConfig = RETRY_CONFIG) => {
         log.debug(() => message)
         const drive = google.drive({version: 'v3', auth: auth()})
-        return from(op(drive)).pipe(
+        return defer(() => op(drive)).pipe(
             map(({data}) => data),
-            autoRetry(RETRY_CONFIG)
+            autoRetry(retryConfig)
         )
-
     }
 
     const and = (...conditions) =>
@@ -214,13 +223,14 @@ export const drive = ({sepalUser}) => {
     const isParent = parentId =>
         parentId && `"${parentId}" in parents`
 
+    // Always a condition: an empty name must match no folder rather than every one.
     const isName = name =>
-        name && `name = "${name}"`
+        `name = "${name}"`
 
     const do$ = (message, operation$) => {
         log.debug(() => message)
         return operation$
     }
 
-    return {createFolder$, readFile$, removeFolder$}
+    return {createFolder$, readFile$, listFiles$, removeFolder$}
 }

@@ -23,6 +23,8 @@ import {Panel} from '~/widget/panel/panel'
 import {SearchBox} from '~/widget/searchBox'
 import {Tag} from '~/widget/tag'
 
+import {mergeListing, startListingRequest} from '../recipe'
+import {LISTING_STATE_PATH, touchedListing} from '../recipeListing'
 import {Project} from './project'
 import styles from './projects.module.css'
 import {RecipeListConfirm} from './recipeListConfirm'
@@ -70,6 +72,7 @@ class _Projects extends React.Component {
 
     removeProject(project) {
         const {id} = project
+        const request = startListingRequest()
         this.props.stream('REQUEST_REMOVE_PROJECT',
             api.project.remove$(id).pipe(
                 switchMap(projects =>
@@ -78,10 +81,14 @@ class _Projects extends React.Component {
                     )
                 )
             ),
-            ({projects, recipes}) => {
+            ({projects, recipes: response}) => {
+                const listed = new Set(response.map(({id}) => id))
+                const removed = (select('process.recipes') || []).map(({id}) => id).filter(id => !listed.has(id))
+                const {recipes, listingState} = mergeListing(request, response)
                 actionBuilder('REMOVE_PROJECT', {project, recipes})
                     .set('process.projects', projects)
                     .set('process.recipes', recipes)
+                    .set(LISTING_STATE_PATH, touchedListing(listingState, removed))
                     .dispatch()
             },
             error => Notifications.error({message: msg('process.project.remove.error'), error})

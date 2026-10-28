@@ -1,15 +1,17 @@
 import React from 'react'
 
+import {INPUT_IMAGE} from '#sepal/recipe/source/inputImagery'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
+import {inputImageryRequirements} from '../../panels/inputImagery/inputImageryRequirements'
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
-import {getDefaultModel, RecipeActions} from './bandMathRecipe'
-import {getAvailableBands} from './bands'
+import {getDefaultModel} from './bandMathRecipe'
+import {bandMathRequirements} from './bandMathRequirements'
 import {BandMathToolbar} from './panels/bandMathToolbar'
 import {Sync} from './sync/sync'
 import {getPreSetVisualizations} from './visualizations'
@@ -23,7 +25,6 @@ class _BandMath extends React.Component {
     constructor(props) {
         super(props)
         const {savedLayers, recipeId} = props
-        this.recipeActions = RecipeActions(recipeId)
         initializeLayers({
             recipeId,
             savedLayers
@@ -47,13 +48,10 @@ const BandMath = compose(
     recipe({getDefaultModel, mapRecipeToProps})
 )
 
-const getDependentRecipeIds = recipe =>
-    (selectFrom(recipe, 'model.inputImagery.images') || [])
-        .filter(({type}) => type === 'RECIPE_REF')
-        .map(({id}) => id)
-
 export default () => ({
     id: 'BAND_MATH',
+    // The images it reads that the layout shows (mapLayout/dependencyLayerSources.js).
+    dependencyLayerRoles: [INPUT_IMAGE],
     labels: {
         name: msg('process.bandMath.create'),
         creationDescription: msg('process.bandMath.description'),
@@ -62,10 +60,11 @@ export default () => ({
     components: {
         recipe: BandMath
     },
-    getDependentRecipeIds,
+    imageSource: true,
+    // A band an input includes is refused where it is included: at the input itself.
+    sourceRequirements: [...bandMathRequirements, ...inputImageryRequirements(({path}) => path[3])],
     getDateRange(_recipe) {
         return null
     },
-    getAvailableBands,
     getPreSetVisualizations
 })

@@ -19,6 +19,24 @@
     dump: 0
     passno: 0
 
+# Per-user task and sandbox logs live on EFS, like the worker logs before them. EFS only mounts a directory that
+# exists, so it is created through the worker log mount first.
+- name: Create EFS user log directory
+  file:
+    path: "/var/log/sepal/worker/user-log"
+    state: directory
+    mode: '0755'
+
+- name: Mount EFS user logs
+  mount:
+    name: "/var/log/sepal/user"
+    fstype: "efs"
+    state: "mounted"
+    src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/worker-instance-log/user-log"
+    opts: "defaults,_netdev"
+    dump: 0
+    passno: 0
+
 - name: Mount /data/sepal/jupyter
   mount:
     name: "/data/sepal/jupyter"

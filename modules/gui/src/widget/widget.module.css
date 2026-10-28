@@ -54,9 +54,6 @@
 
 .widget.border {
     --input-border-color: var(--input-border-default-color);
-    --input-border-default-color: #606060;
-    --input-border-hover-color: #b0b0b0;
-    --input-border-focus-color: #a0a0a0;
     border-bottom: 1px solid var(--input-border-color);
     transition: 100ms ease-in-out;
 }
@@ -71,13 +68,13 @@
 }
 
 .widget.border.error {
-    --input-border-color: #e81351;
+    --input-border-color: var(--invalid-color);
 }
 
 /* widget state */
 
 .widget.error {
-    --error-background-color: rgba(232, 19, 81, 0.1);
+    --error-background-color: var(--invalid-background-color);
     background-color: var(--error-background-color);
 }
 
@@ -89,8 +86,8 @@
     bottom: 0;
     height: 1px;
     z-index: 2; /* make sure busy spinner is above the overlay */
-    background-color: #c0c0c0;
-    mix-blend-mode: screen;
+    background-color: var(--busy-indicator-color);
+    mix-blend-mode: var(--busy-indicator-blend-mode);
     animation: busy 600ms linear infinite alternate;
 }
 

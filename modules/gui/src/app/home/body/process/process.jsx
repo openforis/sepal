@@ -1,11 +1,11 @@
-import _ from 'lodash'
 import React from 'react'
 
-import {Recipe} from '~/app/home/body/process/recipeContext'
+import {Recipe, recipeActivationPath} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {select} from '~/store'
 import {msg} from '~/translate'
-import {withActivators} from '~/widget/activation/activator'
+import {withActivationContext} from '~/widget/activation/activationContext'
+import {activateIn} from '~/widget/activation/activator'
 import {withLeaveAlert} from '~/widget/leaveAlert'
 import {Notifications} from '~/widget/notifications'
 import {Tabs} from '~/widget/tabs/tabs'
@@ -13,12 +13,13 @@ import {Tabs} from '~/widget/tabs/tabs'
 import {CloseRecipe} from './closeRecipe'
 import {registerImageLayerSources} from './imageLayerSources'
 import {ProcessMenu} from './processMenu'
-import {loadProjects$, loadRecipes$, recipePath, saveRecipe} from './recipe'
+import {hasUnsavedWork, loadProjects$, loadRecipes$, recipePath, saveRecipe} from './recipe'
 import {RecipeHome} from './recipeHome'
 import {registerRecipeImageLayers} from './recipeImageLayers'
 import {getRecipeType} from './recipeTypeRegistry'
 import {registerRecipeTypes} from './recipeTypes'
 import {SaveRecipe} from './saveRecipe'
+import {SourceRuntimeProvider} from './sourceRuntime/sourceRuntimeContext'
 
 class _Process extends React.Component {
     constructor(props) {
@@ -39,6 +40,7 @@ class _Process extends React.Component {
                     label={msg('home.sections.process')}
                     statePath='process'
                     isLandingTab={this.isLandingTab}
+                    newTabPlaceholder={msg('process.recipe.landingTab')}
                     tabActions={this.renderMenu}
                     onTitleChanged={saveRecipe}
                     onClose={this.onCloseTab}>
@@ -88,15 +90,16 @@ class _Process extends React.Component {
         )
     }
 
+    // The dialog is about the recipe closed: what holds it back is that recipe's open panels, not another's.
     onCloseTab(tab, close) {
-        const {activator: {activatables: {closeRecipeDialog}}} = this.props
+        const {activationContext: {pathList}} = this.props
         const recipe = {
             ...select(recipePath(tab.id)),
             title: tab.title
         }
         const unsaved = recipe.ui && recipe.ui.unsaved && recipe.ui.initialized
         if (unsaved) {
-            closeRecipeDialog.activate({recipe})
+            activateIn(recipeActivationPath(pathList, tab.id), 'closeRecipeDialog', {recipe})
         } else {
             close()
         }
@@ -121,18 +124,17 @@ class _Process extends React.Component {
     }
 }
 
-const mapStateToLeaveAlert = () => {
-    const loadedRecipes = select('process.loadedRecipes') || {}
-    const unsavedRecipeCount = _(loadedRecipes)
-        .values()
-        .map(recipe => recipe.ui && recipe.ui.unsaved)
-        .filter(unsaved => unsaved)
-        .size()
-    return unsavedRecipeCount > 0
-}
-
-export const Process = compose(
+const ProcessContent = compose(
     _Process,
-    withActivators('closeRecipeDialog'),
-    withLeaveAlert(mapStateToLeaveAlert)
+    withActivationContext(),
+    withLeaveAlert(hasUnsavedWork)
+)
+
+// Process owns the source runtime. Wrapping here rather than in Body keeps source resolution out of what Body
+// knows about, and gives the runtime exactly the lifetime its operations need: it mounts when Process is first
+// activated, survives route navigation because Section retains Process, and closes when Process does.
+export const Process = props => (
+    <SourceRuntimeProvider>
+        <ProcessContent {...props}/>
+    </SourceRuntimeProvider>
 )

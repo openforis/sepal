@@ -9,11 +9,13 @@ import {fileName} from '#sepal/path'
 const MAX_BUCKETS = Math.pow(2, 8)
 const MAX_PIXELS = 1e5
 
+// The rest of the request names the product the layer shows, exactly as its preview sends it, so the image asked
+// about is the one on the map. The band asked about is selected last, so nothing else in the request can replace it.
 const worker$ = ({
-    requestArgs: {recipe, band, aoi, mapBounds}
+    requestArgs: {recipe, band, aoi, mapBounds, ...productArgs}
 }) => {
 
-    const {getImage$, histogramMaxPixels} = ImageFactory(recipe, {selection: [band]})
+    const {getImage$, histogramMaxPixels} = ImageFactory(recipe, {...productArgs, selection: [band]})
     // ASSET_BOUNDS has no aoi geometry of its own; every other aoi is resolved before the geometry
     // selection below is composed.
     const aoiGeometry$ = aoi && aoi.type !== 'ASSET_BOUNDS'

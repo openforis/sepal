@@ -7,28 +7,34 @@ import {FormCombo} from '~/widget/form/combo'
 import {Layout} from '~/widget/layout'
 import {Legend} from '~/widget/legend/legend'
 
+import {bandOptionsOf, showLoadError} from '../../../changeImageSelection'
 import styles from './inputImage.module.css'
 
+// The image's source, its class band and the legend of its classes. A read of the source the image was saved with
+// changes nothing saved - its band, legend and band list stay as they are, a band the source no longer provides
+// included, offered beside the bands it does and refused beside its field (changeImageRequirements.js). Only a source
+// the user selects is taken up: the bands it provides become the image's, its band kept where it provides it, or chosen
+// where none was. A band it does not provide is cleared with its legend, quietly, for the user to choose again.
 export class ImageForm extends Component {
-    state = {entries: [], loadedRecipe: null}
+    // What the latest read of the selected source answered, never saved: null while none has.
+    state = {available: null, loadedRecipe: null}
+    // A band chosen of another source, cleared as one this source lacks: the user chooses again, so no default fills it
+    // until a band is chosen or the source kind starts over.
+    bandCleared = false
 
     render() {
-        const {input, inputComponent, inputs: {band, bands, legendEntries}} = this.props
-        const {loadedRecipe} = this.state
-        const bandOptions = (Object.keys(bands.value) || [])
-            .map(bandName => ({
-                value: bandName,
-                label: bandName
-            }))
+        const {form, input, inputComponent, labelButtons, inputs: {band, legendEntries}} = this.props
+        const {available, loadedRecipe} = this.state
+        const bandOptions = bandOptionsOf(Object.keys(available || {}), band.value)
         return (
             <Layout>
                 <div ref={this.element} className={styles.inputComponent}>
                     {React.createElement(inputComponent, {
                         input,
-                        onLoading: () => {
-                            bands.set({})
-                        },
-                        onLoaded: ({id, bands, metadata, visualizations, recipe}) => this.onLoaded(id, bands, metadata, visualizations, recipe)
+                        labelButtons,
+                        onLoading: () => this.setState({available: null}),
+                        onLoaded: ({id, bands, metadata, visualizations, recipe}) => this.onLoaded(id, bands, metadata, visualizations, recipe),
+                        onError: error => showLoadError(input, error)
                     })}
                 </div>
                 <FormCombo
@@ -44,23 +50,32 @@ export class ImageForm extends Component {
                     entries={legendEntries.value || []}
                     disabled={!band.value}
                     onUpdate={updatedEntries => legendEntries.set(updatedEntries)}
-                    errorMessage={legendEntries.error}
+                    errorMessage={form.getErrorMessage(legendEntries)}
                 />
             </Layout>
         )
     }
 
     componentDidUpdate(prevProps) {
-        const {inputs: {band: {value: prevBand}}} = prevProps
-        const {inputs: {band: {value: band}}} = this.props
+        const {input: prevInput, inputs: {band: {value: prevBand}}} = prevProps
+        const {input, inputs: {band: {value: band}}} = this.props
+        if (prevInput?.name !== input?.name) {
+            this.bandCleared = false
+        }
         if (band && band !== prevBand) {
+            this.bandCleared = false
             this.bandSelected(band)
         }
     }
 
+    // Another band chosen: its legend starts from the categorical style its source gives it.
     bandSelected(band) {
         const {inputs: {bands, legendEntries}} = this.props
-        const visualization = bands.value[band]
+        const {available} = this.state
+        const visualization = (available || bands.value || {})[band]
+        if (available) {
+            bands.set(available)
+        }
         const entries = ((visualization && visualization.values) || [])
             .map((value, i) => {
                 return {
@@ -70,35 +85,40 @@ export class ImageForm extends Component {
                     label: (visualization.labels && visualization.labels[i]) || `${value}`,
                 }
             })
-        legendEntries.set(entries)
+        // Programmatic: a legend left empty is neutral until interacted with, as a new field is; one too long says so.
+        legendEntries.set(entries, {validate: entries.length > 0})
     }
 
     onLoaded(id, loadedBands, loadedMetadata, loadedVisualizations, loadedRecipe) {
-        const {form, inputs: {band, bands, metadata, visualizations, recipe}} = this.props
-        if (!id || !form.isDirty()) {
+        const {input, inputs: {band, bands, legendEntries, metadata, visualizations}} = this.props
+        if (!id) {
+            return
+        }
+        this.setState({available: loadedBands, loadedRecipe})
+        if (!input.isDirty()) {
+            metadata.setInitialValue(loadedMetadata)
+            visualizations.setInitialValue(loadedVisualizations)
             return
         }
         bands.set(loadedBands)
-        const bandNames = Object.keys(loadedBands)
-        const selectedBand = band.value
-        if (!selectedBand || !bandNames.includes(selectedBand)) {
-            const defaultBand = bandNames
-                .find(bandName => {
-                    const values = loadedBands[bandName].values
-                    return values && values.length
-                })
-                || bandNames[0]
+        if (!band.value && !this.bandCleared) {
+            const bandNames = Object.keys(loadedBands)
+            const defaultBand = bandNames.find(bandName => loadedBands[bandName].values?.length) || bandNames[0]
             band.set(defaultBand)
+        } else if (band.value && !Object.hasOwn(loadedBands, band.value)) {
+            this.bandCleared = true
+            band.set(undefined, {validate: false})
+            legendEntries.set(undefined, {validate: false})
         }
         metadata.set(loadedMetadata)
         visualizations.set(loadedVisualizations)
-        recipe.set(loadedRecipe.id)
-        this.setState({loadedRecipe})
     }
 }
 
 ImageForm.propTypes = {
     children: PropTypes.any,
+    form: PropTypes.object,
     inputComponent: PropTypes.any,
-    inputs: PropTypes.any
+    inputs: PropTypes.any,
+    labelButtons: PropTypes.array
 }

@@ -421,6 +421,7 @@ const valuesToModel = values => ({
     seed: toInt(values.seed),
     shrinkage: toFloat(values.shrinkage) || 0.05,
     samplingRate: toFloat(values.samplingRate) || 0.7,
+    loss: values.loss || 'LeastSquares',
     decisionTree: values.decisionTree,
     normalize: values.normalize,
     tileScale: toFloat(values.tileScale) || 1,

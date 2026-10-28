@@ -1,9 +1,9 @@
 import moment from 'moment'
 import React from 'react'
 
+import {PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
-import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {maxDate, minDate} from '~/widget/form/datePicker'
@@ -11,6 +11,7 @@ import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
 
+import {segmentDatesOf} from '../../../segmentEvidence'
 import styles from './date.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -32,8 +33,8 @@ const fields = {
 }
 
 const mapRecipeToProps = recipe => ({
-    segmentsStartDate: selectFrom(recipe, 'model.reference.startDate'),
-    segmentsEndDate: selectFrom(recipe, 'model.reference.endDate')
+    segmentsStartDate: segmentDatesOf(recipe, PRIMARY_IMAGE).startDate,
+    segmentsEndDate: segmentDatesOf(recipe, PRIMARY_IMAGE).endDate
 })
 
 class _Date extends React.Component {

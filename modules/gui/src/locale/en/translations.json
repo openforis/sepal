@@ -45,7 +45,12 @@
     },
     "googleAccountRequired": "Some apps are unavailable. To enable them, connect your SEPAL account to your Google account.",
     "info": "Show information about this app",
-    "initializing": "Starting session...",
+    "landingTab": "Apps",
+    "launch": {
+      "startingSession": "Starting session...",
+      "startingServer": "Starting server...",
+      "startingApp": "Starting app..."
+    },
     "loading": {
       "error": "Failed to load apps. Please reload page to try again.",
       "progress": "Loading..."
@@ -57,6 +62,30 @@
     "running": "App is running",
     "noInstanceRequired": "Instant",
     "noInstanceRequiredTooltip": "This app doesn't require a dedicated instance to run.",
+    "gpuRequiredTooltip": "This app recommends an instance with at least {count, plural, one {# GPU} other {# GPUs}}.",
+    "sessionTakenOver": "{app} was closed in this window because it was opened in another browser window",
+    "confirmReopen": {
+      "title": "App already open",
+      "instance": "instance {number} ({type})",
+      "unknownInstance": "another instance",
+      "otherBrowser": "{app} is already open in another browser window.|Opening it here will close the other one.",
+      "otherInstance": "{app} is already open on {instance}.|Opening it on the selected instance will close the other one.",
+      "group": "{apps} {count, plural, one {is} other {are}} already open on {instance}.|Opening {app} on the selected instance will close {count, plural, one {it} other {them}}.",
+      "alsoClosing": "{apps} will close too — related apps must run on the same instance.",
+      "releaseFailed": "Could not close the app on its previous instance — please try again."
+    },
+    "instancePicker": {
+      "title": "Start {app}",
+      "instance": "Instance",
+      "placeholder": "Select an instance...",
+      "runningSection": "Running instances",
+      "newSection": "New instance without SSD",
+      "newSsdSection": "New instance with SSD",
+      "newInstanceTitle": "Start new instance",
+      "noInstanceType": "No instance type is available. Contact your administrator.",
+      "belowRequirements": "This app recommends an instance with at least {specs}.",
+      "alreadyRunning": "This app was already running on another instance — it opened there."
+    },
     "admin": {
       "title": "{app} management panel",
       "logs": {
@@ -154,7 +183,7 @@
     },
     "reload": {
       "tooltip": "Reload assets",
-      "progress": "Reloading... {count}"
+      "progress": "Reloading assets..."
     },
     "browser": {
       "tooltip": "Open asset browser",
@@ -338,10 +367,12 @@
     "lessThan": "Must be less than {maxValue}",
     "match": "Must match {regex}",
     "max": "Max value is {maxValue}",
+    "maxLength": "Must be at most {max} characters",
     "min": "Min value is {minValue}",
     "notBlank": "Cannot be blank",
     "notEmpty": "Cannot be empty",
-    "number": "Must be a number"
+    "number": "Must be a number",
+    "username": "Username format is invalid"
   },
   "footer": {
     "buildNumber": "Build number",
@@ -364,7 +395,9 @@
   "gee": {
     "asset": {
       "error": {
-        "wrongType": "Asset is of type {actualType} while the only allowed types are: {allowedTypes}."
+        "wrongType": "Asset is of type {actualType} while the only allowed types are: {allowedTypes}.",
+        "invalidIds": "At most {max} asset ids can be checked at once.",
+        "notFound": "Asset not found: {asset}"
       }
     },
     "classification": {
@@ -373,9 +406,21 @@
       }
     },
     "error": {
-      "earthEngineException": "{earthEngineMessage}",
+      "earthEngineException": "Google Earth Engine: {earthEngineMessage}",
       "failedToLoadRecipe": "Failed to load recipe",
       "title": "Google Earth Engine error"
+    },
+    "geoId": {
+      "error": {
+        "invalidBuffer": "The buffer must be a whole number of metres, at least {min, number}, for this GeoID.",
+        "invalidGeometry": "The geometry of GeoID {geoId} from the GeoID service ({host}) could not be used.",
+        "notFound": "GeoID {geoId} is not registered with the GeoID service ({host}).",
+        "rateLimited": "The GeoID service ({host}) is limiting requests. Try again later.",
+        "rejected": "The GeoID service ({host}) refused the request (HTTP {status}).",
+        "serviceError": "The GeoID service ({host}) reported an error (HTTP {status}). Try again later.",
+        "unreachable": "SEPAL could not reach the GeoID service ({host}). Try again later.",
+        "unusableResponse": "The GeoID service ({host}) returned a response SEPAL could not use."
+      }
     },
     "image": {
       "error": {
@@ -395,8 +440,10 @@
     "connectivityError": "You are currently unable to connect to the SEPAL server.",
     "versionMismatch": {
       "title": "SEPAL has been updated!",
-      "message": "Please reload your browser to make sure everything works as expected.",
-      "reloadNow": "Reload now"
+      "message": "Please save your work, then reload this page to apply the update."
+    },
+    "loginSession": {
+      "switched": "You're now logged in as {username}"
     },
     "sections": {
       "account": "Account settings",
@@ -405,16 +452,16 @@
       "collapse": "Automatically hide and show menu",
       "expand": "Always show menu",
       "help": "Open SEPAL documentation in a new tab/window",
-      "logout": "Logout from SEPAL",
+      "logout": "Logout",
       "process": "Process",
       "tasks": "Tasks",
       "terminal": "Terminal",
       "user": {
-        "messages": "Show user messages",
+        "messages": "Show messages",
         "profile": "Manage user profile",
         "report": {
           "budgetExceeded": "Exceeded",
-          "tooltip": "Show user report"
+          "tooltip": "Show usage and sessions"
         }
       },
       "users": "Users"
@@ -516,7 +563,7 @@
         "label": "Email",
         "placeholder": "Enter your email address",
         "required": "Email is required",
-        "format": "Please enter a valid email address",
+        "format": "Email format is invalid",
         "duplicate": "This email is not available, please choose another one",
         "cannotValidate": "Cannot validate email"
       },
@@ -689,7 +736,8 @@
           "duplicateColor": "There are more than one entry with this color",
           "duplicateLabel": "There are more than one entry with this label",
           "duplicateValue": "There are more than one entry with this value",
-          "invalidColor": "Another entry has the same color"
+          "invalidColor": "Another entry has the same color",
+          "invalidValue": "Enter a number"
         },
         "remove": {
           "tooltip": "Remove this legend entry"
@@ -790,7 +838,26 @@
             }
           },
           "Recipe": {
-            "description": "Add a SEPAL recipe"
+            "description": "Add a SEPAL recipe",
+            "form": {
+              "name": {
+                "label": "Name",
+                "placeholder": "Optional display name"
+              }
+            }
+          }
+        }
+      },
+      "editImageLayerSource": {
+        "types": {
+          "Asset": {
+            "description": "Edit an Earth Engine asset layer"
+          },
+          "Planet": {
+            "description": "Edit a Planet account layer"
+          },
+          "Recipe": {
+            "description": "Change the SEPAL recipe of a layer"
           }
         }
       },
@@ -802,16 +869,37 @@
         }
       },
       "layer": {
+        "edit": {
+          "tooltip": "Edit layer"
+        },
         "remove": {
           "tooltip": "Remove layer"
+        },
+        "actions": {
+          "label": "Source actions",
+          "edit": "Edit source",
+          "rename": "Rename source",
+          "delete": "Delete source",
+          "deleteOwned": "Remove this source from the recipe’s inputs."
+        },
+        "delete": {
+          "confirmation": "Delete {description} from Layers? Any map area showing it stops showing it."
         }
       },
+      "legacySource": "No longer an input of this recipe; kept because a map area shows it",
+      "missingSources": "{count, plural, one {A layer source names a recipe that is no longer available} other {# layer sources name recipes that are no longer available}}",
       "mode": {
         "grid": {
           "label": "Grid"
         },
         "stack": {
           "label": "Stack"
+        }
+      },
+      "renameImageLayerSource": {
+        "title": "Rename layer",
+        "name": {
+          "label": "Label"
         }
       },
       "title": "Layers"
@@ -821,6 +909,17 @@
       "bands": {
         "loading": "Loading bands...",
         "loadError": "Failed to load image bands"
+      },
+      "draft": {
+        "copy": {
+          "label": "Copy settings",
+          "tooltip": "Copy these settings as they are, unapplied changes included, to paste into another visualization."
+        },
+        "paste": {
+          "label": "Paste settings",
+          "tooltip": "Replace these settings with the copied ones. Nothing is saved until you apply.",
+          "empty": "Copy the settings of a visualization first, to paste them here."
+        }
       },
       "form": {
         "band": {
@@ -832,6 +931,7 @@
           "reverse.tooltip": "Reverse the band",
           "saturation.label": "Saturation",
           "select.placeholder": "Select band...",
+          "unavailable": "This layer has no band {band} it can draw. Choose another band.",
           "value.label": "Value"
         },
         "gamma": {
@@ -858,7 +958,8 @@
           },
           "text": {
             "tooltip": "Show and edit palette as text.",
-            "placeholder": "Enter comma-separated list of colors..."
+            "placeholder": "Enter comma-separated list of colors...",
+            "invalid": "Not a color: {colors}"
           }
         },
         "min": {
@@ -894,6 +995,7 @@
     "visualizationSelector": {
       "label": "Bands",
       "userDefined.label": "User defined",
+      "inherited.label": "From source recipe",
       "add.tooltip": "Add visualization",
       "edit.tooltip": "Edit selected visualization",
       "clone.tooltip": "Duplicate selected pre-set visualization",
@@ -905,6 +1007,18 @@
     },
     "interactionMode": {
       "chart": "Click the map to chart a pixel"
+    },
+    "layerSource": {
+      "refresh": {
+        "tooltip": "Refresh: read the sources this layer draws from again",
+        "failed": "Unable to refresh the layer sources"
+      },
+      "checking": "Checking asset…",
+      "unavailable": "Asset {asset} is not available. Refresh, or choose another source.",
+      "failing": "Earth Engine could not be reached. The drawing may be out of date.",
+    "held": "Cannot render ''{recipe}''. Review {section} in that recipe.",
+    "heldUpstream": "Cannot render ''{recipe}''. Review ''{source}'', which it reads.",
+    "checkingSection": "Checking the source selected in {section} of ''{recipe}''…"
     }
   },
   "featureLayerSources": {
@@ -947,13 +1061,17 @@
   },
   "imageLayerSources": {
     "Asset": {
+      "refresh": {
+        "failed": "Unable to refresh asset"
+      },
       "label": "EE Asset",
       "description": "Earth Engine Asset"
     },
     "Recipe": {
       "label": "Recipe",
       "thisRecipeDescription": "This recipe",
-      "loadError": "Failed to load recipe: {error}"
+      "notFound": "The recipe for layer source ''{description}'' could not be found or is no longer accessible.",
+      "loadFailed": "Failed to load the recipe for layer source ''{description}''."
     },
     "Planet": {
       "label": "Planet",
@@ -966,6 +1084,9 @@
       "label": "Google Satellite",
       "description": "Google hi-res satellite imagery"
     }
+  },
+  "instanceLaunch": {
+    "unavailable": "Amazon Web Services (AWS) cannot provide this instance type in SEPAL's region right now: it has run out of capacity for it, or does not offer it there. This is outside SEPAL's control. Pick another instance type, or try again later."
   },
   "notifications": {
     "error": {
@@ -995,6 +1116,8 @@
             "label": "Legend"
           },
           "noBands": "No bands selected",
+          "duplicateSource": "Another input already uses this image.",
+          "missingBands": "Its source no longer has {bands}.",
           "noImagery": "Please add at least one image.",
           "recipe": {
             "label": "Recipe",
@@ -1020,7 +1143,12 @@
         "sections": {
           "title": "Image to include"
         },
-        "title": "Input imagery"
+        "title": "Input imagery",
+        "tooltip": "Select input imagery",
+        "unavailableBands": {
+          "input": "Some bands are unavailable. Open this image to review them.",
+          "inputs": "Some bands are unavailable. Review Input imagery."
+        }
       }
     },
     "mapZoom": {
@@ -1069,6 +1197,7 @@
         "loadFailed": "Failed to load chart.",
         "loadObservations.error": "Failed to load observations.",
         "loadSegments.error": "Failed to load segments.",
+        "noChartableBand": "The monitoring data observes none of the bands the reference's segments can be charted for.",
         "start.tooltip": "Chart time-series for pixel"
       },
       "create": "CCDC",
@@ -1439,23 +1568,17 @@
           "tooltip": "Retrieve time-series"
         },
         "source": {
-          "asset": {
-            "label": "Earth Engine CCDC Asset",
-            "title": "Earth Engine CCDC Asset",
-            "notCcdc": "Asset does not contain CCDC segments"
-          },
           "button": "SRC",
           "form": {
             "asset": {
-              "invalid": "Asset must be an exported CCDC asset",
               "label": "CCDC asset",
               "placeholder": "Enter CCDC asset ID",
               "required": "An asset ID must be specified"
+            },
+            "recipe": {
+              "label": "CCDC recipe",
+              "required": "Select a recipe"
             }
-          },
-          "recipe": {
-            "label": "Saved SEPAL CCDC recipe",
-            "title": "Saved SEPAL CCDC recipe"
           },
           "title": "Source",
           "tooltip": "Select EE asset with CCDC segments to slice"
@@ -1490,7 +1613,8 @@
       },
       "error": {
         "noImages": "No monitoring images match the recipe configuration. Update the dates or sources.",
-        "noChangeClasses": "Select at least one \"From\" class and one \"To\" class in the change-detection options."
+        "noChangeClasses": "Select at least one \"From\" class and one \"To\" class in the change-detection options.",
+        "noAoi": "Configure an area of interest for PyEO Alerts."
       },
       "panel": {
         "dates": {
@@ -1537,7 +1661,8 @@
             "dataSets": {
               "label": "Optical datasets",
               "tooltip": "One or more Sentinel-2 / Landsat collections. Bands are harmonised across the selection.",
-              "required": "Pick at least one optical dataset"
+              "required": "Pick at least one optical dataset",
+              "unsuppliedInputs": "The selected datasets don't provide the bands this classification reads: {missing}. Choose datasets that do."
             },
             "cloudPercentageThreshold": {
               "label": "Maximum scene cloud cover",
@@ -1548,7 +1673,9 @@
               "label": "Classification recipe",
               "tooltip": "Only Classification recipes appear here. Class IDs and labels are pulled from the selected recipe.",
               "placeholder": "Select a Classification recipe",
-              "required": "Pick a Classification recipe"
+              "required": "Pick a Classification recipe",
+              "unsuppliedInputs": "No supported monitoring data provides the bands this classification reads: {missing}. Choose another classification.",
+              "multipleInputs": "This classification uses {count} input images; PyEO Alerts needs exactly one. Remove the others from the classification, or choose another classification."
             },
             "changeFromClasses": {
               "label": "FROM classes (baseline)",
@@ -1563,7 +1690,8 @@
             },
             "changeClasses": {
               "noClassification": "Select a classification recipe to choose From/To classes"
-            }
+            },
+            "andMore": "{items} and {count} more"
           }
         },
         "options": {
@@ -1572,16 +1700,28 @@
           "tooltip": "Optional spectral-index confirmation and the temporal-consistency threshold.",
           "form": {
             "useIndexGate": {
-              "label": "Require index drop",
+              "label": "Require drop",
               "tooltip": "Require the chosen index to drop by at least the threshold (baseline − monitoring) before an alert is confirmed. Only decreases count — an index increase never confirms a change.",
               "off": "No",
               "on": "Yes",
-              "unavailable": "The selected classification's baseline imagery has no near-infrared band, so it cannot produce a spectral index; the index gate is unavailable."
+              "unavailable": "The selected classification's baseline imagery has no near-infrared band, so it cannot produce a spectral index; Require drop is unavailable.",
+              "dependsOnSources": {
+                "CHECKING": "Checking the classification under SRC before Require drop can be changed.",
+                "UNAVAILABLE": "The classification under SRC can't be checked right now, so Require drop can't be changed."
+              }
             },
             "gateIndex": {
               "label": "Index",
               "tooltip": "Spectral index whose drop (baseline − monitoring) confirms an alert — a drop signals disturbance. Options depend on the selected sources.",
-              "required": "Pick an index"
+              "required": "Pick an index",
+              "unavailable": {
+                "BASELINE": "The classification's imagery can't provide {index} for Require drop. Choose another index, or turn Require drop off.",
+                "MONITORING": "The monitoring data can't provide {index} for Require drop. Choose another index, or turn Require drop off."
+              },
+              "noAlternative": {
+                "BASELINE": "The classification's imagery can't provide {index} or any other index Require drop offers. Turn Require drop off.",
+                "MONITORING": "The monitoring data can't provide {index} or any other index Require drop offers. Turn Require drop off."
+              }
             },
             "gateThreshold": {
               "label": "Minimum drop",
@@ -1589,9 +1729,24 @@
               "required": "Set a threshold",
               "value": "{value}"
             },
-            "minConsecutiveDetections": {
-              "label": "Minimum consecutive detections",
-              "tooltip": "A pixel only flags as an alert after this many consecutive monitoring acquisitions show the same change.",
+            "minRepeatability": {
+              "label": "Minimum repeatability",
+              "tooltip": "A pixel only flags as an alert if this percentage of classified images verifies an initial change detection.",
+              "value": "{value}%"
+            },
+            "minCumulativeDetections": {
+              "label": "Minimum cumulative detections",
+              "tooltip": "A pixel only flags as an alert after this many cumulative monitoring acquisitions show the same change.",
+              "value": "{value} images"
+            },
+            "minFromDetections": {
+              "label": "Minimum From detections",
+              "tooltip": "A pixel can only flag in the 'Binary from-to decision' layer after this many occurrences of any of the FROM classes.",
+              "value": "{value} images"
+            },
+            "minToDetections": {
+              "label": "Minimum To detections",
+              "tooltip": "A pixel can only flag in the 'Binary from-to decision' layer after this many occurrences of any of the TO classes.",
               "value": "{value} images"
             }
           }
@@ -1601,9 +1756,9 @@
         "loadError": "Failed to load the classification recipe: {error}",
         "mosaicLoadError": "Failed to load the classification's imagery: {error}",
         "assetLoadError": "Failed to read the classification asset metadata: {error}",
-        "singleInputRequired": "This classification uses more than one input image, which isn't supported here. Choose a classification with a single input.",
         "selectedScenesUnsupported": "This classification was trained on hand-selected scenes, which isn't supported yet. Choose a classification trained on a date range.",
-        "notDerivable": "Couldn't read the imagery dates from this classification (external asset). Set the baseline and monitoring dates manually."
+        "pending": "Reading the selected classification…",
+        "unavailable": "The selected classification could not be read. Choose it again to retry."
       }
     },
     "changeAlerts": {
@@ -1716,8 +1871,7 @@
         "reference": {
           "asset": {
             "label": "Earth Engine CCDC Asset",
-            "title": "Earth Engine CCDC Asset",
-            "notCcdc": "Asset does not contain CCDC segments"
+            "title": "Earth Engine CCDC Asset"
           },
           "button": "REF",
           "form": {
@@ -1726,6 +1880,9 @@
               "label": "CCDC asset",
               "placeholder": "Enter CCDC asset ID",
               "required": "An asset ID must be specified"
+            },
+            "recipe": {
+              "required": "Select a recipe"
             }
           },
           "recipe": {
@@ -1928,7 +2085,18 @@
           "loadError": "Failed to load recipe"
         }
       },
-      "tabPlaceholder": "Change_alerts"
+      "tabPlaceholder": "Change_alerts",
+      "processing": {
+        "REFERENCE": "from reference (read-only)",
+        "RECORDED": "recorded by the asset (read-only)",
+        "NOT_RECORDED": "not recorded by the asset — check it matches",
+        "MIXED": "recorded settings are read-only — check that editable settings match",
+        "UNREADABLE": "recorded settings cannot be read",
+        "PENDING": "checking reference settings",
+        "UNAVAILABLE": "could not read reference settings",
+        "unreadable": "The reference’s recorded processing settings cannot be read. Repair the metadata or select another reference.",
+        "dateFormatRequired": "The asset does not record its date format. Select the format used by its segments."
+      }
     },
     "classification": {
       "bands": {
@@ -2034,7 +2202,8 @@
                       "label": "Mahalanobis",
                       "tooltip": "Mahalanobis distance from the class mean"
                     }
-                  }
+                  },
+                  "tooltip": "Distance measure used to compare a pixel with each class mean"
                 }
               },
               "label": "Min distance"
@@ -2105,7 +2274,8 @@
                 },
                 "degree": {
                   "label": "Degree of polynomial",
-                  "placeholder": "Degree..."
+                  "placeholder": "Degree...",
+                  "tooltip": "Degree of the polynomial kernel"
                 },
                 "gamma": {
                   "label": "Gamma",
@@ -2214,6 +2384,7 @@
             "indexes": {
               "label": "Indexes"
             },
+            "insufficientBands": "Select at least two available bands.",
             "pairWiseExpression": {
               "ANGLE": {
                 "label": "Angle"
@@ -2230,7 +2401,9 @@
               "RATIO": {
                 "label": "Ratio"
               }
-            }
+            },
+            "unavailableBands": "Source no longer provides {bands}.",
+            "underivableIndexes": "Source no longer provides the bands to derive {indexes}."
           },
           "button": "IMG",
           "derivedBands": {
@@ -2285,6 +2458,9 @@
               "placeholder": "Enter an asset ID...",
               "required": "You must enter an asset ID"
             },
+            "bandSetSpecs": {
+              "required": "Select at least one band"
+            },
             "includedBands": {
               "label": "Included bands"
             },
@@ -2297,6 +2473,12 @@
               "required": "An image must be selected"
             }
           },
+          "unavailableSelections": {
+            "incompleteCombination": "A band combination needs at least two available bands.",
+            "input": "Some bands or indexes are unavailable. Open this image to review them.",
+            "inputs": "Some bands or indexes are unavailable. Review Input imagery."
+          },
+          "ambiguousFeatures": "More than one band of the input images gives {features}, whatever its case. To reuse training data, give the bands distinct names in a Stack's Band names panel, and use that Stack in both recipes.",
           "loadingBands": "Loading available bands",
           "loadingBandsError": "Failed to load from Google Earth Engine",
           "noImagery": "Please add at least one image to classify.",
@@ -2410,17 +2592,11 @@
             },
             "sampleClassification": {
               "typeToSample": {
-                "label": "Image source",
-                "ASSET": "EE Asset",
-                "RECIPE": "Recipe"
+                "label": "Image source"
               },
               "assetToSample": {
-                "label": "EE asset ID of classification",
                 "placeholder": "Enter an asset ID...",
                 "required": "You must enter an asset ID"
-              },
-              "recipeToSample": {
-                "label": "Recipe to sample"
               },
               "sampleScale": {
                 "label": "Scale to sample in",
@@ -2516,6 +2692,12 @@
               }
             }
           },
+          "missing": "Collect points on the map or add a training data set.",
+          "missingFeatures": "No input image of {recipe} supplies {features}, which this recipe trains on.",
+          "derivedFeature": "{feature} is built of {bands}, which one input image of it must hold.",
+          "ambiguousFeatures": "In {recipe}, more than one band matches {conflicts}. Give the bands distinct names in a Stack's Band names panel, and use that Stack in both recipes.",
+          "conflict": "{feature} ({inputs})",
+          "conflictInput": "input image {input}: {bands}",
           "noDataSet": "No training data set added",
           "remove": {
             "confirmationMessage": "Are you sure you want to remove {name} from your training data?",
@@ -2556,6 +2738,9 @@
               "title": "Collect Earth Online",
               "tooltip": "Use training data from CEO"
             }
+          },
+          "reusedRecipe": {
+            "repair": "{count, plural, one {Fix the problem in {recipes}, or select another recipe.} other {Fix the problems in {recipes}, or select another recipe.}}"
           }
         }
       },
@@ -2577,6 +2762,7 @@
       "description": "Create a regression from SEPAL or Google Earth Engine imagery.",
       "panel": {
         "trainingData": {
+          "missing": "Add a training data set.",
           "form": {
             "eeTable": {
               "valueColumn": {
@@ -2831,12 +3017,33 @@
           "title": "Band names",
           "tooltip": "Set the band names of the stack.",
           "duplicateBand": "Duplicate band name",
-          "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters"
+          "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters",
+          "problem": {
+            "duplicate": "\"{outputName}\" is the name of more than one band.",
+            "blank": "A band has no name.",
+            "unmapped": "Its bands are not named.",
+            "invalidFormat": "\"{outputName}\" is not a valid band name."
+          }
         }
       },
       "tabPlaceholder": "Stack"
     },
     "bandMath": {
+      "requirement": {
+        "syntaxError": "The expression cannot be read.",
+        "unknownVariable": "\"{variable}\" is neither an input nor an earlier calculation.",
+        "unknownBand": "\"{variable}\" has no band \"{band}\".",
+        "forwardReference": "\"{variable}\" is calculated after this calculation.",
+        "selfReference": "\"{variable}\" cannot use itself.",
+        "missingImage": "\"{variable}\" no longer exists.",
+        "invalidArgCount": "A function is given {argCount} arguments instead of {expectedArgCount}.",
+        "invalidBandCount": "\"{imageName}\" has {bandCount} bands, while another image read whole has {expectedBandCount}.",
+        "missingInputBands": "Its source no longer has {bands}.",
+        "noOutputBands": "\"{variable}\" outputs no bands.",
+        "noOutputImages": "No image or calculation is output.",
+        "invalidOutputName": "\"{outputName}\" is not a valid band name.",
+        "duplicateOutputName": "\"{outputName}\" is the name of more than one output band."
+      },
       "create": "Band Math",
       "description": "Perform band math on imagery from SEPAL and/or Google Earth Engine image assets.",
       "duplicateName": "Duplicate name. There are other images or calculations with this name.",
@@ -2954,8 +3161,12 @@
           "tooltip": "Select bands to output and their corresponding names.",
           "duplicateBand": "Duplicate band name",
           "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters",
-          "noImages": "No images/calculations added to output",
+          "noImages": "Choose the bands to output: press Add to pick an input image or a calculation, then its bands. Input bands can be output directly; a calculation is optional.",
           "noBands": "No bands added to output",
+          "missingBands": "An image or calculation outputs no bands.",
+          "resetName": {
+            "tooltip": "Clear to use an available default name."
+          },
           "addImage": {
             "label": "Add",
             "tooltip": "Include bands from image or calculation to output",
@@ -2991,8 +3202,7 @@
         "inputImage": {
           "asset": {
             "label": "Earth Engine asset ID",
-            "placeholder": "Enter an asset ID...",
-            "title": "Earth Engine Asset"
+            "placeholder": "Enter an asset ID..."
           },
           "changeBand": {
             "label": "Change band"
@@ -3006,10 +3216,9 @@
           },
           "legend": {
             "label": "Legend",
-            "tooLong": "The legend is too long. It cannot contain more than {max} entries."
-          },
-          "recipe": {
-            "title": "Saved SEPAL Recipe"
+            "tooLong": "The legend is too long. It cannot contain more than {max} entries.",
+            "missing": "This image has no legend. Open it to add the classes to compare.",
+            "required": "Add the classes of the change band to compare."
           },
           "to": {
             "button": {
@@ -3017,6 +3226,9 @@
               "tooltip": "Select to image"
             },
             "title": "To image"
+          },
+          "image": {
+            "label": "Image"
           }
         },
         "legend": {
@@ -3055,9 +3267,7 @@
       "panel": {
         "inputImage": {
           "asset": {
-            "label": "Earth Engine asset ID",
-            "placeholder": "Enter an asset ID...",
-            "title": "Earth Engine Asset"
+            "placeholder": "Enter an asset ID..."
           },
           "changeBand": {
             "label": "Change band"
@@ -3074,8 +3284,7 @@
           },
           "recipe": {
             "label": "Recipe",
-            "placeholder": "Select a recipe...",
-            "title": "Saved SEPAL Recipe"
+            "placeholder": "Select a recipe..."
           },
           "to": {
             "button": {
@@ -3083,6 +3292,9 @@
               "tooltip": "Select to image"
             },
             "title": "To image"
+          },
+          "image": {
+            "label": "Image"
           }
         },
         "legend": {
@@ -3251,15 +3463,14 @@
       "panel": {
         "inputImage": {
           "asset": {
-            "label": "Earth Engine asset ID",
-            "placeholder": "Enter an asset ID...",
-            "title": "Earth Engine Asset"
+            "placeholder": "Enter an asset ID..."
           },
           "imageMask": {
             "button": {
               "label": "MSK",
               "tooltip": "Select mask to use"
             },
+            "missing": "Select a mask",
             "title": "Mask to use"
           },
           "imageToMask": {
@@ -3271,8 +3482,10 @@
           },
           "recipe": {
             "label": "Recipe",
-            "placeholder": "Select a recipe...",
-            "title": "Saved SEPAL Recipe"
+            "placeholder": "Select a recipe..."
+          },
+          "image": {
+            "label": "Image"
           }
         }
       },
@@ -3440,6 +3653,30 @@
                 "required": "A row must be selected"
               },
               "title": "Select from Fusion Table"
+            },
+            "geoId": {
+              "about": "About GeoID",
+              "checking": "Checking GeoID...",
+              "label": "GeoID",
+              "lookUp": "Look up a GeoID",
+              "multiple": "More than one GeoID found. An area of interest uses a single GeoID.",
+              "none": "No GeoID found. Paste a GeoID, or a link containing one.",
+              "notChecked": "Not checked: {error}",
+              "placeholder": "Paste a GeoID or a link containing one",
+              "title": "From GeoID",
+              "tooltip": "A GeoID is a permanent identifier for a location – a point or a boundary – registered with the Open Foris GeoID service. Paste a GeoID, or a link containing one."
+            },
+            "bufferMeters": {
+              "defaultPlaceholder": "Default",
+              "invalid": "A whole number of metres, at least {min, number}",
+              "label": "Buffer (m)",
+              "square": "m = {size, number} m × {size, number} m square",
+              "tooltip": {
+                "point": "This GeoID is a single location. The area of interest is the square reaching this distance from it in each direction.",
+                "polygon": "This GeoID is a boundary. The area of interest extends this distance beyond it; 0 keeps the boundary as it is.",
+                "unknown": "How far to extend the area of interest beyond the geometry of the GeoID. Leave empty for its default: a 250 m square around a point, the boundary itself for a polygon."
+              },
+              "unit": "m"
             },
             "polygon": {
               "description": "Draw a polygon on the map.",
@@ -4370,23 +4607,17 @@
           "tooltip": "Configure imagery pre-processing"
         },
         "reference": {
-          "asset": {
-            "label": "Earth Engine Asset",
-            "title": "Earth Engine Asset",
-            "notBayTSHistorical": "Asset is not a BAYTS historical image or image collection"
-          },
           "button": "REF",
           "form": {
             "asset": {
-              "invalid": "Asset must be an exported BAYTS historical asset",
               "label": "BAYTS historical asset",
               "placeholder": "Enter BAYTS historical asset ID",
               "required": "An asset ID must be specified"
+            },
+            "recipe": {
+              "label": "BAYTS historical recipe",
+              "required": "Select a recipe"
             }
-          },
-          "recipe": {
-            "label": "Saved SEPAL recipe",
-            "title": "Saved SEPAL recipe"
           },
           "title": "Source",
           "tooltip": "Select BAYTS historical asset or recipe to use as reference for alerts"
@@ -4400,15 +4631,17 @@
         "loading": "Loading tiles: {pending}",
         "tilesFailed": "{failed} failed"
       },
-      "reference": {
-        "asset": {
-          "loadError": "Failed to load asset"
-        },
-        "recipe": {
-          "loadError": "Failed to load recipe"
-        }
-      },
-      "tabPlaceholder": "BAYTS_alerts"
+      "tabPlaceholder": "BAYTS_alerts",
+      "processing": {
+        "REFERENCE": "from the historical statistics (read-only)",
+        "RECORDED": "recorded by the asset (read-only)",
+        "NOT_RECORDED": "not recorded by the asset — check it matches the statistics",
+        "MIXED": "recorded settings are read-only — check that editable settings match",
+        "UNREADABLE": "recorded settings cannot be read",
+        "PENDING": "checking the processing of the historical statistics",
+        "UNAVAILABLE": "could not read the processing of the historical statistics",
+        "unreadable": "The processing the historical statistics were built with cannot be read. Repair the asset’s metadata or select another reference."
+      }
     },
     "baytsHistorical": {
       "create": "BAYTS Historical Layer",
@@ -4456,7 +4689,8 @@
                 "label": "Descending",
                 "tooltip": "Include scenes from descending orbits."
               },
-              "label": "Orbits"
+              "label": "Orbits",
+              "required": "Select at least one orbit."
             },
             "outlierRemoval": {
               "aggressive": {
@@ -4722,6 +4956,7 @@
     },
     "project": {
       "title": "Project",
+      "loadingError": "Failed to load projects. Please reload the page to try again.",
       "description": "{count} {count, plural, one {recipe} other {recipes}}",
       "form": {
         "name.label": "Name",
@@ -4744,6 +4979,7 @@
       "noProjectOption": "[no project]"
     },
     "recipe": {
+      "landingTab": "Recipes",
       "lastUpdate": "Last update",
       "loading": "Loading recipes",
       "loadingError": "Failed to load recipes. Please reload page to try again.",
@@ -4813,6 +5049,11 @@
           "title": "Mapping"
         }
       },
+      "requirement": {
+        "bandNotIncluded": "A constraint reads band \"{band}\", which its input does not include.",
+        "missingInput": "A constraint reads an input that has been removed.",
+        "sourceBandMissing": "The input source no longer provides band \"{band}\". Restore it or select another band."
+      },
       "tabPlaceholder": "Remapping"
     },
     "retrieve": {
@@ -4836,7 +5077,10 @@
         },
         "bands": {
           "atLeastOne": "At least one band must be retrieved",
-          "label": "Bands to retrieve"
+          "checking": "Checking whether the selected bands can be retrieved...",
+          "label": "Bands to retrieve",
+          "loading": "Loading available bands...",
+          "unavailable": "These bands are no longer available from this recipe: {bands}. Select from the bands offered above."
         },
         "crs": {
           "label": "CRS",
@@ -4861,6 +5105,13 @@
           "suffix": "multiples",
           "tooLarge": "Multiple * shard size must be less than or equal to 131072",
           "tooltip": "Multiples of the shard size to set the file dimentions to, the size to split each export into. E.g. for a shard size of 256 and a multiple of 10, the exported image will be downloaded it images with the maximum size of 2560x2560 pixels."
+        },
+        "additionalOutputs": {
+          "label": "Additional outputs",
+          "SITS": {
+            "label": "SITS files",
+            "tooltip": "Adds per-date VRT files for the SITS R package."
+          }
         },
         "scale": {
           "label": "Scale",
@@ -4907,9 +5158,26 @@
         }
       },
       "title": "Retrieve",
-      "tooltip": "Retrieve recipe"
+      "tooltip": "Retrieve recipe",
+      "error": {
+        "imageOutput": "Unable to determine the export requirements for this recipe. Please try again, and check that the recipes it depends on are available.",
+        "submit": "The export could not be submitted. Check the task list before trying again."
+      },
+      "assets": {
+        "checking": "Checking asset…",
+        "unavailable": "Asset {asset} is not available. Refresh, or choose another source.",
+        "failing": "Asset {asset} could not be checked. Earth Engine could not be reached.",
+        "expired": "The assets this recipe reads have not been checked recently.",
+        "retry": "Refresh"
+      },
+      "source": {
+        "checking": "Checking the source selected under {section}…",
+        "unavailable": "The source selected under {section} is missing or unavailable. Open {section} to see why.",
+        "expired": "The source selected under {section} has not been checked recently. Refresh to check it again."
+      }
     },
     "saveRecipe": {
+      "conflict": "This recipe was changed somewhere else, so your latest edits could not be saved. They remain open in this tab. To keep them, use Duplicate recipe in the top-right recipe menu and save the copy. Then close and reopen the original to load the latest version.",
       "error": "Sorry, but something went wrong when trying to save your recipe. If you close the window/tab, you will lose any changes you've made since last successful save. To make sure you have some record the data within this recipe, you might want to export it. Go to the top right recipe menu and select \"Export recipe\".",
       "form": {
         "name": {
@@ -5588,6 +5856,107 @@
         "easeGrid2North": "North polar (EPSG:6931)",
         "easeGrid2South": "South polar (EPSG:6932)"
       }
+    },
+    "requirement": {
+      "inputImage": {
+        "field": {
+          "missingAsset": "This asset no longer exists or is not accessible.",
+        "missingRecipe": "This recipe no longer exists or is not accessible.",
+          "unavailableBand": "Source no longer provides {band}."
+        },
+        "missingAsset": "The selected asset no longer exists or is not accessible.",
+      "missingRecipe": "The selected recipe no longer exists or is not accessible.",
+        "unavailableBands": "Selected bands are unavailable. Open this image to review them."
+      },
+      "itemProblem": "{item}: {message}",
+      "output": "its settings",
+      "prerequisiteUnmet": "Depends on {items}, which need attention."
+    },
+    "source": {
+      "status": {
+        "checking": "Checking the selected source…",
+        "recipeNeedsAttention": "{recipe} needs attention.",
+        "multipleClassifierInputs": "{recipe} has {count} input images. This recipe requires a Classification with one input image. Select a single-input Classification.",
+        "multipleClassifierInputsUpstream": "{consumer} cannot run because {recipe} has {count} input images, while {consumer} requires a Classification with one input image. Select a single-input Classification in {consumer}.",
+        "providesNoTrainingData": "{recipe} provides no training data. Select a Classification or Regression with training data instead.",
+        "providesNoTrainingDataUpstream": "{consumer} cannot run because {recipe} provides no training data. Select a Classification or Regression with training data in {consumer}.",
+        "providesNoClassifier": "{recipe} has no classifier to apply. Select a Classification instead.",
+        "providesNoClassifierUpstream": "{consumer} cannot run because {recipe} has no classifier to apply. Select a Classification in {consumer}.",
+        "providesNoImage": "{recipe} makes no image. Select an image instead.",
+        "providesNoImageUpstream": "{consumer} cannot run because {recipe} makes no image. Select an image in {consumer}.",
+        "recipeUnusable": "This recipe cannot use {recipe}. Select another recipe.",
+        "recipeUnusableUpstream": "{consumer} cannot use {recipe}. Review {consumer}, or select another recipe.",
+        "recipeBlockedBy": "{recipe} cannot run because {origins} needs attention.",
+        "recipeBlockedByOrigins": "{recipe} cannot run because {origins} need attention.",
+        "recipeAlsoDependsOn": "{recipe} needs attention. It also depends on {origins}, which needs attention.",
+        "recipeAlsoDependsOnOrigins": "{recipe} needs attention. It also depends on {origins}, which need attention.",
+        "unavailable": "The selected source is missing or unavailable. Refresh, or choose another source.",
+        "assetUnavailable": "Asset {asset} could not be checked. Refresh, or choose another source.",
+        "assetMissing": "Asset {asset} is missing or unavailable. Refresh, or choose another source.",
+        "expired": "The selected source has not been checked recently. Refresh to check it again.",
+        "refresh": "Refresh",
+        "missing": "No source is selected.",
+        "notAProducer": "{way}{source} provides no {capability}.",
+        "unfilledRole": "{way}{source} does not select the image it stands for.",
+        "cyclic": "The selected source refers back to itself.",
+        "unsuitable": "The selected source cannot provide {capability}.",
+        "withheld": "Not loaded: the source selected in {section} cannot be used yet.",
+        "advisory": "{about}: {message}",
+        "sectionsIncompatible": "The settings in {sections} are incompatible with this reference. Choose another reference or update the settings in {sections}."
+      },
+      "operation": {
+        "PIXEL_SEGMENTS": "Segment chart"
+      },
+      "capability": {
+        "baytsHistoricalStats": "BAYTS historical statistics",
+        "ccdcSegments": "CCDC segments"
+      },
+      "historicalStats": {
+        "incompatible": "Asset {asset} does not have the BAYTS historical statistics alert detection reads: {problems}.",
+        "missingBand": "{band} is missing",
+        "arrayBand": "{band} is an array, where a scalar is needed",
+        "unexpectedBand": "{band} would be read as a statistic of its orbit pass",
+        "misordered": "{bands} must be stored VV before VH",
+        "undetermined": "The array dimensions of {count} bands of asset {asset} could not be established: {bands}.",
+        "noPass": "The selected source has no orbit pass with BAYTS historical statistics.",
+        "passAbsent": "The reference has no usable statistics for the {absent} orbit {count, plural, one {pass} other {passes}} monitored. Monitor {passes} instead.",
+        "malformedPasses": "The orbit passes to monitor are not valid. Choose them again.",
+        "passAbsentNoAlternative": "The reference has no usable statistics for the {absent} orbit {count, plural, one {pass} other {passes}} monitored."
+      },
+      "classifierInputs": {
+        "classification": "No collection this recipe can use provides the bands this classification reads: {missing}. Choose another classification, or none.",
+        "dataSets": "The selected data sets don't provide the bands this classification reads: {missing}. Choose data sets that do, or another classification."
+      },
+      "classifiedOutputs": {
+        "band": "The selected classification's classifier can't provide {unsupported}. Choose another band, or another classification.",
+        "breakpointBands": "The selected classification's classifier can't provide {unsupported}. Choose other breakpoint bands, or another classification."
+      },
+      "segments": {
+        "incompatible": "Asset {asset} does not have the CCDC segment layout alert detection reads: {problems}.",
+        "incompatibleSlice": "Asset {asset} does not have the CCDC segment layout slicing reads: {problems}.",
+        "notSegments": "This asset can't be used as a CCDC segment reference. Choose an asset or recipe that provides CCDC segments.",
+        "notSliceSegments": "This asset can't be sliced as CCDC segments. Choose an asset or recipe that provides CCDC segments.",
+        "missingBand": "{band} is missing",
+        "scalarBand": "{band} is not an array, where {expected}-dimensional arrays are needed",
+        "wrongDimensions": "{band} has {actual} array dimensions, where {expected} are needed",
+        "misordered": "the RMSE and magnitude bands of {measures} are not stored in the same order",
+        "undetermined": "The array dimensions of {count} bands of asset {asset} could not be established: {bands}.",
+        "andMore": "{items} and {count} more",
+        "measureAbsent": "The selected source has no segments for band {measure}. Choose a band it has segments for: {measures}.",
+        "measureClassified": "{measure} is computed by a classification, which Change Alerts doesn't use. Monitor a band of the imagery instead: {measures}.",
+        "measureUnobserved": "The selected monitoring data does not observe {measure}. Choose a band it observes that the selected source has segments for: {measures}.",
+        "noMonitorableMeasure": "The selected source has segments only for {measures}, which no supported monitoring data observes. Choose another source.",
+        "noAvailableMeasure": "The selected source has segments only for {measures}, which this type of monitoring data does not observe. Choose a type that observes one of them.",
+        "noObservedMeasure": "The selected source has segments only for {measures}, which the selected data sets do not observe as currently processed. Choose data sets that observe one of them, or check the surface reflectance (SR) correction in pre-processing.",
+        "noMeasures": "none",
+        "noMeasure": "The selected source has no band with both coefficients and RMSE.",
+        "noSliceMeasure": "The selected source has no band with coefficients, RMSE and magnitude.",
+        "noChartableMeasure": "No measure has the coefficients, RMSE and magnitude a segment chart plots."
+      }
+    },
+    "sourceType": {
+      "ASSET": "Asset",
+      "RECIPE": "Recipe"
     }
   },
   "sources": {
@@ -5649,6 +6018,8 @@
         "asset": {
           "createFolder": "Create asset folder {assetId}",
           "delete": "Delete asset {assetId}",
+          "encodingConflict": "The image collection {assetId} already holds images stored with a different band encoding. Export with the Replace strategy instead of Resume.",
+          "encodingTooLarge": "The band encoding of {assetId} cannot be stored as Earth Engine asset metadata: {reason}",
           "prepareImageCollection": "Prepare image collection {assetId}",
           "startExport": "Start export of {tileCount} tiles",
           "sharing": "Sharing asset {assetId}",
@@ -5753,7 +6124,14 @@
     },
     "removeAll": {
       "label": "Clear inactive tasks",
-      "tooltip": "Remove all completed, failed, or stopped tasks"
+      "tooltip": "Remove all completed, failed, or stopped tasks",
+      "filteredTooltip": {
+        "search": "Remove tasks matching the current filter",
+        "completed": "Remove completed tasks",
+        "completedSearch": "Remove completed tasks matching the current filter",
+        "failed": "Remove failed or canceled tasks",
+        "failedSearch": "Remove failed or canceled tasks matching the current filter"
+      }
     },
     "stop": {
       "tooltip": "Stop task"
@@ -5771,6 +6149,9 @@
       }
     },
     "samplingDesign": {
+      "progress": {
+        "prepare": "Preparing samples"
+      },
       "grid": {
         "unsupportedArrangementCrs": "The selected Sample Arrangement CRS is not supported. Choose one of: {supported}.",
         "invalidStratificationCrs": "The Stratification CRS is missing. Provide the projected CRS the categorical source is interpreted in.",
@@ -5844,12 +6225,18 @@
       "completed": "Completed!",
       "EEException": "Earth Engine: {error}",
       "executing": "Executing...",
+      "exitedUnexpectedly": "The task ended unexpectedly. Run the task again.",
       "failed": "{error}",
       "failedGeneric": "The task failed. Try running it again. If the problem persists, contact the SEPAL team.",
-      "initializing": "Initializing..."
+      "initializing": "Initializing...",
+      "interrupted": "Interrupted by a server restart. Run the task again.",
+      "launchFailed": "The task could not be started. Run the task again.",
+      "stalled": "The task stopped responding. Run the task again.",
+      "waitingForLocalProcessing": "Waiting for other exports to finish downloading..."
     }
   },
   "terminal": {
+    "menuTab": "Sessions",
     "server": {
       "error": "Failed to start terminal"
     }
@@ -5931,6 +6318,7 @@
     },
     "report": {
       "resources": {
+        "info": "Shows your monthly instance and storage budgets, and the storage space in use.",
         "max": "Max",
         "instanceSpending": "Instance spending",
         "storageSpending": "Storage spending",
@@ -5941,8 +6329,8 @@
         "used%": "Used"
       },
       "sessions": {
+        "active": "{count} active",
         "cost": "Cost",
-        "earliestTimeoutHours": "Keep alive",
         "hourlyCost": "Hourly cost",
         "instanceDescription": "Instance description",
         "instanceType": "Instance type",
@@ -5950,7 +6338,7 @@
         "time": "Date/time started",
         "title": "Sessions"
       },
-      "title": "User report",
+      "title": "Usage",
       "usage": "Using {percentage}% of allocated quota",
       "updateQuota": "Request additional resources"
     },
@@ -5999,22 +6387,81 @@
         "error": "Could not update user"
       }
     },
+    "sshKeys": {
+      "add": {
+        "error": {
+          "DUPLICATE_KEY": "You have already added this key.",
+          "failed": "Failed to add the SSH key.",
+          "INVALID_KEY": "This is not a public key. Choose a .pub file, or paste its single line.",
+          "KEY_TOO_WEAK": "RSA keys must be at least 2048 bits.",
+          "PRIVATE_KEY": "This is a private key: never share it. Use the .pub file next to it.",
+          "TOO_MANY_KEYS": "You have reached the maximum of 20 keys.",
+          "UNSUPPORTED_TYPE": "This key type is not supported. Use an ed25519, ECDSA or RSA key."
+        },
+        "form": {
+          "file": {
+            "dropOrClick": "Drop your .pub file here, or click to select it",
+            "label": "Public key file",
+            "notPub": "Only .pub files can be added. The file without .pub is your private key: never share it.",
+            "tooLarge": "This file is too large to be a public key."
+          },
+          "name": {
+            "label": "Name",
+            "placeholder": "Defaults to the key's comment"
+          },
+          "publicKey": {
+            "label": "Public key",
+            "placeholder": "Or paste it here: ssh-ed25519 AAAA… you@laptop",
+            "privateKeyHidden": "•••••• private key hidden ••••••",
+            "required": "Choose a .pub file, or paste a public key"
+          }
+        },
+        "howTo": "Create a key, if you have none, then drop or select the public key file. Alternatively, paste its contents below.",
+        "label": "Add",
+        "success": "SSH key added.",
+        "title": "Add SSH key"
+      },
+      "intro": "SSH keys allow you to login into a session without having to type your password.",
+      "label": "SSH keys",
+      "load": {
+        "error": "Failed to load your SSH keys."
+      },
+      "none": "You have no SSH keys.",
+      "remove": {
+        "error": "Failed to remove the SSH key.",
+        "message": "Remove the SSH key {name}? It will no longer let you log in.",
+        "tooltip": "Remove this key"
+      },
+      "title": "SSH keys"
+    },
+    "userAccount": {
+      "editDetails": {
+        "label": "User details",
+        "tooltip": "Edit the user's details and role"
+      },
+      "title": "User account"
+    },
     "userDetails": {
       "form": {
         "email": {
           "label": "Email",
           "required": "Email is required",
+          "format": "Email format is invalid",
           "unique": "There is another user with this email"
         },
         "emailNotifications": {
           "disabled.label": "Disabled",
+          "disabled.tooltip": "Do not receive optional email notifications",
           "enabled.label": "Enabled",
+          "enabled.tooltip": "Receive optional email notifications",
           "label": "Email notifications",
           "tooltip": "Enable or disable optional email notifications (e.g. task completed, task failed, etc.)"
         },
         "manualMapRendering": {
           "disabled.label": "Disabled",
+          "disabled.tooltip": "Render map layers automatically",
           "enabled.label": "Enabled",
+          "enabled.tooltip": "Render map layers only when requested",
           "label": "Manual map rendering",
           "tooltip": "Enable or disable manual map rendering"
         },
@@ -6057,6 +6504,17 @@
           "label": "Intended use",
           "required": "Intended use is required"
         },
+        "usage": {
+          "label": "Computing resource usage",
+          "avgMax": "{metric} (avg/max)",
+          "cost": "Cost",
+          "hours": "Hours",
+          "instanceType": "Instance type",
+          "month": "Month",
+          "network": "Network",
+          "noData": "No usage recorded",
+          "error": "Could not load usage data"
+        },
         "username": {
           "format": "Username must start with a letter and can only contain letters and digits",
           "label": "Username",
@@ -6089,7 +6547,8 @@
       "switchingToSEPALGoogleAccount": "Switching to SEPAL's Google Account",
       "title": "User details",
       "update": {
-        "error": "Could not update user."
+        "error": "Could not update user.",
+        "conflict": "This user was changed by someone else meanwhile. Review the changes and try again."
       },
       "confirmation": {
         "message": "User role will be changed to \"{role}\""
@@ -6105,12 +6564,34 @@
           "label": "Instance name"
         }
       },
+      "start": {
+        "error": "Could not start session.",
+        "label": "Start"
+      },
       "stop": {
         "error": "Could not stop session.",
         "label": "Stop",
-        "message": "Stop session?",
+        "message": "You are stopping session {name}.",
+        "messageWithRunning": "You are stopping session {name}.|The following are running on it and will be closed.",
         "success": "Session stopped.",
         "tooltip": "Stop session (cannot be resumed)."
+      },
+      "expiry": {
+        "currentlyRunning": "Currently running:",
+        "extend": "Keep it running {minutes} min",
+        "extendFailed": "Could not extend the session.",
+        "extendUnknown": "Keep it running",
+        "idle": "{instance} has not been used for a while and will be stopped to avoid unnecessary cost.",
+        "idleClosed": "{instance} had not been used for a while and was stopped to avoid unnecessary cost.",
+        "instance": "Session {name} ({type})",
+        "instanceUnnamed": "One of your sessions",
+        "runningClosed": "{instance} had not been used for a while and was stopped to avoid unnecessary cost, closing:",
+        "terminate": "Terminate now"
+      },
+      "stopAll": {
+        "error": "Could not stop all sessions.",
+        "label": "Stop all",
+        "message": "You are stopping all your instances ({count}). Everything running on them will be closed."
       },
       "suspend": {
         "error": "Could not suspend session.",
@@ -6122,10 +6603,27 @@
         "error": "Could not update session.",
         "success": "Session has been updated.",
         "tooltip": "Edit session."
+      },
+      "sshLogin": {
+        "tooltip": "Copy SSH login: {login}"
+      },
+      "deadline": {
+        "expired": "{time} (expired)",
+        "label": "Keep alive until",
+        "stopping": "Stops at",
+        "value": "{time} ({relative})"
+      },
+      "usage": {
+        "cpu": "CPU",
+        "gpu": "GPU",
+        "net": "NET",
+        "ram": "RAM"
       }
     }
   },
-  "userMessage": {
+  "message": {
+    "acknowledged": "Seen by {count, plural, one {# user} other {# users}}",
+    "from": "from: {username}",
     "form": {
       "contents": {
         "label": "Contents",
@@ -6137,27 +6635,29 @@
       },
       "preview": {
         "label": "Preview"
+      },
+      "priority": {
+        "unpublished": "Unpublished",
+        "normal": "Normal",
+        "urgent": "Urgent"
       }
     },
-    "publish": {
-      "error": "Cannot publish user message",
-      "success": "User message has been published"
-    },
     "remove": {
-      "error": "Cannot remove user message",
-      "success": "User message has been removed"
+      "error": "Cannot remove message",
+      "success": "Message has been removed"
     },
-    "title": "User message",
+    "title": "Message",
     "update": {
-      "error": "Cannot update user message",
-      "success": "User message has been updated"
+      "error": "Cannot update message",
+      "published.success": "Message has been published",
+      "unpublished.success": "Message has been unpublished"
     },
     "updateState": {
-      "error": "Cannot update user message state",
-      "success": "User message state has been updated"
+      "error": "Cannot update message state",
+      "success": "Message state has been updated"
     }
   },
-  "userMessages": {
+  "messages": {
     "author": "Message by {author}",
     "edit": "Edit message",
     "noMessages": "There are no messages",
@@ -6167,7 +6667,7 @@
       "READ": "Mark as unread",
       "UNREAD": "Mark as read"
     },
-    "title": "User messages"
+    "title": "Messages"
   },
   "users": {
     "count": "{count} {count, plural, one {user} other {users}}, {lastMonthUserCount} updated in the last month",
@@ -6216,7 +6716,15 @@
         }
       }
     },
-    "page": "Page {pageNumber} of {pageCount}"
+    "page": "Page {pageNumber} of {pageCount}",
+    "record": {
+      "changed": "This record has changed",
+      "update": "Update"
+    },
+    "update": {
+      "label": "Update{count, plural, =0 {} other {: #}}",
+      "tooltip": "Apply the changes received since the list was loaded"
+    }
   },
   "widget": {
     "assetDestination": {
@@ -6226,6 +6734,7 @@
       },
       "loadError": "Unable to load asset",
       "invalidAssetId": "Use only letters, numbers, periods, hyphens, underscores, and forward slashes. Spaces are not allowed.",
+      "insideNonContainer": "{ancestor} is an existing asset that is not a folder or image collection, so nothing can be exported inside it",
       "taskPending": "A task is already exporting to this asset. Please choose a different asset ID.",
       "validating": "Validating asset destination...",
       "replace": {
@@ -6243,7 +6752,20 @@
     "workspaceDestination": {
       "taskPending": "A task is already pending in this folder. Please choose a different folder.",
       "notEmpty": "This folder must be completely empty. Please choose a different folder or remove its contents.",
-      "loadError": "Unable to load the workspace. Please try again."
+      "loadError": "Unable to load the workspace. Please try again.",
+      "browser": {
+        "tooltip": "Open workspace browser",
+        "title": "Workspace browser",
+        "path": "Destination",
+        "home": "Home",
+        "filter.placeholder": "Filter by name",
+        "createFolder": {
+          "label": "Create folder",
+          "placeholder": "Enter folder name",
+          "existing.error": "A file or folder with this name already exists",
+          "error": "Unable to create the folder"
+        }
+      }
     },
     "assetInput": {
       "loadError": "Unable to load asset"
@@ -6302,6 +6824,7 @@
       },
       "band": {
         "label": "Band",
+        "notOffered": "\"{band}\" is not among this image's bands.",
         "notSelected": "[No band selected]"
       },
       "booleanOperator": {
@@ -6314,6 +6837,7 @@
       },
       "image": {
         "label": "Image",
+        "notOffered": "This image is no longer available.",
         "notSelected": "[No image selected]"
       },
       "logicalAnd": {
@@ -6398,7 +6922,13 @@
       "placeholder": "Select a recipe...",
       "all": {
         "tooltip": "Show all recipes or only recipes in current project"
-      }
+      },
+      "ownRecipe": {
+        "invalid": "A recipe cannot be used as its own input"
+      },
+      "loadError": "Unable to load recipe",
+      "selection": "Selected",
+      "unlisted": "Unavailable recipe"
     },
     "safetyButton": {
       "label": "Proceed"
@@ -6414,5 +6944,15 @@
       "newTab": "New_Tab"
     }
   },
-  "chromeOnHighResDisplayWarning": "The browser you are using can have issues when showing multiple layers at the same time on very high resolution displays, like yours. If your screen flickers or freezes, please reduce the number of layers or use a different browser, like Firefox or Safari, until the issue has been resolved."
+  "chromeOnHighResDisplayWarning": "The browser you are using can have issues when showing multiple layers at the same time on very high resolution displays, like yours. If your screen flickers or freezes, please reduce the number of layers or use a different browser, like Firefox or Safari, until the issue has been resolved.",
+  "theme": {
+    "label": "Theme",
+    "dark": "Dark",
+    "light": "Light",
+    "system": "System",
+    "systemTooltip": "Follow the operating system setting"
+  },
+  "language": {
+    "label": "Language"
+  }
 }

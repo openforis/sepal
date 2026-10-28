@@ -1,10 +1,10 @@
 import _ from 'lodash'
-import {concat, exhaustMap, filter, first, interval, map} from 'rxjs'
+import {EMPTY, filter, first, map, Observable, of, switchMap, tap, throwError} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
 import {normalizeAppsCatalog} from '~/appsCatalog'
-import {select} from '~/store'
+import {select, subscribe} from '~/store'
 import {getLanguage} from '~/translate'
 
 export const appList = () =>
@@ -20,22 +20,56 @@ export const loadApps$ = () =>
         )
     )
 
-export const runApp$ = path => {
-    const {endpoint} = appList().find(app => app.path === path)
+// The session report is kept fresh by the worker/session websocket (~/widget/sessionMonitor), so
+// waiting for a session to start is a store subscription rather than a poll. Emit the current value
+// on subscribe so a session that is already running resolves without waiting for a push.
+const sessions$ = () => new Observable(subscriber => {
+    subscriber.next(select('user.currentUserReport.sessions'))
+    return subscribe('user.currentUserReport.sessions', sessions => subscriber.next(sessions))
+})
 
-    const isSessionStarted = e => e.status === 'STARTED'
-
-    const requestSession$ = api.apps.requestSession$(endpoint).pipe(
-        filter(e => isSessionStarted(e))
-    )
-
-    const waitForSession$ = interval(2000).pipe(
-        exhaustMap(() => api.apps.waitForSession$(endpoint)),
-        filter(e => isSessionStarted(e)),
+// waitForSession$ — completes once the launched session reports ACTIVE ('STARTING' while its
+// instance provisions). A session that appeared in a report and then vanished was closed, which
+// means the launch failed: that must surface as an error rather than wait forever. The
+// seen-then-gone guard is essential — a session is not in the report until the first push arrives,
+// and treating that initial absence as a closure would fail every launch instantly.
+const waitForSession$ = sessionId => {
+    let seen = false
+    return sessions$().pipe(
+        map(sessions => (sessions || []).find(({id}) => id === sessionId)),
+        switchMap(session => {
+            if (session) {
+                seen = true
+                return of(session)
+            }
+            return seen
+                ? throwError(() => new Error(`Session ${sessionId} closed before it started`))
+                : EMPTY
+        }),
+        filter(({status}) => status === 'ACTIVE'),
         first()
     )
+}
 
-    return concat(requestSession$, waitForSession$).pipe(
-        first()
+// runApp$ — three phases the app tab shows as it goes: the session (instance provisioned and
+// ACTIVE), then the endpoint's server (rstudio/shiny/jupyter listening), then the caller loads the
+// app. onPhase marks the second; the caller owns the first and the last.
+export const runApp$ = (path, {sessionId, instanceType, onSession, onPhase} = {}) => {
+    const {endpoint, label} = appList().find(app => app.path === path)
+
+    return api.apps.requestSession$(
+        {endpoint, appPath: path, appLabel: label, sessionId, instanceType}
+    ).pipe(
+        tap(session => onSession && onSession(session)),
+        // The start response uses the gateway's status contract ('STARTED'); the report the wait
+        // reads uses the worker's ('ACTIVE'). Same state, different vocabulary.
+        switchMap(session => session.status === 'STARTED'
+            ? of(session)
+            : waitForSession$(session.id)),
+        first(),
+        tap(() => onPhase && onPhase('STARTING_SERVER')),
+        switchMap(session => api.apps.startServer$({sessionId: session.id, endpoint}).pipe(
+            map(() => session)
+        ))
     )
 }

@@ -1,4 +1,4 @@
-import {getDayOfYear} from 'date-fns/getDayOfYear'
+import {dayOfYearIgnoringLeapDay} from './sceneSearch.js'
 
 const DATASET_BY_PREFIX = {
     LT04: 'LANDSAT_TM',
@@ -24,14 +24,18 @@ const getCloudCover = (cloudCover, dataset) =>
         ? Math.min(100, parseFloat(cloudCover) + 22)
         : parseFloat(cloudCover)
 
+// Earth Search reports numbers, the CSV files strings: 0 is a value, not a missing field.
+const isPresent = value =>
+    value !== undefined && value !== null && value !== ''
+
 const scene = ({id, dataset, wrsPath, wrsRow, acquiredTimestamp, cloudCover, sunAzimuth, sunElevation}) =>
-    id && dataset && wrsPath && wrsRow && acquiredTimestamp && cloudCover && sunAzimuth && sunElevation ? ({
+    [id, dataset, wrsPath, wrsRow, acquiredTimestamp, cloudCover, sunAzimuth, sunElevation].every(isPresent) ? ({
         id,
         source: 'LANDSAT',
         dataset,
         sceneAreaId: getSceneAreaId(wrsPath, wrsRow),
         acquiredTimestamp,
-        dayOfYear: getDayOfYear(acquiredTimestamp),
+        dayOfYear: dayOfYearIgnoringLeapDay(new Date(acquiredTimestamp)),
         cloudCover: getCloudCover(cloudCover, dataset),
         sunAzimuth: parseFloat(sunAzimuth),
         sunElevation: parseFloat(sunElevation)

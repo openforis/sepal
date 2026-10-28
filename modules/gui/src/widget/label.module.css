@@ -1,5 +1,5 @@
 .label {
-    --label-color: hsl(0, 0%, 70%);
+    --label-color: var(--text-label-color);
     --small-font-size: .7rem;
     --normal-font-size: .8rem;
     --large-font-size: .9rem;
@@ -44,7 +44,7 @@
 }
 
 .label .info:hover {
-    color: #e0e0e0;
+    color: var(--text-label-hover-color);
 }
 
 .error {

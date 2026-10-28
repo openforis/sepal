@@ -30,8 +30,7 @@ const mapRecipeToProps = recipe => {
 
 class _RecipeInput extends React.Component {
     state = {
-        all: false,
-        result: undefined
+        all: false
     }
     cancel$ = new Subject()
 
@@ -40,7 +39,10 @@ class _RecipeInput extends React.Component {
     }
 
     render() {
-        const {stream, input, label, labelButtons, placeholder, autoFocus, onChange} = this.props
+        const {
+            stream, input, label, labelButtons, placeholder, tooltip, allowClear, autoFocus,
+            busyMessage, errorMessage, warningMessage, onChange
+        } = this.props
         const {all} = this.state
         const options = this.getOptions()
 
@@ -65,15 +67,21 @@ class _RecipeInput extends React.Component {
         
         return (
             <Form.Combo
+                windowed
                 input={input}
                 label={label || msg('widget.recipeInput.label')}
                 labelButtons={labelButtons}
                 placeholder={placeholder || msg('widget.recipeInput.placeholder')}
+                tooltip={tooltip}
                 options={options}
                 autoFocus={autoFocus}
+                allowClear={allowClear}
                 buttons={buttons}
-                busyMessage={stream('LOAD_RECIPE').active}
-                onChange={({value}) => {
+                busyMessage={stream('LOAD_RECIPE').active || busyMessage}
+                errorMessage={errorMessage}
+                warningMessage={warningMessage}
+                onChange={option => {
+                    const value = option?.value
                     onChange && onChange(value)
                     this.loadRecipe(value)
                 }}
@@ -88,64 +96,111 @@ class _RecipeInput extends React.Component {
         }
     }
 
-    getOptions() {
-        const {projectId, projects, recipes, filter} = this.props
-        const {all} = this.state
-        const filteredRecipes = recipes
-            .map(recipe => ({...recipe, projectId: recipe.projectId || ''}))
-            .filter(recipe => {
-                const {projectId: p, type} = recipe
-                const recipeType = getRecipeType(type)
-                return all || (p === projectId || (!p && !projectId))
-                   && (filter && recipeType ? filter(recipeType, recipe) : true)
-            })
-        const groups = _.groupBy(filteredRecipes, 'projectId')
-        const options = Object.keys(groups)
-            .map(projectId => {
-                const project = projects.find(({id}) => id === projectId)
-                const group = project
-                    ? project.name
-                    : msg('process.project.noProjectOption')
-                return {
-                    label: group,
-                    filterOptions: isMatchingGroup => !isMatchingGroup,
-                    options: groups[projectId]
-                        .map(recipe => ({
-                            value: recipe.id,
-                            label: recipe.name
-                        }))
-                }
-            })
-        return _.sortBy(options, 'label')
+    // A recipe cannot be an input to itself: the reference closes a cycle the moment it is made, and the
+    // resolver rejects one. Identity is the recipe's id - a title is neither stable nor unique, and the
+    // catalogue summary is a different object from the recipe being edited. What opts out is any selection
+    // that does not become a dependency edge - see allowOwnRecipe.
+    isOwnRecipe(recipeId) {
+        const {recipeId: ownRecipeId, allowOwnRecipe} = this.props
+        return !allowOwnRecipe && !!ownRecipeId && recipeId === ownRecipeId
     }
 
-    loadRecipe(recipeId) {
-        const {stream, onError, onLoading, onLoaded, loadRecipe$} = this.props
-        this.cancel$.next()
-        if (recipeId) {
-            onLoading && onLoading(recipeId)
-            stream('LOAD_RECIPE',
-                loadRecipe$(recipeId).pipe(
-                    switchMap(recipe => {
-                        return api.gee.bands$({recipe}).pipe(
-                            map(bandNames => ({
-                                recipe,
-                                bandNames,
-                                type: getRecipeType(recipe.type)
-                            }))
-                        )
-                    }
-                    )
-                ).pipe(
-                    takeUntil(this.cancel$)
-                ),
-                result => {
-                    this.setState({result})
-                    return onLoaded && onLoaded(result)
-                },
-                error => onError && onError(error)
-            )
+    getOptions() {
+        const offered = this.offeredRecipes()
+        const groups = _.groupBy(offered, 'projectId')
+        return [...this.unofferedSelection(offered), ...this.orderedProjects(Object.keys(groups))
+            .map(({id, project}) => ({
+                // Prefixed so no id can be mistaken for the unfiled group's empty one, and identified by id
+                // rather than by name: groups sharing a heading would otherwise be one group, and leaving
+                // the view one belongs to would leave its heading behind.
+                key: `project:${id}`,
+                label: project ? project.name : msg('process.project.noProjectOption'),
+                filterOptions: isMatchingGroup => !isMatchingGroup,
+                options: groups[id].map(recipe => ({value: recipe.id, label: recipe.name}))
+            }))]
+    }
+
+    // The selection made, offered or not, for a caller that keeps showing it - one no longer listed, or no longer
+    // passing the filter, is still what the recipe holds. Why it is not offered is the caller's to say: a filter may
+    // state an eligibility rule rather than a requirement, so nothing here calls it unsuitable.
+    unofferedSelection(offered) {
+        const {input, keepSelection, recipes} = this.props
+        if (!keepSelection || !input.value || offered.some(({id}) => id === input.value)) {
+            return []
         }
+        const listed = (recipes || []).find(({id}) => id === input.value)
+        return [{
+            key: 'selection',
+            label: msg('widget.recipeInput.selection'),
+            options: [{value: input.value, label: listed?.name || msg('widget.recipeInput.unlisted')}]
+        }]
+    }
+
+    // ALL widens which projects are offered, never what the caller can use.
+    offeredRecipes() {
+        const {projectId, recipes, filter} = this.props
+        const {all} = this.state
+        return recipes
+            .map(recipe => ({...recipe, projectId: recipe.projectId || ''}))
+            .filter(recipe => !this.isOwnRecipe(recipe.id))
+            .filter(recipe => {
+                const recipeType = getRecipeType(recipe.type)
+                return filter && recipeType ? filter(recipeType, recipe) : true
+            })
+            .filter(({projectId: p}) => all || p === projectId || (!p && !projectId))
+    }
+
+    orderedProjects(ids) {
+        const {projects} = this.props
+        return _.sortBy(
+            ids.map(id => ({id, project: projects.find(project => project.id === id)})),
+            [({project}) => project ? 1 : 0, ({project}) => project?.name?.toLowerCase(), 'id']
+        )
+    }
+
+    // A recipe saved before this rule can still name itself. The value is left exactly as it was saved -
+    // rewriting a model the user has not touched is not this component's to do - so the form is told the
+    // field is invalid instead. Refusing to load is not enough on its own: a field validated only for being
+    // non-blank, as several of these are, would go on satisfying Apply with a reference nothing can
+    // resolve. Choosing another recipe clears it, because setting a value clears that field's errors.
+    loadRecipe(recipeId) {
+        const {input, stream, onError, onLoading, onRecipeLoaded, onBandsLoaded} = this.props
+        // Whatever a previous selection had in flight can no longer be about what is selected now.
+        this.cancel$.next()
+        if (!recipeId) {
+            return
+        }
+        // Validation is not acquisition: a saved self-reference is refused whether or not anything is read.
+        if (this.isOwnRecipe(recipeId)) {
+            input.setInvalid(msg('widget.recipeInput.ownRecipe.invalid'))
+            onError && onError(new Error(`Recipe ${recipeId} cannot be an input to itself`))
+            return
+        }
+        // What is read is what a consumer asked to be given. A caller that only needs to know what was
+        // selected reads nothing, and one that never asks for bands never reaches Earth Engine.
+        if (!onRecipeLoaded && !onBandsLoaded) {
+            return
+        }
+        onLoading && onLoading(recipeId)
+        stream('LOAD_RECIPE',
+            this.result$(recipeId).pipe(takeUntil(this.cancel$)),
+            ({recipe, bandNames}) => {
+                const type = getRecipeType(recipe.type)
+                onRecipeLoaded && onRecipeLoaded({recipe, type})
+                onBandsLoaded && onBandsLoaded({recipe, type, bandNames})
+            },
+            error => onError && onError(error)
+        )
+    }
+
+    // One record read, whichever results were asked for.
+    result$(recipeId) {
+        const {onBandsLoaded, loadRecipe$} = this.props
+        const record$ = loadRecipe$(recipeId)
+        return onBandsLoaded
+            ? record$.pipe(switchMap(recipe =>
+                api.gee.bands$({recipe}).pipe(map(bandNames => ({recipe, bandNames})))))
+            : record$.pipe(map(recipe => ({recipe})))
     }
 }
 
@@ -158,12 +213,28 @@ export const RecipeInput = compose(
 
 RecipeInput.propTypes = {
     input: PropTypes.object.isRequired,
+    // For the selections that do NOT become a dependency edge, where naming this recipe closes no cycle:
+    // a Map Layers layer, which displays a recipe rather than consuming one, and the training-data
+    // samplers, which read the selected recipe once and persist the points (the recipe definitions leave
+    // their `recipeIdToSample` out of directSources for exactly that reason). Never set it on an input
+    // execution resolves.
+    allowOwnRecipe: PropTypes.bool,
+    allowClear: PropTypes.bool,
+    busyMessage: PropTypes.any,
+    errorMessage: PropTypes.any,
     filter: PropTypes.func,
+    // Keep showing the selection when it is not offered, for a caller that says what is wrong with it.
+    keepSelection: PropTypes.bool,
     label: PropTypes.any,
     labelButtons: PropTypes.any,
     placeholder: PropTypes.string,
-    onError: PropTypes.func,
+    tooltip: PropTypes.any,
+    warningMessage: PropTypes.any,
+    // What a consumer asks to be given decides what is read. Neither reads nothing; both share one record
+    // read, and only onBandsLoaded reaches Earth Engine.
+    onBandsLoaded: PropTypes.func,
     onChange: PropTypes.func,
-    onLoaded: PropTypes.func,
+    onError: PropTypes.func,
     onLoading: PropTypes.func,
+    onRecipeLoaded: PropTypes.func,
 }

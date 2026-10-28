@@ -15,7 +15,7 @@
     left: .25rem;
     overflow: hidden;
     line-height: .4rem;
-    color: rgb(40%, 40%, 40%);
+    color: var(--text-disabled-color);
 }
 
 .clickable {
@@ -43,7 +43,7 @@
 
 .dragging.clone {
     opacity: 1;
-    box-shadow: 0 0 1rem hsla(0, 0%, 0%, 1);
+    box-shadow: 0 0 1rem var(--shadow-color);
 }
 
 .dragging.original.hidden {

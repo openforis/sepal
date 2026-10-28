@@ -6,11 +6,8 @@ import {VisualizationSelector} from '~/app/home/map/imageLayerSource/visualizati
 import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
-import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
-import {getAvailableBands} from './bands'
-import {hasTrainingData} from './regressionRecipe'
 import {getPreSetVisualizations} from './visualizations'
 
 const defaultLayerConfig = {
@@ -22,7 +19,7 @@ class _RegressionImageLayer extends React.Component {
         const {layer, map} = this.props
         return (
             <MapAreaLayout
-                layer={this.canRender() ? layer : null}
+                layer={layer}
                 form={this.renderImageLayerForm()}
                 map={map}
             />
@@ -30,8 +27,7 @@ class _RegressionImageLayer extends React.Component {
     }
 
     renderImageLayerForm() {
-        const {recipe, source, layerConfig = {}} = this.props
-        const availableBands = getAvailableBands(recipe)
+        const {recipe, source, layerConfig = {}, imageOutput: {availableBands}} = this.props
         const preSetOptions = getPreSetVisualizations(recipe)
             .filter(({bands}) => availableBands[bands[0]])
             .map(visParams => {
@@ -47,15 +43,10 @@ class _RegressionImageLayer extends React.Component {
                 source={source}
                 recipe={recipe}
                 presetOptions={options}
+                availableBands={availableBands}
                 selectedVisParams={layerConfig.visParams}
             />
         )
-    }
-
-    canRender() {
-        const {recipe} = this.props
-        const inputImagery = selectFrom(recipe, ['model.inputImagery.images']) || []
-        return inputImagery.length && hasTrainingData(recipe)
     }
 }
 
@@ -69,6 +60,7 @@ export const RegressionImageLayer = compose(
 RegressionImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,
     source: PropTypes.object.isRequired,
+    imageOutput: PropTypes.object.isRequired,
     layer: PropTypes.object,
     layerConfig: PropTypes.object,
     map: PropTypes.object

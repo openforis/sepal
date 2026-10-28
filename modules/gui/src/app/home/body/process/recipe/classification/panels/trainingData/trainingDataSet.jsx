@@ -234,6 +234,8 @@ const modelToValues = model => {
         dataSetId: model.dataSetId,
         name: model.name,
         type: model.type,
+        // The step a section's editor opens on (PanelSections.jsx), so opening it edits nothing.
+        wizardStep: 0,
         inputData: model.inputData,
         columns: model.columns,
         eeTable: model.eeTable,

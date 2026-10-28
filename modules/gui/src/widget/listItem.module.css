@@ -35,7 +35,7 @@
     left: .25rem;
     overflow: hidden;
     line-height: .4rem;
-    color: rgb(40%, 40%, 40%);
+    color: var(--text-disabled-color);
 }
 
 .main {
@@ -60,6 +60,11 @@
     flex-shrink: 1;
 }
 
+/* Let nested row content shrink while retaining its intrinsic size when the list sizes to its contents. */
+.horizontalWrapper, .main, .content {
+    min-width: 0;
+}
+
 .expansion {
     position: relative;
     display: flex;
@@ -79,7 +84,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background-color: hsla(0, 0%, 0%, .3);
+    background-color: var(--expansion-shade, var(--inset-shade-color));
     border-radius: var(--border-radius);
     border-top-left-radius: 0;
     border-top-right-radius: 0;

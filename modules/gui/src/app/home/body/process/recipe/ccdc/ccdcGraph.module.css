@@ -7,7 +7,7 @@
 .point {
     position: absolute;
     z-index: 10;
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: var(--graph-tooltip-background-color);
     border: var(--wireframe);
     padding: 1.5rem 1rem;
     display: grid;
@@ -23,7 +23,7 @@
 .observationPoint {
     position: absolute;
     z-index: 10;
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: var(--graph-tooltip-background-color);
     border: var(--wireframe);
     padding: 1.5rem 1rem;
     display: grid;

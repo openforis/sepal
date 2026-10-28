@@ -1,15 +1,18 @@
 import React from 'react'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
+import {SourceKind} from '~/app/home/body/process/sourceTypeButtons'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
-import {PanelSections} from '~/widget/panelSections'
+import {Panel} from '~/widget/panel/panel'
 
 import {AssetSection} from './assetSection'
 import {RecipeSection} from './recipeSection'
-import {SectionSelection} from './sectionSelection'
 import styles from './source.module.css'
+
+// A reference not yet selected is a recipe to select.
+const NEW_REFERENCE_KIND = 'RECIPE_REF'
 
 const fields = {
     section: new Form.Field()
@@ -22,66 +25,59 @@ const fields = {
         .notBlank('process.ccdcSlice.panel.source.form.recipe.required'),
     dateFormat: new Form.Field()
         .skip((value, {section}) => section !== 'ASSET')
-        .notBlank(),
-    bands: new Form.Field(),
-    baseBands: new Form.Field(),
-    segmentBands: new Form.Field(),
-    startDate: new Form.Field(),
-    endDate: new Form.Field(),
-    visualizations: new Form.Field(),
+        .notBlank()
 }
 
 class _Source extends React.Component {
+    constructor(props) {
+        super(props)
+        this.clearSource = this.clearSource.bind(this)
+    }
+
     render() {
         return (
             <RecipeFormPanel
                 className={styles.panel}
                 placement='bottom-right'>
-                {this.renderSections()}
+                <Panel.Header
+                    icon='cog'
+                    title={msg('process.ccdcSlice.panel.source.title')}/>
+                <Panel.Content>
+                    {this.renderSource()}
+                </Panel.Content>
+                <Form.PanelButtons/>
             </RecipeFormPanel>
         )
     }
 
-    renderSections() {
-        const {recipeId, inputs} = this.props
-        const sections = [
-            {
-                component: <SectionSelection recipeId={recipeId} inputs={inputs}/>
-            },
-            {
-                value: 'RECIPE_REF',
-                label: msg('process.ccdcSlice.panel.source.recipe.label'),
-                title: msg('process.ccdcSlice.panel.source.recipe.title'),
-                component: <RecipeSection inputs={inputs}/>
-            },
-            {
-                value: 'ASSET',
-                label: msg('process.ccdcSlice.panel.source.asset.label'),
-                title: msg('process.ccdcSlice.panel.source.asset.title'),
-                component: <AssetSection inputs={inputs}/>
-            }
-        ]
+    renderSource() {
+        const {inputs} = this.props
         return (
-            <PanelSections
-                inputs={inputs}
-                sections={sections}
-                selected={inputs.section}
-                icon='cog'
-                label={msg('process.ccdcSlice.panel.source.title')}
-            />
+            <SourceKind input={inputs.section} recipe='RECIPE_REF' defaultKind={NEW_REFERENCE_KIND} onChange={this.clearSource}>
+                {({recipe, labelButtons}) => recipe
+                    ? <RecipeSection inputs={inputs} labelButtons={labelButtons}/>
+                    : <AssetSection inputs={inputs} labelButtons={labelButtons}/>}
+            </SourceKind>
         )
     }
+
+    // A source of the other type starts over: nothing selected or configured for the previous one carries across.
+    clearSource() {
+        const {inputs} = this.props
+        inputs.asset.set(undefined)
+        inputs.recipe.set(undefined)
+        inputs.dateFormat.set(undefined)
+    }
 }
-const modelToValues = ({id, type, dateFormat, bands, baseBands, segmentBands, startDate, endDate, visualizations}) => {
+
+// Only the selection and, for an asset, the date representation the user configured. The description of
+// the source - its bands, base bands, dates, templates - is evidence read from the source while the recipe
+// is open, never written here; a copy an older GUI saved beside the reference is left as it is until the
+// selection is applied again, and dropped then, because it described a source that may no longer be this.
+const modelToValues = ({id, type, dateFormat}) => {
     const values = {
-        section: type || 'SELECTION',
-        dateFormat,
-        bands,
-        baseBands,
-        segmentBands,
-        startDate,
-        endDate,
-        visualizations
+        section: type,
+        dateFormat
     }
     switch (type) {
         case 'RECIPE_REF':
@@ -93,16 +89,10 @@ const modelToValues = ({id, type, dateFormat, bands, baseBands, segmentBands, st
     }
 }
 
-const valuesToModel = ({type, section, asset, recipe, bands, dateFormat, baseBands, segmentBands, startDate, endDate, visualizations}) => {
+const valuesToModel = ({section, asset, recipe, dateFormat}) => {
     const model = {
         type: section,
-        bands,
-        dateFormat: type === 'RECIPE_REF' ? null : dateFormat,
-        baseBands,
-        segmentBands,
-        startDate,
-        endDate,
-        visualizations
+        dateFormat: section === 'ASSET' ? dateFormat : null
     }
     switch (section) {
         case 'RECIPE_REF':

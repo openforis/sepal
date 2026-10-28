@@ -1,7 +1,6 @@
 import moment from 'moment'
 
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {pyramidingPolicies, submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 import {uuid} from '~/uuid'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -79,25 +78,7 @@ export const RecipeActions = id => {
                 'ui.bands.selection': bands
             }, {bands})
         },
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_INDEX_CHANGE_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions,
-                })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .dispatch()
-        },
     }
 }
 
-export const hasError = recipe => {
-    const fromImage = recipe.model.fromImage
-    const toImage = recipe.model.toImage
-    return fromImage && fromImage.errorBand && toImage && toImage.errorBand
-}
-
-const submitRetrieveRecipeTask = recipe =>
-    submitTask(recipe, {
-        pyramidingPolicy: pyramidingPolicies.changeBased('change')
-    })
+export const retrieveTask = {}

@@ -1,0 +1,117 @@
+// RequestInstance:
+//   1. Candidates come from the hosting service ALONE — it is the only authority on what exists.
+//   2. Claim them in order until one INSERT wins; a lost race moves to the next candidate rather
+//      than launching, so an available idle instance is always used.
+//   3. Won → tag the reservation, wait for the address, emit InstancePendingProvisioning.
+//   4. Every candidate taken → start the oldest ready POOLED (stopped) instance as the requested
+//      type: claim it, startPooled, wait for the address, emit InstancePendingProvisioning. A
+//      failed start releases the claim.
+//   5. No pooled instance, or its start failed → launchReserved, record the claim, then wait for
+//      the address.
+//   6. On any exception → emit FailedToRequestInstance, rethrow.
+
+import {getLogger} from '#sepal/log'
+
+import {instanceTag, userTag} from '../../tag.js'
+import {
+    emitFailedToRequestInstance,
+    emitInstanceLaunched,
+    emitInstancePendingProvisioning,
+} from '../events.js'
+import {reserve} from '../workerInstance.js'
+
+const log = getLogger('worker/requestInstance')
+
+const launchedAt = instance => new Date(instance.launchTime ?? 0).getTime()
+const isBooted = instance => Boolean(instance.running && instance.host)
+
+// Booted instances first, then those still coming up; oldest launch first within each group.
+// Same instinct as SizeIdlePool terminating newest-first for surplus: keep and use the warm machine.
+const ordered = instances =>
+    [...instances].sort((a, b) =>
+        Number(isBooted(b)) - Number(isBooted(a)) || launchedAt(a) - launchedAt(b)
+    )
+
+const requestInstance = async ({workerType, instanceType, username, sessionId}, {claims, provider}) => {
+    log.debug(`Requesting ${instanceType} instance for ${userTag(username)} (${workerType})...`)
+    const reservation = {username, workerType, sessionId}
+
+    try {
+        for (const candidate of ordered(await provider.idleInstances(instanceType))) {
+            if (!await claims.claim(candidate.id, sessionId)) {
+                log.debug(`Lost claim on ${instanceTag(candidate)}, trying the next candidate`)
+                continue
+            }
+            try {
+                const reserved = reserve(candidate, reservation)
+                await provider.reserve(reserved)
+                const ready = await provider.awaitHost(reserved)
+                emitInstancePendingProvisioning(ready)
+                log.info(`Reserved idle ${instanceTag(ready)} for ${userTag(username)} (${workerType})`)
+                return ready
+            } catch (err) {
+                // Release, or the instance stays claimed with no session behind it — forever.
+                await claims.release(candidate.id)
+                throw err
+            }
+        }
+
+        return await startPooledInstance({instanceType, reservation}, {claims, provider})
+            ?? await launchInstance({instanceType, reservation}, {claims, provider})
+
+    } catch (err) {
+        emitFailedToRequestInstance(workerType, instanceType, err)
+        throw err
+    }
+}
+
+// startPooledInstance — resolves null when there is no pooled instance to start, or its start failed.
+// Only one candidate is tried: capacity and type-compatibility failures belong to the requested
+// type, not to the instance, so the next one would fail the same way.
+const startPooledInstance = async ({instanceType, reservation}, {claims, provider}) => {
+    const [candidate] = [...await provider.pooledInstances({ready: true})]
+        .sort((a, b) => launchedAt(a) - launchedAt(b))
+    if (!candidate || !await claims.claim(candidate.id, reservation.sessionId)) {
+        return null
+    }
+    let started
+    try {
+        started = await provider.startPooled(candidate, instanceType, reservation)
+    } catch (err) {
+        log.warn(`Failed to start pooled ${instanceTag(candidate)} as ${instanceType}, launching instead: ${err.message}`)
+        await claims.release(candidate.id)
+        return null
+    }
+    try {
+        // Provisioned from here, like a reserved idle instance: the started-instance poll would
+        // cost up to its interval. Its Docker check rides out the rest of the boot.
+        const ready = await provider.awaitHost(started)
+        emitInstancePendingProvisioning(ready)
+        log.info(`Started pooled ${instanceTag(ready)} for ${userTag(reservation.username)} (${reservation.workerType})`)
+        return ready
+    } catch (err) {
+        await claims.release(candidate.id)
+        throw err
+    }
+}
+
+// launchInstance — every idle candidate was already taken, or there were none.
+const launchInstance = async ({instanceType, reservation}, {claims, provider}) => {
+    const {username, workerType, sessionId} = reservation
+    const instance = await provider.launchReserved(instanceType, reservation)
+    // Claim BEFORE the address wait: the instance is already tagged reserved with no session row
+    // behind it, and the claim is the only thing keeping ReleaseUnusedInstances off it while it
+    // boots. A failed INSERT is logged rather than fatal — failing here would strand a running
+    // machine, and ReleaseUnusedInstances reclaims it if the session never materialises.
+    try {
+        await claims.claim(instance.id, sessionId)
+    } catch (err) {
+        log.error(`Failed to record claim on ${instanceTag(instance)}: ${err.message}`)
+    }
+    const ready = await provider.awaitHost(instance)
+    emitInstanceLaunched(ready)
+    log.info(`Launched new ${instanceTag(ready)} for ${userTag(username)} (${workerType})`)
+    return ready
+}
+
+export {requestInstance}

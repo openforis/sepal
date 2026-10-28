@@ -11,7 +11,7 @@
 
 .value {
     margin: auto;
-    color: #ccc;
+    color: var(--text-color);
     overflow: hidden;
 }
 

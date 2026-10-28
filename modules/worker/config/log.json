@@ -1,0 +1,11 @@
+{
+    "port": 5000,
+    "categories": {
+        "config": "info",
+        "crypto": "info",
+        "database": "info",
+        "http/server": "warn",
+        "main": "info",
+        "worker/expiry": "debug"
+    }
+}

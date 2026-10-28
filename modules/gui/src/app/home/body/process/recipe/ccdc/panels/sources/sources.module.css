@@ -1,6 +1,28 @@
+/* Each family and view fits its own controls with the family's usual data sets, Planet's asset field included.
+   More reserves the Classification field and two additional breakpoint-band rows. */
 .panel {
     max-width: 37rem;
     height: 46rem;
+}
+
+.panel.more {
+    height: 58rem;
+}
+
+.panel.radar {
+    height: 30rem;
+}
+
+.panel.radar.more {
+    height: 42rem;
+}
+
+.panel.planet {
+    height: 36rem;
+}
+
+.panel.planet.more {
+    height: 48rem;
 }
 
 .oneDataSet {

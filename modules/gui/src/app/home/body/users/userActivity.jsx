@@ -13,7 +13,7 @@ import {Tooltip} from '~/widget/tooltip'
 import styles from './userActivity.module.css'
 
 const getUserEvents$ = username =>
-    api.userStorage.getUserEvents$(username)
+    api.storage.getUserEvents$(username)
 
 const ACTIVE = 'ACTIVE'
 const INACTIVE_LOW = 'INACTIVE_LOW'

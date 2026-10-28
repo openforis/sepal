@@ -22,7 +22,7 @@
 }
 
 .info {
-    color: #a0a0a0;
+    color: var(--text-dimmed-color);
     font-size: .9rem;
 }
 
@@ -36,6 +36,6 @@
     width: .9rem;
     height: .9rem;
     flex: 0 0 .9rem;
-    border: 1px solid rgba(255, 255, 255, .35);
+    border: 1px solid var(--table-border-color);
     background-color: var(--class-color);
 }

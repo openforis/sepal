@@ -1,5 +1,7 @@
 import React from 'react'
 
+import {INPUT_IMAGE} from '#sepal/recipe/source/inputImagery'
+import {inputImageryRequirements} from '~/app/home/body/process/panels/inputImageryWithDerived/inputImageryRequirements'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
@@ -7,10 +9,11 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
+import {regressionTrainingDataRequirements} from '../classification/trainingDataRequirements'
 import {initializeLayers} from '../recipeImageLayerSource'
-import {getAvailableBands} from './bands'
+import {bandPresentation} from './bands'
 import {RegressionToolbar} from './panels/regressionToolbar'
-import {getDefaultModel, RecipeActions} from './regressionRecipe'
+import {getDefaultModel} from './regressionRecipe'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -25,7 +28,6 @@ class _Regression extends React.Component {
     constructor(props) {
         super(props)
         const {savedLayers, recipeId} = props
-        this.recipeActions = RecipeActions(recipeId)
         initializeLayers({
             recipeId,
             savedLayers
@@ -48,13 +50,10 @@ const Regression = compose(
     recipe({getDefaultModel, mapRecipeToProps})
 )
 
-const getDependentRecipeIds = recipe =>
-    (selectFrom(recipe, 'model.inputImagery.images') || [])
-        .filter(({type}) => type === 'RECIPE_REF')
-        .map(({id}) => id)
-
 export default () => ({
     id: 'REGRESSION',
+    // The images it reads that the layout shows (mapLayout/dependencyLayerSources.js).
+    dependencyLayerRoles: [INPUT_IMAGE],
     labels: {
         name: msg('process.regression.create'),
         creationDescription: msg('process.regression.description'),
@@ -63,10 +62,11 @@ export default () => ({
     components: {
         recipe: Regression
     },
-    getDependentRecipeIds,
+    imageSource: true,
     getDateRange(_recipe) {
         return null
     },
-    getAvailableBands,
-    getPreSetVisualizations
+    bandPresentation,
+    getPreSetVisualizations,
+    sourceRequirements: [...inputImageryRequirements, ...regressionTrainingDataRequirements]
 })

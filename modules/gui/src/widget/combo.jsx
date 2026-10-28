@@ -14,6 +14,7 @@ import {Input} from '~/widget/input'
 import {Keybinding} from '~/widget/keybinding'
 import {ScrollableList} from '~/widget/list'
 import {isMobile} from '~/widget/userAgent'
+import {ScrollableWindowedList} from '~/widget/windowedList'
 
 import styles from './combo.module.css'
 import {Widget} from './widget'
@@ -36,7 +37,8 @@ class _Combo extends React.Component {
         flattenedOptions: [],
         selectedOption: null,
         selected: false,
-        focused: false
+        focused: false,
+        advanceFrom: undefined
     }
 
     constructor(props) {
@@ -76,6 +78,7 @@ class _Combo extends React.Component {
 
     hideOptions() {
         const {onCancel} = this.props
+        this.chosen = null
         this.setState({showOptions: false}, () => onCancel && onCancel())
     }
 
@@ -265,19 +268,21 @@ class _Combo extends React.Component {
     }
 
     renderOptions() {
-        const {hPlacement, vPlacement, optionsClassName, optionTooltipPlacement, alignment} = this.props
-        const {flattenedOptions, selectedOption, selected} = this.state
+        const {hPlacement, vPlacement, optionsClassName, optionTooltipPlacement, alignment, windowed} = this.props
+        const {flattenedOptions, selectedOption, selected, advanceFrom} = this.state
+        const OptionsList = windowed ? ScrollableWindowedList : ScrollableList
         return (
             <FloatingBox
                 element={this.inputContainer.current}
                 hPlacement={hPlacement}
                 vPlacement={vPlacement}
                 onBlur={this.onOptionsBlur}>
-                <ScrollableList
+                <OptionsList
                     ref={this.list}
                     air='more'
                     className={optionsClassName || styles.options}
                     options={flattenedOptions}
+                    advanceFrom={advanceFrom}
                     selectedValue={selectedOption?.value}
                     onSelect={this.selectOption}
                     onCancel={this.resetFilterOrClose}
@@ -296,6 +301,7 @@ class _Combo extends React.Component {
         const {showOptions} = this.state
         const nullSafeFilter = filter || ''
         const filterReset = filter === undefined
+        this.chosen = null
         onFilterChange && onFilterChange(nullSafeFilter, filterReset)
         if (showOptions) {
             this.focusInput()
@@ -330,6 +336,7 @@ class _Combo extends React.Component {
                 if (stayOpenOnSelect) {
                     this.showOptions()
                     this.focusInput()
+                    this.chosen = option
                 } else {
                     this.hideOptions()
                     this.setFilter()
@@ -356,12 +363,13 @@ class _Combo extends React.Component {
         autoOpen && this.showOptions()
     }
 
-    componentDidUpdate({value: prevValue, selectedOption: prevSelectedOption}, {filter: prevFilter}) {
+    componentDidUpdate({value: prevValue, selectedOption: prevSelectedOption, options: prevOptions}, {filter: prevFilter}) {
         const {value, options} = this.props
         const {filter} = this.state
         const inputChanged = value !== prevValue
         const filteredOptions = this.getFilteredOptions(options)
         const flattenedOptions = this.getFlattenedOptions(filteredOptions)
+        const advanceFrom = options !== prevOptions ? this.takeChosenKey() : undefined
 
         const validatedSelectedOption = prevSelectedOption && flattenedOptions.find(option => !option.group && option.value === prevSelectedOption.value)
 
@@ -376,8 +384,17 @@ class _Combo extends React.Component {
         this.setStateIfUpdated({
             filteredOptions,
             flattenedOptions,
-            selectedOption
+            selectedOption,
+            advanceFrom
         })
+    }
+
+    // The option chosen while the options stay open, taken with the options next given: those follow from the choice, which
+    // may have removed it (ListContent). Typing a filter or closing the options in between ends it.
+    takeChosenKey() {
+        const chosenKey = this.chosen?.key
+        this.chosen = null
+        return chosenKey
     }
 
     setStateIfUpdated(state) {
@@ -521,6 +538,8 @@ Combo.propTypes = {
     value: PropTypes.any,
     vPlacement: PropTypes.oneOf(['above', 'below', 'above-or-below', 'below-or-above']),
     warningMessage: PropTypes.any,
+    // Renders only the options in view (windowedList.jsx), for lists of many.
+    windowed: PropTypes.any,
     onBlur: PropTypes.func,
     onCancel: PropTypes.func,
     onChange: PropTypes.func,

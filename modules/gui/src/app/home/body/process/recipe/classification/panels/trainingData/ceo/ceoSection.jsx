@@ -85,6 +85,7 @@ export class _CeoSection extends React.Component {
         return (
             <Form.Combo
                 label={msg('process.classification.panel.trainingData.form.ceo.project.label')}
+                windowed
                 tooltip={msg('process.classification.panel.trainingData.form.ceo.project.tooltip')}
                 input={project}
                 options={(projects || [])}

@@ -2,25 +2,21 @@ import {normalize} from '~/app/home/map/visParams/visParams'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
-import {getAvailableBands} from './bands'
-
+// Candidate styles only. Which of them apply is decided by the bands the mosaic's description resolves, where they
+// are offered - a style removed here could not be restored by anything downstream.
 export const getPreSetVisualizations = recipe => {
     const {model: {compositeOptions: {corrections}}} = recipe
     const correction = corrections && corrections.includes('SR') ? 'SR' : 'TOA'
-    const availableBands = getAvailableBands(recipe)
-    const dataSetVisualizations = visualizations[correction]
     return [
-        ...dataSetVisualizations,
+        ...visualizations[correction],
         ...visualizations.INDEXES,
         ...visualizations.METADATA
-    ].filter(({bands}) => bands.every(band => availableBands[band]))
+    ]
 }
 
 export const visualizationOptions = recipe => {
     const compositeOptions = selectFrom(recipe, 'model.compositeOptions')
     const reflectance = compositeOptions.corrections.includes('SR') ? 'SR' : 'TOA'
-    const median = compositeOptions.compose === 'MEDIAN'
-    const availableBands = getAvailableBands(recipe)
     const visParamsToOption = visParams => {
         const value = visParams.bands.join(', ')
         return {
@@ -31,7 +27,6 @@ export const visualizationOptions = recipe => {
         }
     }
     const toOptions = visualizations => visualizations
-        .filter(({bands}) => bands.every(band => availableBands[band]))
         .map(visParamsToOption)
     const bandCombinationOptions = {
         label: msg('process.mosaic.bands.combinations'),
@@ -45,9 +40,7 @@ export const visualizationOptions = recipe => {
         label: msg('process.mosaic.bands.metadata'),
         options: toOptions(visualizations.METADATA)
     }
-    return median
-        ? [bandCombinationOptions, indexOptions]
-        : [bandCombinationOptions, indexOptions, metadataOptions]
+    return [bandCombinationOptions, indexOptions, metadataOptions]
 }
 
 export const visualizations = {

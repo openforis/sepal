@@ -22,7 +22,8 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _ReferenceDataLayer extends React.Component {
-    state = {clickListener: null}
+    clickListener = null
+
     constructor(props) {
         super(props)
         const {recipeId, map, dataCollectionManager} = props
@@ -48,49 +49,47 @@ class _ReferenceDataLayer extends React.Component {
     }
 
     componentDidMount() {
-        const {collecting, map} = this.props
+        const {map} = this.props
         this.updateAllMarkers()
         map.setLayer({id: 'referenceData', layer: this.layer})
-        if (collecting) {
-            this.addMapListener()
-        }
+        this.applyCollecting()
     }
 
     componentDidUpdate(prevProps) {
-        this.handleCollectingChange(prevProps.collecting)
+        if (prevProps.collecting !== this.props.collecting) {
+            this.applyCollecting()
+        }
     }
 
     componentWillUnmount() {
-        this.clearMapListeners()
+        this.removeMapListener()
         const {map} = this.props
         map.removeLayer(this.layer.id)
     }
 
-    handleCollectingChange(prevCollecting) {
+    // While sampling, clicking a marker selects its sample and clicking the map adds one; otherwise neither.
+    applyCollecting() {
         const {collecting} = this.props
-        if (prevCollecting === collecting)
-            return
+        this.layer.setClickable(Boolean(collecting))
         if (collecting) {
             this.addMapListener()
-            this.layer.setClickable(true)
         } else {
-            this.clearMapListeners()
-            this.layer.setClickable(false)
+            this.removeMapListener()
         }
     }
 
     addMapListener() {
         const {map, dataCollectionManager} = this.props
-        const clickListener = map.addClickListener(
-            ({lat, lng}) => dataCollectionManager.add({x: lng, y: lat}, this.props.prevPoint)
-        )
-        this.setState({clickListener})
+        if (!this.clickListener) {
+            this.clickListener = map.addClickListener(
+                ({lat, lng}) => dataCollectionManager.add({x: lng, y: lat}, this.props.prevPoint)
+            )
+        }
     }
 
-    clearMapListeners() {
-        const {clickListener} = this.state
-        clickListener && clickListener.remove()
-        this.setState({clickListener: null})
+    removeMapListener() {
+        this.clickListener?.remove()
+        this.clickListener = null
     }
 
     updateAllMarkers() {

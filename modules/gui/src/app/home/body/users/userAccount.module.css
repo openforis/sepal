@@ -1,0 +1,48 @@
+.panel {
+    width: 35rem;
+    height: 50vh;
+}
+
+.summary {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    min-width: 0;
+}
+
+.name {
+    font-weight: bold;
+    overflow-wrap: anywhere;
+}
+
+.username {
+    margin-left: .5rem;
+    font-size: .9rem;
+    font-weight: normal;
+    color: var(--text-muted-color);
+}
+
+.contact {
+    font-size: .9rem;
+    color: var(--text-muted-color);
+    overflow-wrap: anywhere;
+}
+
+.intendedUse {
+    font-size: .85rem;
+    font-style: italic;
+    color: var(--text-dimmed-color);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.monthlyLimits input {
+    width: 6rem;
+}
+
+.message {
+    font-size: .9rem;
+    color: var(--info-color);
+}

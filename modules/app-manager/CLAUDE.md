@@ -5,8 +5,8 @@ Monitors and serves Jupyter/Shiny applications. Polls a config file for app defi
 ## Commands
 
 ```bash
-npm test              # Jest (no test files currently exist)
-npm run testWatch     # Jest watch mode
+npm test              # Node test runner
+npm run testWatch     # Node test runner watch mode
 ```
 
 ## Key Architecture
@@ -16,6 +16,12 @@ npm run testWatch     # Jest watch mode
 
 ### App Monitoring
 `src/apps.js` - RxJS interval polls every 5 seconds using `exhaustMap` + `concatMap` for sequential Git update operations. Calls external `update-app.sh` shell script per app.
+
+### Catalog Fields
+- Optional per-app `requirements: {minRamGiB, minCpuCount, minGpuCount}` in the config file (GiB /
+  CPU count / GPU count). Passed through `GET /list` verbatim, unvalidated — the GUI's app catalog
+  normalizer makes bundle children inherit the parent's `requirements` wholesale unless the child
+  defines its own, and the instance picker uses it to filter/pick a suitable instance type.
 
 ### Routes
 - `GET /list` - App listing

@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# Set by the SSH front door when `user+instance` names no running instance of this user.
+if [ -n "${SEPAL_ROUTING_ERROR:-}" ]; then
+    printf '%s\n' "$SEPAL_ROUTING_ERROR" >&2
+    exit 1
+fi
 interactive="non-interactive"
 if [ -z "$SSH_ORIGINAL_COMMAND" ]; then
     interactive="interactive"
@@ -10,17 +15,40 @@ node src/main.js \
     --${interactive} \
     --username="${USER}" \
     --user-key-file="/home/${USER}/.ssh/id_rsa" \
-    --endpoint="http://sepal/api/" \
-    --endpoint-password="$(cat /etc/sepalAdmin.passwd)" \
+    --endpoint="http://worker/" \
+    --endpoint-password="$(cat /etc/sepaladmin.passwd)" \
     --ssh-command-path="${sshScriptFile}"
 
 if [ -s $sshScriptFile ]; then
+  sessionId=$(sed -n 's/^[[:space:]]*# session-id: //p' $sshScriptFile)
   n=0
+  terminated=
   until [ "$n" -ge 5 ]
   do
-    eval "$sshScriptFile \"${SSH_ORIGINAL_COMMAND:-}\"" && break
+    "$sshScriptFile" "${SSH_ORIGINAL_COMMAND:-}" && break
+    # Retrying is only worth it while the session still exists (transient drop) — once it
+    # has been stopped the worker answers 404 and each retry just keeps the user staring
+    # at a dead terminal. A bodiless heartbeat: this is a liveness PROBE, fired while the user
+    # is disconnected, and it deliberately extends nothing. curl failure (000) keeps retrying.
+    if [ -n "$sessionId" ]; then
+      sessionStatus=$(curl -s -o /dev/null -w '%{http_code}' \
+        -H "sepal-user:{\"username\": \"sepaladmin\", \"roles\": [\"application_admin\"]}" \
+        -X POST "http://worker/sessions/$USER/session/$sessionId")
+      if [ "$sessionStatus" = "404" ]; then
+        terminated=1
+        break
+      fi
+    fi
     n=$((n+1))
     sleep 5
   done
   rm $sshScriptFile > /dev/null 2>&1
+  # The session is gone for good. Returning now would hand back to the caller, which clears the
+  # screen before showing the menu again — so hold here with everything the user had on screen
+  # still on screen, and let them decide when to lose it. Interactive only: a non-interactive
+  # ssh has nobody to press the key.
+  if [ -n "$terminated" ] && [ -z "$SSH_ORIGINAL_COMMAND" ]; then
+    printf '\n\n\033[96mThe session has been terminated. Press ENTER to reset the terminal.\033[0m'
+    read -r _
+  fi
 fi

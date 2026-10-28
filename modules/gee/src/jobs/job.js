@@ -1,28 +1,29 @@
-import {createRequire} from 'module'
+import {createRequire} from 'node:module'
+
+import {defer} from 'rxjs'
 
 import * as config from '#gee/config'
-import ee from '#sepal/ee/ee'
+import {createEEContext} from '#gee/jobs/eeRequestContext'
+import {inEEContext} from '#sepal/ee/eeContext'
+import {inRecipeScope} from '#sepal/ee/recipeScope'
 import Job from '#sepal/worker/job'
 
-// authenticate <-> job form a cycle; load it lazily (at job() call time) to break it.
+// runtime <-> job form a cycle; load it lazily (at job() call time) to break it.
 const require = createRequire(import.meta.url)
 
-const getSepalUser = ctx => {
-    const sepalUser = ctx.request.headers['sepal-user']
-    return sepalUser
-        ? JSON.parse(sepalUser)
-        : {}
+const parseHeader = (ctx, name) => {
+    const value = ctx.request.headers[name]
+    return value
+        ? JSON.parse(value)
+        : null
 }
 
-const getCredentials = ctx => {
-    const sepalUser = getSepalUser(ctx)
-    const serviceAccountCredentials = config.serviceAccountCredentials
-    return {
-        sepalUser,
-        serviceAccountCredentials,
-        googleProjectId: config.googleProjectId
-    }
-}
+const getCredentials = ctx => ({
+    sepalUser: parseHeader(ctx, 'sepal-user') || {},
+    sepalSession: parseHeader(ctx, 'sepal-session'),
+    serviceAccountCredentials: config.serviceAccountCredentials,
+    googleProjectId: config.googleProjectId
+})
 
 const job = ({
     jobName,
@@ -32,22 +33,24 @@ const job = ({
     minIdleCount,
     maxIdleMilliseconds,
     ctx,
-    before = [require('#gee/jobs/ee/authenticate').default],
+    before = [require('#gee/jobs/ee/runtime').default],
     services,
     args = ctx => ({
         requestArgs: {...ctx.request.query, ...ctx.request.body},
         credentials: getCredentials(ctx)
     }),
     worker$,
-    finalize$
+    finalize$,
+    workloadTag
 }) => {
-    const workerWithWorkloadTag$ = (...args) => {
-        const tag = `sepal-work-${jobName
-            .toLowerCase()
-            .replace(/[^a-z0-9_-]/g, '_')
-            .substring(0, 63)}`
-        ee.data.setDefaultWorkloadTag(tag)
-        return worker$(...args)
+    // Every task of a request makes its Earth Engine calls as the request's user, and runs inside the request's
+    // own recipe operation, which the configure task ahead of them put on the shared state.
+    const workerInContext$ = (...args) => {
+        const [{credentials, requestArgs, initArgs: {eeEndpoint} = {}, requestId, state} = {}] = args
+        return defer(() => inEEContext(
+            createEEContext({requestId, credentials, jobName, workloadTag: workloadTag?.(requestArgs), endpoint: eeEndpoint}),
+            defer(() => inRecipeScope(state?.recipeScope, worker$(...args)))
+        ))
     }
     return Job({
         jobName,
@@ -61,7 +64,7 @@ const job = ({
         before,
         services,
         args,
-        worker$: workerWithWorkloadTag$,
+        worker$: workerInContext$,
         finalize$
     })
 }

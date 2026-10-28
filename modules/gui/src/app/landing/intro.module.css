@@ -6,6 +6,7 @@
     padding: 25vh 5% 2rem;
     min-height: 100vh;
     position: relative;
+    overflow-x: clip;
 }
 
 .github {
@@ -14,6 +15,23 @@
     right: 0;
     bottom: 0;
     margin: 0 5% 2rem 0;
+}
+
+.language {
+    z-index: 1;
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 2rem 5% 0 0;
+    opacity: .8;
+    animation: language 250ms 1000ms ease-in-out both;
+}
+
+@keyframes language {
+    0% {
+        opacity: 0;
+        transform: translateX(100%);
+    }
 }
 
 .pulse:not(:hover) {

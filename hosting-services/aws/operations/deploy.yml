@@ -26,12 +26,17 @@
         - "LC_ALL=en_US.utf-8"
 
     # increase max_map_count to prevent out of memory errors
-    - name: Increase max_map_count
+    # enable overcommit so Redis background saves cannot fail on fork
+    - name: Configure kernel VM settings
       lineinfile:
         path: /etc/sysctl.conf
         line: "{{ item }}"
       with_items:
         - "vm.max_map_count=1048576"
+        - "vm.overcommit_memory=1"
+
+    - name: Apply kernel VM settings
+      command: sysctl -p
 
     - name: Create filesystem on /var/lib/docker volume
       filesystem:

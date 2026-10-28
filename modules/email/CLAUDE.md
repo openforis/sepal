@@ -5,8 +5,8 @@ Processes email sending requests via RabbitMQ. Uses BullMQ (Redis) for job queue
 ## Commands
 
 ```bash
-npm test              # Jest (no test files currently exist)
-npm run testWatch     # Jest watch mode
+npm test              # Node test runner
+npm run testWatch     # Node test runner watch mode
 ```
 
 ## Key Architecture
@@ -18,7 +18,7 @@ npm run testWatch     # Jest watch mode
 Three RabbitMQ topics on `sepal.topic` exchange:
 - `email.sendToAddress` - Send email to a direct address
 - `email.sendToUser` - Send email to a user (looks up email address)
-- `user.emailNotificationsEnabled` - Update user notification preference
+- `user.UserUpdated` - Update the user's cached notification preference
 
 ### BullMQ Job Queue
 `src/emailQueue.js` - Redis-backed job queue (db 1):
@@ -38,4 +38,6 @@ Three RabbitMQ topics on `sepal.topic` exchange:
 - **Dual queue system**: RabbitMQ for message ingestion, BullMQ (Redis) for actual email job processing with retry
 - **Locked users skipped**: Email sending silently skips locked user accounts
 - **Template compiled once**: Handlebars template compiled at startup, reused for all emails
-- **Notification preferences**: Fetched from remote API if not in Redis cache
+- **Notification preferences**: Fetched from remote API if not in Redis cache, kept current by `user.UserUpdated`. A
+  fetched value never overwrites one set by an event (`SET NX`), and the cache is cleared at startup, so an update
+  published while the module was not subscribed cannot leave a stale preference

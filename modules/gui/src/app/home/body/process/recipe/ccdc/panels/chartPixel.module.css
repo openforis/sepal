@@ -17,7 +17,7 @@
     align-self: center;
     justify-content: space-around;
     flex-direction: column;
-    color: #ccc;
+    color: var(--text-color);
 }
 
 .bandSelection {

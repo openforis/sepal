@@ -9,9 +9,10 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
-import {getAvailableBands} from './bands'
+import {bandPresentation} from './bands'
 import {PyeoAlertsToolbar} from './panels/pyeoAlertsToolbar'
 import {defaultModel} from './pyeoAlertsRecipe'
+import {sourcesRequirements} from './sourcesRequirements'
 import {getPreSetVisualizations} from './visualizations'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -33,7 +34,7 @@ class _PyeoAlerts extends React.Component {
         return (
             <Map>
                 <PyeoAlertsToolbar/>
-                <Aoi value={aoi}/>
+                <Aoi value={aoi?.type && aoi}/>
             </Map>
         )
     }
@@ -52,11 +53,6 @@ const getDateRange = recipe => {
     ]
 }
 
-const getDependentRecipeIds = recipe => {
-    const classificationId = selectFrom(recipe, 'model.sources.classification')
-    return classificationId ? [classificationId] : []
-}
-
 export default () => ({
     id: 'PYEO_ALERTS',
     labels: {
@@ -68,8 +64,9 @@ export default () => ({
     components: {
         recipe: PyeoAlerts
     },
-    getDependentRecipeIds,
+    sourceRequirements: sourcesRequirements,
+    imageSource: true,
     getDateRange,
-    getAvailableBands,
+    bandPresentation,
     getPreSetVisualizations
 })

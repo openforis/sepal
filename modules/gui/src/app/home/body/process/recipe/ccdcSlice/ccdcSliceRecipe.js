@@ -1,12 +1,17 @@
 import _ from 'lodash'
 import moment from 'moment'
 
+import {PRIMARY_IMAGE} from '#sepal/recipe/type/ccdcSlice'
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {toT} from '~/app/home/body/process/recipe/ccdc/t'
-import {submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
+import {pyramidingPolicies} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {selectFrom} from '~/stateUtils'
+
+import {segmentDatesOf} from '../segmentEvidence'
+import {visualizationsWithAvailableBands} from '../visualizationMatching'
+import {chartSourceReference, dateFormatOf, materializedTemplates, outputBandsOf} from './sliceEvidence'
 
 export const defaultModel = {
     date: {
@@ -35,39 +40,32 @@ export const RecipeActions = id => {
             return actionBuilder('SET_CHART_PIXEL', latLng)
                 .set('ui.chartPixel', latLng)
                 .dispatch()
-        },
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_CCDC_SLICE_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions
-                })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .build()
         }
     }
 }
 
+// The endpoint takes the source reference and resolves the rest from the source itself. What it is handed
+// is what the recipe selected, not a description of it.
 export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
-    api.gee.loadCCDCSegments$({recipe: recipe.model.source, latLng, bands})
+    api.gee.loadCCDCSegments$({recipe: chartSourceReference(recipe), latLng, bands})
 
-export const getAllVisualizations = recipe => {
-    return recipe.ui.initialized
-        ? [
-            ...Object.values((selectFrom(recipe, ['layers.userDefinedVisualizations', 'this-recipe']) || {})),
-            ...selectFrom(recipe, 'model.source.visualizations') || [],
-            ...additionalVisualizations(recipe)
-        ]
-        : []
-}
+// Everything this recipe offers over its own output: the source's templates that survive the operation, plus
+// the break-date preset it derives itself. One list, so what the layer form offers is exactly what the
+// generic reconciler will accept - two lists let the form offer a style the reconciler then called stale. Matched by
+// name: which of them can be drawn is the layer's filter to decide, over the bands the slice's description holds.
+export const preSetVisualizations = (recipe, resolved) =>
+    visualizationsWithAvailableBands(
+        [...materializedTemplates(recipe, resolved), ...additionalVisualizations(recipe, resolved)],
+        outputBandsOf(recipe, resolved)
+    )
 
-export const additionalVisualizations = recipe => {
+const additionalVisualizations = (recipe, resolved) => {
     const dateType = selectFrom(recipe, 'model.date.dateType')
     const date = selectFrom(recipe, 'model.date.date')
     const startDate = selectFrom(recipe, 'model.date.startDate')
     const endDate = selectFrom(recipe, 'model.date.endDate')
-    const segmentsEndDate = selectFrom(recipe, 'model.source.endDate')
-    const dateFormat = selectFrom(recipe, 'model.source.dateFormat')
+    const {endDate: segmentsEndDate} = segmentDatesOf(recipe, PRIMARY_IMAGE, resolved)
+    const dateFormat = dateFormatOf(recipe, resolved)
     const dataTypesByDateFormat = ['number', 'fractionalYears', 'number']
 
     const DATE_FORMAT = 'YYYY-MM-DD'
@@ -102,45 +100,8 @@ export const additionalVisualizations = recipe => {
     ]
 }
 
-const submitRetrieveRecipeTask = recipe => {
-    const {baseBands, bandTypes, segmentBands} = recipe.ui.retrieveOptions
-    const bandTypeSuffixes = {
-        value: '',
-        rmse: '_rmse',
-        magnitude: '_magnitude',
-        breakConfidence: '_breakConfidence',
-        intercept: '_intercept',
-        slope: '_slope',
-        phase_1: '_phase_1',
-        phase_2: '_phase_2',
-        phase_3: '_phase_3',
-        amplitude_1: '_amplitude_1',
-        amplitude_2: '_amplitude_2',
-        amplitude_3: '_amplitude_3',
-    }
-    const allBands = [
-        ...recipe.model.source.bands,
-        ...recipe.model.source.baseBands
-            .map(({name}) => Object.values(bandTypeSuffixes)
-                .map(suffix => `${name}${suffix}`)
-            )
-            .flat()
-    ]
-    const bands = [
-        ...baseBands
-            .map(name => bandTypes
-                .map(bandType => `${name}${bandTypeSuffixes[bandType]}`)
-            )
-            .flat(),
-        ...baseBands.map(({name}) => name),
-        ...segmentBands
-    ].filter(band => allBands.includes(band))
-
-    return submitTask(recipe, {
-        filterVisualizations: true,
-        customizeImage: image => ({
-            ...image,
-            bands: {selection: bands, baseBands}
-        })
-    })
+// Every band a slice derives is scalar and declares no policy; the generic export sends Earth Engine's own default
+// for each, as it always has, and nothing for a band that is not verified scalar.
+export const retrieveTask = {
+    fallbackPyramidingPolicy: pyramidingPolicies.mean
 }

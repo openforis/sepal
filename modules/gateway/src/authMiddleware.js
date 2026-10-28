@@ -5,13 +5,15 @@ import {getLogger} from '#sepal/log'
 
 import modules from '../config/modules.json' with {type: 'json'}
 import {urlTag, usernameTag} from './tag.js'
-import {getRequestUser, setRequestUser, setSessionUsername} from './user.js'
+import {getRequestUser, setRequestSession, setRequestUser, setSessionUsername} from './user.js'
 
 const log = getLogger('authMiddleware')
 
-const AUTHENTICATION_URL = `http://${modules.userNode}/authenticate`
-const API_KEY_AUTH_URL = `http://${modules.sepal}/api/sessions/api-key-authenticate`
-const USER_LOOKUP_URL = `http://${modules.userNode}/info`
+const AUTHENTICATION_URL = `http://${modules.user}/authenticate`
+const API_KEY_AUTH_URL = `http://${modules.worker}/sessions/api-key-authenticate`
+const TASK_API_KEY_AUTH_URL = `http://${modules.taskManager}/tasks/api-key-authenticate`
+const TASK_API_KEY_PREFIX = 'task_'
+const USER_LOOKUP_URL = `http://${modules.user}/info`
 
 // sepal-user header the gateway sends itself to call [ADMIN] endpoints internally.
 const INTERNAL_ADMIN_HEADER = {
@@ -27,7 +29,7 @@ const OK = 200
 const UNAUTHORIZED = 401
 const INTERNAL_SERVER_ERROR = 500
 
-const AuthMiddleware = userStore => {
+const AuthMiddleware = (userStore, ensureSessionFor) => {
     const authMiddleware = async (req, res, next) => {
         try {
             const isAuthenticated = () => !!(getRequestUser(req))
@@ -42,6 +44,7 @@ const AuthMiddleware = userStore => {
 
             const authenticatedGuiRequest$ = (username, user) =>
                 userStore.setUser$(user).pipe(
+                    switchMap(() => ensureSessionFor(req, res, username)),
                     switchMap(() => of(OK).pipe(
                         tap(() => {
                             setSessionUsername(req, username)
@@ -60,8 +63,7 @@ const AuthMiddleware = userStore => {
                 )
                 
             const authorized$ = (username, response) => {
-                const {body} = response
-                const user = JSON.parse(body)
+                const {body: user} = response
                 return isGuiRequest()
                     ? authenticatedGuiRequest$(username, user)
                     : authenticatedNonGuiRequest$(username, user)
@@ -99,6 +101,7 @@ const AuthMiddleware = userStore => {
                     log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Authenticating user`)
                     return post$(AUTHENTICATION_URL, {
                         body: {username, password},
+                        responseType: 'json',
                         validStatuses: [OK, UNAUTHORIZED]
                     }).pipe(
                         switchMap(response => {
@@ -117,32 +120,36 @@ const AuthMiddleware = userStore => {
             }
 
             const authenticateApiKey$ = apiKey =>
-                post$(API_KEY_AUTH_URL, {
+                apiKey.startsWith(TASK_API_KEY_PREFIX)
+                    ? keyOwner$(TASK_API_KEY_AUTH_URL, apiKey, ({username, taskId}) => loadUser$(username, {workerType: 'task', taskId}))
+                    : keyOwner$(API_KEY_AUTH_URL, apiKey, ({username, sessionId, workerType}) => loadUser$(username, {sessionId, workerType}))
+
+            const keyOwner$ = (url, apiKey, authorized$) =>
+                post$(url, {
                     body: {apiKey},
                     headers: INTERNAL_ADMIN_HEADER,
+                    responseType: 'json',
                     validStatuses: [OK, UNAUTHORIZED]
                 }).pipe(switchMap(response => {
-                    const {statusCode} = response
-                    switch (statusCode) {
-                        case OK: {
-                            const {username} = JSON.parse(response.body)
-                            return loadUser$(username)
-                        }
+                    switch (response.statusCode) {
+                        case OK: return authorized$(response.body)
                         case UNAUTHORIZED: return unauthorized$('')
                         default: return failure$('', response)
                     }
                 }))
 
-            const loadUser$ = username =>
+            const loadUser$ = (username, workerSession = null) =>
                 get$(USER_LOOKUP_URL, {
                     query: {username},
                     headers: INTERNAL_ADMIN_HEADER,
+                    responseType: 'json',
                     validStatuses: [OK, UNAUTHORIZED]
                 }).pipe(switchMap(response => {
                     const {statusCode} = response
                     switch (statusCode) {
                         case OK: {
-                            const user = JSON.parse(response.body)
+                            const user = response.body
+                            workerSession && setRequestSession(req, workerSession)
                             return authenticatedNonGuiRequest$(username, user)
                         }
                         case UNAUTHORIZED: return unauthorized$(username)
@@ -160,10 +167,12 @@ const AuthMiddleware = userStore => {
                 return of(UNAUTHORIZED)
             }
     
-            const statusCode$ = isAuthenticated()
-                ? of(OK)
-                : hasBasicAuthHeaders()
-                    ? authenticate$()
+            // Presented credentials win over the session's user: a login from a browser logged in as
+            // someone else must authenticate the submitted account, not pass as the current one.
+            const statusCode$ = hasBasicAuthHeaders()
+                ? authenticate$()
+                : isAuthenticated()
+                    ? of(OK)
                     : missingAuthHeader$()
     
             const statusCode = await firstValueFrom(statusCode$)

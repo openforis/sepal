@@ -8,12 +8,13 @@ import style from './inputImage.module.css'
 
 export class AssetSection extends React.Component {
     render() {
-        const {input, onLoading} = this.props
+        const {input, labelButtons, onLoading} = this.props
         return (
             <Form.AssetCombo
                 className={style.inputComponent}
                 input={input}
-                label={msg('process.indexChange.panel.inputImage.asset.label')}
+                label={msg('process.indexChange.panel.inputImage.image.label')}
+                labelButtons={labelButtons}
                 placeholder={msg('process.indexChange.panel.inputImage.asset.placeholder')}
                 autoFocus
                 allowedTypes={['Image', 'ImageCollection']}
@@ -34,6 +35,7 @@ export class AssetSection extends React.Component {
 
 AssetSection.propTypes = {
     input: PropTypes.object.isRequired,
+    labelButtons: PropTypes.array,
     onLoaded: PropTypes.func.isRequired,
     onLoading: PropTypes.func.isRequired
 }

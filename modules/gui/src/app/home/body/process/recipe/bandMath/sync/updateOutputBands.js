@@ -1,6 +1,6 @@
 import {compose} from '~/compose'
 
-import {addOutputBand, addOutputImage} from '../panels/outputBands/outputImages'
+import {addOutputBand, addOutputImage, isOutputOf, namedApart} from '../panels/outputBands/outputImages'
 
 export const updateOutputBands = ({changes, outputImages}) =>
     compose(
@@ -8,8 +8,7 @@ export const updateOutputBands = ({changes, outputImages}) =>
         removeImages(changes.removedImages),
         addImages(changes.addedCalculations),
         removeImages(changes.removedCalculations),
-        updateBands(changes.calculationsWithChangedBands),
-        updateBands(changes.imagesWithChangedBands)
+        updateBands([...changes.calculationsWithChangedBands, ...changes.imagesWithChangedBands])
     )
 
 const addImages = addedImages =>
@@ -33,60 +32,72 @@ const removeImages = removedImages =>
         }
     }
 
+// The bands of every changed input and calculation removed, then renamed, then added, each step over every output image,
+// so a name is checked against every output and the names given before it in the same change.
 const updateBands = updatedImages =>
-    outputImages => {
-        if (updatedImages.length) {
-            return outputImages.map(outputImage => {
-                const updatedImage = updatedImages.find(({imageId}) => imageId === outputImage.imageId)
-                return updatedImage
-                    ? compose(
-                        outputImage,
-                        addBand(updatedImage),
-                        removeBand(updatedImage),
-                        renameBand(updatedImage)
-                    )
-                    : outputImage
-            })
+    outputImages => updatedImages.length
+        ? compose(
+            outputImages,
+            ...updatedImages.map(updatedImage => updateOutputImage(updatedImage, removeBand(updatedImage))),
+            renameBands(updatedImages),
+            ...updatedImages.map(addBands)
+        )
+        : outputImages
 
-        } else {
-            return outputImages
+const updateOutputImage = (updatedImage, update) =>
+    outputImages => outputImages.map(outputImage =>
+        outputImage.imageId === updatedImage.imageId ? update(outputImage) : outputImage
+    )
+
+const addBands = updatedImage =>
+    outputImages => (updatedImage.addedBands || []).reduce(
+        (outputImages, addedBand) => addOutputBand(updatedImage, addedBand, outputImages),
+        outputImages
+    )
+
+// A removed band takes every output copied from it. The known bands are those still selected, the ones just added
+// included, and the removed ones themselves: none of them is taken by another's name.
+const removeBand = updatedImage =>
+    outputImage => {
+        if (!updatedImage.removedBands?.length) {
+            return outputImage
         }
+        const knownBandIds = [...updatedImage.includedBands, ...updatedImage.removedBands].map(({id}) => id)
+        return updatedImage.removedBands.reduce(
+            (outputImage, removedBand) => ({
+                ...outputImage,
+                outputBands: outputImage.outputBands.filter(outputBand => !isOutputOf(outputBand, removedBand, knownBandIds))
+            }),
+            outputImage
+        )
     }
 
-const addBand = updatedImage =>
-    outputImage =>
-        updatedImage.addedBands?.length
-            ? updatedImage.addedBands.reduce(
-                (outputImage, addedBand) => addOutputBand(updatedImage, addedBand, [outputImage])[0],
-                outputImage
-            )
-            : outputImage
+// A renamed band takes its new name, made unique among every other output's final name - custom names included - and the
+// names given to bands renamed before it, in output order (namedApart). Until it is named, a renamed band's old name holds
+// back no other.
+const renameBands = updatedImages =>
+    outputImages => {
+        const renamedImages = updatedImages.filter(({renamedBands}) => renamedBands?.length)
+        if (!renamedImages.length) {
+            return outputImages
+        }
+        const unnamed = compose(
+            outputImages,
+            ...renamedImages.map(updatedImage => updateOutputImage(updatedImage, unnameRenamedBands(updatedImage)))
+        )
+        return namedApart(unnamed, ({imageIndex, bandIndex}) => {
+            const {imageId, outputBands} = unnamed[imageIndex]
+            const renamedImage = renamedImages.find(updatedImage => updatedImage.imageId === imageId)
+            return Boolean(renamedImage?.renamedBands.some(({id}) => id === outputBands[bandIndex].id))
+        })
+    }
 
-const removeBand = updatedImage =>
-    outputImage =>
-        updatedImage.removedBands?.length
-            ? updatedImage.removedBands.reduce(
-                (outputImage, removedBand) => ({
-                    ...outputImage,
-                    outputBands: outputImage.outputBands.filter(({id}) => id !== removedBand.id)
-                }),
-                outputImage
-            )
-            : outputImage
-
-const renameBand = updatedImage =>
-    outputImage =>
-        updatedImage.renamedBands?.length
-            ? updatedImage.renamedBands.reduce(
-                (outputImage, renamedBand) => ({
-                    ...outputImage,
-                    includedBands: updatedImage.includedBands,
-                    outputBands: outputImage.outputBands.map(band =>
-                        band.id === renamedBand.id
-                            ? {...band, defaultOutputName: renamedBand.name, name: renamedBand.name}
-                            : band
-                    )
-                }),
-                outputImage
-            )
-            : outputImage
+const unnameRenamedBands = updatedImage =>
+    outputImage => ({
+        ...outputImage,
+        includedBands: updatedImage.includedBands,
+        outputBands: outputImage.outputBands.map(band => {
+            const renamedBand = updatedImage.renamedBands.find(({id}) => id === band.id)
+            return renamedBand ? {...band, name: renamedBand.name, defaultOutputName: undefined} : band
+        })
+    })

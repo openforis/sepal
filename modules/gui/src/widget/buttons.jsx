@@ -50,8 +50,8 @@ class _Buttons extends React.Component {
     }
 
     renderButton({value, look: customLook, icon, label, content, tooltip, disabled: buttonDisabled, alwaysSelected, neverSelected, deselect, options}, index) {
-        const {chromeless, air, disabled: allDisabled, look, shape, size, tabIndex, width, selected} = this.props
-        const optionSelected = !allDisabled && (alwaysSelected || (!neverSelected && this.isSelected(value)))
+        const {chromeless, air, disabled: allDisabled, readOnly, look, shape, size, tabIndex, width, selected} = this.props
+        const optionSelected = (!allDisabled || readOnly) && (alwaysSelected || (!neverSelected && this.isSelected(value)))
         const highlighted = optionSelected
             || deselect === true && Array.isArray(selected) && selected.length === 0
         const key = value || label || index
@@ -64,7 +64,7 @@ class _Buttons extends React.Component {
                     shape={shape}
                     size={size}
                     air={air}
-                    disabled={allDisabled || buttonDisabled || alwaysSelected || neverSelected}
+                    disabled={allDisabled || readOnly || buttonDisabled || alwaysSelected || neverSelected}
                     icon={icon}
                     label={label}
                     labelStyle='smallcaps'
@@ -87,7 +87,7 @@ class _Buttons extends React.Component {
                     shape={shape || 'pill'}
                     air={air}
                     size={size}
-                    disabled={allDisabled || buttonDisabled || alwaysSelected || neverSelected}
+                    disabled={allDisabled || readOnly || buttonDisabled || alwaysSelected || neverSelected}
                     icon={icon}
                     label={label}
                     labelStyle={highlighted ? 'smallcaps-highlight' : 'smallcaps'}
@@ -105,7 +105,7 @@ class _Buttons extends React.Component {
                     shape={shape}
                     size={size}
                     air={air}
-                    disabled={allDisabled || buttonDisabled || alwaysSelected || neverSelected}
+                    disabled={allDisabled || readOnly || buttonDisabled || alwaysSelected || neverSelected}
                     icon={icon}
                     label={label}
                     labelStyle='smallcaps'
@@ -148,7 +148,7 @@ class _Buttons extends React.Component {
     }
 
     render() {
-        const {label, labelButtons, tooltip, tooltipPlacement, groupSpacing, framed, disabled, options, className} = this.props
+        const {label, labelButtons, tooltip, tooltipPlacement, groupSpacing, framed, disabled, errorMessage, options, className} = this.props
         return (
             <Widget
                 className={className}
@@ -159,6 +159,7 @@ class _Buttons extends React.Component {
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 disabled={disabled}
+                errorMessage={errorMessage}
             >
                 {options.length && options[0].options
                     ? this.renderOptionGroups(options)
@@ -181,6 +182,7 @@ Buttons.propTypes = {
     chromeless: PropTypes.any,
     className: PropTypes.string,
     disabled: PropTypes.any,
+    errorMessage: PropTypes.any,
     framed: PropTypes.any,
     groupSpacing: PropTypes.any,
     label: PropTypes.any,
@@ -188,6 +190,8 @@ Buttons.propTypes = {
     layout: PropTypes.string,
     look: PropTypes.string,
     multiple: PropTypes.any,
+    // Keep the configured selection visible while preventing interaction.
+    readOnly: PropTypes.bool,
     options: PropTypes.arrayOf(
         PropTypes.oneOfType([
             PropTypes.string,

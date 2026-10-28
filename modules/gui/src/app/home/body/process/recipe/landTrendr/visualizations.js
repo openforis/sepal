@@ -1,30 +1,35 @@
+import {IMAGE_OUTPUT} from '#sepal/recipe/output/product'
+import {ANNUAL_MOSAIC, annualMosaicRecipe} from '#sepal/recipe/type/landTrendr'
 import {visualizationOptions as opticalVisualizationOptions} from '~/app/home/body/process/recipe/opticalMosaic/visualizations'
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {msg} from '~/translate'
 
-import {getAvailableBands} from './bands'
-import {toMosaicRecipe} from './mosaicRecipe'
+import {bandPresentation} from './bands'
 
 // Registered on the recipe type, so it feeds the visualization properties
 // attached to exports - which only ever contain change bands.
-export const getPreSetVisualizations = recipe => {
-    const availableBands = getAvailableBands(recipe, 'changes')
-    return changeVisualizations(recipe.model.dates)
-        .filter(({bands}) => bands.every(band => availableBands[band]))
+export const getPreSetVisualizations = recipe =>
+    changeVisualizations(recipe.model.dates)
+
+// The styles for the product a layer's read described, and none while it describes nothing: a year that cannot be
+// shown offers nothing to draw, and its layer form stays usable to choose another.
+export const visualizationOptions = (recipe, {description} = {}) => {
+    if (!description) {
+        return []
+    }
+    const {product} = description.output
+    return product?.name === ANNUAL_MOSAIC
+        ? opticalVisualizationOptions(annualMosaicRecipe(recipe, product.parameters.year))
+        : changeVisualizationOptions(recipe)
 }
 
-export const visualizationOptions = (recipe, visualizationType) =>
-    visualizationType === 'mosaics'
-        ? opticalVisualizationOptions(toMosaicRecipe(recipe))
-        : changeVisualizationOptions(recipe)
-
 const changeVisualizationOptions = recipe => {
-    const availableBands = getAvailableBands(recipe, 'changes')
+    const presentation = bandPresentation(recipe, {name: IMAGE_OUTPUT})
     return [{
         label: msg('process.landTrendr.layers.imageLayer.preSets'),
         options: getPreSetVisualizations(recipe).map(visParams => {
             const band = visParams.bands[0]
-            return {value: band, label: availableBands[band].label, visParams}
+            return {value: band, label: presentation[band].label, visParams}
         })
     }]
 }

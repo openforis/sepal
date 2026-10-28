@@ -7,8 +7,6 @@ ENV PROJECT_DIR /home/sepal/sepal
 ENV NODE_MAJOR=26
 ARG DOCKER_COMPOSE_VERSION=v5.1.3
 ARG DOCKER_BUILDX_VERSION=v0.33.0
-ARG JAVA_VERSION=11.0.32-tem
-ARG GRADLE_VERSION=6.9.1
 
 # Injected by compose build args
 
@@ -36,19 +34,6 @@ RUN apt-get update && apt-get install -y \
     unzip \
     sudo \
     zip
-
-# Install Java and Gradle
-
-ENV SDKMAN_DIR=/usr/local/lib/sdkman
-RUN curl -s https://get.sdkman.io | bash && \
-    source "${SDKMAN_DIR}/bin/sdkman-init.sh" && \
-    yes | sdk install java ${JAVA_VERSION} && \
-    sdk install gradle ${GRADLE_VERSION}
-RUN source "${SDKMAN_DIR}/bin/sdkman-init.sh" && \    
-    ln -s "$(which java)" /usr/local/bin/java && \
-    ln -s "$(which gradle)" /usr/local/bin/gradle && \
-    JAVA_HOME=$(sdk home java current) && \
-    sed -i 's/jdk.tls.disabledAlgorithms=.*/jdk.tls.disabledAlgorithms=SSLv3, RC4, DES, MD5withRSA, /' "$JAVA_HOME/conf/security/java.security"
 
 # Install docker-cli
 

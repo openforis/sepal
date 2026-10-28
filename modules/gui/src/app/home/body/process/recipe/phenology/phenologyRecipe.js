@@ -4,7 +4,6 @@ import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {defaultModel as defaultPlanetModel} from '~/app/home/body/process/recipe/planetMosaic/planetMosaicRecipe'
 import {defaultModel as defaultRadarModel} from '~/app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
-import {submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 
 export const defaultModel = {
     dates: {
@@ -47,19 +46,9 @@ export const RecipeActions = id => {
                 'ui.bands.selection': bands
             }, {bands})
         },
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_PHENOLOGY_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions,
-                })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .dispatch()
-        },
     }
 }
 
-const submitRetrieveRecipeTask = recipe =>
-    submitTask(recipe, {
-        dataSetType: 'OPTICAL'
-    })
+export const retrieveTask = {
+    dataSetType: 'OPTICAL'
+}

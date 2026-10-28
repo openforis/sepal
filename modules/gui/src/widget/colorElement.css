@@ -25,5 +25,5 @@
 .colorPicker .react-colorful__alpha-pointer {
     width: 1.5rem;
     height: 1.5rem;
-    border: 1px solid white;
+    border: 1px solid var(--swatch-border-color);
 }

@@ -53,9 +53,7 @@ build r-proxy
 restart r-proxy
 
 build email
-build sys-monitor
 build caddy
-build java
 build rabbitmq
 build backup
 build mysql-backup
@@ -63,43 +61,42 @@ build mysql
 build gateway
 build terminal
 build ssh-gateway
-build geospatial-toolkit
 build sandbox
 build task
+build task-manager
 build gee
-    # Transitional: LDAP must stay up so user-node's startup credential migration has a source to
-    # read from. Decommission (remove these two) only in design phase 6, after migration is verified.
-build ldap
-build user-node
-build user-storage
+build user
+build storage
 build user-storage-backup
 build user-assets
 build user-files
+build message
+build recipe
+build budget
+build worker
 build gui
 build ceo-gateway
 build app-launcher
 build app-manager
-build sepal-server
 build scene-metadata
 
 echo "${DOCKER_REGISTRY_PASSWORD}" | docker login "${DOCKER_REGISTRY_HOST}" -u "${DOCKER_REGISTRY_USERNAME}" --password-stdin
 
 push logger
-push sys-monitor
 push email
 push backup
 push rabbitmq
-    # Transitional: LDAP must stay up so user-node's startup credential migration has a source to
-    # read from. Decommission (remove these two) only in design phase 6, after migration is verified.
-push ldap
-push user-node
-push user-storage
+push user
+push storage
 push user-storage-backup
 push app-launcher
 push app-manager
-push sepal
 push user-assets
 push user-files
+push message
+push recipe
+push budget
+push worker
 push gui
 push ceo-gateway
 push mysql
@@ -109,6 +106,7 @@ push gateway
 push ssh-gateway
 push sandbox
 push task
+push task-manager
 push terminal
 push caddy
 push scene-metadata

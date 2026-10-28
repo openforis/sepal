@@ -51,6 +51,21 @@
 
 	encode gzip
 
+	# /config/maintenance.on exists -> maintenance page (503) for everything.
+	# Checked per request, so creating or removing the file takes effect without a restart.
+	@maintenance file {
+		root /config
+		try_files /maintenance.on
+	}
+	handle @maintenance {
+		root * /usr/share/caddy
+		header Cache-Control "no-cache, no-store, must-revalidate"
+		rewrite * /maintenance.html
+		file_server {
+			status 503
+		}
+	}
+
 	# /api/* and /privacy-policy -> gateway
 	@gateway path /api/* /privacy-policy
 	handle @gateway {

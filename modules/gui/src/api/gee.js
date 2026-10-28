@@ -48,6 +48,15 @@ export default {
             }
         }),
 
+    // Each asset's change token, read from its metadata alone (modules/gee/src/jobs/ee/asset/versions.js).
+    assetVersions$: ({ids}) =>
+        postJson$('/api/gee/assetVersions', {
+            body: {ids},
+            retry: {
+                maxRetries: 0
+            }
+        }),
+
     imageMetadata$: ({asset, recipe}) =>
         postJson$('/api/gee/imageMetadata', {
             body: {asset, recipe},
@@ -56,9 +65,9 @@ export default {
             }
         }),
 
-    distinctBandValues$: ({recipe, band, aoi, mapBounds}) =>
+    distinctBandValues$: ({recipe, band, aoi, mapBounds, ...params}) =>
         postJson$('/api/gee/image/distinctBandValues', {
-            body: {recipe, band, aoi, mapBounds},
+            body: {recipe, band, aoi, mapBounds, ...params},
             retry: {
                 maxRetries: 0
             }
@@ -99,6 +108,14 @@ export default {
     aoiBounds$: aoi =>
         postJson$('/api/gee/aoi/bounds', {
             body: {aoi},
+            retry: {
+                maxRetries: 0
+            }
+        }),
+
+    aoiGeoId$: ({id, bufferMeters}) =>
+        postJson$('/api/gee/aoi/geoId', {
+            body: {id, bufferMeters},
             retry: {
                 maxRetries: 0
             }
@@ -218,14 +235,14 @@ export default {
         }),
 
     scenesInSceneArea$: ({sceneAreaId, dates, sources, sceneSelectionOptions}) =>
-        get$(`/api/data/sceneareas/${sceneAreaId}`, {
+        get$(`/api/scene-metadata/sceneareas/${sceneAreaId}`, {
             query: {
                 query: JSON.stringify({dates, sources, sceneSelectionOptions})
             }
         }),
 
     autoSelectScenes$: ({sceneAreaIds, sources, dates, sceneSelectionOptions, sceneCount, cloudCoverTarget}) =>
-        post$('/api/data/best-scenes', {
+        post$('/api/scene-metadata/best-scenes', {
             body: {
                 query: JSON.stringify({
                     sceneAreaIds, sources, dates, sceneSelectionOptions, sceneCount, cloudCoverTarget

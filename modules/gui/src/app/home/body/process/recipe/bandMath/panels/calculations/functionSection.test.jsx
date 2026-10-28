@@ -23,25 +23,15 @@ const createSection = selectedBandNames => {
         value: selectedBandNames.map(name => bandsByName[name]),
         set: vi.fn()
     }
-    const section = new FunctionSection({inputs: {usedBands}})
-    section.state = {
-        bandOptions: [
-            {
-                key: 'image-1',
-                label: 'Image one',
-                options: [
-                    {value: 'image-1|red-id', label: 'red', band: red},
-                    {value: 'image-1|nir-id', label: 'nir', band: nir},
-                    {value: 'image-1|all-id', label: 'all', band: all}
-                ]
-            },
-            {
-                key: 'image-2',
-                label: 'Image two',
-                options: [{value: 'image-2|blue-id', label: 'blue', band: blue}]
-            }
-        ]
-    }
+    const images = [
+        {imageId: 'image-1', name: 'Image one', includedBands: [red, nir, all].map(({id, name}) => ({id, name}))},
+        {imageId: 'image-2', name: 'Image two', includedBands: [{id: blue.id, name: blue.name}]}
+    ]
+    const section = new FunctionSection({
+        images,
+        calculations: [],
+        inputs: {imageId: {value: 'calculation-1'}, name: {value: 'c1'}, usedBands}
+    })
     return {section, usedBands, red, nir, all, blue}
 }
 

@@ -88,8 +88,12 @@ const createAssetManager = ({send, stop$}) => {
             map(({user}) => user)
         )
     ).pipe(
-        mergeMap(user => from(onMonitor(user))),
-        share()
+        mergeMap(user => from(onMonitor(user)).pipe(
+            catchError(error => {
+                log.warn(`${userTag(user.username)} monitor failed`, error)
+                return EMPTY
+            })
+        ))
     )
 
     const onUnmonitor = async user => {
@@ -100,7 +104,14 @@ const createAssetManager = ({send, stop$}) => {
         return user
     }
 
-    const unmonitor$ = merge(
+    const unmonitor$ = new Subject()
+
+    // The unmonitor side effects (drop cached assets, push an empty tree) must run for every
+    // event, not only while some per-user subscriber happens to be attached: on a share()d
+    // pipe there is a zero-subscriber window (no user currently monitored) during which a
+    // token removal or user-down would be dropped, stranding a stale cached tree. A failing
+    // cleanup is logged and skipped so a single Redis hiccup cannot kill the stream.
+    merge(
         userDown$.pipe(
             tap(user => userStatus(user, 'down'))
         ),
@@ -109,9 +120,17 @@ const createAssetManager = ({send, stop$}) => {
             map(({user}) => user)
         )
     ).pipe(
-        mergeMap(user => from(onUnmonitor(user))),
-        share()
-    )
+        mergeMap(user => from(onUnmonitor(user)).pipe(
+            catchError(error => {
+                log.warn(`${userTag(user.username)} unmonitor failed`, error)
+                return EMPTY
+            })
+        )),
+        takeUntil(stop$)
+    ).subscribe({
+        next: user => unmonitor$.next(user),
+        error: error => log.error('Unexpected unmonitor stream error', error)
+    })
 
     const unmonitorCurrentUser$ = username =>
         unmonitor$.pipe(
@@ -229,14 +248,24 @@ const createAssetManager = ({send, stop$}) => {
                     take(1),
                     repeat({delay: 0}),
                     takeUntil(unmonitorCurrentUser$(username).pipe(
-                        switchMap(() => from(removeUser(username)))
+                        switchMap(() => from(removeUser(username)).pipe(
+                            catchError(error => {
+                                log.warn(`${userTag(username)} remove user failed`, error)
+                                return of(username)
+                            })
+                        ))
                     )),
                     finalize(() => log.info(`${userTag(username)} unmonitoring assets`))
                 )
             }
             )
         )),
-        mergeMap(({username, tree}) => from(updateTree(username, tree))),
+        mergeMap(({username, tree}) => from(updateTree(username, tree)).pipe(
+            catchError(error => {
+                log.warn(`${userTag(username)} update failed`, error)
+                return EMPTY
+            })
+        )),
     ).subscribe({
         error: error => log.error('Unexpected monitor$ stream error', error),
         complete: () => log.error('Unexpected monitor$ stream complete')
@@ -296,53 +325,29 @@ const createAssetManager = ({send, stop$}) => {
         complete: () => log.error('Unexpected subscription stream complete')
     })
 
-    remove$.pipe(
-        mergeMap(({username, path}) =>
-            from(getUser(username)).pipe(
-                switchMap(user =>
-                    deleteAsset$(user, path.join('/')).pipe(
-                        tap({
-                            complete: () => log.info(`${userTag(username)} removed path:`, path.join('/'))
-                        }),
-                        catchError(error => {
-                            log.warn(`${userTag(username)} assets failed`, error)
-                            return EMPTY
-                        }),
-                        switchMap(() => scanNode$(username, path.slice(0, -1)))
-                    )
-                ),
-                map(node => ({username, node}))
+    const modifyAssets = (request$, modify$, action) =>
+        request$.pipe(
+            mergeMap(({username, path}) =>
+                from(getUser(username)).pipe(
+                    switchMap(user => modify$(user, path.join('/'))),
+                    tap({
+                        complete: () => log.info(`${userTag(username)} ${action} path:`, path.join('/'))
+                    }),
+                    switchMap(() => scanNode$(username, path.slice(0, -1))),
+                    switchMap(node => from(updateNode(username, node))),
+                    catchError(error => {
+                        log.warn(`${userTag(username)} assets failed`, error)
+                        return EMPTY
+                    })
+                )
             )
-        ),
-        mergeMap(({username, node}) => from(updateNode(username, node)))
-    ).subscribe({
-        error: error => log.error('Unexpected stream error', error),
-        complete: () => log.error('Unexpected stream complete')
-    })
-    
-    create$.pipe(
-        mergeMap(({username, path}) =>
-            from(getUser(username)).pipe(
-                switchMap(user =>
-                    createFolder$(user, path.join('/')).pipe(
-                        tap({
-                            complete: () => log.info(`${userTag(username)} created path:`, path.join('/'))
-                        }),
-                        catchError(error => {
-                            log.warn(`${userTag(username)} assets failed`, error)
-                            return EMPTY
-                        }),
-                        switchMap(() => scanNode$(username, path.slice(0, -1)))
-                    )
-                ),
-                map(node => ({username, node}))
-            )
-        ),
-        mergeMap(({username, node}) => from(updateNode(username, node)))
-    ).subscribe({
-        error: error => log.error('Unexpected stream error', error),
-        complete: () => log.error('Unexpected stream complete')
-    })
+        ).subscribe({
+            error: error => log.error('Unexpected stream error', error),
+            complete: () => log.error('Unexpected stream complete')
+        })
+
+    modifyAssets(remove$, deleteAsset$, 'removed')
+    modifyAssets(create$, createFolder$, 'created')
 
     busy$.pipe(
         map(({username, status}) => ({username, data: {status}}))

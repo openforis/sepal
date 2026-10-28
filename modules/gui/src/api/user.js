@@ -1,31 +1,18 @@
 import {delete$, get$, post$} from '~/http-client'
+import {launchFailureRetry} from '~/instanceLaunchFailure'
+import {uuid} from '~/uuid'
+
+import {moduleWebSocket$} from './ws.js'
 
 export default {
+    // Admin-only: the user module pushes every user change to subscribers of the user list.
+    ws: () => moduleWebSocket$('user'),
+
     loadCurrentUser$: () =>
         get$('/api/user/current', {
             validStatuses: [200, 401]
         }),
 
-    updateMessage$: message =>
-        post$(`/api/notification/messages/${message.id}`, {
-            body: message
-        }),
-
-    removeMessage$: message =>
-        delete$(`/api/notification/messages/${message.id}`),
-
-    updateMessageState$: userMessage =>
-        post$(`/api/notification/notifications/${userMessage.message.id}`, {
-            body: {
-                state: userMessage.state
-            }
-        }),
-
-    loadUserMessages$: ({retry}) =>
-        get$('/api/notification/notifications', {
-            retry
-        }),
-    
     loadCurrentUserReport$: ({retry}) =>
         get$('/api/sessions/report', {
             retry
@@ -80,9 +67,9 @@ export default {
             body: {token, password, recaptchaToken}
         }),
 
-    updateCurrentUserDetails$: ({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}) =>
+    updateCurrentUserDetails$: ({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled, revision}) =>
         post$('/api/user/current/details', {
-            body: {name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}
+            body: {name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled, revision}
         }),
 
     acceptPrivacyPolicy$: () =>
@@ -92,6 +79,19 @@ export default {
         post$('/api/user/current/password', {
             body: {oldPassword, newPassword}
         }),
+
+    sshKeys$: () =>
+        get$('/api/user/current/ssh-keys'),
+
+    // A refused key answers 400 {code}; it arrives as a value so the form can say why.
+    addSshKey$: ({publicKey, name}) =>
+        post$('/api/user/current/ssh-keys', {
+            body: {publicKey, name},
+            validStatuses: [201, 400]
+        }),
+
+    removeSshKey$: id =>
+        delete$(`/api/user/current/ssh-keys/${id}`),
 
     getGoogleAccessRequestUrl$: destinationUrl =>
         get$('/api/user/google/access-request-url', {
@@ -106,11 +106,22 @@ export default {
             query: {projectId, legacyProject}
         }),
 
+    // The keepAlive slider REPLACES the session's deadline — it can shorten as well as lengthen,
+    // unlike every automatic signal, which may only ratchet. Handing an instance back at once is
+    // still Stop; setting 0 here lets the normal warn-then-grace cycle run.
     updateCurrentUserSession$: session =>
-        post$(`/api/sessions/session/${session.id}/earliestTimeoutTime`, {
+        post$(`/api/sessions/session/${session.id}/keep-alive`, {
             body: {
                 hours: session.keepAlive
             }
+        }),
+
+    // Naming the session makes the request safe to retry: a gateway timeout does not mean the
+    // launch failed, and the worker answers a repeat with the session it already created.
+    startCurrentUserSession$: instanceTypeId =>
+        post$(`/api/sessions/instance-type/${encodeURIComponent(instanceTypeId)}`, {
+            query: {sessionId: uuid()},
+            retry: launchFailureRetry
         }),
 
     stopCurrentUserSession$: session =>

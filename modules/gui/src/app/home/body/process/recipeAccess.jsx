@@ -1,22 +1,13 @@
-import _ from 'lodash'
 import React from 'react'
-import {map, of, switchMap, tap} from 'rxjs'
 
-import {actionBuilder} from '~/action-builder'
-import api from '~/apiRegistry'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
-import {uuid} from '~/uuid'
 
-import {initializeRecipe} from './recipe'
-import {getRecipeType} from './recipeTypeRegistry'
+import {sessionRecipeCache} from './recipe'
+import {RecipeCacheClaimant} from './recipeCacheClaims'
 
-let componentIdsByRecipeId = {}
-
-const componentIdsForRecipeId = recipeId => Array.from(
-    componentIdsByRecipeId[recipeId] || new Set([])
-)
+// A component's claim on the session's recipe cache, held while it is mounted (recipeCacheClaims.js).
 
 const mapStateToProps = state => ({
     loadedRecipes: selectFrom(state, 'process.loadedRecipes') || {}
@@ -25,97 +16,21 @@ const mapStateToProps = state => ({
 export const recipeAccess = () =>
     WrappedComponent => compose(
         class RecipeAccessHOC extends React.Component {
-            constructor(props) {
-                super(props)
-                this.componentId = uuid()
-            }
+            claimant = new RecipeCacheClaimant(sessionRecipeCache)
 
             render() {
                 const {loadedRecipes} = this.props
                 return React.createElement(WrappedComponent, {
                     ...this.props,
-                    usingRecipe: recipeId => this.usingRecipe(recipeId),
-                    loadRecipe$: recipeId => this.loadRecipe$(recipeId),
-                    loadSourceRecipe$: recipeId => this.loadSourceRecipe$(recipeId),
+                    usingRecipe: recipeId => this.claimant.use(recipeId),
+                    loadRecipe$: recipeId => this.claimant.load$(recipeId),
+                    reloadRecipe$: recipeId => this.claimant.reload$(recipeId),
                     loadedRecipes
                 })
             }
 
             componentWillUnmount() {
-                const updatedComponentIdsByRecipeId = {}
-                Object.keys(componentIdsByRecipeId)
-                    .forEach(recipeId => {
-                        const componentIds = new Set(
-                            componentIdsForRecipeId(recipeId)
-                                .filter(componentId => componentId !== this.componentId)
-                        )
-                        if (_.isEmpty(componentIds)) {
-                            this.removeCachedRecipe(recipeId)
-                        } else {
-                            updatedComponentIdsByRecipeId[recipeId] = componentIds
-                        }
-                    })
-                componentIdsByRecipeId = updatedComponentIdsByRecipeId
-            }
-
-            usingRecipe(recipeId) {
-                componentIdsByRecipeId = {
-                    ...componentIdsByRecipeId,
-                    [recipeId]: new Set([
-                        ...componentIdsForRecipeId(recipeId),
-                        this.componentId
-                    ])
-                }
-            }
-
-            loadRecipe$(recipeId) {
-                const {loadedRecipes} = this.props
-                this.usingRecipe(recipeId)
-                return Object.keys(loadedRecipes).includes(recipeId)
-                    ? of(loadedRecipes[recipeId])
-                    : api.recipe.load$(recipeId).pipe(
-                        map(recipe => initializeRecipe(recipe)),
-                        tap(recipe => this.cacheRecipe(recipe))
-                    )
-            }
-
-            loadSourceRecipe$(recipeId) {
-                return this.loadRecipe$(recipeId).pipe(
-                    switchMap(recipe => {
-                        const type = getRecipeType(recipe.type)
-                        const sourceRecipe = type?.sourceRecipe && type.sourceRecipe(recipe)
-                        if (sourceRecipe) {
-                            if (sourceRecipe.type === 'ASSET') {
-                                return of(sourceRecipe)
-                            } else {
-                                return this.loadSourceRecipe$(sourceRecipe.id)
-                            }
-                        } else {
-                            this.cacheRecipe(recipe)
-                            return of(recipe)
-                        }
-                    })
-                )
-            }
-
-            cacheRecipe(recipe) {
-                const prevComponentIds = componentIdsForRecipeId(recipe.id)
-                componentIdsByRecipeId = {
-                    ...componentIdsByRecipeId,
-                    [recipe.id]: new Set([
-                        ...prevComponentIds,
-                        this.componentId
-                    ])
-                }
-                actionBuilder('CACHE_RECIPE', recipe)
-                    .set(['process.loadedRecipes', recipe.id], recipe)
-                    .dispatch()
-            }
-
-            removeCachedRecipe(recipeId) {
-                actionBuilder('REMOVE_CACHE_RECIPE', recipeId)
-                    .del(['process.loadedRecipes', recipeId])
-                    .dispatch()
+                this.claimant.release()
             }
         },
         connect(mapStateToProps)

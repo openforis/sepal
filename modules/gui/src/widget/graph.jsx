@@ -5,6 +5,8 @@ import React from 'react'
 
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
+import {withEnabled} from '~/enabled'
+import {withTheme} from '~/themeHooks'
 
 import styles from './graph.module.css'
 
@@ -15,15 +17,7 @@ class _Graph extends React.Component {
     graphRef = React.createRef()
 
     shouldComponentUpdate(nextProps) {
-        const {data, highlights, dimensions} = this.props
-        const {data: nextData, highlights: nextHighlights} = nextProps
-        const options = this.getOptions(this.props)
-        const nextOptions = this.getOptions(nextProps)
-        const nextDimensions = nextProps.dimensions
-        return !_.isEqual(dimensions, nextDimensions)
-            || data !== nextData
-            || !_.isEqual(highlights, nextHighlights)
-            || !_.isEqual(_.omit(options, CALLBACKS), _.omit(nextOptions, CALLBACKS))
+        return this.changed(this.props, nextProps) || this.props.enabled !== nextProps.enabled
     }
 
     render() {
@@ -39,27 +33,41 @@ class _Graph extends React.Component {
         this.update()
     }
 
-    componentDidUpdate(prevProps) {
-        this.update(prevProps)
+    componentDidUpdate() {
+        this.update()
     }
 
-    update(prevProps = {}) {
-        const {data, highlights, dimensions} = this.props
-        const {dimensions: prevDimentions} = prevProps
+    // Dygraph sizes a chart by its element when it builds it, and keeps that size: one built where it is not displayed -
+    // in a panel of a tab not selected (panel.jsx) - takes a default size it never leaves. So nothing is drawn while
+    // disabled, and what was asked for meanwhile is drawn, as it then stands, once enabled again.
+    update() {
+        const {data, highlights, dimensions, theme, enabled} = this.props
+        if (enabled === false || (this.graph && !this.changed(this.drawn, this.props))) {
+            return
+        }
+        const {dimensions: drawnDimensions, theme: drawnTheme} = this.drawn || {}
         const options = this.getOptions(this.props)
         const updatedData = data
         const newState = {data: updatedData, options}
         this.setState(newState)
         const underlayCallback = createUnderlayCallback(highlights)
-        if (!this.graph || !_.isEqual(dimensions, prevDimentions)) {
+        if (!this.graph || !_.isEqual(dimensions, drawnDimensions) || theme !== drawnTheme) {
             this.graph = new Dygraph(this.graphRef.current, data, {...options, underlayCallback})
         } else {
             this.graph.updateOptions({file: [...updatedData], underlayCallback})
         }
+        this.drawn = this.props
+    }
+
+    changed(props, nextProps) {
+        return !_.isEqual(props.dimensions, nextProps.dimensions)
+            || props.data !== nextProps.data
+            || !_.isEqual(props.highlights, nextProps.highlights)
+            || !_.isEqual(_.omit(this.getOptions(props), CALLBACKS), _.omit(this.getOptions(nextProps), CALLBACKS))
     }
 
     getOptions(props) {
-        return _.pick(props, [
+        return resolveGraphColors(props.theme, _.pick(props, [
             'animatedZooms',
             'annotationClickHandler',
             'annotationDblClickHandler',
@@ -176,7 +184,7 @@ class _Graph extends React.Component {
             'yLabelWidth',
             'yRangePad',
             'zoomCallback',
-        ])
+        ]))
     }
 }
 
@@ -202,11 +210,43 @@ const createUnderlayCallback = highlights =>
 const CALLBACKS = ['clickCallback', 'drawCallback', 'drawHighlightPointCallback', 'drawPointCallback',
     'highlightCallback', 'pointClickCallback', 'underlayCallback', 'unhighlightCallback', 'zoomCallback']
 
+// Chart chrome is drawn on canvas, where CSS custom properties do not reach, so it is named with
+// graphColor() and resolved here for the active theme. Series colors that are data stay literal.
+export const graphColor = name => `${GRAPH_COLOR_PREFIX}${name}`
+
+const GRAPH_COLOR_PREFIX = 'graph-color:'
+
+const GRAPH_COLORS = {
+    dark: {
+        foreground: '#FFFFFF',
+        highlightBackground: 'hsla(0, 0%, 0%, 1)',
+        rangeSelectorPlot: '#1B1B1C',
+        rangeSelectorStroke: 'rgba(100%, 100%, 100%, .15)'
+    },
+    light: {
+        foreground: '#2b2926',
+        highlightBackground: 'hsla(39, 40%, 95%, 1)',
+        rangeSelectorPlot: '#ddd7cb',
+        rangeSelectorStroke: 'hsla(40, 12%, 12%, .2)'
+    }
+}
+
+const resolveGraphColors = (theme, options) => {
+    const colors = GRAPH_COLORS[theme] || GRAPH_COLORS.dark
+    return _.cloneDeepWith(options, value =>
+        typeof value === 'string' && value.startsWith(GRAPH_COLOR_PREFIX)
+            ? colors[value.slice(GRAPH_COLOR_PREFIX.length)]
+            : undefined
+    )
+}
+
 export const Graph = compose(
     _Graph,
     asFunctionalComponent({
         color: '#FFB300'
-    })
+    }),
+    withTheme(),
+    withEnabled()
 )
 
 Graph.propTypes = {

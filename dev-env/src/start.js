@@ -1,34 +1,13 @@
 import _ from 'lodash'
 
 import {compose} from './compose.js'
-import {SEPAL_SRC} from './config.js'
 import {allowsProductionMode, getRunDependencyMap} from './deps.js'
-import {exec} from './exec.js'
 import {logs} from './logs.js'
-import {getMode, getModules, getStatus, isGradleModule, isModule, isRunnable, isRunning, MESSAGE, multi, progress, showModuleStatus, showStatus} from './utils.js'
+import {getMode, getModules, getStatus, isModule, isRunnable, MESSAGE, multi, showModuleStatus, showStatus} from './utils.js'
 
-const startModule = async (module, options = {}, rootModule, gradleOptions) => {
+const startModule = async (module, options = {}, rootModule) => {
     if (isModule(module)) {
         if (isRunnable(module)) {
-            if (gradleOptions.build && isGradleModule(module) && !await isRunning(module)) {
-                await progress(
-                    exec({
-                        command: 'gradle',
-                        args: [
-                            '-x',
-                            'test',
-                            'build'
-                        ],
-                        cwd: SEPAL_SRC,
-                        showStdOut: options.verbose
-                    }),
-                    count => showModuleStatus('gradle', [MESSAGE.BUILDING, '.'.repeat(count)].join(' '), {sameLine: true})
-                )
-
-                showModuleStatus('gradle', MESSAGE.BUILT)
-                gradleOptions.build = false
-            }
-
             const productionMode = options.production && allowsProductionMode(module)
 
             showModuleStatus(module, MESSAGE.STARTING, {sameLine: true})
@@ -85,13 +64,13 @@ const waitModuleRunning = async module =>
         wait()
     })
 
-const startModules = async (rootModules, options, gradleOptions, dependencyMap = getRunDependencyMap(rootModules, options)) => {
+const startModules = async (rootModules, options, dependencyMap = getRunDependencyMap(rootModules, options)) => {
     const independentModules = _(dependencyMap)
         .pickBy(dependencies => dependencies.length === 0)
         .keys()
         .value()
 
-    await multi(independentModules, async module => await startModule(module, options, rootModules.includes(module), gradleOptions), options.sequential)
+    await multi(independentModules, async module => await startModule(module, options, rootModules.includes(module)), options.sequential)
 
     const updatedDependencyMap = _(dependencyMap)
         .omit(independentModules)
@@ -99,12 +78,11 @@ const startModules = async (rootModules, options, gradleOptions, dependencyMap =
         .value()
 
     if (!_.isEmpty(updatedDependencyMap)) {
-        await startModules(rootModules, options, gradleOptions, updatedDependencyMap)
+        await startModules(rootModules, options, updatedDependencyMap)
     }
 }
 
 export const start = async (modules, options) => {
     const rootModules = getModules(modules)
-    const gradleOptions = {build: true}
-    await startModules(rootModules, options, gradleOptions)
+    await startModules(rootModules, options)
 }

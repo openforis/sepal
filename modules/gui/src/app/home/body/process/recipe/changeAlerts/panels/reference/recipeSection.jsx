@@ -2,8 +2,10 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {Subject} from 'rxjs'
 
+import {mayProvideSegments} from '#sepal/recipe/capability/ccdcSegments'
 import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {compose} from '~/compose'
+import {Layout} from '~/widget/layout'
 import {RecipeInput} from '~/widget/recipeInput'
 
 class _RecipeSection extends React.Component {
@@ -13,16 +15,18 @@ class _RecipeSection extends React.Component {
     }
 
     render() {
-        const {inputs: {recipe}} = this.props
+        const {labelButtons, inputs: {recipe}} = this.props
         return (
-            <RecipeInput
-                filter={type => {
-                    return type.id === 'CCDC' || type.sourceRecipe // TODO: Include optional sourceType on recipes (store as column in db). Default to type
-                }}
-                input={recipe}
-                autoFocus
-                errorMessage
-            />
+            <Layout>
+                <RecipeInput
+                    filter={type => mayProvideSegments(type.id)}
+                    input={recipe}
+                    labelButtons={labelButtons}
+                    autoFocus
+                    keepSelection
+                    errorMessage
+                />
+            </Layout>
         )
     }
 }
@@ -33,5 +37,6 @@ export const RecipeSection = compose(
 )
 
 RecipeSection.propTypes = {
-    inputs: PropTypes.object.isRequired
+    inputs: PropTypes.object.isRequired,
+    labelButtons: PropTypes.array
 }

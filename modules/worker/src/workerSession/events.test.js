@@ -1,0 +1,142 @@
+import assert from 'node:assert/strict'
+import {afterEach, beforeEach, describe, it} from 'node:test'
+
+import {
+    emitSessionAppAssociated,
+    emitSessionExpiryClosed,
+    emitSessionExpiryNotified,
+    emitWorkerSessionActivated,
+    emitWorkerSessionClosed,
+    sessionChanged$,
+    WORKER_SESSION_PUBLISHERS,
+} from './events.js'
+
+const collect = () => {
+    const seen = []
+    const subscription = sessionChanged$.subscribe(value => seen.push(value))
+    return {seen, unsubscribe: () => subscription.unsubscribe()}
+}
+
+describe('sessionChanged$', () => {
+    let collected
+
+    beforeEach(() => {
+        collected = collect()
+    })
+
+    afterEach(() => {
+        collected.unsubscribe()
+    })
+
+    it('fires when a session is activated', () => {
+        emitWorkerSessionActivated({username: 'alice', session: {id: 's-1'}})
+        assert.deepEqual(collected.seen, [{username: 'alice'}])
+    })
+
+    it('fires when a session is closed', () => {
+        emitWorkerSessionClosed({username: 'alice', sessionId: 's-1'})
+        assert.deepEqual(collected.seen, [{username: 'alice'}])
+    })
+
+    it('fires when an app is associated with a session', () => {
+        emitSessionAppAssociated({username: 'alice', sessionId: 's-1', path: '/sandbox/shiny/foo', label: 'Foo'})
+        assert.deepEqual(collected.seen, [{username: 'alice'}])
+    })
+
+    // A malformed event with no username would otherwise push a report for "everyone" — the ws
+    // registry treats the username as the multicast selector.
+    it('does not fire without a username', () => {
+        emitWorkerSessionClosed({sessionId: 's-1'})
+        assert.deepEqual(collected.seen, [])
+    })
+
+    it('fires when a session expiry is notified', () => {
+        emitSessionExpiryNotified({username: 'alice', session: {id: 's-1', apiKey: null}})
+        assert.deepEqual(collected.seen, [{username: 'alice'}])
+    })
+})
+
+describe('WorkerSessionClosed', () => {
+    // Consumers such as budget may process the event long after it was published (a consumer
+    // outage leaves it queued), so the close time travels with the event.
+    it('publishes {username, sessionId, closeTime} stamped when the session closed', () => {
+        const publisher = WORKER_SESSION_PUBLISHERS
+            .find(({key}) => key === 'workerSession.WorkerSessionClosed')
+        const published = []
+        const subscription = publisher.publish$.subscribe(value => published.push(value))
+        const before = Date.now()
+        emitWorkerSessionClosed({username: 'alice', sessionId: 's-1'})
+        const after = Date.now()
+        subscription.unsubscribe()
+        const [{closeTime, ...rest}] = published
+        assert.deepEqual(rest, {username: 'alice', sessionId: 's-1'})
+        assert.equal(closeTime, new Date(closeTime).toISOString())
+        assert.ok(Date.parse(closeTime) >= before && Date.parse(closeTime) <= after)
+    })
+})
+
+describe('SessionExpiryClosed', () => {
+    it('carries the instance name and type through to the bus', () => {
+        const publisher = WORKER_SESSION_PUBLISHERS
+            .find(({key}) => key === 'workerSession.SessionExpiryClosed')
+        const published = []
+        const subscription = publisher.publish$.subscribe(value => published.push(value))
+        emitSessionExpiryClosed({
+            username: 'alice', sessionId: 's-1', name: 'crazy-banana', typeName: 't3a.small'})
+        subscription.unsubscribe()
+        assert.partialDeepStrictEqual(published[0], {name: 'crazy-banana', typeName: 't3a.small'})
+    })
+
+    it('publishes {username, sessionId, apps, terminals, ordinal, instanceName}', () => {
+        const publisher = WORKER_SESSION_PUBLISHERS
+            .find(({key}) => key === 'workerSession.SessionExpiryClosed')
+        assert.notEqual(publisher, undefined)
+        const published = []
+        const subscription = publisher.publish$.subscribe(value => published.push(value))
+        emitSessionExpiryClosed({username: 'alice', sessionId: 's-1'})
+        subscription.unsubscribe()
+        // apps/terminals/ordinal/instanceName describe what was closed, so the GUI can replace its
+        // warning with an accurate past-tense message. They default rather than being required.
+        const expected = {
+            username: 'alice', sessionId: 's-1',
+            apps: [], terminals: 0, ordinal: null, name: null, typeName: null,
+        }
+        assert.deepEqual(published, [expected])
+    })
+})
+
+describe('SessionExpiryNotified', () => {
+    // The emitter rebuilds the payload from an explicit allow-list, so a field the caller passes
+    // is silently dropped unless it is named here. That is exactly how the instance name went
+    // missing from the in-app notification while the email still had it.
+    it('carries the instance name and type through to the bus', () => {
+        const publisher = WORKER_SESSION_PUBLISHERS
+            .find(({key}) => key === 'workerSession.SessionExpiryNotified')
+        const published = []
+        const subscription = publisher.publish$.subscribe(value => published.push(value))
+        emitSessionExpiryNotified({
+            username: 'alice',
+            session: {id: 's-1', username: 'alice', apiKey: null},
+            name: 'crazy-banana',
+            typeName: 't3a.small',
+        })
+        subscription.unsubscribe()
+        assert.partialDeepStrictEqual(published[0], {name: 'crazy-banana', typeName: 't3a.small'})
+    })
+
+    it('publishes {username, sessionId, session} on the bus subject', () => {
+        const publisher = WORKER_SESSION_PUBLISHERS
+            .find(({key}) => key === 'workerSession.SessionExpiryNotified')
+        assert.notEqual(publisher, undefined)
+        const published = []
+        const subscription = publisher.publish$.subscribe(value => published.push(value))
+        const session = {id: 's-1', username: 'alice', apiKey: null}
+        emitSessionExpiryNotified({username: 'alice', session})
+        subscription.unsubscribe()
+        const expected = {
+            username: 'alice', sessionId: 's-1', session,
+            apps: [], terminals: 0, ordinal: null, name: null, typeName: null, extensionMinutes: null,
+        }
+        assert.deepEqual(published, [expected])
+    })
+})

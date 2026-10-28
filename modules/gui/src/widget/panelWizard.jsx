@@ -10,19 +10,27 @@ const Context = React.createContext()
 
 export const withPanelWizard = withContext(Context, 'panelWizard')
 
+// Leads a recipe being set up through its panels in order, until done. While it does, it knows which panels have been
+// opened - its steps reached so far, and any other panel opened meanwhile - so what the toolbar says about a section
+// can wait until it is reached (`reached`), and which step is open (`step`), so what is said of it while it is being
+// set up can wait too. That progress is the wizard's alone, kept while it is shown and never saved;
+// once done, or for a recipe already set up, every panel counts as reached.
 class _PanelWizard extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {initialized: props.initialized}
+        this.state = {initialized: props.initialized, opened: []}
+    }
+
+    static getDerivedStateFromProps({activator: {activatables}}, {initialized, opened}) {
+        const newlyOpened = initialized ? [] : activeIds(activatables).filter(id => !opened.includes(id))
+        return newlyOpened.length ? {opened: [...opened, ...newlyOpened]} : null
     }
 
     render() {
         const {panels = [], activator: {activatables, updateActivatables}, onDone, children} = this.props
-        const {initialized} = this.state
+        const {initialized, opened} = this.state
 
-        const currentId = !initialized && _(activatables)
-            .pickBy(({active}) => active)
-            .keys()
+        const currentId = !initialized && activeIds(activatables)
             .find(id => panels.includes(id))
         const currentIndex = panels.indexOf(currentId)
         const currentActivatable = activatables[panels[currentIndex]]
@@ -43,6 +51,7 @@ class _PanelWizard extends React.Component {
         }
 
         const wizard = !initialized && panels
+        const reached = id => !wizard || opened.includes(id)
         const back = navigate(currentIndex - 1)
         const next = navigate(currentIndex + 1)
 
@@ -53,7 +62,7 @@ class _PanelWizard extends React.Component {
         }
 
         return (
-            <Context.Provider value={{wizard, back, next, done}}>
+            <Context.Provider value={{wizard, back, next, done, reached, step: currentId || null}}>
                 {children}
             </Context.Provider>
         )
@@ -89,6 +98,12 @@ class _PanelWizard extends React.Component {
         }
     }
 }
+
+const activeIds = activatables =>
+    _(activatables)
+        .pickBy(({active}) => active)
+        .keys()
+        .value()
 
 export const PanelWizard = compose(
     _PanelWizard,

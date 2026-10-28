@@ -1,19 +1,25 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {recipeVisualizationsNaming} from '~/app/home/body/process/recipe/visualizations'
+import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
+import {msg} from '~/translate'
 import {RecipeInput} from '~/widget/recipeInput'
 
 export class RecipeSection extends React.Component {
     render() {
-        const {input, onLoading} = this.props
+        const {input, labelButtons, onLoading, onError} = this.props
         return (
             <RecipeInput
+                label={msg('process.classChange.panel.inputImage.image.label')}
+                labelButtons={labelButtons}
                 input={input}
-                filter={type => !type.noImageOutput}
+                filter={isImageSource}
                 autoFocus
+                keepSelection
                 onLoading={onLoading}
-                onLoaded={value => this.onRecipeLoaded(value)}
+                onError={onError}
+                onBandsLoaded={value => this.onRecipeLoaded(value)}
             />
         )
     }
@@ -32,7 +38,7 @@ export class RecipeSection extends React.Component {
 
     extractBands(recipe, bandNames) {
         const bands = {}
-        const categoricalVisualizations = getAllVisualizations(recipe)
+        const categoricalVisualizations = recipeVisualizationsNaming(recipe, bandNames)
             .filter(({type}) => type === 'categorical')
         bandNames
             .forEach(bandName => {
@@ -46,5 +52,7 @@ export class RecipeSection extends React.Component {
 
 RecipeSection.propTypes = {
     input: PropTypes.object.isRequired,
+    labelButtons: PropTypes.array,
+    onError: PropTypes.func,
     recipes: PropTypes.array
 }

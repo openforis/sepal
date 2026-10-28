@@ -1,4 +1,5 @@
-
-.bandSelector {
-    flex-grow: 1;
+/* Keep the full name in the title tooltip when the shared header truncates it. */
+.name {
+    max-width: 100%;
+    text-overflow: ellipsis;
 }

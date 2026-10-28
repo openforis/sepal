@@ -2,7 +2,6 @@ import _ from 'lodash'
 import moment from 'moment'
 
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {pyramidingPolicies, submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
@@ -31,18 +30,11 @@ export const RecipeActions = id => {
                 'ui.bands.selection': bands
             }, {bands})
         },
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_CLASS_CHANGE_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions,
-                })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .dispatch()
-        },
     }
 }
 
+// Whether the source snapshots saved when each image was selected hold the same classes, each with its probability
+// band. A snapshot is what the source held then, so this is a hint, not evidence that a confidence can be computed.
 export const hasConfidence = recipe => {
     const fromImage = recipe.model.fromImage
     const toImage = recipe.model.toImage
@@ -52,7 +44,7 @@ export const hasConfidence = recipe => {
     const fromBands = Object.keys(fromImage.bands)
     const fromValues = fromImage.bands[fromImage.band].values
     const toBands = Object.keys(toImage.bands)
-    const toValues = fromImage.bands[toImage.band].values
+    const toValues = toImage.bands[toImage.band].values
 
     if (!_.isEqual(new Set(fromValues), new Set(toValues))) {
         return false
@@ -63,7 +55,4 @@ export const hasConfidence = recipe => {
     }
 }
 
-const submitRetrieveRecipeTask = recipe =>
-    submitTask(recipe, {
-        pyramidingPolicy: pyramidingPolicies.changeBased('transition')
-    })
+export const retrieveTask = {}

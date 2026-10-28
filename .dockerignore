@@ -2,10 +2,9 @@
 
 !lib/
 !modules/**/
-!common/
-!common-test/
 
 **/node_modules/
+lib/js/*/package-lock.json
 **/build
 modules/gui/dist
 
@@ -13,9 +12,6 @@ modules/**/binary
 modules/**/build
 modules/**/target
 
-!build.gradle
-!settings.gradle
-!modules/**/build.gradle
 
 .DS_Store
 .node-xmlhttprequest-*

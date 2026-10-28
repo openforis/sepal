@@ -1,9 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import {catchError, map, of} from 'rxjs'
 
 import {isValidEarthEngineAssetId, sanitizeEarthEngineAssetId} from '#sepal/earthEngineExportNames'
-import api from '~/apiRegistry'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -16,12 +14,15 @@ import {CopyButton} from '~/widget/copyButton'
 import {Form} from '~/widget/form'
 
 import {withActivators} from './activation/activator'
+import {findNonContainerAncestor} from './assetDestinationAncestor'
 import {AssetDestinationBrowser} from './assetDestinationBrowser'
 import {Button} from './button'
 
 const mapStateToProps = state => ({
     projects: selectFrom(state, 'process.projects'),
-    assetRoots: selectFrom(state, 'assets.roots')
+    assetRoots: selectFrom(state, 'assets.roots'),
+    userAssets: selectFrom(state, 'assets.user'),
+    tasks: selectFrom(state, 'tasks')
 })
 
 const mapRecipeToProps = recipe => ({
@@ -29,8 +30,6 @@ const mapRecipeToProps = recipe => ({
     projectId: recipe.projectId,
     recipeName: recipe.title || recipe.placeholder
 })
-
-const shouldLoadAsset = assetId => !!assetId && isValidEarthEngineAssetId(assetId)
 
 class _AssetDestination extends React.Component {
     checking = false
@@ -48,6 +47,7 @@ class _AssetDestination extends React.Component {
         this.onError = this.onError.bind(this)
         this.onChange = this.onChange.bind(this)
         this.openAssetBrowser = this.openAssetBrowser.bind(this)
+        this.shouldLoadAsset = this.shouldLoadAsset.bind(this)
     }
 
     render() {
@@ -83,7 +83,7 @@ class _AssetDestination extends React.Component {
                 onLoading={this.onLoading}
                 onLoaded={({asset, metadata} = {}) => this.onLoaded({asset, currentType: metadata?.type})}
                 onError={this.onError}
-                shouldLoad={shouldLoadAsset}
+                shouldLoad={this.shouldLoadAsset}
             />
         )
     }
@@ -224,14 +224,12 @@ class _AssetDestination extends React.Component {
         return projects.find(({id}) => id === projectId)
     }
 
-    checkTaskConflict$(assetId) {
-        return api.tasks.listExisting$({
-            outputPath: assetId,
-            destination: 'GEE',
-            status: 'PENDING,ACTIVE'
-        }).pipe(
-            map(tasks => ({conflict: tasks?.length > 0})),
-            catchError(error => of({error}))
+    hasTaskConflict(assetId) {
+        const {tasks} = this.props
+        return (tasks || []).some(({status, taskInfo}) =>
+            ['PENDING', 'ACTIVE'].includes(status)
+                && taskInfo?.destination === 'GEE'
+                && taskInfo?.outputPath === assetId
         )
     }
 
@@ -275,27 +273,22 @@ class _AssetDestination extends React.Component {
     }
 
     validateConflict(asset, validationSequence, currentType) {
-        const {addSubscription, assetInput, strategyInput} = this.props
-        addSubscription(
-            this.checkTaskConflict$(asset).subscribe(({error, conflict}) =>
-                this.completeValidation(validationSequence, () => {
-                    if (error) {
-                        assetInput.setInvalid(msg('widget.assetDestination.loadError'))
-                    } else if (conflict) {
-                        assetInput.setInvalid(msg('widget.assetDestination.taskPending'))
-                    } else if (currentType) {
-                        assetInput.setInvalid(msg(
-                            ['Image', 'ImageCollection', 'Table'].includes(currentType)
-                                ? 'widget.assetDestination.exists.replaceable'
-                                : 'widget.assetDestination.exists.notReplaceable'
-                        ))
-                    } else {
-                        assetInput.setInvalid(null)
-                        strategyInput.set('new')
-                    }
-                })
-            )
-        )
+        const {assetInput, strategyInput} = this.props
+        const conflict = this.hasTaskConflict(asset)
+        this.completeValidation(validationSequence, () => {
+            if (conflict) {
+                assetInput.setInvalid(msg('widget.assetDestination.taskPending'))
+            } else if (currentType) {
+                assetInput.setInvalid(msg(
+                    ['Image', 'ImageCollection', 'Table'].includes(currentType)
+                        ? 'widget.assetDestination.exists.replaceable'
+                        : 'widget.assetDestination.exists.notReplaceable'
+                ))
+            } else {
+                assetInput.setInvalid(null)
+                strategyInput.set('new')
+            }
+        })
     }
 
     startValidation() {
@@ -313,18 +306,36 @@ class _AssetDestination extends React.Component {
         return this.validationSequence
     }
 
+    shouldLoadAsset(assetId) {
+        return !!assetId && isValidEarthEngineAssetId(assetId) && !this.findNonContainerAncestor(assetId)
+    }
+
     validateAssetId() {
-        const {assetInput, strategyInput} = this.props
-        if (!assetInput.value) {
+        const {assetInput} = this.props
+        const assetId = assetInput.value
+        const nonContainerAncestor = assetId && this.findNonContainerAncestor(assetId)
+        if (!assetId) {
             this.cancelValidation()
-        } else if (!isValidEarthEngineAssetId(assetInput.value)) {
-            this.cancelValidation()
-            strategyInput.set(null)
-            this.setState({currentType: null})
-            assetInput.setInvalid(msg('widget.assetDestination.invalidAssetId'))
+        } else if (!isValidEarthEngineAssetId(assetId)) {
+            this.rejectAssetId(msg('widget.assetDestination.invalidAssetId'))
+        } else if (nonContainerAncestor) {
+            this.rejectAssetId(msg('widget.assetDestination.insideNonContainer', {ancestor: nonContainerAncestor.id}))
         } else {
             this.startValidation()
         }
+    }
+
+    findNonContainerAncestor(assetId) {
+        const {userAssets} = this.props
+        return findNonContainerAncestor(assetId, userAssets || [])
+    }
+
+    rejectAssetId(message) {
+        const {assetInput, strategyInput} = this.props
+        this.cancelValidation()
+        strategyInput.set(null)
+        this.setState({currentType: null})
+        assetInput.setInvalid(message)
     }
 
     cancelValidation() {

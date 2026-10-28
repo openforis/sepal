@@ -3,6 +3,8 @@ import sys
 from osgeo import gdal
 from osgeo.gdalconst import GA_ReadOnly
 
+gdal.UseExceptions()
+
 
 def get_band_names(path):
     ds = gdal.Open(path, GA_ReadOnly)

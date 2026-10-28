@@ -446,3 +446,116 @@ describe('the band list toVisualizations is given', () => {
         expect(toVisualizations(properties, [])).toEqual([])
     })
 })
+
+// Round-tripping the properties of a real, existing CCDC asset (users/wiell/amazonas_ccdc, written October
+// 2021). These are the exact strings the asset carries, so what the parser makes of them describes every asset
+// like it. The decoding rules themselves are covered above; this is the whole-asset witness for them.
+describe('a legacy CCDC asset', () => {
+    // Physical bands. The asset carries a `_coefs` array band per measure, never the coefficient bands by name.
+    const BANDS = [
+        'tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb',
+        'ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude'
+    ]
+
+    const HARMONIC = {
+        visualization_11_type: 'hsv',
+        visualization_11_bands: 'ndvi_phase_1,ndvi_amplitude_1,ndvi_rmse',
+        visualization_11_baseBands: 'ndvi',
+        visualization_11_gamma: '1,1,1',
+        visualization_11_inverted: 'false,false,true',
+        visualization_11_max: '3.141592653589793,3000,2500',
+        visualization_11_min: '-3.141592653589793,0,0',
+        visualization_11_name: 'ndvi_phase_1\\, ndvi_amplitude_1\\, ndvi_rmse'
+    }
+
+    const CONTINUOUS = {
+        visualization_6_type: 'continuous',
+        visualization_6_bands: 'ndvi',
+        visualization_6_baseBands: 'ndvi',
+        visualization_6_inverted: 'false',
+        visualization_6_max: '10000',
+        visualization_6_min: '-10000',
+        visualization_6_name: 'ndvi',
+        visualization_6_palette: '#112040,#1C67A0,#6DB6B3,#FFFCCC,#ABAC21,#177228,#172313'
+    }
+
+    const RGB = {
+        visualization_0_type: 'rgb',
+        visualization_0_bands: 'red,green,blue',
+        visualization_0_baseBands: 'red,green,blue',
+        visualization_0_gamma: '1.3,1.3,1.3',
+        visualization_0_inverted: 'false,false,false',
+        visualization_0_max: '2500,2500,2300',
+        visualization_0_min: '300,100,0',
+        visualization_0_name: 'red\\, green\\, blue'
+    }
+
+    const parse = properties => toVisualizations(properties, BANDS)
+
+    it('reads a harmonic template naming bands the asset does not physically carry', () => {
+        expect(parse(HARMONIC)[0]).toEqual({
+            type: 'hsv',
+            bands: ['ndvi_phase_1', 'ndvi_amplitude_1', 'ndvi_rmse'],
+            baseBands: ['ndvi'],
+            gamma: [1, 1, 1],
+            inverted: [false, false, true],
+            min: [-3.141592653589793, 0, 0],
+            max: [3.141592653589793, 3000, 2500],
+            name: 'ndvi_phase_1, ndvi_amplitude_1, ndvi_rmse'
+        })
+    })
+
+    it('parses an ordinary continuous band template unchanged by the CCDC fields beside it', () => {
+        expect(parse(CONTINUOUS)[0]).toEqual({
+            type: 'continuous',
+            bands: ['ndvi'],
+            baseBands: ['ndvi'],
+            inverted: [false],
+            min: [-10000],
+            max: [10000],
+            name: 'ndvi',
+            palette: ['#112040', '#1C67A0', '#6DB6B3', '#FFFCCC', '#ABAC21', '#177228', '#172313']
+        })
+    })
+
+    it('parses an ordinary rgb template unchanged by the CCDC fields beside it', () => {
+        expect(parse(RGB)[0]).toEqual({
+            type: 'rgb',
+            bands: ['red', 'green', 'blue'],
+            baseBands: ['red', 'green', 'blue'],
+            gamma: [1.3, 1.3, 1.3],
+            inverted: [false, false, false],
+            min: [300, 100, 0],
+            max: [2500, 2500, 2300],
+            name: 'red, green, blue'
+        })
+    })
+
+    // Indices are ordered numerically because lodash groups them into integer-like object keys, not because
+    // anything sorts them; the property order in the asset is irrelevant.
+    it('orders visualizations by index and closes the gaps between them', () => {
+        const parsed = parse({...HARMONIC, ...CONTINUOUS, ...RGB})
+
+        expect(parsed).toHaveLength(3)
+        expect(parsed.map(({type}) => type)).toEqual(['rgb', 'continuous', 'hsv'])
+    })
+
+    it('ignores properties that are not visualizations', () => {
+        expect(parse({dateFormat: 1, startDate: '2015-01-01', surfaceReflectance: 1})).toEqual([])
+    })
+})
+
+// Shapes a hand-edited or foreign asset can present that are neither malformed nor recognised.
+describe('unsupported and incomplete properties', () => {
+    it('keeps an unrecognized field verbatim rather than rejecting the visualization', () => {
+        expect(toVisualizations({
+            visualization_0_bands: 'a',
+            visualization_0_type: 'continuous',
+            visualization_0_somethingElse: 'kept'
+        }, ['a'])[0].somethingElse).toBe('kept')
+    })
+
+    it('needs all three class properties before it derives a categorical visualization', () => {
+        expect(toVisualizations({b_class_names: 'foo', b_class_values: '1'}, ['b'])).toEqual([])
+    })
+})

@@ -1,0 +1,73 @@
+import assert from 'node:assert/strict'
+import {after, describe, it, mock} from 'node:test'
+
+import {closeConsole, prompt, readLine$, setTitle} from './console.js'
+
+// The shared readline interface reads process.stdin; emitting 'data' drives its
+// line parser synchronously, so prompts can be tested without a real terminal.
+describe('readLine$', () => {
+    after(() => closeConsole())
+
+    it('delivers input to sequential prompts (menu → confirmation regression)', () => {
+        const received = []
+        readLine$().subscribe(line => {
+            received.push(`first:${line}`)
+            // subscribing the next prompt inside the previous prompt's handler is
+            // exactly what interactive.js does (stop → y/N confirmation); with
+            // per-prompt readline interfaces this second prompt never fired
+            readLine$().subscribe(line2 => received.push(`second:${line2}`))
+        })
+        process.stdin.emit('data', '1s\n')
+        process.stdin.emit('data', 'y\n')
+        assert.deepEqual(received, ['first:1s', 'second:y'])
+    })
+
+    it('releases the prompt when unsubscribed before any input (race loser)', () => {
+        const received = []
+        const subscription = readLine$().subscribe(line => received.push(line))
+        subscription.unsubscribe()
+        process.stdin.emit('data', 'ignored\n')
+        assert.deepEqual(received, [])
+    })
+})
+
+describe('prompt', () => {
+    after(() => closeConsole())
+
+    it('renders the prompt text through readline', () => {
+        const writes = []
+        const spy = mock.method(process.stdout, 'write', chunk => {
+            writes.push(String(chunk))
+            return true
+        })
+        prompt('Select (1): ')
+        spy.mock.restore()
+        assert.ok(writes.join('').includes('Select (1): '))
+    })
+})
+
+// The GUI names each terminal tab after the xterm title, which the emulator picks up from this
+// escape sequence — the only channel from inside the ssh session back out to the surrounding UI.
+describe('setTitle', () => {
+    const captureWrites = fn => {
+        const writes = []
+        const spy = mock.method(process.stdout, 'write', chunk => {
+            writes.push(String(chunk))
+            return true
+        })
+        fn()
+        spy.mock.restore()
+        return writes.join('')
+    }
+
+    it('writes the title as an OSC 0 sequence', () => {
+        assert.equal(
+            captureWrites(() => setTitle('1: lazy-paper')),
+            '\u001B]0;1: lazy-paper\u0007'
+        )
+    })
+
+    it('clears the title with an empty string', () => {
+        assert.equal(captureWrites(() => setTitle('')), '\u001B]0;\u0007')
+    })
+})

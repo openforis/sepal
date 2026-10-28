@@ -18,7 +18,7 @@ import {SpatialSpeckleFilterOptions} from './spatialSpeckleFilterOptions'
 const fields = {
     advanced: new Form.Field(),
     orbits: new Form.Field()
-        .notEmpty('process.recipeMosaic.panel.options.form.orbits.required'),
+        .notEmpty('process.baytsHistorical.panel.options.form.orbits.required'),
     orbitNumbers: new Form.Field(),
     geometricCorrection: new Form.Field(),
     spatialSpeckleFilter: new Form.Field(),
@@ -39,6 +39,8 @@ const fields = {
 }
 
 class _Options extends React.Component {
+    learned = new Set()
+
     render() {
         const {inputs: {advanced}} = this.props
         return (
@@ -60,6 +62,14 @@ class _Options extends React.Component {
         )
     }
 
+    componentDidMount() {
+        this.learnDefaults()
+    }
+
+    componentDidUpdate() {
+        this.learnDefaults()
+    }
+
     renderAdvanced() {
         const {monitor, inputs: {mask}} = this.props
         return (
@@ -70,7 +80,7 @@ class _Options extends React.Component {
                 {this.renderGeometricCorrection()}
                 {this.renderSpatialSpeckleFilter()}
                 {this.usingSpatialSpeckleFilter() ? this.renderSpatialSpeckleFilterOptions() : null}
-                {this.usingSpatialSpeckleFilter() ? this.renderMultitemporalSpeckleFilter() : null}
+                {!monitor && this.usingSpatialSpeckleFilter() ? this.renderMultitemporalSpeckleFilter() : null}
                 {!monitor && this.usingMultitemporalSpeckleFilter() ? this.renderMultitemporalSpeckleFilterOptions() : null}
                 {!monitor ? this.renderOutlierRemoval() : null}
                 {!monitor ? this.renderMinObservations() : null}
@@ -85,14 +95,14 @@ class _Options extends React.Component {
                 {this.renderOrbits()}
                 {this.renderGeometricCorrection()}
                 {this.renderSpatialSpeckleFilter()}
-                {this.usingSpatialSpeckleFilter() ? this.renderMultitemporalSpeckleFilter() : null}
+                {!monitor && this.usingSpatialSpeckleFilter() ? this.renderMultitemporalSpeckleFilter() : null}
                 {!monitor ? this.renderOutlierRemoval() : null}
             </Layout>
         )
     }
 
     renderOrbits() {
-        const {inputs: {orbits}} = this.props
+        const {monitor, supportedOrbits, form, inputs: {orbits}} = this.props
         const options = [
             {
                 value: 'ASCENDING',
@@ -104,13 +114,14 @@ class _Options extends React.Component {
                 label: msg('process.baytsHistorical.panel.options.form.orbits.descending.label'),
                 tooltip: msg('process.baytsHistorical.panel.options.form.orbits.descending.tooltip')
             }
-        ]
+        ].map(option => supportedOrbits ? {...option, disabled: !this.offered(option.value)} : option)
         return (
             <Form.Buttons
                 label={msg('process.baytsHistorical.panel.options.form.orbits.label')}
                 input={orbits}
                 multiple
                 options={options}
+                errorMessage={monitor ? form.getErrorMessage(orbits) : undefined}
             />
         )
     }
@@ -138,6 +149,7 @@ class _Options extends React.Component {
             <Form.Buttons
                 label={msg('process.baytsHistorical.panel.options.form.geometricCorrection.label')}
                 input={geometricCorrection}
+                {...geometricCorrection.presentation?.(msg('process.baytsHistorical.panel.options.form.geometricCorrection.label'))}
                 options={options}
             />
         )
@@ -186,6 +198,7 @@ class _Options extends React.Component {
             <Form.Buttons
                 label={msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilter.label')}
                 input={spatialSpeckleFilter}
+                {...spatialSpeckleFilter.presentation?.(msg('process.baytsHistorical.panel.options.form.spatialSpeckleFilter.label'))}
                 options={options}
             />
         )
@@ -341,10 +354,36 @@ class _Options extends React.Component {
             && multitemporalSpeckleFilter.value !== 'NONE'
     }
 
+    // Where a setting holds no value as it is first offered, the value it runs with is where it starts (`defaults`, BAYTS
+    // Alerts' PRC), learned as its initial value: the draft is not edited by it, and a value saved, entered or cleared
+    // afterwards is never replaced.
+    learnDefaults() {
+        const {defaults = {}, inputs} = this.props
+        Object.entries(defaults)
+            .filter(([name]) => inputs[name] && !this.learned.has(name))
+            .forEach(([name, value]) => {
+                this.learned.add(name)
+                if (isAbsent(inputs[name].value)) {
+                    inputs[name].setInitialValue(value)
+                }
+            })
+    }
+
+    // Whether a pass can be chosen: one the source supports, or one already chosen, which stays shown so that it can be
+    // deselected - the requirement on the passes monitored says why it cannot stay (sourceRequirement.js). A disabled
+    // choice would be dropped from the draft by the buttons themselves.
+    offered(orbit) {
+        const {supportedOrbits, inputs: {orbits}} = this.props
+        return supportedOrbits.includes(orbit) || (Array.isArray(orbits.value) && orbits.value.includes(orbit))
+    }
+
 }
 
+const isAbsent = value => value === undefined || value === null || value === '' || Number.isNaN(value)
+
+// Strong scatterer values a recipe saved none of are those its radar collection runs with (radar/collection.js).
 const modelToValues = model => {
-    const [strongScattererValue1, strongScattererValue2] = model.strongScattererValues || [7, 2]
+    const [strongScattererValue1, strongScattererValue2] = model.strongScattererValues || [0, -5]
     return ({
         ...model,
         strongScattererValue1,
@@ -379,5 +418,9 @@ export const Options = compose(
 )
 
 Options.propTypes = {
-    monitor: PropTypes.any
+    // By input: where a setting saved no value starts from (BAYTS Alerts' PRC).
+    defaults: PropTypes.object,
+    monitor: PropTypes.any,
+    // The passes the source is established to support, where something establishes them; others cannot be added.
+    supportedOrbits: PropTypes.arrayOf(PropTypes.string)
 }

@@ -6,6 +6,13 @@
     z-index: 2; /* same as panels */
 }
 
+/* The toolbar carries its buttons' look, not their interactivity: between its buttons, and over a disabled one, which
+   lets the pointer through, nothing is offered. Enabled buttons offer their own pointer. */
+.toolbar.horizontal,
+.toolbar.vertical {
+    cursor: default;
+}
+
 .toolbar.horizontal {
     display: flex;
     flex-direction: row;

@@ -8,9 +8,9 @@
 }
 
 .panel a {
-    color: hsl(var(--selected-hue), var(--selected-sat), 45%);
+    color: var(--selected-text-color);
 }
 
 .panel a:hover {
-    color: hsl(var(--selected-hue), var(--selected-sat), 50%);
+    color: var(--selected-text-hover-color);
 }

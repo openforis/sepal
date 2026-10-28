@@ -11,6 +11,7 @@ import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {AuxiliaryImagery} from '../../classification/panels/auxiliaryImagery/auxiliaryImagery'
 import {RetrieveButton} from '../../retrieveButton'
+import {SectionButton} from '../../sectionButton'
 import {Clusterer} from './cluster/clusterer'
 import {Retrieve} from './retrieve/retrieve'
 import {Sampling} from './sampling/sampling'
@@ -46,7 +47,7 @@ class _UnsupervisedClassificationToolbar extends React.Component {
                     vertical
                     placement='bottom-right'
                     className={styles.bottom}>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='inputImagery'
                         label={msg('process.classification.panel.inputImagery.button')}
                         tooltip={msg('process.classification.panel.inputImagery.tooltip')}

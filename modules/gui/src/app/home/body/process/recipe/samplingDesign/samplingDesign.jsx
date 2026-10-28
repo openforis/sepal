@@ -1,5 +1,6 @@
 import React from 'react'
 
+import {PROPORTIONS_IMAGE, STRATIFICATION} from '#sepal/recipe/type/samplingDesign'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
@@ -9,7 +10,6 @@ import {msg} from '~/translate'
 import {recipeAccess} from '../../recipeAccess'
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
-import {getAvailableBands} from './bands'
 import {SamplingDesignToolbar} from './panels/samplingDesignToolbar'
 import {calculationCache} from './sampling/calculationCache'
 import {getDefaultModel} from './sampling/defaultModel'
@@ -69,13 +69,10 @@ const SamplingDesign = compose(
     recipeAccess()
 )
 
-const getDependentRecipeIds = recipe => {
-    const classification = selectFrom(recipe, 'model.sources.classification')
-    return classification ? [classification] : []
-}
-
 export default () => ({
     id: 'SAMPLING_DESIGN',
+    // The images it reads that the layout shows (mapLayout/dependencyLayerSources.js).
+    dependencyLayerRoles: [STRATIFICATION, PROPORTIONS_IMAGE],
     labels: {
         name: msg('process.samplingDesign.create'),
         creationDescription: msg('process.samplingDesign.description'),
@@ -85,9 +82,7 @@ export default () => ({
     components: {
         recipe: SamplingDesign
     },
-    noImageOutput: true,
-    getDependentRecipeIds,
+    imageSource: false,
     getDateRange: () => undefined,
-    getAvailableBands,
     getPreSetVisualizations
 })

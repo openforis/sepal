@@ -1,5 +1,5 @@
-import {readdir, readFile, rm, writeFile} from 'fs/promises'
-import Path from 'path'
+import {readdir, readFile, rm, writeFile} from 'node:fs/promises'
+import Path from 'node:path'
 
 import {getLogger} from '#sepal/log'
 

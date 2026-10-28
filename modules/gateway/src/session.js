@@ -1,4 +1,6 @@
+import {LOGIN_SESSION_INVALIDATED} from '#sepal/event/definitions'
 import {getLogger} from '#sepal/log'
+import {isStoredUsername, storedUsername} from '#sepal/username'
 import {toPromise} from '#sepal/util'
 
 import {usernameTag} from './tag.js'
@@ -6,7 +8,7 @@ import {getSessionUsername} from './user.js'
 
 const log = getLogger('session')
 
-const SessionManager = sessionStore => {
+const SessionManager = (sessionStore, redis, event$) => {
     const getAllSessions = async () => {
         const [sessions] = await toPromise(
             callback => sessionStore.all(callback)
@@ -14,15 +16,22 @@ const SessionManager = sessionStore => {
         return sessions
     }
     
-    const removeSession = async id =>
+    const removeSession = async (username, id, reason) => {
         await toPromise(
             callback => sessionStore.destroy(id, callback)
         )
+        sessionInvalidated(username, id, reason)
+    }
+
+    // The reason lets a kicked tab tell a login as another user in its browser ('replaced', worth
+    // telling the user about) from an ordinary end of its session.
+    const sessionInvalidated = (username, sessionId, reason) =>
+        event$.next({type: LOGIN_SESSION_INVALIDATED, data: {username, sessionId, reason}})
     
     const getSessionIdsByUsername = async username => {
         const sessions = await getAllSessions()
         return sessions
-            .filter(({username: sessionUsername}) => username === sessionUsername)
+            .filter(({username: sessionUsername}) => storedUsername(username) === storedUsername(sessionUsername))
             .map(({id}) => id)
     }
 
@@ -32,11 +41,34 @@ const SessionManager = sessionStore => {
     
         return Promise.all(
             userSessionIds.map(
-                async sessionId => await removeSession(sessionId)
+                async sessionId => await removeSession(username, sessionId, 'locked')
             )
         ).then(async () => {
             return true
         })
+    }
+
+    // A session names its user in whatever spelling authenticated, and every lookup here compares
+    // that name exactly, so a session spelled differently from the stored username survives the lock
+    // it was supposed to end. Sessions are rewritten in place rather than through sessionStore.set(),
+    // which derives a fresh TTL from a cookie that carries no expiry of its own — correcting a name
+    // must not hand a nearly expired session another day of life.
+    const normalizeCase = async () => {
+        const sessions = await getAllSessions()
+        const corrected = sessions.filter(({username}) => username && !isStoredUsername(username))
+
+        for (const {id, ...session} of corrected) {
+            await redis.set(
+                `${sessionStore.prefix}${id}`,
+                JSON.stringify({...session, username: storedUsername(session.username)}),
+                {KEEPTTL: true}
+            )
+        }
+
+        if (corrected.length) {
+            log.info(`Normalized sessions: ${corrected.length} username(s) corrected of ${sessions.length}`)
+        }
+        return {corrected: corrected.length}
     }
 
     const messageHandler = async (key, msg) => {
@@ -55,15 +87,17 @@ const SessionManager = sessionStore => {
 
     const logout = async (req, res, _next) => {
         const username = getSessionUsername(req)
+        const sessionId = req.sessionID
         await new Promise((resolve, reject) =>
             req.session.destroy(err => err ? reject(err) : resolve())
         )
         
         if (username) {
+            sessionInvalidated(username, sessionId, 'logout')
             const userSessionIds = await getSessionIdsByUsername(username)
             log.info(`${usernameTag(username)} Logout, ${userSessionIds.length} active session(s) remaining`)
         } else {
-            log.warn('Logout without user in session')
+            log.debug('Logout without user in session')
         }
 
         const cookieHeader = req.get('Cookie')
@@ -79,6 +113,21 @@ const SessionManager = sessionStore => {
         res.status(200).send({status: 'success', message: 'logout'})
     }
 
+    // A login on a session that another user holds replaces the session rather than relabelling it,
+    // so that user's tabs are kicked instead of silently switching account. They are told only once
+    // the response carrying the new cookie has gone out, so their reload already lands as the new user.
+    const ensureSessionFor = async (req, res, username) => {
+        const previousUsername = getSessionUsername(req)
+        const previousSessionId = req.sessionID
+        if (previousUsername && storedUsername(previousUsername) !== storedUsername(username)) {
+            await toPromise(
+                callback => req.session.regenerate(callback)
+            )
+            log.info(`${usernameTag(username)} Login replaces session of ${usernameTag(previousUsername)}`)
+            res.on('finish', () => sessionInvalidated(previousUsername, previousSessionId, 'replaced'))
+        }
+    }
+
     const invalidateOtherSessions = async (req, res, _next) => {
         const username = getSessionUsername(req)
         const userSessionIds = await getSessionIdsByUsername(username)
@@ -86,14 +135,14 @@ const SessionManager = sessionStore => {
         await Promise.all(
             userSessionIds
                 .filter(sessionId => sessionId !== req.sessionID)
-                .map(async sessionId => await removeSession(sessionId))
+                .map(async sessionId => await removeSession(username, sessionId, 'invalidated'))
         )
 
         res.status(200).send({status: 'success', message: 'other sessions invalidated'})
     }
     
     return {
-        messageHandler, logout, invalidateOtherSessions
+        messageHandler, logout, invalidateOtherSessions, ensureSessionFor, normalizeCase
     }
 }
 

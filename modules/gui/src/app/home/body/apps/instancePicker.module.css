@@ -1,0 +1,29 @@
+.panel {
+    width: 28rem;
+}
+
+.option {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.instance {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.apps {
+    margin-top: .5rem;
+    margin-left: 1rem;
+    opacity: .75;
+    line-height: 1.5;
+}

@@ -1,7 +1,9 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {recipeActionBuilder} from '~/app/home/body/process/recipe'
+import {removeInputImage} from '~/app/home/body/process/inputImages'
+import {INPUT_IMAGERY} from '~/app/home/body/process/panels/inputImagery/inputImageryRequirements'
+import {withItemProblems} from '~/app/home/body/process/recipe/selectedSource'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -72,24 +74,24 @@ class _InputImagery extends React.Component {
     renderImages(images) {
         return (
             <Layout type='vertical' spacing='tight'>
-                {images.map((image, index) => this.renderImage(image, index))}
+                {images.map(image => this.renderImage(image))}
             </Layout>
         )
     }
 
-    renderImage(image, index) {
-        const {recipeNameById} = this.props
+    renderImage(image) {
+        const {recipeNameById, itemProblems} = this.props
         const description = image.type === 'RECIPE_REF'
             ? recipeNameById[image.id]
             : image.id
-        const key = `${image.type}-${image.id}-${index}`
         return description
             ? (
                 <ListItem
-                    key={key}
+                    key={image.imageId}
                     onClick={() => this.editImage(image)}>
                     <CrudItem
                         title={msg(`process.panels.inputImagery.form.type.${image.type}`)}
+                        error={itemProblems[image.imageId]}
                         description={description}
                         metadata={image.name}
                         onRemove={() => this.removeImage(image)}
@@ -117,11 +119,7 @@ class _InputImagery extends React.Component {
 
     removeImage(imageToRemove) {
         const {recipeId} = this.props
-        const actionBuilder = recipeActionBuilder(recipeId)
-        actionBuilder('REMOVE_INPUT_IMAGE', {imageToRemove})
-            .del(['model.inputImagery.images', {id: imageToRemove.id}])
-            .del(['ui.inputImagery.images', {id: imageToRemove.id}])
-            .dispatch()
+        removeInputImage(recipeId, imageToRemove)
     }
 
     onChange() {
@@ -138,6 +136,7 @@ const valuesToModel = null
 export const InputImagery = compose(
     _InputImagery,
     connect(mapStateToProps),
+    withItemProblems(INPUT_IMAGERY.id),
     recipeFormPanel({id: 'inputImagery', mapRecipeToProps, valuesToModel, additionalPolicy}),
     withActivators('inputImage')
 )

@@ -4,6 +4,8 @@ import {Subject, takeUntil} from 'rxjs'
 
 import api from '~/apiRegistry'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
+import {SourceKind} from '~/app/home/body/process/sourceTypeButtons'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
@@ -24,9 +26,11 @@ class _SampleClassificationSection extends React.Component {
             <Layout>
                 {this.renderSamplesPerClass()}
                 {this.renderSampleScale()}
-                {this.renderTypeToSample()}
-                {typeToSample.value === 'ASSET' && this.renderAssetToSample()}
-                {typeToSample.value === 'RECIPE' && this.renderRecipeToSample()}
+                <SourceKind input={typeToSample} defaultKind='ASSET'>
+                    {({recipe, labelButtons}) => recipe
+                        ? this.renderRecipeToSample(labelButtons)
+                        : this.renderAssetToSample(labelButtons)}
+                </SourceKind>
                 {this.renderValueColumnInput()}
             </Layout>
         )
@@ -83,25 +87,12 @@ class _SampleClassificationSection extends React.Component {
         )
     }
 
-    renderTypeToSample() {
-        const {inputs: {typeToSample}} = this.props
-        return (
-            <Form.Buttons
-                label={msg('process.classification.panel.trainingData.form.sampleClassification.typeToSample.label')}
-                input={typeToSample}
-                options={[
-                    {value: 'ASSET', label: msg('process.classification.panel.trainingData.form.sampleClassification.typeToSample.ASSET')},
-                    {value: 'RECIPE', label: msg('process.classification.panel.trainingData.form.sampleClassification.typeToSample.RECIPE')},
-                ]}
-            />
-        )
-    }
-
-    renderAssetToSample() {
+    renderAssetToSample(labelButtons) {
         const {inputs: {assetToSample}} = this.props
         return (
             <Form.AssetCombo
-                label={msg('process.classification.panel.trainingData.form.sampleClassification.assetToSample.label')}
+                label={msg('process.classification.panel.trainingData.form.sampleClassification.typeToSample.label')}
+                labelButtons={labelButtons}
                 autoFocus
                 input={assetToSample}
                 placeholder={msg('process.classification.panel.trainingData.form.sampleClassification.assetToSample.placeholder')}
@@ -130,20 +121,26 @@ class _SampleClassificationSection extends React.Component {
         )
     }
 
-    renderRecipeToSample() {
+    renderRecipeToSample(labelButtons) {
         const {inputs: {recipeIdToSample}} = this.props
         return (
             <RecipeInput
-                label={msg('process.classification.panel.trainingData.form.sampleClassification.recipeToSample.label')}
+                label={msg('process.classification.panel.trainingData.form.sampleClassification.typeToSample.label')}
+                labelButtons={labelButtons}
                 input={recipeIdToSample}
-                filter={type => !type.noImageOutput}
+                filter={isImageSource}
+                // Sampling reads the selected recipe once and persists the points in the data set; only a
+                // RECIPE data set is a source execution resolves. Sampling this recipe's own current output
+                // is therefore a snapshot with a base case, not a cycle - see its recipe definition's
+                // directSources, which leaves recipeIdToSample out.
+                allowOwnRecipe
                 autoFocus
                 onLoading={() => {
                     this.cancel$.next()
                     this.setState({bands: []})
                     this.props.inputs.inputData.set(null)
                 }}
-                onLoaded={({bandNames: bands, recipe}) => {
+                onBandsLoaded={({bandNames: bands, recipe}) => {
                     if (bands.includes(this.props.inputs.valueColumn.value)) {
                         this.setState({bands, recipeToSample: recipe}, () =>
                             this.loadInputData({
@@ -188,14 +185,11 @@ class _SampleClassificationSection extends React.Component {
     }
 
     componentDidMount() {
-        const {inputs: {typeToSample, samplesPerClass, sampleScale}} = this.props
+        const {inputs: {samplesPerClass, sampleScale}} = this.props
         const count = samplesPerClass.value || '100'
         const scale = sampleScale.value || '30'
         samplesPerClass.set(count)
         sampleScale.set(scale)
-        if (!typeToSample.value) {
-            typeToSample.set('ASSET')
-        }
     }
 
     loadInputData({asset, count, scale, classBand}) {

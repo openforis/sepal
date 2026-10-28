@@ -1,0 +1,410 @@
+import {Command, Option} from 'commander'
+
+import {getLogger} from '#sepal/log'
+
+const log = getLogger('config')
+
+const DEFAULT_HTTP_PORT = 80
+const DEFAULT_HOSTING_SERVICE = 'local'
+const DEFAULT_DOCKER_PORT = 2375
+const DEFAULT_RABBITMQ_PORT = 5672
+
+// EC2 accepts 100-300 MiB/s; anything else fails every RunInstances, so refuse it at boot instead.
+const parseVolumeInitializationRate = value => {
+    const rate = parseInt(value)
+    if (rate !== 0 && !(rate >= 100 && rate <= 300)) {
+        throw new Error(`VOLUME_INITIALIZATION_RATE must be 0 or 100-300 MiB/s, got: ${value}`)
+    }
+    return rate
+}
+
+const parseStoppedPoolSize = value => {
+    const size = Number(value)
+    if (!Number.isInteger(size) || size < 0) {
+        throw new Error(`STOPPED_POOL_SIZE must be a non-negative integer, got: ${value}`)
+    }
+    return size
+}
+
+// Compose passes an unset ${VAR} to the container as an empty string, which commander takes as a value:
+// the default is skipped and the parser gets '' (parseInt('') is NaN, and an empty secret is a known key).
+const ignoreEmptyEnv = command => {
+    command.options
+        .filter(({envVar}) => envVar && process.env[envVar] === '')
+        .forEach(({envVar}) => delete process.env[envVar])
+    return command
+}
+
+const program = new Command()
+
+program
+    // ─── HTTP ───────────────────────────────────────────────────────────────
+    .addOption(
+        new Option('--port <number>', 'HTTP listen port')
+            .env('HTTP_PORT')
+            .argParser(v => parseInt(v))
+            .default(DEFAULT_HTTP_PORT)
+    )
+
+    // ─── Hosting service ────────────────────────────────────────────────────
+    .addOption(
+        new Option('--hosting-service <name>', 'Hosting service provider: aws | local')
+            .env('HOSTING_SERVICE')
+            .choices(['aws', 'local'])
+            .default(DEFAULT_HOSTING_SERVICE)
+    )
+
+    // ─── SEPAL creds / host ─────────────────────────────────────────────────
+    .addOption(
+        new Option('--worker-ami-version <string>', 'Build the worker AMI and its sandbox image were made from (e.g. 1937)')
+            .env('WORKER_AMI_VERSION')
+    )
+    .addOption(
+        new Option('--sepal-user <string>', 'SEPAL service username for inter-service calls')
+            .env('SEPAL_USER')
+    )
+    .addOption(
+        new Option('--sepal-host <string>', 'SEPAL hostname (internal, e.g. sepal)')
+            .env('SEPAL_HOST')
+    )
+    .addOption(
+        new Option('--sepal-ssh-host <string>', 'Public address of the SSH gateway, for the ssh login shown to users (optional)')
+            .env('SEPAL_SSH_HOST')
+    )
+    .addOption(
+        new Option('--sepal-host-data-dir <path>', 'Host path to /data (mounted into sandbox containers)')
+            .env('SEPAL_HOST_DATA_DIR')
+    )
+
+    // ─── Instance usage monitoring ──────────────────────────────────────────
+    .addOption(
+        new Option('--usage-sampling-interval-seconds <number>', 'Instance usage sampling interval (default 60)')
+            .env('USAGE_SAMPLING_INTERVAL_SECONDS')
+            .argParser(v => parseInt(v))
+            .default(60)
+    )
+    .addOption(
+        new Option('--usage-sample-retention-days <number>', 'Raw usage sample retention (default 30)')
+            .env('USAGE_SAMPLE_RETENTION_DAYS')
+            .argParser(v => parseInt(v))
+            .default(30)
+    )
+    .addOption(
+        new Option('--usage-hourly-retention-days <number>', 'Hourly usage rollup retention (default 365)')
+            .env('USAGE_HOURLY_RETENTION_DAYS')
+            .argParser(v => parseInt(v))
+            .default(365)
+    )
+
+    // ─── Session expiration (docs/session-expiration-model.md) ──────────────
+    // Defaults are deliberately generous where a mistake costs a user their work. They should be
+    // tightened from production data, not loosened from complaints.
+    .addOption(
+        new Option('--session-expiry-mode <mode>', 'off | notify | enforce — notify runs the full UX without closing anything')
+            .env('SESSION_EXPIRY_MODE')
+            .choices(['off', 'notify', 'enforce'])
+            .default('off')
+    )
+    .addOption(
+        new Option('--startup-lease-minutes <number>', 'Initial deadline on session request, re-ratcheted on activation (default 30)')
+            .env('STARTUP_LEASE_MINUTES')
+            .argParser(v => parseInt(v))
+            .default(30)
+    )
+    .addOption(
+        new Option('--open-extension-minutes <number>', 'Extension when an app or terminal is opened (default 15)')
+            .env('OPEN_EXTENSION_MINUTES')
+            .argParser(v => parseInt(v))
+            .default(15)
+    )
+    .addOption(
+        new Option('--interaction-extension-minutes <number>', 'Extension per attributed human interaction (default 15)')
+            .env('INTERACTION_EXTENSION_MINUTES')
+            .argParser(v => parseInt(v))
+            .default(15)
+    )
+    .addOption(
+        new Option('--busy-extension-minutes <number>', 'Extension per busy verdict from the sampler (default 15)')
+            .env('BUSY_EXTENSION_MINUTES')
+            .argParser(v => parseInt(v))
+            .default(15)
+    )
+    .addOption(
+        new Option('--manual-extension-minutes <number>', 'Extension from the in-app Keep-it-running button (default 60)')
+            .env('MANUAL_EXTENSION_MINUTES')
+            .argParser(v => parseInt(v))
+            .default(60)
+    )
+    .addOption(
+        // Its own key rather than sharing manualExtensionMinutes: delivery latency plus "find a
+        // laptop" is itself several minutes, so this one may deserve to be larger still.
+        new Option('--email-extension-minutes <number>', 'Extension from the email keep-running link (default 60)')
+            .env('EMAIL_EXTENSION_MINUTES')
+            .argParser(v => parseInt(v))
+            .default(60)
+    )
+    .addOption(
+        // The hard bound on load-only extension, measured from the last human interaction (falling
+        // back to activation). An overnight job is covered; a crashed process spinning a core stops
+        // buying time twelve hours after the last keystroke.
+        new Option('--max-unattended-hours <number>', 'Cap on load-only extension, from the last interaction (default 12)')
+            .env('MAX_UNATTENDED_HOURS')
+            .argParser(v => parseFloat(v))
+            .default(12)
+    )
+    .addOption(
+        new Option('--notification-visible-minutes <number>', 'Unacknowledged notification → email (default 5)')
+            .env('NOTIFICATION_VISIBLE_MINUTES')
+            .argParser(v => parseInt(v))
+            .default(5)
+    )
+    .addOption(
+        new Option('--session-grace-minutes <number>', 'Notification → close (default 60)')
+            .env('SESSION_GRACE_MINUTES')
+            .argParser(v => parseInt(v))
+            .default(60)
+    )
+    .addOption(
+        new Option('--unknown-busy-grace-ticks <number>', 'Consecutive below-coverage sampler ticks treated as busy (default 10)')
+            .env('UNKNOWN_BUSY_GRACE_TICKS')
+            .argParser(v => parseInt(v))
+            .default(10)
+    )
+    .addOption(
+        new Option('--busy-window-minutes <number>', 'Rolling window for the busy verdict (default 10)')
+            .env('BUSY_WINDOW_MINUTES')
+            .argParser(v => parseInt(v))
+            .default(10)
+    )
+    .addOption(
+        // ABSOLUTE cores, not percent of instance. Percent-of-instance fails in both directions at
+        // once: enough idle app tabs pin a small instance busy, while a real one-core job on a
+        // 64-core instance reads as idle. Three idle apps use ~0.03 cores; one real job uses 1.0.
+        new Option('--busy-cpu-cores <number>', 'Cores used at or above which a session counts as busy (default 0.5)')
+            .env('BUSY_CPU_CORES')
+            .argParser(v => parseFloat(v))
+            .default(0.5)
+    )
+    .addOption(
+        new Option('--busy-gpu-threshold-pct <number>', 'Avg GPU utilization at or above which a session counts as busy (default 5)')
+            .env('BUSY_GPU_THRESHOLD_PCT')
+            .argParser(v => parseFloat(v))
+            .default(5)
+    )
+    .addOption(
+        // The measured idle floor is 14.7 KB/s for three open apps and scales ~4.9 KB/s per app,
+        // so the old 50 KB/s idle threshold left only a 3.4x margin — ~10 idle tabs would have
+        // pinned a session permanently busy. Real transfers run at MB/s.
+        new Option('--busy-network-threshold-kbps <number>', 'Avg network rate at or above which a session counts as busy (KB/s, default 500)')
+            .env('BUSY_NETWORK_THRESHOLD_KBPS')
+            .argParser(v => parseFloat(v))
+            .default(500)
+    )
+    .addOption(
+        new Option('--session-expiry-secret <string>', 'HMAC secret for the email action links (random per process if unset)')
+            .env('SESSION_EXPIRY_SECRET')
+    )
+    .addOption(
+        new Option('--sepal-endpoint <url>', 'Public SEPAL base URL, for links in outbound email')
+            .env('SEPAL_ENDPOINT')
+    )
+
+    // ─── Docker ─────────────────────────────────────────────────────────────
+    .addOption(
+        new Option('--docker-port <number>', 'Docker Engine TCP port on worker instances (default 2375)')
+            .env('DOCKER_PORT')
+            .argParser(v => parseInt(v))
+            .default(DEFAULT_DOCKER_PORT)
+    )
+    .addOption(
+        new Option('--docker-entry-point <string>', 'Docker Engine API version path prefix (e.g. v1.38)')
+            .env('DOCKER_ENTRY_POINT')
+    )
+    .addOption(
+        new Option('--docker-registry-host <string>', 'Docker registry hostname for image pulls')
+            .env('DOCKER_REGISTRY_HOST')
+    )
+
+    // ─── Sandbox basemap key ────────────────────────────────────────────────
+    .addOption(
+        new Option('--carto-db-basemap-key <string>', 'CARTO basemap key forwarded into sandbox containers')
+            .env('CARTODB_BASEMAP_KEY')
+            .default('')
+    )
+
+    // ─── Google OAuth ───────────────────────────────────────────────────────
+    .addOption(
+        new Option('--google-oauth-endpoint <url>', 'user-module Google OAuth endpoint base (trailing slash)')
+            .env('GOOGLE_OAUTH_ENDPOINT')
+            .default('http://user/google/')
+    )
+
+    // ─── User ───────────────────────────────────────────────────────────────
+    .addOption(
+        new Option('--user-url <url>', 'user-module base URL (users\' SSH public keys for their sandboxes)')
+            .env('USER_URL')
+            .default('http://user')
+    )
+
+    // ─── Budget ─────────────────────────────────────────────────────────────
+    .addOption(
+        new Option('--budget-url <url>', 'budget-module base URL (live over-budget check on session request)')
+            .env('BUDGET_URL')
+            .default('http://budget')
+    )
+
+    // ─── RabbitMQ ───────────────────────────────────────────────────────────
+    .addOption(
+        new Option('--rabbitmq-host <string>', 'RabbitMQ hostname')
+            .env('RABBITMQ_HOST')
+    )
+    .addOption(
+        new Option('--rabbitmq-port <number>', 'RabbitMQ AMQP port (default 5672)')
+            .env('RABBITMQ_PORT')
+            .argParser(v => parseInt(v))
+            .default(DEFAULT_RABBITMQ_PORT)
+    )
+
+    // ─── AWS — only required when HOSTING_SERVICE=aws ────────────────────────
+    .addOption(
+        new Option('--region <string>', 'AWS region (e.g. eu-central-1) [aws only]')
+            .env('AWS_REGION')
+    )
+    .addOption(
+        new Option('--availability-zone <string>', 'AWS availability zone (e.g. eu-central-1a) [aws only]')
+            .env('AVAILABILITY_ZONE')
+    )
+    .addOption(
+        new Option('--access-key <string>', 'AWS access key ID [aws only]')
+            .env('AWS_ACCESS_KEY_ID')
+    )
+    .addOption(
+        new Option('--secret-key <string>', 'AWS secret access key [aws only]')
+            .env('AWS_SECRET_ACCESS_KEY')
+    )
+    .addOption(
+        new Option('--syslog-address <string>', 'Syslog UDP address for Docker log driver (e.g. udp://host:514) [aws only]')
+            .env('SYSLOG_ADDRESS')
+    )
+    .addOption(
+        new Option('--environment <string>', 'AWS environment tag value (e.g. production) [aws only]')
+            .env('ENVIRONMENT')
+    )
+    .addOption(
+        new Option('--volume-initialization-rate <MiB/s>', 'EBS volume initialization rate for launched workers, 100-300; 0 = lazy loading [aws only]')
+            .env('VOLUME_INITIALIZATION_RATE')
+            .argParser(parseVolumeInitializationRate)
+            .default(0)
+    )
+    .addOption(
+        new Option('--stopped-pool-size <number>', 'Stopped, disk-warm workers kept ready to start as any instance type; 0 = no pool [aws only]')
+            .env('STOPPED_POOL_SIZE')
+            .argParser(parseStoppedPoolSize)
+            .default(0)
+    )
+    .addOption(
+        new Option('--prewarm-idle-volumes <boolean>', 'Idle-pool workers read their whole Docker volume at first boot [aws only]')
+            .env('PREWARM_IDLE_VOLUMES')
+            .argParser(v => v === 'true')
+            .default(false)
+    )
+
+ignoreEmptyEnv(program).parse()
+
+const {
+    port,
+    hostingService,
+    workerAmiVersion,
+    sepalUser,
+    sepalHost,
+    sepalHostDataDir,
+    sepalSshHost,
+    usageSamplingIntervalSeconds,
+    usageSampleRetentionDays,
+    usageHourlyRetentionDays,
+    sessionExpiryMode,
+    startupLeaseMinutes,
+    openExtensionMinutes,
+    interactionExtensionMinutes,
+    busyExtensionMinutes,
+    manualExtensionMinutes,
+    emailExtensionMinutes,
+    maxUnattendedHours,
+    notificationVisibleMinutes,
+    sessionGraceMinutes,
+    unknownBusyGraceTicks,
+    busyWindowMinutes,
+    busyCpuCores,
+    busyGpuThresholdPct,
+    busyNetworkThresholdKbps,
+    sessionExpirySecret,
+    sepalEndpoint,
+    dockerPort,
+    dockerEntryPoint,
+    dockerRegistryHost,
+    googleOAuthEndpoint,
+    cartoDbBasemapKey,
+    budgetUrl,
+    userUrl,
+    rabbitmqHost,
+    rabbitmqPort,
+    region,
+    availabilityZone,
+    accessKey,
+    secretKey,
+    syslogAddress,
+    environment,
+    volumeInitializationRate,
+    prewarmIdleVolumes,
+    stoppedPoolSize,
+} = program.opts()
+
+log.info('Configuration loaded')
+
+export {
+    accessKey,
+    availabilityZone,
+    budgetUrl,
+    busyCpuCores,
+    busyExtensionMinutes,
+    busyGpuThresholdPct,
+    busyNetworkThresholdKbps,
+    busyWindowMinutes,
+    cartoDbBasemapKey,
+    dockerEntryPoint,
+    dockerPort,
+    dockerRegistryHost,
+    emailExtensionMinutes,
+    environment,
+    googleOAuthEndpoint,
+    hostingService,
+    interactionExtensionMinutes,
+    manualExtensionMinutes,
+    maxUnattendedHours,
+    notificationVisibleMinutes,
+    openExtensionMinutes,
+    port,
+    prewarmIdleVolumes,
+    rabbitmqHost,
+    rabbitmqPort,
+    region,
+    secretKey,
+    sepalEndpoint,
+    sepalHost,
+    sepalHostDataDir,
+    sepalSshHost,
+    sepalUser,
+    sessionExpiryMode,
+    sessionExpirySecret,
+    sessionGraceMinutes,
+    startupLeaseMinutes,
+    stoppedPoolSize,
+    syslogAddress,
+    unknownBusyGraceTicks,
+    usageHourlyRetentionDays,
+    usageSampleRetentionDays,
+    usageSamplingIntervalSeconds,
+    userUrl,
+    volumeInitializationRate,
+    workerAmiVersion,
+}

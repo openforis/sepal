@@ -1,13 +1,11 @@
 .container {
     /* --y is injected */
     /* --x is injected */
-    /* --attribution-mask-size: 2rem; */
-    /* --attribution-mask-size: 0rem; */
-
-    /* HACK: hide mysterious blue border around the map (in Google Maps markup)
+    /* HACK: hide the blue border Google Maps draws around the map:
         <div style="pointer-events: none; width: 100%; height: 100%; box-sizing: border-box; position: absolute; z-index: 1000002; opacity: 0; border: 2px solid rgb(26, 115, 232);"></div>
+        Areas are grown by this much in every direction, then clipped back to their
+        original bounds, so the border falls outside the visible box.
     */
-    /* It looks like the blue border is gone... */
     --attribution-mask-size: 2px;
 
     --half-margin-size: 1px;
@@ -22,8 +20,6 @@
 
     --half-area-marker-size: 2.5rem;
     --area-marker-distance: 0rem;
-    /* --half-area-marker-size: 1rem;
-    --area-marker-distance: 2rem; */
 
     --idle-color: #808080;
     --dragging-color: #c0c0c0;

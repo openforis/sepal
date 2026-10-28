@@ -5,21 +5,27 @@ import {RecipeInput} from '~/widget/recipeInput'
 
 export class RecipeSection extends React.Component {
     render() {
-        const {recipeId, inputs: {name, recipe}, onLoading} = this.props
+        const {inputs: {recipe}, onLoading} = this.props
         return (
             <RecipeInput
                 input={recipe}
-                filter={(type, recipe) => type.id === 'REGRESSION' && recipe.id !== recipeId}
+                filter={type => type.id === 'REGRESSION'}
                 autoFocus
                 onLoading={onLoading}
-                onLoaded={({recipe}) => name.set(recipe.title || recipe.placeholder)}
+                onRecipeLoaded={({recipe}) => this.nameAfter(recipe)}
             />
         )
     }
 
-    // TODO: Should do some validation of the bands. Use a separate input for that?
+    // A data set is named after the recipe chosen for it; the one it was saved with keeps the name it was saved with, so
+    // reading that recipe on opening edits nothing.
+    nameAfter(loaded) {
+        const {model, inputs: {name}} = this.props
+        name.set(loaded.id === model?.recipe && model?.name ? model.name : loaded.title || loaded.placeholder)
+    }
 }
 
 RecipeSection.propTypes = {
     inputs: PropTypes.object.isRequired,
+    model: PropTypes.object
 }

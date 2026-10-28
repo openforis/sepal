@@ -1,9 +1,10 @@
-import {catchError, delay, map, of, switchMap, tap} from 'rxjs'
+import {catchError, delay, map, of, switchMap, tap, throwError} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
 import {userDetailsHint} from '~/app/home/user/userDetails'
 import {publishCurrentUserEvent, publishEvent} from '~/eventPublisher'
+import {forgetPreviousUsername, notePreviousUsername} from '~/loginSession'
 import {select} from '~/store'
 import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
@@ -82,7 +83,13 @@ const unspecifiedError$ = () => {
     return of(null)
 }
 
-export const login$ = ({username, password}, recaptchaToken) => {
+// The user chose this account, so no switch is to be told.
+export const login$ = (credentials, recaptchaToken) => {
+    forgetPreviousUsername()
+    return authenticate$(credentials, recaptchaToken)
+}
+
+const authenticate$ = ({username, password}, recaptchaToken) => {
     resetInvalidCredentials()
     return api.user.login$({username, password, recaptchaToken}).pipe(
         tap(user => {
@@ -92,16 +99,32 @@ export const login$ = ({username, password}, recaptchaToken) => {
     )
 }
 
-export const logout$ = () =>
-    api.user.logout$().pipe(
+export const logout$ = () => {
+    forgetPreviousUsername()
+    return api.user.logout$().pipe(
         tap(() => document.location = '/' /* force full state reset*/)
     )
+}
 
+// For password-reset and account-activation links: the tab shows the form whoever the browser is
+// logged in as. The session is left alone, and the app starts logged off so Home never claims the
+// tab; who the browser was logged in as is noted, to tell the user if the tab comes back as another account.
+export const startLoggedOff$ = () =>
+    api.user.loadCurrentUser$().pipe(
+        catchError(() => of(null)),
+        tap(user => {
+            notePreviousUsername(user?.username)
+            updateUser(null)
+        })
+    )
+
+// The browser may be logged in as someone else: the gateway replaces that session on login and kicks
+// its other tabs once the new cookie is out, so no logout is needed here — and a rejected reset changes nothing.
 export const resetPassword$ = ({token, username, password, type, recaptchaToken}) =>
     api.user.resetPassword$({token, password, recaptchaToken}).pipe(
         tap(() => publishEvent(type === 'reset' ? 'password_reset' : 'user_activated')),
         delay(2000),
-        switchMap(() => login$({username, password})),
+        switchMap(() => authenticate$({username, password})),
         switchMap(user =>
             api.user.invalidateOtherSessions$().pipe(
                 map(() => user)
@@ -166,7 +189,10 @@ export const validateEmail$ = ({email, recaptchaToken}) =>
         map(({valid}) => valid)
     )
 
+// Sent with the revision the user was loaded at: a save over a record changed since (from another
+// tab, say) is rejected, and the current record is loaded in place of the optimistic values.
 export const updateCurrentUserDetails$ = ({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}) => {
+    const {revision} = currentUser()
     actionBuilder('UPDATE_USER_DETAILS', {name, email, organization, intendedUse})
         .set('user.currentUser.name', name)
         .set('user.currentUser.email', email)
@@ -175,7 +201,12 @@ export const updateCurrentUserDetails$ = ({name, email, organization, intendedUs
         .set('user.currentUser.emailNotificationsEnabled', emailNotificationsEnabled)
         .set('user.currentUser.manualMapRenderingEnabled', manualMapRenderingEnabled)
         .dispatch()
-    return api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled})
+    return api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled, revision}).pipe(
+        catchError(error => error.status === 409
+            ? loadUser$().pipe(switchMap(() => throwError(() => error)))
+            : throwError(() => error)
+        )
+    )
 }
 
 export const acceptPrivacyPolicy$ = () =>
@@ -183,19 +214,32 @@ export const acceptPrivacyPolicy$ = () =>
 
 export const changeCurrentUserPassword$ = ({oldPassword, newPassword}) =>
     api.user.changePassword$({oldPassword, newPassword}).pipe(
-        switchMap(() => api.user.invalidateOtherSessions$())
+        switchMap(result => result.status === 'success'
+            ? api.user.invalidateOtherSessions$().pipe(map(() => result))
+            : of(result)
+        )
     )
+
+export const sshKeys$ = () => api.user.sshKeys$()
+
+export const addSshKey$ = key => api.user.addSshKey$(key)
+
+export const removeSshKey$ = id => api.user.removeSshKey$(id)
 
 export const updateCurrentUserSession$ = session =>
     api.user.updateCurrentUserSession$(session).pipe(
         tap(() =>
             actionBuilder('UPDATE_USER_SESSION_POSTED', {session})
                 .assign(['user.currentUserReport.sessions', {id: session.id}], {
-                    earliestTimeoutHours: session.keepAlive
+                    timeoutHours: session.keepAlive
                 })
                 .dispatch()
         )
     )
+
+// No store update: the worker pushes the new session through the session websocket.
+export const startCurrentUserSession$ = instanceTypeId =>
+    api.user.startCurrentUserSession$(instanceTypeId)
 
 export const stopCurrentUserSession$ = session =>
     api.user.stopCurrentUserSession$(session).pipe(

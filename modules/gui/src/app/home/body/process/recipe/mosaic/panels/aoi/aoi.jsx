@@ -11,6 +11,7 @@ import {modelToValues, valuesToModel} from './aoiModel'
 import {AssetBoundsSection} from './assetBoundsSection'
 import {CountrySection} from './countrySection'
 import {EETableSection} from './eeTableSection'
+import {geoIdFields, GeoIdSection} from './geoIdSection'
 import {PolygonSection} from './polygonSection'
 import {SectionSelection} from './sectionSelection'
 import {SourceSection} from './sourceSection'
@@ -51,7 +52,8 @@ const fields = {
         .notBlank('process.mosaic.panel.areaOfInterest.form.asset.required'),
     recipeId: new Form.Field()
         .skip((value, {section, sourceType}) => !(section === 'SOURCE' && sourceType === 'RECIPE'))
-        .notBlank('process.mosaic.panel.areaOfInterest.form.recipe.required')
+        .notBlank('process.mosaic.panel.areaOfInterest.form.recipe.required'),
+    ...geoIdFields
 }
 
 class _Aoi extends React.Component {
@@ -92,6 +94,12 @@ class _Aoi extends React.Component {
                 label: msg('process.mosaic.panel.areaOfInterest.form.source.title'),
                 title: 'ASSET / RECIPE',
                 component: <SourceSection recipeId={recipeId} inputs={inputs} layerIndex={layerIndex}/>
+            },
+            {
+                value: 'GEOID',
+                label: msg('process.mosaic.panel.areaOfInterest.form.geoId.title'),
+                title: 'GEOID',
+                component: <GeoIdSection recipeId={recipeId} inputs={inputs}/>
             },
             {
                 value: 'POLYGON',

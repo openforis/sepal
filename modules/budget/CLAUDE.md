@@ -1,0 +1,40 @@
+# CLAUDE.md - modules/budget
+
+Standalone event-driven budget service (Node.js). Extracted from `modules/worker` (2026-07). Tracks
+instance + storage spending and enforces monthly budgets; owns the `budget` MySQL schema (Postgrator).
+
+## Database migrations
+
+`migrations/` holds the portable schema stream. `migrations/legacy-import/` holds the one-off copy from `sdms`. Startup and import cleanup are described in [docs/database-migrations.md](../../docs/database-migrations.md).
+
+## Commands
+- `npm test` — Node test runner (TZ=UTC)
+- `sepal build budget` / `sepal start budget` / `sepal logs budget -r`
+
+## Routes
+- `GET /budget/report` [admin], `POST /budget` [admin], `POST /budget/requestUpdate` [user]
+- `GET /budget/spending/:username` [admin] — internal 8-field Spending DTO (used by the ssh-gateway menu)
+- `POST /budget/check/:username` [admin] — internal live over-budget verdict
+  `{username, exceeded, reason}`, `reason` ∈ `INSTANCE_BUDGET | STORAGE_BUDGET | STORAGE_QUOTA | null`.
+  The worker calls this before granting a session (`workerSession/budgetClient.js`); the reason
+  strings are a cross-module contract mapped back to typed errors in `workerSession/budgetErrors.js`.
+  Same short-circuit order as `budgetManager.check`: instance budget → storage budget → storage quota.
+  Body `{openSessions: [{sessionId, instanceType, creationTime}]}` — the user's open sessions,
+  opened in `open_session_use` before the verdict, since a just-requested session's
+  WorkerSessionRequested event may not have arrived yet.
+- `GET /ws` — gateway virtual-websocket endpoint (module `budget`): pushes
+  `{spending, budgetUpdateRequest}` to GUI subscribers on subscribe, on `{refresh: true}`, and on
+  every `spending$` emission (session/storage/budget changes + hourly rebuild)
+
+## Events
+- Subscribes: workerSession.WorkerSessionRequested, workerSession.WorkerSessionActivated,
+  workerSession.WorkerSessionClosed, storage.size
+- Publishes: budget.UserBudgetExceeded, budget.UserBudgetCleared (level-triggered): every minute
+  for users with open sessions (the worker closes an over-budget user's sessions on each Exceeded),
+  hourly for every user
+
+## Schema `budget`
+- user_budget, default_user_budget, user_monthly_storage, user_spending, budget_update_request
+- open_session_use — event-sourced instance-use (replaces the worker `instance_use` view).
+  Opened on WorkerSessionRequested (upsert keyed on session_id, re-asserted by
+  WorkerSessionActivated) so a session is billed from its creationTime even if it never activates.

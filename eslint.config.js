@@ -1,15 +1,32 @@
+import {builtinModules} from 'node:module'
+
 import js from '@eslint/js'
 import stylistic from '@stylistic/eslint-plugin'
 import importPlugin from 'eslint-plugin-import-x'
 import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import globals from 'globals'
 
+const unprefixedBuiltin = `/^(${builtinModules.filter(name => !/[:/]/.test(name)).join('|')})(\\x2F|$)/`
+const builtinPrefixMessage = 'Import Node built-in modules with the node: prefix.'
+
 const baseConfig = {
-    files: ['**/*.js'],
+    files: [
+        '**/*.js',
+        'modules/gee/test/**/*.mjs',
+        // The hand-run Earth Engine probes that carry shared logic, named one by one: the other scripts in
+        // modules/gee/verify predate this configuration and are not covered by it.
+        'modules/gee/verify/probeRun.mjs',
+        'modules/gee/verify/eeFailures.mjs',
+        'modules/gee/verify/assetPropertyLimits.mjs',
+        'modules/gee/verify/bandEncodingPersistence.mjs',
+        'modules/gee/verify/filteredCollectionEvidence.mjs',
+        'modules/gee/verify/ccdcOutputBandSelection.mjs',
+        'modules/gee/verify/bandMathGeometry.mjs',
+        'modules/gee/verify/remappingSourceBands.mjs'
+    ],
     languageOptions: {
         ecmaVersion: 'latest',
         globals: {
-            ...globals.jest,
             ...globals.node,
         }
     },
@@ -41,6 +58,16 @@ const baseConfig = {
         '@stylistic/space-infix-ops': 'error',
         '@stylistic/template-curly-spacing': 'error',
         'no-console': ['error', {allow: ['info', 'warn', 'error']}],
+        'no-restricted-syntax': ['error',
+            {
+                selector: `:matches(ImportDeclaration, ExportNamedDeclaration, ExportAllDeclaration, ImportExpression)[source.value=${unprefixedBuiltin}]`,
+                message: builtinPrefixMessage
+            },
+            {
+                selector: `CallExpression[callee.name='require'][arguments.0.value=${unprefixedBuiltin}]`,
+                message: builtinPrefixMessage
+            }
+        ],
         'no-unused-vars': ['error', {argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_'}],
         'simple-import-sort/imports': 'error',
         'simple-import-sort/exports': 'error',
@@ -54,4 +81,32 @@ const baseConfig = {
     }
 }
 
-export default [baseConfig]
+// Test support is for tests and other test support only; production code must never reach it.
+const testSupportBoundary = {
+    files: ['lib/js/shared/src/**/*.js', 'modules/*/src/**/*.js'],
+    ignores: ['**/*.test.js', '**/testSupport/**'],
+    rules: {
+        'no-restricted-imports': ['error', {
+            patterns: [{
+                group: ['#sepal/testSupport/**', '**/testSupport/**'],
+                message: 'Test support must not be imported by production code.'
+            }]
+        }]
+    }
+}
+
+// A hand-run probe's report is its output, written to stdout by the entry point that assembles it. The helpers
+// those two share have no report to write.
+const verifyEntryPoints = {
+    files: [
+        'modules/gee/verify/assetPropertyLimits.mjs',
+        'modules/gee/verify/bandEncodingPersistence.mjs',
+        'modules/gee/verify/filteredCollectionEvidence.mjs',
+        'modules/gee/verify/ccdcOutputBandSelection.mjs'
+    ],
+    rules: {
+        'no-console': ['error', {allow: ['log', 'info', 'warn', 'error']}]
+    }
+}
+
+export default [baseConfig, testSupportBoundary, verifyEntryPoints]

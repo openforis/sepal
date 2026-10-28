@@ -1,5 +1,6 @@
+import {createRequire} from 'node:module'
+
 import _ from 'lodash'
-import {createRequire} from 'module'
 import {first, of} from 'rxjs'
 
 import * as service from '#sepal/service'

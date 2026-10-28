@@ -1,12 +1,10 @@
 import moment from 'moment'
 
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {pyramidingPolicies, submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
 export const defaultModel = {
-    aoi: {},
     sources: {
         classification: undefined,
         dataSets: {},
@@ -45,7 +43,10 @@ export const defaultModel = {
     },
     // Change-detection params (renamed from model.options).
     pyeoAlertsOptions: {
-        minConsecutiveDetections: 2,
+        minRepeatability: 50,
+        minCumulativeDetections: 2,
+        minFromDetections: 2,
+        minToDetections: 2,
         indexGate: {index: 'ndvi', threshold: 0.2}
     }
 }
@@ -64,19 +65,7 @@ export const RecipeActions = id => {
                 .set('ui.classificationLegend', classificationLegend)
                 .dispatch()
         },
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_PYEO_ALERTS_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions
-                })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .dispatch()
-        }
     }
 }
 
-const submitRetrieveRecipeTask = recipe =>
-    submitTask(recipe, {
-        pyramidingPolicy: pyramidingPolicies.sample
-    })
+export const retrieveTask = {}

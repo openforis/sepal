@@ -1,0 +1,151 @@
+import {RUNNING_STATES, State, StateDescription} from '../task.js'
+
+export class InMemoryRepository {
+    #tasks = new Map()
+    #clock
+
+    constructor(clock) {
+        this.#clock = clock
+    }
+
+    async add(task) {
+        const stored = {...task, progressTime: task.state === State.ACTIVE ? this.#clock.now() : null, updateTime: this.#clock.now()}
+        this.#tasks.set(task.id, stored)
+        return stored
+    }
+
+    async getTask(id) {
+        return this.#tasks.get(id) ?? null
+    }
+
+    async pendingTasks(limit, {excludeUsernames = []} = {}) {
+        return [...this.#tasks.values()]
+            .filter(({state, username}) => state === State.PENDING && !excludeUsernames.includes(username))
+            .sort((a, b) => a.creationTime - b.creationTime)
+            .slice(0, limit)
+    }
+
+    async runningTasks() {
+        return [...this.#tasks.values()].filter(({state}) => RUNNING_STATES.includes(state))
+    }
+
+    async countRunning() {
+        return (await this.runningTasks()).length
+    }
+
+    async countRunningByUser() {
+        const counts = new Map()
+        for (const {username} of await this.runningTasks()) {
+            counts.set(username, (counts.get(username) ?? 0) + 1)
+        }
+        return counts
+    }
+
+    async activate(task, apiKeyHash) {
+        return this.#update(task.id, [State.PENDING], {state: State.ACTIVE, apiKeyHash, progressTime: this.#clock.now()})
+    }
+
+    async transition(task, {from, to, statusDescription = StateDescription[to]}) {
+        return this.#update(task.id, from, {state: to, statusDescription})
+    }
+
+    async stalledTasks(before) {
+        return [...this.#tasks.values()].filter(({state, progressTime}) => state === State.ACTIVE && progressTime < before)
+    }
+
+    async cancelingSince(before) {
+        return [...this.#tasks.values()].filter(({state, updateTime}) => state === State.CANCELING && updateTime < before)
+    }
+
+    async insert(task) {
+        this.#tasks.set(task.id, {...task, removed: false})
+    }
+
+    async userTasks(username) {
+        return [...this.#tasks.values()]
+            .filter(task => task.username === username && !task.removed)
+            .sort((a, b) => a.creationTime - b.creationTime)
+    }
+
+    async recordProgress(task, statusDescription) {
+        return this.#update(task.id, [State.ACTIVE], {statusDescription, progressTime: this.#clock.now()})
+    }
+
+    async grantSlot(task) {
+        const stored = this.#tasks.get(task.id)
+        if (stored?.state !== State.ACTIVE || stored.slotTime) {
+            return null
+        }
+        return this.#setSlot(stored, this.#clock.now())
+    }
+
+    async renewSlot(task) {
+        const stored = this.#tasks.get(task.id)
+        if (!RUNNING_STATES.includes(stored?.state) || !stored.slotTime) {
+            return null
+        }
+        return this.#setSlot(stored, this.#clock.now())
+    }
+
+    async releaseSlot(task, slot) {
+        const stored = this.#tasks.get(task.id)
+        const grant = stored?.slotTime
+        if (!grant || (slot && grant.getTime() !== new Date(slot).getTime())) {
+            return null
+        }
+        this.#setSlot(stored, null)
+        return grant
+    }
+
+    async slotHolders() {
+        return (await this.runningTasks())
+            .filter(({slotTime}) => slotTime)
+            .map(({id, username}) => ({id, username}))
+    }
+
+    async resetProgressClock() {
+        for (const task of this.#tasks.values()) {
+            if (task.state === State.ACTIVE) {
+                this.#tasks.set(task.id, {...task, progressTime: this.#clock.now()})
+            } else if (task.state === State.CANCELING) {
+                this.#tasks.set(task.id, {...task, updateTime: this.#clock.now()})
+            }
+        }
+    }
+
+    async findByApiKeyHash(apiKeyHash) {
+        return [...this.#tasks.values()].find(task => task.apiKeyHash === apiKeyHash && RUNNING_STATES.includes(task.state)) ?? null
+    }
+
+    async remove(task) {
+        const stored = this.#tasks.get(task.id)
+        if (!stored || stored.removed) {
+            return false
+        }
+        this.#tasks.set(task.id, {...stored, removed: true})
+        return true
+    }
+
+    async removeFinishedUserTasks(username, taskIds) {
+        for (const task of this.#tasks.values()) {
+            if (task.username === username && taskIds.includes(task.id)
+                && [State.COMPLETED, State.CANCELED, State.FAILED].includes(task.state)) {
+                this.#tasks.set(task.id, {...task, removed: true})
+            }
+        }
+    }
+
+    #setSlot(task, slotTime) {
+        this.#tasks.set(task.id, {...task, slotTime})
+        return slotTime
+    }
+
+    #update(id, from, changes) {
+        const task = this.#tasks.get(id)
+        if (!task || !from.includes(task.state)) {
+            return false
+        }
+        this.#tasks.set(id, {...task, ...changes, updateTime: this.#clock.now()})
+        return true
+    }
+}

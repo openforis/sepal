@@ -3,19 +3,6 @@ import moment from 'moment'
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-import {submitRetrieveRecipeTask as submitTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
-
-// yod/dur are whole years, not continuous values - averaging them at
-// overview zoom levels (e.g. yod 2003 and 2004 -> 2003.5) is meaningless,
-// so they need 'sample' pyramiding like changeAlerts/baytsAlerts use for
-// their own discrete bands. The rest (mag/preval/postval/rmse/sig) are
-// genuinely continuous and read better with 'mean'.
-const SAMPLE_BANDS = ['yod', 'dur']
-const pyramidingPolicy = bands => {
-    const policy = {}
-    bands.forEach(band => policy[band] = SAMPLE_BANDS.includes(band) ? 'sample' : 'mean')
-    return policy
-}
 
 export const defaultModel = {
     dates: {
@@ -65,23 +52,12 @@ export const RecipeActions = id => {
                 .dispatch()
         },
 
-        retrieve(retrieveOptions) {
-            return actionBuilder('REQUEST_LANDTRENDR_RETRIEVAL', {retrieveOptions})
-                .setAll({
-                    'ui.retrieveState': 'SUBMITTED',
-                    'ui.retrieveOptions': retrieveOptions
-                })
-                .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
-                .dispatch()
-        }
     }
 }
 
 export const loadLandTrendrSegments$ = ({recipe, latLng}) =>
     api.gee.loadLandTrendrSegments$({recipe, latLng})
 
-const submitRetrieveRecipeTask = recipe =>
-    submitTask(recipe, {
-        dataSetType: 'OPTICAL',
-        pyramidingPolicy
-    })
+export const retrieveTask = {
+    dataSetType: 'OPTICAL'
+}

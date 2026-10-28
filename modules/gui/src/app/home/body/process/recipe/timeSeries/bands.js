@@ -1,21 +1,9 @@
-import _ from 'lodash'
-
 import {msg} from '~/translate'
 
-export const getAvailableBands = () => {
-    return {
-        count: {
-            dataType: {precision: 'int'},
-            label: msg('process.timeSeries.bands.count')
-        }
+// Which bands a time series has is its declaration's to say; this is how they are shown.
+export const bandPresentation = () => ({
+    count: {
+        dataType: {precision: 'int'},
+        label: msg('process.timeSeries.bands.count')
     }
-}
-
-export const getGroupedBandOptions = recipe => {
-    const availableBands = getAvailableBands(recipe)
-    return [
-        Object
-            .keys(availableBands)
-            .map(band => ({value: band, ...availableBands[band]}))
-    ]
-}
+})

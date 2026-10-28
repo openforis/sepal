@@ -15,6 +15,7 @@ describe('Band Math ImageForm band collection', () => {
         const imageForm = new ImageForm({
             inputs: {
                 bands: {value: {red: {}, nir: {}}},
+                currentBands: {value: null},
                 includedBands
             }
         })
@@ -35,6 +36,7 @@ describe('Band Math ImageForm band collection', () => {
         const imageForm = new ImageForm({
             inputs: {
                 bands: {value: {red: {}, nir: {}}},
+                currentBands: {value: null},
                 includedBands: {value: [], set: vi.fn()}
             }
         })
@@ -57,6 +59,7 @@ describe('Band Math ImageForm band collection', () => {
         const imageForm = new ImageForm({
             inputs: {
                 bands: {value: {red: {}, nir: {}}},
+                currentBands: {value: null},
                 includedBands
             }
         })
@@ -76,6 +79,7 @@ describe('Band Math ImageForm band collection', () => {
         const imageForm = new ImageForm({
             inputs: {
                 bands: {value: {red: {}, all: {}, nir: {}}},
+                currentBands: {value: null},
                 includedBands
             }
         })
@@ -99,6 +103,7 @@ describe('Band Math ImageForm band collection', () => {
         const imageForm = new ImageForm({
             inputs: {
                 bands: {value: {red: {}, all: {}, nir: {}}},
+                currentBands: {value: null},
                 includedBands
             }
         })

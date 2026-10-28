@@ -10,16 +10,16 @@ import styles from './tag.module.css'
 
 class _Tag extends React.Component {
     render() {
-        const {size, tooltip, tooltipPlacement} = this.props
+        const {shape, look, size, upperCase, tooltip, tooltipPlacement} = this.props
         return (
             <Shape
-                shape='pill'
-                look='transparent'
+                shape={shape}
+                look={look}
                 size={size}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
                 disableHover={!tooltip}>
-                <div className={styles.contents}>
+                <div className={[styles.contents, upperCase ? styles.upperCase : null].join(' ')}>
                     {this.renderIcon()}
                     {this.renderContents()}
                 </div>
@@ -43,15 +43,21 @@ class _Tag extends React.Component {
 export const Tag = compose(
     _Tag,
     asFunctionalComponent({
-        size: 'normal'
+        shape: 'pill',
+        look: 'transparent',
+        size: 'normal',
+        upperCase: true
     })
 )
 
 Tag.propTypes = {
     children: PropTypes.any,
+    shape: PropTypes.any,
     icon: PropTypes.any,
     label: PropTypes.any,
+    look: PropTypes.string,
     size: PropTypes.any,
     tooltip: PropTypes.any,
-    tooltipPlacement: PropTypes.string
+    tooltipPlacement: PropTypes.string,
+    upperCase: PropTypes.bool
 }

@@ -5,7 +5,7 @@ import {Subject, takeUntil} from 'rxjs'
 
 import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 import api from '~/apiRegistry'
-import {getAllVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {recipeVisualizationsNaming} from '~/app/home/body/process/recipe/visualizations'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -104,7 +104,7 @@ class _Proportions extends React.Component {
         this.onImageChanged = this.onImageChanged.bind(this)
         this.onImageLoading = this.onImageLoading.bind(this)
         this.onAssetLoaded = this.onAssetLoaded.bind(this)
-        this.onRecipeLoaded = this.onRecipeLoaded.bind(this)
+        this.onRecipeBandsLoaded = this.onRecipeBandsLoaded.bind(this)
         this.onBandChanged = this.onBandChanged.bind(this)
         this.onAnticipationStrategyChanged = this.onAnticipationStrategyChanged.bind(this)
         this.onPercentageChanged = this.onPercentageChanged.bind(this)
@@ -197,7 +197,7 @@ class _Proportions extends React.Component {
             onImageChanged={this.onImageChanged}
             onImageLoading={this.onImageLoading}
             onAssetLoaded={this.onAssetLoaded}
-            onRecipeLoaded={this.onRecipeLoaded}
+            onRecipeBandsLoaded={this.onRecipeBandsLoaded}
             onBandChanged={this.onBandChanged}
             onScaleChanged={this.onScaleChanged}
             onPercentageChanged={this.onPercentageChanged}
@@ -383,31 +383,14 @@ class _Proportions extends React.Component {
     }
 
     onAssetLoaded({metadata, visualizations}) {
-        const {inputs: {assetId}} = this.props
         const bands = metadata.bands.map(({id}) => id) || []
         // Carries the property band's own resolution, which the Scale default is calculated from.
         this.bandMetadata = metadata.bands
-        this.updateImageLayerSources({
-            id: assetId.value,
-            type: 'Asset',
-            sourceConfig: {
-                asset: assetId.value,
-                metadata,
-                visualizations
-            },
-        })
         this.onImageLoaded(bands, visualizations)
     }
 
-    onRecipeLoaded({bandNames: bands, recipe}) {
-        this.updateImageLayerSources({
-            id: recipe.id,
-            type: 'Recipe',
-            sourceConfig: {
-                recipeId: recipe.id
-            },
-        })
-        this.onImageLoaded(bands, getAllVisualizations(recipe))
+    onRecipeBandsLoaded({bandNames: bands, recipe}) {
+        this.onImageLoaded(bands, recipeVisualizationsNaming(recipe, bands))
     }
 
     onImageLoaded(bands, visualizations) {
@@ -701,13 +684,6 @@ class _Proportions extends React.Component {
             setImmediate(() => this.setPercentage(true))
         }
         return toProportions({percentage: adjustedPercentage, targetOverallProportion, strata, probabilityPerStratum})
-    }
-
-    updateImageLayerSources(source) {
-        const {recipeActionBuilder} = this.props
-        recipeActionBuilder('UPDATE_PROPORTIONS_IMAGE_LAYER_SOURCE', {source})
-            .set(['layers.additionalImageLayerSources', {id: source.id}], source)
-            .dispatch()
     }
     
     isPercentage() {

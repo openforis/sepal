@@ -3,9 +3,11 @@ import {catchError, defer, EMPTY, firstValueFrom, from, map, of, switchMap, tap,
 
 import {GOOGLE_ACCESS_TOKEN_ADDED, GOOGLE_ACCESS_TOKEN_REMOVED, GOOGLE_ACCESS_TOKEN_UPDATED, USER_UPDATED} from '#sepal/event/definitions'
 import {getLogger} from '#sepal/log'
+import {applyKeyNormalization} from '#sepal/redisKeyCase'
+import {isStoredUsername, storedUsername} from '#sepal/username'
 
 import {usernameTag, userTag} from './tag.js'
-import {getSessionUsername, removeRequestUser, setRequestUser} from './user.js'
+import {getSessionUsername, removeRequestSession, removeRequestUser, setRequestUser} from './user.js'
 import {loadUser$} from './userApi.js'
 
 const log = getLogger('userStore')
@@ -19,7 +21,12 @@ const UserStore = (redis, event$) => {
     }
 
     const userKey = username =>
-        `${USER_PREFIX}:${username.toLowerCase()}`
+        `${USER_PREFIX}:${storedUsername(username)}`
+
+    // The cached user is keyed by the stored spelling and carries it too, so that the `sepal-user`
+    // header this store feeds every other module names the user the same way the database does.
+    const storedUser = user =>
+        ({...user, username: storedUsername(user.username)})
 
     const getUser$ = username =>
         from(redis.get(userKey(username))).pipe(
@@ -42,8 +49,8 @@ const UserStore = (redis, event$) => {
         )
 
     const setUser$ = user =>
-        from(redis.set(userKey(user.username), JSON.stringify(user), {GET: true})).pipe(
-            map(prevUser => ({prevUser: JSON.parse(prevUser), user})),
+        from(redis.set(userKey(user.username), JSON.stringify(storedUser(user)), {GET: true})).pipe(
+            map(prevUser => ({prevUser: JSON.parse(prevUser), user: storedUser(user)})),
             catchError(cause =>
                 throwError(() => new Error(`${userTag(user?.username)} cannot be saved`, {cause}))
             ),
@@ -85,13 +92,22 @@ const UserStore = (redis, event$) => {
         }
     }
 
+    // A locked user's sessions are destroyed on the UserLocked event, but that arrives on its own
+    // path; a session that outlives it must still not identify the user, or the userUpdated push
+    // the lock triggers can be answered with a successful request.
     const userMiddleware = (req, res, next) => {
         const username = getSessionUsername(req)
         removeRequestUser(req)
+        // Only api-key authentication puts this back.
+        removeRequestSession(req)
         if (username) {
             firstValueFrom(getUser$(username))
                 .then(user => {
-                    setRequestUser(req, user)
+                    if (user.status === 'ACTIVE') {
+                        setRequestUser(req, user)
+                    } else {
+                        log.info(`${usernameTag(username)} Session user is ${user.status}, not injecting into request`)
+                    }
                     next()
                 })
                 .catch(err => {
@@ -103,8 +119,57 @@ const UserStore = (redis, event$) => {
         }
     }
 
+    const scanUserKeys = async () => {
+        const keys = []
+        for await (const batch of redis.scanIterator({MATCH: `${USER_PREFIX}:*`, COUNT: 1000})) {
+            keys.push(...batch)
+        }
+        return keys
+    }
+
+    // Both halves of a cache entry can name the user in a spelling the database no longer holds: the
+    // key, written before it was normalized here, and the username inside the value, copied verbatim
+    // from whatever the backend returned. A key in any other spelling is unreachable — userKey()
+    // normalizes every lookup — so it is dropped rather than renamed, while a reachable entry keeps
+    // its value and has only the username corrected.
+    //
+    // The correction deliberately bypasses setUser$: that publishes USER_UPDATED and the Google token
+    // events on every change, which at startup would mean thousands of events describing no change at
+    // all. Nothing here alters what a user IS, only how the store spells them.
+    const normalizeCase = async () => {
+        const {removed} = await applyKeyNormalization(await scanUserKeys(), {
+            prefix: USER_PREFIX,
+            orphans: 'remove',
+            removeKeys: keys => redis.del(keys)
+        })
+
+        let corrected = 0
+        for (const keys of _.chunk(await scanUserKeys(), 500)) {
+            const users = await redis.mGet(keys)
+            for (const [index, key] of keys.entries()) {
+                const user = parseUser(key, users[index])
+                if (user && !isStoredUsername(user.username)) {
+                    await redis.set(key, JSON.stringify(storedUser(user)), {KEEPTTL: true})
+                    corrected++
+                }
+            }
+        }
+
+        log.info(`Normalized user cache: ${removed} unreachable key(s) removed, ${corrected} username(s) corrected`)
+        return {removed, corrected}
+    }
+
+    const parseUser = (key, serializedUser) => {
+        try {
+            return serializedUser ? JSON.parse(serializedUser) : null
+        } catch (error) {
+            log.warn(`Cannot deserialize ${key}, leaving it untouched`, error)
+            return null
+        }
+    }
+
     return {
-        getUser$, setUser$, updateUser$, userMiddleware
+        getUser$, normalizeCase, setUser$, updateUser$, userMiddleware
     }
 }
 

@@ -1,6 +1,74 @@
+/* Loaded before rc-tooltip's own stylesheet, so its rules are overridden with more specific selectors. */
+
 .rc-tooltip-inner {
     max-width: 25rem;
     opacity: 1;
     overflow: hidden;
-    box-shadow: 0 0 1rem hsla(0, 0%, 0%, .5) !important;
+    box-shadow: 0 0 1rem var(--shadow-medium-color) !important;
+    border: 1px solid var(--tooltip-border-color);
+}
+
+.rc-tooltip .rc-tooltip-inner {
+    color: var(--tooltip-text-color);
+    background-color: var(--tooltip-background-color);
+}
+
+/* The arrow is a square turned 45°, bordered on its two outer sides so it carries the bubble's border, and
+   centered on the bubble's edge so its inner half covers the border where they meet. The library places it at
+   the wrapper's edge (inline top/bottom/left/right: 0) and centered on the trigger (inline left/top), which the
+   margins correct for. */
+.rc-tooltip[class*='rc-tooltip-placement'] .rc-tooltip-arrow {
+    --size: 8px;
+    --padding: 6px;
+    box-sizing: border-box;
+    width: var(--size);
+    height: var(--size);
+    margin: 0;
+    border: 0 solid var(--tooltip-border-color);
+    background-color: var(--tooltip-background-color);
+    transform: rotate(45deg);
+}
+
+.rc-tooltip[class*='rc-tooltip-placement-top'] {
+    padding-bottom: 6px;
+}
+
+.rc-tooltip[class*='rc-tooltip-placement-top'] .rc-tooltip-arrow {
+    margin-left: calc(var(--size) / -2);
+    margin-bottom: calc(var(--padding) - var(--size) / 2 + .5px);
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+}
+
+.rc-tooltip[class*='rc-tooltip-placement-right'] {
+    padding-left: 6px;
+}
+
+.rc-tooltip[class*='rc-tooltip-placement-right'] .rc-tooltip-arrow {
+    margin-top: calc(var(--size) / -2);
+    margin-left: calc(var(--padding) - var(--size) / 2 + .5px);
+    border-left-width: 1px;
+    border-bottom-width: 1px;
+}
+
+.rc-tooltip[class*='rc-tooltip-placement-bottom'] {
+    padding-top: 6px;
+}
+
+.rc-tooltip[class*='rc-tooltip-placement-bottom'] .rc-tooltip-arrow {
+    margin-left: calc(var(--size) / -2);
+    margin-top: calc(var(--padding) - var(--size) / 2 + .5px);
+    border-top-width: 1px;
+    border-left-width: 1px;
+}
+
+.rc-tooltip[class*='rc-tooltip-placement-left'] {
+    padding-right: 6px;
+}
+
+.rc-tooltip[class*='rc-tooltip-placement-left'] .rc-tooltip-arrow {
+    margin-top: calc(var(--size) / -2);
+    margin-right: calc(var(--padding) - var(--size) / 2 + .5px);
+    border-right-width: 1px;
+    border-top-width: 1px;
 }

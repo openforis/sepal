@@ -75,9 +75,9 @@ scrape_configs:
     static_configs:
       - targets: ['${SEPAL_HOST}']
 
-  - job_name: sys-monitor
+  - job_name: user-files
     scrape_interval: 5s
-    metrics_path: '/api/sys-monitor/metrics'
+    metrics_path: '/api/user-files/metrics'
     basic_auth:
       username: '${TARGET_USERNAME}'
       password: '${TARGET_PASSWORD}'
@@ -85,9 +85,9 @@ scrape_configs:
     static_configs:
       - targets: ['${SEPAL_HOST}']
 
-  - job_name: user-files
-    scrape_interval: 5s
-    metrics_path: '/api/user-files/metrics'
+  - job_name: worker
+    scrape_interval: 15s
+    metrics_path: '/api/worker/metrics'
     basic_auth:
       username: '${TARGET_USERNAME}'
       password: '${TARGET_PASSWORD}'

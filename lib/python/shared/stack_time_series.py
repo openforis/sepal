@@ -4,7 +4,6 @@ import os
 
 import re
 import subprocess
-import sys
 from glob import glob
 from os import listdir, pardir
 from os.path import abspath, exists, join, relpath, basename
@@ -13,13 +12,16 @@ from osgeo.gdalconst import GA_ReadOnly
 import xml.etree.cElementTree as ET
 from xml.dom import minidom
 
-tile_file_pattern = re.compile('.*-(\d{10}-\d{10}).tif')
-tile_dir_pattern = re.compile('.*-(\d{10}-\d{10})')
-chunk_file_pattern = re.compile('chunk-(.*)')
+# Keeps GDAL's error-return behaviour this script was written for; the sandbox runs it too.
+gdal.DontUseExceptions()
+
+# Drive inserts a hyphen before chip coordinates; Cloud Storage appends them directly.
+tile_file_pattern = re.compile(r'.*(\d{10}-\d{10})\.tif$')
+tile_dir_pattern = re.compile(r'.*-(\d{10}-\d{10})')
 nodata_value = 0
 
 
-def stack_time_series(directory):
+def stack_time_series(directory, band=None, sits_dir=None):
     chunk_dirs = sorted(glob(join(directory, 'chunk-*')))
     if not chunk_dirs:
         print('    Skipping. No chunk-* directories')
@@ -32,6 +34,8 @@ def stack_time_series(directory):
     dates = get_dates(chunks)
     create_stack(directory, dates)
     create_dates_csv(directory, dates)
+    if band:
+        create_sits_files(sits_dir or join(directory, 'sits'), tiles, band)
     print('    Done.')
 
 
@@ -59,9 +63,17 @@ def get_chunks(chunk_dirs):
             dates.append(date)
         chunks.append({
             'chunk_dir': chunk_dir,
-            'dates': dates
+            'dates': dates,
+            'tile_files': get_tile_files(chunk_dir)
         })
     return chunks
+
+
+def get_tile_files(chunk_dir):
+    tile_files = {}
+    for tif_file in get_tif_files(chunk_dir):
+        tile_files.setdefault(get_tile_name(tif_file), join(chunk_dir, tif_file))
+    return tile_files
 
 
 def get_tiles(chunk_dirs):
@@ -92,6 +104,7 @@ def create_tile_stacks(metadata, chunks, tiles):
 
 def create_tile_stack(metadata, chunks, tile):
     tile_dir = tile['tile_dir']
+    tile_name = tile_dir_pattern.search(basename(tile_dir))[1]
     root = ET.Element('VRTDataset', {
         'rasterXSize': str(tile['xSize']),
         'rasterYSize': str(tile['ySize'])
@@ -100,6 +113,7 @@ def create_tile_stack(metadata, chunks, tile):
     ET.SubElement(root, 'GeoTransform').text = tile['geoTransform']
     band_nr = 0
     for chunk in chunks:
+        chunk_file = get_chunk_file(chunk, tile_name)
         for i, date in enumerate(chunk['dates']):
             band_nr = band_nr + 1
             band = ET.SubElement(root, 'VRTRasterBand', {
@@ -109,15 +123,6 @@ def create_tile_stack(metadata, chunks, tile):
             ET.SubElement(band, 'Description').text = date
             ET.SubElement(band, 'NoDataValue').text = str(nodata_value)
             source = ET.SubElement(band, 'ComplexSource')
-
-            chunk_dir = chunk['chunk_dir']
-            chunk_name = chunk_file_pattern.search(basename(chunk_dir))[1]
-            tile_name = tile_dir_pattern.search(basename(tile_dir))[1]
-            matches = sorted(glob(join(chunk_dir, '*{0}-{1}.tif'.format(chunk_name, tile_name))))
-            if matches:
-                chunk_file = matches[0]
-            else:
-                chunk_file = sorted(glob(join(chunk_dir, '*{}.tif'.format(chunk_name))))[0]
             ET.SubElement(source, 'SourceFilename', {
                 'relativeToVRT': '1',
                 'shared': '0'
@@ -151,6 +156,15 @@ def create_tile_stack(metadata, chunks, tile):
     create_tile_dir(tile_dir)
     with open(stack_file, 'w+') as text_file:
         text_file.write(vrt)
+
+
+def get_chunk_file(chunk, tile_name):
+    chunk_file = chunk['tile_files'].get(tile_name)
+    if not chunk_file:
+        raise ValueError('{} has no file for tile {}; every chunk must be split into the same tiles'.format(
+            basename(chunk['chunk_dir']), tile_name
+        ))
+    return chunk_file
 
 
 def get_dates(chunks):
@@ -200,11 +214,13 @@ def extract_chunk_tile_bands(tif_file):
 
 
 def get_tile_dir(tif_file):
-    tile_name = tile_file_pattern.match(tif_file).group(1) \
-        if tile_file_pattern.match(tif_file) \
-        else '0000000000-0000000000'
     parent_dir = join(tif_file, pardir, pardir)
-    return abspath(join(parent_dir, 'tile-' + tile_name))
+    return abspath(join(parent_dir, 'tile-' + get_tile_name(tif_file)))
+
+
+def get_tile_name(tif_file):
+    match = tile_file_pattern.match(tif_file)
+    return match.group(1) if match else '0000000000-0000000000'
 
 
 def create_tile_dir(tile_dir):
@@ -232,15 +248,65 @@ def create_dates_csv(directory, dates):
             f.write(d + '\n')
 
 
+# One thin VRT per tile per date, named for a sits local_cube parse_info of c("X1", "tile", "band", "date").
+# sits requires an upper-case band token for raw cubes. sits_dir may be shared by several bands, so they load
+# as one multi-band cube.
+def create_sits_files(sits_dir, tiles, band):
+    create_tile_dir(sits_dir)
+    band = band.replace('_', '-').upper()
+    for tile in tiles:
+        create_sits_tile_files(sits_dir, tile, band)
+
+
+def create_sits_tile_files(sits_dir, tile, band):
+    tile_dir = tile['tile_dir']
+    tile_name = tile_dir_pattern.search(basename(tile_dir))[1]
+    stack_file = join(tile_dir, 'stack.vrt')
+    rel_stack_file = relpath(stack_file, sits_dir)
+    ds = gdal.Open(stack_file, GA_ReadOnly)
+    os.chdir(sits_dir)
+    gdal.SetConfigOption('VRT_SHARED_SOURCE', '0')
+    for band_index in range(1, ds.RasterCount + 1):
+        date = ds.GetRasterBand(band_index).GetDescription()
+        out_file = join(sits_dir, 'SEPAL_{}_{}_{}.vrt'.format(tile_name, band, date))
+        vrt = gdal.BuildVRT(
+            out_file, rel_stack_file,
+            bandList=[band_index],
+            VRTNodata=nodata_value
+        )
+        vrt.GetRasterBand(1).SetDescription(date)
+        vrt.FlushCache()
+        vrt = None
+        # BuildVRT writes an absolute source path whatever it is given; keep it relative so the export can move.
+        set_source_relative_to_vrt(out_file, rel_stack_file)
+    ds = None
+
+
+# Edits the parsed XML, as the path GDAL wrote is XML-escaped and need not match the raw path textually.
+def set_source_relative_to_vrt(vrt_file, source_file):
+    tree = ET.parse(vrt_file)
+    for source_filename in tree.iter('SourceFilename'):
+        source_filename.text = source_file
+        source_filename.set('relativeToVRT', '1')
+    tree.write(vrt_file, encoding='utf-8')
+
+
 def make_relative_to_vrt(vrt_file):
     subprocess.check_call(['sed', '-i', 's/relativeToVRT="0"/relativeToVRT="1"/g', vrt_file])
 
 
 if __name__ == '__main__':
-    dirs = sys.argv[1:]
-    for d in dirs:
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('directories', nargs='+')
+    parser.add_argument('--band', help='Indicator name; also writes sits-readable per-date VRTs')
+    parser.add_argument('--sits-dir', help='Where to write the sits VRTs (default: <directory>/sits)')
+    args = parser.parse_args()
+
+    for d in args.directories:
         if exists(d):
             print('Stacking time-series in {}'.format(d))
-            stack_time_series(abspath(d))
+            stack_time_series(abspath(d), args.band, args.sits_dir)
         else:
             print('Not found: {}'.format(d))

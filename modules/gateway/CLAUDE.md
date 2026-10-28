@@ -5,8 +5,8 @@ HTTP gateway/reverse proxy. Entry point for all API traffic. Uses **Express** (n
 ## Commands
 
 ```bash
-npm test              # Jest
-npm run testWatch     # Jest watch mode
+npm test              # Node test runner
+npm run testWatch     # Node test runner watch mode
 ```
 
 ## Key Architecture
@@ -30,14 +30,75 @@ Three-layer WebSocket system:
 
 Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server registry in `websocket-server.js` (keyed by module name).
 
+### Sandbox App Routing
+- `sandboxSessionManager.resolveTarget` attributes a proxied sandbox request to a host in this
+  order: kernel-id probe (Jupyter `/api/kernels/:id/` paths, probes candidate hosts) → app-path
+  prefix match → `Referer` header prefix match → single-candidate fallback → legacy
+  per-endpoint lookup (`GET /sessions/active`).
+- `POST /api/sandbox/start` (`sandboxStartRoute.js`) takes query params `endpoint`, `appPath`,
+  `appLabel`, `sessionId`, `instanceType` and returns `{id, status, reused?}`; `reused: true` means
+  an explicit `sessionId`/`instanceType` pick was overridden by a winning live association or a
+  concurrent-start race. Omitting `appPath` keeps the legacy reuse-any-session behavior.
+- `DELETE /api/sandbox/start?appPath=…&clientId=…` → 204: releases the app ↔ session binding
+  (GUI tab close, or a takeover before re-opening the app elsewhere) via worker
+  `DELETE /sessions/app` and drops the cached app entry; the session stays open, so the app
+  can be re-opened on a different instance.
+- **Lazy sandbox servers**: `rstudio`/`shiny`/`jupyter` are started on first use, so the proxy
+  calls `sandboxSessionManager.ensureServerStarted` BEFORE forwarding a request (both the HTTP
+  and the ws-upgrade path) — `resolveTarget` returns `sessionId` for that. Pre-flight rather than
+  retry-on-refused: httpxy has already begun consuming the request stream by the time a
+  connection error surfaces, so a bodied request could never be replayed. The ensure is memoized
+  per `(sessionId, endpoint)`, so it costs one worker round-trip and a Set lookup thereafter; a
+  failed ensure answers 502 (socket closed on ws) and is not cached.
+- `POST /api/sandbox/server?sessionId=…&endpoint=…` → 204 once the endpoint's server is
+  listening (same `ensureServerStarted`; 4xx passed through, other failures 502). The GUI calls
+  it once the session is ACTIVE so the app tab can show "starting server" as its own phase;
+  `startApp` itself never starts a server, and the proxy remains the authoritative gate.
+- **App ↔ client ownership (worker-owned)**: the downlink sends each browser its
+  gateway-minted `clientId` right after ws connect; the GUI tags `POST`/`DELETE
+  /api/sandbox/start` with it and the worker stores it on the association
+  (`session_app.client_id`). On clientDown the WORKER dissociates that client's apps (the
+  gateway only broadcasts the event). `startApp` hitting an existing association still calls
+  the worker associate to refresh ownership (reconnect re-assert). The
+  `gateway.sessionAppDissociated` subscriber drops the cached app entry on every
+  dissociation and, when the owner ≠ requester (takeover), unicasts `workerSessionAppDissociated
+  {appPath, sessionId}` to the owner client, whose GUI closes the app's tab. The reconnect
+  re-assert sends `reassert=true`, which the gateway forwards in the associate body: the worker
+  refreshes ownership but moves NO deadline, since the socket dropping is not a user opening an
+  app. Only the literal `'true'` counts, so a garbled report reads as a real open.
+- **Interaction reporting** (`sandboxInteractionRoute.js`, `POST /api/sandbox/interaction?sessionId=&observable=`):
+  the GUI reports real input events observed inside an app iframe; the gateway sets the marker its
+  existing 30 s heartbeat loop already carries, and the beat sends `{interaction: true}`. A
+  PROXIED REQUEST IS NOT AN INTERACTION — JupyterLab and RStudio poll continuously, and counting
+  those is what made an open tab immortal (`sandboxSessionManager.test.js` pins this). The one
+  exception is a session the GUI declared `observable=false` (a genuinely cross-origin app), for
+  which proxied requests are counted as before; the declaration has a short TTL and the default
+  with no report is observable.
+- Forwards `workerSession.WorkerSessionClosed` to the user's browsers as
+  `{event: {type: 'workerSessionClosed', data: {sessionId}}}` (username only selects the
+  recipient clients), used by the GUI to close app tabs pinned to that session; the internal
+  event (with username) is also republished on the bus as `systemEvent` (see `RABBITMQ.md`).
+
 ### Session Management
 - Cookie: `SEPAL-SESSIONID`
 - Redis store via `connect-redis`
 - Session secret persisted in Redis (survives restarts)
-- `src/session.js`: Logout destroys session, invalidate-other-sessions destroys all but current
+- `src/session.js`: Logout destroys session, invalidate-other-sessions destroys all but current. Every destroyed session (also on `user.UserLocked`) is announced on `event$` as `loginSessionInvalidated {username, sessionId}` (the `workerSession*` events are the sandbox ones); browser websockets are bound to the session that upgraded them, so the tabs of that session get the event and are then closed — the GUI reloads on it
 
 ### Authentication
-- `src/authMiddleware.js`: Checks `sepal-user` header, falls back to HTTP Basic Auth via POST to `http://user/authenticate`
+- `src/authMiddleware.js`: HTTP Basic credentials, when present, are authenticated via POST to `http://user/authenticate` and win over the session's `sepal-user` (a login from a browser logged in as someone else must switch account); otherwise the injected `sepal-user` passes. A GUI login on a session held by another user replaces the session (`ensureSessionFor` in `session.js`)
+- **Worker-session API keys**: Basic auth with an *empty* username treats the password as a worker-session
+  api key, authenticated via `POST http://worker/sessions/api-key-authenticate`. The key resolves to
+  `{username, sessionId, workerType}`; the user is injected as `sepal-user` and the session as
+  `sepal-session` (`{sessionId, workerType}` — never the key, never a role). `sepal-session` is
+  request-local: `userStore.userMiddleware` strips whatever the client sent, only successful key
+  authentication sets it, and `src/proxy.js` forwards it on authenticated endpoints only.
+- **Metrics are admin-only**: `src/metricsAccess.js` answers 403 to any `/api/<module>/metrics[.json]` request
+  from a user without `application_admin` (Prometheus scrapes as `sepaladmin`). Every Koa module serves
+  `/metrics` behind its catch-all proxy, so the guard matches the path pattern, case-insensitively, not a list.
+- **Websocket upgrades bypass Express**, so `src/webSocketUpgrade.js` repeats the guards for them: it strips
+  `sepal-user` and `sepal-session`, refuses metrics paths, and proxies only endpoints marked `ws: true` in
+  `config/endpoints.js` (plus `/api/ws` and the sandbox proxy); anything else is answered 404.
 - `src/googleAccessToken.js`: Background token refresh monitor. Refreshes 10 min before expiry with exponential backoff retry.
 
 ### RabbitMQ
@@ -52,4 +113,4 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
 - **User header injection**: Downstream services receive authenticated user as JSON in `sepal-user` request header. The gateway strips any client-injected values first.
 - **`sepal-user-updated` response header**: When a downstream service sets this header, the gateway triggers a user refresh from the user module.
 - **Tag utilities** (`src/tag.js`): Formatted log tags like `Client<username:ab12>`, `Subscription<user:id:sub>`.
-- **Only test file**: `src/rewrite.test.js` tests HTTP Location header rewriting for proxied redirects.
+- **Tests**: `src/rewrite.test.js` (Location header rewriting), `src/userStore.test.js`, `src/session.test.js`, `src/websocket-client.test.js`.

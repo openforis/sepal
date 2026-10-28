@@ -17,10 +17,13 @@ const initializeDownlink = ({servers, clients, wss, userStore, event$}) => {
     const client$ = new Subject()
 
     heartbeatResponse$.pipe(
-        groupBy(({clientId}) => clientId),
+        groupBy(({clientId}) => clientId, {
+            duration: clientId$ => clientDisconnected$(clientId$.key)
+        }),
         mergeMap(clientId$ =>
             clientId$.pipe(
                 debounceTime(HEARTBEAT_INTERVAL_MS * 2),
+                // Unsubscribes before the duration completes the group, which would flush a pending timeout.
                 takeUntil(clientDisconnected$(clientId$.key))
             )
         )
@@ -101,7 +104,7 @@ const initializeDownlink = ({servers, clients, wss, userStore, event$}) => {
             filter(({clientId: currentClientId, disconnected}) => currentClientId === clientId && disconnected)
         )
 
-    const onClientConnected = (ws, username) => {
+    const onClientConnected = (ws, username, sessionId) => {
         const clientId = uuid()
         log.info(`${clientTag(username, clientId)} connected`)
 
@@ -120,13 +123,17 @@ const initializeDownlink = ({servers, clients, wss, userStore, event$}) => {
             complete: () => log.debug(`${clientTag(username, clientId)} heartbeat stopped`)
         })
 
-        clients.add(username, clientId, ws)
+        clients.add(username, clientId, ws, sessionId)
         client$.next({username, clientId, connected: true})
 
         ws.on('message', message => onClientMessage(username, clientId, message))
         ws.on('error', error => onClientError(username, clientId, error))
         ws.on('close', () => onClientDisconnected(username, clientId))
 
+        // Tell the browser its own clientId, so it can tag sandbox start/release requests
+        // with it (the worker stores it as the app association's owner; a reconnect gets a
+        // fresh id and re-asserts).
+        clients.send(clientId, {clientId})
         clients.send(clientId, {modules: {state: servers.list()}})
         event$.next({type: CLIENT_UP, data: {username, clientId}})
     }
@@ -166,7 +173,10 @@ const initializeDownlink = ({servers, clients, wss, userStore, event$}) => {
 
     const onHeartbeat = (username, clientId, hb) => {
         log.trace('Heartbeat reply received', hb)
-        heartbeatResponse$.next({username, clientId})
+        // A reply racing the disconnect would open a heartbeat group no disconnect ever ends.
+        if (clients.has(clientId)) {
+            heartbeatResponse$.next({username, clientId})
+        }
     }
 
     const onSubscribed = (username, clientId, subscriptionId, module) => {
@@ -201,6 +211,10 @@ const initializeDownlink = ({servers, clients, wss, userStore, event$}) => {
     }
 
     const disconnect = (username, clientId) => {
+        // remove() terminates the socket, whose 'close' (or an 'error' then 'close') lands here again.
+        if (!clients.has(clientId)) {
+            return
+        }
         client$.next({username, clientId, disconnected: true})
         Object.entries(clients.getSubscriptions(clientId)).forEach(([subscriptionId, module]) => {
             clients.removeSubscription(clientId, subscriptionId)
@@ -210,8 +224,8 @@ const initializeDownlink = ({servers, clients, wss, userStore, event$}) => {
         clients.remove(clientId)
     }
 
-    wss.on('connection', (ws, _req, username) =>
-        onClientConnected(ws, username)
+    wss.on('connection', (ws, _req, username, sessionId) =>
+        onClientConnected(ws, username, sessionId)
     )
 }
 

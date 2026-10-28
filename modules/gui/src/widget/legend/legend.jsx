@@ -22,14 +22,14 @@ const mapRecipeToProps = (recipe, {componentId}) => ({
 
 class _Legend extends React.Component {
     render() {
-        const {label, entries, disabled, errorMessage} = this.props
+        const {label, entries, disabled, errorMessage, activator: {activatables: {editLegendPanel}}} = this.props
         return (
             <Widget
                 label={label}
                 disabled={disabled}
                 errorMessage={errorMessage}
                 labelButtons={this.renderLabelButtons()}>
-                <EditLegendPanel/>
+                <EditLegendPanel id={editLegendPanel.id}/>
                 {entries && entries.length ? this.renderEntries() : this.renderNoEntries()}
             </Widget>
         )
@@ -118,7 +118,8 @@ const toUpdatedEntryPath = componentId => ['ui', 'widget.Legend', componentId, '
 export const Legend = compose(
     _Legend,
     withRecipe(mapRecipeToProps),
-    withActivators('editLegendPanel'),
+    // An editor of its own: where several legends are shown, editing one opens its editor alone.
+    withActivators({editLegendPanel: (_props, activatorId) => `editLegendPanel-${activatorId}`}),
     asFunctionalComponent({
         entries: []
     })

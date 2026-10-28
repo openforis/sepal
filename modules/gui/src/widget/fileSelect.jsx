@@ -5,11 +5,17 @@ import {msg} from '~/translate'
 
 import styles from './fileSelect.module.css'
 
-export const FileSelect = ({multiple, single, accept, onSelect, children}) => {
+export const FileSelect = ({multiple, single, accept, onSelect, onReject, children}) => {
     const {getRootProps, getInputProps, isDragActive, isDragAccept, isDragReject} = useDropzone({
         multiple: multiple || !single,
         accept,
-        onDrop: files => onSelect(single ? files[0] : files),
+        onDrop: (files, rejections) => {
+            if (files.length) {
+                onSelect(single ? files[0] : files)
+            } else if (rejections.length) {
+                onReject && onReject(rejections)
+            }
+        },
     })
     
     const reject = isDragReject || (isDragActive && !isDragAccept)
@@ -45,6 +51,7 @@ export const FileSelect = ({multiple, single, accept, onSelect, children}) => {
 FileSelect.propTypes = {
     onSelect: PropTypes.func.isRequired,
     accept: PropTypes.any,
+    onReject: PropTypes.func,
     multiple: PropTypes.any,
     single: PropTypes.any,
 }

@@ -1,5 +1,5 @@
 .modal {
-    --modal-background: hsla(0, 0%, 5%, .8);
+    --modal-background: var(--modal-backdrop-color);
     position: absolute;
     top: 0;
     bottom: 0;

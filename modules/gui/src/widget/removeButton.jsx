@@ -17,18 +17,18 @@ class _RemoveButton extends React.Component {
     }
 
     renderModalConfirmationButton() {
-        const {chromeless, air, icon, label, tooltip, tooltipPlacement, title, message, shape, size, onRemove, disabled, unsafe, children} = this.props
+        const {chromeless, air, icon, label, tooltip, tooltipPlacement, title, message, shape, size, onRemove, pending, disabled, unsafe, children} = this.props
         return (
             <ModalConfirmationButton
                 chromeless={chromeless}
                 air={air}
                 shape={shape}
                 size={size}
-                icon={icon}
+                icon={pending ? 'spinner' : icon}
                 label={label}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
-                disabled={disabled}
+                disabled={pending || disabled}
                 skipConfirmation={unsafe}
                 title={title}
                 message={message}
@@ -40,19 +40,19 @@ class _RemoveButton extends React.Component {
     }
 
     renderInlineConfirmationButton() {
-        const {chromeless, air, icon, label, confirmationLabel, tooltip, tooltipPlacement, shape, size, onRemove, disabled, unsafe} = this.props
+        const {chromeless, air, icon, label, confirmationLabel, tooltip, tooltipPlacement, shape, size, onRemove, pending, disabled, unsafe} = this.props
         return (
             <InlineConfirmationButton
                 chromeless={chromeless}
                 air={air}
                 shape={shape}
                 size={size}
-                icon={icon}
+                icon={pending ? 'spinner' : icon}
                 label={label}
                 confirmationLabel={confirmationLabel || msg('button.remove')}
                 tooltip={tooltip}
                 tooltipPlacement={tooltipPlacement}
-                disabled={disabled}
+                disabled={pending || disabled}
                 skipConfirmation={unsafe}
                 onConfirm={onRemove}
             />
@@ -76,8 +76,10 @@ RemoveButton.propTypes = {
     chromeless: PropTypes.any,
     confirmationLabel: PropTypes.any,
     disabled: PropTypes.any,
+    icon: PropTypes.any,
     label: PropTypes.any,
     message: PropTypes.any,
+    pending: PropTypes.any,
     shape: PropTypes.any,
     size: PropTypes.any,
     title: PropTypes.any,

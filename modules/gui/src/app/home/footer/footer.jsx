@@ -1,16 +1,13 @@
-import {compose} from '~/compose'
-import {connect} from '~/connect'
 import {msg} from '~/translate'
-import {logout$} from '~/user'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {CopyButton} from '~/widget/copyButton'
 import {Layout} from '~/widget/layout'
 import {WebSocketConnectionIndicator} from '~/widget/webSocketIndicator'
 
+import {MessagesButton} from '../messages/messages'
 import {UsageButton} from '../user/usage'
 import {UserDetailsButton} from '../user/userDetails'
-import {UserMessagesButton} from '../user/userMessages'
 import styles from './footer.module.css'
 
 export const Footer = ({className}) => {
@@ -24,10 +21,9 @@ export const Footer = ({className}) => {
                 <div>
                     <ButtonGroup layout='horizontal-nowrap' spacing='tight'>
                         <WebSocketConnectionIndicator/>
-                        <UserMessagesButton/>
+                        <MessagesButton/>
                         <UsageButton/>
                         <UserDetailsButton/>
-                        <Logout/>
                     </ButtonGroup>
                 </div>
             </div>
@@ -36,27 +32,6 @@ export const Footer = ({className}) => {
 }
 
 Footer.propTypes = {}
-
-const _Logout = ({stream}) => {
-    const logout = () => stream('LOGOUT', logout$())
-    return (
-        <Button
-            chromeless
-            look='transparent'
-            size='large'
-            air='less'
-            icon='sign-out-alt'
-            tooltip={msg('home.sections.logout')}
-            tooltipPlacement='top'
-            onClick={logout}
-        />
-    )
-}
-
-const Logout = compose(
-    _Logout,
-    connect()
-)
 
 const Title = () => {
     const wikiURL = 'https://github.com/openforis/sepal'

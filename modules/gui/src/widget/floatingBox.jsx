@@ -19,6 +19,9 @@ const Context = React.createContext()
 
 const withFloatingBox = withContext(Context, 'floatingBox')
 
+// Subscribed only to re-render on viewport resize. Positioning reads the live viewport: the stored
+// dimensions are throttled, and positions computed against a stale width resize a box whose width is
+// set by left and right, so measuring it never converges.
 const mapStateToProps = state => ({
     viewportDimensions: selectFrom(state, 'dimensions') || []
 })
@@ -149,7 +152,7 @@ class _FloatingBox extends React.Component {
     }
 
     getVerticalPosition(vPlacement) {
-        const {viewportDimensions: {height: viewportHeight}} = this.props
+        const viewportHeight = window.innerHeight
         const {elementDimensions: {top: elementTop, bottom: elementBottom}, contentDimensions: {height: contentHeight}} = this.state
         const verticalElementCenter = (elementBottom + elementTop) / 2
 
@@ -271,7 +274,7 @@ class _FloatingBox extends React.Component {
     }
 
     getHorizontalPosition(hPlacement) {
-        const {viewportDimensions: {width: viewportWidth}} = this.props
+        const viewportWidth = window.innerWidth
         const {elementDimensions: {left: elementLeft, right: elementRight}, contentDimensions: {width: contentWidth}} = this.state
         const horizontalElementCenter = (elementRight + elementLeft) / 2
 

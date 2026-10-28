@@ -22,21 +22,18 @@ const mapStateToProps = state => {
 
 class _BandMathImageLayer extends React.Component {
     render() {
-        const {layer, map, recipe} = this.props
-        const hasOutputBands = !!recipe?.model?.outputBands?.outputImages?.length
-        return hasOutputBands
-            ? (
-                <MapAreaLayout
-                    layer={this.canRender() ? layer : null}
-                    form={this.renderImageLayerForm()}
-                    map={map}
-                />
-            )
-            : null
+        const {layer, map} = this.props
+        return (
+            <MapAreaLayout
+                layer={layer}
+                form={this.renderImageLayerForm()}
+                map={map}
+            />
+        )
     }
 
     renderImageLayerForm() {
-        const {recipes, recipe, source, layerConfig = {}} = this.props
+        const {recipes, recipe, source, layerConfig = {}, imageOutput: {availableBands}} = this.props
         const images = recipe.model.inputImagery?.images || []
         const recipeNameById = {}
         images
@@ -50,15 +47,10 @@ class _BandMathImageLayer extends React.Component {
                 source={source}
                 recipe={recipe}
                 presetOptions={options}
+                availableBands={availableBands}
                 selectedVisParams={layerConfig.visParams}
             />
         )
-    }
-
-    canRender() {
-        const {recipe} = this.props
-        const inputImagery = selectFrom(recipe, ['model.inputImagery.images']) || []
-        return inputImagery.length
     }
 }
 
@@ -73,6 +65,7 @@ export const BandMathImageLayer = compose(
 BandMathImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,
     source: PropTypes.object.isRequired,
+    imageOutput: PropTypes.object.isRequired,
     layer: PropTypes.object,
     layerConfig: PropTypes.object,
     map: PropTypes.object

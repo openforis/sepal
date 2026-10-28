@@ -167,6 +167,7 @@ class _Options extends React.Component {
             <Form.Buttons
                 label={msg('process.radarMosaic.panel.options.form.geometricCorrection.label')}
                 input={geometricCorrection}
+                {...geometricCorrection.presentation?.(msg('process.radarMosaic.panel.options.form.geometricCorrection.label'))}
                 options={options}
             />
         )
@@ -215,6 +216,7 @@ class _Options extends React.Component {
             <Form.Buttons
                 label={msg('process.radarMosaic.panel.options.form.spatialSpeckleFilter.label')}
                 input={spatialSpeckleFilter}
+                {...spatialSpeckleFilter.presentation?.(msg('process.radarMosaic.panel.options.form.spatialSpeckleFilter.label'))}
                 options={options}
                 onChange={value => {
                     if (value === 'NONE') {
@@ -226,10 +228,11 @@ class _Options extends React.Component {
     }
 
     renderSpatialSpeckleFilterOptions() {
-        const {inputs: {spatialSpeckleFilter, kernelSize, sigma, strongScatterers, strongScattererValue1, strongScattererValue2, snicSize, snicCompactness}} = this.props
+        const {showStrongScatterers, inputs: {spatialSpeckleFilter, kernelSize, sigma, strongScatterers, strongScattererValue1, strongScattererValue2, snicSize, snicCompactness}} = this.props
         return (
             <SpatialSpeckleFilterOptions
                 spatialSpeckleFilter={spatialSpeckleFilter.value}
+                showStrongScatterers={showStrongScatterers}
                 inputs={{kernelSize, sigma, strongScatterers, strongScattererValue1, strongScattererValue2, snicSize, snicCompactness}}
             />
         )
@@ -265,6 +268,7 @@ class _Options extends React.Component {
             <Form.Buttons
                 label={msg('process.radarMosaic.panel.options.form.multitemporalSpeckleFilter.label')}
                 input={multitemporalSpeckleFilter}
+                {...multitemporalSpeckleFilter.presentation?.(msg('process.radarMosaic.panel.options.form.multitemporalSpeckleFilter.label'))}
                 options={options}
             />
         )
@@ -413,6 +417,7 @@ export const Options = compose(
 )
 
 Options.propTypes = {
+    showStrongScatterers: PropTypes.bool,
     disabled: PropTypes.any,
     recipeId: PropTypes.string,
     sources: PropTypes.any

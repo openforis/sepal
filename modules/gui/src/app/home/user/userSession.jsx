@@ -27,7 +27,7 @@ const mapStateToProps = () => {
         session,
         values: {
             id,
-            keepAlive: session.earliestTimeoutHours
+            keepAlive: session.timeoutHours
         }
     }
 }
@@ -48,12 +48,12 @@ class _UserSession extends React.Component {
             .dispatch()
     }
 
+    // The store update belongs to updateCurrentUserSession$, which assigns keepAlive onto the right
+    // session. The line that used to be here wrote `session.timeoutHours` — a field the form values
+    // do not have — to `users.currentUserReport…`, a path that does not exist either.
     updateSession(session) {
         updateCurrentUserSession$(session).subscribe(
             () => {
-                actionBuilder('UPDATE_USER_SESSION')
-                    .set(['users.currentUserReport.sessions.earliestTimeoutHours'], session.earliestTimeoutHours)
-                    .dispatch()
                 Notifications.success({message: msg('user.userSession.update.success')})
             },
             error => Notifications.error({message: msg('user.userSession.update.error'), error})
@@ -75,7 +75,7 @@ class _UserSession extends React.Component {
                 onApply={session => this.updateSession(session)}
                 onClose={() => this.unselectSession()}>
                 <Panel.Header
-                    title={`${session.instanceType.name} (${session.instanceType.description})`}
+                    title={`${session.instanceType.tag ?? session.instanceType.name} (${session.instanceType.description})`}
                     label={`${format.dollars(session.costSinceCreation)} (${format.dollarsPerHour(session.instanceType.hourlyCost)})`}
                 />
                 <Panel.Content>

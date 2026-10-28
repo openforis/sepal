@@ -1,0 +1,271 @@
+import logConfig from '#config/log.json' with {type: 'json'}
+import * as server from '#sepal/httpServer'
+import {configureServer, getLogger} from '#sepal/log'
+import {initMessageQueue} from '#sepal/messageQueue'
+
+import * as config from './config.js'
+import {initializeDb} from './db.js'
+import {createHostingService} from './hostingService/index.js'
+import {createBusyRegistry} from './instanceUsage/busyRegistry.js'
+import {createDockerInstanceStats} from './instanceUsage/dockerInstanceStats.js'
+import {createInstanceUsageComponent} from './instanceUsage/index.js'
+import {createTerminalRegistry} from './instanceUsage/terminalRegistry.js'
+import {UsageRepository} from './instanceUsage/usageRepository.js'
+import {createLockedUsers} from './lockedUsers.js'
+import {createRoutes, createWsRoutes} from './routes.js'
+import {ClaimRepository} from './workerInstance/claimRepository.js'
+import {createDockerSandboxServerControl} from './workerInstance/dockerSandboxServerControl.js'
+import {createWorkerInstanceComponent} from './workerInstance/index.js'
+import {instanceFromSession} from './workerInstance/instanceFromSession.js'
+import {createUserPublicKeyClient} from './workerInstance/userPublicKeyClient.js'
+import {createBudgetClient} from './workerSession/budgetClient.js'
+import {closeUserSessions as _closeUserSessions} from './workerSession/command/closeUserSessions.js'
+import {email$, sendEmail} from './workerSession/email.js'
+import {emitWorkerSessionClosed} from './workerSession/events.js'
+import {createExpiryMetrics} from './workerSession/expiryMetrics.js'
+import {createExpiryTokens} from './workerSession/expiryToken.js'
+import {createGoogleOAuthGateway} from './workerSession/googleOAuthGateway.js'
+import {createSessionComponent} from './workerSession/index.js'
+import {createSandboxServerManager} from './workerSession/sandboxServerManager.js'
+import {SessionAppRepository} from './workerSession/sessionAppRepository.js'
+import {createSessionManager} from './workerSession/sessionManager.js'
+import {createSessionsApi} from './workerSession/sessionsApi.js'
+import {State} from './workerSession/workerSession.js'
+import {createWorkerSessionApiKey} from './workerSession/workerSessionApiKey.js'
+import {WorkerSessionRepository} from './workerSession/workerSessionRepository.js'
+
+configureServer(logConfig)
+
+const log = getLogger('main')
+
+const {port, rabbitmqHost, rabbitmqPort} = config
+
+const amqpUri = `amqp://${rabbitmqHost}:${rabbitmqPort}`
+
+let instanceComponent = null
+let sessionComponent = null
+let usageComponent = null
+
+const main = async () => {
+    const db = await initializeDb()
+    const clock = () => new Date()
+
+    // The session_app repository is shared between the worker_session repository (cascade delete
+    // on session close) and the session manager, so both talk to ONE instance.
+    const sessionAppRepository = new SessionAppRepository(db, clock)
+
+    const workerSessionRepository = new WorkerSessionRepository(db, clock, sessionAppRepository)
+    const sandboxSessionApiKey = createWorkerSessionApiKey(workerSessionRepository)
+
+    const usageRepository = new UsageRepository(db, clock)
+
+    // Constructing the hosting service NEVER calls live AWS; that only happens on
+    // provider.start()/launch.
+    const userPublicKeys = createUserPublicKeyClient(config)
+    const hostingService = createHostingService(config, {sandboxSessionApiKey, userPublicKeys})
+    const {instanceProvider, instanceProvisioner, instanceTypes} = hostingService
+
+    const claimRepository = new ClaimRepository(db)
+
+    // The open sessions are the durable record of what is allocated. A provider that keeps its
+    // world in memory (local dev) rebuilds from this at start; AWS ignores it. It lives here
+    // rather than inside workerInstance so that component never has to import workerSession.
+    const openSessionInstances = async () => {
+        const sessions = await workerSessionRepository.sessions([State.PENDING, State.ACTIVE])
+        return sessions.filter(s => s.instance?.id).map(instanceFromSession)
+    }
+
+    instanceComponent = createWorkerInstanceComponent({
+        claims: claimRepository,
+        provider: instanceProvider,
+        provisioner: instanceProvisioner,
+        instanceTypes,
+        openSessionInstances,
+        stoppedPoolSize: config.stoppedPoolSize,
+    })
+
+    // The locked-users set starts EMPTY on every worker restart and only catches up on the budget
+    // module's cycles (every minute for users with open sessions, hourly for the rest), so it is
+    // the FALLBACK gate, not the authoritative one: requestSession asks budgetClient for a live
+    // verdict and only falls back to this set when budget is unreachable. The set is still what
+    // closes an over-budget user's running sessions, driven by the budget.UserBudgetExceeded
+    // subscriber below.
+    // closeUserSessions is bound to the raw command here rather than to sessionManager, which would
+    // be a construction cycle (sessionManager depends on lockedUsers).
+    const lockedUsers = createLockedUsers({
+        closeUserSessions: username => _closeUserSessions(username, {
+            repo: workerSessionRepository,
+            instanceManager: instanceComponent.instanceManager,
+            emitWorkerSessionClosed,
+        }),
+    })
+
+    // Constructing the budget client NEVER calls budget; that only happens on check().
+    const budgetClient = createBudgetClient(config)
+
+    // The session-expiration policy: the mode plus every magnitude by which an event may move a
+    // deadline. ONE object, shared by the session manager (which applies the ratchets), the
+    // sampler (busy verdicts and pty interaction) and the REST serialisation — there is no second
+    // place where a duration is decided.
+    const instanceTypeById = Object.fromEntries(instanceTypes.map(t => [t.id, t]))
+    const expiryPolicy = {
+        mode: config.sessionExpiryMode,
+        startupLeaseMinutes: config.startupLeaseMinutes,
+        openExtensionMinutes: config.openExtensionMinutes,
+        interactionExtensionMinutes: config.interactionExtensionMinutes,
+        busyExtensionMinutes: config.busyExtensionMinutes,
+        manualExtensionMinutes: config.manualExtensionMinutes,
+        emailExtensionMinutes: config.emailExtensionMinutes,
+        maxUnattendedHours: config.maxUnattendedHours,
+        notificationVisibleMinutes: config.notificationVisibleMinutes,
+        graceMinutes: config.sessionGraceMinutes,
+        unknownBusyGraceTicks: config.unknownBusyGraceTicks,
+        busyWindowMinutes: config.busyWindowMinutes,
+        busyCpuCores: config.busyCpuCores,
+        busyGpuThresholdPct: config.busyGpuThresholdPct,
+        busyNetworkThresholdKBps: config.busyNetworkThresholdKbps,
+        samplingIntervalSeconds: config.usageSamplingIntervalSeconds,
+    }
+    const expiryTokens = createExpiryTokens({
+        secret: config.sessionExpirySecret,
+        graceMinutes: expiryPolicy.graceMinutes,
+    })
+    const expiryMetrics = createExpiryMetrics()
+    // Written by the sampler each tick, read by the expiry sweep and the session report — one
+    // process, two maps, no schema.
+    const terminals = createTerminalRegistry()
+    const verdicts = createBusyRegistry()
+    // The email's link has to be clickable from a phone with no SEPAL session, so it is absolute
+    // and public. Without SEPAL_ENDPOINT there is no URL worth putting in an email; the mail still
+    // goes out, and using the instance rescues it just as well as the link would have.
+    const manageUrl = session => {
+        const token = expiryTokens.create({
+            sessionId: session.id, notifiedTime: session.notifiedTime,
+        })
+        return config.sepalEndpoint && token
+            ? `${config.sepalEndpoint.replace(/\/+$/, '')}/api/sessions/expiry/${token}`
+            : null
+    }
+
+    const sessionManager = createSessionManager({
+        repo: workerSessionRepository,
+        appRepo: sessionAppRepository,
+        instanceManager: instanceComponent.instanceManager,
+        budgetClient,
+        lockedUsers,
+        usageRepo: usageRepository,
+        usageHourlyRetentionDays: config.usageHourlyRetentionDays,
+        expiryPolicy,
+        instanceTypeById,
+        sendEmail,
+        manageUrl,
+        expiryMetrics,
+        terminals,
+        verdicts,
+    })
+
+    log.info(`Session expiration mode: ${expiryPolicy.mode}`)
+    if (expiryPolicy.mode !== 'off' && !config.sepalEndpoint) {
+        log.warn('SEPAL_ENDPOINT is unset - expiry emails will go out without a working management link')
+    }
+    const googleOAuthGateway = createGoogleOAuthGateway(config)
+    sessionComponent = createSessionComponent({
+        sessionManager,
+        repo: workerSessionRepository,
+        googleOAuthGateway,
+        instanceManager: instanceComponent.instanceManager,
+    })
+
+    usageComponent = createInstanceUsageComponent({
+        sessionRepo: workerSessionRepository,
+        usageRepo: usageRepository,
+        stats: createDockerInstanceStats({config, defaultDaemonHost: hostingService.defaultDaemonHost}),
+        instanceTypes,
+        samplingIntervalSeconds: config.usageSamplingIntervalSeconds,
+        sampleRetentionDays: config.usageSampleRetentionDays,
+        hourlyRetentionDays: config.usageHourlyRetentionDays,
+        expiryPolicy,
+        terminals,
+        verdicts,
+    })
+
+    const sandboxServers = createSandboxServerManager({
+        repo: workerSessionRepository,
+        control: createDockerSandboxServerControl({
+            config, defaultDaemonHost: hostingService.defaultDaemonHost}),
+    })
+
+    const sessionsApi = createSessionsApi({sessionManager, sandboxServers, expiryPolicy, expiryTokens, sshHost: config.sepalSshHost})
+
+    await initMessageQueue(amqpUri, {
+        publishers: [
+            ...instanceComponent.WORKER_INSTANCE_PUBLISHERS,
+            ...sessionComponent.WORKER_SESSION_PUBLISHERS,
+            {key: 'email.sendToUser', publish$: email$},
+        ],
+        subscribers: [
+            sessionComponent.userSubscriber,
+            {
+                queue: 'worker.budgetExceeded',
+                topic: 'budget.UserBudgetExceeded',
+                handler: (key, message) => lockedUsers.onExceeded(message),
+            },
+            {
+                queue: 'worker.budgetCleared',
+                topic: 'budget.UserBudgetCleared',
+                handler: (key, message) => lockedUsers.onCleared(message),
+            },
+        ],
+    })
+
+    await instanceComponent.start()
+    sessionComponent.start()
+    usageComponent.start()
+
+    await server.start({
+        port,
+        routes: createRoutes({sessionsApi}),
+        wsRoutes: createWsRoutes({sessionsApi, sessionManager}),
+    })
+
+    log.info('Initialized')
+}
+
+const stop = async () => {
+    if (usageComponent) {
+        try {
+            usageComponent.stop()
+        } catch (error) {
+            log.error('Error stopping instanceUsage component', error)
+        }
+    }
+    if (sessionComponent) {
+        try {
+            sessionComponent.stop()
+        } catch (error) {
+            log.error('Error stopping workerSession component', error)
+        }
+    }
+    if (instanceComponent) {
+        try {
+            await instanceComponent.stop()
+        } catch (error) {
+            log.error('Error stopping workerInstance component', error)
+        }
+    }
+    process.exit(0)
+}
+
+process.once('SIGTERM', stop)
+process.once('SIGINT', stop)
+
+// A rejected main() leaves the process alive on the MySQL pool's open handles with no HTTP
+// server listening: restart:always never fires, and Compose does not act on a failing
+// healthcheck either, so the module stays dead until an operator notices. Exiting hands the
+// retry to Docker, which is the only thing that can re-attempt a boot that lost AWS, MySQL or
+// RabbitMQ. In dev, nodemon deliberately does NOT restart on a crash — a broken source file
+// should wait for the fix rather than spin the container.
+main().catch(error => {
+    log.fatal('Failed to start worker', error)
+    process.exit(1)
+})

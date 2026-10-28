@@ -6,6 +6,7 @@ import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recip
 import {defaultModel as defaultPlanetModel} from '~/app/home/body/process/recipe/planetMosaic/planetMosaicRecipe'
 import {defaultModel as defaultRadarModel} from '~/app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
 import {getTaskInfo} from '~/app/home/body/process/recipe/recipeOutputPath'
+import {submitExportTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 import {publishEvent} from '~/eventPublisher'
 import {msg} from '~/translate'
 
@@ -54,15 +55,15 @@ export const RecipeActions = id => {
                 .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
                 .dispatch()
         },
-        setClassification({classificationLegend, classifierType} = {}) {
+        setClassification({classificationLegend, classifierType, classifier} = {}) {
             actionBuilder('SET_CLASSIFICATION', {classificationLegend, classifierType})
-                .set('ui.classification', {classificationLegend, classifierType})
+                .set('ui.classification', {classificationLegend, classifierType, classifier})
                 .dispatch()
         }
     }
 }
 
-const submitRetrieveRecipeTask = recipe => {
+export const submitRetrieveRecipeTask = recipe => {
     const name = recipe.title || recipe.placeholder
     const destination = 'SEPAL'
     const taskTitle = msg(['process.retrieve.form.task.SEPAL'], {name})
@@ -76,7 +77,7 @@ const submitRetrieveRecipeTask = recipe => {
             image: {
                 ...recipe.ui.retrieveOptions,
                 recipe,
-                indicator: recipe.ui.retrieveOptions.bands
+                indicators: recipe.ui.retrieveOptions.bands
             },
             taskInfo: getTaskInfo({
                 recipe,
@@ -90,7 +91,7 @@ const submitRetrieveRecipeTask = recipe => {
         destination,
         data_set_type: recipe.model.dataSetType
     })
-    return api.tasks.submit$(task).subscribe()
+    return submitExportTask(task)
 }
 
 export const loadObservations$ = ({recipe, latLng, bands}) =>

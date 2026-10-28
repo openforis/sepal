@@ -15,9 +15,9 @@ class _AssetReloadButton extends React.Component {
     }
 
     render() {
-        const {shape, air, spin, assets: {busy, progress}} = this.props
+        const {shape, air, spin, assets: {busy}} = this.props
         const reloadTooltip = busy
-            ? msg('asset.reload.progress', {count: progress})
+            ? msg('asset.reload.progress')
             : msg('asset.reload.tooltip')
 
         return (
@@ -30,8 +30,7 @@ class _AssetReloadButton extends React.Component {
                 iconAttributes={{spin: busy || spin}}
                 tooltip={reloadTooltip}
                 tooltipPlacement='top'
-                tooltipVisible={progress ? true : undefined}
-                tooltipAllowedWhenDisabled={progress}
+                tooltipAllowedWhenDisabled={busy || spin}
                 tabIndex={-1}
                 disabled={isServiceAccount() || busy || spin}
                 keybinding='Shift+R'

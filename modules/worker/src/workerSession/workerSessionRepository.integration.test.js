@@ -1,0 +1,883 @@
+import assert from 'node:assert/strict'
+import {join} from 'node:path'
+import {after, before, beforeEach, describe, test} from 'node:test'
+
+import {configureNoLogging} from '#sepal/log'
+import {dirName} from '#sepal/path'
+import {createTestDb} from '#sepal/testSupport/db/testDb'
+
+import {SessionAppRepository} from './sessionAppRepository.js'
+import {activate, close, createWorkerSession, NotificationState, State} from './workerSession.js'
+import {WorkerSessionRepository} from './workerSessionRepository.js'
+
+// Session lifetime against real MySQL. Every deadline this repository writes comes from the database's
+// own NOW() through GREATEST/LEAST/COALESCE, so what the ratchet, the cap and the guarded transitions
+// actually do to a stored TIMESTAMP is only observable here.
+//
+// App associations are arranged through the repository that owns them. Rows are written directly only for
+// what no operation can produce: a notification that was raised in the past, an interaction that happened
+// an hour ago, and a leftover row in the legacy task table.
+
+describe('WorkerSessionRepository', () => {
+    let testDb
+    let repository
+    let sessionAppRepository
+    let now
+
+    before(async () => {
+        configureNoLogging()
+        testDb = await createTestDb({name: 'worker_session', migrations: MIGRATIONS_PATH})
+    })
+
+    beforeEach(async () => {
+        await testDb.reset()
+        now = new Date('2026-06-01T12:00:00Z')
+        sessionAppRepository = new SessionAppRepository(testDb.db, () => now)
+        repository = new WorkerSessionRepository(testDb.db, () => now, sessionAppRepository)
+    })
+
+    after(() => testDb?.remove())
+
+    describe('insert', () => {
+        test('stores a session with the instance it runs on', async () => {
+            await repository.insert(aSession({apiKey: 'the-key'}))
+
+            const stored = await repository.getSession(SESSION_ID)
+            assert.equal(stored.id, SESSION_ID)
+            assert.equal(stored.state, State.PENDING)
+            assert.equal(stored.username, USERNAME)
+            assert.equal(stored.workerType, 'SANDBOX')
+            assert.equal(stored.instanceType, INSTANCE_TYPE)
+            assert.deepEqual(stored.instance, {id: INSTANCE_ID, host: HOST})
+            assert.equal(stored.host, HOST)
+            assert.equal(stored.apiKey, 'the-key')
+        })
+
+        test('stores the username in lowercase', async () => {
+            await repository.insert(aSession({username: 'Alice'}))
+
+            const stored = await repository.getSession(SESSION_ID)
+            assert.equal(stored.username, USERNAME)
+        })
+
+        test('carries the startup lease the session was requested with', async () => {
+            const lease = new Date('2026-06-01T12:30:00Z')
+
+            await repository.insert(aSession({timeoutTime: lease}))
+
+            const stored = await repository.getSession(SESSION_ID)
+            assert.deepEqual(stored.timeoutTime, lease)
+        })
+    })
+
+    describe('getSession', () => {
+        test('refuses to answer for a session that does not exist', async () => {
+            await assert.rejects(repository.getSession('nope'), /Non-existing worker session: nope/)
+        })
+    })
+
+    describe('findSession', () => {
+        test('answers null for a session that does not exist', async () => {
+            assert.equal(await repository.findSession('nope'), null)
+        })
+    })
+
+    describe('update', () => {
+        test('records the state, stamped with the current time, keeping the api key of an open session', async () => {
+            await repository.insert(aSession({apiKey: 'keep-me'}))
+            now = new Date('2026-06-01T12:34:00Z')
+
+            await repository.update(activate(await repository.getSession(SESSION_ID)))
+
+            const stored = await repository.getSession(SESSION_ID)
+            assert.equal(stored.state, State.ACTIVE)
+            assert.equal(stored.apiKey, 'keep-me')
+            assert.equal(stored.updateTime.getTime(), now.getTime())
+        })
+
+        test('withdraws the api key of a session it closes', async () => {
+            await repository.insert(aSession({apiKey: 'to-be-nulled'}))
+
+            await repository.update(close(await repository.getSession(SESSION_ID)))
+
+            const stored = await repository.getSession(SESSION_ID)
+            assert.equal(stored.state, State.CLOSED)
+            assert.equal(stored.apiKey, null)
+        })
+
+        // The deadline moves through extendSession and nowhere else, so a stale in-memory session
+        // cannot undo a ratchet that landed while it was held.
+        test('never writes the deadline back from the session it is given', async () => {
+            await repository.insert(activeSession())
+            await repository.extendSession({sessionId: SESSION_ID, minutes: 120})
+            const ratcheted = await repository.getSession(SESSION_ID)
+
+            await repository.update({...ratcheted, timeoutTime: new Date('2026-06-01T12:01:00Z')})
+
+            const stored = await repository.getSession(SESSION_ID)
+            assert.deepEqual(stored.timeoutTime, ratcheted.timeoutTime)
+        })
+
+        test('gives up the app associations of the session it closes, keeping every other session\'s', async () => {
+            await repository.insert(aSession())
+            await repository.insert(aSession({id: ANOTHER_SESSION_ID, instance: {id: 'i-2', host: HOST}}))
+            await sessionAppRepository.associate({username: USERNAME, appPath: '/app-one', sessionId: SESSION_ID, label: 'One'})
+            await sessionAppRepository.associate({username: USERNAME, appPath: '/app-two', sessionId: SESSION_ID, label: 'Two'})
+            await sessionAppRepository.associate({
+                username: ANOTHER_USERNAME, appPath: '/app-one', sessionId: ANOTHER_SESSION_ID, label: 'One'
+            })
+
+            await repository.update(close(await repository.getSession(SESSION_ID)))
+
+            const apps = await sessionAppRepository.appsForSessions([SESSION_ID, ANOTHER_SESSION_ID])
+            assert.equal(apps.get(SESSION_ID), undefined)
+            assert.equal(apps.get(ANOTHER_SESSION_ID).length, 1)
+        })
+
+        // A heartbeat or closer holding a read from before the close must not undo it.
+        test('never reopens a session that closed after it was read', async () => {
+            await repository.insert(activeSession())
+            const stale = await repository.getSession(SESSION_ID)
+            await repository.update(close(stale))
+
+            const changed = await repository.update(stale)
+
+            assert.equal(changed, false)
+            assert.equal((await repository.getSession(SESSION_ID)).state, State.CLOSED)
+        })
+
+        test('closes a session only once', async () => {
+            await repository.insert(activeSession())
+            const stale = await repository.getSession(SESSION_ID)
+
+            const first = await repository.update(close(stale))
+            const second = await repository.update(close(stale))
+
+            assert.deepEqual([first, second], [true, false])
+        })
+
+        test('leaves the app associations of a session it only activates', async () => {
+            await repository.insert(aSession())
+            await sessionAppRepository.associate({username: USERNAME, appPath: '/app-one', sessionId: SESSION_ID, label: 'One'})
+
+            await repository.update(activate(await repository.getSession(SESSION_ID)))
+
+            const apps = await sessionAppRepository.appsForSessions([SESSION_ID])
+            assert.equal(apps.get(SESSION_ID).length, 1)
+        })
+    })
+
+    describe('activateSession', () => {
+        test('stamps when the session became active and gives it the full lease from then', async () => {
+            await repository.insert(aSession({timeoutTime: await secondsFromNow(60)}))
+
+            const activated = await repository.activateSession(SESSION_ID, 30)
+
+            const deadline = await secondsFromNow(29 * 60)
+            assert.equal(activated.state, State.ACTIVE)
+            assert.notEqual(activated.activeTime, null)
+            assert.ok(activated.timeoutTime.getTime() > deadline.getTime())
+        })
+
+        test('activates a pending session once, and reports nothing to the caller that lost', async () => {
+            await repository.insert(aSession())
+
+            const first = await repository.activateSession(SESSION_ID, 30)
+            const second = await repository.activateSession(SESSION_ID, 30)
+
+            assert.equal(first.state, State.ACTIVE)
+            assert.equal(second, null)
+        })
+    })
+
+    describe('extendSession — the ratchet', () => {
+        test('sets a deadline on a session that had none', async () => {
+            await repository.insert(activeSession())
+
+            const extended = await repository.extendSession({sessionId: SESSION_ID, minutes: 15})
+
+            const floor = await secondsFromNow(14 * 60)
+            const {timeoutTime} = await repository.getSession(SESSION_ID)
+            assert.equal(extended, true)
+            assert.ok(timeoutTime.getTime() > floor.getTime())
+        })
+
+        // Events arriving out of order, or a small extension landing after a large one, can never
+        // shorten a session.
+        test('never shortens a deadline a larger extension already set', async () => {
+            await repository.insert(activeSession())
+            await repository.extendSession({sessionId: SESSION_ID, minutes: 120})
+            const far = (await repository.getSession(SESSION_ID)).timeoutTime
+
+            await repository.extendSession({sessionId: SESSION_ID, minutes: 1})
+
+            const {timeoutTime} = await repository.getSession(SESSION_ID)
+            assert.deepEqual(timeoutTime, far)
+        })
+
+        test('leaves a session that is not active alone', async () => {
+            await repository.insert(aSession())
+
+            const extended = await repository.extendSession({sessionId: SESSION_ID, minutes: 15})
+
+            const {timeoutTime} = await repository.getSession(SESSION_ID)
+            assert.equal(extended, false)
+            assert.equal(timeoutTime, null)
+        })
+
+        // That a busy verdict does NOT stamp the interaction is the whole mechanism of the cap.
+        test('records only a human extension as an interaction', async () => {
+            await repository.insert(activeSession())
+
+            await repository.extendSession({sessionId: SESSION_ID, minutes: 15, interaction: false})
+            const afterVerdict = await repository.getSession(SESSION_ID)
+            await repository.extendSession({sessionId: SESSION_ID, minutes: 15, interaction: true})
+            const afterInteraction = await repository.getSession(SESSION_ID)
+
+            assert.equal(afterVerdict.lastInteractionTime, null)
+            assert.notEqual(afterInteraction.lastInteractionTime, null)
+        })
+
+        // "Any extension cancels the expiry cycle" is a claim about interleaving, and it holds only
+        // because the reset happens in the SAME statement as the ratchet.
+        test('cancels the expiry cycle of the session it extends', async () => {
+            await givenExpiredSession()
+            await repository.notifyExpiry(SESSION_ID)
+            const notified = await repository.getSession(SESSION_ID)
+
+            await repository.extendSession({sessionId: SESSION_ID, minutes: 15})
+
+            const rescued = await repository.getSession(SESSION_ID)
+            assert.equal(notified.notificationState, NotificationState.NOTIFIED)
+            assert.equal(rescued.notificationState, NotificationState.NONE)
+            assert.equal(rescued.notifiedTime, null)
+        })
+
+        // A ratchet the cap clamped into the past moves nothing, and cancelling the cycle on the
+        // strength of a no-op let a session under continuous load re-notify on every sweep and never
+        // reach the end of its grace. Load stopped buying time, and then bought it back through the
+        // reset. Three hours since the last interaction against a one-hour cap puts the clamped
+        // candidate behind the deadline that is already past.
+        test('leaves the expiry cycle of a session whose deadline it could not move', async () => {
+            await givenExpiredSession()
+            await repository.notifyExpiry(SESSION_ID)
+            const notified = await repository.getSession(SESSION_ID)
+            await givenLastInteractionHoursAgo(3)
+
+            await repository.extendSession({sessionId: SESSION_ID, minutes: 15, interaction: false, capHours: 1})
+
+            const after = await repository.getSession(SESSION_ID)
+            assert.equal(after.notificationState, NotificationState.NOTIFIED)
+            assert.deepEqual(after.notifiedTime, notified.notifiedTime)
+            assert.deepEqual(after.timeoutTime, notified.timeoutTime)
+        })
+    })
+
+    describe('extendSession — the unattended cap', () => {
+        test('cannot push a busy session past its cap from the last interaction', async () => {
+            await repository.insert(activeSession({timeoutTime: await secondsFromNow(60)}))
+            await givenLastInteractionHoursAgo(1)
+            const before = (await repository.getSession(SESSION_ID)).timeoutTime
+
+            await repository.extendSession({sessionId: SESSION_ID, minutes: 15, interaction: false, capHours: 1})
+
+            const {timeoutTime} = await repository.getSession(SESSION_ID)
+            assert.deepEqual(timeoutTime, before)
+        })
+
+        // Refusing once now is past the boundary would let a verdict landing a second before it push
+        // the deadline a whole extension beyond the cap; clamping subsumes refusal.
+        test('lands a verdict just inside the boundary on the cap rather than past it', async () => {
+            await repository.insert(activeSession())
+            await givenLastInteractionSecondsAgo(3599)
+
+            await repository.extendSession({sessionId: SESSION_ID, minutes: 15, interaction: false, capHours: 1})
+
+            const ceiling = await secondsFromNow(2)
+            const {timeoutTime} = await repository.getSession(SESSION_ID)
+            assert.ok(timeoutTime.getTime() <= ceiling.getTime())
+        })
+
+        test('never caps a human extension', async () => {
+            await repository.insert(activeSession())
+            await givenLastInteractionHoursAgo(1)
+
+            await repository.extendSession({sessionId: SESSION_ID, minutes: 60, interaction: true})
+
+            const floor = await secondsFromNow(59 * 60)
+            const {timeoutTime} = await repository.getSession(SESSION_ID)
+            assert.ok(timeoutTime.getTime() > floor.getTime())
+        })
+
+        // now − NULL is NULL in SQL, which would make the comparison false and the busy ratchet
+        // UNBOUNDED — in exactly the cases the cap exists for.
+        test('caps a session nobody has ever interacted with, from when it became active', async () => {
+            await repository.insert(activeSession())
+            await givenNeverInteractedActiveHoursAgo(1)
+
+            await repository.extendSession({sessionId: SESSION_ID, minutes: 15, interaction: false, capHours: 1})
+
+            const ceiling = await secondsFromNow(2)
+            const {timeoutTime} = await repository.getSession(SESSION_ID)
+            assert.notEqual(timeoutTime, null)
+            assert.ok(timeoutTime.getTime() <= ceiling.getTime())
+        })
+
+        // MySQL takes only a whole number of units in INTERVAL n HOUR and quietly rounds anything
+        // else, so a fractional cap has to reach SQL as minutes.
+        test('honours a cap of less than an hour', async () => {
+            await repository.insert(activeSession())
+            await givenLastInteractionSecondsAgo(60)
+
+            await repository.extendSession({sessionId: SESSION_ID, minutes: 60, interaction: false, capHours: 0.5})
+
+            const ceiling = await secondsFromNow(29 * 60 + 2)
+            const {timeoutTime} = await repository.getSession(SESSION_ID)
+            assert.ok(timeoutTime.getTime() <= ceiling.getTime())
+        })
+    })
+
+    describe('setSessionTimeout — the keep-alive slider', () => {
+        // The one write that is not a ratchet: the last thing a person said is what they meant.
+        test('shortens a deadline the ratchet could only have lengthened', async () => {
+            await repository.insert(activeSession())
+            await repository.extendSession({sessionId: SESSION_ID, minutes: 240})
+            const long = (await repository.getSession(SESSION_ID)).timeoutTime
+
+            const applied = await repository.setSessionTimeout({sessionId: SESSION_ID, minutes: 30})
+
+            const ceiling = await secondsFromNow(31 * 60)
+            const short = (await repository.getSession(SESSION_ID)).timeoutTime
+            assert.equal(applied, true)
+            assert.ok(short.getTime() < long.getTime())
+            assert.ok(short.getTime() <= ceiling.getTime())
+        })
+
+        test('lengthens just as readily', async () => {
+            await repository.insert(activeSession())
+
+            await repository.setSessionTimeout({sessionId: SESSION_ID, minutes: 120})
+
+            const floor = await secondsFromNow(119 * 60)
+            const {timeoutTime} = await repository.getSession(SESSION_ID)
+            assert.ok(timeoutTime.getTime() > floor.getTime())
+        })
+
+        // A person restating what they want earns the reset in either direction.
+        test('cancels the expiry cycle even while shortening', async () => {
+            await givenExpiredSession()
+            await repository.notifyExpiry(SESSION_ID)
+
+            await repository.setSessionTimeout({sessionId: SESSION_ID, minutes: 1})
+
+            const after = await repository.getSession(SESSION_ID)
+            assert.equal(after.notificationState, NotificationState.NONE)
+            assert.equal(after.notifiedTime, null)
+            assert.notEqual(after.lastInteractionTime, null)
+        })
+
+        test('leaves a session that is not active alone', async () => {
+            await repository.insert(aSession())
+
+            const applied = await repository.setSessionTimeout({sessionId: SESSION_ID, minutes: 60})
+
+            assert.equal(applied, false)
+        })
+    })
+
+    describe('expiredSessions', () => {
+        test('reports a session that is past its deadline', async () => {
+            await givenExpiredSession()
+
+            const expired = await repository.expiredSessions()
+
+            assert.deepEqual(expired.map(({id}) => id), [SESSION_ID])
+        })
+
+        test('reports an expired session even when the legacy task table still lists an unfinished task for it', async () => {
+            await givenExpiredSession()
+            await givenLegacyActiveTask()
+
+            const expired = await repository.expiredSessions()
+
+            assert.deepEqual(expired.map(({id}) => id), [SESSION_ID])
+        })
+
+        test('never reports a session with no deadline at all', async () => {
+            await repository.insert(activeSession())
+
+            const expired = await repository.expiredSessions()
+
+            assert.deepEqual(expired, [])
+        })
+    })
+
+    describe('the notification transitions', () => {
+        // Each is guarded on what the sweep observed, so exactly one sweep sees it and the event
+        // fires once even if a sweep overruns its minute.
+        test('raises the notification exactly once', async () => {
+            await givenExpiredSession()
+
+            const first = await repository.notifyExpiry(SESSION_ID)
+            const second = await repository.notifyExpiry(SESSION_ID)
+
+            assert.equal(first, true)
+            assert.equal(second, false)
+        })
+
+        test('sends the email exactly once for the notification it was raised against', async () => {
+            await givenExpiredSession()
+            await repository.notifyExpiry(SESSION_ID)
+            const {notifiedTime} = await repository.getSession(SESSION_ID)
+
+            const first = await repository.markEmailed(SESSION_ID, notifiedTime)
+            const second = await repository.markEmailed(SESSION_ID, notifiedTime)
+
+            const stored = await repository.getSession(SESSION_ID)
+            assert.equal(first, true)
+            assert.equal(second, false)
+            assert.equal(stored.notificationState, NotificationState.EMAILED)
+        })
+
+        // "I saw it, don't email me": an easy misclick must not read as consent to close early.
+        test('silences the email without moving the deadline', async () => {
+            await givenExpiredSession()
+            await repository.notifyExpiry(SESSION_ID)
+            const notified = await repository.getSession(SESSION_ID)
+
+            const dismissed = await repository.dismissNotification(SESSION_ID, USERNAME)
+
+            const stored = await repository.getSession(SESSION_ID)
+            assert.equal(dismissed, true)
+            assert.equal(stored.notificationState, NotificationState.DISMISSED)
+            assert.deepEqual(stored.timeoutTime, notified.timeoutTime)
+        })
+
+        test('refuses to silence another user\'s notification', async () => {
+            await givenExpiredSession()
+            await repository.notifyExpiry(SESSION_ID)
+
+            const dismissed = await repository.dismissNotification(SESSION_ID, ANOTHER_USERNAME)
+
+            const stored = await repository.getSession(SESSION_ID)
+            assert.equal(dismissed, false)
+            assert.equal(stored.notificationState, NotificationState.NOTIFIED)
+        })
+
+        // Notify mode must not accumulate warned sessions: resetting alone would re-notify on the
+        // very next minute, so the reset also buys one more grace period.
+        test('restarting the cycle both clears the notification and moves the deadline out', async () => {
+            await givenExpiredSession()
+            await repository.notifyExpiry(SESSION_ID)
+            const {notifiedTime, timeoutTime} = await repository.getSession(SESSION_ID)
+
+            const restarted = await repository.restartExpiryCycle(SESSION_ID, notifiedTime, 60)
+
+            const stored = await repository.getSession(SESSION_ID)
+            assert.equal(restarted, true)
+            assert.equal(stored.notificationState, NotificationState.NONE)
+            assert.equal(stored.notifiedTime, null)
+            assert.ok(stored.timeoutTime.getTime() > timeoutTime.getTime())
+        })
+    })
+
+    describe('closeExpiredSession', () => {
+        test('closes an undisturbed session and withdraws its api key', async () => {
+            await givenExpiredSession({apiKey: 'the-key'})
+            const observed = await givenNotificationRaisedMinutesAgo(61)
+
+            const closed = await repository.closeExpiredSession({...observed, graceMinutes: 60})
+
+            const stored = await repository.getSession(SESSION_ID)
+            assert.equal(closed, true)
+            assert.equal(stored.state, State.CLOSED)
+            assert.equal(stored.apiKey, null)
+        })
+
+        // Selecting candidates and then closing them is a lost update waiting to happen: an
+        // interaction landing in between would lose to a decision made before it arrived.
+        test('leaves a session that was extended after the sweep observed it', async () => {
+            await givenExpiredSession()
+            const observed = await givenNotificationRaisedMinutesAgo(61)
+            await repository.extendSession({sessionId: SESSION_ID, minutes: 15})
+
+            const closed = await repository.closeExpiredSession({...observed, graceMinutes: 60})
+
+            const stored = await repository.getSession(SESSION_ID)
+            assert.equal(closed, false)
+            assert.equal(stored.state, State.ACTIVE)
+        })
+
+        test('closes an expired session even when the legacy task table still lists an unfinished task for it', async () => {
+            await givenExpiredSession()
+            const observed = await givenNotificationRaisedMinutesAgo(61)
+            await givenLegacyActiveTask()
+
+            const closed = await repository.closeExpiredSession({...observed, graceMinutes: 60})
+
+            const stored = await repository.getSession(SESSION_ID)
+            assert.equal(closed, true)
+            assert.equal(stored.state, State.CLOSED)
+        })
+
+        test('leaves a session whose grace has not elapsed', async () => {
+            await givenExpiredSession()
+            await repository.notifyExpiry(SESSION_ID)
+            const observed = await observedNotification()
+
+            const closed = await repository.closeExpiredSession({...observed, graceMinutes: 60})
+
+            const stored = await repository.getSession(SESSION_ID)
+            assert.equal(closed, false)
+            assert.equal(stored.state, State.ACTIVE)
+        })
+
+        test('gives up the app associations of the session it closes', async () => {
+            await givenExpiredSession()
+            await sessionAppRepository.associate({username: USERNAME, appPath: '/app-one', sessionId: SESSION_ID, label: 'One'})
+            const observed = await givenNotificationRaisedMinutesAgo(61)
+
+            await repository.closeExpiredSession({...observed, graceMinutes: 60})
+
+            const apps = await sessionAppRepository.appsForSessions([SESSION_ID])
+            assert.equal(apps.get(SESSION_ID), undefined)
+        })
+    })
+
+    describe('the expiry email links', () => {
+        test('extends the session once for the notification the token was signed against', async () => {
+            await givenExpiredSession()
+            await repository.notifyExpiry(SESSION_ID)
+            const {notifiedTime} = await repository.getSession(SESSION_ID)
+
+            const first = await repository.redeemExtension({sessionId: SESSION_ID, notifiedTime, minutes: 15})
+            const second = await repository.redeemExtension({sessionId: SESSION_ID, notifiedTime, minutes: 15})
+
+            assert.equal(first, true)
+            assert.equal(second, false)
+        })
+
+        test('terminates the session once', async () => {
+            await givenExpiredSession()
+            await repository.notifyExpiry(SESSION_ID)
+            const {notifiedTime} = await repository.getSession(SESSION_ID)
+
+            const first = await repository.redeemTermination({sessionId: SESSION_ID, notifiedTime})
+            const second = await repository.redeemTermination({sessionId: SESSION_ID, notifiedTime})
+
+            const stored = await repository.getSession(SESSION_ID)
+            assert.equal(first, true)
+            assert.equal(second, false)
+            assert.equal(stored.state, State.CLOSED)
+        })
+
+        // The rescue must win: the user went back to typing, and a terminate link left sitting in an
+        // inbox must not be able to kill the instance later.
+        test('refuses to terminate a session that has since been extended', async () => {
+            await givenExpiredSession()
+            await repository.notifyExpiry(SESSION_ID)
+            const {notifiedTime} = await repository.getSession(SESSION_ID)
+            await repository.extendSession({sessionId: SESSION_ID, minutes: 15})
+
+            const terminated = await repository.redeemTermination({sessionId: SESSION_ID, notifiedTime})
+
+            const stored = await repository.getSession(SESSION_ID)
+            assert.equal(terminated, false)
+            assert.equal(stored.state, State.ACTIVE)
+        })
+
+        test('gives up the app associations of a session it terminates', async () => {
+            await givenExpiredSession()
+            await sessionAppRepository.associate({username: USERNAME, appPath: '/app-one', sessionId: SESSION_ID, label: 'One'})
+            await repository.notifyExpiry(SESSION_ID)
+            const {notifiedTime} = await repository.getSession(SESSION_ID)
+
+            await repository.redeemTermination({sessionId: SESSION_ID, notifiedTime})
+
+            const apps = await sessionAppRepository.appsForSessions([SESSION_ID])
+            assert.equal(apps.get(SESSION_ID), undefined)
+        })
+
+        test('leaves the app associations of a session it fails to terminate', async () => {
+            await givenExpiredSession()
+            await sessionAppRepository.associate({username: USERNAME, appPath: '/app-one', sessionId: SESSION_ID, label: 'One'})
+            await repository.notifyExpiry(SESSION_ID)
+            const {notifiedTime} = await repository.getSession(SESSION_ID)
+            await repository.extendSession({sessionId: SESSION_ID, minutes: 15})
+
+            await repository.redeemTermination({sessionId: SESSION_ID, notifiedTime})
+
+            const apps = await sessionAppRepository.appsForSessions([SESSION_ID])
+            assert.equal(apps.get(SESSION_ID).length, 1)
+        })
+    })
+
+    // PENDING only: an ACTIVE session's lifetime is its stored deadline, swept by ExpireSessions.
+    // Sweeping ACTIVE rows on update_time freshness is exactly the derived timeout this replaced.
+    describe('timedOutSessions', () => {
+        test('reports a pending session whose provisioning has hung', async () => {
+            await repository.insert(aSession({id: 'stale', updateTime: minutesAgo(11)}))
+            await repository.insert(aSession({id: 'fresh', instance: {id: 'i-2', host: HOST}, updateTime: minutesAgo(1)}))
+
+            const timedOut = await repository.timedOutSessions()
+
+            assert.deepEqual(timedOut.map(({id}) => id), ['stale'])
+        })
+
+        test('never reports a session that is no longer pending, whatever its age', async () => {
+            await repository.insert(aSession({id: 'active', state: State.ACTIVE, updateTime: minutesAgo(24 * 60)}))
+            await repository.insert(aSession({
+                id: 'closed', state: State.CLOSED, instance: {id: 'i-2', host: HOST}, updateTime: minutesAgo(24 * 60)
+            }))
+
+            const timedOut = await repository.timedOutSessions()
+
+            assert.deepEqual(timedOut, [])
+        })
+    })
+
+    describe('findSessionByApiKey', () => {
+        test('names the session, its owner and its worker type for an open session', async () => {
+            await repository.insert(activeSession({
+                id: 'executor-1', workerType: 'SANDBOX', apiKey: 'live-key'
+            }))
+
+            const found = await repository.findSessionByApiKey('live-key')
+
+            assert.deepEqual(found, {
+                sessionId: 'executor-1', username: USERNAME, workerType: 'SANDBOX'
+            })
+        })
+
+        test('tells two open sessions of the same user apart by their keys', async () => {
+            await repository.insert(activeSession({id: 'executor-1', apiKey: 'key-1'}))
+            await repository.insert(activeSession({
+                id: 'executor-2', apiKey: 'key-2', instance: {id: 'i-2', host: HOST}
+            }))
+
+            const first = await repository.findSessionByApiKey('key-1')
+            const second = await repository.findSessionByApiKey('key-2')
+
+            assert.equal(first.sessionId, 'executor-1')
+            assert.equal(second.sessionId, 'executor-2')
+        })
+
+        test('finds nothing for a session that has closed', async () => {
+            await repository.insert(aSession({state: State.CLOSED, apiKey: 'dead-key'}))
+
+            assert.equal(await repository.findSessionByApiKey('dead-key'), null)
+        })
+
+        test('finds nothing once an open session is closed', async () => {
+            const session = activeSession({id: 'executor-1', apiKey: 'live-key'})
+            await repository.insert(session)
+
+            await repository.update({...session, state: State.CLOSED})
+
+            assert.equal(await repository.findSessionByApiKey('live-key'), null)
+        })
+
+        // Answered while the suite's only connection is held: with no key there is nothing to look up,
+        // so nothing is looked up.
+        test('finds nothing when there is no key, without reaching the database', async () => {
+            const found = await testDb.db.withConnection(() => repository.findSessionByApiKey(null))
+
+            assert.equal(found, null)
+        })
+    })
+
+    describe('sessionOnInstance', () => {
+        test('finds the session occupying the instance', async () => {
+            await repository.insert(activeSession({id: 'a', instance: {id: 'i-a', host: HOST}}))
+            await repository.insert(activeSession({id: 'b', instance: {id: 'i-b', host: HOST}}))
+
+            const found = await repository.sessionOnInstance('i-a', [State.PENDING, State.ACTIVE])
+
+            assert.equal(found.id, 'a')
+        })
+
+        test('finds nothing when no session in those states is on it', async () => {
+            await repository.insert(activeSession({instance: {id: 'i-a', host: HOST}}))
+
+            const found = await repository.sessionOnInstance('i-a', [State.CLOSED])
+
+            assert.equal(found, null)
+        })
+    })
+
+    describe('sessions', () => {
+        test('reports every session in any of the given states', async () => {
+            await repository.insert(aSession({id: 'p', state: State.PENDING}))
+            await repository.insert(aSession({id: 'a', state: State.ACTIVE, instance: {id: 'i-2', host: HOST}}))
+            await repository.insert(aSession({id: 'c', state: State.CLOSED, instance: {id: 'i-3', host: HOST}}))
+
+            const found = await repository.sessions([State.PENDING, State.ACTIVE])
+
+            assert.deepEqual(found.map(({id}) => id).sort(), ['a', 'p'])
+        })
+    })
+
+    describe('allOpenSessions', () => {
+        test('reports every open session of every user, as the budget module needs them', async () => {
+            await repository.insert(aSession({id: 'p', creationTime: minutesAgo(5)}))
+            await repository.insert(activeSession({
+                id: 'a', username: ANOTHER_USERNAME, instance: {id: 'i-2', host: HOST}
+            }))
+            await repository.insert(aSession({id: 'c', state: State.CLOSED, instance: {id: 'i-3', host: HOST}}))
+
+            const open = await repository.allOpenSessions()
+
+            assert.deepEqual(open.map(({sessionId}) => sessionId).sort(), ['a', 'p'])
+            assert.deepEqual(open.find(({sessionId}) => sessionId === 'p'), {
+                sessionId: 'p', username: USERNAME, instanceType: INSTANCE_TYPE, creationTime: minutesAgo(5),
+            })
+        })
+
+        test('reports nothing when every session has closed', async () => {
+            await repository.insert(aSession({state: State.CLOSED}))
+
+            const open = await repository.allOpenSessions()
+
+            assert.deepEqual(open, [])
+        })
+    })
+
+    describe('userSessions', () => {
+        test('reports all of the user\'s sessions, oldest first', async () => {
+            await repository.insert(aSession({id: 'later', creationTime: minutesAgo(1)}))
+            await repository.insert(aSession({
+                id: 'earlier', instance: {id: 'i-2', host: HOST}, creationTime: minutesAgo(10)
+            }))
+            await repository.insert(aSession({
+                id: 'other-user', username: ANOTHER_USERNAME, instance: {id: 'i-3', host: HOST}
+            }))
+
+            const found = await repository.userSessions(USERNAME)
+
+            assert.deepEqual(found.map(({id}) => id), ['earlier', 'later'])
+        })
+
+        test('narrows to the state, worker type and instance type it is given', async () => {
+            await repository.insert(activeSession({id: 'match'}))
+            await repository.insert(activeSession({
+                id: 'other-type', workerType: 'OTHER_TYPE', instance: {id: 'i-2', host: HOST}
+            }))
+            await repository.insert(aSession({
+                id: 'other-state', state: State.CLOSED, instance: {id: 'i-3', host: HOST}
+            }))
+            await repository.insert(activeSession({
+                id: 'other-instance-type', instanceType: 'T3aLarge', instance: {id: 'i-4', host: HOST}
+            }))
+
+            const found = await repository.userSessions(USERNAME, [State.ACTIVE], 'SANDBOX', INSTANCE_TYPE)
+
+            assert.deepEqual(found.map(({id}) => id), ['match'])
+        })
+    })
+
+    describe('mostRecentlyClosedSession', () => {
+        test('reports when each user last closed a session', async () => {
+            now = new Date('2026-06-01T10:00:00Z')
+            await repository.insert(aSession({id: 'd1'}))
+            await repository.update(close(await repository.getSession('d1')))
+            now = new Date('2026-06-01T11:00:00Z')
+            await repository.insert(aSession({id: 'd2', instance: {id: 'i-2', host: HOST}}))
+            await repository.update(close(await repository.getSession('d2')))
+            await repository.insert(activeSession({id: 'd3', instance: {id: 'i-3', host: HOST}}))
+
+            const byUser = await repository.mostRecentlyClosedSessionByUser()
+            const single = await repository.mostRecentlyClosedSession(USERNAME)
+
+            assert.deepEqual(Object.keys(byUser), [USERNAME])
+            assert.deepEqual(byUser[USERNAME], new Date('2026-06-01T11:00:00Z'))
+            assert.deepEqual(single.timestamp, new Date('2026-06-01T11:00:00Z'))
+        })
+
+        test('reports nothing for a user who has closed none', async () => {
+            await repository.insert(activeSession())
+
+            const single = await repository.mostRecentlyClosedSession(USERNAME)
+
+            assert.deepEqual(single, {})
+        })
+    })
+
+    const givenExpiredSession = async (over = {}) =>
+        await repository.insert(activeSession({timeoutTime: await secondsFromNow(-60), ...over}))
+
+    const givenLegacyActiveTask = () => testDb.query(
+        `INSERT INTO task (id, state, username, session_id, operation, params, status_description,
+             creation_time, update_time, removed)
+         VALUES ('legacy-task', 'ACTIVE', ?, ?, 'image.GEE', '{}', '{}', NOW(), NOW(), 0)`,
+        [USERNAME, SESSION_ID]
+    )
+
+    // notifyExpiry stamps notified_time with NOW(), so a grace period has not elapsed by definition.
+    // Backdating it is what lets a close be attempted at all, and keeps the guard tests failing for the
+    // reason they name rather than for want of elapsed time.
+    const givenNotificationRaisedMinutesAgo = async minutes => {
+        await repository.notifyExpiry(SESSION_ID)
+        await testDb.query(
+            'UPDATE worker_session SET notified_time = notified_time - INTERVAL ? MINUTE WHERE id = ?',
+            [minutes, SESSION_ID]
+        )
+        return await observedNotification()
+    }
+
+    const observedNotification = async () => {
+        const {notificationState, notifiedTime} = await repository.getSession(SESSION_ID)
+        return {sessionId: SESSION_ID, notificationState, notifiedTime}
+    }
+
+    // The cap is anchored on times only the database writes, and only ever as NOW().
+    const givenLastInteractionHoursAgo = hours => testDb.query(
+        'UPDATE worker_session SET last_interaction_time = NOW() - INTERVAL ? HOUR WHERE id = ?',
+        [hours, SESSION_ID]
+    )
+
+    const givenLastInteractionSecondsAgo = seconds => testDb.query(
+        'UPDATE worker_session SET last_interaction_time = NOW() - INTERVAL ? SECOND WHERE id = ?',
+        [seconds, SESSION_ID]
+    )
+
+    const givenNeverInteractedActiveHoursAgo = hours => testDb.query(
+        `UPDATE worker_session
+            SET last_interaction_time = NULL, active_time = NOW() - INTERVAL ? HOUR
+            WHERE id = ?`,
+        [hours, SESSION_ID]
+    )
+
+    // Deadlines are compared against the database's clock, never the suite's.
+    const secondsFromNow = async seconds => {
+        const [rows] = await testDb.query('SELECT NOW() + INTERVAL ? SECOND AS t', [seconds])
+        return new Date(rows[0].t)
+    }
+
+    const minutesAgo = minutes => new Date(now.getTime() - minutes * 60 * 1000)
+
+    const activeSession = (over = {}) => aSession({state: State.ACTIVE, ...over})
+
+    const aSession = (over = {}) => createWorkerSession({
+        id: SESSION_ID,
+        state: State.PENDING,
+        username: USERNAME,
+        workerType: 'SANDBOX',
+        instanceType: INSTANCE_TYPE,
+        instance: {id: INSTANCE_ID, host: HOST},
+        creationTime: now,
+        updateTime: now,
+        timeoutTime: null,
+        apiKey: null,
+        ...over,
+    })
+
+    const SESSION_ID = 's-1'
+    const ANOTHER_SESSION_ID = 's-2'
+    const INSTANCE_ID = 'i-1'
+    const INSTANCE_TYPE = 'T3aSmall'
+    const HOST = 'host-1'
+    const USERNAME = 'alice'
+    const ANOTHER_USERNAME = 'bob'
+
+    const MIGRATIONS_PATH = join(dirName(import.meta.url), '../../migrations')
+})

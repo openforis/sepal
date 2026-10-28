@@ -2,11 +2,13 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {forkJoin, map, of, switchMap, tap, timer} from 'rxjs'
 
+import api from '~/apiRegistry'
 import {runApp$} from '~/apps'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {publishEvent} from '~/eventPublisher'
 import {get$} from '~/http-client'
+import {launchFailureMessage} from '~/instanceLaunchFailure'
 import {getLogger} from '~/log'
 import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
@@ -14,14 +16,34 @@ import {ContentPadding} from '~/widget/sectionLayout'
 import {withTab} from '~/widget/tabs/tabContext'
 
 import styles from './appInstance.module.css'
+import {FAILED, launchStatusMessageKey, READY, STARTING_APP, STARTING_SESSION} from './appLaunchStatus'
+import {voilaReady$} from './voilaReady'
 
 const log = getLogger('apps')
+
+// The interaction signal (docs/session-expiration-model.md §4a). Apps render in SAME-ORIGIN
+// iframes, so their input events are observable from here — which is what separates "a human did
+// something" from "a tab is open on an app that polls its backend", the distinction the old
+// heartbeat could not make and that kept forgotten tabs alive indefinitely.
+//
+// Capture phase, passive: the app's own handlers must be unaffected, and nothing here may delay
+// input. Attribution is per session — input in the SEPAL shell reaches no iframe and extends
+// nothing, which falls out naturally since only the focused tab receives input.
+const INTERACTION_EVENTS = ['pointerdown', 'keydown', 'wheel', 'touchstart']
+const INTERACTION_LISTENER_OPTIONS = {capture: true, passive: true}
+const REPORT_INTERVAL_MS = 60 * 1000
 
 class _AppInstance extends React.Component {
     iFrameRef = React.createRef()
 
+    sessionId = null
+    interactionDocument = null
+    observable = true
+    lastReportTime = 0
+    observableTimer = null
+
     state = {
-        appState: 'REQUESTED',
+        appState: STARTING_SESSION,
         src: undefined,
         srcDoc: undefined
     }
@@ -29,20 +51,27 @@ class _AppInstance extends React.Component {
     constructor(props) {
         super(props)
         this.iFrameLoaded = this.iFrameLoaded.bind(this)
+        this.onInteraction = this.onInteraction.bind(this)
+        this.onSession = this.onSession.bind(this)
+        this.onPhase = this.onPhase.bind(this)
     }
 
     render() {
         const {app: {label, alt}} = this.props
+        const {appState} = this.state
+        const launching = ![READY, FAILED].includes(appState)
         return (
             <ContentPadding
                 menuPadding
                 className={styles.appInstance}>
                 <div className={styles.content}>
                     <div className={styles.backdrop}>
-                        {label || alt}
-                    </div>
-                    <div className={styles.status}>
-                        {this.renderStatus()}
+                        <div
+                            className={[styles.loading, launching ? styles.launching : null].join(' ')}
+                            aria-busy={launching}>
+                            <div className={styles.appName}>{label || alt}</div>
+                            <div className={styles.appStatus}>{this.renderStatus()}</div>
+                        </div>
                     </div>
                     {this.renderIFrame()}
                 </div>
@@ -52,7 +81,8 @@ class _AppInstance extends React.Component {
 
     renderIFrame() {
         const {app: {label, alt}} = this.props
-        const {src, srcDoc} = this.state
+        const {src, srcDoc, appState} = this.state
+        const shown = this.useIFrameSrc() || appState === READY
         return this.useIFrameSrc() || srcDoc
             ? (
                 <iframe
@@ -62,7 +92,13 @@ class _AppInstance extends React.Component {
                     frameBorder='0'
                     src={this.useIFrameSrc() ? src : undefined}
                     title={label || alt}
-                    style={{border: 'none', display: 'block'}}
+                    inert={!shown}
+                    style={{
+                        border: 'none',
+                        display: 'block',
+                        opacity: shown ? 1 : 0,
+                        pointerEvents: shown ? 'auto' : 'none'
+                    }}
                     onLoad={this.iFrameLoaded}
                 />
             )
@@ -70,13 +106,10 @@ class _AppInstance extends React.Component {
     }
 
     renderStatus() {
-        const {app} = this.props
+        const {app: {label, alt}} = this.props
         const {appState} = this.state
-        return appState === 'REQUESTED'
-            ? msg('apps.initializing')
-            : appState === 'FAILED'
-                ? msg('apps.run.error', {label: app.label || app.alt})
-                : msg('apps.loading.progress')
+        const key = launchStatusMessageKey(appState)
+        return key ? msg(key, {label: label || alt}) : null
     }
 
     componentDidMount() {
@@ -84,6 +117,7 @@ class _AppInstance extends React.Component {
         if (endpoint === 'docker') {
             busy.set(id, true)
             publishEvent('launch_app', {app: id})
+            this.setState({appState: STARTING_APP})
             stream('RUN_APP',
                 get$(`${path}`, {
                     responseType: 'text',
@@ -91,13 +125,13 @@ class _AppInstance extends React.Component {
                         maxRetries: 9
                     }
                 }).pipe(
-                    map(() => ({appState: 'INITIALIZED', src: path}))
+                    map(() => ({src: path}))
                 ),
                 result => this.setState(result),
                 error => this.onError(error)
             )
         } else if (!endpoint) {
-            this.setState({appState: 'INITIALIZED', src: path}, () =>
+            this.setState({appState: STARTING_APP, src: path}, () =>
                 stream('RUN_APP', of())
             )
         } else {
@@ -107,7 +141,6 @@ class _AppInstance extends React.Component {
     }
 
     componentDidUpdate(_prevProps, prevState) {
-        const {app: {id}, tab: {busy}} = this.props
         const {srcDoc} = this.state
         const iFrame = this.iFrameRef.current
         if (!this.useIFrameSrc() && srcDoc && !prevState.srcDoc && iFrame) {
@@ -115,8 +148,19 @@ class _AppInstance extends React.Component {
             doc.open()
             doc.write(srcDoc)
             doc.close()
-            busy.set(id, false)
+            this.showWhenReady(iFrame.contentWindow)
         }
+    }
+
+    showWhenReady(appWindow) {
+        const {app: {id}, tab: {busy}, stream} = this.props
+        stream('APP_READY',
+            voilaReady$(appWindow),
+            () => {
+                busy.set(id, false)
+                this.setState({appState: READY})
+            }
+        )
     }
 
     useIFrameSrc() {
@@ -127,13 +171,103 @@ class _AppInstance extends React.Component {
     iFrameLoaded() {
         const {app: {id}, tab: {busy}} = this.props
         const {src} = this.state
+        // Apps navigate their frame after sign-in, which replaces the document the listeners were
+        // attached to — so they are re-attached on every load, not just on mount.
+        this.attachInteractionListeners()
         if (this.useIFrameSrc() && src) {
             busy.set(id, false)
-            this.setState({appState: 'READY'})
+            this.setState({appState: READY})
         }
     }
 
+    onSession(session) {
+        const {onSession} = this.props
+        this.sessionId = session?.id ?? this.sessionId
+        onSession && onSession(session)
+    }
+
+    onPhase(appState) {
+        this.setState({appState})
+    }
+
+    // attachInteractionListeners — best-effort by construction. An inaccessible frame (an app
+    // that navigated genuinely cross-origin) throws on contentDocument, and that is DECLARED to
+    // the gateway rather than swallowed: it cannot otherwise tell "the GUI cannot observe this
+    // app" from "the GUI can observe it and nobody is touching it", and those must produce
+    // opposite outcomes. Wrapped in try/catch so a hostile frame degrades the signal instead of
+    // throwing into the render path.
+    attachInteractionListeners() {
+        this.detachInteractionListeners()
+        const iFrame = this.iFrameRef.current
+        if (!iFrame) {
+            return
+        }
+        try {
+            const doc = iFrame.contentDocument
+            if (!doc) {
+                throw new Error('No contentDocument')
+            }
+            INTERACTION_EVENTS.forEach(event =>
+                doc.addEventListener(event, this.onInteraction, INTERACTION_LISTENER_OPTIONS))
+            this.interactionDocument = doc
+            this.setObservable(true)
+        } catch (_error) {
+            log.debug('App iframe is not observable — falling back to proxied-request attribution')
+            this.setObservable(false)
+        }
+    }
+
+    detachInteractionListeners() {
+        const doc = this.interactionDocument
+        this.interactionDocument = null
+        if (!doc) {
+            return
+        }
+        try {
+            INTERACTION_EVENTS.forEach(event =>
+                doc.removeEventListener(event, this.onInteraction, INTERACTION_LISTENER_OPTIONS))
+        } catch (_error) {
+            // frame already destroyed — nothing to detach from
+        }
+    }
+
+    // The unobservable declaration is held by the gateway with a short TTL, so it has to be
+    // re-asserted for as long as it holds; an observable app needs no such upkeep, because its
+    // input reports say everything.
+    setObservable(observable) {
+        this.observable = observable
+        clearInterval(this.observableTimer)
+        this.observableTimer = null
+        if (!observable) {
+            this.reportUnobservable()
+            this.observableTimer = setInterval(() => this.reportUnobservable(), REPORT_INTERVAL_MS)
+        }
+    }
+
+    reportUnobservable() {
+        if (this.sessionId) {
+            api.apps.reportInteraction$({sessionId: this.sessionId, observable: false}).subscribe({
+                error: error => log.debug('Failed to report app observability', error)
+            })
+        }
+    }
+
+    // Coalesced to at most one report per session per interval: this fires on every keystroke, and
+    // the deadline moves in 15-minute steps — reporting each one would be pure noise.
+    onInteraction() {
+        const now = Date.now()
+        if (!this.sessionId || now - this.lastReportTime < REPORT_INTERVAL_MS) {
+            return
+        }
+        this.lastReportTime = now
+        api.apps.reportInteraction$({sessionId: this.sessionId}).subscribe({
+            error: error => log.debug('Failed to report app interaction', error)
+        })
+    }
+
     componentWillUnmount() {
+        clearInterval(this.observableTimer)
+        this.detachInteractionListeners()
         this.unloadIFrame()
     }
 
@@ -150,14 +284,14 @@ class _AppInstance extends React.Component {
     }
 
     runApp() {
-        const {app, stream} = this.props
+        const {app, selection, stream} = this.props
         publishEvent('launch_app', {app: app.id})
         stream('RUN_APP',
             forkJoin([
-                runApp$(app.path),
+                runApp$(app.path, {...selection, onSession: this.onSession, onPhase: this.onPhase}),
                 timer(500)
             ]).pipe(
-                tap(() => this.setState({appState: 'INITIALIZED'})),
+                tap(() => this.setState({appState: STARTING_APP})),
                 switchMap(() => {
                     if (this.useIFrameSrc()) {
                         return of({src: `/api${app.path}`})
@@ -182,8 +316,10 @@ class _AppInstance extends React.Component {
     onError(error) {
         const {app: {id, label, alt}, tab: {busy}} = this.props
         log.error('Failed to load app', error)
-        this.setState({appState: 'FAILED'})
-        Notifications.error({message: msg('apps.run.error', {label: label || alt})})
+        this.setState({appState: FAILED})
+        const failure = msg('apps.run.error', {label: label || alt})
+        const launchFailure = launchFailureMessage(error)
+        Notifications.error(launchFailure ? {title: failure, message: launchFailure} : {message: failure})
         busy.set(id, false)
     }
 }
@@ -200,5 +336,7 @@ AppInstance.propTypes = {
         endpoint: PropTypes.string,
         label: PropTypes.string,
         path: PropTypes.string
-    })
+    }),
+    selection: PropTypes.object,
+    onSession: PropTypes.func
 }

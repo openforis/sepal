@@ -1,60 +1,76 @@
-import {getAvailableBands as opticalBands} from '~/app/home/body/process/recipe/opticalMosaic/bands'
-import {getAvailableBands as planetBands} from '~/app/home/body/process/recipe/planetMosaic/bands'
-import {getAvailableBands as radarBands} from '~/app/home/body/process/recipe/radarMosaic/bands'
+import {IMAGE_OUTPUT} from '#sepal/recipe/output/product'
+import {CHANGE_ALERT_BANDS, COLLECTION_MOSAIC, collectionMosaicRefusals} from '#sepal/recipe/type/changeAlerts'
+import {planetMosaicBands} from '#sepal/recipe/type/planetMosaic'
+import {POINT_IN_TIME, RADAR_MOSAIC_BANDS, TIME_SCAN} from '#sepal/recipe/type/radarMosaic'
+import {bandPresentation as opticalBandPresentation} from '~/app/home/body/process/recipe/opticalMosaic/bands'
+import {planetBandTable} from '~/app/home/body/process/recipe/planetMosaic/bands'
+import {radarBandTable} from '~/app/home/body/process/recipe/radarMosaic/bands'
+
+import {settingsOf} from './processingSettings'
 
 const typeFloat = {precision: 'float'}
+const typeInt = {precision: 'int'}
 
-export const getAvailableBands = (recipe, visualizationType) =>
-    visualizationType === 'changes'
-        ? changesBands()
-        : mosaicBands(recipe)
-
-const changesBands = () => {
-    return {
-        confidence: {dataType: typeFloat},
-        difference: {dataType: typeFloat},
-        detection_count: {dataType: typeFloat},
-        monitoring_observation_count: {dataType: typeFloat},
-        calibration_observation_count: {dataType: typeFloat},
-        last_stable_date: {dataType: typeFloat},
-        first_detection_date: {dataType: typeFloat},
-        confirmation_date: {dataType: typeFloat},
-        last_detection_date: {dataType: typeFloat}
-    }
+// The counts are whole numbers of observations.
+const CHANGE_BAND_TYPES = {
+    detection_count: typeInt,
+    monitoring_observation_count: typeInt,
+    calibration_observation_count: typeInt
 }
-        
-const mosaicBands = recipe => {
-    const dataSetType = recipe.model.sources.dataSetType
-    switch(dataSetType) {
-        case 'OPTICAL': return opticalBands({
-            model: {
-                sources: recipe.model.sources
-            },
-            compositeOptions: recipe.model.options
-        })
-        case 'RADAR': return radarBands(recipe)
-        case 'PLANET': return planetBands()
+
+// How the change bands are shown; which of them exist is the declaration's to say.
+const changeBands = () =>
+    Object.fromEntries(
+        CHANGE_ALERT_BANDS.map(({name}) => [name, {dataType: CHANGE_BAND_TYPES[name] || typeFloat}])
+    )
+
+// A collection mosaic is shown as the mosaic its sources build: optical, radar - either configuration - or Planet.
+export const bandPresentation = (recipe, {name} = {}) => {
+    switch (name) {
+        case IMAGE_OUTPUT: return changeBands()
+        case COLLECTION_MOSAIC: return MOSAIC_PRESENTATION[recipe.model?.sources?.dataSetType]?.() || {}
         default: return {}
     }
 }
 
-export const getGroupedBandOptions = () => {
-    const toOption = band => ({value: band, label: band})
+const MOSAIC_PRESENTATION = {
+    OPTICAL: () => opticalBandPresentation(),
+    RADAR: () => radarBandTable([...RADAR_MOSAIC_BANDS[POINT_IN_TIME], ...RADAR_MOSAIC_BANDS[TIME_SCAN]]),
+    PLANET: () => planetBandTable(planetMosaicBands({}))
+}
+
+const PERIODS = ['monitoring', 'calibration']
+const MOSAIC_TYPES = ['latest', 'median']
+
+// The changes are the output; a layer may instead show the mosaic a period is compared on. That mosaic is described once
+// the reference's processing is known, never from this recipe's saved copies of it; what its own period and sources
+// refuse is said meanwhile, from them alone.
+export const mapProducts = {
+    project: recipe => settingsOf(recipe).model
+        ?? (collectionMosaicRefusals(recipe.model).length ? withoutProcessing(recipe.model) : null),
+    defaults: {visualizationType: 'changes', mosaicType: 'latest'},
+    productOf: ({visualizationType, mosaicType}) => {
+        if (visualizationType === 'changes') {
+            return {name: IMAGE_OUTPUT}
+        }
+        return PERIODS.includes(visualizationType) && MOSAIC_TYPES.includes(mosaicType)
+            ? {name: COLLECTION_MOSAIC, parameters: {period: visualizationType, mosaicType}}
+            : null
+    }
+}
+
+const withoutProcessing = model => {
+    const {options: _options, ...configured} = model ?? {}
+    return configured
+}
+
+// The groups Retrieve offers the change bands in.
+export const groupedBandPresentation = () => {
+    const presentation = changeBands()
+    const toOption = band => ({value: band, label: band, ...presentation[band]})
     return [
-        [
-            toOption('confidence'),
-            toOption('difference'),
-            toOption('detection_count')
-        ],
-        [
-            toOption('last_stable_date'),
-            toOption('first_detection_date'),
-            toOption('confirmation_date'),
-            toOption('last_detection_date')
-        ],
-        [
-            toOption('monitoring_observation_count'),
-            toOption('calibration_observation_count'),
-        ]
+        ['confidence', 'difference', 'detection_count'].map(toOption),
+        ['last_stable_date', 'first_detection_date', 'confirmation_date', 'last_detection_date'].map(toOption),
+        ['monitoring_observation_count', 'calibration_observation_count'].map(toOption)
     ]
 }

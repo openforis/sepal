@@ -8,7 +8,7 @@ import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import format from '~/format'
 import {msg} from '~/translate'
-import {Graph} from '~/widget/graph'
+import {Graph, graphColor} from '~/widget/graph'
 import {isMobile} from '~/widget/userAgent'
 import {Widget} from '~/widget/widget'
 
@@ -47,7 +47,7 @@ class _CCDCGraph extends React.Component {
                         observations: {
                             drawPoints: true,
                             strokeWidth: 0,
-                            color: '#FFFFFF',
+                            color: graphColor('foreground'),
                             highlightCircleSize: 1
                         }
                     }}
@@ -60,15 +60,15 @@ class _CCDCGraph extends React.Component {
                         }
                     }}
                     highlightSeriesBackgroundAlpha={1}
-                    highlightSeriesBackgroundColor={'hsla(0, 0%, 0%, 1)'}
+                    highlightSeriesBackgroundColor={graphColor('highlightBackground')}
                     dateWindow={[startDate, endDate]}
                     showRangeSelector={!isMobile()}
-                    rangeSelectorPlotFillColor={'#1B1B1C'}
-                    rangeSelectorPlotFillGradientColor={'#1B1B1C'}
-                    rangeSelectorPlotStrokeColor={'#1B1B1C'}
+                    rangeSelectorPlotFillColor={graphColor('rangeSelectorPlot')}
+                    rangeSelectorPlotFillGradientColor={graphColor('rangeSelectorPlot')}
+                    rangeSelectorPlotStrokeColor={graphColor('rangeSelectorPlot')}
                     rangeSelectorAlpha={0.2}
-                    rangeSelectorBackgroundStrokeColor={'rgba(100%, 100%, 100%, .15)'}
-                    rangeSelectorForegroundStrokeColor={'rgba(100%, 100%, 100%, .15)'}
+                    rangeSelectorBackgroundStrokeColor={graphColor('rangeSelectorStroke')}
+                    rangeSelectorForegroundStrokeColor={graphColor('rangeSelectorStroke')}
                     errorBars
                     sigma={1}
                     highlightCallback={isMobile() ? undefined : this.highlightCallback}

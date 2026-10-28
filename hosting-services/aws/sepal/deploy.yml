@@ -3,6 +3,39 @@
   user: ec2-user
   become: yes
   gather_facts: true
+  gather_subset:
+    - network
+
+  # bin/deploy verifies the images of the modules it finds as "module: <name>"
+  vars:
+    modules:
+      - {module: logger}
+      - {module: backup}
+      - {module: rabbitmq}
+      - {module: email}
+      - {module: mysql}
+      - {module: mysql-backup}
+      - {module: gee}
+      - {module: user}
+      - {module: budget}
+      - {module: app-manager}
+      - {module: worker}
+      - {module: message}
+      - {module: recipe}
+      - {module: task-manager}
+      - {module: scene-metadata}
+      - {module: user-assets}
+      - {module: user-files}
+      - {module: gui}
+      - {module: ceo-gateway}
+      - {module: ssh-gateway}
+      - {module: terminal}
+      - {module: gateway}
+      - {module: caddy}
+
+    # Images modules start containers from themselves, outside compose. bin/deploy verifies them as "image: <name>".
+    images:
+      - {image: task}
 
   pre_tasks:
     - set_fact:
@@ -35,16 +68,24 @@
         - "LC_ALL=en_US.utf-8"
 
     # increase max_map_count to prevent out of memory errors
-    - name: Increase max_map_count
-      lineinfile:
-        path: /etc/sysctl.conf
-        line: "{{ item }}"
+    # enable overcommit so Redis background saves cannot fail on fork
+    - name: Configure kernel VM settings
+      ansible.posix.sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        sysctl_set: yes
       with_items:
-        - "vm.max_map_count=1048576"
+        - {name: vm.max_map_count, value: 1048576}
+        - {name: vm.overcommit_memory, value: 1}
 
-    - name: Install monit
+    # One transaction: each yum task reloads the repository metadata
+    - name: Install packages
       yum:
-        name: 'monit'
+        name:
+          - monit
+          - multitail
+          - htop
+          - "@Development Tools"
 
     - name: Stop monit
       systemd:
@@ -85,8 +126,10 @@
         group: "root"
         mode: "0755"
 
-    - file: path="/data/sepal/etc" state=directory
-    - template: src="./aws.properties" dest=/data/sepal/etc/aws.properties
+    - name: Remove unused aws.properties
+      file:
+        path: "/data/sepal/etc/aws.properties"
+        state: absent
 
     # sshd
     - name: Bind sshd to primary private IP
@@ -105,16 +148,6 @@
     # # rsyslog
     - name: Copy rsyslog.conf
       template: src="rsyslog.conf" dest=/etc/rsyslog.conf
-
-    # Install multitail
-    - name: Install multitail
-      yum:
-        name: "multitail"
-
-    # Install htop
-    - name: Install htop
-      yum:
-        name: "htop"
 
     # profile.d
     - name: Copy profile.d
@@ -144,12 +177,14 @@
         src: "{{ config_home }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
 
-    - name: Install docker
-      command: "amazon-linux-extras install docker -y"
+    - name: Enable the Docker extras topic
+      command: "amazon-linux-extras enable docker"
+      changed_when: false
 
-    - name: Install Development Tools
+    # Only a DOCKER_VERSION change upgrades Docker (see deploy.sh)
+    - name: Install docker
       yum:
-        name: "@Development Tools"
+        name: "docker{{ '-' ~ lookup('env', 'DOCKER_VERSION') if lookup('env', 'DOCKER_VERSION') else '' }}"
 
     - name: Create /etc/docker
       file:
@@ -171,19 +206,30 @@
         enabled: yes
         masked: no
 
-    - name: pip install urllib3
-      pip:
-        name: urllib3==1.26.18
-        executable: pip3
+    - name: Copy sepal-task firewall script
+      copy:
+        src: docker/sepal-task-firewall.sh
+        dest: /usr/local/sbin/sepal-task-firewall.sh
+        mode: '0755'
 
-    - name: pip install requests
-      pip:
-        name: requests
-        executable: pip3
+    - name: Copy sepal-task firewall unit
+      copy:
+        src: docker/sepal-task-firewall.service
+        dest: /etc/systemd/system/sepal-task-firewall.service
 
-    - name: pip install docker
+    - name: Enable sepal-task firewall
+      systemd:
+        name: sepal-task-firewall
+        state: restarted
+        enabled: yes
+        daemon_reload: yes
+
+    - name: pip install Docker SDK
       pip:
-        name: docker
+        name:
+          - urllib3==1.26.18
+          - requests
+          - docker
         executable: pip3
 
     - name: Init a new swarm with default parameters
@@ -220,20 +266,27 @@
       register: network
       retries: 15
       delay: 2
-      until: network.stdout != "null"            
+      until: network.stdout != "null"
+
+    - docker_network:
+        name: sepal-task
+        driver: bridge
+        ipam_config:
+          - subnet: 172.29.0.0/16
+            iprange: 172.29.128.0/17
 
     - file:
         path: "/usr/local/lib/docker/cli-plugins"
         state: directory
 
     - uri:
-        url: https://github.com/docker/compose/releases/download/{{ lookup('env', 'DOCKER_COMPOSE_VERSION') }}/docker-compose-linux-x86_64
+        url: https://github.com/docker/compose/releases/download/v{{ lookup('env', 'DOCKER_COMPOSE_VERSION') }}/docker-compose-linux-x86_64
         dest: /usr/local/lib/docker/cli-plugins/docker-compose
         mode: +x
         status_code: [200, 304]
 
     - uri:
-        url: https://github.com/docker/buildx/releases/download/{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}/buildx-{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}.linux-amd64
+        url: https://github.com/docker/buildx/releases/download/v{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}/buildx-v{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}.linux-amd64
         dest: /usr/libexec/docker/cli-plugins/docker-buildx
         mode: +x
         status_code: [200, 304]
@@ -249,6 +302,7 @@
         dest: "/etc/sepal/env.d/env-current"
         content: |
           SEPAL_VERSION={{ version }}
+          WORKER_AMI_VERSION={{ worker_ami_version }}
           SEPAL_IP={{ sepal_ip }}
           SEPAL_SSH_IP={{ sepal_ssh_ip }}
           SYSLOG_ADDRESS={{ syslog_address }}
@@ -263,6 +317,42 @@
         src: "{{ lookup('env', 'PROJECT_DIR') }}/modules/docker-compose.logger.yml"
         dest: "/var/lib/sepal/modules/"
 
+  tasks:
+    - import_role: {name: live-patching}
+    - import_role: {name: aws-mount-efs}
+    - import_role: {name: docker-login}
+
+    # Every release pulls a full set of images, so older ones are removed first to leave room for it. docker rmi
+    # refuses an image a container still uses: the running release, and task containers still running the
+    # release that started them, keep theirs.
+    - name: Remove unused images of other releases
+      shell: >
+        docker images --format '{% raw %}{{.Repository}}:{{.Tag}}{% endraw %}'
+        | grep '^{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/openforis/'
+        | grep -v ':{{ version }}$'
+        | xargs -r -n 1 docker rmi 2>/dev/null || true;
+        docker image prune --force
+      changed_when: false
+
+    # Pulling all images up front, before any container is recreated, keeps running modules untouched
+    # when a pull fails and leaves each module's downtime to the recreate itself
+    - name: Pull module images
+      shell: >
+        printf '%s\n' {{ ((modules | map(attribute='module') | list) + (images | map(attribute='image') | list)) | join(' ') }}
+        | xargs -P 0 -I MODULE docker pull --quiet
+        {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/openforis/MODULE:{{ version }}
+      changed_when: false
+
+    - name: Run modules
+      include_role:
+        name: run-module
+      vars:
+        module: "{{ entry.module }}"
+      loop: "{{ modules }}"
+      loop_control:
+        loop_var: entry
+        label: "{{ entry.module }}"
+
   post_tasks:
     - name: Start monit
       systemd:
@@ -270,29 +360,3 @@
         state: started
         enabled: yes
         masked: no
-
-  roles:
-    - { role: live-patching }
-    - { role: aws-mount-efs }
-    - { role: docker-login }
-
-    - { role: run-module, module: logger }
-    - { role: run-module, module: backup }
-    - { role: run-module, module: rabbitmq }
-    - { role: run-module, module: email }
-    - { role: run-module, module: mysql }
-    - { role: run-module, module: mysql-backup }
-    - { role: run-module, module: gee}
-    - { role: run-module, module: user-node }
-    - { role: run-module, module: app-manager }
-    - { role: run-module, module: sepal-server }
-    - { role: run-module, module: user-assets }
-    - { role: run-module, module: user-files }
-    - { role: run-module, module: gui }
-    - { role: run-module, module: ceo-gateway }
-    - { role: run-module, module: ssh-gateway }
-    - { role: run-module, module: terminal }
-    - { role: run-module, module: gateway }
-    - { role: run-module, module: caddy }
-    - { role: run-module, module: sys-monitor }
-    - { role: run-module, module: scene-metadata }

@@ -3,6 +3,7 @@ import {catchError, map, merge, mergeMap, of, switchMap, toArray} from 'rxjs'
 
 import {job} from '#gee/jobs/job'
 import ee from '#sepal/ee/ee'
+import {currentEEContext} from '#sepal/ee/eeContext'
 import * as http from '#sepal/httpClient'
 import {getLogger} from '#sepal/log'
 import {fileName} from '#sepal/path'
@@ -17,7 +18,7 @@ const worker$ = ({
         throw Error('Requires a connected Google Account')
     }
 
-    const headers = {'x-goog-user-project': ee.data.getProject(), Authorization: `Bearer ${googleTokens.accessToken}`}
+    const headers = {'x-goog-user-project': currentEEContext().projectId, Authorization: `Bearer ${googleTokens.accessToken}`}
 
     const assets$ = parentId =>
         ee.listAssets$(parentId).pipe(
@@ -40,9 +41,10 @@ const worker$ = ({
 
     const getRootInfo$ = ({id, name}) =>
         http.get$(`https://earthengine.googleapis.com/v1/${name || id}`, {
-            headers
+            headers,
+            responseType: 'json'
         }).pipe(
-            map(({body}) => JSON.parse(body)),
+            map(({body}) => body),
             catchError(() => {
                 log.debug(`Unable to determine quota for ${id || name}`)
                 return of({id, name, type: 'FOLDER'})
@@ -64,9 +66,10 @@ const worker$ = ({
     
     const cloudProjectRoots$ = () =>
         http.get$('https://cloudresourcemanager.googleapis.com/v1/projects?filter=labels.earth-engine=""', {
-            headers: {Authorization: `Bearer ${googleTokens.accessToken}`}
+            headers: {Authorization: `Bearer ${googleTokens.accessToken}`},
+            responseType: 'json'
         }).pipe(
-            map(({body}) => JSON.parse(body)),
+            map(({body}) => body),
             map(mapCloudProjectRoots),
             catchError(e => {
                 log.warn(`Failed to load cloud project roots for ${username}: ${id}`, e)

@@ -1,6 +1,7 @@
 .featureSource {
     display: flex;
     flex-direction: row;
+    align-items: center;
     flex-grow: 1;
     min-width: 0;
 }
@@ -17,9 +18,26 @@
 
 .imageSource,
 .removableImageSource {
+    display: flex;
+    align-items: center;
     flex-grow: 1;
+    min-width: 0;
+}
+
+.imageSource > :first-child,
+.removableImageSource > :first-child {
+    flex-grow: 1;
+    min-width: 0;
 }
 
 .removableImageSource {
     padding-left: .25rem;
+}
+
+.featureSource > .actions,
+.actions {
+    flex: 0 0 2.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }

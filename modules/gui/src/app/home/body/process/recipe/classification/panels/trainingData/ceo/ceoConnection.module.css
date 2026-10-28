@@ -3,7 +3,7 @@
 }
 
 .info {
-    color: #a0a0a0;
+    color: var(--text-dimmed-color);
 }
 
 .connected {

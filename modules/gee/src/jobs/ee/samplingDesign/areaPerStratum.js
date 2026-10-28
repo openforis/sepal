@@ -7,6 +7,7 @@ import imageFactory from '#sepal/ee/imageFactory'
 import {stratificationProjection} from '#sepal/ee/samplingDesign/stratificationImage'
 import {fileName} from '#sepal/path'
 
+import {userStorageSerializerService} from '../../service/userStorageSerializer.js'
 import {exportToCSV$} from '../batch/exportToCSV.js'
 import {parseGroups} from '../batch/parse.js'
 
@@ -73,5 +74,6 @@ const worker$ = ({
 export default job({
     jobName: 'Calculate area per stratum',
     jobPath: fileName(import.meta.url),
+    services: [userStorageSerializerService],
     worker$
 })

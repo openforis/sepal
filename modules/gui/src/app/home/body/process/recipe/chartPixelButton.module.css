@@ -60,9 +60,9 @@
     z-index: 1;
 }
 
-.container:hover .chevron,
-.container:has(:focus-visible) .chevron,
-.coordinateInputVisible .chevron {
+.container:hover .chevron:not(:disabled),
+.container:has(:focus-visible) .chevron:not(:disabled),
+.coordinateInputVisible .chevron:not(:disabled) {
     opacity: 1;
     pointer-events: auto;
     transform: translateX(0);
@@ -96,7 +96,7 @@
 
 .chevron:disabled {
     cursor: default;
-    opacity: var(--look-disabled-opacity);
+    visibility: hidden;
 }
 
 .chevron > span {
@@ -118,7 +118,7 @@
     border: 1px solid var(--wireframe-color);
     border-radius: var(--button-border-radius);
     background-color: var(--panel-default-background-color);
-    box-shadow: 0 .15rem .45rem rgb(0 0 0 / 25%);
+    box-shadow: 0 .15rem .45rem var(--shadow-soft-color);
 }
 
 .coordinateOption {
@@ -151,7 +151,7 @@
 }
 
 @media (hover: none) {
-    .chevron {
+    .chevron:not(:disabled) {
         opacity: 1;
         pointer-events: auto;
         transform: translateX(0);

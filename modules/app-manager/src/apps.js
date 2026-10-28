@@ -1,4 +1,5 @@
-import {basename} from 'path'
+import {basename} from 'node:path'
+
 import {catchError, concatMap, defaultIfEmpty, defer, delay, EMPTY, exhaustMap, filter, from, interval, map, of, switchMap} from 'rxjs'
 
 import {getLogger} from '#sepal/log'
@@ -13,6 +14,10 @@ const log = getLogger('apps')
 const APPS_FILE = '/var/lib/sepal/app-manager/apps.json'
 
 const MANAGED_ENDPOINTS = ['shiny', 'jupyter', 'rstudio']
+
+// The catalog is external input, so only a real boolean opts an app in; a JSON string or number
+// must not silently enable caching.
+const cacheVenvArg = ({cacheVenv}) => cacheVenv === true ? 'true' : 'false'
 
 const monitorApps = () =>
     interval(5000).pipe(
@@ -41,7 +46,7 @@ const apps$ = () =>
         switchMap(({apps}) => from(apps)),
         filter(({repository}) => repository),
         filter(({endpoint}) => MANAGED_ENDPOINTS.includes(endpoint)),
-        map(({endpoint = 'shiny', label, repository, branch}) => {
+        map(({endpoint = 'shiny', label, repository, branch, cacheVenv}) => {
             const name = basename(repository)
             return {
                 endpoint,
@@ -51,7 +56,8 @@ const apps$ = () =>
                     ? `/var/lib/sepal/app-manager/apps/${name}`
                     : `/shiny/${name}`,
                 repository,
-                branch
+                branch,
+                cacheVenv
             }
         }),
         catchError(error => {
@@ -65,7 +71,7 @@ const updateApp$ = app => {
     return exec$(
         '/',
         'sudo',
-        ['update-app', app.path, app.label, app.repository, app.branch || 'HEAD']
+        ['update-app', app.path, app.label, app.repository, app.branch || 'HEAD', cacheVenvArg(app)]
     ).pipe(
         catchError(error => {
             log.error('Failed to update app:', error)
@@ -76,4 +82,4 @@ const updateApp$ = app => {
 
 const catalog$ = () => source$()
 
-export {apps$, catalog$, monitorApps, source$}
+export {apps$, cacheVenvArg, catalog$, monitorApps, source$}

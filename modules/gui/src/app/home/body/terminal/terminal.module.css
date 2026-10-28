@@ -2,6 +2,9 @@
     height: 100%;
     width: 100%;
     pointer-events: all;
+    background-color: var(--terminal-background-color);
+    border-radius: var(--container-border-radius);
+    box-shadow: var(--elevation-shadow);
 }
 
  /* [HACK] Fix forced vertical scrollbar and transparency */

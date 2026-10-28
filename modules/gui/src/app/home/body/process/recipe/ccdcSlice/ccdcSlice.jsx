@@ -9,9 +9,11 @@ import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
-import {defaultModel, RecipeActions} from './ccdcSliceRecipe'
+import {SourceEvidenceSync} from '../sourceEvidenceSync'
+import {defaultModel, preSetVisualizations} from './ccdcSliceRecipe'
 import {CcdcSliceToolbar} from './panels/ccdcSliceToolbar'
-import {SourceSync} from './sourceSync'
+import {resolveEvidence$, sliceObservation} from './sliceObservation'
+import {sliceRequirements} from './sourceRequirement'
 
 const mapRecipeToProps = recipe => ({
     source: selectFrom(recipe, 'model.source'),
@@ -23,7 +25,6 @@ class _CcdcSlice extends React.Component {
         super(props)
         const {savedLayers, recipeId} = props
         initializeLayers({recipeId, savedLayers})
-        this.recipeActions = RecipeActions(recipeId)
     }
 
     render() {
@@ -32,7 +33,7 @@ class _CcdcSlice extends React.Component {
             <Map>
                 <CcdcSliceToolbar/>
                 <Aoi value={source.type && source}/>
-                <SourceSync/>
+                <SourceEvidenceSync observation={sliceObservation}/>
             </Map>
         )
     }
@@ -43,11 +44,6 @@ const CcdcSlice = compose(
     _CcdcSlice,
     recipe({defaultModel, mapRecipeToProps})
 )
-
-const getDependentRecipeIds = recipe => {
-    const {type, id} = selectFrom(recipe, 'model.source') || {}
-    return type === 'RECIPE_REF' ? [id] : []
-}
 
 export default () => ({
     id: 'CCDC_SLICE',
@@ -60,11 +56,14 @@ export default () => ({
     components: {
         recipe: CcdcSlice
     },
-    getDependentRecipeIds,
+    imageSource: true,
     getDateRange(recipe) {
         const date = moment.utc(recipe.model.date.date, 'YYYY-MM-DD')
         return [date, date]
     },
-    getAvailableBands: recipe => selectFrom(recipe, 'model.source.bands') || [],
-    getPreSetVisualizations: recipe => selectFrom(recipe, 'model.source.visualizations') || []
+    resolveEvidence$,
+    getPreSetVisualizations: (recipe, evidence) => preSetVisualizations(recipe, evidence?.segments),
+    sourceRequirements: sliceRequirements,
+    // What a layer, Retrieve or chart observes to check the source it requires, wherever it is shown.
+    sourceObservation: sliceObservation
 })

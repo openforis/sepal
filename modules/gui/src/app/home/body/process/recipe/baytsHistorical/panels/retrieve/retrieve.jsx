@@ -1,6 +1,6 @@
 import React from 'react'
 
-import {RecipeActions} from '~/app/home/body/process/recipe/baytsHistorical/baytsHistoricalRecipe'
+import {retrieveTask} from '~/app/home/body/process/recipe/baytsHistorical/baytsHistoricalRecipe'
 import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
@@ -14,14 +14,9 @@ class _Retrieve extends React.Component {
                 allBands
                 defaultScale={10}
                 toEE
-                onRetrieve={retrieveOptions => this.retrieve(retrieveOptions)}
+                task={retrieveTask}
             />
         )
-    }
-
-    retrieve(retrieveOptions) {
-        const {recipeId} = this.props
-        return RecipeActions(recipeId).retrieve(retrieveOptions)
     }
 }
 

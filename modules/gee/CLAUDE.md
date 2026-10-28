@@ -5,14 +5,28 @@ Google Earth Engine API service. Exposes GEE operations as REST endpoints for th
 ## Commands
 
 ```bash
-npm test              # Jest
-npm run testWatch     # Jest watch mode
+npm test              # Node test runner
+npm run testWatch     # Node test runner watch mode
 ```
+
+Target one suite while working, from `modules/gee` in the dev-env container:
+
+```bash
+node --experimental-test-module-mocks --test test/jobs/recipeIdentity.test.js
+```
+
+## Tests
+
+Automated tests live in `test/`, mirroring the `src/` tree they exercise (`test/jobs/ee/image/...`), as
+`*.test.js` files.
+
+`verify/` is separate: hand-run gates against live Earth Engine, outside any suite. The helpers those scripts
+share are ordinary modules, and `test/verify/` covers them over fakes.
 
 ## Key Architecture
 
 ### Entry Point
-`src/main.js` - Starts HTTP server with `#sepal/httpServer`, initializes scheduler with `STICKY` strategy (jobs stick to the same worker).
+`src/main.js` - Starts HTTP server with `#sepal/httpServer`, initializes scheduler with the `ROUND_ROBIN` strategy (any worker thread serves any user) over `GEE_INSTANCES` threads, half the cores by default.
 
 ### Import Maps
 - `#sepal/*` -> shared library
@@ -45,4 +59,23 @@ Key endpoints: `POST /preview`, `POST /bands`, `POST /sceneareas`, `POST /assetM
 
 - **Authentication per-request**: Each GEE call authenticates using the user's Google OAuth tokens from the `sepal-user` header. Falls back to service account.
 - **Scheduler**: Named "GoogleEarthEngine", configurable instances via `--instances` CLI flag.
-- **Config**: `src/config.js` uses `commander` for CLI args: `--gee-email`, `--gee-key-path`, `--google-project-id`, `--sepal-endpoint`, `--port`, `--instances`.
+- **Config**: `src/config.js` uses `commander` for CLI args: `--gee-email`, `--gee-key-path`, `--google-project-id`, `--sepal-endpoint`, `--recipe-endpoint`, `--geoid-endpoint` (GeoID service, defaulting to FAO's), `--port`, `--instances`.
+- **Recipe reads**: referenced recipes are read from the `recipe` module as the user the gateway authenticated on the request, installed per job by `src/jobs/configure.js`. There is no service-credential fallback.
+
+## Earth Engine requests
+
+The `EE runtime` job (default `before` of every job) initializes Earth Engine once per worker thread and installs
+the REST transport; each task runs in its request's Earth Engine context (wrapped in `jobs/job.js`, built by `jobs/eeRequestContext.js`), so any
+thread serves any user. Calls pass the `EERestLimiter` tiers `taskUser` → `taskGlobal` (task traffic only, identified by
+`sepal-session` `workerType: 'task'`) before user → project → global, configured with
+`EE_LIMIT_*` (`src/config.js`). `verify/restTransport.mjs` checks the transport against live Earth Engine.
+
+## Task endpoints
+
+The task runner's `POST /task/...` endpoints refuse any request not authenticated with a task container's key
+(`requireTaskSession`, `src/taskSession.js`): a user calling them directly would bypass task-manager's task limits
+and the limiter's task tiers. `GET /task/listCompleted` is a GUI endpoint and stays open.
+
+Task containers keep the image of the release that started them while gee is redeployed, so the `/task/...`
+endpoints must accept the previous release's requests: add fields, never rename or remove them within one
+release.

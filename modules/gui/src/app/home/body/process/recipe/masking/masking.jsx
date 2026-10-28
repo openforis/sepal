@@ -1,6 +1,8 @@
 import React from 'react'
 
+import {MASK_IMAGE, PRIMARY_IMAGE} from '#sepal/recipe/type/masking'
 import {initializeLayers} from '~/app/home/body/process/recipe/recipeImageLayerSource'
+import {SourceEvidenceSync} from '~/app/home/body/process/recipe/sourceEvidenceSync'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
@@ -8,8 +10,9 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
-import {getAvailableBands} from './bands'
 import {defaultModel} from './maskingRecipe'
+import {maskingObservation} from './maskingSourceEvidence'
+import {maskRequirements} from './maskRequirements'
 import {MaskingToolbar} from './panels/maskingToolbar'
 import {getPreSetVisualizations} from './visualizations'
 
@@ -32,6 +35,7 @@ class _Masking extends React.Component {
             <Map>
                 <MaskingToolbar/>
                 <Aoi value={imageToMask}/>
+                <SourceEvidenceSync observation={maskingObservation}/>
             </Map>
         )
     }
@@ -42,16 +46,10 @@ const Masking = compose(
     recipe({defaultModel, mapRecipeToProps})
 )
 
-const getDependentRecipeIds = recipe =>
-    [
-        (selectFrom(recipe, 'model.imageToMask') || {}),
-        (selectFrom(recipe, 'model.imageMask') || {}),
-    ]
-        .filter(({type}) => type === 'RECIPE_REF')
-        .map(({id}) => id)
-
 export default () => ({
     id: 'MASKING',
+    // The images it reads that the layout shows (mapLayout/dependencyLayerSources.js).
+    dependencyLayerRoles: [PRIMARY_IMAGE, MASK_IMAGE],
     labels: {
         name: msg('process.masking.create'),
         creationDescription: msg('process.masking.description'),
@@ -60,8 +58,7 @@ export default () => ({
     components: {
         recipe: Masking
     },
-    sourceRecipe: recipe => recipe.model.imageToMask,
-    getDependentRecipeIds,
-    getAvailableBands,
-    getPreSetVisualizations
+    imageSource: true,
+    getPreSetVisualizations,
+    sourceRequirements: maskRequirements
 })

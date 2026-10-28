@@ -1,8 +1,9 @@
+import https from 'node:https'
+import Path from 'node:path'
+import readline from 'node:readline'
+
 import {compare} from 'compare-versions'
-import https from 'https'
 import {minimatch} from 'minimatch'
-import Path from 'path'
-import readline from 'readline'
 
 import {getLogger} from '#sepal/log'
 

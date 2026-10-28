@@ -3,16 +3,16 @@
 }
 
 :global .cm-tooltip-autocomplete {
-    border: rgb(51, 51, 51) 1px solid !important;
-    background-color: hsla(0, 0%, 0%, .9) !important;
+    border: var(--floating-border-color) 1px solid !important;
+    background-color: var(--floating-background-color) !important;
     min-height: fit-content !important;
 }
 
 :global .cm-tooltip-autocomplete>ul {}
 
 :global .cm-tooltip-autocomplete>ul>li {
-    background-color: hsla(0, 0%, 0%, .9) !important;
-    color: rgb(204, 204, 204) !important;
+    background-color: var(--floating-background-color) !important;
+    color: var(--text-color) !important;
     font-family: Ubuntu, Helvetica Neue, Helvetica, Arial, sans-serif !important;
     font-size: .9rem !important;
     line-height: .9rem !important;
@@ -23,21 +23,21 @@
 }
 
 :global .cm-tooltip-autocomplete>ul>li[aria-selected="true"] {
-    background-color: hsla(40, 60%, 23%, 1) !important;
+    background-color: var(--code-completion-selected-background-color) !important;
     border-color: var(--look-selected-hover-border-color) !important;
-    color: white !important;
+    color: var(--text-strong-color) !important;
 }
 
 :global .cm-tooltip-autocomplete>ul>li:hover {
     background-color: var(--look-highlight-hover-background-color) !important;
-    color: white !important;
+    color: var(--text-strong-color) !important;
 }
 
 :global .cm-tooltip-autocomplete>ul>completion-section {
-    background-color: #000000 !important;
+    background-color: var(--code-completion-section-background-color) !important;
     border-color: transparent !important;
     border: none !important;
-    color: rgb(204, 204, 204) !important;
+    color: var(--text-color) !important;
     color: var(--look-default-color) !important;
     font-family: Ubuntu, Helvetica Neue, Helvetica, Arial, sans-serif !important;
     font-size: .8rem !important;
@@ -49,8 +49,8 @@
 }
 
 :global .cm-completionInfo {
-    background-color: #373737 !important;
-    color: white !important;
+    background-color: var(--popover-background-color) !important;
+    color: var(--text-strong-color) !important;
     min-height: 34px !important;
     padding: 8px 10px !important;
     font-family: Ubuntu, Helvetica Neue, Helvetica, Arial, sans-serif !important;
@@ -58,7 +58,7 @@
     font-size: 12px !important;
     line-height: 1.5 !important;
     border-radius: 6px !important;
-    box-shadow: 0 0 1rem hsla(0, 0%, 0%, .5) !important;
+    box-shadow: 0 0 1rem var(--shadow-medium-color) !important;
     margin-left: 0.25rem;
 }
 

@@ -9,18 +9,16 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
-// import {RecipeActions} from '../bandMathRecipe'
+import {SectionButton} from '../../sectionButton'
 import styles from './bandMathToolbar.module.css'
 import {Calculations} from './calculations/calculations'
 import {InputImagery} from './inputImagery/inputImagery'
-// import {toBandNames} from './outputBands/bandNamesUpdate'
 import {OutputBands} from './outputBands/outputBands'
 import {Retrieve} from './retrieve/retrieve'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
     initialized: selectFrom(recipe, 'ui.initialized'),
-    calculations: selectFrom(recipe, 'model.calculations.calculations'),
 })
 
 class _BandMathToolbar extends React.Component {
@@ -29,7 +27,7 @@ class _BandMathToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, initialized, calculations} = this.props
+        const {recipeId, initialized} = this.props
         return (
             <PanelWizard
                 panels={['inputImagery']}
@@ -50,20 +48,19 @@ class _BandMathToolbar extends React.Component {
                     vertical
                     placement='bottom-right'
                     className={styles.bottom}>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='inputImagery'
                         label={msg('process.panels.inputImagery.button')}
                         tooltip={msg('process.panels.inputImagery.tooltip')}
                         disabled={!initialized}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='calculations'
-                        error={calculations.find(({invalid}) => invalid)}
                         label={msg('process.bandMath.panel.calculations.button')}
                         tooltip={msg('process.bandMath.panel.calculations.tooltip')}
                         disabled={!initialized}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='outputBands'
                         label={msg('process.bandMath.panel.outputBands.button')}
                         tooltip={msg('process.bandMath.panel.outputBands.tooltip')}

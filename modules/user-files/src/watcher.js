@@ -1,13 +1,15 @@
-import {readdir, realpath, rm, stat} from 'fs/promises'
+import {readdir, realpath, stat} from 'node:fs/promises'
+import Path from 'node:path'
+
 import _ from 'lodash'
-import Path from 'path'
 import {catchError, distinctUntilChanged, EMPTY, exhaustMap, filter, finalize, first, from, groupBy, map, mergeMap, mergeWith, of, reduce, repeat, scan, Subject, switchMap, takeUntil, throttleTime, timer} from 'rxjs'
 
 import {getLogger} from '#sepal/log'
 import {minDuration$} from '#sepal/rxjs'
 
 import {homeDir, pollIntervalMilliseconds} from './config.js'
-import {resolvePath} from './filesystem.js'
+import {filesDeleted$} from './events.js'
+import {removeUserPath, resolvePath} from './filesystem.js'
 import {clientTag, subscriptionTag} from './tag.js'
 
 const log = getLogger('watcher')
@@ -95,10 +97,6 @@ const createWatcher = async ({send, stop$}) => {
         complete: () => log.fatal('Unexpected monitor$ stream complete')
     })
 
-    stop$.subscribe(
-        () => monitorSubscription.unsubscribe()
-    )
-
     remove$.pipe(
         mergeMap(({username, clientId, subscriptionId, remove}) =>
             minDuration$(
@@ -114,7 +112,7 @@ const createWatcher = async ({send, stop$}) => {
         complete: () => log.fatal('Unexpected remove$ stream complete')
     })
     
-    stats$.pipe(
+    const statsSubscription = stats$.pipe(
         mergeWith(of(null)),
         scan((acc, clientId) => (clientId ? {...acc, [clientId]: (acc[clientId] || 0) + 1} : acc), {}),
         throttleTime(STATS_INTERVAL_MS, null, {leading: false, trailing: true}),
@@ -128,6 +126,11 @@ const createWatcher = async ({send, stop$}) => {
         next: ({clients, scans}) => log.info(`Stats: ${scans} scans by ${clients} clients`),
         error: error => log.fatal('Unexpected stats$ stream error', error),
         complete: () => log.fatal('Unexpected stats$ stream complete')
+    })
+
+    stop$.subscribe(() => {
+        monitorSubscription.unsubscribe()
+        statsSubscription.unsubscribe()
     })
 
     const scanDir$ = ({username, clientId, subscriptionId, path}) =>
@@ -209,9 +212,9 @@ const createWatcher = async ({send, stop$}) => {
         } else {
             unmonitor({username, clientId, subscriptionId, path})
             try {
-                const {absolutePath} = resolvePath(await userHomeDir(username), path)
-                await rm(absolutePath, {recursive: true})
+                await removeUserPath(await userHomeDir(username), path)
                 log.debug(`${subscriptionTag({username, clientId, subscriptionId})} removed path: ${path}`)
+                filesDeleted$.next({username})
             } catch (error) {
                 if (error.code === 'ENOENT') {
                     log.debug(() => `${subscriptionTag({username, clientId, subscriptionId})} ignored non-existing path: ${path}`)

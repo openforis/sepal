@@ -4,22 +4,22 @@
     "description": "",
     "main": "main.js",
     "scripts": {
-        "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-        "testWatch": "NODE_OPTIONS=--experimental-vm-modules jest --watchAll"
+        "test": "node --experimental-test-module-mocks --test \"**/*.test.js\"",
+        "testWatch": "node --experimental-test-module-mocks --test --watch \"**/*.test.js\""
     },
     "author": "",
     "license": "ISC",
     "dependencies": {
         "commander": "^15.0.0",
         "date-fns": "^4.4.0",
-        "koa-body": "^8.0.0",
+        "koa-body": "^8.0.1",
         "lodash": "^4.18.1",
         "log4js": "^6.9.1",
-        "moment": "^2.30.1",
+        "moment": "^2.31.0",
         "rxjs": "^7.8.2",
         "sepal": "../../lib/js/shared",
-        "uuid": "^14.0.1",
-        "ws": "^8.21.0"
+        "uuid": "^14.0.3",
+        "ws": "^8.22.0"
     },
     "imports": {
         "#sepal/*": "sepal/src/*.js",

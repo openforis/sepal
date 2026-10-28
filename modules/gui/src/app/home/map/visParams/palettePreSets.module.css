@@ -9,7 +9,7 @@
 }
 
 .presetLabel {
-    background-color: black;
-    color: #ccc;
+    background-color: var(--well-background-color);
+    color: var(--text-color);
     padding: .25rem .5rem;
 }

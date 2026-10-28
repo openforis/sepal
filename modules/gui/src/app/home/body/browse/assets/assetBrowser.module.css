@@ -91,7 +91,7 @@
 
 .fileInfo {
     display: inline-block;
-    color: #707070;
+    color: var(--text-faint-color);
     padding-left: .5rem;
     font-size: smaller;
 }
@@ -101,11 +101,11 @@
     width: var(--icon-width);
     padding: 0 .5rem;
     text-align: center;
-    color: #b0b0b0;
+    color: var(--text-secondary-color);
 }
 
 .directory:hover {
-    color: white;
+    color: var(--text-strong-color);
 }
 
 .expanded svg {

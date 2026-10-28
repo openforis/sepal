@@ -81,7 +81,7 @@ class _Scrollable extends React.PureComponent {
     }
 
     render() {
-        const {containerClassName} = this.props
+        const {containerClassName, hideScrollbar} = this.props
         return (
             <ElementResizeDetector targetRef={this.containerRef} resize$={this.resize$}>
                 <div
@@ -92,8 +92,7 @@ class _Scrollable extends React.PureComponent {
                         containerClassName
                     ].join(' ')}>
                     {this.renderScrollable()}
-                    {this.renderHorizontalScrollbar()}
-                    {this.renderVerticalScrollbar()}
+                    {hideScrollbar ? null : this.renderScrollbars()}
                 </div>
             </ElementResizeDetector>
         )
@@ -149,6 +148,15 @@ class _Scrollable extends React.PureComponent {
         return _.isFunction(children)
             ? children(scrollable)
             : children
+    }
+
+    renderScrollbars() {
+        return (
+            <React.Fragment>
+                {this.renderVerticalScrollbar()}
+                {this.renderHorizontalScrollbar()}
+            </React.Fragment>
+        )
     }
 
     renderVerticalScrollbar() {

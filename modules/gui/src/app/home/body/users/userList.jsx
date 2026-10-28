@@ -12,6 +12,7 @@ import lookStyles from '~/style/look.module.css'
 import {msg} from '~/translate'
 import {Buttons} from '~/widget/buttons'
 import {FastList} from '~/widget/fastList'
+import {FloatingButton} from '~/widget/floatingButton'
 import {Icon} from '~/widget/icon'
 import {Label} from '~/widget/label'
 import {Layout} from '~/widget/layout'
@@ -74,19 +75,25 @@ export class UserList extends React.Component {
 
     getUsers() {
         const {users} = this.props
-        const {sortingOrder, sortingDirection, textFilterValues} = this.state
+        const {sortingOrder, sortingDirection, textFilterValues, statusFilter} = this.state
+        return this.filterAndSort(users, sortingOrder, sortingDirection, textFilterValues, statusFilter)
+    }
+
+    // Filtering and sorting tens of thousands of rows is the cost of every render of this list,
+    // so it is done only when the rows or the criteria change.
+    filterAndSort = memoizeOne((users, sortingOrder, sortingDirection, textFilterValues, statusFilter) => {
         const searchMatchers = textFilterValues.map(filter => RegExp(filter, 'i'))
         return _.chain(users)
-            .filter(user => this.userMatchesFilters(user, searchMatchers))
+            .filter(user => this.userMatchesFilters(user, searchMatchers, statusFilter))
             .orderBy(user => {
                 const item = _.get(user, sortingOrder)
                 return _.isString(item) ? simplifyString(item).toUpperCase() : item
             }, sortingDirection === 1 ? 'asc' : 'desc')
             .value()
-    }
+    })
 
-    userMatchesFilters(user, searchMatchers) {
-        return this.userMatchesTextFilter(user, searchMatchers) && this.userMatchesStatusFilter(user)
+    userMatchesFilters(user, searchMatchers, statusFilter) {
+        return this.userMatchesTextFilter(user, searchMatchers) && this.userMatchesStatusFilter(user, statusFilter)
     }
 
     userMatchesTextFilter(user, searchMatchers) {
@@ -100,8 +107,7 @@ export class UserList extends React.Component {
             : true
     }
 
-    userMatchesStatusFilter(user) {
-        const {statusFilter} = this.state
+    userMatchesStatusFilter(user, statusFilter) {
         switch (statusFilter) {
             case 'PENDING':
                 return UserStatus.isPending(user.status)
@@ -287,6 +293,24 @@ export class UserList extends React.Component {
         )
     }
 
+    // Live changes are held back until asked for, so the list does not shift under the admin.
+    renderUpdateButton() {
+        const {updatePending, onUpdate} = this.props
+        return (
+            <FloatingButton
+                look='add'
+                air='more'
+                shape='circle'
+                size='large'
+                icon='refresh'
+                tooltip={msg('users.update.tooltip')}
+                tooltipPlacement='left'
+                hidden={!updatePending}
+                onClick={onUpdate}
+            />
+        )
+    }
+
     renderInfo(users) {
         const oneMonthAgo = moment().subtract(1, 'months')
         const lastMonthUserCount = users.filter(user => oneMonthAgo.isBefore(user.updateTime)).length
@@ -346,6 +370,7 @@ export class UserList extends React.Component {
                         {this.renderHeader(users)}
                         {this.renderUsers(users)}
                     </Scrollable>
+                    {this.renderUpdateButton()}
                 </Content>
             </SectionLayout>
         )
@@ -354,7 +379,9 @@ export class UserList extends React.Component {
 
 UserList.propTypes = {
     users: PropTypes.array.isRequired,
-    onSelect: PropTypes.func.isRequired
+    onSelect: PropTypes.func.isRequired,
+    onUpdate: PropTypes.func.isRequired,
+    updatePending: PropTypes.bool,
 }
 
 class UserItem extends React.PureComponent {

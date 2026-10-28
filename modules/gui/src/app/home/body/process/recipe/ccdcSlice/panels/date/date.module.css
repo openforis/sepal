@@ -10,6 +10,6 @@
 }
 
 .dateRange {
-    color: #ccc;
+    color: var(--text-color);
     font-size: 0.8rem;
 }

@@ -16,9 +16,10 @@ const worker$ = ({
 
     const cloudProjects$ = () =>
         http.get$('https://cloudresourcemanager.googleapis.com/v1/projects?filter=labels.earth-engine=""', {
-            headers
+            headers,
+            responseType: 'json'
         }).pipe(
-            map(({body}) => JSON.parse(body)),
+            map(({body}) => body),
             map(({projects = []}) => projects)
         )
 

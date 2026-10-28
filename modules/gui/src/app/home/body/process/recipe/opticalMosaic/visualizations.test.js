@@ -4,6 +4,9 @@ vi.mock('~/translate', () => ({msg: id => id}))
 
 const {visualizationOptions} = await import('./visualizations')
 
+// Candidate styles, whatever the data sets. Which apply is decided against the bands the mosaic's description
+// resolves, where they are offered (registeredPresentation.test.js).
+
 const recipeWithDataSets = dataSets => ({
     model: {
         sources: {dataSets},
@@ -14,41 +17,13 @@ const recipeWithDataSets = dataSets => ({
     }
 })
 
-const availableVisualizationBands = recipe =>
+const offeredBands = recipe =>
     visualizationOptions(recipe)
         .flatMap(({options}) => options)
         .map(({value}) => value)
 
-it('excludes EBBI from Sentinel-2 map visualization options', () => {
-    const bands = availableVisualizationBands(
-        recipeWithDataSets({SENTINEL_2: ['SENTINEL_2']})
-    )
+it('offers the index styles as candidates even for data sets that cannot carry them', () => {
+    const bands = offeredBands(recipeWithDataSets({SENTINEL_2: ['SENTINEL_2']}))
 
-    expect(bands).toContain('nbi')
-    expect(bands).toContain('bui')
-    expect(bands).toContain('kndvi')
-    expect(bands).not.toContain('ebbi')
-})
-
-it('includes EBBI in Landsat map visualization options', () => {
-    const bands = availableVisualizationBands(
-        recipeWithDataSets({LANDSAT: ['LANDSAT_8']})
-    )
-
-    expect(bands).toContain('bui')
-    expect(bands).toContain('kndvi')
-    expect(bands).toContain('ebbi')
-})
-
-it('excludes EBBI from mixed Landsat and Sentinel-2 map visualization options', () => {
-    const bands = availableVisualizationBands(
-        recipeWithDataSets({
-            LANDSAT: ['LANDSAT_8'],
-            SENTINEL_2: ['SENTINEL_2']
-        })
-    )
-
-    expect(bands).toContain('bui')
-    expect(bands).toContain('kndvi')
-    expect(bands).not.toContain('ebbi')
+    expect(bands).toEqual(expect.arrayContaining(['nbi', 'bui', 'kndvi', 'ebbi']))
 })

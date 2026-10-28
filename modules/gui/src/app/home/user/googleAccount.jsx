@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types'
 import React from 'react'
 import {catchError, map, of, tap} from 'rxjs'
 
@@ -6,7 +5,6 @@ import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {googleProjectId, isGoogleAccount, projects$, requestUserAccess$, revokeGoogleAccess$, updateGoogleProject$} from '~/user'
 import {withActivatable} from '~/widget/activation/activatable'
-import {withActivators} from '~/widget/activation/activator'
 import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
@@ -74,12 +72,8 @@ class _GoogleAccount extends React.Component {
     }
 
     close() {
-        const {activator: {activatables: {userDetails}}, activatable: {deactivate, mandatory}} = this.props
-        if (mandatory) {
-            deactivate()
-        } else {
-            userDetails.activate()
-        }
+        const {activatable: {deactivate}} = this.props
+        deactivate()
     }
 
     getTaskCount() {
@@ -278,31 +272,7 @@ const policy = () => ({
 export const GoogleAccount = compose(
     _GoogleAccount,
     withForm({fields, mapStateToProps}),
-    withActivators('userDetails'),
     withActivatable({id: 'googleAccount', policy, alwaysAllow: true})
 )
 
 GoogleAccount.propTypes = {}
-
-class _GoogleAccountButton extends React.Component {
-    render() {
-        const {disabled, activator: {activatables: {googleAccount: {activate, canActivate}}}} = this.props
-        return (
-            <Button
-                icon='google'
-                iconType='brands'
-                label={msg('user.googleAccount.label')}
-                disabled={!canActivate || disabled}
-                onClick={activate}/>
-        )
-    }
-}
-
-export const GoogleAccountButton = compose(
-    _GoogleAccountButton,
-    withActivators('googleAccount')
-)
-
-GoogleAccountButton.propTypes = {
-    disabled: PropTypes.any,
-}

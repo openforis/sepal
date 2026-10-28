@@ -1,0 +1,236 @@
+import {describe, expect, it} from 'vitest'
+
+import {sliceOutputBands} from '#sepal/recipe/type/ccdcSlice'
+
+import {
+    chartSourceReference,
+    dateFormatOf,
+    materializedTemplates,
+    outputBandsOf,
+    retrievableBands,
+    sliceRequest
+} from './sliceEvidence'
+
+// What a CCDC Slice recipe derives from the segments it slices, from the evidence in force (segmentEvidence.test.js
+// reads the description). Fixtures are the smallest shapes the source panel and the older sourceSync wrote, over one
+// measure.
+
+const DESCRIBED = {
+    bands: ['ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude', 'tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb'],
+    baseBands: [{name: 'ndvi', measures: ['value', 'rmse', 'magnitude']}],
+    segmentBands: [{name: 'tStart'}, {name: 'tEnd'}, {name: 'tBreak'}, {name: 'numObs'}, {name: 'changeProb'}],
+    dateFormat: 1,
+    startDate: '2015-01-01',
+    endDate: '2021-01-01',
+    visualizations: [
+        {id: 'v-ndvi', bands: ['ndvi'], type: 'continuous'},
+        {id: 'v-harmonic', bands: ['ndvi_phase_1', 'ndvi_amplitude_1', 'ndvi_rmse'], type: 'hsv'},
+        {id: 'v-nbr', bands: ['nbr'], type: 'continuous'}
+    ]
+}
+
+// A recipe saved by an older GUI, carrying a copy beside its reference.
+const COPIED = {
+    type: 'RECIPE_REF',
+    id: 'ccdc-1',
+    bands: ['nbr_coefs', 'tStart'],
+    baseBands: [{name: 'nbr', bandTypes: ['value']}],
+    segmentBands: [{name: 'tStart'}],
+    dateFormat: null,
+    startDate: '2000-01-01',
+    endDate: '2020-01-01',
+    visualizations: [{id: 'v-old', bands: ['nbr'], type: 'continuous'}]
+}
+
+const sliceOf = ({source, sourceEvidence, dateType = 'SINGLE', gapStrategy = 'MASK', harmonics = 3} = {}) => ({
+    id: 'slice-1',
+    type: 'CCDC_SLICE',
+    model: {source, date: {dateType, date: '2020-06-01'}, options: {gapStrategy, harmonics}},
+    ...(sourceEvidence ? {ui: {sourceEvidence}} : {})
+})
+
+const observed = (sourceKey, segments) => ({sourceKey, status: 'OBSERVED', segments})
+
+describe('a slice whose source has been observed', () => {
+    const recipe = sliceOf({source: COPIED, sourceEvidence: observed('RECIPE_REF:ccdc-1', DESCRIBED)})
+
+    it('derives the scalar bands its operation produces from the physical bands the source carries', () => {
+        expect(outputBandsOf(recipe)).toEqual([
+            'ndvi',
+            'ndvi_intercept', 'ndvi_slope',
+            'ndvi_phase_1', 'ndvi_amplitude_1', 'ndvi_phase_2', 'ndvi_amplitude_2', 'ndvi_phase_3', 'ndvi_amplitude_3',
+            'ndvi_rmse', 'ndvi_magnitude', 'ndvi_breakConfidence',
+            'tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb'
+        ])
+    })
+
+    it('offers every derived band, all scalar', () => {
+        expect(outputBandsOf(recipe)).toContain('ndvi_phase_2')
+    })
+
+    // A template is offered only where this slice produces every band it names. `nbr` was never fitted by
+    // this source, so its template describes nothing this recipe makes; it is withheld, not deleted.
+    it('materializes the source templates against what it actually produces', () => {
+        expect(materializedTemplates(recipe).map(({id}) => id)).toEqual(['v-ndvi', 'v-harmonic'])
+        expect(DESCRIBED.visualizations.map(({id}) => id)).toContain('v-nbr')
+    })
+})
+
+// The operation decides which bands exist, and a template describing bands it does not produce is not
+// offered. Interpolating with no harmonics is the case that was advertised wrongly.
+describe('an operation asked for no harmonics', () => {
+    const interpolating = sliceOf({
+        source: COPIED,
+        sourceEvidence: observed('RECIPE_REF:ccdc-1', DESCRIBED),
+        gapStrategy: 'INTERPOLATE',
+        harmonics: 0
+    })
+
+    it('produces no harmonic bands', () => {
+        expect(outputBandsOf(interpolating).filter(band => band.includes('phase'))).toEqual([])
+    })
+
+    it('does not offer the harmonic template that names them', () => {
+        expect(materializedTemplates(interpolating).map(({id}) => id)).toEqual(['v-ndvi'])
+    })
+
+    it('offers it again once harmonics are asked for', () => {
+        const withHarmonics = sliceOf({
+            source: COPIED,
+            sourceEvidence: observed('RECIPE_REF:ccdc-1', DESCRIBED),
+            gapStrategy: 'INTERPOLATE',
+            harmonics: 1
+        })
+
+        expect(materializedTemplates(withHarmonics).map(({id}) => id)).toEqual(['v-ndvi', 'v-harmonic'])
+    })
+})
+
+// A consumer resolving this recipe as a dependency supplies the description itself, because a recipe it has
+// merely loaded has no runtime evidence of its own.
+describe('a description supplied by a consumer', () => {
+    const unopened = sliceOf({source: {type: 'RECIPE_REF', id: 'ccdc-1'}})
+
+    it('is used in place of runtime evidence', () => {
+        expect(materializedTemplates(unopened, DESCRIBED).map(({id}) => id)).toEqual(['v-ndvi', 'v-harmonic'])
+    })
+
+    it('leaves the recipe answering nothing without it', () => {
+        expect(materializedTemplates(unopened)).toEqual([])
+    })
+})
+
+describe('a slice whose source has not been observed', () => {
+    const recipe = sliceOf({source: COPIED})
+
+    it('derives its bands from the copy an older GUI saved', () => {
+        expect(outputBandsOf(recipe)).toContain('nbr_phase_1')
+    })
+
+    it('answers nothing from a recipe that carries no copy either', () => {
+        const bare = sliceOf({source: {type: 'RECIPE_REF', id: 'ccdc-1'}})
+
+        expect(outputBandsOf(bare)).toEqual([])
+    })
+})
+
+// Evidence that could not be had is not a reason to answer from a copy made when things were different.
+describe('a slice whose source could not be observed', () => {
+    const recipe = sliceOf({
+        source: COPIED,
+        sourceEvidence: {sourceKey: 'RECIPE_REF:ccdc-1', status: 'UNAVAILABLE'}
+    })
+
+    it('answers nothing, rather than the copy', () => {
+        expect(outputBandsOf(recipe)).toEqual([])
+        expect(materializedTemplates(recipe)).toEqual([])
+    })
+})
+
+// Slice interprets segment times by the shared rule (segmentEvidence.test.js), with a default of its own.
+describe('the date representation', () => {
+    it('is Julian days when nothing at all says otherwise', () => {
+        expect(dateFormatOf(sliceOf({source: {type: 'RECIPE_REF', id: 'ccdc-1'}}))).toBe(0)
+    })
+})
+
+// The pixel-chart endpoint takes the reference the recipe selected and resolves the rest from the source.
+describe('the reference handed to the pixel chart', () => {
+    it('is the selected recipe, with nothing copied beside it', () => {
+        expect(chartSourceReference(sliceOf({source: COPIED}))).toEqual({type: 'RECIPE_REF', id: 'ccdc-1'})
+    })
+
+    it('carries the configured date representation for an asset, zero included', () => {
+        expect(chartSourceReference(sliceOf({source: {type: 'ASSET', id: 'users/x/segments', dateFormat: 0}})))
+            .toEqual({type: 'ASSET', id: 'users/x/segments', dateFormat: 0})
+    })
+
+    it('never carries a target type from a previous source', () => {
+        const recipe = sliceOf({source: {...COPIED, targetType: 'ASSET_MOSAIC'}})
+
+        expect(chartSourceReference(recipe)).not.toHaveProperty('targetType')
+    })
+})
+
+// What a retrieve selection may be made from follows the names the slice's output holds, read by the slice's own
+// naming rule. The names are what the slice's derivation makes of the source's bands, as its read answers them.
+describe('what a retrieve selection offers', () => {
+    const SINGLE_MASKING = {date: {dateType: 'SINGLE', date: '2020-06-01'}, options: {gapStrategy: 'MASK', harmonics: 3}}
+    const interpolating = harmonics => ({
+        date: {dateType: 'SINGLE', date: '2020-06-01'},
+        options: {gapStrategy: 'INTERPOLATE', harmonics}
+    })
+    const offered = (sourceBands, model = SINGLE_MASKING) => retrievableBands(sliceOutputBands(sourceBands, model))
+
+    it('is every base band, measure and segment band the output holds', () => {
+        expect(offered(['ndvi_coefs', 'nbr_coefs', 'tStart'])).toEqual({
+            baseBands: [{name: 'ndvi'}, {name: 'nbr'}],
+            measures: [
+                'value', 'rmse', 'magnitude', 'breakConfidence', 'intercept', 'slope',
+                'phase_1', 'phase_2', 'phase_3', 'amplitude_1', 'amplitude_2', 'amplitude_3'
+            ],
+            segmentBands: [{name: 'tStart'}]
+        })
+    })
+
+    it('excludes phase and amplitude for a slice interpolating without harmonics', () => {
+        expect(offered(['ndvi_coefs', 'tStart'], interpolating(0)).measures)
+            .toEqual(['value', 'rmse', 'magnitude', 'breakConfidence', 'intercept', 'slope'])
+    })
+
+    it('includes as many harmonics as the slice is asked for', () => {
+        expect(offered(['ndvi_coefs', 'tStart'], interpolating(2)).measures).toEqual([
+            'value', 'rmse', 'magnitude', 'breakConfidence', 'intercept', 'slope',
+            'phase_1', 'phase_2', 'amplitude_1', 'amplitude_2'
+        ])
+    })
+
+    // The source's description once listed only red; the output the slice's read answers holds nir too.
+    it('offers a base band the output holds whatever an older description of the source lists', () => {
+        expect(retrievableBands(['red', 'red_rmse', 'nir', 'nir_rmse']).baseBands.map(({name}) => name))
+            .toEqual(['red', 'nir'])
+    })
+
+    // A source fitting both `red` and a measure named `red_phase_1`, sliced without harmonics: `red_phase_1` is a base
+    // band with measures of its own, whatever its name also spells.
+    it('offers every band the output holds when a base band is named like a measure of another', () => {
+        const output = sliceOutputBands(['red_coefs', 'red_phase_1_coefs'], interpolating(0))
+        const {baseBands, measures, segmentBands} = retrievableBands(output)
+
+        const selectable = sliceRequest({output: {bands: output.map(name => ({name}))}, retrieveOptions: {
+            baseBands: baseBands.map(({name}) => name),
+            bandTypes: measures,
+            segmentBands: segmentBands.map(({name}) => name)
+        }}).names
+
+        expect(output.filter(name => !selectable.includes(name))).toEqual([])
+    })
+
+    it('reads a base band whose own name has an underscore as the band it is', () => {
+        expect(retrievableBands(['probability_1', 'probability_1_rmse'])).toEqual({
+            baseBands: [{name: 'probability_1'}],
+            measures: ['value', 'rmse'],
+            segmentBands: []
+        })
+    })
+})

@@ -28,13 +28,13 @@ export class FormPanelButtons extends React.Component {
     }
 
     renderInForm({busy, submittable, invalid, onCancel, onOk, onClose}) {
-        const {applyLabel, disabled, disabledCancel} = this.props
+        const {applyLabel, disabled, disabledCancel, disabledEscape} = this.props
         return (
             <Panel.Buttons>
                 <Panel.Buttons.Main>
                     <Panel.Buttons.Cancel
                         hidden={!submittable || disabled || disabledCancel}
-                        keybinding='Escape'
+                        keybinding={disabledEscape ? null : 'Escape'}
                         onClick={onCancel}/>
                     <Panel.Buttons.Apply
                         type={'submit'}
@@ -49,7 +49,7 @@ export class FormPanelButtons extends React.Component {
                         label={applyLabel}
                         hidden={submittable}
                         disabled={disabled}
-                        keybinding={['Enter', 'Escape']}
+                        keybinding={disabledEscape ? 'Enter' : ['Enter', 'Escape']}
                         onClick={onClose}/>
                 </Panel.Buttons.Main>
                 {this.renderExtraButtons()}
@@ -58,13 +58,13 @@ export class FormPanelButtons extends React.Component {
     }
 
     renderInWizard({closable, submittable, invalid, first, last, onCancel, onBack, onNext, onDone}) {
-        const {applyLabel} = this.props
+        const {applyLabel, disabledEscape} = this.props
         return (
             <Panel.Buttons>
                 <Panel.Buttons.Main>
                     <Panel.Buttons.Cancel
                         hidden={!closable || !submittable}
-                        keybinding='Escape'
+                        keybinding={disabledEscape ? null : 'Escape'}
                         onClick={onCancel}/>
                     <Panel.Buttons.Close
                         type={'submit'}
@@ -109,6 +109,7 @@ FormPanelButtons.propTypes = {
     closable: PropTypes.bool,
     disabled: PropTypes.bool,
     disabledCancel: PropTypes.bool,
+    disabledEscape: PropTypes.bool,
     first: PropTypes.bool,
     id: PropTypes.string,
     invalid: PropTypes.bool,

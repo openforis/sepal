@@ -1,22 +1,18 @@
 import {get$, post$, postJson$} from '~/http-client'
+import {uuid} from '~/uuid'
+
+import {moduleWebSocket$} from './ws.js'
 
 export default {
-    loadAll$: ({retry}) =>
-        get$('/api/tasks', {
-            retry
-        }),
+    ws: () => moduleWebSocket$('task-manager/task'),
 
     loadDetails$: taskId =>
         get$(`/api/tasks/task/${taskId}/details`),
 
-    listExisting$: ({outputPath, destination, status}) =>
-        get$('/api/tasks', {
-            query: {outputPath, destination, status}
-        }),
-
+    // The id makes a retry after a failed response return the task already created instead of creating another.
     submit$: task =>
         postJson$('/api/tasks', {
-            body: task
+            body: {id: uuid(), ...task}
         }),
 
     restart$: taskId =>
@@ -28,6 +24,8 @@ export default {
     remove$: taskId =>
         post$(`/api/tasks/task/${taskId}/remove`),
 
-    removeAll$: () =>
-        post$('/api/tasks/remove')
+    removeFinished$: taskIds =>
+        postJson$('/api/tasks/remove', {
+            body: {taskIds}
+        })
 }

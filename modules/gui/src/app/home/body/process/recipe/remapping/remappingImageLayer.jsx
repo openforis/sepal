@@ -9,7 +9,6 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
-import {getAvailableBands} from './bands'
 import {getPreSetVisualizations} from './visualizations'
 
 const defaultLayerConfig = {
@@ -21,7 +20,7 @@ class _RemappingImageLayer extends React.Component {
         const {layer, map} = this.props
         return (
             <MapAreaLayout
-                layer={this.canRender() ? layer : null}
+                layer={layer}
                 form={this.renderImageLayerForm()}
                 map={map}
             />
@@ -29,8 +28,7 @@ class _RemappingImageLayer extends React.Component {
     }
 
     renderImageLayerForm() {
-        const {recipe, source, layerConfig = {}} = this.props
-        const availableBands = getAvailableBands(recipe)
+        const {recipe, source, layerConfig = {}, imageOutput: {availableBands}} = this.props
         const preSetOptions = getPreSetVisualizations(recipe)
             .filter(({bands}) => availableBands[bands[0]])
             .map(visParams => {
@@ -48,6 +46,7 @@ class _RemappingImageLayer extends React.Component {
                 source={source}
                 recipe={recipe}
                 presetOptions={options}
+                availableBands={availableBands}
                 selectedVisParams={layerConfig.visParams}
             />
         )
@@ -56,12 +55,6 @@ class _RemappingImageLayer extends React.Component {
     hasLegend() {
         const {recipe} = this.props
         return !_.isEmpty(selectFrom(recipe, 'model.legend.entries'))
-    }
-
-    canRender() {
-        const {recipe} = this.props
-        const inputImagery = selectFrom(recipe, ['model.inputImagery.images']) || []
-        return !!inputImagery.length
     }
 }
 
@@ -75,6 +68,7 @@ export const RemappingImageLayer = compose(
 RemappingImageLayer.propTypes = {
     recipe: PropTypes.object.isRequired,
     source: PropTypes.object.isRequired,
+    imageOutput: PropTypes.object.isRequired,
     layer: PropTypes.object,
     layerConfig: PropTypes.object,
     map: PropTypes.object

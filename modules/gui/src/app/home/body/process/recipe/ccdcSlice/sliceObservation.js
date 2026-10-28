@@ -1,0 +1,35 @@
+import {map} from 'rxjs'
+
+import {PRIMARY_IMAGE} from '#sepal/recipe/type/ccdcSlice'
+
+import {describeSegmentSource$} from '../segmentCapability'
+import {selectedSourceOf} from '../sourceEvidence'
+import {withKnownIdentities} from '../visualizationMatching'
+import {knownTemplates} from './sliceEvidence'
+
+// What CCDC Slice observes about the source it slices: the description of the segments that source
+// produces. Read by the shared evidence lifecycle, which decides when.
+//
+// Slice asks for the CCDC_SEGMENTS capability of the source it selected. Which recipe actually produces
+// those segments, and whether the selection stands for one at all, is the capability's to answer.
+
+export const resolveEvidence$ = ({recipe, graph, recipesById}) =>
+    describeSegmentSource$(selectedSourceOf(recipe, PRIMARY_IMAGE), {graph, recipesById}).pipe(
+        map(segments => ({
+            segments: {
+                ...segments,
+                // A fresh read identifies an asset's templates anew. Keeping the identities the recipe
+                // already knows them by is what lets a saved selection survive a refresh, and what keeps two
+                // styles over one band separately selectable.
+                visualizations: withKnownIdentities(segments.visualizations, knownTemplates(recipe))
+            }
+        }))
+    )
+
+// The styles a saved Slice restores are bound to the source they were made for (sliceEvidence.js), recorded wherever the
+// recipe is first observed (evidenceRegistry.js).
+export const sliceObservation = {
+    sourceReference: recipe => selectedSourceOf(recipe, PRIMARY_IMAGE),
+    observe$: resolveEvidence$,
+    savedLayerSource: true
+}

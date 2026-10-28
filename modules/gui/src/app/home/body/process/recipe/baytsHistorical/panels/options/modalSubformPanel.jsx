@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import React from 'react'
 
 import {compose} from '~/compose'
@@ -26,7 +27,7 @@ export const modalSubformPanel = ({id, toTitle, toClassName, fields}) =>
                         onCancel={this.cancel}>
                         <Panel.Header title={toTitle()}/>
                         <Panel.Content>
-                            {React.createElement(WrappedComponent, {...this.props})}
+                            {React.createElement(WrappedComponent, {...this.props, inputs: this.presentedInputs()})}
                         </Panel.Content>
                         <Form.PanelButtons/>
                     </Form.Panel>
@@ -40,6 +41,26 @@ export const modalSubformPanel = ({id, toTitle, toClassName, fields}) =>
                     .forEach(name => inputs[name].set(inputsToUpdate[name].value))
             }
     
+            // A setting the source recipe's reference owns stays its current value, as the outer form presents it.
+            componentDidUpdate() {
+                const {inputsToUpdate, inputs} = this.props
+                Object.entries(inputsToUpdate).forEach(([name, source]) => {
+                    if (source.referenceOwned && inputs[name] && !_.isEqual(inputs[name].value, source.value)) {
+                        inputs[name].setInitialValue(source.value)
+                    }
+                })
+            }
+
+            // Each field as the outer form presents it: one the reference owns is that outer input, read-only, and one
+            // the recipe owns is edited here, said as the outer form says it.
+            presentedInputs() {
+                const {inputs, inputsToUpdate} = this.props
+                return Object.fromEntries(Object.entries(inputs).map(([name, input]) => {
+                    const source = inputsToUpdate[name]
+                    return [name, source?.referenceOwned ? source : {...input, presentation: source?.presentation}]
+                }))
+            }
+
             update(values) {
                 const {inputsToUpdate, activatable: {deactivate}} = this.props
                 Object.keys(inputsToUpdate)

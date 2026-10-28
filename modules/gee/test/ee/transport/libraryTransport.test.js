@@ -1,0 +1,50 @@
+import assert from 'node:assert/strict'
+import {before, test} from 'node:test'
+
+import {firstValueFrom} from 'rxjs'
+
+import ee from '#sepal/ee/ee'
+import {LibraryTransport} from '#sepal/ee/transport/libraryTransport'
+import {assertMatches} from '#sepal/testSupport/assert'
+
+import {answerLibrary, API, initializeOfflineEE, TEST_PROJECT} from '../../support/eeOffline.js'
+
+// The transport `task` keeps: requests sent by the client library, as whoever the library is authenticated as.
+
+before(() => initializeOfflineEE())
+
+test('computes a value through the client library, as the library is authenticated', async () => {
+    const requests = answerLibrary({[`${API}/v1/projects/${TEST_PROJECT}/value:compute`]: {result: 42}})
+
+    const result = await firstValueFrom(new LibraryTransport(ee).getInfo$(ee.Image('USGS/SRTMGL1_003'), 'probe'))
+
+    assert.equal(result, 42)
+    assert.equal(requests[0].headers.Authorization, 'Bearer offline-token')
+})
+
+test('reads an export task\'s status as one status', async () => {
+    answerLibrary({[`${API}/v1/projects/earthengine-legacy/operations/T1`]: {
+        name: `projects/${TEST_PROJECT}/operations/T1`,
+        done: false,
+        metadata: {state: 'RUNNING', type: 'EXPORT_FEATURES', description: 'probe'}
+    }})
+
+    const status = await firstValueFrom(new LibraryTransport(ee).getTaskStatus$('T1', 'poll probe export task status'))
+
+    assert.partialDeepStrictEqual(status, {id: 'T1', state: 'RUNNING'})
+})
+
+test('reads a Cloud asset record without dropping its version or band ranks', async () => {
+    const name = 'projects/earthengine-legacy/assets/users/test/segments'
+    const record = {
+        name,
+        type: 'IMAGE',
+        updateTime: '2026-10-07T00:00:00.123456Z',
+        bands: [{id: 'VV_coefs', dataType: {precision: 'DOUBLE', dimensionsCount: 2}}]
+    }
+    answerLibrary({[`${API}/v1/${name}?prettyPrint=false`]: record})
+
+    const result = await firstValueFrom(new LibraryTransport(ee).getAssetRecord$('users/test/segments'))
+
+    assertMatches(result, record)
+})

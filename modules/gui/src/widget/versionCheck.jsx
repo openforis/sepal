@@ -5,7 +5,6 @@ import {event$} from '~/api/ws'
 import {useSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 
-import {Button} from './button'
 import {Notifications} from './notifications'
 
 export const VersionCheck = () => {
@@ -21,26 +20,12 @@ export const VersionCheck = () => {
         )
     }, [addSubscriptions])
 
-    const reload = () =>
-        window.location.replace('/')
-
-    const renderReloadButton = () => (
-        <Button
-            look={'add'}
-            shape='pill'
-            label={msg('home.versionMismatch.reloadNow')}
-            width='max'
-            onClick={reload}
-        />
-    )
-
     const notify = () =>
         Notifications.success({
             title: msg('home.versionMismatch.title'),
             message: msg('home.versionMismatch.message'),
             timeout: 0,
-            group: true,
-            content: renderReloadButton
+            group: true
         })
 
     return null

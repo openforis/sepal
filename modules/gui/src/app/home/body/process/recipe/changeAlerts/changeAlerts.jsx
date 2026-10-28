@@ -1,6 +1,7 @@
 import moment from 'moment'
 import React from 'react'
 
+import {hasMonitoringDates, monitoringDates} from '#sepal/recipe/changeAlerts/monitoringDates'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
@@ -9,10 +10,13 @@ import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
-import {getAvailableBands} from './bands'
+import {SourceEvidenceSync} from '../sourceEvidenceSync'
+import {bandPresentation, mapProducts} from './bands'
 import {defaultModel, RecipeActions} from './changeAlertsRecipe'
+import {observedBands} from './monitoringData'
 import {ChangeAlertsToolbar} from './panels/changeAlertsToolbar'
-import {ReferenceSync} from './referenceSync'
+import {changeAlertsObservation} from './referenceObservation'
+import {referenceRequirements} from './referenceRequirement'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -34,7 +38,7 @@ class _ChangeAlerts extends React.Component {
             <Map>
                 <ChangeAlertsToolbar/>
                 <Aoi value={reference.type && reference}/>
-                <ReferenceSync/>
+                <SourceEvidenceSync observation={changeAlertsObservation}/>
             </Map>
         )
     }
@@ -44,11 +48,6 @@ const ChangeAlerts = compose(
     _ChangeAlerts,
     recipe({defaultModel, mapRecipeToProps})
 )
-
-const getDependentRecipeIds = recipe => {
-    const {type, id} = selectFrom(recipe, 'model.reference') || {}
-    return type === 'RECIPE_REF' ? [id] : []
-}
 
 export default () => ({
     id: 'CHANGE_ALERTS',
@@ -61,13 +60,21 @@ export default () => ({
     components: {
         recipe: ChangeAlerts
     },
-    getDependentRecipeIds,
+    imageSource: true,
+    // The monitoring period, as instants its callers can take the value of. A recipe that states no period
+    // has no range to offer.
     getDateRange(recipe) {
-        const monitoringEnd = moment.utc(recipe.model.date.monitoringEnd, 'YYYY-MM-DD')
-        const monitoringStart = moment(monitoringEnd)
-            .subtract(recipe.model.date.monitoringDuration, recipe.model.date.monitoringDurationUnit)
-        return [monitoringStart, monitoringEnd]
+        if (!hasMonitoringDates(recipe.model)) {
+            return null
+        }
+        const {monitoringEnd, monitoringStart} = monitoringDates(recipe.model)
+        return [moment.utc(monitoringStart, 'YYYY-MM-DD'), moment.utc(monitoringEnd, 'YYYY-MM-DD')]
     },
-    getAvailableBands,
-    getPreSetVisualizations
+    mapProducts,
+    bandPresentation,
+    getPreSetVisualizations,
+    sourceRequirements: referenceRequirements,
+    observedBands,
+    // What a layer, Retrieve or chart observes to check the reference it requires, wherever it is shown.
+    sourceObservation: changeAlertsObservation
 })

@@ -1,0 +1,59 @@
+/* Takes the width it is given rather than the table's, so a narrow panel scrolls the table sideways
+   instead of widening. */
+.months {
+    contain: inline-size;
+}
+
+.table {
+    border-collapse: collapse;
+    font-size: .8rem;
+    width: 100%;
+}
+
+.table th,
+.table td {
+    text-align: right;
+    padding: .1rem .5rem;
+    white-space: nowrap;
+}
+
+.table th:first-child,
+.table td:first-child {
+    text-align: left;
+}
+
+.table th {
+    font-weight: normal;
+    opacity: .6;
+}
+
+/* On the rows, not the cells: the header cells' opacity would dim the line. */
+.table thead tr {
+    border-bottom: 1px solid var(--wireframe-color);
+}
+
+.table th {
+    padding-bottom: .5rem;
+}
+
+/* A spacer row rather than padding on the first row, so a highlighted row stops short of the line. */
+.table tbody::before {
+    content: '';
+    display: table-row;
+    height: .75rem;
+}
+
+/* Hovering a month shows its usage per instance type. */
+.table tr.month {
+    cursor: default;
+}
+
+.table tr.month:hover td {
+    color: var(--look-highlight-color);
+    background-color: var(--look-highlight-background-color);
+}
+
+.message {
+    font-size: .8rem;
+    opacity: .6;
+}

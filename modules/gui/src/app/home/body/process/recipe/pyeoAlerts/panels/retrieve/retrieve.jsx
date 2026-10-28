@@ -1,8 +1,8 @@
 import React from 'react'
 
 import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
-import {getGroupedBandOptions} from '~/app/home/body/process/recipe/pyeoAlerts/bands'
-import {RecipeActions} from '~/app/home/body/process/recipe/pyeoAlerts/pyeoAlertsRecipe'
+import {groupedBandPresentation} from '~/app/home/body/process/recipe/pyeoAlerts/bands'
+import {retrieveTask} from '~/app/home/body/process/recipe/pyeoAlerts/pyeoAlertsRecipe'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 
@@ -17,18 +17,13 @@ class _Retrieve extends React.Component {
                 toSepal
                 toEE
                 toDrive
-                onRetrieve={retrieveOptions => this.retrieve(retrieveOptions)}
+                task={retrieveTask}
             />
         )
     }
 
     bandOptions() {
-        return getGroupedBandOptions()
-    }
-
-    retrieve(retrieveOptions) {
-        const {recipeId} = this.props
-        return RecipeActions(recipeId).retrieve(retrieveOptions)
+        return groupedBandPresentation()
     }
 }
 

@@ -1,20 +1,21 @@
-import {switchMap} from 'rxjs'
+import {map, switchMap} from 'rxjs'
 
 import {job} from '#gee/jobs/job'
+import {assetBandEvidence$, imageBandEvidence$} from '#sepal/ee/bandEvidence'
 import ee from '#sepal/ee/ee'
 import ImageFactory from '#sepal/ee/imageFactory'
 import {fileName} from '#sepal/path'
 
 const worker$ = ({
-    requestArgs: {asset, recipe}
+    requestArgs: {asset, recipe, includeDataTypes = false}
 }) => {
 
     const assetBands$ = () =>
-        ImageFactory({type: 'ASSET', id: asset}).getImage$().pipe(
-            switchMap(image => ee.getInfo$(image.bandNames(), 'asset band names'))
-        )
+        includeDataTypes
+            ? assetBandEvidence$(asset)
+            : assetBandEvidence$(asset).pipe(map(bands => bands.map(({name}) => name)))
 
-    const recipeBands$ = () => {
+    const recipeBandNames$ = () => {
         const {getBands$, getImage$} = ImageFactory(recipe)
         return getBands$
             ? getBands$()
@@ -22,6 +23,11 @@ const worker$ = ({
                 switchMap(image => ee.getInfo$(image.bandNames(), 'image band names'))
             )
     }
+
+    const recipeBands$ = () =>
+        includeDataTypes
+            ? imageBandEvidence$(recipe)
+            : recipeBandNames$()
 
     return asset
         ? assetBands$()

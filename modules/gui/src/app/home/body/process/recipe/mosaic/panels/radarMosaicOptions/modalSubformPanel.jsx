@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import React from 'react'
 
 import {compose} from '~/compose'
@@ -26,7 +27,12 @@ export const modalSubformPanel = ({id, toTitle, toClassName, fields, constraints
                         onCancel={this.cancel}>
                         <Panel.Header title={toTitle()}/>
                         <Panel.Content>
-                            {React.createElement(WrappedComponent, {...this.props})}
+                            {React.createElement(WrappedComponent, {...this.props,
+                                inputs: Object.fromEntries(Object.entries(this.props.inputs).map(([name, input]) => {
+                                    const source = this.props.inputsToUpdate[name]
+                                    return [name, source?.referenceOwned ? source : {...input, presentation: source?.presentation}]
+                                }))
+                            })}
                         </Panel.Content>
                         <Form.PanelButtons/>
                     </Form.Panel>
@@ -40,6 +46,15 @@ export const modalSubformPanel = ({id, toTitle, toClassName, fields, constraints
                     .forEach(name => inputs[name].set(inputsToUpdate[name].value))
             }
     
+            componentDidUpdate() {
+                const {inputsToUpdate, inputs} = this.props
+                Object.entries(inputsToUpdate).forEach(([name, source]) => {
+                    if (source.referenceOwned && inputs[name] && !_.isEqual(inputs[name].value, source.value)) {
+                        inputs[name].setInitialValue(source.value)
+                    }
+                })
+            }
+
             update(values) {
                 const {inputsToUpdate, activatable: {deactivate}} = this.props
                 Object.keys(inputsToUpdate)

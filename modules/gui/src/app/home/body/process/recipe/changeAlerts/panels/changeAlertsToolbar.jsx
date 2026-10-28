@@ -14,9 +14,12 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
+import {withSourceProblems} from '../../selectedSource'
 import {RecipeActions} from '../changeAlertsRecipe'
+import {presentProcessingInputs, preserveProcessingCopies, settingsOf} from '../processingSettings'
+import {hasSegmentDescription} from '../referenceEvidence'
 import styles from './changeAlertsToolbar.module.css'
-import {ChartPixel} from './chartPixel'
+import {CHART_OPERATIONS, ChartPixel} from './chartPixel'
 import {Date} from './date/date'
 import {Options} from './options/options'
 import {Reference} from './reference/reference'
@@ -24,8 +27,9 @@ import {Retrieve} from './retrieve/retrieve'
 import {Sources} from './sources/sources'
 
 const mapRecipeToProps = recipe => ({
+    processing: settingsOf(recipe),
     initialized: selectFrom(recipe, 'ui.initialized'),
-    baseBands: selectFrom(recipe, 'model.reference.baseBands'),
+    describedSource: hasSegmentDescription(recipe),
     sources: selectFrom(recipe, 'model.sources'),
 })
 
@@ -36,27 +40,30 @@ class _ChangeAlertsToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, initialized, baseBands, sources} = this.props
+        const {recipeId, initialized, describedSource, sources, sourceProblems, processing} = this.props
         const dataSets = Object.keys(sources.dataSets)
+        const presentation = {presentInputs: presentProcessingInputs(processing), modelToApply: preserveProcessingCopies(processing)}
         return (
             <PanelWizard
                 panels={['reference', 'date', 'sources']}
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
-                {initialized && baseBands ? <ChartPixel/> : null}
+                {initialized && describedSource ? <ChartPixel/> : null}
                 <Retrieve/>
                 <Reference/>
                 <Date/>
                 <Sources/>
                 {dataSets.includes('SENTINEL_1')
-                    ? <RadarOptions/>
+                    ? <RadarOptions {...presentation} showStrongScatterers={false}/>
                     : dataSets.includes('PLANET')
                         ? <PlanetOptions
+                            {...presentation}
                             title={msg('process.timeSeries.panel.preprocess.title')}
                             source={sources.dataSets['PLANET'][0]}
                             forCollection
                         />
                         : <OpticalOptions
+                            {...presentation}
                             title={msg('process.timeSeries.panel.preprocess.title')}
                             forCollection
                         />
@@ -68,10 +75,11 @@ class _ChangeAlertsToolbar extends React.Component {
                     placement='top-right'
                     className={styles.top}>
                     <ChartPixelButton
-                        disabled={!initialized || !baseBands}
+                        disabled={!initialized || !describedSource}
+                        operations={CHART_OPERATIONS}
                         onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}
                     />
-                    <RetrieveButton disabled={!baseBands} tooltip={msg('process.changeAlerts.panel.retrieve.tooltip')}/>
+                    <RetrieveButton disabled={!describedSource} tooltip={msg('process.changeAlerts.panel.retrieve.tooltip')}/>
                 </Toolbar>
                 <Toolbar
                     vertical
@@ -80,7 +88,8 @@ class _ChangeAlertsToolbar extends React.Component {
                     <Toolbar.ActivationButton
                         id='reference'
                         label={msg('process.changeAlerts.panel.reference.button')}
-                        tooltip={msg('process.changeAlerts.panel.reference.tooltip')}
+                        tooltip={sourceProblems.reference || msg('process.changeAlerts.panel.reference.tooltip')}
+                        error={!!sourceProblems.reference}
                         disabled={!initialized}
                         panel/>
                     <Toolbar.ActivationButton
@@ -92,7 +101,8 @@ class _ChangeAlertsToolbar extends React.Component {
                     <Toolbar.ActivationButton
                         id='sources'
                         label={msg('process.changeAlerts.panel.sources.button')}
-                        tooltip={msg('process.changeAlerts.panel.sources.tooltip')}
+                        tooltip={sourceProblems.sources || msg('process.changeAlerts.panel.sources.tooltip')}
+                        error={!!sourceProblems.sources}
                         disabled={!initialized}
                         panel/>
                     <Toolbar.ActivationButton
@@ -117,6 +127,7 @@ const OpticalOptions = createCompositeOptions({
 
 export const ChangeAlertsToolbar = compose(
     _ChangeAlertsToolbar,
+    withSourceProblems(),
     withRecipe(mapRecipeToProps)
 )
     

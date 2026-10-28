@@ -1,0 +1,221 @@
+import {act} from 'react'
+import {createRoot} from 'react-dom/client'
+import {Provider} from 'react-redux'
+import {legacy_createStore as createStore} from 'redux'
+import {finalize, of, Subject} from 'rxjs'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+
+import {assetProcessing, processingOfProducer} from '#sepal/recipe/changeAlerts/processing'
+import {actionBuilder} from '~/action-builder'
+import {Recipe} from '~/app/home/body/process/recipeContext'
+import {initStore} from '~/store'
+import {PortalContainer, PortalContext} from '~/widget/portal'
+
+import {ChartPixel} from './chartPixel'
+
+// Samples are interpreted with the description they were taken under. A description arriving for the same
+// source is a new one, so what was sampled under the old one is no longer what the chart may draw.
+
+const {loadCCDCSegments$, loadTimeSeriesObservations$} = vi.hoisted(() => ({
+    loadCCDCSegments$: vi.fn(),
+    loadTimeSeriesObservations$: vi.fn()
+}))
+vi.mock('~/apiRegistry', () => ({default: {gee: {loadCCDCSegments$, loadTimeSeriesObservations$}}}))
+vi.mock('~/translate', () => ({msg: key => key}))
+vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
+vi.mock('~/sources', () => ({
+    getAvailableBands: () => ['ndvi'],
+    groupedBandOptions: () => [[{value: 'ndvi', label: 'ndvi'}]]
+}))
+// The graph renderer is the output boundary; the chart, form and Redux are real.
+vi.mock('../../ccdc/ccdcGraph', () => ({
+    CCDCGraph: ({band, segments, dateFormat}) =>
+        <output aria-label='chart'>{JSON.stringify({band, segments, dateFormat})}</output>
+}))
+
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
+
+const ALERTS = 'alerts-1'
+const SOURCE = 'RECIPE_REF:masking-1'
+
+let root, container
+
+beforeEach(() => {
+    loadCCDCSegments$.mockReset().mockReturnValue(of(['current segments']))
+    loadTimeSeriesObservations$.mockReset().mockReturnValue(of([]))
+})
+
+afterEach(() => {
+    act(() => root?.unmount())
+    root = null
+    container?.remove()
+    vi.restoreAllMocks()
+})
+
+describe('a description accepted for the source being charted', () => {
+    it('discards the samples taken under the previous one and asks again', () => {
+        openChart(described({dateFormat: 1}))
+        expect(chart()).toMatchObject({dateFormat: 1, segments: ['current segments']})
+
+        loadCCDCSegments$.mockReturnValue(of(['resampled segments']))
+        observe({dateFormat: 2})
+
+        expect(loadCCDCSegments$).toHaveBeenCalledTimes(2)
+        expect(chart()).toMatchObject({dateFormat: 2, segments: ['resampled segments']})
+    })
+
+    it('cancels a request the previous description was still waiting on', () => {
+        const pending = new Subject()
+        let cancelled = false
+        loadCCDCSegments$.mockReturnValueOnce(pending.pipe(finalize(() => cancelled = true)))
+        openChart(described({dateFormat: 1}))
+
+        observe({dateFormat: 2})
+
+        expect(cancelled).toBe(true)
+        act(() => {
+            pending.next(['obsolete segments'])
+            pending.complete()
+        })
+        expect(chart()).toMatchObject({dateFormat: 2, segments: ['current segments']})
+    })
+})
+
+describe('the samples charted', () => {
+    it('are kept when the same description is published again', () => {
+        openChart(described({dateFormat: 1}))
+
+        observe({dateFormat: 1})
+
+        expect(loadCCDCSegments$).toHaveBeenCalledTimes(1)
+    })
+
+    it('are taken again once the asset charted reports a new token, though nothing described changed', () => {
+        openChart(overAsset({dateFormat: 1}))
+        tokens({[SEGMENTS_ASSET]: {version: 'v1'}})
+        expect(loadCCDCSegments$).toHaveBeenCalledTimes(1)
+
+        loadCCDCSegments$.mockReturnValue(of(['resampled segments']))
+        tokens({[SEGMENTS_ASSET]: {version: 'v2', changedAt: 1}})
+
+        expect(loadCCDCSegments$).toHaveBeenCalledTimes(2)
+        expect(chart()).toMatchObject({segments: ['resampled segments']})
+    })
+})
+
+// The server derives, and judges, the collection the alerts monitor from the recipe as applied (observedCollection):
+// the request names the recipe, its Classification copy and all, rather than settings standing for no recipe.
+describe('the observations charted', () => {
+    it('are asked for of the alerts recipe as applied', () => {
+        const recipe = withCopiedClassification(described({dateFormat: 1}))
+
+        openChart(recipe)
+
+        expect(loadTimeSeriesObservations$).toHaveBeenCalledTimes(1)
+        expect(loadTimeSeriesObservations$).toHaveBeenCalledWith({
+            recipe: expect.objectContaining({id: ALERTS, type: 'CHANGE_ALERTS', model: recipe.model}),
+            latLng: {lat: 0, lng: 0},
+            bands: ['ndvi']
+        })
+    })
+
+    it('are asked for again of the recipe once what it monitors is applied changed', () => {
+        openChart(described({dateFormat: 1}))
+
+        act(() => actionBuilder('APPLY_SOURCES')
+            .set(['process.loadedRecipes', ALERTS, 'model.sources.dataSets'], {LANDSAT: ['LANDSAT_9']})
+            .dispatch())
+
+        expect(loadTimeSeriesObservations$).toHaveBeenCalledTimes(2)
+        expect(loadTimeSeriesObservations$.mock.lastCall[0].recipe.model.sources.dataSets).toEqual({LANDSAT: ['LANDSAT_9']})
+    })
+})
+
+const SEGMENTS_ASSET = 'users/x/segments'
+
+// What the source runtime knows of each asset, for the credentials in effect: none are linked here.
+const tokens = versions => act(() => actionBuilder('UPDATE_ASSET_EVIDENCE')
+    .set('process.assetEvidence', {
+        generation: 0,
+        assets: Object.fromEntries(Object.entries(versions).map(([id, {version, changedAt = null}]) => [id, {version, checkedAt: 0, changedAt}]))
+    })
+    .dispatch())
+
+const overAsset = evidence => {
+    const recipe = described({...evidence, source: `ASSET:${SEGMENTS_ASSET}`})
+    return {...recipe, model: {...recipe.model, reference: {type: 'ASSET', id: SEGMENTS_ASSET}}}
+}
+
+const chart = () => JSON.parse(container.querySelector('output').textContent)
+
+const observe = evidence => act(() => actionBuilder('OBSERVED')
+    .set(['process.loadedRecipes', ALERTS, 'ui.sourceEvidence'], sourceEvidence(evidence))
+    .dispatch())
+
+const sourceEvidence = ({dateFormat, source = SOURCE}) => ({
+    sourceKey: source,
+    status: 'OBSERVED',
+    processing: source.startsWith('ASSET:') ? assetProcessing({dateFormat}) : processingOfProducer({options: {}}),
+    segments: {bands: ['ndvi_rmse'], baseBands: [{name: 'ndvi', measures: ['value']}], dateFormat}
+})
+
+const described = evidence => ({
+    id: ALERTS,
+    type: 'CHANGE_ALERTS',
+    model: {
+        reference: {type: 'RECIPE_REF', id: 'masking-1'},
+        sources: {band: 'ndvi', dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_8']}},
+        options: {corrections: []},
+        date: {
+            monitoringEnd: '2024-01-01',
+            monitoringDuration: 1,
+            monitoringDurationUnit: 'months',
+            calibrationDuration: 2,
+            calibrationDurationUnit: 'months'
+        }
+    },
+    ui: {chartPixel: {lat: 0, lng: 0}, sourceEvidence: sourceEvidence(evidence)}
+})
+
+// Sources still carrying the Classification copied from the reference's producer, which Change Alerts does not use.
+const withCopiedClassification = recipe =>
+    ({...recipe, model: {...recipe.model, sources: {...recipe.model.sources, classification: 'classification-1'}}})
+
+// The Masking the alerts reference, over a CCDC, as the session holds them: it can run.
+const REFERENCED = [
+    {id: 'masking-1', type: 'MASKING', model: {imageToMask: {type: 'RECIPE_REF', id: 'ccdc-1'}, imageMask: {type: 'RECIPE_REF', id: 'mosaic-1'}}},
+    {id: 'mosaic-1', type: 'MOSAIC', model: {}},
+    {id: 'ccdc-1', type: 'CCDC', model: {sources: {dataSets: {LANDSAT: ['LANDSAT_8']}}, options: {corrections: []}, dates: {startDate: '2020-01-01', endDate: '2021-01-01'}}}
+]
+
+const openChart = recipe => {
+    const initialState = {
+        dimensions: {width: 1024, height: 768},
+        process: {
+            loadedRecipes: {
+                [recipe.id]: {...recipe, ui: {...recipe.ui, chartPixel: null}},
+                ...Object.fromEntries(REFERENCED.map(record => [record.id, record]))
+            },
+            tabs: [{id: recipe.id}],
+            recipes: []
+        }
+    }
+    const store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
+    initStore(store)
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    root = createRoot(container)
+    act(() => root.render(
+        <Provider store={store}>
+            <PortalContainer id='chart-panel'/>
+            <PortalContext id='chart-panel'>
+                <Recipe id={recipe.id}>
+                    <ChartPixel values={{selectedBand: 'ndvi'}}/>
+                </Recipe>
+            </PortalContext>
+        </Provider>
+    ))
+    act(() => actionBuilder('CHART_PIXEL')
+        .set(['process.loadedRecipes', recipe.id, 'ui.chartPixel'], recipe.ui.chartPixel)
+        .dispatch())
+}

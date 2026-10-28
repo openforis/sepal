@@ -1,0 +1,522 @@
+import {act} from 'react'
+import {createRoot} from 'react-dom/client'
+import {Provider} from 'react-redux'
+import {legacy_createStore as createStore} from 'redux'
+import {firstValueFrom, of, Subject, throwError} from 'rxjs'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+
+import {effectiveSettings} from '#sepal/recipe/changeAlerts/processing'
+import {PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
+import {Recipe} from '~/app/home/body/process/recipeContext'
+import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
+import {selectFrom} from '~/stateUtils'
+import {initStore} from '~/store'
+
+// Mounts the real lifecycle and observation against a Redux store; remote reads and presentation are faked.
+const assetMetadata$ = vi.fn()
+const loadRecipe$ = vi.fn()
+// The token Earth Engine reports for every asset: the update time the asset store lists for it.
+const versions = vi.hoisted(() => ({current: 0}))
+vi.mock('~/apiRegistry', async () => {
+    const {of} = await import('rxjs')
+    return {default: {
+        gee: {
+            assetMetadata$: (...args) => assetMetadata$(...args),
+            assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: `v${versions.current}`}))})
+        },
+        recipe: {load$: (...args) => loadRecipe$(...args)}
+    }}
+})
+vi.mock('~/translate', () => ({msg: key => key}))
+vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
+vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
+vi.mock('~/sources', () => ({getAvailableBands: ({dataSets}) => dataSets.map(dataSet => dataSet.toLowerCase())}))
+vi.mock('../ccdc/ccdcRecipe', () => ({getAllVisualizations: recipe => recipe.model.templates || []}))
+vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
+    const {describeSegments$} = await import('../ccdc/segmentDescription')
+    const {describeSegmentsAsset$} = await import('../ccdc/segmentsAsset')
+    return {
+        getRecipeType: type => ({
+            CCDC: {describeSegments$},
+            ASSET_MOSAIC: {describeSegments$: ({recipe}) => describeSegmentsAsset$(recipe.model.assetDetails.assetId)}
+        })[type]
+    }
+})
+
+const {SourceEvidenceSync} = await import('../sourceEvidenceSync')
+const {changeAlertsObservation} = await import('./referenceObservation')
+const {baseBandsOf} = await import('../segmentEvidence')
+
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
+
+const ALERTS = 'alerts-1'
+const MASKING = 'masking-1'
+const CCDC = 'ccdc-1'
+const SEGMENTS_ASSET = 'users/x/segments'
+const WRAPPED_ASSET = 'masking-over-asset'
+const ASSET_MOSAIC = 'asset-mosaic-1'
+
+let root, container, store
+
+beforeEach(() => {
+    assetMetadata$.mockReset()
+    loadRecipe$.mockReset()
+    loadRecipe$.mockReturnValue(throwError(() => new Error('Recipe not found')))
+})
+
+afterEach(async () => {
+    await act(async () => root?.unmount())
+    root = null
+    container?.remove()
+    vi.restoreAllMocks()
+})
+
+describe('selecting a recipe as the reference', () => {
+    it.each([CCDC, MASKING])('observes %s without replacing or decorating the selected reference', id => {
+        const selection = {type: 'RECIPE_REF', id}
+
+        sync({selection})
+
+        expect(reference()).toEqual(selection)
+        expect(baseBandsOf(alertsRecipe(), PRIMARY_IMAGE).map(({name}) => name)).toEqual(['red', 'nir'])
+    })
+
+    it('does not reset the monitoring configuration the user has chosen', () => {
+        sync({
+            selection: {type: 'RECIPE_REF', id: MASKING},
+            sources: {band: 'nir', dataSetType: 'OPTICAL', cloudPercentageThreshold: 42}
+        })
+
+        expect(sources()).toMatchObject({
+            band: 'nir',
+            dataSetType: 'OPTICAL',
+            cloudPercentageThreshold: 42
+        })
+    })
+})
+
+describe('the producer of a selected recipe', () => {
+    it('refreshes processing facts while preserving consumer datasets and saved corrections', async () => {
+        sync({selection: {type: 'RECIPE_REF', id: MASKING}})
+
+        await update(CCDC, {
+            sources: {dataSets: {SENTINEL_1: ['SENTINEL_1']}},
+            options: {corrections: []}
+        })
+
+        expect(processing().defaults.sources.dataSets).toEqual({SENTINEL_1: ['SENTINEL_1']})
+        expect(sources().dataSets).toBeUndefined()
+        expect(alertsRecipe().model.options).toEqual({})
+        expect(effective().options.corrections).toEqual([])
+        expect(baseBandsOf(alertsRecipe(), PRIMARY_IMAGE).map(({name}) => name)).toEqual(['sentinel_1'])
+    })
+
+    it('is the asset a wrapper leads to, whose exported configuration is read without writing monitoring settings', async () => {
+        assetMetadata$.mockReturnValue(of(assetMetadata({
+            dateFormat: 2,
+            recipe_sources: JSON.stringify({dataSets: {SENTINEL_1: ['SENTINEL_1']}}),
+            recipe_options: JSON.stringify({spatialSpeckleFilter: 'LEE'})
+        })))
+
+        sync({selection: {type: 'RECIPE_REF', id: WRAPPED_ASSET}})
+        await settled()
+
+        expect(processing().defaults.sources.dataSets).toEqual({SENTINEL_1: ['SENTINEL_1']})
+        expect(sources().dataSets).toBeUndefined()
+        expect(effective().options.spatialSpeckleFilter).toBe('LEE')
+        expect(alertsRecipe().model.options).toEqual({})
+        expect(baseBandsOf(alertsRecipe(), PRIMARY_IMAGE).map(({name}) => name)).toEqual(['red'])
+        expect(reference()).toEqual({type: 'RECIPE_REF', id: WRAPPED_ASSET})
+    })
+})
+
+// Change Alerts uses no Classification and fits no breakpoints: what a producer's Sources say of those is not taken,
+// whether the producer is a recipe or an asset's exported configuration, and what Change Alerts already holds is kept.
+describe('the producer settings monitoring takes', () => {
+    it('are a recipe\'s imagery settings, not its Classification or breakpoint bands', async () => {
+        sync({selection: {type: 'RECIPE_REF', id: MASKING}})
+        await hold(PRODUCER_CLASSIFICATION)
+
+        await update(CCDC, {
+            sources: {dataSets: {SENTINEL_1: ['SENTINEL_1']}, classification: PRODUCER_CLASSIFICATION.id, breakpointBands: ['vv']},
+            options: {corrections: []}
+        })
+
+        expect(processing().defaults.sources.dataSets).toEqual({SENTINEL_1: ['SENTINEL_1']})
+        expect(sources().dataSets).toBeUndefined()
+        expect(sources()).not.toHaveProperty('classification')
+        expect(sources()).not.toHaveProperty('breakpointBands')
+    })
+
+    it('are an asset\'s exported imagery settings, not the Classification they name', async () => {
+        assetMetadata$.mockReturnValue(of(assetMetadata({
+            dateFormat: 2,
+            recipe_sources: JSON.stringify({dataSets: {SENTINEL_1: ['SENTINEL_1']}, classification: 'colleagues-classification'})
+        })))
+
+        sync({selection: {type: 'RECIPE_REF', id: WRAPPED_ASSET}})
+        await settled()
+
+        expect(processing().defaults.sources.dataSets).toEqual({SENTINEL_1: ['SENTINEL_1']})
+        expect(sources().dataSets).toBeUndefined()
+        expect(sources()).not.toHaveProperty('classification')
+    })
+
+    // What is not taken is no change: the user's edits stay, as for any producer setting that has not changed.
+    it.each([
+        ['its breakpoint bands', async () => update(CCDC, {sources: {dataSets: {LANDSAT: ['RED', 'NIR']}, breakpointBands: ['nir']}})],
+        ['its Classification', async () => {
+            await hold(PRODUCER_CLASSIFICATION)
+            await update(CCDC, {sources: {dataSets: {LANDSAT: ['RED', 'NIR']}, classification: PRODUCER_CLASSIFICATION.id}})
+        }]
+    ])('leave the monitoring settings the user edited alone when a recipe producer changes only %s', async (_case, change) => {
+        sync({selection: {type: 'RECIPE_REF', id: MASKING}})
+        await settled()
+        await update(ALERTS, {sources: {...sources(), dataSets: {LANDSAT: ['SWIR1']}}})
+
+        await change()
+
+        expect(sources().dataSets).toEqual({LANDSAT: ['SWIR1']})
+    })
+
+    it.each([
+        ['its breakpoint bands', {breakpointBands: ['nir']}],
+        ['the Classification it names', {classification: 'colleagues-classification'}]
+    ])('leave the monitoring settings the user edited alone when an asset is re-exported changing only %s', async (_case, ignored) => {
+        assetStates({dateFormat: 2, recipe_sources: JSON.stringify({dataSets: {LANDSAT: ['RED']}})})
+        sync({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
+        await settled()
+        await update(ALERTS, {sources: {...sources(), dataSets: {LANDSAT: ['NIR']}}})
+
+        assetStates({dateFormat: 2, recipe_sources: JSON.stringify({dataSets: {LANDSAT: ['RED']}, ...ignored})})
+        await reExport()
+
+        expect(sources().dataSets).toEqual({LANDSAT: ['NIR']})
+    })
+
+    it('leave a Classification Change Alerts already saved as it is', async () => {
+        sync({selection: {type: 'RECIPE_REF', id: MASKING}, sources: {classification: 'saved-classification'}})
+        await hold(PRODUCER_CLASSIFICATION)
+
+        await update(CCDC, {sources: {dataSets: {SENTINEL_1: ['SENTINEL_1']}, classification: PRODUCER_CLASSIFICATION.id}})
+
+        expect(processing().defaults.sources.dataSets).toEqual({SENTINEL_1: ['SENTINEL_1']})
+        expect(sources().dataSets).toBeUndefined()
+        expect(sources().classification).toBe('saved-classification')
+    })
+})
+
+describe('an observation repeated for another reason', () => {
+    it('leaves monitoring settings the user has edited alone', async () => {
+        sync({selection: {type: 'RECIPE_REF', id: MASKING}})
+        await settled()
+
+        await update(ALERTS, {
+            sources: {...sources(), dataSets: {LANDSAT: ['SWIR1']}},
+            options: {corrections: []}
+        })
+        await update(CCDC, {dates: {startDate: '2016-01-01', endDate: '2021-01-01'}})
+
+        expect(sources().dataSets).toEqual({LANDSAT: ['SWIR1']})
+        expect(alertsRecipe().model.options).toEqual({corrections: []})
+    })
+})
+
+describe('an asset re-exported under the same selection', () => {
+    it('refreshes reference facts without changing consumer settings or its saved date fallback', async () => {
+        assetStates({dateFormat: 2, recipe_sources: JSON.stringify({dataSets: {LANDSAT: ['RED']}})})
+        sync({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
+        await settled()
+        expect(effective().reference.dateFormat).toBe(2)
+        expect(reference().dateFormat).toBeUndefined()
+        await update(ALERTS, {reference: {type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 0}})
+
+        assetStates({dateFormat: 2, recipe_sources: JSON.stringify({dataSets: {SENTINEL_1: ['SENTINEL_1']}})})
+        await reExport()
+
+        expect(processing().defaults.sources.dataSets).toEqual({SENTINEL_1: ['SENTINEL_1']})
+        expect(sources().dataSets).toBeUndefined()
+        expect(reference().dateFormat).toBe(0)
+        expect(effective().reference.dateFormat).toBe(2)
+    })
+
+    it('does not restore settings the user edited when only its date representation changed', async () => {
+        assetStates({dateFormat: 2, recipe_sources: JSON.stringify({dataSets: {LANDSAT: ['RED']}})})
+        sync({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
+        await settled()
+        await update(ALERTS, {sources: {dataSets: {LANDSAT: ['NIR']}, band: 'nir'}})
+
+        assetStates({dateFormat: 1, recipe_sources: JSON.stringify({dataSets: {LANDSAT: ['RED']}})})
+        await reExport()
+
+        expect(sources()).toEqual({dataSets: {LANDSAT: ['NIR']}, band: 'nir'})
+    })
+})
+
+describe('a consumer whose own configuration has lost a dependency', () => {
+    it('can initialize a newly selected source despite obsolete monitoring dependencies', async () => {
+        sync({
+            selection: {type: 'RECIPE_REF', id: 'missing-reference'},
+            sources: {classification: 'deleted-1', dataSets: {LANDSAT: ['SWIR1']}}
+        })
+        await settled()
+        expect(alertsRecipe().ui.sourceEvidence.status).toBe('UNAVAILABLE')
+
+        await update(ALERTS, {reference: {type: 'RECIPE_REF', id: CCDC}})
+
+        expect(alertsRecipe().ui.sourceEvidence.status).toBe('OBSERVED')
+        expect(processing().defaults.sources.dataSets).toEqual({LANDSAT: ['RED', 'NIR']})
+    })
+})
+
+describe('a source that could not be read and then can', () => {
+    it('leaves monitoring settings the user edited since the last answer alone', async () => {
+        const exported = {
+            recipe_sources: JSON.stringify({dataSets: {LANDSAT: ['RED']}}),
+            recipe_options: JSON.stringify({corrections: ['SR']})
+        }
+        assetStates(exported)
+        sync({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
+        await settled()
+        expect(sources()).toEqual({})
+        expect(processing().defaults.sources.dataSets).toEqual({LANDSAT: ['RED']})
+        await update(ALERTS, {
+            sources: {...sources(), dataSets: {LANDSAT: ['NIR']}},
+            options: {corrections: []}
+        })
+
+        assetMetadata$.mockReturnValue(throwError(() => new Error('asset unavailable')))
+        await reExport()
+        expect(alertsRecipe().ui.sourceEvidence.status).toBe('UNAVAILABLE')
+
+        assetStates(exported)
+        await reExport()
+
+        expect(alertsRecipe().ui.sourceEvidence.status).toBe('OBSERVED')
+        expect(sources().dataSets).toEqual({LANDSAT: ['NIR']})
+        expect(alertsRecipe().model.options).toEqual({corrections: []})
+    })
+
+    it('reads the date representation the recovered asset states', async () => {
+        assetMetadata$.mockReturnValue(throwError(() => new Error('asset unavailable')))
+        sync({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
+        await settled()
+        expect(alertsRecipe().ui.sourceEvidence.status).toBe('UNAVAILABLE')
+        expect(reference().dateFormat).toBeUndefined()
+
+        assetStates({dateFormat: 2})
+        await reExport()
+
+        expect(alertsRecipe().ui.sourceEvidence.status).toBe('OBSERVED')
+        expect(effective().reference.dateFormat).toBe(2)
+        expect(reference().dateFormat).toBeUndefined()
+    })
+})
+
+describe('a source that cannot be read', () => {
+    it('leaves the monitoring configuration as the user left it', async () => {
+        assetMetadata$.mockReturnValue(throwError(() => new Error('asset unavailable')))
+
+        sync({
+            selection: {type: 'ASSET', id: SEGMENTS_ASSET},
+            sources: {band: 'nir', dataSets: {LANDSAT: ['NIR']}}
+        })
+        await settled()
+
+        expect(alertsRecipe().ui.sourceEvidence.status).toBe('UNAVAILABLE')
+        expect(sources()).toEqual({band: 'nir', dataSets: {LANDSAT: ['NIR']}})
+        expect(reference()).toEqual({type: 'ASSET', id: SEGMENTS_ASSET})
+    })
+})
+
+describe('a response for a selection that has been replaced', () => {
+    it('does not configure the recipe that moved on', async () => {
+        const held = new Subject()
+        assetMetadata$.mockReturnValue(held)
+        sync({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
+        await settled()
+
+        await update(ALERTS, {reference: {type: 'RECIPE_REF', id: MASKING}})
+        await act(async () => {
+            held.next(assetMetadata({
+                dateFormat: 2,
+                recipe_sources: JSON.stringify({dataSets: {SENTINEL_1: ['SENTINEL_1']}})
+            }))
+            held.complete()
+        })
+
+        expect(processing().defaults.sources.dataSets).toEqual({LANDSAT: ['RED', 'NIR']})
+        expect(reference()).toEqual({type: 'RECIPE_REF', id: MASKING})
+    })
+})
+
+describe('selecting a segments asset as the reference', () => {
+    it('reads the segment description and monitoring settings from the same asset response', async () => {
+        const exported = {dataSets: {LANDSAT: ['RED']}}
+        assetMetadata$
+            .mockReturnValueOnce(of(assetMetadata({recipe_sources: JSON.stringify(exported)})))
+            .mockReturnValue(of(assetMetadata({recipe_sources: JSON.stringify({dataSets: {LANDSAT: ['NIR']}})})))
+        const recipe = {type: 'CHANGE_ALERTS', model: {reference: {type: 'ASSET', id: SEGMENTS_ASSET}}}
+
+        const evidence = await firstValueFrom(changeAlertsObservation.observe$({
+            recipe, graph: {recipes: [], edges: []}, recipesById: new Map()
+        }))
+
+        expect(evidence.segments.baseBands.map(({name}) => name)).toEqual(['red'])
+        expect(evidence.processing.defaults.sources).toEqual(exported)
+        expect(assetMetadata$).toHaveBeenCalledTimes(1)
+    })
+
+    it('reads its date representation from the asset', () => {
+        assetMetadata$.mockReturnValue(of(assetMetadata({dateFormat: 2})))
+
+        sync({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
+
+        expect(effective().reference.dateFormat).toBe(2)
+        expect(reference().dateFormat).toBeUndefined()
+    })
+
+    it('reads a zero representation as the asset stating one', () => {
+        assetMetadata$.mockReturnValue(of(assetMetadata({dateFormat: 0})))
+
+        sync({selection: {type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 1}})
+
+        expect(effective().reference.dateFormat).toBe(0)
+        expect(reference().dateFormat).toBe(1)
+    })
+
+    it('keeps a correction applied to the asset already selected', async () => {
+        assetMetadata$.mockReturnValue(of(assetMetadata({dateFormat: 2})))
+        sync({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
+        await settled()
+        expect(effective().reference.dateFormat).toBe(2)
+        expect(reference().dateFormat).toBeUndefined()
+
+        await update(ALERTS, {reference: {type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 0}})
+
+        expect(reference().dateFormat).toBe(0)
+        expect(effective().reference.dateFormat).toBe(2)
+    })
+
+    it('keeps what was configured beside the reference when the asset states none', () => {
+        assetMetadata$.mockReturnValue(of(assetMetadata({})))
+
+        sync({selection: {type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 1}})
+
+        expect(reference().dateFormat).toBe(1)
+    })
+})
+
+const settled = () => act(async () => {})
+
+const assetStates = properties => assetMetadata$.mockReturnValue(of(assetMetadata(properties)))
+
+const reExport = () => act(async () => store.dispatch({
+    type: 'ASSET_RE_EXPORTED',
+    reduce: state => ({
+        ...state,
+        assets: {user: [{id: SEGMENTS_ASSET, updateTime: `v${++versions.current}`}], other: []}
+    })
+}))
+
+// A Classification of the producer's, held so that the producer can be described again.
+const PRODUCER_CLASSIFICATION = {
+    id: 'producer-classification',
+    type: 'CLASSIFICATION',
+    model: {legend: {entries: [{value: 1}]}, classifier: {type: 'RANDOM_FOREST'}, inputImagery: {images: []}}
+}
+
+const hold = record => act(async () => store.dispatch({
+    type: 'HOLD_RECORD',
+    reduce: state => ({...state, process: {...state.process, loadedRecipes: {...state.process.loadedRecipes, [record.id]: record}}})
+}))
+
+const update = (id, model) => act(async () => store.dispatch({
+    type: 'UPDATE_RECORD',
+    reduce: state => ({
+        ...state,
+        process: {
+            ...state.process,
+            loadedRecipes: {
+                ...state.process.loadedRecipes,
+                [id]: {
+                    ...state.process.loadedRecipes[id],
+                    model: {...state.process.loadedRecipes[id].model, ...model}
+                }
+            }
+        }
+    })
+}))
+
+const alertsRecipe = () => selectFrom(store.getState(), ['process.loadedRecipes', ALERTS])
+
+const reference = () => alertsRecipe().model.reference
+
+const sources = () => alertsRecipe().model.sources
+const processing = () => alertsRecipe().ui.sourceEvidence.processing
+const effective = () => effectiveSettings(alertsRecipe().model, processing()).model
+
+const sync = ({selection, sources = {}}) => {
+    const initialState = {
+        process: {
+            loadedRecipes: {
+                [ALERTS]: {
+                    id: ALERTS,
+                    type: 'CHANGE_ALERTS',
+                    model: {reference: selection, sources, options: {}}
+                },
+                [MASKING]: {
+                    id: MASKING,
+                    type: 'MASKING',
+                    model: {imageToMask: {type: 'RECIPE_REF', id: CCDC}}
+                },
+                [CCDC]: ccdcRecipe(),
+                [WRAPPED_ASSET]: {
+                    id: WRAPPED_ASSET,
+                    type: 'MASKING',
+                    model: {imageToMask: {type: 'RECIPE_REF', id: ASSET_MOSAIC}}
+                },
+                [ASSET_MOSAIC]: {
+                    id: ASSET_MOSAIC,
+                    type: 'ASSET_MOSAIC',
+                    model: {assetDetails: {assetId: SEGMENTS_ASSET}}
+                }
+            },
+            recipes: [],
+            projects: [],
+            tabs: [{id: ALERTS}]
+        },
+        assets: {user: [{id: SEGMENTS_ASSET, updateTime: 'v0'}], other: []}
+    }
+    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
+    initStore(store)
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    root = createRoot(container)
+    act(() => root.render(
+        <Provider store={store}>
+            <SourceRuntimeProvider>
+                <Recipe id={ALERTS}>
+                    <SourceEvidenceSync observation={changeAlertsObservation}/>
+                </Recipe>
+            </SourceRuntimeProvider>
+        </Provider>
+    ))
+}
+
+const ccdcRecipe = () => ({
+    id: CCDC,
+    type: 'CCDC',
+    model: {
+        sources: {dataSets: {LANDSAT: ['RED', 'NIR']}},
+        options: {corrections: ['SR']},
+        ccdcOptions: {dateFormat: 1},
+        dates: {startDate: '2015-01-01', endDate: '2021-01-01'},
+        templates: [{id: 'v-red'}]
+    }
+})
+
+const assetMetadata = properties => ({
+    bandNames: ['red_coefs', 'red_rmse', 'tStart', 'tEnd'],
+    properties: {startDate: '2015-01-01', endDate: '2021-01-01', ...properties}
+})
