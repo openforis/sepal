@@ -27,11 +27,6 @@ const endpoints = [
         authenticate: false
     },
     {
-        path: '/api/user/password/reset',
-        target: `http://${modules.user}/password/reset`,
-        authenticate: false
-    },
-    {
         path: '/api/user/validate',
         target: `http://${modules.user}/validate`,
         authenticate: false

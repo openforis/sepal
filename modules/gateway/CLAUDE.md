@@ -90,6 +90,9 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
 - **Login throttling**: the user module throttles failed password logins per username at a client address and per client address (see
   `modules/user/src/loginThrottle.js`). The gateway sends `req.ip` as `clientIp` (`trust proxy` is 1: Caddy sets
   `X-Forwarded-For`) and passes the user module's 429 on to the client.
+- **Password reset logs in**: `POST /api/user/password/reset` (`src/passwordResetRoute.js`) forwards to the user
+  module and, when it accepts the token, starts the browser's session as that user (`src/userSession.js`, shared with
+  `authMiddleware`). The reset proves control of the account's email, so no throttled login follows it.
 - **Worker-session API keys**: Basic auth with an *empty* username treats the password as a worker-session
   api key, authenticated via `POST http://worker/sessions/api-key-authenticate`. The key resolves to
   `{username, sessionId, workerType}`; a key whose owner is not `ACTIVE` (e.g. locked) is refused

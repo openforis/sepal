@@ -18,6 +18,7 @@ import {amqpUri, port, redisUri, sandboxDefaultInstanceType, sepalHost} from './
 import {initializeGoogleAccessTokenRefresher} from './googleAccessToken.js'
 import {GoogleAccessTokenMiddleware} from './googleAccessTokenMiddleware.js'
 import {restrictMetricsToAdmins} from './metricsAccess.js'
+import {passwordResetRoute} from './passwordResetRoute.js'
 import {Proxy} from './proxy.js'
 import {sandboxInteractionRoute} from './sandbox/sandboxInteractionRoute.js'
 import {createSandboxProxy} from './sandbox/sandboxProxy.js'
@@ -29,6 +30,7 @@ import {sessionExpiryClosedSubscriber} from './sandbox/sessionExpiryClosedSubscr
 import {sessionExpiryNotifiedSubscriber} from './sandbox/sessionExpiryNotifiedSubscriber.js'
 import {workerSessionClosedSubscriber} from './sandbox/workerSessionClosedSubscriber.js'
 import {SessionManager} from './session.js'
+import {userSessionStarter} from './userSession.js'
 import {UserStore} from './userStore.js'
 import {initializeWebSocketServer} from './websocket.js'
 import {webSocketUpgradeHandler} from './webSocketUpgrade.js'
@@ -153,6 +155,7 @@ const main = async () => {
     // Auth not needed for these endpoints
     app.post('/api/user/logout', logout)
     app.post('/api/user/invalidateOtherSessions', invalidateOtherSessions)
+    app.post('/api/user/password/reset', passwordResetRoute(userSessionStarter(userStore, ensureSessionFor)))
 
     restrictMetricsToAdmins(app, authMiddleware)
     app.use('/api/gateway/metrics', apiMetrics({metricsPath: '/api/gateway/metrics'}))

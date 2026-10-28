@@ -1,4 +1,4 @@
-import {catchError, delay, map, of, switchMap, tap, throwError} from 'rxjs'
+import {catchError, map, of, switchMap, tap, throwError} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
@@ -118,13 +118,15 @@ export const startLoggedOff$ = () =>
         })
     )
 
-// The browser may be logged in as someone else: the gateway replaces that session on login and kicks
-// its other tabs once the new cookie is out, so no logout is needed here — and a rejected reset changes nothing.
-export const resetPassword$ = ({token, username, password, type, recaptchaToken}) =>
+// The reset logs the browser in itself, so no login follows it to be refused by the login throttle. The browser may
+// be logged in as someone else: the gateway replaces that session and kicks its other tabs once the new cookie is
+// out, so no logout is needed here — and a rejected reset changes nothing.
+export const resetPassword$ = ({token, password, type, recaptchaToken}) =>
     api.user.resetPassword$({token, password, recaptchaToken}).pipe(
-        tap(() => publishEvent(type === 'reset' ? 'password_reset' : 'user_activated')),
-        delay(2000),
-        switchMap(() => authenticate$({username, password})),
+        tap(user => {
+            publishEvent(type === 'reset' ? 'password_reset' : 'user_activated')
+            publishCurrentUserEvent(user)
+        }),
         switchMap(user =>
             api.user.invalidateOtherSessions$().pipe(
                 map(() => user)
