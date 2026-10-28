@@ -45,7 +45,12 @@
     },
     "googleAccountRequired": "",
     "info": "",
-    "initializing": "",
+    "landingTab": "",
+    "launch": {
+      "startingSession": "",
+      "startingServer": "",
+      "startingApp": ""
+    },
     "loading": {
       "error": "",
       "progress": ""
@@ -57,6 +62,30 @@
     "running": "",
     "noInstanceRequired": "",
     "noInstanceRequiredTooltip": "",
+    "gpuRequiredTooltip": "",
+    "sessionTakenOver": "",
+    "confirmReopen": {
+      "title": "",
+      "instance": "",
+      "unknownInstance": "",
+      "otherBrowser": "",
+      "otherInstance": "",
+      "group": "",
+      "alsoClosing": "",
+      "releaseFailed": ""
+    },
+    "instancePicker": {
+      "title": "",
+      "instance": "",
+      "placeholder": "",
+      "runningSection": "",
+      "newSection": "",
+      "newSsdSection": "",
+      "newInstanceTitle": "",
+      "noInstanceType": "",
+      "belowRequirements": "",
+      "alreadyRunning": ""
+    },
     "admin": {
       "title": "",
       "logs": {
@@ -338,10 +367,12 @@
     "lessThan": "",
     "match": "",
     "max": "",
+    "maxLength": "",
     "min": "",
     "notBlank": "",
     "notEmpty": "",
-    "number": ""
+    "number": "",
+    "username": ""
   },
   "footer": {
     "buildNumber": "",
@@ -364,7 +395,9 @@
   "gee": {
     "asset": {
       "error": {
-        "wrongType": ""
+        "wrongType": "",
+        "invalidIds": "",
+        "notFound": ""
       }
     },
     "classification": {
@@ -376,6 +409,18 @@
       "earthEngineException": "",
       "failedToLoadRecipe": "",
       "title": ""
+    },
+    "geoId": {
+      "error": {
+        "invalidBuffer": "",
+        "invalidGeometry": "",
+        "notFound": "",
+        "rateLimited": "",
+        "rejected": "",
+        "serviceError": "",
+        "unreachable": "",
+        "unusableResponse": ""
+      }
     },
     "image": {
       "error": {
@@ -395,8 +440,10 @@
     "connectivityError": "",
     "versionMismatch": {
       "title": "",
-      "message": "",
-      "reloadNow": ""
+      "message": ""
+    },
+    "loginSession": {
+      "switched": ""
     },
     "sections": {
       "account": "",
@@ -689,7 +736,8 @@
           "duplicateColor": "",
           "duplicateLabel": "",
           "duplicateValue": "",
-          "invalidColor": ""
+          "invalidColor": "",
+          "invalidValue": ""
         },
         "remove": {
           "tooltip": ""
@@ -790,6 +838,25 @@
             }
           },
           "Recipe": {
+            "description": "",
+            "form": {
+              "name": {
+                "label": "",
+                "placeholder": ""
+              }
+            }
+          }
+        }
+      },
+      "editImageLayerSource": {
+        "types": {
+          "Asset": {
+            "description": ""
+          },
+          "Planet": {
+            "description": ""
+          },
+          "Recipe": {
             "description": ""
           }
         }
@@ -802,15 +869,36 @@
         }
       },
       "layer": {
+        "edit": {
+          "tooltip": ""
+        },
         "remove": {
           "tooltip": ""
+        },
+        "actions": {
+          "label": "",
+          "edit": "",
+          "rename": "",
+          "delete": "",
+          "deleteOwned": ""
+        },
+        "delete": {
+          "confirmation": ""
         }
       },
+      "legacySource": "",
+      "missingSources": "",
       "mode": {
         "grid": {
           "label": ""
         },
         "stack": {
+          "label": ""
+        }
+      },
+      "renameImageLayerSource": {
+        "title": "",
+        "name": {
           "label": ""
         }
       },
@@ -822,6 +910,17 @@
         "loading": "",
         "loadError": ""
       },
+      "draft": {
+        "copy": {
+          "label": "",
+          "tooltip": ""
+        },
+        "paste": {
+          "label": "",
+          "tooltip": "",
+          "empty": ""
+        }
+      },
       "form": {
         "band": {
           "band.label": "",
@@ -832,6 +931,7 @@
           "reverse.tooltip": "",
           "saturation.label": "",
           "select.placeholder": "",
+          "unavailable": "",
           "value.label": ""
         },
         "gamma": {
@@ -858,7 +958,8 @@
           },
           "text": {
             "tooltip": "",
-            "placeholder": ""
+            "placeholder": "",
+            "invalid": ""
           }
         },
         "min": {
@@ -894,6 +995,7 @@
     "visualizationSelector": {
       "label": "",
       "userDefined.label": "",
+      "inherited.label": "",
       "add.tooltip": "",
       "edit.tooltip": "",
       "clone.tooltip": "",
@@ -905,6 +1007,18 @@
     },
     "interactionMode": {
       "chart": ""
+    },
+    "layerSource": {
+      "refresh": {
+        "tooltip": "",
+        "failed": ""
+      },
+      "checking": "",
+      "unavailable": "",
+      "failing": "",
+      "held": "",
+      "heldUpstream": "",
+      "checkingSection": ""
     }
   },
   "featureLayerSources": {
@@ -947,13 +1061,17 @@
   },
   "imageLayerSources": {
     "Asset": {
+      "refresh": {
+        "failed": ""
+      },
       "label": "",
       "description": ""
     },
     "Recipe": {
       "label": "",
       "thisRecipeDescription": "",
-      "loadError": ""
+      "notFound": "",
+      "loadFailed": ""
     },
     "Planet": {
       "label": "",
@@ -966,6 +1084,9 @@
       "label": "",
       "description": ""
     }
+  },
+  "instanceLaunch": {
+    "unavailable": ""
   },
   "notifications": {
     "error": {
@@ -995,6 +1116,8 @@
             "label": ""
           },
           "noBands": "",
+          "duplicateSource": "",
+          "missingBands": "",
           "noImagery": "",
           "recipe": {
             "label": "",
@@ -1020,7 +1143,12 @@
         "sections": {
           "title": ""
         },
-        "title": ""
+        "title": "",
+        "tooltip": "",
+        "unavailableBands": {
+          "input": "",
+          "inputs": ""
+        }
       }
     },
     "mapZoom": {
@@ -1069,6 +1197,7 @@
         "loadFailed": "",
         "loadObservations.error": "",
         "loadSegments.error": "",
+        "noChartableBand": "",
         "start.tooltip": ""
       },
       "create": "",
@@ -1439,23 +1568,17 @@
           "tooltip": ""
         },
         "source": {
-          "asset": {
-            "label": "",
-            "title": "",
-            "notCcdc": ""
-          },
           "button": "",
           "form": {
             "asset": {
-              "invalid": "",
               "label": "",
               "placeholder": "",
               "required": ""
+            },
+            "recipe": {
+              "label": "",
+              "required": ""
             }
-          },
-          "recipe": {
-            "label": "",
-            "title": ""
           },
           "title": "",
           "tooltip": ""
@@ -1490,7 +1613,8 @@
       },
       "error": {
         "noImages": "",
-        "noChangeClasses": ""
+        "noChangeClasses": "",
+        "noAoi": ""
       },
       "panel": {
         "dates": {
@@ -1537,7 +1661,8 @@
             "dataSets": {
               "label": "",
               "tooltip": "",
-              "required": ""
+              "required": "",
+              "unsuppliedInputs": ""
             },
             "cloudPercentageThreshold": {
               "label": "",
@@ -1548,7 +1673,9 @@
               "label": "",
               "tooltip": "",
               "placeholder": "",
-              "required": ""
+              "required": "",
+              "unsuppliedInputs": "",
+              "multipleInputs": ""
             },
             "changeFromClasses": {
               "label": "",
@@ -1563,7 +1690,8 @@
             },
             "changeClasses": {
               "noClassification": ""
-            }
+            },
+            "andMore": ""
           }
         },
         "options": {
@@ -1576,12 +1704,24 @@
               "tooltip": "",
               "off": "",
               "on": "",
-              "unavailable": ""
+              "unavailable": "",
+              "dependsOnSources": {
+                "CHECKING": "",
+                "UNAVAILABLE": ""
+              }
             },
             "gateIndex": {
               "label": "",
               "tooltip": "",
-              "required": ""
+              "required": "",
+              "unavailable": {
+                "BASELINE": "",
+                "MONITORING": ""
+              },
+              "noAlternative": {
+                "BASELINE": "",
+                "MONITORING": ""
+              }
             },
             "gateThreshold": {
               "label": "",
@@ -1589,7 +1729,22 @@
               "required": "",
               "value": ""
             },
-            "minConsecutiveDetections": {
+            "minRepeatability": {
+              "label": "",
+              "tooltip": "",
+              "value": ""
+            },
+            "minCumulativeDetections": {
+              "label": "",
+              "tooltip": "",
+              "value": ""
+            },
+            "minFromDetections": {
+              "label": "",
+              "tooltip": "",
+              "value": ""
+            },
+            "minToDetections": {
               "label": "",
               "tooltip": "",
               "value": ""
@@ -1601,9 +1756,9 @@
         "loadError": "",
         "mosaicLoadError": "",
         "assetLoadError": "",
-        "singleInputRequired": "",
         "selectedScenesUnsupported": "",
-        "notDerivable": ""
+        "pending": "",
+        "unavailable": ""
       }
     },
     "changeAlerts": {
@@ -1716,8 +1871,7 @@
         "reference": {
           "asset": {
             "label": "",
-            "title": "",
-            "notCcdc": ""
+            "title": ""
           },
           "button": "",
           "form": {
@@ -1725,6 +1879,9 @@
               "invalid": "",
               "label": "",
               "placeholder": "",
+              "required": ""
+            },
+            "recipe": {
               "required": ""
             }
           },
@@ -1928,7 +2085,18 @@
           "loadError": ""
         }
       },
-      "tabPlaceholder": ""
+      "tabPlaceholder": "",
+      "processing": {
+        "REFERENCE": "",
+        "RECORDED": "",
+        "NOT_RECORDED": "",
+        "MIXED": "",
+        "UNREADABLE": "",
+        "PENDING": "",
+        "UNAVAILABLE": "",
+        "unreadable": "",
+        "dateFormatRequired": ""
+      }
     },
     "classification": {
       "bands": {
@@ -2034,7 +2202,8 @@
                       "label": "",
                       "tooltip": ""
                     }
-                  }
+                  },
+                  "tooltip": ""
                 }
               },
               "label": ""
@@ -2105,7 +2274,8 @@
                 },
                 "degree": {
                   "label": "",
-                  "placeholder": ""
+                  "placeholder": "",
+                  "tooltip": ""
                 },
                 "gamma": {
                   "label": "",
@@ -2214,6 +2384,7 @@
             "indexes": {
               "label": ""
             },
+            "insufficientBands": "",
             "pairWiseExpression": {
               "ANGLE": {
                 "label": ""
@@ -2230,7 +2401,9 @@
               "RATIO": {
                 "label": ""
               }
-            }
+            },
+            "unavailableBands": "",
+            "underivableIndexes": ""
           },
           "button": "",
           "derivedBands": {
@@ -2285,6 +2458,9 @@
               "placeholder": "",
               "required": ""
             },
+            "bandSetSpecs": {
+              "required": ""
+            },
             "includedBands": {
               "label": ""
             },
@@ -2297,6 +2473,12 @@
               "required": ""
             }
           },
+          "unavailableSelections": {
+            "incompleteCombination": "",
+            "input": "",
+            "inputs": ""
+          },
+          "ambiguousFeatures": "",
           "loadingBands": "",
           "loadingBandsError": "",
           "noImagery": "",
@@ -2410,17 +2592,11 @@
             },
             "sampleClassification": {
               "typeToSample": {
-                "label": "",
-                "ASSET": "",
-                "RECIPE": ""
+                "label": ""
               },
               "assetToSample": {
-                "label": "",
                 "placeholder": "",
                 "required": ""
-              },
-              "recipeToSample": {
-                "label": ""
               },
               "sampleScale": {
                 "label": "",
@@ -2516,6 +2692,12 @@
               }
             }
           },
+          "missing": "",
+          "missingFeatures": "",
+          "derivedFeature": "",
+          "ambiguousFeatures": "",
+          "conflict": "",
+          "conflictInput": "",
           "noDataSet": "",
           "remove": {
             "confirmationMessage": "",
@@ -2556,6 +2738,9 @@
               "title": "",
               "tooltip": ""
             }
+          },
+          "reusedRecipe": {
+            "repair": ""
           }
         }
       },
@@ -2577,6 +2762,7 @@
       "description": "",
       "panel": {
         "trainingData": {
+          "missing": "",
           "form": {
             "eeTable": {
               "valueColumn": {
@@ -2831,12 +3017,33 @@
           "title": "",
           "tooltip": "",
           "duplicateBand": "",
-          "invalidFormat": ""
+          "invalidFormat": "",
+          "problem": {
+            "duplicate": "",
+            "blank": "",
+            "unmapped": "",
+            "invalidFormat": ""
+          }
         }
       },
       "tabPlaceholder": ""
     },
     "bandMath": {
+      "requirement": {
+        "syntaxError": "",
+        "unknownVariable": "",
+        "unknownBand": "",
+        "forwardReference": "",
+        "selfReference": "",
+        "missingImage": "",
+        "invalidArgCount": "",
+        "invalidBandCount": "",
+        "missingInputBands": "",
+        "noOutputBands": "",
+        "noOutputImages": "",
+        "invalidOutputName": "",
+        "duplicateOutputName": ""
+      },
       "create": "",
       "description": "",
       "duplicateName": "",
@@ -2956,6 +3163,10 @@
           "invalidFormat": "",
           "noImages": "",
           "noBands": "",
+          "missingBands": "",
+          "resetName": {
+            "tooltip": ""
+          },
           "addImage": {
             "label": "",
             "tooltip": "",
@@ -2991,8 +3202,7 @@
         "inputImage": {
           "asset": {
             "label": "",
-            "placeholder": "",
-            "title": ""
+            "placeholder": ""
           },
           "changeBand": {
             "label": ""
@@ -3006,10 +3216,9 @@
           },
           "legend": {
             "label": "",
-            "tooLong": ""
-          },
-          "recipe": {
-            "title": ""
+            "tooLong": "",
+            "missing": "",
+            "required": ""
           },
           "to": {
             "button": {
@@ -3017,6 +3226,9 @@
               "tooltip": ""
             },
             "title": ""
+          },
+          "image": {
+            "label": ""
           }
         },
         "legend": {
@@ -3055,9 +3267,7 @@
       "panel": {
         "inputImage": {
           "asset": {
-            "label": "",
-            "placeholder": "",
-            "title": ""
+            "placeholder": ""
           },
           "changeBand": {
             "label": ""
@@ -3074,8 +3284,7 @@
           },
           "recipe": {
             "label": "",
-            "placeholder": "",
-            "title": ""
+            "placeholder": ""
           },
           "to": {
             "button": {
@@ -3083,6 +3292,9 @@
               "tooltip": ""
             },
             "title": ""
+          },
+          "image": {
+            "label": ""
           }
         },
         "legend": {
@@ -3251,15 +3463,14 @@
       "panel": {
         "inputImage": {
           "asset": {
-            "label": "",
-            "placeholder": "",
-            "title": ""
+            "placeholder": ""
           },
           "imageMask": {
             "button": {
               "label": "",
               "tooltip": ""
             },
+            "missing": "",
             "title": ""
           },
           "imageToMask": {
@@ -3271,8 +3482,10 @@
           },
           "recipe": {
             "label": "",
-            "placeholder": "",
-            "title": ""
+            "placeholder": ""
+          },
+          "image": {
+            "label": ""
           }
         }
       },
@@ -3440,6 +3653,30 @@
                 "required": ""
               },
               "title": ""
+            },
+            "geoId": {
+              "about": "",
+              "checking": "",
+              "label": "",
+              "lookUp": "",
+              "multiple": "",
+              "none": "",
+              "notChecked": "",
+              "placeholder": "",
+              "title": "",
+              "tooltip": ""
+            },
+            "bufferMeters": {
+              "defaultPlaceholder": "",
+              "invalid": "",
+              "label": "",
+              "square": "",
+              "tooltip": {
+                "point": "",
+                "polygon": "",
+                "unknown": ""
+              },
+              "unit": ""
             },
             "polygon": {
               "description": "",
@@ -4370,23 +4607,17 @@
           "tooltip": ""
         },
         "reference": {
-          "asset": {
-            "label": "",
-            "title": "",
-            "notBayTSHistorical": ""
-          },
           "button": "",
           "form": {
             "asset": {
-              "invalid": "",
               "label": "",
               "placeholder": "",
               "required": ""
+            },
+            "recipe": {
+              "label": "",
+              "required": ""
             }
-          },
-          "recipe": {
-            "label": "",
-            "title": ""
           },
           "title": "",
           "tooltip": ""
@@ -4400,15 +4631,17 @@
         "loading": "",
         "tilesFailed": ""
       },
-      "reference": {
-        "asset": {
-          "loadError": ""
-        },
-        "recipe": {
-          "loadError": ""
-        }
-      },
-      "tabPlaceholder": ""
+      "tabPlaceholder": "",
+      "processing": {
+        "REFERENCE": "",
+        "RECORDED": "",
+        "NOT_RECORDED": "",
+        "MIXED": "",
+        "UNREADABLE": "",
+        "PENDING": "",
+        "UNAVAILABLE": "",
+        "unreadable": ""
+      }
     },
     "baytsHistorical": {
       "create": "",
@@ -4456,7 +4689,8 @@
                 "label": "",
                 "tooltip": ""
               },
-              "label": ""
+              "label": "",
+              "required": ""
             },
             "outlierRemoval": {
               "aggressive": {
@@ -4722,6 +4956,7 @@
     },
     "project": {
       "title": "",
+      "loadingError": "",
       "description": "",
       "form": {
         "name.label": "",
@@ -4744,6 +4979,7 @@
       "noProjectOption": ""
     },
     "recipe": {
+      "landingTab": "",
       "lastUpdate": "",
       "loading": "",
       "loadingError": "",
@@ -4813,6 +5049,11 @@
           "title": ""
         }
       },
+      "requirement": {
+        "bandNotIncluded": "",
+        "missingInput": "",
+        "sourceBandMissing": ""
+      },
       "tabPlaceholder": ""
     },
     "retrieve": {
@@ -4836,7 +5077,10 @@
         },
         "bands": {
           "atLeastOne": "",
-          "label": ""
+          "checking": "",
+          "label": "",
+          "loading": "",
+          "unavailable": ""
         },
         "crs": {
           "label": "",
@@ -4861,6 +5105,13 @@
           "suffix": "",
           "tooLarge": "",
           "tooltip": ""
+        },
+        "additionalOutputs": {
+          "label": "",
+          "SITS": {
+            "label": "",
+            "tooltip": ""
+          }
         },
         "scale": {
           "label": "",
@@ -4907,9 +5158,26 @@
         }
       },
       "title": "",
-      "tooltip": ""
+      "tooltip": "",
+      "error": {
+        "imageOutput": "",
+        "submit": ""
+      },
+      "assets": {
+        "checking": "",
+        "unavailable": "",
+        "failing": "",
+        "expired": "",
+        "retry": ""
+      },
+      "source": {
+        "checking": "",
+        "unavailable": "",
+        "expired": ""
+      }
     },
     "saveRecipe": {
+      "conflict": "",
       "error": "",
       "form": {
         "name": {
@@ -5588,6 +5856,107 @@
         "easeGrid2North": "",
         "easeGrid2South": ""
       }
+    },
+    "requirement": {
+      "inputImage": {
+        "field": {
+          "missingAsset": "",
+          "missingRecipe": "",
+          "unavailableBand": ""
+        },
+        "missingAsset": "",
+        "missingRecipe": "",
+        "unavailableBands": ""
+      },
+      "itemProblem": "",
+      "output": "",
+      "prerequisiteUnmet": ""
+    },
+    "source": {
+      "status": {
+        "checking": "",
+        "recipeNeedsAttention": "",
+        "multipleClassifierInputs": "",
+        "multipleClassifierInputsUpstream": "",
+        "providesNoTrainingData": "",
+        "providesNoTrainingDataUpstream": "",
+        "providesNoClassifier": "",
+        "providesNoClassifierUpstream": "",
+        "providesNoImage": "",
+        "providesNoImageUpstream": "",
+        "recipeUnusable": "",
+        "recipeUnusableUpstream": "",
+        "recipeBlockedBy": "",
+        "recipeBlockedByOrigins": "",
+        "recipeAlsoDependsOn": "",
+        "recipeAlsoDependsOnOrigins": "",
+        "unavailable": "",
+        "assetUnavailable": "",
+        "assetMissing": "",
+        "expired": "",
+        "refresh": "",
+        "missing": "",
+        "notAProducer": "",
+        "unfilledRole": "",
+        "cyclic": "",
+        "unsuitable": "",
+        "withheld": "",
+        "advisory": "",
+        "sectionsIncompatible": ""
+      },
+      "operation": {
+        "PIXEL_SEGMENTS": ""
+      },
+      "capability": {
+        "baytsHistoricalStats": "",
+        "ccdcSegments": ""
+      },
+      "historicalStats": {
+        "incompatible": "",
+        "missingBand": "",
+        "arrayBand": "",
+        "unexpectedBand": "",
+        "misordered": "",
+        "undetermined": "",
+        "noPass": "",
+        "passAbsent": "",
+        "malformedPasses": "",
+        "passAbsentNoAlternative": ""
+      },
+      "classifierInputs": {
+        "classification": "",
+        "dataSets": ""
+      },
+      "classifiedOutputs": {
+        "band": "",
+        "breakpointBands": ""
+      },
+      "segments": {
+        "incompatible": "",
+        "incompatibleSlice": "",
+        "notSegments": "",
+        "notSliceSegments": "",
+        "missingBand": "",
+        "scalarBand": "",
+        "wrongDimensions": "",
+        "misordered": "",
+        "undetermined": "",
+        "andMore": "",
+        "measureAbsent": "",
+        "measureClassified": "",
+        "measureUnobserved": "",
+        "noMonitorableMeasure": "",
+        "noAvailableMeasure": "",
+        "noObservedMeasure": "",
+        "noMeasures": "",
+        "noMeasure": "",
+        "noSliceMeasure": "",
+        "noChartableMeasure": ""
+      }
+    },
+    "sourceType": {
+      "ASSET": "",
+      "RECIPE": ""
     }
   },
   "sources": {
@@ -5649,6 +6018,8 @@
         "asset": {
           "createFolder": "",
           "delete": "",
+          "encodingConflict": "",
+          "encodingTooLarge": "",
           "prepareImageCollection": "",
           "startExport": "",
           "sharing": "",
@@ -5753,7 +6124,14 @@
     },
     "removeAll": {
       "label": "",
-      "tooltip": ""
+      "tooltip": "",
+      "filteredTooltip": {
+        "search": "",
+        "completed": "",
+        "completedSearch": "",
+        "failed": "",
+        "failedSearch": ""
+      }
     },
     "stop": {
       "tooltip": ""
@@ -5771,6 +6149,9 @@
       }
     },
     "samplingDesign": {
+      "progress": {
+        "prepare": ""
+      },
       "grid": {
         "unsupportedArrangementCrs": "",
         "invalidStratificationCrs": "",
@@ -5844,12 +6225,18 @@
       "completed": "",
       "EEException": "",
       "executing": "",
+      "exitedUnexpectedly": "",
       "failed": "",
       "failedGeneric": "",
-      "initializing": ""
+      "initializing": "",
+      "interrupted": "",
+      "launchFailed": "",
+      "stalled": "",
+      "waitingForLocalProcessing": ""
     }
   },
   "terminal": {
+    "menuTab": "",
     "server": {
       "error": ""
     }
@@ -5931,6 +6318,7 @@
     },
     "report": {
       "resources": {
+        "info": "",
         "max": "",
         "instanceSpending": "",
         "storageSpending": "",
@@ -5941,8 +6329,8 @@
         "used%": ""
       },
       "sessions": {
+        "active": "",
         "cost": "",
-        "earliestTimeoutHours": "",
         "hourlyCost": "",
         "instanceDescription": "",
         "instanceType": "",
@@ -5999,22 +6387,81 @@
         "error": ""
       }
     },
+    "sshKeys": {
+      "add": {
+        "error": {
+          "DUPLICATE_KEY": "",
+          "failed": "",
+          "INVALID_KEY": "",
+          "KEY_TOO_WEAK": "",
+          "PRIVATE_KEY": "",
+          "TOO_MANY_KEYS": "",
+          "UNSUPPORTED_TYPE": ""
+        },
+        "form": {
+          "file": {
+            "dropOrClick": "",
+            "label": "",
+            "notPub": "",
+            "tooLarge": ""
+          },
+          "name": {
+            "label": "",
+            "placeholder": ""
+          },
+          "publicKey": {
+            "label": "",
+            "placeholder": "",
+            "privateKeyHidden": "",
+            "required": ""
+          }
+        },
+        "howTo": "",
+        "label": "",
+        "success": "",
+        "title": ""
+      },
+      "intro": "",
+      "label": "",
+      "load": {
+        "error": ""
+      },
+      "none": "",
+      "remove": {
+        "error": "",
+        "message": "",
+        "tooltip": ""
+      },
+      "title": ""
+    },
+    "userAccount": {
+      "editDetails": {
+        "label": "",
+        "tooltip": ""
+      },
+      "title": ""
+    },
     "userDetails": {
       "form": {
         "email": {
           "label": "",
           "required": "",
+          "format": "",
           "unique": ""
         },
         "emailNotifications": {
           "disabled.label": "",
+          "disabled.tooltip": "",
           "enabled.label": "",
+          "enabled.tooltip": "",
           "label": "",
           "tooltip": ""
         },
         "manualMapRendering": {
           "disabled.label": "",
+          "disabled.tooltip": "",
           "enabled.label": "",
+          "enabled.tooltip": "",
           "label": "",
           "tooltip": ""
         },
@@ -6057,6 +6504,17 @@
           "label": "",
           "required": ""
         },
+        "usage": {
+          "label": "",
+          "avgMax": "",
+          "cost": "",
+          "hours": "",
+          "instanceType": "",
+          "month": "",
+          "network": "",
+          "noData": "",
+          "error": ""
+        },
         "username": {
           "format": "",
           "label": "",
@@ -6089,7 +6547,8 @@
       "switchingToSEPALGoogleAccount": "",
       "title": "",
       "update": {
-        "error": ""
+        "error": "",
+        "conflict": ""
       },
       "confirmation": {
         "message": ""
@@ -6105,12 +6564,34 @@
           "label": ""
         }
       },
+      "start": {
+        "error": "",
+        "label": ""
+      },
       "stop": {
         "error": "",
         "label": "",
         "message": "",
+        "messageWithRunning": "",
         "success": "",
         "tooltip": ""
+      },
+      "expiry": {
+        "currentlyRunning": "",
+        "extend": "",
+        "extendFailed": "",
+        "extendUnknown": "",
+        "idle": "",
+        "idleClosed": "",
+        "instance": "",
+        "instanceUnnamed": "",
+        "runningClosed": "",
+        "terminate": ""
+      },
+      "stopAll": {
+        "error": "",
+        "label": "",
+        "message": ""
       },
       "suspend": {
         "error": "",
@@ -6122,10 +6603,27 @@
         "error": "",
         "success": "",
         "tooltip": ""
+      },
+      "sshLogin": {
+        "tooltip": ""
+      },
+      "deadline": {
+        "expired": "",
+        "label": "",
+        "stopping": "",
+        "value": ""
+      },
+      "usage": {
+        "cpu": "",
+        "gpu": "",
+        "net": "",
+        "ram": ""
       }
     }
   },
-  "userMessage": {
+  "message": {
+    "acknowledged": "",
+    "from": "",
     "form": {
       "contents": {
         "label": "",
@@ -6137,11 +6635,12 @@
       },
       "preview": {
         "label": ""
+      },
+      "priority": {
+        "unpublished": "",
+        "normal": "",
+        "urgent": ""
       }
-    },
-    "publish": {
-      "error": "",
-      "success": ""
     },
     "remove": {
       "error": "",
@@ -6150,14 +6649,15 @@
     "title": "",
     "update": {
       "error": "",
-      "success": ""
+      "published.success": "",
+      "unpublished.success": ""
     },
     "updateState": {
       "error": "",
       "success": ""
     }
   },
-  "userMessages": {
+  "messages": {
     "author": "",
     "edit": "",
     "noMessages": "",
@@ -6216,7 +6716,15 @@
         }
       }
     },
-    "page": ""
+    "page": "",
+    "record": {
+      "changed": "",
+      "update": ""
+    },
+    "update": {
+      "label": "",
+      "tooltip": ""
+    }
   },
   "widget": {
     "assetDestination": {
@@ -6226,6 +6734,7 @@
       },
       "loadError": "",
       "invalidAssetId": "",
+      "insideNonContainer": "",
       "taskPending": "",
       "validating": "",
       "replace": {
@@ -6243,7 +6752,20 @@
     "workspaceDestination": {
       "taskPending": "",
       "notEmpty": "",
-      "loadError": ""
+      "loadError": "",
+      "browser": {
+        "tooltip": "",
+        "title": "",
+        "path": "",
+        "home": "",
+        "filter.placeholder": "",
+        "createFolder": {
+          "label": "",
+          "placeholder": "",
+          "existing.error": "",
+          "error": ""
+        }
+      }
     },
     "assetInput": {
       "loadError": ""
@@ -6302,6 +6824,7 @@
       },
       "band": {
         "label": "",
+        "notOffered": "",
         "notSelected": ""
       },
       "booleanOperator": {
@@ -6314,6 +6837,7 @@
       },
       "image": {
         "label": "",
+        "notOffered": "",
         "notSelected": ""
       },
       "logicalAnd": {
@@ -6398,7 +6922,13 @@
       "placeholder": "",
       "all": {
         "tooltip": ""
-      }
+      },
+      "ownRecipe": {
+        "invalid": ""
+      },
+      "loadError": "",
+      "selection": "",
+      "unlisted": ""
     },
     "safetyButton": {
       "label": ""
@@ -6414,5 +6944,15 @@
       "newTab": ""
     }
   },
-  "chromeOnHighResDisplayWarning": ""
+  "chromeOnHighResDisplayWarning": "",
+  "theme": {
+    "label": "",
+    "dark": "",
+    "light": "",
+    "system": "",
+    "systemTooltip": ""
+  },
+  "language": {
+    "label": ""
+  }
 }
