@@ -61,14 +61,12 @@ or in a `golang:1.27-trixie` container mounting `router/` (`go vet ./... && go t
 `src/endpoint.js` - HTTP calls using `#sepal/httpClient`:
 - `sandboxInfo$` - Fetches `/api/sessions/{username}/report`
 - `createSession$`, `joinSession$`, `terminateSession$`
-- Retries every 5s until session leaves STARTING state
+- Polls every 1s until the session leaves STARTING state
 
 ### Terminal Utilities
 `src/console.js` - ANSI color formatting (30+ styles), `readline` wrapped in RxJS `defer/fromEvent/first`.
 
 ## Non-Obvious Conventions
 
-- **Menu is a pure CLI tool**: Writes SSH script file instead of serving HTTP
-- **Entire app is an RxJS pipeline**: User interaction, HTTP calls, and output all composed as observables
 - **ASCII table rendering**: `src/asciiTable.js` for formatted budget/session display
 - **Session selection logic**: ACTIVE -> STARTING -> create new instance

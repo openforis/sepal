@@ -1,35 +1,19 @@
-# user
+# User
 
-Node.js user module (formerly `user-node`; it replaced the now-deleted Java `user`
-module and LDAP). Owns users and their credentials (password hashes, SSH public keys)
-in the `user` MySQL database (table `sepal_user`), copied by migration 001 from the legacy
-`sepal_user` schema, which is left untouched. The one-shot LDAP→DB credential migration that ran
-at startup during the transition has been removed along with the `ldap` module.
+Owns accounts, password hashes, SSH public keys, Google credentials and POSIX identities in the `user`
+MySQL database (`sepal_user` table). The Java user service and LDAP are no longer runtime dependencies.
 
-POSIX identity is **stored**, not derived: `sepal_user` has `uid` and `gid` columns.
-For users migrated from LDAP they hold the real `uidNumber` and per-user-group
-`gidNumber` (each was allocated from an independent ldapscripts sequence, so they differ
-from each other and from `sepal_user.id`; on-disk files are owned by these numbers).
-Users created by this module get `uid = gid = id`, which is collision-free because the
-LDAP migration bumped the table `AUTO_INCREMENT` past every existing uid/gid. There is
-no shared group model — the only file-owning shared group, `sepal` (gid 9999), is a
-local OS group.
+## POSIX identity
 
-> Note: this reverses design decision **D8** (which assumed `uid = gid = id`).
-> Production data showed `id ≠ uidNumber` for many users, so uid/gid are now stored.
-
-See the design spec: `docs/superpowers/specs/2026-06-16-ldap-removal-user-node-design.md`
-(the module was named `user-node` there) and the rename/decommission design:
-`docs/superpowers/specs/2026-07-07-user-module-rename-decommission-design.md`.
-
-## Schema ownership
-
-The module owns the `user` schema end to end: migration 001 creates the `sepal_user`
-table at its full current shape and copies the rows from the legacy `sepal_user` schema
-if that schema is present and the target is still empty. Postgrator uses the default
-history table `schema_version`. The Java `user` module's previous Flyway
-history table was renamed to `schema_version_old` at cutover.
+`uid` and `gid` are stored independently of the account ID. Migrated users retain their LDAP-assigned
+values, which can differ from each other and from `id`; existing files depend on those values.
+New users get `uid = gid = id`. The LDAP migration advanced `AUTO_INCREMENT` beyond existing uid/gid values
+before this allocation rule was used. The local OS group `sepal` (gid 9999) is separate from per-user groups.
 
 ## Database migrations
 
-`migrations/` holds the portable schema stream. `migrations/legacy-import/` holds the one-off copy from `sepal_user`. Startup and import cleanup are described in [docs/database-migrations.md](../../docs/database-migrations.md).
+`migrations/001.do.schema.sql` creates the complete current table. The separate
+`migrations/legacy-import/001.do.import.sql` copies rows, including uid/gid and credentials, from the
+legacy `sepal_user` schema only when its table exists and the target is empty. The source is unchanged.
+Schema and import histories use `schema_version` and `legacy_import_version` respectively.
+See [database migrations](../../docs/database-migrations.md) for startup, repair and import retirement.

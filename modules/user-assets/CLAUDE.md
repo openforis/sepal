@@ -35,8 +35,6 @@ Uses `STree` (Sepal Tree) from `#sepal/tree/sTree` for hierarchical asset repres
 
 ## Non-Obvious Conventions
 
-- **WebSocket only** - no REST endpoints, all communication via WebSocket
-- **Extensive RxJS**: `groupBy`, `mergeMap`, `switchMap`, `debounceTime`, `exhaustMap`, `race`, `concat`, `defer`, `autoRetry`
 - **Min reload delay**: 60 seconds to prevent thrashing
 - **Retry strategy**: 2s to 3660s max with exponential backoff
 - **Polling interval**: Configurable in minutes via `--poll-interval-minutes`

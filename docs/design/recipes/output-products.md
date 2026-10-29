@@ -24,10 +24,6 @@ order, dimensionality or export policy. Raw names remain request/selection ident
 
 ## Declaration and description
 
-A declaration states how a product is derived. A resolved description is the result for one recipe graph and
-runtime evidence. A declaration can provide useful guarantees before exact band names are known; a description owns
-the final ordered bands.
-
 Every image-producing type declares its output. Every band in a READY description has an established
 `dataType.arrayDimensions` (0 for scalar, a positive integer for array). Declaration, inheritance or observation
 must establish it; waiting for or failing to obtain that evidence must not publish an unknown-dimensionality READY
@@ -110,7 +106,9 @@ selects the bands of the visualization it draws.
 Band questions are answered without building an image where configuration or metadata can answer them, and
 without computing an aggregate extent merely to answer them.
 
-**Implemented acquisition** (`lib/js/ee/src/bandEvidence.js`, shared by the gee `/bands` job and Task):
+**Implemented acquisition** (`lib/js/ee/src/bandEvidence.js`, used by gee's `/bands` and task-export jobs).
+Task export authority in this document means the server job in gee; the task container calls it through the gateway.
+
 
 - An asset's schema is read directly: an image's own bands, or a raw collection's first image. Its stored encoding
   is the image's or the collection's own metadata, read in the same evaluation; a collection's member properties
@@ -284,24 +282,12 @@ Capabilities can refer to an image product without becoming another source of it
 
 ### Presentation
 
-Presentation definitions remain separate from product schema. A direct product preset is expressed in one named
-product's band namespace, while a downstream transformation template refers to potential output of one closed,
-named transformation. A CCDC Slice template is therefore not a visualization of the CCDC Segments product.
+[Visualization ownership](visualizations.md) owns preset/template binding, local styles and applicability.
+A direct style uses concrete scalar bands; a CCDC Slice template names logical outputs of its transformation,
+not the source's physical arrays. Neither establishes schema or capabilities.
 
-A direct preset becomes a candidate only after binding it to a concrete product instance and parameters. It becomes
-an active visualization only after separate definition validation and direct-rendering requirement validation.
-Every referenced band must exist and direct visualization requires scalar bands. A visualization is never evidence
-that a band exists, is scalar or has categorical semantics.
-
-User-defined visualizations remain owned by the recipe or layer where the user edited them. Requested selection is
-distinct from an active product binding, so pending or unavailable evidence never rewrites it, and a layer replaces
-it only once a settled answer offers candidates none of which matches. Exact presentation ownership, template and
-selection contracts belong in [visualizations.md](visualizations.md).
-
-Preset versus template is an interpretation distinction, not necessarily a storage-format distinction. Existing
-Earth Engine assets use `visualization_*` properties for both. An ordinary image adapter can interpret one as a
-direct product preset, while the CCDC Segments asset adapter interprets logical base-band references as templates
-owned by `CCDC_SEGMENT_SLICE`. The property record never decides its own product or transformation.
+Legacy assets store both forms as `visualization_*` properties. The owning image/segment adapter interprets
+them; the metadata does not choose its own product or transformation.
 
 ### Form metadata
 
@@ -311,33 +297,15 @@ order, physical type or export policy.
 
 ### Band choices in Retrieve
 
-A Retrieve panel over its recipe's image output reads it through the common read, and that read is the only authority
-for what may be selected ([Retrieve integration](gui-source-runtime.md#retrieve-integration)). A described answer
-supplies the choices, the destination-compatibility check, the submitted band names and the policies, so those cannot
-describe different bands. The band options a recipe type supplies are
-presentation - labels, tooltips and groups matched by name - and can neither add a choice nor withhold one; a choice
-they do not present is offered after the groups they do.
+The [GUI Retrieve contract](gui-source-runtime.md#retrieve-integration) owns watching, current-state acceptance,
+readiness, source currency, destination checks and reconciliation. One output read supplies physical choices,
+submitted names and policies. GUI labels/groups decorate names; ungrouped physical bands remain available.
 
-Until the read answers, the panel offers no choices and retrieval stays disabled. The band names copied into a recipe
-when its source was selected are a snapshot nothing has verified since, and are never offered in its place. A failed
-acquisition, an invalid description or dependencies not known to be sound are reported where the choices would be,
-and likewise offer nothing.
-
-What identifies an answer is the content of every record the session's graph holds, evidence included, and the
-credential epoch it was acquired under. A record is also replaced for reasons the answer does not depend on - panel
-state, a rename, a new server revision - and those restart nothing. A change that the answer does depend on
-invalidates it at once and acquires anew; a failed acquisition withholds the choices rather than leaving the previous
-answer in force.
-
-A saved selection survives acquisition and failure untouched: neither shows that a band disappeared. Once the answer
-is known, a saved choice it no longer offers goes from the selection and the others stay; if none remain, the user
-chooses again, and an empty selection never means every band. Only choices go: a request built from offered choices
-that the output still does not hold - a CCDC breakpoint band the collection no longer carries, a Slice combination
-it does not produce - is named and blocks. Submission decides again against the output as it then stands, so a
-reconciled form never makes a stale request acceptable.
-
-A request not selecting image-output bands, such as a Time Series indicator, keeps its type-owned choices but
-still takes readiness and current submission authority from the shared output read.
+Pending/failed/invalid reads offer no authoritative choices and never rewrite saved selections. After success,
+remove unavailable saved choices without substituting another band. An empty manual selection means none.
+Derived selectors translate choices to physical names before validation; CCDC breakpoint and Slice-combination
+requests can still fail even when their base choices were offered. Time Series indicators retain type-owned
+choices and use the shared read for readiness/authority without treating them as count-image bands.
 
 ### Structured band selection (deferred)
 
@@ -473,376 +441,102 @@ only through a bounded consumer that replaces existing duplicated logic.
 
 ## Source planning and collection composition
 
-Source roles remain separate: modality groups presentation; a catalogue entry identifies a saved selection;
-a source instance contains actual references/parameters; an adapter owns acquisition/normalization commands;
-the temporal composer owns shared collection derivation; a recipe requirement judges a consumer operation.
-`OPTICAL`, `RADAR` and `PLANET` are current execution branches, not scientific compatibility guarantees. A custom
-asset bypasses catalogue selection, not the need for an explicit processing contract.
-
-The replacement for the Optical, Radar and Planet switches is deliberately not a universal offer/matcher framework.
-It is a small set of named, versioned commands owned by the executors that understand them.
-
-The current processing naturally separates into three layers:
-
-1. A source adapter acquires and normalizes source observations.
-2. A closed temporal collection composer applies requested derivations, optional Classification augmentation,
-   selected bands, temporal metadata and SEPAL encoding.
-3. A recipe operation such as CCDC, Phenology, LandTrendr or Change Alerts consumes that configured collection and
-   declares its own result.
-
-The middle layer is required because the existing `timeSeries/collection.js` already owns behavior shared across
-Optical, Sentinel-1 and Planet paths. Copying classification, derivation, selection, casting and temporal rules into
-each adapter would make source extensibility worse. Conversely, the composer is not a generic remote-sensing
-workflow language. It has one named executor, a closed parameter contract and nested adapter-owned source commands.
-
-Implementation reuse and product compatibility are independent. Sentinel-1, ALOS PALSAR and NISAR may reuse
-substantial Earth Engine mechanics after small generalizations while exposing distinct adapter and product
-contracts. Planet may share little implementation with Landsat or Sentinel-2 while still satisfying an explicitly
-declared consumer requirement. Reuse code by mechanics; establish compatibility only through declared guarantees.
-
-### Current extension cost
-
-The current reuse boundary is incomplete. Adding or changing a source can require coordinated edits to:
-
-- the GUI data-set catalogue and date availability;
-- GUI source grouping and selection rules;
-- GUI band metadata and grouped options;
-- GUI visualization presets;
-- the generic `modules/gui/src/sources.js` dispatcher;
-- Earth Engine collection construction and source-specific options;
-- dependency extraction for recipe or asset-backed sources;
-- every recipe that fabricates a Mosaic-shaped model to call the GUI helpers.
-
-The branch is also represented differently at different layers. `collectionType()` is shared by dependency extraction
-and Earth Engine execution, which is a useful first step, but `modules/gui/src/sources.js` still repeats the decision
-with Optical/Radar/Planet conditionals and constructs partial recipe objects solely to satisfy recipe-local helper
-signatures. `lib/js/ee/src/timeSeries/collection.js` owns another family switch and destructures the union of all
-family options. This makes a new family a cross-cutting change and lets catalogues, schemas and execution drift.
-
-### Adapter commands, discovery and binding
-
-Treat planning and resolution as distinct pure phases around the existing recipe graph:
-
-```text
-source model in persisted shape, whether saved or an unsaved draft
-    -> discover command skeletons and named direct references
-    -> shared graph completes the authorized closure
-    -> resolve declarations bottom-up through role-scoped child bindings
-    -> PLANNED command, declarations and evidence requirements
-    -> preliminary operation-requirement validation
-    -> acquire only relevant authorized evidence
-    -> re-resolve affected declarations bottom-up
-    -> runtime READY | UNAVAILABLE | INVALID
-    -> final operation-requirement validation
-```
-
-Discovery returns `DISCOVERED` or `INVALID`. It normalizes legacy input, selects only adapter-owned parameters and
-records every direct reference once. Graph edges are a projection of those named references; callers never provide a
-second dependency list that can disagree with the command.
-
-The graph owns loading, authorization, edges, cycles, diamonds and traversal order. It does not resolve products.
-After closure, the product resolver evaluates declarations bottom-up. A binder receives only the role-scoped child
-declarations corresponding to the skeleton's named bindings, not raw foreign recipe records or the complete graph
-catalogue. The definition that owns a recipe may inspect its own model while resolving that node; cross-recipe
-consumers never reconstruct another type's output from its model.
-
-Binding returns `PLANNED` or `INVALID`. A planned command may have partial product and capability declarations plus
-explicit evidence requirements. That does not make the command invalid or unexecutable.
-
-For example, a temporal composer receives a declaration binding rather than a Classification recipe model:
-
-```js
-{
-    classification: {
-        reference,
-        productDeclarations,
-        capabilityDeclarations,
-        evidenceRequirements
-    }
-}
-```
-
-After authorized evidence is resolved, products and capability instances carry their evidence and provider paths.
-A provisional capability declaration is not treated as an established capability instance.
-
-Consumer validation is a separate tri-state operation:
-
-```text
-validateRequirement({declarations, requirement})
-    -> SUPPORTED | UNSUPPORTED | NEEDS_EVIDENCE
-```
-
-Before acquisition, `SUPPORTED` means declarations suffice and observation is skipped. `UNSUPPORTED` means no
-allowed evidence can make the operation admissible, so resolution stops. `NEEDS_EVIDENCE` is returned only when a
-specific authorized acquisition path could decide the requirement.
-
-After acquisition, successful evidence produces `SUPPORTED` or `UNSUPPORTED`; transport or authorization failure is
-runtime `UNAVAILABLE`; contradictory or malformed evidence is runtime `INVALID`; and permanently absent semantic
-provenance is `UNSUPPORTED` with `INSUFFICIENT_PROVENANCE`. Final validation cannot remain `NEEDS_EVIDENCE` after all
-declared acquisition paths are exhausted. Here `UNSUPPORTED` means not admissible under the current operation
-contract, whether contradicted or insufficiently evidenced. Runtime availability remains separate: an executable
-collection command may still find no observations for one AOI and date interval.
-
-A command and bound plan are deterministic, immutable and JSON-safe. They contain no functions, Earth Engine
-objects, credentials, GUI labels or Redux state. They are scoped to their owning adapter or composer, suitable for
-fingerprinting and validated again by the trusted executor. They are derived state and are never persisted back into
-recipe JSON.
-
-Named operations are interpreted only by the adapter or composer that owns their namespace and contract version.
-Do not introduce a generic `operations` language whose vocabulary every adapter must understand.
-
-### Intended extension boundary
-
-Keep four implementation surfaces separate:
-
-1. **Shared planner**: catalogue identities, legacy normalization, command validation, named references, selection
-   domain and declared product guarantees.
-2. **Earth Engine executor**: revalidates and executes only commands in its adapter or composer namespace.
-3. **GUI presentation adapter**: labels, translated tooltips, grouping, availability hints and source-specific
-   controls.
-4. **Recipe operation**: declares the requirement for one operation and transforms the resulting product; it does
-   not reconstruct source rules.
-
-The shared planner owns pure facts used by more than one runtime. Earth Engine objects remain in EE, while translated
-labels and widgets remain in the GUI. A large cross-runtime descriptor would couple environments that intentionally
-have different dependencies.
-
-One configured command must distinguish what a form may select from what execution will emit:
-
-```js
-{
-    status: 'PLANNED',
-    executionPlan,
-    selectionDomain: {
-        bands: [/* validated measurements accepted by this composer */]
-    },
-    productDeclaration: {
-        bands: [/* exact bands requested by this configured command */]
-    },
-    evidenceRequirements: []
-}
-```
-
-`selectionDomain` is the configured command's available bands, with their facts. Classification binding can extend it
-before the user chooses output bands. `productDeclaration` is the projection of one configured selection by name. GUI
-option groups are a presentation projection of the available bands and cannot become another band authority.
-
-A discovered skeleton records scoped references explicitly:
-
-```js
-{
-    source: {
-        adapter: {id: 'SENTINEL1_GRD', adapterContractVersion: 1},
-        command: {/* adapter-owned parameters */}
-    },
-    references: {
-        classification: {
-            role: 'CLASSIFICATION_SOURCE',
-            reference: {type: 'RECIPE_REF', id: '...'}
-        }
-    },
-    composer: {
-        id: 'SEPAL_TEMPORAL_COLLECTION',
-        composerContractVersion: 1,
-        parameters: {
-            requestedBands: ['VV'],
-            classificationBinding: 'classification'
-        }
-    }
-}
-```
-
-This shape is illustrative. Planner-owned encoding and executor choices are not arbitrary recipe or browser input.
-The final contract should retain only fields justified by the consuming workflows.
-
-For the first proof, `SEPAL_OPTICAL` is one adapter over its supported Landsat and Sentinel-2 catalogue entries.
-Per-dataset collection IDs, native mappings and readers remain internal modules rather than independently contracted
-adapters. Its command owns ordered multi-entry normalization. Input order is preserved unless the adapter proves it
-irrelevant, while output band order comes from the product declaration rather than incidentally from the first entry.
-
-Introduce a named source-composition boundary only when a real operation must combine independently contracted
-adapters. That boundary is distinct from the temporal composer and must not be implied by overloading “source
-command” in the first proof.
-
-### Collection products
-
-An image collection is a product, not a capability. Its declaration needs more than a flat image band list:
-
-```js
-{
-    kind: 'IMAGE_COLLECTION',
-    members: {
-        requiredBands: [/* present with compatible schema on every member */],
-        optionalBands: [/* permitted but not guaranteed on every member */],
-        homogeneity: 'HETEROGENEOUS'
-    },
-    temporal: {
-        coordinate: 'system:time_start',
-        representation: 'MILLISECONDS_SINCE_EPOCH',
-        ordering: 'UNSPECIFIED',
-        duplicates: 'ALLOWED'
-    }
-}
-```
-
-Unknown evidence is not silently converted to optional. A trusted constructor may establish guarantees by
-construction; resolution does not require exhaustive inspection of every member when authoritative construction
-evidence is sufficient for the consumer. A selection transform can produce a homogeneous collection only when it
-establishes the requested compatible band on every retained member. An aggregation declares the exact image product
-it creates rather than inheriting the member schema automatically.
-
-Planet Daily is the first required heterogeneous witness: RGB and NIR are common, while PSB.SD-only bands are not
-present on every member before an explicit selection, filter or missing-band policy.
-
-### Requirements, adapter restrictions and capabilities
-
-Requirements belong to a consumer operation, not to an entire recipe type. Counting images, charting a scalar band,
-running CCDC, annualizing LandTrendr input and comparing Change Alerts observations make different assumptions about
-the same source collection.
-
-One requirement object may constrain both the product and additional capabilities while preserving their different
-roles:
-
-```js
-{
-    product: {
-        id: 'IMAGE_OUTPUT',
-        kind: 'IMAGE',
-        requiredBands: ['ndvi']
-    },
-    capabilities: [{
-        id: 'CCDC_SEGMENTS',
-        version: 1,
-        cardinality: 'EXACTLY_ONE',
-        baseBand: 'ndvi'
-    }]
-}
-```
-
-Validation returns one operation-level result. Product lookup and transformation remain separate from capability
-cardinality, provider lineage and interpretation.
-
-Start with direct structural constraints and adapter restrictions. Current Sentinel-1-specific processing should
-say that it requires `SENTINEL1_GRD` at an exact adapter contract version rather than disguising that dependency as a
-generic dual-polarization capability.
-
-A capability is admitted only when it expresses consumer-relevant interpretation or behavior that product schema
-and adapter identity cannot express. It is granted only by its producer or an explicit transformation. Capabilities
-have no inferred inheritance from modality, names or similar fields, and supported adapter options do not become
-capabilities automatically. Exact version matching is sufficient initially.
-
-Band names identify bands within one product; they do not establish cross-product semantics. Encoding describes
-representation only; matching encodings do not establish that two bands measure the same thing. A future semantic
-band description may add measurement identity beside the established encoding:
-
-```js
-{
-    name: 'ndvi',
-    dataType: {/* established physical facts */},
-    encoding: {scale: 0.0001, offset: 0, unit: '1'},
-    measurement: {id: 'SEPAL_OPTICAL_NDVI', version: 1}
-}
-```
-
-Use namespaced identifiers only after a migrated consumer proves their contract. Do not turn familiar output names
-into informal universal semantic IDs.
-
-Some compatibility is relational. Change Alerts must compare new observations with the measurement represented by
-its CCDC Segments source. Keep the authoritative evidence structured and let each operation compare only the
-projection it needs:
-
-- value semantics: formula, units, scale, offset and value-changing corrections;
-- observation protocol: sensor selection, orbit, masking, filtering and resampling;
-- operation scope: AOI and dates, which affect execution but not measurement identity.
-
-Change Alerts may require matching value and substantial observation-protocol evidence, while a chart may need only
-one scalar interpretable measurement. Derive fingerprints from canonical normalized projections for efficient
-comparison and provenance. A fingerprint is not a substitute for the structured contract. Keep the full execution
-fingerprint separate from narrower value or observation-protocol fingerprints.
-
-Authenticated principal and linked Earth Engine identity scope authorization, observations and caches. They are not
-scientific measurement compatibility or export provenance and do not enter a measurement contract fingerprint.
-
-### Contract versioning
-
-Version only durable contracts whose interpretation may intentionally evolve:
-
-- `bundleSchemaVersion` identifies execution-bundle serialization;
-- `commandSchemaVersion` appears only when a command crosses a runtime or persistence boundary;
-- `adapterContractVersion` identifies intentional adapter command semantics and guarantees;
-- `composerContractVersion` identifies intentional temporal-composer semantics and guarantees;
-- `measurement.version` identifies a scientific measurement definition used across durable boundaries.
-
-Internal refactoring that preserves behavior does not change these versions. Known implementation defects are not
-versioned into supported contracts: corrections land before contract activation. Do not add legacy formula branches,
-creation-date checks or asset-specific compatibility workarounds for outputs produced by old bugs. Existing affected
-assets remain existing data and may need to be recreated when correctness matters.
-
-Schema versioning becomes useful only when a value crosses a durable or runtime boundary such as an authorized
-execution bundle. Contract and measurement versions become useful when an actual consumer compares or persists
-their semantics. Do not add version fields to transient objects merely to appear future-proof. Existing assets
-without trustworthy semantic provenance cannot have their formulas or preprocessing recovered from band names and
-physical metadata; observation establishes physical structure, not historical scientific correctness.
-
-### Expected extension workflow
-
-There are several materially different changes:
-
-- **Another catalogue entry using an existing adapter** adds persisted catalogue facts and adapter-owned parameters,
-  without changing consumers.
-- **Another adapter using shared EE mechanics** may reuse acquisition, correction or normalization functions while
-  declaring a distinct contract. PALSAR or NISAR does not inherit Sentinel-1 VV/VH, orbit or correction assumptions
-  merely because implementation is reusable.
-- **Another adapter satisfying an existing requirement** must do so through an audited declaration or explicit
-  transformation. Matching band names or modality is insufficient.
-- **Another source composition** adds a named planner/executor only when existing commands cannot express it. It
-  declares intended runtime surfaces: shared planning always, EE execution when executable, and GUI presentation
-  only when directly selectable or requiring source-specific controls.
-- **Another recipe operation** states its own requirement and consumes the configured product without adding a
-  source-adapter switch.
-
-Indexes, classification augmentation, selection and temporal encoding belong to the closed temporal composer or a
-recipe operation, not to modality. Normalization maps native encoding to logical measurements. Calibration and
-correction change representation. Reserve *harmonization* for an explicit transformation that establishes a named
-comparability guarantee; common names and numeric encoding alone do not prove harmonization.
-
-Catalogue availability is a GUI hint, not evidence that imagery exists for the current AOI, dates and identity.
-Authorization and runtime availability remain separate evidence.
-
-### Bands and visualizations during migration
-
-Current `bands.js` modules commonly combine physical schema, numeric display hints, translated tooltips and option
-grouping. Split those responsibilities incrementally:
-
-- shared product declarations own ordered band identity and established physical facts;
-- a GUI band-presentation catalogue owns labels, tooltips, ranges and groups;
-- visualization templates name the product and required band identities, then applicability is checked against the
-  resolved or declared product;
-- user-edited visualization state remains owned by the recipe or layer, never by an adapter or composer contract.
-
-Existing `bands.js`, `visualizations.js` and `modules/gui/src/sources.js` exports remain compatibility adapters while
-callers migrate. The first goal is to project their answers from one planned product or selection domain, not to
-rewrite every panel.
+**Target design; no general adapter/composer API exists.** Replace family switches and fabricated foreign-recipe
+models through a bounded consumer that removes existing duplication. The independent
+[collection-output correctness assessment](data-sources.md#collection-output-correctness) does not depend on this
+refactor and must establish actual behavior before new contracts adopt it.
+
+### Ownership boundaries
+
+Keep three execution responsibilities separate:
+
+1. A source adapter acquires observations and normalizes native encoding.
+2. A closed temporal composer owns shared derivations, Classification augmentation, band selection, temporal
+   metadata and SEPAL storage encoding, as the current `timeSeries/collection.js` partly does.
+3. A recipe operation consumes the configured collection under its own requirements and declares its result.
+
+Modality groups presentation; catalogue entries identify saved selections. Neither `OPTICAL`, `RADAR`, `PLANET`
+nor a matching band name proves scientific compatibility. Custom assets still need an explicit processing contract.
+Reuse EE mechanics where they fit: Sentinel-1, PALSAR and NISAR can share implementation without inheriting each
+other's measurement, orbit or correction assumptions. Planet can satisfy a consumer requirement without sharing
+Optical implementation. No universal matcher or workflow language is proposed.
+
+Current extension cost spans GUI catalogues/date hints, band options, presets, `modules/gui/src/sources.js`, EE
+construction/options and dependency extraction. GUI helpers fabricate Mosaic-shaped models; EE collection building
+has its own family switch. A replacement should give shared pure planning ownership of normalization, named
+references and product guarantees, EE ownership of execution, and GUI ownership of labels and controls. Recipes
+state operation requirements instead of reconstructing source rules.
+
+### Planning, evidence and execution
+
+Discover adapter-owned parameters and named direct references from persisted input or a draft. Project graph edges
+from those references once; the shared graph retains loading, authorization, cycles, diamonds and traversal. Resolve
+product declarations bottom-up using only role-scoped child declarations. A type may inspect its own model, but a
+cross-recipe binder must not inspect foreign records or an undeclared graph catalogue.
+
+A planned command can have partial guarantees and explicit evidence requirements; a provisional capability is not
+an established instance. Judge the consumer's requirement before acquisition: `SUPPORTED` needs no observation,
+`UNSUPPORTED` stops, and `NEEDS_EVIDENCE` names an authorized
+acquisition that can decide it. Re-resolve after acquisition. Transport/authorization failure is `UNAVAILABLE`;
+malformed or contradictory evidence is `INVALID`; permanently insufficient semantic provenance is `UNSUPPORTED`
+with `INSUFFICIENT_PROVENANCE`. Exhausted acquisition cannot leave a requirement pending forever. Even an admissible
+command can find no observations for the requested AOI/dates.
+
+Commands are deterministic, immutable, JSON-safe derived state, never written back into recipe JSON. They carry no
+EE objects, functions, credentials, translated labels or Redux state. Each executor validates its own named command;
+a trusted execution boundary rebuilds or revalidates it from authorized inputs rather than trusting a browser plan.
+
+Distinguish available selections from the exact ordered output of one configured request. Classification binding
+may extend the available domain before selection; GUI groups only decorate it. Preserve order-significant input,
+while deriving output order from the declaration. For an initial Optical proof, Landsat and Sentinel-2 catalogue
+entries can share one adapter with internal dataset readers. Add a separate source-composition boundary only when a
+real consumer must combine independently contracted adapters; that is distinct from temporal derivation.
+
+### Hard cases and unresolved contracts
+
+- **Collection schema.** Declare required versus optional member bands, homogeneity, time coordinate/representation,
+  ordering and duplicate policy. Unknown evidence is not optional. Construction can establish guarantees without a
+  full member scan; selection/filtering must establish compatibility on every retained member it promises to cover.
+  Aggregation declares its own image schema. Planet Daily's common RGB/NIR versus PSB.SD-only bands is the required
+  heterogeneous case; an explicit selection, filter or missing-band policy must establish homogeneity.
+- **Operation requirements.** Counting, scalar charts, CCDC, annualized LandTrendr and Change Alerts require different
+  guarantees. Start with structural constraints and explicit adapter restrictions: Sentinel-1-specific processing
+  should name that dependency rather than claim a generic dual-polarization capability. Product schema and capability
+  cardinality/provider lineage remain separate; a multi-instance requirement needs selection or cardinality rules.
+- **Measurement meaning.** Encoding states representation, not scientific equivalence. Add measurement identities only
+  when a consumer needs and can establish them. Change Alerts is relational: compare value semantics (formula, units,
+  encoding and value-changing corrections) and relevant observation protocol (sensor, orbit, masking, filtering,
+  resampling). Keep AOI/dates as execution scope. Structured evidence is authoritative; narrower fingerprints support
+  comparison without replacing it. Principal/linked-account identity scopes access and caches, not measurement meaning.
+- **Capabilities.** Admit one only for interpretation or behavior not expressed by product schema and explicit adapter
+  restrictions. Only a producer or audited transformation grants it; modality, similar names and supported options
+  do not. Normalization and correction alone must not be described as harmonization: that needs an explicit
+  comparability guarantee. Existing assets without trustworthy provenance cannot recover formulas from band names.
+- **Versioning.** Introduce versions only for contracts a real consumer compares or carries across a runtime/durable
+  boundary. Internal refactoring needs none. Do not preserve confirmed algorithm defects as legacy profiles or invent
+  creation-date/asset-specific branches. Existing affected data may require recreation when correctness matters.
+- **Presentation migration.** Keep shared ordered schema separate from GUI labels, tooltips, ranges and groups.
+  Presets/templates identify their product and required bands; local styles keep their owner. Existing helper exports
+  can adapt migrated answers while callers move. This does not schedule the broader band-presentation review.
+
+An added catalogue entry under an existing adapter should need no consumer change. A new adapter may reuse mechanics
+but must establish its own guarantees; a new operation declares requirements rather than adding family switches.
+Catalogue date availability remains a hint, separate from actual AOI/date/identity availability.
 
 ### Source-planning verification
 
-Before adopting the boundary, tests must prove:
+Before adopting the boundary, establish:
 
-- shared planning and EE execution consume the same normalized command;
-- every adapter validates its own command namespace and intended runtime surfaces;
-- a modality label or matching band names never makes incompatible products interchangeable;
-- dependency edges are projected from exactly the named references the selected EE branch reads;
-- a binder cannot inspect an undeclared graph record;
-- representative declarations agree with the actual `getImage$()` result, not another helper projection;
-- adding a synthetic catalogue entry for an existing adapter does not require a recipe-type change;
-- same-name but semantically incompatible synthetic adapters are rejected;
-- an explicit audited transformation can establish a requirement an adapter does not natively satisfy;
-- missing EE or GUI implementations fail only when the adapter declares that surface;
-- source presentation changes cannot alter physical output schema;
-- recipes consuming a collection product do not branch on Optical, Radar or Planet;
-- equivalent input has deterministic canonical serialization, while order-significant input changes the plan;
-- the trusted executor rebuilds or revalidates the command from the authorized recipe bundle and never trusts a
-  browser-supplied plan as execution authority.
+- planning and EE execution use the same normalized command, with deterministic serialization and meaningful order;
+- named references match the selected executable branch, and binders cannot read undeclared records;
+- representative declarations match actual `getImage$()` output for default and explicit requests, including
+  encoding, classification, derivation and heterogeneous members;
+- a synthetic catalogue entry needs no recipe change, and same-name incompatible adapters are refused;
+- an audited transformation can establish a requirement its source cannot natively satisfy;
+- each adapter validates its command and declared runtime surfaces; an absent implementation fails only on a
+  surface it claims to support;
+- GUI presentation cannot change physical schema, and collection consumers need no Optical/Radar/Planet switch;
+- trusted execution validates authorized inputs independently of browser plans.
 
 ## Transformation and capability projection
 

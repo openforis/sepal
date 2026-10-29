@@ -65,10 +65,8 @@ the input images are, and refused where a band set selects what an input does no
 
 ## Verification
 
-- `lib/js/shared/test/recipe/output/type/regression.test.js` - absent and known-empty training data refused for every
-  classifier, stored points and a `RECIPE` data set accepted, and a Remapping of the predictions held and restored.
-- `modules/gui/src/app/home/body/process/recipe/regression/trainingDataReadiness.test.jsx` - the TRN button, layer and
-  Retrieve agreeing for the Regression and a Remapping of it; an empty plots table reloaded in its editor, cancelled and
-  applied.
-- `modules/gee/test/jobs/task/export/imageAssetExport.test.js` - the asset export refused for the Regression and a
-  Remapping of it, and exported once a data set stores points.
+- `lib/js/shared/test/recipe/output/type/regression.test.js`: training presence, classifiers and downstream repair.
+- `modules/gui/src/app/home/body/process/recipe/regression/trainingDataReadiness.test.jsx`: TRN/layer/Retrieve
+  agreement, empty data and draft Apply/Cancel.
+- `modules/gee/test/jobs/task/export/imageAssetExport.test.js`: direct/downstream refusal and export after repair.
+These establish readiness, not statistical adequacy or successful training on arbitrary inputs.

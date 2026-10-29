@@ -1,8 +1,8 @@
 # CLAUDE.md - modules/recipe
 
-SEPAL processing-recipe service (Node.js). Replaces the storage/CRUD half of the Java `sepal-server`
-`processingrecipe` component. Owns the `recipe` MySQL schema (recipe + project tables).
-Serves the existing `/api/processing-recipes` routes. The recipe-content migration engine is Phase 2b.
+Processing-recipe persistence service. Owns the `recipe` MySQL schema (recipe and project tables) and
+serves `/api/processing-recipes`. Content and its monotonic revision are loaded together; updates require
+`expectedRevision`. See the [storage contract](../../docs/design/recipes/source-freshness.md#recipe-storage-contract).
 
 ## Database migrations
 

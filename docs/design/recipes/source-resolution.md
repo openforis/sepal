@@ -237,6 +237,9 @@ Cancel writes nothing. Both segment-capable export paths write server-derived pr
 field-state/preservation mechanics live in `referenceProcessing.js`; recipe-specific interpretation stays local.
 There is no separate copy-again action.
 
+Change Alerts omits the legacy strong-scatterer toggle that its monitoring collection does not read; the thresholds
+it does use retain reference ownership or explicit unrecorded fallbacks. Ordinary Radar controls are unchanged.
+
 ### CCDC Slice SRC
 
 SRC requires the segment layout its slicing operation reads, including complete measures and their stored order;

@@ -55,9 +55,7 @@ The GUI groups the bands by segment and by month and sets their cursor precision
 
 ## Verification
 
-- `modules/gee/verify/phenologyPyeoOutputBands.mjs` - on live Earth Engine, over an area with months without scenes
-  and one with scenes every month: unselected and empty selections return the declared bands, a subset returns in
-  the order asked, a month without scenes has no valid pixels, and a month with scenes keeps its median's values,
-  mask, pixel type, CRS and affine transform.
-- `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js` - the declaration, presentation and
-  export policy through the real registration.
+- `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js`: output declaration,
+  presentation and export policy through registration.
+- [Phenology/PyEO live probe](../../modules/gee/verify/README.md): complete/selected schema, empty-month masks,
+  and median values, pixel type and projection. It does not settle the two-month window policy.

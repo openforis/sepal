@@ -78,18 +78,10 @@ preview, histogram and distinct values - carries alike.
 
 ## Verification
 
-- `modules/gee/verify/baytsAlertsRadarObservation.mjs` - on live Earth Engine, for both positions: the shared
-  description, the catalogue and the image the layer's arguments build hold the same scalar bands. At a point, each
-  sample names an acquisition listed independently from the scene catalogue, by its zero-based day of year and whole
-  days from the target, with its orbit, and none lies nearer. Masking over a historical asset is reported as blocked:
-  no BAYTS Historical asset is accessible to the service account.
-- `modules/gee/verify/baytsAlertsOutputBands.mjs` - the alerts' schema.
-- `lib/js/shared/test/recipe/output/type/baytsAlerts.test.js` - the product's description, identity, parameters, the
-  target date it is delegated at - month ends, leap years, years below 100 - and the monitoring periods that cannot
-  place it.
-- `modules/gee/test/jobs/ee/bayts/alertMapProducts.node.test.mjs` - the mosaic built for each mode and an unknown one,
-  the asset masking and its absence over a recipe.
-- `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js` - described and presented positions,
-  styles, refusals without legacy fallback, and the reference states that do and do not block preview.
-- `modules/gui/src/app/home/body/process/recipe/recipeImageLayer.test.js` - preview arguments as the editor reads them,
-  a mode change and a restyle acquiring nothing again.
+- `lib/js/shared/test/recipe/output/type/baytsAlerts.test.js`: named-product parameters, identity, date
+  normalization and refusals.
+- `modules/gee/test/jobs/ee/bayts/alertMapProducts.test.js`: executed product, unknown mode and asset masking.
+- `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js` and `recipe/recipeImageLayer.test.js`:
+  presentation, readiness, preview arguments and acquisition lifetime.
+- [Live BAYTS probes](../../modules/gee/verify/README.md): alerts schema and first/last radar samples;
+  historical-asset masking is not covered without an accessible fixture.

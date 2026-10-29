@@ -5,7 +5,10 @@ work. This document evaluates two browser-based GIS applications for that role,
 [GeoLibre](https://github.com/opengeos/GeoLibre) and [RustGIS](https://github.com/opengeos/RustGIS). Each would run in
 the user's sandbox, integrated with SEPAL's files and processing.
 
-**Status:** nothing is implemented, and neither application has run on SEPAL.
+**Status:** unimplemented evaluation proposal; neither application has run on SEPAL.
+Upstream findings below are scoped to the recorded versions, not current-release compatibility. The pinned
+upstream sources were not retrievable during this documentation review; rerun the prototypes before relying
+on their detailed API/limit assumptions.
 
 **Evidence markers:**
 - **established:** read in SEPAL's code or the pinned upstream sources, or run in local containers built from SEPAL's
@@ -25,95 +28,35 @@ the user's sandbox, integrated with SEPAL's files and processing.
 
 ## Evaluation brief
 
-**What we are deciding:** whether either application provides a useful **SEPAL imagery workspace**. We are not
-committing to exposing every feature of either. Features that do not work well on SEPAL data are hidden. An
-application that cannot give a coherent experience for the workflows below is not adopted.
+Evaluate both as browser imagery workspaces in a user sandbox. Adoption requires:
 
-**What "integrated" means.** Without knowing about Jupyter, proxies, tokens or the browser/sandbox divide, a user can:
-1. open an image retrieved in SEPAL, from their SEPAL home, as one image;
-2. view and style it smoothly: navigation, band selection, stretches, colours;
-3. process a polygon they drew or selected, and see the result;
-4. save through the application's normal Save and Open into their SEPAL home, with downloading to their own computer
-   as a separate, explicit choice;
-5. return after closing the app or getting a new sandbox, and find imagery, styling, polygons, edits and results intact.
-
-Passing technical checks does not by itself establish this.
-
-**How the pieces fit.** Everything runs on machines SEPAL already uses.
-- **The user's sandbox** serves, through its Jupyter server:
-  - the application;
-  - home files (`/api/sandbox/jupyter/files/<path>`) and their listing and saving (`…/api/contents/<path>`);
-  - a [job service](#the-sandbox-job-service) for processing, in the app's kernel.
-- **A browser integration layer** connects each application's existing interface to these:
-  - **GeoLibre:** a deployment policy, a start-up script with a file-picker adapter, and a bundled plugin, added to its
-    published web build;
-  - **RustGIS:** browser integration code, a Rust crate compiled with RustGIS's interface into its WebAssembly
-    application.
-- **SEPAL** gains only [generic features](#generic-sepal-work).
-
-**Processing: what runs where.** Neither design runs every existing tool in the sandbox. Menus offering tools that
-fail or mislead on SEPAL data count against an integration.
-
-| | GeoLibre | RustGIS |
-|---|---|---|
-| **Work as they are** | Map, raster styling, drawing, editing; browser vector tools on small layers | Map, drawing, editing; built-in vector tools on small layers |
-| **SEPAL equivalents** (job service) | Prepare for viewing, materialize mosaic, statistics | The same |
-| **Hidden or labelled** | Browser raster and Whitebox tools (load whole files, up to 512 MB); desktop-only dialogs; plugin installation; sharing; exports bypassing the save path | GeoLibre-runner tools and raster commands (in-browser data only; SEPAL imagery cannot be an input); Add Data from file (embeds data in the project) |
-
-**Before viewing imagery.** A SEPAL retrieval is a folder of tiles with a `.vrt` over them
-([what SEPAL exports](#what-sepal-exports)):
-- **GeoLibre** reads the `.vrt` directly when its tiles have overviews; without them it draws only zoomed in until
-  prepared.
-- **RustGIS** cannot read a `.vrt`, so `.vrt`-based retrievals are first prepared into one COG. A COG with a layout
-  it handles well ([large data](#large-data-and-state)) opens directly.
-
-Preparation writes into the user's home and counts towards their quota. The evaluation judges whether it is
-understandable: why it is needed, progress and time estimate, storage shown beforehand, the quota warning, and what
-happens to the file later. A [viewer-friendly export](#a-viewer-friendly-sepal-export) would make it unnecessary for
-new retrievals only if its layout proves to suit both applications in the performance tests.
+1. Open a SEPAL home retrieval as one image; navigate, select bands and style it within agreed limits.
+2. Process drawn/selected polygons and add the result.
+3. Native Save/Open writes into home; downloading to the local computer is an explicit alternative.
+4. Reopening after app closure or sandbox replacement restores imagery, styles, polygons, edits and results.
 
 ### How the two are evaluated
 
-**The same inputs and conditions for both:**
-- **exports:** a multi-gigabyte, multi-band SEPAL export (for example 20,000 × 20,000 pixels, 10 bands, with a scaled
-  optical band), a classification and a Float32 export;
-- **polygons:** a drawn one, a layer crossing tile boundaries, and a layer in another coordinate system;
-- **environment:** the same browser, machine and sandbox instance type;
-- **workflows:** the five steps above, plus preparing an image and materializing a mosaic.
+Use the same browser, client machine and sandbox type, with a multi-gigabyte multiband SEPAL export, a
+classification and a Float32 export. Include scaled optical bands, tile-boundary polygons and cross-CRS zones.
+Agree pass/fail limits before measuring browser memory, transferred bytes, first-image latency, navigation
+frame times, conversion duration/peak disk, statistics accuracy and job memory.
 
-**Measured against pass/fail limits agreed before testing:**
-- browser memory, bytes transferred, time to first image and frame times while panning and zooming;
-- preparation and mosaic time, and peak temporary disk;
-- statistics against an independent computation, and job memory.
+Record blocking/significant/minor issues: confusing dialogs/waits, unexpected downloads, unreachable styling,
+misleading tools, lost state and maintenance cost. A labelled preparation step, native SEPAL submenu, hidden
+unsupported tools, sandbox requirement or prototype band numbers is acceptable. Silent save loss, account
+leakage, uncontrolled quota growth or unusable imagery is not.
 
-**Rough-edge log**, each entry rated blocking, significant or minor:
-- repeated or confusing dialogs;
-- unexpected downloads;
-- styling reachable only through command search;
-- confusing failures or unexplained waits;
-- lost state;
-- misleading menus.
+GeoLibre may read a plain mosaic VRT with overview-bearing tiles; otherwise preparation is required for low
+zoom. RustGIS needs a prepared COG because it cannot read VRT. Show conversion storage, progress and cleanup
+ownership; prepared files count toward quota. A common viewer-friendly export remains conditional on tests.
 
-**Acceptable compromises:**
-- SEPAL's tools in a submenu or ribbon tab of their own;
-- an explained preparation step with progress and storage shown;
-- some tools hidden;
-- labelled "from this computer" actions beside SEPAL's;
-- needing a sandbox;
-- band numbers instead of names in the prototype.
+Existing browser/vector tools are limited to small in-memory data. GeoLibre browser-raster/Whitebox and
+RustGIS raster/GeoLibre-runner tools do not establish scalable processing of SEPAL imagery; hide or label them.
+Both integrations use the shared sandbox jobs for preparation, materialization and statistics.
 
-**Reasons to stop:**
-- silent loss of work (a save reported done but not written, edits lost on reopening);
-- downloads the user did not choose;
-- imagery unviewable within the limits;
-- styling users cannot reach in the interface;
-- misleading menus that cannot be hidden;
-- quota filled without warning;
-- one account's data visible to another;
-- adaptation that needs substantial rework at every upgrade.
-
-**Next step:** GeoLibre's [Stage 0](#stage-0) before its full plugin; the RustGIS [prototype](#prototype) kept
-bounded, assessing its styling and save-contract gaps explicitly; production decided on measured results.
+Evaluate GeoLibre through [Stage 0](#stage-0), and RustGIS through its bounded [prototype](#prototype), before
+committing to either production integration.
 
 ## Shared design
 
@@ -141,14 +84,9 @@ not a notebook (established).
     reconnects;
   - the GUI keeps all of a user's Jupyter apps on one instance.
 
-**Catalog apps over the alternatives**, on packaging and lifecycle grounds. Either browser integration layer could
-connect to the same services under any model, and RustGIS's save contract is needed either way.
-- **Packages in the sandbox image:** every upgrade would be a SEPAL release and a new worker AMI, sharing the system
-  Python.
-- **A first-class sandbox endpoint,** like RStudio: SEPAL would maintain a server, port, launch and routing for each
-  application. Catalog apps reuse app-manager's install from Git, its per-app environments, Voilà, and the existing
-  app tabs and session handling. That model's advantages, request routing by path and a frame the GUI already
-  observes, are matched by the [generic SEPAL work](#generic-sepal-work).
+Catalog apps reuse app-manager installation, per-app environments, Voilà, tabs and session handling.
+Baking applications into the sandbox would couple upgrades to SEPAL releases/AMIs; dedicated sandbox endpoints
+would add per-application server/routing ownership. Neither alternative removes the file/save integration needs.
 
 ### Files through the sandbox
 
@@ -218,7 +156,8 @@ route for layers too large to hold in the application.
   memory stays bounded.
 
 **Stored versus physical values:**
-- **Encodings:** SEPAL stores bands with a scale, offset and unit; optical reflectance, for example, at 10,000 per unit
+- **Encodings:** some producers declare scale, offset and unit; unknown encoding stays unknown. Optical
+  reflectance is stored at 10,000 per unit
   (`OPTICAL_STORED_PER_UNIT`, `lib/js/shared/src/recipe/optical/encoding.js`).
 - **GDAL reads return stored values** regardless of a file's scale and offset metadata. So:
   - **nodata** is compared on stored values, from the image or the user, since SEPAL exports carry none;
@@ -339,14 +278,14 @@ A retrieve option, **Cloud-optimized with overviews**, possibly the default for 
      of them.
 
 **Costs:**
-- each conversion takes 1 CPU and 4 GB, in one of the main host's 4 local-processing slots, and must keep reporting
-  progress;
+- the proposed task conversion uses one local-processing slot and reports progress; defaults are four slots
+  (`TASK_MAX_CONCURRENT_LOCAL_PROCESSING`), 1 CPU and 4096 MiB per task container, all configurable;
 - disk use roughly doubles unless the tiles are removed;
 - tasks do not check quota today.
 
 ### Platform facts
 
-- **jupyter-server-proxy** is unpinned (`>=4.2.0`; 4.6.0 current):
+- **jupyter-server-proxy** is unpinned (`>=4.2.0`; the recorded inspection included 4.6.0):
   - it reaches any local port;
   - ranges, 206, conditional requests, 304 and WebSockets pass through;
   - responses are buffered whole, capped at 100 MB, with a 300 s timeout.
@@ -404,41 +343,20 @@ A retrieve option, **Cloud-optimized with overviews**, possibly the default for 
 
 ### User experience
 
-- **Opening the app:**
-  - GeoLibre opens from SEPAL's Apps, in SEPAL's language and theme, with its own menus, plus the SEPAL submenus and
-    SEPAL's file dialog wherever GeoLibre saves or opens files;
-  - no notebook, kernel or URL shows.
-- **Opening data:** Add Data › SEPAL › From SEPAL… browses home from `downloads`.
-  - Each retrieval is listed once, as its `.vrt`, and prepared copies are marked.
-  - An image that reads well (tiles with overviews) is added as one layer, styled with GeoLibre's raster styling. Band
-    names or numbers depend on Stage 0 ([band names](#geolibre-specifics)).
-  - Otherwise the dialog offers Prepare for viewing, or adding it anyway with a zoomed-in-only warning.
-  - Vectors over the supported size are refused with an explanation.
-  - GeoLibre's own Add Data stays, labelled "from this computer".
-- **Saving:**
-  - Save (Ctrl+S) opens SEPAL's dialog at a `GeoLibre` folder or the last one used, and confirms overwrites. Projects
-    reference imagery by URL, so they stay small.
-  - Save As always asks. Download to this computer is a second button, never the default. Exports through GeoLibre's
-    common save path get the same dialog.
-  - **A failed save stays unsaved, and nothing downloads unasked:**
-    - GeoLibre's browser save (`saveTextFileBrowser`, `file-dialogs.ts:124-159`, and its binary twin) turns any
-      non-cancellation error into a local download reported as success (established).
-    - The adapter never lets a failure reach that path. SEPAL's dialog shows the error with Retry, Download or Cancel.
-    - Cancel is reported as an `AbortError`, so Save returns false and the project stays unsaved
-      (`useProjectFileActions.ts:1650-1665`).
-    - Download is performed by the adapter, which reports success (as GeoLibre treats downloads) and records that home
-      was not updated.
-- **Processing** (Processing › SEPAL):
-  - **Prepare for viewing** writes a COG beside the image or where chosen, and swaps the layer;
-  - **Materialize mosaic** writes one GeoTIFF/COG from a `.vrt`;
-  - **Statistics** writes a CSV and optionally adds polygons with their statistics;
-  - jobs show progress, estimated size and Cancel in a jobs panel.
-- **Returning:**
-  - Project › Open restores imagery, styling, polygons and edits, after a closed tab, kernel restart or new sandbox;
-  - long jobs reappear while the sandbox lives;
-  - missing files show as missing, with "Locate…".
-- **Privacy:** no browser project history, no external plugins whatever the browser holds, no sharing to
-  `share.geolibre.app`, and [account-bound storage](#browser-storage-bound-to-one-account).
+- Add Data › SEPAL browses home from `downloads`, showing one VRT per retrieval and identifying prepared copies.
+  Open directly where supported; otherwise offer preparation or an explicit low-zoom limitation. Bound vector size.
+- Native Save/Ctrl+S, Save As and Open use the file-picker adapter. Save As asks for a path; overwrite requires
+  confirmation. Projects retain imagery URLs; local download is a separate choice.
+- The adapter must contain write failures: GeoLibre's browser save currently falls back from non-cancellation
+  errors to a download reported as success (`saveTextFileBrowser`, `file-dialogs.ts`, and its binary counterpart).
+  Show Retry/Download/Cancel instead; Cancel becomes `AbortError`, leaving the project unsaved. Explicit Download
+  records that home was not updated. Verify this assumption against the pinned build.
+- Processing › SEPAL offers preparation, mosaic materialization and statistics through jobs with progress,
+  estimated storage and cancellation. Missing files offer Locate; running jobs reappear while the sandbox lives.
+- Disable browser project history, external plugins and public sharing. Restore from home on a new sandbox;
+  enforce [account-bound storage](#browser-storage-bound-to-one-account).
+
+The [evaluation brief](#evaluation-brief) owns workflow and performance acceptance.
 
 ### How each capability is reached
 
@@ -566,27 +484,14 @@ band names and the observations above.
 
 ### Acceptance
 
-Beyond the [evaluation brief](#how-the-two-are-evaluated):
-- **Preparation:** keeps full-resolution values (checksummed); categorical overviews contain only source classes.
-- **Mosaic:** cancellation leaves no partial output.
-- **Statistics:**
-  - nodata is compared on stored values;
-  - scaled bands are reported in physical units;
-  - edits after submission do not affect a job.
-- **Saving:** a failed write stays unsaved and downloads nothing; Download only when chosen.
-- **Privacy:** nothing carries over between accounts (logout, replacement, expiry, second tab, no marker), and no
-  external plugin loads.
-- **Settings and activity:** SEPAL's language and theme apply; working only in the map keeps the session alive.
+Apply the [shared evaluation](#how-the-two-are-evaluated). Additionally verify the file-picker adapter's failed
+write/cancellation behavior, policy with pre-existing browser state and slow deployment metadata, nested-frame
+activity, language/theme and restored edits. Full-resolution pixels must be unchanged; categorical overviews
+may contain only source classes. Statistics use stored-value nodata, physical-value conversion and captured zones.
 
-**Unresolved:**
-- whether Python-written `metadata.bandNames` survives the snapshot round trip;
-- how existing exports' encodings are known (presets only, or from the producing recipe while its record exists);
-- range requests and contents-API body sizes through the gateway;
-- whether root-relative layer URLs survive saving;
-- the start-up script in Firefox and Safari;
-- how quota is read before a job (no sandbox API is known);
-- vector size and editing limits;
-- which tools and exports to hide.
+Unresolved: Python `metadata.bandNames` round trip; trustworthy legacy export encodings; range/contents writes
+through the gateway; root-relative project URLs; Firefox/Safari behavior; a quota-read API; vector/edit limits;
+and the exact tools/exports to hide.
 
 ## RustGIS
 
@@ -726,11 +631,9 @@ project.
 | **RustGIS's Python widget** | Rejected: the browser posts the whole project after every change, pans included, and the kernel reopens it, re-reading every raster from disk; kernel results are embedded without a cap |
 | **A remote engine** (the interface driving a sandbox session) | Every interface-to-engine command made asynchronous upstream; not maintainable as our contribution |
 
-**Size** (estimate from source structure):
-- The public API covers start-up, `run`, the mutable session and registry, and `logic`/`ui` in our own frame update.
-- The stock shell's 1,390 lines (`main` `e5046e0`) include parts not needed: the embed protocol (178), the browser tool
-  runner (144), local-file part reading (93), the assistant's HTTP and URL parameters.
-- The estimate is a few hundred lines, mostly ours, with about 150 copied for the fetcher.
+The public API appears sufficient for a small integration crate; the stock shell also contains unnecessary
+embed/tool-runner/local-file code. Actual copied code and maintenance cost must be measured in the prototype,
+not inferred from source line counts.
 
 **Upstream requests:**
 1. **The save contract** (prerequisite).
@@ -777,53 +680,31 @@ Bounded, built on `main` at a pinned commit:
 - how prepared COGs draw;
 - whether unknown project keys really are dropped.
 
-**Recommendation:**
-- **Feasible:** RustGIS can provide an integrated workspace this way.
-- **Before production:** the save contract and COG styling upstream, and maintained Rust integration code with a
-  WebAssembly build. RustGIS's own tools stay unusable on SEPAL imagery.
-- **Prototype conditions:**
-  - the save contract demonstrated with a patched hook;
-  - sidecar entries keyed by immutable paths;
-  - minimal integration code tried before any shell copy;
-  - styling recorded against the gate.
+**Production prerequisites:** demonstrated asynchronous save success/failure/cancellation, reachable COG styling,
+immutable prepared paths, consistent sidecar/project commit, and maintainable integration code. Feasibility
+remains unproven until the prototype passes; source inspection is not a runtime result.
 
 ## Comparison and decision
 
-| | GeoLibre | RustGIS |
-|---|---|---|
-| **Our code against** | Public plugin API; browser save and open behaviour (internal, not a contract); private `serve_app` (Stage 0 only) | Public `RustGisApp` and `Services` API |
-| **Patches or copies** | Five patches to minified, content-hashed files, re-applied by string matching at each upgrade | A copied fetcher (the whole shell only if minimal code fails) |
-| **Build** | Re-packaging the published wheel | Rust and WebAssembly in our CI |
-| **Upstream before production** | None; requests retire patches | Save contract and COG styling |
-| **Release pace** | Very fast (36 releases in four months) | Fast and young (first released 12 October 2026) |
+| Concern | GeoLibre | RustGIS |
+| --- | --- | --- |
+| Integration boundary | Public plugin/widget API plus an internal browser picker adapter. | Public `RustGisApp`/`Services` and a custom WebAssembly shell. |
+| Maintenance | Five proposed patches to minified content-hashed files; private serving hook for Stage 0. | Copied fetcher and integration crate; copy the stock shell only if the smaller boundary fails. |
+| Build | Repackage a pinned wheel. | Rust/WebAssembly CI build. |
+| Production gates | Native save failure semantics, persistence, policy and representative imagery performance. | Asynchronous save contract, COG styling, persistence and representative imagery performance. |
 
-**For each app repository:**
-- a named maintainer;
-- automated adapter tests covering ranges and suffix ranges, fingerprints (including a changed tile behind an
-  unchanged `.vrt`), project restoration and edits, the save contract, and start-up with the pinned versions;
-- acceptance results recorded on a dev SEPAL at each upgrade, which is deliberate given the release pace.
+Each app repository needs a maintainer, pinned inputs, automated transport/fingerprint/save/restoration tests
+and recorded dev-SEPAL acceptance at upgrades. A fingerprint must detect changed tiles behind an unchanged VRT.
 
-**What remains to establish**, all at runtime:
-1. **Transport:** ranges and suffix ranges, `.vrt` siblings, authenticated access, contents-API writes, and URLs
-   surviving sandbox replacement.
-2. **Large images:** memory, transfer and responsiveness on representative exports; conversion time and peak disk;
-   limits agreed beforehand.
-3. **Preservation of work:** native Save and Open, failed writes, cancellation, and styling, polygons and edits
-   surviving reopening. GeoLibre's early gates test this first.
-4. **Processing:** nodata, scale and offset, coordinate transformation and captured edits checked independently; masks
-   and reads within memory.
-5. **Lifecycle and accounts:** detached jobs after kernel shutdown, cancellation cleanup, account changes across tabs,
-   policy enforcement, and nested-frame activity.
-6. **Maintenance:** GeoLibre's actual patch burden, the RustGIS integration code's actual size, ownership, and whether
-   RustGIS's upstream prerequisites are achievable.
+The runtime experiments must establish:
 
-**Platform checks** bearing on both:
-- the jupyter-server-proxy version in the image;
-- kernel environment variables;
-- the GUI's CSP in the Voilà page;
-- delivery of Voilà's shutdown beacon;
-- orphaned kernels after failed renders;
-- Earth Engine tiles without authentication.
+- Authenticated ranges/suffix ranges, VRT siblings, contents writes and durable URLs.
+- Large-image memory/transfer/navigation, conversion time/peak disk and bounded statistics reads.
+- Save failure/cancellation, reopened styles/edits and interrupted sidecar/project commits.
+- Nodata, scale/offset, CRS transformations and zones captured at submission against an independent oracle.
+- Job lifetime after kernel closure, cancellation cleanup, account changes across tabs and nested-frame activity.
+- Actual patch/copy burden and achievable upstream prerequisites.
 
-**Decision:** evaluate both comparably, GeoLibre through Stage 0 and its gates first, RustGIS through its bounded
-prototype, and decide on production from measured results judged by the [evaluation brief](#evaluation-brief).
+Check the deployed proxy version, kernel environment, Voilà CSP/shutdown beacon, orphaned failed-render kernels
+and EE tile authentication. Run GeoLibre Stage 0 first and the bounded RustGIS prototype under the same evaluation;
+choose production only from measured results.

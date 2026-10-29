@@ -70,7 +70,7 @@ Keys resolve only while the session is PENDING or ACTIVE; closing a session clea
 last terminal callback of a session revokes its own credential.
 
 ## Session expiration
-See `docs/session-expiration-model.md`. Lifetime is a STORED `timeout_time` moved only by
+Lifetime is a stored `timeout_time` moved only by
 `workerSessionRepository.extendSession` — one monotonic UPDATE that is also atomic with the
 notification reset, which is what makes "any extension cancels the expiry" a guarantee rather than
 a race. There is no other way to move a deadline.
@@ -184,27 +184,18 @@ The event-fed `lockedUsers` set is only the FALLBACK for when that call fails �
 restart, so it must not be the authoritative gate. It remains what closes an over-budget user's
 running sessions, via the `budget.UserBudgetExceeded` subscriber in `main.js`.
 
-## Database Schemas
-- `worker` — consolidated worker-cluster schema. Holds a COPY of the worker-cluster tables:
-  `worker_session`. The budget tables belong to the budget module's own schema.
-  - `session_app` — `(username, app_path)` PK mapping to `session_id` + `label`;
-    one live session per app per user. No DB-level FK; rows are cascade-deleted at the application
-    layer (`sessionAppRepository.deleteForSession`) when a session transitions to CLOSED.
-    Nullable `client_id` is the gateway ws client (browser window) owning the app's tab;
-    clientDown dissociates by it, ownerless rows are never swept.
-  - `instance_claim` — not a copy of anything: `(instance_id, session_id, claimed_at)`, one row
-    per instance currently claimed by a session. EC2 (the hosting service) is authoritative for
-    everything else about an instance; this table records only the one fact MySQL needs to know.
-  - The originals remain LIVE in `sdms` (Java still uses them directly).
-  - Tables copied from `sdms`: `worker_session` and `task`.
-  - `task` — kept only as the source of task-manager's one-off import
-    (`modules/task-manager/migrations/legacy-import/001.do.import.sql`, which reads `worker.task`). The
-    worker's own task import (`migrations/legacy-import/001.do.import.sql`) must stay until task-manager's
-    import has run everywhere; the table is dropped in a later release.
-  - `scene_meta_data` lives in the `scene_metadata` schema (moved in Phase 3).
-  - `rmb_message` / `rmb_message_processing` (reliable message bus) belong to the Groovy
-    sepal-server and stay in `sdms` — NOT part of the worker schema.
-  - Vestigial access-control tables (users/groups/roles/etc.) remain in `sdms` — NOT copied.
+## Database schema
 
-Migrations managed via Postgrator (single `migrations/` dir) with auto-rename of legacy
-Flyway `schema_version` → `schema_version_old`.
+The `worker` schema holds:
+
+- `worker_session`: persisted sessions, deadlines, API keys and instance references.
+- `session_app`: `(username, app_path)` key mapped to `session_id`, `label` and nullable browser `client_id`.
+  Application code removes rows when their session closes; there is no database foreign key. Client-down
+  handling dissociates owned rows; ownerless rows are not swept by that event.
+- `instance_claim`: `(instance_id, session_id, claimed_at)`, one claim per instance. Hosting-service inventory
+  remains authoritative for instance state.
+- `task`: historical rows retained solely for task-manager's one-off import from `worker.task`. Keep the
+  worker's import from `sdms` until task-manager's import has completed everywhere; drop the table later.
+
+Budget and scene metadata have their own schemas. Legacy reliable-message-bus and access-control tables in
+`sdms` are not worker tables. Migration streams and cleanup are owned by the guide linked above.

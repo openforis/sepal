@@ -19,7 +19,7 @@ Session (Redis-backed) -> User injection -> Auth -> Google token refresh -> Prox
 
 ### Proxy Configuration
 - `config/endpoints.js`: Defines all 25+ HTTP proxy routes and 2 WebSocket routes with auth requirements, timeouts, and caching
-- `config/modules.json`: Maps module names to Docker hostnames (e.g., `"gee": "gee"`, `"sepal": "sepal"`)
+- `config/modules.json`: Maps module names to Docker hostnames (e.g., `"gee": "gee"`, `"taskManager": "task-manager"`)
 - `src/proxy.js`: Creates `http-proxy-middleware` instances per endpoint. Sets `sepal-user` header with user JSON for downstream services.
 
 ### WebSocket Architecture (6 files)
@@ -33,8 +33,8 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
 ### Sandbox App Routing
 - `sandboxSessionManager.resolveTarget` attributes a proxied sandbox request to a host in this
   order: kernel-id probe (Jupyter `/api/kernels/:id/` paths, probes candidate hosts) → app-path
-  prefix match → `Referer` header prefix match → single-candidate fallback → legacy
-  per-endpoint lookup (`GET /sessions/active`).
+  prefix match → `Referer` header prefix match → single-host fallback among that endpoint's
+  associations. Otherwise it returns no target; it never picks an arbitrary active session.
 - `POST /api/sandbox/start` (`sandboxStartRoute.js`) takes query params `endpoint`, `appPath`,
   `appLabel`, `sessionId`, `instanceType` and returns `{id, status, reused?}`; `reused: true` means
   an explicit `sessionId`/`instanceType` pick was overridden by a winning live association or a

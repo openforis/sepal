@@ -56,9 +56,7 @@ updates are one action; readiness still checks the actual `image` reference and 
 
 Legacy orphaned constraints that have already lost their input and have no retained identity need one explicit repair
 in Mapping. Their former source cannot safely be inferred from a name or band. Duplicate source or input identities
-are not resolved by choosing an arbitrary match; ambiguous or malformed orphan references stay invalid. The supplied
-`.vscode/remapping_A.json` is already orphaned this way: B must be explicitly linked to the radar input once before
-future removal and restoration can recover automatically.
+are not resolved by choosing an arbitrary match; ambiguous or malformed orphan references stay invalid. Already-orphaned recipes need that explicit repair before future removal/restoration can recover automatically.
 
 Running it needs one input image at least: a Remapping listing none cannot run, though its class is described from
 its legend. Input imagery says "Please add at least one image." - except while the set-up wizard has it open, where its
@@ -78,9 +76,9 @@ and the same shared rule: Apply is disabled for that draft's missing source band
 while another entry remains invalid, and Cancel changes no applied availability. No saved validity or extra assessment
 work type is introduced. Other callers of the constraint editor keep their existing behaviour.
 
-Restoring the source band and refreshing its evidence restores the chain without editing the constraints or their
-retained source identity. For an asset whose version token has not changed, refresh the **source asset**: refreshing
-only a downstream output refreshes that question but does not also refresh separately held upstream output answers.
+Restoring the source band and refreshing its evidence restores the chain without changing constraints or
+retained source identity. If the asset token has not changed, refresh the source asset so independently held
+upstream answers are also invalidated; refreshing only a downstream question does not guarantee that.
 
 ## Output
 
@@ -112,38 +110,26 @@ unused-selection policy across recipe types.
 
 ## Feedback for a blocked recipe input
 
-A confirmed upstream readiness finding marks IMG and the input row declaring that recipe reference. For
-Band Math → Remapping A → Remapping B, a missing source band used by A remains A's detailed input diagnosis;
-B says “Remapping A needs attention.” If a Band Math calculation instead owns the problem, B says
-“Remapping A cannot run because Band Math needs attention.” If both own findings, B says “Remapping A needs
-attention. It also depends on Band Math, which needs attention.” The direct recipe is excluded from the upstream
-list by ID; this wording does not imply that repairing the upstream problem repairs A. Multiple confirmed origins
-are named once each, with plural wording where needed, without
-intermediate recipes or detailed diagnoses. The direct and origin IDs and names remain structured feedback data.
-With another healthy input,
-only A's row is marked. The shared input presentation also applies to Band Math, Stack and the classification
-family; it adds no validation rule, execution gate or styling. Pending or temporarily failed
-evidence adds no reference validation mark. Repair and current evidence clear both marks without editing B.
-The input editor shows the same explanation beside its recipe selector, following the current draft. Selecting a
-healthy replacement clears that field feedback; Cancel keeps the applied warning. Opening alone remains unedited,
-and upstream repair while the editor is open clears the explanation. This display does not change Apply policy.
-Dependent sections within the same recipe do not repeat errors. Known recipe names in shared validation
-feedback open those recipes through the common navigation action, preserving the originating panel draft.
+Shared [reference feedback](../design/recipes/source-resolution.md#consumers) marks IMG and the exact
+recipe input for confirmed upstream findings. For Band Math → Remapping A → Remapping B, a problem owned
+by A names A; a Band Math problem names A as the direct reference and Band Math as the origin. Both may
+be named when each owns a finding. IDs remain structured through rendering and common recipe navigation.
 
-Only routes present in readiness findings can be marked. A shared dependency visited once in a diamond graph may
-leave another affected route without a mark; execution remains blocked. See the design's
-[marks and attribution limit](../design/recipes/source-resolution.md#consumers).
+The input editor follows its draft selection. A healthy replacement clears draft feedback without repairing
+the applied model; Cancel preserves that model, and upstream repair clears feedback with current evidence.
+Pending/transient failures add no configuration mark. This display adds no Apply rule or execution gate.
+Only reported dependency routes are marked; diamond traversal may omit an alternate route.
 
 ## Open issues
 
-The [validation and repair roadmap](../design/recipes/data-sources.md#validation-repair-and-operation-coverage)
+The [validation roadmap](../design/recipes/data-sources.md#validation-and-execution-coverage)
 tracks the remaining work below. Automatic source recovery and checking used bands against current source
 descriptions are implemented.
 
 - **Unused missing selections on recipe inputs.** Execution differs by source type, as described above. Decide whether
   to preserve those selection semantics and add type-specific requirements, or change execution to select only used
   bands, before broadening validation. Unused missing asset selections remain distinct and do not block readiness.
-  The previously rejected editor-assessment framework has not been revived to mark them.
+
 - **Routes that build the image unchecked.** The asset, Drive and workspace exports refuse a broken constraint, but
   Preview and the other image routes build it as before
   ([Execution readiness](../design/recipes/source-resolution.md#consumers)): a constraint naming a removed input fails
@@ -152,73 +138,23 @@ descriptions are implemented.
 
 ## Verification
 
-The source-band packet adds shared used-band/downstream cases, mounted constraint draft repair and Cancel cases,
-input-row/IMG feedback, preview withdrawal/restoration, runtime pending/failed/superseded evidence and source refresh,
-and mocked asset-export refusal/recovery. `remappingSourceBands.mjs` is the separate live EE check described above.
+- `lib/js/shared/test/recipe/output/type/remapping.test.js`: located constraint/source findings and downstream repair.
+- `modules/gui/src/app/home/body/process/recipe/remapping/`: constraint drafts, exact-source recovery,
+  field/row/section marks, layer withdrawal and panel activation.
+- `modules/gee/test/jobs/task/export/imageAssetExport.test.js`: direct/downstream export refusal and repair.
+- [Live probes](../../modules/gee/verify/README.md): `classificationOutputBands.mjs` checks output schema;
+  `remappingSourceBands.mjs` distinguishes used/unused selections through assets, Stack and Asset recipes.
 
-### Manual source-band sequence
+Browser acceptance:
 
-1. Create a working Band Math with two output bands, `used` and `spare`. Add it to Remapping A, include both bands,
-   and give an entry a constraint on `used`. Create Remapping B using A's `class` output. Confirm both render and
-   offer Retrieve. Add a second, healthy recipe input to B to check row attribution.
-2. In the upstream Band Math output editor, remove `used` while keeping `spare`. Cancel first: both Remappings should
-   remain available. Repeat and Apply: A's IMG and input row should be marked; its input editor should explain the
-   missing selection. Both Remappings should stop rendering and refuse Retrieve/asset export, with B attributing
-   the failure upstream. B's IMG and only its reference to A should say that Remapping A needs attention;
-   its tooltip should name A without repeating the missing-band diagnosis. A's MAP and B's MAP stay unmarked.
-3. Open A's constraint. Its selected `used` band should explain the source problem and Apply should be disabled.
-   Select `spare`: Apply should become available, but applied availability should remain blocked. Cancel to keep the
-   original constraint.
-4. Restore the upstream output with the exact name `used` and Apply. With current source evidence, A and B should
-   render and offer Retrieve again. No constraint band, operator, value or retained source identity should change.
-   For external asset changes, refresh the source asset's evidence after restoring its band.
-5. As a separate check, leave an unused missing selection on an asset input while every constraint reads an available
-   band. It should not block rendering/Retrieve. Recipe-input differences are the open policy described above.
-
-### Automated coverage
-
-- `modules/gee/verify/classificationOutputBands.mjs` - on live Earth Engine: the declared band against the image
-  built, with and without legend entries, and each case of a missing input band above, built and at one pixel; an asset
-  input built as Remapping builds it, keeping every band it stores.
-- `lib/js/shared/test/recipe/output/type/remapping.test.js` - each broken reference found at its constraint, the
-  Remapping described, a Remapping of it held and both restored once repaired; an input not yet loaded awaited, and a
-  band its asset no longer holds not taken for one its input does not include.
-- `modules/gee/test/jobs/task/export/imageAssetExport.test.js` - the asset export refused for a Remapping reading a
-  removed input or a band not included, and for a Remapping of it, and exported once repaired.
-- `modules/gui/src/app/home/body/process/recipe/remapping/remappingRequirements.test.js` - each entry said by what its
-  constraints read, every problem once in constraint order; the image output held back by Mapping, Retrieve not offered
-  and refused at submission until the constraint is repaired; a Remapping of it held, its input
-  reference marked with the upstream recipe name, and offered once repaired.
-- `modules/gui/src/app/home/body/process/recipe/remapping/remappingLayer.test.jsx` - a layer on another map not
-  requested while a constraint reads a removed input or a band not included, withdrawn once one is applied, and drawn
-  again once repaired, though its assets store every band read.
-- `modules/gui/src/app/home/body/process/recipe/remapping/constraintReferences.test.jsx` - the Mapping button, rows and
-  fields marked and Retrieve not offered, opening writing nothing, each invalid constraint expanded in turn and kept in
-  focus, a removed input replaced only when chosen, repair by replacement or removal, Cancel, an invalid edit refused
-  without unmarking the applied mapping, automatic recovery after re-adding the exact asset or recipe source, recovery
-  across saving/reopening, omitted bands, different sources, Cancel, changed input sources, legacy ambiguity, and
-  Index Change's constraints judged as before.
-- `modules/gui/src/app/home/body/process/recipe/remapping/panelActivation.test.jsx` - which of its panels open and
-  give way, an edited legend or input holding the others closed, and the set-up wizard.
-
-### Manual source recovery check
-
-1. Start with A reading optical `nbr < 500` and B reading radar `VV_med < -7`. For the supplied already-broken recipe,
-   first repair B's input and band in Mapping and Apply.
-2. Remove the radar input. B and MAP should be marked, Retrieve unavailable and the preview withdrawn. Save and reopen.
-3. Add the exact radar asset, include `VV_med`, and Apply. B should still read `VV_med < -7`; its marks and execution
-   blocks should clear. A should retain its optical reference and expression.
-4. Repeat with only `VH_med` included: B should report that `VV_med` is not included. Include it and Apply to recover.
-   Re-adding a different radar asset or cancelling the new input must leave B blocked.
-
-### Reference feedback manual check
-
-1. Use Band Math → Remapping A → Remapping B, with another healthy input in B. Break a calculation in Band Math.
-   B's IMG and only A's row should say that A cannot run because Band Math needs attention. A's own source-band
-   problem instead should give B the direct “A needs attention” message.
-2. Open A's input row in B. The recipe selector should show the same explanation; opening alone must not enable Apply.
-   Select a healthy replacement: the field explanation clears, while B's applied warning and execution blocking remain.
-   Cancel and reopen: the original explanation returns.
-3. Keep that editor open and repair the originating recipe. Once current evidence settles, the explanation clears
-   without editing B. Close the editor and verify previews and Retrieve recover. Pending/retryable failures must not
-   be described as a confirmed recipe problem. No navigation links are implemented yet.
+1. Build Band Math (`used`, `spare`) → Remapping A (constraint on `used`) → Remapping B. Add another healthy
+   input to B; establish real previews/Retrieve.
+2. Remove `used` upstream and Apply. A's IMG/input row, and B's reference to A, must be marked; MAP must not
+   repeat the input failure. Both previews/Retrieve are held. Pending or failed reads create no false mark.
+3. In A's constraint, select `spare`: draft Apply enables, applied blocking remains, Cancel keeps it. Restore
+   exact `used` upstream and refresh current source evidence: both recover without changing constraints.
+4. Remove an input, save/reopen and re-add its exact source with the required bands. Constraints recover with
+   operators/values intact. Different sources, Cancel and omitted required bands must not repair them.
+5. Open B's marked input, try a healthy draft replacement, Cancel, then repair upstream with the editor open.
+   Feedback must follow the draft/current evidence; known recipe links preserve the originating draft.
+6. Verify an unused missing asset selection does not block. Recipe-input differences remain the policy gap above.

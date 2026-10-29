@@ -1,438 +1,198 @@
 # Recipe behavior contracts
 
-Recipe behavior should follow the analysis the user configured. The applied settings, the editor, the available
-actions and the result should agree. Reading new evidence should update what the app knows without silently
-rewriting what the user chose.
+Applied settings, editor feedback, available actions and computation must describe the same analysis.
+New evidence updates facts without silently rewriting user choices.
 
-This document states durable behavior rules, not implementation coverage or delivery history. Current technical
-contracts and unimplemented proposals are distinguished in their owning documents; the
-[roadmap](data-sources.md#remaining-work) contains remaining work.
-
-Use this guide when designing a recipe, dependency, operation or form. The technical mechanisms remain owned by
-[output products](output-products.md), [source resolution](source-resolution.md), the
+These are design rules, not implementation-coverage claims. Current contracts and target designs live in
+[output products](output-products.md), [source resolution](source-resolution.md),
 [GUI runtime](gui-source-runtime.md), [freshness](source-freshness.md) and
-[visualizations](visualizations.md). These principles do not require another validation framework.
+[visualizations](visualizations.md). Remaining work belongs in the [roadmap](data-sources.md#remaining-work).
 
 ## Define the behavior before the mechanism
 
-Before implementation, answer these questions in the change description. A small change can answer them in a short
-paragraph; a dependency or asynchronous workflow usually also needs a state table.
+For the changed workflow, state:
 
-1. **Promise:** what analysis has the user configured, and which selections are essential versus optional? State
-   validity policy explicitly rather than inferring it from whichever outputs can happen to compute.
-2. **Ownership:** who owns each effective value: this recipe, its source, a user-editable draft, or current evidence?
-   State when defaults are proposed, what may change on refresh, and what Cancel leaves untouched.
-3. **Authority:** which shared rule decides each prerequisite, and which type declaration applies it? Choices,
-   validation and execution use that same semantic decision, including units, masks and feature transformations.
-4. **Entry points:** inventory every way the computation starts: normal and alternate layers, charts, Retrieve and
-   each server/export route. Identify its common analysis prerequisites plus any operation-specific requirements,
-   and the point where they are enforced before product work. Include direct requests and reopening saved recipes.
-5. **State and repair:** write the response to confirmed invalidity, pending evidence, unavailable evidence and
-   repair. Name the repair field, what closes or remains open, what is disabled, what is cancelled and what choices
-   survive. A description of available bands alone cannot authorize computation.
-6. **Commit boundary:** what accepts Apply or Run from current state, before saving settings, remembering a
-   destination, submitting work or closing the panel? Buttons, keyboard submission and server calls must agree.
-7. **Timing:** what happens on upstream edits, late answers, replacement, deselection, unacknowledged saves and
-   hidden tabs? Preserve ownership and user intent, release watches with their owner, and keep shared preparation
-   outside per-scene work.
-8. **Proof:** test opening an already-invalid recipe and the working -> invalid -> repaired journey, plus pending
-   and unavailable states and submission before re-render. Exercise representative callers of a shared mechanism;
-   establish both refusal before product work and a working control. State what still needs a browser or live test.
+| Question | Required decision |
+| --- | --- |
+| User promise | Mandatory selections, optional features and operation-specific needs. |
+| Ownership | Authority for each value; when defaults apply; what refresh and Cancel preserve. |
+| Shared rule | Pure requirement, type declaration, evidence owner and execution enforcement. |
+| Entry points | Layers, named products, charts, Retrieve, direct API/export requests and saved recipes. |
+| State and repair | Invalid, pending, unavailable and repaired behavior; repair field and affected actions. |
+| Commit boundary | Current-state acceptance before saving, submitting, remembering destinations or closing. |
+| Lifetime | Upstream edits, late answers, source replacement, unsettled saves, hidden tabs and cancellation. |
+| Proof | Refusal before product work, a valid control and representative recovery journeys. |
 
-State policy changes explicitly. A new requirement can enforce a product decision as well as an execution need;
-the reason matters when deciding where to put it and which apparent bypasses are intentional.
-
-Use this short brief in implementation prompts and reviews; expand only the parts the change affects:
-
-```text
-User promise and mandatory selections:
-Value owners and allowed updates:
-Shared rules/declarations and affected entry points:
-Invalid / pending / unavailable / repaired behavior:
-Acceptance before commit and asynchronous lifetime:
-Acceptance tests, valid controls and remaining live checks:
-```
-
-Pause design review when a proposed fix introduces blue information text for an error, a type-name exception in a
-generic component, another readiness flag/cache, copied validation logic, or background writes to editable settings.
-These are prompts to examine ownership and the shared contract, not automatic prohibitions. Before calling a
-shared fix complete, check the entry-point inventory and remove the old decisions it supersedes. A test proving
-that old code differs is useful only after the intended behavior has been agreed.
+A short change needs a paragraph; a dependency or async workflow may need a state table. Before adding a
+readiness flag, cache, copied validator, type-name exception or background configuration write, identify
+its owner and remove the superseded decision path. Similar-looking code alone does not justify a framework.
 
 ## Declare validity for the operation and the configured analysis
 
-Separate three questions:
+Distinguish product availability, computational requirements and configured-analysis policy. A cheap band
+description does not authorize execution. Named products can have prerequisites without describing or
+building the canonical image. Operations may add to their type's analysis prerequisites, never weaken them.
 
-- What output or capability can this source provide?
-- What configuration and evidence does this operation require?
-- What does the product policy require of the analysis the user selected?
+Time Series and CCDC treat a selected Classification as mandatory for native and classified operations,
+including counts, until repaired or deselected. Native computation still need not train. Phenology retains
+its conditional classified-band policy. This does not require every source to build its own full image:
+a training-data Provider supplies samples, not necessarily a trainable classified result.
 
-Start with the promise of the selection: a source chosen as a classifier must supply a usable classifier; a source
-chosen for training data supplies samples rather than its own classified image. Weaker, optional or metadata-only
-uses need an explicit contract instead of inheriting meaning from whichever code path happens to execute.
+Optional features declare conditional needs. PyEO's Require drop needs an available index only while enabled;
+disabling it does not repair an incompatible Classification or unsupported input count. Pixel charts use
+their own operations and may replace the consumer AOI with the clicked point; referenced imagery keeps its AOI.
 
-For Time Series and CCDC, a selected Classification is part of the configured analysis. An unusable selection holds native and classified chart/retrieval operations, including count outputs, until
-repair or explicit deselection. Native execution still need not train. This is a scoped policy decision, not a
-universal rule that every reference must produce its full image before any consumer can run.
-
-Declare such a policy once, as the analysis prerequisites of the type, rather than copying it into each operation.
-Every entry point to the analysis - its image and layers, named map products, charts and Retrieve - is then held to
-it through the same readiness, and an operation can add requirements but not weaken it. A product may still describe
-its bands cheaply from configuration: description is not authorization, and judging a product's prerequisites must not
-require describing or building the canonical image. A type that declares no prerequisites keeps each product's own
-semantics.
-
-An optional feature has a different contract. PyEO with Require drop off does not require a drop index. With it on,
-the index must be available. Turning it off can repair that optional requirement, but cannot repair an incompatible
-Classification or an unsupported number of input images.
-
-Actions consume applicable shared requirements, not the color of SRC or another toolbar button. A pixel chart
-must not inherit unrelated image-export requirements merely because an image-output read is convenient. Direct
-pixel operations can replace the consumer AOI with the selected point while referenced imagery retains its own AOI.
-
-Inventory client and server callers when changing the policy. Enforce guards before product work at execution
-boundaries; keep known unguarded routes explicitly recorded until migrated. A client hold alone does not establish
-server enforcement. Client-assembled settings and omitted recipe types must not provide a way around a guard.
+Enforce requirements at each execution boundary before its work. Inventory known unguarded routes in
+[source resolution](source-resolution.md#operation-availability-and-server-coverage); a GUI hold proves no
+server protection. Omitted recipe types or browser-supplied settings must not bypass a declared guard.
 
 ## Give each effective value one owner
 
-| Value | Authority | Expected behavior |
+| Value | Authority | Update policy |
 | --- | --- | --- |
-| Applied configuration | The recipe's applied model | It describes the analysis that operations and section marks judge. |
-| Unapplied edit | The editor's candidate | It can differ from the model until Apply; Cancel leaves the model unchanged. |
-| Current source facts | The resolved record or runtime evidence | Refresh facts and revalidate; a copied UI snapshot is not authority. |
-| Setting that must match a source | The source's effective value | Show the value as read-only with its ownership clear; execution uses that same value. |
-| Independently editable consumer setting | The consumer | Preserve it through refresh and unrelated source edits. Copying new values is an explicit form action. |
+| Applied configuration | Recipe model | Operations and section marks judge it. |
+| Unapplied edit | Editor candidate | Apply commits; Cancel leaves the model unchanged. |
+| Source facts | Current authorized record/evidence | Refresh revalidates; saved UI copies are not authority. |
+| Required processing match | Source's effective value | Show read-only; execution uses the same value. |
+| Editable consumer setting | Consumer | Preserve on refresh and unrelated upstream edits. |
 
-Decide which settings genuinely must match by tracing the algorithm. A source edit is not permission to overwrite
-an entire group of consumer settings. Disabling an input while continuing to use a stale copied value does not
-establish ownership.
+Trace which settings must match the algorithm; do not synchronize whole option groups. Defaults are
+proposals at a defined action, never continuous synchronization. Change Alerts seeds consumer-owned defaults
+on first creation Reference Apply only. Later replacement, refresh and reopening preserve choices; required
+processing follows the producer or recorded asset evidence. Only genuinely unrecorded asset values permit
+labelled editable fallbacks. Pending, failed or malformed evidence does not. See
+[Change Alerts REF](source-resolution.md#change-alerts-ref) for precedence and coverage.
 
-Defaults are proposals at a defined user action, not a continuous synchronization rule. A late proposal must not
-overwrite edits. Change Alerts seeds consumer-owned monitoring defaults only at the first Reference Apply during
-new creation (`!ui.initialized` and no previously applied reference). Apply, Enter and wizard Next use current,
-authorised candidate facts and publish the reference and defaults atomically. Later reference changes, reopen,
-Refresh and producer edits never reseed; Cancel writes nothing. There is no separate "Use reference settings"
-copy-again action; required ownership and creation seeding cover the intended behavior without another copying control.
+A reference states what it reuses: pixels, samples, metadata or processing settings. For training-data reuse,
+Provider owns imagery, points, labels, scale and masks; Consumer owns the feature definition and transformation.
+Never sample Provider's points on Consumer's imagery as an incidental shortcut. Assets use recorded evidence
+without requiring access to private producer recipes.
 
-Change Alerts derives required processing matches from the actual segment producer, with its execution defaults,
-or from asset metadata. Recorded values are read-only; genuinely unrecorded asset values are labelled editable
-consumer fallbacks. Pending and failed acquisition supply no effective fallback, and malformed governing metadata
-is explained at REF and holds affected work. Displaying effective values does not change saved consumer copies or
-an open editable draft. Observations now acquire these processing facts before projecting the observed collection;
-that facts read neither builds segments nor loads the producer's Classification/training dependencies. Separately,
-Change Alerts declares the live reference's `IMAGE_OUTPUT` readiness as an analysis prerequisite of its images,
-period mosaics and pixel operations. Confirmed upstream findings mark REF and block REF Apply/Next/Done through the
-normal output candidate; submission rechecks blocking candidates against current values and state. Back and Cancel
-retain their existing behavior. Operation gates withdraw affected layers and open operation panels; repair releases
-the holds. An exported asset remains independent of its private producer and Classification. CCDC Slice retains its
-own date-format policy.
-
-Reference ownership must preserve the normal processing-form labels and layout. Explain ownership and unverified
-asset fallbacks through the standard label help tooltip. Read-only choice groups keep their selected value
-highlighted. A speckle-details summary opens an editor only when a currently displayed parameter is editable;
-otherwise it remains a read-only summary without an action affordance. Change Alerts does not offer the legacy
-strong-scatterer toggle that its observed time-series collection does not read; the thresholds actually used by that
-collection retain their reference ownership or explicit unrecorded fallback. Ordinary radar controls are unchanged.
-
-Change Alerts' configured monitoring band is part of its alerts and analysis chart, independently of the band
-currently explored in that chart. The existing monitored-measure rule must explain an incompatible choice in Sources
-and hold retrieval and both chart streams. Keep missing native as well as classified selections visible in the draft;
-opening must not normalize a broken applied choice into a different one or make it appear repaired. A valid draft
-repair is applicable; Cancel and unsaved edits leave applied findings and gates unchanged. Confirmed invalidity closes
-an open chart and cancels both streams, and repair makes reopening available without reopening it automatically.
-An unrelated image-only/export requirement is not a chart prerequisite. Metadata acquisition remains separate from
-computation authorization; the same semantic rule can judge current catalogue facts at a guarded server boundary.
-
-New computing-segment exports record bounded, server-derived `processing` metadata and their date representation.
-Readers distinguish complete canonical/recognised producer records from partial imports and apply precedence per
-field; malformed governing metadata cannot silently fall through. This is additive: existing assets and saved
-recipes are not migrated. Matching processing settings does not establish scientific comparability.
-
-A reference must state what it reuses. Reusing an image, training points, metadata and processing settings are
-different relationships. For reused training data, Provider owns its imagery, points and sampling location; the
-named-feature contract gives Consumer ownership of the required feature definition and training transformation.
-That does not authorize sampling Provider's points on Consumer's imagery or dropping Consumer's features.
-
-For an asset reference, use evidence recorded on the asset; do not require access to its private producer recipe.
-
-A confirmed shared finding that makes the selection being edited unusable must both explain the problem and block
-committing that selection. Reference-editor errors are not decorative: Apply, wizard Next/Done and keyboard/direct
-submission use the same candidate finding and recheck current values and state before writing or advancing. Valid
-replacement and upstream repair release the hold. Unchanged Close, Cancel, Back and removal keep their existing exit
-paths. Apply policy is never inferred from translated message text. A presentation-only declaration can opt out of
-its own blocking only where an existing field rule supplies that behavior; record that reason beside the declaration.
-Operation scope remains authoritative: Phenology analysing a native band does not acquire a classifier requirement.
-
-List panels that apply entries individually may declare `valuesToModel: null`. Completing their wizard step must
-close or advance without serializing over those entries; optional form serialization hooks must preserve that opt-out.
-AOI recipe eligibility is distinct from image-input eligibility: the GUI's optional `geometrySource` declaration
-defaults to `imageSource`, and CCDC opts into geometry selection while remaining excluded from ordinary image inputs.
-If a persisted setting or format must change, describe compatibility explicitly. Transient UI state cannot supply
-a guarantee that must survive saving, reopening or importing a recipe.
+List panels with `valuesToModel: null` advance/close without serializing over individually applied entries.
+AOI eligibility is separate from image eligibility: GUI `geometrySource` defaults to `imageSource`, while
+CCDC permits geometry selection without becoming an ordinary image input. Persisted-format changes require
+explicit compatibility rules.
 
 ## Distinguish setup, invalidity and missing evidence
 
-| State | Feedback | Execution |
+| State | Feedback | Operation policy |
 | --- | --- | --- |
-| Setup not yet complete | Neutral guidance naming the actual ways to complete it; required-field feedback follows the form's interaction policy | Hold operations whose prerequisites are absent. |
-| A confirmed incompatible or broken selection | An actionable error at the relevant field/item, with a section summary | Hold affected operations. |
-| Evidence still being read | Checking state where explanation is needed | Wait; do not infer a missing band, empty Provider or invalid reference from an unanswered read. |
-| Evidence could not be read | A distinct unavailable state and an appropriate recovery path | Hold operations requiring that evidence; do not invent a configuration finding. |
-| Repaired configuration and current evidence | Clear obsolete findings and restore the applicable actions | Resume using the repaired analysis. |
+| Incomplete setup | Neutral guidance listing valid completion paths. | Hold unmet operations. |
+| Confirmed broken/incompatible choice | Actionable field/item error and section mark. | Withdraw affected operations. |
+| Pending evidence | Checking indication when useful. | Wait without inventing a finding. |
+| Unavailable evidence | Distinct failure and recovery path. | Hold work requiring that evidence. |
+| Repaired | Clear obsolete findings. | Restore actions using current evidence. |
 
-The absence of a refusal is not proof of readiness. An editor that saves configuration and a button that starts a
-computation may have different policies for unresolved evidence. State that policy explicitly. The current reused
-training-data editor blocks confirmed findings; that does not establish a universal rule that pending candidates
-may be applied in every form.
+Absence of a finding is not readiness. Editors must explicitly decide whether unresolved candidates may
+Apply; saving configuration and starting computation can have different policies. Configured points do
+not prove post-mask sample adequacy, geographic coverage or classifier success.
 
-Confirmed invalidity withdraws the affected operation, including an operation panel that is already open. For Time
-Series and CCDC, a broken selected Classification closes open Retrieve panels and charts, disables their opening
-actions and withholds the affected layers. Explain the cause in SRC, where it can be repaired, rather than keeping
-Retrieve open with another message or a Refresh action for that configuration error. Use the shared operation
-lifecycle and existing readiness, without another panel-specific configuration validator.
+A confirmed source/configuration finding closes an open affected Retrieve/chart through the ordinary
+lifecycle. Pending/unavailable evidence can leave it open with submission held. Local export selection or
+destination errors remain repairable in Retrieve. Closing preserves last submitted settings, discards
+unapplied edits and never automatically reopens after repair. Current-state submission guards remain
+necessary because closing can race submission.
 
-Pending or unavailable evidence does not establish a broken configuration: an open panel may remain, with submission
-held. A missing export selection or invalid destination is local to Retrieve and remains repairable there. Closing
-for a configuration finding must not clear saved retrieval settings or save unsubmitted edits; use the normal panel
-close semantics. Repair restores the opening action without reopening the panel automatically. Current-state
-submission guards and server readiness remain necessary, because a submission can race the closing render.
-
-Avoid using a red section mark as a generic instruction to start setup. A Classification without points can be
-completed by collecting them on the map or adding a data set; Regression offers a different set of actions.
-Operations requiring training remain held. Feedback for an explicitly selected empty Provider is a separate policy
-question; an empty branch does not by itself establish that the Consumer's total training data is empty.
-
-The same distinction applies to Band Math: no output chosen yet is setup guidance, while a configured output that
-references a missing band or has an invalid name is an error. An empty overall output selection still holds preview
-and Retrieve. Guidance must allow selecting input bands directly as outputs; creating a calculation is optional.
-
-Presence and sufficiency are different claims. Configured points do not prove that samples survive masking, cover
-the imagery or suffice for a particular classifier.
+An empty Classification can be completed on the map or by adding a dataset; Regression has different paths.
+Band Math permits direct input outputs without calculations. Neutral setup guidance must reflect those
+paths while execution remains held.
 
 ## Put feedback where the user can repair the cause
 
-A finding can appear as a section mark, a list-item explanation and editor feedback. These are views of the same
-diagnosis, with the same affected item and origin, rather than independent validators.
-
-Choose the primary location by the meaningful repair. A collection that cannot feed the selected Classification
-is explained beside Classification. A compatible source that cannot provide the enabled Require drop index is
-explained in OPT, where another index or turning Require drop off can repair it.
-
-Suppress a dependent field error when its prerequisite already makes the analysis unusable. Keep the dependent
-controls visible with their values, disabled while necessary. A confirmed SRC problem does not need another
-paragraph in OPT repeating it; checking or unreadable evidence may need a short status to explain disabled controls.
+Fields, item rows and section marks present the same structured finding. Keep its code, item, model path,
+recipe path and operation separate from translated prose. Explain an unsuitable classifier beside the
+consumer's Classification choice; explain an otherwise compatible but unavailable Require drop index in OPT.
+Suppress dependent errors while a prerequisite explains the hold, retaining disabled controls and their values.
 Independent controls remain editable.
 
-Use one actionable explanation in a field. Appending a blue repair paragraph to an error saying only "needs
-attention" creates repetition. Include useful cause and repair in the validation message. Match the control's
-terminology: "Require drop" in user-facing text, even if an internal identifier says `indexGate`.
+One message states cause and repair in the control's terms. Extra information text must have a distinct
+purpose, such as setup, progress or recovery; it must not compensate for a misplaced error or an operation
+panel that should have closed. An item editor must not show another item's failure.
 
-Treat blue information text introduced in response to an error as a design checkpoint. Stop and examine whether
-the panel or operation should still be open, whether the user can repair the cause there, whether a prerequisite
-already explains it elsewhere, and whether the message compensates for missing ownership or lifecycle behavior.
-Prefer the correct lifecycle and one actionable finding over another explanatory state. This is a reason to
-analyze the interaction, not a ban on neutral setup guidance, progress or genuine recovery information.
+Distinguish a broken producer from an unsupported use: a valid multi-input Classification can be unsuitable
+as a collection classifier. Attribute that restriction to the consumer; use neutral wording for an
+unexplained use refusal. Name actual upstream defects at their origin. Never invent an alternate route
+through a diamond that readiness did not report.
 
-Name the actual origin of a nested problem. Scope an item editor to the item it edits; a healthy item must not show
-another item's Provider error. Keep the finding's identity and path separate from its translated prose.
-
-Carry recipe references in feedback as IDs and display names through the shared message presentation, rather
-than flattening them into translated text early. Use the common recipe link and opening action for section, item,
-field and map feedback; never recover identity by matching displayed names. Preserve a plain-text equivalent for
-nonvisual consumers. Opening a referenced recipe leaves the originating panel and its unapplied edits intact.
-Shared feedback indicators own touch/keyboard access, and a popup cannot remain interactive while its owner is
-hidden or covered. Validation and submission decisions do not depend on message rendering.
-
-Distinguish a recipe's own validity from its suitability for the operation requesting it. A Classification of several
-input images is valid by itself, yet its classifier cannot be applied to each image of a collection. Explain that
-beside the consumer's selection as the consumer's requirement, with selecting a suitable recipe as the repair; do not
-say the selected recipe "needs attention", since opening it shows nothing to repair. Where the unsuitable recipe is
-further up, name the recipe that selects it as the one to review. Genuine upstream defects keep naming their origin.
-Where the evidence establishes only that a use is refused, for a reason feedback cannot explain, say so neutrally; do
-not fall back to claiming the referenced recipe is broken.
-
-Repair guidance must describe an action that works in the current interface. Opening another recipe from a modal
-uses shared navigation and modal ownership so the originating panel and its draft remain available.
+Carry recipe IDs and names to the shared renderer; never infer identity by parsing labels. Known recipe
+links use the common open/focus action and preserve the originating draft. Keep a plain-text equivalent,
+keyboard/touch access and modal ownership; hidden or covered owners leave no interactive tooltip.
 
 ## Make editing and recovery predictable
 
 | Action | Contract |
 | --- | --- |
-| Open | Read and initialize without changing applied values or making the form dirty. Preserve saved names. |
-| Apply | Commit a genuine edit only when the editor's validity policy allows it; button, Enter and direct form submission agree. |
-| Close | Leave an unchanged item, including one with an upstream problem, without applying it again. |
-| Cancel | Discard the editor's edits while preserving independently applied upstream changes. |
+| Open | Initialize without changing applied values, saved names or dirty state. |
+| Apply / Enter / wizard Next or Done | Judge the current candidate before any persistence, work or closure. |
+| Close | Exit an unchanged item without applying it again, including an item with an upstream error. |
+| Cancel / Back | Preserve applied configuration and independent upstream changes. |
+| Remove | Remain available for repairing an invalid item. |
 
-Evaluate submission against current state. A disabled button or the previous render's props cannot protect against
-a dependency change in the same event batch. Use the existing form/candidate gate on the submission path.
+Confirmed unusability blocks committing that selection. Presentation-only candidate blocking may be disabled
+only where an identified field/form rule already refuses it; document and test that guard. Read findings
+and form validity, never message colors or translated text. A valid draft repair can Apply while another
+applied item is invalid. A refused submission saves nothing and does not count as successful Apply.
 
-A refused action is not a successful Apply. Check acceptance before committing the action form's values or closing
-it. A keyboard submission while evidence is pending must leave Retrieve open with its draft edits and must not
-replace the saved retrieval settings, even though no task was submitted. Button and keyboard paths share that rule.
-
-Blocking Apply for a confirmed bad selection must leave choosing a replacement, Cancel and Close available. Removal
-must remain reachable. An error must not trap the user inside the editor.
-
-A confirmed finding that makes the selection being edited unusable must block committing that selection through
-Apply, wizard Next/Done and keyboard submission. An explanation may opt out of candidate blocking only when an
-identified field or form rule already refuses the same invalid state. Document that guard and test both the button
-and direct submission; calling feedback "presentation only" does not establish that committing it is acceptable.
-Read the shared finding and form validity, rather than inferring blocking from an error message or its color.
-
-Refreshing a source must update offered choices and validation from current evidence. The two must not disagree
-because one uses the runtime and the other uses an old UI copy. A late answer for an earlier selection must not
-replace the current selection, its name or edits.
-
-Distinguish temporary invalidity from a withdrawn capability:
-
-- A training failure does not remove the Classification's configured output choices. Keep selections for repair.
-- A saved analysis parameter that a changed reference can no longer supply should remain visible and explained;
-  do not silently switch Optical to Radar or substitute a different monitoring band.
-- Explicit deselection of Classification must stop a leftover UI copy offering classified outputs. Any fallback
-  or removal of obsolete request selections follows the particular control's stated reconciliation policy.
-- Repair clears stale findings and restores availability while preserving the user's band, index and threshold
-  wherever they still have meaning.
-
-Consistent behavior does not require every control to reconcile identically. It requires a deliberate rule for
-each case, rather than whatever mutation happens to make validation pass.
+Late answers cannot replace the current source, names or edits. Refresh updates choices and validation from
+the same evidence. Training failures retain configured output choices; unavailable saved monitoring choices
+remain visible for repair. Explicit deselection removes the authority of leftover UI snapshots. Each control
+owns its reconciliation policy; repair preserves selections and thresholds wherever still meaningful.
 
 ## Share semantic decisions between validation and execution
 
-Each physical or semantic constraint needs one owner. Shared declarations express when it applies; forms bind
-findings to fields; the runtime acquires evidence; execution consumes the same decision. UI and routes should not
-reconstruct a second validator from recipe shapes or old copied settings.
-An output's name or container type alone does not establish its units, feature space or derivability.
+Shared pure requirements own semantic decisions; declarations scope them, runtime acquires evidence, forms
+locate findings and execution enforces them. Product names, wrapper types and matching feature names do not
+prove units, encoding, derivability or scientific comparability.
 
-Selection flexibility must preserve measurement meaning. Reusing training points may derive Consumer features from
-Provider imagery despite a different Provider band selection, but those features still need comparable scaling,
-units and processing to the imagery being classified. Check the features actually used; unrelated extra bands do
-not determine suitability. A single input or a Stack wrapper is a structural fact, not proof of scientific
-comparability. Enforce known constraints through shared rules and state clearly what evidence does not establish.
+Use the smallest correspondence needed by computation: unambiguous named classifier features, not whole-recipe
+equivalence or incidental input order. Preserve Consumer operand order, units and normalization, Provider
+sampling footprint and masks, and avoid scaling provided indexes twice. Known incompatibility is enforced;
+unknown comparability remains explicit. The complete
+[training-reuse contract](source-resolution.md#reused-training-data) owns matching and sampling details.
 
-Use the smallest correspondence contract the computation actually needs. A classifier consumes named features;
-structural compatibility by unambiguous feature names does not require proving equivalence of whole source recipes
-or introducing source-role metadata. State ambiguity explicitly and use meaningful names where needed. Do not
-resolve it through incidental list order, or mistake matching names for proof of matching measurement semantics.
-
-A map product's description and permission to compute it are separate contracts. Knowing the bands of a count or
-another visualization from configuration does not establish that its configured analysis is usable. State which
-operation's prerequisites apply to each product and acquire them before constructing a new preview. Keep the cheap
-description independent; avoid assuming that every distinct map product executes the canonical image. Cover opening
-an already-invalid saved recipe as well as a working recipe becoming invalid.
-
-Mandatory prerequisites of the configured analysis must be enforced consistently by every analysis entry point:
-layers, alternate map products, charts and Retrieve. A selected Classification is such a prerequisite for Time Series
-and CCDC under their configured-analysis policy. Derive this common verdict from the existing readiness rules and current records
-and evidence; individual operations can add their own requirements. A product description does not authorize an
-operation to bypass that verdict. Implement the shared contract rather than separate checks for each visualization
-or panel, and do not introduce another validator or a stored `isValid` flag. Regression tests should exercise each
-entry point against the same failure, pending and repair transitions.
-
-Operation-specific examples:
-
-- Producing training data and training a classifier are different operations. An empty Provider can produce an
-  empty collection without being able to train its own image. Type support comes from declared operations, not
-  the incidental presence of a `trainingData` array.
-- PyEO's one-input restriction belongs to its shared requirements, not only a selector callback or runtime throw.
-- Require drop's index can be provided or calculated from the required raw bands. Readiness, offered choices and
-  execution use the same derivation decision and the source's actual output names, including Stack aliases.
-- Feature names alone do not establish compatible values. Training and prediction must use the same units and
-  transformation; provided indexes must not be scaled twice. Preserve masks and reference footprints too.
-
-Assemble shared samples/training inputs once per collection computation, outside the per-scene map. Do not add a
-cross-request cache merely to preserve that boundary. Counted expression construction is not evidence of how often
-Earth Engine evaluates it.
-
-Prefer stable semantic contracts to object shape or accidental instance identity. A requirement copied to extend
-its operation list is still the same rule; a shared diagnostic code alone may not identify it uniquely.
-
-When a clearer base contract makes special operations, watches or messages redundant, remove them. Do not keep a
-second decision path after moving authority into declarations. Request-specific checks remain necessary where the
-operation genuinely depends on the request; shared analysis prerequisites do not eliminate genuine request-dependent requirements.
-
-Separate recipe policy from common mechanism. PyEO's one-input restriction and CCDC's mapping of physical bands to
-fitted measures are legitimate domain rules, expressed once and shared by their callers. Evidence states, readiness
-enforcement, panel withdrawal, cancellation and acceptance before commit belong to common mechanisms. A type-name
-branch or allowlist in a generic component is a design-review trigger: determine whether the difference belongs in
-the type's declaration. Generalize repeated decisions and ownership, with representative callers proving the
-contract; similar-looking code alone is not a reason to invent a framework or erase distinct operation semantics.
+Assemble shared training inputs outside per-scene prediction. Do not introduce a cross-request cache merely
+to achieve that lifetime; counted expression construction does not measure EE evaluation frequency.
+A requirement extended with more operations remains the same semantic rule; a shared diagnostic code alone
+may not identify it uniquely. Keep genuine request-specific checks after consolidating common prerequisites.
 
 ## Scope asynchronous work and presentation to their real lifetime
 
-Modal panels inherit their workflow's owner. Establish recipe scope once in the recipe context so ordinary
-panels, nested confirmations, date pickers and destination browsers follow it automatically. An application-wide
-workflow rendered inside that context declares its exception at its own boundary; account login and the landing
-tab's shared project management are such exceptions. Outside a recipe, application scope remains the default.
-Scope does not change a panel's placement or turn non-modal map interactions into modal panels.
+Modal ownership is inherited once from the recipe context. Application-wide login/project workflows declare
+an exception; outside a recipe, application scope is the default. Tab/section navigation preserves drafts and
+nested dialogs. Only the active owner's top modal handles input, including document shortcuts and portalled
+popups. Preserve tab-close protection while a modal is open. Placement and non-modal map interactions retain
+their own semantics. [GUI scope](gui-source-runtime.md#recipe-scoped-panels-and-navigation) owns the mechanism.
 
-Navigation between recipes or application sections preserves unapplied panel state. Only the active owner's
-modal stack can interact, including document shortcuts and globally portalled popups; DOM inertness alone does
-not cover those paths. Let the owning tab/section control visual visibility and transitions while disabling
-interaction immediately. Nested panels inherit the same owner, and an application override covers its whole
-subtree. Keep the approved tab-close protection while a recipe modal panel is open; switching tabs is not closing one.
+Cancel obsolete requests, release claims with their owner and reject superseded answers. Hidden tabs,
+replacement and save timing must not change the analysis. Shared reads deliver next/error/complete in each
+subscriber's captured async context, preserving authority and path-local ancestry inside the sharing owner.
+Test delayed concurrent subscribers and completion continuations without instrumentation that masks ordering.
 
-Preserve user intent across timing changes: data arriving while a tab is inactive, evidence arriving after a source
-replacement, and saves completing while a form is open must not produce different analyses.
-
-Cancel obsolete requests, release watches when their owners leave, and reject stale answers. A source made invalid
-must withdraw the authority to continue the affected operation; a later repair uses current evidence. Save agreement
-and source currency remain part of that decision.
-
-Shared reads and transport boundaries own notification context. Share the answer, but deliver each subscriber's
-next, error and completion in the context captured when that subscriber subscribes. Enforce this inside the private
-sharing mechanism, so callers cannot accidentally omit a wrapper. Keep producer authority, operation lifetime and
-dependency ancestry intact. Test concurrent subscribers and completion-driven continuations with delayed reads;
-instrumentation must not add an asynchronous hop that hides the actual delivery behavior.
-
-Draw a chart only when its container can be measured. Keep data received while hidden and display it on return
-without a second request just to repair layout. Fix a shared lifecycle defect in its owning component and verify
-unrelated users, rather than adding per-chart delays or unconditional rebuilding.
-
-Size panels by meaningful views, with viewport limits and scrolling. A deliberate Optical/Radar/Planet or More/Less
-change can resize a panel; background metadata should not repeatedly move the interface. The agreed CCDC sizing
-direction follows that distinction. It does not require a universal fixed height.
-
-Keep labels, ordering and keyboard behavior predictable. Human-readable labels do not change band/request identity;
-adding a band with Enter should preserve the user's place in the list. These are interaction contracts, not output
-schema or validation changes.
+Charts retain data received while hidden and draw when measurable; returning should not need another request
+solely to repair layout. Fix shared lifecycle defects at their owner. Panels may resize for deliberate views
+such as Optical/Radar/Planet or More/Less, while background metadata must not repeatedly move controls.
+Labels do not change raw request identity; keyboard additions preserve the user's list position.
 
 ## Test the agreed user journey
 
-Write acceptance from the intended behavior before using the current implementation as the expected result.
-A witness proves a regression detects a code difference; it does not prove that the chosen policy is desirable.
+Acceptance follows the intended contract, not whatever the implementation currently does. Cover the relevant
+working → invalid → repaired journey, saved invalid state, pending/unavailable evidence, replacement, Cancel,
+and submission before re-render. A shared rule needs representative consumers and a valid control.
 
-Use representative transitions for the changed contract: working, newly configured, confirmed invalid, pending,
-unavailable, upstream change, replacement, Cancel, repair and submission before re-render. Cover two consumers when
-claiming a shared rule. For operation guards, prove refusal before product work and a successful valid control.
+Helpers must perform actual user mutations without repairing copied UI snapshots. Assert exact Apply/Close
+behavior and unchanged applied values. Compare complete labelled training rows rather than independent columns.
 
-Test helpers must perform the same change as the user. Do not update a copied UI snapshot alongside an upstream
-edit or accept either Apply or Close as equivalent outcomes. Assert the intended button/state and that no
-unintended applied values changed.
+Match the evidence to the claim:
 
-Match evidence to the claim:
+- DOM tests establish lifecycle/request behavior; browser checks establish layout, focus and actual interaction.
+- Numeric stand-ins establish arithmetic; live EE checks establish graph semantics, values, masks and projections.
+- An enabled action is not a successful chart/export. Use actual responses and complete working fixtures.
+- A reported past pass, a newly observed pass and an untested variant remain distinct.
 
-- A mounted DOM test proves lifecycle and request behavior, not that a chart visually fills its panel.
-- A numeric stand-in can prove arithmetic and scaling, not Earth Engine's own evaluation or performance.
-- Compare complete training rows, including their labels; independently matching each feature column can conceal
-  wrong samples. Compare predictions, masks and units where the result contract requires them.
-- Browser acceptance needs an actual preview/chart response or completed export with the requested data, not an
-  enabled button. Repair with a complete working fixture; one point clearing an absence finding does not prove
-  training succeeds.
-
-Run checks appropriate to the change and representative unrelated users of changed shared components. Keep focused
-browser rechecks after corrections and an integrated automated checkpoint at the agreed boundary. Preserve the
-distinction between a reported pass, an independently observed result and an untested variant.
+Run targeted checks and representative users of changed shared components. Keep temporary results and review
+history in the change under review; durable coverage stays in its owning suite.
 
 ## Choices that still need explicit resolution
 
-These principles narrow the decisions; they do not settle every product policy:
-
-- How to present an explicitly selected empty Provider, especially when other data supplies points.
-- What scientific comparability and additional legacy asset metadata establish beyond the implemented processing
-  ownership contract. Unknown provenance must not silently acquire an invented producer snapshot.
-- Whether a particular configuration editor may Apply unresolved evidence. Applying configuration and starting a
-  computation must remain distinct decisions.
-
-Keep unresolved choices and their implementation scope in the roadmap. Do not make them implicit side effects of
-a component helper, a disabled field or a cache implementation.
+The roadmap retains decisions about empty training Providers, scientific comparability/legacy provenance and
+whether particular editors may Apply unresolved evidence. These must not become implicit cache or helper policy.

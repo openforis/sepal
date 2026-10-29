@@ -54,11 +54,8 @@ Sentinel-1 collection's measures for temporal consumers - CCDC, time series, cha
 
 ## Verification
 
-- `modules/gee/verify/radarMosaicOutputBands.mjs` - on live Earth Engine, for both configurations under minimal and
-  saved-default options: the catalogue, unselected, empty and full requests, subsets out of order, harmonic subsets,
-  a target date beside a period, the refusal without dates and valid harmonic pixels. A point in time asked for
-  nothing is compared pixel by pixel, values and masks, with the same bands of an image computing harmonics.
-- `modules/gee/test/jobs/ee/radar/mosaicBands.test.js` - the catalogue per configuration, whatever is selected.
-- `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js` - the declaration, presentation,
-  presets, Retrieve groups and export policies through the real registration, and the BAYTS and Change Alerts views
-  that show a radar mosaic.
+- `modules/gee/test/jobs/ee/radar/mosaicBands.test.js`: configuration-dependent catalogue.
+- `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js`: declaration, presentation,
+  Retrieve and delegated BAYTS/Change Alerts views.
+- [Radar live probe](../../modules/gee/verify/README.md): both schemas/defaults, selection order, harmonic
+  subsets, missing-date refusal and native-grid value/mask equivalence with/without harmonic construction.

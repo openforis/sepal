@@ -7,8 +7,10 @@ that task and exits. It is not a service: nothing listens, and nothing runs insi
 
 ```bash
 sepal npm-test task                         # Node test runner
-sepal npm-test task -- --test-name-pattern '<test name regex>'
 ```
+
+To filter tests, put runner options before the test paths: from `modules/task` in dev-env, run
+`node --experimental-test-module-mocks --test --test-name-pattern '<regex>' <test-file>`.
 
 ## Contract
 

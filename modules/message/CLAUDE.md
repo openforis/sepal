@@ -1,7 +1,6 @@
 # CLAUDE.md - modules/message
 
-SEPAL message service (Node.js; formerly `notification`). Replaces the Java `sepal-server`
-`notification` component. System messages (admin) + per-user read/unread state ("notifications").
+System messages (admin) and per-user read/unread state ("notifications").
 Owns the `message` MySQL schema (`message.message`, `message.notification`).
 
 ## Database migrations

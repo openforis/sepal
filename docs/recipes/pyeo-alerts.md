@@ -4,11 +4,6 @@ PyEO Alerts detects class transitions between a classified baseline and a sequen
 images. These notes describe the recipe's current behavior, integration constraints and deferred work. They are
 for developers; user-facing documentation belongs in the separate `sepal-doc` repository.
 
-Recipe-specific issues here are not commitments in the shared source-resolution roadmap. Maintain behavior
-while migrating to shared approaches, and fix regressions introduced by those migrations. Existing algorithm
-limitations and optional features remain deferred unless a shared contract addresses them or they are explicitly
-selected for a separate delivery.
-
 ## Inputs, configuration and output
 
 The user selects a direct Classification recipe. Its classified image supplies the baseline classes, and its
@@ -146,7 +141,7 @@ Opening OPT edits nothing. An index gated on that the known bands cannot compute
 or NBR beside a red/nir-only input - stays selected, is said beside the index and holds Apply back; it is never
 switched off for the user. Choosing an index the bands support, or turning the gate off (still possible while no index
 is available), repairs it, and Cancel leaves the saved gate as it was. With the gate off and no index available, the
-gate stays disabled. The check is the panel's alone; index availability is not a readiness requirement.
+gate stays disabled. The panel checks its draft; the enabled applied gate is also judged by shared readiness, as described above.
 
 | Baseline input | How execution obtains the index |
 | --- | --- |
@@ -208,7 +203,7 @@ equivalent check. Preserve that behavior during shared migrations; do not broade
 - [Classification results and reusable classifiers](../design/recipes/source-resolution.md#classification-results-and-reusable-classifiers)
   must define baseline, training and monitoring mask semantics before accepting masked Classifications. CCDC,
   Time Series and Phenology share this requirement.
-- [Dependency diagnostics](../design/recipes/data-sources.md#bounded-usability-and-correctness-follow-ups), including useful cycle
+- [Dependency diagnostics](../design/recipes/data-sources.md#usability), including useful cycle
   errors in map layers, belong to shared error presentation. A failure encountered through PyEO is not a
   PyEO-specific error-handling requirement.
 

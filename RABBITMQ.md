@@ -1,11 +1,13 @@
 # RabbitMQ — the `sepal.topic` exchange
 
-All asynchronous inter-service messaging goes through a single topic exchange, `sepal.topic`.
-Messages are JSON objects, published with `persistent: true` on a confirm channel. A publisher holds
-each message until the broker confirms it, including while the broker is unreachable, and publishes
-unconfirmed ones again after reconnecting, so delivery is at-least-once. Consumers bind a **durable queue**
-(named `<consumer-module>.<purpose>`) to a routing-key pattern; a handler that resolves acks the
-message, a handler that throws nacks it (the message is redelivered).
+RabbitMQ traffic uses the `sepal.topic` exchange. Messages are JSON, published with `persistent: true`
+on a confirm channel. Unconfirmed messages are retained in process memory and republished after reconnect;
+this provides at-least-once delivery across reconnects, not a durable publisher outbox across process restarts.
+
+Consumers normally bind a durable named queue (`<consumer-module>.<purpose>`) to a routing-key pattern;
+SSH menus use anonymous exclusive queues. A successful handler acknowledges the message. A failed handler
+requeues a first delivery; failure of an already-redelivered message drops it. Malformed JSON is acknowledged
+and discarded. Handlers must tolerate duplicates.
 
 Node modules wire both sides with `initMessageQueue(amqpUri, {publishers, subscribers, handler})`
 from [lib/js/shared/src/messageQueue.js](lib/js/shared/src/messageQueue.js):
@@ -23,8 +25,8 @@ publishers are `{key, publish$}` (an RxJS stream per routing key), subscribers a
 | `workerSession.WorkerSessionClosed` | worker | budget, storage, gateway, ssh-gateway |
 | `workerSession.SessionAppAssociated` | worker | ssh-gateway |
 | `workerSession.SessionAppDissociated` | worker | ssh-gateway, gateway |
-| `workerSession.SessionExpiryNotified` | worker | gateway |
-| `workerSession.SessionExpiryClosed` | worker | gateway |
+| `workerSession.SessionExpiryNotified` | worker | gateway, ssh-gateway |
+| `workerSession.SessionExpiryClosed` | worker | gateway, ssh-gateway |
 | `workerInstance.*` (7 events) | worker | *(none — telemetry/parity)* |
 | `budget.UserBudgetExceeded` | budget | worker |
 | `budget.UserBudgetCleared` | budget | worker |
@@ -66,9 +68,6 @@ the full user map:
 - **sub:** worker (queue `workersession.user`, bound to `user.*`) — closes all of the user's
   sandbox sessions; other `user.*` keys are ignored
   ([workerSession/index.js](modules/worker/src/workerSession/index.js))
-
-> The `user` module was formerly named `user-node`; the legacy Java `user` module it replaced
-> (which published the same keys via `RabbitMQTopic('user', …)`) has been deleted.
 
 ## `workerSession.*` — sandbox session lifecycle
 
@@ -138,7 +137,7 @@ apiKey: null}`.
 
 ### `workerSession.SessionExpiryNotified` — `{username, sessionId, session}`
 - **pub:** worker — when an ACTIVE session passes its stored `timeout_time`
-  (docs/session-expiration-model.md; gated by `SESSION_EXPIRY_MODE`, default `off`).
+  (see [session expiration](modules/worker/CLAUDE.md#session-expiration); gated by `SESSION_EXPIRY_MODE`, default `off`).
   `session` has `apiKey` stripped. Fires once per cycle — the transition is a guarded UPDATE, and
   any extension resets the cycle to `NONE`.
 - **sub:** gateway (queue `gateway.sessionExpiryNotified`) — relays to the user's browser tabs as
@@ -172,15 +171,15 @@ Published by **worker** ([workerInstance/events.js](modules/worker/src/workerIns
 ## `budget.*` — budget enforcement verdicts
 
 Published by **budget** ([events.js](modules/budget/src/events.js)). Level-triggered: each event
-carries a user's *current* verdict, re-published for every user on the hourly enforcement cycle, so
-a lost delivery or a consumer restart self-corrects within the hour.
+carries a user's current verdict. Enforcement runs every minute for users with open sessions and hourly
+for all users; repeated delivery repairs a consumer's in-memory state after restart.
 
 ### `budget.UserBudgetExceeded` / `budget.UserBudgetCleared` — `{username}`
-- **pub:** budget — after each enforcement cycle (hourly spending-report rebuild, and on
-  storage/session events that change a user's spending)
-- **sub:** worker (queues `worker.budgetExceeded` / `worker.budgetCleared`) — maintains the
-  in-process locked-users set that gates new session requests; a *new* lock also closes the user's
-  running sessions ([main.js](modules/worker/src/main.js))
+- **pub:** budget — during the enforcement cycles above. Storage/session events refresh spending;
+  they do not publish enforcement verdicts directly.
+- **sub:** worker (queues `worker.budgetExceeded` / `worker.budgetCleared`) — maintains its fallback
+  locked-users set and closes running sessions on every Exceeded event. New session requests first use the
+  budget service's live verdict ([main.js](modules/worker/src/main.js)).
 
 ## `storage.size` — storage scan result
 

@@ -55,22 +55,14 @@ declared product delegating to this declaration.
 - **Temporal choices differ from the collection's measures.** The choices above omit `kndvi`, which the collection
   computes, and the bands PSB.SD-only Daily imagery carries, both of which CCDC declares among its measures
   (`lib/js/shared/src/recipe/type/ccdc.js`).
-- **NICFI's encoding is not stated.** Authoritative documentation of that exact product could justify declaring it;
-  the migration deferred it.
+- **NICFI's encoding is not stated.** Declare it only after authoritative evidence for that exact product establishes it.
 
 ## Verification
 
-- `modules/gee/verify/planetMosaicOutputBands.mjs` - on live Earth Engine over synthetic collections in each Planet
-  schema run through the real processing, which verifies the algorithm and not ingestion: the catalogue, every
-  declared band asked for, the empty requests each branch builds, subsets, working bands asked for, the mixed Daily
-  refusal once a pixel is computed, histogram matching for schema only, and each index stored per ten thousand. Real
-  NICFI and Daily coverage is blocked without Planet access, and a requested real check fails on it.
-- `lib/js/shared/test/recipe/output/type/planetMosaic.test.js` - the declaration per branch, and through Masking and
-  Stack.
-- `modules/gee/test/jobs/ee/planet/mosaicBands.test.js` - the catalogue, whatever is selected.
-- `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js` - the common read, presentation, presets,
-  Retrieve's groups and policies, broken dependencies, and Change Alerts' Planet mosaics.
-- `modules/gui/src/app/home/body/process/recipe/planetMosaic/planetMosaicOutput.test.js` - Masking and Stack over it.
-- `modules/gui/src/sources.test.js` and `modules/gui/src/app/home/body/process/recipe/ccdc/planetTemplates.test.js` -
-  the temporal choices and CCDC's presets, unchanged.
-- `modules/gee/test/jobs/task/export/imageAssetExport.test.js` - the encoding an export records, directly and through Masking.
+- `lib/js/shared/test/recipe/output/type/planetMosaic.test.js`: each branch and wrapper inheritance.
+- `modules/gee/test/jobs/ee/planet/mosaicBands.test.js`: catalogue; server export tests cover recorded encoding.
+- `modules/gui/src/app/home/body/process/recipe/planetMosaic/`, `recipe/modelDerivedOutput.test.js`,
+  `recipe/ccdc/planetTemplates.test.js` and `modules/gui/src/sources.test.js`: presentation, Retrieve,
+  temporal choices and CCDC presets.
+- [Planet live probe](../../modules/gee/verify/README.md): synthetic branch schemas, mixed-member refusal and
+  index scaling. Matching is schema-only; real NICFI/Daily ingestion needs explicit access-enabled checks.

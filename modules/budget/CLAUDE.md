@@ -1,6 +1,6 @@
 # CLAUDE.md - modules/budget
 
-Standalone event-driven budget service (Node.js). Extracted from `modules/worker` (2026-07). Tracks
+Event-driven budget service. Tracks
 instance + storage spending and enforces monthly budgets; owns the `budget` MySQL schema (Postgrator).
 
 ## Database migrations

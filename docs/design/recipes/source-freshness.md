@@ -227,9 +227,10 @@ local draft. Keep dependency snapshots private to an operation rather than writi
 
 ## Target: persisted-result freshness
 
-The following result-evidence and product-fingerprint machinery is not yet implemented for Sampling Design.
-Current edit-driven result invalidation remains until replaced by this contract. Do not add a temporary browser
-content-hash bridge or use `update_time` as an intermediate freshness tier.
+All result-evidence, resource-retention and integration sections below are target design. This machinery is not
+yet implemented for Sampling Design; its [current edit-driven invalidation](../../recipes/sampling-design.md#derived-result-freshness)
+remains until replaced by this contract. Do not add a temporary browser content-hash bridge or use `update_time` as
+an intermediate freshness tier.
 
 ### Snapshot authority
 
@@ -289,7 +290,7 @@ The envelope is generic even though each operation defines its own inputs:
 {
     result,
     calculatedFrom: {
-        resource: {id: 'SAMPLING_STRATUM_AREAS', contractVersion: 1},
+        resource: {id: 'CALCULATION_KIND', contractVersion: 1},
         question: {/* normalized operation parameters */},
         inputFingerprint: 'resolved-operation-input-fingerprint',
         sourceEvidence: {/* named source roles and observed versions */}
@@ -314,16 +315,9 @@ one recalculation before it can establish durable freshness. Likewise, an asset 
 evidence cannot establish cross-session `CURRENT` merely because its ID and schema still match; the consumer must
 recalculate or acquire stronger evidence under its declared policy.
 
-Consumers decide presentation and policy. Sampling Design keeps stale and unknown values visible for context while
-blocking submission and asking for recalculation. Preview may refresh automatically. Retrieve requires current
-evidence before enabling submission. The shared resource layer reports evidence and state; it does not choose those
-actions.
-
-`UNKNOWN` blocks submission exactly as `STALE` does. A result without usable evidence cannot truthfully be declared
-current, and the conservative reading is the only honest one. This has a stated migration consequence: every
-Sampling Design result that predates `calculatedFrom` is `UNKNOWN` on first open, so each such recipe needs one
-recalculation — potentially a batch calculation — before its next submission. The existing values stay visible as
-context throughout.
+Consumers own stale presentation, recalculation and submission policy; the shared resource layer reports evidence
+and state. [Sampling Design's integration](../../recipes/sampling-design.md#target-persisted-calculation-evidence)
+defines its two calculations, sidecars, propagation and legacy migration. None of those rules is current behavior.
 
 ### Exact calculation evidence
 
@@ -333,16 +327,15 @@ never computed from — a result that reads `CURRENT` for a question it did not 
 
 Recipes and Earth Engine assets support different strengths of claim, and the design must not blur them.
 
-**Recipe snapshots are exact.** The execution boundary keeps a **request-scoped recipe snapshot cache**:
-
-- one raw recipe snapshot and revision per recipe ID per operation;
-- one shared in-flight load for duplicate dereferences of the same ID;
-- transitive recipe loads included;
-- edge-specific recipe factories may be constructed repeatedly from the same snapshot;
-- the returned recipe revision vector describes exactly what was loaded.
+**Recipe snapshots are exact per ID.** The existing
+[operation-scoped reader](source-resolution.md#operation-scoped-recipe-loading) retains one raw record/revision
+per ID, including transitive and concurrent reads; factories may still be constructed repeatedly.
+Returning that exact revision vector as calculation evidence remains target work. This does not establish
+graph-wide coherence across different IDs.
 
 **Asset evidence is contemporaneous observation, not a snapshot.** An operation records the asset observations it
-made, such as `system:version`, and revalidates them before the result is committed. An asset version is
+made and revalidates them before the result is committed. Current live evidence uses metadata `updateTime`;
+any alternative such as `system:version` needs its own verified replacement/membership semantics. An asset version is
 invalidation evidence, not an immutable execution version: it does not pin the pixels Earth Engine evaluates, and
 an asset replaced between observation and evaluation cannot be excluded by evidence alone. Revalidation narrows
 that window rather than closing it, and the existing rule stands — asset IDs and observations are invalidation
@@ -367,95 +360,6 @@ evidence is separate work; a browser observation taken before execution cannot s
 
 Task atomicity remains separate. Persisted execution bundles are target design, not a guarantee of current tasks.
 
-## Sampling Design integration
-
-Sampling Design is the first persisted derived-result consumer. It supplies two named resource descriptions while
-the shared layer owns source evidence, fingerprints, in-flight sharing, replay and stale-response rejection.
-
-Stratum areas depend on:
-
-- the resolved AOI geometry product;
-- the resolved stratification image product and selected band;
-- the configured Stratification CRS and Scale;
-- the contracts that define those products and the area calculation.
-
-Per-stratum probabilities depend on:
-
-- the resolved AOI geometry product;
-- the resolved stratification product, band, CRS and Scale when stratification is active;
-- the resolved categorical or probability source product and selected bands;
-- the proportions mode, target class and configured Proportions Scale;
-- the contracts that define those products and the probability calculation.
-
-The two Earth Engine calculations are stratum areas and per-stratum probabilities. Anticipated proportions are
-derived locally from the probabilities together with the percentage interpretation, the overall-proportion target
-and the current stratum weights, and are rewritten by ordinary form edits without any Earth Engine call. Evidence
-therefore belongs to the calculated probabilities; anticipated proportions inherit staleness through that local
-derivation, as one of the downstream propagations Sampling Design owns.
-
-The source used only to calculate probabilities is an operation-scoped dependency. It does not become a general
-execution edge of the final Sampling Design product merely because its values are materialized into the recipe.
-
-AOI evidence is derived by AOI kind:
-
-- an inline polygon uses a canonical geometry fingerprint;
-- an Earth Engine asset or table uses its reference, geometry-affecting selection and `system:version` when
-  available;
-- a recipe reference resolves the AOI geometry product exposed by that recipe, including relevant transitive recipe
-  and asset evidence;
-- `ASSET_BOUNDS` binds to the concrete source product whose bounds it adopts;
-- a GeoID uses its id and buffer: its geometry is immutable under the GeoID service's contract, so the
-  GeoID is its own fingerprint and is never polled. Looking it up can still fail during execution; that is an
-  availability failure, not a change.
-
-For a recipe AOI, Sampling Design never decides which fields of the referenced recipe affect geometry. The recipe's
-product provider owns that projection. A changed recipe revision says only that the AOI may have changed; after
-re-resolution, unchanged AOI evidence leaves the areas current.
-
-The AOI geometry product is the abstraction, but the first milestone does not reimplement every runtime geometry
-rule in the browser. Until a recipe type has a shared AOI-product declaration used by both GUI resolution and
-executor execution, its fallback is conservative whole persisted-source evidence. "Unrelated edits keep areas
-current" is therefore a capability of migrated product providers, not a universal guarantee: a conservative
-provider may mark such an edit stale. It must never infer a narrow projection from a consumer-maintained field
-list.
-
-Evidence is persisted as section-level sidecars written atomically with the results they describe, leaving the
-existing arrays and their owner-first joins untouched:
-
-```
-model.stratification.strataCalculatedFrom
-model.proportions.probabilityPerStratumCalculatedFrom
-```
-
-The generic `{result, calculatedFrom}` envelope is conceptual. Do not wrap or relocate `strata`,
-`probabilityPerStratum` or `anticipatedProportions`; their persisted ownership and legacy joined-row compatibility
-stay exactly as they are.
-
-Suppose recipe B stores Sampling Design areas calculated from an AOI exposed by recipe A. A may be edited and closed
-while B is not open. When B is opened later, the runtime refreshes the revision vector for B's dependencies. If A's
-revision is unchanged, the areas stay current with no content load. If it advanced, A is reloaded, its AOI product
-re-resolved, and the new operation-input fingerprint compared with B's `calculatedFrom` evidence. A mismatch marks
-the areas and their dependent calculated results stale. A and B never need to be open simultaneously, and no update
-event or patch stream is required for this check.
-
-Sampling Design-specific code owns the two dependency descriptions, how stale areas and probabilities propagate to
-anticipated proportions and allocation, panel messages, recalculation commands and submission blocking. The shared
-graph owns closure and applies the recipe-closure limits it already defines; the shared freshness layer owns recipe
-and asset observation, generic cache keys, request epochs and source-version subscriptions.
-
-| Concern | Owner |
-| --- | --- |
-| authorized loading, edges, cycles and closure | shared graph |
-| recipe snapshots and asset-version observations | shared freshness layer |
-| AOI, image and capability declarations and fingerprints | product and capability owners |
-| evidence comparison, replay, in-flight sharing and epochs | generic derived-resource layer |
-| area/probability dependency questions and propagation rules | Sampling Design |
-| stale presentation, recalculation controls and submission policy | Sampling Design |
-
-The existing per-panel calculation caches are replaced by the generic derived resource, not left running beside it.
-Stratum areas migrate first, then per-stratum probabilities; the old module is removed once both have migrated, so
-two cache semantics never coexist.
-
 ## Resource retention and invalidation
 
 Extend existing source-runtime ownership with one logical resource per kind and normalized question. Share one
@@ -469,9 +373,10 @@ causes an authorized reload and product comparison. WebSocket revisions/patches 
 not the only way to detect changes after a dependent recipe was closed. GEE caching, if justified, must preserve
 principal and linked-account scope and cannot own long-lived GUI correctness.
 
-Task-driven mutations should invalidate actual written/replaced/partly removed asset IDs through the shared owner.
-That integration awaits the task rewrite's lifecycle audit; session mutations already work. Keep polling and
-explicit Refresh for external changes and missed notifications.
+Task-driven invalidation remains deferred. Audit the exporter → task result/progress → supervisor settlement →
+task-list notification boundary identified in [task orchestration](../tasks/orchestration.md#asset-mutation-notifications-deferred)
+before choosing transport into the shared asset-evidence owner. Current session mutations already work; polling and
+explicit Refresh remain necessary for external changes and missed notifications.
 
 ## Verification and open decisions
 

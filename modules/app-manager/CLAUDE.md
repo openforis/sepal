@@ -37,5 +37,3 @@ npm run testWatch     # Node test runner watch mode
 ## Non-Obvious Conventions
 
 - **No database or message queue** - purely filesystem-based app discovery
-- **RxJS-heavy**: interval(), exhaustMap(), concatMap(), switchMap(), catchError() for all async ops
-- **Git-based updates**: Each app is a Git repo updated via shell script

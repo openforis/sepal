@@ -58,10 +58,9 @@ Before running this code against an existing dev/test database:
 2. Bring the actual schema into agreement with the current files, preserving application data. This
    includes case-insensitive username columns, Worker's `instance_name` and `instance_claim`, and removal
    of its old `instance` mirror. The hosting service owns instance inventory; MySQL holds only the claim.
-   Sessions predating the claim table get one back from `backfillClaims`
-   (`modules/worker/src/workerInstance/index.js`), a temporary startup shim that claims reserved instances
-   the hosting service reports with a session ID. It is not permanent Worker behavior and is marked for
-   removal one release after this ships; retire this instruction together with it.
+   `backfillClaims` (`modules/worker/src/workerInstance/index.js`) reconciles reserved instances carrying
+   a session ID with missing claim rows. This also repairs claim-insert failures; it remains part of normal
+   startup reconciliation.
 3. Verify the schema before aligning its history with the checksums of the exact files being deployed.
    Preserve unrelated migration versions, names and timestamps. Changing a checksum alone does not
    apply a schema change.

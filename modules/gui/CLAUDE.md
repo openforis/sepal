@@ -70,7 +70,7 @@ src/
 ## Non-Obvious Conventions
 
 - **Path aliases**: `~/` resolves to `src/` (configured in `vite.config.js`). Imports look like `import {thing} from '~/store'`.
-- **CSS Modules**: All component styles use `*.module.css` files (279 total). Import as `import styles from './component.module.css'`.
+- **CSS Modules**: Component styles use `*.module.css`. Import as `import styles from './component.module.css'`.
 - **`compose` HOC pattern**: `src/compose.js` chains multiple HOCs. Legacy pattern - newer code uses hooks.
 - **`connect` HOC**: `src/connect.js` connects components to Redux store (custom, not react-redux's connect).
 - **Logging**: `src/log.js` with `src/log.json` config. Uses `getLogger(name)` with level-based filtering per module.
