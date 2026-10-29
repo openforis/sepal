@@ -108,7 +108,8 @@ image readiness.
    in 338 files with two workers. Build, lint and whitespace checks pass. The migration is checkpointed on
    `feat/recipe-scoped-modals`.
    The separate untouched-PRC initialization correction is implemented; it is not a modal-migration gate.
-   Opening selected recipes follows the accepted migration.
+   Opening selected recipes is implemented in the shared selector and browser-accepted (2026-10-29), including
+   from a recipe-scoped modal. See [Open selected recipe](data-sources.md#open-selected-recipe).
 
 This order records the user's priorities and adds no release gates to already accepted work. The copy-settings
 action remains dropped.

@@ -2,7 +2,7 @@ import {act} from 'react'
 import {createRoot} from 'react-dom/client'
 import {Provider} from 'react-redux'
 import {legacy_createStore as createStore} from 'redux'
-import {of, Subject} from 'rxjs'
+import {firstValueFrom, NEVER, of, Subject, throwError} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
@@ -17,8 +17,10 @@ import {PortalContainer} from '~/widget/portal'
 // reads a selection triggers - the recipe read and the band read - so that whether a selection was acted on
 // is observable without a backend.
 
-const {bands$, load$} = vi.hoisted(() => ({bands$: vi.fn(), load$: vi.fn()}))
-vi.mock('~/apiRegistry', () => ({default: {gee: {bands$}, recipe: {load$}}}))
+const {bands$, load$, loadError} = vi.hoisted(() => ({bands$: vi.fn(), load$: vi.fn(), loadError: vi.fn()}))
+vi.mock('~/apiRegistry', () => ({default: {gee: {bands$}, recipe: {load$, save$: () => NEVER}}}))
+vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
+vi.mock('~/widget/notifications', () => ({Notifications: {error: loadError}}))
 vi.mock('~/translate', () => ({msg: key => key}))
 // Cuts an import cycle the barrel would otherwise enter from the wrong side: the asset combo reaches
 // `~/user`, which reaches a panel that reads `Form.Field` while the barrel is still evaluating. Nothing
@@ -32,6 +34,7 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({
 }))
 
 const {RecipeInput} = await import('./recipeInput')
+const {openRecipeById$} = await import('~/app/home/body/process/recipe')
 const {maskableImage} = await import(
     '~/app/home/body/process/recipe/masking/panels/inputImage/recipeSection'
 )
@@ -44,6 +47,7 @@ beforeEach(() => {
     loaded = []
     loading = []
     selected = []
+    loadError.mockReset()
     bands$.mockReset().mockImplementation(() => of(['red', 'nir']))
     load$.mockReset().mockImplementation(recipeId => of(recipeOf(recipeId)))
 })
@@ -95,6 +99,135 @@ describe('the recipe an input belongs to', () => {
         expect(selectedValue()).toBe(OTHER)
         expect(loaded).toEqual([{id: OTHER, bandNames: ['red', 'nir']}])
         expect(form.isInvalid()).toBe(false)
+    })
+})
+
+describe('opening the selected recipe', () => {
+    it('offers a disabled Open button without a selection and reads nothing', async () => {
+        show({requests: {}})
+        expect(openButton().disabled).toBe(true)
+        await act(async () => openButton().click())
+        expect(load$).not.toHaveBeenCalled()
+    })
+
+    it('selects an already open draft without reading or changing it or the selector', async () => {
+        show({value: OTHER, requests: {}})
+        const draft = {...recipeOf(OTHER), model: {unsaved: 'working draft'}}
+        await session({tabs: [{id: OWNER}, {id: OTHER}], loadedRecipes: {...cachedRecipes(), [OTHER]: draft}})
+        await act(async () => openButton().click())
+
+        expect(processState().selectedTabId).toBe(OTHER)
+        expect(processState().tabs.map(({id}) => id)).toEqual([OWNER, OTHER])
+        expect(cachedRecipes()[OTHER]).toBe(draft)
+        expect(load$).not.toHaveBeenCalled()
+        expect(bands$).not.toHaveBeenCalled()
+        expect(selectedValue()).toBe(OTHER)
+        expect(form.isDirty()).toBe(false)
+        expect(selected).toEqual([])
+        expect(optionElements()).toEqual([])
+    })
+
+    it('loads authoritative content and its save revision into a new tab, bypassing a settled cache copy', async () => {
+        show({value: OTHER, requests: {}})
+        await session({tabs: [{id: OWNER}], loadedRecipes: {...cachedRecipes(), [OTHER]: {...recipeOf(OTHER), revision: 1}}})
+        const stored = {...recipeOf(OTHER), title: 'Saved recipe', revision: 7, model: {saved: 'fresh'}}
+        load$.mockReturnValue(of(stored))
+        await act(async () => openButton().click())
+
+        expect(load$).toHaveBeenCalledExactlyOnceWith(OTHER)
+        expect(bands$).not.toHaveBeenCalled()
+        expect(processState().tabs.map(({id}) => id)).toEqual([OWNER, OTHER])
+        expect(processState().selectedTabId).toBe(OTHER)
+        expect(cachedRecipes()[OTHER]).toMatchObject(stored)
+        expect(processState().saveStates[OTHER]).toMatchObject({status: 'SAVED', revision: 7})
+        expect(selectedValue()).toBe(OTHER)
+        expect(form.isDirty()).toBe(false)
+    })
+
+    it.each(['SAVING', 'FAILED', 'CONFLICTED', 'UNRESOLVED'])('reopens a closed %s draft without replacing it or its save state', async status => {
+        show({value: OTHER, requests: {}})
+        const draft = {...recipeOf(OTHER), model: {unsaved: status}}
+        const saveState = {status, revision: 4}
+        await session({tabs: [{id: OWNER}], loadedRecipes: {...cachedRecipes(), [OTHER]: draft}, saveStates: {[OTHER]: saveState}})
+        await act(async () => openButton().click())
+
+        expect(cachedRecipes()[OTHER]).toBe(draft)
+        expect(processState().saveStates[OTHER]).toBe(saveState)
+        expect(processState().tabs.map(({id}) => id)).toEqual([OWNER, OTHER])
+        expect(processState().selectedTabId).toBe(OTHER)
+        expect(load$).not.toHaveBeenCalled()
+    })
+
+    it.each([true, false])('keeps a draft created during the read, whether still open (%s) or closed with unsettled saves', async open => {
+        show({value: OTHER, requests: {}})
+        await session({tabs: [{id: OWNER}]})
+        const held = new Subject()
+        load$.mockReturnValue(held)
+        await act(async () => openButton().click())
+        expect(openButton().disabled).toBe(true)
+        const draft = {...recipeOf(OTHER), model: {unsaved: 'opened elsewhere'}}
+        await session({
+            tabs: open ? [{id: OWNER}, {id: OTHER}] : [{id: OWNER}],
+            loadedRecipes: {...cachedRecipes(), [OTHER]: draft},
+            saveStates: {[OTHER]: {status: 'SAVING', revision: 4}}
+        })
+        await act(async () => { held.next({...recipeOf(OTHER), revision: 7}); held.complete() })
+
+        expect(cachedRecipes()[OTHER]).toBe(draft)
+        expect(processState().tabs.map(({id}) => id)).toEqual([OWNER, OTHER])
+        expect(processState().selectedTabId).toBe(OTHER)
+    })
+
+    it('uses the same authoritative opening path when the recipe list replaces its landing tab', async () => {
+        show({requests: {}})
+        await session({tabs: [{id: OWNER}]})
+        await act(async () => firstValueFrom(openRecipeById$(OTHER, {inNewTab: false})))
+
+        expect(load$).toHaveBeenCalledExactlyOnceWith(OTHER)
+        expect(processState().tabs.map(({id}) => id)).toEqual([OTHER])
+        expect(processState().selectedTabId).toBe(OTHER)
+        expect(processState().saveStates[OTHER]).toMatchObject({status: 'SAVED', revision: 4})
+    })
+
+    it('does not replace another recipe if the user leaves the list while its load is pending', async () => {
+        show({requests: {}})
+        await session({tabs: [{id: 'landing'}, {id: OWNER}], selectedTabId: 'landing'})
+        const held = new Subject()
+        load$.mockReturnValue(held)
+        const opening = firstValueFrom(openRecipeById$(OTHER, {inNewTab: false}))
+        await session({selectedTabId: OWNER})
+        await act(async () => { held.next(recipeOf(OTHER)); held.complete(); await opening })
+
+        expect(processState().tabs.map(({id}) => id)).toEqual(['landing', OWNER, OTHER])
+        expect(processState().selectedTabId).toBe(OTHER)
+    })
+
+    it('opens a saved selection in another project without changing the project filter', async () => {
+        show({value: 'elsewhere', keepSelection: true, requests: {}})
+        await session({tabs: [{id: OWNER}]})
+        await act(async () => openButton().click())
+
+        expect(load$).toHaveBeenCalledExactlyOnceWith('elsewhere')
+        expect(processState().selectedTabId).toBe('elsewhere')
+        expect(selectedValue()).toBe('elsewhere')
+        expect(await offered()).toEqual(['In another project', 'Another recipe', 'A table recipe', 'A CCDC'])
+    })
+
+    it('reports a failed load without changing tabs, field validity or selection', async () => {
+        show({value: OTHER, requests: {}})
+        await session({tabs: [{id: OWNER}]})
+        const error = new Error('Recipe unavailable')
+        load$.mockReturnValue(throwError(() => error))
+        await act(async () => openButton().click())
+
+        expect(loadError).toHaveBeenCalledWith({message: 'widget.recipeInput.loadError', error})
+        expect(processState().tabs).toEqual([{id: OWNER}])
+        expect(processState().selectedTabId).toBe(OWNER)
+        expect(selectedValue()).toBe(OTHER)
+        expect(form.isInvalid()).toBe(false)
+        expect(form.isDirty()).toBe(false)
+        expect(selected).toEqual([])
+        expect(openButton().disabled).toBe(false)
     })
 })
 
@@ -423,6 +556,7 @@ const show = ({
     const initialState = {
         dimensions: {width: 1024, height: 768},
         process: {
+            selectedTabId: OWNER,
             loadedRecipes: {[OWNER]: {id: OWNER, type: 'MOSAIC', projectId: 'p1', model: {}}},
             recipes,
             projects,
@@ -456,9 +590,12 @@ const show = ({
 const combo = () => container.querySelector('input')
 
 // What a panel reads when it is applied.
-const recipeOf = recipeId => ({id: recipeId, type: 'MOSAIC', model: {}})
+const recipeOf = recipeId => ({id: recipeId, type: 'MOSAIC', revision: 4, ui: {initialized: true}, model: {}})
 
 const cachedRecipes = () => store.getState().process.loadedRecipes
+const processState = () => store.getState().process
+const session = values => act(async () => store.dispatch({type: 'SESSION_CHANGED', reduce: state => ({...state, process: {...state.process, ...values}})}))
+const openButton = () => container.querySelector('button[aria-label="widget.recipeInput.open"]')
 
 const selectedValue = () => form.values().recipe
 

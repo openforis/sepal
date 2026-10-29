@@ -19,6 +19,7 @@ import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Panel} from '~/widget/panel/panel'
 import {PortalContainer} from '~/widget/portal'
+import {RecipeInput} from '~/widget/recipeInput'
 import {selectTab} from '~/widget/tabs/tabActions'
 import {Tabs} from '~/widget/tabs/tabs'
 
@@ -80,6 +81,23 @@ describe('modal ownership supplied by the recipe context', () => {
         expect(select(['process.loadedRecipes', A, 'model.name'])).toBe('A saved')
         await show(A)
         expect(draft(A).value).toBe('A draft')
+        await click(layer(A), 'button.cancel')
+        expect(select(['process.loadedRecipes', A, 'model.name'])).toBe('A saved')
+    })
+
+    it('opens the recipe selected in a modal without applying or losing the originating draft', async () => {
+        await mount({A: 'reference', B: 'plain'})
+        await type(draft(A), 'Unapplied name')
+        const selector = layer(A).querySelector('[aria-label="widget.recipeInput.open"]')
+        await act(async () => selector.click())
+
+        expect(select('process.selectedTabId')).toBe(B)
+        expect(select('process.tabs').map(({id}) => id)).toEqual([A, B])
+        expect(select(['process.loadedRecipes', A, 'model.name'])).toBe('A saved')
+        await show(A)
+        expect(draft(A).value).toBe('Unapplied name')
+        expect(layer(A).querySelector('[data-label="widget.recipeInput.label"] input').placeholder)
+            .toBe('widget.recipeInput.unlisted')
         await click(layer(A), 'button.cancel')
         expect(select(['process.loadedRecipes', A, 'model.name'])).toBe('A saved')
     })
@@ -265,7 +283,8 @@ const Contents = ({id, kind}) => {
         case 'form':
         case 'radar':
         case 'historical':
-            return <DraftPanel id={id} kind={kind} values={{name: select(['process.loadedRecipes', id, 'model.name']), date: '2020-01-01', value: 3}}/>
+        case 'reference':
+            return <DraftPanel id={id} kind={kind} values={{name: select(['process.loadedRecipes', id, 'model.name']), date: '2020-01-01', value: 3, reference: B}}/>
         default: return <PlainPanel id={id} confirm={kind === 'confirm'}/>
     }
 }
@@ -292,12 +311,13 @@ const DraftPanel = compose(
             <Form.Input label='Name' input={inputs.name}/>
             <input data-value readOnly value={inputs.value.value}/>
             <Form.DatePicker label='Date' input={inputs.date} startDate='2019-01-01' endDate='2030-01-01'/>
+            {kind === 'reference' ? <RecipeInput input={inputs.reference} keepSelection/> : null}
             {kind === 'radar' ? <RadarDetails inputsToUpdate={{value: inputs.value}}/> : null}
             {kind === 'historical' ? <HistoricalDetails inputsToUpdate={{value: inputs.value}}/> : null}
         </Panel.Content>
         <Form.PanelButtons/>
     </Form.Panel>,
-    withForm({fields: {name: new Form.Field().notBlank(), date: new Form.Field(), ...detailFields}})
+    withForm({fields: {name: new Form.Field().notBlank(), date: new Form.Field(), reference: new Form.Field(), ...detailFields}})
 )
 
 async function type(input, value) {

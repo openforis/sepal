@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import React from 'react'
-import {catchError, defer, firstValueFrom, map, switchMap, throwError} from 'rxjs'
+import {catchError, defer, firstValueFrom, map, of, switchMap, throwError} from 'rxjs'
 
 import {actionBuilder, scopedActionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
@@ -18,6 +18,7 @@ import {downloadObjectZip$} from '~/widget/download'
 import {Notifications} from '~/widget/notifications'
 import {addTab, closeTab} from '~/widget/tabs/tabActions'
 
+import {isDraft} from './draftAgreement'
 import {initializeRecipe, saveStatePath} from './recipeCache'
 import {releaseSettled} from './recipeCacheClaims'
 import {
@@ -186,14 +187,40 @@ export const mergeListing = (request, response) => mergedListing({
     now: Date.now()
 })
 
-export const openRecipe = recipe => {
+export const openRecipe = (recipe, {inNewTab = false} = {}) => {
     publishEvent('load_recipe', {recipe_type: recipe.type})
     const {id, placeholder, title, type} = recipe
-    actionBuilder('OPEN_RECIPE')
-        .set(tabPath(select('process.selectedTabId')), {id, placeholder, title, type})
+    const action = actionBuilder('OPEN_RECIPE')
+    ;(inNewTab
+        ? action.push('process.tabs', {id, placeholder, title, type})
+        : action.set(tabPath(select('process.selectedTabId')), {id, placeholder, title, type}))
         .set('process.selectedTabId', id)
         .dispatch()
 }
+
+// Navigation loads authoritative content and its save revision together, unless the session owns a draft.
+// Check again on arrival: another caller may have opened or edited the recipe while this read was in flight.
+export const openRecipeById$ = (recipeId, {inNewTab = true} = {}) => defer(() => {
+    const originatingTabId = select('process.selectedTabId')
+    const retainedDraft = () => {
+        const held = select(recipePath(recipeId))
+        return held && (held.ui?.unsaved || isDraft({
+            open: isRecipeOpen(recipeId), saveState: select(saveStatePath(recipeId))
+        })) ? held : null
+    }
+    const held = retainedDraft()
+    return (held ? of(held) : api.recipe.load$(recipeId)).pipe(
+        map(loaded => {
+            if (isRecipeOpen(recipeId)) {
+                selectRecipe(recipeId)
+                return select(recipePath(recipeId))
+            }
+            const recipe = retainedDraft() || openRecipeRevision(loaded)
+            openRecipe(recipe, {inNewTab: inNewTab || select('process.selectedTabId') !== originatingTabId})
+            return recipe
+        })
+    )
+})
 
 export const selectRecipe = recipeId =>
     actionBuilder('SELECT_RECIPE')

@@ -1879,8 +1879,8 @@ the originating editor and its draft, including when the selector is inside a re
 
 ### Open selected recipe
 
-Revisit after [recipe-scoped modals](#recipe-scoped-modals) are settled. A recipe selector offers to open its
-selected recipe; it must behave the same everywhere the selector appears, not only outside modals.
+Implemented after the accepted [recipe-scoped modals](#recipe-scoped-modals) migration (2026-10-29). The shared
+recipe selector offers an Open icon on its right, including inside modal panels. Running-app acceptance is complete.
 
 - Leave the originating form as it was: opening never applies, clears or changes the selection or pending edits,
   and they are intact on returning to its tab.
@@ -1891,6 +1891,38 @@ selected recipe; it must behave the same everywhere the selector appears, not on
 - Work for a selection in another project without the ALL view; report a failed load without changing the current
   tab or selection; keep the action reachable and operable by keyboard, without a panel's own keybindings taking
   its keys.
+
+**Implementation (2026-10-29).** `RecipeInput` uses its existing Combo button slot; no per-caller opt-in, layout
+component or form change is needed. The icon is disabled without a selection, remains available for a selected
+recipe that needs repair, and is busy during its navigation read. A failed read reports the existing load error
+without changing the tab, selection or form validity. The icon's native Enter/Space events are kept from the
+containing panel's shortcuts, so they open the selected recipe rather than applying that panel.
+
+Opening is owned by `openRecipeById$` in `recipe.jsx`, shared with the recipe list. The selector opens a new tab;
+the list replaces its landing tab, opening a new tab instead if the user navigated away during the load. Both select
+an already open recipe without a load, reuse a closed draft with unsettled saves, and otherwise use an authoritative load to initialize content and
+the save revision together. These checks run again when the response arrives, preserving a draft opened or closed
+while the read was in flight and preventing duplicate tabs. Dependency-cache copies are not used as the saved
+revision's authority. The navigation read asks only for the record; the opened recipe manages its normal
+observations and previews.
+
+Regressions cover no selection, an existing draft, an authoritative load over a settled cache copy, four unsettled
+save outcomes, open and closed drafts created during a read, another project without ALL, load failure, and the
+recipe list's replacement path. A mounted real-panel/tab case checks navigation without applying or discarding
+the originating draft. A temporary harness of the real selector, forms and tabs passes 44 browser checks in
+Chromium and Firefox at 1280px and 360px, including native Enter/Space, preserved drafts and selections, a closed
+recipe's revision, repeated Open, and the right-side layout. Harness API calls are substituted; the signed-in app
+has not been checked. Harness files and logs are outside the repository in `/tmp/sepal-open-selected-recipe/`.
+
+Verification: 1443 caller/widget tests pass in 116 files with two workers. After the final list-navigation race
+guard, the focused navigation, modal, autosave, cache and locale set passes 106 tests in seven files. Lint on all
+five changed JS/JSX files, `git diff --check` and the production build pass. Build output stays under the temporary
+verification directory; the full GUI suite and live Earth Engine were not run for this navigation slice.
+
+Running-app check: edit a recipe panel without applying, use the Open icon beside its selected recipe, then return
+to the original tab and confirm the panel and edits remain. Try one recipe that is not already open as well.
+The user accepted the feature on 2026-10-29: "Works great, also from a recipe-scoped modal."
+The user then authorized committing this slice on `feat/recipe-scoped-modals`. No push is included.
 
 ### Task-driven asset invalidation
 

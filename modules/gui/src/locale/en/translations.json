@@ -6919,6 +6919,7 @@
     },
     "recipeInput": {
       "label": "Recipe",
+      "open": "Open selected recipe",
       "placeholder": "Select a recipe...",
       "all": {
         "tooltip": "Show all recipes or only recipes in current project"
