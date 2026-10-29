@@ -12,7 +12,7 @@ speckle filtering, outlier removal, masking - and `dates` bound it. The AOI is i
 ## Output
 
 Declared in `lib/js/shared/src/recipe/type/baytsHistorical.js` from the configuration alone (see the
-[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)): for each pass, in the
+[output contract](../design/recipes/output-products.md#declaration-and-description)): for each pass, in the
 order the model stores them, `VV_mean`, `VV_std`, `VH_mean`, `VH_std`, `orbit`, `VV_speckle` and `VH_speckle`,
 suffixed `_asc` or `_desc`. That is the order execution builds them in: each pass's radar time scan, then the speckle
 statistics added to it. Every band is scalar and stored as computed, with no encoding. Coarser pyramid levels keep the

@@ -52,7 +52,7 @@ step, neither its button nor an untouched legend says it yet. The legend's ten-e
 ## Output
 
 Class Change always declares two scalar bands (see the
-[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)):
+[output contract](../design/recipes/output-products.md#declaration-and-description)):
 
 - `transition`, exported with `mode` pyramiding;
 - `confidence`, exported with `mean` pyramiding.

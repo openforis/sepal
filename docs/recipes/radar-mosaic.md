@@ -14,7 +14,7 @@ filtering, outlier removal, border masking and the minimum number of observation
 ## Output
 
 Each configuration declares its bands in `lib/js/shared/src/recipe/type/radarMosaic.js` (see the
-[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)), all scalar and
+[output contract](../design/recipes/output-products.md#declaration-and-description)), all scalar and
 without encoding:
 
 | Configuration | Bands, in order | Pyramiding |

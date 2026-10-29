@@ -1,7 +1,7 @@
 # Map inspection and capability-driven layer actions
 
-Exploratory discussion. Scope, interaction design and scheduling are undecided. This is not an implementation
-plan or a prerequisite for the current recipe migrations.
+Exploratory discussion. Scope, interaction design and scheduling are undecided. This is target design, not a scheduled
+implementation or a prerequisite for other recipe work.
 
 ## Scenarios
 

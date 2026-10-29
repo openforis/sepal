@@ -82,7 +82,7 @@ withhold rather than fail; `monitoringDates` fails with that reason.
 ## Output
 
 The changes are its canonical output, declared in `lib/js/shared/src/recipe/type/changeAlerts.js` (see the
-[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)): nine scalar bands,
+[output contract](../design/recipes/output-products.md#declaration-and-description)): nine scalar bands,
 sampled, with no encoding, known before a period or a reference is chosen. Retrieve, Masking and Task read only these.
 Their styles span the period, so a recipe whose period cannot be computed is described alike but offered none, and its
 layer selects nothing until the period is corrected.

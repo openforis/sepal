@@ -30,7 +30,7 @@ dates. Monitoring images are constructed from PyEO's own datasets, processing op
 The result is a change-report image containing counts, change dates, repeatability and decision bands. PyEO declares
 its 18 scalar report bands in the order the algorithm assembles them, with or without the index-drop gate, all
 exported with `sample` pyramiding and no encoding (`PYEO_ALERTS_BANDS`, see the
-[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)). Asked for no bands it
+[output contract](../design/recipes/output-products.md#declaration-and-description)). Asked for no bands it
 returns the whole report; a selection returns exactly the bands selected, in the order selected.
 
 ### Readiness of Sources
@@ -203,12 +203,12 @@ equivalent check. Preserve that behavior during shared migrations; do not broade
 
 ## Shared work affecting this recipe
 
-- [Band encoding](../design/recipes/data-sources.md#band-encoding) belongs to the shared output contract and asset export/read
+- [Band encoding](../design/recipes/output-products.md#band-encoding) belongs to the shared output contract and asset export/read
   path. PyEO is one consumer exposing the need, not the owner of the contract.
 - [Classification results and reusable classifiers](../design/recipes/source-resolution.md#classification-results-and-reusable-classifiers)
   must define baseline, training and monitoring mask semantics before accepting masked Classifications. CCDC,
   Time Series and Phenology share this requirement.
-- [Dependency diagnostics](../design/recipes/data-sources.md#9-source-selection-and-further-consumers), including useful cycle
+- [Dependency diagnostics](../design/recipes/data-sources.md#bounded-usability-and-correctness-follow-ups), including useful cycle
   errors in map layers, belong to shared error presentation. A failure encountered through PyEO is not a
   PyEO-specific error-handling requirement.
 

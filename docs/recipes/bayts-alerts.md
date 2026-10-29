@@ -30,7 +30,7 @@ PRC hides those settings and keeps their saved values.
 ## Output
 
 The alerts are its canonical output, declared in `lib/js/shared/src/recipe/type/baytsAlerts.js` (see the
-[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)): six scalar bands,
+[output contract](../design/recipes/output-products.md#declaration-and-description)): six scalar bands,
 sampled, with no encoding. Retrieve, Masking and Task read only these. The layer's confidence filters
 (`previouslyConfirmed`, `minConfidence`) mask alert pixels and change no band.
 

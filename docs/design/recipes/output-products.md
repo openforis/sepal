@@ -1,118 +1,34 @@
 # Recipe output products and band schemas
 
-Technical design and research record for replacing recipe-specific `bands.js` and `visualizations.js` derivation
-with shared output declarations. Dependency traversal and runtime observation belong to
-[source-resolution.md](source-resolution.md), refresh and replay belong to
-[source-freshness.md](source-freshness.md), and presentation ownership belongs to
-[visualizations.md](visualizations.md).
+The current contract separates canonical output, named map products, physical band facts, export requirements,
+encoding and GUI decoration. Every image-producing recipe type declares an `IMAGE_OUTPUT` provider; Sampling
+Design declares `NO_IMAGE_OUTPUT`. Map and Retrieve read through the shared output boundary.
 
-This document is intentionally a design constraint rather than a finished JavaScript API. The existing helpers are
-an evidence corpus and a compatibility boundary. Moving their current signatures into shared recipe definitions
-would centralize several incompatible meanings without simplifying them.
+[Source resolution](source-resolution.md) owns traversal and readiness; [the GUI runtime](gui-source-runtime.md)
+owns acquisition; [freshness](source-freshness.md) owns currency; [visualizations](visualizations.md) owns styles.
+The source-planning and transformation-projection sections below are explicitly target design, not a second
+implemented planning API. The [roadmap](data-sources.md#remaining-work) lists remaining adoption work.
 
-## Problem
+## Product roles
 
-A single band helper registered beside `getPreSetVisualizations()`, as `getAvailableBands()` was, conceals several
-different questions:
+A product is a concrete logical result: a canonical image, one map mode, an internal temporal collection, a future
+AOI geometry product or a non-image result. A union of every band any mode could display is not a product.
+CCDC Segments is an image product; `CCDC_SEGMENTS` is an interpretation capability, not another physical schema.
 
-- which bands the recipe can export;
-- which bands one map-layer mode happens to display;
-- which bands an internal optical, radar or Planet collection provides to an algorithm;
-- which bands were copied from a selected recipe or asset at an earlier time;
-- which labels, tooltips and grouping a form should display;
-- which presentation presets are currently applicable.
+A declaration states derivation; a resolved description gives one configured graph's ordered bands and evidence.
+Schema, structural dependency validity, operation readiness and current acquisition authority answer different
+questions. A description of available bands is not permission to compute.
 
-The same physical rules are sometimes derived independently in GUI and Earth Engine code. Other consumers reuse a
-helper by constructing an object that resembles another recipe's model. CCDC Slice and Change Alerts manually load
-dependent recipes and copy reconstructed descriptions into their own models. These patterns create stale snapshots,
-type switches and output rules that can drift from execution.
+GUI labels/tooltips/groups/preset ranges decorate names. They do not decide whether bands exist, their execution
+order, dimensionality or export policy. Raw names remain request/selection identities.
 
-The objective is not to produce a more elaborate band registry. It is to make each question have one owner and to
-let recipe implementations declare only behavior specific to that recipe.
-
-## Decision summary
-
-- Products are concrete logical results; capabilities describe additional consumer-relevant interpretation.
-- Modality is presentation metadata, not an execution or compatibility discriminator.
-- Catalogue entries, source instances and adapters are distinct roles.
-- Adapters own small versioned source commands; they do not participate in a universal matching language.
-- One closed temporal collection composer owns shared derivation, Classification augmentation, selection and
-  encoding above source adapters.
-- Command discovery declares named direct references; the shared graph alone completes the authorized closure; the
-  product resolver then evaluates declarations bottom-up through scoped child bindings.
-- Plan validity is separate from operation-specific requirement validation and runtime availability.
-- An image output describes the bands available from the configured recipe. An operation selects from them by
-  name, and execution produces that selection; how a requested band is built is the producer's responsibility.
-- Product compatibility follows physical and structured semantic guarantees, never modality or matching names
-  alone.
-- Browser plans are preflight evidence; trusted execution rebuilds or validates commands from an authorized bundle.
-- Contract versions describe deliberate durable evolution. Known defects are fixed before contracts are declared
-  and never become supported legacy algorithms.
-
-## Terminology
-
-### Source contract roles
-
-The current Optical, Radar and Planet branches mix several orthogonal roles. The replacement model keeps them
-separate:
-
-- **modality** is non-authoritative grouping metadata such as optical or radar;
-- a **catalogue entry** is a stable persisted selection ID with pure catalogue facts such as declared availability;
-- a **source instance** is the concrete assets, references and parameters selected for one operation;
-- a **source adapter** owns pure planning and runtime execution for one stable adapter identity and contract;
-- a **source command** is the adapter-owned, versioned and JSON-safe instruction produced from persisted input;
-- a **temporal collection composer** applies SEPAL's closed set of collection-level derivations, classification
-  augmentation, selection and encoding above a normalized source collection;
-- a **recipe requirement** states what one consumer operation needs from the configured product.
-
-These roles are not identity levels in a hierarchy. Optical and Radar are physical modalities, while Planet is
-primarily a provider and execution path whose imagery is optical. The existing `OPTICAL`, `RADAR` and `PLANET`
-values classify legacy executor branches; they are not scientific compatibility contracts. Modality may group UI
-choices, but it never selects an executor or proves compatibility.
-
-A catalogue entry and adapter are also different. Several Landsat entries can share implementation while differing
-in collection ID, tier, native mapping and availability. A custom asset can bypass catalogue selection, but it never
-bypasses adapter binding: arbitrary metadata is not enough to guess Planet Daily, Sentinel-1 or another processing
-contract.
-
-### Product
-
-A product is a concrete logical result with a coherent schema and meaning: an image, image collection, feature
-collection, chart series or another established result kind. A recipe can expose more than one:
-
-- the canonical image output consumed by downstream image recipes and Retrieve where supported;
-- a named map product used by one layer mode;
-- an internal collection product consumed by an algorithm;
-- an AOI geometry product exposed when another recipe uses this recipe as its area of interest;
-- a non-image product, such as Sampling Design's sample FeatureCollection.
-
-CCDC Segments is an image product. `CCDC_SEGMENTS` is a capability describing how that product can be interpreted;
-it is not a second product. Likewise, the absence of an image output is not represented by a synthetic product. A
-recipe can simply have products of other kinds or no declared product of that kind.
-
-A union of all bands that any layer mode might display is not a product.
-
-An AOI recipe reference is resolved through that named geometry product, not by allowing the consumer to inspect the
-referenced recipe's model. The provider defines whether the geometry comes from configured AOI intent, image-output
-bounds or another declared source and which transitive evidence affects it. The current `RECIPE` AOI behavior obtains
-geometry through the referenced image product; migration must make that behavior explicit rather than silently
-redefine a recipe AOI as `model.aoi`. The rule differs per recipe type — some expose their configured AOI, others
-delegate to a source or to one of several input images — so each declaration is derived from that type's actual
-behavior and shared by GUI resolution and executor execution rather than reimplemented on either side.
-
-Recipe types are migrated to an explicit AOI-product declaration one at a time. Until a type has one, a consumer
-depending on its geometry falls back to conservative whole persisted-source evidence: correct, but it treats
-unrelated edits as potentially geometry-affecting. Narrower invalidation is a property a migrated provider earns,
-not a guarantee available before the projection exists.
-
-### Declaration and description
+## Declaration and description
 
 A declaration states how a product is derived. A resolved description is the result for one recipe graph and
 runtime evidence. A declaration can provide useful guarantees before exact band names are known; a description owns
 the final ordered bands.
 
-During migration, a description may omit a band's dimensionality. The target at the
-[mandatory-declaration step](data-sources.md) is stricter: every band in a READY description has an established
+Every image-producing type declares its output. Every band in a READY description has an established
 `dataType.arrayDimensions` (0 for scalar, a positive integer for array). Declaration, inheritance or observation
 must establish it; waiting for or failing to obtain that evidence must not publish an unknown-dimensionality READY
 answer. A names-only catalogue observation remains useful internally when the provider supplies the physical shape.
@@ -218,7 +134,7 @@ without computing an aggregate extent merely to answer them.
 Trusting the first image is a collection-schema assumption, not verification that every member agrees. Do not
 replace that assumption with a collection-wide schema scan.
 
-**Remaining migration:**
+**Acquisition rule:**
 
 - Return names and physical dimensionality directly when configuration establishes them. Asking for types must
   not automatically turn a known schema into an observation of the running image.
@@ -255,12 +171,12 @@ established (`'1'` for dimensionless quantities). It is numeric encoding, not pi
 unknown — never 1, never inferred from a name, data type or producer configuration. A producer states the encoding
 of its actual output bands; a reader of a stored asset takes it from the asset's persisted metadata; a preserving
 transformation carries it with the band. Stated encodings are compared as facts: an omitted offset is zero. See
-[Band encoding](data-sources.md#band-encoding) for the persisted form and export rules.
+[Band encoding](#band-encoding) for the persisted form and export rules.
 
-Fields remain optional when evidence is absent. Precision, numeric range, grid, categorical value semantics
+Dimensionality is required for a READY band; other fields may remain absent when evidence is unknown. Precision, numeric range, grid, categorical value semantics
 and other candidates enter the shared contract only when a migrated consumer establishes their source, ownership and
-validation rules. Physical schema, export requirements and semantic evidence may remain fields in one compatible
-band record, but their ownership and completion rules stay distinct. The current GUI `precision` vocabulary is not
+validation rules. Physical schema, export requirements and semantic evidence share a compatible band record, but their ownership
+and completion rules stay distinct. The current GUI `precision` vocabulary is not
 automatically an Earth Engine PixelType contract. Translation keys, labels, tooltips and form grouping are GUI
 decoration rather than output schema.
 
@@ -289,14 +205,13 @@ Some products require explicit parameters that are layer state rather than persi
 - Change Alerts collection mosaic: `{period: 'monitoring' | 'calibration', mosaicType}`;
 - BAYTS radar observation: `{position: 'first' | 'last'}`.
 
-The eventual request therefore identifies a product and validated parameters. It must not read ambient layer state
+A product request identifies its product and validated parameters. It must not read ambient layer state
 or accept an unstructured `visualizationType` bag. Parameters affect the product description and its presets, but do
 not alter the canonical image output declaration.
 
 ### Map-product identity
 
-Step 1 of the [output-declaration migration](data-sources.md#output-declaration-migration), for the four types whose
-map layers show more than one product.
+The shared map-product contract covers the types whose map layers display different products.
 
 In the GUI a layer names its product from its type's vocabulary over its `layerConfig`, and a value the type does
 not know is refused ([reading a recipe's own output](gui-source-runtime.md#reading-a-recipes-own-output)).
@@ -306,7 +221,7 @@ the band selection. Every other axis a mode needs - LandTrendr's `year`, Change 
 `previouslyConfirmed` and `minConfidence` - rides in the same bag. The preview and the visualization editor's
 histogram and distinct-value requests all send that same bag, so they concern one product. Export passes neither a
 mode nor a parameter, so it always builds the canonical product, with whatever each producer does for a parameter it
-was not given. The canonical observation (`/bands`) is asked with no arguments: the canonical product by omission.
+was not given. The canonical observation (`/bands`) is asked with no product arguments on the current wire protocol.
 
 A layer therefore names a product and supplies that product's declared parameters. Every product a type exposes is
 named, including its canonical image output: absence is not an identity, and a request carrying an unknown product
@@ -421,8 +336,8 @@ that the output still does not hold - a CCDC breakpoint band the collection no l
 it does not produce - is named and blocks. Submission decides again against the output as it then stands, so a
 reconciled form never makes a stale request acceptable.
 
-A request that is not about the recipe's image output - Time Series' indicator, a measure of its collection - offers
-exactly what its recipe type supplies and reads nothing.
+A request not selecting image-output bands, such as a Time Series indicator, keeps its type-owned choices but
+still takes readiness and current submission authority from the shared output read.
 
 ### Structured band selection (deferred)
 
@@ -462,31 +377,107 @@ This work is deferred from the band-encoding and catalogue-correctness delivery.
 default-selection policy remain to be designed against both CCDC and Slice. The implementation should replace
 their duplicated selection logic, rather than add recipe-type branches to Masking or delegate whole panels.
 
-## Output guarantees and early compatibility
+## Band encoding
 
-Do not add an independent `SCALAR_ONLY` or `ARRAY_ONLY` recipe flag. Scalar versus array is a per-band physical fact,
-and a second boolean authority can disagree with the resolved schema.
+Each band of an image output may state what its stored values mean: `physical = stored * scale + offset`, in
+`unit` where established. The field is part of the shared output-band record described in
+[output products](output-products.md#output-band-description); it describes representation, not measurement
+identity, and it is numeric encoding, not pixel size. Absent is unknown — never 1, and never inferred from band
+names, data types or a producer's current configuration.
 
-A configured product declaration may nevertheless prove an output-wide invariant before exact names are available:
+**Producers.** A producer states the encoding of the bands it actually emits. The optical mosaic declares
+available bands derived from its persisted model: the data sets that actually contribute observations (the selected
+scenes' data sets when scenes are picked by hand, after alias expansion and model migration), and the indexes and
+tasseled-cap components computable from the logical bands they share. Without a contributing data set nothing can be
+asked for, whatever the composing method. The same rule is execution's `getBands$()` and the GUI's index
+availability. Normalization maps native data-set encodings onto reflectance and kilokelvin, and the composer stores
+every composited band at 10000 per unit of that quantity, so reflectance bands, indexes and tasseled-cap components
+are stored at `1e-4` (`'1'`) and thermal bands at `0.1` (`'K'`). Date bands, added after storage, and the native
+`qa` bitmask are undeclared.
 
-- the current Optical Mosaic, Sentinel-1 Radar Mosaic and Planet Mosaic image products emit scalar bands;
-- every CCDC Segments output band is array-valued;
-- Masking preserves the primary product's invariant;
-- Stack composes the selected input bands and may be mixed;
-- an arbitrary Earth Engine asset remains unknown until observed.
+**Transformations.** A preserving provider carries each available band with its encoding. Any other provider states
+its own output; a band keeping its name through a calculation inherits nothing. An Asset recipe provides the bands
+its own configured image holds — its filtering, masking and compositing included — because a collection asset is
+read as its first image, which a recipe filtered to any other one does not provide. Its encoding comes from the
+asset's own metadata, never from the properties its running image carries: it keeps that encoding for an image and
+for mosaic, median, mean, minimum, maximum and mode composites, whose values are stored values or linear in them,
+while a standard-deviation composite leaves encoding unknown. A band the asset reading does not hold has no stated
+encoding to take, so it stays unknown.
 
-These guarantees belong to the named configured products, not to optical, radar or Planet as broad categories. A
-future radar adapter, heterogeneous collection or different operation inherits none of them automatically.
+**Persisted form.** An Earth Engine string property of an image or an image collection holds at most 16,384 UTF-8
+bytes. A direct property update rejects a larger value; a batch export accepts one and completes with the property
+silently missing. That is the measured limit for those two metadata paths — not a universal Earth Engine property
+limit, and no safe number of properties per asset was established. A 31-band optical output takes about 1.5 kB, but
+an output with hundreds of bands does not fit one property: 293 bands take about 17 kB.
 
-Consumers derive aggregate answers such as `all selected bands are scalar` from the strongest available declaration
-or exact description. The representation of partial schema constraints remains open until the audit is complete.
-It must be capable of expressing inheritance and composition rather than adding recipe-type flags.
+An export therefore writes the encoding as a manifest plus as many parts as it needs, each within the limit:
 
-This allows a Retrieve panel to disable incompatible destinations immediately for a statically known product while
-retaining conservative pending behavior for an asset or dynamic transformation. Runtime observation verifies or
-completes the exact schema; it is not required merely to rediscover a declared invariant.
+```json
+sepal_band_encoding    {"version": 2, "parts": 2}
+sepal_band_encoding_1  {"red": {"scale": 0.0001, "offset": 0, "unit": "1"}, "…": {}}
+sepal_band_encoding_2  {"…": {}}
+```
+
+Bands with unknown encoding are absent from the parts. The manifest alone says what the value is: every part it
+names must be readable, or nothing is known — a partial dictionary would otherwise read as an authoritative
+statement that the missing bands have no encoding. A property the manifest does not name is left over from an
+earlier write and is never part of the value, which is what stops an inherited or obsolete property from becoming
+authoritative. Within a complete representation a malformed entry withholds only its own band. The manifest is
+always written, with no parts when nothing is known. Version 1, which held the whole dictionary inline in
+`sepal_band_encoding`, is still read; the version is part of the durable contract, and an unsupported version is
+unknown, not guessed. At most 64 parts are written or read, so a reader can name every property it needs before it
+reads the asset.
+
+**Failure.** An encoding that cannot be represented stops the export: a band whose single entry exceeds a whole
+property, or more parts than can be read back, fails before anything is created, replaced, deleted, updated or
+submitted, naming the entry or property, its measured size and the limit. There is no truncation, no partial
+encoding and no silent downgrade to unknown. Size is measured on the string the property is set to, not on its
+characters and not on the request body. The same limit governs the property filter in front of `setAssetProperties`,
+which keeps a value Earth Engine would reject from failing the whole write; a property of another origin that
+exceeds it is still dropped there.
+
+**Export authority.** The task resolves the output description itself, from the recipe it exports: it completes the
+recipe's closure through its own operation-scoped reader and resolves the shared providers, so the description and the
+exported image come from the same records. The export names its bands, the image returned has exactly those bands, and
+encoding is written for them; an export naming none builds the producer's default image, which the available bands do
+not describe, and records no encoding. A recipe with no image output - the exported recipe, or one it reads as an
+image - fails the export before anything is built. So does a failed read, an incomplete closure or an invalid
+description, rather than being recorded as unknown, and a closure whose dependencies are not structurally sound, even
+where the description reads none of the broken part.
+
+An image collection keeps its existing tiles unless it is replaced, so its encoding must describe those too.
+Resuming compares the persisted and proposed encodings as facts:
+
+| Established encodings | Outcome |
+|---|---|
+| disagree for a band: a different scale, offset or stated unit | refused before any property changes or tile is submitted; use Replace |
+| agree for the same set of bands, with the same units stated | the encoding is kept |
+| incomplete, with no contradiction (absent, empty, partial, unreadable or unsupported metadata — a missing part included — or a unit stated on one side only) | exported as explicitly unknown |
+
+**Asset reading.** Asset band evidence reads the encoding in the same evaluation as the bands and their
+dimensionality, however many properties it occupies. An asset without the property, or with an unreadable, unsupported or partially malformed one, still
+describes its bands, and each band it cannot establish is unknown; a failed evaluation remains a failed read. A
+recipe's encoding comes from its provider and is never read from its running image. An image collection is read
+through its own properties; consuming a collection requires its members to be homogeneous in the bands and encoding
+consumed, which is what lets one description stand for the whole.
+
+**Not included.** Nothing converts pixels or visualization ranges. Convert at one boundary, never both, when a
+consumer needs physical values; derived quantities need their own rules, and phase and timing do not inherit a base
+band's multiplier. Other producers, export destinations, charts and legends adopt the contract separately.
+
+## Target design
+
+The following planning and capability-projection contracts are not yet implemented as a general API. Current
+recipe providers and consumer-specific capability declarations remain the execution path. Introduce the target
+only through a bounded consumer that replaces existing duplicated logic.
 
 ## Source planning and collection composition
+
+Source roles remain separate: modality groups presentation; a catalogue entry identifies a saved selection;
+a source instance contains actual references/parameters; an adapter owns acquisition/normalization commands;
+the temporal composer owns shared collection derivation; a recipe requirement judges a consumer operation.
+`OPTICAL`, `RADAR` and `PLANET` are current execution branches, not scientific compatibility guarantees. A custom
+asset bypasses catalogue selection, not the need for an explicit processing contract.
 
 The replacement for the Optical, Radar and Planet switches is deliberately not a universal offer/matcher framework.
 It is a small set of named, versioned commands owned by the executors that understand them.
@@ -662,7 +653,7 @@ A discovered skeleton records scoped references explicitly:
 ```
 
 This shape is illustrative. Planner-owned encoding and executor choices are not arbitrary recipe or browser input.
-The final contract should retain only fields justified by the proof packets.
+The final contract should retain only fields justified by the consuming workflows.
 
 For the first proof, `SEPAL_OPTICAL` is one adapter over its supported Landsat and Sentinel-2 catalogue entries.
 Per-dataset collection IDs, native mappings and readers remain internal modules rather than independently contracted
@@ -853,9 +844,9 @@ Before adopting the boundary, tests must prove:
 - the trusted executor rebuilds or revalidates the command from the authorized recipe bundle and never trusts a
   browser-supplied plan as execution authority.
 
-## Transformation vocabulary under investigation
+## Transformation and capability projection
 
-The audit must determine the smallest vocabulary that covers real recipes. Current evidence requires at least:
+The target must cover these demonstrated derivation patterns without another recipe-type switch:
 
 - **intrinsic static**: exact schema fixed by the implementation, such as Regression;
 - **intrinsic model-derived**: exact schema derived from the recipe model, such as Classification;
@@ -924,25 +915,16 @@ Named presentation transformations remain closed contracts. `CCDC_SEGMENT_SLICE@
 references and Slice parameters, and materializes a concrete target-product visualization. The template does not
 repeat the transformation's accepted input contract or source requirements.
 
-### Current provider limitation
+### Partial schema and evidence
 
-Providers answer from configuration, from an observation of their running image, from the catalogue their producer
-declares, or from their sources' descriptions.
-Regression, Unsupervised Classification, Index Change, Class Change, Classification, Remapping, Phenology, PyEO
-Alerts and LandTrendr describe their bands from configuration. Several other alert products could describe their ordered names and
-scalar shape the same way, but have no provider yet. No provider combines declared constraints with an observation that supplies exact bands. The eventual contract must support all three outcomes:
+Current providers establish output from configuration, running-image/catalogue observation or source descriptions.
+All image-producing types have providers. The target additionally needs partial guarantees before exact schema:
+for example, a configured mosaic can guarantee scalar output, Masking can preserve that guarantee, Stack can mix
+inputs, and an arbitrary asset remains unknown until observed. This is not a second `SCALAR_ONLY` type flag.
 
-1. an exact description from configuration requiring no observation;
-2. useful declared constraints followed by observation that supplies exact bands;
-3. an entirely observed description for assets and arbitrary runtime output.
-
-Do not implement the second by letting each provider guess when an optional observation is complete. The evidence
-requirement must stay explicit in what a provider asks for. An observation that contradicts a declared invariant is a
-controlled invalid result, not a reason to silently prefer either side.
-
-The current resolved contract retains, per band, ordered names, physical array dimensionality, optional export
-policy and optional [encoding](data-sources.md#band-encoding). Expanding it to precision, range, grid or semantics
-is a separate contract change backed by consumers; it is not required for the scalar/array destination fast path.
+A provider must explicitly name evidence needed to complete its declaration; each caller must not decide whether
+an optional observation is complete. Contradictory observation is a controlled refusal. Precision, numeric range,
+grid and semantic facts need their own consumer-backed contracts; they are not mandatory merely to know shape.
 
 ### Current execution-request limitation
 
@@ -951,306 +933,17 @@ exactly the requested bands. Classification builds its bands in one fixed order 
 `getImage$()`; a caller passing a selection without `outputBands` receives that fixed order. The export adapters supply `outputBands` alongside the selection for every recipe,
 declared or not; the limitation is whether the producer honors it.
 
-## Preliminary recipe audit
+## Verification and open decisions
 
-This table records the registered GUI types. It is a first classification, not proof that every listed GUI band
-matches execution. The execution comparison is a research gate below.
+Current provider tests cover declarations, deterministic band order, physical shape, exact requested output and
+scalar/array destination rules. Compare real `getImage$()` output for both default and explicit selections where
+Earth Engine decides schema; a catalogue helper agreeing with another helper does not prove the pixels' schema.
+Masks, projection, index encoding and heterogeneous collections need representative live checks.
 
-| Recipe | Canonical output | Additional products or capabilities | Current schema source | Initial shape knowledge |
-| --- | --- | --- | --- | --- |
-| Asset | selected Earth Engine image | asset source presets | copied `assetDetails`, runtime metadata | observed; scalar, array or mixed |
-| Band Math | configured input and calculated bands under configured names | rewritten input presets | shared declaration from configuration; dimensionality observed from its running image | observed; scalar, array or mixed |
-| BAYTS Alerts | alert result | first/last radar observation map product, delegating to Radar Mosaic | shared declaration | scalar |
-| BAYTS Historical | orbit-selected historical metrics | `BAYTS_HISTORICAL_STATS` | shared declaration from its orbits | scalar |
-| CCDC | CCDC Segments image | scalar count map product; `CCDC_SEGMENTS` | runtime image for segments, fixed GUI count | segments array; count scalar |
-| CCDC Slice | selected segment projection | `CCDC_SEGMENTS` consumer | copied source snapshot and manual reconstruction | derived scalar, names source/model-dependent |
-| Change Alerts | scalar alert result | monitoring/calibration collection mosaic map product, delegating to the Optical, Radar or Planet Mosaic its sources name | shared declaration | scalar |
-| Class Change | transition and confidence, masked without probabilities | classification semantics | shared declaration | scalar |
-| Classification | class, optional class probability, regression and per-class probabilities | classification categories | shared declaration from classifier and legend | scalar |
-| Index Change | change metrics and optional error/confidence | none identified | shared declaration from model conditions | scalar |
-| LandTrendr | change result | annual optical mosaic map product | shared declaration; mosaic by a fabricated recipe | scalar |
-| Masking | primary image with changed validity mask | compatible inherited presets/capabilities | copied primary snapshot today; shared preservation declared | inherited; may be mixed |
-| Optical Mosaic | selected composite | internal optical collection | dataset/intersection/index/compose helpers | scalar |
-| Phenology | seasonality metrics and month composites | internal source collection | shared declaration | scalar |
-| Planet Mosaic | selected composite | internal Planet collection | shared declaration from configuration | scalar |
-| PyEO Alerts | alert result | internal classified monitoring collection | shared declaration | scalar |
-| Radar Mosaic | point-in-time or time-scan composite | internal radar collection | shared declaration by configuration | scalar |
-| Regression | regression image | none identified | shared declaration | scalar |
-| Remapping | remapped class image; no bands without legend entries | categorical semantics | shared declaration from legend | scalar |
-| Sampling Design | sample FeatureCollection; no `IMAGE_OUTPUT` | stratification evidence | empty GUI band helper | not applicable |
-| Stack | selected and renamed input bands | mapped source presets | shared declaration from its mapping over its inputs' current descriptions | inherited composition; may be mixed |
-| Time Series | observation count image | chart series and SEPAL collection export | shared declaration | scalar |
-| Unsupervised Classification | cluster class image | cluster value semantics | shared declaration; model-derived range as presentation | scalar |
+The target requires pure tests of command normalization, named-reference discovery, role-scoped binding, explicit
+unresolved evidence, capability/template reduction and trusted executor validation. Browser plans never authorize
+a task by themselves. Do not add a universal matcher, rule language or legacy algorithm profile.
 
-## Detailed findings
-
-### One helper currently describes incompatible products
-
-LandTrendr declares its change result as its canonical output and its annual mosaic as a separate map product
-delegating to Optical Mosaic. Change Alerts and BAYTS switch between algorithm output and source-collection mosaic
-products. CCDC declares scalar `count` as its `COUNT` map product, while its custom asset export is the
-array-valued Segments image.
-
-Each generic caller passes no mode, and each of these types answers its canonical output then: BAYTS its alerts and
-Change Alerts its changes, from their declarations in the GUI and their algorithms in Earth Engine.
-
-The shared definition therefore keeps one canonical `imageOutput`; additional map products require explicit names.
-Callers must not ask for an unqualified union.
-
-### Reuse currently depends on fabricated recipe models
-
-The generic GUI source helper constructs partial recipe objects to call Optical, Radar or Planet helpers. Those
-objects encode undocumented assumptions about another recipe's persisted model. Adapter and composer commands remove
-both the fake model and the legacy branch switch from consumers.
-
-Reusing an execution module is reasonable; treating the ephemeral adapter as if it were a persisted recipe contract
-is not. Product, adapter and composer APIs should make the required model projection explicit and test it in one
-place, as LandTrendr's annual mosaic and Change Alerts' collection mosaic do: one shared function builds the mosaic
-both described and executed.
-
-### Copied descriptions are persisted as configuration
-
-Masking stores copied bands and visualizations beside each selected reference. Stack and Band Math store source
-snapshots and rewrite their visualizations. CCDC Slice loads a selected CCDC recipe and its Classification dependency,
-reconstructs segment metadata and stores it under `model.source`. Change Alerts performs related CCDC reconstruction.
-
-Only source reference, user selections and explicit output mappings are durable intent. Current bands,
-visualizations and capabilities are runtime descriptions keyed by source versions. Migration must preserve legacy
-JSON while ceasing to treat those snapshots as authoritative.
-
-### Physical schema and GUI decoration are mixed
-
-Optical band entries combine precision and range with translated tooltips. Classification combines physical range,
-category-derived labels and form text. The shared output-band description should distinguish physical facts, export
-requirements and established semantic evidence; the GUI builds labels and grouped options from stable band names or
-semantics.
-
-### GUI and Earth Engine can drift
-
-Collection and algorithm implementations independently select, add and rename bands in Earth Engine. A shared pure
-declaration can own deterministic model-derived output, but Earth Engine remains the execution boundary. Each
-migrated type needs a focused comparison against the image returned by its real `getImage$()` path, evaluating
-`bandNames()` and `bandTypes()` of the image returned for representative selections as the oracle; where a producer
-computes bands only on request, the image built for an empty selection is not. Comparing a declaration only with
-`getBands$()` is insufficient because
-that helper is one of the independently maintained projections already shown to drift. Runtime observation remains
-necessary where the EE graph determines the answer.
-
-### Early execution-comparison findings
-
-The source comparison found helper drift and production defects. They must be fixed before the first adapter or
-temporal-composer contract is declared:
-
-- Optical GUI and EE code maintain separate data-set band catalogues. EE also exposes `unixTimeDays` for a MEDOID
-  output while the GUI metadata group currently offers only `dayOfYear` and `daysFromTarget`. Whether
-  `unixTimeDays` is intentionally hidden or accidentally omitted needs a product-level decision.
-- Temporal Sentinel-1 derives `ratio_VV_VH` by dividing values after the source adapter converted VV and VH to dB,
-  while Radar Mosaic subtracts VH from VV. The shared name therefore currently identifies different measurements.
-- Several temporal defaults contain `DECENDING`, while the executor expects `DESCENDING`; the effective selection
-  does not match the apparent both-orbits intent.
-- Those defaults set the unused `speckleFilter: 'NONE'` while execution reads the inherited
-  `spatialSpeckleFilter`, which can leave `LEE_SIGMA` active unexpectedly.
-- Optical explicitly scales Classification regression and probability outputs before temporal casting, while Radar
-  and Planet do not use the same encoding path. One temporal classification-band contract cannot be claimed until
-  this is corrected deliberately.
-- Empty and unknown legacy data-set selections fall through to Planet, while mixed Sentinel-1 and Landsat selections
-  can be classified as Optical. That permissive classifier is not a safe extension boundary.
-- Planet Daily combines four-band and eight-band members. Planet Mosaic declares the bands common to both, but the
-  underlying collection is heterogeneous until a selection, filter or explicit missing-band policy establishes a
-  homogeneous product. Its composite without histogram matching establishes none, so Earth Engine refuses mixed
-  members.
-- Optical common-band order follows the first selected data set and collection merge order follows input order.
-  Neither order may be canonicalized away until execution consequences are understood.
-- CCDC shows that input eligibility is not an output contract: its GUI registration states it is no image source,
-  which only removes it from recipe-selection lists offering a generic image input, while it declares the
-  array-valued Segments product its custom task exports. Eligibility controls no export path.
-
-Do not encode these defects as compatibility profiles, legacy measurement contracts or accepted composer behavior. For
-each defect, reproduce the failure, define the intended behavior in a red regression test, fix it on the integration
-branch, and merge the correction into this branch. The first contract describes only the corrected behavior.
-Investigation may use temporary characterization or read-only inventories, but committed product-contract tests must
-not bless a known scientific defect.
-
-Persisted recipe normalization may need a focused migration decision when a typo or obsolete option is stored. That
-is input migration, not a product guarantee. Assets already produced by defective algorithms receive no special
-formula branch, timestamp test or compatibility workaround in the new architecture; users recreate them when their
-scientific correctness matters.
-
-Backward-compatible reading of an established output format is different from preserving a defective algorithm.
-Existing CCDC Segments assets remain valid Slice inputs when the CCDC asset adapter can establish their structural
-contract from observed bands and required metadata. Their legacy `visualization_*` properties continue to carry
-Slice templates. This does not version or reproduce an old computation, and it does not make those mutable
-properties generic capability authority.
-
-These findings still prove that a product-qualified declaration must replace both helper implementations as the
-authority. Choosing either current side wholesale would preserve a different set of errors.
-
-### Representative agreement findings
-
-The comparison also found useful stable declarations rather than only defects:
-
-- LandTrendr's seven fixed change bands are its declaration, in the order execution builds them; its annual mosaic
-  branch is explicitly map-only.
-- BAYTS Alerts' six alert bands are its declaration: execution selects them last, in that order, from its own
-  initial alerts or a previous run's, and its confidence filters only mask. Its former Earth Engine catalogue built
-  and evaluated the whole alert computation to list them; it now answers from the declaration.
-- Phenology's fixed metric and month band lists are its declaration. Execution omitted a month without observations
-  and returned no bands when asked for none; it now masks such a month and returns every declared band.
-- Classification's optional bands follow from classifier capability and legend entries. Its declaration is the
-  order execution builds - `class`, `class_probability`, `regression`, then one `probability_<value>` per legend
-  entry in the legend's stored order - which the former Earth Engine catalogue did not match. This does not settle
-  the inconsistent temporal-composer encoding paths identified above. Its categorical labels and palette remain
-  presentation and semantic concerns.
-- Regression and Unsupervised Classification each have one fixed scalar output band.
-- PyEO Alerts has one fixed change-report vocabulary, which is the band list its algorithm assembles.
-- Masking's EE `getBands$()` delegates to the primary image exactly as the shared preserving transformation states.
-- Stack's execution selects and renames by the persisted name mapping in input order, and its declaration takes
-  each output band's physical facts from the input band it is mapped from.
-- Band Math's output names come from its configuration. An explicit cast sets only a band's element type, never
-  whether it is an array, so dimensionality is observed for every output band.
-
-These are the first candidates for exact/model-derived declarations and transformation tests. They also show that
-the migration does not require one mechanism for every recipe: static, derived, inherited and observed outputs can
-share a result contract while retaining different evidence requirements.
-
-## Provisional declaration shape
-
-The following illustrates responsibilities only. Names and nesting are not accepted API:
-
-```js
-defineRecipeType({
-    type: 'EXAMPLE',
-    directSources,
-    imageOutput: preservingProvider({role: PRIMARY_IMAGE}),
-    products: {
-        annualMosaic: derivedProduct({/* declaration */})
-    },
-    capabilities: {
-        /* capability derivations */
-    },
-    presentation: {
-        /* direct product presets and closed transformation templates */
-    }
-})
-```
-
-Do not add `products`, presentation or capabilities to `defineRecipeType()` until at least two migrated witnesses
-need each field and the audit has established validation rules. The existing `imageOutput` contract remains the
-canonical output seam and should evolve compatibly.
-
-The shown top-level `directSources` is the current recipe-definition seam. For a future adapter or composer command,
-named references belong in the discovered command skeleton and direct edges are projected from them. Do not require
-callers to maintain both a command reference and an independent matching edge declaration.
-
-Presentation may be declared beside products and capabilities in one recipe specification, but its definitions,
-applicability and active bindings remain separately owned. It must not introduce GUI translation dependencies into
-`lib/js/shared` or become evidence for product schema.
-
-## Research plan
-
-### Phase A: correct known production defects
-
-Address the ratio formula, orbit spelling, speckle authority, classification encoding and unsafe unknown-source
-fallback on the integration branch, with intended-behavior regression tests. Merge those fixes into this branch before
-defining the first source or temporal-composer contract. Inventory impact where useful, but do not create supported
-legacy contracts for defective outputs.
-
-Continue the product matrix for every registered recipe type:
-
-- canonical output and every map-only or internal product;
-- the exact EE function constructing each product;
-- declared, model-derived and runtime-observed band facts;
-- per-band physical shape and separately owned export requirements;
-- source-adapter, composer and domain-capability dependencies;
-- source presets and user-owned visualization inputs;
-- copied model fields and their original authority;
-- consumers of `getAvailableBands()` and `getPreSetVisualizations()`.
-
-### Phase B: discovery and pure planning proof
-
-Introduce no real source migration. Prove with current fixtures and synthetic adapters:
-
-- legacy selection normalization and explicit unknown or unsupported-combination diagnostics;
-- adapter-owned parameter extraction that ignores irrelevant fields from today's union-shaped models;
-- command validation, deterministic serialization and order preservation by default;
-- named reference discovery with dependency edges projected from the same skeleton;
-- scoped binding that cannot inspect undeclared dependencies;
-- one statically complete declaration and one valid plan with explicit unresolved evidence;
-- no graph traversal, loading, EE object or GUI presentation dependency inside planning;
-- missing runtime implementations fail only for surfaces the adapter declares.
-
-### Phase C: collection composition and requirements proof
-
-Add the closed temporal composer and representative hard cases:
-
-1. Optical alone and Landsat plus Sentinel-2, including deterministic declared band order and observed input-order
-   effects.
-2. Current Sentinel-1 command with exact adapter restrictions and supported options.
-3. Two incompatible synthetic radar adapters: one with different polarizations and one with matching VV/VH names
-   but incompatible semantics.
-4. An explicit audited transformation that establishes a requirement the source does not natively satisfy.
-5. Classification dependency binding, selection-domain expansion and corrected cross-adapter output encoding.
-6. Planet Daily heterogeneous members and a transform that genuinely establishes homogeneous selected output.
-7. CCDC, chart, Phenology and LandTrendr requirements that demonstrate operation-specific validation.
-8. Change Alerts relational comparison using structured value and observation-protocol evidence.
-9. A declared source that needs no EE observation and a custom asset whose exact description requires evidence.
-10. CCDC Slice templates whose logical references are resolved by the named transformation rather than compared
-    directly with CCDC Segments physical band names.
-11. Identity Masking and explicit export-subset mappings that preserve, reduce or drop `CCDC_SEGMENTS` correctly.
-
-### Phase D: trusted boundary integration
-
-- Complete dependencies through the shared graph; planners declare direct references but never load or traverse.
-- Rebuild or validate commands from the authorized recipe bundle at the trusted task boundary.
-- Revalidate adapter and composer contracts in EE before execution.
-- Compare declarations with the actual `getImage$()` result, including band names and types.
-- Treat the browser plan as preflight evidence only.
-- Prove GUI compatibility adapters no longer fabricate recipe-shaped models.
-
-### Phase E: migrate incrementally
-
-Begin with one output described from configuration, one preserving provider and one collection consumer. Keep old
-`bands.js` and `visualizations.js` exports as thin projections until their callers migrate. Do not migrate all recipe
-types in one commit, persist resolved descriptions or plans into recipe JSON, or add a generic matching registry in
-anticipation of future adapters.
-
-## Performance constraints
-
-- Statically or model-derived schemas resolve synchronously without `/bands` observation.
-- A declaration-level physical guarantee can drive conservative UI compatibility before exact names resolve.
-- Unknown assets and genuinely runtime-derived outputs use the source runtime and future versioned resource cache.
-- One consumer changing band selection recomputes compatibility from a resolved description without re-observing.
-- Planning and collection-description derivation are pure and proportional to selected entries, references and
-  bands.
-- No recipe-type registry lookup, graph traversal or Earth Engine request runs on unrelated Redux actions.
-
-## Verification
-
-Pure shared tests own declaration validation, deterministic band order, physical guarantees, preservation, name-based
-selection and renaming, explicit subset mapping, capability projection, product separation, presentation-definition
-validation and direct visualization applicability.
-
-Boundary tests prove:
-
-- GUI adapters preserve existing grouped options and applicable presets during migration;
-- EE outputs for representative selections agree with declared names and array dimensionality;
-- map-only products never enter canonical Retrieve output;
-- copied legacy snapshots cannot override current resolved evidence;
-- malformed presentation remains distinct from an unsupported product;
-- active visualization bindings name the concrete product instance and parameters they preview;
-- export selection drops capabilities and transformation templates whose source requirements no longer hold;
-- statically known scalar or array compatibility requires no metadata request;
-- unknown and mixed outputs remain conservative until exact evidence is available.
-
-## Open decisions
-
-- Minimal representation for partial band-schema guarantees and their composition.
-- Whether output name is sufficient band identity for every transformation.
-- Minimum structured value and observation-protocol evidence required by the first relational consumer.
-- Shared data-set catalogue ownership, including availability and logical-band mappings, without exposing EE objects
-  or GUI translations across runtime boundaries.
-- Which categorical fields belong in generic band schema versus a Classification capability.
-- How much deterministic schema is shared directly with EE versus verified at the runtime boundary.
-- Whether a later operation needs a named boundary for composing independently contracted source adapters.
-- Product identity and temporal guarantees required beyond the first collection-composer proof.
-- Migration treatment for legacy user-edited visualizations that originated as copied source presets.
+Open questions are partial-schema representation, stable band identity through transformations, minimum value and
+observation-protocol evidence for relational consumers, shared catalogue ownership, generic category facts versus
+domain capabilities, explicit AOI product projections, and the treatment of intentionally edited old source presets.

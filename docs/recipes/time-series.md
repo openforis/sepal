@@ -46,7 +46,7 @@ band options follow the Classification record the session holds.
 ## Output
 
 Declared in `lib/js/shared/src/recipe/type/timeSeries.js` (see the
-[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)): one scalar band,
+[output contract](../design/recipes/output-products.md#declaration-and-description)): one scalar band,
 `count` - per pixel, how many images of the filtered, masked collection hold a valid value in their first band, not
 how many scenes intersect the area. Whatever the sources, that is the schema, so it is described from the
 configuration alone, before anything is configured and without reading a dependency. Coarser pyramid levels

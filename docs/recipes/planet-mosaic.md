@@ -16,7 +16,7 @@ applies.
 ## Output
 
 Declared in `lib/js/shared/src/recipe/type/planetMosaic.js` from the configuration alone (see the
-[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)): `blue`, `green`,
+[output contract](../design/recipes/output-products.md#declaration-and-description)): `blue`, `green`,
 `red`, `nir`, then `ndvi`, `ndwi`, `evi`, `evi2`, `savi` and `kndvi`, the indexes those bands support, in the order
 execution adds them. Every band is scalar and averaged at coarser pyramid levels.
 

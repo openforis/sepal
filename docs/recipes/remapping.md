@@ -127,7 +127,8 @@ evidence adds no reference validation mark. Repair and current evidence clear bo
 The input editor shows the same explanation beside its recipe selector, following the current draft. Selecting a
 healthy replacement clears that field feedback; Cancel keeps the applied warning. Opening alone remains unedited,
 and upstream repair while the editor is open clears the explanation. This display does not change Apply policy.
-Dependent sections within the same recipe still do not repeat errors. Navigation links remain deferred.
+Dependent sections within the same recipe do not repeat errors. Known recipe names in shared validation
+feedback open those recipes through the common navigation action, preserving the originating panel draft.
 
 Only routes present in readiness findings can be marked. A shared dependency visited once in a diamond graph may
 leave another affected route without a mark; execution remains blocked. See the design's
@@ -135,7 +136,7 @@ leave another affected route without a mark; execution remains blocked. See the 
 
 ## Open issues
 
-The [validation and source recovery roadmap](../design/recipes/source-resolution.md#validation-and-source-recovery-roadmap-2026-10-15)
+The [validation and repair roadmap](../design/recipes/data-sources.md#validation-repair-and-operation-coverage)
 tracks the remaining work below. Automatic source recovery and checking used bands against current source
 descriptions are implemented.
 

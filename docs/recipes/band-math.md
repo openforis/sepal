@@ -240,7 +240,7 @@ closes. A layer, Retrieve or Task export reads nothing to explain it.
 ## Output
 
 Declared in `lib/js/shared/src/recipe/type/bandMath.js` (see the
-[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)): the configured output
+[output contract](../design/recipes/output-products.md#declaration-and-description)): the configured output
 bands in configured order, each under its final name, `outputName` or else `defaultOutputName`.
 
 Whether a band is an array is not configured. A cast sets only the element type and keeps an array an array; an
@@ -286,8 +286,8 @@ the bands selected, in the order selected. The catalogue answers the configured 
 
 Shared calculation-reference validation and automatic recovery of preserved input references are implemented.
 Deleted output selections and their custom names still require a separate retention decision. See the
-[validation and source recovery roadmap](../design/recipes/source-resolution.md#validation-and-source-recovery-roadmap-2026-10-15)
-for the audit evidence, completed packets and remaining boundaries.
+[validation and repair roadmap](../design/recipes/data-sources.md#validation-repair-and-operation-coverage)
+for the remaining boundaries and retention decisions.
 
 - **Earth Engine renames a repeated output name.** Output images are concatenated, so a second `x` is built as `x_1`.
   The declaration refuses such a configuration; execution still builds it.

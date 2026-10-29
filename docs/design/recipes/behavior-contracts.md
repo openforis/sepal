@@ -4,32 +4,14 @@ Recipe behavior should follow the analysis the user configured. The applied sett
 actions and the result should agree. Reading new evidence should update what the app knows without silently
 rewriting what the user chose.
 
-This guidance comes from the [manual findings](source-resolution.md#browser-feedback-further-results-2026-10-23)
-and their corrections in October 2026. It records design principles and the scope of the choices behind them.
-The [correction roadmap](source-resolution.md#next-steps-from-browser-feedback-updated-2026-10-23) owns delivery
-status and verification; the principles here do not imply every affected recipe already implements them.
+This document states durable behavior rules, not implementation coverage or delivery history. Current technical
+contracts and unimplemented proposals are distinguished in their owning documents; the
+[roadmap](data-sources.md#remaining-work) contains remaining work.
 
 Use this guide when designing a recipe, dependency, operation or form. The technical mechanisms remain owned by
 [output products](output-products.md), [source resolution](source-resolution.md), the
 [GUI runtime](gui-source-runtime.md), [freshness](source-freshness.md) and
 [visualizations](visualizations.md). These principles do not require another validation framework.
-
-## What the manual findings exposed
-
-The findings were several different kinds of problem. Treating all of them as missing validation would preserve
-some undesirable behavior and add checks around it.
-
-| Kind | Examples | Design response |
-| --- | --- | --- |
-| Implementation defect | A chart built in a hidden panel; an empty missing-band warning; opening an editor offers Apply | Correct lifecycle, data handling or initialization while preserving the intended interaction. |
-| Missing operation prerequisite | PyEO accepts a Classification with several input images, then fails during execution | Declare the prerequisite and present the same diagnosis before the action runs. |
-| Unspecified product policy | A native chart can compute while the selected Classification is broken | Decide what a valid configured analysis means; computational possibility alone does not decide the interaction. |
-| Unclear ownership or meaning | Change Alerts overwrites overrides; reused samples depend on the Provider's selected features | Establish who owns each setting and each part of the computation, then align execution and validation. |
-| Incomplete workflow | An item error has no editor explanation; an error suggests a repair the field cannot perform | Design discovery, explanation, repair and recovery together. |
-
-The generalized resolver can answer whether declared requirements hold against available evidence. It cannot infer
-why a dependency was selected, which settings should follow it, or whether a user would expect native output to
-remain available. Those are behavior contracts to define before choosing declarations or UI mechanisms.
 
 ## Define the behavior before the mechanism
 
@@ -89,8 +71,7 @@ Start with the promise of the selection: a source chosen as a classifier must su
 chosen for training data supplies samples rather than its own classified image. Weaker, optional or metadata-only
 uses need an explicit contract instead of inheriting meaning from whichever code path happens to execute.
 
-For Time Series and CCDC, the S3 direction makes a selected Classification part of the configured analysis:
-an unusable selection holds native and classified chart/retrieval operations, including count outputs, until
+For Time Series and CCDC, a selected Classification is part of the configured analysis. An unusable selection holds native and classified chart/retrieval operations, including count outputs, until
 repair or explicit deselection. Native execution still need not train. This is a scoped policy decision, not a
 universal rule that every reference must produce its full image before any consumer can run.
 
@@ -131,8 +112,8 @@ Defaults are proposals at a defined user action, not a continuous synchronizatio
 overwrite edits. Change Alerts seeds consumer-owned monitoring defaults only at the first Reference Apply during
 new creation (`!ui.initialized` and no previously applied reference). Apply, Enter and wizard Next use current,
 authorised candidate facts and publish the reference and defaults atomically. Later reference changes, reopen,
-Refresh and producer edits never reseed; Cancel writes nothing. The separate "Use reference settings" action was
-dropped on 2026-10-27: its limited convenience does not justify another potentially confusing copying control.
+Refresh and producer edits never reseed; Cancel writes nothing. There is no separate "Use reference settings"
+copy-again action; required ownership and creation seeding cover the intended behavior without another copying control.
 
 Change Alerts derives required processing matches from the actual segment producer, with its execution defaults,
 or from asset metadata. Recorded values are read-only; genuinely unrecorded asset values are labelled editable
@@ -170,7 +151,7 @@ recipes are not migrated. Matching processing settings does not establish scient
 
 A reference must state what it reuses. Reusing an image, training points, metadata and processing settings are
 different relationships. For reused training data, Provider owns its imagery, points and sampling location; the
-agreed S4 direction gives Consumer ownership of the required feature definition and training transformation.
+named-feature contract gives Consumer ownership of the required feature definition and training transformation.
 That does not authorize sampling Provider's points on Consumer's imagery or dropping Consumer's features.
 
 For an asset reference, use evidence recorded on the asset; do not require access to its private producer recipe.
@@ -272,7 +253,7 @@ Where the evidence establishes only that a use is refused, for a reason feedback
 not fall back to claiming the referenced recipe is broken.
 
 Repair guidance must describe an action that works in the current interface. Opening another recipe from a modal
-requires correct modal ownership; a special navigation button is not a substitute for that missing contract.
+uses shared navigation and modal ownership so the originating panel and its draft remain available.
 
 ## Make editing and recovery predictable
 
@@ -342,13 +323,13 @@ an already-invalid saved recipe as well as a working recipe becoming invalid.
 
 Mandatory prerequisites of the configured analysis must be enforced consistently by every analysis entry point:
 layers, alternate map products, charts and Retrieve. A selected Classification is such a prerequisite for Time Series
-and CCDC under the agreed S3 policy. Derive this common verdict from the existing readiness rules and current records
+and CCDC under their configured-analysis policy. Derive this common verdict from the existing readiness rules and current records
 and evidence; individual operations can add their own requirements. A product description does not authorize an
 operation to bypass that verdict. Implement the shared contract rather than separate checks for each visualization
 or panel, and do not introduce another validator or a stored `isValid` flag. Regression tests should exercise each
 entry point against the same failure, pending and repair transitions.
 
-Examples from the corrections:
+Operation-specific examples:
 
 - Producing training data and training a classifier are different operations. An empty Provider can produce an
   empty collection without being able to train its own image. Type support comes from declared operations, not
@@ -368,7 +349,7 @@ its operation list is still the same rule; a shared diagnostic code alone may no
 
 When a clearer base contract makes special operations, watches or messages redundant, remove them. Do not keep a
 second decision path after moving authority into declarations. Request-specific checks remain necessary where the
-operation genuinely depends on the request; the S3 simplification is not a general ban on request context.
+operation genuinely depends on the request; shared analysis prerequisites do not eliminate genuine request-dependent requirements.
 
 Separate recipe policy from common mechanism. PyEO's one-input restriction and CCDC's mapping of physical bands to
 fitted measures are legitimate domain rules, expressed once and shared by their callers. Evidence states, readiness
@@ -425,9 +406,9 @@ Use representative transitions for the changed contract: working, newly configur
 unavailable, upstream change, replacement, Cancel, repair and submission before re-render. Cover two consumers when
 claiming a shared rule. For operation guards, prove refusal before product work and a successful valid control.
 
-Test helpers must perform the same change as the user. Updating both an upstream recipe and a copied UI snapshot
-hid PyEO's freshness defect. Accepting either Apply or Close hid an editor initialization defect. Assert the actual
-button/state and that no unintended applied values changed.
+Test helpers must perform the same change as the user. Do not update a copied UI snapshot alongside an upstream
+edit or accept either Apply or Close as equivalent outcomes. Assert the intended button/state and that no
+unintended applied values changed.
 
 Match evidence to the claim:
 
@@ -453,5 +434,5 @@ These principles narrow the decisions; they do not settle every product policy:
 - Whether a particular configuration editor may Apply unresolved evidence. Applying configuration and starting a
   computation must remain distinct decisions.
 
-Keep these choices and implementation status in the correction roadmap. Do not make them implicit side effects of
+Keep unresolved choices and their implementation scope in the roadmap. Do not make them implicit side effects of
 a component helper, a disabled field or a cache implementation.

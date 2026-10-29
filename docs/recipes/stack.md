@@ -77,7 +77,7 @@ suffixed where a band of any input already has it - two inputs' `elevation` give
 ## Output
 
 Declared in `lib/js/shared/src/recipe/type/stack.js` (see the
-[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)). Each output band
+[output contract](../design/recipes/output-products.md#declaration-and-description)). Each output band
 corresponds to one band of one input (`stackBandCorrespondence`): the input images in model order, and within each
 the bands its mapping names, in the mapping's order. Selecting and renaming change neither values nor representation,
 so an output band takes its input band's dimensionality, pyramiding policy and encoding under its new name, from the
@@ -103,7 +103,7 @@ anything.
 - **Re-adding an input loses output aliases.** The source-recovery audit found a removed input's custom output name
   was replaced by a fresh default when the same source returned, leaving a downstream consumer of the old name
   blocked. Restoring discarded aliases needs a retention policy, not just source matching. See the
-  [validation and source recovery roadmap](../design/recipes/source-resolution.md#validation-and-source-recovery-roadmap-2026-10-15).
+  [validation and repair roadmap](../design/recipes/data-sources.md#validation-repair-and-operation-coverage).
 - **A selection can leave nothing to clip to.** An input none of whose bands is selected contributes an empty image,
   whose empty geometry becomes the clip region when every other selected input is unbounded - a global asset - and
   Earth Engine refuses it. A selection naming no mapped band fails the same way.

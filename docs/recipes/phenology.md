@@ -27,7 +27,7 @@ chosen, and opening the panel leaves it unedited, until another band is chosen
 ## Output
 
 Phenology declares 35 scalar bands, whatever its configuration (see the
-[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)), all exported with
+[output contract](../design/recipes/output-products.md#declaration-and-description)), all exported with
 `mean` pyramiding and no encoding:
 
 - the metrics `background`, `amplitude` and `median`, then `dayOfYear`, `days`, `median`, `slope` and `offset` for
