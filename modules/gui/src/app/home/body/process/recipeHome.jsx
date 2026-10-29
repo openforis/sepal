@@ -8,6 +8,7 @@ import api from '~/apiRegistry'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {select} from '~/store'
+import {ModalScope} from '~/widget/panel/modalScope'
 import {Content, SectionLayout} from '~/widget/sectionLayout'
 import {closeTab} from '~/widget/tabs/tabActions'
 
@@ -25,17 +26,19 @@ class _RecipeHome extends React.Component {
     render() {
         const {recipeId} = this.props
         return (
-            <SectionLayout>
-                <Content className={styles.container} horizontalPadding verticalPadding menuPadding>
-                    <RecipeList
-                        recipeId={recipeId}
-                        onClick={recipeId => this.openRecipe(recipeId)}
-                        onDuplicate={recipeId => this.duplicateRecipe(recipeId)}
-                        onMove={(recipeIds, projectId) => this.moveRecipes(recipeIds, projectId)}
-                        onRemove={recipeIds => this.removeRecipes(recipeIds)}
-                    />
-                </Content>
-            </SectionLayout>
+            <ModalScope scope='application'>
+                <SectionLayout>
+                    <Content className={styles.container} horizontalPadding verticalPadding menuPadding>
+                        <RecipeList
+                            recipeId={recipeId}
+                            onClick={recipeId => this.openRecipe(recipeId)}
+                            onDuplicate={recipeId => this.duplicateRecipe(recipeId)}
+                            onMove={(recipeIds, projectId) => this.moveRecipes(recipeIds, projectId)}
+                            onRemove={recipeIds => this.removeRecipes(recipeIds)}
+                        />
+                    </Content>
+                </SectionLayout>
+            </ModalScope>
         )
     }
 

@@ -98,15 +98,29 @@ image readiness.
    by mounted tests and Chromium/Firefox, not a manual trackpad check. Full GUI verification passed 4881 tests in
    337 files; the production build, lint and whitespace checks passed. A final wording-only change passed 24
    locale/modal tests and another production build. The checkpoint is on `feat/recipe-scoped-modals`, from
-   `77e4e8f89`. Next: establish recipe scope once at the recipe boundary, inheriting it for ordinary panels and
-   nested dialogs with explicit application-wide exceptions. Opening selected recipes follows that migration.
+   `77e4e8f89`. The next slice is implemented, uncommitted (2026-10-29): Recipe now supplies scope once for all
+   ordinary recipe panels and nested dialogs; the Map-specific wrappers are removed. Landing/project management
+   and CEO account login declare application-wide exceptions. Four production files changed; no shared form or
+   modal machinery was rewritten. The affected-caller campaign (1909 tests/149 files), final ten boundary cases,
+   lint and 68 new Chromium/Firefox checks pass, as do the original 60 pilot browser checks without local
+   wrappers. Mutation witnesses cover the default and each global exception; the production build also passes.
+   The user accepted the migration (2026-10-29: "Modals all good"); final full GUI verification passed 4891 tests
+   in 338 files with two workers. Build, lint and whitespace checks pass. The migration is checkpointed on
+   `feat/recipe-scoped-modals`.
+   Untouched PRC subdialogs offering Apply are recorded as a separate follow-up, not a modal-migration gate.
+   Opening selected recipes follows the accepted migration.
 
-This order records the user's priorities and adds no release gates to already accepted work. Visualization
-Copy/Paste is next after the BAYTS slice is committed. The copy-settings action remains dropped.
+This order records the user's priorities and adds no release gates to already accepted work. The copy-settings
+action remains dropped.
 
 **Functional follow-ups.** The BAYTS ownership correction below is now browser-accepted; server preview readiness
 remains deferred:
 
+- **Untouched PRC subdialogs:** reported during modal acceptance (2026-10-29). Opening Radar Mosaic's processing
+  subdialogs should offer Close until a real edit, rather than marking copied initial values dirty. Audit both
+  Radar Mosaic and BAYTS Historical adapters and preserve reference-owned fields, defaults and parent drafts.
+  This is a separate small follow-up, not a modal-migration gate; see the
+  [modal workstream record](data-sources.md#recipe-scoped-modals).
 - **Server preview readiness:** `modules/gee/src/jobs/ee/image/preview.js` still constructs imagery without the shared
   readiness guard. GUI layers withdraw correctly, but a direct or stale preview request can reach an execution
   error. Extending declaration-based operation/product authorization needs its own scope and cost assessment;

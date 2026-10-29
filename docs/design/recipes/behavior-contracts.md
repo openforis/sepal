@@ -372,6 +372,18 @@ contract; similar-looking code alone is not a reason to invent a framework or er
 
 ## Scope asynchronous work and presentation to their real lifetime
 
+Modal panels inherit their workflow's owner. Establish recipe scope once in the recipe context so ordinary
+panels, nested confirmations, date pickers and destination browsers follow it automatically. An application-wide
+workflow rendered inside that context declares its exception at its own boundary; account login and the landing
+tab's shared project management are such exceptions. Outside a recipe, application scope remains the default.
+Scope does not change a panel's placement or turn non-modal map interactions into modal panels.
+
+Navigation between recipes or application sections preserves unapplied panel state. Only the active owner's
+modal stack can interact, including document shortcuts and globally portalled popups; DOM inertness alone does
+not cover those paths. Let the owning tab/section control visual visibility and transitions while disabling
+interaction immediately. Nested panels inherit the same owner, and an application override covers its whole
+subtree. Keep the approved tab-close protection while a recipe modal panel is open; switching tabs is not closing one.
+
 Preserve user intent across timing changes: data arriving while a tab is inactive, evidence arriving after a source
 replacement, and saves completing while a form is open must not produce different analyses.
 

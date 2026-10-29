@@ -1725,6 +1725,94 @@ the user's trackpad; mounted tests and the Chromium/Firefox harness cover it thr
   with explicit application-wide exceptions; do not opt ordinary recipe panels in one by one. Only visualization
   panels and legend import are migrated in this checkpoint. Opening selected recipes remains subsequent work.
 
+**Recipe-boundary migration (2026-10-29; implemented, uncommitted).** Continued from the accepted pilot checkpoint
+`b6ccf789c` on `feat/recipe-scoped-modals`, at the user's request to support all recipe panels. The boundary
+migration changes four production files; shared Panel, Form.Panel, RecipeFormPanel, portals, activation,
+shortcuts and tab-close behavior are unchanged.
+
+- **Default once.** `Recipe` supplies `ModalScope scope='recipe'` beside its existing data/activation context.
+  Removed both visualization-specific scope wrappers from Map. Ordinary recipe callers have no opt-in, mapping,
+  type allowlist, saved flag or new data acquisition. Nested dialogs inherit the same context through portals.
+- **Explicit application workflows.** RecipeHome's landing/list/project-management workflow supplies application
+  scope, because it manages the shared project/recipe catalogue rather than one analysis. CEO login supplies
+  application scope for its shared account credentials/session, even when opened inside training data. Both
+  exceptions are owned by their workflow component, rather than repeated at its callers.
+- **Existing application workflows.** Create recipe inherits RecipeHome's application boundary. Save/close recipe,
+  user/account, messages, privacy, apps and task dialogs keep their existing outside-recipe default. No exception
+  was scattered across their children. The raw map-pane portal and histogram drag cursor overlay are not modal
+  panels and are unchanged.
+
+| Audited caller group | Result |
+| --- | --- |
+| Map layer settings, map layout, layer rename and asset/recipe/Planet selectors | Inherit recipe scope |
+| Shared input imagery, derived inputs, Band Math inputs/calculations | Inherit recipe scope |
+| Classification/Regression training data and legends | Inherit recipe scope |
+| Radar Mosaic and BAYTS Historical processing subforms | Inherit recipe scope |
+| Optical scene selection and scene preview | Inherit recipe scope |
+| Legend edit/import, image constraints, date pickers and confirmations | Inherit recipe scope |
+| Retrieve asset and workspace destination browsers | Inherit recipe scope |
+| Landing project/list/create workflows; CEO account login | Explicit application scope |
+| Other application-level dialogs outside Recipe | Existing application default |
+| Non-modal drawing, scene areas, inspection and anchored panels | Existing placement preserved |
+
+**Boundary regressions.** `recipeModalScope.test.jsx` uses real Recipe, Tabs, activation and forms, with no caller
+scope declaration for ordinary panels. Ten cases cover a plain/new panel and nested Confirm, two independent
+Form.Panel drafts across tab/section navigation with Apply/Cancel isolation, the real date picker, both real
+radar-processing subform adapters, Labels settings, the real export asset browser, landing Project, CEO login and
+an outside-recipe control. The landing list is replaced by its real Project dialog to isolate ownership from CRUD;
+scrolling, unrelated account UI and API endpoints are stand-ins. No account login, export or Earth Engine work
+is submitted by the tests.
+
+**Verification so far.** The broad affected-caller campaign passes 1909 tests in 149 files with two workers. It
+included the first nine boundary cases; after adding the asset-browser control, the final ten-case file also
+passes. ESLint passes on all five changed/new JS/JSX files and `git diff --check` is clean. The browser harness
+removes the pilot's local scope wrappers: 68 new checks pass in Chromium and Firefox at 1280px/360px over real
+Form.Panel/date-picker and Labels flows, plus the CEO and landing exceptions. Drafts, Enter/Cancel ownership,
+nested navigation and panel geometry are covered; maps/toolbars and external services remain stand-ins.
+The prior pilot's full GUI result remains evidence for the checkpoint, not a full-suite claim for this migration.
+
+**Migration verification completed (2026-10-29).** With the local visualization wrappers removed, all 60 original
+pilot browser checks pass again in Chromium and Firefox, in addition to the 68 new migration checks. Removing
+the Recipe default makes seven of the ten boundary cases fail; removing only the landing or CEO override makes
+its one case fail while the other nine pass. Each production file was restored automatically and checked against
+the tested browser snapshot. Evidence is in `/tmp/sepal-modal-migration/`, including the final ten-case run,
+broad affected-caller run, browser logs/screenshots, mutation logs and production fingerprints. The production
+GUI build also passes with output isolated under that directory; the workspace build output is untouched.
+
+Running-app acceptance remains: check one input-imagery modal across recipe/section navigation and Cancel, a
+radar-processing subdialog across navigation, and a Retrieve destination browser. These are representative
+inherited workflows, not a requirement to retest every recipe. Final full GUI verification follows acceptance.
+No files were staged, committed or pushed for this migration.
+
+**Migration running-app acceptance (2026-10-29).** The user reported "Modals all good" after the representative
+checks. Input/processing/destination-panel scoping is accepted. An empty workspace listing was identified by the
+user as a crashed module, and the user explicitly asked to ignore it; it is not recorded as a modal defect or a
+pending code fix. Final full GUI verification of the unchanged migration tree is running with two workers.
+
+**Separate follow-up: untouched PRC subdialogs offer Apply (2026-10-29).** The user found that Radar Mosaic's PRC
+subdialogs offer Apply immediately on opening, with no edit, and expects Close instead. This is separate from the
+accepted modal migration. Both the Radar Mosaic and BAYTS Historical `modalSubformPanel.jsx` adapters already
+seed fields using `inputs[name].set(...)` in `componentDidMount`; neither adapter changed in this migration.
+Marking initial values as edits is the likely cause, not a verified correction. A bounded follow-up should establish
+the initial baseline without marking the subform dirty, check both adapters and their consumers, and preserve
+reference-owned/unrecorded values and their presentation. Cover untouched Close, genuine edits offering Apply,
+Cancel and reopening, and parent-form isolation. Do not weaken shared Form.Panel's dirty/acceptance checks or
+bundle this follow-up into modal ownership. It is not a release gate for the accepted migration.
+
+**Migration final verification (2026-10-29; ready for commit).** After the user's running-app acceptance, the full
+GUI suite passed 4891 tests in 338 files with two workers, exit 0, in 379.26 s. This is the checkpoint's 4881 tests
+plus the ten new ownership cases. All five changed/new GUI files remained identical throughout the run; the
+changed-file set was also checked. The earlier production build, five-file ESLint run, whitespace checks,
+68 new native-browser checks and 60 original pilot checks remain valid. Logs and source fingerprints are in
+`/tmp/sepal-modal-migration/final/` and its parent directory. Existing test warnings remain; there are no failed
+tests. No backend or live Earth Engine run was needed for this GUI-context-only change. Nothing is staged,
+committed or pushed for this migration; the accepted pilot checkpoint remains `b6ccf789c`.
+
+**Migration checkpoint (2026-10-29).** The user authorized committing the accepted, fully verified migration on
+`feat/recipe-scoped-modals`. This checkpoint contains the recipe-boundary default, the two application-wide
+exceptions, regressions and documentation above. The PRC initialization issue remains a separate follow-up;
+its adapters are not changed here. No push is included in this checkpoint action.
+
 Separate UI workstream, starting with inspection. On 2026-10-27 the user selected this after BAYTS settings
 ownership/consistency and visualization Copy/Paste, following the current keyboard band-addition slice; see the
 [agreed next sequence](source-resolution.md#current-release-checkpoint). No implementation is claimed yet.
