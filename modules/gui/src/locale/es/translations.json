@@ -592,6 +592,7 @@
         "required": "La contraseña es obligatoria"
       },
       "sign-up": "Regístrate",
+      "throttled": "",
       "username": {
         "label": "Nombre de usuario",
         "placeholder": "Introduce tu nombre de usuario",
@@ -6522,7 +6523,8 @@
           "unique": ""
         },
         "password": {
-          "label": "Contraseña"
+          "label": "Contraseña",
+          "required": ""
         }
       },
       "resetPassword": {
@@ -6548,7 +6550,8 @@
       "title": "Datos del usuario",
       "update": {
         "error": "",
-        "conflict": ""
+        "conflict": "",
+        "incorrectPassword": ""
       },
       "confirmation": {
         "message": ""
