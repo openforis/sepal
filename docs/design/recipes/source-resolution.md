@@ -107,7 +107,7 @@ image readiness.
    The user accepted the migration (2026-10-29: "Modals all good"); final full GUI verification passed 4891 tests
    in 338 files with two workers. Build, lint and whitespace checks pass. The migration is checkpointed on
    `feat/recipe-scoped-modals`.
-   Untouched PRC subdialogs offering Apply are recorded as a separate follow-up, not a modal-migration gate.
+   The separate untouched-PRC initialization correction is implemented; it is not a modal-migration gate.
    Opening selected recipes follows the accepted migration.
 
 This order records the user's priorities and adds no release gates to already accepted work. The copy-settings
@@ -116,10 +116,11 @@ action remains dropped.
 **Functional follow-ups.** The BAYTS ownership correction below is now browser-accepted; server preview readiness
 remains deferred:
 
-- **Untouched PRC subdialogs:** reported during modal acceptance (2026-10-29). Opening Radar Mosaic's processing
-  subdialogs should offer Close until a real edit, rather than marking copied initial values dirty. Audit both
-  Radar Mosaic and BAYTS Historical adapters and preserve reference-owned fields, defaults and parent drafts.
-  This is a separate small follow-up, not a modal-migration gate; see the
+- **Untouched PRC subdialogs:** corrected separately after modal acceptance (2026-10-29). Radar Mosaic and BAYTS
+  Historical now establish the child form's baseline with the existing `setInitialValue` API, so opening offers
+  Close and real edits offer Apply/Cancel. Parent drafts and reference-owned presentation are preserved.
+  The user accepted the running-app check and authorized committing the correction.
+  Verification and the short running-app check are in the
   [modal workstream record](data-sources.md#recipe-scoped-modals).
 - **Server preview readiness:** `modules/gee/src/jobs/ee/image/preview.js` still constructs imagery without the shared
   readiness guard. GUI layers withdraw correctly, but a direct or stale preview request can reach an execution

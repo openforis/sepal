@@ -114,6 +114,46 @@ describe('modal ownership supplied by the recipe context', () => {
         expect(select(['process.loadedRecipes', A, 'model.value'])).toBe(3)
     })
 
+    it.each(['radar', 'historical'])('opens untouched %s details with Close and leaves the parent clean', async kind => {
+        await mount({A: kind, B: 'plain'})
+        await activate(A, 'processing-details')
+        const details = layer(A).lastElementChild
+        expect(details.querySelector('input').value).toBe('3')
+        expect(buttonLabels(details)).toEqual(['button.close'])
+        await click(details, 'button.close')
+
+        expect(buttonLabels(layer(A))).toEqual(['button.close'])
+        expect(layer(A).querySelector('input[data-value]').value).toBe('3')
+        expect(select(['process.loadedRecipes', A, 'model.value'])).toBe(3)
+    })
+
+    it.each(['radar', 'historical'])('cancels %s details without changing the parent draft and reopens at that draft', async kind => {
+        await mount({A: kind, B: 'plain'})
+        await type(draft(A), 'Parent draft')
+        await activate(A, 'processing-details')
+        await type(layer(A).lastElementChild.querySelector('input'), '7')
+        expect(buttonLabels(layer(A).lastElementChild)).toEqual(['button.cancel', 'button.apply'])
+        await click(layer(A).lastElementChild, 'button.apply')
+
+        await activate(A, 'processing-details')
+        expect(layer(A).lastElementChild.querySelector('input').value).toBe('7')
+        expect(buttonLabels(layer(A).lastElementChild)).toEqual(['button.close'])
+        await type(layer(A).lastElementChild.querySelector('input'), '9')
+        await click(layer(A).lastElementChild, 'button.cancel')
+        expect(draft(A).value).toBe('Parent draft')
+        expect(layer(A).querySelector('input[data-value]').value).toBe('7')
+
+        await activate(A, 'processing-details')
+        expect(layer(A).lastElementChild.querySelector('input').value).toBe('7')
+        expect(buttonLabels(layer(A).lastElementChild)).toEqual(['button.close'])
+        await type(layer(A).lastElementChild.querySelector('input'), '9')
+        await type(layer(A).lastElementChild.querySelector('input'), '7')
+        expect(buttonLabels(layer(A).lastElementChild)).toEqual(['button.close'])
+        await click(layer(A).lastElementChild, 'button.close')
+        await click(layer(A), 'button.apply')
+        expect(select(['process.loadedRecipes', A, 'model'])).toMatchObject({name: 'Parent draft', value: '7'})
+    })
+
     it('scopes the actual Labels panel, retaining a category edit and applying it only to its recipe', async () => {
         await mount({A: 'labels', B: 'plain'})
         await activate(A, 'labelsLayerOptions-main')
@@ -273,3 +313,7 @@ async function click(inElement, label) {
     expect(button).toBeDefined()
     await act(async () => button.click())
 }
+
+const buttonLabels = element => [...element.querySelectorAll('button')]
+    .map(button => button.textContent)
+    .filter(label => ['button.close', 'button.cancel', 'button.apply'].includes(label))

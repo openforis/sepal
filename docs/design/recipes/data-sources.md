@@ -1813,6 +1813,33 @@ committed or pushed for this migration; the accepted pilot checkpoint remains `b
 exceptions, regressions and documentation above. The PRC initialization issue remains a separate follow-up;
 its adapters are not changed here. No push is included in this checkpoint action.
 
+**PRC initialization correction (2026-10-29).** The user requested the separate subdialog fix after the modal
+migration checkpoint. Both Radar Mosaic and BAYTS Historical adapters initialized their child fields with `set`,
+so opening the panel registered changes against empty initial values. Each adapter now uses the existing
+`setInitialValue` API instead. These are the only two production-line changes; shared forms and modal ownership
+are unchanged. All three processing subdialog callers of each adapter receive the correction.
+
+Six new regression cases cover both adapters: untouched Close without dirtying the parent, a real edit offering
+Apply/Cancel, child Apply updating only the parent draft, Cancel and reopening from that draft, reverting to the
+child's initial value, and reference-owned values updating without making an untouched child dirty. The existing
+mixed-ownership and consumer tests cover read-only presentation and preservation. Restoring both old initializers
+makes exactly the six new cases fail; both files were then restored byte for byte.
+
+The Change Alerts test harness had left the mask subdialog open automatically. Its global Apply lookup therefore
+submitted that child instead of PRC, and its ownership assertion expected the pass selection to remain unsaved.
+The harness now leaves that child closed until activated, like the other processing subdialogs, and the assertion
+checks that the explicitly edited pass selection is saved while reference-owned copies remain unchanged. This
+corrected caller test passes with either initializer.
+
+Verification: 350 tests in 21 files pass with two workers, covering the recipe-boundary forms, both adapters,
+Radar Mosaic, BAYTS Historical/Alerts and Change Alerts. ESLint on all five changed JS/JSX files and
+`git diff --check` pass. Logs and the automatically restored pre-fix comparison are in
+`/tmp/sepal-prc-subdialog/`. The full GUI suite and build were not repeated for this initialization-only change.
+
+Running-app acceptance (2026-10-29): the user reported "Working well" after the check of untouched Close,
+Apply/Cancel after an edit, and Cancel/reopen, then authorized this correction's commit. The already accepted
+modal behaviour is unchanged. No push is included in this checkpoint.
+
 Separate UI workstream, starting with inspection. On 2026-10-27 the user selected this after BAYTS settings
 ownership/consistency and visualization Copy/Paste, following the current keyboard band-addition slice; see the
 [agreed next sequence](source-resolution.md#current-release-checkpoint). No implementation is claimed yet.

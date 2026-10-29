@@ -26,12 +26,13 @@ vi.mock('~/widget/panel/panel', () => ({Panel: {Header: () => null, Content: ({c
 vi.mock('~/translate', () => ({msg: key => key}))
 
 const {modalSubformPanel} = await import('./modalSubformPanel')
+const {modalSubformPanel: historicalSubformPanel} = await import('../../../baytsHistorical/panels/options/modalSubformPanel')
 const {FormField} = await import('~/widget/form/property')
 const {presentProcessingInputs, preserveProcessingCopies} = await import('../../../changeAlerts/processingSettings')
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
-const Details = modalSubformPanel({
+const detailsFor = factory => factory({
     id: 'radar-details', fields: {kernelSize: new FormField(), sigma: new FormField()},
     toTitle: () => '', toClassName: () => ''
 })(({inputs}) => Object.entries(inputs).map(([name, input]) => <input key={name} aria-label={name}
@@ -46,7 +47,8 @@ afterEach(async () => {
     container?.remove()
 })
 
-const open = async ({recorded = true} = {}) => {
+const open = async ({recorded = true, factory = modalSubformPanel} = {}) => {
+    const Details = detailsFor(factory)
     const saved = vi.fn()
     let refresh
     const Parent = () => {
@@ -98,6 +100,22 @@ it('keeps ordinary radar details editable and applies both values', async () => 
     expect(saved).toHaveBeenCalledWith({kernelSize: 7, sigma: 0.7})
 })
 
+it.each([
+    ['radar', modalSubformPanel],
+    ['historical', historicalSubformPanel]
+])('keeps untouched %s details clean when reference-owned values update', async (_name, factory) => {
+    const {saved, refresh} = await open({factory})
+    expect(applyButton().disabled).toBe(true)
+    await refresh(7)
+    expect(input('kernelSize').value).toBe('7')
+    expect(input('kernelSize').disabled).toBe(true)
+    expect(applyButton().disabled).toBe(true)
+    await click('Cancel details')
+    await click('Save processing')
+    expect(saved).toHaveBeenCalledWith(INITIAL)
+})
+
+const applyButton = () => [...container.querySelectorAll('button')].find(button => button.textContent === 'Apply details')
 const input = name => container.querySelector(`input[aria-label="${name}"]`)
 const change = (name, value) => act(async () => {
     const element = input(name)

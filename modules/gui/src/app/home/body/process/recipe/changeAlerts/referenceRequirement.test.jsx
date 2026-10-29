@@ -138,7 +138,7 @@ vi.mock('~/widget/activation/activatable', async () => {
     const {useState} = await import('react')
     return {
         withActivatable: ({id} = {}) => Component => props => {
-            const [active, setActive] = useState(!['spatialSpeckleFilterOptions', 'multitemporalSpeckleFilterOptions'].includes(id))
+            const [active, setActive] = useState(!['maskOptions', 'spatialSpeckleFilterOptions', 'multitemporalSpeckleFilterOptions'].includes(id))
             panelActivations[id] = () => setActive(true)
             return active
                 ? <Component {...props} activatable={{active, activate: () => setActive(true), deactivate: () => setActive(false)}}/>
@@ -1720,7 +1720,7 @@ describe('reference-owned PRC values and consumer drafts', () => {
         await chooseButton('process.radarMosaic.panel.options.form.orbits.ascending.label')
         await apply()
         expect(alertsRecipe().model.options).toMatchObject({
-            spatialSpeckleFilter: 'SNIC', kernelSize: 17, strongScatterers: 'FILTER', orbits: ['ASCENDING', 'DESCENDING']
+            spatialSpeckleFilter: 'SNIC', kernelSize: 17, strongScatterers: 'FILTER', orbits: ['DESCENDING']
         })
     })
 
