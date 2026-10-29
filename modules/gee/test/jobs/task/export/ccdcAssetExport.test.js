@@ -3,6 +3,8 @@ import {beforeEach, describe, it, mock} from 'node:test'
 
 import {lastValueFrom, of, throwError} from 'rxjs'
 
+import {assetProcessing, effectiveSettings} from '#sepal/recipe/changeAlerts/processing'
+
 // What an existing CCDC Segments asset contains. These are characterization tests: they pin the format already
 // written into every asset users hold, so that anything reading one later can be held to the same shape.
 //
@@ -11,13 +13,15 @@ import {lastValueFrom, of, throwError} from 'rxjs'
 // those exact bytes - and so do the closure, the declarations and the readiness the export is held to.
 
 const captured = {}
-const state = {catalogue: {}, catalogueUnreadable: false}
+const state = {catalogue: {}, catalogueUnreadable: false, assets: {}, observed: []}
 
 beforeEach(() => {
     delete captured.ccdc
     delete captured.export
     state.catalogue = {}
     state.catalogueUnreadable = false
+    state.assets = {}
+    state.observed = []
 })
 
 const geometry = {bounds: () => 'region-bounds'}
@@ -30,6 +34,29 @@ mock.module('#sepal/ee/timeSeries/ccdc', {
                 getImage$: () => of('segments-image'),
                 getGeometry$: () => of(geometry)
             }
+        }
+    }
+})
+// What reading an asset's bands evaluates (bandEvidence.js): an image whose bands a scenario states.
+const assetImage = bands => ({
+    bandNames: () => ({map: mapper => bands.map(({name}) => mapper(name))}),
+    bandTypes: () => ({get: name => bands.find(band => band.name === name)}),
+    toDictionary: () => ({})
+})
+mock.module('#sepal/ee/ee', {
+    exports: {
+        default: {
+            // Readiness's own evidence of an asset's bands, no work of the export's.
+            getAsset$: id => {
+                state.observed.push(id)
+                return state.assets[id]
+                    ? of({type: 'Image'})
+                    : throwError(() => new Error(`Asset could not be read: ${id}`))
+            },
+            Image: id => assetImage(state.assets[id] ?? []),
+            Dictionary: values => values,
+            PixelType: band => ({dimensions: () => band.arrayDimensions}),
+            getInfo$: value => of(value)
         }
     }
 })
@@ -122,11 +149,20 @@ describe('a CCDC Segments export held to what its recipe requires', () => {
         model.model.sources = {dataSets: {LANDSAT: ['LANDSAT_8']}, classification: CLASSIFICATION}
         return model
     }
-    const classification = included => ({
-        id: CLASSIFICATION,
-        type: 'CLASSIFICATION',
-        model: {inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]}}
-    })
+    // Trained on points over `included` of an asset, observed with them: every CCDC export trains it (type/ccdc.js).
+    const classification = included => {
+        state.assets['users/x/input'] = included.map(name => ({name, arrayDimensions: 0}))
+        return {
+            id: CLASSIFICATION,
+            type: 'CLASSIFICATION',
+            model: {
+                inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]},
+                legend: {entries: [{value: 1}, {value: 2}]},
+                trainingData: {dataSets: [{type: 'COLLECTED', referenceData: [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]}]},
+                classifier: {type: 'RANDOM_FOREST'}
+            }
+        }
+    }
 
     it('is refused where its classification\'s classifier the Landsat scenes cannot feed, building and submitting nothing', async () => {
         state.catalogue[CLASSIFICATION] = classification(['VV_mean', 'VH_med'])
@@ -162,6 +198,213 @@ describe('a CCDC Segments export held to what its recipe requires', () => {
         await assert.rejects(submit(), /unavailable output/)
         assert.equal(captured.ccdc, undefined)
         assert.equal(captured.export, undefined)
+    })
+})
+
+// The Classification a CCDC's Sources select is part of its analysis: what training it needs refuses the export,
+// whichever its breakpoint bands are - one it computes, which trains it, or bands of the images alike.
+describe('exporting a CCDC over a Classification that cannot be trained, whatever its breakpoint bands', () => {
+    const POINTS = [{x: 1, y: 1, class: 1}, {x: 1, y: 2, class: 1}, {x: 2, y: 1, class: 2}, {x: 2, y: 2, class: 2}]
+    const OPTICAL_ASSET = 'users/x/optical'
+    const classificationOf = ({points = []} = {}) => ({
+        id: CLASSIFICATION,
+        type: 'CLASSIFICATION',
+        model: {
+            inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: OPTICAL_ASSET, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['red', 'nir']}]}]},
+            legend: {entries: [{value: 1}, {value: 2}]},
+            trainingData: {dataSets: points.length ? [{type: 'COLLECTED', referenceData: points}] : []},
+            classifier: {type: 'RANDOM_FOREST'}
+        }
+    })
+    const fitting = breakpointBands => {
+        const model = recipe()
+        model.model.sources = {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands, classification: CLASSIFICATION}
+        return model
+    }
+
+    beforeEach(() => {
+        state.assets[OPTICAL_ASSET] = [{name: 'red', arrayDimensions: 0}, {name: 'nir', arrayDimensions: 0}]
+    })
+
+    it('fails the export, saying why, building nothing, and exports once the Classification stores points', async () => {
+        const model = fitting(['ndvi', 'probability_1'])
+        state.catalogue[CLASSIFICATION] = classificationOf()
+
+        await assert.rejects(submit({model}), /cannot run: NO_TRAINING_DATA$/)
+        assert.equal(captured.ccdc, undefined)
+        assert.equal(captured.export, undefined)
+
+        state.catalogue[CLASSIFICATION] = classificationOf({points: POINTS})
+        const {image} = await submit({model})
+        assert.equal(image, 'segments-image')
+    })
+
+    it('fails the export of breakpoint bands of the images too, building nothing, and exports once the Classification stores points', async () => {
+        const model = fitting(['ndvi'])
+        state.catalogue[CLASSIFICATION] = classificationOf()
+
+        await assert.rejects(submit({model}), /cannot run: NO_TRAINING_DATA$/)
+        assert.equal(captured.ccdc, undefined)
+
+        state.catalogue[CLASSIFICATION] = classificationOf({points: POINTS})
+        const {image} = await submit({model})
+        assert.equal(image, 'segments-image')
+    })
+})
+
+// What training the Classification needs refuses the export before the segments are built, as the CCDC's own
+// configuration does, whatever measures it names - one the Classification computes, fitted with the breakpoint bands,
+// or measures of the images alike. Then the measures named must be ones the Classification provides.
+describe('exporting the measures a CCDC fits over its Classification', () => {
+    const PROVIDER = 'provider-1'
+    const CLASSIFIED = 'probability_1'
+    const SVM = {type: 'SVM', svmType: 'C_SVC'}
+    const POINTS = [{x: 1, y: 1, class: 1}, {x: 1, y: 2, class: 1}, {x: 2, y: 1, class: 2}, {x: 2, y: 2, class: 2}]
+    const inputOf = id => `users/x/${id}-input`
+    const trainable = ({id = CLASSIFICATION, included = ['red', 'nir'], images, points = POINTS, reuses = [], classifier = {type: 'RANDOM_FOREST'}} = {}) => {
+        state.assets[inputOf(id)] = included.map(name => ({name, arrayDimensions: 0}))
+        return {
+            id,
+            type: 'CLASSIFICATION',
+            model: {
+                inputImagery: {images: images ?? [{imageId: 'i-1', type: 'ASSET', id: inputOf(id), bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]},
+                legend: {entries: [{value: 1}, {value: 2}]},
+                classifier,
+                trainingData: {dataSets: [
+                    ...(points.length ? [{dataSetId: 'collected', type: 'COLLECTED', referenceData: points}] : []),
+                    ...reuses.map(recipe => ({dataSetId: recipe, type: 'RECIPE', recipe}))
+                ]}
+            }
+        }
+    }
+    const fitting = (breakpointBands = ['ndvi']) => {
+        const model = recipe()
+        model.model.sources = {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands, classification: CLASSIFICATION}
+        return model
+    }
+    const assertNothingBuilt = () => {
+        assert.equal(captured.ccdc, undefined)
+        assert.equal(captured.export, undefined)
+    }
+
+    for (const [_case, catalogue, code] of [
+        ['stores no points', () => ({[CLASSIFICATION]: trainable({points: []})}), 'NO_TRAINING_DATA'],
+        ['reuses a recipe without input imagery', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, images: []})}), 'MISSING_ROLE'],
+        ['reuses a recipe sampling fewer features', () => ({[CLASSIFICATION]: trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, included: ['red']})}), 'MISSING_TRAINING_FEATURES']
+    ]) {
+        for (const bands of [['ndvi', CLASSIFIED], ['ndvi', 'swir1']]) {
+            it(`is refused for ${bands.join(', ')}, building and submitting nothing, where the Classification ${_case}`, async () => {
+                state.catalogue = catalogue()
+
+                await assert.rejects(submit({model: fitting(), bands}), new RegExp(`ccdc-1 cannot run: ${code}$`))
+
+                assertNothingBuilt()
+            })
+        }
+    }
+
+    it('exports once the Classification stores points again', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({points: []})}
+        await assert.rejects(submit({model: fitting(), bands: [CLASSIFIED]}), /NO_TRAINING_DATA$/)
+
+        state.catalogue = {[CLASSIFICATION]: trainable()}
+        const {image} = await submit({model: fitting(), bands: [CLASSIFIED]})
+
+        assert.equal(image, 'segments-image')
+        assert.deepEqual(captured.ccdc.options, {selection: [CLASSIFIED]})
+    })
+
+    // Judged as what is built, whatever type is stated: MOSAIC declares no need of a Classification at all.
+    for (const type of ['TIME_SERIES', 'MOSAIC']) {
+        it(`is refused, building and submitting nothing, for a recipe stated as ${type}, whose segments are built as a CCDC's`, async () => {
+            state.catalogue = {[CLASSIFICATION]: trainable({points: []})}
+
+            await assert.rejects(submit({model: {...fitting(), type}, bands: [CLASSIFIED]}), /ccdc-1 cannot run: NO_TRAINING_DATA$/)
+
+            assertNothingBuilt()
+        })
+    }
+
+    it('exports a recipe stated as another type as before, its segments built as a CCDC\'s, once its Classification can be trained', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable()}
+
+        const {image} = await submit({model: {...fitting(), type: 'MOSAIC'}, bands: [CLASSIFIED]})
+
+        assert.equal(image, 'segments-image')
+        assert.deepEqual(captured.ccdc.options, {selection: [CLASSIFIED]})
+    })
+
+    it('fails with what could not be read, as no finding and building nothing, where the Classification\'s input cannot be observed', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable()}
+        delete state.assets[inputOf(CLASSIFICATION)]
+
+        await assert.rejects(submit({model: fitting(), bands: [CLASSIFIED]}), /cannot run: what it needs could not be read: Asset could not be read: users\/x\/classification-1-input$/)
+
+        assertNothingBuilt()
+    })
+
+    it('is refused for a classified breakpoint band\'s training before a requested output the Classification does not provide', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({points: [], classifier: SVM})}
+
+        await assert.rejects(submit({model: fitting(['ndvi', CLASSIFIED]), bands: ['regression']}), /ccdc-1 cannot run: NO_TRAINING_DATA$/)
+
+        assertNothingBuilt()
+    })
+
+    it('is refused for a classified breakpoint band\'s training whatever measures of the images it names', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({points: []})}
+
+        await assert.rejects(submit({model: fitting(['ndvi', CLASSIFIED]), bands: ['ndvi']}), /ccdc-1 cannot run: NO_TRAINING_DATA$/)
+
+        assertNothingBuilt()
+    })
+
+    it('is refused for an output its trainable Classification does not provide as a client\'s error, building nothing', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({classifier: SVM})}
+
+        await assert.rejects(submit({model: fitting(), bands: ['ndvi', 'regression']}), error =>
+            error.errorCode === 'UNSUPPORTED_CLASSIFIED_OUTPUT' && error.statusCode === 400
+            && error.message === `Classification ${CLASSIFICATION} does not provide regression`)
+
+        assertNothingBuilt()
+    })
+
+    // What the configuration needs comes first: the Classification's training before an output asked of it.
+    it('is refused for the Classification\'s training before an output it does not provide, building nothing', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({points: [], classifier: SVM})}
+
+        await assert.rejects(submit({model: fitting(), bands: ['ndvi', 'regression']}), /ccdc-1 cannot run: NO_TRAINING_DATA$/)
+
+        assertNothingBuilt()
+    })
+
+    it('is refused for a configured breakpoint band the Classification does not provide, as the configuration\'s finding', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({classifier: SVM})}
+
+        await assert.rejects(submit({model: fitting(['ndvi', 'regression']), bands: ['regression']}), error =>
+            /ccdc-1 cannot run: UNSUPPORTED_CLASSIFIED_OUTPUT$/.test(error.message) && error.errorCode === undefined)
+
+        assertNothingBuilt()
+    })
+
+    it('is refused for classifier inputs the scenes cannot feed before anything the measures add', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable({included: ['VV_mean', 'VH_med'], classifier: SVM})}
+
+        await assert.rejects(submit({model: fitting(), bands: ['regression']}), /ccdc-1 cannot run: UNSUPPLIED_CLASSIFIER_INPUTS$/)
+
+        assertNothingBuilt()
+    })
+
+    it('writes the asset as before once it can run, a classified measure among those it names', async () => {
+        state.catalogue = {[CLASSIFICATION]: trainable()}
+
+        const {pyramidingPolicy, maxPixels, region, properties} = await submit({model: fitting(), bands: ['ndvi', CLASSIFIED], visualizations: [NDVI]})
+
+        assert.deepEqual(pyramidingPolicy, {'.default': 'sample'})
+        assert.equal(maxPixels, 1e13)
+        assert.equal(region, 'region-bounds')
+        assert.equal(properties.dateFormat, 1)
+        assert.equal(visualizationProperties(properties).visualization_0_bands, 'ndvi')
     })
 })
 
@@ -370,5 +613,20 @@ describe('the band vocabulary a visualization is admitted against', () => {
 
     it('rejects a multi-band template when only some of its bands are selected', async () => {
         assert.equal(await admitted({...NDVI, bands: ['ndvi', 'swir1'], name: 'mixed'}), false)
+    })
+})
+
+describe('executed processing metadata', () => {
+    it('records the specialized CCDC computation even when the request claims another type or provenance', async () => {
+        const executed = {...recipe({corrections: ['BRDF']}), type: 'MOSAIC'}
+        executed.model.sources = {dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_8']}, cloudPercentageThreshold: 31}
+        executed.model.options.brdfMultiplier = 3
+        const {properties} = await submit({model: executed, properties: {processing: '{"options":{"corrections":["SR"]}}', recipe_options: {corrections: ['SR']}}})
+        const read = effectiveSettings({options: {corrections: ['SR']}}, assetProcessing(properties))
+        assert.deepEqual(read.model.options.corrections, ['BRDF'])
+        assert.equal(read.model.options.brdfMultiplier, 3)
+        assert.equal(read.fields.dateFormat.value, 1)
+        assert.equal(read.fields.SR.state, 'RECORDED')
+        assert.deepEqual(JSON.parse(properties.processing).dataSets, executed.model.sources.dataSets)
     })
 })

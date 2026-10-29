@@ -7,6 +7,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
+import lookStyles from '~/style/look.module.css'
 import listItemStyles from '~/widget/listItem.module.css'
 
 // A saved input of Classification, Regression or Unsupervised Classification, as the editor they share learns its
@@ -221,6 +222,81 @@ describe('a saved input switched between kinds of source', () => {
     })
 })
 
+// The bands an image bands set is offered, by keyboard: Enter adds the band highlighted and highlights the one after it,
+// so Enter again adds that one; past the last nothing is highlighted, and Enter adds nothing - least of all every band.
+describe('bands added to a band set by keyboard', () => {
+    it('are added one per Enter, in the order offered, the next highlighted after each', async () => {
+        await editInput()
+        await answer('mosaic-1', ['red', 'nir', 'swir1', 'swir2', 'blue'])
+        await openAddBands()
+        expect(highlighted()).toEqual([ALL_BANDS])
+
+        await press('ArrowDown')
+        await press('Enter')
+
+        expect(bandSets()[0]).toEqual(['red', 'nir', 'swir1'])
+        expect(highlighted()).toEqual(['swir2'])
+
+        await press('Enter')
+
+        expect(bandSets()[0]).toEqual(['red', 'nir', 'swir1', 'swir2'])
+        expect(highlighted()).toEqual(['blue'])
+
+        await press('Enter')
+
+        expect(bandSets()[0]).toEqual(['red', 'nir', 'swir1', 'swir2', 'blue'])
+    })
+
+    it('keep the filter typed, highlighting the next band it matches', async () => {
+        await editInput()
+        await answer('mosaic-1', ['red', 'nir', 'swir1', 'swir2', 'swir3', 'blue'])
+        await openAddBands()
+        await typeFilter('sw')
+        await press('ArrowDown')
+        expect(highlighted()).toEqual(['swir2'])
+
+        await press('Enter')
+
+        expect(addBandsInput().value).toBe('sw')
+        expect(highlighted()).toEqual(['swir3'])
+
+        await press('Enter')
+        await press('Enter')
+
+        expect(addBandsInput().value).toBe('sw')
+        expect(bandSets()[0]).toEqual(['red', 'nir', 'swir2', 'swir3'])
+    })
+
+    it('add nothing more once the last is added, All bands still offered but neither highlighted nor added', async () => {
+        await editInput()
+        await answer('mosaic-1', ['red', 'nir', 'swir1', 'swir2', 'blue'])
+        await openAddBands()
+        await press('End')
+
+        await press('Enter')
+
+        expect(bandSets()[0]).toEqual(['red', 'nir', 'blue'])
+        expect(offeredBands()).toEqual([ALL_BANDS, 'swir1', 'swir2'])
+        expect(highlighted()).toEqual([])
+
+        await press('Enter')
+
+        expect(bandSets()[0]).toEqual(['red', 'nir', 'blue'])
+    })
+
+    it('are all added when All bands is chosen', async () => {
+        await editInput()
+        await answer('mosaic-1', ['red', 'nir', 'swir1', 'swir2', 'blue'])
+        await openAddBands()
+
+        await press('Enter')
+
+        expect(bandSets()[0]).toEqual(['red', 'nir', 'swir1', 'swir2', 'blue'])
+    })
+})
+
+const ALL_BANDS = 'process.classification.panel.inputImagery.bandSetSpec.addBands.all.label'
+
 // Saved with two image bands and an index derived from them.
 const SAVED = {
     imageId: 'input-a',
@@ -339,6 +415,32 @@ const addBand = async (name, set = 0) => {
     }
     await click(options().find(element => element.textContent === name))
 }
+
+// The image bands set's "+" opened: its bands offered, the first highlighted.
+const openAddBands = () => click(bandSetRows()[0].querySelector('svg[data-icon="plus"]').closest('button'))
+
+// A key pressed with the offered bands shown, as the document receives it.
+const press = key => act(async () => {
+    document.dispatchEvent(new KeyboardEvent('keydown', {key, bubbles: true}))
+}).then(settled)
+
+const addBandsInput = () => document.querySelector('input[placeholder="process.classification.panel.inputImagery.bandSetSpec.addBands.placeholder"]')
+
+const typeFilter = async text => {
+    const input = addBandsInput()
+    await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, text)
+        input.dispatchEvent(new Event('input', {bubbles: true}))
+    })
+    await settled()
+}
+
+const offeredBands = () => options().map(element => element.textContent)
+
+// The offered band the keyboard highlights, if any.
+const highlighted = () => options()
+    .filter(element => element.classList.contains(lookStyles.hoverForcedOn))
+    .map(element => element.textContent)
 
 // A derived band set added from the derived bands offered.
 const addDerived = async operation => {

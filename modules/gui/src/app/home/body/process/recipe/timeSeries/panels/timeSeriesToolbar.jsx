@@ -20,7 +20,7 @@ import {Toolbar} from '~/widget/toolbar/toolbar'
 import {RetrieveButton} from '../../retrieveButton'
 import {SectionButton} from '../../sectionButton'
 import {RecipeActions} from '../timeSeriesRecipe'
-import {ChartPixel} from './chartPixel'
+import {CHART_OPERATIONS, ChartPixel} from './chartPixel'
 import styles from './timeSeriesToolbar.module.css'
 
 const mapRecipeToProps = recipe => ({
@@ -69,6 +69,7 @@ class _TimeSeriesToolbar extends React.Component {
                     className={styles.top}>
                     <ChartPixelButton
                         disabled={!initialized}
+                        operations={CHART_OPERATIONS}
                         onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}/>
                     <RetrieveButton/>
                 </Toolbar>

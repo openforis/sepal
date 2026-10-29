@@ -30,6 +30,7 @@ const createSandboxSessionManager = ({
     workerBaseUrl,
     defaultInstanceType,
     heartbeatIntervalMs = 30000,
+    heartbeatTimeoutMs = 10000,
     observableTtlMs = 5 * 60 * 1000,
     log = defaultLog,
     fetch = globalThis.fetch
@@ -162,14 +163,15 @@ const createSandboxSessionManager = ({
     const sepalUserHeader = username =>
         JSON.stringify({username, roles: []})
 
-    const workerRequest = async (username, method, path, body) => {
+    const workerRequest = async (username, method, path, body, {timeoutMs} = {}) => {
         const response = await fetch(`${baseUrl}${path}`, {
             method,
             headers: {
                 'sepal-user': sepalUserHeader(username),
                 'Content-Type': 'application/json'
             },
-            ...body === undefined ? {} : {body: JSON.stringify(body)}
+            ...body === undefined ? {} : {body: JSON.stringify(body)},
+            ...timeoutMs === undefined ? {} : {signal: AbortSignal.timeout(timeoutMs)}
         })
         if (!response.ok) {
             const error = new Error(`worker ${method} ${path} → ${response.status}`)
@@ -189,10 +191,11 @@ const createSandboxSessionManager = ({
     // POST /sessions/session/{id} → {id, path, username, status, host}
     // interaction: true only when a REAL user interaction was attributed to the session since the
     // last heartbeat — the worker ratchets the deadline on it. Losing one is harmless: the GUI
-    // re-reports within a minute.
+    // re-reports within a minute. Beats go out one session at a time, so a hung one must time out
+    // rather than hold back every session after it.
     const sendHeartbeat = (username, sessionId, interaction = false) =>
         workerRequest(username, 'POST', `/sessions/session/${encodeURIComponent(sessionId)}`,
-            interaction ? {interaction: true} : undefined)
+            interaction ? {interaction: true} : undefined, {timeoutMs: heartbeatTimeoutMs})
 
     // GET /sessions/active → [{id, host, status, instanceType}]
     const findActiveSessions = username =>
@@ -566,6 +569,44 @@ const createSandboxSessionManager = ({
     }
 
     let heartbeatTimer = null
+    let heartbeatRunning = false
+
+    // Per-session state is keyed by whatever sessionId it was given, so it is not bounded by the
+    // cache: the GUI may report any sessionId, a report or server ensure can land just after the
+    // session's close was handled, and a session whose last app is released leaves the cache
+    // without a heartbeat 404 ever reaching dropSession. Each beat keeps only what belongs to a
+    // session it targets; anything pruned for a session served again is merely re-derived.
+    const pruneSessionState = targets => {
+        const liveKeys = new Set(targets.map(({username, sessionId}) => activityKey(username, sessionId)))
+        const liveSessionIds = new Set(targets.map(({sessionId}) => sessionId))
+        const now = Date.now()
+        for (const key of [...pendingActivity, ...interactionSeen]) {
+            if (!liveKeys.has(key)) {
+                pendingActivity.delete(key)
+                interactionSeen.delete(key)
+            }
+        }
+        for (const [key, expiry] of [...unobservableUntil]) {
+            if (!liveKeys.has(key) || expiry <= now) {
+                unobservableUntil.delete(key)
+            }
+        }
+        for (const [username, kernels] of [...kernelsByUsername]) {
+            for (const [kernelId, {sessionId}] of [...kernels]) {
+                if (!liveKeys.has(activityKey(username, sessionId))) {
+                    kernels.delete(kernelId)
+                }
+            }
+            if (kernels.size === 0) {
+                kernelsByUsername.delete(username)
+            }
+        }
+        for (const key of [...startedServers]) {
+            if (!liveSessionIds.has(key.slice(0, key.lastIndexOf(':')))) {
+                startedServers.delete(key)
+            }
+        }
+    }
 
     const heartbeatOnce = async () => {
         const seen = new Set()
@@ -579,6 +620,7 @@ const createSandboxSessionManager = ({
                 }
             }
         }
+        pruneSessionState(targets)
         for (const {username, sessionId} of targets) {
             try {
                 // Consume the interaction marker before sending: a failed heartbeat loses it,
@@ -629,7 +671,13 @@ const createSandboxSessionManager = ({
     const start = () => {
         if (!heartbeatTimer) {
             heartbeatTimer = setInterval(() => {
-                heartbeatOnce().catch(error => log.error('Heartbeat loop error', error))
+                if (heartbeatRunning) return
+                heartbeatRunning = true
+                heartbeatOnce()
+                    .catch(error => log.error('Heartbeat loop error', error))
+                    .finally(() => {
+                        heartbeatRunning = false
+                    })
             }, heartbeatIntervalMs)
             if (heartbeatTimer.unref) {
                 heartbeatTimer.unref()

@@ -11,6 +11,14 @@ export const DEFAULT_REQUIREMENTS = {minRamGiB: 0, minCpuCount: 0, minGpuCount: 
 export const appRequirements = app =>
     ({...DEFAULT_REQUIREMENTS, ...(app?.requirements || {})})
 
+// The floors in the order and form of the specs pill ("4 CPU · 16 GB"), leaving out unset ones.
+export const requirementSpecs = ({minRamGiB, minCpuCount, minGpuCount}) =>
+    [
+        minCpuCount ? `${minCpuCount} CPU` : null,
+        minGpuCount ? `${minGpuCount} GPU` : null,
+        minRamGiB ? `${minRamGiB} GB` : null
+    ].filter(Boolean).join(' · ')
+
 export const isSuitableInstanceType = (instanceType, requirements) =>
     instanceType.cpuCount >= requirements.minCpuCount
     && instanceType.ramGiB >= requirements.minRamGiB
@@ -19,18 +27,15 @@ export const isSuitableInstanceType = (instanceType, requirements) =>
 // Tagged types only (untagged = legacy, not user-selectable), in catalog order — the same filter
 // and order as the ssh-gateway menu.
 export const suitableInstanceTypes = (instanceTypes, requirements) =>
-    (instanceTypes || [])
-        .filter(({tag}) => tag)
+    selectableInstanceTypes(instanceTypes)
         .filter(instanceType => isSuitableInstanceType(instanceType, requirements))
+
+const selectableInstanceTypes = instanceTypes =>
+    (instanceTypes || []).filter(({tag}) => tag)
 
 export const cheapestSuitableInstanceType = (instanceTypes, requirements) =>
     suitableInstanceTypes(instanceTypes, requirements)
         .reduce((cheapest, instanceType) => !cheapest || instanceType.hourlyCost < cheapest.hourlyCost ? instanceType : cheapest, null)
-
-// Is there anything the user could actually pick? (drives the picker's dead-end message)
-export const hasSuitableOption = ({sessions, instanceTypes, requirements}) =>
-    (sessions || []).some(session => isSuitableInstanceType(session.instanceType, requirements))
-    || suitableInstanceTypes(instanceTypes, requirements).length > 0
 
 // An option row is `title` — what the instance IS — on the left and its `instanceType` — what it
 // costs and provides, in the same specs pill the session list shows — right-aligned, so a column
@@ -64,8 +69,8 @@ export const sessionNumber = (sessions, sessionId) => {
 const sessionApps = session =>
     (session.apps || []).map(({path, label}) => label || path)
 
-// Two labelled combo sections: every running instance (unsuitable ones disabled),
-// then the suitable new instance types. Option values: 'session:<id>' / 'type:<id>'.
+// Labelled combo sections: the running instances, then the new instance types, the ones below the
+// requirements dimmed. Option values: 'session:<id>' / 'type:<id>'.
 //
 // `title`/`instanceType` are the two columns of a new instance type's row; a running instance's row
 // has only its title, since its specs are what the session list shows. `label` is the closed field's one
@@ -83,15 +88,16 @@ export const buildPickerOptions = ({sessions, instanceTypes, requirements, runni
             title,
             apps,
             searchableText: [title, ...apps].join(' '),
-            disabled: !isSuitableInstanceType(session.instanceType, requirements)
+            dimmed: !isSuitableInstanceType(session.instanceType, requirements)
         }
     })
-    const typeOptions = suitableInstanceTypes(instanceTypes, requirements).map(instanceType => ({
+    const typeOptions = selectableInstanceTypes(instanceTypes).map(instanceType => ({
         value: `type:${instanceType.id}`,
         label: instanceTypeTitle(instanceType),
         title: instanceTypeTitle(instanceType),
         instanceType,
-        searchableText: oneLine(instanceTypeTitle(instanceType), instanceType)
+        searchableText: oneLine(instanceTypeTitle(instanceType), instanceType),
+        dimmed: !isSuitableInstanceType(instanceType, requirements)
     }))
     const section = (label, options) => options.length ? [{label, options}] : []
     return [
@@ -109,9 +115,13 @@ export const buildPickerOptions = ({sessions, instanceTypes, requirements, runni
 // the obvious keystroke — accept the default — the one that pops a confirm dialog and closes Lab.
 // Preselecting the group's own instance makes the default the move that costs nothing.
 //
-// An unsuitable group instance is skipped rather than preselected: the option is disabled in the
-// list, and the user genuinely does have to move the group in that case.
-export const defaultPickerValue = ({sessions, instanceTypes, requirements, groupSessionIds}) => {
+// An unsuitable group instance is skipped rather than preselected, so the default meets the app's
+// requirements whenever any instance does. When none does, the default is the one the app would get
+// without requirements.
+export const defaultPickerValue = inputs =>
+    defaultWithin(inputs, inputs.requirements) ?? defaultWithin(inputs, DEFAULT_REQUIREMENTS)
+
+const defaultWithin = ({sessions, instanceTypes, groupSessionIds}, requirements) => {
     const suitable = session => isSuitableInstanceType(session.instanceType, requirements)
     const ids = new Set(groupSessionIds || [])
     const groupSession = (sessions || []).find(session => ids.has(session.id) && suitable(session))

@@ -14,8 +14,11 @@ import {RemoveButton} from '~/widget/removeButton'
 import {Widget} from '~/widget/widget'
 
 import styles from './legendBuilder.module.css'
+import {legendValue} from './legendValue'
 import {PalettePreSets, pickColors} from './visParams/palettePreSets'
 
+// A row's value is held as it is entered - text, blank, or not a number - until its legend is committed
+// (legendEntriesToModel), when each is the number it states. Until then, a row stating none is invalid.
 export class LegendBuilder extends React.Component {
     state = {
         invalidEntries: {},
@@ -152,7 +155,7 @@ export class LegendBuilder extends React.Component {
     updateValidation(entry, invalid) {
         const {entries, onChange} = this.props
         this.setState(({invalidEntries}) => {
-            const filteredInvalidEntries = _.pickBy(invalidEntries, entries.map(({id}) => id))
+            const filteredInvalidEntries = _.pick(invalidEntries, entries.map(({id}) => id))
             return invalid
                 ? {invalidEntries: {...filteredInvalidEntries, ...{[entry.id]: invalid}}}
                 : {invalidEntries: _.omit(filteredInvalidEntries, entry.id)}
@@ -175,12 +178,30 @@ export class LegendBuilder extends React.Component {
     }
 }
 
+// The legend's values, as committed: the number each row states, rows ordered by it.
+export const legendEntriesToModel = entries =>
+    _.sortBy(entries.map(entry => ({...entry, value: legendValue(entry.value)})), 'value')
+
+// The value a row added to the legend starts with: one above the highest stated.
+export const nextLegendValue = entries => {
+    const values = entries.map(({value}) => legendValue(value)).filter(Number.isFinite)
+    return values.length ? _.max(values) + 1 : 1
+}
+
+const isNumber = value => Number.isFinite(legendValue(value))
+
 const isUnique = (key, value, entries) => !entries || entries.filter(entry => entry[key] === value).length <= 1
+
+// Values are the same that state the same number, however written: 1 and 1.0.
+const isUniqueValue = (value, entries) =>
+    !entries || !Number.isFinite(legendValue(value))
+    || entries.filter(entry => legendValue(entry.value) === legendValue(value)).length <= 1
 
 const entryFields = {
     entries: new Form.Field(),
     value: new Form.Field()
-        .notBlank(),
+        .notBlank()
+        .predicate(isNumber, 'map.legendBuilder.entry.error.invalidValue'),
     color: new Form.Field()
         .notBlank()
         .predicate(color => {
@@ -200,7 +221,7 @@ const entryConstraints = {
         .predicate(({
             value,
             entries
-        }) => isUnique('value', value, entries), 'map.legendBuilder.entry.error.duplicateValue'),
+        }) => isUniqueValue(value, entries), 'map.legendBuilder.entry.error.duplicateValue'),
     colorUnique: new Form.Constraint(['color', 'entries'])
         .predicate(({
             color,
@@ -325,7 +346,7 @@ class _Entry extends React.Component {
             ...entry,
             id: entry.id,
             color: color === undefined ? inputs.color.value : color,
-            value: parseInt(value === undefined ? inputs.value.value : value),
+            value: value === undefined ? inputs.value.value : value,
             label: label === undefined ? inputs.label.value : label
         }
         onChange(updatedEntry, form.isInvalid())

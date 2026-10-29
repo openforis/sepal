@@ -9,7 +9,7 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
-import {collectionClassifierRequirements} from '../collectionClassifierRequirements'
+import {classificationReferenceFeedback, classifiedOutputRequirements, collectionClassifierRequirements} from '../collectionClassifierRequirements'
 import {bandPresentation} from './bands'
 import {PhenologyToolbar} from './panels/phenologyToolbar'
 import {defaultModel} from './phenologyRecipe'
@@ -48,6 +48,8 @@ const getDateRange = recipe => {
     return [moment.utc(fromYear, 'YYYY'), moment.utc(toYear, 'YYYY')]
 }
 
+const SOURCES = {id: 'sources', label: 'process.changeAlerts.panel.sources.button'}
+
 export default () => ({
     id: 'PHENOLOGY',
     labels: {
@@ -58,7 +60,11 @@ export default () => ({
     components: {
         recipe: Phenology
     },
-    sourceRequirements: collectionClassifierRequirements({id: 'sources', label: 'process.changeAlerts.panel.sources.button'}),
+    sourceRequirements: [
+        ...collectionClassifierRequirements(SOURCES),
+        classifiedOutputRequirements(SOURCES, 'band'),
+        classificationReferenceFeedback(SOURCES)
+    ],
     imageSource: true,
     getDateRange,
     bandPresentation,

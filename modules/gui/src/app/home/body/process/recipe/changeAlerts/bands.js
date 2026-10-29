@@ -1,10 +1,12 @@
 import {IMAGE_OUTPUT} from '#sepal/recipe/output/product'
-import {CHANGE_ALERT_BANDS, COLLECTION_MOSAIC} from '#sepal/recipe/type/changeAlerts'
+import {CHANGE_ALERT_BANDS, COLLECTION_MOSAIC, collectionMosaicRefusals} from '#sepal/recipe/type/changeAlerts'
 import {planetMosaicBands} from '#sepal/recipe/type/planetMosaic'
 import {POINT_IN_TIME, RADAR_MOSAIC_BANDS, TIME_SCAN} from '#sepal/recipe/type/radarMosaic'
 import {bandPresentation as opticalBandPresentation} from '~/app/home/body/process/recipe/opticalMosaic/bands'
 import {planetBandTable} from '~/app/home/body/process/recipe/planetMosaic/bands'
 import {radarBandTable} from '~/app/home/body/process/recipe/radarMosaic/bands'
+
+import {settingsOf} from './processingSettings'
 
 const typeFloat = {precision: 'float'}
 const typeInt = {precision: 'int'}
@@ -40,8 +42,12 @@ const MOSAIC_PRESENTATION = {
 const PERIODS = ['monitoring', 'calibration']
 const MOSAIC_TYPES = ['latest', 'median']
 
-// The changes are the output; a layer may instead show the mosaic a period is compared on.
+// The changes are the output; a layer may instead show the mosaic a period is compared on. That mosaic is described once
+// the reference's processing is known, never from this recipe's saved copies of it; what its own period and sources
+// refuse is said meanwhile, from them alone.
 export const mapProducts = {
+    project: recipe => settingsOf(recipe).model
+        ?? (collectionMosaicRefusals(recipe.model).length ? withoutProcessing(recipe.model) : null),
     defaults: {visualizationType: 'changes', mosaicType: 'latest'},
     productOf: ({visualizationType, mosaicType}) => {
         if (visualizationType === 'changes') {
@@ -51,6 +57,11 @@ export const mapProducts = {
             ? {name: COLLECTION_MOSAIC, parameters: {period: visualizationType, mosaicType}}
             : null
     }
+}
+
+const withoutProcessing = model => {
+    const {options: _options, ...configured} = model ?? {}
+    return configured
 }
 
 // The groups Retrieve offers the change bands in.

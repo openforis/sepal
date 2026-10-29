@@ -12,20 +12,21 @@ const capture = vi.hoisted(() => ({
     destinationButtons: null,
     googleAccount: true,
     onApply: null,
+    accepts: null,
     panelButtons: null,
     read: null,
     rerender: null
 }))
 
 vi.mock('~/app/home/body/process/recipe/withRetrieveOutput', () => ({
-    withRetrieveOutput: ({isImageOutput = () => true} = {}) => Component => props => isImageOutput(props)
-        ? <Component {...props} retrieveOutput={capture.read} readRetrieveOutput={() => capture.read}/>
-        : <Component {...props}/>
+    withRetrieveOutput: () => Component => props =>
+        <Component {...props} retrieveOutput={capture.read} readRetrieveOutput={() => capture.read}/>
 }))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 
 vi.mock('~/app/home/body/process/recipeFormPanel', () => ({
-    RecipeFormPanel: ({children, onApply}) => {
+    RecipeFormPanel: ({children, accepts, onApply}) => {
+        capture.accepts = accepts
         capture.onApply = onApply
         return children
     },
@@ -480,9 +481,12 @@ describe('resolution and submission lifecycle', () => {
         expect(capture.destinationButtons.disabled).not.toBe(true)
     })
 
-    it('reads nothing for a request that is not about the output, submitting it as the recipe type does', () => {
+    // Its choices are its own, so its destinations do not wait for the output; whether it may be submitted does.
+    it('holds a request that is not about the output\'s bands while that output is read, submitting it as the recipe type does once it can run', () => {
         const onRetrieve = vi.fn()
         const submitTask = vi.fn()
+        const values = {bands: ['anything'], destination: 'DRIVE', fileDimensionsMultiple: 10, shardSize: 256}
+        capture.read = resolving()
         mount(baseProps({
             formInputs: inputs({bands: ['anything'], destination: 'DRIVE'}),
             requestOptions: [[{value: 'anything', label: 'anything'}]],
@@ -492,8 +496,13 @@ describe('resolution and submission lifecycle', () => {
 
         expect(capture.destinationButtons.disabled).not.toBe(true)
         expectEnabled('GEE', 'DRIVE', 'SEPAL')
+        expect(capture.panelButtons.invalid).toBe(true)
+        expect(capture.accepts(values)).toBe(false)
+
+        answer(ready([band('count', 0)]))
         expect(capture.panelButtons.invalid).toBe(false)
-        capture.onApply({fileDimensionsMultiple: 10, shardSize: 256})
+        expect(capture.accepts(values)).toBe(true)
+        capture.onApply(values)
         expect(onRetrieve).toHaveBeenCalledTimes(1)
         expect(submitTask).not.toHaveBeenCalled()
     })

@@ -1,19 +1,14 @@
-import {catchError, defer, filter, map, switchMap, take, tap, throwError} from 'rxjs'
+import {map, of, switchMap, throwError} from 'rxjs'
 
-import {assetBandEvidence$, imageBandEvidence$} from '#sepal/ee/bandEvidence'
-import ImageFactory from '#sepal/ee/imageFactory'
-import {loadRecipe$} from '#sepal/ee/recipe'
+import {requireCcdcRequestedOutputs$} from '#gee/jobs/requestedBands'
+import {CCDC_SEGMENTS} from '#sepal/recipe/capability/ccdcSegments'
+import {discoverProvider, FOUND} from '#sepal/recipe/capability/discoverProvider'
+import {processingOfProducer} from '#sepal/recipe/changeAlerts/processing'
 import {INVALID, READY, settledImageOutput$} from '#sepal/recipe/output/observeImageOutput'
-import {AVAILABLE_BANDS} from '#sepal/recipe/output/provider'
-import {NOT_READY} from '#sepal/recipe/output/readiness'
-import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
-import {
-    completeRecipeClosure$,
-    DEFAULT_RECIPE_CLOSURE_LIMITS
-} from '#sepal/recipe/source/completeRecipeClosure'
-import {dependencyValidity, INVALID as INVALID_DEPENDENCIES, VALID} from '#sepal/recipe/source/dependencyValidity'
-import {createLoadRecipesById$} from '#sepal/recipe/source/recipeClosureLoader'
-import {ASSET} from '#sepal/recipe/source/reference'
+import {dependencyValidity, VALID} from '#sepal/recipe/source/dependencyValidity'
+import ccdcType from '#sepal/recipe/type/ccdc'
+
+import {dependencyError, imageOutputAcquisition, readinessError, recipeClosure$} from '../../executionReadiness.js'
 
 // Resolved from the recipe being exported, never accepted from the submitter. A failed read, an incomplete closure, a
 // malformed declaration or a recipe producing no image fails the export.
@@ -22,10 +17,25 @@ import {ASSET} from '#sepal/recipe/source/reference'
 // run. A closure whose dependencies are not structurally sound fails the export before anything is described,
 // whether or not the description would have read the broken part; and an output that cannot run - its own
 // configuration, or any recipe whose image running it builds, failing a requirement (readiness.js) - fails it too.
-// The image is built beside this check, so a refused export may already have started Earth Engine work.
+// Asset exports construct their product only after this check passes (imageAssetExport.js); evidence needed to
+// establish readiness is distinct from the product being exported.
 
 export const resolveImageOutput$ = recipe =>
     describe$(recipe)
+
+// The image output, then what the bands the image is to be built with (`request`) add: for a direct CCDC, the measures
+// they ask it to fit, each one its Classification provides (requireCcdcRequestedOutputs$) - a capability refused as a
+// client's error. Its Classification's training is the image output's, judged first. Nothing of the image is built for it.
+export const resolveRequestedImageOutput$ = (recipe, request) =>
+    resolveImageOutput$(recipe).pipe(
+        switchMap(imageOutput => judgesRequest(recipe)
+            ? requireCcdcRequestedOutputs$(recipe, request).pipe(map(() => imageOutput))
+            : of(imageOutput)
+        )
+    )
+
+// Whether the bands a recipe's image is requested with can ask more of its sources than its image output does.
+export const judgesRequest = recipe => recipe.type === ccdcType.type
 
 // Only the bands the export names. An export naming none builds whatever its producer builds by default, which the
 // available bands do not describe.
@@ -34,79 +44,25 @@ export const selectedBandEncoding = (description, selectedBandNames) => {
     return (selectedBandNames || []).map(name => byName.get(name)).filter(band => band)
 }
 
-const describe$ = recipe => closure$(recipe).pipe(
+const describe$ = recipe => recipeClosure$(recipe).pipe(
     switchMap(closure => {
         const validity = dependencyValidity(closure)
         return validity.status === VALID
-            ? settledImageOutput$({graph: closure.graph, ...acquisition})
+            ? settledImageOutput$({graph: closure.graph, ...imageOutputAcquisition}).pipe(
+                map(result => ({...result, processing: executedProcessing(recipe, closure.graph)}))
+            )
             : throwError(() => dependencyError(recipe, validity))
     }),
-    map(({status, description, diagnostics, error, readiness}) => {
+    map(({status, description, diagnostics, error, readiness, processing}) => {
         if (status !== READY) {
             throw outputError(recipe, {status, diagnostics, error})
         }
         if (readiness.status !== READY) {
             throw readinessError(recipe, readiness)
         }
-        return description
+        return processing ? {...description, ...processing} : description
     })
 )
-
-// Unseeded, so the description is built only from this operation's own reads. A failure stays the failure it
-// was; what the closure had already established about its dependencies is named beside it.
-const closure$ = recipe => defer(() => {
-    let failed = null
-    return completeRecipeClosure$({
-        rootRecipe: recipe,
-        seedRecipesById: new Map(),
-        loadRecipesById$: createLoadRecipesById$({loadRecipe$}),
-        limits: DEFAULT_RECIPE_CLOSURE_LIMITS
-    }).pipe(
-        tap(state => {
-            if (state.status === 'FAILED') {
-                failed = state
-            }
-        }),
-        filter(({status}) => status === 'COMPLETE'),
-        take(1),
-        catchError(error => throwError(() => closureError(recipe, failed, error)))
-    )
-})
-
-// This runtime builds the image itself rather than asking a service for its bands, and an asset is read with
-// its stored encoding. A producer asked what it can be asked for answers from its own catalogue, which costs
-// no image and no evaluation; its physical facts come from the declaration that asked.
-const acquisition = {
-    observeBands$: ({reference, recipe, observes}) => reference.type === ASSET
-        ? assetBandEvidence$(reference.id)
-        : observes === AVAILABLE_BANDS
-            ? ImageFactory(recipe).getBands$().pipe(map(bandNames => bandNames.map(name => ({name}))))
-            : imageBandEvidence$(recipe),
-    declarationFor: recipe => recipeType(recipe.type)?.imageOutput,
-    readinessFor: recipe => recipeType(recipe.type)
-}
-
-const codesOf = diagnostics => diagnostics.map(({code}) => code).join(', ')
-
-const dependencyError = (recipe, {status, diagnostics}) =>
-    new Error(`Recipe ${recipe.id} cannot run: its dependencies are ${status.toLowerCase()} (${codesOf(diagnostics)})`)
-
-// Only a failure after a definitive diagnosis gains a message of its own, naming both; any other is passed on
-// untouched, and the original is always the cause.
-const closureError = (recipe, failed, error) => {
-    const validity = failed && dependencyValidity(failed)
-    return validity?.status === INVALID_DEPENDENCIES
-        ? new Error(
-            `Could not read the dependencies of recipe ${recipe.id}: ${error?.message || error}; already known: ${codesOf(validity.diagnostics)}`,
-            {cause: error}
-        )
-        : error
-}
-
-const readinessError = (recipe, {status, findings, failures = []}) => new Error(status === NOT_READY
-    ? `Recipe ${recipe.id} cannot run: ${codesOf(findings)}`
-    : `Recipe ${recipe.id} cannot run: what it needs could not be read${failures[0] ? `: ${failures[0].message}` : ''}`,
-{cause: failures[0]})
 
 // A provider that faulted is diagnosed by the error it threw and nothing else, so what the state carries
 // decides what the failure can name.
@@ -116,4 +72,13 @@ const outputError = (recipe, {status, diagnostics, error}) => {
         ? `${outcome} (${diagnostics.map(({code}) => code).join(', ')})`
         : error ? `${outcome}: ${error.message}` : outcome
     return new Error(`Could not describe the output of recipe ${recipe.id}: ${cause}`, {cause: error})
+}
+
+// Only the declared computing segment producer can establish a complete processing record. Wrappers retain that
+// producer's values; unrelated outputs and assets of unknown provenance acquire no invented processing metadata.
+const executedProcessing = (recipe, graph) => {
+    const records = new Map(graph.recipes.map(record => [record.id, record]))
+    const {status, provider} = discoverProvider({type: 'RECIPE_REF', id: recipe.id}, records, CCDC_SEGMENTS)
+    return status === FOUND && provider.record && !provider.declared.segmentsAsset
+        ? {processing: processingOfProducer(provider.record.model).record, segmentDateFormat: provider.declared.dateFormat?.(provider.record.model)} : null
 }

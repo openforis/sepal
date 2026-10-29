@@ -87,15 +87,25 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
 
 ### Authentication
 - `src/authMiddleware.js`: HTTP Basic credentials, when present, are authenticated via POST to `http://user/authenticate` and win over the session's `sepal-user` (a login from a browser logged in as someone else must switch account); otherwise the injected `sepal-user` passes. A GUI login on a session held by another user replaces the session (`ensureSessionFor` in `session.js`)
+- **Login throttling**: the user module throttles failed password logins per username at a client address and per client address (see
+  `modules/user/src/loginThrottle.js`). The gateway sends `req.ip` as `clientIp` (`trust proxy` is 1: Caddy sets
+  `X-Forwarded-For`) and passes the user module's 429 on to the client.
+- **Password reset logs in**: `POST /api/user/password/reset` (`src/passwordResetRoute.js`) forwards to the user
+  module and, when it accepts the token, starts the browser's session as that user (`src/userSession.js`, shared with
+  `authMiddleware`). The reset proves control of the account's email, so no throttled login follows it.
 - **Worker-session API keys**: Basic auth with an *empty* username treats the password as a worker-session
   api key, authenticated via `POST http://worker/sessions/api-key-authenticate`. The key resolves to
-  `{username, sessionId, workerType}`; the user is injected as `sepal-user` and the session as
+  `{username, sessionId, workerType}`; a key whose owner is not `ACTIVE` (e.g. locked) is refused
+  with 401, as task-container keys (`task_…`, via task-manager) are; otherwise the user is injected as `sepal-user` and the session as
   `sepal-session` (`{sessionId, workerType}` — never the key, never a role). `sepal-session` is
   request-local: `userStore.userMiddleware` strips whatever the client sent, only successful key
   authentication sets it, and `src/proxy.js` forwards it on authenticated endpoints only.
 - **Metrics are admin-only**: `src/metricsAccess.js` answers 403 to any `/api/<module>/metrics[.json]` request
   from a user without `application_admin` (Prometheus scrapes as `sepaladmin`). Every Koa module serves
   `/metrics` behind its catch-all proxy, so the guard matches the path pattern, case-insensitively, not a list.
+- **Internal user-module endpoints**: `/api/user/auth/*` and `/api/user/nss/*` (`internalPaths` in `config/endpoints.js`)
+  answer 404; only the ssh-gateway calls them, directly. `proxyEndpoints` registers the block itself, so it always
+  precedes the `/api/user` proxy.
 - **Websocket upgrades bypass Express**, so `src/webSocketUpgrade.js` repeats the guards for them: it strips
   `sepal-user` and `sepal-session`, refuses metrics paths, and proxies only endpoints marked `ws: true` in
   `config/endpoints.js` (plus `/api/ws` and the sandbox proxy); anything else is answered 404.

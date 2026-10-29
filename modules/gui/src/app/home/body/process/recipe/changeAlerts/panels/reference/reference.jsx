@@ -1,12 +1,15 @@
 import React from 'react'
 
+import {effectiveSettings, seedMonitoring} from '#sepal/recipe/changeAlerts/processing'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {SourceKind} from '~/app/home/body/process/sourceTypeButtons'
 import {compose} from '~/compose'
+import {select} from '~/store'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {Panel} from '~/widget/panel/panel'
 
+import {presentProcessingInputs} from '../../processingSettings'
 import {AssetSection} from './assetSection'
 import {RecipeSection} from './recipeSection'
 import styles from './reference.module.css'
@@ -24,8 +27,6 @@ const fields = {
         .skip((value, {section}) => section !== 'RECIPE_REF')
         .notBlank('process.changeAlerts.panel.reference.form.recipe.required'),
     dateFormat: new Form.Field()
-        .skip((value, {section}) => section !== 'ASSET')
-        .notBlank()
 }
 
 class _Reference extends React.Component {
@@ -33,7 +34,15 @@ class _Reference extends React.Component {
         return (
             <RecipeFormPanel
                 className={styles.panel}
-                placement='bottom-right'>
+                placement='bottom-right'
+                additionalUpdates={() => {
+                    const {recipeId, sourceCandidate} = this.props
+                    const recipe = select(['process.loadedRecipes', recipeId])
+                    return !recipe.ui?.initialized && !recipe.model.reference?.id
+                        ? Object.entries(seedMonitoring(sourceCandidate?.facts()?.processing))
+                            .map(([group, value]) => ({path: `model.${group}`, value, merge: true}))
+                        : []
+                }}>
                 <Panel.Header
                     icon='cog'
                     title={msg('process.changeAlerts.panel.reference.title')}/>
@@ -48,12 +57,15 @@ class _Reference extends React.Component {
     // The kind of source is chosen beside its picker. Each picker keeps what was selected in it while the form is open;
     // only the kind shown is applied.
     renderSource() {
-        const {inputs} = this.props
+        const {inputs, sourceCandidate} = this.props
+        const processing = sourceCandidate?.facts()?.processing || {state: sourceCandidate?.status()?.state === 'UNAVAILABLE_SOURCE' ? 'UNAVAILABLE' : 'PENDING'}
+        const settings = effectiveSettings({reference: {dateFormat: inputs.dateFormat.value}}, processing)
+        const presented = presentProcessingInputs(settings)(inputs, model => model)
         return (
             <SourceKind input={inputs.section} recipe='RECIPE_REF' defaultKind={NEW_REFERENCE_KIND}>
                 {({recipe, labelButtons}) => recipe
                     ? <RecipeSection inputs={inputs} labelButtons={labelButtons}/>
-                    : <AssetSection inputs={inputs} labelButtons={labelButtons}/>}
+                    : <AssetSection inputs={presented} labelButtons={labelButtons}/>}
             </SourceKind>
         )
     }

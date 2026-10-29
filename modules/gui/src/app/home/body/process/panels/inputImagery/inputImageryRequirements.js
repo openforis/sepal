@@ -67,7 +67,6 @@ export const inputRecipeFeedback = section => ({
     editor: {
         panel: 'inputImage',
         input: 'recipe',
-        blocksApply: false,
         explain: true,
         candidate: (recipe, image) => ({
             ...recipe,

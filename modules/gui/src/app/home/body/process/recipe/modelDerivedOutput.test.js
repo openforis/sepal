@@ -67,9 +67,10 @@ const {visualizationOptions: changeAlertsVisualizationOptions} = await import('.
 const {groupedBandPresentation: radarMosaicRetrieveGroups} = await import('./radarMosaic/bands')
 const {groupedBandPresentation: planetMosaicRetrieveGroups} = await import('./planetMosaic/bands')
 const {renderableVisualizations} = await import('./visualizationMatching')
-const {typedSegmentsAssetDescription} = await import('./ccdc/segmentsAsset')
+const {describedByRuntime, observedSegmentsAsset, segmentsAssetMetadata} = await import('./changeAlerts/observedReference.test.fixtures')
 const {declaredSelections, sourceKeyOf} = await import('./sourceEvidence')
 const {historicalStatsOf} = await import('./baytsAlerts/historicalStatistics')
+const {assetProcessing} = await import('#sepal/recipe/bayts/processing')
 
 addRecipeType(regression())
 addRecipeType(unsupervisedClassification())
@@ -92,11 +93,19 @@ beforeEach(() => {
 })
 
 describe('a regression', () => {
-    it('is described from its declaration while the recipe it trains on is not even loaded', () => {
-        const {output} = read(regressionOf({trainingRecipe: 'training-1'}))
+    it('is described from its declaration, whatever recipe it trains on', () => {
+        const {output} = readAll([regressionOf({trainingRecipe: TRAINING}), COVARIATES, LAND_COVER, trainingProviderOf('REGRESSION')])
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands).toEqual([expect.objectContaining({name: 'regression', dataType: {arrayDimensions: 0}})])
+    })
+
+    // Running it produces that recipe's training data (TRAINING_DATA), so whether it can run waits for that recipe.
+    it('waits for the recipe it trains on while that recipe is not loaded, naming it as needed', () => {
+        const {output} = read(regressionOf({trainingRecipe: TRAINING}))
+
+        expect(output.status).toBe('NEEDS_EVIDENCE')
+        expect(output.readiness.needs.records).toEqual([TRAINING])
     })
 
     it('is presented with its label, float cursor precision and preset style', () => {
@@ -291,8 +300,8 @@ describe('a classification', () => {
         ['a naive Bayes classifier', 'NAIVE_BAYES', ['class', 'class_probability', 'probability_1', 'probability_2']],
         ['a minimum distance classifier', 'MINIMUM_DISTANCE', ['class']],
         ['a decision tree', 'DECISION_TREE', ['class']]
-    ])('by %s is described with the bands execution builds, while the recipe it trains on is not even loaded', (_case, type, names) => {
-        const {output} = read(classificationOf({classifier: type, trainingRecipe: 'training-1'}))
+    ])('by %s is described with the bands execution builds, whatever recipe it trains on', (_case, type, names) => {
+        const {output} = readAll([classificationOf({classifier: type, trainingRecipe: TRAINING}), COVARIATES, LAND_COVER, trainingProviderOf('CLASSIFICATION')])
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands.map(({name}) => name)).toEqual(names)
@@ -427,13 +436,21 @@ describe('a phenology', () => {
 })
 
 describe('a PyEO alerts recipe', () => {
-    it('is described with its change report, while the classification it applies is not even loaded', () => {
-        const {output} = read(pyeoAlertsOf({classification: 'classification-1'}))
+    it('is described with its change report', () => {
+        const {output} = read(pyeoAlertsOf())
 
         expect(output).toMatchObject({status: 'READY', authority: 'DESCRIBED'})
         expect(output.bands).toHaveLength(18)
         expect(output.bands.slice(0, 3).map(({name}) => name)).toEqual(['available_image_count', 'occluded_count', 'total_changes'])
         expect(output.bands.every(({dataType}) => dataType.arrayDimensions === 0)).toBe(true)
+    })
+
+    // Its baseline is that classification's image, so whether it can run waits for that recipe.
+    it('waits for the classification it applies while that recipe is not loaded, naming it as needed', () => {
+        const {output} = read(pyeoAlertsOf({classification: 'classification-1'}))
+
+        expect(output.status).toBe('NEEDS_EVIDENCE')
+        expect(output.readiness.needs.records).toEqual(['classification-1'])
     })
 
     it('is presented with its labels and ranges', () => {
@@ -822,6 +839,50 @@ describe('a Change Alerts recipe', () => {
         })
     })
 
+    // The mosaic is built with processing the reference owns, so it waits for that to be read rather than being built from
+    // the copies this recipe saved. What its own period and sources refuse needs none of it, and is said meanwhile.
+    describe('while its reference\'s processing is still being read', () => {
+        const layerConfig = {visualizationType: 'monitoring', mosaicType: 'latest'}
+
+        it('waits to describe its mosaic, which cannot be previewed', () => {
+            const {output} = layerRead(unobserved(changeAlertsOf()), layerConfig)
+
+            expect(output.status).toBe('NEEDS_EVIDENCE')
+            expect(canPreview(output)).toBe(false)
+        })
+
+        it('is already refused before a period is chosen', () => {
+            const {output} = layerRead(unobserved(changeAlertsOf({date: {...PERIOD, monitoringEnd: undefined}})), layerConfig)
+
+            expect(output).toMatchObject({
+                status: 'INVALID',
+                diagnostics: [expect.objectContaining({code: 'INCOMPLETE_IMAGE_OUTPUT', path: ['model', 'date', 'monitoringEnd']})]
+            })
+        })
+
+        it.each([
+            ['no model', undefined],
+            ['a null model', null]
+        ])('is refused, not thrown, for a recipe with %s yet', (_case, model) => {
+            const {output} = layerRead({id: ID, type: 'CHANGE_ALERTS', title: 'Alerts', model}, layerConfig)
+
+            expect(output).toMatchObject({status: 'INVALID'})
+            expect(output.diagnostics).toEqual(expect.arrayContaining([
+                expect.objectContaining({code: 'INCOMPLETE_IMAGE_OUTPUT', path: ['model', 'date', 'monitoringEnd']}),
+                expect.objectContaining({code: 'INCOMPLETE_IMAGE_OUTPUT', path: ['model', 'sources', 'dataSetType']})
+            ]))
+        })
+
+        it('is already refused for a Planet source with no Planet collection', () => {
+            const {output} = layerRead(unobserved(changeAlertsOf({sources: {...PLANET_SOURCES, dataSets: {}}})), layerConfig)
+
+            expect(output).toMatchObject({
+                status: 'INVALID',
+                diagnostics: [expect.objectContaining({code: 'INCOMPLETE_IMAGE_OUTPUT', path: ['model', 'sources', 'dataSets', 'PLANET']})]
+            })
+        })
+    })
+
     // A latest radar mosaic stands at the period's end or start, and a median one scans the period.
     it.each([
         ['monitoring', 'latest', RADAR_POINT_IN_TIME, ['VV', 'VH', 'ratio_VV_VH']],
@@ -1118,6 +1179,19 @@ describe.each([
 
 const ID = 'model-1'
 
+// A recipe whose training data another reuses: over the covariates, with points of its own.
+const TRAINING = 'training-1'
+const trainingProviderOf = type => ({
+    id: TRAINING,
+    type,
+    model: {
+        inputImagery: {images: [COVARIATES_IMAGE]},
+        legend: {entries: [{value: 1, label: 'One', color: '#000000'}, {value: 2, label: 'Two', color: '#ffffff'}]},
+        classifier: {type: 'RANDOM_FOREST'},
+        trainingData: {dataSets: [{type: 'EE_TABLE', referenceData: [{x: 0.5, y: 0.5, class: 1, value: 1}]}]}
+    }
+})
+
 // The imagery a model is fit to: an optical mosaic, described from its configuration as soon as it is loaded.
 const COVARIATES = {
     id: 'covariates-1',
@@ -1268,23 +1342,23 @@ const baytsAlertsOf = ({reference = {type: 'ASSET', id: 'users/x/bayts-historica
     ...(reference.type === 'ASSET' && {ui: {sourceEvidence: historicalStatsObserved(reference)}})
 })
 
-// An image asset's historical statistics as the observation reads them from its metadata: each band scalar.
+// An image asset's historical statistics as the observation reads them from its metadata: each band scalar, and no
+// processing recorded beside them.
 const historicalStatsObserved = reference => {
     const bands = ['asc', 'desc'].flatMap(suffix =>
         ['VV_mean', 'VV_std', 'VH_mean', 'VH_std', 'orbit', 'VV_speckle', 'VH_speckle'].map(statistic => `${statistic}_${suffix}`)
     )
+    const metadata = {
+        type: 'Image',
+        bandNames: bands,
+        bands: bands.map(id => ({id, dimensions: [5015, 3093], data_type: {type: 'PixelType', precision: 'float'}})),
+        properties: {}
+    }
     return {
         status: 'OBSERVED',
         sourceKey: sourceKeyOf(reference),
-        historicalStats: historicalStatsOf({
-            producer: {assetId: reference.id},
-            metadata: {
-                type: 'Image',
-                bandNames: bands,
-                bands: bands.map(id => ({id, dimensions: [5015, 3093], data_type: {type: 'PixelType', precision: 'float'}})),
-                properties: {}
-            }
-        })
+        processing: assetProcessing(metadata.properties),
+        historicalStats: historicalStatsOf({producer: {assetId: reference.id}, metadata})
     }
 }
 
@@ -1317,19 +1391,10 @@ const changeAlertsOf = ({reference = {type: 'ASSET', id: 'users/x/segments'}, da
 })
 
 // An image asset's segments as the observation reads them from its metadata: each band's grid, and its array rank.
-const segmentsObserved = (reference, band) => {
-    const bands = [['tStart', 1], ['tEnd', 1], [`${band}_coefs`, 2], [`${band}_rmse`, 1]]
-    return {
-        status: 'OBSERVED',
-        sourceKey: sourceKeyOf(reference),
-        segments: typedSegmentsAssetDescription({
-            type: 'Image',
-            bandNames: bands.map(([name]) => name),
-            bands: bands.map(([id, dimensions]) => ({id, dimensions: [5015, 3093], data_type: {type: 'PixelType', precision: 'double', dimensions}})),
-            properties: {dateFormat: 1}
-        }, {assetId: reference.id})
-    }
-}
+const segmentsObserved = (reference, band) => observedSegmentsAsset(reference, segmentsAssetMetadata({band}))
+
+// The recipe as it is before its reference has been observed.
+const unobserved = ({ui: {sourceEvidence: _observed, ...ui} = {}, ...recipe}) => ({...recipe, ui})
 
 const RADAR_POINT_IN_TIME = ['VV', 'VH', 'ratio_VV_VH', 'orbit', 'dayOfYear', 'daysFromTarget']
 
@@ -1422,7 +1487,7 @@ const read = recipe => readAll([recipe, COVARIATES, LAND_COVER])
 
 // The read a Retrieve panel makes of the first recipe, with the others loaded beside it and nothing retained. What a
 // recipe's evidence lifecycle published on it was observed on a basis current for this read, and the asset it was read
-// from was just checked.
+// from was just checked; the runtime has described what that asset's evidence describes (describedByRuntime).
 const readAll = ([recipe, ...others]) => {
     const owners = {}
     const records = [recipe, ...others].map(record => observedNow(record, owners))
@@ -1433,7 +1498,7 @@ const readAll = ([recipe, ...others]) => {
             assetEvidence: {generation: 0, assets: Object.fromEntries(records.flatMap(checkedAssets))}
         }},
         recipeId: recipe.id,
-        heldFor: () => null,
+        heldFor: key => key.kind === 'DESCRIBE' ? describedByRuntime(records) : null,
         evidenceOwnerOf: id => owners[id] || null
     })
 }

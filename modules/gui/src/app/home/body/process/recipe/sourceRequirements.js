@@ -1,7 +1,7 @@
 import _ from 'lodash'
 
 import {CYCLIC, discoverProvider, FOUND, MALFORMED, NOT_A_SOURCE, UNRESOLVED} from '#sepal/recipe/capability/discoverProvider'
-import {NOT_READY} from '#sepal/recipe/output/readiness'
+import {NOT_READY, PIXEL_SEGMENTS} from '#sepal/recipe/output/readiness'
 import {NEEDS_EVIDENCE, SUPPORTED, UNSUPPORTED} from '#sepal/recipe/requirement/verdict'
 import {VALID} from '#sepal/recipe/source/dependencyValidity'
 import {directSourceEdges} from '#sepal/recipe/source/directSources'
@@ -27,6 +27,7 @@ import {
     READY as OUTPUT_READY,
     UNAVAILABLE as OUTPUT_UNAVAILABLE
 } from './recipeOutput'
+import {establishesOwnDefect} from './referenceFeedback'
 import {OBSERVED, sourceEdgeOf, sourceKeyOf} from './sourceEvidence'
 import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 
@@ -123,9 +124,10 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 //
 // A presentation-only declaration may name `outputDiagnostics.upstreamReferences`: the roles whose directly
 // referenced recipes need attention according to confirmed readiness findings. Each reported recipe path's first
-// hop is matched to the recipe's declared edges, and `itemOf` receives that edge's path and reference. The original
-// diagnosis remains upstream. Such a declaration has no operations and no editor binding: it marks the reference
-// without changing gates, acquisition or draft validity. Nothing is read for it without a located finding.
+// hop is matched to the recipe's declared edges, and `itemOf` receives that edge's path and reference, the origins and
+// the findings routed through it. The original diagnosis remains upstream. Such a declaration has no operations and no
+// editor binding: it marks the reference without changing gates, acquisition or draft validity. Nothing is read for it
+// without a located finding.
 //
 // Where that read holds no refusal a declaration states but is no description either - still being read, unreadable,
 // refused for something else, or over dependencies known unsound - one read without an item says so for the
@@ -163,8 +165,8 @@ export const CONFIGURATION_UNMET = 'CONFIGURATION_UNMET'
 
 export const PREREQUISITE_UNMET = 'PREREQUISITE_UNMET'
 
-// The operation of reading the segments at a pixel, as a segment chart does.
-export const PIXEL_SEGMENTS = 'PIXEL_SEGMENTS'
+// The operation of reading the segments at a pixel, as a segment chart does (#sepal/recipe/output/readiness).
+export {PIXEL_SEGMENTS}
 
 // {declaration, selected, acquisition, providerChain, verdict, assetId?, missing?} for each requirement the recipe's type declares.
 // Local reads, in their declaration's place, are {declaration, local: true, item, acquisition, providerChain, ownVerdict,
@@ -335,25 +337,29 @@ export const readLocalRequirements = recipe => {
 // The identity of a local read: its declaration's id and its item's.
 export const readKey = ({declaration, item}) => keyOf(declaration.id, item?.id)
 
-// Why a request for an operation over the recipe may not start, by what it selected, if anything: blocks before waits.
-// Nothing an owner is not reading is waited for: no reader can say whether anything will. Retrieve refuses on any of
-// them; a new request for a preview or a chart is held (requestGate).
-export const sourceRequirementGate = ({state, recipe, operation, evidenceOwnerOf, heldFor, now}) =>
-    firstReason(requirementReasons({state, recipe, operation, evidenceOwnerOf, heldFor, now}))
-
 // Whether a new Earth Engine request for an operation over the recipe may start now: null when it may, otherwise
 // {wait, withdraw, code, section, read} - `read` the requirement's read behind it, as far as the operation is held to it. While a requirement is not known to be met nothing new is requested, and what is
 // already drawn stays - checking is no reason to change it. A source found missing or unsuitable, or a configuration
-// found not to meet its requirements, also withdraws it.
+// found not to meet its requirements, also withdraws it. Blocks come before waits, and nothing an owner is not reading
+// is waited for: no reader can say whether anything will.
 // Wherever the recipe is shown, the consumer requesting the operation watches the evidence it needs (sourceRuntime.js),
 // so what is held is being read.
 export const requestGate = ({state, recipe, operation, evidenceOwnerOf, heldFor, now}) =>
     requestGateOf(readSourceRequirements({state, recipe, evidenceOwnerOf, heldFor, now}), operation)
 
 // The same, judged from the recipe's reads (readSourceRequirements), for a caller asking more than one question of them.
-export const requestGateOf = (reads, operation) =>
-    firstReason(reasonsIn(reads, operation)
-        .map(reason => ({...reason, withdraw: WITHDRAWING.includes(reason.code)})))
+// A finding withdraws it whatever another requirement is still to establish. A refusal a requirement states - local,
+// located or of a selected source - is the reason where it holds the operation: the output read refused, said for a
+// declaration that found nothing of its own (`outputState`), is the reason only where none does, for that operation.
+export const requestGateOf = (reads, operation) => {
+    const reasons = reasonsIn(reads, operation)
+        .map(reason => ({...reason, withdraw: WITHDRAWING.includes(reason.code)}))
+    const stated = reasons.some(({read}) => !read.outputState && read.verdict.status === UNSUPPORTED)
+    const given = stated
+        ? reasons.filter(({read}) => !(read.outputState && read.acquisition === CHECKED))
+        : reasons
+    return given.find(({withdraw}) => withdraw) || firstReason(given)
+}
 
 // Why the recipe's own configuration refuses an operation, if it does: {wait, withdraw, code, section, read}, decided
 // from the recipe alone, whatever its sources or its output read as.
@@ -378,9 +384,6 @@ export const establishedIn = (reads, operation) => {
 // An operation that needs the requirement met is answered by its whole read. One that only resolves the source through
 // its provider chain is refused only where that chain is, and waits only for its records: what the requirement judges
 // of the segments is not its concern.
-const requirementReasons = ({state, recipe, operation, evidenceOwnerOf, heldFor, now}) =>
-    reasonsIn(readSourceRequirements({state, recipe, evidenceOwnerOf, heldFor, now}), operation)
-
 const reasonsIn = (reads, operation) => reads
     .map(read => reasonFor(read, operation))
     .filter(Boolean)
@@ -565,24 +568,36 @@ const refusedReferences = (output, recipe, roles) => {
         return []
     }
     const refused = new Map()
-    ;(output.readiness?.findings || []).forEach(({recipePath = []}) => {
+    ;(output.readiness?.findings || []).forEach(finding => {
+        const {recipePath = []} = finding
         if (!Array.isArray(recipePath) || recipePath[0] !== recipe.id || recipePath.length < 2) {
             return
         }
         const reference = recipePath[1]
-        const origins = refused.get(reference) || new Set()
-        const origin = recipePath.at(-1)
+        const {origins, findings} = refused.get(reference) || {origins: new Set(), findings: []}
+        const origin = originOf(finding)
         if (typeof origin === 'string' && origin.trim()) {
             origins.add(origin)
         }
-        refused.set(reference, origins)
+        refused.set(reference, {origins, findings: [...findings, finding]})
     })
     if (!refused.size) {
         return []
     }
     return directSourceEdges(recipe).edges
         .filter(({role, reference}) => roles.includes(role) && reference.type === 'RECIPE_REF' && refused.has(reference.id))
-        .map(({role, path, reference}) => ({role, path, reference, origins: [...refused.get(reference.id)], recipePath: [recipe.id]}))
+        .map(({role, path, reference}) => {
+            const {origins, findings} = refused.get(reference.id)
+            return {role, path, reference, origins: [...origins], findings, recipePath: [recipe.id]}
+        })
+}
+
+// The recipe a finding says is to review: where it is found, where it establishes that recipe unsound by itself, or else
+// the recipe referencing it, which cannot use it so - none when that is the recipe reading it, whose own selection it is.
+const originOf = finding => {
+    const {recipePath} = finding
+    const origin = establishesOwnDefect(finding) ? recipePath.at(-1) : recipePath.at(-2)
+    return origin === recipePath[0] ? null : origin
 }
 
 // The sources the recipe's own edges in the `references` roles name that are found gone, each located at its edge.
@@ -660,7 +675,10 @@ const findingsOf = output => {
 
 // The recipe further up the closure whose own refusal refuses this one, if one does: where its repair lies.
 const upstreamRefuser = (diagnostics = []) =>
-    diagnostics.find(({recipePath = []}) => recipePath.length > 1)?.recipePath.at(-1) || null
+    diagnostics
+        .filter(({recipePath = []}) => recipePath.length > 1)
+        .map(originOf)
+        .find(Boolean) || null
 
 // Names by recipe id from the listing, once per listing and shared by everything naming recipes from it: read, never
 // changed.

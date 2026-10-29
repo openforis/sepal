@@ -9,6 +9,13 @@ import {lastValueFrom, of, throwError} from 'rxjs'
 
 const state = {}
 
+// The Classification's input is observed holding what it selects (`state.inputBands`), to judge its training.
+mock.module('#sepal/ee/bandEvidence', {
+    exports: {
+        assetBandEvidence$: () => of((state.inputBands || []).map(name => ({name, arrayDimensions: 0}))),
+        imageBandEvidence$: recipe => throwError(() => new Error(`Image described: ${recipe.id}`))
+    }
+})
 mock.module('#sepal/ee/recipe', {
     exports: {
         loadRecipe$: id => state.catalogue[id]
@@ -109,12 +116,21 @@ describe('an image export to the workspace of a recipe that cannot run', () => {
         title: 'My masking',
         model: {imageToMask: {type: 'RECIPE_REF', id: ccdc.id}, imageMask: {type: 'RECIPE_REF', id: MOSAIC.id}}
     }
-    const classification = included => ({
-        id: CLASSIFICATION,
-        type: 'CLASSIFICATION',
-        model: {inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]}}
-    })
-    const exportOf = recipe => startImageWorkspaceExport$({image: {...PARAMS.image, recipe, bands: {selection: ['ndvi']}}}, {sepalUser: ALICE})
+    // Trained on points over `included` of an asset: every CCDC export trains it (type/ccdc.js).
+    const classification = included => {
+        state.inputBands = included
+        return {
+            id: CLASSIFICATION,
+            type: 'CLASSIFICATION',
+            model: {
+                inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]},
+                legend: {entries: [{value: 1}, {value: 2}]},
+                trainingData: {dataSets: [{type: 'COLLECTED', referenceData: [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]}]},
+                classifier: {type: 'RANDOM_FOREST'}
+            }
+        }
+    }
+    const exportOf = recipe => startImageWorkspaceExport$({image: {...PARAMS.image, recipe, bands: {selection: ['ndvi_coefs']}}}, {sepalUser: ALICE})
 
     beforeEach(() => {
         state.catalogue = {[ccdc.id]: ccdc, [MOSAIC.id]: MOSAIC}

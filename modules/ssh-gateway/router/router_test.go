@@ -172,6 +172,11 @@ func TestLoginsAreRefused(t *testing.T) {
 		{"unauthorized key", func(g *gateway) (*libplugin.Upstream, error) {
 			return g.router.publicKey(aConnection("alice+funky-name"), aPublicKey(t).Marshal())
 		}},
+		{"client address the user module throttles", func(g *gateway) (*libplugin.Upstream, error) {
+			connection := aConnection("alice")
+			g.throttledIP, _, _ = net.SplitHostPort(connection.RemoteAddr())
+			return g.router.password(connection, []byte("secret"))
+		}},
 		{"username SEPAL cannot issue", func(g *gateway) (*libplugin.Upstream, error) {
 			return g.router.password(aConnection("../alice"), []byte("secret"))
 		}},
@@ -221,6 +226,7 @@ type gateway struct {
 	sepalKey    []byte
 	userKey     ssh.PublicKey
 	keys        map[string][]ssh.PublicKey
+	throttledIP string
 	clock       time.Time
 }
 
@@ -244,6 +250,10 @@ func aGateway(t *testing.T) *gateway {
 	}
 	users := http.NewServeMux()
 	users.Handle("/auth/password", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if g.throttledIP != "" && r.PostFormValue("clientIp") == g.throttledIP {
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
+		}
 		if _, known := g.keys[r.PostFormValue("username")]; known && r.PostFormValue("password") == "secret" {
 			return
 		}

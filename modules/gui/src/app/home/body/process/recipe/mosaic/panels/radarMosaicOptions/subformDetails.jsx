@@ -6,7 +6,7 @@ import styles from './subformDetails.module.css'
 export const SubformDetails = ({fields, onClick}) => {
     return (
         <Layout
-            className={styles.details}
+            className={onClick ? styles.details : undefined}
             type='horizontal'
             alignment='left'
             framed
@@ -16,9 +16,9 @@ export const SubformDetails = ({fields, onClick}) => {
     )
 }
 
-const renderField = ({label, value}) =>
+const renderField = ({label, value, tooltip}) =>
     <Layout key={label} type='vertical' spacing='none'>
-        <Label msg={label} size='small'/>
+        <Label msg={label} tooltip={tooltip} size='small'/>
         <div className={styles.value}>
             {value || value !== '' ? value : <i>n/a</i>}
         </div>

@@ -10,7 +10,7 @@ import {Notifications} from '~/widget/notifications'
 
 import {recipeAccess} from '../../recipeAccess'
 import {Aoi} from '../aoi'
-import {collectionClassifierRequirements} from '../collectionClassifierRequirements'
+import {classificationReferenceFeedback, collectionClassifierRequirements} from '../collectionClassifierRequirements'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {bandPresentation} from './bands'
 import {TimeSeriesToolbar} from './panels/timeSeriesToolbar'
@@ -58,13 +58,14 @@ class _TimeSeries extends React.Component {
                 classification => {
                     this.recipeActions.setClassification({
                         classificationLegend: classification.model.legend,
-                        classifierType: classification.model.classifier.type
+                        classifierType: classification.model.classifier.type,
+                        classifier: classification.model.classifier
                     })
                 },
                 error => Notifications.error({message: msg('process.timeSeries.panel.sources.classificationLoadError', {error}), error})
             )
         } else if (!classificationRecipeId && classificationLegend && !stream('LOAD_CLASSIFICATION_RECIPE').active) {
-            this.recipeActions.setClassification({classificationLegend: null, classifierType: null})
+            this.recipeActions.setClassification({classificationLegend: null, classifierType: null, classifier: null})
         }
     }
 }
@@ -74,6 +75,8 @@ const TimeSeries = compose(
     recipe({defaultModel, mapRecipeToProps}),
     recipeAccess()
 )
+
+const SOURCES = {id: 'sources', label: 'process.timeSeries.panel.sources.button'}
 
 export default () => ({
     id: 'TIME_SERIES',
@@ -86,7 +89,10 @@ export default () => ({
     components: {
         recipe: TimeSeries
     },
-    sourceRequirements: collectionClassifierRequirements({id: 'sources', label: 'process.timeSeries.panel.sources.button'}),
+    sourceRequirements: [
+        ...collectionClassifierRequirements(SOURCES),
+        classificationReferenceFeedback(SOURCES)
+    ],
     imageSource: false,
     // Keeps a time series out of other recipes' source pickers. It says nothing of its image: that is declared, and
     // its map shows it.

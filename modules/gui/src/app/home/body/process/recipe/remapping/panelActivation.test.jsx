@@ -7,7 +7,7 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
+import {initStore, select} from '~/store'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import widgetStyles from '~/widget/widget.module.css'
 
@@ -178,6 +178,28 @@ describe('a legend holding an edit', () => {
         expect(labelField('Lake')).toBeDefined()
     })
 
+    it('saves an entered value as the whole number it states, the legend ordered by those numbers', async () => {
+        await open()
+        await press(BUTTONS.LEGEND)
+
+        await typeInto(valueFields()[0], '1e1')
+        await press('button.apply')
+
+        expect(select(['process.loadedRecipes', ID, 'model.legend.entries'])).toEqual([
+            {id: 'l-2', color: '#0000ff', value: 2, label: 'Water'},
+            {id: 'l-1', color: '#00ff00', value: 10, label: 'Forest'}
+        ])
+    })
+
+    it('refuses an entry stating another\'s value differently, which cannot be applied', async () => {
+        await open()
+        await press(BUTTONS.LEGEND)
+
+        await typeInto(valueFields()[1], '1.0')
+
+        expect(panelButton('button.apply').disabled).toBe(true)
+    })
+
     it('refuses an entry taking another\'s label, which cannot be applied', async () => {
         await open()
         await press(BUTTONS.LEGEND)
@@ -322,6 +344,8 @@ const editorShowing = () => document.querySelector('[data-label="widget.recipeIn
         : null
 
 const labelField = label => [...document.querySelectorAll('input')].find(field => field.value === label)
+
+const valueFields = () => [...document.querySelectorAll('input[name="value"]')]
 
 // The legend's labels whose fields are in their error state.
 const labelsInError = () => [...document.querySelectorAll('input[name="label"]')]

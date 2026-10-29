@@ -4,6 +4,10 @@ Technical index for aligning how SEPAL recipes consume other recipes and Earth E
 cross-recipe concern. Masking, CCDC, CCDC Slice and Classification provide acceptance cases, but none owns the
 shared model. User-facing documentation belongs in the separate `sepal-doc` repository.
 
+[Recipe behavior contracts](behavior-contracts.md) records the interaction and design guidance from manual testing:
+configuration ownership, operation validity, repair feedback, editing, recovery and verification. Use it when
+designing a consumer change; the technical contracts below implement those choices rather than deciding them.
+
 ## Current delivery focus
 
 Make the shared output declaration the single band authority for every recipe type. The work after it —
@@ -1261,8 +1265,10 @@ These are follow-ups, not additions to the current suitability packet. Coordinat
 
 ### Recipe-scoped modals
 
-Separate UI workstream, starting with inspection; implementation is not yet scheduled. This is a prerequisite for
-[opening the selected recipe](#open-selected-recipe), not an expansion of the current validation packets.
+Separate UI workstream, starting with inspection. On 2026-10-27 the user selected this after BAYTS settings
+ownership/consistency and visualization Copy/Paste, following the current keyboard band-addition slice; see the
+[agreed next sequence](source-resolution.md#current-release-checkpoint). No implementation is claimed yet.
+This is a prerequisite for [opening the selected recipe](#open-selected-recipe), not an expansion of the current validation packets.
 Application-wide modals prevent switching recipe tabs and application sections. The intended direction is for an
 ordinary recipe editor to block interaction only within its owning recipe, leaving that navigation available.
 

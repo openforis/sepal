@@ -9,6 +9,7 @@ import {createTestDb} from '#sepal/testSupport/db/testDb'
 import {BudgetRepository} from './budgetRepository.js'
 import {budget, storageUse, userSpendingReport} from './dto.js'
 import {OpenSessionUseRepository} from './openSessionUse.js'
+import {STORAGE_COST_PER_GB_MONTH} from './pricing.js'
 
 // Direct SQL appears only where a public read cannot show what was stored: the initial and final figures
 // of a budget request, and whether a write replaced a row or added one.
@@ -200,8 +201,8 @@ describe('BudgetRepository', () => {
             assert.equal(report[OWNER].instanceBudget, 7)
             assert.equal(report[OWNER].storageQuota, 700)
             assert.equal(report[OWNER].budgetUpdateRequest, undefined)
-            assert.equal(report[OWNER].costPerGbMonth, 0)
-            assert.equal(report[ANOTHER_OWNER].costPerGbMonth, 0)
+            assert.equal(report[OWNER].costPerGbMonth, STORAGE_COST_PER_GB_MONTH)
+            assert.equal(report[ANOTHER_OWNER].costPerGbMonth, STORAGE_COST_PER_GB_MONTH)
             assert.equal(report[ANOTHER_OWNER].instanceSpending, 0)
             assert.equal(report[ANOTHER_OWNER].instanceBudget, 1)
             assert.equal(report[ANOTHER_OWNER].storageQuota, 100)

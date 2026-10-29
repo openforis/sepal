@@ -1,15 +1,21 @@
+import {PIXEL_OBSERVATIONS} from '#sepal/recipe/output/readiness'
 import {
     MONITORED_MEASURE_ABSENT,
     MONITORED_MEASURE_UNOBSERVED,
     NO_AVAILABLE_MEASURE,
     NO_OBSERVED_MEASURE
 } from '#sepal/recipe/requirement/ccdcSegments'
+import {CHANGE_ALERTS_PROCESSING} from '#sepal/recipe/requirement/changeAlertsProcessing'
 import {COLLECTION_MOSAIC, PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
+import {msg} from '~/translate'
 
 import {IMAGE_OUTPUT} from '../recipeOutput'
+import {referenceFeedback} from '../referenceFeedback'
+import {SEGMENTS} from '../segmentCapability'
 import {CHARTABLE_SEGMENTS, MONITORED_MEASURE, SLICEABLE_SEGMENTS} from '../segmentRequirements'
 import {PIXEL_SEGMENTS} from '../sourceRequirements'
 import {availableMeasures, monitorableMeasures, observedMeasures} from './monitoringData'
+import {settingsOf} from './processingSettings'
 
 // What Change Alerts needs of the reference it monitors against, selected in REF, by what reads it. The alerts and
 // their Retrieve slice its segments (lib/js/ee/src/timeSeries/changeAlertsAlgorithm.js) for the measure chosen in
@@ -28,7 +34,8 @@ import {availableMeasures, monitorableMeasures, observedMeasures} from './monito
 const REFERENCE = {
     id: 'reference',
     label: 'process.changeAlerts.panel.reference.button',
-    input: ({section}) => section === 'RECIPE_REF' ? 'recipe' : 'asset'
+    input: ({section}, refusal) => refusal?.code === 'REFERENCE_DATE_FORMAT_REQUIRED' ? 'dateFormat'
+        : section === 'RECIPE_REF' ? 'recipe' : 'asset'
 }
 const SOURCES = {
     id: 'sources',
@@ -62,12 +69,12 @@ export const referenceRequirements = [
         role: PRIMARY_IMAGE,
         section: SOURCES,
         requirement: MONITORED_MEASURE,
-        parameters: ({model}) => ({
-            measure: model.sources?.band || null,
-            available: availableMeasures(model.sources?.dataSetType),
-            observed: observedMeasures(model)
+        parameters: recipe => ({
+            measure: recipe.model.sources?.band || null,
+            available: availableMeasures(recipe.model.sources?.dataSetType),
+            observed: settingsOf(recipe).model ? observedMeasures(settingsOf(recipe).model) : null
         }),
-        operations: [IMAGE_OUTPUT]
+        operations: [IMAGE_OUTPUT, PIXEL_SEGMENTS, PIXEL_OBSERVATIONS]
     },
     {
         role: PRIMARY_IMAGE,
@@ -75,5 +82,30 @@ export const referenceRequirements = [
         requirement: CHARTABLE_SEGMENTS,
         operations: [PIXEL_SEGMENTS],
         requiredForSelection: false
+    },
+    {
+        role: PRIMARY_IMAGE,
+        section: REFERENCE,
+        requirement: {
+            ...CHANGE_ALERTS_PROCESSING,
+            capability: {...SEGMENTS, factsOf: observed => observed?.processing},
+            describe: diagnostic => ({message: msg(diagnostic.code === 'REFERENCE_DATE_FORMAT_REQUIRED'
+                ? 'process.changeAlerts.processing.dateFormatRequired' : 'process.changeAlerts.processing.unreadable'), details: []})
+        },
+        parameters: recipe => ({model: recipe.model}),
+        operations: [IMAGE_OUTPUT, COLLECTION_MOSAIC, PIXEL_OBSERVATIONS, PIXEL_SEGMENTS]
+    },
+    {
+        ...referenceFeedback({
+            section: REFERENCE,
+            roles: [PRIMARY_IMAGE],
+            itemOf: () => ({id: 'reference', path: ['model', 'reference'], label: msg(REFERENCE.label)})
+        }),
+        editor: {
+            panel: REFERENCE.id,
+            input: 'recipe',
+            explain: true,
+            candidate: (recipe, reference) => ({...recipe, model: {...recipe.model, reference}})
+        }
     }
 ]

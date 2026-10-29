@@ -2,8 +2,9 @@ import assert from 'node:assert/strict'
 import {beforeEach, describe, it, mock} from 'node:test'
 import {format} from 'node:util'
 
-import {lastValueFrom, of, throwError} from 'rxjs'
+import {defer, lastValueFrom, of, throwError} from 'rxjs'
 
+import {assetProcessing, effectiveSettings} from '#sepal/recipe/changeAlerts/processing'
 import {assertMatches} from '#sepal/testSupport/assert'
 
 // Recipe reads, image construction, Earth Engine evaluation and the exporter are substituted. Resolution,
@@ -42,6 +43,11 @@ describe('exporting an optical mosaic', () => {
         })
 
         assert.deepEqual(bandEncoding, {red: REFLECTANCE})
+    })
+
+    it('does not tag an unrelated export with caller-supplied processing', async () => {
+        const {properties} = await submit({recipe: landsatMosaic(), bands: ['red'], properties: {processing: '{"options":{}}'}})
+        assert.equal(properties.processing, undefined)
     })
 
     it('leaves a band it does not declare an encoding for unknown', async () => {
@@ -176,6 +182,20 @@ describe('exporting a masked CCDC', () => {
         assert.deepEqual(image, {builtFrom: 'masking-1'})
     })
 
+    it('records the actual segment producer processing through a wrapper, disregarding request provenance', async () => {
+        const recipe = maskedCcdc()
+        const producer = state.catalogue['ccdc-1']
+        producer.model.options = {corrections: ['BRDF'], brdfMultiplier: 7}
+        producer.model.ccdcOptions = {dateFormat: 2}
+        recipe.model.options = {corrections: ['SR']}
+        const {properties} = await submit({recipe, bands: ['red_coefs'], properties: {processing: '{"options":{"corrections":["SR"]}}', dateFormat: 0}})
+        const read = effectiveSettings({options: {corrections: ['SR']}}, assetProcessing(properties))
+        assert.deepEqual(read.model.options.corrections, ['BRDF'])
+        assert.equal(read.model.options.brdfMultiplier, 7)
+        assert.equal(read.fields.dateFormat.value, 2)
+        assert.deepEqual(JSON.parse(properties.processing).dataSets, producer.model.sources.dataSets)
+    })
+
     it('records no encoding, because CCDC states none', async () => {
         const recipe = maskedCcdc()
 
@@ -194,6 +214,167 @@ describe('exporting a masked CCDC', () => {
 
 // Band Math is described from the output bands it is configured with, and the dimensionality its running image is
 // observed to have - here, within the export itself - over inputs described as holding every band it includes.
+// Exporting a CCDC's physical bands fits the measures they are built from (measuresFor) with its breakpoint bands. A
+// measure its Classification computes trains that Classification, so what training needs refuses the export before
+// anything of it is built - after what the CCDC's configuration requires, and after the outputs asked for being ones
+// the Classification provides. Bands built from measures of the images, or from no measure, need none of it.
+// What training the CCDC's Classification needs refuses the export before its image is built, whatever bands are named -
+// built from a measure it computes, from measures of the images, timing bands alone, or none (type/ccdc.js). Then the
+// outputs asked for must be ones the Classification provides.
+describe('exporting the bands of a CCDC over its Classification', () => {
+    const PROVIDER = 'provider-1'
+    const SVM = {type: 'SVM', svmType: 'C_SVC'}
+    const POINTS = [{x: 1, y: 1, class: 1}, {x: 1, y: 2, class: 1}, {x: 2, y: 1, class: 2}, {x: 2, y: 2, class: 2}]
+    const MEASURES = ['ndvi', 'regression', 'probability_1']
+    const inputOf = id => `users/x/${id}-input`
+    const trainable = ({id = 'classification-1', included = ['red', 'nir'], images, points = POINTS, reuses = [], classifier = {type: 'RANDOM_FOREST'}} = {}) => {
+        state.assets[inputOf(id)] = {bands: included.map(name => ({name, arrayDimensions: 0})), properties: {}}
+        return {
+            id,
+            type: 'CLASSIFICATION',
+            model: {
+                inputImagery: {images: images ?? [{imageId: 'i-1', type: 'ASSET', id: inputOf(id), bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]},
+                legend: {entries: [{value: 1}, {value: 2}]},
+                classifier,
+                trainingData: {dataSets: [
+                    ...(points.length ? [{dataSetId: 'collected', type: 'COLLECTED', referenceData: points}] : []),
+                    ...reuses.map(recipe => ({dataSetId: recipe, type: 'RECIPE', recipe}))
+                ]}
+            }
+        }
+    }
+    // Over Landsat 8 scenes, fitting the breakpoint bands given; what it can be asked for is its catalogue.
+    const ccdcOf = (breakpointBands = ['ndvi']) => {
+        state.recipeBands['ccdc-1'] = [
+            'tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb',
+            ...MEASURES.flatMap(measure => ['coefs', 'rmse', 'magnitude'].map(suffix => `${measure}_${suffix}`))
+        ]
+        return {
+            id: 'ccdc-1',
+            type: 'CCDC',
+            model: {
+                dates: {startDate: '2015-01-01', endDate: '2020-01-01'},
+                sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands, classification: 'classification-1'},
+                options: {corrections: ['SR']},
+                ccdcOptions: {dateFormat: 1}
+            }
+        }
+    }
+    const assertNothingBuilt = () => {
+        assert.deepEqual(state.productFactories, [])
+        assert.deepEqual(state.built, [])
+        assert.deepEqual(state.exported, [])
+    }
+
+    for (const [_case, catalogue, code] of [
+        ['stores no points', () => ({'classification-1': trainable({points: []})}), 'NO_TRAINING_DATA'],
+        ['reuses a recipe without input imagery', () => ({'classification-1': trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, images: []})}), 'MISSING_ROLE'],
+        ['reuses a recipe sampling fewer features', () => ({'classification-1': trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, included: ['red']})}), 'MISSING_TRAINING_FEATURES']
+    ]) {
+        it(`is refused, building nothing, for a coefficient band where the Classification ${_case}`, async () => {
+            state.catalogue = catalogue()
+
+            await assert.rejects(submit({recipe: ccdcOf(), bands: ['probability_1_coefs']}), new RegExp(`ccdc-1 cannot run: ${code}$`))
+
+            assertNothingBuilt()
+        })
+
+        it(`is refused, building nothing, for bands of measures of the images where the Classification ${_case}`, async () => {
+            state.catalogue = catalogue()
+
+            await assert.rejects(submit({recipe: ccdcOf(), bands: ['ndvi_coefs', 'tStart']}), new RegExp(`ccdc-1 cannot run: ${code}$`))
+
+            assertNothingBuilt()
+        })
+    }
+
+    for (const bands of [['probability_1_rmse'], ['probability_1_magnitude'], ['ndvi_coefs', 'probability_1_magnitude']]) {
+        it(`is refused, building nothing, for ${bands.join(' and ')} where the Classification stores no points`, async () => {
+            state.catalogue = {'classification-1': trainable({points: []})}
+
+            await assert.rejects(submit({recipe: ccdcOf(), bands}), /ccdc-1 cannot run: NO_TRAINING_DATA$/)
+
+            assertNothingBuilt()
+        })
+    }
+
+    for (const [_case, bands] of [['timing bands alone', ['tStart', 'tBreak', 'changeProb']], ['no bands', []]]) {
+        it(`is refused for ${_case}, building nothing, while the Classification stores no points, and exported once it stores some`, async () => {
+            state.catalogue = {'classification-1': trainable({points: []})}
+            await assert.rejects(submit({recipe: ccdcOf(), bands}), /ccdc-1 cannot run: NO_TRAINING_DATA$/)
+            assertNothingBuilt()
+
+            state.catalogue = {'classification-1': trainable()}
+            await submit({recipe: ccdcOf(), bands})
+
+            assert.deepEqual(state.productFactories, ['ccdc-1'])
+        })
+    }
+
+    it('is refused for a classified breakpoint band\'s training whatever bands it names', async () => {
+        state.catalogue = {'classification-1': trainable({points: []})}
+
+        await assert.rejects(submit({recipe: ccdcOf(['ndvi', 'probability_1']), bands: ['ndvi_coefs']}), /ccdc-1 cannot run: NO_TRAINING_DATA$/)
+
+        assertNothingBuilt()
+    })
+
+    it('exports once the Classification stores points again, describing and pyramiding the bands as before', async () => {
+        state.catalogue = {'classification-1': trainable({points: []})}
+        await assert.rejects(submit({recipe: ccdcOf(), bands: ['probability_1_coefs']}), /NO_TRAINING_DATA$/)
+
+        state.catalogue = {'classification-1': trainable()}
+        const pyramidingPolicy = {'.default': 'sample'}
+        const visualizations = [{type: 'continuous', bands: ['probability_1_rmse'], min: [0], max: [100], palette: ['#000000', '#ffffff']}]
+        const exported = await submit({recipe: ccdcOf(), bands: ['probability_1_coefs', 'probability_1_rmse'], pyramidingPolicy, visualizations})
+
+        assert.deepEqual(exported.image, {builtFrom: 'ccdc-1'})
+        assert.equal(exported.region, 'region')
+        assert.deepEqual(exported.bandEncoding, {})
+        assert.deepEqual(exported.pyramidingPolicy, pyramidingPolicy)
+        assert.equal(exported.properties.visualization_0_bands, 'probability_1_rmse')
+    })
+
+    it('fails with what could not be read, as no finding and building nothing, where the Classification\'s input cannot be observed', async () => {
+        state.catalogue = {'classification-1': trainable()}
+        delete state.assets[inputOf('classification-1')]
+
+        await assert.rejects(
+            submit({recipe: ccdcOf(), bands: ['probability_1_coefs']}),
+            /cannot run: what it needs could not be read: Asset could not be read: users\/x\/classification-1-input$/
+        )
+
+        assertNothingBuilt()
+    })
+
+    it('is refused for an output its trainable Classification does not provide as a client\'s error, building nothing', async () => {
+        state.catalogue = {'classification-1': trainable({classifier: SVM})}
+
+        await assert.rejects(submit({recipe: ccdcOf(), bands: ['ndvi_coefs', 'regression_coefs']}), error =>
+            error.errorCode === 'UNSUPPORTED_CLASSIFIED_OUTPUT' && error.statusCode === 400
+            && error.message === 'Classification classification-1 does not provide regression')
+
+        assertNothingBuilt()
+    })
+
+    // What the configuration needs comes first: the Classification's training before an output asked of it.
+    it('is refused for the Classification\'s training before an output it does not provide, building nothing', async () => {
+        state.catalogue = {'classification-1': trainable({points: [], classifier: SVM})}
+
+        await assert.rejects(submit({recipe: ccdcOf(), bands: ['ndvi_coefs', 'regression_coefs']}), /ccdc-1 cannot run: NO_TRAINING_DATA$/)
+
+        assertNothingBuilt()
+    })
+
+    it('is refused for classifier inputs the scenes cannot feed before anything the bands add', async () => {
+        state.catalogue = {'classification-1': trainable({included: ['VV_mean', 'VH_med'], classifier: SVM})}
+
+        await assert.rejects(submit({recipe: ccdcOf(), bands: ['regression_coefs']}), /ccdc-1 cannot run: UNSUPPLIED_CLASSIFIER_INPUTS$/)
+
+        assertNothingBuilt()
+    })
+})
+
 describe('exporting a Band Math recipe', () => {
     const bandMath = ({outputNames = ['dem2', 'coefs']} = {}) => ({
         id: 'band-math-1',
@@ -522,6 +703,170 @@ describe('exporting a recipe over a Classification without training data', () =>
     })
 })
 
+// Training data reused from recipes that store no point anywhere along their own reuse is none at all, known from their
+// records before anything is built (trainingData.js); one point upstream ends that.
+describe('exporting a Classification reusing training data that stores no point', () => {
+    const POINTS = [{x: 1, y: 1, class: 1}, {x: 1, y: 2, class: 1}, {x: 2, y: 1, class: 2}, {x: 2, y: 2, class: 2}]
+    const classificationOf = (id, {points = [], reuses = []} = {}) => ({
+        id,
+        type: 'CLASSIFICATION',
+        model: {
+            inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: DEM_ASSET, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['elevation']}]}]},
+            legend: {entries: [{value: 1}, {value: 2}]},
+            trainingData: {dataSets: [
+                ...(points.length ? [{type: 'COLLECTED', referenceData: points}] : []),
+                ...reuses.map(recipe => ({type: 'RECIPE', recipe}))
+            ]},
+            classifier: {type: 'RANDOM_FOREST'}
+        }
+    })
+
+    beforeEach(() => {
+        state.assets[DEM_ASSET] = {bands: [{name: 'elevation', arrayDimensions: 0}], properties: {}}
+    })
+
+    it('fails the export, saying why, and exports once a point is added upstream', async () => {
+        const recipe = classificationOf('consumer-1', {reuses: ['provider-1']})
+        state.catalogue = {
+            'provider-1': classificationOf('provider-1', {reuses: ['nested-1']}),
+            'nested-1': classificationOf('nested-1')
+        }
+
+        await assert.rejects(submit({recipe, bands: ['class']}), /cannot run: NO_TRAINING_DATA$/)
+        assert.deepEqual(state.exported, [])
+
+        state.catalogue['nested-1'] = classificationOf('nested-1', {points: POINTS})
+        await submit({recipe, bands: ['class']})
+    })
+})
+
+// A classifier trains on every sample by its own band names, so points reused from a recipe sampling fewer features
+// than it trains on lack one: known from the recipes' band sets and their inputs' bands before anything is built.
+describe('exporting a Classification reusing training data whose imagery lacks a feature it trains on', () => {
+    const POINTS = [{x: 1, y: 1, class: 1}, {x: 1, y: 2, class: 1}, {x: 2, y: 1, class: 2}, {x: 2, y: 2, class: 2}]
+    const ELEVATION_ASSET = 'users/x/elevation'
+    const classificationOf = (id, {included, asset = DEM_ASSET, points = [], reuses = []}) => ({
+        id,
+        type: 'CLASSIFICATION',
+        model: {
+            inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: asset, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included}]}]},
+            legend: {entries: [{value: 1}, {value: 2}]},
+            trainingData: {dataSets: [
+                ...(points.length ? [{type: 'COLLECTED', referenceData: points}] : []),
+                ...reuses.map(recipe => ({type: 'RECIPE', recipe}))
+            ]},
+            classifier: {type: 'RANDOM_FOREST'}
+        }
+    })
+
+    beforeEach(() => {
+        state.assets[DEM_ASSET] = {bands: [{name: 'elevation', arrayDimensions: 0}, {name: 'slope', arrayDimensions: 0}], properties: {}}
+        state.assets[ELEVATION_ASSET] = {bands: [{name: 'elevation', arrayDimensions: 0}], properties: {}}
+    })
+
+    it('fails the export, saying why, and exports once the provider\'s imagery holds the missing band', async () => {
+        const recipe = classificationOf('consumer-1', {included: ['elevation', 'slope'], reuses: ['provider-1']})
+        state.catalogue = {'provider-1': classificationOf('provider-1', {included: ['elevation'], asset: ELEVATION_ASSET, points: POINTS})}
+
+        await assert.rejects(submit({recipe, bands: ['class']}), /cannot run: MISSING_TRAINING_FEATURES$/)
+        assert.deepEqual(state.exported, [])
+
+        state.catalogue['provider-1'] = classificationOf('provider-1', {included: ['elevation'], points: POINTS})
+        await submit({recipe, bands: ['class']})
+    })
+})
+
+// PyEO's baseline is its Classification's own image, trained on that Classification's training data, so what running
+// that image needs refuses the export, whatever PyEO's index gate.
+describe('exporting a PyEO Alerts over a Classification storing no point', () => {
+    const POINTS = [{x: 1, y: 1, class: 1}, {x: 1, y: 2, class: 1}, {x: 2, y: 1, class: 2}, {x: 2, y: 2, class: 2}]
+    const OPTICAL_ASSET = 'users/x/optical'
+    const classificationOf = ({points = []} = {}) => ({
+        id: 'classification-1',
+        type: 'CLASSIFICATION',
+        model: {
+            inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: OPTICAL_ASSET, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['red', 'nir']}]}]},
+            legend: {entries: [{value: 1}, {value: 2}]},
+            trainingData: {dataSets: points.length ? [{type: 'COLLECTED', referenceData: points}] : []},
+            classifier: {type: 'RANDOM_FOREST'}
+        }
+    })
+    const pyeoAlerts = () => ({
+        id: 'pyeo-1',
+        type: 'PYEO_ALERTS',
+        model: {
+            aoi: {type: 'POLYGON', path: [[0, 0], [1, 0], [1, 1], [0, 0]]},
+            dates: {monitoringStart: '2024-01-01', monitoringEnd: '2024-06-01'},
+            sources: {classification: 'classification-1', dataSets: {SENTINEL_2: ['SENTINEL_2']}, changeFromClasses: [1], changeToClasses: [2]},
+            options: {corrections: ['SR']},
+            pyeoAlertsOptions: {minConsecutiveDetections: 2}
+        }
+    })
+
+    beforeEach(() => {
+        state.assets[OPTICAL_ASSET] = {bands: [{name: 'red', arrayDimensions: 0}, {name: 'nir', arrayDimensions: 0}], properties: {}}
+    })
+
+    it('fails the export, saying why, and exports once the Classification stores points', async () => {
+        const recipe = pyeoAlerts()
+        state.catalogue = {'classification-1': classificationOf()}
+
+        await assert.rejects(submit({recipe, bands: ['total_changes']}), /cannot run: NO_TRAINING_DATA$/)
+        assert.deepEqual(state.exported, [])
+
+        state.catalogue['classification-1'] = classificationOf({points: POINTS})
+        await submit({recipe, bands: ['total_changes']})
+    })
+})
+
+// A band the Classification computes trains its classifier on that Classification's training data and applies it to
+// every image of the collection, so what training needs refuses the export; a band of the images needs none of it.
+describe('exporting a Phenology analysing a band its Classification computes', () => {
+    const POINTS = [{x: 1, y: 1, class: 1}, {x: 1, y: 2, class: 1}, {x: 2, y: 1, class: 2}, {x: 2, y: 2, class: 2}]
+    const OPTICAL_ASSET = 'users/x/optical'
+    const classificationOf = ({points = []} = {}) => ({
+        id: 'classification-1',
+        type: 'CLASSIFICATION',
+        model: {
+            inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: OPTICAL_ASSET, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['red', 'nir']}]}]},
+            legend: {entries: [{value: 1}, {value: 2}]},
+            trainingData: {dataSets: points.length ? [{type: 'COLLECTED', referenceData: points}] : []},
+            classifier: {type: 'RANDOM_FOREST'}
+        }
+    })
+    const phenology = band => ({
+        id: 'phenology-1',
+        type: 'PHENOLOGY',
+        model: {
+            aoi: {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]},
+            dates: {fromYear: 2020, toYear: 2021},
+            sources: {classification: 'classification-1', dataSets: {LANDSAT: ['LANDSAT_8']}, band},
+            options: {corrections: ['SR']}
+        }
+    })
+
+    beforeEach(() => {
+        state.assets[OPTICAL_ASSET] = {bands: [{name: 'red', arrayDimensions: 0}, {name: 'nir', arrayDimensions: 0}], properties: {}}
+    })
+
+    it('fails the export, saying why, and exports once the Classification stores points', async () => {
+        const recipe = phenology('probability_1')
+        state.catalogue = {'classification-1': classificationOf()}
+
+        await assert.rejects(submit({recipe, bands: ['amplitude']}), /cannot run: NO_TRAINING_DATA$/)
+        assert.deepEqual(state.exported, [])
+
+        state.catalogue['classification-1'] = classificationOf({points: POINTS})
+        await submit({recipe, bands: ['amplitude']})
+    })
+
+    it('exports a band of the images while the Classification stores no point', async () => {
+        state.catalogue = {'classification-1': classificationOf()}
+
+        await submit({recipe: phenology('ndvi'), bands: ['amplitude']})
+    })
+})
+
 // A recipe zipping no input image cannot run, nor can a recipe whose image builds it.
 describe('exporting a recipe without input imagery', () => {
     const POINTS = [{x: 1, y: 1, class: 1}, {x: 1, y: 2, class: 1}, {x: 2, y: 1, class: 2}, {x: 2, y: 2, class: 2}]
@@ -765,6 +1110,79 @@ describe('a recipe whose dependencies are not structurally sound', () => {
     })
 })
 
+// Change Alerts monitors a band its imagery observes, and uses no Classification: one its Sources copied from the
+// producer of its reference is kept as saved, but is no dependency of it. What the reference itself depends on still is.
+describe('exporting a Change Alerts', () => {
+    const alerts = ({reference = {type: 'ASSET', id: SEGMENTS_ASSET}, ...sources} = {}) => ({
+        id: 'alerts-1',
+        type: 'CHANGE_ALERTS',
+        model: {
+            reference,
+            sources: {dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_8']}, band: 'ndvi', ...sources},
+            options: {corrections: ['SR']},
+            date: {monitoringEnd: '2024-01-01', monitoringDuration: 1, monitoringDurationUnit: 'months', calibrationDuration: 2, calibrationDurationUnit: 'months'}
+        }
+    })
+    const SEGMENTS_ASSET = 'users/x/segments'
+    // A Classification of another user's, named by the asset's exported recipe_sources: this one cannot read it.
+    const INACCESSIBLE = 'colleagues-classification'
+
+    beforeEach(() => {
+        state.assets[SEGMENTS_ASSET] = {bands: [{name: 'tStart', arrayDimensions: 1}], properties: {}}
+    })
+
+    it('exports over a shared segments asset, though the Classification its Sources copied cannot be read', async () => {
+        const recipe = alerts({classification: INACCESSIBLE, breakpointBands: ['ndvi']})
+
+        await submit({recipe, bands: ['confidence']})
+
+        assert.deepEqual(state.recipeReads, [])
+    })
+
+    it('is refused where the CCDC it references depends on a Classification that cannot be read', async () => {
+        const ccdc = {
+            id: 'ccdc-1',
+            type: 'CCDC',
+            model: {sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands: ['ndvi'], classification: INACCESSIBLE}}
+        }
+        state.catalogue = {[ccdc.id]: ccdc}
+
+        await assert.rejects(
+            submit({recipe: alerts({reference: {type: 'RECIPE_REF', id: ccdc.id}}), bands: ['confidence']}),
+            error => error.message === `Recipe could not be read: ${INACCESSIBLE}`
+        )
+        assert.deepEqual(state.exported, [])
+    })
+
+    it('refuses the referenced CCDC with a multiple-input classifier, and exports after repair', async () => {
+        const ccdc = {id: 'ccdc-1', type: 'CCDC', model: {
+            sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands: ['ndvi'], classification: 'classifier'}, options: {}
+        }}
+        const input = {imageId: 'i-1', type: 'RECIPE_REF', id: 'mosaic-1', bandSetSpecs: [{type: 'IMAGE_BANDS', included: ['red']}]}
+        const classifier = {id: 'classifier', type: 'CLASSIFICATION', model: {
+            inputImagery: {images: [input, {...input, imageId: 'i-2'}]},
+            classifier: {type: 'DECISION_TREE'}, legend: {entries: [{value: 1}]}
+        }}
+        state.catalogue = {[ccdc.id]: ccdc, classifier, 'mosaic-1': landsatMosaic()}
+        state.recipeBands[ccdc.id] = ['ndvi']
+        const recipe = alerts({reference: {type: 'RECIPE_REF', id: ccdc.id}})
+        await assert.rejects(submit({recipe, bands: ['confidence']}), /cannot run: MULTIPLE_CLASSIFIER_INPUTS$/)
+        assert.deepEqual(state.exported, [])
+        assert.deepEqual(state.built, [])
+        state.catalogue.classifier = {...classifier, model: {...classifier.model, inputImagery: {images: [input]}}}
+        await submit({recipe, bands: ['confidence']})
+        assert.equal(state.exported.length, 1)
+    })
+
+    it('is refused at its band where that is one a Classification computes', async () => {
+        await assert.rejects(
+            submit({recipe: alerts({band: 'regression', classification: INACCESSIBLE}), bands: ['confidence']}),
+            /cannot run: CLASSIFIED_MONITORED_BAND$/
+        )
+        assert.deepEqual(state.exported, [])
+    })
+})
+
 const landsatMosaic = ({compose = 'MEDIAN'} = {}) => ({
     id: 'mosaic-1',
     type: 'MOSAIC',
@@ -786,7 +1204,7 @@ const masking = ({primary, mask = {type: 'ASSET', id: MASK_ASSET}}) => ({
 
 const state = {}
 
-const submit = async ({recipe, bands, pyramidingPolicy, properties = {}}) => {
+const submit = async ({recipe, bands, pyramidingPolicy, properties = {}, visualizations}) => {
     const {startImageAssetExport$} = await import('#gee/jobs/task/export/imageAssetExport')
     await lastValueFrom(startImageAssetExport$({
         image: {
@@ -794,6 +1212,7 @@ const submit = async ({recipe, bands, pyramidingPolicy, properties = {}}) => {
             bands: {selection: bands},
             scale: 30,
             properties,
+            ...(visualizations && {visualizations}),
             assetId: 'projects/p/assets/out',
             ...(pyramidingPolicy && {pyramidingPolicy})
         }
@@ -827,9 +1246,13 @@ const collection = ({bands, properties}) => ({
 
 mock.module('#sepal/ee/ee', {exports: {
     default: {
-        getAsset$: id => state.assets[id]
-            ? of({type: state.assets[id].type || 'Image'})
-            : throwError(() => new Error(`Asset could not be read: ${id}`)),
+        // Readiness's own evidence of an asset, no work of the export's.
+        getAsset$: id => {
+            state.observed.push(id)
+            return state.assets[id]
+                ? of({type: state.assets[id].type || 'Image'})
+                : throwError(() => new Error(`Asset could not be read: ${id}`))
+        },
         Image: id => assetImage(typeof id === 'string' ? state.assets[id] : {bands: [], properties: {}}),
         ImageCollection: id => collection(typeof id === 'string' ? state.assets[id] : {bands: [], properties: {}}),
         Dictionary: values => values,
@@ -845,18 +1268,24 @@ mock.module('#sepal/ee/recipe', {exports: {
             : throwError(() => new Error(`Recipe could not be read: ${id}`))
     }
 }})
+// A factory given what to build with is the export's product (`productFactories`, and `built` once its image or geometry
+// is asked for); one given nothing answers what the recipe can be asked for, as its description reads it.
 mock.module('#sepal/ee/imageFactory', {exports: {
-    default: source => source.type === 'ASSET'
-        ? {
-            getImage$: () => throwError(() => new Error(`Read an asset through the image execution builds: ${source.id}`))
-        }
-        : {
-            getImage$: () => of(recipeImage(source.id)),
-            getBands$: () => state.recipeBands[source.id]
-                ? of(state.recipeBands[source.id])
-                : throwError(() => new Error(`Recipe bands could not be read: ${source.id}`)),
-            getGeometry$: () => of({bounds: () => 'region'})
-        }
+    default: (source, ...buildArgs) => {
+        buildArgs.length && state.productFactories.push(source.id)
+        const built = value => (state.built.push(source.id), value)
+        return source.type === 'ASSET'
+            ? {
+                getImage$: () => throwError(() => new Error(`Read an asset through the image execution builds: ${source.id}`))
+            }
+            : {
+                getImage$: () => defer(() => of(built(recipeImage(source.id)))),
+                getBands$: () => state.recipeBands[source.id]
+                    ? of(state.recipeBands[source.id])
+                    : throwError(() => new Error(`Recipe bands could not be read: ${source.id}`)),
+                getGeometry$: () => defer(() => of(built({bounds: () => 'region'})))
+            }
+    }
 }})
 mock.module('#gee/jobs/task/export/toAsset', {exports: {
     startImageToAssetExport$: args => {
@@ -872,4 +1301,7 @@ beforeEach(() => {
     state.recipeBands = {}
     state.recipeReads = []
     state.exported = []
+    state.observed = []
+    state.productFactories = []
+    state.built = []
 })

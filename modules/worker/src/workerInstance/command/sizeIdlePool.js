@@ -8,7 +8,8 @@
 //
 // The surplus of every type then fills the STOPPED pool, oldest first, up to stoppedPoolSize minus
 // what the pool already holds; the rest is terminated. Whatever deficit the surplus does not fill
-// is warm-up launched. stoppedPoolSize 0 leaves the stopped pool untouched and unqueried.
+// is warm-up launched, at most MAX_CONCURRENT_WARM_UPS at a time. stoppedPoolSize 0 leaves the
+// stopped pool untouched and unqueried.
 //
 // A surplus instance is pooled or terminated only under a claim, the same election a request runs
 // before reserving an idle instance: whichever claims first has it, so the cycle never stops or
@@ -25,6 +26,11 @@ const log = getLogger('worker/sizeIdlePool')
 // other claim whose session is not open.
 const POOL_CYCLE_CLAIM = 'pool-cycle'
 
+// EC2 caps the volume initialization rate requested across every volume still initializing in the
+// region (5,000 MiB/s by default), and a session launch draws on the same quota. Warm-ups are the
+// launches nobody waits for, so they fill the pool a few at a time and leave the rest to sessions.
+const MAX_CONCURRENT_WARM_UPS = 2
+
 const launchedAt = instance => new Date(instance.launchTime ?? 0).getTime()
 
 const sizeIdlePool = async (targetIdleCountByInstanceType, stoppedPoolSize, {provider, claims}) => {
@@ -35,9 +41,9 @@ const sizeIdlePool = async (targetIdleCountByInstanceType, stoppedPoolSize, {pro
         : new Map(Object.entries(targetIdleCountByInstanceType))
 
     const surplus = await sizeRunningIdle(targetMap, {provider})
-    const deficit = stoppedPoolSize > 0
-        ? Math.max(0, stoppedPoolSize - (await provider.pooledInstances()).length)
-        : 0
+    const {deficit, warming} = stoppedPoolSize > 0
+        ? await stoppedPoolState(stoppedPoolSize, {provider})
+        : {deficit: 0, warming: 0}
 
     // Oldest first: they have read the most of their disk, which is what a pooled start is for.
     let pooled = 0
@@ -52,10 +58,21 @@ const sizeIdlePool = async (targetIdleCountByInstanceType, stoppedPoolSize, {pro
         }
     }
 
-    const warmUps = deficit - pooled
+    const warmUps = Math.min(deficit - pooled, MAX_CONCURRENT_WARM_UPS - warming)
     if (warmUps > 0) {
         log.info(`Launching ${warmUps} warm-up instance(s) for the stopped pool`)
         await attempt('launch warm-up instances', () => provider.launchPooled(warmUps))
+    }
+}
+
+// A pooled instance that has not stopped yet is still warming up. That includes a surplus instance
+// the previous cycle stopped into the pool, which only holds the next warm-up back by a cycle.
+const stoppedPoolState = async (stoppedPoolSize, {provider}) => {
+    const all = await provider.pooledInstances()
+    const ready = await provider.pooledInstances({ready: true})
+    return {
+        deficit: Math.max(0, stoppedPoolSize - all.length),
+        warming: all.length - ready.length,
     }
 }
 
@@ -108,7 +125,7 @@ const underClaim = async (instance, operation, {claims}) => {
         await operation()
         return true
     } finally {
-        await claims.release(instance.id)
+        await claims.release(instance.id, POOL_CYCLE_CLAIM)
     }
 }
 

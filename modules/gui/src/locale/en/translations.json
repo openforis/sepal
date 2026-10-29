@@ -45,6 +45,7 @@
     },
     "googleAccountRequired": "Some apps are unavailable. To enable them, connect your SEPAL account to your Google account.",
     "info": "Show information about this app",
+    "landingTab": "Apps",
     "launch": {
       "startingSession": "Starting session...",
       "startingServer": "Starting server...",
@@ -61,7 +62,7 @@
     "running": "App is running",
     "noInstanceRequired": "Instant",
     "noInstanceRequiredTooltip": "This app doesn't require a dedicated instance to run.",
-    "gpuRequiredTooltip": "This app requires an instance with at least {count, plural, one {# GPU} other {# GPUs}}.",
+    "gpuRequiredTooltip": "This app recommends an instance with at least {count, plural, one {# GPU} other {# GPUs}}.",
     "sessionTakenOver": "{app} was closed in this window because it was opened in another browser window",
     "confirmReopen": {
       "title": "App already open",
@@ -82,7 +83,7 @@
       "newSsdSection": "New instance with SSD",
       "newInstanceTitle": "Start new instance",
       "noInstanceType": "No instance type is available. Contact your administrator.",
-      "noSuitableInstance": "No available instance type satisfies this app's requirements ({cpu} CPU / {ram} GB RAM{gpu}). Contact your administrator.",
+      "belowRequirements": "This app recommends an instance with at least {specs}.",
       "alreadyRunning": "This app was already running on another instance — it opened there."
     },
     "admin": {
@@ -405,7 +406,7 @@
       }
     },
     "error": {
-      "earthEngineException": "{earthEngineMessage}",
+      "earthEngineException": "Google Earth Engine: {earthEngineMessage}",
       "failedToLoadRecipe": "Failed to load recipe",
       "title": "Google Earth Engine error"
     },
@@ -591,6 +592,7 @@
         "required": "Password is required"
       },
       "sign-up": "Sign up",
+      "throttled": "Too many failed attempts, retry later.",
       "username": {
         "label": "Username",
         "placeholder": "Enter your username",
@@ -735,7 +737,8 @@
           "duplicateColor": "There are more than one entry with this color",
           "duplicateLabel": "There are more than one entry with this label",
           "duplicateValue": "There are more than one entry with this value",
-          "invalidColor": "Another entry has the same color"
+          "invalidColor": "Another entry has the same color",
+          "invalidValue": "Enter a number"
         },
         "remove": {
           "tooltip": "Remove this legend entry"
@@ -908,6 +911,17 @@
         "loading": "Loading bands...",
         "loadError": "Failed to load image bands"
       },
+      "draft": {
+        "copy": {
+          "label": "Copy settings",
+          "tooltip": "Copy these settings as they are, unapplied changes included, to paste into another visualization."
+        },
+        "paste": {
+          "label": "Paste settings",
+          "tooltip": "Replace these settings with the copied ones. Nothing is saved until you apply.",
+          "empty": "Copy the settings of a visualization first, to paste them here."
+        }
+      },
       "form": {
         "band": {
           "band.label": "Band",
@@ -918,6 +932,7 @@
           "reverse.tooltip": "Reverse the band",
           "saturation.label": "Saturation",
           "select.placeholder": "Select band...",
+          "unavailable": "This layer has no band {band} it can draw. Choose another band.",
           "value.label": "Value"
         },
         "gamma": {
@@ -944,7 +959,8 @@
           },
           "text": {
             "tooltip": "Show and edit palette as text.",
-            "placeholder": "Enter comma-separated list of colors..."
+            "placeholder": "Enter comma-separated list of colors...",
+            "invalid": "Not a color: {colors}"
           }
         },
         "min": {
@@ -1659,7 +1675,8 @@
               "tooltip": "Only Classification recipes appear here. Class IDs and labels are pulled from the selected recipe.",
               "placeholder": "Select a Classification recipe",
               "required": "Pick a Classification recipe",
-              "unsuppliedInputs": "No supported monitoring data provides the bands this classification reads: {missing}. Choose another classification."
+              "unsuppliedInputs": "No supported monitoring data provides the bands this classification reads: {missing}. Choose another classification.",
+              "multipleInputs": "This classification uses {count} input images; PyEO Alerts needs exactly one. Remove the others from the classification, or choose another classification."
             },
             "changeFromClasses": {
               "label": "FROM classes (baseline)",
@@ -1688,16 +1705,23 @@
               "tooltip": "Require the chosen index to drop by at least the threshold (baseline − monitoring) before an alert is confirmed. Only decreases count — an index increase never confirms a change.",
               "off": "No",
               "on": "Yes",
-              "unavailable": "The selected classification's baseline imagery has no near-infrared band, so it cannot produce a spectral index; the index gate is unavailable."
+              "unavailable": "The selected classification's baseline imagery has no near-infrared band, so it cannot produce a spectral index; Require drop is unavailable.",
+              "dependsOnSources": {
+                "CHECKING": "Checking the classification under SRC before Require drop can be changed.",
+                "UNAVAILABLE": "The classification under SRC can't be checked right now, so Require drop can't be changed."
+              }
             },
             "gateIndex": {
               "label": "Index",
               "tooltip": "Spectral index whose drop (baseline − monitoring) confirms an alert — a drop signals disturbance. Options depend on the selected sources.",
               "required": "Pick an index",
-              "unsupported": "The selected imagery can't compute {index}. Choose an index it supports, or turn the index gate off.",
               "unavailable": {
-                "BASELINE": "The classification's imagery can't provide {index} for the index gate. Choose another index, or turn the gate off.",
-                "MONITORING": "The monitoring data can't provide {index} for the index gate. Choose another index, or turn the gate off."
+                "BASELINE": "The classification's imagery can't provide {index} for Require drop. Choose another index, or turn Require drop off.",
+                "MONITORING": "The monitoring data can't provide {index} for Require drop. Choose another index, or turn Require drop off."
+              },
+              "noAlternative": {
+                "BASELINE": "The classification's imagery can't provide {index} or any other index Require drop offers. Turn Require drop off.",
+                "MONITORING": "The monitoring data can't provide {index} or any other index Require drop offers. Turn Require drop off."
               }
             },
             "gateThreshold": {
@@ -1733,7 +1757,6 @@
         "loadError": "Failed to load the classification recipe: {error}",
         "mosaicLoadError": "Failed to load the classification's imagery: {error}",
         "assetLoadError": "Failed to read the classification asset metadata: {error}",
-        "singleInputRequired": "This classification uses more than one input image, which isn't supported here. Choose a classification with a single input.",
         "selectedScenesUnsupported": "This classification was trained on hand-selected scenes, which isn't supported yet. Choose a classification trained on a date range.",
         "pending": "Reading the selected classification…",
         "unavailable": "The selected classification could not be read. Choose it again to retry."
@@ -2063,7 +2086,18 @@
           "loadError": "Failed to load recipe"
         }
       },
-      "tabPlaceholder": "Change_alerts"
+      "tabPlaceholder": "Change_alerts",
+      "processing": {
+        "REFERENCE": "from reference (read-only)",
+        "RECORDED": "recorded by the asset (read-only)",
+        "NOT_RECORDED": "not recorded by the asset — check it matches",
+        "MIXED": "recorded settings are read-only — check that editable settings match",
+        "UNREADABLE": "recorded settings cannot be read",
+        "PENDING": "checking reference settings",
+        "UNAVAILABLE": "could not read reference settings",
+        "unreadable": "The reference’s recorded processing settings cannot be read. Repair the metadata or select another reference.",
+        "dateFormatRequired": "The asset does not record its date format. Select the format used by its segments."
+      }
     },
     "classification": {
       "bands": {
@@ -2445,6 +2479,7 @@
             "input": "Some bands or indexes are unavailable. Open this image to review them.",
             "inputs": "Some bands or indexes are unavailable. Review Input imagery."
           },
+          "ambiguousFeatures": "More than one band of the input images gives {features}, whatever its case. To reuse training data, give the bands distinct names in a Stack's Band names panel, and use that Stack in both recipes.",
           "loadingBands": "Loading available bands",
           "loadingBandsError": "Failed to load from Google Earth Engine",
           "noImagery": "Please add at least one image to classify.",
@@ -2658,7 +2693,12 @@
               }
             }
           },
-          "missing": "Add training data",
+          "missing": "Collect points on the map or add a training data set.",
+          "missingFeatures": "No input image of {recipe} supplies {features}, which this recipe trains on.",
+          "derivedFeature": "{feature} is built of {bands}, which one input image of it must hold.",
+          "ambiguousFeatures": "In {recipe}, more than one band matches {conflicts}. Give the bands distinct names in a Stack's Band names panel, and use that Stack in both recipes.",
+          "conflict": "{feature} ({inputs})",
+          "conflictInput": "input image {input}: {bands}",
           "noDataSet": "No training data set added",
           "remove": {
             "confirmationMessage": "Are you sure you want to remove {name} from your training data?",
@@ -2699,6 +2739,9 @@
               "title": "Collect Earth Online",
               "tooltip": "Use training data from CEO"
             }
+          },
+          "reusedRecipe": {
+            "repair": "{count, plural, one {Fix the problem in {recipes}, or select another recipe.} other {Fix the problems in {recipes}, or select another recipe.}}"
           }
         }
       },
@@ -2720,6 +2763,7 @@
       "description": "Create a regression from SEPAL or Google Earth Engine imagery.",
       "panel": {
         "trainingData": {
+          "missing": "Add a training data set.",
           "form": {
             "eeTable": {
               "valueColumn": {
@@ -3118,7 +3162,7 @@
           "tooltip": "Select bands to output and their corresponding names.",
           "duplicateBand": "Duplicate band name",
           "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters",
-          "noImages": "No images/calculations added to output",
+          "noImages": "Choose the bands to output: press Add to pick an input image or a calculation, then its bands. Input bands can be output directly; a calculation is optional.",
           "noBands": "No bands added to output",
           "missingBands": "An image or calculation outputs no bands.",
           "resetName": {
@@ -4588,7 +4632,17 @@
         "loading": "Loading tiles: {pending}",
         "tilesFailed": "{failed} failed"
       },
-      "tabPlaceholder": "BAYTS_alerts"
+      "tabPlaceholder": "BAYTS_alerts",
+      "processing": {
+        "REFERENCE": "from the historical statistics (read-only)",
+        "RECORDED": "recorded by the asset (read-only)",
+        "NOT_RECORDED": "not recorded by the asset — check it matches the statistics",
+        "MIXED": "recorded settings are read-only — check that editable settings match",
+        "UNREADABLE": "recorded settings cannot be read",
+        "PENDING": "checking the processing of the historical statistics",
+        "UNAVAILABLE": "could not read the processing of the historical statistics",
+        "unreadable": "The processing the historical statistics were built with cannot be read. Repair the asset’s metadata or select another reference."
+      }
     },
     "baytsHistorical": {
       "create": "BAYTS Historical Layer",
@@ -4926,6 +4980,7 @@
       "noProjectOption": "[no project]"
     },
     "recipe": {
+      "landingTab": "Recipes",
       "lastUpdate": "Last update",
       "loading": "Loading recipes",
       "loadingError": "Failed to load recipes. Please reload page to try again.",
@@ -5023,6 +5078,7 @@
         },
         "bands": {
           "atLeastOne": "At least one band must be retrieved",
+          "checking": "Checking whether the selected bands can be retrieved...",
           "label": "Bands to retrieve",
           "loading": "Loading available bands...",
           "unavailable": "These bands are no longer available from this recipe: {bands}. Select from the bands offered above."
@@ -5116,12 +5172,9 @@
         "retry": "Refresh"
       },
       "source": {
-        "missing": "No source is selected under {section}.",
         "checking": "Checking the source selected under {section}…",
         "unavailable": "The source selected under {section} is missing or unavailable. Open {section} to see why.",
-        "expired": "The source selected under {section} has not been checked recently. Refresh to check it again.",
-        "unsuitable": "The source selected under {section} cannot be used. Open {section} to see why.",
-        "configurationUnmet": "The settings under {section} need attention. Open {section} to see why."
+        "expired": "The source selected under {section} has not been checked recently. Refresh to check it again."
       }
     },
     "saveRecipe": {
@@ -5824,6 +5877,16 @@
       "status": {
         "checking": "Checking the selected source…",
         "recipeNeedsAttention": "{recipe} needs attention.",
+        "multipleClassifierInputs": "{recipe} has {count} input images. This recipe requires a Classification with one input image. Select a single-input Classification.",
+        "multipleClassifierInputsUpstream": "{consumer} cannot run because {recipe} has {count} input images, while {consumer} requires a Classification with one input image. Select a single-input Classification in {consumer}.",
+        "providesNoTrainingData": "{recipe} provides no training data. Select a Classification or Regression with training data instead.",
+        "providesNoTrainingDataUpstream": "{consumer} cannot run because {recipe} provides no training data. Select a Classification or Regression with training data in {consumer}.",
+        "providesNoClassifier": "{recipe} has no classifier to apply. Select a Classification instead.",
+        "providesNoClassifierUpstream": "{consumer} cannot run because {recipe} has no classifier to apply. Select a Classification in {consumer}.",
+        "providesNoImage": "{recipe} makes no image. Select an image instead.",
+        "providesNoImageUpstream": "{consumer} cannot run because {recipe} makes no image. Select an image in {consumer}.",
+        "recipeUnusable": "This recipe cannot use {recipe}. Select another recipe.",
+        "recipeUnusableUpstream": "{consumer} cannot use {recipe}. Review {consumer}, or select another recipe.",
         "recipeBlockedBy": "{recipe} cannot run because {origins} needs attention.",
         "recipeBlockedByOrigins": "{recipe} cannot run because {origins} need attention.",
         "recipeAlsoDependsOn": "{recipe} needs attention. It also depends on {origins}, which needs attention.",
@@ -5865,6 +5928,10 @@
         "classification": "No collection this recipe can use provides the bands this classification reads: {missing}. Choose another classification, or none.",
         "dataSets": "The selected data sets don't provide the bands this classification reads: {missing}. Choose data sets that do, or another classification."
       },
+      "classifiedOutputs": {
+        "band": "The selected classification's classifier can't provide {unsupported}. Choose another band, or another classification.",
+        "breakpointBands": "The selected classification's classifier can't provide {unsupported}. Choose other breakpoint bands, or another classification."
+      },
       "segments": {
         "incompatible": "Asset {asset} does not have the CCDC segment layout alert detection reads: {problems}.",
         "incompatibleSlice": "Asset {asset} does not have the CCDC segment layout slicing reads: {problems}.",
@@ -5877,6 +5944,7 @@
         "undetermined": "The array dimensions of {count} bands of asset {asset} could not be established: {bands}.",
         "andMore": "{items} and {count} more",
         "measureAbsent": "The selected source has no segments for band {measure}. Choose a band it has segments for: {measures}.",
+        "measureClassified": "{measure} is computed by a classification, which Change Alerts doesn't use. Monitor a band of the imagery instead: {measures}.",
         "measureUnobserved": "The selected monitoring data does not observe {measure}. Choose a band it observes that the selected source has segments for: {measures}.",
         "noMonitorableMeasure": "The selected source has segments only for {measures}, which no supported monitoring data observes. Choose another source.",
         "noAvailableMeasure": "The selected source has segments only for {measures}, which this type of monitoring data does not observe. Choose a type that observes one of them.",
@@ -6169,6 +6237,7 @@
     }
   },
   "terminal": {
+    "menuTab": "Sessions",
     "server": {
       "error": "Failed to start terminal"
     }
@@ -6437,7 +6506,7 @@
           "required": "Intended use is required"
         },
         "usage": {
-          "label": "Computing resources usage",
+          "label": "Computing resource usage",
           "avgMax": "{metric} (avg/max)",
           "cost": "Cost",
           "hours": "Hours",
@@ -6454,7 +6523,8 @@
           "unique": "There is another user with this username"
         },
         "password": {
-          "label": "Password"
+          "label": "Password",
+          "required": "Enter your password to change the email"
         }
       },
       "resetPassword": {
@@ -6480,7 +6550,8 @@
       "title": "User details",
       "update": {
         "error": "Could not update user.",
-        "conflict": "This user was changed by someone else meanwhile. Review the changes and try again."
+        "conflict": "This user was changed by someone else meanwhile. Review the changes and try again.",
+        "incorrectPassword": "Incorrect password. Your details were not changed."
       },
       "confirmation": {
         "message": "User role will be changed to \"{role}\""

@@ -8,7 +8,7 @@ import {IMAGE_OUTPUT} from './recipeOutput'
 import {sectionRefusalOf, sectionStatusOf} from './selectedSourceStatus'
 import {sourceKeyOf} from './sourceEvidence'
 import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
-import {readSourceRequirements} from './sourceRequirements'
+import {CHECKED, readSourceRequirements} from './sourceRequirements'
 
 // A recipe form panel's values, judged by the source requirements its recipe's type declares for the panel's section
 // before they are applied (sourceRequirements.js, selectedSourceStatus.js). The panel is the section its id names, and
@@ -72,6 +72,24 @@ export class SourceCandidate {
         return Boolean(this.status()?.state)
     }
 
+    // Only an observation still owned by this exact draft and current session can supply facts.
+    facts() {
+        const state = select()
+        const recipe = this.#recipe(state)
+        if (!recipe) {
+            return null
+        }
+        const candidate = this.#overlay(recipe)
+        const reference = getRecipeType(recipe.type)?.sourceObservation?.sourceReference(candidate)
+        const owner = this.#watch ? this.#candidate?.owner : this.#sourceRuntime?.evidenceOwnerOf(this.#recipeId)
+        const evidence = this.#watch ? this.#candidate?.evidence : recipe.ui?.sourceEvidence
+        return reference && owner?.observes && evidence?.status === 'OBSERVED'
+            && this.#reads().every(({acquisition}) => acquisition === CHECKED)
+            && owner.observationId === evidence.observationId
+            && !outdatedBasis(owner.basis, {recipe: candidate, sourceKey: sourceKeyOf(reference), session: {...evidenceSession(state), now: Date.now()}})
+            ? evidence : null
+    }
+
     // Reads the edit's source again. Where the recipe's observation holds for it, that is the recipe's own source, read
     // again as Refresh reads it anywhere else. Otherwise only what the edit's own observation reads: its assets, read again
     // explicitly - which has the observation read anew - and the edit observed anew where that did not.
@@ -105,14 +123,18 @@ export class SourceCandidate {
         }
         const candidate = this.#overlay(recipe)
         const now = Date.now()
+        // OutputCandidate owns output findings and its declaration's Apply policy. SourceCandidate judges only
+        // selected-source requirements, including in panels that also present output-reference feedback.
         return this.#watch
             ? readSourceRequirements({
                 state,
                 recipe: {...candidate, ui: {...candidate.ui, sourceEvidence: this.#candidate?.evidence || undefined}},
                 evidenceOwnerOf: () => this.#candidate?.owner || null,
+                heldFor: key => this.#sourceRuntime?.heldFor(key),
                 now
-            })
-            : readSourceRequirements({state, recipe: candidate, evidenceOwnerOf: id => this.#sourceRuntime?.evidenceOwnerOf(id), now})
+            }).filter(({declaration}) => !declaration.outputDiagnostics)
+            : readSourceRequirements({state, recipe: candidate, evidenceOwnerOf: id => this.#sourceRuntime?.evidenceOwnerOf(id),
+                heldFor: key => this.#sourceRuntime?.heldFor(key), now}).filter(({declaration}) => !declaration.outputDiagnostics)
     }
 
     // Observes the candidate on its own only where the recipe's observation does not hold for it, and tells the panel
@@ -126,7 +148,7 @@ export class SourceCandidate {
         } else if (!held && !this.#watch && this.#sourceRuntime) {
             this.#observe()
         }
-        const seen = JSON.stringify([Boolean(this.#watch), this.status()])
+        const seen = JSON.stringify([Boolean(this.#watch), this.status(), this.facts()?.observationId])
         if (seen !== this.#seen) {
             this.#seen = seen
             this.#onChange()

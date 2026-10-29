@@ -2,7 +2,8 @@ import {describe, expect, it, vi} from 'vitest'
 
 // The Change Alerts layer form over a saved recipe whose mosaic cannot be built: dates or sources an initialized recipe
 // can still hold. The form reads the product as the map does and settles as the map area merges its writes; what it
-// offers is read from its own controls.
+// offers is read from its own controls. Its reference asset has been observed and described, as the runtime does
+// before anything is drawn (observedReference.test.fixtures.js), so what is refused here is the configuration alone.
 
 vi.mock('~/compose', () => ({
     compose: Component => Component,
@@ -19,6 +20,7 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
 const {ChangeAlertsImageLayer} = await import('./changeAlertsImageLayer')
 const {buildMapDependencyGraph} = await import('../mapDependencyGraph')
 const {canPreview, layerProduct, readRecipeOutput} = await import('../recipeOutput')
+const {describedByRuntime, observedSegmentsAsset, segmentsAssetMetadata} = await import('./observedReference.test.fixtures')
 
 describe.each([
     ['dates that name no day', {date: {monitoringEnd: '2024-02-30'}}],
@@ -91,12 +93,14 @@ describe.each([
     })
 })
 
+const REFERENCE = {type: 'ASSET', id: 'users/x/segments'}
+
 const changeAlerts = ({date = {}, sources = {}} = {}) => ({
     id: 'change-alerts-1',
     type: 'CHANGE_ALERTS',
-    ui: {initialized: true},
+    ui: {initialized: true, sourceEvidence: observedSegmentsAsset(REFERENCE, segmentsAssetMetadata({band: 'ndvi'}))},
     model: {
-        reference: {type: 'ASSET', id: 'users/x/segments'},
+        reference: REFERENCE,
         date: {
             monitoringEnd: '2024-01-01', monitoringDuration: 2, monitoringDurationUnit: 'months',
             calibrationDuration: 3, calibrationDurationUnit: 'months',
@@ -127,7 +131,7 @@ const layerForm = ({recipe, layerConfig}) => {
             recipe,
             product: layerProduct(recipe, layerConfig),
             graph: buildMapDependencyGraph({recipe, loadedRecipes: {[recipe.id]: recipe}}),
-            heldFor: () => null
+            heldFor: key => key.kind === 'DESCRIBE' ? describedByRuntime([recipe]) : null
         }),
         mapArea: {updateLayerConfig: changes => pending.push(changes)}
     })

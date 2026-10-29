@@ -30,6 +30,8 @@ or in a `golang:1.27-trixie` container mounting `router/` (`go vet ./... && go t
 - sshpiper routes a public key, and logs in upstream with it, before the client proves it holds the key. So a direct
   connection fires the one-shot `POST /sessions/session/:id/opened` only when its pipe starts, and one connection
   routes at most two public keys.
+- A password check sends the client's address along; the user module throttles failed password logins per username at an
+  address and per address, and answers 429, which the router refuses like a wrong password.
 - **Internal sshd**: `127.0.0.1:2222`, public keys only (only sshpiperd reaches it, with the SEPAL key),
   `DisableForwarding yes`, `ForceCommand ssh-bootstrap`. It sees every login from 127.0.0.1; the router logs
   client addresses.

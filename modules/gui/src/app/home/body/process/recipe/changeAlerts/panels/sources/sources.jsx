@@ -20,6 +20,7 @@ import {Panel} from '~/widget/panel/panel'
 
 import {baseBandsOf} from '../../../segmentEvidence'
 import {dataSetOptions, MONITORING_TYPES} from '../../monitoringData'
+import {settingsOf} from '../../processingSettings'
 import {segmentBandsOf} from '../../referenceEvidence'
 import styles from './sources.module.css'
 
@@ -49,7 +50,7 @@ const mapRecipeToProps = recipe => ({
     dates: selectFrom(recipe, 'model.dates'),
     bands: segmentBandsOf(recipe),
     baseBands: baseBandsOf(recipe, PRIMARY_IMAGE),
-    corrections: selectFrom(recipe, 'model.options.corrections')
+    corrections: settingsOf(recipe).model?.options.corrections || []
 })
 
 class _Sources extends React.Component {
@@ -149,10 +150,14 @@ class _Sources extends React.Component {
         const ccdcBands = baseBands
             .map(({name}) => name)
             .filter(band => rmseBands.includes(band))
-        const options = collectionGrouped
+        const offered = collectionGrouped
             .map(group => group
                 .filter(({value}) => ccdcBands.includes(value))
             )
+        // Keep saved native and classified choices visible; only the shared requirement judges their validity.
+        const chosen = band.value && !offered.flat().some(({value}) => value === band.value)
+            ? [[{value: band.value, label: band.value}]] : []
+        const options = [...offered, ...chosen]
             .filter(group => group.length)
             .map(group => ({options: group}))
         return (

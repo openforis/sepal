@@ -5,6 +5,7 @@ import {legacy_createStore as createStore} from 'redux'
 import {finalize, of, Subject} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {assetProcessing, processingOfProducer} from '#sepal/recipe/changeAlerts/processing'
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {initStore} from '~/store'
@@ -102,6 +103,34 @@ describe('the samples charted', () => {
     })
 })
 
+// The server derives, and judges, the collection the alerts monitor from the recipe as applied (observedCollection):
+// the request names the recipe, its Classification copy and all, rather than settings standing for no recipe.
+describe('the observations charted', () => {
+    it('are asked for of the alerts recipe as applied', () => {
+        const recipe = withCopiedClassification(described({dateFormat: 1}))
+
+        openChart(recipe)
+
+        expect(loadTimeSeriesObservations$).toHaveBeenCalledTimes(1)
+        expect(loadTimeSeriesObservations$).toHaveBeenCalledWith({
+            recipe: expect.objectContaining({id: ALERTS, type: 'CHANGE_ALERTS', model: recipe.model}),
+            latLng: {lat: 0, lng: 0},
+            bands: ['ndvi']
+        })
+    })
+
+    it('are asked for again of the recipe once what it monitors is applied changed', () => {
+        openChart(described({dateFormat: 1}))
+
+        act(() => actionBuilder('APPLY_SOURCES')
+            .set(['process.loadedRecipes', ALERTS, 'model.sources.dataSets'], {LANDSAT: ['LANDSAT_9']})
+            .dispatch())
+
+        expect(loadTimeSeriesObservations$).toHaveBeenCalledTimes(2)
+        expect(loadTimeSeriesObservations$.mock.lastCall[0].recipe.model.sources.dataSets).toEqual({LANDSAT: ['LANDSAT_9']})
+    })
+})
+
 const SEGMENTS_ASSET = 'users/x/segments'
 
 // What the source runtime knows of each asset, for the credentials in effect: none are linked here.
@@ -126,6 +155,7 @@ const observe = evidence => act(() => actionBuilder('OBSERVED')
 const sourceEvidence = ({dateFormat, source = SOURCE}) => ({
     sourceKey: source,
     status: 'OBSERVED',
+    processing: source.startsWith('ASSET:') ? assetProcessing({dateFormat}) : processingOfProducer({options: {}}),
     segments: {bands: ['ndvi_rmse'], baseBands: [{name: 'ndvi', measures: ['value']}], dateFormat}
 })
 
@@ -147,11 +177,25 @@ const described = evidence => ({
     ui: {chartPixel: {lat: 0, lng: 0}, sourceEvidence: sourceEvidence(evidence)}
 })
 
+// Sources still carrying the Classification copied from the reference's producer, which Change Alerts does not use.
+const withCopiedClassification = recipe =>
+    ({...recipe, model: {...recipe.model, sources: {...recipe.model.sources, classification: 'classification-1'}}})
+
+// The Masking the alerts reference, over a CCDC, as the session holds them: it can run.
+const REFERENCED = [
+    {id: 'masking-1', type: 'MASKING', model: {imageToMask: {type: 'RECIPE_REF', id: 'ccdc-1'}, imageMask: {type: 'RECIPE_REF', id: 'mosaic-1'}}},
+    {id: 'mosaic-1', type: 'MOSAIC', model: {}},
+    {id: 'ccdc-1', type: 'CCDC', model: {sources: {dataSets: {LANDSAT: ['LANDSAT_8']}}, options: {corrections: []}, dates: {startDate: '2020-01-01', endDate: '2021-01-01'}}}
+]
+
 const openChart = recipe => {
     const initialState = {
         dimensions: {width: 1024, height: 768},
         process: {
-            loadedRecipes: {[recipe.id]: {...recipe, ui: {...recipe.ui, chartPixel: null}}},
+            loadedRecipes: {
+                [recipe.id]: {...recipe, ui: {...recipe.ui, chartPixel: null}},
+                ...Object.fromEntries(REFERENCED.map(record => [record.id, record]))
+            },
             tabs: [{id: recipe.id}],
             recipes: []
         }

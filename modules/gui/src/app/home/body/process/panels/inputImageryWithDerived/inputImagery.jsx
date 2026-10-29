@@ -118,7 +118,8 @@ class _InputImagery extends React.Component {
         RecipeActions(recipeId).removeInputImage(imageToRemove)
     }
 }
-const additionalPolicy = () => ({_: 'allow'})
+// The editor of one of its images opens beside it; anything else is as for any section.
+export const additionalPolicy = () => ({inputImage: 'allow'})
 // [HACK] This actually isn't a form, and we don't want to update the model. This prevents the selected images from
 // being overridden.
 const valuesToModel = null

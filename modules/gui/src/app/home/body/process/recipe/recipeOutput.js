@@ -248,6 +248,15 @@ const hasNeeds = ({records, observations}) =>
 // A map product is described from its root's configuration alone, so the session answers it and only validity is
 // acquired. Whatever its declaration refuses is invalid, as is a product its type does not declare.
 const mapProduct = ({recipe, product, graph, validity, pending}) => {
+    const project = getRecipeType(recipe.type)?.mapProducts?.project
+    if (project) {
+        const model = project(recipe)
+        if (!model) {
+            return answer({status: NEEDS_EVIDENCE, validity})
+        }
+        const projected = {...recipe, model}
+        graph = {...graph, recipes: graph.recipes.map(record => record.id === recipe.id ? projected : record)}
+    }
     let read
     try {
         read = readImageOutput({graph, declarationFor, product, productFor})

@@ -22,6 +22,14 @@ See the design spec: `docs/superpowers/specs/2026-06-16-ldap-removal-user-node-d
 (the module was named `user-node` there) and the rename/decommission design:
 `docs/superpowers/specs/2026-07-07-user-module-rename-decommission-design.md`.
 
+## Login throttling
+
+`/authenticate` (gateway) and `/auth/password` (ssh-gateway) share one in-memory `LoginThrottle`. Per 15 minutes
+it allows 10 failed logins of a username from one `clientIp` (the address the caller sends), and 50 from one
+`clientIp` whatever the username. Never per username alone, which would let anyone lock a user out. A throttled
+login is answered 429 before its password is verified, even when the password is right. Counts reset when the module
+restarts.
+
 ## Schema ownership
 
 The module owns the `user` schema end to end: migration 001 creates the `sepal_user`

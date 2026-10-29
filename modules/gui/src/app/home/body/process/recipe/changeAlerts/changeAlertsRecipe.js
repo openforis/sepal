@@ -1,9 +1,12 @@
-import {monitoringDates} from '#sepal/recipe/changeAlerts/monitoringDates'
+import {throwError} from 'rxjs'
+
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {defaultModel as defaultPlanetModel} from '~/app/home/body/process/recipe/planetMosaic/planetMosaicRecipe'
 import {defaultModel as defaultRadarModel} from '~/app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
+
+import {settingsOf} from './processingSettings'
 
 export const defaultModel = {
     reference: {},
@@ -64,22 +67,13 @@ export const RecipeActions = id => {
     }
 }
 
-export const loadCCDCSegments$ = ({recipe, latLng, bands}) =>
-    api.gee.loadCCDCSegments$({recipe: recipe.model.reference, latLng, bands})
-
-// TODO: Might need to tweak the recipe for this
-export const loadCCDCObservations$ = ({recipe, latLng, bands}) => {
-    const {monitoringEnd, calibrationStart} = monitoringDates(recipe.model)
-    return api.gee.loadTimeSeriesObservations$({
-        recipe: {model: {
-            dates: {
-                startDate: calibrationStart,
-                endDate: monitoringEnd
-            },
-            sources: recipe.model.sources,
-            options: recipe.model.options
-        }},
-        latLng,
-        bands
-    })
+export const loadCCDCSegments$ = ({recipe, latLng, bands}) => {
+    const model = settingsOf(recipe).model
+    return model ? api.gee.loadCCDCSegments$({recipe: model.reference, latLng, bands})
+        : throwError(() => new Error('Reference processing settings are not available'))
 }
+
+// The monitoring imagery's observations of a band of its own: the server derives the collection this recipe observes,
+// and judges it, from the recipe as applied (observedCollection, lib/js/shared/src/recipe/changeAlerts).
+export const loadCCDCObservations$ = ({recipe, latLng, bands}) =>
+    api.gee.loadTimeSeriesObservations$({recipe, latLng, bands})

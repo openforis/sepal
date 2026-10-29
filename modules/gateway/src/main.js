@@ -18,6 +18,7 @@ import {amqpUri, port, redisUri, sandboxDefaultInstanceType, sepalHost} from './
 import {initializeGoogleAccessTokenRefresher} from './googleAccessToken.js'
 import {GoogleAccessTokenMiddleware} from './googleAccessTokenMiddleware.js'
 import {restrictMetricsToAdmins} from './metricsAccess.js'
+import {passwordResetRoute} from './passwordResetRoute.js'
 import {Proxy} from './proxy.js'
 import {sandboxInteractionRoute} from './sandbox/sandboxInteractionRoute.js'
 import {createSandboxProxy} from './sandbox/sandboxProxy.js'
@@ -29,6 +30,7 @@ import {sessionExpiryClosedSubscriber} from './sandbox/sessionExpiryClosedSubscr
 import {sessionExpiryNotifiedSubscriber} from './sandbox/sessionExpiryNotifiedSubscriber.js'
 import {workerSessionClosedSubscriber} from './sandbox/workerSessionClosedSubscriber.js'
 import {SessionManager} from './session.js'
+import {userSessionStarter} from './userSession.js'
 import {UserStore} from './userStore.js'
 import {initializeWebSocketServer} from './websocket.js'
 import {webSocketUpgradeHandler} from './webSocketUpgrade.js'
@@ -127,6 +129,8 @@ const main = async () => {
 
     const app = express()
     app.disable('x-powered-by')
+    // Caddy, the one hop in front, sets X-Forwarded-For to the client's address: req.ip is what logins are throttled by.
+    app.set('trust proxy', 1)
     
     const secret = await getSecret()
 
@@ -151,11 +155,7 @@ const main = async () => {
     // Auth not needed for these endpoints
     app.post('/api/user/logout', logout)
     app.post('/api/user/invalidateOtherSessions', invalidateOtherSessions)
-
-    // Internal-only user-module endpoints — the ssh-gateway calls the user module directly (module-to-module),
-    // so these must NOT be reachable through the public /api/user proxy. Block them before the
-    // catch-all proxy below would otherwise forward /api/user/auth/* and /api/user/nss/* to it.
-    app.use(['/api/user/auth', '/api/user/nss'], (_req, res) => res.sendStatus(404))
+    app.post('/api/user/password/reset', passwordResetRoute(userSessionStarter(userStore, ensureSessionFor)))
 
     restrictMetricsToAdmins(app, authMiddleware)
     app.use('/api/gateway/metrics', apiMetrics({metricsPath: '/api/gateway/metrics'}))

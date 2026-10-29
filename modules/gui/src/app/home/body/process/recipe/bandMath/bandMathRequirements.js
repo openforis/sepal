@@ -53,12 +53,15 @@ export const bandMathRequirements = [
         items: outputItems,
         operations: [IMAGE_OUTPUT]
     },
+    // Nothing output yet is setup still to do, not an error: the image stays held, and Output bands' own list says how
+    // to begin, so its toolbar button is not marked for it.
     {
         id: OUTPUT_IMAGES_REQUIREMENT,
         section: OUTPUT_BANDS,
         requirement: {...OUTPUT_PRESENCE, describe: diagnostic => describeProblems(diagnostic)},
         localFacts: chainFacts,
-        operations: [IMAGE_OUTPUT]
+        operations: [IMAGE_OUTPUT],
+        toolbarMark: false
     }
 ]
 

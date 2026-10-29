@@ -1,6 +1,6 @@
 import {selectFrom} from '~/stateUtils'
 
-import {AGREED, draftAgreement, isDraft} from '../draftAgreement'
+import {AGREED, draftAgreement, isDraft, SAVE_PENDING} from '../draftAgreement'
 
 // What this session knows of each recipe record's persisted state, from the parts of the session that say so: the
 // records it holds, the recipe listing and how current it is (recipeListing.js), the open recipes, and what their
@@ -41,6 +41,27 @@ export const recordCurrency = ({catalogue = {}, listing = [], listingState = {},
 }
 
 export const knownRevisionOf = ({listed, saveState, cached}) => newest(newest(listed, saveState?.revision), cached)
+
+// The drafts among these records that are not what storage holds - what a dependency is executed from is storage's copy -
+// each {recipeId, code, wait}: waited for while its save is pending, otherwise not to be executed over.
+export const draftDisagreementsOfState = (state, ids) => {
+    const loadedRecipes = selectFrom(state, 'process.loadedRecipes') || {}
+    const open = new Set((selectFrom(state, 'process.tabs') || []).map(({id}) => id))
+    const saves = selectFrom(state, 'process.saveStates') || {}
+    const listed = new Map((selectFrom(state, 'process.recipes') || []).map(({id, revision}) => [id, revision]))
+    return ids
+        .filter(id => loadedRecipes[id] && isDraft({open: open.has(id), saveState: saves[id]}))
+        .map(id => ({
+            recipeId: id,
+            code: draftAgreement({
+                draft: loadedRecipes[id],
+                saveState: saves[id],
+                knownRevision: knownRevisionOf({listed: listed.get(id), saveState: saves[id]})
+            })
+        }))
+        .filter(({code}) => code !== AGREED)
+        .map(draft => ({...draft, wait: draft.code === SAVE_PENDING}))
+}
 
 // Staleness alone, for a reader rendering from the session: it changes only with the listing, the open recipes and
 // which closed recipes are still saving - not with every record, or with each save of an open one.

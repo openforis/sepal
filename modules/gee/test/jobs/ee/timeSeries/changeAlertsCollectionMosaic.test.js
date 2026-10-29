@@ -3,6 +3,8 @@ import {beforeEach, describe, it, mock} from 'node:test'
 
 import {firstValueFrom, of} from 'rxjs'
 
+import {effectiveSettings, processingOfProducer} from '#sepal/recipe/changeAlerts/processing'
+
 // What a Change Alerts mosaic mode executes: the mosaic its product is described as, over the geometry of the reference
 // it selected. The mosaics and the reference's images are substituted: each mosaic records the recipe it was built from,
 // and each image states whose geometry it is. Which pixels real imagery holds is the live verifier's
@@ -45,6 +47,7 @@ const imageFactory = mock.fn(recipe => {
     return imageOf(recipe.id)
 })
 
+mock.module('#sepal/ee/asset', {exports: {assetProperties$: () => of({dateFormat: 1})}})
 mock.module('#sepal/ee/imageFactory', {
     exports: {
         default: imageFactory
@@ -80,7 +83,7 @@ for (const [scenario, sources] of [
 
                     assert.deepEqual(
                         mosaics,
-                        [withArea(describedMosaic(recipe, {period, mosaicType}), {geometryOf: 'ccdc-1'})]
+                        [withArea(describedMosaic({...recipe, model: effectiveSettings(recipe.model, processingOfProducer(RECORDS['ccdc-1'].model)).model}, {period, mosaicType}), {geometryOf: 'ccdc-1'})]
                     )
                 }
             )

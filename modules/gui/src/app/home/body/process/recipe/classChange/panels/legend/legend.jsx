@@ -6,7 +6,7 @@ import {classTransitions} from '#sepal/recipe/type/classChange'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
-import {LegendBuilder} from '~/app/home/map/legendBuilder'
+import {LegendBuilder, legendEntriesToModel} from '~/app/home/map/legendBuilder'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -112,7 +112,7 @@ class _LegendPanel extends React.Component {
 }
 
 const valuesToModel = ({entries}) => ({
-    entries: _.sortBy(entries, 'value')
+    entries: legendEntriesToModel(entries)
 })
 
 const LegendPanel = compose(

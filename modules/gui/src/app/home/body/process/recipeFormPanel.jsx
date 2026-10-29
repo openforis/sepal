@@ -27,6 +27,11 @@ const defaultPolicy = ({values, panelWizard: {wizard}}) =>
         ? {_: 'disallow'}
         : {_: 'allow-then-deactivate'}
 
+// What may open beside a form panel (widget/activation/activationPolicy.js): its policy - by default nothing over a set-up
+// wizard or unapplied edits, and otherwise anything, which closes it - with what the panel adds by id.
+export const recipeFormPanelPolicy = ({policy = defaultPolicy, additionalPolicy = () => ({})} = {}) =>
+    props => ({...policy(props), ...additionalPolicy(props)})
+
 export const recipeFormPanel = (
     {
         id,
@@ -100,7 +105,7 @@ export const recipeFormPanel = (
     }
 
     return WrappedComponent => {
-        const policyToApply = props => ({...policy(props), ...additionalPolicy(props)})
+        const policyToApply = recipeFormPanelPolicy({policy, additionalPolicy})
         // [HACK] Using withRecipe() twice.
         // withActivatable() is dependent on recipe for its policy -> withRecipe() before withActivatable()
         // withRecipe() is dependent on activatable props -> withActivatable() before withRecipe()
@@ -134,13 +139,18 @@ export const recipeFormPanel = (
                             id,
                             evaluatedPath: path(this.props),
                             form,
+                            sourceCandidate: this.sourceCandidate,
+                            outputEditors: this.outputEditors,
                             statePath,
-                            valuesToModel,
+                            // List panels deliberately have no serializer: their entries are already applied.
+                            valuesToModel: valuesToModel && this.props.modelToApply
+                                ? values => this.props.modelToApply(valuesToModel(values), this.props.model) : valuesToModel,
                             deactivate,
                             prevValues: this.prevValues
                         }}>
                             <FormContext form={form}>
-                                {React.createElement(WrappedComponent, {...this.props, form})}
+                                {React.createElement(WrappedComponent, {...this.props, form, sourceCandidate: this.sourceCandidate,
+                                    inputs: this.props.presentInputs ? this.props.presentInputs(this.props.inputs, modelToValues) : this.props.inputs})}
                             </FormContext>
                         </Context.Provider>
                     )
@@ -194,7 +204,7 @@ export const recipeFormPanel = (
                             : feedback
                     }, {})
                     return withInputFeedback(form, {
-                        feedbackOf: name => name === sourceInput ? sourceFeedback : outputFeedback[name] || null,
+                        feedbackOf: name => _.mergeWith({}, name === sourceInput ? sourceFeedback : null, outputFeedback[name], combineFeedback),
                         blocked: () => Boolean(sourceCandidate?.refused() || outputEditors.some(({declaration, candidate}) =>
                             declaration.editor.blocksApply !== false && candidate?.refused()
                         ))
@@ -212,9 +222,9 @@ export const recipeFormPanel = (
     }
 }
 
-export const RecipeFormPanel = ({className, placement, isActionForm, additionalUpdates, onApply, onCancel, onClose, children}) =>
+export const RecipeFormPanel = ({className, placement, isActionForm, additionalUpdates, accepts, onApply, onCancel, onClose, children}) =>
     <Context.Consumer>
-        {({id, evaluatedPath, form, statePath, valuesToModel, deactivate, prevValues}) => {
+        {({id, evaluatedPath, form, sourceCandidate, outputEditors, statePath, valuesToModel, deactivate, prevValues}) => {
             const wrappedOnApply = values => {
                 if (isActionForm) {
                     setValues({evaluatedPath, statePath, values})
@@ -234,6 +244,14 @@ export const RecipeFormPanel = ({className, placement, isActionForm, additionalU
                     className={className}
                     placement={placement}
                     form={form}
+                    accepts={values => {
+                        // Recheck the submitted draft, including Enter/Next and changes since the last render.
+                        sourceCandidate?.update(values)
+                        outputEditors.forEach(({candidate}) => candidate?.update(values))
+                        return !sourceCandidate?.refused()
+                            && !outputEditors.some(({declaration, candidate}) => declaration.editor.blocksApply !== false && candidate?.refused())
+                            && (!accepts || accepts(values))
+                    }}
                     isActionForm={isActionForm}
                     onApply={values => {
                         wrappedOnApply(values)
@@ -254,6 +272,9 @@ export const RecipeFormPanel = ({className, placement, isActionForm, additionalU
 
 RecipeFormPanel.propTypes = {
     children: PropTypes.any.isRequired,
+    // Whether the values may be applied as the session now stands: refused, nothing is committed and the panel stays
+    // open (widget/form/panel.jsx).
+    accepts: PropTypes.func,
     // The rest of the recipe this panel's values imply, as [{path, value, merge}] over recipe-relative
     // paths, published in the same action as the panel's own model.
     additionalUpdates: PropTypes.func,
@@ -297,12 +318,12 @@ const setDirty = ({evaluatedPath, statePath, dirty}) => {
         .dispatch()
 }
 
-// What a candidate's findings tell each input of the panel: all of them to the editor's one input, or each to the input
-// the editor names for it.
+// What a candidate's findings tell each input of the panel: all of them to the editor's one input - as the editor says
+// them there (`editor.message(findings)`) or as the requirement does - or each to the input the editor names for it.
 const outputFeedbackOf = (editor, findings, values) => {
     if (typeof editor.input !== 'function') {
         return {[editor.input]: {
-            error: findings.message,
+            error: editor.message ? editor.message(findings) : findings.message,
             diagnostics: findings.diagnostics,
             ...(findings.referenceFeedback && {referenceFeedback: findings.referenceFeedback})
         }}

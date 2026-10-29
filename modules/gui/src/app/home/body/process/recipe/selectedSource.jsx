@@ -4,12 +4,13 @@ import React from 'react'
 import {withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {composeHoC} from '~/compose'
 import {connect} from '~/connect'
+import {selectFrom} from '~/stateUtils'
 import {select} from '~/store'
 
 import {OutputWatch} from './outputWatch'
 import {IMAGE_OUTPUT} from './recipeOutput'
 import {itemStatusesOfState, sectionProblemsOfState} from './selectedSourceStatus'
-import {isJudgedByOutput} from './sourceRequirements'
+import {isJudgedByOutput, readOutputRequirementsOfState} from './sourceRequirements'
 
 // `sourceProblems`: {[sectionId]: message} for the sections whose selected source is unavailable or unsuitable, or whose
 // own configuration does not meet its requirements, for a toolbar to mark them; `wizardStepProblems` the same, for the
@@ -31,6 +32,17 @@ export const withItemProblems = sectionId => composeHoC(
             ({message}) => message
         )
     })),
+    withOutputRequirementWatch(),
+    withSourceRuntime()
+)
+
+// What `propsOf(reads)` makes of the reads of the requirements the recipe's output read judges (sourceRequirements.js),
+// for a panel whose settings depend on what they establish. Needs the recipe's id.
+export const withOutputRequirementReads = propsOf => composeHoC(
+    connect((state, {recipeId, sourceRuntime}) => {
+        const recipe = selectFrom(state, ['process.loadedRecipes', recipeId])
+        return propsOf(recipe ? readOutputRequirementsOfState({state, recipe, heldFor: key => sourceRuntime?.heldFor(key)}) : [])
+    }),
     withOutputRequirementWatch(),
     withSourceRuntime()
 )

@@ -21,13 +21,19 @@ import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import {resolveChartBand} from '../../chartBandSelection'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
-import {pixelChartAvailability} from '../../operationAvailability'
+import {pixelChartAvailability, pixelOperationsAvailability, watchOperations} from '../../operationAvailability'
 import {pixelGenerationOfState} from '../../pixelGeneration'
+import {segmentBandLabelsOf} from '../../segmentCapability'
 import {segmentDescription} from '../../segmentEvidence'
+import {selectedSourceOf} from '../../sourceEvidence'
 import {PIXEL_SEGMENTS} from '../../sourceRequirements'
 import {loadCCDCSegments$, RecipeActions} from '../ccdcSliceRecipe'
 import {dateFormatOf} from '../sliceEvidence'
 import styles from './chartPixel.module.css'
+
+// What the chart runs at its pixel: the source's segments, built as the source's own image. It and its action are held
+// to these, and watch them (ccdcSliceToolbar.jsx).
+export const CHART_OPERATIONS = [PIXEL_SEGMENTS]
 
 const fields = {
     selectedBand: new Form.Field()
@@ -156,10 +162,12 @@ class _ChartPixel extends React.Component {
         }
     }
 
-    // The chart watches the evidence its segments need, so they are checked wherever it is open.
+    // The chart watches the evidence its segments need, and what running them needs, so both are checked wherever it is
+    // open.
     componentDidMount() {
         const {recipeId, sourceRuntime} = this.props
         this.evidence = sourceRuntime?.watchEvidence$({recipeId, operation: PIXEL_SEGMENTS}).subscribe()
+        this.operationWatches = watchOperations({sourceRuntime, recipeId, operations: CHART_OPERATIONS})
         this.updateChart()
     }
 
@@ -169,15 +177,21 @@ class _ChartPixel extends React.Component {
 
     componentWillUnmount() {
         this.evidence?.unsubscribe()
+        this.operationWatches.unsubscribe()
         this.cancel$.next(true)
         this.cancel$.complete()
     }
 
-    // Segments are requested only once the source is known to suit them (requestGate, sourceRequirements.js), and
-    // requested when it comes to; segments already charted stay while it is checked again. Nothing is requested for a
-    // band being replaced: the update the replacement causes requests it.
+    // Segments are requested only once the source is known to suit them (requestGate, sourceRequirements.js) and to run
+    // (pixelOperationsAvailability), and requested when it comes to; segments already charted stay while the source is
+    // checked again, and are let go once whether it runs is no longer known. A source found unable to run closes the
+    // chart, whatever band is selected. Nothing is requested for a band being replaced: the update the replacement
+    // causes requests it.
     updateChart(prevProps) {
-        const {pixels, recipe, latLng, description, segmentsGate, noChartableBand, inputs: {selectedBand}} = this.props
+        const {pixels, recipe, latLng, description, segmentsGate, operationsGate, noChartableBand, inputs: {selectedBand}} = this.props
+        if (latLng && operationsGate?.withdraw) {
+            return this.close()
+        }
         const band = this.resolvedBand(selectedBand.value)
         if (band !== selectedBand.value) {
             this.clearData()
@@ -188,18 +202,19 @@ class _ChartPixel extends React.Component {
         if (noChartableBand || !latLng || !band) {
             return this.clearData()
         }
-        // Read again when what is asked changes AND when the pixels may have moved without the model moving: a chart
-        // drawn before that goes on plotting pixels the source no longer has.
-        if (!prevProps || !_.isEqual(
-            [recipe.model, pixels, latLng, band, description],
-            [prevProps.recipe.model, prevProps.pixels, prevProps.latLng, prevProps.inputs.selectedBand.value, prevProps.description])
+        // Read again when what is asked changes, what the source builds included, AND when the pixels may have moved
+        // without the model moving: a chart drawn before that goes on plotting pixels the source no longer has.
+        const gate = segmentsGate || operationsGate
+        if (!prevProps || (operationsGate && !prevProps.operationsGate) || !_.isEqual(
+            [recipe.model, pixels, latLng, band, description, sourceBuild(this.props)],
+            [prevProps.recipe.model, prevProps.pixels, prevProps.latLng, prevProps.inputs.selectedBand.value, prevProps.description, sourceBuild(prevProps)])
         ) {
             this.clearData()
-            this.segmentsHeld = Boolean(segmentsGate)
+            this.segmentsHeld = Boolean(gate)
             if (!this.segmentsHeld) {
                 this.loadSegments()
             }
-        } else if (this.segmentsHeld && !segmentsGate) {
+        } else if (this.segmentsHeld && !gate) {
             this.segmentsHeld = false
             this.loadSegments()
         }
@@ -222,10 +237,12 @@ class _ChartPixel extends React.Component {
         )
     }
 
-    // The measures the source's segments can be plotted for (pixelChartAvailability).
+    // The measures the source's segments can be plotted for (pixelChartAvailability), labelled as their producer labels
+    // them where it does; by name otherwise - a name like `constructor` included, which the labels only inherit. The
+    // name is what is selected and requested.
     bandOptions() {
-        const {chartBands} = this.props
-        return chartBands.map(name => ({value: name, label: name}))
+        const {chartBands, bandLabels} = this.props
+        return chartBands.map(name => ({value: name, label: (Object.hasOwn(bandLabels, name) && bandLabels[name]) || name}))
     }
 
     // A band no longer offered is replaced by one that is - but only once what can be plotted is established: checking
@@ -253,19 +270,30 @@ class _ChartPixel extends React.Component {
 
 // What the chart's pixels were read from beyond the recipe: a change means they may have moved, which no comparison of
 // what the source DESCRIBES would show (pixelGeneration.js). And, assessed as the toolbar's action assesses it, whether
-// its segments may be read and which bands it can plot.
+// its segments may be read, which bands it can plot, and whether the source can run - with how the bands are labelled,
+// from the records that assessment resolved.
 const mapStateToProps = (state, {recipe, recipeId, sourceRuntime}) => {
+    const heldFor = key => sourceRuntime?.heldFor(key)
     const {gate, chartable, bands, noChartableBand} = pixelChartAvailability({
-        state, recipe, evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id), heldFor: key => sourceRuntime?.heldFor(key), now: Date.now()
+        state, recipe, evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id), heldFor, now: Date.now()
     })
+    const operations = pixelOperationsAvailability({state, recipe, heldFor, operations: CHART_OPERATIONS})
     return {
         pixels: pixelGenerationOfState(state, recipeId),
         segmentsGate: gate,
+        operationsGate: operations.gate,
+        computation: operations.computation,
         chartable,
         chartBands: bands,
+        bandLabels: segmentBandLabelsOf(selectedSourceOf(recipe, PRIMARY_IMAGE), operations.recordOf),
         noChartableBand
     }
 }
+
+// What the source builds: the content of every record its segments are computed from but the slice's own, which leads
+// (pixelOperationsAvailability) and whose model is compared beside it. What the source executes, its own AOI included -
+// not titles, layout, ui or unrelated recipes.
+const sourceBuild = ({computation}) => computation.slice(1)
 
 export const ChartPixel = compose(
     _ChartPixel,

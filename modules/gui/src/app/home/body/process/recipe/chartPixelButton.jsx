@@ -18,7 +18,7 @@ import {Tooltip} from '~/widget/tooltip'
 
 import styles from './chartPixelButton.module.css'
 import {rankCoordinateCandidates} from './coordinateCandidates'
-import {pixelChartAvailability} from './operationAvailability'
+import {pixelChartAvailability, pixelOperationsAvailability, watchOperations} from './operationAvailability'
 
 const LONG_PRESS_DURATION_MS = 600
 const LONG_PRESS_MOVE_TOLERANCE_PX = 8
@@ -115,6 +115,12 @@ class _ChartPixelButton extends React.Component {
                 </div>
             </FloatingBox>
         ) : null
+    }
+
+    // What the operations the chart runs at its pixel need is read for as long as the chart can be opened from here.
+    componentDidMount() {
+        const {operations, recipe, sourceRuntime} = this.props
+        this.operationWatches = watchOperations({sourceRuntime, recipeId: recipe.id, operations})
     }
 
     // A pixel being chosen, or a long press about to offer coordinates, when the chart can no longer be opened would
@@ -287,18 +293,26 @@ class _ChartPixelButton extends React.Component {
     }
 
     componentWillUnmount() {
+        this.operationWatches.unsubscribe()
         this.cancelLongPress()
         this.state.clickListener?.remove()
         this.stopInteractionMode()
     }
 }
 
-// Not offered while the chart's prerequisites are being checked or are not met (operationAvailability.js).
-const mapStateToProps = (state, {recipe, sourceRuntime, disabled}) => ({
-    disabled: disabled || !pixelChartAvailability({
-        state, recipe, evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id), heldFor: key => sourceRuntime?.heldFor(key), now: Date.now()
-    }).available
-})
+// Not offered while the chart's prerequisites are being checked or are not met (operationAvailability.js): those of the
+// segments it reads from its source, and what its recipe's type declares the operations it runs at its pixel require
+// (`operations`).
+const mapStateToProps = (state, {recipe, sourceRuntime, disabled, operations}) => {
+    const heldFor = key => sourceRuntime?.heldFor(key)
+    return {
+        disabled: disabled
+            || !pixelChartAvailability({
+                state, recipe, evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id), heldFor, now: Date.now()
+            }).available
+            || (operations.length > 0 && !pixelOperationsAvailability({state, recipe, heldFor, operations}).available)
+    }
+}
 
 export const ChartPixelButton = compose(
     _ChartPixelButton,
@@ -311,9 +325,11 @@ export const ChartPixelButton = compose(
 ChartPixelButton.propTypes = {
     onPixelSelected: PropTypes.func.isRequired,
     disabled: PropTypes.any,
+    operations: PropTypes.arrayOf(PropTypes.string),
     tooltipKey: PropTypes.string
 }
 
 ChartPixelButton.defaultProps = {
+    operations: [],
     tooltipKey: 'process.chartPixel'
 }

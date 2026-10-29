@@ -4,10 +4,12 @@ import {storedUsername} from '#sepal/username'
 import {hashPassword, needsRehash, verifyPassword} from './crypto.js'
 import {sendInvite, sendPasswordReset} from './email.js'
 import {publishUserLocked, publishUserUnlocked, publishUserUpdated} from './events.js'
+import {LoginThrottle} from './loginThrottle.js'
 import {renderGroup, renderPasswd, snapshotVersion} from './nss.js'
 import {recaptcha} from './recaptcha.js'
 import {generateToken, getOrGenerateToken, isExpired} from './tokens.js'
 import {userToMap} from './user.js'
+import {DuplicateUserError} from './userRepository.js'
 import {isText, isValidEmail, isValidPassword, isValidUsername} from './validation.js'
 
 const log = getLogger('userApi')
@@ -15,6 +17,9 @@ const log = getLogger('userApi')
 // What #applyDetails answers with when the body carries an email the database would reject, so its
 // callers can tell that apart from an unknown user.
 const INVALID_EMAIL = Symbol('invalid-email')
+
+// What #applyDetails answers with when the body's email belongs to another user.
+const EMAIL_TAKEN = Symbol('email-taken')
 
 // What #applyDetails answers with when the body's revision is not the stored one — the caller edited
 // a record that has since changed.
@@ -25,18 +30,26 @@ export class UserApi {
     #googleService
     #googleOAuth
     #ensureProvisioned
+    #loginThrottle
 
-    constructor({repository, googleService, googleOAuth, ensureProvisioned}) {
+    constructor({repository, googleService, googleOAuth, ensureProvisioned, loginThrottle = new LoginThrottle()}) {
         this.#repository = repository
         this.#googleService = googleService
         this.#googleOAuth = googleOAuth
         this.#ensureProvisioned = ensureProvisioned
+        this.#loginThrottle = loginThrottle
     }
 
+    // clientIp is the address the caller saw the login come from.
     async authenticate(ctx) {
-        const {username, password} = readBody(ctx)
+        const {username, password, clientIp} = readBody(ctx)
+        if (!this.#loginThrottle.tryAttempt({username, clientIp})) {
+            refuseThrottled(ctx)
+            return
+        }
         const user = isText(username) ? await this.#repository.findByUsername(username) : null
         if (await authenticates(user, password)) {
+            this.#loginThrottle.succeeded({username, clientIp})
             await this.#repository.setLastLoginTime(user.username)
             await this.#maybeRehashPassword(user, password)
             try {
@@ -117,8 +130,13 @@ export class UserApi {
     // Deliberately publishes no event and sets no refresh header.
     async changePassword(ctx) {
         const {oldPassword, newPassword} = readBody(ctx)
+        if (!isValidPassword(newPassword)) {
+            ctx.status = 400
+            ctx.body = {message: 'Invalid request'}
+            return
+        }
         const user = await this.#repository.findByUsername(ctx.state.currentUser.username)
-        if (isText(newPassword) && await verifies(user, oldPassword)) {
+        if (await verifies(user, oldPassword)) {
             await this.#repository.updatePassword(user.username, await hashPassword(newPassword))
             ctx.body = {status: 'success', message: 'Password changed'}
         } else {
@@ -129,10 +147,20 @@ export class UserApi {
     // The admin flag comes from the caller's current status, so a self-update cannot self-elevate.
     async updateCurrentDetails(ctx) {
         const current = ctx.state.currentUser
+        if (!(await this.#confirmsEmailChange(ctx, current.username))) {
+            ctx.status = 403
+            ctx.body = {message: 'Invalid password'}
+            return
+        }
         const user = await this.#applyDetails(ctx, {targetUsername: current.username, adminValue: !!current.admin})
         if (user === INVALID_EMAIL) {
             ctx.status = 400
             ctx.body = {message: 'Invalid email'}
+            return
+        }
+        if (user === EMAIL_TAKEN) {
+            ctx.status = 400
+            ctx.body = {message: 'Email already in use'}
             return
         }
         if (user === CONFLICT) {
@@ -156,6 +184,11 @@ export class UserApi {
         if (user === INVALID_EMAIL) {
             ctx.status = 400
             ctx.body = {message: 'Invalid email'}
+            return
+        }
+        if (user === EMAIL_TAKEN) {
+            ctx.status = 400
+            ctx.body = {message: 'Email already in use'}
             return
         }
         if (user === CONFLICT) {
@@ -254,7 +287,6 @@ export class UserApi {
         const wasPending = user.status === 'PENDING'
         await this.#repository.updatePassword(user.username, await hashPassword(password))
         await this.#repository.updateStatus(user.username, 'ACTIVE')
-        await this.#repository.invalidateToken(token)
         // Leaving PENDING (covers unlock: LOCKED -> PENDING -> reset link) must guarantee complete
         // provisioning; a keyless user is healed too. Routine resets of provisioned users skip it —
         // provision recursively chowns the data home, too expensive for a request that needs neither.
@@ -294,7 +326,16 @@ export class UserApi {
             ctx.body = {message: 'Invalid request'}
             return
         }
-        await this.#createInvitedUser({username, name, email, organization, intendedUse: null})
+        try {
+            await this.#createInvitedUser({username, name, email, organization, intendedUse: null})
+        } catch (error) {
+            if (!(error instanceof DuplicateUserError)) {
+                throw error
+            }
+            ctx.status = 400
+            ctx.body = {message: 'Username or email already in use'}
+            return
+        }
         ctx.body = {status: 'success', message: 'Signup succeeded'}
     }
 
@@ -319,8 +360,12 @@ export class UserApi {
             log.info(`Ignoring password reset request for locked user: ${user.username}`)
             return
         }
+        // An outstanding link is resent as it is: restarting its clock would let anyone who has seen it
+        // once keep it alive indefinitely.
         const token = getOrGenerateToken(user)
-        await this.#repository.updateToken(user.username, token)
+        if (token !== user.token) {
+            await this.#repository.updateToken(user.username, token)
+        }
         log.info(`Sending password reset email to '${user.username}'`)
         sendPasswordReset(user, token)
     }
@@ -397,9 +442,14 @@ export class UserApi {
     // Backs the ssh-gateway's PAM module, which verifies against this database rather than LDAP.
     // ACTIVE users only.
     async authPassword(ctx) {
-        const {username, password} = readBody(ctx)
+        const {username, password, clientIp} = readBody(ctx)
+        if (!this.#loginThrottle.tryAttempt({username, clientIp})) {
+            refuseThrottled(ctx)
+            return
+        }
         const user = isText(username) ? await this.#repository.findByUsername(username) : null
         if (await authenticates(user, password)) {
+            this.#loginThrottle.succeeded({username, clientIp})
             await this.#maybeRehashPassword(user, password)
             ctx.body = {status: 'success'}
         } else {
@@ -436,11 +486,19 @@ export class UserApi {
         }
     }
 
+    // Whoever controls the address can reset the password, so changing it takes the password too. An
+    // unknown user passes, to be answered as such by #applyDetails.
+    async #confirmsEmailChange(ctx, username) {
+        const {email, password} = readBody(ctx)
+        const user = await this.#repository.findByUsername(username)
+        return !user || email === user.email || await verifies(user, password)
+    }
+
     // Shared detail-update core. adminValue forces the admin flag (self-update cannot self-elevate).
     // Returns the reloaded user, null when the request names no existing user, INVALID_EMAIL when
-    // the body carries an email the database would reject (malformed, or over EMAIL_MAX_LENGTH), or
-    // CONFLICT when the body's revision is not the stored one. Both callers funnel through here, so
-    // neither can skip the checks.
+    // the body carries an email the database would reject (malformed, or over EMAIL_MAX_LENGTH),
+    // EMAIL_TAKEN when another user has that email, or CONFLICT when the body's revision is not the
+    // stored one. Both callers funnel through here, so neither can skip the checks.
     async #applyDetails(ctx, {targetUsername, adminValue}) {
         if (!isText(targetUsername)) {
             return null
@@ -459,7 +517,10 @@ export class UserApi {
             manualMapRenderingEnabled: body.manualMapRenderingEnabled === true || body.manualMapRenderingEnabled === 'true',
             admin: adminValue,
             revision: toRevision(body.revision)
-        })
+        }).catch(error => error instanceof DuplicateUserError ? EMAIL_TAKEN : Promise.reject(error))
+        if (updated === EMAIL_TAKEN) {
+            return EMAIL_TAKEN
+        }
         const user = await this.#repository.findByUsername(targetUsername)
         if (!user) {
             return null
@@ -510,6 +571,11 @@ const suppliedUsername = ctx => {
 // a value of any other type into bytes of its own rather than refusing it.
 const verifies = async (user, password) =>
     Boolean(user?.passwordHash) && isText(password) && await verifyPassword(password, user.passwordHash)
+
+const refuseThrottled = ctx => {
+    ctx.status = 429
+    ctx.body = {message: 'Too many failed logins, try again later'}
+}
 
 // What both password endpoints mean by a successful login.
 const authenticates = async (user, password) =>

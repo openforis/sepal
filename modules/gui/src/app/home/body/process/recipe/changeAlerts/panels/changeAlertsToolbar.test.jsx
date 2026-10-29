@@ -11,7 +11,7 @@ import {initStore} from '~/store'
 // failed leaves nothing to chart or export, however much configuration the recipe carries.
 
 vi.mock('~/translate', () => ({msg: key => key}))
-vi.mock('./chartPixel', () => ({ChartPixel: () => <output aria-label='chart'/>}))
+vi.mock('./chartPixel', () => ({CHART_OPERATIONS: [], ChartPixel: () => <output aria-label='chart'/>}))
 vi.mock('./retrieve/retrieve', () => ({Retrieve: () => null}))
 vi.mock('./reference/reference', () => ({Reference: () => null}))
 vi.mock('./date/date', () => ({Date: () => null}))

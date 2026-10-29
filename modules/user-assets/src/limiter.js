@@ -4,11 +4,11 @@ import {getLogger} from '#sepal/log'
 
 const log = getLogger('limiter')
 
-const Limiter = ({name, concurrency, group = () => true}) => {
+const Limiter = ({name, concurrency}) => {
     const request$ = new Subject()
 
     request$.pipe(
-        groupBy(group),
+        groupBy(({key}) => key),
         mergeMap(group$ => group$.pipe(
             mergeMap(
                 ({task$, response$, abort$}) => task$().pipe(
@@ -30,10 +30,10 @@ const Limiter = ({name, concurrency, group = () => true}) => {
         complete: () => log.error(`Unexpected ${name} limiter stream complete`)
     })
     
-    return task$ => {
+    return (task$, key) => {
         const response$ = new ReplaySubject(1)
         const abort$ = new Subject()
-        request$.next({task$, response$, abort$})
+        request$.next({task$, response$, abort$, key})
         return response$.pipe(
             take(1),
             finalize(() => abort$.next(true))

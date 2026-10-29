@@ -22,6 +22,7 @@ import {assetEvidenceOfState} from '../sourceRuntime/assetEvidence'
 import {recordStalenessOfState} from '../sourceRuntime/recordCurrency'
 import {withSourceRuntime} from '../sourceRuntime/sourceRuntimeContext'
 import {buildMapDependencyGraph} from './mapDependencyGraph'
+import {mapProductGate, mapProductOperation, watchOperations} from './operationAvailability'
 import {OutputWatch} from './outputWatch'
 import {pixelGeneration, samePixels} from './pixelGeneration'
 import {recipeContent} from './recipeContent'
@@ -54,11 +55,12 @@ import {layerSelection, layerVisualizations} from './visualizations'
 const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}, layerConfig, sourceRuntime}) => {
     const recipe = selectFrom(state, ['process.loadedRecipes', recipeId])
     const loadedRecipes = selectFrom(state, 'process.loadedRecipes')
+    const product = recipe ? layerProduct(recipe, layerConfig) : null
     const sourceGate = recipe
         ? requestGate({
             state,
             recipe,
-            operation: layerProduct(recipe, layerConfig)?.name,
+            operation: product?.name,
             evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id),
             heldFor: key => sourceRuntime?.heldFor(key),
             now: Date.now()
@@ -71,6 +73,7 @@ const mapStateToProps = (state, {source: {id, sourceConfig: {recipeId}}, layerCo
             ? buildMapDependencyGraph({recipe, loadedRecipes})
             : null,
         sourceGate,
+        productGate: recipe ? mapProductGate({state, recipe, product, heldFor: key => sourceRuntime?.heldFor(key)}) : null,
         heldSource: heldSourceStatusOfState(state, recipe, sourceGate),
         recordStaleness: recordStalenessOfState(state),
         assetEvidence: assetEvidenceOfState(state),
@@ -167,6 +170,7 @@ class _RecipeImageLayer extends React.Component {
     componentWillUnmount() {
         this.mounted = false
         this.watch.stop()
+        this.watchProductOperation(null)
     }
 
     // An explicit refresh of the question this layer shows, shared with every other consumer of it.
@@ -181,10 +185,28 @@ class _RecipeImageLayer extends React.Component {
     update() {
         const {recipe, layerConfig} = this.props
         if (!recipe) {
+            this.watchProductOperation(null)
             return this.watch.stop()
         }
-        this.watch.update({recipeId: recipe.id, product: layerProduct(recipe, layerConfig)})
+        const product = layerProduct(recipe, layerConfig)
+        this.watch.update({recipeId: recipe.id, product})
+        this.watchProductOperation(mapProductOperation(recipe, product))
         this.reconcileVisualization()
+    }
+
+    // What the operation a map product runs needs is read for as long as the layer shows it (mapProductGate).
+    watchProductOperation(operation) {
+        const {recipe, sourceRuntime} = this.props
+        const key = operation && JSON.stringify([recipe.id, operation])
+        if (key === this.productOperationKey) {
+            return
+        }
+        const previous = this.productOperationWatch
+        this.productOperationKey = key
+        this.productOperationWatch = operation
+            ? watchOperations({sourceRuntime, recipeId: recipe.id, operations: [operation]})
+            : null
+        previous?.unsubscribe()
     }
 
     imageOutput() {
@@ -248,8 +270,9 @@ class _RecipeImageLayer extends React.Component {
     // preview executes every dependency, read or not, and one Earth Engine would reject - bands that do not exist,
     // a dependency that is gone - is withheld rather than requested. While the answer is being loaded nothing new is
     // drawn, but a drawing already shown is kept as long as nothing it was drawn from has changed (preserved). The same
-    // holds while a source the product requires is not known to suit it (requestGate, sourceRequirements.js), and a
-    // source found unsuitable takes the drawing away. The saved selection is left alone - only what it would present is
+    // holds while a source the product requires is not known to suit it (requestGate, sourceRequirements.js), or while
+    // the operation a map product runs is not known to be able to (mapProductGate), and a source found unsuitable, or a
+    // finding of that operation, takes the drawing away. The saved selection is left alone - only what it would present is
     // withheld.
     //
     // Whatever is withheld is also let go. MapAreaLayout takes a withheld layer off the map, which cancels it for
@@ -267,12 +290,16 @@ class _RecipeImageLayer extends React.Component {
         if (!map || !recipe.ui.initialized || !layerConfig || !layerConfig.visParams) {
             return null
         }
+        // A finding takes the drawing away whatever is still being read: preserving it is for what is not yet known.
+        const gates = [this.props.sourceGate, this.props.productGate].filter(Boolean)
+        if (gates.some(({withdraw}) => withdraw)) {
+            return null
+        }
         if (!canPreview(imageOutput)) {
             return this.preserved(imageOutput)
         }
-        const {sourceGate} = this.props
-        if (sourceGate) {
-            return sourceGate.withdraw ? null : this.drawn(imageOutput)
+        if (gates.length) {
+            return this.drawn(imageOutput)
         }
         if (this.selfManagedVisualizations()) {
             return this.createLayer(imageOutput)

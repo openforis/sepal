@@ -2,6 +2,7 @@ import _ from 'lodash'
 import moment from 'moment'
 import {map, switchMap} from 'rxjs'
 
+import {requireProvidedOutputs$} from '#gee/jobs/requestedBands'
 import {toFeatureCollection$} from '#sepal/ee/aoi'
 import ee from '#sepal/ee/ee'
 import {hasImagery as hasOpticalImagery} from '#sepal/ee/optical/collection'
@@ -10,6 +11,7 @@ import {hasImagery as hasRadarImagery} from '#sepal/ee/radar/collection'
 import tile from '#sepal/ee/tile'
 import {getCollection$} from '#sepal/ee/timeSeries/collection'
 import {planetSource} from '#sepal/recipe/collectionType'
+import timeSeriesType from '#sepal/recipe/type/timeSeries'
 
 import {resolveImageOutput$} from './imageOutput.js'
 import {startImageToWorkspaceExport$} from './toWorkspace.js'
@@ -17,17 +19,22 @@ import {startImageToWorkspaceExport$} from './toWorkspace.js'
 // Each request - the tile ids, a tile's date ranges, a chunk's export - is held to what the recipe's image output
 // requires (imageOutput.js) before it tiles or reads anything else, whatever a previous request established. The
 // download reads an indicator of the collection rather than the image, but every requirement on that image concerns
-// the collection both build. Establishing readiness may itself read Earth Engine.
-export const timeSeriesTiles$ = ({image: {recipe, tileSize}}) =>
-    resolveImageOutput$(recipe).pipe(
+// the collection both build - the Classification its Sources select trainable, whatever indicators are named. Then the
+// indicators the Classification computes must be ones it provides (requireProvidedOutputs$): planning judges every
+// indicator the download names, each chunk its own. Establishing readiness may itself read Earth Engine.
+export const timeSeriesTiles$ = ({image}) => {
+    const {recipe, tileSize} = image
+    return ready$(recipe, indicatorsOf(image)).pipe(
         switchMap(() => tiling$(recipe, tileSize)),
         switchMap(({tiles}) => ee.getInfo$(tiles.aggregate_array('system:index'), 'time-series tile ids')),
         map(tileIds => ({tileIds}))
     )
+}
 
 // One computation for the whole tile, not one per date range.
-export const timeSeriesChunks$ = ({image: {recipe, tileSize}, tileId, dateRanges}) =>
-    resolveImageOutput$(recipe).pipe(
+export const timeSeriesChunks$ = ({image, tileId, dateRanges}) => {
+    const {recipe, tileSize} = image
+    return ready$(recipe, indicatorsOf(image)).pipe(
         switchMap(() => tiling$(recipe, tileSize)),
         switchMap(({tiles}) => {
             const geometry = tileFeature(tiles, tileId).geometry()
@@ -38,9 +45,10 @@ export const timeSeriesChunks$ = ({image: {recipe, tileSize}, tileId, dateRanges
         }),
         map(flags => ({dateRanges: dateRanges.filter((_range, index) => flags[index])}))
     )
+}
 
 export const startTimeSeriesChunkExport$ = ({description, image: {recipe, indicator, tileSize, filenamePrefix, scale, crs, crsTransform, shardSize, fileDimensions}, tileId, tileIndex, startDate, endDate}, {sepalUser}) =>
-    resolveImageOutput$(recipe).pipe(
+    ready$(recipe, [indicator]).pipe(
         switchMap(() => tiling$(recipe, tileSize)),
         switchMap(({aoiGeometry, tiles}) => timeSeries$({recipe, indicator, aoiGeometry, feature: tileFeature(tiles, tileId), startDate, endDate})),
         switchMap(timeSeries => {
@@ -52,6 +60,19 @@ export const startTimeSeriesChunkExport$ = ({description, image: {recipe, indica
             }, {sepalUser})
         })
     )
+
+// The recipe's image output, described and ready, over its own AOI; then the indicators it is asked for. Judged as a Time
+// Series whatever type it states, since what is built is a Time Series' collection.
+const ready$ = (recipe, indicators) => {
+    const built = {...recipe, type: timeSeriesType.type}
+    return resolveImageOutput$(built).pipe(
+        switchMap(() => requireProvidedOutputs$({recipe: built, requested: indicators}))
+    )
+}
+
+// The indicators a download names. A task started by an earlier release names one, `indicator`.
+const indicatorsOf = ({indicators, indicator}) =>
+    indicators?.length ? indicators : [indicator].filter(Boolean)
 
 // The aoi is resolved before any of the export graph is built: an ASSET or RECIPE aoi is a descriptor whose
 // geometry only Earth Engine can supply, and tile() needs the real collection. The whole aoi filters the source

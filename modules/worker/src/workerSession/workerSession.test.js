@@ -5,12 +5,10 @@ import assert from 'node:assert/strict'
 import {describe, test} from 'node:test'
 
 import {
-    activate,
     close,
     createApiKeyGenerator,
     createWorkerSession,
     isActive,
-    isClosed,
     isPending,
     NotificationState,
     State,
@@ -42,7 +40,6 @@ describe('createWorkerSession', () => {
         const s = baseSession()
         assert.equal(isPending(s), true)
         assert.equal(isActive(s), false)
-        assert.equal(isClosed(s), false)
     })
 
     test('is immutable (frozen)', () => {
@@ -53,22 +50,17 @@ describe('createWorkerSession', () => {
 })
 
 describe('mutators', () => {
-    test('activate → ACTIVE, original unchanged, other fields preserved', () => {
+    test('close → CLOSED, original unchanged, other fields preserved', () => {
         const s = baseSession()
-        const a = activate(s)
-        assert.equal(a.state, State.ACTIVE)
-        assert.equal(isActive(a), true)
-        assert.equal(s.state, State.PENDING)
-        assert.equal(a.id, 's-1')
-        assert.equal(a.apiKey, 'secret-key')
-        assert.deepEqual(a.instance, {id: 'i-1', host: 'host-1'})
-    })
-
-    test('close → CLOSED (domain does NOT null api_key; that is the repo update variant)', () => {
-        const c = close(baseSession())
+        const c = close(s)
         assert.equal(c.state, State.CLOSED)
-        assert.equal(isClosed(c), true)
+        assert.equal(isActive(c), false)
+        assert.equal(isPending(c), false)
+        assert.equal(s.state, State.PENDING)
+        assert.equal(c.id, 's-1')
+        // The domain does NOT null api_key; that is the repository update's job.
         assert.equal(c.apiKey, 'secret-key')
+        assert.deepEqual(c.instance, {id: 'i-1', host: 'host-1'})
     })
 
     test('withInstance replaces instance and host', () => {
@@ -89,16 +81,6 @@ describe('Timeout', () => {
     test('lastValidUpdate(now) = now - 10min', () => {
         const now = new Date('2026-01-01T12:00:00Z')
         assert.deepEqual(Timeout.PENDING.lastValidUpdate(now), new Date(now.getTime() - TEN_MIN))
-    })
-
-    test('get(now) = now - 10min', () => {
-        const now = new Date('2026-01-01T12:00:00Z')
-        assert.deepEqual(Timeout.PENDING.get(now), new Date(now.getTime() - TEN_MIN))
-    })
-
-    test('willTimeout(date) = date + 10min + 1ms', () => {
-        const d = new Date('2026-01-01T12:00:00Z')
-        assert.deepEqual(Timeout.PENDING.willTimeout(d), new Date(d.getTime() + TEN_MIN + 1))
     })
 
     // ACTIVE is deliberately absent: an ACTIVE session's lifetime is its stored timeout_time, and

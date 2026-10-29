@@ -39,6 +39,14 @@ export class OpenSessionUseRepository {
         })
     }
 
+    // Only closes a row still open, so a real close recorded since the caller read it wins.
+    closeStaleSession({sessionId, to}) {
+        return this.#db.withConnection(connection => connection.query(
+            'UPDATE open_session_use SET to_time = ? WHERE session_id = ? AND to_time IS NULL',
+            [to, sessionId]
+        ))
+    }
+
     removeUser(username) {
         return this.#db.withConnection(connection => connection.query(
             'DELETE FROM open_session_use WHERE username = ?', [username]

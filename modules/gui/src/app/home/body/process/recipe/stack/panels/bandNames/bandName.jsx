@@ -30,9 +30,10 @@ class _BandName extends React.Component {
     }
 
     render() {
-        const {originalName, inputs: {outputName}} = this.props
+        const {className, originalName, inputs: {outputName}} = this.props
         return (
             <Form.Input
+                className={className}
                 label={originalName}
                 input={outputName}
                 placeholder={`${originalName}...`}
@@ -83,6 +84,7 @@ BandName.propTypes = {
     images: PropTypes.array.isRequired,
     originalName: PropTypes.string.isRequired,
     outputName: PropTypes.string.isRequired,
+    className: PropTypes.string,
     onChange: PropTypes.func,
     onValidationStatusChanged: PropTypes.func
 }

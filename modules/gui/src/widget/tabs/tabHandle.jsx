@@ -15,6 +15,7 @@ import {withScrollable} from '~/widget/scrollable'
 import {renameTab, selectTab} from './tabActions'
 import styles from './tabHandle.module.css'
 
+const MIDDLE_BUTTON = 1
 const CLOSE_ANIMATION_DURATION_MS = 250
 const ADD_ANIMATION_DURATION_MS = 200 // matches .tab.regular.add in tabHandle.module.css
 
@@ -28,6 +29,8 @@ class _TabHandle extends React.Component {
     constructor(props) {
         super(props)
         this.onClick = this.onClick.bind(this)
+        this.onMouseDown = this.onMouseDown.bind(this)
+        this.onAuxClick = this.onAuxClick.bind(this)
         this.onTitleChange = this.onTitleChange.bind(this)
         this.saveTitle = this.saveTitle.bind(this)
         this.restoreTitle = this.restoreTitle.bind(this)
@@ -56,7 +59,7 @@ class _TabHandle extends React.Component {
     }
 
     render() {
-        const {selected, closing, dragging} = this.props
+        const {selected, closing, dragging, readOnlyTitle} = this.props
         const {busy, editing, animateAdd} = this.state
         return (
             <Layout
@@ -66,13 +69,16 @@ class _TabHandle extends React.Component {
                     styles.tab,
                     styles.regular,
                     selected ? styles.selected : null,
+                    readOnlyTitle ? styles.readOnly : null,
                     busy ? styles.busy : null,
                     closing ? styles.closing : null,
                     editing ? styles.editing : null,
                     dragging ? styles.dragging : null,
                     animateAdd && !dragging ? styles.add : null
                 ].join(' ')}
-                style={{'--close-animation-duration': `${CLOSE_ANIMATION_DURATION_MS}ms`}}>
+                style={{'--close-animation-duration': `${CLOSE_ANIMATION_DURATION_MS}ms`}}
+                onMouseDown={this.onMouseDown}
+                onAuxClick={this.onAuxClick}>
                 {this.renderPrefix()}
                 {this.renderInput()}
                 {this.renderCloseButton()}
@@ -140,6 +146,22 @@ class _TabHandle extends React.Component {
             this.selectTab()
         } else if (!readOnlyTitle) {
             this.editTitle()
+        }
+    }
+
+    // Middle click closes the tab, as in a browser's tab strip. The press is cancelled too, or
+    // Firefox on Windows would enter autoscroll mode on it.
+    onMouseDown(e) {
+        if (e.button === MIDDLE_BUTTON) {
+            e.preventDefault()
+        }
+    }
+
+    onAuxClick(e) {
+        const {onClose} = this.props
+        if (e.button === MIDDLE_BUTTON) {
+            e.preventDefault()
+            onClose()
         }
     }
 

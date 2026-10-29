@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict'
 import {beforeEach, mock, test} from 'node:test'
 
-import {requireAdmin, requireAuth} from './currentUser.js'
+import {requireAdmin, requireAuth} from '#sepal/currentUser'
+
 import {registerBudgetRoutes} from './routes.js'
 
 const makeRouter = () => {

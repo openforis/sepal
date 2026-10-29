@@ -26,8 +26,8 @@ import {readRetrieveOutput} from './retrieveOutput'
 // only make a change to any record it holds, to the listing, to a save or to what is known of an asset re-render the
 // panel.
 //
-// `isImageOutput` says whether the panel's request is about the recipe's image output at all; one that is not reads
-// and watches nothing.
+// A request about something else - Time Series' indicators - is held to the image output all the same, so every panel
+// reads and watches it.
 
 const mapStateToProps = (state, {recipeId}) => {
     const loadedRecipes = selectFrom(state, 'process.loadedRecipes')
@@ -40,7 +40,7 @@ const mapStateToProps = (state, {recipeId}) => {
     }
 }
 
-export const withRetrieveOutput = ({isImageOutput = () => true} = {}) => WrappedComponent => {
+export const withRetrieveOutput = () => WrappedComponent => {
     class RetrieveOutputOwner extends React.Component {
         static contextType = ReactReduxContext
 
@@ -61,9 +61,7 @@ export const withRetrieveOutput = ({isImageOutput = () => true} = {}) => Wrapped
                 retrieveGraph: _retrieveGraph, retrieveStaleness: _retrieveStaleness, retrieveSaves: _retrieveSaves,
                 retrieveAssets: _retrieveAssets, sourceRuntime: _sourceRuntime, ...props
             } = this.props
-            return isImageOutput(this.props)
-                ? <WrappedComponent {...props} retrieveOutput={this.read()} readRetrieveOutput={this.read} refreshRetrieveOutput={this.refresh}/>
-                : <WrappedComponent {...props}/>
+            return <WrappedComponent {...props} retrieveOutput={this.read()} readRetrieveOutput={this.read} refreshRetrieveOutput={this.refresh}/>
         }
 
         // Opening a Retrieve renews the listing it will be authorized by, if it is older than a minute, even while its
@@ -85,9 +83,7 @@ export const withRetrieveOutput = ({isImageOutput = () => true} = {}) => Wrapped
 
         update() {
             const {recipeId} = this.props
-            isImageOutput(this.props)
-                ? this.watch.update({recipeId, product: {name: IMAGE_OUTPUT}})
-                : this.watch.stop()
+            this.watch.update({recipeId, product: {name: IMAGE_OUTPUT}})
         }
 
         refresh() {

@@ -14,9 +14,12 @@ import {downloadCsv} from '~/widget/download'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
+import {Message} from '~/widget/message'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 
+import {TRAINING_DATA, TRAINING_DATA_LIST} from '../../../classification/trainingDataRequirements'
+import {withItemProblems} from '../../../selectedSource'
 import styles from './trainingData.module.css'
 import {TrainingDataSet} from './trainingDataSet'
 
@@ -96,15 +99,20 @@ class _TrainingData extends React.Component {
             : this.renderNoDataSetMessage()
     }
 
+    // How to add training data, while the recipe has none: guidance, not a problem with what is listed.
     renderDataSets(dataSets) {
+        const {itemProblems} = this.props
+        const missing = itemProblems[TRAINING_DATA_LIST]
         return (
             <Layout type='vertical' spacing='tight'>
+                {missing ? <Message type='info' text={missing}/> : null}
                 {dataSets}
             </Layout>
         )
     }
 
     renderDataSet(dataSet) {
+        const {itemProblems} = this.props
         const name = dataSet.name
         if (!name)
             return null
@@ -114,6 +122,7 @@ class _TrainingData extends React.Component {
                 onClick={() => this.editDataSet(dataSet)}>
                 <CrudItem
                     title={msg(`process.regression.panel.trainingData.type.${dataSet.type}.label`)}
+                    error={itemProblems[dataSet.dataSetId]}
                     description={name}
                     removeMessage={msg('process.classification.panel.trainingData.remove.confirmationMessage', {name})}
                     removeTooltip={msg('process.classification.panel.trainingData.remove.tooltip')}
@@ -126,8 +135,9 @@ class _TrainingData extends React.Component {
     }
 
     renderNoDataSetMessage() {
+        const {itemProblems} = this.props
         return (
-            <NoData message={msg('process.classification.panel.trainingData.noDataSet')}/>
+            <NoData message={itemProblems[TRAINING_DATA_LIST] || msg('process.classification.panel.trainingData.noDataSet')}/>
         )
     }
 
@@ -170,6 +180,7 @@ const valuesToModel = null
 
 export const TrainingData = compose(
     _TrainingData,
+    withItemProblems(TRAINING_DATA.id),
     recipeFormPanel({id: 'trainingData', mapRecipeToProps, valuesToModel, additionalPolicy}),
     withActivators('trainingDataSet')
 )

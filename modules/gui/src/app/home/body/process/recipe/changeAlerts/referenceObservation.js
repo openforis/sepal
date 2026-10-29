@@ -1,9 +1,11 @@
-import _ from 'lodash'
 import {map, throwError} from 'rxjs'
 
+import {CCDC_SEGMENTS} from '#sepal/recipe/capability/ccdcSegments'
+import {PRESERVES, PRODUCES, providerStep} from '#sepal/recipe/capability/providerStep'
+import {assetProcessing, processingOfProducer} from '#sepal/recipe/changeAlerts/processing'
+import {directSourceEdges} from '#sepal/recipe/source/directSources'
 import {PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
 import api from '~/apiRegistry'
-import {selectFrom} from '~/stateUtils'
 
 import {typedSegmentsAssetDescription} from '../ccdc/segmentsAsset'
 import {describeProducer$, resolveSegmentProducer, segmentsAssetOf} from '../segmentCapability'
@@ -16,47 +18,28 @@ import {segmentVisualizations} from './referenceEvidence'
 
 export const changeAlertsObservation = {
     sourceReference: recipe => selectedSourceOf(recipe, PRIMARY_IMAGE),
-    applyAccepted: ({recipe, evidence, previous}) => [
-        ...monitoringSettings(evidence, previous),
-        ...assetDateFormat(recipe, evidence, previous)
-    ],
+    sourcesOf: record => {
+        const step = providerStep(record, CCDC_SEGMENTS)
+        const direct = directSourceEdges(record)
+        const asset = step.status === PRODUCES && step.declared.segmentsAsset?.(record.model)
+        return {diagnostics: [], edges: direct.edges.filter(edge => step.status === PRESERVES
+            ? edge.role === step.role : asset && edge.reference.type === 'ASSET' && edge.reference.id === asset)}
+    },
     observe$: ({recipe, graph, recipesById}) => {
         const producer = resolveSegmentProducer(selectedSourceOf(recipe, PRIMARY_IMAGE), recipesById)
         if (producer.error) {
             return throwError(() => producer.error)
         }
         return observeProducer$(producer, {graph, recipesById}).pipe(
-            map(({segments, monitoring}) => ({
+            map(({segments, processing}) => ({
                 segments: {
                     ...segments,
                     visualizations: withKnownIdentities(segments.visualizations, segmentVisualizations(recipe))
                 },
-                monitoring
+                processing
             }))
         )
     }
-}
-
-// Unchanged producer settings must not overwrite subsequent user edits.
-const monitoringSettings = ({sourceKey, monitoring}, previous) => {
-    const sameSource = previous?.sourceKey === sourceKey
-    if (!monitoring || (sameSource && _.isEqual(monitoring, previous.monitoring))) {
-        return []
-    }
-    return [
-        ...(monitoring.sources ? [{path: 'model.sources', value: monitoring.sources, merge: true}] : []),
-        ...(monitoring.options ? [{path: 'model.options', value: monitoring.options, merge: true}] : [])
-    ]
-}
-
-// Prefill on the first successful observation of a selection; preserve later user corrections.
-const assetDateFormat = (recipe, {sourceKey, segments}, previous) => {
-    const selected = selectFrom(recipe, 'model.reference') || {}
-    return selected.type === 'ASSET'
-        && segments?.dateFormat !== undefined
-        && previous?.sourceKey !== sourceKey
-        ? [{path: 'model.reference.dateFormat', value: segments.dateFormat}]
-        : []
 }
 
 const observeProducer$ = (producer, context) => {
@@ -65,21 +48,13 @@ const observeProducer$ = (producer, context) => {
         ? api.gee.assetMetadata$({asset: segmentsAsset}).pipe(
             map(metadata => ({
                 segments: typedSegmentsAssetDescription(metadata, {assetId: segmentsAsset}),
-                monitoring: {
-                    sources: parsed(metadata.properties?.recipe_sources),
-                    options: parsed(metadata.properties?.recipe_options)
-                }
+                processing: assetProcessing(metadata.properties)
             }))
         )
         : describeProducer$(producer, context).pipe(
             map(segments => ({
                 segments,
-                monitoring: {
-                    sources: producer.record.model?.sources ?? null,
-                    options: producer.record.model?.options ?? null
-                }
+                processing: processingOfProducer(producer.record.model)
             }))
         )
 }
-
-const parsed = value => value ? JSON.parse(value) : null

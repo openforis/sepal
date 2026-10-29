@@ -16,6 +16,7 @@ let catalogue = {}
 let loaded = []
 let maskApplications = []
 let collectionRequests = []
+let monitoringRecipes = []
 let selections = []
 let assets = {}
 let assetsRead = []
@@ -33,7 +34,7 @@ const eeImage = (source, masks = []) => ({
     },
     clip: () => eeImage(source, masks),
     reduceRegion: () => ({source, masks}),
-    bandNames: () => [`${source}:band`],
+    bandNames: () => assets[source]?.bands || (source === SEGMENTS_ASSET ? ['ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude'] : [`${source}:band`]),
     updateMask: mask => {
         const maskedImage = eeImage(source, [...masks, mask.source])
         maskApplications.push({source: maskedImage.source, masks: maskedImage.masks})
@@ -63,7 +64,8 @@ mock.module('#sepal/ee/ee', {
 mock.module('#sepal/ee/timeSeries/collection', {
     exports: {
         getCollection$: ({recipe, bands}) => {
-            collectionRequests.push({type: recipe.type, bands})
+            if (recipe.type !== 'CCDC') monitoringRecipes.push(recipe)
+            collectionRequests.push({type: recipe.type, bands, classification: recipe.model.sources?.classification})
             return of(eeImage('collection'))
         }
     }
@@ -218,6 +220,7 @@ beforeEach(() => {
     loaded = []
     maskApplications = []
     collectionRequests = []
+    monitoringRecipes = []
 })
 
 describe('the image Change Alerts monitors', () => {
@@ -259,6 +262,76 @@ describe('the image Change Alerts monitors', () => {
 
         assert.deepEqual(recipesLoaded(), ['ccdc-1'])
         assert.deepEqual(maskApplications, [])
+    })
+})
+
+// Change Alerts monitors a band of its imagery and uses no Classification: one its Sources copied from the producer is not
+// run, and a band a Classification computes is refused before anything is built.
+describe('the imagery Change Alerts monitors', () => {
+    const monitoringRequests = () => collectionRequests.filter(({type}) => type !== 'CCDC')
+    const alertsMonitoring = sources => {
+        const recipe = alertsOver(DIRECT_REFERENCE)
+        return {...recipe, model: {...recipe.model, sources: {...recipe.model.sources, ...sources}}}
+    }
+
+    inOperation('is built without the Classification its Sources copied', async () => {
+        await firstValueFrom(changeAlerts(alertsMonitoring({classification: 'copied-classification'})).getImage$())
+
+        assert.deepEqual(monitoringRequests().map(({bands, classification}) => ({bands, classification})), [{bands: ['ndvi'], classification: undefined}])
+    })
+
+    inOperation('uses the current producer processing while retaining consumer masks and saved copies', async () => {
+        catalogue['ccdc-1'] = {...ccdcRecipe, model: {...ccdcRecipe.model, options: {corrections: ['BRDF'], brdfMultiplier: 3}}}
+        const recipe = alertsMonitoring({})
+        recipe.model.options = {corrections: ['SR'], brdfMultiplier: 12, snowMasking: 'OFF'}
+        await firstValueFrom(changeAlerts(recipe).getImage$())
+        assert.deepEqual(monitoringRecipes[0].model.options.corrections, ['BRDF'])
+        assert.equal(monitoringRecipes[0].model.options.brdfMultiplier, 3)
+        assert.equal(monitoringRecipes[0].model.options.snowMasking, 'OFF')
+        assert.deepEqual(recipe.model.options, {corrections: ['SR'], brdfMultiplier: 12, snowMasking: 'OFF'})
+    })
+
+    inOperation('refuses an incompatible monitoring choice before building segments or observations, then executes after producer repair', async () => {
+        const original = catalogue['ccdc-1']
+        catalogue['ccdc-1'] = {...original, model: {...original.model, sources: {dataSets: {SENTINEL_1: ['SENTINEL_1']}, breakpointBands: ['VV']}}}
+        await assert.rejects(alertImage$({type: 'RECIPE_REF', id: 'masking-1'}), error => error.code === 'NO_AVAILABLE_MEASURE')
+        assert.deepEqual(collectionRequests, [])
+        assert.deepEqual(alertAlgebra, [])
+        catalogue['ccdc-1'] = original
+        const repaired = new RecipeScope(readRecipe$)
+        try {
+            await withRecipeScope(repaired, () => alertImage$({type: 'RECIPE_REF', id: 'masking-1'}))
+        } finally {
+            repaired.close()
+        }
+        assert.equal(alertAlgebra.length, 1)
+    })
+
+    inOperation('uses recorded asset processing and dates instead of consumer copies', async () => {
+        assets[SEGMENTS_ASSET] = {properties: {dateFormat: 0, processing: JSON.stringify({options: {corrections: ['BRDF'], brdfMultiplier: 6}})}}
+        const recipe = alertsOver({type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 2})
+        recipe.model.options = {corrections: ['SR'], snowMasking: 'OFF'}
+        await firstValueFrom(changeAlerts(recipe).getImage$())
+        assert.deepEqual(monitoringRecipes[0].model.options.corrections, ['BRDF'])
+        assert.equal(monitoringRecipes[0].model.options.brdfMultiplier, 6)
+        assert.equal(alertAlgebraCall().dateFormat, 0)
+        assert.deepEqual(recipe.model.options.corrections, ['SR'])
+    })
+
+    inOperation('refuses unreadable reference processing before constructing a producer collection', async () => {
+        catalogue['ccdc-1'] = {...ccdcRecipe, model: {...ccdcRecipe.model, options: {corrections: 'invalid'}}}
+        await assert.rejects(firstValueFrom(changeAlerts(alertsMonitoring({})).getImage$()), error => error.errorCode === 'UNREADABLE_REFERENCE_PROCESSING')
+        assert.deepEqual(collectionRequests, [])
+        assert.deepEqual(alertAlgebra, [])
+    })
+
+    inOperation('is not built for a band a Classification computes, which is refused', async () => {
+        await assert.rejects(
+            firstValueFrom(changeAlerts(alertsMonitoring({band: 'regression'})).getImage$()),
+            error => error.errorCode === 'CLASSIFIED_MONITORED_BAND'
+        )
+
+        assert.deepEqual(monitoringRequests(), [])
     })
 })
 

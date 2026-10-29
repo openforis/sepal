@@ -16,9 +16,10 @@ import {Toolbar} from '~/widget/toolbar/toolbar'
 import {RetrieveButton} from '../../retrieveButton'
 import {withSourceProblems} from '../../selectedSource'
 import {RecipeActions} from '../changeAlertsRecipe'
+import {presentProcessingInputs, preserveProcessingCopies, settingsOf} from '../processingSettings'
 import {hasSegmentDescription} from '../referenceEvidence'
 import styles from './changeAlertsToolbar.module.css'
-import {ChartPixel} from './chartPixel'
+import {CHART_OPERATIONS, ChartPixel} from './chartPixel'
 import {Date} from './date/date'
 import {Options} from './options/options'
 import {Reference} from './reference/reference'
@@ -26,6 +27,7 @@ import {Retrieve} from './retrieve/retrieve'
 import {Sources} from './sources/sources'
 
 const mapRecipeToProps = recipe => ({
+    processing: settingsOf(recipe),
     initialized: selectFrom(recipe, 'ui.initialized'),
     describedSource: hasSegmentDescription(recipe),
     sources: selectFrom(recipe, 'model.sources'),
@@ -38,8 +40,9 @@ class _ChangeAlertsToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, initialized, describedSource, sources, sourceProblems} = this.props
+        const {recipeId, initialized, describedSource, sources, sourceProblems, processing} = this.props
         const dataSets = Object.keys(sources.dataSets)
+        const presentation = {presentInputs: presentProcessingInputs(processing), modelToApply: preserveProcessingCopies(processing)}
         return (
             <PanelWizard
                 panels={['reference', 'date', 'sources']}
@@ -51,14 +54,16 @@ class _ChangeAlertsToolbar extends React.Component {
                 <Date/>
                 <Sources/>
                 {dataSets.includes('SENTINEL_1')
-                    ? <RadarOptions/>
+                    ? <RadarOptions {...presentation} showStrongScatterers={false}/>
                     : dataSets.includes('PLANET')
                         ? <PlanetOptions
+                            {...presentation}
                             title={msg('process.timeSeries.panel.preprocess.title')}
                             source={sources.dataSets['PLANET'][0]}
                             forCollection
                         />
                         : <OpticalOptions
+                            {...presentation}
                             title={msg('process.timeSeries.panel.preprocess.title')}
                             forCollection
                         />
@@ -71,6 +76,7 @@ class _ChangeAlertsToolbar extends React.Component {
                     className={styles.top}>
                     <ChartPixelButton
                         disabled={!initialized || !describedSource}
+                        operations={CHART_OPERATIONS}
                         onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}
                     />
                     <RetrieveButton disabled={!describedSource} tooltip={msg('process.changeAlerts.panel.retrieve.tooltip')}/>

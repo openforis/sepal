@@ -13,12 +13,13 @@ import {Panel} from '~/widget/panel/panel'
 import {InstanceSpecsTag} from '../../instanceSpecs'
 import {conflictingAssociations} from './appOpenPlan'
 import styles from './instancePicker.module.css'
-import {appRequirements, buildPickerOptions, defaultPickerValue, hasSuitableOption} from './instanceSuitability'
+import {appRequirements, buildPickerOptions, defaultPickerValue, requirementSpecs} from './instanceSuitability'
 
 // Modal picker shown before starting a sandbox app that has no live instance
-// association. Two combo sections: the user's running instances (unsuitable ones
-// disabled) and the suitable new instance types (in catalog order). Default: first
-// suitable running instance, else the cheapest suitable type.
+// association. Combo sections: the user's running instances and the new instance types
+// (in catalog order). An app's requirements are a recommendation, not a restriction: the
+// instances below them are listed dimmed, and picking one shows a warning.
+// Default: first suitable running instance, else the cheapest suitable type.
 // Without an app it picks the type of a new instance: no running instances, no requirements.
 class _InstancePicker extends React.Component {
     state = {
@@ -115,34 +116,33 @@ class _InstancePicker extends React.Component {
     }
 
     renderContent() {
-        const {app} = this.props
         const {report, value} = this.state
-        const requirements = appRequirements(app)
-        if (report && !hasSuitableOption(this.pickerInputs(report))) {
-            // Dead end: nothing running fits and no catalog type satisfies the floors —
-            // tell the user why instead of showing an empty combo.
+        const options = report ? this.pickerOptions(report) : []
+        if (report && !options.length) {
             return (
-                <div>
-                    {app
-                        ? msg('apps.instancePicker.noSuitableInstance', {
-                            cpu: requirements.minCpuCount,
-                            gpu: requirements.minGpuCount ? ` / ${requirements.minGpuCount} GPU` : '',
-                            ram: requirements.minRamGiB
-                        })
-                        : msg('apps.instancePicker.noInstanceType')}
-                </div>
+                <div>{msg('apps.instancePicker.noInstanceType')}</div>
             )
         }
         return (
             <Combo
                 label={msg('apps.instancePicker.instance')}
                 placeholder={msg('apps.instancePicker.placeholder')}
-                options={report ? this.pickerOptions(report) : []}
+                options={options}
                 value={value}
                 busyMessage={!report}
+                warningMessage={this.belowRequirementsMessage(options)}
                 onChange={this.onChange}
             />
         )
+    }
+
+    belowRequirementsMessage(options) {
+        const {app} = this.props
+        const {value} = this.state
+        const selected = options.flatMap(({options}) => options).find(option => option.value === value)
+        return selected?.dimmed
+            ? msg('apps.instancePicker.belowRequirements', {specs: requirementSpecs(appRequirements(app))})
+            : null
     }
 
     render() {

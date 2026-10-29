@@ -33,6 +33,7 @@ const {default: unsupervisedClassification} = await import('./unsupervisedClassi
 const {default: stack} = await import('./stack/stack')
 const {default: bandMath} = await import('./bandMath/bandMath')
 const {default: remapping} = await import('./remapping/remapping')
+const {default: timeSeries} = await import('./timeSeries/timeSeries')
 const {inputImageryRequirements} = await import('../panels/inputImageryWithDerived/inputImageryRequirements')
 const {retrieveAvailability} = await import('./operationAvailability')
 const {readRetrieveOutput} = await import('./retrieveOutput')
@@ -40,7 +41,8 @@ const {OutputRegistry} = await import('../sourceRuntime/outputRegistry')
 const {compatibleBasis, outputLoading} = await import('./recipeOutput')
 const {NEVER, Subject} = await import('rxjs')
 const {heldSourceStatusOfState, itemStatusesOf, itemStatusesOfState, sourceProblemsOfState} = await import('./selectedSourceStatus')
-const {readOutputRequirements, readOutputRequirementsOfState, requestGate, requestGateOf} = await import('./sourceRequirements')
+const {readLocalRequirements, readOutputRequirements, readOutputRequirementsOfState, requestGate, requestGateOf} = await import('./sourceRequirements')
+const {SUPPORTED, unsupported} = await import('#sepal/recipe/requirement/verdict')
 const {IMAGE_OUTPUT} = await import('./recipeOutput')
 
 addRecipeType(classification())
@@ -49,6 +51,7 @@ addRecipeType(unsupervisedClassification())
 addRecipeType(stack())
 addRecipeType(bandMath())
 addRecipeType(remapping())
+addRecipeType(timeSeries())
 
 describe('the requirement on input band sets', () => {
     it.each(['CLASSIFICATION', 'REGRESSION', 'UNSUPERVISED_CLASSIFICATION'])('is registered by %s', type => {
@@ -73,6 +76,151 @@ describe('shared recipe-input feedback', () => {
             expect(requestGateOf(reads, IMAGE_OUTPUT)).toMatchObject({read: {outputState: true, refusedBy: 'broken'}})
         }
     )
+})
+
+// A Classification of several input images is valid by itself, but its classifier cannot be applied to a collection's
+// images (MULTIPLE_CLASSIFIER_INPUTS, found only for CLASSIFIER): the recipe asking that of it is what to repair.
+describe('a reference valid by itself but unsuitable for what the recipe reading it asks of it', () => {
+    it('is explained at the selection asking it, as that recipe\'s requirement, naming no recipe further up to review', () => {
+        const series = {id: 'series', type: 'TIME_SERIES', model: {sources: {classification: 'classification'}}}
+        const output = refusing({code: MULTIPLE_CLASSIFIER_INPUTS, recipePath: ['series', 'classification'], path: INPUT_IMAGES, count: 2})
+
+        const reads = readOutputRequirements({recipe: series, output, recipeNames: NAMES})
+
+        expect(itemStatusesOf(reads, 'sources')).toEqual({
+            'sources.classification': expect.objectContaining({
+                message: 'process.source.status.multipleClassifierInputs {"recipe":"Classification","count":2}'
+            })
+        })
+        expect(requestGateOf(reads, IMAGE_OUTPUT).read.refusedBy).toBeUndefined()
+    })
+
+    it.each([
+        ['reads it', ['dependent', 'series', 'classification']],
+        ['reads a recipe reading it', ['dependent', 'over', 'series', 'classification']]
+    ])('is explained at an input that %s as the requirement of the recipe asking it, which is the one to review', (_case, recipePath) => {
+        const recipe = stackOver(recipePath[1])
+        const output = refusing({code: MULTIPLE_CLASSIFIER_INPUTS, recipePath, path: INPUT_IMAGES, count: 2})
+
+        const reads = readOutputRequirements({recipe, output, recipeNames: NAMES})
+
+        expect(itemStatusesOf(reads, 'inputImagery')).toEqual({
+            row: expect.objectContaining({
+                message: 'process.source.status.multipleClassifierInputsUpstream {"consumer":"Series","recipe":"Classification","count":2}'
+            })
+        })
+        expect(requestGateOf(reads, IMAGE_OUTPUT)).toMatchObject({read: {refusedBy: 'series'}})
+    })
+
+    it('is explained, with its repair, in the editor of a data set reusing a recipe over it', () => {
+        const recipe = reusing('provider')
+        const output = refusing({code: MULTIPLE_CLASSIFIER_INPUTS, recipePath: ['dependent', 'provider', 'series', 'classification'], path: INPUT_IMAGES, count: 2})
+
+        const reads = readOutputRequirements({recipe, output, recipeNames: NAMES})
+        const {declaration, ownVerdict: {diagnostic: {item}}} = reads.find(read => read.item?.id === 'reused')
+
+        expect(declaration.editor.message(declaration.requirement.describe({item}))).toBe(
+            'process.source.status.multipleClassifierInputsUpstream {"consumer":"Series","recipe":"Classification","count":2}'
+        )
+    })
+
+    it('is explained beside what else the recipe it is read through needs, each said once', () => {
+        const recipe = stackOver('series')
+        const unsuitable = {code: MULTIPLE_CLASSIFIER_INPUTS, recipePath: ['dependent', 'series', 'classification'], path: INPUT_IMAGES, count: 2}
+        const output = {status: 'READY', diagnostics: [], readiness: {status: 'NOT_READY', findings: [
+            unsuitable,
+            unsuitable,
+            {code: 'INVALID_CALCULATION', recipePath: ['dependent', 'series', 'over'], path: INPUT_IMAGES}
+        ]}}
+
+        const reads = readOutputRequirements({recipe, output, recipeNames: NAMES})
+
+        expect(itemStatusesOf(reads, 'inputImagery')).toEqual({
+            row: expect.objectContaining({message: [
+                'process.source.status.multipleClassifierInputsUpstream {"consumer":"Series","recipe":"Classification","count":2}',
+                'process.source.status.recipeBlockedBy {"recipe":"Series","origins":"Over"}'
+            ].join(' ')})
+        })
+    })
+
+    it('leaves a recipe further up that is unsound by itself the one to review', () => {
+        const recipe = stackOver('series')
+        const output = refusing({code: 'INVALID_CALCULATION', recipePath: ['dependent', 'series', 'classification'], path: INPUT_IMAGES})
+
+        const reads = readOutputRequirements({recipe, output, recipeNames: NAMES})
+
+        expect(itemStatusesOf(reads, 'inputImagery')).toEqual({
+            row: expect.objectContaining({message: 'process.source.status.recipeBlockedBy {"recipe":"Series","origins":"Classification"}'})
+        })
+        expect(requestGateOf(reads, IMAGE_OUTPUT)).toMatchObject({read: {refusedBy: 'classification'}})
+    })
+})
+
+// A recipe asked for an operation its type does not provide (UNDECLARED_OPERATION) is valid by itself: its image runs.
+describe('a reference asked for what its type does not provide', () => {
+    it('is explained at the data set reusing it, and in its editor, as what that data set needs, naming no recipe to fix', () => {
+        const recipe = reusing('mosaic')
+        const output = refusing({code: 'UNDECLARED_OPERATION', operation: 'TRAINING_DATA', path: [], recipePath: ['dependent', 'mosaic']})
+
+        const reads = readOutputRequirements({recipe, output, recipeNames: NAMES})
+        const {declaration, ownVerdict: {diagnostic: {item}}} = reads.find(read => read.item?.id === 'reused')
+
+        const said = 'process.source.status.providesNoTrainingData {"recipe":"Working mosaic"}'
+        expect(itemStatusesOf(reads, 'trainingData')).toEqual({reused: expect.objectContaining({message: said})})
+        expect(declaration.editor.message(declaration.requirement.describe({item}))).toBe(said)
+        expect(requestGateOf(reads, IMAGE_OUTPUT).read.refusedBy).toBeUndefined()
+    })
+
+    it('is explained at an input selecting a recipe that makes no image, as what that input needs', () => {
+        const output = refusing({code: 'NON_IMAGE_OUTPUT', path: [], recipePath: ['dependent', 'design']})
+
+        const reads = readOutputRequirements({recipe: stackOver('design'), output, recipeNames: NAMES})
+
+        expect(itemStatusesOf(reads, 'inputImagery')).toEqual({
+            row: expect.objectContaining({message: 'process.source.status.providesNoImage {"recipe":"Design"}'})
+        })
+        expect(requestGateOf(reads, IMAGE_OUTPUT).read.refusedBy).toBeUndefined()
+    })
+
+    it('is explained at an input reading the recipe asking it, which is the one to review', () => {
+        const recipe = stackOver('series')
+        const output = refusing({code: 'UNDECLARED_OPERATION', operation: 'CLASSIFIER', path: [], recipePath: ['dependent', 'series', 'mosaic']})
+
+        const reads = readOutputRequirements({recipe, output, recipeNames: NAMES})
+
+        expect(itemStatusesOf(reads, 'inputImagery')).toEqual({
+            row: expect.objectContaining({message: 'process.source.status.providesNoClassifierUpstream {"consumer":"Series","recipe":"Working mosaic"}'})
+        })
+        expect(requestGateOf(reads, IMAGE_OUTPUT)).toMatchObject({read: {refusedBy: 'series'}})
+    })
+})
+
+// A finding refusing only the use asked (it names the `operation`), for a reason feedback has no explanation of, is said
+// without blaming either recipe.
+describe('a reference refused for that use alone, for a reason feedback does not know', () => {
+    it('is said to be unusable here, not to need attention, where it is selected', () => {
+        const recipe = reusing('mosaic')
+        const output = refusing({code: 'UNKNOWN_REASON', operation: 'TRAINING_DATA', path: [], recipePath: ['dependent', 'mosaic']})
+
+        const reads = readOutputRequirements({recipe, output, recipeNames: NAMES})
+        const {declaration, ownVerdict: {diagnostic: {item}}} = reads.find(read => read.item?.id === 'reused')
+
+        const said = 'process.source.status.recipeUnusable {"recipe":"Working mosaic"}'
+        expect(itemStatusesOf(reads, 'trainingData')).toEqual({reused: expect.objectContaining({message: said})})
+        expect(declaration.editor.message(declaration.requirement.describe({item}))).toBe(said)
+        expect(requestGateOf(reads, IMAGE_OUTPUT).read.refusedBy).toBeUndefined()
+    })
+
+    it('names the recipe further up that cannot use it, as the one to review', () => {
+        const output = refusing({code: 'UNKNOWN_REASON', operation: 'CLASSIFIER', path: [], recipePath: ['dependent', 'series', 'classification']})
+
+        const reads = readOutputRequirements({recipe: stackOver('series'), output, recipeNames: NAMES})
+
+        expect(itemStatusesOf(reads, 'inputImagery')).toEqual({
+            row: expect.objectContaining({message: 'process.source.status.recipeUnusableUpstream {"consumer":"Series","recipe":"Classification"}'})
+        })
+        expect(requestGateOf(reads, IMAGE_OUTPUT)).toMatchObject({read: {refusedBy: 'series'}})
+    })
 })
 
 describe('a recipe whose output read refuses an input\'s band set', () => {
@@ -189,7 +337,8 @@ describe('a recipe whose output read refuses nothing', () => {
     })
 })
 
-// Classification's Training data button does not say it has no training data; what holds it says so all the same.
+// No training data at all is set-up not yet done: neither type's Training data button is marked for it, while what it holds
+// is held all the same.
 describe('a Classification without training data', () => {
     it('leaves its Training data section unmarked, while Retrieve and its previews are held, naming that section', () => {
         const state = sessionWith(modelOf([image('image-1', MOSAIC, ['red'])], {trainingData: NO_TRAINING_DATA}))
@@ -221,10 +370,10 @@ describe('a Classification without training data', () => {
 })
 
 describe('a Regression without training data', () => {
-    it('is marked on its Training data section, and Retrieve and its previews are held, naming that section', () => {
+    it('leaves its Training data section unmarked, while Retrieve and its previews are held, naming that section', () => {
         const state = sessionWith(modelOf([image('image-1', MOSAIC, ['red'])], {trainingData: {dataSets: []}}), {type: 'REGRESSION'})
 
-        expect(sourceProblems(state)).toEqual({trainingData: MISSING_TRAINING_DATA})
+        expect(sourceProblems(state)).toEqual({})
         expect(retrieve(state)).toMatchObject({available: false, gate: {code: 'CONFIGURATION_UNMET', section: TRAINING_DATA_SECTION}})
         expect(previewGate(state)).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET', section: TRAINING_DATA_SECTION})
     })
@@ -252,10 +401,11 @@ describe('a recipe without input imagery', () => {
         expect(retrieve(state).gate.section).toBe(section)
     })
 
-    it('of type BAND_MATH keeps its Output bands marked for having none, beside it', () => {
+    // Nothing output yet is setup still to do (bandMathRequirements.js): Output bands holds the output unmarked.
+    it('of type BAND_MATH leaves its Output bands unmarked for having none, beside it', () => {
         const state = sessionWith(emptyModels.BAND_MATH(), {type: 'BAND_MATH'})
 
-        expect(Object.keys(sourceProblems(state)).sort()).toEqual(['inputImagery', 'outputBands'])
+        expect(Object.keys(sourceProblems(state))).toEqual(['inputImagery'])
     })
 
     it('holds a Remapping over it and marks its input reference, keeping the diagnosis upstream', () => {
@@ -303,6 +453,30 @@ describe('a finding one declaration locates, beside another declaration', () => 
     })
 })
 
+// The output read refused for what no declaration locates is said, for a declaration finding nothing of its own, only
+// where no requirement states a refusal of the same operation: a stated refusal is the reason, operation by operation.
+describe('an output refusal no declaration locates, beside a requirement of the configuration', () => {
+    it.each([
+        ['refusing the operation, gives way to that refusal', 'STATES_IMAGE', ['IMAGE_OUTPUT'], true, ['IMAGE_OUTPUT'],
+            {code: 'CONFIGURATION_UNMET', section: 'stated'}, null],
+        ['refusing the operation, still holds another it alone holds', 'STATES_IMAGE_ALSO_SEGMENTS', ['IMAGE_OUTPUT'], true,
+            ['IMAGE_OUTPUT', 'PIXEL_SEGMENTS'], {code: 'CONFIGURATION_UNMET', section: 'stated'}, {code: 'SOURCE_UNSUITABLE', section: 'other'}],
+        ['refusing only another operation, is the reason for the one it holds', 'STATES_SEGMENTS', ['PIXEL_SEGMENTS'], true,
+            ['IMAGE_OUTPUT'], {code: 'SOURCE_UNSUITABLE', section: 'other'}, {code: 'CONFIGURATION_UNMET', section: 'stated'}],
+        ['met, is the reason', 'STATES_NOTHING', ['IMAGE_OUTPUT'], false, ['IMAGE_OUTPUT'],
+            {code: 'SOURCE_UNSUITABLE', section: 'other'}, null]
+    ])('%s', (_case, type, stated, refuses, generic, imageGate, segmentsGate) => {
+        // Declared, and read, before the requirement, so that order alone would make it the reason.
+        addRecipeType({id: type, imageSource: true, sourceRequirements: [{...OTHER, operations: generic}, stating(stated, refuses)]})
+        const recipe = {id: 'stated-1', type, model: {}}
+
+        const reads = [...readOutputRequirements({recipe, output: UNLOCATED_FINDING}), ...readLocalRequirements(recipe)]
+
+        expect(requestGateOf(reads, 'IMAGE_OUTPUT')).toMatchObject({withdraw: true, ...imageGate})
+        expect(requestGateOf(reads, 'PIXEL_SEGMENTS')).toEqual(segmentsGate && expect.objectContaining({withdraw: true, ...segmentsGate}))
+    })
+})
+
 describe('the requirements of a type its output read judges', () => {
     it('are not read without the source runtime\'s answers', () => {
         const state = sessionWith(modelOf([image('image-1', MOSAIC, ['red'])]))
@@ -310,6 +484,24 @@ describe('the requirements of a type its output read judges', () => {
         expect(() => requestGate({state, recipe: recipeOf(state), operation: IMAGE_OUTPUT, now: Date.now()})).toThrow()
     })
 })
+
+const MULTIPLE_CLASSIFIER_INPUTS = 'MULTIPLE_CLASSIFIER_INPUTS'
+
+const INPUT_IMAGES = ['model', 'inputImagery', 'images']
+
+const NAMES = {series: 'Series', classification: 'Classification', over: 'Over', mosaic: 'Working mosaic', provider: 'Provider', design: 'Design'}
+
+// A Classification whose one data set reuses `id`.
+const reusing = id => ({id: 'dependent', type: 'CLASSIFICATION', model: {
+    inputImagery: {images: []},
+    trainingData: {dataSets: [{dataSetId: 'reused', type: 'RECIPE', name: NAMES[id], recipe: id}]}
+}})
+
+// A Stack whose one input is `id`.
+const stackOver = id => ({id: 'dependent', type: 'STACK', model: {inputImagery: {images: [{imageId: 'row', type: 'RECIPE_REF', id}]}}})
+
+// An output read refused for `finding` alone.
+const refusing = finding => ({status: 'READY', diagnostics: [], readiness: {status: 'NOT_READY', findings: [finding]}})
 
 const declaration = (id, codes, itemOf) => ({
     id,
@@ -338,6 +530,25 @@ const LOCATED_FINDING = {
     }
 }
 
+// A requirement of the recipe's own configuration over `operations`, refusing it or met.
+const stating = (operations, refuses) => ({
+    id: 'STATED',
+    section: {id: 'stated', label: 'stated'},
+    requirement: {
+        id: 'STATED',
+        evaluate: () => refuses ? unsupported({code: 'STATED_CODE'}) : {status: SUPPORTED},
+        describe: () => ({message: 'STATED', details: []})
+    },
+    localFacts: () => ({}),
+    operations
+})
+
+// An output described and kept from running by what no declaration locates.
+const UNLOCATED_FINDING = {
+    ...LOCATED_FINDING,
+    readiness: {...LOCATED_FINDING.readiness, findings: [{code: 'UNLOCATED_CODE', path: ['model'], recipePath: ['stated-1']}]}
+}
+
 const ID = 'classification-1'
 const SECTION = 'process.classification.panel.inputImagery.button'
 const MISSING = 'process.classification.panel.inputImagery.unavailableSelections.input'
@@ -346,7 +557,6 @@ const INCOMPLETE = 'process.classification.panel.inputImagery.unavailableSelecti
 const TRAINING_DATA_SECTION = 'process.classification.panel.trainingData.button'
 const IMAGERY_SECTION = 'process.panels.inputImagery.button'
 const NO_IMAGERY = 'process.panels.inputImagery.form.noImagery'
-const MISSING_TRAINING_DATA = 'process.classification.panel.trainingData.missing'
 
 const MOSAIC = {
     id: 'mosaic-1',

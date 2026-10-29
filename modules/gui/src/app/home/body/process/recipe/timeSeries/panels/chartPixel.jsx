@@ -1,9 +1,10 @@
-import _ from 'lodash'
 import moment from 'moment'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
+import {PIXEL_OBSERVATIONS} from '#sepal/recipe/output/readiness'
 import {compose} from '~/compose'
+import {connect} from '~/connect'
 import {flatBandOptions, getAvailableBands, toDataSetIds} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -16,10 +17,19 @@ import {Panel} from '~/widget/panel/panel'
 
 import {NoData} from '../../../../../../../widget/noData'
 import {withRecipe} from '../../../recipeContext'
+import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
+import {pixelOperationsAvailability, watchOperations} from '../../operationAvailability'
+import {pixelChartUpdate} from '../../pixelChartUpdate'
+import {selectedClassificationOfState} from '../../selectedClassification'
 import {loadObservations$, RecipeActions} from '../timeSeriesRecipe'
 import styles from './chartPixel.module.css'
+
+// What the chart runs at its pixel, whatever band it charts: the collection's observations, which need the Classification
+// its Sources select trainable (type/timeSeries.js). It and its action are held to these, and watch them
+// (timeSeriesToolbar.jsx): a Classification that becomes unusable closes it (pixelChartUpdate).
+export const CHART_OPERATIONS = [PIXEL_OBSERVATIONS]
 
 const fields = {
     selectedBand: new Form.Field()
@@ -31,8 +41,6 @@ const mapRecipeToProps = recipe => ({
     startDate: moment(selectFrom(recipe, 'model.dates.startDate'), 'YYYY-MM-DD').toDate(),
     endDate: moment(selectFrom(recipe, 'model.dates.endDate'), 'YYYY-MM-DD').toDate(),
     dateFormat: selectFrom(recipe, 'model.ccdcOptions.dateFormat'),
-    classificationLegend: selectFrom(recipe, 'ui.classification.classificationLegend'),
-    classifierType: selectFrom(recipe, 'ui.classification.classifierType'),
     corrections: selectFrom(recipe, 'model.opticalPreprocess.corrections'),
     dataSets: selectFrom(recipe, 'model.sources.dataSets'),
     recipe
@@ -106,11 +114,11 @@ class _ChartPixel extends React.Component {
     }
 
     bandSetting() {
-        const {classificationLegend, classifierType, corrections, dataSets} = this.props
+        const {classificationLegend, classifierType, classifier, corrections, dataSets} = this.props
         return {
             dataSets: toDataSetIds(dataSets),
             corrections,
-            classification: {classificationLegend, classifierType, include: ['regression', 'probabilities']}
+            classification: {classificationLegend, classifierType, classifier, include: ['regression', 'probabilities']}
         }
     }
 
@@ -138,29 +146,37 @@ class _ChartPixel extends React.Component {
         }
     }
 
-    componentDidUpdate(prevProps) {
-        const {recipe, latLng, inputs: {selectedBand}} = this.props
-        const availableBands = getAvailableBands(this.bandSetting())
-        if (!availableBands.includes(selectedBand.value)) {
-            selectedBand.set(availableBands.length
-                ? availableBands[0]
-                : null
-            )
-        }
-        if (latLng && selectedBand.value && !_.isEqual(
-            [recipe.model, latLng, selectedBand.value],
-            [prevProps.recipe.model, prevProps.latLng, prevProps.inputs.selectedBand.value])
-        ) {
-            this.loadData()
-        }
+    componentDidMount() {
+        const {recipeId, sourceRuntime} = this.props
+        this.operationWatches = watchOperations({sourceRuntime, recipeId, operations: CHART_OPERATIONS})
+        this.updateChart()
     }
 
-    loadData() {
-        const {stream, recipe, latLng, inputs: {selectedBand}} = this.props
+    componentDidUpdate(prevProps) {
+        this.updateChart(prevProps)
+    }
+
+    componentWillUnmount() {
+        this.operationWatches.unsubscribe()
         this.cancel$.next(true)
-        this.setState({observations: undefined})
+    }
+
+    // The observations are read whenever they may be (pixelChartUpdate).
+    updateChart(prevProps) {
+        const {inputs: {selectedBand}} = this.props
+        const {close, clear, select, load} = pixelChartUpdate(this.props, prevProps, getAvailableBands(this.bandSetting()))
+        if (close) {
+            return this.close()
+        }
+        clear && this.clearData()
+        select !== undefined && selectedBand.set(select)
+        load && this.loadData(load)
+    }
+
+    loadData(band) {
+        const {stream, recipe, latLng} = this.props
         stream('LOAD_OBSERVATIONS',
-            loadObservations$({recipe, latLng, bands: [selectedBand.value]}).pipe(
+            loadObservations$({recipe, latLng, bands: [band]}).pipe(
                 takeUntil(this.cancel$)
             ),
             observations => this.setState({observations}),
@@ -174,15 +190,35 @@ class _ChartPixel extends React.Component {
         )
     }
 
-    close() {
+    clearData() {
         this.cancel$.next(true)
-        this.setState({observations: undefined})
+        if (this.state.observations !== undefined)
+            this.setState({observations: undefined})
+    }
+
+    close() {
+        this.clearData()
         this.recipeActions.setChartPixel(null)
+    }
+}
+
+// What it is computed from, beside whether it may be read (pixelOperationsAvailability), and what is offered of the
+// Classification its Sources select, as the session holds it now or as those reads resolved it.
+const mapStateToProps = (state, {recipe, sourceRuntime}) => {
+    const {gate, computation, recordOf} = pixelOperationsAvailability({
+        state, recipe, heldFor: key => sourceRuntime?.heldFor(key), operations: CHART_OPERATIONS
+    })
+    return {
+        operationsGate: gate,
+        computation,
+        ...selectedClassificationOfState(state, recipe, recordOf)
     }
 }
 
 export const ChartPixel = compose(
     _ChartPixel,
+    connect(mapStateToProps),
+    withSourceRuntime(),
     withRecipe(mapRecipeToProps),
     withForm({fields})
 )

@@ -7,6 +7,12 @@ import {isText} from './validation.js'
 // login stamp is the one exception: it records activity, not a change to the record.
 const BUMP = 'revision = revision + 1, update_time = NOW()'
 
+const DUPLICATE_ENTRY = 'ER_DUP_ENTRY'
+
+// A write that would give a user the username or email of another. The unique indexes decide, so two
+// concurrent writers cannot both take one.
+export class DuplicateUserError extends Error {}
+
 // insertUser is the only statement that writes `username`, so it is the only one that normalizes
 // (see #sepal/username). Every query below passes the caller's value through untouched: the column
 // is ascii_general_ci, so `WHERE username = ?` matches any case and still uses the unique index,
@@ -137,11 +143,12 @@ export class UserRepository {
         })
     }
 
+    // A reset link issued before the change must not be able to undo it.
     async updatePassword(username, passwordHash) {
         requireSelector(username)
         return this.#db.withConnection(async connection => {
             await connection.query(
-                `UPDATE sepal_user SET password_hash = ?, ${BUMP} WHERE username = ?`,
+                `UPDATE sepal_user SET password_hash = ?, token = NULL, ${BUMP} WHERE username = ?`,
                 [passwordHash, username]
             )
         })
@@ -150,19 +157,23 @@ export class UserRepository {
     // With a `revision`, the write only happens if the row still has it — the check and the write
     // are one statement, so two callers holding the same revision cannot both get through. Returns
     // whether a row was written.
+    //
+    // A new address voids the reset link sent to the old one. MySQL assigns left to right, so the token
+    // is compared against the address before it is overwritten.
     async updateUserDetails({username, name, email, organization, intendedUse,
         emailNotificationsEnabled, manualMapRenderingEnabled, admin, revision}) {
         requireSelector(username)
         return this.#db.withConnection(async connection => {
             const [result] = await connection.query(
                 `UPDATE sepal_user
-                 SET name = ?, email = ?, organization = ?, intended_use = ?,
+                 SET token = IF(email <=> ?, token, NULL),
+                     name = ?, email = ?, organization = ?, intended_use = ?,
                      email_notifications_enabled = ?, manual_map_rendering_enabled = ?, admin = ?, ${BUMP}
                  WHERE username = ? AND (? IS NULL OR revision = ?)`,
-                [name, email, organization, intendedUse,
+                [email, name, email, organization, intendedUse,
                     emailNotificationsEnabled, manualMapRenderingEnabled, admin, username,
                     revision ?? null, revision ?? null]
-            )
+            ).catch(rethrowDuplicate)
             return result.affectedRows > 0
         })
     }
@@ -197,14 +208,6 @@ export class UserRepository {
         })
     }
 
-    // token_generation_time is NOT NULL, so only the token itself can be cleared.
-    async invalidateToken(token) {
-        requireSelector(token)
-        return this.#db.withConnection(async connection => {
-            await connection.query(`UPDATE sepal_user SET token = NULL, ${BUMP} WHERE token = ?`, [token])
-        })
-    }
-
     async findByEmail(email) {
         if (!isText(email)) {
             return null
@@ -226,7 +229,7 @@ export class UserRepository {
                   creation_time, update_time)
                  VALUES (?, ?, ?, ?, ?, 1, 0, ?, NOW(), 0, 0, 'PENDING', NOW(), NOW())`,
                 [storedUsername(username), name, email, organization, intendedUse ?? null, token]
-            )
+            ).catch(rethrowDuplicate)
             await this.#assignDerivedPosixIds(connection, result.insertId)
             return result.insertId
         })
@@ -258,4 +261,8 @@ const requireSelector = selector => {
     if (!isText(selector)) {
         throw new Error('Invalid selector')
     }
+}
+
+const rethrowDuplicate = error => {
+    throw error.code === DUPLICATE_ENTRY ? new DuplicateUserError(error.message) : error
 }

@@ -111,6 +111,31 @@ describe('submitting a panel outside a wizard', () => {
     })
 })
 
+// An owner may refuse what is submitted as the session then stands, however it is submitted.
+describe('submitting a panel its owner does not accept', () => {
+    it('applies nothing and stays open', async () => {
+        const accepts = vi.fn(() => false)
+        await open(undefined, {accepts})
+        await choose(VALID)
+
+        await submitForm()
+
+        expect(accepts).toHaveBeenCalledWith({choice: VALID})
+        expect(applied).toEqual([])
+        expect(closed).toEqual(0)
+    })
+
+    it('applies and closes once it accepts it', async () => {
+        await open(undefined, {accepts: () => true})
+        await choose(VALID)
+
+        await submitForm()
+
+        expect(applied).toEqual([{choice: VALID}])
+        expect(closed).toEqual(1)
+    })
+})
+
 describe('pressing Escape in a panel outside a wizard', () => {
     it.each([
         ['unedited', INITIAL],
@@ -146,13 +171,15 @@ const fields = {
     choice: new FormField().predicate(choice => choice !== INVALID, 'choice.invalid')
 }
 
-const Harness = withForm({fields})(({form, inputs, disabledEscape}) =>
+const Harness = withForm({fields})(({form, inputs, disabledEscape, accepts}) =>
     <FormPanel
         id={PANEL}
         placement='inline'
         form={form}
+        accepts={accepts}
         onApply={values => applied.push(values)}
-        onCancel={() => cancelled++}>
+        onCancel={() => cancelled++}
+        onClose={() => closed++}>
         <PanelContent>
             <FormButtons
                 input={inputs.choice}
@@ -183,11 +210,12 @@ const submitForm = () => act(async () => {
     form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', {cancelable: true}))
 })
 
-let root, container, store, applied, cancelled
+let root, container, store, applied, cancelled, closed
 
 beforeEach(() => {
     applied = []
     cancelled = 0
+    closed = 0
     wizard.context = undefined
 })
 
@@ -198,7 +226,7 @@ afterEach(async () => {
     vi.restoreAllMocks()
 })
 
-const open = (context, {disabledEscape} = {}) => {
+const open = (context, {disabledEscape, accepts} = {}) => {
     wizard.context = context
     store = createStore((state = {dimensions: {width: 1024, height: 768}}, action) =>
         action.reduce ? action.reduce(state) : state)
@@ -209,7 +237,7 @@ const open = (context, {disabledEscape} = {}) => {
     return act(async () => root.render(
         <Provider store={store}>
             <EventShield>
-                <Harness values={{choice: INITIAL}} disabledEscape={disabledEscape}/>
+                <Harness values={{choice: INITIAL}} disabledEscape={disabledEscape} accepts={accepts}/>
             </EventShield>
         </Provider>
     ))

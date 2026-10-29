@@ -1,0 +1,31 @@
+import {selectFrom} from '~/stateUtils'
+
+// The legend and classifier of the Classification a recipe's Sources select - its type, and its configuration, which decides
+// what it can output (supportProbability) - as what is offered of its outputs reads them: the record's own while the
+// session holds it, so an edit to it is seen at once; otherwise as the operation the offer is for resolved it
+// (`recordOf`, operationReadiness.js), while the runtime holds a current answer read from it; otherwise as copied when it
+// was selected (`ui.classification`). `classificationResolved` says whether what is offered is the record's: false while
+// a selected Classification is known only by that copy. The applied selection decides whether there is one: with none,
+// nothing is offered of it, whatever copy is left from one selected before.
+export const selectedClassificationOfState = (state, recipe, recordOf = () => null) => {
+    const id = selectFrom(recipe, 'model.sources.classification')
+    if (!id) {
+        return NONE_SELECTED
+    }
+    const record = selectFrom(state, ['process.loadedRecipes', id]) || recordOf(id)
+    return record
+        ? {
+            classificationLegend: selectFrom(record, 'model.legend') || null,
+            classifierType: selectFrom(record, 'model.classifier.type') || null,
+            classifier: selectFrom(record, 'model.classifier') || null,
+            classificationResolved: true
+        }
+        : {
+            classificationLegend: selectFrom(recipe, 'ui.classification.classificationLegend'),
+            classifierType: selectFrom(recipe, 'ui.classification.classifierType'),
+            classifier: selectFrom(recipe, 'ui.classification.classifier'),
+            classificationResolved: false
+        }
+}
+
+const NONE_SELECTED = {classificationLegend: null, classifierType: null, classifier: null, classificationResolved: true}

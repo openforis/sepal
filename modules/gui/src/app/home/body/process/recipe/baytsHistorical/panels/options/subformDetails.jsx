@@ -16,9 +16,9 @@ export const SubformDetails = ({fields, onClick}) => {
     )
 }
 
-const renderField = ({label, value}) =>
+const renderField = ({label, tooltip, value}) =>
     <Layout key={label} type='vertical' spacing='none'>
-        <Label msg={label} size='small'/>
+        <Label msg={label} size='small' tooltip={tooltip}/>
         <div className={styles.value}>
             {value || value !== '' ? value : <i>n/a</i>}
         </div>

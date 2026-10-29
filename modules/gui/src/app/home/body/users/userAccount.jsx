@@ -201,7 +201,7 @@ class _UserAccount extends React.Component {
                     onChange={this.onChangeStorageQuota}
                 />
             </Form.FieldSet>
-            
+
         )
     }
 

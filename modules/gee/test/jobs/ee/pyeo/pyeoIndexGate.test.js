@@ -7,17 +7,20 @@ import {NEVER, of} from 'rxjs'
 import {callsOf} from '#sepal/testSupport/mock'
 
 // What PyEO Alerts asks of its imagery for the index-drop gate: with the gate on, the baseline index from the
-// classification's input and the index in each monitoring scene; with it off, neither - only what the classifier itself
-// reads. Orchestration only: the requests are recorded and no Earth Engine image is built.
+// classification's input - a recipe's own index band, or the spectral bands it is calculated of - and the index in each
+// monitoring scene; with it off, neither - only what the classifier itself reads. Orchestration only: the requests are
+// recorded and no Earth Engine image is built; its values are baselineGateIndex.test.js's.
 
 const geometry = {type: () => 'Polygon'}
 const imageRequests = []
 const getCollection$ = mock.fn(() => NEVER)
 const calculateIndex = mock.fn(() => ({multiply: () => ({int16: () => ({rename: () => 'baseline-index'})})}))
 
+// A recipe input outputs `recipeBands`.
+let recipeBands = []
 mock.module('#sepal/ee/imageFactory', {exports: {default: (reference, options) => {
     imageRequests.push({reference, options})
-    return {getImage$: () => of({select: () => 'selected'}), getGeometry$: () => of(geometry)}
+    return {getImage$: () => of({select: () => 'selected'}), getBands$: () => of(recipeBands), getGeometry$: () => of(geometry)}
 }}})
 mock.module('#sepal/ee/aoi', {exports: {toGeometry$: () => of(geometry)}})
 mock.module('#sepal/ee/optical/indexes', {exports: {calculateIndex}})
@@ -68,14 +71,38 @@ describe('a PyEO Alerts with its index-drop gate on', () => {
         assert.deepEqual(bandsRequested(), ['red', 'nir', 'ndvi'])
     })
 
-    it('asks a recipe input for the index rather than calculating it', async () => {
+    it('asks a recipe input providing the index for it rather than calculating it', async () => {
         classificationInput = {type: 'RECIPE_REF', id: 'mosaic-1', bandSetSpecs: [{type: 'IMAGE_BANDS', included: ['red', 'nir']}]}
+        recipeBands = ['red', 'nir', 'swir2', 'nbr']
 
         await request(pyeo({indexGate: {index: 'nbr', threshold: 0.2}}))
 
         assert.equal(calculateIndex.mock.callCount(), 0)
         assert.ok((imageRequests).some(actual => isDeepStrictEqual(actual, {reference: classificationInput, options: {selection: ['nbr']}})))
         assert.deepEqual(bandsRequested(), ['red', 'nir', 'nbr'])
+    })
+
+    it('calculates it of the spectral bands a recipe input outputs where it provides no index band, once, outside the scenes', async () => {
+        classificationInput = {type: 'RECIPE_REF', id: 'stack-1', bandSetSpecs: [{type: 'IMAGE_BANDS', included: ['red']}]}
+        recipeBands = ['red', 'nir']
+
+        await request(pyeo({indexGate: {index: 'ndvi', threshold: 0.2}}))
+
+        assert.equal(calculateIndex.mock.callCount(), 1)
+        assert.ok(imageRequests.some(actual => isDeepStrictEqual(actual, {reference: classificationInput, options: {selection: ['red', 'nir']}})))
+        assert.deepEqual(bandsRequested(), ['red', 'ndvi'])
+    })
+})
+
+describe('a PyEO Alerts with its index-drop gate off over a recipe input', () => {
+    it('reads nothing of the recipe input for an index', async () => {
+        classificationInput = {type: 'RECIPE_REF', id: 'stack-1', bandSetSpecs: [{type: 'IMAGE_BANDS', included: ['red']}]}
+        recipeBands = ['red', 'nir']
+
+        await request(pyeo({indexGate: undefined}))
+
+        assert.equal(calculateIndex.mock.callCount(), 0)
+        assert.ok(!imageRequests.some(({reference}) => isDeepStrictEqual(reference, classificationInput)))
     })
 })
 

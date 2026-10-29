@@ -11,8 +11,8 @@ import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 // A Regression predicting above-ground biomass from a Landsat composite, and a Remapping of its predictions, through
 // Regression's real Training data button, data set list and editor, its layer and Retrieve, over the real store, source
 // runtime and recipe types. Regression trains whichever classifier it is configured with, so one whose data sets store
-// no point - and read none from another recipe - cannot run: its Training data section says so, nothing is drawn, and
-// Retrieve is held, for it and for the Remapping alike. A data set reloaded in its editor changes nothing until it is
+// no point - and read none from another recipe - cannot run: its Training data panel says how to add some, without its
+// button marking anything wrong, nothing is drawn, and Retrieve is held, for it and for the Remapping alike. A data set reloaded in its editor changes nothing until it is
 // applied; cancelled, it never does. Earth Engine is faked: the plots table answers its rows when a test says so.
 
 const fake = vi.hoisted(() => ({rows: []}))
@@ -137,11 +137,12 @@ describe('a Regression without training data', () => {
     it.each([
         ['no data set', () => []],
         ['a plots table read as empty', () => [plotsTable([])]]
-    ])('with %s is marked on Training data, drawing nothing and holding Retrieve, and so is a Remapping of it', async (_case, dataSetsOf) => {
+    ])('with %s says how to add some in Training data, unmarked, drawing nothing and holding Retrieve, and so is a Remapping of it', async (_case, dataSetsOf) => {
         await open(dataSetsOf())
 
-        expect(trainingDataMark()).toEqual([MISSING])
-        expect(sectionProblems(REGRESSION)).toEqual({trainingData: MISSING})
+        expect(shown()).toContain(MISSING)
+        expect(trainingDataMark()).toEqual([])
+        expect(sectionProblems(REGRESSION)).toEqual({})
         expect(map.shown).toBeNull()
         expect(retrieveAvailable(REGRESSION)).toBe(false)
         expect(previewGate(REMAPPING)).toMatchObject({withdraw: true})
@@ -163,6 +164,7 @@ describe('a Regression with training data', () => {
         await open(dataSetsOf())
 
         expect(trainingDataMark()).toEqual([])
+        expect(shown()).not.toContain(MISSING)
         expect(map.shown).toBeTruthy()
         expect(retrieveAvailable(REGRESSION)).toBe(true)
         expect(previewGate(REMAPPING)).toBeNull()
@@ -177,12 +179,12 @@ describe('a plots table read as empty, reloaded in its editor', () => {
         await editDataSet('biomass_plots')
         await answerRows(PLOTS)
         expect(applyEnabled()).toBe(true)
-        expect(trainingDataMark()).toEqual([MISSING])
+        expect(shown()).toContain(MISSING)
         expect(retrieveAvailable(REGRESSION)).toBe(false)
         await click(button('button.cancel'))
 
         expect(savedDataSets()).toEqual([plotsTable([])])
-        expect(trainingDataMark()).toEqual([MISSING])
+        expect(shown()).toContain(MISSING)
         expect(map.shown).toBeNull()
         expect(retrieveAvailable(REGRESSION)).toBe(false)
         expect(retrieveAvailable(REMAPPING)).toBe(false)
@@ -196,7 +198,7 @@ describe('a plots table read as empty, reloaded in its editor', () => {
         await click(button('button.apply'))
 
         expect(savedDataSets()[0].referenceData).toEqual(PLOTS)
-        expect(trainingDataMark()).toEqual([])
+        expect(shown()).not.toContain(MISSING)
         expect(map.shown).toBeTruthy()
         expect(retrieveAvailable(REGRESSION)).toBe(true)
         expect(previewGate(REMAPPING)).toBeNull()
@@ -208,7 +210,7 @@ const REGRESSION = 'regression-1'
 const REMAPPING = 'remapping-1'
 const COMPOSITE = 'composite-1'
 const PLOTS_TABLE = 'users/x/biomass_plots'
-const MISSING = 'process.classification.panel.trainingData.missing'
+const MISSING = 'process.regression.panel.trainingData.missing'
 
 const LISTING = [
     {id: REGRESSION, name: 'Biomass', type: 'REGRESSION', revision: 1},
@@ -363,6 +365,8 @@ const trainingDataMark = () => {
         ? JSON.parse(sectionButton.closest('[data-tooltip]').dataset.tooltip)
         : []
 }
+
+const shown = () => document.body.textContent
 
 const applyEnabled = () => button('button.apply')?.disabled === false
 

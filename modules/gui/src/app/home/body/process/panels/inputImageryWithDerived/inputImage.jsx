@@ -296,7 +296,7 @@ const valuesToModel = values => {
     }
 }
 
-const policy = () => ({_: 'allow'})
+export const inputImagePolicy = () => ({_: 'allow'})
 const panelOptions = {
     id: 'inputImage',
     path: props => {
@@ -307,7 +307,7 @@ const panelOptions = {
     valuesToModel,
     modelToValues,
     mapRecipeToProps,
-    policy
+    policy: inputImagePolicy
 }
 
 export const InputImage = compose(

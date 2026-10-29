@@ -45,13 +45,16 @@ class _Sources extends React.Component {
 
     state = {}
 
+    // More is where the classification is chosen, so Sources open on it while one is selected, as on More pressed before.
     constructor(props) {
         super(props)
         this.recipeActions = RecipeActions(props.recipeId)
+        const {inputs: {advanced, classification}} = props
+        this.state = {advanced: Boolean(advanced.value) || Boolean(classification.value)}
     }
 
     render() {
-        const {inputs: {advanced}} = this.props
+        const {advanced} = this.state
         return (
             <RecipeFormPanel
                 className={styles.panel}
@@ -60,12 +63,12 @@ class _Sources extends React.Component {
                     icon='cog'
                     title={msg('process.timeSeries.panel.sources.title')}/>
                 <Panel.Content>
-                    {advanced.value ? this.renderAdvanced() : this.renderSimple()}
+                    {advanced ? this.renderAdvanced() : this.renderSimple()}
                 </Panel.Content>
                 <Form.PanelButtons>
                     <Button
-                        label={advanced.value ? msg('button.less') : msg('button.more')}
-                        onClick={() => this.setAdvanced(!advanced.value)}/>
+                        label={advanced ? msg('button.less') : msg('button.more')}
+                        onClick={() => this.setAdvanced(!advanced)}/>
                 </Form.PanelButtons>
             </RecipeFormPanel>
         )
@@ -221,7 +224,8 @@ class _Sources extends React.Component {
             loadRecipe$(recipeId).pipe(takeUntil(this.cancel$)),
             classification => this.setState({
                 classificationLegend: classification.model.legend,
-                classifierType: classification.model.classifier.type
+                classifierType: classification.model.classifier.type,
+                classifier: classification.model.classifier
             }),
             error => Notifications.error({
                 message: msg('process.timeSeries.panel.sources.classificationLoadError', {error}),
@@ -233,12 +237,14 @@ class _Sources extends React.Component {
     deselectClassification() {
         this.setState({
             classificationLegend: null,
-            classifierType: null
+            classifierType: null,
+            classifier: null
         })
     }
 
     setAdvanced(enabled) {
         const {inputs: {advanced}} = this.props
+        this.setState({advanced: enabled})
         advanced.set(enabled)
     }
 }

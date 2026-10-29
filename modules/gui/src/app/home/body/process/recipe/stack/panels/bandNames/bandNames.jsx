@@ -82,11 +82,12 @@ class _BandNames extends React.Component {
             ? recipeNameById[image.id]
             : image.id
         const key = `${image.type}-${image.id}-${imageIndex}`
-        const foo = (
-            <Layout type='horizontal'>
+        const bands = (
+            <div className={styles.bands}>
                 {this.namesOf(image).map(({originalName, outputName}, bandIndex) =>
                     <BandName
                         key={originalName}
+                        className={styles.band}
                         images={images}
                         image={image}
                         originalName={originalName}
@@ -96,14 +97,14 @@ class _BandNames extends React.Component {
                         onValidationStatusChanged={this.onValidationStatusChanged}
                     />
                 )}
-            </Layout>
+            </div>
         )
         return (
             <ListItem
                 key={key}
                 expansionClickable
                 expanded
-                expansion={foo}>
+                expansion={bands}>
                 <CrudItem
                     title={msg(`process.panels.inputImagery.form.type.${image.type}`)}
                     description={name}

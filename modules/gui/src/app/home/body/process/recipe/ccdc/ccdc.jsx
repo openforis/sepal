@@ -10,11 +10,11 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
 
-import {collectionClassifierRequirements} from '../collectionClassifierRequirements'
+import {classificationReferenceFeedback, classifiedOutputRequirements, collectionClassifierRequirements} from '../collectionClassifierRequirements'
 import {bandPresentation, mapProducts} from './bands'
 import {dateRange, defaultModel, RecipeActions} from './ccdcRecipe'
 import {CcdcToolbar} from './panels/ccdcToolbar'
-import {describeSegments$} from './segmentDescription'
+import {describeSegments$, segmentBandLabels} from './segmentDescription'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -59,13 +59,14 @@ class _CCDC extends React.Component {
                 classification => {
                     this.recipeActions.setClassification({
                         classificationLegend: classification.model.legend,
-                        classifierType: classification.model.classifier.type
+                        classifierType: classification.model.classifier.type,
+                        classifier: classification.model.classifier
                     })
                 },
                 error => Notifications.error({message: msg('process.ccdc.panel.sources.classificationLoadError', {error}), error})
             )
         } else if (!classificationRecipeId && classificationLegend && !stream('LOAD_CLASSIFICATION_RECIPE').active) {
-            this.recipeActions.setClassification({classificationLegend: null, classifierType: null})
+            this.recipeActions.setClassification({classificationLegend: null, classifierType: null, classifier: null})
         }
     }
 }
@@ -75,6 +76,8 @@ const CCDC = compose(
     recipe({defaultModel, mapRecipeToProps}),
     recipeAccess()
 )
+
+const SOURCES = {id: 'sources', label: 'process.ccdc.panel.sources.button'}
 
 export default () => ({
     id: 'CCDC',
@@ -87,9 +90,15 @@ export default () => ({
     components: {
         recipe: CCDC
     },
-    sourceRequirements: collectionClassifierRequirements({id: 'sources', label: 'process.ccdc.panel.sources.button'}),
+    sourceRequirements: [
+        ...collectionClassifierRequirements(SOURCES),
+        classifiedOutputRequirements(SOURCES, 'breakpointBands'),
+        classificationReferenceFeedback(SOURCES)
+    ],
     imageSource: false,
+    geometrySource: true,
     describeSegments$,
+    segmentBandLabels,
     getDateRange: recipe => dateRange(recipe.model.dates),
     mapProducts,
     bandPresentation,

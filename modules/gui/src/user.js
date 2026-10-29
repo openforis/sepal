@@ -1,4 +1,4 @@
-import {catchError, delay, map, of, switchMap, tap, throwError} from 'rxjs'
+import {catchError, map, of, switchMap, tap, throwError} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
@@ -118,13 +118,15 @@ export const startLoggedOff$ = () =>
         })
     )
 
-// The browser may be logged in as someone else: the gateway replaces that session on login and kicks
-// its other tabs once the new cookie is out, so no logout is needed here — and a rejected reset changes nothing.
-export const resetPassword$ = ({token, username, password, type, recaptchaToken}) =>
+// The reset logs the browser in itself, so no login follows it to be refused by the login throttle. The browser may
+// be logged in as someone else: the gateway replaces that session and kicks its other tabs once the new cookie is
+// out, so no logout is needed here — and a rejected reset changes nothing.
+export const resetPassword$ = ({token, password, type, recaptchaToken}) =>
     api.user.resetPassword$({token, password, recaptchaToken}).pipe(
-        tap(() => publishEvent(type === 'reset' ? 'password_reset' : 'user_activated')),
-        delay(2000),
-        switchMap(() => authenticate$({username, password})),
+        tap(user => {
+            publishEvent(type === 'reset' ? 'password_reset' : 'user_activated')
+            publishCurrentUserEvent(user)
+        }),
         switchMap(user =>
             api.user.invalidateOtherSessions$().pipe(
                 map(() => user)
@@ -190,8 +192,9 @@ export const validateEmail$ = ({email, recaptchaToken}) =>
     )
 
 // Sent with the revision the user was loaded at: a save over a record changed since (from another
-// tab, say) is rejected, and the current record is loaded in place of the optimistic values.
-export const updateCurrentUserDetails$ = ({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}) => {
+// tab, say) is rejected, and the current record is loaded in place of the optimistic values. So is
+// an email change refused for a wrong password.
+export const updateCurrentUserDetails$ = ({name, email, password, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}) => {
     const {revision} = currentUser()
     actionBuilder('UPDATE_USER_DETAILS', {name, email, organization, intendedUse})
         .set('user.currentUser.name', name)
@@ -201,8 +204,8 @@ export const updateCurrentUserDetails$ = ({name, email, organization, intendedUs
         .set('user.currentUser.emailNotificationsEnabled', emailNotificationsEnabled)
         .set('user.currentUser.manualMapRenderingEnabled', manualMapRenderingEnabled)
         .dispatch()
-    return api.user.updateCurrentUserDetails$({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled, revision}).pipe(
-        catchError(error => error.status === 409
+    return api.user.updateCurrentUserDetails$({name, email, password, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled, revision}).pipe(
+        catchError(error => error.status === 409 || error.status === 403
             ? loadUser$().pipe(switchMap(() => throwError(() => error)))
             : throwError(() => error)
         )

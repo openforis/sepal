@@ -13,7 +13,7 @@ import {RetrieveButton} from '../../retrieveButton'
 import {withSourceProblems} from '../../selectedSource'
 import {RecipeActions} from '../ccdcSliceRecipe'
 import styles from './ccdcSliceToolbar.module.css'
-import {ChartPixel} from './chartPixel'
+import {CHART_OPERATIONS, ChartPixel} from './chartPixel'
 import {Date} from './date/date'
 import {Options} from './options/options'
 import {Retrieve} from './retrieve/retrieve'
@@ -48,6 +48,7 @@ class _CcdcSliceToolbar extends React.Component {
                     className={styles.top}>
                     <ChartPixelButton
                         disabled={!initialized}
+                        operations={CHART_OPERATIONS}
                         onPixelSelected={latLng => this.recipeActions.setChartPixel(latLng)}
                     />
                     <RetrieveButton tooltip={msg('process.ccdcSlice.panel.retrieve.tooltip')}/>

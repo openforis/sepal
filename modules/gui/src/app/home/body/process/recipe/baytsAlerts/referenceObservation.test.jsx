@@ -10,13 +10,14 @@ import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourc
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
 
-// Where BAYTS Alerts' radar processing options come from, and when they are written again.
+// Where the processing BAYTS Alerts monitors with comes from, and that observing it configures nothing.
 //
-// The selection is what executes; the producer underneath it is only what the options are seeded from. A
-// Masking over a BAYTS historical recipe runs Masking and takes the historical recipe's options.
+// The selection is what executes; the producer underneath it is only where the processing is read from. A Masking over
+// a BAYTS historical recipe runs Masking, and monitors with the historical recipe's processing. The alerts' own
+// options - which passes, masks and angles they monitor - are theirs, whatever the reference answers.
 //
-// Composed: the real evidence lifecycle runs the real observation over the real shared declarations, and
-// applies BAYTS Alerts' own policy to what it accepts. Only the asset metadata read is substituted.
+// Composed: the real evidence lifecycle runs the real observation over the real shared declarations. Only the asset
+// metadata read is substituted.
 
 const assetMetadata$ = vi.fn()
 const loadRecipe$ = vi.fn()
@@ -38,6 +39,7 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: () 
 
 const {SourceEvidenceSync} = await import('../sourceEvidenceSync')
 const {baytsAlertsObservation} = await import('./referenceObservation')
+const {settingsOf} = await import('./processingSettings')
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -64,121 +66,112 @@ afterEach(async () => {
 })
 
 describe('the producer a selection stands for', () => {
-    it('is a directly selected historical recipe, whose options seed the monitoring run', async () => {
-        sync({selection: recipeSelection(HISTORICAL)})
+    it('is a directly selected historical recipe, whose processing the alerts monitor with, configuring nothing', async () => {
+        sync({selection: recipeSelection(HISTORICAL), options: OWN})
         await settled()
 
-        expect(options()).toMatchObject({orbits: ['ASCENDING'], minObservations: 20})
+        expect(effective('spatialSpeckleFilter')).toEqual({state: 'REFERENCE', value: 'REFINED_LEE'})
+        expect(effective('kernelSize')).toEqual({state: 'REFERENCE', value: 5})
+        expect(options()).toEqual(OWN)
     })
 
     it('is the historical recipe under a preserving wrapper, which stays what executes', async () => {
-        sync({selection: recipeSelection(MASKED)})
+        sync({selection: recipeSelection(MASKED), options: OWN})
         await settled()
 
-        expect(options()).toMatchObject({orbits: ['ASCENDING'], minObservations: 20})
+        expect(effective('spatialSpeckleFilter')).toEqual({state: 'REFERENCE', value: 'REFINED_LEE'})
         expect(reference()).toEqual({type: 'RECIPE_REF', id: MASKED})
+        expect(options()).toEqual(OWN)
     })
 
-    it('is the asset a wrapper leads to, whose exported options seed the monitoring run', async () => {
-        assetStates({recipe_options: JSON.stringify({orbits: ['DESCENDING'], minObservations: 7})})
+    it('is the asset a wrapper leads to, whose exported options say what they state', async () => {
+        assetStates({recipe_options: JSON.stringify({geometricCorrection: 'TERRAIN', orbits: ['DESCENDING']})})
 
-        sync({selection: recipeSelection(WRAPPED_ASSET)})
+        sync({selection: recipeSelection(WRAPPED_ASSET), options: OWN})
         await settled()
 
-        expect(options()).toMatchObject({orbits: ['DESCENDING'], minObservations: 7})
-        expect(reference()).toEqual({type: 'RECIPE_REF', id: WRAPPED_ASSET})
+        expect(effective('geometricCorrection')).toEqual({state: 'RECORDED', value: 'TERRAIN'})
+        expect(effective('spatialSpeckleFilter')).toEqual({state: 'NOT_RECORDED', value: OWN.spatialSpeckleFilter})
+        expect(options()).toEqual(OWN)
+    })
+})
+
+describe('a saved recipe opened in a new session', () => {
+    it('keeps its own passes, masks and angles, and its saved copies, whatever its reference was built with', async () => {
+        sync({selection: recipeSelection(HISTORICAL), options: OWN})
+        await settled()
+
+        expect(options()).toEqual(OWN)
+        expect(effective('spatialSpeckleFilter').value).toBe('REFINED_LEE')
     })
 })
 
 describe('a second source selected after the first was resolved', () => {
-    it('seeds the options of the source now selected', async () => {
-        sync({selection: recipeSelection(HISTORICAL)})
+    it('is monitored with its own processing, the alerts\' choices kept', async () => {
+        sync({selection: recipeSelection(HISTORICAL), options: OWN})
         await settled()
-        expect(options().orbits).toEqual(['ASCENDING'])
 
         await update(ALERTS, {reference: recipeSelection(OTHER_HISTORICAL)})
 
-        expect(options()).toMatchObject({orbits: ['DESCENDING'], minObservations: 3})
+        expect(effective('geometricCorrection')).toEqual({state: 'REFERENCE', value: 'TERRAIN'})
+        expect(effective('spatialSpeckleFilter')).toEqual({state: 'REFERENCE', value: 'NONE'})
+        expect(options()).toEqual(OWN)
     })
 })
 
 describe('the producer of the selection already made', () => {
-    it('supplies refreshed options when its own change', async () => {
-        sync({selection: recipeSelection(MASKED)})
+    it('changing its processing, changes what the alerts monitor with and nothing they saved', async () => {
+        sync({selection: recipeSelection(MASKED), options: OWN})
         await settled()
 
-        await update(HISTORICAL, {options: {orbits: ['ASCENDING', 'DESCENDING'], minObservations: 12}})
+        await update(HISTORICAL, {options: {...HISTORICAL_OPTIONS, spatialSpeckleFilter: 'LEE', mask: ['SIDES'], minAngle: 35}})
 
-        expect(options()).toMatchObject({orbits: ['ASCENDING', 'DESCENDING'], minObservations: 12})
-    })
-
-    // The producer answers with the options it answered with before, so what the user has since chosen in
-    // the preprocess panel is left alone.
-    it('leaves options the user edited alone when it changes for another reason', async () => {
-        sync({selection: recipeSelection(MASKED)})
-        await settled()
-
-        await update(ALERTS, {options: {...options(), minObservations: 42}})
-        await update(HISTORICAL, {dates: {fromDate: '2019-01-01', toDate: '2020-01-01'}})
-
-        expect(options().minObservations).toBe(42)
+        expect(effective('spatialSpeckleFilter')).toEqual({state: 'REFERENCE', value: 'LEE'})
+        expect(options()).toEqual(OWN)
     })
 })
 
 // That it cannot be read is said in REF, as its section's status (sourceRequirement.test.jsx).
 describe('a source that cannot be read', () => {
-    it('leaves the options as the user left them', async () => {
+    it('leaves the processing unknown, with no fallback, and the options as the user left them', async () => {
         assetMetadata$.mockReturnValue(throwError(() => new Error('asset unavailable')))
 
-        sync({selection: recipeSelection(WRAPPED_ASSET), options: {minObservations: 42}})
+        sync({selection: recipeSelection(WRAPPED_ASSET), options: OWN})
         await settled()
 
-        expect(options()).toEqual({minObservations: 42})
+        expect(effective('geometricCorrection')).toEqual({state: 'UNAVAILABLE'})
+        expect(settingsOf(alertsRecipe()).model).toBe(null)
+        expect(options()).toEqual(OWN)
     })
 
-    // A read that failed says which source was asked, not what was found: the first answer about this
-    // selection is still its first.
-    it('still seeds the options once it can be read', async () => {
+    it('is read once it can be, configuring nothing then either', async () => {
         assetMetadata$.mockReturnValue(throwError(() => new Error('asset unavailable')))
-        sync({selection: recipeSelection(WRAPPED_ASSET)})
+        sync({selection: recipeSelection(WRAPPED_ASSET), options: OWN})
         await settled()
 
-        assetStates({recipe_options: JSON.stringify({orbits: ['DESCENDING'], minObservations: 7})})
+        assetStates({recipe_type: 'BAYTS_HISTORICAL', recipe_options: JSON.stringify({orbits: ['DESCENDING'], minAngle: 40})})
         await reExport()
 
-        expect(options()).toMatchObject({orbits: ['DESCENDING'], minObservations: 7})
-    })
-
-    it('does not restore options the user edited when it comes back unchanged', async () => {
-        assetStates({recipe_options: JSON.stringify({minObservations: 7})})
-        sync({selection: recipeSelection(WRAPPED_ASSET)})
-        await settled()
-        expect(options().minObservations).toBe(7)
-        await update(ALERTS, {options: {...options(), minObservations: 42}})
-
-        assetMetadata$.mockReturnValue(throwError(() => new Error('asset unavailable')))
-        await reExport()
-        assetStates({recipe_options: JSON.stringify({minObservations: 7})})
-        await reExport()
-
-        expect(options().minObservations).toBe(42)
+        expect(effective('spatialSpeckleFilter')).toEqual({state: 'RECORDED', value: 'NONE'})
+        expect(options()).toEqual(OWN)
     })
 })
 
 describe('a response for a selection that has been replaced', () => {
-    it('does not configure the recipe that moved on', async () => {
+    it('says nothing of the selection now made', async () => {
         const held = new Subject()
         assetMetadata$.mockReturnValue(held)
-        sync({selection: recipeSelection(WRAPPED_ASSET)})
+        sync({selection: recipeSelection(WRAPPED_ASSET), options: OWN})
         await settled()
 
         await update(ALERTS, {reference: recipeSelection(HISTORICAL)})
         await act(async () => {
-            held.next({bandNames: [], properties: {recipe_options: JSON.stringify({minObservations: 99})}})
+            held.next({bandNames: [], properties: {recipe_type: 'BAYTS_HISTORICAL', recipe_options: JSON.stringify({spatialSpeckleFilter: 'SNIC'})}})
             held.complete()
         })
 
-        expect(options()).toMatchObject({orbits: ['ASCENDING'], minObservations: 20})
+        expect(effective('spatialSpeckleFilter')).toEqual({state: 'REFERENCE', value: 'REFINED_LEE'})
+        expect(options()).toEqual(OWN)
     })
 })
 
@@ -221,6 +214,14 @@ const reference = () => alertsRecipe().model.reference
 
 const options = () => alertsRecipe().model.options
 
+// What the alerts monitor with, for one reference-owned setting, as their editors read it.
+const effective = field => settingsOf(alertsRecipe()).fields[field]
+
+// The alerts' own choices, and a saved copy of a setting the reference owns.
+const OWN = {orbits: ['ASCENDING'], mask: ['FIRST_LAST'], minAngle: 32, maxAngle: 44, spatialSpeckleFilter: 'GAMMA_MAP'}
+
+const HISTORICAL_OPTIONS = {orbits: ['ASCENDING'], spatialSpeckleFilter: 'REFINED_LEE', minObservations: 20}
+
 const sync = ({selection, options = {}}) => {
     const initialState = {
         process: {
@@ -230,8 +231,8 @@ const sync = ({selection, options = {}}) => {
                     type: 'BAYTS_ALERTS',
                     model: {reference: selection, options, baytsAlertsOptions: {}}
                 },
-                [HISTORICAL]: historical(HISTORICAL, {orbits: ['ASCENDING'], minObservations: 20}),
-                [OTHER_HISTORICAL]: historical(OTHER_HISTORICAL, {orbits: ['DESCENDING'], minObservations: 3}),
+                [HISTORICAL]: historical(HISTORICAL, HISTORICAL_OPTIONS),
+                [OTHER_HISTORICAL]: historical(OTHER_HISTORICAL, {orbits: ['DESCENDING'], geometricCorrection: 'TERRAIN'}),
                 [MASKED]: {
                     id: MASKED,
                     type: 'MASKING',

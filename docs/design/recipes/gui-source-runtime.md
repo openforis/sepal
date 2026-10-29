@@ -5,6 +5,10 @@ Current browser source-resolution boundaries and their proposed extensions. The 
 The unified `watchSource$`, configured-source `querySources$`, versioned resource cache and coherent execution bundles
 remain design proposals. Components should not own dependency traversal or cache policy.
 
+[Recipe behavior contracts](behavior-contracts.md) covers the editing, feedback and recovery rules that consumers
+must define. The runtime supplies current evidence for those rules; a loading state or cache layout does not decide
+the product's validity policy.
+
 ## Purpose
 
 Recipe consumers need progressively richer answers about a selected source:

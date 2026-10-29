@@ -16,9 +16,13 @@ const mapRecipeToProps = recipe =>
         sources: selectFrom(recipe, 'model.sources'),
         classificationLegend: selectFrom(recipe, 'ui.classification.classificationLegend'),
         classifierType: selectFrom(recipe, 'ui.classification.classifierType'),
+        classifier: selectFrom(recipe, 'ui.classification.classifier'),
         corrections: selectFrom(recipe, 'model.options.corrections')
     })
 
+// Retrieve exports the recipe's image output, which the panel holds the export to, as it stands at submission
+// (retrieveOutput.js): the Classification its Sources select trainable among it, whatever measures are selected
+// (type/ccdc.js). A measure the Classification does not provide is not offered.
 class _Retrieve extends React.Component {
     render() {
         return (
@@ -36,11 +40,11 @@ class _Retrieve extends React.Component {
 
     // Labels and groups for the measures the collection helper knows; the output decides which are offered.
     bandOptions() {
-        const {classificationLegend, classifierType, corrections, sources: {dataSets}} = this.props
+        const {classificationLegend, classifierType, classifier, corrections, sources: {dataSets}} = this.props
         return groupedBandOptions({
             dataSets: toDataSetIds(dataSets),
             corrections,
-            classification: {classifierType, classificationLegend, include: ['regression', 'probabilities']}
+            classification: {classifierType, classifier, classificationLegend, include: ['regression', 'probabilities']}
         })
     }
 }

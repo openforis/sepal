@@ -54,6 +54,10 @@ const fetchStub = routes => {
     return fn
 }
 
+// A worker call that never answers: it settles only when the caller's signal gives up on it.
+const unanswered = ({signal}) => new Promise((_resolve, reject) =>
+    signal?.addEventListener('abort', () => reject(signal.reason)))
+
 // A legacy (no appPath) start is associated under '/sandbox/<endpoint>' like any other app, so
 // what the worker holds for it — and hands back to a restarted gateway — is an ordinary
 // GET /sessions/app-sessions row.
@@ -67,13 +71,14 @@ const associateBody = fetch => callsOf(fetch)
     .filter(([url, options]) => url.endsWith('/app') && options?.method === 'POST')
     .map(([, options]) => JSON.parse(options.body))
 
-const createManager = ({fetch, defaultInstanceType = 'T3aSmall'} = {}) =>
+const createManager = ({fetch, defaultInstanceType = 'T3aSmall', ...options} = {}) =>
     createSandboxSessionManager({
         workerBaseUrl: 'http://worker',
         defaultInstanceType,
         heartbeatIntervalMs: 999999,
         log: noopLog,
-        fetch
+        fetch,
+        ...options
     })
 
 describe('toClientStatus', () => {
@@ -331,6 +336,43 @@ describe('heartbeat', () => {
         assert.equal(mgr._cache.get('leo').get('/sandbox/rstudio').status, 'ACTIVE')
     })
 
+    test('a hung heartbeat times out instead of holding back the sessions after it', {timeout: 1000}, async () => {
+        const routes = fetchStub({
+            'GET /sessions/app-sessions': [
+                legacyAppSession({endpoint: 'rstudio', sessionId: 'hung', host: 'h1'}),
+                legacyAppSession({endpoint: 'shiny', sessionId: 's2', host: 'h2'})
+            ],
+            'POST /sessions/session/s2': {id: 's2', host: 'h2', status: 'ACTIVE'}
+        })
+        const fetch = (url, options = {}) =>
+            url.endsWith('/sessions/session/hung') ? unanswered(options) : routes(url, options)
+        const mgr = createManager({fetch, heartbeatTimeoutMs: 10})
+        await mgr.status('leo', 'rstudio')
+        await mgr.status('leo', 'shiny')
+
+        await mgr.heartbeatOnce()
+
+        assert.equal(routes.requested('POST /sessions/session/s2'), true)
+    })
+
+    test('a timer tick while a heartbeat is still running starts no second one', async t => {
+        t.mock.timers.enable({apis: ['setInterval']})
+        const routes = fetchStub({
+            'GET /sessions/app-sessions': [legacyAppSession({endpoint: 'rstudio', sessionId: 'hung', host: 'h1'})]
+        })
+        const fetch = mock.fn((url, options = {}) =>
+            url.endsWith('/sessions/session/hung') ? unanswered(options) : routes(url, options))
+        const mgr = createManager({fetch, heartbeatIntervalMs: 1000})
+        await mgr.status('leo', 'rstudio')
+        mgr.start()
+        t.after(() => mgr.stop())
+
+        t.mock.timers.tick(1000)
+        t.mock.timers.tick(1000)
+
+        assert.equal(heartbeatBodies(fetch).length, 1)
+    })
+
     test('dedupes multiple endpoints sharing one session into a single heartbeat', async () => {
         const fetch = fetchStub({
             'GET /sessions/app-sessions': [
@@ -456,6 +498,41 @@ describe('heartbeat', () => {
             const {mgr} = await setup()
             assert.equal(mgr.recordInteraction({username: 'leo'}), false)
             assert.equal(mgr.recordInteraction({sessionId: 's1'}), false)
+        })
+    })
+
+    describe('state for a session the gateway no longer serves', () => {
+        const setup = async () => {
+            const fetch = fetchStub({
+                'GET /sessions/app-sessions': [legacyAppSession({endpoint: 'rstudio', sessionId: 's1', host: 'h1'})],
+                'POST /sessions/session/s1': {id: 's1', host: 'h1', status: 'ACTIVE'},
+            })
+            const mgr = createManager({fetch})
+            await mgr.status('leo', 'rstudio')
+            mgr.onAppDissociated({username: 'leo', appPath: '/sandbox/rstudio'})
+            return {fetch, mgr}
+        }
+
+        test('an interaction reported meanwhile is not carried once it is served again', async () => {
+            const {fetch, mgr} = await setup()
+            mgr.recordInteraction({username: 'leo', sessionId: 's1'})
+            await mgr.heartbeatOnce()
+
+            await mgr.status('leo', 'rstudio')
+            await mgr.heartbeatOnce()
+
+            assert.deepEqual(heartbeatBodies(fetch), [undefined])
+        })
+
+        test('an unobservable declaration made meanwhile does not survive', async () => {
+            const {fetch, mgr} = await setup()
+            mgr.recordInteraction({username: 'leo', sessionId: 's1', observable: false})
+            await mgr.heartbeatOnce()
+
+            await mgr.resolveTarget('leo', 'rstudio', pathUnder('rstudio'))
+            await mgr.heartbeatOnce()
+
+            assert.deepEqual(heartbeatBodies(fetch), [undefined])
         })
     })
 
@@ -697,6 +774,24 @@ describe('resolveTarget per app', () => {
         const probeCallsAfter = callsOf(fetch).filter(([url]) => url.includes('/api/kernels/k-9')).length
         assert.equal(probeCallsAfter, probeCallsBefore) // cached — no re-probe
     })
+
+    it('probes a known kernel again once its session is no longer served', async () => {
+        const fetch = fetchStub({
+            'GET /sessions/app-sessions': [
+                {path: '/sandbox/jupyter/voila/render/a.ipynb', sessionId: 's-1', host: 'h1', status: 'ACTIVE', instanceType: 'T3aSmall'}
+            ],
+            'GET http://h1:8888/api/sandbox/jupyter/api/kernels/k-9': {id: 'k-9'}
+        })
+        const manager = createManager({fetch})
+        await manager.resolveTarget('bob', 'jupyter', '/api/sandbox/jupyter/api/kernels/k-9/channels')
+        manager.onAppDissociated({username: 'bob', appPath: '/sandbox/jupyter/voila/render/a.ipynb'})
+        await manager.heartbeatOnce()
+
+        await manager.resolveTarget('bob', 'jupyter', '/api/sandbox/jupyter/api/kernels/k-9/channels')
+
+        const probes = fetch.keys.filter(key => key === 'GET http://h1:8888/api/sandbox/jupyter/api/kernels/k-9')
+        assert.equal(probes.length, 2)
+    })
 })
 
 describe('releaseApp', () => {
@@ -936,6 +1031,17 @@ describe('ensureServerStarted', () => {
         await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'jupyter'})
         manager.forgetServerStarted({sessionId: 's-1', endpoint: 'jupyter'})
         await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'jupyter'})
+        assert.equal(fetch.keys.filter(key => key === startKey).length, 2)
+    })
+
+    it('starts a server again once its session is no longer served', async () => {
+        const fetch = fetchStub({[startKey]: null})
+        const manager = createManager({fetch})
+        await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'jupyter'})
+        await manager.heartbeatOnce()
+
+        await manager.ensureServerStarted({username: 'bob', sessionId: 's-1', endpoint: 'jupyter'})
+
         assert.equal(fetch.keys.filter(key => key === startKey).length, 2)
     })
 

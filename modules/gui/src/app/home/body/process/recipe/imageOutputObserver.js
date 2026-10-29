@@ -1,6 +1,6 @@
 import {map} from 'rxjs'
 
-import {createImageOutputObserver, explainImageOutput$} from '#sepal/recipe/output/observeImageOutput'
+import {createImageOutputObserver, explainImageOutput$, settledReadiness$} from '#sepal/recipe/output/observeImageOutput'
 import {AVAILABLE_BANDS} from '#sepal/recipe/output/provider'
 import {recipeType} from '#sepal/recipe/recipeTypeRegistry'
 import {buildRecipeDependencyGraph} from '#sepal/recipe/source/dependencyGraph'
@@ -33,6 +33,10 @@ const readinessFor = recipe => recipeType(recipe.type)
 // needs repair (explainImageOutput$).
 export const explainRecipeImageOutput$ = ({graph, observeBands$ = observeImageBands$}) =>
     explainImageOutput$({graph, observeBands$, declarationFor, readinessFor})
+
+// Whether `operation` over the graph's root can run, settled with nothing of the root described (settledReadiness$).
+export const settledRecipeReadiness$ = ({graph, operation, observeBands$ = observeImageBands$}) =>
+    settledReadiness$({graph, operation, observeBands$, declarationFor, readinessFor})
 
 // `observeBands$` is what a request goes through: Earth Engine itself unless a caller shares requests
 // (sourceRuntime/observationRegistry.js).

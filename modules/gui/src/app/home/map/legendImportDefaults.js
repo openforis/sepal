@@ -1,6 +1,10 @@
 import Color from 'color'
 import _ from 'lodash'
 
+import {legendValue} from './legendValue'
+
+// A value column states a different number in every row, each read as the legend reads it - `1e1` and `1e2` are 10 and
+// 100, and 1.5 is not 1. Color channels are whole numbers.
 export const getValidMappings = (columns, rows) => {
     const toInts = column => {
         return rows
@@ -18,9 +22,10 @@ export const getValidMappings = (columns, rows) => {
             })
             .filter(i => _.isInteger(i))
     }
-    const valueColumn = columns.filter(column =>
-        _.uniq(toInts(column)).length === rows.length
-    )
+    const valueColumn = columns.filter(column => {
+        const values = rows.map(row => legendValue(row[column]))
+        return values.every(Number.isFinite) && _.uniq(values).length === rows.length
+    })
     const labelColumn = columns.filter(column =>
         _.uniq(rows
             .map(row => _.isNaN(row[column])

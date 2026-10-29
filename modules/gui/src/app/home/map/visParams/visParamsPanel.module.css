@@ -3,6 +3,27 @@
     width: 40rem;
 }
 
+.headerIcon {
+    flex: 0 0 auto;
+    margin-right: .5rem;
+}
+
+.headerTitle {
+    flex: 0 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+}
+
+.headerActions {
+    flex: 0 0 auto;
+    margin-left: auto;
+    padding-left: .5rem;
+}
+
+.headerType {
+    flex: 0 0 auto;
+}
+
 .band {
     width: 17rem;
 }

@@ -2,14 +2,17 @@ import React from 'react'
 
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
-import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
+import {Message} from '~/widget/message'
 import {Panel} from '~/widget/panel/panel'
 
-import {preferredGateIndex, readableGateIndexes} from '../../gateIndexes'
+import {withOutputRequirementReads} from '../../../selectedSource'
+import {CHECKING, UNAVAILABLE} from '../../../sourceRequirements'
+import {GateIndexCandidates} from '../../gateIndexCandidates'
+import {gateDependencyOf} from '../../sourcesRequirements'
 import styles from './options.module.css'
 
 const fields = {
@@ -35,13 +38,19 @@ const fields = {
         .notBlank('process.pyeoAlerts.panel.options.form.gateThreshold.required')
 }
 
-const mapRecipeToProps = recipe => ({
-    sources: selectFrom(recipe, 'model.sources'),
-    processing: selectFrom(recipe, 'model.options'),
-    classificationImagery: selectFrom(recipe, 'ui.classificationBands')
-})
-
 class _Options extends React.Component {
+    state = {gateIndexChanges: 0}
+
+    constructor(props) {
+        super(props)
+        const {sourceRuntime, recipeId} = props
+        this.gateIndexes = new GateIndexCandidates({
+            sourceRuntime,
+            recipeId,
+            onChange: () => this.mounted && this.setState(({gateIndexChanges}) => ({gateIndexChanges: gateIndexChanges + 1}))
+        })
+    }
+
     render() {
         const {inputs: {advanced}} = this.props
         return (
@@ -64,27 +73,19 @@ class _Options extends React.Component {
     }
 
     componentDidMount() {
-        this.explainGateIndex()
+        this.mounted = true
+        this.gateIndexes.update(this.props.model)
     }
 
     componentDidUpdate() {
-        this.explainGateIndex()
+        this.gateIndexes.update(this.props.model)
     }
 
-    // An index gated on that the imagery cannot compute is said beside the index and holds Apply back; it is not switched
-    // off for the user, so opening OPT edits nothing. Choosing an index it can compute, or turning the gate off, repairs
-    // it. Bands not yet known rule nothing out (availableIndexes).
-    explainGateIndex() {
-        const {inputs: {useIndexGate, gateIndex}} = this.props
-        const error = useIndexGate.value && gateIndex.value && !this.availableIndexes().includes(gateIndex.value)
-            ? msg('process.pyeoAlerts.panel.options.form.gateIndex.unsupported', {index: gateIndex.value.toUpperCase()})
-            : ''
-        if (error ? gateIndex.error !== error : this.explained) {
-            gateIndex.setInvalid(error)
-        }
-        this.explained = !!error
-    }
-
+    // An index the shared rule finds the gate cannot read of the draft is said beside the index, holding Apply back
+    // (sourcesRequirements.js); it is not switched off for the user, so opening OPT edits nothing. While the classification
+    // the gate reads is found unusable, or not yet known, the gate's settings are kept as they are, disabled - what is
+    // wrong with it is said in Sources, so only a classification still being checked, or not checkable, is said here;
+    // the rest of the panel stays editable.
     renderContent() {
         const {inputs: {advanced, minRepeatability, minCumulativeDetections}} = this.props
         return (
@@ -115,10 +116,13 @@ class _Options extends React.Component {
 
     // Disabled rather than hidden: the panel is anchored at the bottom, so a row appearing would move the rows above it.
     renderIndexGate() {
-        const {inputs: {useIndexGate, gateIndex}} = this.props
+        const {gateDependency, inputs: {useIndexGate, gateIndex}} = this.props
         const gateAvailable = this.availableIndexes().length > 0
         return (
             <React.Fragment>
+                {[CHECKING, UNAVAILABLE].includes(gateDependency)
+                    ? <Message type='info' text={msg(`process.pyeoAlerts.panel.options.form.useIndexGate.dependsOnSources.${gateDependency}`)}/>
+                    : null}
                 <Layout type='horizontal' alignment='distribute' spacing='loose'>
                     <Form.Buttons
                         label={msg('process.pyeoAlerts.panel.options.form.useIndexGate.label')}
@@ -130,7 +134,7 @@ class _Options extends React.Component {
                             {value: false, label: msg('process.pyeoAlerts.panel.options.form.useIndexGate.off')},
                             {value: true, label: msg('process.pyeoAlerts.panel.options.form.useIndexGate.on')}
                         ]}
-                        disabled={!gateAvailable && !useIndexGate.value}
+                        disabled={!!gateDependency || (!gateAvailable && !useIndexGate.value)}
                         onChange={on => on && this.preferSupportedIndex()}
                     />
                     <Form.Combo
@@ -138,10 +142,10 @@ class _Options extends React.Component {
                         tooltip={msg('process.pyeoAlerts.panel.options.form.gateIndex.tooltip')}
                         input={gateIndex}
                         options={this.indexOptions()}
-                        disabled={!useIndexGate.value}
+                        disabled={!useIndexGate.value || !!gateDependency}
                     />
                 </Layout>
-                {this.renderIndexThreshold(!useIndexGate.value || !gateAvailable)}
+                {this.renderIndexThreshold(!useIndexGate.value || !gateAvailable || !!gateDependency)}
             </React.Fragment>
         )
     }
@@ -192,24 +196,21 @@ class _Options extends React.Component {
     // A gate turned on with no index saved takes NDVI, or else the first the gate can read; a saved one is kept.
     preferSupportedIndex() {
         const {model, inputs: {gateIndex}} = this.props
-        const preferred = preferredGateIndex(...this.gateContext())
-        if (!model?.indexGate && preferred && !this.availableIndexes().includes(gateIndex.value)) {
+        const available = this.availableIndexes()
+        const preferred = available.includes('ndvi') ? 'ndvi' : available[0]
+        if (!model?.indexGate && preferred && !available.includes(gateIndex.value)) {
             gateIndex.set(preferred)
         }
     }
 
-    // The gate indexes it can read (gateIndexes.js). The classification's input is what Sources last read of it, only
-    // where that is the classification applied: one read for another, or not read yet, rules nothing out.
-    availableIndexes() {
-        return readableGateIndexes(...this.gateContext())
+    componentWillUnmount() {
+        this.mounted = false
+        this.gateIndexes.stop()
     }
 
-    gateContext() {
-        const {sources, processing, classificationImagery} = this.props
-        const baseline = classificationImagery?.classification && classificationImagery.classification === sources?.classification
-            ? classificationImagery
-            : null
-        return [{sources, options: processing}, baseline]
+    // The gate indexes it can read, to offer (gateIndexCandidates.js).
+    availableIndexes() {
+        return this.gateIndexes.readable()
     }
 
     // The indexes it can compute, and the one selected though it cannot, shown to be repaired.
@@ -258,5 +259,6 @@ const gateValues = model => ({
 
 export const Options = compose(
     _Options,
-    recipeFormPanel({id: 'pyeoAlertsOptions', fields, mapRecipeToProps, modelToValues, valuesToModel})
+    withOutputRequirementReads(reads => ({gateDependency: gateDependencyOf(reads)})),
+    recipeFormPanel({id: 'pyeoAlertsOptions', fields, modelToValues, valuesToModel})
 )

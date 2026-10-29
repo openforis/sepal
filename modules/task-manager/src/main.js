@@ -46,6 +46,8 @@ const main = async () => {
     await server.start({
         port: config.port,
         routes: createRoutes(createTasksApi(tasks)),
+        // A submitted export carries its whole recipe, which can embed large training data and drawn geometries.
+        bodyLimit: '100mb',
         wsRoutes: {'/ws': server.wsStream(ctx => taskWs$(ctx.arg$))}
     })
     await supervisor.start()

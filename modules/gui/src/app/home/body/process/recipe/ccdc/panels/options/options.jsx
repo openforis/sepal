@@ -37,6 +37,7 @@ const mapRecipeToProps = recipe => ({
     corrections: selectFrom(recipe, 'model.opticalPreprocess.corrections'),
     classificationLegend: selectFrom(recipe, 'ui.classification.classificationLegend'),
     classifierType: selectFrom(recipe, 'ui.classification.classifierType'),
+    classifier: selectFrom(recipe, 'ui.classification.classifier'),
 })
 
 class _Options extends React.Component {
@@ -67,12 +68,12 @@ class _Options extends React.Component {
     }
 
     renderAdvanced() {
-        const {corrections, classificationLegend, classifierType, sources, inputs: {dateFormat, tmaskBands, minObservations, chiSquareProbability, minNumOfYearsScaler, lambda, maxIterations}} = this.props
+        const {corrections, classificationLegend, classifierType, classifier, sources, inputs: {dateFormat, tmaskBands, minObservations, chiSquareProbability, minNumOfYearsScaler, lambda, maxIterations}} = this.props
         const dataSets = sources.dataSets
         const tmaskBandsOptions = groupedBandOptions({
             dataSets: toDataSetIds(dataSets),
             corrections,
-            classification: {classificationLegend, classifierType, include: ['regression', 'probabilities']}
+            classification: {classificationLegend, classifierType, classifier, include: ['regression', 'probabilities']}
         })
             .map(option => option.filter(({value}) => sources.breakpointBands.includes(value)))
             .flat()

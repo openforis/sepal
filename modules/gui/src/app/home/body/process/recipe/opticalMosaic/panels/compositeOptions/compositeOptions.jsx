@@ -132,17 +132,21 @@ class _CompositeOptions extends React.Component {
             <Form.Buttons
                 label={msg('process.mosaic.panel.composite.form.corrections.label')}
                 input={corrections}
+                {...corrections.presentation?.(msg('process.mosaic.panel.composite.form.corrections.label'))}
                 multiple={true}
                 options={[{
                     value: 'SR',
+                    disabled: corrections.disabledValues?.includes('SR'),
                     label: msg('process.mosaic.panel.composite.form.corrections.surfaceReflectance.label'),
-                    tooltip: msg('process.mosaic.panel.composite.form.corrections.surfaceReflectance.tooltip')
+                    tooltip: corrections.optionTooltip?.('SR', msg('process.mosaic.panel.composite.form.corrections.surfaceReflectance.tooltip')) || msg('process.mosaic.panel.composite.form.corrections.surfaceReflectance.tooltip')
                 }, {
                     value: 'BRDF',
+                    disabled: corrections.disabledValues?.includes('BRDF'),
                     label: msg('process.mosaic.panel.composite.form.corrections.brdf.label'),
-                    tooltip: msg('process.mosaic.panel.composite.form.corrections.brdf.tooltip'),
+                    tooltip: corrections.optionTooltip?.('BRDF', msg('process.mosaic.panel.composite.form.corrections.brdf.tooltip')) || msg('process.mosaic.panel.composite.form.corrections.brdf.tooltip'),
                 }, {
                     value: 'CALIBRATE',
+                    disabled: !!corrections.disabledValues,
                     label: msg('process.mosaic.panel.composite.form.corrections.calibrate.label'),
                     tooltip: msg('process.mosaic.panel.composite.form.corrections.calibrate.tooltip'),
                     neverSelected: _.flatten(Object.values(sources)).length < 2
@@ -162,6 +166,7 @@ class _CompositeOptions extends React.Component {
                 tooltip={msg('process.mosaic.panel.composite.form.brdfMultiplier.tooltip')}
                 placeholder={msg('process.mosaic.panel.composite.form.brdfMultiplier.placeholder')}
                 input={brdfMultiplier}
+                {...brdfMultiplier.presentation?.(msg('process.mosaic.panel.composite.form.brdfMultiplier.label'), msg('process.mosaic.panel.composite.form.brdfMultiplier.tooltip'))}
             />
         )
     }

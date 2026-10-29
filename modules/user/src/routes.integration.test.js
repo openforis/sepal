@@ -70,6 +70,24 @@ describe('the user routes', () => {
 
             assert.equal(response.status, 401)
         })
+
+        test('refuse even a correct password once it failed too often from that client address', async () => {
+            const clientIp = '192.0.2.1'
+            await failLoginsFrom('/authenticate', clientIp)
+
+            const response = await request('POST', '/authenticate', {body: {username: 'bob', password: PASSWORD, clientIp}})
+
+            assert.equal(response.status, 429)
+        })
+
+        test('refuse even a correct ssh password once it failed too often from that client address', async () => {
+            const clientIp = '192.0.2.2'
+            await failLoginsFrom('/auth/password', clientIp)
+
+            const response = await request('POST', '/auth/password', {body: {username: 'bob', password: PASSWORD, clientIp}})
+
+            assert.equal(response.status, 429)
+        })
     })
 
     describe('for the current user', () => {
@@ -160,6 +178,12 @@ describe('the user routes', () => {
         return {status: response.status, body: text && json ? JSON.parse(text) : text || null}
     }
 
+    const failLoginsFrom = async (path, clientIp) => {
+        for (let attempt = 1; attempt <= MAX_LOGIN_FAILURES; attempt++) {
+            await request('POST', path, {body: {username: 'bob', password: 'wrong', clientIp}})
+        }
+    }
+
     // The api over a repository that answers from memory, so a response says which handler ran.
     const startServer = () => {
         const repository = {
@@ -209,6 +233,7 @@ describe('the user routes', () => {
     })
 
     const PASSWORD = 'a-long-enough-password'
+    const MAX_LOGIN_FAILURES = 10
     const ED25519_LINE = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFTTtG0hPe95rIxeTXi4nSx4CHf59bz6WQ6e8K0fhOWn'
     const ADMIN_ROLES = ['application_admin']
 })
