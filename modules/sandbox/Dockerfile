@@ -4,6 +4,9 @@ FROM openforis/sandbox-base
 ARG UV_NO_CACHE=1
 ARG PIP_NO_CACHE_DIR=1
 
+# Build-time only: site-packages is root-owned, so Python can't cache bytecode at runtime
+ARG UV_COMPILE_BYTECODE=1
+
 ENV MODULE_NAME sandbox
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     JAVA_HOME=/usr/local/lib/sdkman/candidates/java/current \

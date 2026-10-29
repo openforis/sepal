@@ -115,6 +115,9 @@ RUN apt-get -y update && apt-get install -y \
 
 RUN pip3 install uv
 
+# Build-time only: site-packages is root-owned, so Python can't cache bytecode at runtime
+ARG UV_COMPILE_BYTECODE=1
+
 # Install Micromamba
 RUN curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xj -C /usr/local/bin/ --strip-components=1 bin/micromamba
 
