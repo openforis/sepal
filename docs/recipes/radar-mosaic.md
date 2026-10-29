@@ -11,6 +11,21 @@ makes a point in time, whatever period is also stated, and anything else is a ti
 a time scan and refused when run. `options` configures the collection: orbits, geometric correction, speckle
 filtering, outlier removal, border masking and the minimum number of observations.
 
+A target date supplies each missing bound independently: ±30 days with `outlierRemoval: 'NONE'`, also the execution
+default when omitted, or ±183 days with `CONSERVATIVE`, `MODERATE` or `AGGRESSIVE` (and numeric thresholds).
+New GUI recipes select `MODERATE`; that creation default does not change the execution default for omitted settings.
+An explicit `fromDate` or `toDate` wins for that side, even alongside a target date. Without a target date, execution
+passes the stated bounds through as a time scan. The collection applies these dates through `filterDate`.
+
+This rule also governs BAYTS first/last radar observations, which force `NONE`, and Change Alerts' latest radar
+mosaics, which retain their effective outlier-removal setting. BAYTS Historical and Change Alerts' radar time scans
+retain their explicit periods; BAYTS' alert-scoring collection has its own explicit monitoring interval.
+
+The corrected `NONE` window replaces the previous accidental ±183-day window. Recomputing an existing recipe with
+`NONE` or an omitted setting can therefore change contributing observations, masks or values wherever a bound is
+target-derived, including the reused map products. Saved models and user dates are not migrated; fully explicit
+intervals and wider-window modes retain their behavior.
+
 ## Output
 
 Each configuration declares its bands in `lib/js/shared/src/recipe/type/radarMosaic.js` (see the
@@ -41,6 +56,8 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
 ## Verification
 
 - `modules/gee/test/jobs/ee/radar/mosaicBands.test.js`: configuration-dependent catalogue.
+- `modules/gee/test/jobs/ee/radar/mosaicDates.test.js`: dates passed to collection construction, execution defaults,
+  independent bound precedence, time scans and reused BAYTS/Change Alerts products.
 - `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js`: declaration, presentation,
   Retrieve and delegated BAYTS/Change Alerts views.
 - [Radar live probe](../../modules/gee/verify/README.md): both schemas/defaults, selection order, harmonic

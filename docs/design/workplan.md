@@ -365,8 +365,6 @@ in the [recipe contract](../recipes/bayts-alerts.md#radar-observation).
 
 ### Radar Mosaic
 
-- `getDates` compares `outlierRemoval === 'NONE   '` with trailing spaces, so point-in-time windows stay
-  ±183 days rather than the intended ±30 days without outlier removal. Correcting this changes pixels.
 - Time scans reduce per-image harmonic terms selected by `VV.*`/`VH.*`, then discard them; assess the wasted work.
 - Missing dates surface EE's DateRange error rather than a controlled configuration diagnosis.
 - The Orbits constraint names undefined translation `process.recipeMosaic.panel.options.form.orbits.required`;
