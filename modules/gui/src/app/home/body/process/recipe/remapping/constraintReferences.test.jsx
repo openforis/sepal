@@ -14,6 +14,7 @@ import {ActivationContext} from '~/widget/activation/activationContext'
 import errorIndicatorStyles from '~/widget/errorIndicator.module.css'
 import listItemStyles from '~/widget/listItem.module.css'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
+import {tooltipText} from '~/widget/tooltip.test.fixtures'
 
 // Remapping constraints reading an input since removed, or a band their input no longer includes, as the editor's real
 // toolbar, Mapping panel and constraint modal show them over a real store: marked on the Mapping button, the legend
@@ -50,8 +51,8 @@ vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
-    Tooltip: ({msg, disabled, children}) => !disabled && [msg].flat().some(line => typeof line === 'string')
-        ? <span data-tooltip={JSON.stringify([msg].flat().filter(line => typeof line === 'string'))}>{children}</span>
+    Tooltip: ({msg, disabled, children}) => !disabled && [msg].flat().map(tooltipText).some(line => typeof line === 'string')
+        ? <span data-tooltip={JSON.stringify([msg].flat().map(tooltipText).filter(line => typeof line === 'string'))}>{children}</span>
         : children
 }))
 
@@ -76,7 +77,7 @@ const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
 const {requestGate} = await import('../sourceRequirements')
 const {withSourceProblems} = await import('../selectedSource')
-const ProblemProbe = withSourceProblems()(({sourceProblems}) => <div data-upstream-problems={JSON.stringify(sourceProblems)}/>)
+const ProblemProbe = withSourceProblems()(({sourceProblems}) => <div data-upstream-problems={JSON.stringify(tooltipText(sourceProblems))}/>)
 const {readImageOutput} = await import('#sepal/recipe/output/readImageOutput')
 const {recipeType} = await import('#sepal/recipe/recipeTypeRegistry')
 const {buildMapDependencyGraph} = await import('../mapDependencyGraph')
@@ -1024,7 +1025,7 @@ const constraintRows = () => [...document.getElementsByClassName(classOf(listIte
 
 // Whether each constraint's row is marked in error.
 const constraintsMarked = () => constraintRows()
-    .map(row => !!row.querySelector(`.${classOf(errorIndicatorStyles, 'indicator')}`))
+    .map(row => !!row.querySelector(`.${classOf(listItemStyles, 'main')} .${classOf(errorIndicatorStyles, 'indicator')}`))
 
 // What each constraint's summary - its row's main part, not its fields - says of it.
 const summaryTooltips = () => constraintRows()

@@ -548,7 +548,8 @@ const ranges = area => [...panelOf(area).querySelectorAll(`[data-label="${MIN}"]
 const bandChoices = area => [...panelOf(area).querySelectorAll('[data-label$="Channel.label"], [data-label$="hue.label"], [data-label="' + BAND + '"]')]
     .map(element => element.querySelector('input').placeholder.replace('map.visParams.form.band.select.placeholder', ''))
 
-const paletteHexButton = area => field(area, 'map.visParams.form.palette.label').querySelector('button')
+const paletteHexButton = area => [...field(area, 'map.visParams.form.palette.label').querySelectorAll('button')]
+    .find(button => button.textContent === 'HEX')
 
 const paletteText = area => field(area, 'map.visParams.form.palette.label').querySelector('textarea')
 

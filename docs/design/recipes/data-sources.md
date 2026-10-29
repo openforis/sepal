@@ -1924,6 +1924,83 @@ to the original tab and confirm the panel and edits remain. Try one recipe that 
 The user accepted the feature on 2026-10-29: "Works great, also from a recipe-scoped modal."
 The user then authorized committing this slice on `feat/recipe-scoped-modals`. No push is included.
 
+**Validation-message recipe links: assessment (2026-10-29).** The user wants recipe names mentioned in validation
+feedback to open those recipes too, with the smallest shared change. Inspection found shared producers and
+presentation paths, but no existing renderer that keeps recipe references as links through them:
+
+- `referenceFeedback.js` builds direct/upstream explanations and already retains recipe IDs alongside names.
+  Classification/Regression's `trainingDataRequirements.js` adds shared feature and repair explanations.
+- `selectedSourceStatus.js` aggregates section/item feedback; `selectedSource.jsx`, `sourceInputFeedback.jsx` and
+  `recipeFormPanel.jsx` deliver it to toolbar, list-item and field tooltips. Several joins/interpolations flatten
+  identity into text. Held map-layer feedback also converts recipe identities into names.
+- `Tooltip` already accepts React content and registers its popup with the owning blur detector. It needs no
+  recipe lookup or navigation logic. Error icons' click/focus access still needs checking for touch/keyboard use;
+  hover alone is insufficient.
+
+Recommended bounded slice: keep localized message templates and typed recipe arguments until shared feedback
+rendering, retaining ordinary string messages unchanged. Use one recipe-link component backed by the accepted
+`openRecipeById$` action. Shared message composition must retain references instead of joining them into strings.
+Adopt this at the shared producers and delivery paths above, including map-held feedback, rather than adding
+recipe-specific controls. Do not parse displayed names, inject HTML, change global translation semantics or make
+generic Tooltip know about recipes. Validation/readiness/submission decisions and saved models are unchanged.
+
+Acceptance should cover direct and nested references, several references and identical names with different IDs,
+training-data repair feedback, toolbar/item/field tooltips and held map feedback, unavailable recipes, existing/new
+tabs, originating-draft retention, and native mouse/keyboard/touch interaction. A tooltip link must be reachable
+without dismissing or applying its owning panel; hidden-tab tooltips must not remain interactive. This round is
+analysis only: no production code or tests changed. Implementation remains the next presentation slice.
+
+**Validation-message recipe links implemented (2026-10-29; verified and browser-accepted).** The shared producers now
+keep a small message description alongside their existing plain message: a translation key and arguments, with
+recipe arguments retaining ID and display name. Shared composition preserves those arguments. Ordinary string
+messages remain strings. `feedbackMessageContent.jsx` is the single renderer and recipe-link implementation;
+links use the already accepted `openRecipeById$`, including its existing-tab, unsaved-draft and authoritative-load
+protections. No name matching or injected HTML is used, and a missing identity stays plain text.
+
+The shared section/item presenters, source-field feedback, output-editor feedback and held-map feedback use that
+renderer. Classification/Regression's feature and repair messages use the same descriptions as direct/upstream
+reference findings. There are no per-recipe navigation handlers. The existing `msg()` contract is unchanged; a
+separate rich formatter uses the same translation catalogues and English fallback. Validation, readiness,
+submission guards, recipe models and data acquisition are unchanged.
+
+`Label` now reuses the existing `ErrorIndicator` that list rows already use, with warning severity supported too.
+Its native button opens by touch or keyboard, retaining the row-drag protection and existing focus-ring styling.
+Plain text keeps its focus explanation on desktop; interactive content opens by click/Enter so focus can move into
+its links, and touch uses the click trigger. The accessible name uses the plain message. Recipe names inside are
+underlined buttons; Enter/Space open the
+recipe rather than applying the containing panel. Tooltip rendering has no recipe knowledge. It reuses the existing
+modal-interaction helper to withdraw a popup when its owner is hidden or covered, releasing the popup's blur
+exclusion as well. Normal toolbar activation is unchanged; its tooltip's named references share the renderer.
+
+The new tests use real translations, Tooltip, forms, tabs and navigation, covering direct/nested references,
+same-named recipes, closed/unavailable/pending targets, feature repair, section/item presenters, quoted map feedback,
+plural/fallback formatting, and a nested panel covering the tooltip owner. Existing wording-oriented tooltip and
+section-mark test stubs use one shared plain-text extraction helper instead of dropping or serializing React
+content. Three action selectors distinguish the feedback button from Remove, HEX and field actions, and a
+constraint-mark helper now inspects its row header rather than including expanded fields' shared indicators.
+
+Verification is complete for the production tree. The full GUI run covered 4924 tests in 339 files with two workers:
+4917 passed and seven failed in three test-harness files. No production change followed that run. The Band Math
+helper now counts marked row headers rather than also counting expanded fields; CrudItem's tests identify Remove
+separately from the feedback button and assert its native button semantics; the missing-layer fixture now supplies
+the dimensions required by its rendered widget. Those three corrected files pass all 30 tests in an isolated rerun.
+The other 336 files' 4894 passing cases remain valid. The full suite was not repeated after these fixture-only
+corrections; production/source fingerprints confirm that only those three test files changed after the full run.
+
+The 13 new real-tooltip cases pass, as do the existing list-drag/focus and affected caller checks. Removing the
+popup's ownership guard makes its nested-panel regression fail; the mutation was restored byte for byte. A harness
+of the actual widgets passes 60 native-browser checks in Chromium and Firefox at desktop and touch-sized widths:
+links, Tab/Enter/Space, visible focus, unchanged drafts/selections, closed targets, hidden/covered owners and plain
+warnings. The harness leaves Apply enabled while presenting feedback to expose an accidental keyboard submission;
+actual requirement holds remain covered by the caller tests. This is harness evidence, not signed-in-app acceptance.
+The production GUI build, ESLint (including the final three fixtures) and `git diff --check` pass. Build output,
+logs and fingerprints are under `/tmp/sepal-validation-links/`; the workspace build output is untouched. Backend
+and live Earth Engine checks were unnecessary for this presentation-only slice and were not run.
+
+The user accepted the running-app checks (2026-10-29: "This works great") after being asked to open a named recipe
+from validation feedback, return to the original panel and its edits, and check an upstream explanation naming
+several recipes. No files are staged, committed or pushed for this slice.
+
 ### Task-driven asset invalidation
 
 Deferred while the task functionality is being rewritten. Once the rewrite lands, audit its destination changes,

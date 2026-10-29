@@ -110,6 +110,9 @@ image readiness.
    The separate untouched-PRC initialization correction is implemented; it is not a modal-migration gate.
    Opening selected recipes is implemented in the shared selector and browser-accepted (2026-10-29), including
    from a recipe-scoped modal. See [Open selected recipe](data-sources.md#open-selected-recipe).
+   Recipe links in validation feedback are implemented and verified through shared message presentation, and the
+   user accepted the running-app checks (2026-10-29: "This works great"). The linked record contains the assessment,
+   implementation boundary and verification details.
 
 This order records the user's priorities and adds no release gates to already accepted work. The copy-settings
 action remains dropped.

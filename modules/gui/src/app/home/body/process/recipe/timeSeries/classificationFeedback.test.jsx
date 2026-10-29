@@ -11,6 +11,7 @@ import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/
 import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
+import {tooltipText} from '~/widget/tooltip.test.fixtures'
 
 // The Classification a Time Series' Sources select is part of its analysis, whatever indicators are asked of it
 // (lib/js/shared/src/recipe/type/timeSeries.js): where it cannot be trained - it stores no training points - the Sources
@@ -36,8 +37,8 @@ vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
-    Tooltip: ({msg, disabled, children}) => !disabled && [msg].flat().some(line => typeof line === 'string')
-        ? <span data-tooltip={JSON.stringify([msg].flat().filter(line => typeof line === 'string'))}>{children}</span>
+    Tooltip: ({msg, disabled, children}) => !disabled && [msg].flat().map(tooltipText).some(line => typeof line === 'string')
+        ? <span data-tooltip={JSON.stringify([msg].flat().map(tooltipText).filter(line => typeof line === 'string'))}>{children}</span>
         : children
 }))
 // The Sources panel is open.

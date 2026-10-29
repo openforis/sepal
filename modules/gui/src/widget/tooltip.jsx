@@ -8,8 +8,8 @@ import React from 'react'
 
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
-import {withEnabled} from '~/enabled'
 import {withBlurDetector} from '~/widget/blurDetector'
+import {withModalInteraction} from '~/widget/panel/modalScope'
 import {isMobile} from '~/widget/userAgent'
 
 import {DEFAULT_PORTAL_CONTAINER_ID} from './portal'
@@ -37,7 +37,7 @@ class _Tooltip extends React.Component {
     }
 
     render() {
-        const {enabled = true, placement, disabled, delay, clickTrigger, hoverTrigger, focusTrigger, destroyTooltipOnHide, onVisibleChange, afterVisibleChange: _afterVisibleChange, onPopupAlign: _onPopupAlign, blurDetector: _blurDetector, children, ...otherProps} = this.props
+        const {enabled = true, interactionEnabled = true, modalScope: _modalScope, tabDialogs: _tabDialogs, placement, disabled, delay, clickTrigger, hoverTrigger, focusTrigger, destroyTooltipOnHide, onVisibleChange, afterVisibleChange: _afterVisibleChange, onPopupAlign: _onPopupAlign, blurDetector: _blurDetector, children, ...otherProps} = this.props
         const {visible} = this.state
         const trigger = _.compact([
             focusTrigger ? 'focus' : '',
@@ -45,7 +45,7 @@ class _Tooltip extends React.Component {
             hoverTrigger && !isMobile() ? 'hover' : ''
         ])
         const msg = this.getMsg()
-        return msg && !disabled && visible && enabled
+        return msg && !disabled && visible && enabled && interactionEnabled
             ? (
                 <RcTooltip
                     overlay={msg}
@@ -113,6 +113,9 @@ class _Tooltip extends React.Component {
 
     componentDidUpdate() {
         const {visible} = this.state
+        if (this.props.enabled === false || this.props.interactionEnabled === false || this.props.disabled) {
+            this.release()
+        }
         if (!visible) {
             // visible should be false for one cycle only
             this.setState({visible: true})
@@ -130,7 +133,7 @@ class _Tooltip extends React.Component {
 export const Tooltip = compose(
     _Tooltip,
     withBlurDetector(),
-    withEnabled(),
+    withModalInteraction(),
     asFunctionalComponent({
         clickTrigger: false,
         hoverTrigger: true,

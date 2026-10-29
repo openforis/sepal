@@ -11,6 +11,7 @@ import {compose} from '~/compose'
 import translations from '~/locale/en/translations.json'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
+import {tooltipText} from '~/widget/tooltip.test.fixtures'
 
 // Whether BAYTS Alerts' reference suits what reads it, composed as its editor composes it - the evidence lifecycle, the
 // REF panel and Retrieve - and as another map shows its layers, over a real store and source runtime. Earth Engine and
@@ -84,7 +85,7 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: typ
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => msg && !disabled && typeof msg !== 'function'
-        ? <span data-tooltip={JSON.stringify([msg].flat().filter(Boolean))}>{children}</span>
+        ? <span data-tooltip={JSON.stringify([msg].flat().map(tooltipText).filter(Boolean))}>{children}</span>
         : children
 }))
 // Constructing a preview layer is what requests a preview: the map mounts it and Earth Engine is asked for its tiles.

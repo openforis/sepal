@@ -7,7 +7,12 @@
 
 .target {
     display: inline-flex;
-    cursor: default;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
     border-radius: var(--border-radius, .25rem);
 }
 

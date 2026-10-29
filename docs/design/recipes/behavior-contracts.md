@@ -256,6 +256,13 @@ analyze the interaction, not a ban on neutral setup guidance, progress or genuin
 Name the actual origin of a nested problem. Scope an item editor to the item it edits; a healthy item must not show
 another item's Provider error. Keep the finding's identity and path separate from its translated prose.
 
+Carry recipe references in feedback as IDs and display names through the shared message presentation, rather
+than flattening them into translated text early. Use the common recipe link and opening action for section, item,
+field and map feedback; never recover identity by matching displayed names. Preserve a plain-text equivalent for
+nonvisual consumers. Opening a referenced recipe leaves the originating panel and its unapplied edits intact.
+Shared feedback indicators own touch/keyboard access, and a popup cannot remain interactive while its owner is
+hidden or covered. Validation and submission decisions do not depend on message rendering.
+
 Distinguish a recipe's own validity from its suitability for the operation requesting it. A Classification of several
 input images is valid by itself, yet its classifier cannot be applied to each image of a collection. Explain that
 beside the consumer's selection as the consumer's requirement, with selecting a suitable recipe as the repair; do not

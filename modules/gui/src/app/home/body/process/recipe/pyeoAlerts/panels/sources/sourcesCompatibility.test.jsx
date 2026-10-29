@@ -10,6 +10,7 @@ import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourc
 import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
+import {tooltipText} from '~/widget/tooltip.test.fixtures'
 
 // A Sources draft judged, before Apply, by what PyEO's shared definition requires of it (sourcesRequirements.js,
 // outputCandidate.js): the real panel, its form and its requirements over a real store and source runtime; the recipe
@@ -30,7 +31,7 @@ vi.mock('~/translate', () => ({msg: (key, args) => [key, ...(args ? Object.value
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
 vi.mock('~/widget/tooltip', () => ({
-    Tooltip: ({msg, children}) => msg ? <><span data-message>{[msg].flat().join(' ')}</span>{children}</> : children
+    Tooltip: ({msg, children}) => msg ? <><span data-message>{[msg].flat().map(tooltipText).join(' ')}</span>{children}</> : children
 }))
 vi.mock('~/widget/activation/activatable', () => ({
     withActivatable: () => Component => props => (

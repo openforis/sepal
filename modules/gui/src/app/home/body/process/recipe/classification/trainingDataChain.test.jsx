@@ -9,6 +9,7 @@ import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {initStore} from '~/store'
+import {tooltipText} from '~/widget/tooltip.test.fixtures'
 
 // A Classification whose classifier is trained, saved without training data, and the recipes whose running builds its
 // image: a Stack that a Class Change selects as both its images, a Remapping, and a Masking by it and of it. What the
@@ -41,7 +42,7 @@ vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => msg && !disabled && typeof msg !== 'function'
-        ? <span data-tooltip={JSON.stringify([msg].flat().filter(Boolean))}>{children}</span>
+        ? <span data-tooltip={JSON.stringify([msg].flat().map(tooltipText).filter(Boolean))}>{children}</span>
         : children
 }))
 // Constructing a preview layer is what requests a preview: the map mounts it and Earth Engine is asked for its tiles.

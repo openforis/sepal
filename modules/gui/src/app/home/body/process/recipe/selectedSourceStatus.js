@@ -4,6 +4,7 @@ import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
+import {describeFeedback, feedbackMessage, joinFeedback, recipeReference} from './feedbackMessage'
 import {
     CHECKED,
     CHECKING,
@@ -135,8 +136,9 @@ export const heldSourceStatusOfState = (state, recipe, gate) => {
     return status && {
         state: status.state,
         recipe: names[recipe.id] || recipe.title || recipe.placeholder || recipe.id,
+        recipeId: recipe.id,
         section: msg(gate.section),
-        ...(refusedBy && {refusedBy: names[refusedBy] || refusedBy})
+        ...(refusedBy && {refusedBy: names[refusedBy] || refusedBy, refusedById: refusedBy})
     }
 }
 
@@ -158,10 +160,14 @@ export const sectionProblemsOfState = (state, recipeId, evidenceOwnerOf, now = D
     }
     const marked = reads.filter(({declaration}) => declaration.toolbarMark !== false)
     const atStep = marked.filter(({declaration}) => declaration.wizardStepMark !== false)
-    const sourceProblems = sourceProblemsOf(state, marked)
+    const statuses = sourceProblemStatuses(state, marked)
+    const atStepStatuses = atStep.length === marked.length ? statuses : sourceProblemStatuses(state, atStep)
+    const sourceProblems = _.mapValues(statuses, ({message}) => message)
     const problems = {
         sourceProblems,
-        wizardStepProblems: atStep.length === marked.length ? sourceProblems : sourceProblemsOf(state, atStep)
+        wizardStepProblems: atStepStatuses === statuses ? sourceProblems : _.mapValues(atStepStatuses, ({message}) => message),
+        sourceProblemContents: _.mapValues(statuses, ({messageContent}) => messageContent),
+        wizardStepProblemContents: _.mapValues(atStepStatuses, ({messageContent}) => messageContent)
     }
     SOURCE_PROBLEMS.set(reads, {listing, problems})
     return problems
@@ -170,11 +176,10 @@ export const sectionProblemsOfState = (state, recipeId, evidenceOwnerOf, now = D
 // What the sections say, while the reads they were said of, and the names they name, are the same.
 const SOURCE_PROBLEMS = new WeakMap()
 
-const sourceProblemsOf = (state, reads) => {
+const sourceProblemStatuses = (state, reads) => {
     return Object.fromEntries(_.uniq(reads.map(({declaration}) => declaration.section.id))
         .map(section => [section, sectionStatusOf(state, reads, section)])
-        .filter(([_section, status]) => [UNAVAILABLE_SOURCE, UNSUITABLE_SOURCE, UNMET_CONFIGURATION].includes(status?.state))
-        .map(([section, {message}]) => [section, message]))
+        .filter(([_section, status]) => [UNAVAILABLE_SOURCE, UNSUITABLE_SOURCE, UNMET_CONFIGURATION].includes(status?.state)))
 }
 
 const readsOf = (state, recipeId, evidenceOwnerOf, now, heldFor) => {
@@ -189,8 +194,12 @@ const PRECEDENCE = [UNSUITABLE_SOURCE, UNAVAILABLE_SOURCE, CHECKING_SOURCE]
 const operationAdvisories = (reads, blocking, names) => reads
     .map(read => [unsuitable(read, names), operationLabel(read.declaration)])
     .filter(([status]) => status)
-    .filter(([{message}], index, all) => message !== blocking?.message && all.findIndex(([other]) => other.message === message) === index)
-    .map(([{message}, about]) => ({message: msg('process.source.status.advisory', {about, message})}))
+    .filter(([status], index, all) => !sameMessage(status, blocking) && all.findIndex(([other]) => sameMessage(other, status)) === index)
+    .map(([{message, messageContent}, about]) => messageContent
+        ? describeFeedback(feedbackMessage('process.source.status.advisory', {about, message: messageContent}))
+        : {message: msg('process.source.status.advisory', {about, message})})
+
+const sameMessage = (a, b) => a.message === b?.message && _.isEqual(a.messageContent, b?.messageContent)
 
 const sectionAdvisories = (reads, names) => {
     const sections = _.uniq(reads.filter(read => unsuitable(read, names)).map(({declaration}) => msg(declaration.section.label)))
@@ -219,6 +228,7 @@ const configurationStatusOf = (reads, sectionId) => {
     const problems = [
         ...summarizing.map(declaration => ({
             message: declaration.summary(unmet.filter(read => read.declaration === declaration)),
+            ...(declaration.summaryContent && {messageContent: declaration.summaryContent(unmet.filter(read => read.declaration === declaration))}),
             details: []
         })),
         ...[
@@ -226,14 +236,17 @@ const configurationStatusOf = (reads, sectionId) => {
             ...itemized.filter(read => read.ownVerdict.status !== UNSUPPORTED && localPrerequisites(read).length)
                 .map(read => ({read, message: prerequisitesMessage(localPrerequisites(read)), details: []}))
         ]
-            .map(({read, message, details}) => read.item
-                ? {message: msg('process.requirement.itemProblem', {item: read.item.label, message}), details}
-                : {message, details})
+            .map(({read, message, messageContent, details}) => read.item
+                ? {...(messageContent
+                    ? describeFeedback(feedbackMessage('process.requirement.itemProblem', {item: read.item.label, message: messageContent}))
+                    : {message: msg('process.requirement.itemProblem', {item: read.item.label, message})}), details}
+                : {message, messageContent, details})
     ]
     return problems.length
         ? {
             state: UNMET_CONFIGURATION,
             message: problems[0].message,
+            ...(problems[0].messageContent && {messageContent: problems[0].messageContent}),
             details: [...problems[0].details, ...problems.slice(1).map(({message}) => message)],
             refresh: false,
             advisories: []
@@ -256,6 +269,7 @@ const localStatusOf = read => {
     return {
         state: UNMET_CONFIGURATION,
         message: own ? own.message : prerequisites,
+        ...(own?.messageContent && {messageContent: own.messageContent}),
         details: own ? [...own.details, ...(prerequisites ? [prerequisites] : [])] : [],
         ...(own?.referenceFeedback && {referenceFeedback: own.referenceFeedback}),
         refresh: false,
@@ -286,8 +300,8 @@ const statusOf = (read, names) => {
     }
     const status = (state, message, refresh, details = []) => ({selected, state, message, details, refresh})
     if (verdict.status === UNSUPPORTED) {
-        const {message, details} = diagnosis(verdict.diagnostic, declaration, names)
-        return status(UNSUITABLE_SOURCE, message, false, details)
+        const {message, messageContent, details} = diagnosis(verdict.diagnostic, declaration, names)
+        return {...status(UNSUITABLE_SOURCE, message, false, details), ...(messageContent && {messageContent})}
     }
     if (acquisition === UNAVAILABLE || acquisition === CHECKED) {
         return status(UNAVAILABLE_SOURCE, assetId
@@ -314,24 +328,24 @@ const outputStateStatusOf = ({acquisition}) => {
 const diagnosis = (diagnostic, declaration, names) => {
     const {capability, describe} = declaration.requirement
     const values = {
-        way: (diagnostic.chain || []).map(({record}) => `${recordText(record, names)} → `).join(''),
-        source: diagnostic.at?.record ? recordText(diagnostic.at.record, names) : '',
+        way: joinFeedback((diagnostic.chain || []).map(({record}) => joinFeedback([recordMessage(record, names), ' → '], '')), ''),
+        source: diagnostic.at?.record ? recordMessage(diagnostic.at.record, names) : '',
         capability: msg(capability.label)
     }
     const plain = message => ({message, details: []})
     switch (diagnostic.code) {
         case NOT_A_PRODUCER:
-            return plain(msg('process.source.status.notAProducer', values))
+            return {...describeFeedback(feedbackMessage('process.source.status.notAProducer', values)), details: []}
         case UNFILLED_ROLE:
-            return plain(msg('process.source.status.unfilledRole', values))
+            return {...describeFeedback(feedbackMessage('process.source.status.unfilledRole', values)), details: []}
         case CYCLIC_SOURCE:
             return plain(msg('process.source.status.cyclic'))
         case MISSING_SOURCE:
             return plain(msg('process.source.status.missing'))
         default:
-            return describe?.(diagnostic) || plain(msg('process.source.status.unsuitable', values))
+            return describe?.(diagnostic) || {...describeFeedback(feedbackMessage('process.source.status.unsuitable', values)), details: []}
     }
 }
 
-const recordText = (record, names) =>
-    `${getRecipeType(record.type)?.labels?.name || record.type} '${names[record.id] || record.id}'`
+const recordMessage = (record, names) =>
+    joinFeedback([getRecipeType(record.type)?.labels?.name || record.type, ' \'', recipeReference(record.id, names[record.id] || record.id), '\''], '')

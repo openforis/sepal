@@ -7,6 +7,7 @@ import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
 import {select} from '~/store'
 
+import {feedbackContent} from './feedbackMessageContent'
 import {OutputWatch} from './outputWatch'
 import {IMAGE_OUTPUT} from './recipeOutput'
 import {itemStatusesOfState, sectionProblemsOfState} from './selectedSourceStatus'
@@ -16,9 +17,15 @@ import {isJudgedByOutput, readOutputRequirementsOfState} from './sourceRequireme
 // own configuration does not meet its requirements, for a toolbar to mark them; `wizardStepProblems` the same, for the
 // section a wizard has open as its step. Needs the recipe's id, as a recipe-connected component has it.
 export const withSourceProblems = () => composeHoC(
-    connect((state, {recipeId, sourceRuntime}) => sectionProblemsOfState(
-        state, recipeId, id => sourceRuntime?.evidenceOwnerOf(id), Date.now(), key => sourceRuntime?.heldFor(key)
-    )),
+    connect((state, {recipeId, sourceRuntime}) => {
+        const {sourceProblems, wizardStepProblems, sourceProblemContents, wizardStepProblemContents} = sectionProblemsOfState(
+            state, recipeId, id => sourceRuntime?.evidenceOwnerOf(id), Date.now(), key => sourceRuntime?.heldFor(key)
+        )
+        return {
+            sourceProblems: _.mapValues(sourceProblems, (message, id) => feedbackContent({message, messageContent: sourceProblemContents[id]})),
+            wizardStepProblems: _.mapValues(wizardStepProblems, (message, id) => feedbackContent({message, messageContent: wizardStepProblemContents[id]}))
+        }
+    }),
     withOutputRequirementWatch(),
     withSourceRuntime()
 )
@@ -29,7 +36,7 @@ export const withItemProblems = sectionId => composeHoC(
     connect((state, {recipeId, sourceRuntime}) => ({
         itemProblems: _.mapValues(
             itemStatusesOfState(state, recipeId, sectionId, key => sourceRuntime?.heldFor(key)),
-            ({message}) => message
+            feedbackContent
         )
     })),
     withOutputRequirementWatch(),

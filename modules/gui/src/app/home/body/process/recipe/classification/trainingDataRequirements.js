@@ -5,8 +5,9 @@ import {TRAINING_DATA_SOURCE} from '#sepal/recipe/type/classification'
 import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
 import {msg} from '~/translate'
 
+import {describeFeedback, feedbackMessage, feedbackText, joinFeedback, recipeReference} from '../feedbackMessage'
 import {listed} from '../fieldRequirement'
-import {causesOf, referenceFeedback, unsuitabilityOf} from '../referenceFeedback'
+import {causesOf, referenceFeedback, unsuitabilityMessage} from '../referenceFeedback'
 
 // What Classification and Regression need of their training data, as their shared output declarations refuse it
 // (lib/js/shared/src/recipe/trainingData.js): a classifier that is trained has something to train on. The output read
@@ -44,18 +45,26 @@ const REUSED_RECIPE_EDITOR = {
     }),
     // A recipe unsuitable for this use is explained with its repair (referenceFeedback.js); one that needs attention by
     // itself gets the repair alone.
-    message: ({referenceFeedback}) => {
-        const unsuitability = unsuitabilityOf(referenceFeedback)
-        const causes = causesOf(referenceFeedback)
-        return [unsuitability, (causes.length || !unsuitability) && repairMessage({origins: causes})].filter(Boolean).join(' ')
-    }
+    message: findings => feedbackText(reusedEditorMessage(findings)),
+    messageContent: reusedEditorMessage
+}
+
+function reusedEditorMessage({referenceFeedback}) {
+    const unsuitability = unsuitabilityMessage(referenceFeedback)
+    const causes = causesOf(referenceFeedback)
+    return joinFeedback([unsuitability, (causes.length || !unsuitability) && repairMessage({origins: causes})])
 }
 
 // What a reused recipe lacks, or holds more than once, is said before the repair; that a reused recipe needs attention,
 // the repair says itself.
 const FEATURES_EDITOR = {
     ...REUSED_RECIPE_EDITOR,
-    message: ({message, referenceFeedback}) => `${message} ${repairMessage(referenceFeedback)}`
+    message: findings => feedbackText(featuresEditorMessage(findings)),
+    messageContent: featuresEditorMessage
+}
+
+function featuresEditorMessage({message, messageContent, referenceFeedback}) {
+    return joinFeedback([messageContent || message, repairMessage(referenceFeedback)])
 }
 
 // Classification's, whose points can also be collected on its map, and Regression's.
@@ -86,12 +95,13 @@ function trainingDataRequirements(missing) {
         requirement: {
             id: MISSING_TRAINING_FEATURES,
             describe: ({diagnostics, item}) => ({
-                message: missingFeaturesMessage(diagnostics, item),
+                ...describeFeedback(missingFeaturesMessage(diagnostics, item)),
                 details: [],
                 referenceFeedback: providersOf(diagnostics, item)
             })
         },
-        summary: reads => reads.map(({ownVerdict: {diagnostic}}) => missingFeaturesMessage(diagnostic.diagnostics, diagnostic.item)).join(' '),
+        summary: reads => feedbackText(missingFeaturesSummary(reads)),
+        summaryContent: reads => missingFeaturesSummary(reads),
         outputDiagnostics: {
             codes: [MISSING_TRAINING_FEATURES],
             itemOf: ({path}, recipe, {recipeNames}) => {
@@ -108,12 +118,13 @@ function trainingDataRequirements(missing) {
         requirement: {
             id: AMBIGUOUS_TRAINING_FEATURES,
             describe: ({diagnostics, item}) => ({
-                message: ambiguousFeaturesMessage(diagnostics, item),
+                ...describeFeedback(ambiguousFeaturesMessage(diagnostics, item)),
                 details: [],
                 referenceFeedback: providersOf(diagnostics, item)
             })
         },
-        summary: reads => reads.map(({ownVerdict: {diagnostic}}) => ambiguousFeaturesMessage(diagnostic.diagnostics, diagnostic.item)).join(' '),
+        summary: reads => feedbackText(ambiguousFeaturesSummary(reads)),
+        summaryContent: reads => ambiguousFeaturesSummary(reads),
         outputDiagnostics: {
             codes: [AMBIGUOUS_TRAINING_FEATURES],
             itemOf: ({path}, recipe, {recipeNames}) => {
@@ -136,24 +147,26 @@ function trainingDataRequirements(missing) {
 
 // Each recipe reused through a data set whose samples lack features, by name, those features, and the bands each derived
 // one is built of.
-const missingFeaturesMessage = (diagnostics, {recipeNames}) => diagnostics
-    .map(({provider, features, requires = {}}) => [
-        msg('process.classification.panel.trainingData.missingFeatures', {
-            recipe: recipeNames[provider] || provider,
+const missingFeaturesSummary = reads => joinFeedback(reads.map(({ownVerdict: {diagnostic}}) => missingFeaturesMessage(diagnostic.diagnostics, diagnostic.item)))
+const ambiguousFeaturesSummary = reads => joinFeedback(reads.map(({ownVerdict: {diagnostic}}) => ambiguousFeaturesMessage(diagnostic.diagnostics, diagnostic.item)))
+
+const missingFeaturesMessage = (diagnostics, {recipeNames}) => joinFeedback(diagnostics
+    .map(({provider, features, requires = {}}) => joinFeedback([
+        feedbackMessage('process.classification.panel.trainingData.missingFeatures', {
+            recipe: recipeReference(provider, recipeNames[provider] || provider),
             features: listed(features, 'process.source.segments.andMore')
         }),
         ...Object.entries(requires).map(([feature, bands]) => msg('process.classification.panel.trainingData.derivedFeature', {
             feature,
             bands: bands.join(', ')
         }))
-    ].join(' '))
-    .join(' ')
+    ])))
 
 // Each recipe reused through a data set more than one band of whose input images matches a feature, by name, each such
 // feature and the bands matching it, input by input, as that recipe spells them.
-const ambiguousFeaturesMessage = (diagnostics, {recipeNames}) => diagnostics
-    .map(({provider, conflicts = []}) => msg('process.classification.panel.trainingData.ambiguousFeatures', {
-        recipe: recipeNames[provider] || provider,
+const ambiguousFeaturesMessage = (diagnostics, {recipeNames}) => joinFeedback(diagnostics
+    .map(({provider, conflicts = []}) => feedbackMessage('process.classification.panel.trainingData.ambiguousFeatures', {
+        recipe: recipeReference(provider, recipeNames[provider] || provider),
         conflicts: conflicts.map(({feature, inputs}) => msg('process.classification.panel.trainingData.conflict', {
             feature,
             inputs: inputs.map(({imageIndex, bands}) => msg('process.classification.panel.trainingData.conflictInput', {
@@ -161,11 +174,10 @@ const ambiguousFeaturesMessage = (diagnostics, {recipeNames}) => diagnostics
                 bands: bands.join(', ')
             })).join('; ')
         })).join('; ')
-    }))
-    .join(' ')
+    })))
 
-const repairMessage = ({origins}) => msg('process.classification.panel.trainingData.reusedRecipe.repair', {
-    recipes: origins.map(({name}) => name).join(', '),
+const repairMessage = ({origins}) => feedbackMessage('process.classification.panel.trainingData.reusedRecipe.repair', {
+    recipes: joinFeedback(origins.map(({id, name}) => recipeReference(id, name)), ', '),
     count: origins.length
 })
 
