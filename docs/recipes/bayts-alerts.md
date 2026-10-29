@@ -62,19 +62,11 @@ Over a historical asset it is also masked to the asset's valid pixels; over a hi
 that recipe's area. On the wire the layer still sends `visualizationType`, which every image request of the layer -
 preview, histogram and distinct values - carries alike.
 
-## Open issues
+The radar observation is contextual: it does not apply historical speckle factors, per-pixel relative-orbit
+masking or normalization, so it does not reproduce the observations BAYTS scores. The GUI holds missing
+references (`SOURCE_MISSING`); direct execution refuses them as `HISTORICAL_PROCESSING_UNAVAILABLE`.
 
-- **An unknown mode is shown as the first observation.** Execution builds the `first` mosaic for any
-  `visualizationType` other than `alerts` and `last`. The GUI never sends one: a layer naming no known mode shows no
-  product.
-- **The radar observation of a recipe that has chosen no reference.** The radar observation is built with the
-  reference's processing, so the GUI holds it, like the alerts, while no reference is selected (`SOURCE_MISSING`).
-  Execution asked for it directly refuses with a client error (`HISTORICAL_PROCESSING_UNAVAILABLE`). Server preview
-  readiness in general remains separate work.
-- **The radar observation is contextual.** It is a nearest-date mosaic built with the alerts' processing settings. It
-  does not apply the history's speckle factors, per-pixel relative-orbit masking or normalization, so it is not the
-  observations BAYTS scores.
-- **Radar Mosaic's window is always ±183 days** (see [Radar Mosaic](radar-mosaic.md)).
+Known limitations and follow-ups are tracked in the [workplan](../design/workplan.md#bayts-alerts).
 
 ## Verification
 

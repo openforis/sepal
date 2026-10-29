@@ -1,7 +1,8 @@
 # Task orchestration
 
 Current task ownership and container supervision are implemented. The durable-workflow, execution-bundle and
-compute-step architecture below remains a proposal, with no delivery commitment.
+compute-step architecture below remains a proposal. The
+[workplan](../workplan.md#tasks-and-exports) owns delivery slices and open work.
 
 ## Current implementation and limits
 
@@ -133,45 +134,5 @@ A compute step declares its runtime requirements and instance type. The orchestr
 `worker`, runs the step on the runner and releases the session when the step ends. Task instances stay generic;
 how task environments are defined and provided is outside this proposal.
 
-## Remaining proposal slices
-
-These are possible scopes from the current container model, not a scheduled delivery sequence.
-
-- **Durable engine and admission:** begin with operations without file steps (`image.DRIVE`, `image.GEE`,
-  `ccdc.GEE`, `samplingDesign.GEE`). Durable acceptance requires the unimplemented
-  [Retrieve execution bundle](../recipes/source-resolution.md#retrieve).
-- **Recoverable file steps:** `image.SEPAL`, `timeseries.download`, `samplingDesign.SEPAL`, including repeatable or
-  discoverable external effects and cleanup obligations.
-- **Compute steps:** runner, task environments and a first compute workload, with sessions acquired only for its
-  resource-intensive steps.
-
-## Asset mutation notifications (deferred)
-
-Audit the existing lifecycle boundary before integrating task writes with recipe asset freshness:
-
-- Export operations in `modules/task/src/runner/operations` receive concrete asset IDs and, for collections, tile
-  IDs from gee. Collection preparation can delete/create assets before tile exports finish; failure or cancellation
-  is not evidence that nothing changed. Sampling Design also creates and cleans up temporary assets.
-- `runTask` currently returns terminal state/status, and progress reports carry status plus local-slot release.
-  The container writes `result.json`; task-manager's `ContainerSupervisor` reads it on exit, settles the task row and
-  removes the workspace. Reconciliation can settle an interrupted task without a usable result file.
-- Repository changes emit `taskChanged$` for a username. The task websocket re-queries the listing; it supplies status
-  and submitted `taskInfo`, not an authoritative affected-asset manifest. That listing notification does not feed
-  recipe source evidence.
-
-The unresolved boundary is how actual written/replaced/deleted IDs, collection parents/members and partial effects
-survive failure, cancellation, lost results and workspace removal, then reach the
-[shared asset-evidence owner](../recipes/source-freshness.md#asset-freshness-and-drawing-currency).
-Audit reporting, settlement and notification together; do not infer effects from a successful terminal state or a
-requested output path alone. Notifications must cause real re-reads, not fabricate tokens or edit catalogue facts.
-Transport, replay/deduplication and missed-event recovery remain to be chosen; no `user-assets` route or integration
-is assumed available. Polling and explicit refresh remain necessary. This audit is independent of adopting the
-whole durable-workflow proposal and is not scheduled here.
-
-## Open questions
-
-- **Recovering lost launch responses.** Stable EE request ids prevent duplicate exports, but recovery must also
-  find an accepted export whose launch response was lost. A reliable mechanism remains to be validated.
-- **Main-instance capacity.** Which file work is cheap enough to stay on the main instance at current task volumes,
-  and when the orchestrator needs an instance of its own.
-- **Compute environments.** How task-specific runtime requirements are defined and provided on task instances.
+Delivery slices, asset-mutation integration, scheduling and export extensions are tracked in the
+[workplan](../workplan.md#tasks-and-exports).

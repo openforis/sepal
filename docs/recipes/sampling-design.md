@@ -312,23 +312,7 @@ Stratification/Proportions panel wiring lacks mounted integration coverage. Unti
 non-default source CRS/scale, late metadata, cleared overrides, Apply/Cancel and reopened placeholders in the
 browser. Pure helper tests do not establish that the panel uses their results correctly.
 
-## Deliberately not done
-
-- **Letting recipes declare their own source grid.** A recipe source defaults to `EPSG:4326` at 30 m because a
-  recipe declares no preferred grid. Where a recipe has exactly one unambiguous source grid it could declare
-  one, without forcing evaluation and therefore at no cost. Two assumptions to measure first: a single-asset
-  classification may already propagate the projection, since per-pixel operations preserve it and only
-  compositing loses it; and it is unconfirmed whether a declared projection surfaces in the band metadata the
-  GUI reads. Until then `/bands` returns band names and nothing is invented.
-- **Collection uniformity detection.** Priced and rejected: the check almost never changes the decision, since
-  the first member's grid is weakly better than a default even when members differ.
-- **Structured errors from the area and proportion calculations.** They throw a plain error where the task
-  boundary produces a renderable structured message. Latent, because both call sites supply a default. Not a
-  fix in passing — those jobs have no structured-exception plumbing, and the GUI consumes their failures
-  through a different path from task errors.
-- **Tiled candidate and final exports**, until real workloads justify the complexity.
-- **Promising sample retention** across enlarged, restratified or annual designs, until deterministic tests
-  establish the overlap contract.
+Deferred scope and unresolved experiments are tracked in the [workplan](../design/workplan.md#sampling-design-deferred-scope).
 
 ## Working with Earth Engine here
 

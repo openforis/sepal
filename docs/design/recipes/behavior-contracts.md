@@ -6,7 +6,7 @@ New evidence updates facts without silently rewriting user choices.
 These are design rules, not implementation-coverage claims. Current contracts and target designs live in
 [output products](output-products.md), [source resolution](source-resolution.md),
 [GUI runtime](gui-source-runtime.md), [freshness](source-freshness.md) and
-[visualizations](visualizations.md). Remaining work belongs in the [roadmap](data-sources.md#remaining-work).
+[visualizations](visualizations.md). Remaining work belongs in the [roadmap](../workplan.md#recipe-correctness).
 
 ## Define the behavior before the mechanism
 

@@ -54,14 +54,7 @@ Declared in `lib/js/shared/src/recipe/type/regression.js`: one scalar band, `reg
 levels. No encoding is declared: the prediction measures whatever the training values measure. It is described once
 the input images are, and refused where a band set selects what an input does not provide (`bandSets.js`).
 
-## Open issues
-
-- **A supplied decision tree is offered but not built.** The classifier panel offers `DECISION_TREE`, which execution's
-  `createClassifier` does not handle, so such a Regression fails in Earth Engine. It still needs training data like any
-  other.
-- **What a `RECIPE` data set reads is not judged.** It counts as training data whatever the recipe it names holds, until
-  a `TRAINING_DATA` operation judges training sources
-  ([Execution readiness](../design/recipes/source-resolution.md#execution-readiness)).
+Known limitations and follow-ups are tracked in the [workplan](../design/workplan.md#regression).
 
 ## Verification
 

@@ -120,19 +120,7 @@ it does not comprehensively validate absent AOI, sources or dates before Earth E
 - **Readiness.** A selected Classification must be trainable and its inputs must suit the collection for every
   operation, including native bands/counts, under the configured-analysis policy described in Inputs.
 
-## Open issues
-
-- **A period without scenes fails with Earth Engine's own error** (`Image.reduce: Unable to reduce an image with 0
-  bands`), before the collection's "all images have been filtered out" can be reported; the catalogue no longer
-  builds the image, so it answers regardless.
-- **Execution ignores requests.** An unknown band name returns `count` rather than being refused, unlike migrated
-  types that honour `outputBands`.
-
-## Potential features
-
-- **Scene cloud cover.** Time Series offers no control for `sources.cloudPercentageThreshold`, the percentage of cloud
-  an optical scene may have to be included; a recipe that states none includes every scene. Expose it: new recipes save 75%
-  explicitly, a recipe that states none keeps including every scene and shows 100%, and a saved value is kept.
+Known limitations and follow-ups are tracked in the [workplan](../design/workplan.md#time-series).
 
 ## Verification
 

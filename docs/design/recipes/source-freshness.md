@@ -374,7 +374,7 @@ not the only way to detect changes after a dependent recipe was closed. GEE cach
 principal and linked-account scope and cannot own long-lived GUI correctness.
 
 Task-driven invalidation remains deferred. Audit the exporter → task result/progress → supervisor settlement →
-task-list notification boundary identified in [task orchestration](../tasks/orchestration.md#asset-mutation-notifications-deferred)
+task-list notification boundary identified in the [workplan](../workplan.md#asset-mutation-notifications)
 before choosing transport into the shared asset-evidence owner. Current session mutations already work; polling and
 explicit Refresh remain necessary for external changes and missed notifications.
 

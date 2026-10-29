@@ -253,15 +253,7 @@ input whose own selection means something else - CCDC's names the measures to fi
 for no bands or an empty selection, Earth Engine builds every configured output band; a selection returns exactly
 the bands selected, in the order selected. The catalogue answers the configured names without building anything.
 
-## Open issues
-
-Shared calculation-reference validation and automatic recovery of preserved input references are implemented.
-Deleted output selections and their custom names still require a separate retention decision. See the
-[correctness and usability roadmap](../design/recipes/data-sources.md#remaining-work)
-for the remaining boundaries and retention decisions.
-
-- **Earth Engine renames a repeated output name.** Output images are concatenated, so a second `x` is built as `x_1`.
-  The declaration refuses such a configuration; execution still builds it.
+Known limitations and follow-ups are tracked in the [workplan](../design/workplan.md#band-math).
 
 ## Verification
 

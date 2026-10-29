@@ -46,12 +46,7 @@ from its schema.
 
 The GUI groups the bands by segment and by month and sets their cursor precision. That is presentation only.
 
-## Open issues
-
-- **Month windows span two months.** Each month composite filters with
-  `ee.Filter.calendarRange(month, month + 1, 'month')`, whose end is inclusive: `january` composites January and
-  February, and so on; `december` asks for months 12 to 13. Whether a month band should cover its own month only is a
-  calculation decision that has not been made.
+Known limitations and follow-ups are tracked in the [workplan](../design/workplan.md#phenology).
 
 ## Verification
 

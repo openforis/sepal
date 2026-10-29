@@ -2,7 +2,7 @@
 
 This document describes the current resolution and execution-readiness contracts, followed by the target design
 for coherent execution bundles and provenance. It does not track delivery history. Remaining work is in the
-[roadmap](data-sources.md#remaining-work).
+[roadmap](../workplan.md#recipe-correctness).
 
 [Output products](output-products.md) owns band schemas and product declarations;
 [the GUI runtime](gui-source-runtime.md) owns browser acquisition;

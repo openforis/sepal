@@ -96,16 +96,7 @@ bands or an empty selection, Earth Engine builds every mapped band; a selection 
 order, and ignores a name the mapping does not give. The catalogue answers the mapped names without building
 anything.
 
-## Open issues
-
-- **Re-adding an input loses output aliases.** The source-recovery audit found a removed input's custom output name
-  was replaced by a fresh default when the same source returned, leaving a downstream consumer of the old name
-  blocked. Restoring discarded aliases needs a retention policy, not just source matching. See the
-  [usability roadmap](../design/recipes/data-sources.md#usability).
-- **A selection can leave nothing to clip to.** An input none of whose bands is selected contributes an empty image,
-  whose empty geometry becomes the clip region when every other selected input is unbounded - a global asset - and
-  Earth Engine refuses it. A selection naming no mapped band fails the same way.
-- **A Stack with no images builds no image.** Execution zips nothing and emits nothing.
+Known limitations and follow-ups are tracked in the [workplan](../design/workplan.md#stack).
 
 ## Verification
 

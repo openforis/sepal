@@ -55,7 +55,7 @@ Existing browser/vector tools are limited to small in-memory data. GeoLibre brow
 RustGIS raster/GeoLibre-runner tools do not establish scalable processing of SEPAL imagery; hide or label them.
 Both integrations use the shared sandbox jobs for preparation, materialization and statistics.
 
-Evaluate GeoLibre through [Stage 0](#stage-0), and RustGIS through its bounded [prototype](#prototype), before
+Evaluate GeoLibre through [Stage 0](workplan.md#geolibre-stage-0), and RustGIS through its bounded [prototype](workplan.md#rustgis-prototype), before
 committing to either production integration.
 
 ## Shared design
@@ -434,53 +434,7 @@ The [evaluation brief](#evaluation-brief) owns workflow and performance acceptan
 - **A parallel SEPAL interface:** it duplicates GeoLibre's menus (used only as Stage 0 scaffolding).
 - **SEPAL's `user-files` service:** whole-file downloads by query parameter, so `.vrt` siblings do not resolve.
 
-### Stages
-
-#### Stage 0
-
-The smallest experiment proving that imagery opens, a polygon is processed, GeoLibre's own Save writes into home, and
-the project reopens after sandbox replacement. It uses no plugin. Its only change to GeoLibre's files is the start-up
-script with the adapter, served from an overlay through the widget's private `serve_app`.
-1. A notebook creating `Map(server_proxy=True, layout="full", height="100vh")`, registered in a dev catalog.
-2. **Imagery:** add a SEPAL export's `.vrt` by its `/files/` URL, and try `metadata.bandNames`. Record sibling
-   resolution, low-zoom behaviour, bytes transferred and memory.
-3. **Polygon:** draw one; a temporary button runs statistics on the `.vrt`, including a scaled band, writing a CSV and
-   adding the polygon.
-4. **Save and Open through the adapter:**
-   - Ctrl+S and Project › Save write into home;
-   - Cancel leaves the project unsaved;
-   - a failed write (a read-only target, or a write refused by the server) shows the error, stays unsaved and
-     downloads nothing;
-   - Download happens only when chosen;
-   - Open reads the project back.
-5. **Reopen in a new sandbox:** imagery, styling, the polygon and an edit are restored.
-
-Also recorded: the tiles' layout (`gdalinfo`), masked-pixel values, and whether map activity is seen.
-
-**Early gates:** the plugin is built only after Stage 0 shows that a failed write stays unsaved without downloading,
-and that a project saved through GeoLibre's own Save reopens through its own Open after sandbox replacement. These test
-the central assumption; if either fails, the design is revisited.
-
-**Recording:** results are recorded in the app repository against the pinned versions: the gates, memory, transfer,
-band names and the observations above.
-
-#### Later stages
-
-1. **The patched web build:** policy, start-up script, history off, policy failing closed, empty plugin, with tests that
-   each patch applied. Verify against earlier browser state and a slow `deployment.json`.
-2. **SEPAL files in GeoLibre's interface:** the plugin's dialog, Add Data › SEPAL, the adapter for all saves, opens and
-   exports, and "Locate…", in Chrome, Firefox and Safari.
-3. **The job service and workflows:** preparation, mosaics and statistics, with disk, quota and overwrite checks.
-4. **Upstream requests,** each retiring a patch or custom piece:
-   - an option disabling history;
-   - a fail-closed policy;
-   - a document-relative sidecar URL;
-   - a storage provider hook for Open, Save and Save As;
-   - plugin entries in the Project menu;
-   - add-by-URL for FlatGeobuf and GeoParquet;
-   - band names from `.vrt` files and on `addCogLayer`;
-   - saves that report failure instead of downloading;
-   - a widget language parameter.
+Evaluation stages are maintained in the [workplan](workplan.md#geolibre-stage-0).
 
 ### Acceptance
 
@@ -654,35 +608,7 @@ not inferred from source line counts.
 **Network at start:** `plugins.rustgis.app/blocklist.json`, always, and the logo and favicon from
 `assets.rustgis.app` (to self-host).
 
-### Prototype
-
-Bounded, built on `main` at a pinned commit:
-1. **Build** the integration code (recording its size and copied parts) with self-hosted assets, served from a Voilà
-   notebook showing only a frame.
-2. **Prepare** a real multi-gigabyte export from its `.vrt`, recording time, peak disk and the result's layout.
-3. **Display** it by URL, choosing bands and range, and record memory, transfer and frame times over a scripted path,
-   for a three-band, a pixel-interleaved 10-band and a band-separate COG.
-4. **Statistics** on a drawn polygon from the `.vrt`, checked independently.
-5. **Save:**
-   - **stock hook:** show that a failed write is reported as saved;
-   - **patched hook:** a failed write stays modified and downloads nothing; a cancellation changes nothing; an edit
-     during a save stays unsaved; an interruption between sidecar and project leaves the previous project openable;
-     re-preparing with new settings and interrupting the save still lets the previous project open and regenerate the
-     previous image.
-6. **Reopen** after a kernel restart and in a new sandbox: two COG layers with bands and range, the statistics layer
-   and an edit are restored. Deleted COGs regenerate independently; a changed source tile is reported, not
-   regenerated.
-7. **Styling:** record the band, stretch and colour choices users can reach in the interface, against the gate.
-
-**To settle:**
-- whether the integration code can draw its own windows cleanly;
-- whether a separate crate's WebAssembly build needs extra configuration;
-- how prepared COGs draw;
-- whether unknown project keys really are dropped.
-
-**Production prerequisites:** demonstrated asynchronous save success/failure/cancellation, reachable COG styling,
-immutable prepared paths, consistent sidecar/project commit, and maintainable integration code. Feasibility
-remains unproven until the prototype passes; source inspection is not a runtime result.
+Prototype work is maintained in the [workplan](workplan.md#rustgis-prototype).
 
 ## Comparison and decision
 
@@ -693,18 +619,4 @@ remains unproven until the prototype passes; source inspection is not a runtime 
 | Build | Repackage a pinned wheel. | Rust/WebAssembly CI build. |
 | Production gates | Native save failure semantics, persistence, policy and representative imagery performance. | Asynchronous save contract, COG styling, persistence and representative imagery performance. |
 
-Each app repository needs a maintainer, pinned inputs, automated transport/fingerprint/save/restoration tests
-and recorded dev-SEPAL acceptance at upgrades. A fingerprint must detect changed tiles behind an unchanged VRT.
-
-The runtime experiments must establish:
-
-- Authenticated ranges/suffix ranges, VRT siblings, contents writes and durable URLs.
-- Large-image memory/transfer/navigation, conversion time/peak disk and bounded statistics reads.
-- Save failure/cancellation, reopened styles/edits and interrupted sidecar/project commits.
-- Nodata, scale/offset, CRS transformations and zones captured at submission against an independent oracle.
-- Job lifetime after kernel closure, cancellation cleanup, account changes across tabs and nested-frame activity.
-- Actual patch/copy burden and achievable upstream prerequisites.
-
-Check the deployed proxy version, kernel environment, Voilà CSP/shutdown beacon, orphaned failed-render kernels
-and EE tile authentication. Run GeoLibre Stage 0 first and the bounded RustGIS prototype under the same evaluation;
-choose production only from measured results.
+The [workplan](workplan.md#gis-workspace-evaluation) owns evaluation, upgrade checks and production decision gates.

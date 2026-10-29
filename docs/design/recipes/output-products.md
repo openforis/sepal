@@ -7,7 +7,7 @@ Design declares `NO_IMAGE_OUTPUT`. Map and Retrieve read through the shared outp
 [Source resolution](source-resolution.md) owns traversal and readiness; [the GUI runtime](gui-source-runtime.md)
 owns acquisition; [freshness](source-freshness.md) owns currency; [visualizations](visualizations.md) owns styles.
 The source-planning and transformation-projection sections below are explicitly target design, not a second
-implemented planning API. The [roadmap](data-sources.md#remaining-work) lists remaining adoption work.
+implemented planning API. The [roadmap](../workplan.md#recipe-correctness) lists remaining adoption work.
 
 ## Product roles
 
@@ -443,7 +443,7 @@ only through a bounded consumer that replaces existing duplicated logic.
 
 **Target design; no general adapter/composer API exists.** Replace family switches and fabricated foreign-recipe
 models through a bounded consumer that removes existing duplication. The independent
-[collection-output correctness assessment](data-sources.md#collection-output-correctness) does not depend on this
+[collection-output correctness assessment](../workplan.md#collection-output-correctness) does not depend on this
 refactor and must establish actual behavior before new contracts adopt it.
 
 ### Ownership boundaries

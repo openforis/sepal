@@ -120,21 +120,7 @@ the applied model; Cancel preserves that model, and upstream repair clears feedb
 Pending/transient failures add no configuration mark. This display adds no Apply rule or execution gate.
 Only reported dependency routes are marked; diamond traversal may omit an alternate route.
 
-## Open issues
-
-The [validation roadmap](../design/recipes/data-sources.md#validation-and-execution-coverage)
-tracks the remaining work below. Automatic source recovery and checking used bands against current source
-descriptions are implemented.
-
-- **Unused missing selections on recipe inputs.** Execution differs by source type, as described above. Decide whether
-  to preserve those selection semantics and add type-specific requirements, or change execution to select only used
-  bands, before broadening validation. Unused missing asset selections remain distinct and do not block readiness.
-
-- **Routes that build the image unchecked.** The asset, Drive and workspace exports refuse a broken constraint, but
-  Preview and the other image routes build it as before
-  ([Execution readiness](../design/recipes/source-resolution.md#consumers)): a constraint naming a removed input fails
-  in Earth Engine, and one reading a band its recipe input does not include executes or fails as that recipe type
-  applies `selection` - only asset inputs are verified live.
+Known limitations and follow-ups are tracked in the [workplan](../design/workplan.md#remapping).
 
 ## Verification
 

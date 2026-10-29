@@ -170,31 +170,14 @@ intrinsic range of -1 to 1. Shared per-band encoding should describe `physical =
 recipe outputs and exported assets. A common multiplicative factor cancels in a normalized difference;
 additive offsets or unequal band factors do not. Band names alone cannot establish encoding or comparability.
 
-## Deferred issues and possible improvements
-
-These are existing limitations or design ideas, not work required to complete the source-resolution migration.
-
-- **Classification-input ancestry.** `loadClassificationInputs$` in `lib/js/ee/src/pyeo/pyeoAlerts.js` uses
-  `loadRecipe$` directly before building the classification's input image, rather than following that read through
-  `recipeRef`. Audit cycle detection on this path separately. The main classification read already uses `recipeRef`;
-  the concern is limited to the input-loading path and has not been reproduced end to end.
-- **Uniform index acquisition.** Use a provided index when its meaning and encoding are known; otherwise
-  calculate it from suitable spectral bands, for either a recipe or asset. Preserve the selected image and its
-  masks. This would replace the recipe/asset branch and its wrapped-asset limitation. Shared output and encoding
-  contracts come first; no PyEO-specific resolver or encoding convention should compete with them.
-- **Threshold ranges from the result.** UoL asked for the detection sliders to end at the largest
-  `post_fcd_change_count`, `from_class_count` or `to_class_count` in the area. That needs an area-wide reduction of
-  the full classification on every change of AOI, dates or classes before OPT can draw its sliders, and a moving
-  maximum can cut a saved value. The ranges stay fixed until there is a cheap, stable bound.
-- **Index choices and names.** Account for supplied indices as well as computable ones on both baseline and
-  monitoring inputs. Unique case-insensitive matching is a possible convenience, retaining the actual band
-  name for execution. Ambiguous matches need an explicit outcome; sensor aliases and value semantics cannot
-  be inferred from case folding.
+## Selection compatibility
 
 The selected-scenes check is a current prefill constraint, not scheduled policy work: selecting a
 Classification backed by a recipe with manually selected scenes is refused when deriving defaults. The check
 is not applied in bands-only reads on reopening or as an execution rule, and the asset-defaults path has no
 equivalent check. Preserve that behavior during shared migrations; do not broaden rejection incidentally.
+
+Follow-ups are tracked in the [workplan](../design/workplan.md#pyeo-alerts).
 
 ## Shared work affecting this recipe
 
@@ -203,7 +186,7 @@ equivalent check. Preserve that behavior during shared migrations; do not broade
 - [Classification results and reusable classifiers](../design/recipes/source-resolution.md#classification-results-and-reusable-classifiers)
   must define baseline, training and monitoring mask semantics before accepting masked Classifications. CCDC,
   Time Series and Phenology share this requirement.
-- [Dependency diagnostics](../design/recipes/data-sources.md#usability), including useful cycle
+- [Dependency diagnostics](../design/workplan.md#recipe-usability), including useful cycle
   errors in map layers, belong to shared error presentation. A failure encountered through PyEO is not a
   PyEO-specific error-handling requirement.
 

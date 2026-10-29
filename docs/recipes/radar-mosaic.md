@@ -36,21 +36,7 @@ observation and Change Alerts' radar collection mosaics are declared products de
 Sentinel-1 collection's measures for temporal consumers - CCDC, time series, charts - are a separate contract
 (`lib/js/shared/src/recipe/radar/collectionMeasures.js`).
 
-## Open issues
-
-- **Outlier removal never shortens the window.** `getDates` in `lib/js/ee/src/radar/mosaic.js` compares
-  `outlierRemoval === 'NONE   '`, with trailing spaces, so a point in time always composites ±183 days around its
-  target date and never the ±30 days intended without outlier removal. Correcting it changes pixels.
-- **A time scan reduces work it discards.** `toTimeScan` selects `VV.*` and `VH.*`, which sweeps the per-image
-  harmonic terms into the reduction whenever harmonics are computed; the final selection drops them.
-- **A recipe stating no dates fails with Earth Engine's own error**
-  (`Required argument (start) missing to function: DateRange`) rather than a stated reason.
-- **Its Orbits field names an undefined message.** The options panel
-  (`modules/gui/src/app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options.jsx`) requires a pass with
-  `process.recipeMosaic.panel.options.form.orbits.required`, which the translations do not define. The locale test only
-  checks literal `msg()` calls, not constraint messages, so it does not catch it.
-- **An unused style entry.** `constant` in `lib/js/ee/src/radar/visParams.js` matches no band.
-- Whether a point in time should offer `unixTimeDays` is an open product decision.
+Known limitations and follow-ups are tracked in the [workplan](../design/workplan.md#radar-mosaic).
 
 ## Verification
 

@@ -44,18 +44,7 @@ choices: the spectral bands and `ndvi`, `ndwi`, `evi`, `evi2` and `savi` (`TEMPO
 `modules/gui/src/app/home/body/process/recipe/planetMosaic/bands.js`). Change Alerts' Planet collection mosaic is a
 declared product delegating to this declaration.
 
-## Open issues
-
-- **Daily without histogram matching duplicates its spectral bands.** `createCollection`
-  (`lib/js/ee/src/planet/collection.js`) adds `addDates(image)`, which already holds the image's bands, to the image,
-  so each spectral band is carried twice (`blue_1`...), built by an empty request and computed per image.
-- **Daily without histogram matching fails over four-band and eight-band imagery together.** Its median needs one
-  schema across the collection; the band metadata reads as the four-band schema, but Earth Engine refuses any pixel
-  ("Expected a homogeneous image collection"). With matching, each image is narrowed to four bands first and it runs.
-- **Temporal choices differ from the collection's measures.** The choices above omit `kndvi`, which the collection
-  computes, and the bands PSB.SD-only Daily imagery carries, both of which CCDC declares among its measures
-  (`lib/js/shared/src/recipe/type/ccdc.js`).
-- **NICFI's encoding is not stated.** Declare it only after authoritative evidence for that exact product establishes it.
+Known limitations and follow-ups are tracked in the [workplan](../design/workplan.md#planet-mosaic).
 
 ## Verification
 

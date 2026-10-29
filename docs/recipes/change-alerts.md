@@ -123,23 +123,7 @@ wire the layer sends `visualizationType` and `mosaicType`, which every image req
 and distinct values - carries alike. Changing the view or the style acquires nothing again; a record the layer depends
 on changing does.
 
-## Open issues
-
-- **Execution builds a mosaic for a mode the GUI would not name.** Any `visualizationType` other than `changes` and
-  `monitoring` is built as the calibration mosaic, and any `mosaicType` other than `latest` as the median.
-- **A layer config saving `mosaicType: undefined` names no product**, while execution would build a median. A layer
-  whose config lacks `mosaicType` writes that when its period is chosen.
-- **The mosaic and the changes can read different collections.** The mosaic is chosen by the saved
-  `sources.dataSetType`; the changes' collection is chosen from `sources.dataSets`. A model where the two disagree
-  builds a mosaic of one family and changes over another.
-- **A recipe that has chosen no reference is not held back from preview.** A new recipe's `reference` is `{}`, which is
-  not diagnosed as a dependency, so the read permits a preview wherever the product's own requirements are met; that
-  does not establish that an uninitialized layer submits one. Execution fails on it with `MALFORMED_SEGMENT_SOURCE`.
-- **The pixel chart's highlights still require a valid period.** `panels/chartPixel.jsx` calls `monitoringDates`;
-  malformed legacy applied periods need separate validation/date-policy cleanup. The export date range now returns
-  no range when monitoring dates are incomplete.
-- **Execution's calendar is more permissive than the product.** `monitoringDates` accepts a day past its month's end,
-  fractional durations and a unit of years; the product refuses them.
+Known limitations and follow-ups are tracked in the [workplan](../design/workplan.md#change-alerts).
 
 ## Verification
 

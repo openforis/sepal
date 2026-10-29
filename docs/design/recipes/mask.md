@@ -3,7 +3,7 @@
 The persisted recipe type remains `MASKING`. Apply mask is implemented; Fill modes below are target design.
 This recipe consumes [output products](output-products.md), [source resolution](source-resolution.md),
 [freshness](source-freshness.md) and [visualization ownership](visualizations.md), rather than owning another
-lineage resolver or copied-source synchronization mechanism. The [roadmap](data-sources.md#mask-and-fill) tracks
+lineage resolver or copied-source synchronization mechanism. The [roadmap](../workplan.md#mask-and-fill) tracks
 remaining work; the user guide belongs in `sepal-doc`.
 
 ## Current design: Apply mask

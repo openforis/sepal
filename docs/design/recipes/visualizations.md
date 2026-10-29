@@ -4,7 +4,7 @@ Current style editing/selection behavior and the target contract for presets, tr
 export projection. [Output products](output-products.md) owns band facts;
 [source resolution](source-resolution.md) owns capabilities;
 [the runtime](gui-source-runtime.md) and [freshness](source-freshness.md) own acquisition and currency.
-Remaining adoption work belongs in [the roadmap](data-sources.md#capability-projection-and-visualization-ownership).
+Remaining adoption work belongs in [the roadmap](../workplan.md#capability-projection-and-visualization-ownership).
 
 ## Current design
 
@@ -82,6 +82,8 @@ encoding and units are separate; matching a style by name proves none of them. C
 readable. General capability/template projection through arbitrary selected subsets is target work below.
 
 ## Target design
+
+Categorical class filtering is tracked in the [workplan](../workplan.md#categorical-class-visibility).
 
 ### Product presets and transformation templates
 
