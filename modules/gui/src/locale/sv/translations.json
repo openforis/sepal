@@ -592,6 +592,7 @@
         "required": ""
       },
       "sign-up": "",
+      "throttled": "",
       "username": {
         "label": "",
         "placeholder": "",
@@ -6522,7 +6523,8 @@
           "unique": ""
         },
         "password": {
-          "label": ""
+          "label": "",
+          "required": ""
         }
       },
       "resetPassword": {
@@ -6548,7 +6550,8 @@
       "title": "",
       "update": {
         "error": "",
-        "conflict": ""
+        "conflict": "",
+        "incorrectPassword": ""
       },
       "confirmation": {
         "message": ""
