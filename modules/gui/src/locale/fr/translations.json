@@ -592,6 +592,7 @@
         "required": "Mot de passe requis"
       },
       "sign-up": "S'inscrire",
+      "throttled": "",
       "username": {
         "label": "Identifiant",
         "placeholder": "Entrer votre identifiant",
@@ -6522,7 +6523,8 @@
           "unique": "Ce nom d'utilisateur existe déjà"
         },
         "password": {
-          "label": "Mot de passe"
+          "label": "Mot de passe",
+          "required": ""
         }
       },
       "resetPassword": {
@@ -6548,7 +6550,8 @@
       "title": "Détails de l'utilisateur",
       "update": {
         "error": "",
-        "conflict": ""
+        "conflict": "",
+        "incorrectPassword": ""
       },
       "confirmation": {
         "message": ""
