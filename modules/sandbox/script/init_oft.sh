@@ -23,7 +23,7 @@ apt-get update && apt-get install -y \
 	 perl \
 	 spatialite-bin
 
-pip3 install h5py scipy
+uv pip install --system h5py scipy
 wget -nv https://foris.fao.org/static/geospatialtoolkit/releases/OpenForisToolkit.run
 chmod u+x OpenForisToolkit.run
 ln -sf /usr/bin/python3 /usr/bin/python

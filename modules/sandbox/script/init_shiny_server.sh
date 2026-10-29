@@ -7,7 +7,7 @@ echo "*** Installing Shiny Server ***"
 echo "*******************************"
 shinyServer=shiny-server-1.5.23.1030-amd64.deb
 wget -nv https://download3.rstudio.org/ubuntu-20.04/x86_64/$shinyServer
-gdebi -n $shinyServer
+apt-get install -y ./$shinyServer
 chown shiny:root /usr/lib/R/library
 rm $shinyServer
 
