@@ -161,7 +161,8 @@ members; only `stopped` ones are candidates.
   terminated. It pools or terminates a surplus instance only under an `instance_claim` (session id
   `pool-cycle`), the election a request runs before reserving, so it never takes an instance a
   request is reserving; that instance's pool slot goes to the next surplus instance. Warm-up launches (`T3aSmall`, user data = `prewarmVolume.sh` + `poweroff`) fill the
-  rest. User data runs on the first boot only, so a pooled instance does not power off when started.
+  rest, at most two warming at a time: with `VOLUME_INITIALIZATION_RATE` set, every launch draws on
+  EC2's regional volume initialization quota, which session launches share. User data runs on the first boot only, so a pooled instance does not power off when started.
 - `sweep` terminates pooled instances of another version, pooled instances still running an hour
   after their start (failed warm-up or stop), and stopped instances outside the pool — every other
   query sees only pending/running instances, so those would otherwise bill for their disk forever.
