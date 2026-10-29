@@ -149,6 +149,7 @@ RUN apt-get -y update && apt-get install -y \
     libspatialindex-dev \
     libssl-dev \
     libudunits2-dev \
+    libuv1-dev \
     libxcursor-dev \
     libxinerama-dev \
     libxml2-dev \
