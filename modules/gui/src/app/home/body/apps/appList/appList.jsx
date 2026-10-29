@@ -22,6 +22,7 @@ import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 import {Notifications} from '~/widget/notifications'
 import {CenteredProgress} from '~/widget/progress'
+import {Scrollable} from '~/widget/scrollable'
 import {SearchBox} from '~/widget/searchBox'
 import {Content, SectionLayout} from '~/widget/sectionLayout'
 import {Tag} from '~/widget/tag'
@@ -120,18 +121,22 @@ class _AppList extends React.Component {
         const itemKey = app => `${app.path}|${this.getHighlightMatcher()}`
         return this.hasData()
             ? (
-                <Layout type='vertical' spacing='compact'>
+                <Layout type='vertical' spacing='compact' shrink>
                     <div className={styles.header}>
                         {this.renderHeader(apps)}
                     </div>
-                    <FastList
-                        items={apps}
-                        itemKey={itemKey}
-                        itemRenderer={this.renderApp}
-                        spacing='tight'
-                        overflow={50}
-                        onEnter={this.handleSelect}
-                    />
+                    <Scrollable
+                        direction='x'
+                        className={styles.apps}>
+                        <FastList
+                            items={apps}
+                            itemKey={itemKey}
+                            itemRenderer={this.renderApp}
+                            spacing='tight'
+                            overflow={50}
+                            onEnter={this.handleSelect}
+                        />
+                    </Scrollable>
                 </Layout>
             )
             : null
