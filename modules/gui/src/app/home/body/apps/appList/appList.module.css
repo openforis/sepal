@@ -15,6 +15,10 @@
     flex-shrink: 1;
 }
 
+.apps > * {
+    min-width: 40rem;
+}
+
 .count {
     display: flex;
     flex-direction: column;
