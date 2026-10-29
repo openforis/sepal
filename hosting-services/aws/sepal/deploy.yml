@@ -125,6 +125,8 @@
         owner: "root"
         group: "root"
         mode: "0755"
+      vars:
+        monit_instance: "SEPAL"
 
     - name: Remove unused aws.properties
       file:
