@@ -15,6 +15,8 @@ mkdir -p /var/run/sshd
 template /config/sepaladmin.passwd /etc/sepaladmin.passwd root: 0644
 
 # Keep /etc/ssh in a mounted volume, so host keys are reused between upgrades
+# The host key fingerprints are published in the user docs (sepal-doc developers/ssh_session.rst),
+# so carry /data/ssh over when moving the gateway, or update the docs if the keys change.
 if [ ! -d /data/ssh ]; then
     mkdir /data/ssh
     cp -rf /etc/ssh/* /data/ssh
