@@ -11,7 +11,9 @@ ENV NODE_MAJOR=26
 RUN apt-get install -y \
     libglpk-dev
 
-RUN R -e 'install.packages("remotes", lib = "/usr/lib/R/site-library")'
+# remotes builds packages through pkgbuild. Installed here, pkgbuild and its dependencies outlive the packages
+# the ABI check removes from the build library.
+RUN R -e 'install.packages(c("remotes", "pkgbuild"), lib = "/usr/lib/R/site-library")'
 
 # Create node user
 RUN adduser node && adduser node sudo && echo 'node      ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers
