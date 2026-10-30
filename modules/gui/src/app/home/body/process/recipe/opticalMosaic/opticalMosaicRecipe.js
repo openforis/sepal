@@ -44,7 +44,7 @@ export const defaultModel = {
         landsatCFMaskCirrusMasking: 'MODERATE',
         landsatCFMaskDilatedCloud: 'REMOVE',
         sepalCloudScoreMaxCloudProbability: 30,
-        cloudBuffering: 0,
+        cloudBuffer: 0,
         holes: 'ALLOW',
         snowMasking: 'ON',
         compose: 'MEDOID'
