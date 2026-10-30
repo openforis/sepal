@@ -176,6 +176,30 @@ describe('a path wider than its row', () => {
         expect(labels()).toEqual([ROOT_NAME, 'Kenya', '2024', 'Q1'])
     })
 
+    it('names no folder in a tooltip when the row holds the whole path', () => {
+        rowWithRoomFor('Kenya2024Q1Q1Q2'.length)
+        mount({folders, folderId: Q1Q2.id, onNavigate: () => {}})
+
+        expect(tooltips()).toEqual([])
+    })
+
+    it('names the folder you are in, in a tooltip, when the row cuts its name', () => {
+        rowWithRoomFor('Q1'.length)
+        mount({folders, folderId: Q1Q2.id, onNavigate: () => {}})
+
+        expect(tooltips()).toEqual(['Q1Q2'])
+    })
+
+    it('drops the tooltip once the row widens enough for the name', () => {
+        rowWithRoomFor('Q1'.length)
+        mount({folders, folderId: Q1Q2.id, onNavigate: () => {}})
+
+        rowWithRoomFor('Kenya2024Q1Q1Q2'.length)
+        act(() => row.resize())
+
+        expect(tooltips()).toEqual([])
+    })
+
     it('shows more of the path once a folder in it gets a shorter name', () => {
         rowWithRoomFor('K2024'.length)
         const render = mount({folders, folderId: Y2024.id, onNavigate: () => {}})
@@ -284,6 +308,8 @@ const hiddenLabels = () => [...container.querySelectorAll('[data-more] button')]
 const hiddenLink = label => [...container.querySelectorAll('[data-more] button')].find(button => button.textContent === label)
 
 const current = () => nameOf(container.querySelector('[aria-current="page"]'))
+
+const tooltips = () => [...container.querySelectorAll('[data-tooltip]')].map(element => element.getAttribute('data-tooltip'))
 
 const icons = element => [...element.querySelectorAll('[data-icon]')].map(icon => icon.getAttribute('data-icon'))
 

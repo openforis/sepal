@@ -28,13 +28,13 @@ export class Breadcrumb extends React.Component {
         const {folders, folderId} = this.props
         return (
             <FittedPath folders={folders} folderId={folderId}>
-                {({hidden, shown, ref}) => this.renderPath(hidden, shown, ref)}
+                {({hidden, shown, ref, cut}) => this.renderPath(hidden, shown, ref, cut)}
             </FittedPath>
         )
     }
 
     // The root is a folder too, so a chevron follows it even when nothing else does.
-    renderPath(hidden, shown, ref) {
+    renderPath(hidden, shown, ref, cut) {
         const {folderId} = this.props
         // A folderId with no path means the folder was removed underneath us: the root is then not the
         // current segment, so it stays clickable and the list never strands with no way out.
@@ -56,7 +56,7 @@ export class Breadcrumb extends React.Component {
                     {shown.map((segment, index) =>
                         <li key={segment.id} className={styles.segment}>
                             {index || hidden.length ? <Separator/> : null}
-                            {this.renderSegment(segment, index === shown.length - 1)}
+                            {this.renderSegment(segment, index === shown.length - 1, cut)}
                         </li>
                     )}
                 </ol>
@@ -78,11 +78,12 @@ export class Breadcrumb extends React.Component {
     // The last segment names where you already are, so it reads as a label rather than a way out.
     // The underline sits on the label rather than the button: a flex container does not pass text
     // decoration down to its items. The root is an icon alone, so a screen reader is told what it stands for.
-    renderSegment({id, name}, current) {
+    // A name is repeated in a tooltip only where the row cuts it.
+    renderSegment({id, name}, current, cut) {
         const root = id === ROOT
         const ariaLabel = root ? msg('process.recipeList.root') : undefined
         return (
-            <Tooltip msg={name} placement='bottom'>
+            <Tooltip msg={cut ? name : undefined} placement='bottom'>
                 {current
                     ? (
                         <div ref={this.current} className={styles.current} aria-current='page' aria-label={ariaLabel} tabIndex={-1}>
@@ -208,9 +209,10 @@ BreadcrumbLabel.propTypes = {
 
 // Shows as many of a path's last folders as fit beside each other without cutting a name, and never fewer
 // than the last one. How the path looks is up to the children: they are given the folders to show, those
-// left out, and a ref for the element the path has to fit, whose names carry the name style.
+// left out, whether a name shown is still cut, and a ref for the element the path has to fit, whose names
+// carry the name style.
 class FittedPath extends React.Component {
-    state = {maxFolders: Infinity}
+    state = {maxFolders: Infinity, cut: false}
 
     element = React.createRef()
 
@@ -221,11 +223,11 @@ class FittedPath extends React.Component {
 
     render() {
         const {folders, folderId, children} = this.props
-        const {maxFolders} = this.state
+        const {maxFolders, cut} = this.state
         const {hidden, shown} = splitPath(folderPath(folders, folderId), maxFolders)
         return (
             <ElementResizeDetector targetRef={this.element} onResize={this.refit}>
-                {children({hidden, shown, ref: this.element})}
+                {children({hidden, shown, ref: this.element, cut})}
             </ElementResizeDetector>
         )
     }
@@ -249,13 +251,16 @@ class FittedPath extends React.Component {
     }
 
     // One folder gathers at a time, until no name is cut. Each pass runs before the browser paints, so
-    // only the path that fits is ever seen.
+    // only the path that fits is ever seen. Only the last folder, kept whatever its length, can stay cut.
     fit() {
         const {folders, folderId} = this.props
-        const {maxFolders} = this.state
+        const {maxFolders, cut} = this.state
         const shown = Math.min(maxFolders, folderPath(folders, folderId).length)
-        if (shown > 1 && this.isNameCut()) {
+        const nameCut = this.isNameCut()
+        if (shown > 1 && nameCut) {
             this.setState({maxFolders: shown - 1})
+        } else if (nameCut !== cut) {
+            this.setState({cut: nameCut})
         }
     }
 
