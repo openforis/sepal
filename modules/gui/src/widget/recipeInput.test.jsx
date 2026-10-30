@@ -599,6 +599,27 @@ describe('the headings of the folders on offer', () => {
     })
 })
 
+// The process view reports the failure; the field still has every recipe to offer.
+describe('folders that failed to load', () => {
+    it('leave every recipe on offer', async () => {
+        show({recipes: [...recentRecipes(), ...DEFAULT_RECIPES]})
+        await session({folders: undefined})
+
+        const options = await offered()
+
+        expect(options.slice(RECENT_COUNT)).toEqual(['Another recipe', 'A table recipe', 'A CCDC', 'In another folder'])
+    })
+
+    it('leave the browser no folders to show', async () => {
+        show()
+        await session({folders: undefined})
+
+        await browse()
+
+        expect(lastBrowser().folders).toEqual([])
+    })
+})
+
 describe('a large recipe listing', () => {
     const recipes = Array.from({length: 2000}, (_, index) => ({
         id: `recipe-${index}`,

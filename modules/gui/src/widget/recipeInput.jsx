@@ -22,14 +22,16 @@ import {Notifications} from '~/widget/notifications'
 import {Form} from './form'
 
 const RECENT_COUNT = 10
+const EMPTY_ARRAY = []
 
 const getPlacedRecipes = memoizeOne(placedRecipes)
 
-// Each recipe where the recipe list shows it.
+// Each recipe where the recipe list shows it. Without folders, as when they failed to load, every path
+// reads as the root.
 const mapStateToProps = () => {
     return {
         recipes: getPlacedRecipes(select('process.folders'), select('process.recipes')),
-        folders: select('process.folders')
+        folders: select('process.folders') ?? EMPTY_ARRAY
     }
 }
 

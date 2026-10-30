@@ -80,6 +80,13 @@ describe('RecipeBrowser', () => {
         expect(rowNames()).toEqual(['Kenya / Kenya_2024 / nairobi_mosaic'])
     })
 
+    // As the recipe field hands it over when the folders failed to load.
+    it('shows the recipes at Home when it knows no folder', () => {
+        mount({folders: []})
+
+        expect(rowNames()).toEqual(['loose_draft'])
+    })
+
     it('can be left without picking anything', () => {
         const onCancel = vi.fn()
         mount({onCancel})
