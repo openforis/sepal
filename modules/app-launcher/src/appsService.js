@@ -1,8 +1,8 @@
 import {getLogger} from '#sepal/log'
 
 import {buildAndRestart, getContainerInfo, getContainerLogs, pathExists, restartContainer} from './docker.js'
-import {getRepoInfo, pullUpdates} from './git.js'
-import {validateAppName, validateBranchName} from './validation.js'
+import {getRepoInfo} from './git.js'
+import {validateAppName} from './validation.js'
 
 const log = getLogger('appsService')
 
@@ -104,37 +104,6 @@ const restartApp = async ctx => {
     }
 }
 
-const pullUpdatesOnly = async ctx => {
-    const appName = validateAppName(ctx.params.appName)
-    const branch = validateBranchName(ctx.query.branch)
-    const appPath = getAppPath(appName)
-    
-    log.debug(`Pulling updates for app ${appName} at path ${appPath} on branch ${branch}`)
-    
-    if (!await pathExists(appPath)) {
-        ctx.status = 404
-        ctx.body = {error: `App directory not found: ${appPath}`}
-        return
-    }
-    
-    try {
-        const result = await pullUpdates(appPath, branch)
-        const updated = result.gitAction === 'updated'
-        
-        ctx.status = 200
-        ctx.body = {
-            success: true,
-            message: updated ? 'Updates pulled successfully' : 'No updates available',
-            updated,
-            gitAction: result.gitAction
-        }
-    } catch (gitError) {
-        log.error(`Git operation failed: ${gitError.message}`)
-        ctx.status = 500
-        ctx.body = {error: `Git operation failed: ${gitError.message}`}
-    }
-}
-
 const buildAndRestartApp = async ctx => {
     const appName = validateAppName(ctx.params.appName)
     const appPath = getAppPath(appName)
@@ -169,6 +138,5 @@ export {
     getAppContainerStatus,
     getAppLogs,
     getAppRepoInfo,
-    pullUpdatesOnly,
     restartApp,
 }

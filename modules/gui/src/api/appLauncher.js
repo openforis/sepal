@@ -57,9 +57,4 @@ export default {
     buildAndRestartApp$: appName =>
         post$(`/api/app-launcher/management/build-restart/${appName}`, {
         }),
-    
-    pullUpdatesOnly$: (appName, branch) =>
-        post$(`/api/app-launcher/management/pull/${appName}`, {
-            query: {branch}
-        }),
 }

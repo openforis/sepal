@@ -141,13 +141,6 @@
       "timestamp": {
         "never": "Never"
       },
-      "update": {
-        "available": "Update available",
-        "checkForUpdates": "Check for updates",
-        "error": "Failed to update",
-        "success": "Updated successfully",
-        "noChanges": "No updates available"
-      },
       "tooltip": "Manage app"
     }
   },

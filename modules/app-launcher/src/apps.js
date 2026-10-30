@@ -7,7 +7,7 @@ import {getLogger} from '#sepal/log'
 import {fetchAppsFromApi$, fetchCatalog$} from './apiService.js'
 import {appsCatalogUrl} from './config.js'
 import {buildAndRestart, isContainerRunning, startContainer} from './docker.js'
-import {cloneOrPull} from './git.js'
+import {cloneOrCheckout} from './git.js'
 import {hasProxies, refreshProxyEndpoints} from './proxyManager.js'
 
 const log = getLogger('apps')
@@ -51,7 +51,7 @@ const apps$ = () =>
     )
 
 const updateApp$ = ({path, repository, branch, commit, name}) =>
-    from(cloneOrPull({path, repository, branch, commit})).pipe(
+    from(cloneOrCheckout({path, repository, branch, commit})).pipe(
         switchMap(({action}) => {
             log.info(`Git operation completed: ${action}`)
             if (action === 'cloned' || action === 'updated') {

@@ -29,7 +29,7 @@ npm run testWatch     # Node test runner watch mode
 - WebSocket upgrade handling via manual server listeners
 
 ### Git Operations
-`src/git.js` - Clone, pull, branch checking, commit info retrieval with error handling and retry.
+`src/git.js` - Clone, checkout of the catalog's branch or pinned commit, and commit info retrieval with error handling and retry. The catalog is the only source of updates; nothing pulls.
 
 ## Non-Obvious Conventions
 
