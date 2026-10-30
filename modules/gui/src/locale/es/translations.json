@@ -6922,6 +6922,7 @@
     },
     "recipeInput": {
       "label": "",
+      "open": "",
       "placeholder": "Selecciona un flujo de trabajo...",
       "all": {
         "tooltip": ""
@@ -6944,6 +6945,7 @@
       "addTab": {
         "tooltip": "Nueva pestaña"
       },
+      "closeWithOpenDialog": "",
       "newTab": "Nueva_pestaña"
     }
   },
