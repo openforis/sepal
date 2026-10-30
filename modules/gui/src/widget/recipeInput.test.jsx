@@ -485,6 +485,33 @@ describe('the browser', () => {
         expect(lastBrowser().folderId).toBe('p2')
     })
 
+    it('is handed a recipe whose folder is gone at the root, where the recipe list shows it', async () => {
+        show({recipes: [...DEFAULT_RECIPES, {id: 'unknown', name: 'Filed under a stranger', type: 'MOSAIC', folderId: 'gone'}]})
+
+        await browse()
+
+        expect(browsedFolderOf('unknown')).toBe(null)
+    })
+
+    // Recipes and folders load apart, and until the folders have, no folder is known to be gone.
+    it('is handed each recipe in the folder it names while the folders have not loaded', async () => {
+        show()
+        await session({folders: undefined})
+
+        await browse()
+
+        expect(browsedFolderOf('elsewhere')).toBe('p2')
+    })
+
+    it('opens at the root when the recipe being edited is in a folder that is gone', async () => {
+        show()
+        await session({loadedRecipes: {[OWNER]: {id: OWNER, type: 'MOSAIC', folderId: 'gone', model: {}}}})
+
+        await browse()
+
+        expect(lastBrowser().folderId).toBe(null)
+    })
+
     it('hands the field the recipe picked in it, and closes', async () => {
         show()
         await browse()
@@ -521,9 +548,8 @@ describe('the headings of the folders on offer', () => {
         expect(headings()).toEqual(['widget.recipeInput.recent', '/Shared name', '/Shared name', '/Zulu folder'])
     })
 
-    // Two different things read as the root: filed under nothing, and filed under a folder this session
-    // cannot resolve.
-    it('keep the root apart for each thing it stands for', async () => {
+    // A recipe can name a folder that is gone, and the recipe list shows it at the root.
+    it('hold a recipe whose folder is gone under the root, with the unfiled ones', async () => {
         show({
             recipes: [
                 ...recentRecipes(),
@@ -535,9 +561,10 @@ describe('the headings of the folders on offer', () => {
             folders: [{id: 'p1', name: 'Zulu folder'}]
         })
 
-        await offered()
+        const options = await offered()
 
-        expect(headings()).toEqual(['widget.recipeInput.recent', NO_FOLDER, NO_FOLDER, '/Zulu folder'])
+        expect(headings()).toEqual(['widget.recipeInput.recent', NO_FOLDER, '/Zulu folder'])
+        expect(options.slice(RECENT_COUNT)).toEqual(['Filed under nothing', 'Filed under a stranger', 'Another recipe'])
     })
 
     it('are found by any folder in their path, the top ones too, which a narrow heading leaves out', async () => {
@@ -746,6 +773,8 @@ const browse = () => act(async () =>
 const lastBrowser = () => browsers[browsers.length - 1]
 
 const browsedRecipeIds = () => lastBrowser().recipes.map(({id}) => id)
+
+const browsedFolderOf = recipeId => lastBrowser().recipes.find(({id}) => id === recipeId).folderId
 
 // Filed under nothing and changed in the last days, newest first: the recipes a scenario adds are offered after them.
 const recentRecipes = (count = RECENT_COUNT) => Array.from({length: count}, (_, index) => ({

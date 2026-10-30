@@ -19,6 +19,27 @@ export const childFolders = (folders, folderId) =>
 export const folderRecipes = (recipes, folderId) =>
     recipes.filter(recipe => at(recipe.folderId) === at(folderId))
 
+// A recipe whose folder is not among the folders shows at the root rather than nowhere. Folders that have not
+// loaded yet show nothing missing, so while they are undefined every recipe stays where it says it is.
+export const placedFolderId = (folders, folderId) =>
+    folders && isLost(folderIds(folders), folderId) ? ROOT : at(folderId)
+
+// The recipes, each where placedFolderId puts it. A recipe already in place keeps its identity, and so do the
+// recipes when every one is.
+export const placedRecipes = (folders, recipes) => {
+    if (!folders || !recipes) {
+        return recipes
+    }
+    const known = folderIds(folders)
+    return recipes.some(({folderId}) => isLost(known, folderId))
+        ? recipes.map(recipe => isLost(known, recipe.folderId) ? {...recipe, folderId: ROOT} : recipe)
+        : recipes
+}
+
+const folderIds = folders => new Set(folders.map(({id}) => id))
+
+const isLost = (knownFolderIds, folderId) => !!at(folderId) && !knownFolderIds.has(folderId)
+
 // The root answers for a folder that sits there, and for one that is no longer there at all.
 export const parentFolderId = (folders, folderId) =>
     at(folders.find(({id}) => id === at(folderId))?.parentId)

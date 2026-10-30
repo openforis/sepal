@@ -27,6 +27,13 @@ describe('RecipeTabTooltip', () => {
         expect(container.textContent).toBe('/ Nairobi')
     })
 
+    // As the recipe list shows it.
+    it('starts the path of a recipe whose folder is gone with the root alone', () => {
+        show(<RecipeTabTooltip recipeId={RECIPE} name='Nairobi'/>, {folderId: 'gone'})
+
+        expect(container.textContent).toBe('/ Nairobi')
+    })
+
     it('follows the recipe when it moves', () => {
         show(<RecipeTabTooltip recipeId={RECIPE} name='Nairobi'/>)
 

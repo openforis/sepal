@@ -52,6 +52,23 @@ describe('MoveRecipe', () => {
         expect(activatable.deactivate).toHaveBeenCalled()
     })
 
+    // The recipe list shows a recipe whose folder is gone at the root, so that is where it is moved from.
+    it('opens at the root for a recipe whose folder is gone', () => {
+        activatable.recipe = {...RECIPE, folderId: 'gone'}
+        show()
+
+        expect(lastPicker().folderId).toBe(null)
+    })
+
+    it('moves a recipe whose folder is gone from the root', () => {
+        activatable.recipe = {...RECIPE, folderId: 'gone'}
+        show()
+
+        moveTo(KENYA.id)
+
+        expect(moveItems).toHaveBeenCalledWith([{kind: 'recipe', id: RECIPE.id, folderId: null}], KENYA.id)
+    })
+
     it('moves nothing when the folder picked is the one it is in', () => {
         show()
 

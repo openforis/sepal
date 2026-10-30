@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import memoizeOne from 'memoize-one'
 import PropTypes from 'prop-types'
 import React from 'react'
 import {map, Subject, switchMap, takeUntil} from 'rxjs'
@@ -9,7 +10,7 @@ import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {BreadcrumbLabel} from '~/app/home/body/process/recipeList/breadcrumb'
 import {RecipeBrowser} from '~/app/home/body/process/recipeList/recipeBrowser'
-import {locationLabel} from '~/app/home/body/process/recipeList/recipeTree'
+import {locationLabel, placedFolderId, placedRecipes} from '~/app/home/body/process/recipeList/recipeTree'
 import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -22,16 +23,19 @@ import {Form} from './form'
 
 const RECENT_COUNT = 10
 
+const getPlacedRecipes = memoizeOne(placedRecipes)
+
+// Each recipe where the recipe list shows it.
 const mapStateToProps = () => {
     return {
-        recipes: select('process.recipes'),
+        recipes: getPlacedRecipes(select('process.folders'), select('process.recipes')),
         folders: select('process.folders')
     }
 }
 
 const mapRecipeToProps = recipe => {
     return ({
-        folderId: recipe.folderId
+        folderId: placedFolderId(select('process.folders'), recipe.folderId)
     })
 }
 

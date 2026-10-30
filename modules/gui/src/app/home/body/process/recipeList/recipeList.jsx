@@ -38,16 +38,18 @@ import {FolderPicker} from './folderPicker'
 import {RecipeItem} from './recipeItem'
 import {RecipeListConfirm} from './recipeListConfirm'
 import {
-    asDragged, canDropInto, childFolders, folderCounts, folderPathLabel, locationLabel, navigatorItems, ROOT,
-    searchHighlight, searchValues
+    asDragged, canDropInto, childFolders, folderCounts, folderPathLabel, locationLabel, navigatorItems,
+    placedRecipes, ROOT, searchHighlight, searchValues
 } from './recipeTree'
 
 const EMPTY_ARRAY = []
 
+const getPlacedRecipes = memoizeOne(placedRecipes)
+
 const mapStateToProps = () => ({
     folders: select('process.folders') ?? EMPTY_ARRAY,
     folderId: select('process.folderId'),
-    recipes: select('process.recipes'),
+    recipes: getPlacedRecipes(select('process.folders'), select('process.recipes')),
     sortingOrder: select('process.sortingOrder') ?? 'updateTime',
     sortingDirection: select('process.sortingDirection') ?? -1,
     filterValue: select('process.filterValue'),

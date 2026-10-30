@@ -10,22 +10,22 @@ import {Panel} from '~/widget/panel/panel'
 import styles from './moveRecipe.module.css'
 import {moveItems} from './recipeList/folderActions'
 import {FolderPicker} from './recipeList/folderPicker'
-import {at} from './recipeList/recipeTree'
+import {at, placedFolderId} from './recipeList/recipeTree'
 
 const EMPTY_ARRAY = []
 
 const mapStateToProps = () => ({
-    folders: select('process.folders') ?? EMPTY_ARRAY
+    folders: select('process.folders')
 })
 
 class _MoveRecipe extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {folderId: at(props.activatable.recipe.folderId)}
+        this.state = {folderId: this.recipeFolderId()}
     }
 
     render() {
-        const {folders, activatable: {recipe, deactivate}} = this.props
+        const {folders, activatable: {deactivate}} = this.props
         const {folderId} = this.state
         return (
             <Panel
@@ -38,8 +38,8 @@ class _MoveRecipe extends React.Component {
                 <Panel.Content>
                     <FolderPicker
                         className={styles.picker}
-                        folders={folders}
-                        folderId={recipe.folderId}
+                        folders={folders ?? EMPTY_ARRAY}
+                        folderId={this.recipeFolderId()}
                         onNavigate={folderId => this.setState({folderId})}
                     />
                 </Panel.Content>
@@ -63,9 +63,16 @@ class _MoveRecipe extends React.Component {
     move(folderId) {
         const {activatable: {recipe, deactivate}} = this.props
         deactivate()
-        if (at(folderId) !== at(recipe.folderId)) {
-            moveItems([{kind: 'recipe', id: recipe.id, folderId: recipe.folderId}], folderId)
+        const from = this.recipeFolderId()
+        if (at(folderId) !== from) {
+            moveItems([{kind: 'recipe', id: recipe.id, folderId: from}], folderId)
         }
+    }
+
+    // Where the recipe list shows the recipe, which is where a move starts from and its way back leads.
+    recipeFolderId() {
+        const {folders, activatable: {recipe}} = this.props
+        return placedFolderId(folders, recipe.folderId)
     }
 }
 

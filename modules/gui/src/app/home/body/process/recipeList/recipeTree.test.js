@@ -2,7 +2,8 @@ import {describe, expect, it} from 'vitest'
 
 import {
     canDropInto, childFolders, folderCounts, folderPath, folderPathLabel, folderRecipes,
-    isSelfOrDescendant, locationLabel, locationPath, parentFolderId, ROOT, searchTree, splitByNameClash
+    isSelfOrDescendant, locationLabel, locationPath, parentFolderId, placedFolderId, placedRecipes, ROOT, searchTree,
+    splitByNameClash
 } from './recipeTree'
 
 const KENYA = {id: 'kenya', name: 'Kenya', parentId: null}
@@ -51,6 +52,40 @@ describe('folderRecipes', () => {
     it('treats a recipe whose folder is an empty string as living at the root', () => {
         const legacy = {id: 'r0', name: 'legacy_draft', type: 'MOSAIC', folderId: ''}
         expect(ids(folderRecipes([legacy, IN_KENYA], ROOT))).toEqual(['r0'])
+    })
+})
+
+// A recipe can name a folder that is gone: saved into it after it was removed, or stored before the server
+// checked. Shown nowhere, it could only be found by a search.
+describe('placedRecipes', () => {
+    const LOST = {id: 'r4', name: 'orphan', type: 'MOSAIC', folderId: 'removed'}
+
+    it('puts a recipe whose folder is gone at the root', () => {
+        const placed = placedRecipes(folders, [...recipes, LOST])
+
+        expect(ids(folderRecipes(placed, ROOT))).toEqual([AT_ROOT.id, LOST.id])
+    })
+
+    it('leaves every recipe where it says it is while the folders are not loaded', () => {
+        expect(placedRecipes(undefined, [...recipes, LOST])).toEqual([...recipes, LOST])
+    })
+
+    it('hands back the same recipes when none has lost its folder', () => {
+        expect(placedRecipes(folders, recipes)).toBe(recipes)
+    })
+})
+
+describe('placedFolderId', () => {
+    it('gives the folder of a recipe in one that exists', () => {
+        expect(placedFolderId(folders, 'kenya')).toBe('kenya')
+    })
+
+    it('gives the root for a folder that is gone', () => {
+        expect(placedFolderId(folders, 'removed')).toBe(ROOT)
+    })
+
+    it('gives the folder named while the folders are not loaded', () => {
+        expect(placedFolderId(undefined, 'kenya')).toBe('kenya')
     })
 })
 
@@ -116,6 +151,11 @@ describe('locationLabel', () => {
     it('ends with the names it is given, below the folder', () => {
         expect(locationLabel(folders, 'kenya', 'nairobi')).toBe('/ Kenya / nairobi')
         expect(locationLabel(folders, ROOT, 'loose_draft')).toBe('/ loose_draft')
+    })
+
+    // Where the tree shows a recipe whose folder is gone.
+    it('starts at the root for a folder that is gone', () => {
+        expect(locationLabel(folders, 'removed', 'orphan')).toBe('/ orphan')
     })
 })
 
