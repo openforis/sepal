@@ -10,6 +10,7 @@ import renameAsset$ from '#gee/jobs/ee/asset/rename'
 import assetVersions$ from '#gee/jobs/ee/asset/versions'
 import loadCCDCSegments$ from '#gee/jobs/ee/ccdc/loadSegments'
 import check$ from '#gee/jobs/ee/check'
+import loadDiasObservations$ from '#gee/jobs/ee/dias/loadObservations'
 import nextReferenceDataPoints$ from '#gee/jobs/ee/classification/nextReferenceDataPoints'
 import imageBands$ from '#gee/jobs/ee/image/bands'
 import imageBounds$ from '#gee/jobs/ee/image/bounds'
@@ -77,6 +78,7 @@ export default router =>
         .post('/aoi/geometry', stream(ctx => aoiGeometry$(ctx)))
         .post('/aoi/geoId', stream(ctx => aoiGeoId$(ctx)))
         .post('/ccdc/loadSegments', stream(ctx => loadCCDCSegments$(ctx)))
+        .post('/dias/loadObservations', stream(ctx => loadDiasObservations$(ctx)))
         .post('/landTrendr/loadSegments', stream(ctx => loadLandTrendrSegments$(ctx)))
         .post('/timeSeries/loadObservations', stream(ctx => loadTimeSeriesbservations$(ctx)))
         .post('/nextReferenceDataPoints', stream(ctx => nextReferenceDataPoints$(ctx)))

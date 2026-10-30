@@ -1,0 +1,47 @@
+.wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.graph {
+    flex-grow: 1;
+    display: flex;
+    position: relative;
+}
+
+.point {
+    position: absolute;
+    z-index: 10;
+    background-color: var(--graph-tooltip-background-color);
+    border: var(--wireframe);
+    padding: 1.5rem 1rem;
+    display: grid;
+    grid-auto-flow: column;
+    column-gap: 2rem;
+}
+
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: .5rem 1rem;
+    color: var(--text-color);
+}
+
+.legendEntry {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+}
+
+.swatch {
+    width: .7rem;
+    height: .7rem;
+    border-radius: 50%;
+}
+
+.thresholdSwatch {
+    width: 1.2rem;
+    border-top: 2px dashed var(--text-color);
+}
