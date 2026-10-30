@@ -1,9 +1,7 @@
-import httpProxy from 'http-proxy'
-
 import {getLogger} from '#sepal/log'
 
 import {getGitHubPackageInfo, getGitHubRepoPath, getGitHubTarget} from './github.js'
-import {checkTarget, forwardAndCache, serveError, serveFailure, serveFile} from './proxy-utils.js'
+import {checkTarget, createProxy, forwardAndCache, serveError, serveFailure, serveFile} from './proxy-utils.js'
 import {enqueueBuildGitHubPackage} from './queue.js'
 
 const log = getLogger('proxy/github')
@@ -12,15 +10,7 @@ const buildBinaryPackage = ({name, path}) =>
     enqueueBuildGitHubPackage(name, path)
         .catch(error => log.error(`Cannot enqueue build of ${name}:`, error))
 
-const proxy = httpProxy.createProxyServer({
-    secure: false,
-    changeOrigin: true,
-    ignorePath: true,
-    selfHandleResponse: true,
-    followRedirects: true
-})
-
-proxy.on('proxyRes', async (proxyRes, req, res, _options) => {
+const forwardResponse = async (proxyRes, req, res) => {
     const requestData = getGitHubPackageInfo(req.url)
     if (!requestData) {
         log.warn('Failed proxy request (unknown path):', req.url)
@@ -40,11 +30,15 @@ proxy.on('proxyRes', async (proxyRes, req, res, _options) => {
         proxyRes.resume()
         serveFailure(res)
     }
-})
+}
 
-proxy.on('error', (error, req, res) => {
-    log.error('proxy error', error)
-    serveFailure(res)
+const proxyRequest = createProxy({
+    secure: false,
+    changeOrigin: true,
+    ignorePath: true,
+    selfHandleResponse: true,
+    followRedirects: true,
+    onResponse: forwardResponse
 })
 
 const serveCachedBinary = async (req, res, path) =>
@@ -59,7 +53,7 @@ const serveCached = async (req, res, path) =>
 const serveProxiedFile = async (req, res, target) => {
     if (await checkTarget(target, {allowRedirect: true})) {
         log.info(`Proxying ${req.url} to ${target}`)
-        proxy.web(req, res, {target})
+        proxyRequest(req, res, target)
         return true
     } else {
         log.debug(`Cannot proxy ${req.url} to ${target}`)
