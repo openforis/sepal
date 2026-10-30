@@ -582,15 +582,6 @@ class _RecipeList extends React.Component {
         }
     }
 
-    getHandleIcon({column, sortingOrder, sortingDirection}) {
-        const sorted = sortingOrder === column
-        return sorted
-            ? sortingDirection === 1
-                ? 'sort-down'
-                : 'sort-up'
-            : 'sort'
-    }
-
     getRecipeTypeName(type) {
         const recipeType = getRecipeType(type)
         return recipeType && recipeType.labels.name
@@ -742,10 +733,6 @@ class _RecipeList extends React.Component {
         return this.getFilteredSelectedItems()
             .filter(({kind, folder}) => kind === 'folder' && !this.isEmptyFolder(folder))
             .map(({id}) => id)
-    }
-
-    getVisibleRecipes() {
-        return this.getItems().filter(({kind}) => kind === 'recipe').map(({recipe}) => recipe)
     }
 
     getFilteredIds() {
