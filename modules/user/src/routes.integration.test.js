@@ -22,6 +22,7 @@ mock.module('./config.js', {
 
 const server = await import('#sepal/httpServer')
 const {hashPassword} = await import('./crypto.js')
+const {LoginThrottle} = await import('./loginThrottle.js')
 const {createRoutes} = await import('./routes.js')
 const {UserApi} = await import('./userApi.js')
 const {SshKeyApi} = await import('./sshKeyApi.js')
@@ -179,7 +180,7 @@ describe('the user routes', () => {
     }
 
     const failLoginsFrom = async (path, clientIp) => {
-        for (let attempt = 1; attempt <= MAX_LOGIN_FAILURES; attempt++) {
+        for (let attempt = 1; attempt <= MAX_USERNAME_FAILURES; attempt++) {
             await request('POST', path, {body: {username: 'bob', password: 'wrong', clientIp}})
         }
     }
@@ -196,7 +197,8 @@ describe('the user routes', () => {
             repository,
             googleService: {refreshGoogleTokens: async () => null, saveTokens: async () => null},
             googleOAuth: {redirectUrl: () => '', requestTokens: async () => null, revokeTokens: async () => undefined},
-            ensureProvisioned: async user => user
+            ensureProvisioned: async user => user,
+            loginThrottle: new LoginThrottle({maxUsernameFailures: MAX_USERNAME_FAILURES})
         })
         const sshKeyRepository = {
             list: async username => keys.filter(key => key.username === username),
@@ -233,7 +235,7 @@ describe('the user routes', () => {
     })
 
     const PASSWORD = 'a-long-enough-password'
-    const MAX_LOGIN_FAILURES = 10
+    const MAX_USERNAME_FAILURES = 10
     const ED25519_LINE = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFTTtG0hPe95rIxeTXi4nSx4CHf59bz6WQ6e8K0fhOWn'
     const ADMIN_ROLES = ['application_admin']
 })

@@ -4,7 +4,10 @@ import {configureServer, getLogger} from '#sepal/log'
 import {initMessageQueue} from '#sepal/messageQueue'
 
 import {createBootstrap} from './bootstrap.js'
-import {amqpUri, googleOauthCallbackBaseUrl, googleOauthClientId, googleOauthClientSecret, port} from './config.js'
+import {
+    amqpUri, googleOauthCallbackBaseUrl, googleOauthClientId, googleOauthClientSecret, maxClientFailures,
+    maxUsernameFailures, port
+} from './config.js'
 import {saveCredentials} from './credentials.js'
 import {hashPassword} from './crypto.js'
 import {initializeDb} from './db.js'
@@ -12,6 +15,7 @@ import {email$, sendSshKeyAdded} from './email.js'
 import {publishUserUpdated, userLocked$, userUpdated$} from './events.js'
 import {GoogleOAuth} from './googleOAuth.js'
 import {GoogleService} from './googleService.js'
+import {LoginThrottle} from './loginThrottle.js'
 import {provision} from './provisioning.js'
 import {createRoutes, wsRoutes} from './routes.js'
 import {SshKeyApi} from './sshKeyApi.js'
@@ -45,7 +49,8 @@ const main = async () => {
         hashPassword,
         readSecret: name => process.env[name]
     })
-    const userApi = new UserApi({repository, googleService, googleOAuth, ensureProvisioned})
+    const loginThrottle = new LoginThrottle({maxUsernameFailures, maxClientFailures})
+    const userApi = new UserApi({repository, googleService, googleOAuth, ensureProvisioned, loginThrottle})
     const sshKeyApi = new SshKeyApi({
         userRepository: repository,
         sshKeyRepository: new SshKeyRepository(db),

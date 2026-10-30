@@ -11,6 +11,26 @@ const fatalError = error => {
     process.exit(1)
 }
 
+const parseLimit = env => value => {
+    if (value === 'false') {
+        return false
+    }
+    const number = Number(value)
+    if (!Number.isInteger(number)) {
+        throw new Error(`${env} must be an integer or false, got: ${value}`)
+    }
+    return number
+}
+
+// Compose passes an unset ${VAR} to the container as an empty string, which commander takes as a value:
+// the default is skipped and the parser gets ''.
+const ignoreEmptyEnv = command => {
+    command.options
+        .filter(({envVar}) => envVar && process.env[envVar] === '')
+        .forEach(({envVar}) => delete process.env[envVar])
+    return command
+}
+
 const program = new Command()
 
 try {
@@ -36,7 +56,9 @@ try {
         .addOption(new Option('--recaptcha-min-score <number>').env('GOOGLE_RECAPTCHA_ENTERPRISE_MIN_SCORE').argParser(v => parseFloat(v)).default(0.7))
         .addOption(new Option('--recaptcha-optional <value>').env('RECAPTCHA_OPTIONAL').default('false'))
         .addOption(new Option('--sepal-host <value>').env('SEPAL_HOST').default(''))
-        .parse()
+        .addOption(new Option('--max-username-failures <number>').env('MAX_USERNAME_FAILURES').argParser(parseLimit('MAX_USERNAME_FAILURES')))
+        .addOption(new Option('--max-client-failures <number>').env('MAX_CLIENT_FAILURES').argParser(parseLimit('MAX_CLIENT_FAILURES')))
+    ignoreEmptyEnv(program).parse()
 } catch (error) {
     fatalError(error)
 }
@@ -44,7 +66,7 @@ try {
 const {
     port, amqpHost, googleProjectId, googleOauthClientId, googleOauthClientSecret, googleOauthCallbackBaseUrl,
     recaptchaApiKey, recaptchaSiteKey, recaptchaMinScore,
-    recaptchaOptional: recaptchaOptionalRaw, sepalHost
+    recaptchaOptional: recaptchaOptionalRaw, sepalHost, maxUsernameFailures, maxClientFailures
 } = program.opts()
 
 log.info('Configuration loaded')
@@ -54,6 +76,6 @@ const recaptchaOptional = recaptchaOptionalRaw === 'true' || recaptchaOptionalRa
 
 export {
     amqpUri, googleOauthCallbackBaseUrl, googleOauthClientId, googleOauthClientSecret,
-    googleProjectId, port, recaptchaApiKey, recaptchaMinScore, recaptchaOptional,
-    recaptchaSiteKey, sepalHost
+    googleProjectId, maxClientFailures, maxUsernameFailures, port, recaptchaApiKey, recaptchaMinScore,
+    recaptchaOptional, recaptchaSiteKey, sepalHost
 }
