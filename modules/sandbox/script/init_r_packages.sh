@@ -302,7 +302,15 @@ R -e "install.packages('remotes', dependencies=TRUE, repos='$CRAN_REPO/')"
 
 R CMD javareconf
 
-R -e "install.packages(c($(rVector "${CRAN_PACKAGES[@]}")), repos='$CRAN_REPO/')"
+# CRAN resets some of r-proxy's connections, which fails the download of those packages and their dependents
+R -e "
+packages <- c($(rVector "${CRAN_PACKAGES[@]}"))
+install.packages(packages, repos = '$CRAN_REPO/')
+for (attempt in 1:2) {
+    missing <- setdiff(packages, rownames(installed.packages()))
+    if (length(missing)) install.packages(missing, repos = '$CRAN_REPO/')
+}
+"
 
 R -e "remotes::install_url(c($(rVector "${GITHUB_URLS[@]}")), repos='$CRAN_REPO/', build = FALSE)"
 
