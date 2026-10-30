@@ -1,11 +1,8 @@
 import {act} from 'react'
 import {createRoot} from 'react-dom/client'
-import {of} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-const {moveRecipes$, offerMoveUndo, pickers} = vi.hoisted(() => ({
-    moveRecipes$: vi.fn(), offerMoveUndo: vi.fn(), pickers: []
-}))
+const {moveItems, pickers} = vi.hoisted(() => ({moveItems: vi.fn(), pickers: []}))
 
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/connect', () => ({connect: () => Component => Component}))
@@ -24,8 +21,8 @@ vi.mock('~/widget/panel/panel', () => {
     })
     return {Panel}
 })
-vi.mock('./recipe', () => ({moveRecipes$}))
-vi.mock('./recipeList/moveNotification', () => ({offerMoveUndo}))
+// The move, its way back and its failures are the list's as much as this dialog's, and have their own test.
+vi.mock('./recipeList/folderActions', () => ({moveItems}))
 // The picker has its own test; what it is handed and what it hands back is the contract here.
 vi.mock('./recipeList/folderPicker', () => ({
     FolderPicker: props => {
@@ -45,24 +42,14 @@ describe('MoveRecipe', () => {
         expect(lastPicker().folderId).toBe(Y2024.id)
     })
 
-    it('moves the recipe to the folder picked, and closes', () => {
+    // The folder it comes from is where the way back leads.
+    it('moves the recipe from its folder to the one picked, and closes', () => {
         show()
 
         moveTo(KENYA.id)
 
-        expect(moveRecipes$).toHaveBeenCalledWith([RECIPE.id], KENYA.id)
+        expect(moveItems).toHaveBeenCalledWith([{kind: 'recipe', id: RECIPE.id, folderId: Y2024.id}], KENYA.id)
         expect(activatable.deactivate).toHaveBeenCalled()
-    })
-
-    it('offers a way back to the folder the recipe came from', () => {
-        show()
-        moveTo(KENYA.id)
-
-        const [message, undo] = offerMoveUndo.mock.calls[0]
-        undo()
-
-        expect(message).toBe('process.recipe.move.done')
-        expect(moveRecipes$).toHaveBeenLastCalledWith([RECIPE.id], Y2024.id)
     })
 
     it('moves nothing when the folder picked is the one it is in', () => {
@@ -70,8 +57,7 @@ describe('MoveRecipe', () => {
 
         act(() => moveHere().click())
 
-        expect(moveRecipes$).not.toHaveBeenCalled()
-        expect(offerMoveUndo).not.toHaveBeenCalled()
+        expect(moveItems).not.toHaveBeenCalled()
         expect(activatable.deactivate).toHaveBeenCalled()
     })
 })
@@ -106,8 +92,7 @@ const moveTo = folderId => {
 
 beforeEach(() => {
     pickers.length = 0
-    moveRecipes$.mockReset().mockImplementation(() => of([]))
-    offerMoveUndo.mockReset()
+    moveItems.mockReset()
     activatable = {recipe: RECIPE, deactivate: vi.fn()}
 })
 

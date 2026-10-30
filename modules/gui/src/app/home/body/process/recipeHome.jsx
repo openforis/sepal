@@ -11,7 +11,7 @@ import {ModalScope} from '~/widget/panel/modalScope'
 import {Content, SectionLayout} from '~/widget/sectionLayout'
 import {closeTab} from '~/widget/tabs/tabActions'
 
-import {duplicateRecipe$, moveRecipes$, openRecipeById$, removeRecipes$} from './recipe'
+import {duplicateRecipe$, openRecipeById$, removeRecipes$} from './recipe'
 import styles from './recipeHome.module.css'
 // import {publishEvent} from '~/eventPublisher'
 import {RecipeList} from './recipeList/recipeList'
@@ -32,7 +32,6 @@ class _RecipeHome extends React.Component {
                             recipeId={recipeId}
                             onClick={recipeId => this.openRecipe(recipeId)}
                             onDuplicate={recipeId => this.duplicateRecipe(recipeId)}
-                            onMove={(recipeIds, folderId) => this.moveRecipes(recipeIds, folderId)}
                             onRemove={recipeIds => this.removeRecipes(recipeIds)}
                         />
                     </Content>
@@ -62,13 +61,6 @@ class _RecipeHome extends React.Component {
         stream('REMOVE_RECIPES',
             removeRecipes$(recipeIds),
             () => recipeIds.forEach(recipeId => closeTab(recipeId, 'process'))
-        )
-    }
-
-    moveRecipes(recipeIds, folderId) {
-        const {stream} = this.props
-        stream('MOVE_RECIPES',
-            moveRecipes$(recipeIds, folderId)
         )
     }
 

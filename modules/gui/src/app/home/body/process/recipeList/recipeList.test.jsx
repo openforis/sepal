@@ -1,10 +1,11 @@
 import {act} from 'react'
 import {createRoot} from 'react-dom/client'
+import {NEVER, throwError} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-const {crudItems, dispatched, folderForms, listItems, notifications, removeFolder$, updateFolder, warnings} = vi.hoisted(() => ({
-    crudItems: [], dispatched: [], folderForms: [], listItems: [], notifications: [], removeFolder$: vi.fn(), updateFolder: vi.fn(),
-    warnings: []
+const {crudItems, dispatched, folderForms, listItems, moveItems, removeFolder$, streamed, updateFolder, warnings} = vi.hoisted(() => ({
+    crudItems: [], dispatched: [], folderForms: [], listItems: [], moveItems: vi.fn(), removeFolder$: vi.fn(), streamed: [],
+    updateFolder: vi.fn(), warnings: []
 }))
 
 vi.mock('~/connect', () => ({connect: () => Component => Component}))
@@ -25,9 +26,12 @@ vi.mock('./folderForm', () => ({
         return null
     }
 }))
-vi.mock('./folderActions', () => ({updateFolder}))
+vi.mock('./folderActions', () => ({moveItems, updateFolder}))
 vi.mock('./recipeListConfirm', () => ({RecipeListConfirm: () => null}))
-vi.mock('../recipe', () => ({loadFolders$: () => ({}), loadRecipes$: () => ({})}))
+vi.mock('../recipe', async () => {
+    const {NEVER} = await import('rxjs')
+    return {loadFolders$: () => NEVER, loadRecipes$: () => NEVER}
+})
 vi.mock('~/apiRegistry', () => ({default: {folder: {remove$: removeFolder$}}}))
 vi.mock('~/widget/searchBox', () => ({
     SearchBox: ({onSearchValue}) => <input data-search onChange={event => onSearchValue(event.target.value)}/>
@@ -58,7 +62,6 @@ vi.mock('~/widget/confirm', () => ({
 }))
 vi.mock('~/widget/notifications', () => ({
     Notifications: {
-        info: notification => notifications.push(notification),
         warning: message => warnings.push(message),
         error: message => warnings.push(message)
     }
@@ -106,9 +109,8 @@ const mount = (props = {}) => {
             filterValue=''
             filterValues={[]}
             selectedIds={[]}
-            stream={() => ({active: false})}
+            stream={runStream}
             onClick={() => {}}
-            onMove={() => {}}
             onRemove={() => {}}
             {...props}
         />
@@ -129,12 +131,17 @@ const confirm = () => act(() => document.querySelector('[data-confirm]').click()
 
 const button = label => [...document.querySelectorAll('button')].find(({textContent}) => textContent.includes(label))
 
-// The notification renders its own card through content(dismiss); the element carries the handler.
-const undoLastMove = () => {
-    const dismiss = vi.fn()
-    const card = notifications[notifications.length - 1].content(dismiss)
-    act(() => card.props.onUndo())
-    return dismiss
+// Runs what the list streams, as connect does, and remembers its name.
+const runStream = (name, stream$, onNext, onError) => {
+    streamed.push(name)
+    stream$.subscribe({next: onNext, error: onError})
+    return {active: false}
+}
+
+// What a move was handed: each item with the folder it comes from, and where they all go.
+const lastMove = () => {
+    const [items, folderId] = moveItems.mock.lastCall
+    return {items: items.map(({kind, id, folderId}) => ({kind, id, from: folderId})), to: folderId}
 }
 
 beforeEach(() => {
@@ -143,9 +150,10 @@ beforeEach(() => {
     folderForms.length = 0
     dispatched.length = 0
     listItems.length = 0
+    streamed.length = 0
     warnings.length = 0
-    notifications.length = 0
-    removeFolder$.mockReset()
+    moveItems.mockReset()
+    removeFolder$.mockReset().mockReturnValue(NEVER)
     updateFolder.mockReset()
 })
 
@@ -198,6 +206,27 @@ describe('RecipeList', () => {
 
         expect(warnings).toEqual([])
         expect(removeFolder$).toHaveBeenCalledWith(EMPTY.id)
+    })
+
+    // A refusal means this copy of the tree disagrees with the server's.
+    it('says what the server found in a folder it refused to remove, and loads the tree again', () => {
+        removeFolder$.mockReturnValue(throwError(() => ({response: {code: 'FOLDER_NOT_EMPTY', folders: 0, recipes: 2}})))
+        mount({folderId: 'kenya'})
+
+        act(() => rowFor('Empty').onRemove())
+
+        expect(warnings.map(({message}) => message)).toEqual(['process.folder.remove.notEmpty'])
+        expect(streamed).toEqual(['REMOVE_FOLDERS', 'LOAD_FOLDERS', 'LOAD_RECIPES'])
+    })
+
+    it('reports a removal that failed, and loads the tree again', () => {
+        removeFolder$.mockReturnValue(throwError(() => new Error('unavailable')))
+        mount({folderId: 'kenya'})
+
+        act(() => rowFor('Empty').onRemove())
+
+        expect(warnings.map(({message}) => message)).toEqual(['process.folder.remove.error'])
+        expect(streamed).toEqual(['REMOVE_FOLDERS', 'LOAD_FOLDERS', 'LOAD_RECIPES'])
     })
 })
 
@@ -261,6 +290,18 @@ describe('edit mode', () => {
         expect(removeFolder$).toHaveBeenCalledWith(EMPTY.id)
     })
 
+    it('says which folder of the selection the server refused to remove', () => {
+        removeFolder$.mockReturnValue(throwError(() => ({response: {code: 'FOLDER_NOT_EMPTY', folders: 1, recipes: 0}})))
+        mount({selectedIds: [EMPTY.id], folderId: KENYA.id})
+
+        editMode()
+        act(() => button('process.recipe.remove.label').click())
+        confirm()
+
+        expect(warnings.map(({message}) => message)).toEqual(['process.folder.remove.notEmpty'])
+        expect(streamed).toContain('LOAD_FOLDERS')
+    })
+
     it('selects the folders and the recipes together', () => {
         mount()
 
@@ -322,21 +363,19 @@ describe('drag and drop', () => {
     })
 
     it('moves a recipe into the folder it is dropped on', () => {
-        const onMove = vi.fn()
-        mount({onMove})
+        mount()
 
         drop(AT_ROOT.id, dropTarget(KENYA.id))
 
-        expect(onMove).toHaveBeenCalledWith([AT_ROOT.id], KENYA.id)
+        expect(lastMove()).toEqual({items: [{kind: 'recipe', id: AT_ROOT.id, from: null}], to: KENYA.id})
     })
 
     it('moves nothing when the drop is outside every target', () => {
-        const onMove = vi.fn()
-        mount({onMove})
+        mount()
 
         drop(AT_ROOT.id, container)
 
-        expect(onMove).not.toHaveBeenCalled()
+        expect(moveItems).not.toHaveBeenCalled()
     })
 
     it('moves a folder to the root when it is dropped on home', () => {
@@ -344,29 +383,7 @@ describe('drag and drop', () => {
 
         drop(Y2024.id, container.querySelector('[data-drop-home]'))
 
-        expect(updateFolder).toHaveBeenCalledWith(expect.objectContaining({id: Y2024.id, parentId: null}))
-    })
-
-    // Two folders of one name cannot sit side by side, and nothing tells them apart if they do.
-    it('keeps a folder where it is when the destination has one of the same name, and says so', () => {
-        const emptyAtHome = {id: 'empty-home', name: 'EMPTY', parentId: null}
-        mount({folderId: KENYA.id, folders: [...folders, emptyAtHome]})
-
-        drop(EMPTY.id, container.querySelector('[data-drop-home]'))
-
-        expect(updateFolder).not.toHaveBeenCalled()
-        expect(warnings.map(({message}) => message)).toEqual(['process.folder.move.nameTaken'])
-        expect(notifications).toEqual([])
-    })
-
-    it('still moves what was dragged with a folder that stays', () => {
-        const emptyAtHome = {id: 'empty-home', name: 'EMPTY', parentId: null}
-        mount({folderId: KENYA.id, folders: [...folders, emptyAtHome], selectedIds: [EMPTY.id, Y2024.id]})
-
-        drop(EMPTY.id, container.querySelector('[data-drop-home]'))
-
-        expect(updateFolder.mock.calls.map(([folder]) => folder.id)).toEqual([Y2024.id])
-        expect(notifications).toHaveLength(1)
+        expect(lastMove()).toEqual({items: [{kind: 'folder', id: Y2024.id, from: KENYA.id}], to: null})
     })
 
     it('moves no folder into one of its own subfolders', () => {
@@ -374,100 +391,61 @@ describe('drag and drop', () => {
 
         drop(Y2024.id, dropTarget(MOSAICS.id))
 
-        expect(updateFolder).not.toHaveBeenCalled()
+        expect(moveItems).not.toHaveBeenCalled()
     })
 
     it('moves every selected recipe when one of them is dragged', () => {
-        const onMove = vi.fn()
-        mount({onMove, selectedIds: [AT_ROOT.id, ALSO_AT_ROOT.id]})
+        mount({selectedIds: [AT_ROOT.id, ALSO_AT_ROOT.id]})
 
         drop(AT_ROOT.id, dropTarget(KENYA.id))
 
-        const [movedIds, folderId] = onMove.mock.calls[0]
-        expect([...movedIds].sort()).toEqual([AT_ROOT.id, ALSO_AT_ROOT.id].sort())
-        expect(folderId).toBe(KENYA.id)
+        const {items, to} = lastMove()
+        expect(items.map(({id}) => id).sort()).toEqual([AT_ROOT.id, ALSO_AT_ROOT.id].sort())
+        expect(to).toBe(KENYA.id)
     })
 
     it('moves only the dragged recipe when it is not one of the selected', () => {
-        const onMove = vi.fn()
-        mount({onMove, selectedIds: [ALSO_AT_ROOT.id]})
+        mount({selectedIds: [ALSO_AT_ROOT.id]})
 
         drop(AT_ROOT.id, dropTarget(KENYA.id))
 
-        expect(onMove).toHaveBeenCalledWith([AT_ROOT.id], KENYA.id)
+        expect(lastMove().items.map(({id}) => id)).toEqual([AT_ROOT.id])
     })
 
-    it('offers an undo that puts the recipe back where it was', () => {
-        const onMove = vi.fn()
-        mount({onMove})
-
-        drop(AT_ROOT.id, dropTarget(KENYA.id))
-        const dismiss = undoLastMove()
-
-        expect(onMove.mock.calls).toEqual([[[AT_ROOT.id], KENYA.id], [[AT_ROOT.id], null]])
-        expect(dismiss).toHaveBeenCalled()
-    })
-
-    it('puts each recipe back in its own folder', () => {
-        const onMove = vi.fn()
-        // A search reaches into the subfolders, so one move can take recipes out of several folders.
-        mount({onMove, filterValue: 'mosaic', filterValues: ['mosaic'], selectedIds: [ALSO_AT_ROOT.id, IN_2024.id]})
+    // A search reaches into the subfolders, so one move can take recipes out of several folders, and the
+    // way back has to know each one.
+    it('tells the move the folder each recipe comes from', () => {
+        mount({filterValue: 'mosaic', filterValues: ['mosaic'], selectedIds: [ALSO_AT_ROOT.id, IN_2024.id]})
 
         drop(ALSO_AT_ROOT.id, dropTarget(MOSAICS.id))
-        undoLastMove()
 
-        const undoCalls = onMove.mock.calls.slice(1)
-        expect(undoCalls).toContainEqual([[ALSO_AT_ROOT.id], null])
-        expect(undoCalls).toContainEqual([[IN_2024.id], Y2024.id])
-    })
-
-    it('offers an undo that puts a folder back under its parent', () => {
-        mount({folderId: KENYA.id})
-
-        drop(Y2024.id, container.querySelector('[data-drop-home]'))
-        undoLastMove()
-
-        expect(updateFolder).toHaveBeenLastCalledWith(expect.objectContaining({id: Y2024.id, parentId: KENYA.id}))
-    })
-
-    it('says nothing when a drop moves nothing', () => {
-        mount()
-
-        drop(AT_ROOT.id, container)
-
-        expect(notifications).toEqual([])
+        expect(lastMove().items).toEqual(expect.arrayContaining([
+            {kind: 'recipe', id: ALSO_AT_ROOT.id, from: null},
+            {kind: 'recipe', id: IN_2024.id, from: Y2024.id}
+        ]))
     })
 
     it('moves every selected folder and recipe when one of them is dragged', () => {
-        const onMove = vi.fn()
-        mount({onMove, selectedIds: [KENYA.id, AT_ROOT.id]})
+        mount({selectedIds: [KENYA.id, AT_ROOT.id]})
 
         drop(KENYA.id, dropTarget(MOZAMBIQUE.id))
 
-        expect(onMove).toHaveBeenCalledWith([AT_ROOT.id], MOZAMBIQUE.id)
-        expect(updateFolder).toHaveBeenCalledWith(expect.objectContaining({id: KENYA.id, parentId: MOZAMBIQUE.id}))
-    })
-
-    it('puts a folder and a recipe back together', () => {
-        const onMove = vi.fn()
-        mount({onMove, selectedIds: [KENYA.id, AT_ROOT.id]})
-
-        drop(KENYA.id, dropTarget(MOZAMBIQUE.id))
-        undoLastMove()
-
-        expect(onMove).toHaveBeenLastCalledWith([AT_ROOT.id], null)
-        expect(updateFolder).toHaveBeenLastCalledWith(expect.objectContaining({id: KENYA.id, parentId: null}))
+        expect(lastMove()).toEqual({
+            items: expect.arrayContaining([
+                {kind: 'folder', id: KENYA.id, from: null},
+                {kind: 'recipe', id: AT_ROOT.id, from: null}
+            ]),
+            to: MOZAMBIQUE.id
+        })
     })
 
     it('refuses a destination that lies inside a folder the selection holds', () => {
-        const onMove = vi.fn()
         // A search shows Kenya, the folder inside it, and a recipe, so all three can take part at once.
-        mount({onMove, selectedIds: [KENYA.id, AT_ROOT.id], filterValue: 'kenya', filterValues: ['kenya']})
+        mount({selectedIds: [KENYA.id, AT_ROOT.id], filterValue: 'kenya', filterValues: ['kenya']})
 
         drop(AT_ROOT.id, dropTarget(Y2024.id))
 
-        expect(onMove).not.toHaveBeenCalled()
-        expect(updateFolder).not.toHaveBeenCalled()
+        expect(moveItems).not.toHaveBeenCalled()
     })
 
     it('ends edit mode once the selection has been moved', () => {

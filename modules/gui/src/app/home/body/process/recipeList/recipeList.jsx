@@ -2,7 +2,7 @@ import _ from 'lodash'
 import memoizeOne from 'memoize-one'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {concat, filter, last, map, Subject, switchMap, takeUntil} from 'rxjs'
+import {catchError, concat, filter, last, map, Subject, switchMap, takeUntil, throwError} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
@@ -31,16 +31,15 @@ import {getRecipeType, listRecipeTypes} from '../recipeTypeRegistry'
 import {Breadcrumb} from './breadcrumb'
 import {DragPreview} from './dragPreview'
 import {DropTargetContext} from './dropTargetContext'
-import {updateFolder} from './folderActions'
+import {moveItems, updateFolder} from './folderActions'
 import {FolderForm} from './folderForm'
 import {FolderItem} from './folderItem'
 import {FolderPicker} from './folderPicker'
-import {offerMoveUndo} from './moveNotification'
 import {RecipeItem} from './recipeItem'
 import {RecipeListConfirm} from './recipeListConfirm'
 import {
     asDragged, canDropInto, childFolders, folderCounts, folderPathLabel, locationLabel, navigatorItems, ROOT,
-    searchHighlight, searchValues, splitByNameClash
+    searchHighlight, searchValues
 } from './recipeTree'
 
 const EMPTY_ARRAY = []
@@ -156,7 +155,7 @@ class _RecipeList extends React.Component {
         this.dragged = null
         this.setState({dragging: false, dragCoords: null, dropTarget: null})
         if (items.length && dropTarget) {
-            this.moveItems(items, dropTarget.folderId)
+            moveItems(items, dropTarget.folderId)
             if (fromSelection) {
                 this.leaveEdit()
             }
@@ -172,53 +171,6 @@ class _RecipeList extends React.Component {
         return this.isSelected(dragged.id)
             ? this.getFilteredSelectedItems().map(asDragged)
             : [dragged]
-    }
-
-    // A move is easy to make by accident, so every one of them offers its own way back. Each row
-    // returns where it came from, which is not one folder when a search moved several at once.
-    moveItems(items, folderId) {
-        const {onMove} = this.props
-        const recipes = items.filter(({kind}) => kind === 'recipe')
-        const folders = this.foldersFreeToMove(items.filter(({kind}) => kind === 'folder'), folderId)
-        if (!recipes.length && !folders.length) {
-            return
-        }
-        if (recipes.length) {
-            onMove(recipes.map(({id}) => id), folderId)
-        }
-        folders.forEach(({folder}) => updateFolder({...folder, parentId: folderId}))
-        offerMoveUndo(this.movedMessage([...recipes, ...folders], folderId), () => {
-            _.forEach(
-                _.groupBy(recipes, ({folderId}) => folderId ?? ROOT),
-                moved => onMove(moved.map(({id}) => id), moved[0].folderId ?? ROOT)
-            )
-            folders.forEach(({folder}) => updateFolder({...folder, parentId: folder.parentId ?? ROOT}))
-        })
-    }
-
-    // A folder the destination already has a namesake of stays, and says so; the rest of the move goes on.
-    foldersFreeToMove(items, folderId) {
-        const {folders} = this.props
-        const [movable, clashing] = splitByNameClash({folders, moving: items.map(({folder}) => folder), targetFolderId: folderId})
-        if (clashing.length) {
-            Notifications.warning({
-                message: msg('process.folder.move.nameTaken', {
-                    folder: this.folderLabel(folderId),
-                    names: clashing.map(({name}) => name).join(', ')
-                })
-            })
-        }
-        return items.filter(({id}) => movable.some(folder => folder.id === id))
-    }
-
-    movedMessage(items, folderId) {
-        const folder = this.folderLabel(folderId)
-        if (items.length === 1 && items[0].kind === 'folder') {
-            return msg('process.folder.move.done', {name: items[0].folder.name, folder})
-        }
-        return items.every(({kind}) => kind === 'recipe')
-            ? msg('process.recipe.move.done', {count: items.length, folder})
-            : msg('process.recipeList.moved', {count: items.length, folder})
     }
 
     folderLabel(folderId) {
@@ -624,24 +576,7 @@ class _RecipeList extends React.Component {
         if (counts.folders || counts.recipes) {
             Notifications.warning({message: notEmptyMessage(folder.name, counts)})
         } else {
-            this.props.stream('REMOVE_FOLDER',
-                api.folder.remove$(folder.id),
-                folders => actionBuilder('REMOVE_FOLDER', {folder})
-                    .set('process.folders', folders)
-                    .dispatch(),
-                error => {
-                    const refusal = error.response?.code === 'FOLDER_NOT_EMPTY' ? error.response : null
-                    if (refusal) {
-                        Notifications.warning({message: notEmptyMessage(folder.name, refusal)})
-                        // The refusal means our copy of the tree disagrees with the server's; refresh
-                        // both so the next attempt (and the counts shown meanwhile) reflect reality.
-                        this.props.stream('LOAD_FOLDERS', loadFolders$())
-                        this.props.stream('LOAD_RECIPES', loadRecipes$())
-                    } else {
-                        Notifications.error({message: msg('process.folder.remove.error'), error})
-                    }
-                }
-            )
+            this.removeFolders([folder])
         }
     }
 
@@ -736,7 +671,7 @@ class _RecipeList extends React.Component {
     }
 
     moveSelected(folderId) {
-        this.moveItems(this.getConfirmedItems().map(asDragged), folderId)
+        moveItems(this.getConfirmedItems().map(asDragged), folderId)
         this.setMove(false)
         this.leaveEdit()
     }
@@ -771,17 +706,26 @@ class _RecipeList extends React.Component {
     }
 
     // One request at a time: each answer carries the whole folder list, and the last one must be the
-    // list with every removal in it.
+    // list with every removal in it. A failure means our copy of the tree may disagree with the server's,
+    // so both are loaded again, for the next attempt and for the counts shown meanwhile.
     removeFolders(removable) {
-        this.props.stream('REMOVE_FOLDERS',
-            concat(...removable.map(({id}) => api.folder.remove$(id))).pipe(last()),
+        const {stream} = this.props
+        stream('REMOVE_FOLDERS',
+            concat(...removable.map(folder => api.folder.remove$(folder.id).pipe(
+                catchError(error => throwError(() => ({folder, error})))
+            ))).pipe(last()),
             folders => actionBuilder('REMOVE_FOLDERS', {folders: removable})
                 .set('process.folders', folders)
                 .dispatch(),
-            error => {
-                Notifications.error({message: msg('process.folder.remove.error'), error})
-                this.props.stream('LOAD_FOLDERS', loadFolders$())
-                this.props.stream('LOAD_RECIPES', loadRecipes$())
+            ({folder, error}) => {
+                const refusal = error.response?.code === 'FOLDER_NOT_EMPTY' ? error.response : null
+                if (refusal) {
+                    Notifications.warning({message: notEmptyMessage(folder.name, refusal)})
+                } else {
+                    Notifications.error({message: msg('process.folder.remove.error'), error})
+                }
+                stream('LOAD_FOLDERS', loadFolders$())
+                stream('LOAD_RECIPES', loadRecipes$())
             }
         )
     }

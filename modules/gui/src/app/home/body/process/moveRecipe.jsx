@@ -5,14 +5,12 @@ import {connect} from '~/connect'
 import {select} from '~/store'
 import {msg} from '~/translate'
 import {withActivatable} from '~/widget/activation/activatable'
-import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
 import styles from './moveRecipe.module.css'
-import {moveRecipes$} from './recipe'
+import {moveItems} from './recipeList/folderActions'
 import {FolderPicker} from './recipeList/folderPicker'
-import {offerMoveUndo} from './recipeList/moveNotification'
-import {at, locationLabel} from './recipeList/recipeTree'
+import {at} from './recipeList/recipeTree'
 
 const EMPTY_ARRAY = []
 
@@ -60,23 +58,14 @@ class _MoveRecipe extends React.Component {
         )
     }
 
-    // The dialog closes before the move lands, so the move is not tied to it: a stream of its own would
-    // be cancelled with it. Like every move in the list, this one offers its way back.
+    // The dialog closes before the move lands, so the move is not tied to it. Like every move in the list,
+    // this one offers its way back.
     move(folderId) {
-        const {folders, activatable: {recipe, deactivate}} = this.props
+        const {activatable: {recipe, deactivate}} = this.props
         deactivate()
-        if (at(folderId) === at(recipe.folderId)) {
-            return
+        if (at(folderId) !== at(recipe.folderId)) {
+            moveItems([{kind: 'recipe', id: recipe.id, folderId: recipe.folderId}], folderId)
         }
-        const moveTo = folderId =>
-            moveRecipes$([recipe.id], folderId).subscribe({
-                error: error => Notifications.error({message: msg('process.recipe.move.error'), error})
-            })
-        moveTo(folderId)
-        offerMoveUndo(
-            msg('process.recipe.move.done', {count: 1, folder: locationLabel(folders, folderId)}),
-            () => moveTo(at(recipe.folderId))
-        )
     }
 }
 

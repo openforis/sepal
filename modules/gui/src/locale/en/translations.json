@@ -5031,7 +5031,8 @@
         "tooltip": "Move selected recipes to a folder",
         "confirm": "Move {count} {count, plural, one {recipe} other {recipes}} to folder {folder}?",
         "done": "Moved {count} {count, plural, one {recipe} other {recipes}} to {folder}.",
-        "error": "Failed to move the recipe."
+        "error": "Failed to move the recipe.",
+        "folderNotFound": "Failed to move the recipe: the folder no longer exists."
       },
       "export": {
         "success": "Recipe has been exported.",
