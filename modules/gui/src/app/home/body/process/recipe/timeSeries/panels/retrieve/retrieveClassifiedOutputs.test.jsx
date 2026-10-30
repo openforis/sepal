@@ -335,7 +335,7 @@ const open = async ({selected, saving}) => {
             saveStates: saving ? {[saving.id]: {status: 'SAVING', revision: saving.revision}} : {},
             recipes: fake.listing,
             recipeListing: {checkedAt: Date.now()},
-            projects: []
+            folders: []
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)

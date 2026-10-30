@@ -31,7 +31,7 @@ import {Recipe, recipeActivationPath} from './recipeContext'
 import {RecipeHome} from './recipeHome'
 
 // Exercise the real recipe boundary, tab owner, activation and forms. Ordinary and previously unknown callers
-// have no scope prop/provider. The landing list is replaced by its real Project dialog, to isolate ownership
+// have no scope prop/provider. The landing list is replaced by its real folder dialog, to isolate ownership
 // from listing and CRUD work; APIs and scrolling do not participate in that decision.
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
@@ -39,8 +39,8 @@ vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
 vi.mock('~/apiRegistry', () => ({default: {recipe: {load$: () => NEVER, loadAll$: () => NEVER, save$: () => NEVER}}}))
 vi.mock('~/ceo', () => ({ceoLogin$: () => NEVER}))
 vi.mock('./recipeList/recipeList', async () => {
-    const {Project} = await import('./recipeList/project')
-    return {RecipeList: () => <Project project={{name: 'Shared project'}} projectNames={[]} onApply={() => {}} onCancel={() => {}}/>}
+    const {FolderForm} = await import('./recipeList/folderForm')
+    return {RecipeList: () => <FolderForm folder={{name: 'Shared folder'}} folderNames={[]} onApply={() => {}} onCancel={() => {}}/>}
 })
 vi.mock('~/widget/scrollable', async () => {
     const {NEVER} = await import('rxjs')
@@ -185,9 +185,9 @@ describe('modal ownership supplied by the recipe context', () => {
         expect(select(['process.loadedRecipes', B, 'layers.areas.main.featureLayers', {sourceId: 'labels'}, 'layerConfig.style'])).toBeUndefined()
     })
 
-    it('keeps project management in the real landing component application-wide', async () => {
+    it('keeps folder management in the real landing component application-wide', async () => {
         await mount({A: 'home', B: 'plain'})
-        expect(globalLayer().textContent).toContain('process.project.title')
+        expect(globalLayer().textContent).toContain('process.folder.title')
         expect(layer(A).querySelectorAll('[class*="_modalWrapper_"]')).toHaveLength(0)
     })
 
@@ -234,7 +234,7 @@ async function mount(kinds) {
         dimensions: {width: 1280, height: 800},
         process: {
             tabs: [{id: A, title: 'Recipe A'}, {id: B, title: 'Recipe B'}], selectedTabId: A,
-            loadedRecipes: {[A]: record(A, 'A saved'), [B]: record(B, 'B saved')}, recipes: [], projects: []
+            loadedRecipes: {[A]: record(A, 'A saved'), [B]: record(B, 'B saved')}, recipes: [], folders: []
         }
     }, action) => action.reduce ? action.reduce(state) : state)
     initStore(store)

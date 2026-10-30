@@ -179,7 +179,7 @@ const show = ({geoId, bufferMeters = ''}) => {
                 }
             },
             recipes: [],
-            projects: [],
+            folders: [],
             tabs: []
         }
     }

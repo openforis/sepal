@@ -2,7 +2,7 @@ import memoizeOne from 'memoize-one'
 import React from 'react'
 
 import api from '~/apiRegistry'
-import {NO_PROJECT_SYMBOL, PROJECT_RECIPE_SEPARATOR} from '~/app/home/body/process/recipeList/recipeListConstants'
+import {locationLabel} from '~/app/home/body/process/recipeList/recipeTree'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import format from '~/format'
@@ -21,6 +21,7 @@ import {Content, SectionLayout, TopBar} from '~/widget/sectionLayout'
 import {Shape} from '~/widget/shape'
 
 import {TaskDetails} from './taskDetails'
+import {taskFolderId} from './taskFolder'
 import styles from './tasks.module.css'
 import {taskStatusDescription} from './taskStatusDescription'
 
@@ -32,7 +33,7 @@ const getHighlightMatcher = memoizeOne(
 
 const mapStateToProps = state => ({
     tasks: state.tasks,
-    projects: state.process?.projects
+    folders: state.process?.folders
 })
 
 class _Tasks extends React.Component {
@@ -131,16 +132,20 @@ class _Tasks extends React.Component {
 
     renderTask(task) {
         const {icon, iconVariant} = this.getStatusIcon(task)
+        const title = this.getTaskTitle(task)
+        const path = this.getRecipePath(task)
         return (
             <ListItem
                 key={task.id}
                 onClick={() => this.showInfo(task)}>
                 <CrudItem
-                    title={this.getTaskTitle(task)}
-                    description={this.getRecipePath(task)}
+                    title={title}
+                    titleTooltip={title}
+                    description={path}
+                    descriptionTooltip={path}
                     highlight={this.getHighlightMatcher()}
                     icon={icon}
-                    iconSize='xl'
+                    iconSize='lg'
                     iconVariant={iconVariant}
                     inlineComponents={[
                         this.renderTaskMetadata(task),
@@ -204,7 +209,7 @@ class _Tasks extends React.Component {
 
     getFilteredTasks() {
         const {tasks, filterValues, statusFilter} = this.state
-        const {projects} = this.props
+        const {folders} = this.props
         const matchers = filterValues.map(v => new RegExp(v, 'i'))
         return tasks.filter(task => {
             if (statusFilter && statusFilter !== 'ALL') {
@@ -222,15 +227,13 @@ class _Tasks extends React.Component {
             }
             const recipeType = task.taskInfo?.recipeType
             const destination = task.taskInfo?.destination
-            const projectId = task.taskInfo?.projectId
-            const project = projects?.find(({id}) => id === projectId)
-            const projectName = project?.name ?? NO_PROJECT_SYMBOL
+            const folderName = locationLabel(folders, taskFolderId(task.taskInfo))
             const searchable = [
                 task.name,
                 task.description,
                 recipeType && msg(`tasks.details.recipeTypeNames.${recipeType}`),
                 destination && msg(`tasks.details.destination.${destination}`),
-                projectName
+                folderName
             ].filter(Boolean).join(' ')
             return matchers.every(matcher => matcher.test(simplifyString(searchable)))
         })
@@ -244,7 +247,8 @@ class _Tasks extends React.Component {
     }
 
     renderTaskList(tasks) {
-        const itemKey = task => `${task.id}|${this.getHighlightMatcher()}`
+        // Rows redraw only when their key changes, and a recipe's folders can load or change after its task.
+        const itemKey = task => `${task.id}|${this.getHighlightMatcher()}|${this.getRecipePath(task)}`
         return (
             <FastList
                 items={tasks}
@@ -354,12 +358,8 @@ class _Tasks extends React.Component {
     }
 
     getRecipePath(task) {
-        const {projects} = this.props
-        const projectId = task.taskInfo?.projectId
-        const project = projects?.find(({id}) => id === projectId)
-        const projectName = project?.name ?? NO_PROJECT_SYMBOL
-        const recipeName = task.description || task.name
-        return [projectName, recipeName].join(PROJECT_RECIPE_SEPARATOR)
+        const {folders} = this.props
+        return locationLabel(folders, taskFolderId(task.taskInfo), task.description || task.name)
     }
 
     // Right-side one-line row metadata: current localized status/progress for a running task, or the final

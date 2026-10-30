@@ -347,7 +347,7 @@ const open = async model => {
     const initial = {
         process: {
             loadedRecipes: {design: {id: 'design', type: 'SAMPLING_DESIGN', revision: 1, model, ui: {initialized: true}}},
-            recipes: [], tabs: [{id: 'design'}], projects: [], saveStates: {}
+            recipes: [], tabs: [{id: 'design'}], folders: [], saveStates: {}
         },
         dimensions: {width: 1024, height: 768}, assets: {user: [], other: []}
     }

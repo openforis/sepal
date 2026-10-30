@@ -285,7 +285,7 @@ async function open(recipe) {
             recipes: [{id: recipe.id, name: 'Masked', type: recipe.type, revision: 1}],
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: recipe.id}]
         },
         assets: {user: [PRIMARY_ASSET, MASK_ASSET].map(id => ({id, type: 'Image', updateTime: 'T1'})), other: []},

@@ -159,7 +159,7 @@ async function onAnotherMap(constraint, downstream = false) {
             recipes: [...LISTING, {id: dependent.id, name: 'Downstream', type: 'REMAPPING', revision: 1}],
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: HOST}]
         },
         assets: {user: [], other: []},

@@ -21,13 +21,13 @@ import {Form} from './form'
 const mapStateToProps = () => {
     return {
         recipes: select('process.recipes'),
-        projects: select('process.projects')
+        folders: select('process.folders')
     }
 }
 
 const mapRecipeToProps = recipe => {
     return ({
-        projectId: recipe.projectId
+        folderId: recipe.folderId
     })
 }
 
@@ -129,14 +129,14 @@ class _RecipeInput extends React.Component {
 
     getOptions() {
         const offered = this.offeredRecipes()
-        const groups = _.groupBy(offered, 'projectId')
-        return [...this.unofferedSelection(offered), ...this.orderedProjects(Object.keys(groups))
-            .map(({id, project}) => ({
+        const groups = _.groupBy(offered, 'folderId')
+        return [...this.unofferedSelection(offered), ...this.orderedFolders(Object.keys(groups))
+            .map(({id, folder}) => ({
                 // Prefixed so no id can be mistaken for the unfiled group's empty one, and identified by id
                 // rather than by name: groups sharing a heading would otherwise be one group, and leaving
                 // the view one belongs to would leave its heading behind.
-                key: `project:${id}`,
-                label: project ? project.name : msg('process.project.noProjectOption'),
+                key: `folder:${id}`,
+                label: folder ? folder.name : msg('process.recipeList.root'),
                 filterOptions: isMatchingGroup => !isMatchingGroup,
                 options: groups[id].map(recipe => ({value: recipe.id, label: recipe.name}))
             }))]
@@ -158,26 +158,26 @@ class _RecipeInput extends React.Component {
         }]
     }
 
-    // ALL widens which projects are offered, never what the caller can use. The project shown narrows the alternatives
-    // to the selection, not the selection: one the caller can use is offered in its own project whichever is shown.
+    // ALL widens which folders are offered, never what the caller can use. The folder shown narrows the alternatives
+    // to the selection, not the selection: one the caller can use is offered in its own folder whichever is shown.
     offeredRecipes() {
-        const {input, projectId, recipes, filter} = this.props
+        const {input, folderId, recipes, filter} = this.props
         const {all} = this.state
         return recipes
-            .map(recipe => ({...recipe, projectId: recipe.projectId || ''}))
+            .map(recipe => ({...recipe, folderId: recipe.folderId || ''}))
             .filter(recipe => !this.isOwnRecipe(recipe.id))
             .filter(recipe => {
                 const recipeType = getRecipeType(recipe.type)
                 return filter && recipeType ? filter(recipeType, recipe) : true
             })
-            .filter(({id, projectId: p}) => all || id === input.value || p === projectId || (!p && !projectId))
+            .filter(({id, folderId: f}) => all || id === input.value || f === folderId || (!f && !folderId))
     }
 
-    orderedProjects(ids) {
-        const {projects} = this.props
+    orderedFolders(ids) {
+        const {folders} = this.props
         return _.sortBy(
-            ids.map(id => ({id, project: projects.find(project => project.id === id)})),
-            [({project}) => project ? 1 : 0, ({project}) => project?.name?.toLowerCase(), 'id']
+            ids.map(id => ({id, folder: folders.find(folder => folder.id === id)})),
+            [({folder}) => folder ? 1 : 0, ({folder}) => folder?.name?.toLowerCase(), 'id']
         )
     }
 

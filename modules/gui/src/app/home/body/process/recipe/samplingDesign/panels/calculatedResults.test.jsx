@@ -797,7 +797,7 @@ const open = async (Panel, {sources, model}, current) => {
     const initial = {
         process: {
             loadedRecipes: {design: {id: 'design', type: 'SAMPLING_DESIGN', revision: 1, model, ui: {initialized: true}}},
-            recipes: sources.map(id => ({id, revision: 1})), tabs: [{id: 'design'}], projects: [], saveStates: {}
+            recipes: sources.map(id => ({id, revision: 1})), tabs: [{id: 'design'}], folders: [], saveStates: {}
         },
         dimensions: {width: 1024, height: 768}, assets: {user: [], other: []}
     }

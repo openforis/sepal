@@ -326,7 +326,7 @@ const editInput = async (saved = SAVED) => {
             ],
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: ID}]
         },
         assets: {user: [SAVED_ASSET.id, OTHER_ASSET].map(id => ({id, type: 'Image', updateTime: 'T1'})), other: []},

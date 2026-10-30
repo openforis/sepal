@@ -441,7 +441,7 @@ async function open(recipe, records = []) {
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: ID}]
         },
         assets: {user: [], other: []},

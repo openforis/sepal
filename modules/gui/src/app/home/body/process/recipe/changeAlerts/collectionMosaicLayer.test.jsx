@@ -259,7 +259,7 @@ const show = async ({layerConfig, inAnotherRecipe = false}) => {
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: inAnotherRecipe ? 'host-1' : recipe.id}]
         }
     }, action) => action.reduce ? action.reduce(state) : state)

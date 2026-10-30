@@ -553,7 +553,7 @@ const editInput = async (images, imageId = images[0].imageId) => {
             ],
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: ID}]
         },
         assets: {

@@ -690,7 +690,7 @@ const sessionState = ({selection, savedLayerSource}) => ({
         recipes: LISTING,
         recipeListing: {checkedAt: Date.now()},
         saveStates: {},
-        projects: [],
+        folders: [],
         tabs: [{id: SLICE}]
     },
     assets: {user: [SEGMENTS_ASSET, OTHER_ASSET].map(id => ({id, updateTime: 'T1'})), other: []},

@@ -275,7 +275,7 @@ async function open({breakpointBands, classifier, points, classification, inputs
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: CCDC}]
         }
     }

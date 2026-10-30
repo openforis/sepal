@@ -396,7 +396,7 @@ async function open(type, TrainingData, {images, consumerImages, points, reuse, 
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: CONSUMER}]
         }
     }
