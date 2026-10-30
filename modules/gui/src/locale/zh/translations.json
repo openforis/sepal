@@ -6922,6 +6922,7 @@
     },
     "recipeInput": {
       "label": "",
+      "open": "",
       "placeholder": "",
       "all": {
         "tooltip": ""
@@ -6944,6 +6945,7 @@
       "addTab": {
         "tooltip": ""
       },
+      "closeWithOpenDialog": "",
       "newTab": ""
     }
   },
