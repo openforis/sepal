@@ -2,7 +2,7 @@ import Hammer from 'hammerjs'
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {animationFrameScheduler, auditTime, delay, filter, fromEvent, map, share, Subject, switchMap, take, takeUntil, timer} from 'rxjs'
+import {animationFrameScheduler, auditTime, delay, filter, fromEvent, map, merge, NEVER, share, Subject, switchMap, take, takeUntil, tap, timer} from 'rxjs'
 
 import {compose} from '~/compose'
 import lookStyles from '~/style/look.module.css'
@@ -13,6 +13,8 @@ import styles from './listItem.module.css'
 
 const EXPAND_DELAYED_TIMEOUT_MS = 1000
 const CLICKABLE_PAN_THRESHOLD_PX = 10
+const DRAG_CLONE_GAP_PX = 10
+const DRAG_CLONE_MARGIN_PX = 8
 
 const DragPreviewContext = React.createContext(false)
 
@@ -28,6 +30,7 @@ class _ListItem extends React.Component {
     state = {
         expanded: false,
         dragging: false,
+        cancelled: false,
         position: null,
         size: null
     }
@@ -41,6 +44,7 @@ class _ListItem extends React.Component {
         this.onDragHandleClick = this.onDragHandleClick.bind(this)
         this.onDragStart = this.onDragStart.bind(this)
         this.onDragMove = this.onDragMove.bind(this)
+        this.onDragCancel = this.onDragCancel.bind(this)
         this.onDragEnd = this.onDragEnd.bind(this)
     }
 
@@ -162,7 +166,11 @@ class _ListItem extends React.Component {
                 ? lookStyles.interactive
                 : null,
             this.isDisabled() ? lookStyles.disabled : null,
-            hovered ? lookStyles.hoverForcedOn : null
+            hovered === false
+                ? lookStyles.hoverForcedOff
+                : hovered
+                    ? lookStyles.hoverForcedOn
+                    : null
         ]
     }
 
@@ -205,10 +213,11 @@ class _ListItem extends React.Component {
     }
 
     render() {
+        const {cancelled} = this.state
         return (
             <React.Fragment>
                 {this.renderItem()}
-                {this.isDragging() ? this.renderDraggableClone() : null}
+                {this.isDragging() && !cancelled ? this.renderDraggableClone() : null}
             </React.Fragment>
         )
     }
@@ -236,14 +245,18 @@ class _ListItem extends React.Component {
 
     renderDraggableClone() {
         const {position, size} = this.state
-        const {dragCloneClassName} = this.props
+        const {dragCloneBesidePointer, dragCloneClassName} = this.props
         if (position && size) {
             return (
                 <Portal type='global'>
                     <DragPreviewContext.Provider value={true}>
                         <div className={styles.draggableContainer}>
                             <div
-                                className={[styles.draggableClone, dragCloneClassName].join(' ')}
+                                className={[
+                                    styles.draggableClone,
+                                    dragCloneBesidePointer ? styles.besidePointer : null,
+                                    dragCloneClassName
+                                ].filter(className => className).join(' ')}
                                 style={{
                                     '--x': position.x,
                                     '--y': position.y,
@@ -270,7 +283,12 @@ class _ListItem extends React.Component {
     }
 
     renderDragHandle(original = false) {
-        const handleOnly = this.props.dragTarget === 'handle'
+        const {showDragHandle, dragTarget} = this.props
+        const handleOnly = dragTarget === 'handle'
+        // An item dragged by its whole surface can do without the grip; one dragged by the grip cannot.
+        if (showDragHandle === false && !handleOnly) {
+            return null
+        }
         return (
             <div
                 ref={original && handleOnly ? this.dragHandle : null}
@@ -295,11 +313,16 @@ class _ListItem extends React.Component {
     // are measured. The preview follows the latest position at most once an animation frame, and the position the
     // pointer is released or cancelled at is delivered before the drag ends.
     initializeDraggable() {
-        const {addSubscription, dragAxis, dragTarget} = this.props
+        const {addSubscription, dragAxis, dragCancelOnEscape, dragCloneBesidePointer, dragPointer, dragTarget} = this.props
         const draggable = this.draggable.current
         const gestureTarget = dragTarget === 'handle' ? this.dragHandle.current : draggable
 
-        const hammer = new Hammer(gestureTarget)
+        // Hammer sets touch-action: none on whatever it listens to, which would stop a finger on the
+        // item from scrolling the list around it. Listening for the mouse alone leaves that scrolling
+        // to the browser, at the price of no drag by touch.
+        const hammer = dragPointer === 'mouse'
+            ? new Hammer(gestureTarget, {inputClass: Hammer.MouseInput, touchAction: 'auto'})
+            : new Hammer(gestureTarget)
 
         hammer.get('pan').set({
             direction: dragAxis === 'vertical'
@@ -319,37 +342,59 @@ class _ListItem extends React.Component {
             filter(({center}) => center),
             map(({center, deltaX, deltaY}) => {
                 const {left, top, width, height} = draggable.getBoundingClientRect()
-                const offset = {x: center.x - deltaX - left, y: center.y - deltaY - top}
-                const origin = {x: left - 1, y: top - 1}
+                const grab = {
+                    origin: {x: left - 1, y: top - 1},
+                    offset: {x: center.x - deltaX - left, y: center.y - deltaY - top},
+                    size: {width, height},
+                    dragAxis,
+                    besidePointer: dragCloneBesidePointer
+                }
                 return {
                     coords: center,
-                    position: dragPosition({origin, offset, coords: center, dragAxis}),
-                    size: {width, height},
-                    origin,
-                    offset
+                    position: dragPosition(grab, center),
+                    size: grab.size,
+                    grab
                 }
             }),
             share()
         )
 
+        // Escape cancels a drag in progress. Heard before anything else, and kept from it, so the same key does
+        // not also close or leave what the item sits in. The rest of the gesture moves and releases nothing.
+        const escape$ = dragCancelOnEscape
+            ? fromEvent(window, 'keydown', {capture: true}).pipe(
+                filter(({key}) => key === 'Escape'),
+                tap(event => {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }),
+                take(1)
+            )
+            : NEVER
+
         const dragMove$ = dragStart$.pipe(
-            switchMap(({origin, offset}) =>
+            switchMap(({grab}) =>
                 panMove$.pipe(
                     map(({center}) => center),
                     auditTime(0, animationFrameScheduler),
-                    takeUntil(panEnd$),
-                    map(coords => ({coords, position: dragPosition({origin, offset, coords, dragAxis})}))
+                    takeUntil(merge(panEnd$, escape$)),
+                    map(coords => ({coords, position: dragPosition(grab, coords)}))
                 )
             )
         )
 
         const dragRelease$ = dragStart$.pipe(
-            switchMap(({origin, offset}) =>
+            switchMap(({grab}) =>
                 panEnd$.pipe(
                     take(1),
-                    map(({center}) => ({coords: center, position: dragPosition({origin, offset, coords: center, dragAxis})}))
+                    takeUntil(escape$),
+                    map(({center}) => ({coords: center, position: dragPosition(grab, center)}))
                 )
             )
+        )
+
+        const dragCancel$ = dragStart$.pipe(
+            switchMap(() => escape$.pipe(takeUntil(panEnd$)))
         )
 
         const dragEnd$ = panEnd$.pipe(
@@ -360,6 +405,7 @@ class _ListItem extends React.Component {
             dragStart$.subscribe(this.onDragStart),
             dragRelease$.subscribe(this.onDragMove),
             dragMove$.subscribe(this.onDragMove),
+            dragCancel$.subscribe(this.onDragCancel),
             dragEnd$.subscribe(this.onDragEnd),
             () => hammer.destroy()
         )
@@ -367,10 +413,17 @@ class _ListItem extends React.Component {
 
     onDragStart({coords, position, size}) {
         const {drag$, dragValue, onDragStart} = this.props
+        this.showDragCursor(true)
         this.setState({dragging: true, position, size}, () => {
             drag$ && drag$.next({dragging: true, value: dragValue, coords})
             onDragStart && onDragStart(dragValue)
         })
+    }
+
+    // The copy under the pointer lets every event through, so without this the cursor would take its
+    // shape from whatever the pointer passes over: a row, the gap between two rows, a button.
+    showDragCursor(dragging) {
+        document.body.classList.toggle(styles.dragCursor, dragging)
     }
 
     onDragMove({coords, position}) {
@@ -380,11 +433,25 @@ class _ListItem extends React.Component {
         this.setState({position})
     }
 
+    // The drag ends here, while the gesture goes on until the pointer lets go: until then it is still no click.
+    onDragCancel() {
+        const {drag$, onDragEnd} = this.props
+        this.showDragCursor(false)
+        this.setState({cancelled: true}, () => {
+            drag$ && drag$.next({dragging: false, cancelled: true})
+            onDragEnd && onDragEnd()
+        })
+    }
+
     onDragEnd() {
         const {drag$, onDragEnd} = this.props
-        this.setState({dragging: false, position: null, size: null}, () => {
-            drag$ && drag$.next({dragging: false})
-            onDragEnd && onDragEnd()
+        const {cancelled} = this.state
+        this.showDragCursor(false)
+        this.setState({dragging: false, cancelled: false, position: null, size: null}, () => {
+            if (!cancelled) {
+                drag$ && drag$.next({dragging: false})
+                onDragEnd && onDragEnd()
+            }
         })
     }
 
@@ -410,6 +477,12 @@ class _ListItem extends React.Component {
         )
     }
 
+    // Only the item being dragged may reset the cursor: a virtual list unmounts other rows as the drag scrolls it.
+    componentWillUnmount() {
+        const {dragging} = this.state
+        dragging && this.showDragCursor(false)
+    }
+
     componentDidMount() {
         if (this.isDraggable()) {
             this.initializeDraggable()
@@ -422,10 +495,29 @@ class _ListItem extends React.Component {
 
 // Where the preview of an item held at `offset` is drawn with the pointer at `coords`: an item dragged along one axis
 // keeps its place on the other.
-const dragPosition = ({origin, offset, coords, dragAxis}) => ({
-    x: dragAxis === 'vertical' ? origin.x : coords.x - offset.x - 1,
-    y: dragAxis === 'horizontal' ? origin.y : coords.y - offset.y - 1
-})
+const dragPosition = ({origin, offset, size, dragAxis, besidePointer}, coords) => {
+    const {x, y} = besidePointer
+        ? positionBesidePointer(size, coords)
+        : {x: coords.x - offset.x - 1, y: coords.y - offset.y - 1}
+    return {
+        x: dragAxis === 'vertical' ? origin.x : x,
+        y: dragAxis === 'horizontal' ? origin.y : y
+    }
+}
+
+// Below and right of the pointer, so what lies under it stays in sight, or above and right of it where the window has
+// no room below. A preview as wide as its list may run past the right edge of the window, which cuts it, rather than
+// leave the pointer's diagonal.
+const positionBesidePointer = (size, coords) => {
+    const below = coords.y + DRAG_CLONE_GAP_PX
+    const above = coords.y - DRAG_CLONE_GAP_PX - size.height
+    return {
+        x: coords.x + DRAG_CLONE_GAP_PX,
+        y: below + size.height <= window.innerHeight - DRAG_CLONE_MARGIN_PX
+            ? below
+            : Math.max(DRAG_CLONE_MARGIN_PX, above)
+    }
+}
 
 export const ListItem = compose(
     _ListItem,
@@ -441,6 +533,11 @@ ListItem.propTypes = {
     disabled: PropTypes.any,
     drag$: PropTypes.object,
     dragAxis: PropTypes.oneOf(['horizontal', 'vertical']),
+    // Lets Escape cancel a drag: drag$ is told {dragging: false, cancelled: true}, and no release follows.
+    dragCancelOnEscape: PropTypes.bool,
+    dragPointer: PropTypes.oneOf(['any', 'mouse']),
+    // Draws the preview below and right of the pointer, rather than where the item was pressed, on a solid surface that fades out to its right.
+    dragCloneBesidePointer: PropTypes.bool,
     dragCloneClassName: PropTypes.string,
     dragTarget: PropTypes.oneOf(['handle', 'item']),
     dragtooltip: PropTypes.any,
@@ -450,7 +547,7 @@ ListItem.propTypes = {
     expansionClassName: PropTypes.string,
     expansionClickable: PropTypes.any,
     expansionInteractive: PropTypes.any,
-    hovered: PropTypes.any,
+    hovered: PropTypes.any, // three-state
     main: PropTypes.any,
     onClick: PropTypes.func,
     onDrag: PropTypes.func,
@@ -459,5 +556,6 @@ ListItem.propTypes = {
     onExpand: PropTypes.func,
     onExpandDelayed: PropTypes.func,
     onMouseOut: PropTypes.func,
-    onMouseOver: PropTypes.func
+    onMouseOver: PropTypes.func,
+    showDragHandle: PropTypes.bool
 }

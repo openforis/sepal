@@ -63,9 +63,44 @@ afterEach(async () => {
     root = null
     container?.remove()
     vi.useRealTimers()
+    vi.unstubAllGlobals()
 })
 
 describe('a dragged item', () => {
+    it('reports viewport coordinates when a drag starts on a scrolled page', async () => {
+        vi.stubGlobal('scrollX', 100)
+        vi.stubGlobal('scrollY', 200)
+        await mount()
+
+        await pan('panstart', {x: 10, y: 10})
+
+        expect(told[0]).toEqual(expect.objectContaining({coords: {x: 10, y: 10}}))
+    })
+
+    it('keeps the drag cursor when another item unmounts', async () => {
+        await mount()
+        const otherContainer = document.createElement('div')
+        document.body.appendChild(otherContainer)
+        const otherRoot = createRoot(otherContainer)
+        await act(async () => otherRoot.render(<ListItem onDragStart={() => {}}>Other</ListItem>))
+        await pan('panstart', {x: 100, y: 62})
+
+        await act(async () => otherRoot.unmount())
+        otherContainer.remove()
+
+        expect(document.body.className).toContain('dragCursor')
+    })
+
+    it('resets the drag cursor when the dragged item unmounts', async () => {
+        await mount()
+        await pan('panstart', {x: 100, y: 62})
+
+        await act(async () => root.unmount())
+        root = null
+
+        expect(document.body.className).not.toContain('dragCursor')
+    })
+
     it('is held where it was pressed, however far the pointer had moved when the drag was recognised', async () => {
         await mount()
 
@@ -131,6 +166,67 @@ describe('a dragged item', () => {
         expect(told.at(-1)).toEqual({dragging: false})
     })
 
+    it('drawn beside the pointer keeps clear of it, below and to the right', async () => {
+        await mount({dragCloneBesidePointer: true})
+
+        await pan('panstart', {x: 100, y: 62})
+        await pan('panmove', {x: 300, y: 200})
+        await nextFrame()
+
+        expect(previewAt()).toEqual({x: 310, y: 210})
+    })
+
+    it('drawn beside the pointer turns above it near the bottom of the window, and stays to its right', async () => {
+        vi.stubGlobal('innerWidth', 800)
+        vi.stubGlobal('innerHeight', 600)
+        await mount({dragCloneBesidePointer: true})
+
+        await pan('panstart', {x: 100, y: 62})
+        await pan('panmove', {x: 700, y: 580})
+        await nextFrame()
+
+        expect(previewAt()).toEqual({x: 710, y: 580 - 10 - 30})
+    })
+
+    it('cancelled with Escape, ends at once and reports nothing more when the pointer lets go', async () => {
+        await mount({dragCancelOnEscape: true})
+        await pan('panstart', {x: 100, y: 62})
+
+        await pressEscape()
+
+        expect(preview()).toBeNull()
+        expect(told.at(-1)).toEqual({dragging: false, cancelled: true})
+
+        await pan('panmove', {x: 150, y: 62})
+        await nextFrame()
+        await pan('panend', {x: 150, y: 62})
+        await act(async () => vi.advanceTimersByTime(100))
+
+        expect(told.slice(1)).toEqual([{dragging: false, cancelled: true}])
+    })
+
+    it('keeps the Escape that cancels a drag from anything else listening for it', async () => {
+        const heard = vi.fn()
+        document.addEventListener('keydown', heard)
+        await mount({dragCancelOnEscape: true})
+        await pan('panstart', {x: 100, y: 62})
+
+        await pressEscape()
+        document.removeEventListener('keydown', heard)
+
+        expect(heard).not.toHaveBeenCalled()
+    })
+
+    it('goes on through Escape unless asked to cancel on it', async () => {
+        await mount()
+        await pan('panstart', {x: 100, y: 62})
+
+        await pressEscape()
+
+        expect(preview()).not.toBeNull()
+        expect(told).toHaveLength(1)
+    })
+
     it('shows what is dragged in its preview, keeping the controls it offers on the item itself', async () => {
         await mount()
 
@@ -172,6 +268,9 @@ const pan = (type, center, {deltaX = 0, deltaY = 0} = {}) =>
     act(async () => hammers[0].emit(type, {center, deltaX, deltaY}))
 
 const nextFrame = () => act(async () => vi.advanceTimersToNextFrame())
+
+const pressEscape = () =>
+    act(async () => document.body.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true})))
 
 const moves = () => told.filter(event => !('dragging' in event)).map(({coords}) => coords)
 

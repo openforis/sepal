@@ -49,18 +49,14 @@
     animation: add var(--publish-animation-duration-ms) ease-in-out normal forwards;
 }
 
+/* A notification answers an action, so it takes its place at once and only fades in: travel of its own
+   would read as a delay. Removal, below, does travel: the card slides out as it fades, and its space
+   closes behind it. */
 @keyframes add {
     0% {
-        transform: translateX(100%);
-        margin-top: -100%;
-        opacity: 0;
-    }
-    50% {
         opacity: 0;
     }
     100% {
-        transform: none;
-        margin-top: 0;
         opacity: 1;
     }
 }

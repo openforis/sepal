@@ -1,3 +1,10 @@
+/* A row takes the width of the list. The vertical Layout around the rows would otherwise widen to the
+   longest line that may not wrap, and push the end of every row out of sight. The rows thus give the list
+   no width: it needs a container with a width of its own. */
+.item {
+    contain: inline-size;
+}
+
 .filler {
     --height: 0;
     --itemHeight: 0;

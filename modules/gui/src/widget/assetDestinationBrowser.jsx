@@ -100,7 +100,7 @@ class _AssetDestinationBrowser extends React.Component {
         return (
             <ButtonPopup
                 look='add'
-                icon='plus'
+                icon='folder-plus'
                 label={msg('Create folder')}
                 vPlacement='below'
                 hPlacement='over-right'

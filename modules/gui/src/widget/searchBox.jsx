@@ -33,6 +33,7 @@ class _SearchBox extends React.Component {
         this.hideOptions = this.hideOptions.bind(this)
         this.selectOption = this.selectOption.bind(this)
         this.clear = this.clear.bind(this)
+        this.escape = this.escape.bind(this)
         this.focus = this.focus.bind(this)
         this.onChange = this.onChange.bind(this)
     }
@@ -42,7 +43,7 @@ class _SearchBox extends React.Component {
         const {value, showOptions} = this.state
         return (
             <Keybinding keymap={{
-                Escape: onEscape || this.clear,
+                Escape: onEscape || this.escape,
                 ArrowDown: this.showOptions,
                 'Ctrl+f': this.focus,
                 'Meta+f': this.focus
@@ -69,6 +70,16 @@ class _SearchBox extends React.Component {
                 {showOptions ? this.renderOptions() : null}
             </Keybinding>
         )
+    }
+
+    // An empty box has nothing to clear, so the key goes on to whatever else answers to it, such as the Cancel
+    // of the dialog the box is in.
+    escape() {
+        const {value} = this.state
+        if (!value) {
+            return false
+        }
+        this.clear()
     }
 
     clear() {
