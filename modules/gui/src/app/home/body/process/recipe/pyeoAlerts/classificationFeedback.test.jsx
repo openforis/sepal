@@ -199,7 +199,7 @@ async function open({points}) {
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: PYEO}]
         }
     }

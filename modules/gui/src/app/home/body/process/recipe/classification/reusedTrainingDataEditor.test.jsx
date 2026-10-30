@@ -358,7 +358,7 @@ async function open(type, TrainingDataSet, {reused = PROVIDER, editing: dataSetI
             recipes: listing(),
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: CONSUMER}],
             selectedTabId: CONSUMER
         }

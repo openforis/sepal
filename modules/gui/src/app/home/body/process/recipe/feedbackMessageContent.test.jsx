@@ -289,7 +289,7 @@ async function mount(status, presenters = false) {
     if (presenters) records.a.type = 'FEEDBACK_TEST'
     const store = createStore((state = {dimensions: {width: 1280, height: 800}, process: {
         loadedRecipes: records, tabs: Object.values(records).map(({id, title}) => ({id, title})), selectedTabId: 'a',
-        recipes: Object.values(records).map(({id, title}) => ({id, name: title})), projects: []
+        recipes: Object.values(records).map(({id, title}) => ({id, name: title})), folders: []
     }}, action) => action.reduce ? action.reduce(state) : state)
     initStore(store)
     container = document.createElement('div')

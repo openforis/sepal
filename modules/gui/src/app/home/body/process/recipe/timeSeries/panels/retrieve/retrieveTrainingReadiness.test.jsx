@@ -27,7 +27,7 @@ import {tooltipText} from '~/widget/tooltip.test.fixtures'
 // submission and the workspace destination's check are the substitutes.
 
 const {inputBands$, saveRecipe$} = vi.hoisted(() => ({inputBands$: vi.fn(), saveRecipe$: vi.fn()}))
-const fake = vi.hoisted(() => ({stored: {}, submitted: [], projects: [], workspacePath: null}))
+const fake = vi.hoisted(() => ({stored: {}, submitted: [], folders: [], workspacePath: null}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
@@ -38,10 +38,10 @@ vi.mock('~/apiRegistry', () => ({default: {
         loadAll$: () => of(LISTING),
         save$: request => saveRecipe$(request)
     },
-    project: {
-        save$: project => {
-            fake.projects.push(project)
-            return of([project])
+    folder: {
+        save$: folder => {
+            fake.folders.push(folder)
+            return of([folder])
         }
     },
     tasks: {
@@ -96,7 +96,7 @@ beforeEach(() => {
     inputBands$.mockReset().mockReturnValue(of(INPUT_BANDS))
     saveRecipe$.mockReset().mockReturnValue(of({revision: 2}))
     fake.submitted = []
-    fake.projects = []
+    fake.folders = []
     fake.workspacePath = null
     watched.length = 0
 })
@@ -160,7 +160,7 @@ describe('an open Time Series Retrieve whose Classification loses its points', (
         await settled()
 
         expect(fake.submitted).toEqual([])
-        expect(fake.projects).toEqual([])
+        expect(fake.folders).toEqual([])
         expect(panelOpen()).toBe(false)
     })
 })
@@ -235,7 +235,7 @@ describe('an open Time Series Retrieve submitted from the keyboard while its Cla
         expect(panelOpen()).toBe(true)
         expect(savedSettings()).toMatchObject({workspacePath: 'downloads/series'})
         expect(fake.submitted).toEqual([])
-        expect(fake.projects).toEqual([])
+        expect(fake.folders).toEqual([])
 
         await act(async () => observed.next(INPUT_BANDS))
         await settled()
@@ -464,7 +464,7 @@ describe('what an open Time Series Retrieve watches', () => {
 const ID = 'time-series-1'
 const CLASSIFICATION = 'classification-1'
 const MOSAIC = 'mosaic-1'
-const PROJECT = 'project-1'
+const FOLDER = 'folder-1'
 const NATIVE = 'ndvi'
 const CLASSIFIED = 'regression'
 const REGRESSION = 'process.classification.bands.regression'
@@ -489,7 +489,7 @@ const seriesRecipe = bands => ({
     id: ID,
     type: 'TIME_SERIES',
     title: 'Series',
-    projectId: PROJECT,
+    folderId: FOLDER,
     revision: 1,
     model: {
         aoi: {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]},
@@ -674,7 +674,7 @@ const open = async ({selected, legacy = false, input = MOSAIC_INPUT, trainingDat
             saveStates: classificationOpen ? {[CLASSIFICATION]: {status: 'SAVED', revision: 1, model: records[1].model}} : {},
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
-            projects: [{id: PROJECT, name: 'Project', defaultWorkspaceFolder: 'earlier'}]
+            folders: [{id: FOLDER, name: 'Folder', defaultWorkspaceFolder: 'earlier'}]
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)

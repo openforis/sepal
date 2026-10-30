@@ -149,7 +149,7 @@ async function open(recipe) {
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: ID}]
         },
         assets: {user: [], other: []},

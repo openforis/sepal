@@ -194,7 +194,7 @@ async function mount({recipeType, Sources, sources}) {
             recipes: CLASSIFICATIONS.map(({id}) => ({id, name: id, type: 'CLASSIFICATION', revision: 1})),
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: []
         }
     }

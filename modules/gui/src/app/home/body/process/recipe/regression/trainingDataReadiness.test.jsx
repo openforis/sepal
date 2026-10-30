@@ -276,7 +276,7 @@ async function open(dataSets) {
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: REGRESSION}]
         },
         assets: {user: [{id: PLOTS_TABLE, type: 'Table', updateTime: 'T1'}], other: []},

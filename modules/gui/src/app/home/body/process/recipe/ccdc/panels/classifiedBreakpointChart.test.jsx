@@ -239,7 +239,7 @@ async function open({breakpointBands}) {
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: CCDC}]
         }
     }

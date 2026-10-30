@@ -235,7 +235,7 @@ async function openLayer({chosen}) {
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: HOST}]
         },
         assets: {user: [], other: []},

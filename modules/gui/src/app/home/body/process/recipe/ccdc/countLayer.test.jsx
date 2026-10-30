@@ -336,7 +336,7 @@ async function open({breakpointBands, classification, input = MOSAIC_INPUT, trai
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: CCDC}]
         },
         assets: {user: [], other: []},

@@ -864,7 +864,7 @@ async function open(recipe, toolbar, sources = []) {
             recipes: [...sources.map(({id, type, title}) => ({id, type, name: title, revision: 1})), {id: recipe.id, name: 'Recipe', type: recipe.type, revision: 1}, {id: RADAR, name: 'Radar recipe', type: 'REMAPPING', revision: 1}],
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [...sources.map(({id}) => ({id})), {id: recipe.id}]
         },
         assets: {user: [ASSET, OPTICAL, RADAR, OTHER_RADAR].map(id => ({id, type: 'Image', updateTime: 'T1'})), other: []},

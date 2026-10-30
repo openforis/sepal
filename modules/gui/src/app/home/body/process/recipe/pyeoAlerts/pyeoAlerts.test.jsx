@@ -113,7 +113,7 @@ const open = aoi => {
                 }
             },
             recipes: [],
-            projects: [],
+            folders: [],
             tabs: []
         }
     }

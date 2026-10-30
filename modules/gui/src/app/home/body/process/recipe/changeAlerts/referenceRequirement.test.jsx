@@ -2317,7 +2317,7 @@ const sessionState = ({selection, tabs, unloaded = [], saving = {}, records = []
         recipes: [...LISTING, ...records.filter(record => !LISTING.some(({id}) => id === record.id))].map(summary => saving[summary.id] ? {...summary, revision: 2} : summary),
         recipeListing: {checkedAt: Date.now()},
         saveStates: Object.fromEntries(Object.keys(saving).map(id => [id, {status: 'SAVING', revision: 2, model: saving[id].model}])),
-        projects: [],
+        folders: [],
         tabs
     },
     assets: {user: [SEGMENTS_ASSET, RADAR_ASSET, 'users/x/other-segments'].map(id => ({id, updateTime: 'T1'})), other: []},

@@ -281,7 +281,7 @@ async function open({points, classifier = {type: 'RANDOM_FOREST'}, inputs}) {
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: SERIES}]
         }
     }

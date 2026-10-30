@@ -154,7 +154,7 @@ async function open({type, Sources, sources}) {
             recipes: [{id: CLASSIFICATION, name: CLASSIFICATION, type: 'CLASSIFICATION', revision: 1}],
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: []
         }
     }

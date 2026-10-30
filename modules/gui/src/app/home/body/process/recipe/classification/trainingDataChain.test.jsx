@@ -394,7 +394,7 @@ async function onChangeMap(referenceData = []) {
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: CHANGE}]
         },
         assets: {user: [], other: []},
