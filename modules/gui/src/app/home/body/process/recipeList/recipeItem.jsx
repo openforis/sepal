@@ -14,6 +14,7 @@ export const RecipeItem = ({
     onClick, onSelect, onDuplicate, onRemove
 }) => {
     const drag = useContext(DropTargetContext)
+    const description = [path, recipe.name].filter(part => part).join(PATH_SEPARATOR)
     return (
         <ListItem
             hovered={drag ? false : hovered}
@@ -29,7 +30,9 @@ export const RecipeItem = ({
                 // Two lines even when the type is unknown, so it stands as tall as every other row of the list.
                 lines={2}
                 title={typeName}
-                description={[path, recipe.name].filter(part => part).join(PATH_SEPARATOR)}
+                description={description}
+                // A drag passes over rows on its way, and a name popping up there would cover the target.
+                descriptionTooltip={drag ? undefined : description}
                 timestamp={recipe.updateTime}
                 highlight={highlight}
                 // A search matches the name and the path, never the type, so the title must not claim a hit.

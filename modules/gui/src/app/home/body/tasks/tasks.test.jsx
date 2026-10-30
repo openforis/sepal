@@ -16,7 +16,7 @@ vi.mock('~/widget/fastList', async () => {
     }
 })
 vi.mock('~/widget/crudItem', () => ({
-    CrudItem: ({description}) => <div data-description>{description}</div>
+    CrudItem: ({description, descriptionTooltip}) => <div data-description data-tooltip={descriptionTooltip}>{description}</div>
 }))
 vi.mock('~/widget/listItem', () => ({ListItem: ({children}) => children}))
 vi.mock('~/widget/sectionLayout', () => ({
@@ -42,6 +42,14 @@ describe('Tasks', () => {
 
         expect(descriptions()).toEqual(['/ Amazon / Brazil / Mosaic 2024'])
     })
+
+    it('gives the whole path of a recipe task on hover, as the row may cut it', () => {
+        const task = recipeTask({folderId: 'brazil', recipeName: 'Mosaic 2024'})
+
+        renderTasks({tasks: [task], folders: [folder('amazon', 'Amazon'), folder('brazil', 'Brazil', 'amazon')]})
+
+        expect(descriptionTooltips()).toEqual(['/ Amazon / Brazil / Mosaic 2024'])
+    })
 })
 
 let container
@@ -64,6 +72,9 @@ const renderTasks = ({tasks, folders}) =>
 
 const descriptions = () =>
     [...container.querySelectorAll('[data-description]')].map(element => element.textContent)
+
+const descriptionTooltips = () =>
+    [...container.querySelectorAll('[data-description]')].map(element => element.dataset.tooltip)
 
 const recipeTask = ({folderId, recipeName}) => ({
     id: 'task-1',

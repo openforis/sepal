@@ -126,6 +126,7 @@ export class RecipeBrowser extends React.Component {
                     icon='folder-open'
                     iconVariant='info'
                     description={folder.name}
+                    descriptionTooltip={folder.name}
                     highlight={getHighlight(filterValues)}
                 />
             </ListItem>
@@ -138,11 +139,13 @@ export class RecipeBrowser extends React.Component {
         const {folderId, filterValues} = this.state
         const path = filterValues.length ? folderPathLabel(folders, recipe.folderId, folderId) : ''
         const typeName = getRecipeType(recipe.type)?.labels.name
+        const description = [path, recipe.name].filter(part => part).join(PATH_SEPARATOR)
         return (
             <ListItem hovered={hovered} onClick={() => onSelect(recipe.id)}>
                 <CrudItem
                     icon='globe'
-                    description={[path, recipe.name].filter(part => part).join(PATH_SEPARATOR)}
+                    description={description}
+                    descriptionTooltip={description}
                     metadata={typeName && <span className={styles.type}>{typeName}</span>}
                     highlight={getHighlight(filterValues)}
                 />

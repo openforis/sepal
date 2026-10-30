@@ -35,6 +35,8 @@ export const FolderItem = ({folder, counts, highlight, hovered, edit, selected, 
                     // row's height.
                     lines={2}
                     description={folder.name}
+                    // A drag passes over rows on its way, and a name popping up there would cover the target.
+                    descriptionTooltip={drag ? undefined : folder.name}
                     metadata={folderDescription(counts)}
                     highlight={highlight}
                     editTooltip={msg('process.folder.edit.tooltip')}

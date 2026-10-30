@@ -51,6 +51,12 @@ describe('FolderItem', () => {
         expect(lastProps().metadata).toBe('process.folder.folderCount · process.folder.description')
     })
 
+    it('gives the whole name on hover, as the row may cut it', () => {
+        mount({folder, counts: {folders: 0, recipes: 0}, onClick: () => {}})
+
+        expect(lastProps().descriptionTooltip).toBe('Kenya')
+    })
+
     it('stands as tall as a recipe row, without a title', () => {
         mount({folder, counts: {folders: 0, recipes: 0}, onClick: () => {}})
 

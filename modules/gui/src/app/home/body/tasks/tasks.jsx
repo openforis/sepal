@@ -131,13 +131,17 @@ class _Tasks extends React.Component {
 
     renderTask(task) {
         const {icon, iconVariant} = this.getStatusIcon(task)
+        const title = this.getTaskTitle(task)
+        const path = this.getRecipePath(task)
         return (
             <ListItem
                 key={task.id}
                 onClick={() => this.showInfo(task)}>
                 <CrudItem
-                    title={this.getTaskTitle(task)}
-                    description={this.getRecipePath(task)}
+                    title={title}
+                    titleTooltip={title}
+                    description={path}
+                    descriptionTooltip={path}
                     highlight={this.getHighlightMatcher()}
                     icon={icon}
                     iconSize='lg'

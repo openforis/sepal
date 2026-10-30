@@ -12,6 +12,7 @@ vi.mock('~/widget/crudItem', () => ({
 vi.mock('~/widget/listItem', () => ({ListItem: ({children}) => children}))
 vi.mock('~/translate', () => ({msg: key => key}))
 
+import {DropTargetContext} from './dropTargetContext'
 import {RecipeItem} from './recipeItem'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -20,11 +21,15 @@ const recipe = {id: 'r1', name: 'nairobi_mosaic', type: 'MOSAIC', updateTime: '2
 
 let mounted
 
-const mount = props => {
+const mount = (props, drag = null) => {
     const container = document.createElement('div')
     document.body.appendChild(container)
     const root = createRoot(container)
-    act(() => root.render(<RecipeItem {...props}/>))
+    act(() => root.render(
+        <DropTargetContext.Provider value={drag}>
+            <RecipeItem {...props}/>
+        </DropTargetContext.Provider>
+    ))
     mounted.push(() => {
         act(() => root.unmount())
         container.remove()
@@ -70,6 +75,18 @@ describe('RecipeItem', () => {
 
         expect(lastProps().description).toBe('Kenya / 2024 / nairobi_mosaic')
         expect(lastProps().metadata).toBeUndefined()
+    })
+
+    it('gives the whole path on hover, as the row may cut it', () => {
+        mount({recipe, typeName: 'Optical mosaic', path: 'Kenya / 2024', onClick: () => {}})
+
+        expect(lastProps().descriptionTooltip).toBe('Kenya / 2024 / nairobi_mosaic')
+    })
+
+    it('keeps its path to itself while a drag passes over it', () => {
+        mount({recipe, typeName: 'Optical mosaic', path: 'Kenya / 2024', onClick: () => {}}, {target: null})
+
+        expect(lastProps().descriptionTooltip).toBeUndefined()
     })
 
     it('offers selection instead of the row actions while editing', () => {
