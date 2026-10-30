@@ -7,14 +7,19 @@ import {lastValueFrom} from 'rxjs'
 
 const state = {}
 
-mock.module('googleapis', {
+mock.module('google-auth-library', {
+    exports: {OAuth2Client: class {setCredentials() {}}}
+})
+
+mock.module('@googleapis/drive', {
     exports: {
-        google: {
-            auth: {OAuth2: class {setCredentials() {}}},
-            drive: () => ({files: {list: async params => {
-                if (state.failures-- > 0) throw Object.assign(new Error('Backend Error'), {code: 503})
-                return {data: list(params)}
-            }}})
+        drive_v3: {
+            Drive: class {
+                files = {list: async params => {
+                    if (state.failures-- > 0) throw Object.assign(new Error('Backend Error'), {code: 503})
+                    return {data: list(params)}
+                }}
+            }
         }
     }
 })

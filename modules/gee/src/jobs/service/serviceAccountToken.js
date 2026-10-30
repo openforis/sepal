@@ -1,4 +1,4 @@
-import {google} from 'googleapis'
+import {JWT} from 'google-auth-library'
 import {defer, first, from} from 'rxjs'
 
 import {serviceAccountCredentials} from '#gee/config'
@@ -48,7 +48,7 @@ export class ServiceAccountToken {
 }
 
 const serviceAccountToken = new ServiceAccountToken({
-    client: new google.auth.JWT({
+    client: new JWT({
         email: serviceAccountCredentials.client_email,
         key: serviceAccountCredentials.private_key,
         scopes: SCOPES
