@@ -249,18 +249,22 @@ export const removeRecipes$ = recipeIds =>
         )
     )
 
+// The merge keeps the local entry of a recipe with a save outstanding, and that entry still names the folder it
+// left, so the move is applied to the merged listing as well.
 export const moveRecipes$ = (recipeIds, folderId) => {
-    const loadedRecipes = select('process.loadedRecipes') || []
     const request = startListingRequest()
     return api.recipe.move$(recipeIds, folderId).pipe(
         map(response => {
             const {recipes, listingState} = mergeListing(request, response)
+            const loadedRecipes = select('process.loadedRecipes') || {}
             recipeIds
                 .filter(id => loadedRecipes[id])
                 .reduce(
                     (builder, id) => builder.set(['process.loadedRecipes', id, 'folderId'], folderId),
                     actionBuilder('MOVE_RECIPES', {recipeIds, folderId})
-                        .set('process.recipes', recipes)
+                        .set('process.recipes', recipes.map(recipe =>
+                            recipeIds.includes(recipe.id) ? {...recipe, folderId} : recipe
+                        ))
                         .set(LISTING_STATE_PATH, touchedListing(listingState, recipeIds))
                 ).dispatch()
         })

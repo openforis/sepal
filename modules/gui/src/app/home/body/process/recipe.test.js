@@ -3,7 +3,7 @@ import {beforeEach, describe, expect, it, test, vi} from 'vitest'
 const dispatched = []
 
 // The session the module reads, and the one listener it registers on loaded recipes: the autosave.
-const session = vi.hoisted(() => ({state: {}, autosave: null, saves: [], listings: []}))
+const session = vi.hoisted(() => ({state: {}, autosave: null, saves: [], listings: [], moves: []}))
 
 vi.mock('~/store', () => ({
     select: path => selectPath(session.state, path),
@@ -28,6 +28,11 @@ vi.mock('~/apiRegistry', async () => {
         loadAll$: () => {
             const response = new Subject()
             session.listings.push(response)
+            return response
+        },
+        move$: () => {
+            const response = new Subject()
+            session.moves.push(response)
             return response
         }
     }}}
@@ -66,7 +71,7 @@ vi.mock('~/widget/tabs/tabActions', () => ({
 
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
 
-const {duplicateRecipe, loadRecipes$, openRecipeRevision, recipePath, saveRecipe, saveStatePath} = await import('./recipe')
+const {duplicateRecipe, loadRecipes$, moveRecipes$, openRecipeRevision, recipePath, saveRecipe, saveStatePath} = await import('./recipe')
 
 beforeEach(() => {
     dispatched.length = 0
@@ -213,6 +218,35 @@ test('the first listing keeps a recipe saved while it was in flight', () => {
     const listed = dispatched.map(sets => sets[JSON.stringify('process.recipes')]).filter(Boolean).at(-1)
     expect(listed.map(({id}) => id)).toEqual(['other', 'created'])
 })
+
+// A move answers with the listing, merged like any other, where a recipe still saving keeps its own entry.
+describe('moving a recipe', () => {
+    it('lists it in the folder it moved to while a save of it is outstanding', () => {
+        session.state = {process: {
+            loadedRecipes: {}, recipes: [{id: 'r1', folderId: 'from'}], recipeListing: {epoch: 0},
+            saveStates: {r1: {status: 'SAVING'}}, tabs: []
+        }}
+        moveRecipes$(['r1'], 'to').subscribe()
+
+        session.moves.at(-1).next([{id: 'r1', folderId: 'to'}])
+
+        expect(listed().map(({folderId}) => folderId)).toEqual(['to'])
+    })
+
+    it('moves it in a tab opened while the move was in flight', () => {
+        session.state = {process: {
+            loadedRecipes: {}, recipes: [{id: 'r1', folderId: 'from'}], recipeListing: {epoch: 0}, saveStates: {}, tabs: []
+        }}
+        moveRecipes$(['r1'], 'to').subscribe()
+        session.state.process.loadedRecipes = {r1: {id: 'r1', folderId: 'from'}}
+
+        session.moves.at(-1).next([{id: 'r1', folderId: 'to'}])
+
+        expect(dispatched.at(-1)[JSON.stringify(['process.loadedRecipes', 'r1', 'folderId'])]).toBe('to')
+    })
+})
+
+const listed = () => dispatched.map(sets => sets[JSON.stringify('process.recipes')]).filter(Boolean).at(-1)
 
 const newRecipe = () => ({
     id: 'r1',
