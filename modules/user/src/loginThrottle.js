@@ -5,19 +5,17 @@ import {isText} from './validation.js'
 
 const log = getLogger('loginThrottle')
 
-const MAX_LOGIN_FAILURES = 10
-// Higher, because users behind one NAT share an address and must not lock each other out.
-const MAX_CLIENT_FAILURES = 50
 const WINDOW_MS = 15 * 60 * 1000
 const SWEEP_INTERVAL_MS = 60 * 1000
 
-// Limits failed password logins per WINDOW_MS: MAX_LOGIN_FAILURES for a username at a client address, and
-// MAX_CLIENT_FAILURES for a client address whatever the username. Failures are deliberately not counted per username
-// alone: anyone could then lock any user out.
+// Limits failed password logins per WINDOW_MS: maxUsernameFailures for a username at a client address, and
+// maxClientFailures for a client address whatever the username. A limit that is missing, false or below 1 is
+// disabled. The client limit belongs above the username limit: users behind one NAT share an address and must not
+// lock each other out. Failures are deliberately not counted per username alone: anyone could then lock any user out.
 // A throttled login is refused before its password is verified: a correct guess must not be told apart, and
 // refusing costs no scrypt hash.
 export class LoginThrottle {
-    #maxLoginFailures
+    #maxUsernameFailures
     #maxClientFailures
     #windowMs
     #now
@@ -25,12 +23,12 @@ export class LoginThrottle {
     #sweptAt = 0
 
     constructor({
-        maxLoginFailures = MAX_LOGIN_FAILURES,
-        maxClientFailures = MAX_CLIENT_FAILURES,
+        maxUsernameFailures,
+        maxClientFailures,
         windowMs = WINDOW_MS,
         now = Date.now
     } = {}) {
-        this.#maxLoginFailures = maxLoginFailures
+        this.#maxUsernameFailures = maxUsernameFailures
         this.#maxClientFailures = maxClientFailures
         this.#windowMs = windowMs
         this.#now = now
@@ -66,8 +64,8 @@ export class LoginThrottle {
         const client = `client ${isText(clientIp) ? clientIp : 'unknown'}`
         return [
             {key: client, maxFailures: this.#maxClientFailures},
-            isText(username) && {key: `user ${storedUsername(username)} at ${client}`, maxFailures: this.#maxLoginFailures}
-        ].filter(Boolean)
+            isText(username) && {key: `user ${storedUsername(username)} at ${client}`, maxFailures: this.#maxUsernameFailures}
+        ].filter(limit => limit && limit.maxFailures >= 1)
     }
 
     #counter({key, maxFailures}, now) {

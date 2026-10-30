@@ -1,0 +1,28 @@
+---
+# get_url fails on a checksum mismatch, before anything is extracted
+- name: Download btop
+  get_url:
+    url: "https://github.com/aristocratos/btop/releases/download/v{{ btop_version }}/btop-x86_64-unknown-linux-musl.tar.gz"
+    dest: "/usr/local/src/btop-{{ btop_version }}.tar.gz"
+    checksum: "sha256:{{ btop_sha256 }}"
+
+- name: Create btop extraction dir
+  file:
+    path: "/usr/local/src/btop-{{ btop_version }}"
+    state: directory
+
+- name: Extract btop
+  unarchive:
+    src: "/usr/local/src/btop-{{ btop_version }}.tar.gz"
+    dest: "/usr/local/src/btop-{{ btop_version }}"
+    remote_src: yes
+    creates: "/usr/local/src/btop-{{ btop_version }}/btop/bin/btop"
+
+- name: Install btop
+  copy:
+    src: "/usr/local/src/btop-{{ btop_version }}/btop/bin/btop"
+    dest: /usr/local/bin/btop
+    remote_src: yes
+    owner: root
+    group: root
+    mode: "0755"

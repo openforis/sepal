@@ -13,6 +13,8 @@ const QUEUE = `build-queue-${platformVersion}`
 
 const QUEUE_OPTIONS = {
     removeOnComplete: true,
+    // Job ids are fixed per package and the queue outlives restarts: a kept failed job would block its package for good
+    removeOnFail: true,
     attempts: 3,
     backoff: {
         type: 'exponential',
@@ -146,7 +148,8 @@ const enqueueUpdateBinaryPackages = updateNow => {
         repeat: updateNow ? null : {
             every: autoUpdateIntervalHours * 3600e3
         },
-        removeOnComplete: true
+        removeOnComplete: true,
+        removeOnFail: true
     })
 }
 
@@ -171,8 +174,6 @@ const processJob = async ({data}) => {
 }
 
 const initQueue = async () => {
-    await queue.obliterate({force: true})
-    log.debug('Queue obliterated')
     log.info(`Scheduling automatic package update every ${autoUpdateIntervalHours} hours`)
     enqueueUpdateBinaryPackages()
     if (updateNow) {

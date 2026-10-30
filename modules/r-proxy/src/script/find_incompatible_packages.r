@@ -4,19 +4,21 @@ args <- commandArgs(trailingOnly = TRUE)
 
 lib <- args[1]
 
-.libPaths(lib)
+rMinorVersion <- paste(getRversion()$major, getRversion()$minor, sep = '.')
 
-# Attempt to load each installed package's compiled .so under the current R.
-# A failure means the binary was compiled against a different R ABI; print the
-# package name so the caller can invalidate and rebuild it.
+builtMinorVersion <- function(built)
+    sub('^R ([0-9]+\\.[0-9]+).*', '\\1', built)
+
+# Print each installed package with compiled code built under another R minor version, so the caller can
+# invalidate and rebuild it: R keeps binary compatibility only within a minor version. Loading the code
+# instead would run package initialization code, which can crash R.
 
 for (pkg in list.dirs(lib, recursive = FALSE, full.names = FALSE)) {
-    sos <- list.files(file.path(lib, pkg, 'libs'), pattern = '\\.so$', full.names = TRUE)
-    for (so in sos) {
-        ok <- tryCatch({dyn.load(so); dyn.unload(so); TRUE}, error = function(e) FALSE)
-        if (!ok) {
-            cat(pkg, '\n')
-            break
-        }
+    if (!dir.exists(file.path(lib, pkg, 'libs'))) {
+        next
+    }
+    built <- suppressWarnings(packageDescription(pkg, lib.loc = lib, fields = 'Built'))
+    if (is.na(built) || builtMinorVersion(built) != rMinorVersion) {
+        writeLines(pkg)
     }
 }

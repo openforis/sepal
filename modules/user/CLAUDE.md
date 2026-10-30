@@ -13,10 +13,11 @@ before this allocation rule was used. The local OS group `sepal` (gid 9999) is s
 ## Login throttling
 
 `/authenticate` (gateway) and `/auth/password` (ssh-gateway) share one in-memory `LoginThrottle`. Per 15 minutes
-it allows 10 failed logins of a username from one `clientIp` (the address the caller sends), and 50 from one
-`clientIp` whatever the username. Never per username alone, which would let anyone lock a user out. A throttled
-login is answered 429 before its password is verified, even when the password is right. Counts reset when the module
-restarts.
+it allows `MAX_USERNAME_FAILURES` failed logins of a username from one `clientIp` (the address the caller sends), and
+`MAX_CLIENT_FAILURES` from one `clientIp` whatever the username. A limit that is unset, `false` or below 1 is
+disabled, so logins are unlimited by default. Never per username alone, which would let anyone lock a user out. A
+throttled login is answered 429 before its password is verified, even when the password is right. Counts reset when
+the module restarts.
 
 ## Database migrations
 

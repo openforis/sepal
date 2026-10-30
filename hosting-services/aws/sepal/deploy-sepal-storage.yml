@@ -239,6 +239,7 @@
         masked: no
 
   roles:
+    - { role: btop }
     - { role: docker-login }
     # - { role: run-module, module: logger }
     - { role: run-module, module: storage }

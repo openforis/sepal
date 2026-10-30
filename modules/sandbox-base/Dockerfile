@@ -9,6 +9,10 @@ ARG PIP_BREAK_SYSTEM_PACKAGES=1
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
 ENV UV_BREAK_SYSTEM_PACKAGES=1
 
+# Build-time only: package caches would otherwise stay in the image layers
+ARG UV_NO_CACHE=1
+ARG PIP_NO_CACHE_DIR=1
+
 
 # Use specific Java version
 ARG JAVA_VERSION=11.0.32-tem
@@ -111,6 +115,9 @@ RUN apt-get -y update && apt-get install -y \
 
 RUN pip3 install uv
 
+# Build-time only: site-packages is root-owned, so Python can't cache bytecode at runtime
+ARG UV_COMPILE_BYTECODE=1
+
 # Install Micromamba
 RUN curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xj -C /usr/local/bin/ --strip-components=1 bin/micromamba
 
@@ -145,6 +152,7 @@ RUN apt-get -y update && apt-get install -y \
     libspatialindex-dev \
     libssl-dev \
     libudunits2-dev \
+    libuv1-dev \
     libxcursor-dev \
     libxinerama-dev \
     libxml2-dev \

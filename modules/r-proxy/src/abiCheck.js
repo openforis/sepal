@@ -3,13 +3,15 @@ import Path from 'node:path'
 
 import {getLogger} from '#sepal/log'
 
-import {CRAN_ROOT, libPath} from './config.js'
+import {CRAN_ROOT, GITHUB_ROOT, libPath} from './config.js'
 import {runScript} from './script.js'
 
 const log = getLogger('abiCheck')
 
-// libPath and CRAN_ROOT are already scoped to <platformVersion> (see config.js).
+// libPath, CRAN_ROOT and GITHUB_ROOT are already scoped to <platformVersion> (see config.js).
 const MARKER = Path.join(libPath, '.r-version')
+
+const R_MINOR_VERSION_MATCHER = /^R version (\d+\.\d+)/
 
 const removePackage = async pkg => {
     await rm(Path.join(libPath, pkg), {recursive: true, force: true})
@@ -24,32 +26,38 @@ const removePackage = async pkg => {
     }
 }
 
-// On startup, if R has changed since the last run, find every installed package whose
-// compiled .so fails to load under the current R (an ABI mismatch) and remove it from both
-// the build library and the served binaries. The existing on-demand build path
-// (proxy-cran.js -> enqueueBuildCranPackage) recompiles each on first client request.
+const findLines = async (script, args) =>
+    (await runScript(script, args))
+        .split('\n').map(s => s.trim()).filter(Boolean)
+
+// On startup, if the R minor version has changed since the last run, remove every installed package and
+// served binary whose compiled code was built under another minor version: R keeps binary compatibility
+// only within a minor version. The existing on-demand build path (proxy-cran.js -> enqueueBuildCranPackage)
+// recompiles each CRAN package on first client request.
 //
-// Detection is symbol-agnostic: a bare dyn.load resolves against libR.so and the system
-// libraries automatically, so a load failure pinpoints true R-ABI breaks without a hardcoded
-// symbol list. False positives are possible but rare: a package whose .so directly links
-// another R package's C symbols (most use R_RegisterCCallable runtime lookup instead) could
-// fail a bare dyn.load even when healthy. Worst case is one extra package rebuild — acceptable.
+// The served binaries are checked separately from the installed packages: a binary outlives the
+// installed copy it was bundled from when that copy is reinstalled or removed.
 export const invalidateIncompatiblePackages = async () => {
-    const currentR = (await runScript('get_r_version.sh', [])).trim()
+    const currentR = (await runScript('get_r_version.sh', [])).match(R_MINOR_VERSION_MATCHER)[1]
     const recordedR = await readFile(MARKER, 'utf8').then(s => s.trim()).catch(() => null)
     if (recordedR === currentR) {
-        log.info(`R unchanged [${currentR}] - skipping ABI check`)
+        log.info(`R minor version unchanged [${currentR}] - skipping ABI check`)
         return
     }
-    log.info(`R changed [${recordedR} -> ${currentR}] - checking cached packages for ABI compatibility`)
-    const broken = (await runScript('find_incompatible_packages.r', [libPath]))
-        .split('\n').map(s => s.trim()).filter(Boolean)
-    if (broken.length) {
-        log.warn(`Removing ${broken.length} ABI-incompatible package(s): ${broken.join(', ')}`)
-        for (const pkg of broken) {
+    log.info(`R minor version changed [${recordedR} -> ${currentR}] - checking cached packages for ABI compatibility`)
+    const packages = await findLines('find_incompatible_packages.r', [libPath])
+    if (packages.length) {
+        log.warn(`Removing ${packages.length} ABI-incompatible package(s): ${packages.join(', ')}`)
+        for (const pkg of packages) {
             await removePackage(pkg)
         }
-    } else {
+    }
+    const binaries = await findLines('find_incompatible_binaries.r', [Path.join(CRAN_ROOT, 'bin'), Path.join(GITHUB_ROOT, 'bin')])
+    if (binaries.length) {
+        log.warn(`Removing ${binaries.length} ABI-incompatible binary package(s): ${binaries.join(', ')}`)
+        await Promise.all(binaries.map(binary => rm(binary, {force: true})))
+    }
+    if (!packages.length && !binaries.length) {
         log.info('No ABI-incompatible packages found')
     }
     await writeFile(MARKER, currentR)

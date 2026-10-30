@@ -321,6 +321,7 @@
 
   tasks:
     - import_role: {name: live-patching}
+    - import_role: {name: btop}
     - import_role: {name: aws-mount-efs}
     - import_role: {name: docker-login}
 

@@ -6,13 +6,38 @@ import Path from 'node:path'
 import {PassThrough} from 'node:stream'
 import {after, before, describe, it} from 'node:test'
 
-import {checkTarget, forwardAndCache} from './proxy-utils.js'
+import {checkTarget, createProxy, forwardAndCache} from './proxy-utils.js'
 
 describe('checkTarget', () => {
     it('rejects when the target cannot be reached', async () => {
         const port = await unusedPort()
 
         await assert.rejects(checkTarget(`https://127.0.0.1:${port}/package.tar.gz`), {code: 'ECONNREFUSED'})
+    })
+})
+
+describe('createProxy', () => {
+    it('retries a request whose upstream connection is reset before the response', async () => {
+        const upstream = await startFlakyUpstream({resets: 1})
+        const proxy = await startProxy(upstream.url)
+
+        const res = await proxy.get()
+
+        assert.equal(res.statusCode, 200)
+        assert.equal(res.body, BODY)
+        upstream.close()
+        proxy.close()
+    })
+
+    it('fails a request whose upstream connection keeps being reset', async () => {
+        const upstream = await startFlakyUpstream({resets: Infinity})
+        const proxy = await startProxy(upstream.url)
+
+        const res = await proxy.get()
+
+        assert.equal(res.statusCode, 500)
+        upstream.close()
+        proxy.close()
     })
 })
 
@@ -81,6 +106,36 @@ const startUpstream = async () => {
         ),
         close: () => server.close()
     }
+}
+
+const startFlakyUpstream = async ({resets}) => {
+    let requests = 0
+    const server = http.createServer((req, res) =>
+        ++requests <= resets ? req.socket.destroy() : res.end(BODY)
+    )
+    const port = await listen(server)
+    return {url: `http://127.0.0.1:${port}/pkg_1.0.tar.gz`, close: () => server.close()}
+}
+
+const startProxy = async target => {
+    const proxyRequest = createProxy({onResponse: (proxyRes, req, res) => proxyRes.pipe(res), selfHandleResponse: true})
+    const server = http.createServer((req, res) => proxyRequest(req, res, target))
+    const port = await listen(server)
+    return {
+        get: () => new Promise((resolve, reject) =>
+            http.get(`http://127.0.0.1:${port}/`, {agent: false}, res => {
+                const chunks = []
+                res.on('data', chunk => chunks.push(chunk))
+                res.on('end', () => resolve({statusCode: res.statusCode, body: Buffer.concat(chunks).toString()}))
+            }).on('error', reject)
+        ),
+        close: () => server.close()
+    }
+}
+
+const listen = async server => {
+    await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
+    return server.address().port
 }
 
 const collector = () => {

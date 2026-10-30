@@ -13,7 +13,12 @@ library(remotes)
 
 .libPaths(lib)
 
-install_url(url, repos = repo, lib = lib, upgrade = 'always')
+# install.packages() only warns when a package fails to install. A previously installed version would
+# then pass the load check below and get bundled under the requested version.
+withCallingHandlers(
+    install_url(url, repos = repo, lib = lib, upgrade = 'always'),
+    warning = function(w) if (grepl('had non-zero exit status', conditionMessage(w))) stop(conditionMessage(w), call. = FALSE)
+)
 
 # check if library can be loaded, otherwise uninstall it and fail
 
