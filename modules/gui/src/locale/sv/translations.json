@@ -5456,10 +5456,7 @@
     },
     "recipeInput": {
       "label": "",
-      "placeholder": "",
-      "all": {
-        "tooltip": ""
-      }
+      "placeholder": ""
     },
     "safetyButton": {
       "label": ""

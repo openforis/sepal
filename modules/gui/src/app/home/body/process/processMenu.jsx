@@ -23,6 +23,7 @@ class _ProcessMenu extends React.Component {
         super(props)
         this.duplicateRecipe = this.duplicateRecipe.bind(this)
         this.exportRecipe = this.exportRecipe.bind(this)
+        this.moveRecipe = this.moveRecipe.bind(this)
         this.save = this.save.bind(this)
     }
 
@@ -35,6 +36,7 @@ class _ProcessMenu extends React.Component {
                     <Menu.Item onSelect={this.duplicateRecipe}>
                         {msg('process.menu.duplicateRecipe.label')}
                     </Menu.Item>
+                    {this.renderMoveRecipeMenuEntry()}
                     <Menu.Item onSelect={this.exportRecipe}>
                         {msg('process.menu.exportRecipe')}
                     </Menu.Item>
@@ -53,6 +55,15 @@ class _ProcessMenu extends React.Component {
         ) : null
     }
 
+    // An unsaved recipe is not on the server to be moved; it is saved into the folder it was made in.
+    renderMoveRecipeMenuEntry() {
+        return this.isRecipeUnsaved() ? null : (
+            <Menu.Item onSelect={this.moveRecipe}>
+                {msg('process.menu.moveRecipe.label')}
+            </Menu.Item>
+        )
+    }
+
     save() {
         const {recipe, activator: {activatables: {saveRecipeDialog}}} = this.props
         saveRecipeDialog.activate({recipe, closeTabOnSave: false})
@@ -61,6 +72,11 @@ class _ProcessMenu extends React.Component {
     isRecipeUnsaved() {
         const {recipe, recipes} = this.props
         return !(recipes && recipes.find(saved => saved.id === recipe.id))
+    }
+
+    moveRecipe() {
+        const {recipe, activator: {activatables: {moveRecipeDialog}}} = this.props
+        moveRecipeDialog.activate({recipe})
     }
 
     duplicateRecipe() {
@@ -82,5 +98,5 @@ class _ProcessMenu extends React.Component {
 export const ProcessMenu = compose(
     _ProcessMenu,
     connect(mapStateToProps),
-    withActivators(['saveRecipeDialog'])
+    withActivators(['saveRecipeDialog', 'moveRecipeDialog'])
 )
