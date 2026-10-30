@@ -75,7 +75,13 @@ actual state rather than assuming it matches another development database.
 
 Once test and production have completed their imports, remove those modules' `databaseMigrations.js`
 coordinators, restore direct `initDb` calls, remove `migrations/legacy-import/`, and drop
-`legacy_import_version`. Keep the schema migrations, `schema_version`, checksum validation, and the
+`legacy_import_version`.
+
+Recipe carries one more step. `003.do.folders.sql` copied `project` into `folder` and `recipe.project_id`
+into `recipe.folder_id`, and left the originals in place because the import's guard reads `project`: a
+statement naming a missing table fails whether or not its condition holds, which would break every fresh
+database. Once that import is gone, a schema migration drops `project`, `recipe.project_id` and
+`idx_recipe_3`. Keep the schema migrations, `schema_version`, checksum validation, and the
 schema and repository integration tests.
 
 ## Integration tests

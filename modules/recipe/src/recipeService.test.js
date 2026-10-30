@@ -20,16 +20,16 @@ describe('loadRecipe', () => {
 
         const recipe = await service.loadRecipe({principal: {...owner, username: 'BOB'}, recipeId: stored.id})
 
-        assert.deepEqual(recipe, {...stored.content, projectId: stored.projectId, revision})
+        assert.deepEqual(recipe, {...stored.content, folderId: stored.folderId, revision})
     })
 
     test('returns a recipe to its owner, with placement and revision', async () => {
-        const stored = recipeToStore({projectId: 'sampling-project'})
+        const stored = recipeToStore({folderId: 'sampling-folder'})
         const {revision} = await repository.saveRecipe(stored)
 
         const recipe = await service.loadRecipe({principal: owner, recipeId: stored.id})
 
-        assert.deepEqual(recipe, {...stored.content, projectId: stored.projectId, revision})
+        assert.deepEqual(recipe, {...stored.content, folderId: stored.folderId, revision})
     })
 
     test('hides a recipe owned by another user', async () => {
@@ -92,44 +92,72 @@ describe('removeRecipes', () => {
 })
 
 describe('moveRecipes', () => {
-    test('returns the moved recipe under its new project', async () => {
-        const destinationProjectId = 'destination-project'
-        const stored = recipeToStore({projectId: 'original-project'})
+    test('returns the moved recipe under its new folder', async () => {
+        const destinationFolderId = 'destination-folder'
+        const stored = recipeToStore({folderId: 'original-folder'})
         await repository.saveRecipe(stored)
 
         const recipes = await service.moveRecipes({
-            principal: owner, projectId: destinationProjectId, recipeIds: [stored.id]
+            principal: owner, folderId: destinationFolderId, recipeIds: [stored.id]
         })
 
         assert.equal(recipes.length, 1)
 
         assert.partialDeepStrictEqual(recipes, [{
-            id: stored.id, projectId: destinationProjectId
+            id: stored.id, folderId: destinationFolderId
         }])
     })
 })
 
-describe('saveProject', () => {
-    test('returns the owner\'s projects, the new one among them', async () => {
-        const project = aProject()
+describe('saveFolder', () => {
+    test('returns the owner\'s folders, the new one among them', async () => {
+        const folder = aFolder()
 
-        const projects = await service.saveProject({principal: owner, project})
+        const result = await service.saveFolder({principal: owner, folder})
 
-        assert.equal(projects.length, 1)
-        assert.partialDeepStrictEqual(projects, [{...project, username: owner.username}])
+        assert.equal(result.folders.length, 1)
+        assert.partialDeepStrictEqual(result, {
+            outcome: 'saved',
+            folders: [{...folder, username: owner.username}]
+        })
+    })
+
+    test('reports the repository\'s rejection instead of the folders', async () => {
+        const stored = folderToStore()
+        await repository.saveFolder(stored)
+
+        const result = await service.saveFolder({
+            principal: owner, folder: {...aFolder(), parentId: stored.id}
+        })
+
+        assert.deepEqual(result, {outcome: 'cycle'})
     })
 })
 
-describe('removeProject', () => {
-    test('returns the owner\'s remaining projects', async () => {
-        const removed = projectToStore({id: 'to-remove'})
-        const kept = projectToStore({id: 'to-keep'})
-        await repository.saveProject(removed)
-        await repository.saveProject(kept)
+describe('removeFolder', () => {
+    test('returns the owner\'s remaining folders', async () => {
+        const removed = folderToStore({id: 'to-remove'})
+        const kept = folderToStore({id: 'to-keep'})
+        await repository.saveFolder(removed)
+        await repository.saveFolder(kept)
 
-        const remaining = await service.removeProject({principal: owner, projectId: removed.id})
+        const result = await service.removeFolder({principal: owner, folderId: removed.id})
 
-        assert.deepEqual(remaining.map(({id}) => id), [kept.id])
+        assert.equal(result.folders.length, 1)
+        assert.partialDeepStrictEqual(result, {
+            outcome: 'removed',
+            folders: [{id: kept.id}]
+        })
+    })
+
+    test('reports the repository\'s rejection instead of the folders', async () => {
+        const folder = folderToStore()
+        await repository.saveFolder(folder)
+        await repository.saveRecipe(recipeToStore({folderId: folder.id}))
+
+        const result = await service.removeFolder({principal: owner, folderId: folder.id})
+
+        assert.deepEqual(result, {outcome: 'notEmpty', folders: 0, recipes: 1})
     })
 })
 
@@ -143,16 +171,16 @@ const recipeToStore = ({
     typeVersion
 })
 
-const projectToStore = ({owner: projectOwner = owner.username, ...project} = {}) => ({
-    ...aProject(project),
-    owner: projectOwner
+const folderToStore = ({owner: folderOwner = owner.username, ...folder} = {}) => ({
+    ...aFolder(folder),
+    owner: folderOwner
 })
 
 const aRecipe = (over = {}) => ({
-    id: 'a-recipe', projectId: null, name: 'A recipe', type: 'MOSAIC', content: aRecipeContent(), ...over
+    id: 'a-recipe', folderId: null, name: 'A recipe', type: 'MOSAIC', content: aRecipeContent(), ...over
 })
 
-const aProject = (over = {}) => ({id: 'a-project', name: 'A project', ...over})
+const aFolder = (over = {}) => ({id: 'a-folder', name: 'A folder', ...over})
 
 const aRecipeContent = (over = {}) => ({model: {}, ...over})
 
