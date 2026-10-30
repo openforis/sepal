@@ -12,6 +12,7 @@ import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {DraggableList} from '~/widget/draggableList'
 import {Keybinding} from '~/widget/keybinding'
+import {Notifications} from '~/widget/notifications'
 import {Scrollable} from '~/widget/scrollable'
 import {Content, SectionLayout, TopBar} from '~/widget/sectionLayout'
 import {isMobile} from '~/widget/userAgent'
@@ -53,7 +54,9 @@ const mapStateToProps = (state, ownProps) => ({
 
 class _Tabs extends React.Component {
     state = {
-        dragging: false
+        dragging: false,
+        // The dialogs open in each tab, by tab id, in the order they opened (tabContent.jsx).
+        dialogs: {}
     }
 
     constructor(props) {
@@ -66,6 +69,7 @@ class _Tabs extends React.Component {
         this.selectPreviousTab = this.selectPreviousTab.bind(this)
         this.selectNextTab = this.selectNextTab.bind(this)
         this.tabBusy$ = this.tabBusy$.bind(this)
+        this.setDialogOpen = this.setDialogOpen.bind(this)
         
         this.busyIn$ = new Subject()
 
@@ -140,6 +144,8 @@ class _Tabs extends React.Component {
                 selected={tab.id === selectedTabId}
                 busyIn$={this.busyIn$}
                 tabBusy$={this.tabBusy$}
+                dialogs={this.state.dialogs[tab.id]}
+                onDialog={this.setDialogOpen}
             >
                 {children}
             </TabContent>
@@ -173,9 +179,25 @@ class _Tabs extends React.Component {
         )
     }
 
+    // A tab holding an open dialog is not closed - by its button, middle-click or the keyboard alike - but shown, the
+    // dialog as it was, and what to do said: what the dialog holds is applied or cancelled there, never dropped here.
     onClose(tab) {
-        const {onClose} = this.props
+        const {onClose, statePath} = this.props
+        if (this.state.dialogs[tab.id]?.length) {
+            selectTab(tab.id, statePath)
+            Notifications.info({message: msg('widget.tabs.closeWithOpenDialog'), timeout: 5})
+            return
+        }
         onClose ? onClose(tab, () => this.closeTab(tab.id)) : this.closeTab(tab.id)
+    }
+
+    setDialogOpen(tabId, dialogId, open) {
+        this.setState(({dialogs}) => {
+            const tabDialogs = (dialogs[tabId] || []).filter(id => id !== dialogId)
+            const nextTabDialogs = open ? [...tabDialogs, dialogId] : tabDialogs
+            const {[tabId]: _previous, ...otherTabs} = dialogs
+            return {dialogs: nextTabDialogs.length ? {...otherTabs, [tabId]: nextTabDialogs} : otherTabs}
+        })
     }
 
     onHandleDragStart() {

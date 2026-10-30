@@ -371,8 +371,8 @@ const outputRowsInError = () => {
     const recipe = selectFrom(store.getState(), ['process.loadedRecipes', ID])
     const names = [...recipe.model.inputImagery.images, ...recipe.model.calculations.calculations].map(({name}) => name)
         .sort((a, b) => b.length - a.length)
-    return [...document.getElementsByClassName(classOf(errorIndicatorStyles, 'indicator'))]
-        .map(indicator => indicator.closest(`.${classOf(listItemStyles, 'verticalWrapper')}`))
+    return [...document.getElementsByClassName(classOf(listItemStyles, 'verticalWrapper'))]
+        .filter(row => row.querySelector(`.${classOf(listItemStyles, 'main')} .${classOf(errorIndicatorStyles, 'indicator')}`))
         .map(row => names.find(name => row.textContent.includes(name)))
 }
 

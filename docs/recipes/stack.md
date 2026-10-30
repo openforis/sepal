@@ -13,25 +13,26 @@ Inputs are told apart by their `imageId`, never by their source. A source - its 
 input only: one another input uses is not offered, or refused where it is typed. A saved recipe whose inputs already
 share a source keeps them, each edited and removed alone.
 
-Stack and Remapping share an input editor. The kind of source - an asset or a recipe - is chosen beside its picker, a
-new input starting as an asset; each kind keeps a draft of its own while the editor is open - its source and the bands
-selected for it - so switching back restores it, and no band crosses from one kind to the other. A kind not yet shown
-starts with nothing selected. It learns what a source holds by reading it; nothing it learns is an edit: opening a saved
-input leaves it unchanged, offering no Apply. Each selected band is a row of its own, named in its header and chosen
-when it is added: another band is taken by removing the row and adding one, which takes nothing of the removed band, not
-its id. The header chooses the band's type, continuous or categorical, over its source's default either way, without
-opening or closing the row. A categorical band shows its legend, open until its row collapses it and opened when the
-band is switched to categorical; a continuous band has none. A legend set aside by switching its band to continuous
-returns if the band is switched back while the editor is open; the configuration keeps no legend for a continuous band.
-Each legend is edited in an editor of its own, however many are shown. A long name is cut short in its row, named in
-full by its tooltip. A read of the source the input was saved with keeps every selected band as saved, with its id. One
-that read finds absent stays selected, marked on its row with the reason as its tooltip, and refuses Apply until it is
-removed or its source has it again. Absence is judged from that read alone: never from the band list saved with the
-input, nor while the read is pending or after it fails. Choosing another source reconciles the selection once that
-source answers: bands it holds are kept and the others dropped; no band is selected for the user. Once a source just
-chosen answers with bands, none of them selected, the bands to add are offered, once: not again after they are
-dismissed, nor when a draft returns or its source is read again, and never while it loads, after its read fails or when
-it has no bands. An answer about a source no longer selected changes nothing.
+### Shared input editor
+
+Stack and Remapping share `process/panels/inputImagery`; Band Math follows the same behavior in its editor.
+
+- Source kind is chosen beside the picker; a new input starts as an asset. Asset/recipe kinds keep separate
+  source and band drafts while open; switching kinds restores its draft without transferring bands.
+- Reading a saved source is not an edit. Its selected bands and IDs survive reopening and metadata refresh.
+  A band confirmed missing stays selected, marked and removable, and blocks Apply. Pending/failed reads do
+  not establish absence. Late answers for a replaced source change nothing.
+- Explicit source replacement reconciles after a successful current read: retain available selected bands,
+  drop absent ones and select no substitute. If none are selected, offer Add once, without reopening it on
+  refresh, draft return or dismissal. Loading, failed and empty reads offer nothing.
+- Each selected band has a row; change it by remove/add, without inheriting the removed row's ID. The type
+  control chooses continuous/categorical without toggling row expansion. Categorical legends initially open
+  and have independent editors. Switching to continuous sets the legend aside in the draft; switching back
+  restores it. Applied continuous bands retain no legend. Truncated names have full tooltips.
+
+Band Math's explicit [reference recovery](band-math.md#inputs) can reclaim retained IDs at Apply.
+
+### Applied input and naming checks
 
 Running it needs one input image at least: a Stack listing none cannot run
 ([Execution readiness](../design/recipes/source-resolution.md#execution-readiness)). Its Input imagery button says
@@ -63,12 +64,9 @@ do not refuse it. Each is repaired in Band names, whose fields check the names a
 among the names the mapping gives, not blank, that rule - without waiting for an edit; Cancel keeps the names saved. The panel finds each input's entry by `imageId`, as the
 declaration does; an input without one is offered its bands to name, blank, and gets its entry only once the user
 names them and applies. A refusal of an input recipe stays with that recipe: its detailed diagnosis does not mark this Stack's Band names.
-Shared reference feedback instead marks IMG and the declaring input row, naming the direct reference and any
-confirmed originating recipes: “A needs attention” or “A cannot run because Band Math needs attention.” The same
-explanation appears beside the input editor's recipe selector, follows its draft selection, and clears after upstream
-repair. Opening stays unedited and Cancel keeps the applied warning; this feedback does not change Apply policy. It uses confirmed readiness findings, never pending or transiently failed evidence, and changes no gates
-or drafts. As with other input-list recipes, only reported dependency routes can be marked; a second route through
-a shared node in a diamond graph may be absent. Opening the panel changes nothing.
+Shared [reference feedback](../design/recipes/source-resolution.md#consumers) marks IMG and the declaring
+input row for a confirmed upstream problem. It follows the draft selector, preserves Apply/Cancel semantics,
+and clears on upstream repair; it does not assign upstream failures to this Stack's Band names.
 
 Input imagery keeps the mapping following the bands each input includes (`toBandNames`). A band keeps the name it was
 given, even one another band also has, until the user edits it there; a band newly included takes its own name,
@@ -77,7 +75,7 @@ suffixed where a band of any input already has it - two inputs' `elevation` give
 ## Output
 
 Declared in `lib/js/shared/src/recipe/type/stack.js` (see the
-[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)). Each output band
+[output contract](../design/recipes/output-products.md#declaration-and-description)). Each output band
 corresponds to one band of one input (`stackBandCorrespondence`): the input images in model order, and within each
 the bands its mapping names, in the mapping's order. Selecting and renaming change neither values nor representation,
 so an output band takes its input band's dimensionality, pyramiding policy and encoding under its new name, from the
@@ -98,46 +96,17 @@ bands or an empty selection, Earth Engine builds every mapped band; a selection 
 order, and ignores a name the mapping does not give. The catalogue answers the mapped names without building
 anything.
 
-## Open issues
-
-- **Re-adding an input loses output aliases.** The source-recovery audit found a removed input's custom output name
-  was replaced by a fresh default when the same source returned, leaving a downstream consumer of the old name
-  blocked. Restoring discarded aliases needs a retention policy, not just source matching. See the
-  [validation and source recovery roadmap](../design/recipes/source-resolution.md#validation-and-source-recovery-roadmap-2026-10-15).
-- **A selection can leave nothing to clip to.** An input none of whose bands is selected contributes an empty image,
-  whose empty geometry becomes the clip region when every other selected input is unbounded - a global asset - and
-  Earth Engine refuses it. A selection naming no mapped band fails the same way.
-- **A Stack with no images builds no image.** Execution zips nothing and emits nothing.
+Known limitations and follow-ups are tracked in the [workplan](../design/workplan.md#stack).
 
 ## Verification
 
-- `modules/gee/verify/stackOutputBands.mjs` - on live Earth Engine: the catalogue, the running image asked for nothing,
-  an empty selection and a selection, the description from its assets' band evidence, one asset stacked twice, CCDC's
-  coefficients and segment starts renamed beside an asset, built and described with the same dimensions, and a
-  repeated name, an unheld band and an unmapped input as the declaration and Earth Engine each answer them, and one
-  pixel value.
-- `lib/js/shared/test/recipe/output/type/stack.test.js` - the declaration's outcomes.
-- `modules/gee/test/jobs/ee/stack/stackBands.test.js` - the catalogue, whatever is selected.
-- `modules/gee/test/jobs/ee/image/inputBandReads.node.test.mjs` - the bands read from a CCDC input.
-- `modules/gui/src/app/home/body/process/recipe/stack/stackOutput.test.js` - Retrieve's policies and destinations,
-  Masking over Stack, and a Stack over an input with no image output.
-- `modules/gee/test/jobs/task/export/imageAssetExport.test.js` - encoding recorded under renamed names, and the export refused
-  before an input with no image output is read.
-- `modules/gui/src/app/home/body/process/recipe/stack/sectionMarks.test.jsx` - an input lacking a band marked on
-  its row and Input imagery before it is opened, Retrieve withheld meanwhile, the configuration kept, recovery, pending and failed reads, reordered
-  and removed inputs; repeated, blank, misspelled and unmapped band names marked on Band names at once and refused in
-  their fields when it opens, kept on Cancel and repaired there; each section left marked while the other is repaired; and an upstream Stack's
-  diagnoses left with it while its declaring reference is marked on this Stack's IMG and input row.
-- `modules/gui/src/app/home/body/process/recipe/stack/panels/bandNames/bandNamesUpdate.test.js` - the mapping following
-  the bands included, names given kept and new ones named apart.
-- `modules/gui/src/app/home/body/process/panels/inputImagery/inputImageBands.test.jsx` - the input editor Stack and
-  Remapping share: an input opened unchanged, a band its source no longer has kept, marked and refused until removed,
-  another band taken by removing and adding, never judged from saved bands, pending or failed reads, edits kept while
-  reading, source switches reconciled, each kind's draft kept and restored with no band crossing, no band selected for
-  the user, the bands to add offered once, and a band's type chosen either way, its legend open, collapsed and kept
-  through a switch to continuous and back, over asset and recipe inputs.
-- `modules/gui/src/app/home/body/process/panels/inputImageSources.test.jsx` - the kind of source chosen beside its
-  picker, a new input starting as an asset and a saved one keeping its kind, and a source another input uses not offered
-  or refused.
-- `modules/gui/src/app/home/body/process/panels/inputImagery/bandLegends.test.jsx` - two categorical bands' legends
-  shown at once in Remapping's real input editor, each edited in the legend widget's own editor alone.
+- `lib/js/shared/test/recipe/output/type/stack.test.js`: mapping validation and inherited band facts.
+- `modules/gee/test/jobs/ee/stack/stackBands.test.js` and `jobs/ee/image/inputBandReads.test.js`:
+  catalogue and physical CCDC input selection.
+- `modules/gee/test/jobs/task/export/imageAssetExport.test.js`: renamed encoding and export refusal.
+- `modules/gui/src/app/home/body/process/recipe/stack/`: output policies, section marks and name synchronization.
+- `modules/gui/src/app/home/body/process/panels/inputImagery/`: shared input drafts, missing bands and legends;
+  `panels/inputImageSources.test.jsx` covers kind selection and duplicate-source refusal.
+
+The read-only [Stack probe](../../modules/gee/verify/README.md) checks real schema, selection order,
+renaming, arrays, one pixel and declaration/execution differences. It does not establish export acceptance.

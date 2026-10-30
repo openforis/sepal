@@ -11,6 +11,7 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
 import lookStyles from '~/style/look.module.css'
+import {tooltipText} from '~/widget/tooltip.test.fixtures'
 import widgetStyles from '~/widget/widget.module.css'
 
 // Whether Change Alerts' reference authorizes Retrieve, composed as its editor composes it: the evidence lifecycle
@@ -138,7 +139,7 @@ vi.mock('~/widget/activation/activatable', async () => {
     const {useState} = await import('react')
     return {
         withActivatable: ({id} = {}) => Component => props => {
-            const [active, setActive] = useState(!['spatialSpeckleFilterOptions', 'multitemporalSpeckleFilterOptions'].includes(id))
+            const [active, setActive] = useState(!['maskOptions', 'spatialSpeckleFilterOptions', 'multitemporalSpeckleFilterOptions'].includes(id))
             panelActivations[id] = () => setActive(true)
             return active
                 ? <Component {...props} activatable={{active, activate: () => setActive(true), deactivate: () => setActive(false)}}/>
@@ -170,7 +171,7 @@ vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => msg && !disabled && typeof msg !== 'function'
-        ? <span data-tooltip={JSON.stringify([msg].flat().filter(value => typeof value === 'string'))}>{children}</span>
+        ? <span data-tooltip={JSON.stringify([msg].flat().map(tooltipText).filter(value => typeof value === 'string'))}>{children}</span>
         : children
 }))
 // The graph renderer is the chart's output boundary: what it is given to draw is recorded.
@@ -1720,7 +1721,7 @@ describe('reference-owned PRC values and consumer drafts', () => {
         await chooseButton('process.radarMosaic.panel.options.form.orbits.ascending.label')
         await apply()
         expect(alertsRecipe().model.options).toMatchObject({
-            spatialSpeckleFilter: 'SNIC', kernelSize: 17, strongScatterers: 'FILTER', orbits: ['ASCENDING', 'DESCENDING']
+            spatialSpeckleFilter: 'SNIC', kernelSize: 17, strongScatterers: 'FILTER', orbits: ['DESCENDING']
         })
     })
 

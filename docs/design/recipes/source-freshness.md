@@ -1,41 +1,17 @@
 # Source freshness, caching and invalidation
 
-Technical design for keeping live recipe and Earth Engine asset descriptions, and results derived from them,
-current within and across interactive sessions. Resolution and frozen task execution belong in
-[source-resolution.md](source-resolution.md).
+The current live runtime shares descriptions and observations, tracks recipe revision/save agreement and asset
+metadata evidence, and invalidates authority synchronously. Persisted derived-result freshness is target work
+specified separately below. [Source resolution](source-resolution.md) owns authorization, graph structure and
+execution guards; no cache provides task atomicity.
 
-## Responsibilities
+## Current design
 
-This subsystem owns:
+A source version is change evidence, not a frozen image. Keep recipe `revision`, local draft identity, asset
+`updateTime` and contract version separate. Recipe timestamps are display/audit metadata. Content/evidence changes
+invalidate relevant descriptions; presentation changes do not imply new pixels.
 
-- session-scoped source-description caching;
-- generic versioned derived resources built from source evidence;
-- in-flight request deduplication;
-- race-safe background refresh;
-- account-aware Earth Engine metadata state;
-- pending, fresh, refresh-required, refreshing and error catalogue states plus propagation of resolver diagnoses;
-- consumer expectation revalidation;
-- persisted evidence describing the inputs from which a derived result was calculated;
-- map and panel invalidation when a resolved graph changes.
-
-It does not own task atomicity. A Retrieve task consumes its accepted execution bundle even if the live catalogue
-changes afterward.
-
-This catalogue is not a prerequisite for the first Masking robustness slice, Apply-mask stabilization, constant
-Fill or direct asset Fill.
-
-Persisted derived-result freshness uses the server-owned monotonic `revision` that the Recipe service returns
-atomically with recipe content. No interim unversioned-recipe tier is needed for Sampling Design freshness.
-There is no temporary browser content-hash bridge, no `update_time` freshness rung and no dual-phase snapshot
-provider that later swaps its evidence. `update_time` remains display and audit metadata only. Websocket revision
-events and patch transport remain optional latency and transport improvements that correctness never requires.
-
-## Shared output description delivery
-
-Packets 1 to 3 are implemented; the broader persisted-result and coherent-execution design below still needs review. Use **description loading** and **description refresh** for
-this work; acquisition also names a satellite observation in this application.
-
-### Packet 1: shared watches and loading
+## Output watches
 
 The Process-scoped source runtime owns watches for every active recipe output question. A question is a recipe ID
 and its normalized product identity; canonical output and named products remain distinct. Watching is separate from
@@ -65,14 +41,7 @@ do not themselves retry failures. The one-shot runtime operations and common rea
 - Credential changes clear retained entries and restart only claimed work, once. Runtime teardown reports
   `SOURCE_RUNTIME_UNAVAILABLE`, stops all watches and work, and cannot start a retry loop.
 
-Packet 1 preserves current conservative content keys, `ui.sourceEvidence` and external freshness behavior. A
-refused basis is held as an `UNAVAILABLE` answer with code `SOURCE_BASIS_CHANGED`, recovered like any failure. The
-tests cover local answers, sharing, both consumer-close orders, same-tick edit and credential change followed by a
-read, late results, basis refusal, failure recovery, expiry before timer cleanup, the retention cap and product
-switches ([verification](gui-source-runtime.md#verification)). Existing scalar/array restrictions, export policies
-and named-product export refusal are unchanged.
-
-### Packet 2: recipe revisions and shared observations
+## Recipe revision currency and shared observations
 
 Revision evidence is the best this session has, not what Earth Engine read: `/bands` reports no dependency
 manifest, and storage can move between the listing, the browser's load and Earth Engine's own load. Answers are
@@ -142,7 +111,7 @@ The browser describes dependency drafts while Earth Engine executes persisted de
 resolve that: an incomplete observation is never reused, and Retrieve waits for or refuses a draft that storage does
 not hold. Masking's evidence reads presets only; its bands are its description's.
 
-### Packet 3: asset freshness and redraw signaling
+## Asset freshness and drawing currency
 
 What this session knows of the Earth Engine assets its consumers read decides whether a description is still about
 them, whether Retrieve may be authorized by it, and whether a preview must be drawn again. Description recomputation,
@@ -224,461 +193,93 @@ closure check, which reads recipes, not assets.
   content, work, basis or preview key and carries no counter, and an observer over another recipe reads again when that
   recipe's evidence content changes.
 
-A live probe on 2026-10-01 (a disposable collection in one user project, one-pixel images) observed the collection's
-own `updateTime` advance within 1.5 to 5.2 seconds for each of: a member added, a member deleted (not the newest, the
-newest and the last), a member deleted and recreated under its id with other bands and pixels, a member's properties
-edited and the collection's properties edited. A member's property edit gave the collection exactly the member's new
-`updateTime`. Not exercised: export with overwrite, copy, move or rename through the API, ACL changes, rewritten
-GeoTIFFs, ingestion into the public catalogue - whose members can carry the collection's own version - and anything
-beyond one project. These are untested, not known failures. Within the propagation delay a read can still see the old
-token; the mutation follow-ups and polling cover it.
-
-### Execution boundary
-
-Schema availability and structural validity do not prove executability. Missing dates, training data or required
-references can prevent execution even with READY and VALID results, including through wrappers. Document this
-boundary now. Requirements are validated in the GUI, before Apply and at Retrieve
-([requirement contract](source-resolution.md#requirement-contract)), with no unused resource slot or new panel guards;
-rechecking them at the execution boundary is not implemented yet.
-Task continues resolving independently. Separately review its acceptance of browser-supplied band selections and
-pyramiding policies, including whether policies should be derived or validated against its own description.
-
-## Catalogue boundary
-
-The pure source contract is storage-agnostic. The first catalogue-backed consumer decides whether Redux or a plain
-observable store best fits existing GUI lifecycle and DevTools needs. React components consume selectors or
-observables; they do not traverse dependencies, parse asset naming conventions or maintain copied source state.
-
-Catalogue keys include:
-
-- normalized source reference;
-- authenticated SEPAL principal;
-- linked Earth Engine identity or authorization context for assets;
-- resolver, adapter, composer and capability contract versions where they affect the answer;
-- collection schema policy where it changes the description.
-
-The catalogue stores data and status, never active subscriptions or Earth Engine objects.
-
-The browser catalogue is naturally scoped to one authenticated SEPAL session, but the principal remains part of
-the logical key. Any adaptation in GEE, Task or another shared process must preserve that scope explicitly rather
-than assume one process serves one user.
-
-## Source versions and invalidation
-
-A source version is change evidence, not a copy of the source and not a claim that Earth Engine execution is
-pinned. Keep these values separate:
-
-- **Recipe `revision`**: a server-owned monotonic integer, scoped to one recipe, changed atomically with
-  persisted recipe content. It orders websocket events, supports optimistic concurrency and cheaply invalidates
-  browser resources. It is distinct from the existing `typeVersion`, which is the recipe schema-migration version
-  and says nothing about whether content changed.
-- **Recipe timestamp**: display and audit metadata only. The current second-resolution `update_time` cannot order
-  all saves and is not a cache key. It is never freshness evidence, not even negatively.
-- **Local draft generation**: exact immutable recipe-object identity or an equivalent runtime-only generation. It
-  invalidates results immediately for unsaved edits without pretending that the draft has a persisted revision.
-- **Earth Engine asset version**: `{id, system:version}`, with the version normalized to an opaque string. It is
-  useful invalidation evidence, not a timestamp and not proof that an execution is pinned to those pixels.
-
-### Recipe storage contract
-
-The Recipe service provides:
-
-```
-list                          ->  recipe ID + revision, per entry
-load                          ->  the recipe, with the revision injected as an additive top-level field,
-                                  read from one committed row
-save(expectedRevision)        ->  committed revision
-```
-
-There is no separate snapshot or executor-facing read. The ordinary authorized load serves editing, dependency
-resolution and execution alike, so every reader observes the same content and the same revision from the same
-committed row.
-
-Required semantics:
-
-- `revision` is server-owned, monotonic and scoped to one recipe.
-- Persisted content and revision change atomically.
-- The revision is stored only as a column on the recipe row. It is response metadata, not persisted recipe
-  content: a load injects the column value into the returned recipe JSON, stored contents never carry a
-  revision, and a client-submitted one is stripped before storage.
-- Content and revision are coherent because a load reads both from the same row, so no second representation
-  exists to contradict the column.
-- A recipe-model migration rewrites stored contents, and advances the column when it does.
-- Project placement is row metadata injected on load in the same way. It is not execution content, and
-  moving a recipe does not advance its revision.
-- **The same revision always returns the same execution-relevant recipe content.** This is what allows evidence
-  gathered by one reader to be compared against a fingerprint computed by another; see
-  [Exact calculation evidence](#exact-calculation-evidence).
-- Save acknowledgement returns the committed revision, and the GUI updates its revision registry from it.
-- Existing rows may be backfilled with one fixed initial revision. That value carries no meaning: existing derived
-  results are `UNKNOWN` because they lack `calculatedFrom`, and a backfilled revision never retroactively
-  validates them.
-- Display-only changes such as rename may advance the revision. Product fingerprint comparison
-  absorbs that conservative invalidation, so the storage boundary needs no second display-only revision.
-- Deletion receives the same ordered treatment as an update. After a *successful* authorized revision-list refresh,
-  an absent referenced ID is a missing-source result, reported without disclosing foreign ownership. Failure to
-  refresh is `UNAVAILABLE` and is never read as proof of deletion.
-
-Idempotent save behavior, which the storage boundary does NOT yet implement - its save is the conditional
-update alone, so a resubmission of already-committed content is answered as a conflict:
-
-```
-normalize candidate
-if candidate equals current content:
-    succeed and return the current revision
-else if expectedRevision differs from current:
-    reject with a conflict
-else:
-    persist and increment revision
-```
-
-The no-op comparison deliberately precedes the conflict check: a client that resubmits content already committed
-converges rather than conflicting. Reordering the two produces spurious conflicts during ordinary editing.
-
-Semantic no-op detection is desirable storage behavior, but Sampling Design correctness must not depend on it. If
-it is phased in after the initial revision implementation, spurious revision increments only over-invalidate: they
-trigger re-resolution, and an unchanged product fingerprint still preserves the result. Do not describe no-op
-detection as unnecessary — it governs event noise, `revision` semantics and optimistic concurrency, and
-client-side deep equality is not authoritative because direct clients and future writers can still submit no-ops.
-
-Normalization must be defined well enough that raw gzip or JSON byte equality is never authoritative: transient UI
-state excluded, object-key order irrelevant, array order preserved where it is meaningful, value types preserved,
-and migration and default semantics versioned. Normalization excludes *transient UI state*, not display metadata:
-a title lives in persisted content, which is why a rename legitimately advances the revision.
-
-A persisted content digest remains optional and is not a freshness requirement. Add one only if a concrete
-provenance, integrity, cross-record deduplication or immutable-content requirement needs exact byte identity. If
-introduced, compute and store it at the trusted persistence boundary rather than serializing large recipe models
-in the browser.
-
-Future patch saves do not change this contract. A patch is transport, while revision remains persisted ordering.
-The server applies a patch against an expected revision, validates and normalizes the result, and advances the
-revision only when the final content differs. A patch may accompany an authorized update event as an optimization;
-a client applies it only from the expected base revision and otherwise reloads. Freshness must remain correct when
-only the recipe ID and new revision are announced.
-
-The GUI serializes saves per recipe rather than cancelling an in-flight one, because a cancelled request may
-still have committed. A save coordinator holds at most one request in flight per recipe and coalesces whatever
-arrives while it is out, so an editing session advances through revisions it has been acknowledged rather than
-guessing. A draft's base revision changes only on an acknowledgement or a coherent load, which is what keeps a
-committed write, a safe retry and a conflicting remote write distinguishable.
-
-If an acknowledgement is lost, recovery is currently the client's: the coordinator loads the recipe and compares
-the committed content with what it sent, adopting the returned revision when they agree and entering the conflict
-flow when they do not. Blind replay is not safe until the storage boundary detects a no-op, because the retry
-carries a base revision the lost acknowledgement may already have advanced. Once that detection exists, replaying
-the *exact same payload* becomes the one safe retry.
-
-A conflict against content written by another session must never be retried blindly. Refreshing the registry to
-the newer revision and resubmitting would overwrite that session's work with this one's. Preserve the local draft
-and enter the explicit conflict flow instead; its presentation and merge policy belong to recipe editing.
-
-One source-version registry consumes those events and asset-version observations. It knows current versions and
-invalidation only; it does not resolve recipe graphs or own feature-specific results. Dynamic resources subscribe
-to only the source references in their resolved dependency closure. An unrelated recipe event does no graph work.
-When a relevant version changes, the resource cancels superseded work, resolves against one new snapshot and
-publishes the replacement result.
-
-If a remote persisted revision advances while the same recipe has unsaved local edits, retain the local draft and
-record that a newer remote revision exists. Never overwrite the draft silently. Conflict presentation and merge
-policy belong to recipe editing, while invalidating derived evidence belongs here.
-
-## Snapshot authority
-
-Consumers receive recipe snapshots through one provider that states which representation it is handing over:
-
-```js
-{
-    reference,
-    origin: 'ROOT_DRAFT' | 'PERSISTED',
-    record,
-    versionToken
-}
-```
-
-- The explicitly supplied **root** may be an unsaved draft. Its `versionToken` is a local draft generation.
-- Referenced recipes consumed by persisted derived calculations use fresh, **operation-local persisted snapshots**.
-  Their `versionToken` is `revision`.
-- An open referenced recipe's unsaved draft must never be fingerprinted while the executor runs against its
-  persisted version. Binding a calculation to a draft that the executor cannot see is the defect this separation
-  exists to prevent.
-- Supporting draft dependencies later requires an executor that consumes the same frozen draft closure. It must
-  never happen accidentally as a side effect of reading whatever the store already holds.
-
-Dependency snapshots must not be written into, or overwrite, `process.loadedRecipes`. That map currently conflates
-editable roots with dependency cache entries: an open recipe's editing state and a recipe loaded only because
-something referenced it occupy the same slot, and its loader returns a cached record without re-reading. It is a
-convenience cache, not freshness authority, and writing operation-local snapshots into it would overwrite live
-editing state.
-
-A local draft generation is an O(1) observation, not a hash: never stringify or hash an entire model on a render,
-source request or store update. Observe the execution-relevant object — the model — rather than the whole recipe,
-which also carries transient UI state such as map bounds, and rather than a shallow copy, which drops
-non-enumerable identity markers. Where interior identity is not guaranteed, fall back to object identity.
-
-A successful **save acknowledgement** is the in-session dependency trigger. A dependent calculation binds to
-persisted content, so a draft edit to a dependency changes nothing until it commits, and the acknowledgement is the
-first moment its new revision is known.
-
-Revision refresh happens according to policy when the dependent recipe is opened, when returning after inactivity,
-and when submitting Retrieve. The existing recipe list can initially supply the batch revision vector — every
-recipe in a legitimate closure is owned by the same principal — but it must be re-fetched at those triggers rather
-than trusted from session start, because another session may have advanced a revision since it was loaded. A
-dedicated batch-revision read for a specific ID set is the natural refinement.
-
-The precise claim is that **unchanged authoritative evidence avoids recipe-content loads**. Reopening still costs a
-bounded revision-vector refresh; it is not free of HTTP.
-
-## Product-scoped fingerprints
-
-A source version answers whether a source may have changed. It does not answer whether the change matters to a
-particular consumer. Revisions and draft generations are **invalidation triggers and provenance. They never become
-the operation-input fingerprint.** Wiring a revision into the fingerprint would make every conservative or
-display-only revision bump force an expensive recalculation, which is precisely what the fingerprint exists to
-avoid. The sequence is always:
-
-```
-revision or draft generation changed
-    -> re-resolve the consumed product
-    -> compare operation-input fingerprint
-    -> CURRENT or STALE
-```
-
-The quick `CURRENT` path must compare all applicable evidence, not only recipe revisions:
-
-- the normalized operation question;
-- resource and relevant contract versions;
-- the recipe revision vector;
-- refreshed asset evidence, including `system:version`;
-- inline inputs such as polygon geometry.
-
-The graph owns loading, authorization, edges, cycles and ordering. It does not interpret products. A recipe selected
-as an AOI is a dependency through the AOI geometry it exposes, not through its undifferentiated model: the product
-resolver asks for that geometry and follows any transitive references needed to describe it. A title, visualization
-or unrelated algorithm change may advance the recipe revision without changing the AOI fingerprint.
-
-Product fingerprints include normalized declarations, structured edge roles, relevant adapter, composer, capability
-and transformation contract versions, and relevant asset observations. A provider that owns a product projection
-fingerprints only that product's relevant normalized inputs. A provider that has not yet declared one may
-conservatively fingerprint its normalized loaded execution content, computed once when calculating or after a
-revision-triggered reload. That may over-invalidate, which is acceptable; hashing whole recipes on renders or
-ordinary store updates is not. Narrow only at an owned product boundary; never maintain consumer-side lists of
-supposedly relevant recipe fields.
-
-Unknown relevance fails closed and over-invalidates. Once a product provider declares its inputs, unrelated fields
-stay outside that product fingerprint by construction rather than through a heuristic data/schema/presentation
-classification.
-
-The fingerprint is derived evidence and cache identity. It may be persisted with the result it justifies, but it is
-not authoritative source content and does not replace revision ordering.
-
-Revision and fingerprint have different jobs. A revision says that persisted content changed; a resolved product
-fingerprint identifies the inputs relevant to one derived answer, including dependencies, asset evidence and
-contract versions. Do not substitute one for the other merely because both can be represented as strings.
-
-Contract versions identify deliberate supported command or semantic evolution. They are not revisions of source
-content and are not used to preserve historical implementation defects. Corrected behavior invalidates affected
-derived resources normally; the cache does not select a legacy algorithm based on an old asset or recipe date.
-
-## State axes
-
-Three independent state spaces answer three different questions. Keeping them separate is what stops one word from
-meaning two things:
-
-```js
-// catalogue observation - is our description of this source current?
-'PENDING' | 'FRESH' | 'REFRESH_REQUIRED' | 'REFRESHING' | 'TRANSIENT_ERROR' | 'DEFINITIVE_ERROR'
-
-// derived-result comparison - does this saved result still answer the same question?
-'CURRENT' | 'STALE' | 'UNKNOWN'
-
-// runtime - can this source be used right now?
-'READY' | 'UNAVAILABLE' | 'INVALID'
-```
-
-`REFRESH_REQUIRED` means a historical source description exists but requires current validation. `STALE` means the
-current resolved operation inputs are known to differ from the persisted calculation evidence. The first is "we
-have not checked yet"; the second is "we checked and it changed". `STALE` is never a catalogue refresh state.
-
-A catalogue entry keeps the last successful description separately from its current refresh state:
-
-```js
-{
-    description,
-    fingerprint,
-    observedAt,
-    status: 'FRESH', // PENDING, FRESH, REFRESH_REQUIRED, REFRESHING, TRANSIENT_ERROR, DEFINITIVE_ERROR
-    error,
-    requestEpoch
-}
-```
-
-`PENDING` applies before any description exists. A transient resolution diagnosis does not erase the last successful
-description or claim that bands disappeared. The catalogue preserves the transient or definitive classification
-supplied by source resolution. Diagnostics carry stable codes and dependency paths.
-
-## Refresh triggers
-
-Refresh active sources:
-
-1. when a recipe or source is opened;
-2. immediately when a source selection or linked Earth Engine account changes;
-3. when a dependency's save is acknowledged in the current GUI session;
-4. when returning to an active recipe after browser-tab inactivity;
-5. on a bounded timer for active asset sources;
-6. before Preview or Retrieve when the current observation is older than policy allows;
-7. on an explicit user Refresh command if a migrated consumer demonstrates that it is useful;
-8. when a websocket event advances the persisted revision of an output-relevant recipe.
-
-Triggers 1, 4 and 6 refresh the revision vector for the dependencies of the recipe being opened, resumed or
-submitted. Trigger 3 is a save acknowledgement rather than a draft edit: a persisted calculation binds to persisted
-content, so an uncommitted edit to a dependency changes nothing it depends on. Trigger 8 improves latency for
-already-open consumers and is never the only path to discovering change.
-
-Do not periodically resolve every transitive recipe graph through Earth Engine. A revision that has not moved needs
-no content load; a changed revision causes an authorized reload and product re-resolution. Revisions alone never
-settle a derived result — that decision weighs all applicable evidence, as described under
-[Product-scoped fingerprints](#product-scoped-fingerprints). The
-second-resolution recipe `update_time` is never used as evidence, in either direction. Asset refresh normally
-starts with metadata and performs bounded runtime inspection only when the consumer contract needs it.
-
-Only actively consumed sources need scheduled refresh. Inactive entries may remain for the GUI session.
-
-## Race and traversal safety
-
-Every refresh receives a monotonically increasing epoch. A response may update an entry only if its epoch is still
-current. Cancellation is useful for releasing work but is not the correctness mechanism; a late response must be
-harmless even when the underlying request cannot be cancelled.
-
-Identical in-flight requests are shared. Graph resolution memoizes diamond dependencies, uses bounded concurrency
-for independent branches, and applies the traversal limits defined by the resolution contract. A newer account or
-source selection invalidates every older request before its response is considered.
-
-## Asset freshness
-
-Earth Engine asset IDs are stable while their metadata, schema, pixels and permissions can change. Cache entries
-are scoped to the linked account. Account link, unlink or replacement invalidates affected entries immediately.
-
-An asset's change token is its metadata `updateTime`, opaque and at full precision, for the whole asset - a
-collection's included: the live probe saw a collection's own `updateTime` advance for every membership, schema and
-property change it made ([packet 3](#packet-3-asset-freshness-and-redraw-signaling)), so no token is constructed from
-a collection's members, size or newest member. It is invalidation evidence, not an immutable execution version, and a
-matching token is not proof of unchanged contents. A source without a token is unversioned: what was read from it is
-bounded in what it may authorize, never in what is drawn.
-
-The source runtime owns asset metadata evidence: map layers, Retrieve and evidence observers share its reads, its
-in-flight requests and its account scoping, and nothing keeps a parallel cache. Direct asset layers read their bands
-and presets through it; persistent layer snapshots are identity seeds, never proof of freshness, and unchanged preset
-identities are kept without replacing saved user intent.
-
-Tasks should report the **actual affected asset IDs** after destination changes, including collection destinations
-and written members where relevant, partial writes of a failed or cancelled export included. The shared owner
-invalidates those assets and revalidates active consumers; tasks do not identify recipes, layers or panels to refresh
-([task-driven asset invalidation](data-sources.md#task-driven-asset-invalidation)). This integration is deferred
-until the task rewrite lands; its lifecycle and notification paths must be audited again before implementation.
-
-Background validation while a recipe is open should detect:
-
-- source deletion or lost permission;
-- bands added, removed, reordered or type/grid changed;
-- relevant properties or category semantics changed;
-- collection membership changes under the declared schema policy;
-- replacement under the same asset ID.
-
-## Recipe freshness and dependencies
-
-A recipe description depends on the root model and every output-relevant transitive edge. Local immutable-model
-changes invalidate the affected graph immediately for the editable root. A persisted revision change invalidates
-previously resolved descriptions and causes an authorized reload; the resulting product fingerprint determines
-whether an existing derived answer remains reusable.
-
-A dependent recipe need not be open when its source changes. When it is opened later, a revision-vector refresh
-identifies which dependencies moved, changed ones are reloaded and re-resolved, and the resulting product
-fingerprints are compared with the persisted derived-result evidence. Unchanged revisions settle the question
-without loading content. Events improve latency for already-open consumers; they are not the only path to
-discovering change.
-
-Opening a recipe performs background existence and dependency validation using the diagnoses defined by
-[source-resolution.md](source-resolution.md). Cycle prevention, deletion behavior and execution eligibility are
-owned there; freshness only schedules re-resolution and publishes the resulting current state.
-
-Recipe rename or project movement does not invalidate an ID-based reference, but display metadata must refresh.
-If future operations can replace recipe IDs, replacement is an explicit migration rather than inferred from title
-or project.
-
-## Expectation validation
-
-Consumers declare requirements over the facts of what they select: pure shared rules, declared by the consuming
-type with the section owning them and the operations they gate
-([requirement contract](source-resolution.md#requirement-contract)). That contract supersedes the earlier
-expectation-object shape (product `requiredBands`, capability `cardinality` and `requiredMeasures`).
-
-Refresh reconciles evidence with intent:
-
-- added unused bands update choices without changing the model;
-- reordering does not alter name-based mappings;
-- removed unused bands require no user action;
-- missing or incompatible required bands remain selected and visibly invalid;
-- changed values with unchanged bands invalidate maps through the conservative graph fingerprint;
-- changed source presets update choices without overwriting local styles.
-
-The GUI directs the user to the panel owning the invalid expectation. It must not allow a later Earth Engine
-`select` or model-property read to become the first validation.
-
-Candidate discovery uses the same expectation contract. It queries resolved source instances and distinguishes
-`SUPPORTED`, `UNSUPPORTED` and `NEEDS_EVIDENCE`; it does not index a denormalized effective recipe type. A selector
-can therefore admit a pass-through recipe only when its current operation and dependency graph preserve the
-required capability, without knowing that recipe type. Catalogue refresh re-evaluates the query when any
-output-relevant dependency or asset observation changes.
+Collection metadata tokens can lag writes. Session-mutation follow-ups and polling handle propagation;
+the token is not proof that every external operation advances it. Export overwrite, API copy/move/rename, ACL
+changes, public catalogue ingestion and rewritten GeoTIFFs need their own verification. An unreported pixel change
+remains unseen until explicit refresh.
+
+
+## Recipe storage contract
+
+The authorized Recipe service returns committed revision alongside list entries and loaded content. A load reads
+content/revision from one row; revision is response/column metadata, never a field the client controls inside stored
+content. Saves carry `expectedRevision`; acknowledgements return the committed revision. The same revision must
+represent the same execution-relevant content. `typeVersion` remains schema versioning, and project movement is
+row/display metadata rather than execution content.
+
+The GUI serializes each recipe's saves, coalescing queued changes rather than cancelling an in-flight write that
+may already have committed. A lost acknowledgement is recovered by loading and comparing the sent content with
+committed content. Adopt its revision only when they agree; otherwise preserve the draft for conflict handling.
+Never blindly retry against a newer remote revision. A dependency draft agrees with storage only when its current
+model was acknowledged, nothing is queued and no newer revision is known.
+
+The session cache releases an unclaimed closed record after its save settles. A dirty, unresolved or conflicting
+draft remains retained; completion must not discard the only copy of user work.
+
+Semantic no-op detection is not implemented at storage. The target is normalized equality before conflict checking:
+already-committed identical content succeeds with its existing revision; changed content still needs the expected
+revision. Define normalization first—exclude transient UI state, preserve meaningful array order/types, ignore
+object-key order and version migration/default semantics. Raw JSON/gzip equality is not authority. No-op behavior
+improves convergence/event noise but persisted-result correctness cannot depend on it.
+
+Listing absence triggers an authorized availability read; it does not establish deletion or permit overwriting a
+local draft. Keep dependency snapshots private to an operation rather than writing them into the editing cache.
+
+## Target: persisted-result freshness
+
+All result-evidence, resource-retention and integration sections below are target design. This machinery is not
+yet implemented for Sampling Design; its [current edit-driven invalidation](../../recipes/sampling-design.md#derived-result-freshness)
+remains until replaced by this contract. Do not add a temporary browser content-hash bridge or use `update_time` as
+an intermediate freshness tier.
+
+### Snapshot authority
+
+The exact submitted root may be an unsaved draft. Referenced inputs for persisted calculations are fresh,
+operation-local persisted records keyed by revision, not arbitrary open dependency drafts. If draft dependencies
+are ever supported, execution must consume that same frozen closure explicitly.
+
+Never overwrite `process.loadedRecipes` with private calculation snapshots. Local root identity is an O(1)
+immutable-model generation, not full serialization/hashing during renders or ordinary store updates. Refresh
+revision evidence on open/resume and before submission. An unchanged authoritative vector avoids content loads,
+not the evidence-refresh request itself. A save acknowledgement, not an uncommitted dependency edit, advances a
+persisted calculation's dependency evidence.
+
+### Product-scoped fingerprints
+
+Revision changes trigger product re-resolution; the resolved operation-input fingerprint decides whether an
+expensive result is stale. Putting revision directly in that fingerprint would force recalculation for a rename.
+
+Compare the normalized question, relevant contract versions, recipe revision evidence, current asset evidence and
+inline inputs. Product owners project what matters; consumers never maintain lists of foreign model fields. An
+unmigrated product may conservatively fingerprint whole normalized persisted-source content once after a relevant
+change. It may over-invalidate but cannot silently miss a dependency. No per-render whole-model hashing is allowed.
+
+Explicit AOI products should follow actual geometry behavior—including transitive inputs—rather than assuming a
+referenced recipe's `model.aoi` is its geometry. Until shared provider/executor projection exists, whole-source
+fallback is conservative. A content digest is optional integrity/provenance work, not a substitute for revisions.
+
+### State axes
+
+Keep source observation currency, derived-result comparison and runtime usability distinct:
+
+- Observation: pending, current, refresh-required, refreshing, transient or definitive failure.
+- Persisted result: `CURRENT`, `STALE` or `UNKNOWN`.
+- Runtime description/readiness: the existing shared statuses, not a new saved validity flag.
+
+A failed refresh does not prove calculation inputs changed. Keep last successful values as context while refusing
+unsupported authority. Epochs reject superseded answers even when a transport cannot actually cancel them.
 
 ### Declarative dependency evaluation
 
-Agreed direction for subsequent implementation, not an implemented declaration API: evaluate the current model
-against current source descriptions and local dependencies instead of maintaining chains of imperative
-"when X changes, invalidate Y" rules. Shared observation and source descriptions are implemented. The
-[validation boundary review](data-sources.md#validation-boundary-review) extends the implemented requirement contract
-towards this direction rather than defining a second one; CCDC Slice and BAYTS do not introduce it.
+Extend the existing shared requirements with recipe-owned pure input projections, conditional dependencies and
+derived outputs. Local and external inputs differ in acquisition/versioning, not in whether the evaluator can
+judge them. Band Math consumes expression-referenced bands; Sampling Design manual proportions consume identities,
+not colors or row order. Reuse their domain analysis instead of inventing a rule language.
 
-Recipe definitions own ordinary pure functions declaring:
-
-- the inputs a calculation or section consumes, including dependencies conditional on its mode;
-- the semantic projection of those inputs and the requirements they must satisfy;
-- its derived output and whether a change permits automatic derivation, requires recalculation or needs review.
-
-Use the same declaration and evaluation contract for local model values, locally derived outputs and resolved
-recipe or asset outputs. Requirements operate on the supplied inputs, not on whether their origin is internal or
-external. Providers own obtaining those inputs and their availability and freshness evidence; the evaluator does
-not load sources or branch on their location. Uniform evaluation does not imply identical acquisition or versioning.
-
-A section-to-section dependency list alone is insufficient. Band Math consumes the bands actually referenced by
-an expression; Sampling Design's manual proportions depend on stratum identities, not their colors or ordering,
-while automatic proportions consume different inputs. Reuse the existing expression analysis and domain functions
-rather than inventing a rule language. Keep external source traversal and observation in their existing shared
-boundaries; local calculation dependencies are not additional recipe-reference edges.
-
-Derive diagnostics and propagate affected state from the current inputs, independently of which panel is open.
-Diagnostics identify a stable reason and the affected model location; the GUI maps that location to the owning
-section and corrective action. Apply the expectation-validation rules above without deleting user configuration.
-A Change Alerts analysis band disappearing and a Band Math expression losing an input share that mechanism,
-but their recipe definitions own the different semantic requirements.
-
-Keep three questions separate: is the configuration compatible, is a calculated result still current, and does a
-user decision need review? Compatible inputs can contain changed pixel values. Cheap derived output can update
-automatically; stored calculations use the [result evidence](#persisted-derived-result-evidence) captured by the
-actual operation, not flags inferred from edit events. User-authored choices are not calculated results.
-
-The declaration shape and reusable evaluator remain open until the bounded Band Math workflow establishes what
-is needed. Extract only demonstrated common mechanics; do not build a general rules engine or rewrite Sampling
-Design's invalidation planner in the CCDC Slice or Band Math packet. That planner stays Sampling Design's current
-mechanism until then; it is not the final architecture.
-
-## Availability state
-
-The diagnosis taxonomy, known-bad versus unknown policy and execution blocking are owned
-by [source-resolution.md](source-resolution.md). The catalogue preserves the last successful description when a
-refresh produces a transient diagnosis, marks the entry `REFRESH_REQUIRED`, and exposes the current diagnosis
-beside it. It never converts a definitive diagnosis into a transient one or decides whether an operation may
-proceed.
+Derive diagnostics from current inputs and map them to the owning section. Cheap output may recompute; expensive
+stored results use operation-produced evidence. User-authored choices are neither calculation caches nor disposable
+normalization targets. Distinguish compatibility, freshness and a user decision needing review. Migrate concrete
+workflows incrementally and replace superseded caches/flags rather than running parallel mechanisms.
 
 ## Persisted derived-result evidence
 
@@ -689,7 +290,7 @@ The envelope is generic even though each operation defines its own inputs:
 {
     result,
     calculatedFrom: {
-        resource: {id: 'SAMPLING_STRATUM_AREAS', contractVersion: 1},
+        resource: {id: 'CALCULATION_KIND', contractVersion: 1},
         question: {/* normalized operation parameters */},
         inputFingerprint: 'resolved-operation-input-fingerprint',
         sourceEvidence: {/* named source roles and observed versions */}
@@ -714,16 +315,9 @@ one recalculation before it can establish durable freshness. Likewise, an asset 
 evidence cannot establish cross-session `CURRENT` merely because its ID and schema still match; the consumer must
 recalculate or acquire stronger evidence under its declared policy.
 
-Consumers decide presentation and policy. Sampling Design keeps stale and unknown values visible for context while
-blocking submission and asking for recalculation. Preview may refresh automatically. Retrieve requires current
-evidence before enabling submission. The shared resource layer reports evidence and state; it does not choose those
-actions.
-
-`UNKNOWN` blocks submission exactly as `STALE` does. A result without usable evidence cannot truthfully be declared
-current, and the conservative reading is the only honest one. This has a stated migration consequence: every
-Sampling Design result that predates `calculatedFrom` is `UNKNOWN` on first open, so each such recipe needs one
-recalculation — potentially a batch calculation — before its next submission. The existing values stay visible as
-context throughout.
+Consumers own stale presentation, recalculation and submission policy; the shared resource layer reports evidence
+and state. [Sampling Design's integration](../../recipes/sampling-design.md#target-persisted-calculation-evidence)
+defines its two calculations, sidecars, propagation and legacy migration. None of those rules is current behavior.
 
 ### Exact calculation evidence
 
@@ -733,16 +327,15 @@ never computed from — a result that reads `CURRENT` for a question it did not 
 
 Recipes and Earth Engine assets support different strengths of claim, and the design must not blur them.
 
-**Recipe snapshots are exact.** The execution boundary keeps a **request-scoped recipe snapshot cache**:
-
-- one raw recipe snapshot and revision per recipe ID per operation;
-- one shared in-flight load for duplicate dereferences of the same ID;
-- transitive recipe loads included;
-- edge-specific recipe factories may be constructed repeatedly from the same snapshot;
-- the returned recipe revision vector describes exactly what was loaded.
+**Recipe snapshots are exact per ID.** The existing
+[operation-scoped reader](source-resolution.md#operation-scoped-recipe-loading) retains one raw record/revision
+per ID, including transitive and concurrent reads; factories may still be constructed repeatedly.
+Returning that exact revision vector as calculation evidence remains target work. This does not establish
+graph-wide coherence across different IDs.
 
 **Asset evidence is contemporaneous observation, not a snapshot.** An operation records the asset observations it
-made, such as `system:version`, and revalidates them before the result is committed. An asset version is
+made and revalidates them before the result is committed. Current live evidence uses metadata `updateTime`;
+any alternative such as `system:version` needs its own verified replacement/membership semantics. An asset version is
 invalidation evidence, not an immutable execution version: it does not pin the pixels Earth Engine evaluates, and
 an asset replaced between observation and evaluation cannot be excluded by evidence alone. Revalidation narrows
 that window rather than closing it, and the existing rule stands — asset IDs and observations are invalidation
@@ -762,222 +355,40 @@ be enough.
 Memoizing per ID also removes the possibility of one operation mixing two revisions of the same recipe, so no
 separate conflicting-read detection is needed — one snapshot per ID makes the conflict unrepresentable.
 
-This request-scoped memoization is a permanent correctness and efficiency improvement, not temporary Sampling
-Design scaffolding: the current reference loader re-reads on every subscription, so one calculation dereferencing
-the same recipe twice can already observe two different revisions, and pays for the duplicate loads.
+The existing operation-owned recipe reader supplies record sharing. Extending its output with exact calculation
+evidence is separate work; a browser observation taken before execution cannot stand in for that evidence.
 
-Task atomicity remains separate. A task executes its accepted execution bundle even if the live catalogue changes
-afterward.
+Task atomicity remains separate. Persisted execution bundles are target design, not a guarantee of current tasks.
 
-## Cache policy
+## Resource retention and invalidation
 
-Do not impose an arbitrary entry-count cap initially. Source descriptions are expected to be small and users cannot
-practically activate hundreds of sources. Measure:
+Extend existing source-runtime ownership with one logical resource per kind and normalized question. Share one
+in-flight calculation for exact inputs and retain at most the latest successful answer per active resource, or a
+small measured inactive LRU. Reuse the runtime's identity, version subscriptions and epoch handling rather than
+independent feature caches. Definitive invalidity can be held only for the evidence establishing it; transient
+unavailability never becomes a reusable success.
 
-- entry count and serialized bytes;
-- unusually wide image or collection schemas;
-- request frequency and latency;
-- inactive-entry lifetime.
+Refresh only actively consumed sources. An unrelated recipe event does no graph work; a changed relevant revision
+causes an authorized reload and product comparison. WebSocket revisions/patches are optional latency improvements,
+not the only way to detect changes after a dependent recipe was closed. GEE caching, if justified, must preserve
+principal and linked-account scope and cannot own long-lived GUI correctness.
 
-Add eviction or per-entry bounds only in response to evidence. This is separate from execution-bundle safeguards,
-which protect server and task payload boundaries.
+Task-driven invalidation remains deferred. Audit the exporter → task result/progress → supervisor settlement →
+task-list notification boundary identified in the [workplan](../workplan.md#asset-mutation-notifications)
+before choosing transport into the shared asset-evidence owner. Current session mutations already work; polling and
+explicit Refresh remain necessary for external changes and missed notifications.
 
-The GEE module may coalesce identical concurrent metadata requests or use a short request cache. Recipe entries are
-keyed by SEPAL principal; asset entries are keyed by both SEPAL principal and linked Earth Engine identity. GEE does
-not own long-lived correctness state: instances restart, may be replicated and cannot notify the GUI that a source
-became stale.
+## Verification and open decisions
 
-A generic derived resource has a logical key consisting of its resource kind and normalized question. A
-source-version vector for every output-relevant dependency tells it when current input evidence must be resolved
-again. The resulting operation-input fingerprint decides whether the previous answer remains reusable. Examples
-include an image-output description, visualization applicability and Sampling Design stratum areas and per-stratum
-probabilities. Features must not build independent caches for these results, and existing per-feature caches are
-replaced rather than left running beside the shared one.
+Owner tests cover shared claims, independent close orders, retained-answer expiry, save/listing races, replaced
+credentials, late replies, revision rollback/withdrawal, transient versus definitive asset failures and unchanged
+drawings. Native/browser evidence is needed for visible redraw and panel interaction; live asset reads are needed
+for token propagation behavior beyond the supported metadata contract.
 
-For one exact input fingerprint, the resource may share one in-flight request and replay its last successful
-terminal result when a panel closes and reopens. A source-version change invalidates its evidence and triggers
-re-resolution; new expensive work starts only if the input fingerprint changed and there is an active consumer.
-Transient `UNAVAILABLE` results are not retained as successful cache entries. Definitive invalidity may be retained
-only for the exact evidence that proved it. Earth Engine identity change and owning-runtime teardown clear affected
-resources.
+Persisted-result work additionally needs exact execution evidence, AOI/image projections, legacy `UNKNOWN`
+submission refusal, unchanged fingerprints after irrelevant revision changes and a dependency edited while its
+consumer is closed. Never relabel browser preflight as exact executor provenance.
 
-Keep retention bounded. Start with at most the latest successful result per active logical resource, or a small
-measured LRU if inactive reuse proves useful. Do not add an unbounded map simply because source descriptions are
-usually small. The current cold `resolveImageOutput$` remains one-shot and uncached; a shared live resource is added
-behind the source runtime when its first consumer, refresh policy and product-fingerprint evidence are ready.
-
-### Sampling Design first vertical slice
-
-Sampling Design is the first persisted derived-result consumer. It supplies two named resource descriptions while
-the shared layer owns source evidence, fingerprints, in-flight sharing, replay and stale-response rejection.
-
-Stratum areas depend on:
-
-- the resolved AOI geometry product;
-- the resolved stratification image product and selected band;
-- the configured Stratification CRS and Scale;
-- the contracts that define those products and the area calculation.
-
-Per-stratum probabilities depend on:
-
-- the resolved AOI geometry product;
-- the resolved stratification product, band, CRS and Scale when stratification is active;
-- the resolved categorical or probability source product and selected bands;
-- the proportions mode, target class and configured Proportions Scale;
-- the contracts that define those products and the probability calculation.
-
-The two Earth Engine calculations are stratum areas and per-stratum probabilities. Anticipated proportions are
-derived locally from the probabilities together with the percentage interpretation, the overall-proportion target
-and the current stratum weights, and are rewritten by ordinary form edits without any Earth Engine call. Evidence
-therefore belongs to the calculated probabilities; anticipated proportions inherit staleness through that local
-derivation, as one of the downstream propagations Sampling Design owns.
-
-The source used only to calculate probabilities is an operation-scoped dependency. It does not become a general
-execution edge of the final Sampling Design product merely because its values are materialized into the recipe.
-
-AOI evidence is derived by AOI kind:
-
-- an inline polygon uses a canonical geometry fingerprint;
-- an Earth Engine asset or table uses its reference, geometry-affecting selection and `system:version` when
-  available;
-- a recipe reference resolves the AOI geometry product exposed by that recipe, including relevant transitive recipe
-  and asset evidence;
-- `ASSET_BOUNDS` binds to the concrete source product whose bounds it adopts;
-- a GeoID uses its id and buffer: its geometry is immutable under the GeoID service's contract, so the
-  GeoID is its own fingerprint and is never polled. Looking it up can still fail during execution; that is an
-  availability failure, not a change.
-
-For a recipe AOI, Sampling Design never decides which fields of the referenced recipe affect geometry. The recipe's
-product provider owns that projection. A changed recipe revision says only that the AOI may have changed; after
-re-resolution, unchanged AOI evidence leaves the areas current.
-
-The AOI geometry product is the abstraction, but the first milestone does not reimplement every runtime geometry
-rule in the browser. Until a recipe type has a shared AOI-product declaration used by both GUI resolution and
-executor execution, its fallback is conservative whole persisted-source evidence. "Unrelated edits keep areas
-current" is therefore a capability of migrated product providers, not a universal guarantee: a conservative
-provider may mark such an edit stale. It must never infer a narrow projection from a consumer-maintained field
-list.
-
-Evidence is persisted as section-level sidecars written atomically with the results they describe, leaving the
-existing arrays and their owner-first joins untouched:
-
-```
-model.stratification.strataCalculatedFrom
-model.proportions.probabilityPerStratumCalculatedFrom
-```
-
-The generic `{result, calculatedFrom}` envelope is conceptual. Do not wrap or relocate `strata`,
-`probabilityPerStratum` or `anticipatedProportions`; their persisted ownership and legacy joined-row compatibility
-stay exactly as they are.
-
-Suppose recipe B stores Sampling Design areas calculated from an AOI exposed by recipe A. A may be edited and closed
-while B is not open. When B is opened later, the runtime refreshes the revision vector for B's dependencies. If A's
-revision is unchanged, the areas stay current with no content load. If it advanced, A is reloaded, its AOI product
-re-resolved, and the new operation-input fingerprint compared with B's `calculatedFrom` evidence. A mismatch marks
-the areas and their dependent calculated results stale. A and B never need to be open simultaneously, and no update
-event or patch stream is required for this check.
-
-Sampling Design-specific code owns the two dependency descriptions, how stale areas and probabilities propagate to
-anticipated proportions and allocation, panel messages, recalculation commands and submission blocking. The shared
-graph owns closure and applies the recipe-closure limits it already defines; the shared freshness layer owns recipe
-and asset observation, generic cache keys, request epochs and source-version subscriptions.
-
-| Concern | Owner |
-| --- | --- |
-| authorized loading, edges, cycles and closure | shared graph |
-| recipe snapshots and asset-version observations | shared freshness layer |
-| AOI, image and capability declarations and fingerprints | product and capability owners |
-| evidence comparison, replay, in-flight sharing and epochs | generic derived-resource layer |
-| area/probability dependency questions and propagation rules | Sampling Design |
-| stale presentation, recalculation controls and submission policy | Sampling Design |
-
-The existing per-panel calculation caches are replaced by the generic derived resource, not left running beside it.
-Stratum areas migrate first, then per-stratum probabilities; the old module is removed once both have migrated, so
-two cache semantics never coexist.
-
-## Map and panel invalidation
-
-Panels and map layers subscribe to resolved descriptions and fingerprints rather than copied snapshots. A changed
-fingerprint causes the current source to be revalidated and the map request to reload. Saved user intent is not
-rewritten merely because runtime evidence changed.
-
-Before shared versioned resources exist, an output-dependent panel may repeat observation whenever it mounts. Its
-pending UI must remain conservative rather than briefly offer actions that later become incompatible. Once the
-resource layer exists, closing and reopening that panel should replay the current successful result immediately and
-continue watching its current source evidence.
-
-A recipe revision may cause re-resolution without causing a map or calculation refresh. Only a changed product or
-operation-input fingerprint invalidates the rendered or calculated answer. Providers that have not yet isolated
-their product inputs may over-invalidate through their conservative model fingerprint; preserve correctness and
-measure that cost before narrowing them.
-
-## Observability
-
-Emit low-cardinality Prometheus metrics and access-controlled structured logs for:
-
-- cache hits, misses, entry bytes and active entry count;
-- refresh reason, duration and result;
-- in-flight deduplication and stale response rejection;
-- source age at Preview and Retrieve;
-- transient unavailability and definitive blocks;
-- revision-vector refreshes, and how often they avoid a content load;
-- recipe revision events, save conflicts and asset `system:version` changes;
-- recipe revision changes that leave a consumed product fingerprint unchanged;
-- accepted no-op saves and incorrectly published no-op update events;
-- asset `updateTime` fallback observations;
-- map invalidations caused by resolved-graph changes.
-
-Do not label metrics with recipe IDs, asset IDs or usernames.
-
-Stale responses overwriting a newer epoch and cache hits crossing a SEPAL or Earth Engine principal are contract
-violations whose counters must remain zero. Any non-zero value requires investigation. Refresh latency, transient
-failure rate, observation age, catalogue growth and invalidation-rate thresholds are set after the first
-catalogue-backed consumer establishes normal behavior. Visualization-only invalidation is product telemetry rather
-than an operational page.
-
-## Verification
-
-Pure tests own catalogue transitions, canonical fingerprinting, epochs, stale-while-revalidate, in-flight
-deduplication, account invalidation, dependency memoization and expectation reconciliation.
-
-Versioned-resource tests also prove that identical snapshots share work, a reopened consumer receives the replayed
-successful result, a relevant recipe or asset version invalidates exactly the dependent resources, unrelated
-events do nothing, transient failures are not cached as success, and unsaved local edits are never overwritten by a
-remote event.
-
-The Sampling Design slice additionally proves that a source recipe may change while its dependent Sampling Design
-recipe is closed. Reopening the dependent recipe refreshes the revision vector, keeps results current without a
-content load when no revision moved, re-resolves consumed products when one did, keeps areas current when the
-exposed AOI fingerprint is unchanged despite a conservative revision change, marks them stale when the fingerprint
-changed, and rejects a response calculated for superseded inputs. Retrieve revalidates afresh and blocks stale or
-unknown applicable results. Asset replacement under the same ID exercises the same path through `system:version`.
-
-Execution-boundary tests prove that one operation dereferencing the same recipe twice observes exactly one snapshot
-and one revision, and that the returned evidence vector describes the snapshots actually used.
-
-Focused GUI tests cover each migrated source boundary and a late-response race without broad component rendering.
-Environment witnesses prove the shared contract loads through the GUI build and GEE/Task runtimes.
-
-Manual acceptance is limited to browser behavior that pure tests cannot establish:
-
-- visible stale/refresh/error states;
-- source edit in another tab or browser session;
-- linked-account replacement;
-- map reload after pixel, schema, category or preset changes.
-
-## Open decisions
-
-- Redux versus a dedicated observable catalogue after the first catalogue-backed slice.
-- Refresh interval and freshness threshold based on measured cost.
-- Whether an explicit Refresh command improves recovery.
-- Collection schema policy for each migrated consumer.
-- Whether every relevant ImageCollection membership change advances `system:version`; if not, the bounded member
-  evidence required by each collection policy.
-- Whether semantic no-op detection ships with the initial `revision` implementation or is phased in after it.
-- The exact normalization rules for persisted-content equality, and their versioning.
-- Websocket event transport and dirty-draft conflict presentation in the Node server migration.
-- Whether the shared recipe-closure limits suit this path, in particular whether the 8 MiB serialized bound holds
-  for large Classification and manually selected Mosaic recipes. This needs measurement, not a second limit policy.
-- Whether future patch events are useful enough to apply locally; freshness correctness must not depend on them.
-- Initial handling of recipes that become invalid under stricter checks.
-- Thresholds that would justify split fingerprints or cache eviction.
+Open decisions include resource-specific retention/refresh budgets, additional product projections, unreliable
+asset-version fallback policy, semantic no-op normalization and conflict presentation. The task drift/bundle
+policies remain owned by [source resolution](source-resolution.md#coherent-execution-bundles).

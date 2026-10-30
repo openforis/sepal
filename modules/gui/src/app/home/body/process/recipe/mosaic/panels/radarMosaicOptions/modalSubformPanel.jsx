@@ -43,7 +43,7 @@ export const modalSubformPanel = ({id, toTitle, toClassName, fields, constraints
                 const {inputsToUpdate, inputs} = this.props
                 Object.keys(inputsToUpdate)
                     .filter(name => Object.keys(inputs).includes(name))
-                    .forEach(name => inputs[name].set(inputsToUpdate[name].value))
+                    .forEach(name => inputs[name].setInitialValue(inputsToUpdate[name].value))
             }
     
             componentDidUpdate() {

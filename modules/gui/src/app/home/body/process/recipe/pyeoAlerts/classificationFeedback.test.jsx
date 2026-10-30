@@ -11,6 +11,7 @@ import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/
 import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
+import {tooltipText} from '~/widget/tooltip.test.fixtures'
 
 // A PyEO Alerts whose selected Classification cannot itself run - it stores no training points: its baseline is that
 // recipe's image, so the Sources panel names that recipe beside the classification field, whose own sections say why,
@@ -34,8 +35,8 @@ vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
-    Tooltip: ({msg, disabled, children}) => !disabled && [msg].flat().some(line => typeof line === 'string')
-        ? <span data-tooltip={JSON.stringify([msg].flat().filter(line => typeof line === 'string'))}>{children}</span>
+    Tooltip: ({msg, disabled, children}) => !disabled && [msg].flat().map(tooltipText).some(line => typeof line === 'string')
+        ? <span data-tooltip={JSON.stringify([msg].flat().map(tooltipText).filter(line => typeof line === 'string'))}>{children}</span>
         : children
 }))
 // The Sources panel is open.

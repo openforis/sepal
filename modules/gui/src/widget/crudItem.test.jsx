@@ -142,7 +142,7 @@ describe('CrudItem error mark', () => {
         const [content, mark, remove] = [
             marked.querySelector('[data-content]'),
             marked.querySelector('[data-feedback="error"]'),
-            marked.querySelector('button')
+            marked.querySelector('[data-icon="trash"]')?.closest('button') || null
         ]
 
         expect(content.compareDocumentPosition(mark) & FOLLOWS).toBeTruthy()
@@ -158,7 +158,9 @@ describe('CrudItem error mark', () => {
         expect(mark.closest(`.${styles.titleRow}`)).not.toBeNull()
         expect(leadingElement(marked).contains(mark)).toBe(true)
         expect(leadingElement(marked).nextElementSibling.contains(mark)).toBe(false)
-        expect(mark.getAttribute('role')).toBe('img')
+        expect(mark.tagName).toBe('BUTTON')
+        expect(mark.getAttribute('type')).toBe('button')
+        expect(mark.getAttribute('aria-label')).toBe('Reads a removed input')
         expect(leadingElement(marked).contains(content)).toBe(true)
         expect(leadingElement(unmarked).contains(unmarked.querySelector('[data-content]'))).toBe(true)
     })

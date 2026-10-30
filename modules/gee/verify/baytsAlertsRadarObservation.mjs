@@ -34,7 +34,7 @@ import {buildRecipeDependencyGraph} from '#sepal/recipe/source/dependencyGraph'
 import {RADAR_OBSERVATION} from '#sepal/recipe/type/baytsAlerts'
 
 const READ_TIMEOUT_MS = 300000
-const WINDOW_DAYS = 183
+const WINDOW_DAYS = 30
 const MILLIS_PER_DAY = 24 * 60 * 60 * 1000
 
 const POINT = [-62.525, -10.025]

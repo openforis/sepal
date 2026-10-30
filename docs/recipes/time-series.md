@@ -46,7 +46,7 @@ band options follow the Classification record the session holds.
 ## Output
 
 Declared in `lib/js/shared/src/recipe/type/timeSeries.js` (see the
-[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)): one scalar band,
+[output contract](../design/recipes/output-products.md#declaration-and-description)): one scalar band,
 `count` - per pixel, how many images of the filtered, masked collection hold a valid value in their first band, not
 how many scenes intersect the area. Whatever the sources, that is the schema, so it is described from the
 configuration alone, before anything is configured and without reading a dependency. Coarser pyramid levels
@@ -69,27 +69,16 @@ date ranges before any imagery check, and each chunk's export before its collect
 the export submitted. Planning judges every indicator the download names (`indicators`, or the single `indicator` a
 task from an earlier release names), and each chunk its own.
 
-The Retrieve panel holds a download to the same as any Retrieve holds an export (the shared `retrievePanel.jsx`): it
-reads and watches the image output while open (`withRetrieveOutput`), and that read's readiness, validity, listing,
-asset and save authority hold the submission (`outputDecision`). What is particular to Time Series is the indicators
-offered and holding a selection to them (`requestGate`, `retrieve.jsx`), the Classification's record taken from the
-session or from that same read. A finding the toolbar's Retrieve action is withdrawn for - a Classification that
-cannot be trained - closes the panel (`retrieveAvailability`), as it closes a chart. A hold keeps the
-selection and disables Apply; a submission, by Apply or the form, is judged again from the session as it stands, so
-one made before the panel closes is refused. A refused submission saves nothing and leaves the panel open
-(`accepts`, `widget/form/panel.jsx`). Any indicator is held, with the panel open, while what the image output
-needs is read or a dependency's save is unacknowledged. The chart's observation request (`modules/gee/src/jobs/ee/timeSeries/loadObservations.js`) is held
-to what this type declares its observations require, then to the requested bands (`requireRequestedBands$`,
-`modules/gee/src/jobs/requestedBands.js`). `PIXEL_OBSERVATIONS` needs the classifier inputs, the source imagery
-resolving, and the selected Classification's `CLASSIFIER` readiness - its training data and its reused recipes' input
-imagery and sampled features, judged over the Classification's own imagery. The check runs before the request builds
-the pixel or the collection or evaluates anything, and it judges the recipe at the clicked point: its AOI, which the
-chart does not read, is not required, and the submitted recipe is unchanged. The bands it charts are not checked
-against `count`, and the count image is not described. The configuration is judged first, the Classification's
-training included; then a band the Classification computes must be one it provides, refused as the collection refuses
-it, a client error coded `UNSUPPORTED_CLASSIFIED_OUTPUT` (`classifiedOutputRefusal.js`). A Classification that cannot
-be trained therefore now precedes that capability error. CCDC's observations are held the same way. Change Alerts' observations are judged as the Time Series
-collection it monitors (`observedCollection`).
+Retrieve uses the [shared lifecycle and acceptance boundary](../design/recipes/gui-source-runtime.md#retrieve-integration)
+with type-owned indicator choices (`requestGate`). It watches `IMAGE_OUTPUT` for readiness and current listing,
+asset and save authority, without validating indicators against `count`. Confirmed source findings close it;
+pending evidence and local destination/selection problems keep it open. Refused submission persists nothing.
+
+The chart endpoint (`modules/gee/src/jobs/ee/timeSeries/loadObservations.js`) first judges `PIXEL_OBSERVATIONS`,
+including selected-classifier readiness and feature compatibility, then requested classified outputs. The guard
+runs before pixel/collection construction and uses the clicked point in place of this recipe's AOI without
+mutating the submitted model. Training failure therefore precedes `UNSUPPORTED_CLASSIFIED_OUTPUT`. CCDC follows
+the same policy; Change Alerts judges the native Time Series collection it monitors.
 
 The task (`modules/task/src/runner/operations/timeSeriesExport.js`) exports one indicator per Earth Engine chunk
 request and lays the download out band first:
@@ -109,8 +98,8 @@ because chip names repeat across tiles; load one tile folder as a cube.
 The GUI registration states a time series is no image source (`imageSource: false`), which keeps it out of other
 recipes' source pickers; declaring the image does not make it an input. Reached through the API or a saved model anyway,
 the count is exported with `mean`, directly and through Masking or Stack, and an image export checks the recipe's
-dependencies. That check validates no configuration: a model stating no AOI, sources or dates is not refused before
-Earth Engine is asked.
+dependencies. The shared guard enforces declared configuration requirements, including the selected Classification;
+it does not comprehensively validate absent AOI, sources or dates before Earth Engine is asked.
 
 ## Classified outputs
 
@@ -128,87 +117,21 @@ Earth Engine is asked.
 - **What is offered.** The chart's and Retrieve's choices are the outputs the classifier's configuration provides:
   an SVM's type decides its class probabilities (`supportProbability`). No Time Series setting requires a classified
   output, so none is validated beyond the request.
-- **Readiness.** The classifier's inputs must suit the collection, whatever band is charted or downloaded. A charted
-  or downloaded classified output also needs the Classification's training readiness (see Configuration and Output).
+- **Readiness.** A selected Classification must be trainable and its inputs must suit the collection for every
+  operation, including native bands/counts, under the configured-analysis policy described in Inputs.
 
-## Open issues
-
-- **A period without scenes fails with Earth Engine's own error** (`Image.reduce: Unable to reduce an image with 0
-  bands`), before the collection's "all images have been filtered out" can be reported; the catalogue no longer
-  builds the image, so it answers regardless.
-- **Execution ignores requests.** An unknown band name returns `count` rather than being refused, unlike migrated
-  types that honour `outputBands`.
-
-## Potential features
-
-- **Scene cloud cover.** Time Series offers no control for `sources.cloudPercentageThreshold`, the percentage of cloud
-  an optical scene may have to be included; a recipe that states none includes every scene. Expose it: new recipes save 75%
-  explicitly, a recipe that states none keeps including every scene and shows 100%, and a saved value is kept.
+Known limitations and follow-ups are tracked in the [workplan](../design/workplan.md#time-series).
 
 ## Verification
 
-- `modules/gee/verify/timeSeriesOutputBands.mjs` - on live Earth Engine, with optical and radar sources: the catalogue
-  and the image built for nothing and for the declared bands hold exactly `count`, scalar, and a recipe configuring
-  nothing is catalogued the same. At a point, the count equals the number of images of the recipe's own collection
-  whose first band holds a value there, read from the collection's pixel values. An unknown band name and a period
-  without scenes are recorded, not judged; Planet is reported as blocked.
-- `lib/js/shared/test/recipe/output/type/timeSeries.test.js` - the declaration over each source family and before
-  anything is configured, without reading its AOI, and its policy through Masking and Stack.
-- `modules/gee/test/jobs/ee/timeSeries/timeSeriesBands.test.js` - the catalogue, without building the collection.
-- `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js` - the read, presentation, preset style,
-  the map's product, and a recipe over broken dependencies not previewed.
-- `modules/gui/src/app/home/body/process/recipe/timeSeries/timeSeriesWorkflow.test.js` - kept out of Masking's
-  pickers, and Retrieve submitting `timeseries.download` for the indicators and additional outputs named.
-- `modules/task/src/runner/operations/timeSeriesExport.test.js` - the band-first layout, one chunk request per
-  indicator, and the per-tile `sits/` folders.
-- `lib/python/shared/test_stack_time_series.py` - stacking chunks, and sits files that still read their pixels once the
-  export has moved.
-- `modules/gee/test/jobs/task/export/imageAssetExport.test.js` - an image export records no encoding, reads no recipe, and fails
-  over an AOI recipe that cannot be read.
-- `modules/gee/test/jobs/task/export/timeSeries.test.js` - each download request refused for an incompatible
-  classification before its own work, a chunk export refused without planning, the workflow unchanged after repair,
-  and an unreadable classification failing as a read; classified indicators refused for each training finding before
-  anything is tiled, built or exported, mixed and earlier-release requests judged in full, each chunk its own
-  indicator, repair, unobservable input, the coded capability refusal and its precedence, and native indicators
-  planned without observing the Classification.
-- `modules/gui/src/app/home/body/process/recipe/timeSeries/panels/retrieve/retrieveTrainingReadiness.test.jsx` - the
-  panel's lifecycle beside the real Retrieve action and SRC mark: an open panel closing, its action disabled and
-  nothing submitted, once the Classification cannot be trained, even in the event submitting it; repair offering it
-  again, reopening on what was last submitted; saves, pending and unobservable imagery, an empty selection and an
-  unnamed folder holding it open; deselection; a submission judged from the session as it stands; the image output
-  alone watched, let go on closing while SRC's mark keeps reading.
-- `modules/gui/src/app/home/body/process/recipe/timeSeries/classificationFeedback.test.jsx` - an untrainable
-  Classification named beside the classification field, SRC marked, Retrieve and the chart held naming SRC, Apply not
-  held; repair, deselection and a decision tree releasing them.
-- `modules/gee/test/ee/timeSeries/classifiedOutputs.test.js` - over optical, radar and Planet collections, the output
-  modes each classified request constructs; an unsupported regression refused before anything is processed; native
-  and positional bands reading nothing of the Classification.
-- `modules/gee/test/jobs/ee/timeSeries/loadObservations.test.js` - the chart's observations refused for an
-  incompatible classification before any chart work, unchanged after repair, an unreadable classification failing as
-  a read, and no count image built; charted over an AOI that cannot be read, refers back or is incomplete, reading
-  none of it, and without changing the submitted recipe; native and classified bands refused for each training finding
-  before any chart work, answered after repair, unavailable input observation failing as a read; an unprovided output
-  refused as the collection refuses it once the Classification can be trained, after its training otherwise; one
-  operation judged whatever band; no selection and a decision tree reading nothing for training; CCDC's observations
-  refused and answered the same way, whatever its breakpoint bands; Change Alerts' monitored collection.
-- `lib/js/shared/test/recipe/classifiedOutputTraining.test.js` - `CLASSIFIER` for every Time Series and CCDC operation,
-  native and classified, beside Phenology's classified band: each training finding at the recipe it concerns, decision
-  trees, pending and unavailable evidence, repair; no selection needing nothing; Phenology's native band observing
-  nothing of the Classification.
-- `modules/gui/src/app/home/body/process/recipe/selectedClassificationChart.test.jsx` - an open Time Series or CCDC
-  chart, native or classified band, closing and cancelling once the Classification cannot be trained, its action
-  withdrawn until repair, the repair's save or deselection, its band kept; pending or unobservable imagery reading
-  nothing, the chart open; the operations watched, released with the chart.
-- `modules/gui/src/app/home/body/process/recipe/pixelObservationsAvailability.test.js`,
-  `chartPixelButton.test.jsx` and `pixelObservationsChart.test.jsx` - the chart's availability, said in Sources,
-  over an unresolvable AOI, while the Classification is read and as the runtime settles it; the action withdrawn
-  mid-selection; an open chart waiting, letting go of its request once the Classification is no longer held and
-  reading again once it is, and closing and cancelling on a finding (Time Series and CCDC alike); reading again
-  after compatible input or classifier changes, waiting for the Classification's save, not for unrelated changes,
-  reading the band chosen, replacing a band the Classification no longer provides without reading it again, and
-  offering the Classification's outputs as its record holds them.
-- `modules/gui/src/app/home/body/process/sourceRuntime/assetFreshness.test.js` - watching a pixel's observations
-  reads none of the AOI they ignore.
-- `lib/js/shared/test/recipe/output/operationReadiness.test.js` - the readiness-only read: nothing of the root
-  described, an undeclared operation refused, and a requirement's observed bands pending, judged and failing as
-  unavailable.
+- `lib/js/shared/test/recipe/output/type/timeSeries.test.js` and `test/recipe/classifiedOutputTraining.test.js`:
+  count schema, selected-classifier prerequisites and Phenology's distinct native-band policy.
+- `modules/gee/test/jobs/task/export/timeSeries.test.js`, `jobs/ee/timeSeries/loadObservations.test.js` and
+  `test/ee/timeSeries/classifiedOutputs.test.js`: planning/chunk/observation guards, native versus classified
+  construction, unsupported output and repair across collection families.
+- `modules/gui/src/app/home/body/process/recipe/timeSeries/` and `recipe/selectedClassificationChart.test.jsx`:
+  indicator requests, feedback, submission races, chart/Retrieve withdrawal, pending states and recovery.
+- `modules/task/src/runner/operations/timeSeriesExport.test.js` and `lib/python/shared/test_stack_time_series.py`:
+  band-first download layout, chunk stacking, relative SITS VRTs and relocation.
+- [Live count probe](../../modules/gee/verify/README.md): optical/radar schema and valid first-band pixel counts;
+  Planet is not covered. Unknown-band and no-scene behavior are recorded rather than treated as valid output.

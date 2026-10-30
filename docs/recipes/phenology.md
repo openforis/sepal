@@ -27,7 +27,7 @@ chosen, and opening the panel leaves it unedited, until another band is chosen
 ## Output
 
 Phenology declares 35 scalar bands, whatever its configuration (see the
-[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)), all exported with
+[output contract](../design/recipes/output-products.md#declaration-and-description)), all exported with
 `mean` pyramiding and no encoding:
 
 - the metrics `background`, `amplitude` and `median`, then `dayOfYear`, `days`, `median`, `slope` and `offset` for
@@ -46,18 +46,11 @@ from its schema.
 
 The GUI groups the bands by segment and by month and sets their cursor precision. That is presentation only.
 
-## Open issues
-
-- **Month windows span two months.** Each month composite filters with
-  `ee.Filter.calendarRange(month, month + 1, 'month')`, whose end is inclusive: `january` composites January and
-  February, and so on; `december` asks for months 12 to 13. Whether a month band should cover its own month only is a
-  calculation decision that has not been made.
+Known limitations and follow-ups are tracked in the [workplan](../design/workplan.md#phenology).
 
 ## Verification
 
-- `modules/gee/verify/phenologyPyeoOutputBands.mjs` - on live Earth Engine, over an area with months without scenes
-  and one with scenes every month: unselected and empty selections return the declared bands, a subset returns in
-  the order asked, a month without scenes has no valid pixels, and a month with scenes keeps its median's values,
-  mask, pixel type, CRS and affine transform.
-- `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js` - the declaration, presentation and
-  export policy through the real registration.
+- `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js`: output declaration,
+  presentation and export policy through registration.
+- [Phenology/PyEO live probe](../../modules/gee/verify/README.md): complete/selected schema, empty-month masks,
+  and median values, pixel type and projection. It does not settle the two-month window policy.

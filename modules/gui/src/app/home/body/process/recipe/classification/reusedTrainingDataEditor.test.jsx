@@ -11,6 +11,7 @@ import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/
 import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
+import {tooltipText} from '~/widget/tooltip.test.fixtures'
 
 // The editor of a Classification's or Regression's data set reusing another recipe's training data, which that recipe
 // cannot produce: it says so beside the recipe reused, once, as the repair - the recipe at fault, further up a chain of
@@ -38,8 +39,8 @@ vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
-    Tooltip: ({msg, disabled, children}) => !disabled && [msg].flat().some(line => typeof line === 'string')
-        ? <span data-tooltip={JSON.stringify([msg].flat().filter(line => typeof line === 'string'))}>{children}</span>
+    Tooltip: ({msg, disabled, children}) => !disabled && [msg].flat().map(tooltipText).some(line => typeof line === 'string')
+        ? <span data-tooltip={JSON.stringify([msg].flat().map(tooltipText).filter(line => typeof line === 'string'))}>{children}</span>
         : children
 }))
 // The editor of one data set is open: the one reusing the recipe that cannot produce its training data, unless a case
@@ -305,7 +306,9 @@ const shown = () => document.body.textContent
 const button = label => [...document.querySelectorAll('button')].find(button => button.textContent === label)
 
 // The actions the label of the recipe reused offers: buttons in the label above its input.
-const recipeFieldActions = () => [...field(RECIPE_LABEL).firstElementChild.querySelectorAll('button')].map(({textContent}) => textContent)
+const recipeFieldActions = () => [...field(RECIPE_LABEL).firstElementChild.querySelectorAll('button')]
+    .filter(button => !button.matches('[data-feedback]') && !button.querySelector('[data-feedback]'))
+    .map(({textContent}) => textContent)
 
 // The editor's form submitted as Enter in a field submits it, past its buttons.
 const submitForm = async () => {

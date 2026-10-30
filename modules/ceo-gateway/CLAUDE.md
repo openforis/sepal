@@ -32,7 +32,5 @@ npm run testWatch     # Node test runner watch mode
 
 ## Non-Obvious Conventions
 
-- **Token via header**: CEO token passed as `x-ceo-token` request header, forwarded as Cookie to CEO
-- **302 = expired**: CEO returns 302 redirect when token expires (not 401)
 - **`requiredQueryParam()` helper**: Validates required query parameters, throws ClientException if missing
 - **No database or message queue**

@@ -14,6 +14,7 @@ import {ActivationContext} from '~/widget/activation/activationContext'
 import {EventShield} from '~/widget/eventShield'
 import {PanelWizard} from '~/widget/panelWizard'
 import {PortalContainer, PortalContext} from '~/widget/portal'
+import {tooltipText} from '~/widget/tooltip.test.fixtures'
 
 // What Time Series Retrieve is held to, as the server holds the download (task/export/timeSeries.js): what the recipe's
 // image output requires - the Classification its Sources select trainable among it - whatever indicators are selected,
@@ -640,7 +641,7 @@ const RecordingWatches = ({children}) => {
 
 // The sections the toolbar marks, as it watches what marking them needs.
 const SectionMarks = compose(
-    ({sourceProblems}) => <output aria-label='marks' data-marks={JSON.stringify(sourceProblems)}/>,
+    ({sourceProblems}) => <output aria-label='marks' data-marks={JSON.stringify(tooltipText(sourceProblems))}/>,
     withSourceProblems(),
     withRecipe(recipe => ({recipeId: recipe.id}))
 )

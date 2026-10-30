@@ -7,6 +7,14 @@ const Context = React.createContext()
 
 const withTabContext = withContext(Context, 'tab')
 
+const DialogsContext = React.createContext()
+
+// The tab's dialogs (tabContent.jsx): the layer they render in, those open, in the order they opened, and how one says
+// it is open.
+export const TabDialogs = DialogsContext.Provider
+
+export const withTabDialogs = withContext(DialogsContext, 'tabDialogs')
+
 export const TabContext = ({id, busyIn$, busyOut$, children}) =>
     <Context.Provider value={{id, busyIn$, busyOut$}}>
         {children}

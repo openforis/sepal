@@ -6,6 +6,7 @@ import {asapScheduler, delay, distinctUntilChanged, filter, fromEvent, map, merg
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {withContext} from '~/context'
+import {withEnabled} from '~/enabled'
 import {withSubscriptions} from '~/subscription'
 
 import styles from './blurDetector.module.css'
@@ -19,7 +20,8 @@ const SKIP_INITIAL_EVENTS_MS = 100
 // Mount-ordered stack of all BlurDetectors, so that only the top-most one (i.e. the most
 // recently mounted overlay) reacts to blur events. This covers stacked overlays that are
 // not nested in the React tree (e.g. a modal confirmation on top of a modal panel), which
-// the context-based parent disabling cannot reach.
+// the context-based parent disabling cannot reach. A detector in what is not shown - a tab not
+// selected, a section left - takes no part: neither reacting, nor keeping the one shown from it.
 const blurDetectorStack = []
 
 const Context = React.createContext()
@@ -50,10 +52,11 @@ class _BlurDetector extends React.Component {
     }
 
     render() {
-        const {className, style, children, onClick} = this.props
+        const {className, style, children, onClick, inert} = this.props
         const {fadeOut} = this.state
         return (
             <div
+                inert={inert}
                 ref={this.ref}
                 className={[
                     className,
@@ -113,6 +116,7 @@ class _BlurDetector extends React.Component {
                 ).pipe(
                     skipUntil(timer(SKIP_INITIAL_EVENTS_MS)),
                     filter(this.isEnabled),
+                    filter(e => this.isWithinBoundary(e)),
                     filter(e => !this.isOver(e))
                 ).subscribe(e => {
                     e.preventDefault()
@@ -182,11 +186,26 @@ class _BlurDetector extends React.Component {
     }
 
     isEnabled() {
-        return this.enabled && this.isTopMost()
+        return this.enabled && this.isShown() && this.isTopMost()
+    }
+
+    isShown() {
+        return this.props.enabled !== false && !this.props.disabled
     }
 
     isTopMost() {
-        return _.last(blurDetectorStack) === this
+        return _.findLast(blurDetectorStack, detector => detector.isShown()) === this
+    }
+
+    // Only what happens within the boundary, where one is given, is outside this detector: a tab's dialog is not
+    // dismissed by a click or focus outside its tab.
+    isWithinBoundary(e) {
+        const {boundary} = this.props
+        if (!boundary) {
+            return true
+        }
+        const element = boundary()
+        return !!element && isOverElement(e, element)
     }
     
     // Notifications float above every overlay: acting on one (a button in a warning, say) is
@@ -218,6 +237,7 @@ export const BlurDetector = compose(
     withBlurDetector(),
     withEventShield(),
     withSubscriptions(),
+    withEnabled(),
     asFunctionalComponent({
         autoBlurTimeout: 2000
     })
@@ -226,9 +246,13 @@ export const BlurDetector = compose(
 BlurDetector.propTypes = {
     children: PropTypes.any.isRequired,
     autoBlurTimeout: PropTypes.number,
+    // Where events outside the detector count, as a function returning the element; everywhere when not given.
+    boundary: PropTypes.func,
     className: PropTypes.string,
+    disabled: PropTypes.bool,
     exclude: PropTypes.any,
     fadeOut: PropTypes.any,
+    inert: PropTypes.bool,
     style: PropTypes.object,
     onBlur: PropTypes.func,
     onClick: PropTypes.func

@@ -1,6 +1,8 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {describeFeedback, feedbackMessage, recipeReference} from '~/app/home/body/process/recipe/feedbackMessage'
+import {feedbackContent} from '~/app/home/body/process/recipe/feedbackMessageContent'
 import {productArgs} from '~/app/home/body/process/recipe/recipeOutput'
 import {CHECKING_SOURCE} from '~/app/home/body/process/recipe/selectedSourceStatus'
 import {renderableBandNames, renderableVisualizations} from '~/app/home/body/process/recipe/visualizationMatching'
@@ -263,11 +265,12 @@ class _VisualizationSelector extends React.Component {
 // recipe.
 const sourceFeedback = ({checking, describing, unavailable, failing, heldSource} = {}, {elsewhere}) => {
     const held = heldSource && heldSource.state !== CHECKING_SOURCE && elsewhere
+    const heldMessage = held && (heldSource.refusedBy
+        ? feedbackMessage('map.layerSource.heldUpstream', {recipe: recipeReference(heldSource.recipeId, heldSource.recipe), source: recipeReference(heldSource.refusedById, heldSource.refusedBy)})
+        : feedbackMessage('map.layerSource.held', {recipe: recipeReference(heldSource.recipeId, heldSource.recipe), section: heldSource.section}))
     const errors = [
         unavailable && msg('map.layerSource.unavailable', {asset: unavailable}),
-        held && (heldSource.refusedBy
-            ? msg('map.layerSource.heldUpstream', {recipe: heldSource.recipe, source: heldSource.refusedBy})
-            : msg('map.layerSource.held', {recipe: heldSource.recipe, section: heldSource.section}))
+        heldMessage && feedbackContent(describeFeedback(heldMessage))
     ].filter(Boolean)
     return {
         busy: heldSource?.state === CHECKING_SOURCE

@@ -16,7 +16,7 @@ new creation seeds editable defaults once; later producer edits, replacement, Re
 Required processing matches are derived read-only from the current producer or recorded asset metadata; genuinely
 unrecorded asset settings remain explicit consumer fallbacks. Displaying those values does not rewrite saved copies
 or editable drafts ([source evidence](../design/recipes/gui-source-runtime.md)). `changeAlertsOptions` configure the
-algorithm. The deferred "Use reference settings" action is not implemented.
+algorithm. No separate "Use reference settings" copy-again action is planned.
 
 Change Alerts monitors a band its imagery observes itself, and uses no Classification.
 - **Not proposed from the producer.** The producer's `classification` and `breakpointBands` are not proposed; ones an
@@ -45,7 +45,7 @@ is repaired. The full findings stay in the requirement read; the field shows its
 ### Monitoring choices and chart availability
 
 SRC, Retrieve and the analysis chart use the existing shared `MONITORED_MEASURE` rule against current reference facts
-and S5 effective processing. The native monitoring scope is shared by the GUI and server, with the existing optical,
+and effective processing. The native monitoring scope is shared by the GUI and server, with the existing optical,
 radar and temporal Planet choices retained. An unusable configured band cannot be bypassed by exploring another band
 in the chart. Missing native and classified selections remain visibly selected with standard field feedback when SRC
 opens; opening does not edit the saved model. Explicit draft repair follows the chosen family, datasets and band.
@@ -82,7 +82,7 @@ withhold rather than fail; `monitoringDates` fails with that reason.
 ## Output
 
 The changes are its canonical output, declared in `lib/js/shared/src/recipe/type/changeAlerts.js` (see the
-[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)): nine scalar bands,
+[output contract](../design/recipes/output-products.md#declaration-and-description)): nine scalar bands,
 sampled, with no encoding, known before a period or a reference is chosen. Retrieve, Masking and Task read only these.
 Their styles span the period, so a recipe whose period cannot be computed is described alike but offered none, and its
 layer selects nothing until the period is corrected.
@@ -94,7 +94,7 @@ A layer can show the `COLLECTION_MOSAIC` map product instead, with `{period: 'mo
 never an export authority.
 
 It is the mosaic `mosaicRecipe` (`lib/js/shared/src/recipe/changeAlerts/mosaicRecipe.js`) builds from Change Alerts'
-own `sources` and period, and S5 effective processing options, and it is described by delegating to that mosaic type's declaration: Optical,
+own `sources` and period, and effective processing options, and it is described by delegating to that mosaic type's declaration: Optical,
 Radar or Planet Mosaic, as `sources.dataSetType` says. Execution builds the same recipe, clipped to the geometry of the
 selected reference - a wrapper's own, not the CCDC's under it. Describing it reads no reference, resolves no geometry
 and builds no imagery.
@@ -123,23 +123,7 @@ wire the layer sends `visualizationType` and `mosaicType`, which every image req
 and distinct values - carries alike. Changing the view or the style acquires nothing again; a record the layer depends
 on changing does.
 
-## Open issues
-
-- **Execution builds a mosaic for a mode the GUI would not name.** Any `visualizationType` other than `changes` and
-  `monitoring` is built as the calibration mosaic, and any `mosaicType` other than `latest` as the median.
-- **A layer config saving `mosaicType: undefined` names no product**, while execution would build a median. A layer
-  whose config lacks `mosaicType` writes that when its period is chosen.
-- **The mosaic and the changes can read different collections.** The mosaic is chosen by the saved
-  `sources.dataSetType`; the changes' collection is chosen from `sources.dataSets`. A model where the two disagree
-  builds a mosaic of one family and changes over another.
-- **A recipe that has chosen no reference is not held back from preview.** A new recipe's `reference` is `{}`, which is
-  not diagnosed as a dependency, so the read permits a preview wherever the product's own requirements are met; that
-  does not establish that an uninitialized layer submits one. Execution fails on it with `MALFORMED_SEGMENT_SOURCE`.
-- **The pixel chart's highlights still require a valid period.** `panels/chartPixel.jsx` calls `monitoringDates`;
-  malformed legacy applied periods need separate validation/date-policy cleanup. The export date range now returns
-  no range when monitoring dates are incomplete.
-- **Execution's calendar is more permissive than the product.** `monitoringDates` accepts a day past its month's end,
-  fractional durations and a unit of years; the product refuses them.
+Known limitations and follow-ups are tracked in the [workplan](../design/workplan.md#change-alerts).
 
 ## Verification
 
@@ -165,9 +149,7 @@ on changing does.
 - `modules/gui/src/app/home/body/process/recipe/recipeImageLayer.test.js` - preview arguments, a view change and a
   restyle acquiring nothing, and a record change acquiring again.
 
-S6 focused checks additionally cover retained native selections, draft Enter/direct submission and Cancel, real
-producer Optical-to-Radar changes, refresh-based asset recovery, both-stream cancellation and reopening, image-only
-hold isolation, native catalogue parity, and server refusal before computation. They use mounted GUI harnesses and
-mocked external EE boundaries. On 2026-10-27 the user passed the S6 browser recheck: actual optical chart responses,
-upstream Radar withdrawal with the monitoring choice retained, Cancel preserving the error, and applied Radar/VV
-repair with actual segments and observations. Final integrated verification remains pending.
+Focused GUI/server tests also cover retained native selections, draft Enter/direct submission, Cancel,
+Optical-to-Radar producer changes, asset refresh recovery, both-stream cancellation and refusal before
+computation. Controlled EE boundaries establish gating, not live pixels; browser acceptance requires actual
+segments/observations after repair.

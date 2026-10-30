@@ -1,6 +1,7 @@
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 
+import {feedbackContent} from './feedbackMessageContent'
 import {CHECKING_SOURCE} from './selectedSourceStatus'
 
 // What the input a source is selected in says of it, from its section's status (selectedSourceStatus.js), as feedback
@@ -14,9 +15,9 @@ export const sourceInputFeedback = (status, refresh) => {
     }
     const checking = status.state === CHECKING_SOURCE
     const held = status.state && !checking
-    const advisories = status.advisories.map(({message}) => message)
+    const advisories = status.advisories.map(feedbackContent)
     return {
-        error: held ? status.message : null,
+        error: held ? feedbackContent(status) : null,
         busy: checking ? status.message : null,
         warning: !held && advisories.length ? advisories : null,
         buttons: status.refresh

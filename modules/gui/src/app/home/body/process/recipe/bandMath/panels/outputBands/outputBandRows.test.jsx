@@ -510,7 +510,7 @@ const value = row => row.querySelector('input').value
 
 // A row's remove button, pressed as a user presses it.
 const remove = async row => {
-    const button = row.querySelector('button')
+    const button = row.querySelector('[data-icon="trash"]').closest('button')
     await act(async () => {
         button.dispatchEvent(new MouseEvent('mouseenter', {bubbles: true}))
         button.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}))

@@ -8,6 +8,7 @@ import {withContext} from '~/context'
 import {selectFrom, toPathList} from '~/stateUtils'
 import {select} from '~/store'
 import {ActivationContext} from '~/widget/activation/activationContext'
+import {ModalScope} from '~/widget/panel/modalScope'
 
 import {recipeActionBuilder} from './recipe'
 import {recipeAccess} from './recipeAccess'
@@ -31,9 +32,11 @@ export const Recipe = ({id, children}) =>
     id
         ? (
             <RecipeContext recipeStatePath={toPathList(['process.loadedRecipes', id])}>
-                <ActivationContext id={recipeActivationId(id)}>
-                    {children}
-                </ActivationContext>
+                <ModalScope scope='recipe'>
+                    <ActivationContext id={recipeActivationId(id)}>
+                        {children}
+                    </ActivationContext>
+                </ModalScope>
             </RecipeContext>
         )
         : null

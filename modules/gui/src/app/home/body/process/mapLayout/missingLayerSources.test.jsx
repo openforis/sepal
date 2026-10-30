@@ -125,6 +125,7 @@ const SourceReaders = withRecipe(recipe => ({recipe, sources: selectFrom(recipe,
 
 async function open() {
     const initialState = {
+        dimensions: {width: 1280, height: 800},
         process: {
             loadedRecipes: {[ID]: {
                 id: ID, type: 'MOSAIC', revision: 1, ui: {initialized: true}, model: {},

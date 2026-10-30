@@ -13,6 +13,7 @@ import {initStore} from '~/store'
 import errorIndicatorStyles from '~/widget/errorIndicator.module.css'
 import listItemStyles from '~/widget/listItem.module.css'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
+import {tooltipText} from '~/widget/tooltip.test.fixtures'
 
 // What the Stack editor marks about its sections, from its output read: an input lacking a band it maps on the Input
 // imagery button and that input's row in the list Stack and Remapping share, each in one sentence, before any input is
@@ -50,8 +51,8 @@ vi.mock('~/widget/activation/activator', () => ({
 }))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
-    Tooltip: ({msg, disabled, children}) => !disabled && [msg].flat().some(line => typeof line === 'string')
-        ? <span data-tooltip={JSON.stringify([msg].flat().filter(line => typeof line === 'string'))}>{children}</span>
+    Tooltip: ({msg, disabled, children}) => !disabled && [msg].flat().map(tooltipText).some(line => typeof line === 'string')
+        ? <span data-tooltip={JSON.stringify([msg].flat().map(tooltipText).filter(line => typeof line === 'string'))}>{children}</span>
         : children
 }))
 

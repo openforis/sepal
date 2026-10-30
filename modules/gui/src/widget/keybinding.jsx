@@ -4,14 +4,13 @@ import React from 'react'
 import {fromEvent} from 'rxjs'
 
 import {compose} from '~/compose'
-import {connect} from '~/connect'
-import {withEnableDetector} from '~/enabled'
+import {withModalInteraction} from '~/widget/panel/modalScope'
 
 const keybindings = []
 
 const getCandidateKeybindings = key =>
     _.filter(keybindings,
-        keybinding => !keybinding.disabled && keybinding.enabled && keybinding.handles(key)
+        keybinding => keybinding.isEnabled() && keybinding.handles(key)
     )
 
 const getClosestKeybinding = keybindings =>
@@ -59,16 +58,12 @@ class _Keybinding extends React.Component {
         super(props)
         this.handlesKey = this.handlesKey.bind(this)
         this.createKeybinding()
-        const {enableDetector: {onChange: onEnableChange}} = props
-        onEnableChange(enabled => this.keybinding.enabled = enabled)
         add(this.keybinding)
     }
 
     createKeybinding() {
-        const {disabled} = this.props
         this.keybinding = {
-            disabled,
-            enabled: true,
+            isEnabled: () => !this.props.disabled && this.props.interactionEnabled,
             handler: this.handle.bind(this),
             handles: this.handlesKey
         }
@@ -107,12 +102,6 @@ class _Keybinding extends React.Component {
         return children || null
     }
 
-    componentDidUpdate() {
-        const {disabled} = this.props
-        this.keybinding.disabled = disabled
-
-    }
-
     componentWillUnmount() {
         remove(this.keybinding)
     }
@@ -120,8 +109,7 @@ class _Keybinding extends React.Component {
 
 export const Keybinding = compose(
     _Keybinding,
-    connect(),
-    withEnableDetector()
+    withModalInteraction()
 )
 
 Keybinding.propTypes = {

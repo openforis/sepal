@@ -51,13 +51,13 @@ Jobs are in `src/jobs/ee/` organized by domain:
 - `aoi/` - bounds calculation
 
 ### Routes
-`src/routes.js` - 27 REST endpoints using Koa `stream()` pattern (returns RxJS observable as HTTP stream).
+`src/routes.js` declares the HTTP endpoints, using Koa `stream()` for observable responses.
 
 Key endpoints: `POST /preview`, `POST /bands`, `POST /sceneareas`, `POST /assetMetadata`, `GET /projects`, `POST /ccdc/loadSegments`, `POST /timeSeries/loadObservations`.
 
 ## Non-Obvious Conventions
 
-- **Authentication per-request**: Each GEE call authenticates using the user's Google OAuth tokens from the `sepal-user` header. Falls back to service account.
+- **Authentication per request**: `jobs/eeRequestContext.js` selects the linked user's Earth Engine identity when tokens are present, otherwise the configured service account. REST calls without an installed request context fail rather than falling back.
 - **Scheduler**: Named "GoogleEarthEngine", configurable instances via `--instances` CLI flag.
 - **Config**: `src/config.js` uses `commander` for CLI args: `--gee-email`, `--gee-key-path`, `--google-project-id`, `--sepal-endpoint`, `--recipe-endpoint`, `--geoid-endpoint` (GeoID service, defaulting to FAO's), `--port`, `--instances`.
 - **Recipe reads**: referenced recipes are read from the `recipe` module as the user the gateway authenticated on the request, installed per job by `src/jobs/configure.js`. There is no service-credential fallback.

@@ -9,6 +9,7 @@ import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
+import {tooltipText} from '~/widget/tooltip.test.fixtures'
 
 // Whether CCDC Slice's source suits what reads it, composed as its editor composes it: the evidence lifecycle, the
 // source panel, the toolbar's actions and the chart, over a real store and source runtime. Earth Engine and storage
@@ -120,7 +121,7 @@ vi.mock('../ccdc/ccdcRecipe', () => ({getAllVisualizations: () => []}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => msg && !disabled && typeof msg !== 'function'
-        ? <span data-tooltip={JSON.stringify([msg].flat().filter(Boolean))}>{children}</span>
+        ? <span data-tooltip={JSON.stringify([msg].flat().map(tooltipText).filter(Boolean))}>{children}</span>
         : children
 }))
 // The graph renderer is the chart's output boundary: what it is given to draw is recorded.

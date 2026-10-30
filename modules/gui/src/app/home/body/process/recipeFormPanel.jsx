@@ -4,6 +4,7 @@ import React from 'react'
 
 import {actionBuilder} from '~/action-builder'
 import {initValues} from '~/app/home/body/process/recipe'
+import {feedbackContent, joinFeedbackContent} from '~/app/home/body/process/recipe/feedbackMessageContent'
 import {OutputCandidate} from '~/app/home/body/process/recipe/outputCandidate'
 import {SourceCandidate} from '~/app/home/body/process/recipe/sourceCandidate'
 import {sourceInputFeedback} from '~/app/home/body/process/recipe/sourceInputFeedback'
@@ -323,7 +324,10 @@ const setDirty = ({evaluatedPath, statePath, dirty}) => {
 const outputFeedbackOf = (editor, findings, values) => {
     if (typeof editor.input !== 'function') {
         return {[editor.input]: {
-            error: editor.message ? editor.message(findings) : findings.message,
+            error: feedbackContent({
+                message: editor.message ? editor.message(findings) : findings.message,
+                messageContent: editor.messageContent ? editor.messageContent(findings) : findings.messageContent
+            }),
             diagnostics: findings.diagnostics,
             ...(findings.referenceFeedback && {referenceFeedback: findings.referenceFeedback})
         }}
@@ -335,7 +339,7 @@ const outputFeedbackOf = (editor, findings, values) => {
 // Preserve all explanations when declarations address the same field.
 const combineFeedback = (previous, next, key) => {
     if (key === 'error' && previous && next) {
-        return [previous, next].join(' ')
+        return joinFeedbackContent([previous, next])
     }
     if (Array.isArray(previous) && Array.isArray(next)) {
         return [...previous, ...next]
