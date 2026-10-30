@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import {randomBytes} from 'node:crypto'
-import {cp, mkdtemp, readdir, rm} from 'node:fs/promises'
+import {cp, mkdtemp, readdir, readFile, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {after, afterEach, before, describe, test} from 'node:test'
@@ -9,16 +9,22 @@ import {createConnection, initDb, migrateDb} from '#sepal/db/mysql'
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 
+import {migrateRecipeDb} from './databaseMigrations.js'
+
 describe('recipe database migrations', () => {
     let admin
     const reserved = []
+    const importCopies = []
 
     before(async () => {
         configureNoLogging()
         admin = await createConnection('mysql')
     })
 
-    afterEach(() => dropReservedDatabases())
+    afterEach(async () => {
+        await dropReservedDatabases()
+        await removeImportCopies()
+    })
 
     after(() => admin?.end())
 
@@ -81,13 +87,13 @@ describe('recipe database migrations', () => {
             assert.deepEqual(history, [{md5: 'previous-file-checksum'}])
         })
 
-        test('create empty recipe and project tables', async () => {
+        test('create empty recipe, project and folder tables', async () => {
             const dbName = await reserveDatabase()
 
             await initDb(dbName, SCHEMA_PATH)
 
             const counts = await rowCounts(dbName)
-            assert.deepEqual(counts, {recipes: 0, projects: 0})
+            assert.deepEqual(counts, {recipes: 0, projects: 0, folders: 0})
         })
     })
 
@@ -160,6 +166,82 @@ describe('recipe database migrations', () => {
         })
     })
 
+    // The schema stream runs before the import, so on a fresh database 003 copies an empty project table.
+    describe('migrateRecipeDb, with the legacy import', () => {
+        test('makes a folder of every imported project on a fresh database', async () => {
+            const source = await aLegacySource()
+            const kenya = await insertProject(source, aProject({id: 'kenya', name: 'Kenya'}))
+            await insertRecipe(source, {...aRecipe(), id: 'in-kenya', project_id: kenya.id})
+            const dbName = await reserveDatabase()
+
+            await migrateRecipeDb(dbName, {importPath: await importReading(source)})
+
+            const [folders] = await admin.query('SELECT * FROM ??.folder', [dbName])
+            assert.deepEqual(folders, [{
+                id: kenya.id,
+                username: kenya.username,
+                name: kenya.name,
+                parent_id: null,
+                default_asset_folder: kenya.default_asset_folder,
+                default_workspace_folder: kenya.default_workspace_folder
+            }])
+            assert.deepEqual(await folderIds(dbName), [{id: 'in-kenya', folder_id: kenya.id}])
+        })
+
+        test('leaves at the root an imported recipe whose project is empty or another owner\'s', async () => {
+            const source = await aLegacySource()
+            const alices = await insertProject(source, aProject({id: 'alices', username: 'alice'}))
+            await insertRecipe(source, {...aRecipe(), id: 'empty', project_id: ''})
+            await insertRecipe(source, {...aRecipe(), id: 'foreign', project_id: alices.id})
+            const dbName = await reserveDatabase()
+
+            await migrateRecipeDb(dbName, {importPath: await importReading(source)})
+
+            assert.deepEqual(await folderIds(dbName), [
+                {id: 'empty', folder_id: null},
+                {id: 'foreign', folder_id: null}
+            ])
+        })
+
+        test('makes the folders where an earlier start imported the projects after copying them', async () => {
+            const source = await aLegacySource()
+            const kenya = await insertProject(source, aProject({id: 'kenya'}))
+            await insertRecipe(source, {...aRecipe(), id: 'in-kenya', project_id: kenya.id})
+            const dbName = await reserveDatabase()
+            await migrateRecipeDb(dbName, {importPath: await importReading(source, {through: 1})})
+
+            await migrateRecipeDb(dbName, {importPath: await importReading(source)})
+
+            assert.deepEqual(await folderIds(dbName), [{id: 'in-kenya', folder_id: kenya.id}])
+        })
+
+        // Where the import ran before 003, 003 made the folders, and users may have rearranged them since.
+        test('leaves the folders alone where the folder migration already copied the projects', async () => {
+            const source = await aLegacySource()
+            const kenya = await insertProject(source, aProject({id: 'kenya'}))
+            await insertRecipe(source, {...aRecipe(), id: 'in-kenya', project_id: kenya.id})
+            const dbName = await aDatabaseAtSchemaVersion(2)
+            await migrateDb(dbName, await importReading(source, {through: 1}), {schemaTable: IMPORT_HISTORY})
+            await migrateDb(dbName, SCHEMA_PATH)
+            await admin.query('UPDATE ??.recipe SET folder_id = NULL WHERE id = ?', [dbName, 'in-kenya'])
+
+            await migrateRecipeDb(dbName, {importPath: await importReading(source)})
+
+            const [folders] = await admin.query('SELECT id FROM ??.folder', [dbName])
+            assert.deepEqual(folders, [{id: kenya.id}])
+            assert.deepEqual(await folderIds(dbName), [{id: 'in-kenya', folder_id: null}])
+        })
+
+        test('builds an empty database where there is no legacy source', async () => {
+            const dbName = await reserveDatabase()
+
+            await migrateRecipeDb(dbName, {importPath: await importReading(aDatabaseName())})
+
+            const counts = await rowCounts(dbName)
+            assert.deepEqual(counts, {recipes: 0, projects: 0, folders: 0})
+        })
+    })
+
     // Copy the real migrations unchanged so the full stream validates them before applying the rest.
     const aDatabaseAtSchemaVersion = async version => {
         const dbName = await reserveDatabase()
@@ -184,6 +266,33 @@ describe('recipe database migrations', () => {
         await admin.query(`CREATE DATABASE \`${dbName}\` DEFAULT CHARACTER SET ascii COLLATE ascii_bin`)
         reserved.push(dbName)
         return dbName
+    }
+
+    const aLegacySource = async () => {
+        const source = await reserveDatabase()
+        await admin.query(LEGACY_RECIPE_TABLE(source))
+        await admin.query(LEGACY_PROJECT_TABLE(source))
+        return source
+    }
+
+    // The import reads processing_recipe by name. A copy that reads the test's own source instead keeps the
+    // suite away from any real legacy database on the same server.
+    const importReading = async (source, {through = Infinity} = {}) => {
+        const copy = await mkdtemp(join(tmpdir(), 'recipe-import-'))
+        importCopies.push(copy)
+        const files = (await readdir(IMPORT_PATH))
+            .filter(name => /^\d{3}\.do\..*\.sql$/.test(name) && Number(name.slice(0, 3)) <= through)
+        for (const file of files) {
+            const sql = await readFile(join(IMPORT_PATH, file), 'utf8')
+            await writeFile(join(copy, file), sql.replaceAll('processing_recipe', source))
+        }
+        return copy
+    }
+
+    const removeImportCopies = async () => {
+        for (const copy of importCopies.splice(0)) {
+            await rm(copy, {recursive: true, force: true})
+        }
     }
 
     const ownIfCreated = (dbName, created) => {
@@ -216,7 +325,8 @@ describe('recipe database migrations', () => {
     const rowCounts = async dbName => {
         const [[{recipes}]] = await admin.query('SELECT COUNT(*) AS recipes FROM ??.recipe', [dbName])
         const [[{projects}]] = await admin.query('SELECT COUNT(*) AS projects FROM ??.project', [dbName])
-        return {recipes, projects}
+        const [[{folders}]] = await admin.query('SELECT COUNT(*) AS folders FROM ??.folder', [dbName])
+        return {recipes, projects, folders}
     }
 
     const usernameCollations = async dbName => {
@@ -261,4 +371,32 @@ const aProject = (over = {}) => ({
 
 const aDatabaseName = () => `recipe_migrations_test_${randomBytes(6).toString('hex')}`
 
+// processing_recipe as sepal-server's Flyway migrations V1 to V4 left it.
+const LEGACY_RECIPE_TABLE = dbName => `
+    CREATE TABLE \`${dbName}\`.recipe (
+        id            VARCHAR(255) NOT NULL,
+        username      VARCHAR(255) NOT NULL,
+        name          VARCHAR(255) NOT NULL,
+        type          VARCHAR(63)  NOT NULL,
+        contents      LONGTEXT     NOT NULL,
+        creation_time TIMESTAMP    NOT NULL,
+        update_time   TIMESTAMP    NOT NULL,
+        removed       BOOLEAN      NOT NULL DEFAULT FALSE,
+        type_version  INT          DEFAULT 1,
+        project_id    VARCHAR(255),
+        PRIMARY KEY (id)
+    )`
+
+const LEGACY_PROJECT_TABLE = dbName => `
+    CREATE TABLE \`${dbName}\`.project (
+        id                       VARCHAR(255) NOT NULL,
+        username                 VARCHAR(255) NOT NULL,
+        name                     VARCHAR(255) NOT NULL,
+        default_asset_folder     TEXT,
+        default_workspace_folder TEXT,
+        PRIMARY KEY (id)
+    )`
+
 const SCHEMA_PATH = join(dirName(import.meta.url), '../migrations')
+const IMPORT_PATH = join(SCHEMA_PATH, 'legacy-import')
+const IMPORT_HISTORY = 'legacy_import_version'
