@@ -6922,6 +6922,7 @@
     },
     "recipeInput": {
       "label": "Formule",
+      "open": "",
       "placeholder": "Selectionner une formule...",
       "all": {
         "tooltip": "Afficher toutes les formules ou seulement les formules dans le projet en cours"
@@ -6944,6 +6945,7 @@
       "addTab": {
         "tooltip": "Nouvel onglet"
       },
+      "closeWithOpenDialog": "",
       "newTab": "Nouvel_onglet"
     }
   },
