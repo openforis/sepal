@@ -34,13 +34,17 @@ const createRoutes = ({recipeService, requireAuth}) => router => router
     })
     .post('/folder', requireAuth, async ctx => {
         const {id, name, parentId, defaultAssetFolder, defaultWorkspaceFolder} = ctx.request.body || {}
+        const folderName = validFolderName(name)
         if (id === NO_FOLDER_ID) {
             ctx.status = 400
             ctx.body = {code: 'FOLDER_ID_RESERVED'}
+        } else if (folderName === null) {
+            ctx.status = 400
+            ctx.body = {code: 'FOLDER_NAME_INVALID'}
         } else {
             respondToFolderSave(ctx, await recipeService.saveFolder({
                 principal: principal(ctx),
-                folder: {id, name, parentId: parentId || null, defaultAssetFolder, defaultWorkspaceFolder}
+                folder: {id, name: folderName, parentId: parentId || null, defaultAssetFolder, defaultWorkspaceFolder}
             }))
         }
     })
@@ -147,6 +151,16 @@ const respondToFolderRemove = (ctx, result) => {
 }
 
 const principal = ctx => ctx.state.currentUser
+
+// Trimmed, so " Kenya" and "Kenya" cannot sit side by side. The limit is the column's, in characters as MySQL
+// counts them. The GUI's shorter limit is not applied: folders made from projects can be longer, and a move or
+// rename saves the whole folder again.
+const validFolderName = name => {
+    const trimmed = typeof name === 'string' ? name.trim() : ''
+    return trimmed.length > 0 && [...trimmed].length <= MAX_FOLDER_NAME_CHARACTERS ? trimmed : null
+}
+
+const MAX_FOLDER_NAME_CHARACTERS = 255
 
 // Absence means create, so a malformed value must be rejected here rather than reaching the service as
 // an absent precondition.

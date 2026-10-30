@@ -303,6 +303,40 @@ describe('POST /folder', () => {
         assert.equal(service.saveFolderCommand.folder.parentId, null)
     })
 
+    test('trims the name before saving', async () => {
+        const folder = aFolder({name: '  Kenya  '})
+
+        await POST('/folder', {json: folder})
+
+        assert.equal(service.saveFolderCommand.folder.name, 'Kenya')
+    })
+
+    // MySQL counts the column in characters, and one of these is two UTF-16 code units in JavaScript.
+    test('accepts a name as long as the column allows, counting characters as MySQL does', async () => {
+        const folder = aFolder({name: '🌍'.repeat(255)})
+
+        const response = await POST('/folder', {json: folder})
+
+        assert.equal(response.status, 200)
+        assert.equal(service.saveFolderCommand.folder.name, folder.name)
+    })
+
+    for (const {description, name} of [
+        {description: 'no name', name: undefined},
+        {description: 'an empty name', name: ''},
+        {description: 'a name of spaces only', name: '   '},
+        {description: 'a name that is not text', name: 42},
+        {description: 'a name longer than the column', name: 'x'.repeat(256)}
+    ]) {
+        test(`refuses ${description} with 400 FOLDER_NAME_INVALID`, async () => {
+            const response = await POST('/folder', {json: aFolder({name})})
+
+            assert.equal(response.status, 400)
+            assert.deepEqual(response.body, {code: 'FOLDER_NAME_INVALID'})
+            assert.equal(service.reached, false)
+        })
+    }
+
     test('refuses to save a folder under the reserved root id', async () => {
         const folder = aFolder({id: 'none'})
 

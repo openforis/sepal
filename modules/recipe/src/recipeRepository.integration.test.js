@@ -597,6 +597,16 @@ describe('recipe repository', () => {
 
             assert.deepEqual(result, {outcome: 'saved'})
         })
+
+        // POST /folder lets through 255 characters, so the column must hold that many of the widest kind.
+        test('stores a name of 255 four-byte characters', async () => {
+            const folder = aFolder({name: '🌍'.repeat(255)})
+
+            await repository.saveFolder(folder)
+
+            const [stored] = await repository.listFolders(OWNER)
+            assert.equal(stored.name, folder.name)
+        })
     })
 
     describe('removeFolder', () => {
