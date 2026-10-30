@@ -44,17 +44,17 @@ describe('authentication', () => {
 })
 
 describe('route precedence', () => {
-    // `/project` must not be matched by `/:id` and read as a recipe called "project".
-    test('reads projects rather than a recipe named project', async () => {
-        const project = aProject()
-        service.projects = [project]
+    // `/folder` must not be matched by `/:id` and read as a recipe called "folder".
+    test('reads folders rather than a recipe named folder', async () => {
+        const folder = aFolder()
+        service.folders = [folder]
         service.recipe = aRecipeContent()
 
-        const response = await GET('/project')
+        const response = await GET('/folder')
 
-        assert.deepEqual(service.listProjectsCommand, {principal: authenticatedUser})
+        assert.deepEqual(service.listFoldersCommand, {principal: authenticatedUser})
         assert.equal(service.loadRecipeCommand, null)
-        assert.deepEqual(response.body, [project])
+        assert.deepEqual(response.body, [folder])
     })
 })
 
@@ -75,7 +75,7 @@ describe('POST /:id', () => {
 
         assert.deepEqual(service.saveRecipeCommand, {
             principal: authenticatedUser,
-            recipe: {id: A_RECIPE_ID, projectId: null, name: 'A recipe', type: 'MOSAIC', content},
+            recipe: {id: A_RECIPE_ID, folderId: null, name: 'A recipe', type: 'MOSAIC', content},
             expectedRevision: undefined
         })
     })
@@ -87,10 +87,10 @@ describe('POST /:id', () => {
     })
 
     // Query strings cannot carry null, and an empty value must not become the literal empty string.
-    test('turns an empty project id into no project at all', async () => {
-        await POST(`/${A_RECIPE_ID}?type=MOSAIC&projectId=`, {gzip: aRecipeContent()})
+    test('turns an empty folder id into no folder at all', async () => {
+        await POST(`/${A_RECIPE_ID}?type=MOSAIC&folderId=`, {gzip: aRecipeContent()})
 
-        assert.equal(service.saveRecipeCommand.recipe.projectId, null)
+        assert.equal(service.saveRecipeCommand.recipe.folderId, null)
     })
 
     for (const expectedRevision of ['abc', '0', '1.5', '-1', '']) {
@@ -251,42 +251,136 @@ describe('DELETE /', () => {
     })
 })
 
-describe('POST /project/:id', () => {
-    test('moves the recipes in the JSON body to the project named in the path', async () => {
+describe('POST /folder/:id', () => {
+    test('moves the recipes in the JSON body to the folder named in the path', async () => {
         const moved = [A_RECIPE_ID]
-        service.recipes = [aRecipeSummary({projectId: DESTINATION_PROJECT_ID})]
+        service.recipes = [aRecipeSummary({folderId: DESTINATION_FOLDER_ID})]
 
-        const response = await POST(`/project/${DESTINATION_PROJECT_ID}`, {json: moved})
+        const response = await POST(`/folder/${DESTINATION_FOLDER_ID}`, {json: moved})
 
         assert.deepEqual(service.moveRecipesCommand, {
-            principal: authenticatedUser, projectId: DESTINATION_PROJECT_ID, recipeIds: moved
+            principal: authenticatedUser, folderId: DESTINATION_FOLDER_ID, recipeIds: moved
         })
         assert.deepEqual(response.body, service.recipes)
     })
-})
 
-describe('POST /project', () => {
-    test('saves the project in the JSON body and returns the projects', async () => {
-        const project = aProject()
-        service.projects = [project]
+    test('moves to the reserved root id, translating it to no folder at all', async () => {
+        const moved = [A_RECIPE_ID]
 
-        const response = await POST('/project', {json: project})
+        await POST('/folder/none', {json: moved})
 
-        assert.deepEqual(service.saveProjectCommand, {principal: authenticatedUser, project})
-        assert.deepEqual(response.body, service.projects)
+        assert.deepEqual(service.moveRecipesCommand, {
+            principal: authenticatedUser, folderId: null, recipeIds: moved
+        })
+    })
+
+    test('answers 409 FOLDER_NOT_FOUND when the service reports folderNotFound', async () => {
+        service.moveOutcome = {outcome: 'folderNotFound'}
+
+        const response = await POST(`/folder/${DESTINATION_FOLDER_ID}`, {json: [A_RECIPE_ID]})
+
+        assert.equal(response.status, 409)
+        assert.deepEqual(response.body, {code: 'FOLDER_NOT_FOUND'})
     })
 })
 
-describe('DELETE /project/:id', () => {
-    test('removes the project named in the path and returns what remains', async () => {
-        service.projects = [aProject({id: 'to-keep'})]
+describe('POST /folder', () => {
+    test('saves the folder in the JSON body and returns the folders', async () => {
+        const folder = aFolder()
+        service.folders = [folder]
 
-        const response = await DELETE(`/project/${A_PROJECT_ID}`)
+        const response = await POST('/folder', {json: folder})
 
-        assert.deepEqual(service.removeProjectCommand, {
-            principal: authenticatedUser, projectId: A_PROJECT_ID
+        assert.deepEqual(service.saveFolderCommand, {principal: authenticatedUser, folder})
+        assert.deepEqual(response.body, service.folders)
+    })
+
+    test('passes the parent through, turning an empty parent into no parent at all', async () => {
+        const folder = aFolder({parentId: ''})
+
+        await POST('/folder', {json: folder})
+
+        assert.equal(service.saveFolderCommand.folder.parentId, null)
+    })
+
+    test('trims the name before saving', async () => {
+        const folder = aFolder({name: '  Kenya  '})
+
+        await POST('/folder', {json: folder})
+
+        assert.equal(service.saveFolderCommand.folder.name, 'Kenya')
+    })
+
+    // MySQL counts the column in characters, and one of these is two UTF-16 code units in JavaScript.
+    test('accepts a name as long as the column allows, counting characters as MySQL does', async () => {
+        const folder = aFolder({name: '🌍'.repeat(255)})
+
+        const response = await POST('/folder', {json: folder})
+
+        assert.equal(response.status, 200)
+        assert.equal(service.saveFolderCommand.folder.name, folder.name)
+    })
+
+    for (const {description, name} of [
+        {description: 'no name', name: undefined},
+        {description: 'an empty name', name: ''},
+        {description: 'a name of spaces only', name: '   '},
+        {description: 'a name that is not text', name: 42},
+        {description: 'a name longer than the column', name: 'x'.repeat(256)}
+    ]) {
+        test(`refuses ${description} with 400 FOLDER_NAME_INVALID`, async () => {
+            const response = await POST('/folder', {json: aFolder({name})})
+
+            assert.equal(response.status, 400)
+            assert.deepEqual(response.body, {code: 'FOLDER_NAME_INVALID'})
+            assert.equal(service.reached, false)
         })
-        assert.deepEqual(response.body, service.projects)
+    }
+
+    test('refuses to save a folder under the reserved root id', async () => {
+        const folder = aFolder({id: 'none'})
+
+        const response = await POST('/folder', {json: folder})
+
+        assert.equal(response.status, 400)
+        assert.deepEqual(response.body, {code: 'FOLDER_ID_RESERVED'})
+        assert.equal(service.reached, false)
+    })
+
+    for (const {outcome, code} of [
+        {outcome: 'cycle', code: 'FOLDER_CYCLE'},
+        {outcome: 'parentNotFound', code: 'FOLDER_PARENT_NOT_FOUND'}
+    ]) {
+        test(`answers 409 ${code} when the service reports ${outcome}`, async () => {
+            service.saveFolderOutcome = {outcome}
+
+            const response = await POST('/folder', {json: aFolder()})
+
+            assert.equal(response.status, 409)
+            assert.deepEqual(response.body, {code})
+        })
+    }
+})
+
+describe('DELETE /folder/:id', () => {
+    test('removes the folder named in the path and returns what remains', async () => {
+        service.folders = [aFolder({id: 'to-keep'})]
+
+        const response = await DELETE(`/folder/${A_FOLDER_ID}`)
+
+        assert.deepEqual(service.removeFolderCommand, {
+            principal: authenticatedUser, folderId: A_FOLDER_ID
+        })
+        assert.deepEqual(response.body, service.folders)
+    })
+
+    test('answers 409 with the counts when the folder still holds something', async () => {
+        service.removeFolderOutcome = {outcome: 'notEmpty', folders: 2, recipes: 5}
+
+        const response = await DELETE(`/folder/${A_FOLDER_ID}`)
+
+        assert.equal(response.status, 409)
+        assert.deepEqual(response.body, {code: 'FOLDER_NOT_EMPTY', folders: 2, recipes: 5})
     })
 })
 
@@ -341,15 +435,18 @@ function recipeServiceSpy() {
         saveRecipeCommand: null,
         removeRecipesCommand: null,
         moveRecipesCommand: null,
-        listProjectsCommand: null,
-        saveProjectCommand: null,
-        removeProjectCommand: null,
+        listFoldersCommand: null,
+        saveFolderCommand: null,
+        removeFolderCommand: null,
         reached: false,
 
         recipe: null,
         recipes: [],
-        projects: [],
+        folders: [],
         saveOutcome: {outcome: 'saved', revision: 1},
+        saveFolderOutcome: {outcome: 'saved', folders: []},
+        removeFolderOutcome: {outcome: 'removed'},
+        moveOutcome: {outcome: 'moved'},
 
         reset: () => {
             spy.loadRecipeCommand = null
@@ -357,14 +454,17 @@ function recipeServiceSpy() {
             spy.saveRecipeCommand = null
             spy.removeRecipesCommand = null
             spy.moveRecipesCommand = null
-            spy.listProjectsCommand = null
-            spy.saveProjectCommand = null
-            spy.removeProjectCommand = null
+            spy.listFoldersCommand = null
+            spy.saveFolderCommand = null
+            spy.removeFolderCommand = null
             spy.reached = false
             spy.recipe = null
             spy.recipes = []
-            spy.projects = []
+            spy.folders = []
             spy.saveOutcome = {outcome: 'saved', revision: 1}
+            spy.saveFolderOutcome = {outcome: 'saved', folders: []}
+            spy.removeFolderOutcome = {outcome: 'removed'}
+            spy.moveOutcome = {outcome: 'moved'}
         },
 
         loadRecipe: async command => {
@@ -390,22 +490,28 @@ function recipeServiceSpy() {
         moveRecipes: async command => {
             spy.moveRecipesCommand = command
             spy.reached = true
-            return spy.recipes
+            return spy.moveOutcome.outcome === 'moved'
+                ? {outcome: 'moved', recipes: spy.recipes}
+                : spy.moveOutcome
         },
-        listProjects: async command => {
-            spy.listProjectsCommand = command
+        listFolders: async command => {
+            spy.listFoldersCommand = command
             spy.reached = true
-            return spy.projects
+            return spy.folders
         },
-        saveProject: async command => {
-            spy.saveProjectCommand = command
+        saveFolder: async command => {
+            spy.saveFolderCommand = command
             spy.reached = true
-            return spy.projects
+            return spy.saveFolderOutcome.outcome === 'saved'
+                ? {outcome: 'saved', folders: spy.folders}
+                : spy.saveFolderOutcome
         },
-        removeProject: async command => {
-            spy.removeProjectCommand = command
+        removeFolder: async command => {
+            spy.removeFolderCommand = command
             spy.reached = true
-            return spy.projects
+            return spy.removeFolderOutcome.outcome === 'removed'
+                ? {outcome: 'removed', folders: spy.folders}
+                : spy.removeFolderOutcome
         }
     }
     return spy
@@ -421,21 +527,21 @@ const aRecipeContentOfBytes = bytes => {
 
 // What a load returns: the stored document with the columns the repository injects.
 const aLoadedRecipe = (over = {}) => ({
-    ...aRecipeContent(), projectId: A_PROJECT_ID, revision: 4, ...over
+    ...aRecipeContent(), folderId: A_FOLDER_ID, revision: 4, ...over
 })
 
 const aRecipeSummary = (over = {}) => ({
-    id: A_RECIPE_ID, projectId: null, name: 'A recipe', type: 'MOSAIC', revision: 1, ...over
+    id: A_RECIPE_ID, folderId: null, name: 'A recipe', type: 'MOSAIC', revision: 1, ...over
 })
 
-const aProject = (over = {}) => ({
-    id: A_PROJECT_ID, name: 'A project',
+const aFolder = (over = {}) => ({
+    id: A_FOLDER_ID, name: 'A folder', parentId: null,
     defaultAssetFolder: null, defaultWorkspaceFolder: null, ...over
 })
 
 const A_RECIPE_ID = 'a-recipe'
-const A_PROJECT_ID = 'a-project'
-const DESTINATION_PROJECT_ID = 'destination-project'
+const A_FOLDER_ID = 'a-folder'
+const DESTINATION_FOLDER_ID = 'destination-folder'
 
 const authenticatedUser = {username: 'bob', roles: []}
 const authenticatedHeaders = {'sepal-user': JSON.stringify(authenticatedUser)}
