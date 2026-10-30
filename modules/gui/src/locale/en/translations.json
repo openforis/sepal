@@ -6954,7 +6954,7 @@
       "selection": "Selected",
       "unlisted": "Unavailable recipe",
       "browse": {
-        "tooltip": "Browse folders",
+        "tooltip": "Browse recipes",
         "title": "Select a recipe"
       }
     },
