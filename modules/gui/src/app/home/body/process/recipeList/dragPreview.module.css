@@ -1,7 +1,3 @@
-.hiddenClone.hiddenClone {
-    display: none;
-}
-
 .preview {
     position: fixed;
     z-index: 2;
@@ -15,7 +11,7 @@
     border-radius: var(--button-border-radius);
     background: var(--popover-background-color);
     color: var(--text-color);
-    box-shadow: 0 .2rem .6rem var(--shadow-medium-color);
+    box-shadow: var(--elevation-shadow);
     user-select: none;
 }
 

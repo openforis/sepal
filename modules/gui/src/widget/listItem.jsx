@@ -208,11 +208,13 @@ class _ListItem extends React.Component {
         ]).join(' ')
     }
 
+    // An item that shows a preview of its own when dragged can do without the copy of itself under the pointer.
     render() {
+        const {dragClone = true} = this.props
         return (
             <React.Fragment>
                 {this.renderItem()}
-                {this.isDragging() ? this.renderDraggableClone() : null}
+                {dragClone && this.isDragging() ? this.renderDraggableClone() : null}
             </React.Fragment>
         )
     }
@@ -470,6 +472,7 @@ ListItem.propTypes = {
     drag$: PropTypes.object,
     dragAxis: PropTypes.oneOf(['horizontal', 'vertical']),
     dragPointer: PropTypes.oneOf(['any', 'mouse']),
+    dragClone: PropTypes.bool,
     dragCloneClassName: PropTypes.string,
     dragTarget: PropTypes.oneOf(['handle', 'item']),
     dragtooltip: PropTypes.any,

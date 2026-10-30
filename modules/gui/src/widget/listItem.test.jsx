@@ -166,6 +166,15 @@ describe('a dragged item', () => {
         expect(told.at(-1)).toEqual({dragging: false})
     })
 
+    it('draws no copy of itself when it has none to show, and still reports the drag', async () => {
+        await mount({dragClone: false})
+
+        await pan('panstart', {x: 100, y: 62})
+
+        expect(preview()).toBeNull()
+        expect(told[0]).toEqual(expect.objectContaining({dragging: true, value: 'item'}))
+    })
+
     it('shows what is dragged in its preview, keeping the controls it offers on the item itself', async () => {
         await mount()
 
