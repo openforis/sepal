@@ -1,12 +1,14 @@
-import {forkJoin, map, switchMap} from 'rxjs'
+import {forkJoin, map, of, switchMap} from 'rxjs'
 
 import {requireCcdcRequestedOutputs$} from '#gee/jobs/requestedBands'
 import ccdc from '#sepal/ee/timeSeries/ccdc'
+import {withRegressionPrecision$} from '#sepal/ee/timeSeries/regressionPrecision'
 import {formatProperties} from '#sepal/formatProperties'
 import {processingOfProducer} from '#sepal/recipe/changeAlerts/processing'
-import ccdcType from '#sepal/recipe/type/ccdc'
+import {encodingOfBands} from '#sepal/recipe/output/bandEncoding'
+import ccdcType, {ccdcOutputBands, fittedMeasures} from '#sepal/recipe/type/ccdc'
 
-import {resolveImageOutput$} from './imageOutput.js'
+import {resolveImageOutput$, selectedBandEncoding} from './imageOutput.js'
 import {startImageToAssetExport$} from './toAsset.js'
 import {toVisualizationProperties} from './visualizations.js'
 
@@ -24,21 +26,24 @@ export const ccdcAssetSource$ = ({image, description}) => {
     const {recipe, bands, scale, visualizations, properties, ...other} = image
     const built = {...recipe, type: ccdcType.type}
     return resolveImageOutput$(built).pipe(
-        switchMap(() => requireCcdcRequestedOutputs$(built, {selection: bands})),
-        switchMap(() => {
+        switchMap(imageOutput => requireCcdcRequestedOutputs$(built, {selection: bands}).pipe(map(() => imageOutput))),
+        switchMap(imageOutput => {
             const segments = ccdc(recipe, {selection: bands})
             return forkJoin({
-                segments: segments.getImage$(),
+                imageOutput: of(imageOutput),
+                result: withRegressionPrecision$(segments.getImage$()),
                 geometry: segments.getGeometry$()
             })
         }),
-        map(({segments, geometry}) => {
+        map(({result: {image: segments, regressionPrecision}, geometry, imageOutput}) => {
             const formattedProperties = formatProperties({...properties, scale})
             const allBands = getAllBands(bands)
             return {
                 ...other,
                 description,
                 image: segments,
+                regressionPrecision,
+                bandEncoding: encodingOfBands(selectedBandEncoding(imageOutput, ccdcOutputBands(fittedMeasures(built.model, bands)))),
                 region: geometry.bounds(),
                 scale,
                 pyramidingPolicy: {'.default': 'sample'},

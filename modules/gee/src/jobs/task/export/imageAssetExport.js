@@ -2,6 +2,7 @@ import {forkJoin, map, of, switchMap} from 'rxjs'
 
 import ImageFactory from '#sepal/ee/imageFactory'
 import {withOutputBands} from '#sepal/ee/outputBands'
+import {withRegressionPrecision$} from '#sepal/ee/timeSeries/regressionPrecision'
 import {formatProperties} from '#sepal/formatProperties'
 import {encodingOfBands} from '#sepal/recipe/output/bandEncoding'
 
@@ -23,7 +24,7 @@ export const imageAssetSource$ = ({image: {recipe, ...retrieveOptions}}) => {
 // exported image inherited. How it is stored, and that it is stored even when empty, belongs to the exporter.
 const source$ = ({recipe, bands, visualizations, scale, properties, ...retrieveOptions}) =>
     built$(recipe, withOutputBands(bands)).pipe(
-        map(({image, geometry, imageOutput}) => {
+        map(({result: {image, regressionPrecision}, geometry, imageOutput}) => {
             const encoding = encodingOfBands(selectedBandEncoding(imageOutput, bands.selection))
             const {processing: _processing, ...submittedProperties} = properties || {}
             const formattedProperties = formatProperties({...submittedProperties, scale})
@@ -31,6 +32,7 @@ const source$ = ({recipe, bands, visualizations, scale, properties, ...retrieveO
             return {
                 ...retrieveOptions,
                 image,
+                regressionPrecision,
                 region: geometry.bounds(scale),
                 scale,
                 bandEncoding: encoding,
@@ -51,7 +53,7 @@ const built$ = (recipe, request) =>
 const build$ = (recipe, request, imageOutput$) => {
     const factory = ImageFactory(recipe, request)
     return forkJoin({
-        image: factory.getImage$(),
+        result: withRegressionPrecision$(factory.getImage$()),
         geometry: factory.getGeometry$(),
         imageOutput: imageOutput$
     })

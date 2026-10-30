@@ -10,6 +10,7 @@ import {hasImagery as hasPlanetImagery} from '#sepal/ee/planet/collection'
 import {hasImagery as hasRadarImagery} from '#sepal/ee/radar/collection'
 import tile from '#sepal/ee/tile'
 import {getCollection$} from '#sepal/ee/timeSeries/collection'
+import {ClientException} from '#sepal/exception'
 import {planetSource} from '#sepal/recipe/collectionType'
 import timeSeriesType from '#sepal/recipe/type/timeSeries'
 
@@ -27,7 +28,7 @@ export const timeSeriesTiles$ = ({image}) => {
     return ready$(recipe, indicatorsOf(image)).pipe(
         switchMap(() => tiling$(recipe, tileSize)),
         switchMap(({tiles}) => ee.getInfo$(tiles.aggregate_array('system:index'), 'time-series tile ids')),
-        map(tileIds => ({tileIds}))
+        map(tileIds => ({tileIds, ...(regressionDownload(image) && {freshIndicators: ['regression']})}))
     )
 }
 
@@ -47,8 +48,13 @@ export const timeSeriesChunks$ = ({image, tileId, dateRanges}) => {
     )
 }
 
-export const startTimeSeriesChunkExport$ = ({description, image: {recipe, indicator, tileSize, filenamePrefix, scale, crs, crsTransform, shardSize, fileDimensions}, tileId, tileIndex, startDate, endDate}, {sepalUser}) =>
+export const startTimeSeriesChunkExport$ = ({description, image: {recipe, indicator, tileSize, filenamePrefix, scale, crs, crsTransform, shardSize, fileDimensions}, tileId, tileIndex, startDate, endDate, regressionDestinationChecked}, {sepalUser}) =>
     ready$(recipe, [indicator]).pipe(
+        map(() => {
+            if (regressionDownload({recipe, indicator}) && regressionDestinationChecked !== true) {
+                throw new ClientException('Regression downloads require a fresh indicator destination. Start a new task with the updated task runner and a fresh destination.')
+            }
+        }),
         switchMap(() => tiling$(recipe, tileSize)),
         switchMap(({aoiGeometry, tiles}) => timeSeries$({recipe, indicator, aoiGeometry, feature: tileFeature(tiles, tileId), startDate, endDate})),
         switchMap(timeSeries => {
@@ -69,6 +75,9 @@ const ready$ = (recipe, indicators) => {
         switchMap(() => requireProvidedOutputs$({recipe: built, requested: indicators}))
     )
 }
+
+const regressionDownload = image =>
+    Boolean(image.recipe.model.sources.classification) && indicatorsOf(image).includes('regression')
 
 // The indicators a download names. A task started by an earlier release names one, `indicator`.
 const indicatorsOf = ({indicators, indicator}) =>

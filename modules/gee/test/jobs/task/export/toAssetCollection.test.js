@@ -28,6 +28,14 @@ const resetState = () => {
     state.submitted = []
     state.created = []
     state.deleted = []
+    state.readErrors = {}
+    state.listError = null
+    state.paged = false
+    state.parentFolders = []
+    state.recordReads = []
+    state.listReads = []
+    state.presenceQueries = []
+    state.presenceError = null
 }
 
 mock.module('#sepal/log', {
@@ -52,6 +60,7 @@ const {replaceAssetProperties$} = eeExtensions({
             : callback(null, `Asset not found: ${assetId}`),
         setAssetProperties: (assetId, properties, callback) => {
             state.replacedProperties.push({assetId, properties})
+            state.assets[assetId].properties = Object.fromEntries(Object.entries(properties).filter(([_key, value]) => value !== undefined))
             callback(true)
         }
     }
@@ -65,12 +74,29 @@ const ee = {
     },
     Feature: geometry => ({geometry}),
     FeatureCollection: features => ({features}),
-    Filter: {eq: () => ({})},
+    Filter: {eq: (name, value) => ({name, value})},
+    ImageCollection: parent => ({filter: filter => ({limit: () => ({size: () => ({evaluate: 'destinationPresence', parent, filter})})})}),
     Geometry: geometry => geometry,
+    Dictionary: value => value,
+    getAssetRecord$: id => {
+        state.recordReads.push(id)
+        return state.readErrors[id] ? throwError(() => state.readErrors[id])
+            : state.assets[id] ? of(state.assets[id]) : throwError(() => Object.assign(new Error('Not visible'), {eeStatusCode: 404}))
+    },
+    listAssetsPage$: (parent, token) => {
+        state.listReads.push({parent, token})
+        if (state.listError) {
+            return throwError(() => state.listError)
+        }
+        const assets = Object.keys(state.assets).filter(id => id.startsWith(`${parent}/`) && !id.slice(parent.length + 1).includes('/')).map(name => ({name}))
+        return of(state.paged && parent === COLLECTION
+            ? token ? {assets: assets.slice(1)} : {assets: assets.slice(0, 1), nextPageToken: 'page-2'}
+            : {assets})
+    },
     getAsset$: id => state.assets[id]
         ? of(state.assets[id])
         : throwError(() => new Error(`Asset not found: ${id}`)),
-    createParentFolder$: () => of(true),
+    createParentFolder$: id => { state.parentFolders.push(id); return of(true) },
     createImageCollection$: assetId => {
         state.created.push(assetId)
         state.assets[assetId] = {type: 'ImageCollection', properties: {}}
@@ -82,11 +108,18 @@ const ee = {
         return of(true)
     },
     replaceAssetProperties$,
-    getInfo$: value => of(
-        value?.evaluate === 'imageProperties' ? value.properties
-            : value?.evaluate === 'tileIds' ? ['tile-0', 'tile-1']
-                : value
-    ),
+    getInfo$: value => {
+        if (value?.evaluate === 'destinationPresence') {
+            state.presenceQueries.push(value)
+            if (state.presenceError) {
+                return throwError(() => state.presenceError)
+            }
+            assert.equal(value.filter.name, 'system:index')
+            return of(state.assets[`${value.parent}/${value.filter.value}`] ? 1 : 0)
+        }
+        return of(value?.evaluate === 'imageProperties' ? value.properties
+            : value?.evaluate === 'tileIds' ? ['tile-0', 'tile-1'] : value)
+    },
     startImageExport$: task => {
         state.submitted.push(task)
         return of('T1')
@@ -109,6 +142,7 @@ mock.module('#sepal/ee/tile', {
 
 const {inEEContext} = await import('#sepal/ee/eeContext')
 const {prepareImageCollection$, startCollectionTileExport$} = await import('#gee/jobs/task/export/toAsset')
+const {readExportAsset$} = await import('#gee/jobs/task/export/regressionCompatibility')
 
 // What version 1 wrote: the whole dictionary in one property.
 const storedInline = bands => JSON.stringify({version: 1, bands})
@@ -503,6 +537,204 @@ describe('resuming an existing image collection', () => {
     })
 })
 
+describe('regression precision compatibility', () => {
+    const precision = JSON.stringify({version: 1, scales: [1000]})
+    const options = {strategy: 'resume', regressionPrecision: precision, bandEncoding: {}}
+    const assertNoWrites = () => {
+        assert.deepEqual(state.parentFolders, [])
+        assert.deepEqual(state.replacedProperties, [])
+        assert.deepEqual(state.submitted, [])
+        assert.deepEqual(state.created, [])
+        assert.deepEqual(state.deleted, [])
+    }
+    const seedCorrected = async () => {
+        await exportCollection(options)
+        const properties = collectionProperties()
+        state.assets[COLLECTION].properties = properties
+        for (const {image, assetId} of state.submitted) {
+            state.assets[assetId] = {type: 'IMAGE', properties: image.properties, bands: [{id: 'regression', dataType: {precision: 'FLOAT'}}]}
+        }
+        state.replacedProperties = []
+        state.submitted = []
+        state.created = []
+        state.deleted = []
+        state.parentFolders = []
+    }
+
+    it('stamps fresh parent and tiles from the executed precision, overriding submitted and inherited claims', async () => {
+        await exportCollection({...options, properties: {sepal_regression_precision: 'forged', sepal_regression_schema: 'forged'}})
+
+        const properties = collectionProperties()
+        assert.equal(properties.sepal_regression_precision, precision)
+        assert.match(properties.sepal_regression_schema, /^[a-f0-9]{64}$/)
+        for (const tile of submittedImages()) {
+            assert.equal(tile.sepal_regression_precision, precision)
+            assert.equal(tile.sepal_regression_schema, properties.sepal_regression_schema)
+        }
+    })
+
+    it('resumes matching corrected results and exports only a tile confirmed absent by the collection listing', async () => {
+        await seedCorrected()
+        delete state.assets[`${COLLECTION}/1`]
+
+        const result = await prepare(options)
+        await exportTile(options, result.tiles[1])
+
+        assert.deepEqual(result.tiles.map(tile => tile.retained), [true, false])
+        assert.deepEqual(state.submitted.map(task => task.assetId), [`${COLLECTION}/1`])
+    })
+
+    for (const badName of ['01', '1']) {
+        it(`validates the distinct member ${badName} even when a matching numeric spelling is read later`, async () => {
+            await seedCorrected()
+            const valid = state.assets[`${COLLECTION}/1`]
+            delete state.assets[`${COLLECTION}/1`]
+            state.assets[`${COLLECTION}/${badName}`] = {...valid, properties: {}}
+            state.assets[`${COLLECTION}/${badName === '01' ? '1' : '01'}`] = valid
+
+            await assert.rejects(prepare(options), error => {
+                assert.ok(error.message.includes(`${COLLECTION}/${badName}`))
+                return true
+            })
+
+            assertNoWrites()
+        })
+    }
+
+    it('does not retain tile 1 merely because a compatible member named 01 exists', async () => {
+        await seedCorrected()
+        state.assets[`${COLLECTION}/01`] = state.assets[`${COLLECTION}/1`]
+        delete state.assets[`${COLLECTION}/1`]
+
+        const {tiles} = await prepare(options)
+
+        assert.deepEqual(tiles.map(tile => tile.retained), [true, false])
+        await exportTile(options, tiles[1])
+        assert.deepEqual(state.submitted.map(task => task.assetId), [`${COLLECTION}/1`])
+    })
+
+    for (const count of [2, 24]) {
+        it(`scans all ${count} retained members at preparation, then reads only each submitted tile and its parent`, async () => {
+            await seedCorrected()
+            const valid = state.assets[`${COLLECTION}/0`]
+            delete state.assets[`${COLLECTION}/0`]
+            delete state.assets[`${COLLECTION}/1`]
+            for (let index = 0; index < count; index++) {
+                state.assets[`${COLLECTION}/retained-${index}`] = valid
+            }
+            state.recordReads = []
+
+            const {tiles} = await prepare(options)
+
+            assert.equal(state.recordReads.length, count + 1)
+            assert.deepEqual(tiles.map(tile => tile.retained), [false, false])
+            state.recordReads = []
+            state.listReads = []
+            state.presenceQueries = []
+            for (const tile of tiles) {
+                await exportTile(options, tile)
+            }
+            assert.deepEqual(state.recordReads, [COLLECTION, `${COLLECTION}/0`, COLLECTION, `${COLLECTION}/1`])
+            assert.deepEqual(state.listReads, [])
+            assert.deepEqual(state.presenceQueries.map(({filter}) => filter.value), ['0', '1'])
+            assert.equal(state.submitted.length, 2)
+        })
+    }
+
+    for (const [label, mutate, checkSubmission = true] of [
+        ['an unmarked parent', () => delete state.assets[COLLECTION].properties.sepal_regression_precision],
+        ['a different public regression scale', () => state.assets[COLLECTION].properties.sepal_regression_precision = '{"version":1,"scales":[1]}'],
+        ['an unmarked tile outside the requested tiling', () => state.assets[`${COLLECTION}/99`] = {type: 'IMAGE', properties: {}}, false],
+        ['an unmarked retained tile', () => delete state.assets[`${COLLECTION}/1`].properties.sepal_regression_precision],
+        ['a conflicting tile on a later listing page', () => { state.paged = true; delete state.assets[`${COLLECTION}/1`].properties.sepal_regression_precision }],
+        ['a wrong retained tile type', () => state.assets[`${COLLECTION}/1`].bands[0].dataType.precision = 'INT'],
+        ['a wrong array rank', () => state.assets[`${COLLECTION}/1`].bands[0].dataType.dimensionsCount = 1],
+        ['an unreadable parent', () => state.readErrors[COLLECTION] = new Error('network failed')],
+        ['an unreadable retained tile', () => state.readErrors[`${COLLECTION}/1`] = new Error('permission denied')],
+        ['a retained tile returning ambiguous 404', () => state.readErrors[`${COLLECTION}/1`] = Object.assign(new Error('not visible'), {eeStatusCode: 404})],
+        ['a failed collection listing', () => state.listError = new Error('listing failed'), false]
+    ]) {
+        it(`refuses ${label} before preparation writes`, async () => {
+            await seedCorrected()
+            mutate()
+
+            await assert.rejects(prepare(options), /fresh destination|Resume|Replace/)
+
+            assertNoWrites()
+        })
+
+        if (checkSubmission) {
+            it(`refuses ${label} at submission of the destination tile`, async () => {
+                await seedCorrected()
+                mutate()
+
+                await assert.rejects(exportTile(options, {tileIndex: 1, tileId: 'tile-1'}), /fresh destination|Resume|Replace/)
+
+                assertNoWrites()
+            })
+        }
+    }
+
+    it('does not reread other members or their listing when submitting a readable compatible destination', async () => {
+        await seedCorrected()
+        state.assets[`${COLLECTION}/99`] = {type: 'IMAGE', properties: {}}
+        state.listError = new Error('whole collection listing must not be read')
+        state.recordReads = []
+        state.listReads = []
+
+        await exportTile(options, {tileIndex: 1, tileId: 'tile-1'})
+
+        assert.deepEqual(state.recordReads, [COLLECTION, `${COLLECTION}/1`])
+        assert.deepEqual(state.listReads, [])
+        assert.equal(state.submitted.length, 1)
+    })
+
+    it('refuses an unreadable scoped absence query before submitting a missing destination tile', async () => {
+        await seedCorrected()
+        delete state.assets[`${COLLECTION}/1`]
+        state.presenceError = new Error('destination query failed')
+
+        await assert.rejects(exportTile(options, {tileIndex: 1, tileId: 'tile-1'}), /destination tile is absent/)
+
+        assertNoWrites()
+    })
+
+    it('does not mistake an unreadable legacy asset alias for absence when its canonical name is listed', async () => {
+        const canonical = 'projects/earthengine-legacy/assets/users/alice/result'
+        state.assets[canonical] = {type: 'IMAGE_COLLECTION', properties: {}}
+        state.assets['projects/earthengine-legacy/assets/users/alice'] = {type: 'FOLDER', properties: {}}
+
+        await assert.rejects(lastValueFrom(readExportAsset$('users/alice/result', {precision, schema: 'expected'})), /fresh destination|Resume|Replace/)
+
+        assertNoWrites()
+    })
+
+    it('permits a fresh legacy destination only after its readable parent listing establishes absence', async () => {
+        const asset = await lastValueFrom(readExportAsset$('users/alice/new-result', {precision, schema: 'expected'}))
+
+        assert.equal(asset, null)
+        assertNoWrites()
+    })
+
+    it('does not accept a missing parent at the independent tile endpoint', async () => {
+        await assert.rejects(exportTile(options, {tileIndex: 0, tileId: 'tile-0'}), /Resume/)
+        assertNoWrites()
+    })
+
+    it('permits explicit Replace of an unmarked collection', async () => {
+        existingCollection({})
+        await exportCollection({...options, strategy: 'replace'})
+        assert.deepEqual(state.deleted, [COLLECTION])
+        assert.equal(collectionProperties().sepal_regression_precision, precision)
+    })
+
+    it('does not trust submitted precision properties on an unrelated export', async () => {
+        await exportCollection({bandEncoding: {}, properties: {sepal_regression_precision: precision, sepal_regression_schema: 'forged'}})
+        assert.equal(collectionProperties().sepal_regression_precision, undefined)
+        assert.equal(collectionProperties().sepal_regression_schema, undefined)
+    })
+})
+
 const encodingOf = properties => encodingFromProperties(properties)
 
 const isEncodingPart = key => /^sepal_band_encoding_\d+$/.test(key)
@@ -531,6 +763,8 @@ const sliceShapedEncoding = measures => {
 // does not name survives on the exported image. toDictionary() answers only the keys it was asked for.
 const sourceImage = (properties = {}) => ({
     properties,
+    bandNames: () => ['regression'],
+    bandTypes: () => ({regression: {precision: 'float'}}),
     set: added => sourceImage({...properties, ...added}),
     toDictionary: keys => ({
         evaluate: 'imageProperties',
@@ -561,7 +795,7 @@ const USER = {requestId: 'r-1', username: 'alice', origin: 'task', auth: {type: 
 const SERVICE_ACCOUNT = {...USER, auth: {type: 'serviceAccount'}}
 const region = {bounds: () => ({type: 'Polygon'})}
 
-const collectionSource = ({image = sourceImage(), strategy, bandEncoding, properties = {}}) => ({
+const collectionSource = ({image = sourceImage(), strategy, bandEncoding, properties = {}, regressionPrecision}) => ({
     image,
     description: 'mosaic',
     assetId: COLLECTION,
@@ -571,7 +805,8 @@ const collectionSource = ({image = sourceImage(), strategy, bandEncoding, proper
     scale: 30,
     tileSize: 2,
     properties: {recipe_id: 'mosaic-1', ...properties},
-    bandEncoding
+    bandEncoding,
+    regressionPrecision
 })
 
 const prepare = ({context = USER, ...options}) =>

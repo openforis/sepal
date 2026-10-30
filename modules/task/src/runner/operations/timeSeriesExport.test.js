@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {mkdtemp, rm} from 'node:fs/promises'
+import {mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {afterEach, beforeEach, mock, test} from 'node:test'
@@ -201,13 +201,50 @@ test('one failed chunk cancels the chunks still running and fails the export', a
     assert.deepEqual(events.filter(({stack}) => stack), [])
 })
 
-const fakeSepal = ({tileIds, ranges}) => {
+test('reserves a fresh regression indicator directory and requests floating chunk validation without restricting native indicators', async () => {
+    const sepal = fakeSepal({tileIds: ['a'], ranges: {a: [RANGE]}, freshIndicators: ['regression']})
+    await mkdir(`${home}/downloads/series/ndvi`, {recursive: true})
+    await writeFile(`${home}/downloads/series/ndvi/existing`, 'native data')
+
+    await timeSeriesExport({...params, image: {...params.image, indicators: ['ndvi', 'regression']}}, context(sepal))
+
+    assert.deepEqual(sepal.exported.map(({body}) => body.regressionDestinationChecked), [false, true])
+    assert.deepEqual(events.filter(event => event.stack).map(event => event.stack[1]), [
+        [`${home}/downloads/series/ndvi/0`],
+        [`${home}/downloads/series/regression/0`, '--require-floating-point']
+    ])
+    assert.equal(await readFile(`${home}/downloads/series/ndvi/existing`, 'utf8'), 'native data')
+})
+
+test('refuses existing regression chunks before any export or stack and preserves their files', async () => {
+    const dir = `${home}/downloads/series/regression`
+    await mkdir(`${dir}/0/chunk-old`, {recursive: true})
+    await writeFile(`${dir}/0/chunk-old/value.tif`, 'old pixels')
+    const sepal = fakeSepal({tileIds: ['a'], ranges: {a: [RANGE]}, freshIndicators: ['regression']})
+
+    await assert.rejects(timeSeriesExport({...params, regressionDestinationChecked: true}, context(sepal)), /fresh destination/)
+
+    assert.deepEqual(sepal.exported, [])
+    assert.deepEqual(events.filter(event => event.stack), [])
+    assert.equal(await readFile(`${dir}/0/chunk-old/value.tif`, 'utf8'), 'old pixels')
+})
+
+test('two regression downloads cannot reserve the same destination', async () => {
+    const sepal = fakeSepal({tileIds: [], ranges: {}, freshIndicators: ['regression']})
+
+    const results = await Promise.allSettled([timeSeriesExport(params, context(sepal)), timeSeriesExport(params, context(sepal))])
+
+    assert.equal(results.filter(result => result.status === 'fulfilled').length, 1)
+    assert.match(results.find(result => result.status === 'rejected').reason.message, /fresh destination/)
+})
+
+const fakeSepal = ({tileIds, ranges, freshIndicators}) => {
     const exported = []
     return {
         exported,
         gee: async (path, body) => {
             if (path === 'task/timeseries/tiles') {
-                return {tileIds}
+                return {tileIds, ...(freshIndicators && {freshIndicators})}
             }
             if (path === 'task/timeseries/chunks') {
                 return {dateRanges: ranges[body.tileId]}

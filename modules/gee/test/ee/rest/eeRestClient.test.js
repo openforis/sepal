@@ -117,6 +117,18 @@ describe('what a call answers', () => {
         assert.partialDeepStrictEqual(asset, {type: 'Image', id: name, properties: {a: 1}})
     })
 
+    for (const status of [403, 404, 503]) {
+        test(`preserves upstream ${status} on an asset read without changing the service error classification`, async () => {
+            const {client} = setup({answers: [failure(status, {message: 'Asset unavailable'})]})
+
+            await assert.rejects(call(alice(), client.getAssetRecord$('projects/alice-project/assets/image', 0)), error => {
+                assert.equal(error.eeStatusCode, status)
+                assert.equal(error.errorType, 'EARTH_ENGINE')
+                return true
+            })
+        })
+    }
+
     test('every page of operations', async () => {
         const first = {name: 'projects/alice-project/operations/T1', done: true}
         const second = {name: 'projects/alice-project/operations/T2', done: true}

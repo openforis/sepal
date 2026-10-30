@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict'
 import {beforeEach, describe, it, mock} from 'node:test'
 
-import {lastValueFrom, of, throwError} from 'rxjs'
+import {defer, lastValueFrom, of, throwError} from 'rxjs'
 
+import {recordRegressionPrecision} from '#sepal/ee/timeSeries/regressionPrecision'
 import {assetProcessing, effectiveSettings} from '#sepal/recipe/changeAlerts/processing'
 
 // What an existing CCDC Segments asset contains. These are characterization tests: they pin the format already
@@ -22,6 +23,7 @@ beforeEach(() => {
     state.catalogueUnreadable = false
     state.assets = {}
     state.observed = []
+    state.executedRegression = []
 })
 
 const geometry = {bounds: () => 'region-bounds'}
@@ -31,7 +33,10 @@ mock.module('#sepal/ee/timeSeries/ccdc', {
         default: (recipe, options) => {
             captured.ccdc = {recipe, options}
             return {
-                getImage$: () => of('segments-image'),
+                getImage$: () => defer(() => {
+                    state.executedRegression.forEach(recordRegressionPrecision)
+                    return of('segments-image')
+                }),
                 getGeometry$: () => of(geometry)
             }
         }
@@ -140,6 +145,22 @@ const submit = async ({model = recipe(), bands = ['ndvi'], visualizations = [], 
 
 const visualizationProperties = properties =>
     Object.fromEntries(Object.entries(properties).filter(([key]) => key.startsWith('visualization_')))
+
+describe('CCDC executed regression compatibility', () => {
+    it('forwards the precision established while building the segments, ignoring submitted claims', async () => {
+        state.executedRegression = [{PLANET: ['BASEMAPS']}]
+
+        const exported = await submit({properties: {sepal_regression_precision: 'forged'}})
+
+        assert.deepEqual(JSON.parse(exported.regressionPrecision), {version: 1, scales: [1]})
+    })
+
+    it('does not mark native-only CCDC merely because a caller submitted a marker', async () => {
+        const exported = await submit({properties: {sepal_regression_precision: 'forged'}})
+
+        assert.equal(exported.regressionPrecision, null)
+    })
+})
 
 // Every CCDC Segments export is held to what the recipe's image output requires (imageOutput.js), by the real
 // resolution and readiness: a recipe that cannot run is refused before its segments are built or submitted.

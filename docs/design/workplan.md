@@ -23,29 +23,57 @@ or new release checks.
 
 ### Collection-output correctness
 
-Assess Classification regression/probability encoding across Optical, Radar and Planet separately from source
-planning. Confirmed in [Classification execution](../../lib/js/ee/src/classification/classification.js),
-[temporal collection construction](../../lib/js/ee/src/timeSeries/collection.js) and
-[family selection](../../lib/js/shared/src/recipe/collectionType.js):
+Current [collection regression storage](../recipes/time-series.md#collection-encoding) and
+[Phenology](../recipes/phenology.md#output) preserve fractions/range in established public units: Optical ×1,000,
+Radar/Planet target units. Probabilities retain Optical `100*q` versus Radar/Planet `q`, where Classification already
+quantizes `q=uint8(100*p)`. Scripts, saved stretches and absolute thresholds depend on these scales; numerical
+agreement across families is not itself a correction criterion. The bounded
+[export compatibility check](recipes/output-products.md#regression-precision-compatibility) prevents old/corrected
+regression tiles or download chunks being combined. These contracts do not require an adapter/composer refactor.
 
-- Classification produces floating regression values and per-class probabilities multiplied by 100 and cast to
-  `uint8`.
-- Optical then multiplies regression by 1,000 and those probabilities by another 100. Radar and Planet add the
-  Classification outputs without those extra multipliers. All three collection branches finally cast to `int16`.
-- Optical and Planet project the requested bands; Radar's collection branch has no equivalent final selection.
-  Shared family selection sends non-radar/non-optical input to the Planet fallback, including empty/unknown input;
-  that routing does not validate whether it can execute.
+**CCDC probability fitting remains deferred.** CCDC still fits public collection values directly with the configured
+lambda. Scale-sensitive LASSO behavior is expected and requires suitable tuning; lambda 20 flattening a small signal
+is not proof that an encoding or algorithm is defective. Do not remove Optical's probability ×100 or regression
+×1,000, change lambda, improve Classification probability quantization or rewrite saved settings in this work.
 
-Still to reproduce: effects on stored values, fractional regression precision/range, chart interpretation and each
-consuming algorithm/export, using supported classifiers and explicit/default requests. The branch differences alone
-do not establish which user outputs are wrong or choose the intended common encoding. Inventory consumers and any
-existing-data compatibility consequences before proposing a correction.
+A candidate for separate assessment is an explicit internal fitting scale, with public values unchanged. For
+probabilities, fit `z=k*y`, where `y` is the public value, `k=1` for Optical and native bands, and `k=100` for
+Radar/Planet probabilities. Inverse every probability coefficient (intercept, slope and harmonics), RMSE and
+magnitude before the shared CCDC result reaches charts, Slice or exports. Do not multiply native outputs, timing,
+counts, phase, change probability or dimensionless confidence ratios. No regression normalization is selected:
+regression targets have arbitrary units and need their own scale/regularization assessment. Keep prediction on
+its pre-encoding features and standalone Classification/training-data contracts separate.
 
-Include unknown/empty/mixed selections, default versus explicit output, GUI omissions such as optical date bands,
-and Planet Daily mixed members in that bounded inventory. Planet's four/eight-band cases and histogram-matching
-narrowing are described by [the current output catalogue](recipes/output-products.md#declaration-and-description); they do
-not establish temporal-collection homogeneity. Require an explicit selection/filter/missing-band policy before
-promising it. Do not make this assessment wait for an adapter/composer refactor.
+Useful controlled EE evidence for this candidate:
+
+- With 36 monthly `p=0.5+0.05*sin(2*pi*month/12)` observations and lambda 20, Optical retains harmonic amplitude
+  `475.776483` and RMSE `45.837557` in its existing public units. Radar/Planet's current fits are flat, RMSE
+  `4.425306`. Internal scaling/inverse conversion preserved the complete Optical result and recovered amplitude
+  `4.757765`, RMSE `0.458376`, and Slice `52.820227` at 2021-06-01 in Radar/Planet percentage units.
+- Native-only outputs remained identical. Mixed native/probability fits matched the Optical reference internally,
+  with only probability value outputs inverse-scaled. A 72-month mixed step series detected the same break
+  (`2023.037645448323`). Full coefficients, masks and types were compared; this establishes neither universal
+  breakpoint invariance nor an appropriate lambda for other data.
+- A mixed native/probability/regression fit recovered fractional regression intercepts after the precision
+  correction, but its small regression seasonality still fitted flat at 20. Probability normalization does not
+  solve general regularization selection or establish classifier quality/calibration.
+
+Before implementing fitting changes, settle explicit activation and suitable internal scales without changing
+public encodings or silently retuning saved lambda. Cover the seasonal witness, native-only and mixed fits,
+representative real-data segmentation, inverse outputs and chart/Slice/export interpretation. A changed fitting
+contract also needs a distinct enforceable Resume contract; retaining units or matching pixel types cannot make
+old/new fits compatible. Existing assets/downloads must retain their interpretation and metadata.
+
+Remaining verification limits include representative real-data fits, rendered styles and a live Optical regression
+asset write: live asset writes, Resume and refusal are verified for Radar regression, and file output for an Optical
+Drive export. Generic provenance and adapter/composer architecture remain separate work.
+
+**Separate collection work.** Radar still has no equivalent final requested-band selection. Family routing still
+sends non-radar/non-optical input, including empty/unknown shapes, to Planet without establishing executability.
+Unknown/empty/mixed selections, default versus explicit output, GUI omissions such as optical date bands, and Planet
+Daily homogeneity remain separate assessments. Its four/eight-band cases and histogram-matching narrowing are
+in [the current output catalogue](recipes/output-products.md#declaration-and-description); an explicit selection,
+filter or missing-band policy must establish homogeneity before it is promised.
 
 **Requested output projection.** Audit producer `selection`/`outputBands` behavior, including internal callers and
 unselected defaults, then consolidate final export projection and remove redundant per-producer projection.
@@ -488,6 +516,20 @@ already freeze their dependency graph or resume durable steps.
   super-resolution algorithm. State native information limits, projection/resampling and storage/runtime costs;
   do not promise added spatial detail from an export-scale change alone. Define validation and compatibility
   before choosing an implementation.
+
+### Time-series download NoData
+
+Pre-existing, outside the regression-precision slice. The workspace stacker (`lib/python/shared/stack_time_series.py`)
+declares NoData 0 on every VRT it writes: each tile's `stack.vrt`, the per-date stacks and the SITS files. A
+legitimate zero, including a regression or index value of exactly 0, therefore reads as missing. Earth Engine writes
+masked Float32 pixels as NaN with no nodata value (seen in a live Float32 Drive export), and the VRTs do not declare
+NaN, so masked floating pixels read as valid NaN values. Reproduce by stacking a floating chunk holding both an exact
+zero and a masked pixel and reading both through the VRT with GDAL.
+
+Decide the NoData policy per data type before changing it: a floating stack could declare NaN, while an integer
+stack needs a value outside its valid range or an explicit mask. Downloads already written, and readers that treat
+0 as missing, keep their interpretation unless they are migrated explicitly. Cover zero, NaN and masked pixels for
+floating and integer chunks through `stack.vrt`, the per-date stacks and SITS.
 
 ### Task design questions
 
