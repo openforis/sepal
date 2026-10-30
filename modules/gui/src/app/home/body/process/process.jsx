@@ -18,7 +18,7 @@ import {hasUnsavedWork, loadFolders$, loadRecipes$, recipePath, saveRecipe} from
 import {RecipeHome} from './recipeHome'
 import {registerRecipeImageLayers} from './recipeImageLayers'
 import {RecipeTabTooltip} from './recipeLocation'
-import {getRecipeType} from './recipeTypeRegistry'
+import {getRecipeType, getRecipeTypeName} from './recipeTypeRegistry'
 import {registerRecipeTypes} from './recipeTypes'
 import {SaveRecipe} from './saveRecipe'
 import {SourceRuntimeProvider} from './sourceRuntime/sourceRuntimeContext'
@@ -73,7 +73,7 @@ class _Process extends React.Component {
 
     renderLabel({type}) {
         return type
-            ? getRecipeType(type)?.labels.name
+            ? getRecipeTypeName(type)
             : msg('process.recipeList.title')
     }
 

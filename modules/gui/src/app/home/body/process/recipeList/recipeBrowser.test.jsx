@@ -4,7 +4,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
-vi.mock('../recipeTypeRegistry', () => ({getRecipeType: type => ({labels: {name: type}})}))
+vi.mock('../recipeTypeRegistry', () => ({getRecipeTypeName: type => type}))
 // The real panel renders through a portal that this isolated test has no root for.
 vi.mock('~/widget/panel/panel', () => {
     const Pass = ({children}) => <div>{children}</div>

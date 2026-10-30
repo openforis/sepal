@@ -43,6 +43,14 @@ describe('Tasks', () => {
         expect(descriptions()).toEqual(['/ Amazon / Brazil / Mosaic 2024'])
     })
 
+    it('finds the folder of a task made before projects were renamed folders', () => {
+        const task = recipeTask({projectId: 'brazil', recipeName: 'Mosaic 2024'})
+
+        renderTasks({tasks: [task], folders: [folder('brazil', 'Brazil')]})
+
+        expect(descriptions()).toEqual(['/ Brazil / Mosaic 2024'])
+    })
+
     it('gives the whole path of a recipe task on hover, as the row may cut it', () => {
         const task = recipeTask({folderId: 'brazil', recipeName: 'Mosaic 2024'})
 
@@ -76,12 +84,12 @@ const descriptions = () =>
 const descriptionTooltips = () =>
     [...container.querySelectorAll('[data-description]')].map(element => element.dataset.tooltip)
 
-const recipeTask = ({folderId, recipeName}) => ({
+const recipeTask = ({recipeName, ...taskInfo}) => ({
     id: 'task-1',
     name: `Retrieve recipe: ${recipeName}`,
     description: recipeName,
     status: 'COMPLETED',
-    taskInfo: {recipeType: 'MOSAIC', destination: 'SEPAL', folderId}
+    taskInfo: {recipeType: 'MOSAIC', destination: 'SEPAL', ...taskInfo}
 })
 
 const folder = (id, name, parentId = null) =>

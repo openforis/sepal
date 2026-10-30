@@ -21,6 +21,7 @@ import {Content, SectionLayout, TopBar} from '~/widget/sectionLayout'
 import {Shape} from '~/widget/shape'
 
 import {TaskDetails} from './taskDetails'
+import {taskFolderId} from './taskFolder'
 import styles from './tasks.module.css'
 import {taskStatusDescription} from './taskStatusDescription'
 
@@ -226,9 +227,7 @@ class _Tasks extends React.Component {
             }
             const recipeType = task.taskInfo?.recipeType
             const destination = task.taskInfo?.destination
-            // Tasks made before the rename hold the old key.
-            const folderId = task.taskInfo?.folderId ?? task.taskInfo?.projectId
-            const folderName = locationLabel(folders, folderId)
+            const folderName = locationLabel(folders, taskFolderId(task.taskInfo))
             const searchable = [
                 task.name,
                 task.description,
@@ -360,8 +359,7 @@ class _Tasks extends React.Component {
 
     getRecipePath(task) {
         const {folders} = this.props
-        const folderId = task.taskInfo?.folderId ?? task.taskInfo?.projectId
-        return locationLabel(folders, folderId, task.description || task.name)
+        return locationLabel(folders, taskFolderId(task.taskInfo), task.description || task.name)
     }
 
     // Right-side one-line row metadata: current localized status/progress for a running task, or the final

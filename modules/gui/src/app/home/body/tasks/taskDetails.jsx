@@ -17,6 +17,7 @@ import {Widget} from '~/widget/widget'
 
 import {isTaskRunning, mergeTask} from './mergeTask'
 import styles from './taskDetails.module.css'
+import {taskFolderId} from './taskFolder'
 import {updateTimeLabelKey} from './taskLabels'
 import {taskStatusDescription} from './taskStatusDescription'
 
@@ -164,7 +165,7 @@ class _TaskDetails extends React.Component {
         }
 
         const recipeType = taskInfo?.recipeType || recipe?.type
-        const folderId = taskInfo?.folderId ?? taskInfo?.projectId
+        const folderId = taskFolderId(taskInfo)
         const recipeName = task.params?.description
 
         return (

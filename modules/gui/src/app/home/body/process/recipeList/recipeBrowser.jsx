@@ -11,7 +11,7 @@ import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 import {SearchBox} from '~/widget/searchBox'
 
-import {getRecipeType} from '../recipeTypeRegistry'
+import {getRecipeTypeName} from '../recipeTypeRegistry'
 import {Breadcrumb} from './breadcrumb'
 import styles from './recipeBrowser.module.css'
 import {PATH_SEPARATOR} from './recipeListConstants'
@@ -138,7 +138,7 @@ export class RecipeBrowser extends React.Component {
         const {folders, onSelect} = this.props
         const {folderId, filterValues} = this.state
         const path = filterValues.length ? folderPathLabel(folders, recipe.folderId, folderId) : ''
-        const typeName = getRecipeType(recipe.type)?.labels.name
+        const typeName = getRecipeTypeName(recipe.type)
         const description = [path, recipe.name].filter(part => part).join(PATH_SEPARATOR)
         return (
             <ListItem hovered={hovered} onClick={() => onSelect(recipe.id)}>
