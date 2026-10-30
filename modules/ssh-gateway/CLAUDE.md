@@ -19,6 +19,8 @@ or in a `golang:1.27-trixie` container mounting `router/` (`go vet ./... && go t
 - **sshpiperd** ([sshpiper](https://github.com/tg123/sshpiper), built from source at a pinned tag and commit in the
   Dockerfile's `go-build` stage) listens on port 22 with the persisted OpenSSH host keys (`/data/ssh`). After
   authentication it relays whole SSH connections, so forwarding and subsystems pass through untouched.
+  The host key fingerprints are published in sepal-doc (`developers/ssh_session.rst`): keep `/data/ssh` when
+  migrating the gateway, or update the docs if the keys change, or users will see a "host key changed" warning.
 - **`sepal-router`** (`router/`, Go) is its plugin. Per connection it splits the username at the first `+`,
   authenticates the client against the user module (`/auth/password`, `/auth/authorized-keys`), and picks the
   upstream, always logging in with the user's SEPAL key `/home/<username>/.ssh/id_rsa`:
