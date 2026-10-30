@@ -5,6 +5,7 @@ import {msg} from '~/translate'
 import {Panel} from '~/widget/panel/panel'
 
 import styles from './confirm.module.css'
+import {Layout} from './layout'
 
 export class Confirm extends React.Component {
     constructor(props) {
@@ -46,10 +47,10 @@ export class Confirm extends React.Component {
                     icon='exclamation-triangle'
                     title={title || msg('widget.confirm.title')}/>
                 <Panel.Content>
-                    <div className={styles.content}>
+                    <Layout type='vertical' spacing='compact' shrink>
                         {this.renderMessage()}
                         {children}
-                    </div>
+                    </Layout>
                 </Panel.Content>
                 <Panel.Buttons>
                     <Panel.Buttons.Main>

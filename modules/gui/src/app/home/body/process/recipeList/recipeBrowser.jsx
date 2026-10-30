@@ -5,6 +5,7 @@ import React from 'react'
 import {msg} from '~/translate'
 import {CrudItem} from '~/widget/crudItem'
 import {FastList} from '~/widget/fastList'
+import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
@@ -49,7 +50,9 @@ export class RecipeBrowser extends React.Component {
                     icon='folder-open'
                     title={msg('widget.recipeInput.browse.title')}/>
                 <Panel.Content scrollable={false}>
-                    {this.renderHeader()}
+                    <div className={styles.header}>
+                        {this.renderHeader()}
+                    </div>
                     {this.renderItems()}
                 </Panel.Content>
                 <Panel.Buttons>
@@ -68,7 +71,7 @@ export class RecipeBrowser extends React.Component {
         const {folders} = this.props
         const {folderId, filterValue, navigationCount} = this.state
         return (
-            <div className={styles.header}>
+            <Layout type='vertical' spacing='compact' shrink>
                 <SearchBox
                     key={navigationCount}
                     value={filterValue}
@@ -80,7 +83,7 @@ export class RecipeBrowser extends React.Component {
                     folderId={folderId}
                     onNavigate={folderId => this.navigateTo(folderId)}
                 />
-            </div>
+            </Layout>
         )
     }
 

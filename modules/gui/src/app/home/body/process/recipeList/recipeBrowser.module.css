@@ -3,14 +3,9 @@
     height: 64vh;
 }
 
-/* Laid out here rather than with a vertical Layout, which carries min-width: fit-content: that holds the
-   header at the width of a long folder name, which then runs past the edge of the dialog instead of
-   ending in an ellipsis. The gap is a compact Layout's. */
+/* Around the Layout rather than on it: a vertical Layout may shrink in the column it shares with the
+   list, and cut the breadcrumb. */
 .header {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    min-width: 0;
     margin-bottom: 1rem;
 }
 

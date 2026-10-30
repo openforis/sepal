@@ -6,11 +6,11 @@ import {connect} from '~/connect'
 import {select} from '~/store'
 import {msg} from '~/translate'
 import {CrudItem} from '~/widget/crudItem'
+import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 
 import {getRecipeType} from '../recipeTypeRegistry'
 import {folderDescription} from './folderItem'
-import styles from './recipeListConfirm.module.css'
 import {folderCounts, locationLabel} from './recipeTree'
 
 const mapStateToProps = () => ({
@@ -22,11 +22,11 @@ class _RecipeListConfirm extends React.Component {
     render() {
         const {items} = this.props
         return (
-            <div className={styles.items}>
+            <Layout type='vertical' spacing='tight' shrink>
                 {items.map(item => item.kind === 'folder'
                     ? this.renderFolder(item.folder)
                     : this.renderRecipe(item.recipe))}
-            </div>
+            </Layout>
         )
     }
 

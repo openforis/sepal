@@ -20,11 +20,11 @@ export class FolderPicker extends React.Component {
     render() {
         const {className} = this.props
         return (
-            <div className={[styles.picker, className].join(' ')}>
+            <Layout type='vertical' spacing='tight' shrink className={[styles.picker, className].join(' ')}>
                 {this.renderCurrentFolder()}
                 {this.renderOptions()}
                 {this.renderSelectButton()}
-            </div>
+            </Layout>
         )
     }
 
@@ -89,7 +89,8 @@ export class FolderPicker extends React.Component {
     }
 
     // One box of one size, whatever the open folder holds, so walking the tree never moves the
-    // button under the pointer.
+    // button under the pointer. The rows' Layout sits in a plain div: straight inside the scrolling
+    // column, it would shrink to the box rather than scroll.
     renderOptions() {
         const options = this.getOptions()
         return (
@@ -97,8 +98,10 @@ export class FolderPicker extends React.Component {
                 <Scrollable direction='y'>
                     {options.length
                         ? (
-                            <div className={styles.rows}>
-                                {options.map(folder => this.renderOption(folder))}
+                            <div>
+                                <Layout type='vertical' spacing='tight' shrink>
+                                    {options.map(folder => this.renderOption(folder))}
+                                </Layout>
                             </div>
                         )
                         : <NoData message={msg('process.folder.none')}/>}
