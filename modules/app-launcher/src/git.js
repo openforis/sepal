@@ -112,9 +112,7 @@ const getRepoInfo = async appPath => {
         lastCommitId: commitId.trim(),
         url: originUrl,
         commitUrl,
-        branch,
-        // Catalog is the only sanctioned source of updates; upstream branch tip is not actionable from the GUI.
-        updateAvailable: false
+        branch
     }
 
     log.debug(`Repository info for ${appPath}:`, appInfo)
@@ -142,7 +140,7 @@ const stampSepalBranch = async (appPath, branch) => {
     }
 }
 
-const cloneOrPull = async ({path: appPath, repository, branch, commit}) => {
+const cloneOrCheckout = async ({path: appPath, repository, branch, commit}) => {
     try {
         const exists = await pathExists(appPath)
         if (!exists) {
@@ -167,12 +165,11 @@ const cloneOrPull = async ({path: appPath, repository, branch, commit}) => {
             await stampSepalBranch(appPath, branch)
             return {action: 'updated', success: true}
         }
-        const result = await pullUpdates(appPath, branch)
+        await checkoutBranch(appPath, branch)
         await stampSepalBranch(appPath, branch)
-        return result
-
+        return {action: 'none', success: true}
     } catch (err) {
-        log.error(`Error in cloneOrPull: ${err.message}`)
+        log.error(`Error in cloneOrCheckout: ${err.message}`)
         if (err.statusCode === 500) {
             return {action: 'system-error', success: false, error: err.message}
         }
@@ -190,30 +187,8 @@ const getCurrentCommitHash = async appPath => {
     }
 }
 
-const pullUpdates = async (appPath, branch) => {
-    try {
-        log.info(`Ensuring repository is on branch '${branch}'`)
-        await checkoutBranch(appPath, branch)
-        
-        const {updateAvailable} = await getRepoInfo(appPath)
-        
-        if (updateAvailable) {
-            log.info(`Updates available for ${appPath} → pulling`)
-            await executeCommand('git', ['pull', 'origin', branch], {cwd: appPath})
-            log.info(`Successfully pulled updates for ${appPath}`)
-            return {action: 'updated', success: true}
-        }
-        log.info(`No updates available for ${appPath}`)
-        return {action: 'none', success: true}
-    } catch (err) {
-        log.error(`Failed to pull updates: ${err.message}`)
-        throw new ClientException(`Failed to pull updates: ${err.message}`)
-    }
-}
-
 export {
-    cloneOrPull,
+    cloneOrCheckout,
     getCurrentCommitHash,
     getRepoInfo,
-    pullUpdates,
 }
