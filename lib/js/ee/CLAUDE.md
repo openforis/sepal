@@ -11,6 +11,9 @@ Consuming modules use two import maps:
 ## Key Architecture
 
 - **`ee.js`**: Singleton loader for `@google/earthengine`. Uses `requireOnce()` to ensure single initialization, then applies custom extensions.
+  It loads this library's own install, whose `googleapis` dependency `package.json` overrides with `stub/googleapis`:
+  the client library needs it only for `ee.data.authenticateViaPrivateKey`, and the real package costs every worker
+  thread ~60 MB of heap.
 - **`extensions/`**: Patches the EE API with custom methods on `ee.Image`, `ee.ImageCollection`, `ee.Number`. These are applied at load time via `require('#sepal/ee/extensions')(ee)`.
 
 ## Processing Pipelines

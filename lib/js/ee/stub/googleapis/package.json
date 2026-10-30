@@ -1,0 +1,6 @@
+{
+    "name": "googleapis",
+    "version": "0.0.0-sepal-stub",
+    "private": true,
+    "main": "index.js"
+}
