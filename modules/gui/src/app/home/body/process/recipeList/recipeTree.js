@@ -105,6 +105,9 @@ export const canDropInto = ({folders, dragged, targetFolderId}) =>
     at(dragged.folderId) !== at(targetFolderId)
         && !(dragged.kind === 'folder' && isSelfOrDescendant(folders, targetFolderId, dragged.id))
 
+// What makes two folder names the same: case, and spaces around them, tell nothing apart.
+export const folderNameKey = name => name.trim().toLowerCase()
+
 // Two folders of one name cannot sit side by side: nothing would tell them apart. A folder whose name the
 // destination already holds, or one moving with it has just claimed there, stays where it is. Returns
 // [movable, clashing].
@@ -113,10 +116,10 @@ export const splitByNameClash = ({folders, moving, targetFolderId}) => {
     const taken = new Set(
         childFolders(folders, targetFolderId)
             .filter(({id}) => !movingIds.includes(id))
-            .map(({name}) => name.toLowerCase())
+            .map(({name}) => folderNameKey(name))
     )
     return _.partition(moving, ({name}) => {
-        const key = name.toLowerCase()
+        const key = folderNameKey(name)
         if (taken.has(key)) {
             return false
         }

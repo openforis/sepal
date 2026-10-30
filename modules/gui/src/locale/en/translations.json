@@ -4977,7 +4977,8 @@
       "update": {
         "error": "Cannot update folder",
         "cycle": "Cannot move a folder into one of its own subfolders",
-        "parentNotFound": "Cannot update folder: the parent folder no longer exists"
+        "parentNotFound": "Cannot update folder: the parent folder no longer exists",
+        "nameInvalid": "Cannot update folder: the name is empty or too long"
       },
       "parent": {
         "tooltip": "Go up one folder"

@@ -9,6 +9,7 @@ import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
 import styles from './folderForm.module.css'
+import {folderNameKey} from './recipeTree'
 
 // Long enough for any name worth reading, short enough that a row, a breadcrumb and a dialog can still
 // show it whole. The column holds 255.
@@ -18,7 +19,7 @@ const fields = {
     name: new Form.Field()
         .notBlank('process.folder.form.name.required')
         .maxLength(NAME_MAX_LENGTH)
-        .predicate((name, {folderNames}) => !folderNames.includes(name.toLowerCase()), 'process.folder.form.name.unique')
+        .predicate((name, {folderNames}) => !folderNames.includes(folderNameKey(name)), 'process.folder.form.name.unique')
 }
 
 const mapStateToProps = (state, ownProps) => {
@@ -64,7 +65,7 @@ class _FolderForm extends React.Component {
                 form={form}
                 isActionForm={true}
                 statePath='folder'
-                onApply={folder => onApply(folder)}
+                onApply={folder => onApply({...folder, name: folder.name.trim()})}
                 onCancel={onCancel}>
                 <Panel.Header
                     icon='folder-open'
@@ -82,6 +83,7 @@ export const FolderForm = compose(
 
 FolderForm.propTypes = {
     folder: PropTypes.object.isRequired,
+    // The names beside the folder, as folderNameKey gives them.
     folderNames: PropTypes.array.isRequired,
     onApply: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired

@@ -38,8 +38,8 @@ import {FolderPicker} from './folderPicker'
 import {RecipeItem} from './recipeItem'
 import {RecipeListConfirm} from './recipeListConfirm'
 import {
-    asDragged, canDropInto, childFolders, folderCounts, folderPathLabel, locationLabel, navigatorItems,
-    placedRecipes, ROOT, searchHighlight, searchValues
+    asDragged, canDropInto, childFolders, folderCounts, folderNameKey, folderPathLabel, locationLabel,
+    navigatorItems, placedRecipes, ROOT, searchHighlight, searchValues
 } from './recipeTree'
 
 const EMPTY_ARRAY = []
@@ -311,7 +311,7 @@ class _RecipeList extends React.Component {
                 // A name is taken only beside the folder, as a file's is: the same name elsewhere is another place.
                 folderNames={childFolders(folders, editFolder.parentId)
                     .filter(({id}) => id !== editFolder.id)
-                    .map(({name}) => name.toLowerCase())}
+                    .map(({name}) => folderNameKey(name))}
                 // The form leaves the placement alone, so the folder keeps the parent it was given.
                 onApply={folder => {
                     updateFolder({...editFolder, ...folder})

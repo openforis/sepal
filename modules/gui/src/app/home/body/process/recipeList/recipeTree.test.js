@@ -285,6 +285,14 @@ describe('splitByNameClash', () => {
         expect(ids(clashing)).toEqual([kenyaElsewhere.id])
     })
 
+    it('keeps back a folder whose name differs from one in the destination only by the spaces around it', () => {
+        const spaced = {id: 'spaced', name: ' kenya ', parentId: 'mozambique'}
+
+        const [, clashing] = splitByNameClash({folders: [...folders, spaced], moving: [spaced], targetFolderId: ROOT})
+
+        expect(ids(clashing)).toEqual([spaced.id])
+    })
+
     it('keeps back the second of two folders of one name moving to the same place', () => {
         const first = {id: 'q1-a', name: 'Q1', parentId: 'kenya'}
         const second = {id: 'q1-b', name: 'q1', parentId: '2024'}

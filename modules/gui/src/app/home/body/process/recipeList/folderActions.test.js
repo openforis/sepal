@@ -194,6 +194,7 @@ describe('updating a folder', () => {
     it.each([
         ['FOLDER_CYCLE', 'process.folder.update.cycle'],
         ['FOLDER_PARENT_NOT_FOUND', 'process.folder.update.parentNotFound'],
+        ['FOLDER_NAME_INVALID', 'process.folder.update.nameInvalid'],
         [undefined, 'process.folder.update.error']
     ])('reports a save refused with %s by its reason', (code, message) => {
         updateFolder({...KENYA, name: 'Renamed'})

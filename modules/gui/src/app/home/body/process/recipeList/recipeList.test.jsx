@@ -493,6 +493,14 @@ describe('naming a folder', () => {
         expect(takenNames()).toEqual(['empty', 'kenya_2024'])
     })
 
+    it('takes a name as taken whatever the spaces around it', () => {
+        mount({folders: [...folders, {id: 'spaced', name: ' Spaced ', parentId: null}]})
+
+        act(() => button('process.folder.add').click())
+
+        expect(takenNames()).toContain('spaced')
+    })
+
     it('leaves a folder its own name, and checks a new one against the folders beside it', () => {
         mount()
 

@@ -113,6 +113,8 @@ const folderUpdateFailed = error => {
         Notifications.error({message: msg('process.folder.update.cycle'), error})
     } else if (code === 'FOLDER_PARENT_NOT_FOUND') {
         Notifications.error({message: msg('process.folder.update.parentNotFound'), error})
+    } else if (code === 'FOLDER_NAME_INVALID') {
+        Notifications.error({message: msg('process.folder.update.nameInvalid'), error})
     } else {
         Notifications.error({message: msg('process.folder.update.error'), error})
     }
