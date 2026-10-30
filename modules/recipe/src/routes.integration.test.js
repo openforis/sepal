@@ -273,6 +273,15 @@ describe('POST /folder/:id', () => {
             principal: authenticatedUser, folderId: null, recipeIds: moved
         })
     })
+
+    test('answers 409 FOLDER_NOT_FOUND when the service reports folderNotFound', async () => {
+        service.moveOutcome = {outcome: 'folderNotFound'}
+
+        const response = await POST(`/folder/${DESTINATION_FOLDER_ID}`, {json: [A_RECIPE_ID]})
+
+        assert.equal(response.status, 409)
+        assert.deepEqual(response.body, {code: 'FOLDER_NOT_FOUND'})
+    })
 })
 
 describe('POST /folder', () => {
@@ -403,6 +412,7 @@ function recipeServiceSpy() {
         saveOutcome: {outcome: 'saved', revision: 1},
         saveFolderOutcome: {outcome: 'saved', folders: []},
         removeFolderOutcome: {outcome: 'removed'},
+        moveOutcome: {outcome: 'moved'},
 
         reset: () => {
             spy.loadRecipeCommand = null
@@ -420,6 +430,7 @@ function recipeServiceSpy() {
             spy.saveOutcome = {outcome: 'saved', revision: 1}
             spy.saveFolderOutcome = {outcome: 'saved', folders: []}
             spy.removeFolderOutcome = {outcome: 'removed'}
+            spy.moveOutcome = {outcome: 'moved'}
         },
 
         loadRecipe: async command => {
@@ -445,7 +456,9 @@ function recipeServiceSpy() {
         moveRecipes: async command => {
             spy.moveRecipesCommand = command
             spy.reached = true
-            return spy.recipes
+            return spy.moveOutcome.outcome === 'moved'
+                ? {outcome: 'moved', recipes: spy.recipes}
+                : spy.moveOutcome
         },
         listFolders: async command => {
             spy.listFoldersCommand = command

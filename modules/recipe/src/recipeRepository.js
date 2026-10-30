@@ -13,17 +13,19 @@ export class RecipeRepository {
 
     // The conditional update atomically enforces ownership, type, revision and deletion, so a writer whose
     // base revision has moved changes nothing. Folder placement belongs to moveRecipes and must not be
-    // overwritten by a retried save.
+    // overwritten by a retried save. A new recipe whose folder the owner does not have goes to the root, where
+    // the tree shows it, rather than failing a save the user would lose.
     async saveRecipe({id, owner, folderId, name, type, typeVersion, content, expectedRevision}) {
         return await this.#db.withTransaction(async connection => {
             const now = new Date()
             if (expectedRevision == null) {
+                const placement = folderId && await ownsFolder(connection, folderId, owner) ? folderId : null
                 try {
                     await connection.query(
                         `INSERT INTO ${RECIPE}
                             (id, folder_id, name, type, type_version, username, contents, creation_time, update_time, revision)
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                        [id, folderId, name, type, typeVersion, storedUsername(owner),
+                        [id, placement, name, type, typeVersion, storedUsername(owner),
                             contentsColumn(content), now, now, INITIAL_REVISION]
                     )
                     return {outcome: 'saved', revision: INITIAL_REVISION}
@@ -88,14 +90,20 @@ export class RecipeRepository {
         })
     }
 
+    // A destination the owner does not have is refused: the tree would show no recipe placed there.
     async moveRecipes({folderId, recipeIds, owner}) {
-        await this.#db.withTransaction(async connection => {
-            if (recipeIds.length) {
-                await connection.query(
-                    `UPDATE ${RECIPE} SET folder_id = ?
-                     WHERE id IN (${placeholders(recipeIds)}) AND username = ?`,
-                    [folderId, ...recipeIds, owner]
-                )
+        return await this.#db.withTransaction(async connection => {
+            if (folderId && !await ownsFolder(connection, folderId, owner)) {
+                return {outcome: 'folderNotFound'}
+            } else {
+                if (recipeIds.length) {
+                    await connection.query(
+                        `UPDATE ${RECIPE} SET folder_id = ?
+                         WHERE id IN (${placeholders(recipeIds)}) AND username = ?`,
+                        [folderId, ...recipeIds, owner]
+                    )
+                }
+                return {outcome: 'moved'}
             }
         })
     }

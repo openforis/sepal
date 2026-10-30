@@ -9,8 +9,9 @@ class FakeRecipeRepository {
     async saveRecipe({id, owner, folderId, name, type, typeVersion, content}) {
         const stored = this.#recipes.get(id)
         if (!stored) {
+            const placement = this.#ownsFolder(folderId, storedUsername(owner)) ? folderId : null
             this.#recipes.set(id, {
-                id, owner: storedUsername(owner), folderId, name, type, typeVersion,
+                id, owner: storedUsername(owner), folderId: placement, name, type, typeVersion,
                 content: persisted(content),
                 revision: 1, removed: false,
                 creationTime: new Date(0), updateTime: new Date(0)
@@ -48,7 +49,12 @@ class FakeRecipeRepository {
     }
 
     async moveRecipes({folderId, recipeIds, owner}) {
-        recipeIds.forEach(id => this.#updateOwned(id, owner, stored => ({...stored, folderId})))
+        if (folderId && !this.#ownsFolder(folderId, storedUsername(owner))) {
+            return {outcome: 'folderNotFound'}
+        } else {
+            recipeIds.forEach(id => this.#updateOwned(id, owner, stored => ({...stored, folderId})))
+            return {outcome: 'moved'}
+        }
     }
 
     async findRecipesToMigrate(type, version) {

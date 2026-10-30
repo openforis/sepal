@@ -24,7 +24,9 @@ describe('loadRecipe', () => {
     })
 
     test('returns a recipe to its owner, with placement and revision', async () => {
-        const stored = recipeToStore({folderId: 'sampling-folder'})
+        const folder = folderToStore()
+        await repository.saveFolder(folder)
+        const stored = recipeToStore({folderId: folder.id})
         const {revision} = await repository.saveRecipe(stored)
 
         const recipe = await service.loadRecipe({principal: owner, recipeId: stored.id})
@@ -93,19 +95,31 @@ describe('removeRecipes', () => {
 
 describe('moveRecipes', () => {
     test('returns the moved recipe under its new folder', async () => {
-        const destinationFolderId = 'destination-folder'
-        const stored = recipeToStore({folderId: 'original-folder'})
+        const destination = folderToStore()
+        await repository.saveFolder(destination)
+        const stored = recipeToStore()
         await repository.saveRecipe(stored)
 
-        const recipes = await service.moveRecipes({
-            principal: owner, folderId: destinationFolderId, recipeIds: [stored.id]
+        const result = await service.moveRecipes({
+            principal: owner, folderId: destination.id, recipeIds: [stored.id]
         })
 
-        assert.equal(recipes.length, 1)
+        assert.equal(result.recipes.length, 1)
+        assert.partialDeepStrictEqual(result, {
+            outcome: 'moved',
+            recipes: [{id: stored.id, folderId: destination.id}]
+        })
+    })
 
-        assert.partialDeepStrictEqual(recipes, [{
-            id: stored.id, folderId: destinationFolderId
-        }])
+    test('reports the repository\'s refusal instead of the recipes', async () => {
+        const stored = recipeToStore()
+        await repository.saveRecipe(stored)
+
+        const result = await service.moveRecipes({
+            principal: owner, folderId: 'removed-folder', recipeIds: [stored.id]
+        })
+
+        assert.deepEqual(result, {outcome: 'folderNotFound'})
     })
 })
 

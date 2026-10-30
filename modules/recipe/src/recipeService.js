@@ -35,8 +35,10 @@ class RecipeService {
     }
 
     async moveRecipes({principal, folderId, recipeIds}) {
-        await this.#repository.moveRecipes({folderId, recipeIds, owner: principal.username})
-        return await this.#repository.listRecipes(principal.username)
+        const result = await this.#repository.moveRecipes({folderId, recipeIds, owner: principal.username})
+        return result.outcome === 'moved'
+            ? {outcome: 'moved', recipes: await this.#repository.listRecipes(principal.username)}
+            : result
     }
 
     listFolders({principal}) {

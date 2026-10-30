@@ -21,11 +21,11 @@ const createRoutes = ({recipeService, requireAuth}) => router => router
     })
     // Folder routes first so `/folder` is not captured by `/:id`.
     .post('/folder/:id', requireAuth, async ctx => {
-        ctx.body = await recipeService.moveRecipes({
+        respondToMove(ctx, await recipeService.moveRecipes({
             principal: principal(ctx),
             folderId: ctx.params.id === NO_FOLDER_ID ? null : ctx.params.id,
             recipeIds: ctx.request.body || []
-        })
+        }))
     })
     .delete('/folder/:id', requireAuth, async ctx => {
         respondToFolderRemove(ctx, await recipeService.removeFolder({
@@ -107,6 +107,17 @@ const respondToSave = (ctx, result) => {
         ctx.status = 404
     } else {
         throw new Error(`Unrecognized save outcome: ${result.outcome}`)
+    }
+}
+
+const respondToMove = (ctx, result) => {
+    if (result.outcome === 'moved') {
+        ctx.body = result.recipes
+    } else if (result.outcome === 'folderNotFound') {
+        ctx.status = 409
+        ctx.body = {code: 'FOLDER_NOT_FOUND'}
+    } else {
+        throw new Error(`Unrecognized move outcome: ${result.outcome}`)
     }
 }
 

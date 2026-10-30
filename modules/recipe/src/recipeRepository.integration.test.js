@@ -188,18 +188,55 @@ describe('recipe repository', () => {
 
         // A retry at the unchanged revision must not write stale folder placement back.
         test('leaves the folder alone, so a retry after a move cannot undo it', async () => {
-            const recipe = aRecipe({folderId: A_FOLDER_ID})
+            const original = aFolder()
+            const destination = aFolder({id: DESTINATION_FOLDER_ID})
+            await repository.saveFolder(original)
+            await repository.saveFolder(destination)
+            const recipe = aRecipe({folderId: original.id})
             const {revision} = await repository.saveRecipe(recipe)
             await repository.moveRecipes({
-                folderId: DESTINATION_FOLDER_ID, recipeIds: [recipe.id], owner: OWNER
+                folderId: destination.id, recipeIds: [recipe.id], owner: OWNER
             })
 
-            await repository.saveRecipe(aRecipe({
-                folderId: A_FOLDER_ID, expectedRevision: revision, content: aRecipeContent({retried: true})
-            }))
+            await repository.saveRecipe({
+                ...recipe, expectedRevision: revision, content: aRecipeContent({retried: true})
+            })
 
             const found = await repository.findRecipe(recipe.id)
-            assert.equal(found.recipe.folderId, DESTINATION_FOLDER_ID)
+            assert.equal(found.recipe.folderId, destination.id)
+        })
+
+        test('places a new recipe in a folder its owner has', async () => {
+            const folder = aFolder()
+            await repository.saveFolder(folder)
+            const recipe = aRecipe({folderId: folder.id})
+
+            await repository.saveRecipe(recipe)
+
+            const found = await repository.findRecipe(recipe.id)
+            assert.equal(found.recipe.folderId, folder.id)
+        })
+
+        // The tree shows a recipe only in a folder that exists or at the root; anywhere else it would vanish.
+        test('places a new recipe at the root when its folder does not exist, and still saves it', async () => {
+            const recipe = aRecipe({folderId: 'removed-folder'})
+
+            const result = await repository.saveRecipe(recipe)
+
+            assert.deepEqual(result, {outcome: 'saved', revision: 1})
+            const found = await repository.findRecipe(recipe.id)
+            assert.equal(found.recipe.folderId, null)
+        })
+
+        test('places a new recipe at the root when its folder is another user\'s', async () => {
+            const foreign = aFolder({owner: ANOTHER_OWNER})
+            await repository.saveFolder(foreign)
+            const recipe = aRecipe({folderId: foreign.id})
+
+            await repository.saveRecipe(recipe)
+
+            const found = await repository.findRecipe(recipe.id)
+            assert.equal(found.recipe.folderId, null)
         })
     })
 
@@ -239,16 +276,18 @@ describe('recipe repository', () => {
         })
 
         test('injects the new folder after a move, which advances no revision', async () => {
+            const destination = aFolder({id: DESTINATION_FOLDER_ID})
+            await repository.saveFolder(destination)
             const recipe = aRecipe()
             const {revision} = await repository.saveRecipe(recipe)
             await repository.moveRecipes({
-                folderId: DESTINATION_FOLDER_ID, recipeIds: [recipe.id], owner: OWNER
+                folderId: destination.id, recipeIds: [recipe.id], owner: OWNER
             })
 
             const found = await repository.findRecipe(recipe.id)
 
             assert.deepEqual(found.recipe, {
-                ...recipe.content, folderId: DESTINATION_FOLDER_ID, revision
+                ...recipe.content, folderId: destination.id, revision
             })
         })
     })
@@ -294,6 +333,64 @@ describe('recipe repository', () => {
             const anothersRecipe = await repository.findRecipe(anothers.id)
             assert.equal(ownRecipe, null)
             assert.notEqual(anothersRecipe, null)
+        })
+    })
+
+    describe('moveRecipes', () => {
+        test('moves the recipes into a folder their owner has', async () => {
+            const destination = aFolder({id: DESTINATION_FOLDER_ID})
+            await repository.saveFolder(destination)
+            const recipe = aRecipe()
+            await repository.saveRecipe(recipe)
+
+            const result = await repository.moveRecipes({
+                folderId: destination.id, recipeIds: [recipe.id], owner: OWNER
+            })
+
+            assert.deepEqual(result, {outcome: 'moved'})
+            const found = await repository.findRecipe(recipe.id)
+            assert.equal(found.recipe.folderId, destination.id)
+        })
+
+        test('moves the recipes to the root', async () => {
+            const folder = aFolder()
+            await repository.saveFolder(folder)
+            const recipe = aRecipe({folderId: folder.id})
+            await repository.saveRecipe(recipe)
+
+            const result = await repository.moveRecipes({folderId: null, recipeIds: [recipe.id], owner: OWNER})
+
+            assert.deepEqual(result, {outcome: 'moved'})
+            const found = await repository.findRecipe(recipe.id)
+            assert.equal(found.recipe.folderId, null)
+        })
+
+        test('refuses a destination that does not exist, moving nothing', async () => {
+            const recipe = aRecipe()
+            await repository.saveRecipe(recipe)
+
+            const result = await repository.moveRecipes({
+                folderId: 'removed-folder', recipeIds: [recipe.id], owner: OWNER
+            })
+
+            assert.deepEqual(result, {outcome: 'folderNotFound'})
+            const found = await repository.findRecipe(recipe.id)
+            assert.equal(found.recipe.folderId, recipe.folderId)
+        })
+
+        test('refuses a destination another user owns, moving nothing', async () => {
+            const foreign = aFolder({owner: ANOTHER_OWNER})
+            await repository.saveFolder(foreign)
+            const recipe = aRecipe()
+            await repository.saveRecipe(recipe)
+
+            const result = await repository.moveRecipes({
+                folderId: foreign.id, recipeIds: [recipe.id], owner: OWNER
+            })
+
+            assert.deepEqual(result, {outcome: 'folderNotFound'})
+            const found = await repository.findRecipe(recipe.id)
+            assert.equal(found.recipe.folderId, recipe.folderId)
         })
     })
 
@@ -608,7 +705,7 @@ describe('recipe repository', () => {
     })
 
     const aRecipe = (over = {}) => ({
-        id: A_RECIPE_ID, owner: OWNER, name: 'A recipe', type: 'MOSAIC', folderId: A_FOLDER_ID,
+        id: A_RECIPE_ID, owner: OWNER, name: 'A recipe', type: 'MOSAIC', folderId: null,
         typeVersion: OUTDATED_TYPE_VERSION, content: aRecipeContent(),
         ...over
     })
