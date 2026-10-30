@@ -12,6 +12,7 @@ services:
       # lib/ee
       - ${SEPAL_PROJECT_DIR}/lib/js/ee/src:/usr/local/src/sepal/lib/js/ee/src
       - ${SEPAL_PROJECT_DIR}/lib/js/ee/package.json:/usr/local/src/sepal/lib/js/ee/package.json
+      - ${SEPAL_PROJECT_DIR}/lib/js/ee/stub:/usr/local/src/sepal/lib/js/ee/stub
       - ${SEPAL_PROJECT_DIR}/modules/gee/lib/ee/package-lock.json:/usr/local/src/sepal/lib/js/ee/package-lock.json
       - ${SEPAL_PROJECT_DIR}/modules/gee/lib/ee/node_modules:/usr/local/src/sepal/lib/js/ee/node_modules
       # module

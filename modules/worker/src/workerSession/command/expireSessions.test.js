@@ -170,7 +170,7 @@ describe('T+graceMinutes — close', () => {
             assert.deepEqual(callsOf(repo.closeExpiredSession), [[{
                 sessionId: 's-1', notificationState: state, notifiedTime: minutesAgo(61), graceMinutes: 60,
             }]])
-            assert.deepEqual(callsOf(releaseInstance), [['i-1']])
+            assert.deepEqual(callsOf(releaseInstance), [['i-1', 's-1']])
             assert.equal(emitWorkerSessionClosed.mock.callCount(), 1)
             assert.equal(emitSessionExpiryClosed.mock.callCount(), 1)
         })

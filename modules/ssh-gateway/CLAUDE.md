@@ -19,6 +19,8 @@ or in a `golang:1.27-trixie` container mounting `router/` (`go vet ./... && go t
 - **sshpiperd** ([sshpiper](https://github.com/tg123/sshpiper), built from source at a pinned tag and commit in the
   Dockerfile's `go-build` stage) listens on port 22 with the persisted OpenSSH host keys (`/data/ssh`). After
   authentication it relays whole SSH connections, so forwarding and subsystems pass through untouched.
+  The host key fingerprints are published in sepal-doc (`developers/ssh_session.rst`): keep `/data/ssh` when
+  migrating the gateway, or update the docs if the keys change, or users will see a "host key changed" warning.
 - **`sepal-router`** (`router/`, Go) is its plugin. Per connection it splits the username at the first `+`,
   authenticates the client against the user module (`/auth/password`, `/auth/authorized-keys`), and picks the
   upstream, always logging in with the user's SEPAL key `/home/<username>/.ssh/id_rsa`:
@@ -30,6 +32,8 @@ or in a `golang:1.27-trixie` container mounting `router/` (`go vet ./... && go t
 - sshpiper routes a public key, and logs in upstream with it, before the client proves it holds the key. So a direct
   connection fires the one-shot `POST /sessions/session/:id/opened` only when its pipe starts, and one connection
   routes at most two public keys.
+- A password check sends the client's address along; the user module throttles failed password logins per username at an
+  address and per address, and answers 429, which the router refuses like a wrong password.
 - **Internal sshd**: `127.0.0.1:2222`, public keys only (only sshpiperd reaches it, with the SEPAL key),
   `DisableForwarding yes`, `ForceCommand ssh-bootstrap`. It sees every login from 127.0.0.1; the router logs
   client addresses.

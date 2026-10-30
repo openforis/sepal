@@ -74,7 +74,7 @@ describe('ClaimRepository', () => {
         test('frees the instance for a later claim', async () => {
             await repository.claim(INSTANCE_ID, SESSION_ID)
 
-            const released = await repository.release(INSTANCE_ID)
+            const released = await repository.release(INSTANCE_ID, SESSION_ID)
 
             const reclaimed = await repository.claim(INSTANCE_ID, ANOTHER_SESSION_ID)
             assert.equal(released, true)
@@ -82,9 +82,20 @@ describe('ClaimRepository', () => {
         })
 
         test('reports that an unclaimed instance released nothing', async () => {
-            const released = await repository.release(INSTANCE_ID)
+            const released = await repository.release(INSTANCE_ID, SESSION_ID)
 
             assert.equal(released, false)
+        })
+
+        // A slow release of the previous session must not take the instance from the next one.
+        test('leaves the claim of another session alone', async () => {
+            await repository.claim(INSTANCE_ID, ANOTHER_SESSION_ID)
+
+            const released = await repository.release(INSTANCE_ID, SESSION_ID)
+
+            const claims = await repository.all()
+            assert.equal(released, false)
+            assert.deepEqual(claims.map(({sessionId}) => sessionId), [ANOTHER_SESSION_ID])
         })
     })
 

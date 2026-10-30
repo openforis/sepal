@@ -20,7 +20,7 @@ export const createReconciler = ({workerClient, openSessionUse, clock}) => {
         const now = clock()
         for (const sessionId of sessionIds) {
             if (!openIds.has(sessionId))
-                await openSessionUse.closeSession({sessionId, to: now})
+                await openSessionUse.closeStaleSession({sessionId, to: now})
         }
     }
     return {reconcile}

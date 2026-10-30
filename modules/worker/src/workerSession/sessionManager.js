@@ -173,7 +173,7 @@ const createSessionManager = ({
         if (!terminated) {
             return false
         }
-        await instanceManager.releaseInstance(session?.instance?.id)
+        await instanceManager.releaseInstance(session?.instance?.id, sessionId)
         emitClosed({username: session?.username, sessionId})
         emitChanged({username: session?.username})
         return true
@@ -281,7 +281,7 @@ const createSessionManager = ({
             instanceTypeById,
             sendEmail,
             manageUrl,
-            releaseInstance: instanceId => instanceManager.releaseInstance(instanceId),
+            releaseInstance: (instanceId, sessionId) => instanceManager.releaseInstance(instanceId, sessionId),
             emitSessionExpiryNotified: emitExpiryNotified,
             emitSessionExpiryClosed: emitExpiryClosed,
             emitWorkerSessionClosed: emitClosed,

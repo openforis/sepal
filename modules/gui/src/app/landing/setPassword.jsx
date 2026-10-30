@@ -76,17 +76,17 @@ class _SetPassword extends React.Component {
     }
 
     submit() {
-        const {inputs: {username, password}} = this.props
-        this.resetPassword(username.value, password.value)
+        const {inputs: {password}} = this.props
+        this.resetPassword(password.value)
     }
 
-    resetPassword(username, password) {
+    resetPassword(password) {
         const {type, recaptcha: {recaptcha$}, stream, searchParams, navigate} = this.props
         const token = searchParams.get('token')
         stream('RESET_PASSWORD',
             recaptcha$('RESET_PASSWORD').pipe(
                 switchMap(recaptchaToken =>
-                    resetPassword$({token, username, password, type, recaptchaToken})
+                    resetPassword$({token, password, type, recaptchaToken})
                 )
             ),
             user => {

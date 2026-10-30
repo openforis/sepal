@@ -51,7 +51,7 @@ const requestInstance = async ({workerType, instanceType, username, sessionId}, 
                 return ready
             } catch (err) {
                 // Release, or the instance stays claimed with no session behind it — forever.
-                await claims.release(candidate.id)
+                await claims.release(candidate.id, sessionId)
                 throw err
             }
         }
@@ -79,7 +79,7 @@ const startPooledInstance = async ({instanceType, reservation}, {claims, provide
         started = await provider.startPooled(candidate, instanceType, reservation)
     } catch (err) {
         log.warn(`Failed to start pooled ${instanceTag(candidate)} as ${instanceType}, launching instead: ${err.message}`)
-        await claims.release(candidate.id)
+        await claims.release(candidate.id, reservation.sessionId)
         return null
     }
     try {
@@ -90,7 +90,7 @@ const startPooledInstance = async ({instanceType, reservation}, {claims, provide
         log.info(`Started pooled ${instanceTag(ready)} for ${userTag(reservation.username)} (${reservation.workerType})`)
         return ready
     } catch (err) {
-        await claims.release(candidate.id)
+        await claims.release(candidate.id, reservation.sessionId)
         throw err
     }
 }

@@ -71,7 +71,7 @@ func (r *router) password(conn libplugin.ConnMetadata, password []byte) (*libplu
 	if err != nil {
 		return nil, err
 	}
-	ok, err := r.users.checkPassword(requested.username, password)
+	ok, err := r.users.checkPassword(requested.username, password, clientIP(conn.RemoteAddr()))
 	if err := r.authenticated(conn, "password", ok, err); err != nil {
 		return nil, err
 	}
@@ -193,6 +193,14 @@ func menuUpstream(username string, sepalKey []byte, routingError string) *libplu
 		upstream.Env = map[string]string{"SEPAL_ROUTING_ERROR": routingError}
 	}
 	return upstream
+}
+
+func clientIP(remoteAddr string) string {
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		return remoteAddr
+	}
+	return host
 }
 
 func reachable(address string) bool {

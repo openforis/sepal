@@ -145,7 +145,7 @@ describe('reprovisionInstance', () => {
         const first = manager.reprovisionInstance(pendingSession)
         assert.equal(manager.isProvisioning('i-1'), true)
 
-        await manager.releaseInstance('i-1')
+        await manager.releaseInstance('i-1', 's-1')
         assert.equal(manager.isProvisioning('i-1'), false)
 
         const successor = {...pendingSession, id: 's-2', username: 'bob'}

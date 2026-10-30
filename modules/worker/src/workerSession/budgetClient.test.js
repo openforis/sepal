@@ -100,4 +100,10 @@ describe('createBudgetClient.check', () => {
         })
         await assert.rejects(createBudgetClient({}).check('frank'), /ECONNREFUSED/)
     })
+
+    test('gives up on a budget module that does not answer, so the caller can fall back', async () => {
+        global.fetch = mock.fn((_url, {signal}) => new Promise((_resolve, reject) =>
+            signal.addEventListener('abort', () => reject(signal.reason))))
+        await assert.rejects(createBudgetClient({}, {timeoutMs: 10}).check('gina'), {name: 'TimeoutError'})
+    })
 })

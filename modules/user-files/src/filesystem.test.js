@@ -5,17 +5,17 @@ import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {afterEach, beforeEach, describe, test} from 'node:test'
 
-import {removeUserPath} from './filesystem.js'
+import {createFolder, removeUserPath, setFile} from './filesystem.js'
+
+let homes
+
+beforeEach(async () => {
+    homes = await mkdtemp(join(tmpdir(), 'user-files-'))
+})
+
+afterEach(() => rm(homes, {recursive: true, force: true}))
 
 describe('removeUserPath', () => {
-    let homes
-
-    beforeEach(async () => {
-        homes = await mkdtemp(join(tmpdir(), 'user-files-'))
-    })
-
-    afterEach(() => rm(homes, {recursive: true, force: true}))
-
     test('removes a folder inside the home', async () => {
         const alice = await aHome('alice')
         await writeFile(join(alice, 'project', 'file'), '')
@@ -54,10 +54,53 @@ describe('removeUserPath', () => {
         assert.equal(existsSync(join(alice, 'link')), false)
         assert.equal(existsSync(join(bob, 'project')), true)
     })
+})
 
-    const aHome = async username => {
-        const home = join(homes, username)
-        await mkdir(join(home, 'project'), {recursive: true})
-        return home
-    }
+describe('createFolder', () => {
+    test('creates folders inside the home', async () => {
+        const alice = await aHome('alice')
+        const ctx = aRequest('alice', {path: 'a/b', recursive: 'true'})
+
+        await createFolder(homes, ctx)
+
+        assert.equal(ctx.response.status, 201)
+        assert.equal(existsSync(join(alice, 'a', 'b')), true)
+    })
+
+    test('refuses a path that leaves the home', async () => {
+        await aHome('alice')
+        const ctx = aRequest('alice', {path: '../carol', recursive: 'true'})
+
+        await createFolder(homes, ctx)
+
+        assert.equal(ctx.response.status, 403)
+        assert.equal(existsSync(join(homes, 'carol')), false)
+    })
+})
+
+describe('setFile', () => {
+    test('refuses a path that leaves the home', async () => {
+        await aHome('alice')
+        const bob = await aHome('bob')
+        const upload = join(homes, 'upload')
+        await writeFile(upload, 'content')
+        const ctx = aRequest('alice', {path: '../bob/project/file'}, {file: {filepath: upload}})
+
+        await setFile(homes, ctx)
+
+        assert.equal(ctx.response.status, 403)
+        assert.equal(existsSync(join(bob, 'project', 'file')), false)
+    })
+})
+
+const aHome = async username => {
+    const home = join(homes, username)
+    await mkdir(join(home, 'project'), {recursive: true})
+    return home
+}
+
+const aRequest = (username, query, files) => ({
+    request: {headers: {'sepal-user': JSON.stringify({username})}, files},
+    query,
+    response: {}
 })

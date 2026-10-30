@@ -8,5 +8,6 @@ curl -s \
     -F "priority=${PRIORITY:-0}" \
     -F "retry={{ lookup('env', 'PUSHOVER_EMERGENCY_RETRY_DELAY_SECONDS') }}" \
     -F "expire={{ lookup('env', 'PUSHOVER_EMERGENCY_RETRY_TIMEOUT_SECONDS') }}" \
+    --form-string "title={{ monit_instance }} ({{ lookup('env', 'DEPLOY_ENVIRONMENT') }})" \
     --form-string "message=[$MONIT_SERVICE] $MONIT_DESCRIPTION" \
     https://api.pushover.net/1/messages.json

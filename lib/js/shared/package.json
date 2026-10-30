@@ -10,7 +10,7 @@
         "testWatch": "node --experimental-test-module-mocks --test --watch \"**/*.test.js\""
     },
     "dependencies": {
-        "@google/earthengine": "^1.7.49",
+        "@google/earthengine": "^1.7.50",
         "@koa/router": "^15.7.0",
         "@lezer/javascript": "1.5.6",
         "amqplib": "^2.2.0",
@@ -18,7 +18,6 @@
         "jsep": "1.6.0",
         "koa": "^3.2.1",
         "koa-bodyparser": "^4.4.1",
-        "koa-easy-ws": "^2.1.0",
         "lodash": "^4.18.1",
         "log4js": "^6.9.1",
         "mysql2": "^3.24.6",

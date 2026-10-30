@@ -10,11 +10,7 @@ export class SceneRepository {
     }
 
     findScenesInSceneArea(query) {
-        return this.#db.withConnection(async connection => {
-            const {sql, params} = buildScoredQuery(query, this.#clock())
-            const [rows] = await connection.query(sql, params)
-            return rows.map(toSceneMetaData)
-        })
+        return this.#findScoredScenes(query)
     }
 
     async findBestScenes(query) {
@@ -22,10 +18,18 @@ export class SceneRepository {
         const result = {}
         for (const sceneAreaId of sceneAreaIds) {
             const areaQuery = {...query, sceneAreaId}
-            const rows = await this.findScenesInSceneArea(areaQuery)
+            const rows = await this.#findScoredScenes(areaQuery, maxScenes)
             result[sceneAreaId] = selectBest(rows, {minScenes, maxScenes, cloudCoverTarget})
         }
         return result
+    }
+
+    #findScoredScenes(query, limit) {
+        return this.#db.withConnection(async connection => {
+            const {sql, params} = buildScoredQuery(query, this.#clock(), limit)
+            const [rows] = await connection.query(sql, params)
+            return rows.map(toSceneMetaData)
+        })
     }
 }
 
@@ -41,7 +45,7 @@ export const selectBest = (scoredRows, {minScenes, maxScenes, cloudCoverTarget})
     return scenes
 }
 
-const buildScoredQuery = (query, now) => {
+const buildScoredQuery = (query, now, limit) => {
     const {
         sceneAreaId,
         dataSets,
@@ -69,7 +73,8 @@ const buildScoredQuery = (query, now) => {
           AND acquisition_date >= ? AND acquisition_date <= ? AND acquisition_date <= ?
           AND ${dayOfYearConstraint}
           AND sensor_id IN (${placeholders(dataSets)})
-        ORDER BY sort_weight, cloud_cover, days_from_target_date`
+        ORDER BY sort_weight, cloud_cover, days_from_target_date
+        ${limit === undefined ? '' : 'LIMIT ?'}`
 
     const params = [
         w, w, t, t, t, t,
@@ -80,6 +85,7 @@ const buildScoredQuery = (query, now) => {
         seasonStartDoy,
         seasonEndDoy,
         ...dataSets,
+        ...(limit === undefined ? [] : [limit]),
     ]
 
     return {sql, params}

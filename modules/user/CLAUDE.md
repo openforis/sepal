@@ -10,6 +10,14 @@ values, which can differ from each other and from `id`; existing files depend on
 New users get `uid = gid = id`. The LDAP migration advanced `AUTO_INCREMENT` beyond existing uid/gid values
 before this allocation rule was used. The local OS group `sepal` (gid 9999) is separate from per-user groups.
 
+## Login throttling
+
+`/authenticate` (gateway) and `/auth/password` (ssh-gateway) share one in-memory `LoginThrottle`. Per 15 minutes
+it allows 10 failed logins of a username from one `clientIp` (the address the caller sends), and 50 from one
+`clientIp` whatever the username. Never per username alone, which would let anyone lock a user out. A throttled
+login is answered 429 before its password is verified, even when the password is right. Counts reset when the module
+restarts.
+
 ## Database migrations
 
 `migrations/001.do.schema.sql` creates the complete current table. The separate

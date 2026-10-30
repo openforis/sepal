@@ -11,6 +11,12 @@ Consuming modules use two import maps:
 ## Key Architecture
 
 - **`ee.js`**: Singleton loader for `@google/earthengine`. Uses `requireOnce()` to ensure single initialization, then applies custom extensions.
+  It loads this library's own install, whose `googleapis` dependency `package.json` overrides with `stub/googleapis`:
+  the client library needs it only for `ee.data.authenticateViaPrivateKey`, and the real package costs every worker
+  thread ~60 MB of heap.
+  It also patches the library's `deleteProto` as it loads, so the walk that strips `constructor` keys from call
+  arguments stops at expressions: unpatched, every call re-walks the graph built so far and building is quadratic.
+  An upgrade that changes `deleteProto` makes loading fail; `modules/gee/test/ee/clientLibrary.test.js` pins the behavior.
 - **`extensions/`**: Patches the EE API with custom methods on `ee.Image`, `ee.ImageCollection`, `ee.Number`. These are applied when `ee.js` calls the imported `extensions(ee)` initializer.
 
 ## Processing Pipelines

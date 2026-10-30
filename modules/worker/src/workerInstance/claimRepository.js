@@ -33,12 +33,14 @@ export class ClaimRepository {
         })
     }
 
-    // affectedRows is unambiguous on a DELETE — CLIENT_FOUND_ROWS only inflates UPDATE counts.
-    release(instanceId) {
+    // Only the claim the caller holds: a release that runs late must not drop the claim of the
+    // session the instance went to next. affectedRows is unambiguous on a DELETE —
+    // CLIENT_FOUND_ROWS only inflates UPDATE counts.
+    release(instanceId, sessionId) {
         return this.#db.withConnection(async connection => {
             const [result] = await connection.query(
-                'DELETE FROM instance_claim WHERE instance_id = ?',
-                [instanceId]
+                'DELETE FROM instance_claim WHERE instance_id = ? AND session_id = ?',
+                [instanceId, sessionId]
             )
             return result.affectedRows > 0
         })

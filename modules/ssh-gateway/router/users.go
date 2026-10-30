@@ -19,10 +19,13 @@ type userModule struct {
 	client  *http.Client
 }
 
-func (u *userModule) checkPassword(username string, password []byte) (bool, error) {
+// The user module throttles failed password logins per username at a client address and per client address,
+// answering 429 without checking the password.
+func (u *userModule) checkPassword(username string, password []byte, clientIP string) (bool, error) {
 	response, err := u.client.PostForm(u.baseURL+"/auth/password", url.Values{
 		"username": {username},
 		"password": {string(password)},
+		"clientIp": {clientIP},
 	})
 	if err != nil {
 		return false, err
@@ -31,7 +34,7 @@ func (u *userModule) checkPassword(username string, password []byte) (bool, erro
 	switch response.StatusCode {
 	case http.StatusOK:
 		return true, nil
-	case http.StatusUnauthorized:
+	case http.StatusUnauthorized, http.StatusTooManyRequests:
 		return false, nil
 	default:
 		return false, fmt.Errorf("user module answered %d to a password check", response.StatusCode)

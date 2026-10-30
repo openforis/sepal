@@ -1,4 +1,4 @@
-import {google} from 'googleapis'
+import {OAuth2Client} from 'google-auth-library'
 import {catchError, from, map, switchMap, throwError} from 'rxjs'
 
 import {job} from '#gee/jobs/job'
@@ -20,7 +20,7 @@ const worker$ = ({
     const accessToken = sepalUser?.googleTokens?.accessToken
     
     if (accessToken) {
-        const oAuth2Client = new google.auth.OAuth2()
+        const oAuth2Client = new OAuth2Client()
         oAuth2Client.setCredentials({
             access_token: accessToken
         })

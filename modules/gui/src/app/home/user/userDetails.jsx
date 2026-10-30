@@ -28,6 +28,9 @@ const fields = {
         .notBlank('user.userDetails.form.name.required'),
     email: new Form.Field()
         .notBlank('user.userDetails.form.email.required'),
+    password: new Form.Field()
+        .skip((_, {email}) => !isEmailChanged(email))
+        .notBlank('user.userDetails.form.password.required'),
     organization: new Form.Field(),
     intendedUse: new Form.Field(),
     // .notBlank('user.userDetails.form.intendedUse.required'),
@@ -58,14 +61,20 @@ class _UserDetails extends React.Component {
     // regular subscription to make sure backend request is not cancelled
     updateUserDetails(userDetails) {
         updateCurrentUserDetails$(userDetails).subscribe({
-            error: error => error.status === 409
-                ? Notifications.error({message: msg('user.userDetails.update.conflict')})
-                : Notifications.error({message: msg('user.userDetails.update.error'), error})
+            error: error => {
+                if (error.status === 409) {
+                    Notifications.error({message: msg('user.userDetails.update.conflict')})
+                } else if (error.status === 403) {
+                    Notifications.error({message: msg('user.userDetails.update.incorrectPassword')})
+                } else {
+                    Notifications.error({message: msg('user.userDetails.update.error'), error})
+                }
+            }
         })
     }
 
     renderPanel() {
-        const {inputs: {name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}} = this.props
+        const {inputs: {name, email, password, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled}} = this.props
         return (
             <React.Fragment>
                 <Panel.Header
@@ -86,6 +95,13 @@ class _UserDetails extends React.Component {
                             input={email}
                             spellCheck={false}
                         />
+                        {isEmailChanged(email.value) ? (
+                            <Form.Input
+                                label={msg('user.userDetails.form.password.label')}
+                                type='password'
+                                input={password}
+                            />
+                        ) : null}
                         <Form.Input
                             label={msg('user.userDetails.form.organization.label')}
                             input={organization}
@@ -265,3 +281,7 @@ UserDetailsButton.propTypes = {}
 
 export const userDetailsHint = visible =>
     hint$.next(visible)
+
+// Changing the address password resets are sent to takes the password.
+const isEmailChanged = email =>
+    email !== currentUser().email

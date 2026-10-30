@@ -12,7 +12,7 @@ const flush = async () => {
     }
 }
 
-const build = ({instanceTypes, idle = [], reserved = [], stoppedPoolSize, claims = {
+const build = ({instanceTypes, idle = [], reserved = [], pooled = [], stoppedPoolSize, claims = {
     claim: mock.fn(async () => true),
     release: mock.fn(async () => true),
     all: mock.fn(async () => []),
@@ -24,7 +24,7 @@ const build = ({instanceTypes, idle = [], reserved = [], stoppedPoolSize, claims
         idleInstances: mock.fn(async () => idle),
         reservedInstances: mock.fn(async () => reserved),
         launchIdle: mock.fn(async () => []),
-        pooledInstances: mock.fn(async () => []),
+        pooledInstances: mock.fn(async ({ready = false} = {}) => pooled.filter(i => !ready || i.stopped)),
         launchPooled: mock.fn(async () => []),
         terminate: mock.fn(async () => {}),
         sweep: mock.fn(async () => {}),
@@ -72,6 +72,30 @@ test('fills the configured stopped pool on the pool cycle', async () => {
     component.stop()
 
     assert.deepEqual(callsOf(provider.launchPooled), [[2]])
+})
+
+test('launches at most two warm-ups at a time', async () => {
+    const {component, provider} = build({instanceTypes: [], stoppedPoolSize: 5})
+
+    await component.start()
+    await flush()
+    component.stop()
+
+    assert.deepEqual(callsOf(provider.launchPooled), [[2]])
+})
+
+test('counts warm-ups still in progress against that limit', async () => {
+    const {component, provider} = build({
+        instanceTypes: [],
+        stoppedPoolSize: 5,
+        pooled: [{id: 'i-warming', stopped: false}, {id: 'i-ready', stopped: true}],
+    })
+
+    await component.start()
+    await flush()
+    component.stop()
+
+    assert.deepEqual(callsOf(provider.launchPooled), [[1]])
 })
 
 test('leaves the stopped pool alone by default', async () => {

@@ -6,7 +6,7 @@ import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 import {createTestDb} from '#sepal/testSupport/db/testDb'
 
-import {UserRepository} from './userRepository.js'
+import {DuplicateUserError, UserRepository} from './userRepository.js'
 
 // Rows are written directly only where no operation can produce them: the POSIX identities, system
 // accounts and creation times that came from the legacy import, which several reads select on.
@@ -56,6 +56,17 @@ describe('UserRepository', () => {
             assert.equal(stored.id, id)
             assert.equal(stored.uid, id)
             assert.equal(stored.gid, id)
+        })
+
+        test('refuses an email another user has, whatever its case', async () => {
+            await repository.insertUser(aUser())
+
+            await assert.rejects(
+                repository.insertUser(aUser({username: 'alice', email: EMAIL.toUpperCase()})),
+                DuplicateUserError
+            )
+
+            assert.equal(await repository.findByUsername('alice'), null)
         })
     })
 
@@ -116,17 +127,6 @@ describe('UserRepository', () => {
             const stored = await repository.findByToken('the-token')
 
             assert.equal(stored.username, USERNAME)
-        })
-
-        test('stops finding the user once the token is invalidated, keeping the user', async () => {
-            await repository.insertUser(aUser({token: 'the-token'}))
-
-            await repository.invalidateToken('the-token')
-
-            const byToken = await repository.findByToken('the-token')
-            const byUsername = await repository.findByUsername(USERNAME)
-            assert.equal(byToken, null)
-            assert.equal(byUsername.token, null)
         })
     })
 
@@ -331,6 +331,37 @@ describe('UserRepository', () => {
             assert.equal(updated, true)
             assert.partialDeepStrictEqual(stored, {name: 'Bobby', revision: 3})
         })
+
+        test('refuses an email another user has, leaving the details as they were', async () => {
+            await repository.insertUser(aUser())
+            await repository.insertUser(aUser({username: 'alice', email: 'alice@example.org', token: 'alice-token'}))
+
+            await assert.rejects(
+                repository.updateUserDetails(details({name: 'Robert', email: 'Alice@Example.org'})),
+                DuplicateUserError
+            )
+
+            const stored = await repository.findByUsername(USERNAME)
+            assert.partialDeepStrictEqual(stored, {name: 'Bob', email: EMAIL, revision: 1})
+        })
+
+        test('voids the reset token when the email changes', async () => {
+            await repository.insertUser(aUser({token: 'the-token'}))
+
+            await repository.updateUserDetails(details({email: 'renamed@example.org'}))
+
+            const byToken = await repository.findByToken('the-token')
+            assert.equal(byToken, null)
+        })
+
+        test('keeps the reset token when the email stays the same', async () => {
+            await repository.insertUser(aUser({token: 'the-token'}))
+
+            await repository.updateUserDetails(details({name: 'Robert'}))
+
+            const byToken = await repository.findByToken('the-token')
+            assert.equal(byToken.username, USERNAME)
+        })
     })
 
     describe('updatePassword', () => {
@@ -341,6 +372,17 @@ describe('UserRepository', () => {
 
             const stored = await repository.findByUsername(USERNAME)
             assert.equal(stored.passwordHash, '{SCRYPT}hash')
+        })
+
+        test('voids the reset token, keeping the user', async () => {
+            await repository.insertUser(aUser({token: 'the-token'}))
+
+            await repository.updatePassword(USERNAME, '{SCRYPT}hash')
+
+            const byToken = await repository.findByToken('the-token')
+            const byUsername = await repository.findByUsername(USERNAME)
+            assert.equal(byToken, null)
+            assert.equal(byUsername.token, null)
         })
     })
 
@@ -424,7 +466,6 @@ describe('UserRepository', () => {
             await assert.rejects(repository.updatePassword(NOT_A_STRING, '{SCRYPT}hash'), REFUSED)
             await assert.rejects(repository.updateStatus(NOT_A_STRING, 'ACTIVE'), REFUSED)
             await assert.rejects(repository.updateToken(NOT_A_STRING, 'new-token'), REFUSED)
-            await assert.rejects(repository.invalidateToken(NOT_A_STRING), REFUSED)
 
             const after = await repository.findByUsername(USERNAME)
             assert.deepEqual(after, before)

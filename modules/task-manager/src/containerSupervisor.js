@@ -40,6 +40,7 @@ export class ContainerSupervisor {
     #config
     #queue = Promise.resolve()
     #watched = new Set()
+    #stopping = new Set()
     #timer = null
     #slots = new LocalProcessingSlots()
 
@@ -83,12 +84,10 @@ export class ContainerSupervisor {
     }
 
     // The container cancels its own work on SIGTERM and exits; collecting it ends the task. Waiting for queued
-    // work lets a launch in progress create the container first. Docker's stop settles only once the container
-    // has exited, up to the grace period later, so it is issued, not awaited.
+    // work lets a launch in progress create the container first.
     async stopContainer(task) {
         await this.#queue
-        this.#docker.stop(containerName(task), this.#config.stopGraceSeconds)
-            .catch(error => log.error(`${taskTag(task)} could not be stopped`, error))
+        this.#stop(task)
     }
 
     // Settles once no queued work remains, including work queued meanwhile by a container that exited.
@@ -203,6 +202,18 @@ export class ContainerSupervisor {
         return true
     }
 
+    // A second SIGTERM kills the runner before it has cancelled its work, so a container is stopped once until it
+    // has exited. Docker's stop settles only then, up to the grace period later, so it is issued, not awaited.
+    #stop(task) {
+        if (this.#stopping.has(task.id)) {
+            return
+        }
+        this.#stopping.add(task.id)
+        this.#docker.stop(containerName(task), this.#config.stopGraceSeconds)
+            .catch(error => log.error(`${taskTag(task)} could not be stopped`, error))
+            .finally(() => this.#stopping.delete(task.id))
+    }
+
     #watch(task) {
         if (this.#watched.has(task.id)) {
             return
@@ -251,6 +262,9 @@ export class ContainerSupervisor {
                 await this.#workspace.remove(task.id)
                 await this.#forgetSlot(task)
             } else if (container.running) {
+                if (task.state === State.CANCELING) {
+                    this.#stop(task)
+                }
                 this.#watch(task)
             } else {
                 await this.#collect(task)

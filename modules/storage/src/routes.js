@@ -1,3 +1,5 @@
+import {requireAdmin} from '#sepal/currentUser'
+
 export const createRoutes = repository => {
     const mostRecentEvents = async ctx =>
         ctx.body = await repository.getMostRecentEvents()
@@ -8,6 +10,6 @@ export const createRoutes = repository => {
     }
 
     return router => router
-        .get('/mostRecentEvents', async ctx => await mostRecentEvents(ctx))
-        .get('/userEvents', async ctx => await userEvents(ctx))
+        .get('/mostRecentEvents', requireAdmin, async ctx => await mostRecentEvents(ctx))
+        .get('/userEvents', requireAdmin, async ctx => await userEvents(ctx))
 }

@@ -11,8 +11,9 @@
 // Auth: the worker has no user context here, so it impersonates an admin via the gateway-style
 // `sepal-user` header — the budget module's requireAdmin guard expects the application_admin role.
 //
-// Errors (non-2xx, transport, malformed JSON) are THROWN, never swallowed: the caller decides how
-// to degrade. See requestSession's fallback to lockedUsers.
+// Errors (non-2xx, transport, timeout, malformed JSON) are THROWN, never swallowed: the caller
+// decides how to degrade. See requestSession's fallback to lockedUsers. The timeout is what keeps a
+// hung budget module from blocking session starts.
 
 import {getLogger} from '#sepal/log'
 
@@ -23,8 +24,9 @@ const log = getLogger('worker/budgetClient')
 const ADMIN_ROLE = 'application_admin'
 const DEFAULT_BUDGET_URL = 'http://budget'
 const DEFAULT_ADMIN_USERNAME = 'sepaladmin'
+const DEFAULT_TIMEOUT_MS = 10_000
 
-const createBudgetClient = config => {
+const createBudgetClient = (config, {timeoutMs = DEFAULT_TIMEOUT_MS} = {}) => {
     const baseUrl = (config.budgetUrl || DEFAULT_BUDGET_URL).replace(/\/+$/, '')
     const adminUsername = config.sepalUser || DEFAULT_ADMIN_USERNAME
 
@@ -41,6 +43,7 @@ const createBudgetClient = config => {
                 'sepal-user': sepalUser,
             },
             body: JSON.stringify({openSessions}),
+            signal: AbortSignal.timeout(timeoutMs),
         })
         if (!response.ok) {
             const text = await response.text().catch(() => '')

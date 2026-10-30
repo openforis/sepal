@@ -98,6 +98,37 @@ describe('OpenSessionUseRepository', () => {
         })
     })
 
+    describe('closeStaleSession', () => {
+        test('closes a session that is still open', async () => {
+            await repository.openSession(aSession())
+
+            await repository.closeStaleSession({sessionId: SESSION_ID, to: at('07-03')})
+
+            const open = await repository.openSessionIds()
+            const stored = await storedSession(SESSION_ID)
+            assert.deepEqual(open, [])
+            assert.equal(stored.to_time.getTime(), at('07-03').getTime())
+        })
+
+        // The real WorkerSessionClosed can land between the reconciler's read and this write.
+        test('keeps a close time already recorded', async () => {
+            await repository.openSession(aSession())
+            await repository.closeSession({sessionId: SESSION_ID, to: at('07-02')})
+
+            await repository.closeStaleSession({sessionId: SESSION_ID, to: at('07-03')})
+
+            const stored = await storedSession(SESSION_ID)
+            assert.equal(stored.to_time.getTime(), at('07-02').getTime())
+        })
+
+        test('records nothing for a session it has never seen', async () => {
+            await repository.closeStaleSession({sessionId: SESSION_ID, to: at('07-03')})
+
+            const count = await repository.count()
+            assert.equal(count, 0)
+        })
+    })
+
     describe('count', () => {
         test('counts sessions whether they are open or closed', async () => {
             await repository.openSession(aSession({sessionId: 'open'}))

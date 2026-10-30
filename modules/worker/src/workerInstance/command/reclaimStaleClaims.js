@@ -23,7 +23,7 @@ import {releaseInstance} from './releaseInstance.js'
 
 const log = getLogger('worker/reclaimStaleClaims')
 
-const reclaimStaleClaims = async (openSessionIds, graceMs, {claims, provider, provisioner, provisioning}) => {
+const reclaimStaleClaims = async (openSessionIds, graceMs, {claims, provider, provisioner, provisioning, releasing}) => {
     const [idle, reserved] = await Promise.all([
         provider.idleInstances(),
         provider.reservedInstances(),
@@ -45,9 +45,9 @@ const reclaimStaleClaims = async (openSessionIds, graceMs, {claims, provider, pr
         // Each claim is independent: one failure must not abort the others.
         try {
             if (gone) {
-                await claims.release(claim.instanceId)
+                await claims.release(claim.instanceId, claim.sessionId)
             } else {
-                await releaseInstance(claim.instanceId, {claims, provider, provisioner, provisioning})
+                await releaseInstance(claim.instanceId, claim.sessionId, {claims, provider, provisioner, provisioning, releasing})
             }
             reclaimed++
             log.debug(`Reclaimed ${gone ? 'gone' : 'abandoned'} claim on ${instanceTag(claim.instanceId)}`)

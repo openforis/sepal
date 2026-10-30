@@ -6,6 +6,7 @@ import {getLogger} from '#sepal/log'
 
 import {concurrency, redisHost} from './config.js'
 import {send, tag} from './email.js'
+import {getUser} from './http.js'
 import {filterEmailNotificationsEnabled} from './user.js'
 
 const log = getLogger('emailQueue')
@@ -36,9 +37,9 @@ queueEvents.on('failed', async ({jobId, failedReason}) => {
     if (job) {
         const email = job.data
         if (job.finishedOn) {
-            log.error(`Could not send email to ${email.to}:`, failedReason)
+            log.error(`Could not send email to ${recipient(email)}:`, failedReason)
         } else {
-            log.debug(`Cannot send email to ${email.to}, will retry:`, failedReason)
+            log.debug(`Cannot send email to ${recipient(email)}, will retry:`, failedReason)
         }
     } else {
         log.error(`Job ${jobId} failed:`, failedReason)
@@ -49,7 +50,7 @@ queueEvents.on('stalled', async ({jobId}) => {
     const job = await queue.getJob(jobId)
     if (job) {
         const email = job.data
-        log.warn(`Could not send email to ${email.to}`, job)
+        log.warn(`Could not send email to ${recipient(email)}`, job)
     } else {
         log.warn(`Job ${jobId} stalled`)
     }
@@ -83,8 +84,26 @@ const logStats = async () =>
     ].join(', '))
 
 const processJob = async job => {
-    const id = job.id
-    const email = job.data
+    const email = await addressToUser(job.data)
+    return email && await sendToEnabledRecipients(job.id, email)
+}
+
+// The address is looked up when the job runs, not when it is queued, so a failed lookup is retried with the job.
+const addressToUser = async ({username, ...email}) => {
+    if (!username) {
+        return email
+    }
+    const {email: to, status} = await getUser(username)
+    if (!to) {
+        log.error(`Cannot send email to user ${username} - no email address found`)
+    } else if (status === 'LOCKED') {
+        log.info(`Skipping email to locked user ${username}`)
+    } else {
+        return {...email, to}
+    }
+}
+
+const sendToEnabledRecipients = async (id, email) => {
     const {to: originalTo, cc: originalCc, bcc: originalBcc, forceEmailNotificationEnabled, ...props} = email
 
     const to = await filterEmailNotificationsEnabled(originalTo, forceEmailNotificationEnabled)
@@ -97,6 +116,9 @@ const processJob = async job => {
         log.debug(() => 'Email discarded due as no recipient is enabled to receive email notifications')
     }
 }
+
+const recipient = ({to, username}) =>
+    to ?? username
 
 const initQueue = async () => {
     await logStats()

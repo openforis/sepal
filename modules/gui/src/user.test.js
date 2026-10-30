@@ -1,15 +1,23 @@
 import {firstValueFrom, of, throwError} from 'rxjs'
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 // A fake of the gateway's login session as the browser sees it: a login on a session held by another
 // user replaces that session (its id is destroyed, a fresh one is issued), a login on a free session
-// fills it. The reset endpoint is a switch the test flips. The browser's session must never be
+// fills it. An accepted reset logs in as the account its token belongs to; the test flips whether it is accepted. The browser's session must never be
 // dropped by the client itself: the gateway kicks the other account's tabs only once the login
 // response has gone out, so their reload lands as the new user.
 
 const browser = {session: null}
-const server = {resetAccepted: true, oldPassword: 'old-password', destroyedSessions: [], logouts: 0, otherSessionsInvalidatedFor: []}
+const server = {resetAccepted: true, resetUsername: 'bob', oldPassword: 'old-password', destroyedSessions: [], logins: 0, logouts: 0, otherSessionsInvalidatedFor: []}
 let nextSessionId = 1
+const logInAs = username => {
+    if (browser.session && browser.session.username !== username) {
+        server.destroyedSessions.push(browser.session.id)
+        browser.session = null
+    }
+    browser.session = {id: browser.session?.id ?? `s${nextSessionId++}`, username}
+    return {username}
+}
 vi.mock('~/apiRegistry', () => ({
     default: {
         user: {
@@ -17,19 +25,17 @@ vi.mock('~/apiRegistry', () => ({
             changePassword$: ({oldPassword}) => of(oldPassword === server.oldPassword
                 ? {status: 'success', message: 'Password changed'}
                 : {status: 'failure', message: 'Invalid old password'}),
-            resetPassword$: () => server.resetAccepted ? of({}) : throwError(() => new Error('Invalid token')),
+            resetPassword$: () => server.resetAccepted
+                ? of(logInAs(server.resetUsername))
+                : throwError(() => new Error('Invalid token')),
             logout$: () => {
                 server.logouts++
                 browser.session = null
                 return of({status: 'success'})
             },
             login$: ({username}) => {
-                if (browser.session && browser.session.username !== username) {
-                    server.destroyedSessions.push(browser.session.id)
-                    browser.session = null
-                }
-                browser.session = {id: browser.session?.id ?? `s${nextSessionId++}`, username}
-                return of({username})
+                server.logins++
+                return of(logInAs(username))
             },
             invalidateOtherSessions$: () => {
                 server.otherSessionsInvalidatedFor.push(browser.session?.username)
@@ -65,16 +71,7 @@ vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}, warni
 const {changeCurrentUserPassword$, login$, logout$, resetPassword$, startLoggedOff$} = await import('./user')
 const {notePreviousUsername, takePreviousUsername} = await import('./loginSession')
 
-const RESET = {token: 't-1', username: 'bob', password: 'new-password-123', type: 'reset', recaptchaToken: 'r'}
-
-// The flow waits a couple of seconds between the reset and the login; the settled promise is
-// taken before flushing the timers so a synchronous rejection is not reported as unhandled.
-const runToCompletion = async observable => {
-    const result = firstValueFrom(observable)
-    result.catch(() => {})
-    await vi.runAllTimersAsync()
-    return result
-}
+const RESET = {token: 't-1', password: 'new-password-123', type: 'reset', recaptchaToken: 'r'}
 
 describe('startLoggedOff$', () => {
     const userState = () => assigned.find(({path}) => path === 'user')?.value
@@ -156,35 +153,37 @@ describe('resetPassword$', () => {
     const ALICE_SESSION = {id: 's-alice', username: 'alice'}
 
     beforeEach(() => {
-        vi.useFakeTimers()
         browser.session = {...ALICE_SESSION}
         server.resetAccepted = true
         server.destroyedSessions.length = 0
+        server.logins = 0
         server.logouts = 0
         server.otherSessionsInvalidatedFor.length = 0
     })
 
-    afterEach(() => {
-        vi.useRealTimers()
-    })
-
     it('ends logged in as the reset account, in a fresh session', async () => {
-        const user = await runToCompletion(resetPassword$(RESET))
+        const user = await firstValueFrom(resetPassword$(RESET))
 
         expect(user).toEqual({username: 'bob'})
         expect(browser.session).toMatchObject({username: 'bob'})
         expect(browser.session.id).not.toBe(ALICE_SESSION.id)
     })
 
-    it('lets the login replace the other account\'s session, without logging out first', async () => {
-        await runToCompletion(resetPassword$(RESET))
+    it('needs no separate login, which the login throttle could refuse', async () => {
+        await firstValueFrom(resetPassword$(RESET))
+
+        expect(server.logins).toBe(0)
+    })
+
+    it('lets the reset replace the other account\'s session, without logging out first', async () => {
+        await firstValueFrom(resetPassword$(RESET))
 
         expect(server.logouts).toBe(0)
         expect(server.destroyedSessions).toEqual([ALICE_SESSION.id])
     })
 
     it('invalidates the other sessions of the reset account, not of the account replaced', async () => {
-        await runToCompletion(resetPassword$(RESET))
+        await firstValueFrom(resetPassword$(RESET))
 
         expect(server.otherSessionsInvalidatedFor).toEqual(['bob'])
     })
@@ -192,7 +191,7 @@ describe('resetPassword$', () => {
     it('keeps the note of who the browser was logged in as, so the switch is told', async () => {
         notePreviousUsername('alice')
 
-        await runToCompletion(resetPassword$(RESET))
+        await firstValueFrom(resetPassword$(RESET))
 
         expect(takePreviousUsername()).toBe('alice')
     })
@@ -200,7 +199,7 @@ describe('resetPassword$', () => {
     it('leaves the current session untouched when the reset is rejected', async () => {
         server.resetAccepted = false
 
-        await expect(runToCompletion(resetPassword$(RESET))).rejects.toThrow('Invalid token')
+        await expect(firstValueFrom(resetPassword$(RESET))).rejects.toThrow('Invalid token')
         expect(browser.session).toEqual(ALICE_SESSION)
         expect(server.destroyedSessions).toEqual([])
     })

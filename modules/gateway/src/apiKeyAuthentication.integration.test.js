@@ -11,14 +11,19 @@ import {Subject} from 'rxjs'
 
 const ALICE = {id: 1, username: 'alice', roles: [], status: 'ACTIVE'}
 const BOB = {id: 2, username: 'bob', roles: [], status: 'ACTIVE'}
+const CAROL = {id: 3, username: 'carol', roles: [], status: 'LOCKED'}
 
 const EXECUTOR_KEY = 'executor-key'
 const SANDBOX_KEY = 'sandbox-key'
 const TASK_KEY = 'task_container-key'
+const LOCKED_SESSION_KEY = 'locked-session-key'
+const LOCKED_TASK_KEY = 'task_locked-key'
 const EXECUTOR_SESSION = {sessionId: 's-executor', username: 'alice', workerType: 'sandbox'}
 const SANDBOX_SESSION = {sessionId: 's-sandbox', username: 'bob', workerType: 'sandbox'}
+const LOCKED_SESSION = {sessionId: 's-locked', username: 'carol', workerType: 'sandbox'}
 
 const FORGED = JSON.stringify({sessionId: 's-forged', workerType: 'sandbox'})
+const FORGED_USER = JSON.stringify({username: 'admin', roles: ['application_admin'], status: 'ACTIVE'})
 
 const parse = value => (value ? JSON.parse(value) : null)
 
@@ -82,6 +87,10 @@ describe('a request authenticated with a worker session api key', () => {
         assert.equal((await probe({apiKey: 'no-such-key'})).status, 401)
         assert.equal((await probe({apiKey: ''})).status, 401)
     })
+
+    test('is refused when the session\'s owner is locked', async () => {
+        assert.equal((await probe({apiKey: LOCKED_SESSION_KEY})).status, 401)
+    })
 })
 
 describe('a request authenticated with a task container\'s key', () => {
@@ -96,6 +105,10 @@ describe('a request authenticated with a task container\'s key', () => {
     test('is refused when task-manager does not know the key', async () => {
         assert.equal((await probe({apiKey: 'task_unknown'})).status, 401)
     })
+
+    test('is refused when the task\'s owner is locked', async () => {
+        assert.equal((await probe({apiKey: LOCKED_TASK_KEY})).status, 401)
+    })
 })
 
 describe('a request to an unauthenticated endpoint', () => {
@@ -104,6 +117,19 @@ describe('a request to an unauthenticated endpoint', () => {
 
         assert.equal(status, 200)
         assert.equal(body.session, null)
+    })
+
+    test('reaches the module with no user, whatever user the caller claimed', async () => {
+        const {status, body} = await probeUnauthenticated(undefined, FORGED_USER)
+
+        assert.equal(status, 200)
+        assert.equal(body.user, null)
+    })
+})
+
+describe('a request without credentials', () => {
+    test('is refused, whatever user the caller claimed', async () => {
+        assert.equal((await probe({claimedUser: FORGED_USER})).status, 401)
     })
 })
 
@@ -140,13 +166,13 @@ const startGateway = async () => {
 
 // /api/tasks is the authenticated endpoint the executor callbacks travel over; /api/sessions/expiry
 // is the one endpoint that is deliberately unauthenticated.
-const probe = ({apiKey, username = '', password, claimedSession}) =>
-    request('/api/tasks/echo', {apiKey, username, password, claimedSession})
+const probe = ({apiKey, username = '', password, claimedSession, claimedUser}) =>
+    request('/api/tasks/echo', {apiKey, username, password, claimedSession, claimedUser})
 
-const probeUnauthenticated = claimedSession =>
-    request('/api/sessions/expiry/echo', {claimedSession})
+const probeUnauthenticated = (claimedSession, claimedUser) =>
+    request('/api/sessions/expiry/echo', {claimedSession, claimedUser})
 
-const request = async (path, {apiKey, username = '', password, claimedSession}) => {
+const request = async (path, {apiKey, username = '', password, claimedSession, claimedUser}) => {
     const credentials = apiKey === undefined ? `${username}:${password}` : `:${apiKey}`
     const response = await fetch(`${gatewayUrl}${path}`, {
         headers: {
@@ -154,7 +180,8 @@ const request = async (path, {apiKey, username = '', password, claimedSession}) 
                 ? {}
                 : {'Authorization': `Basic ${Buffer.from(credentials).toString('base64')}`}),
             'No-auth-challenge': 'true',
-            ...(claimedSession ? {'sepal-session': claimedSession} : {})
+            ...(claimedSession ? {'sepal-session': claimedSession} : {}),
+            ...(claimedUser ? {'sepal-user': claimedUser} : {})
         }
     })
     return {
@@ -164,8 +191,16 @@ const request = async (path, {apiKey, username = '', password, claimedSession}) 
 }
 
 async function startUpstream() {
-    const sessionsByKey = {[EXECUTOR_KEY]: EXECUTOR_SESSION, [SANDBOX_KEY]: SANDBOX_SESSION}
-    const usersByName = {alice: ALICE, bob: BOB}
+    const sessionsByKey = {
+        [EXECUTOR_KEY]: EXECUTOR_SESSION,
+        [SANDBOX_KEY]: SANDBOX_SESSION,
+        [LOCKED_SESSION_KEY]: LOCKED_SESSION
+    }
+    const tasksByKey = {
+        [TASK_KEY]: {username: 'alice', taskId: 't-1'},
+        [LOCKED_TASK_KEY]: {username: 'carol', taskId: 't-2'}
+    }
+    const usersByName = {alice: ALICE, bob: BOB, carol: CAROL}
     const passwords = {alice: 'alices-password'}
 
     const app = express()
@@ -175,9 +210,8 @@ async function startUpstream() {
         session ? res.json(session) : res.status(401).json({})
     })
     app.post('/tasks/api-key-authenticate', (req, res) => {
-        req.body.apiKey === TASK_KEY
-            ? res.json({username: 'alice', taskId: 't-1'})
-            : res.status(401).json({})
+        const task = tasksByKey[req.body.apiKey]
+        task ? res.json(task) : res.status(401).json({})
     })
     app.post('/authenticate', (req, res) => {
         const {username, password} = req.body

@@ -380,7 +380,7 @@ describe('closeSession', () => {
         await mgr.closeSession({sessionId: 's-1'})
 
         assert.partialDeepStrictEqual(callsOf(repo.update), [[{state: State.CLOSED}]])
-        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-1']])
+        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-1', 's-1']])
         assert.equal(events.emitWorkerSessionClosed.mock.callCount(), 1)
     })
 
@@ -402,7 +402,7 @@ describe('closeSessionOnInstance', () => {
         await mgr.closeSessionOnInstance('i-1')
         assert.deepEqual(callsOf(repo.sessionOnInstance), [['i-1', [State.PENDING, State.ACTIVE]]])
         assert.ok(repo.update.mock.callCount() > 0)
-        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-1']])
+        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-1', 's-1']])
         assert.equal(events.emitWorkerSessionClosed.mock.callCount(), 1)
     })
 
@@ -422,7 +422,7 @@ describe('closeUserSessions', () => {
         const {mgr, instanceManager, events} = build({repo})
         await mgr.closeUserSessions('alice')
         assert.deepEqual(callsOf(repo.userSessions), [['alice', [State.PENDING, State.ACTIVE]]])
-        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-a'], ['i-b']])
+        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-a', 's-a'], ['i-b', 's-b']])
         assert.equal(events.emitWorkerSessionClosed.mock.callCount(), 2)
     })
 
@@ -663,7 +663,7 @@ describe('extensions', () => {
         const notifiedTime = new Date('2026-01-01T11:00:00Z')
         assert.equal(await mgr.redeemTermination({sessionId: 's-1', notifiedTime}), true)
         assert.deepEqual(callsOf(repo.redeemTermination), [[{sessionId: 's-1', notifiedTime}]])
-        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-1']])
+        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-1', 's-1']])
         assert.deepEqual(
             callsOf(events.emitWorkerSessionClosed),
             [[{username: 'alice', sessionId: 's-1'}]]

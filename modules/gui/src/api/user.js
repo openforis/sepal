@@ -67,9 +67,9 @@ export default {
             body: {token, password, recaptchaToken}
         }),
 
-    updateCurrentUserDetails$: ({name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled, revision}) =>
+    updateCurrentUserDetails$: ({name, email, password, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled, revision}) =>
         post$('/api/user/current/details', {
-            body: {name, email, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled, revision}
+            body: {name, email, password, organization, intendedUse, emailNotificationsEnabled, manualMapRenderingEnabled, revision}
         }),
 
     acceptPrivacyPolicy$: () =>

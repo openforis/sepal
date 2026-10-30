@@ -1,6 +1,6 @@
 // WorkerSession domain.
 //
-// Sessions are immutable: the mutators (activate/close/withInstance/…) return NEW objects.
+// Sessions are immutable: the mutators (close/withInstance/withApiKey) return NEW objects.
 //
 // Shape (the persisted columns + the derived instance object):
 //   id                    — session id
@@ -74,15 +74,10 @@ const createWorkerSession = ({
 
 const isPending = session => session.state === State.PENDING
 const isActive = session => session.state === State.ACTIVE
-const isClosed = session => session.state === State.CLOSED
 
 // Mutators — return NEW frozen sessions.
 
-const update = (session, state) => createWorkerSession({...session, state})
-
-const activate = session => update(session, State.ACTIVE)
-
-const close = session => update(session, State.CLOSED)
+const close = session => createWorkerSession({...session, state: State.CLOSED})
 
 const withInstance = (session, instance) => createWorkerSession({...session, instance})
 
@@ -92,15 +87,11 @@ const withApiKey = (session, apiKey) => createWorkerSession({...session, apiKey}
 // (update_time is never refreshed before ACTIVE), because a hung provision should die in ten
 // minutes, not thirty. An ACTIVE session's lifetime is the stored timeout_time.
 //   lastValidUpdate(date) = date − 10min      (the oldest update_time that is still "fresh")
-//   willTimeout(date)     = date + 10min + 1ms
 
 const TEN_MINUTES_MS = 10 * 60 * 1000
 
 const makeTimeout = timeoutInMillis => Object.freeze({
-    timeoutInMillis,
-    get: now => new Date(now.getTime() - timeoutInMillis),
     lastValidUpdate: date => new Date(date.getTime() - timeoutInMillis),
-    willTimeout: date => new Date(date.getTime() + timeoutInMillis + 1),
 })
 
 const Timeout = Object.freeze({
@@ -114,17 +105,14 @@ const createApiKeyGenerator = () => ({
 })
 
 export {
-    activate,
     close,
     createApiKeyGenerator,
     createWorkerSession,
     isActive,
-    isClosed,
     isPending,
     NotificationState,
     State,
     Timeout,
-    update,
     withApiKey,
     withInstance,
 }

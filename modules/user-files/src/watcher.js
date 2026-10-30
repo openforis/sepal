@@ -158,9 +158,9 @@ const createWatcher = async ({send, stop$}) => {
         )
 
     const scanValidDir$ = ({username, clientId, subscriptionId, path, absolutePath}) =>
-        from(readdir(absolutePath)).pipe(
-            switchMap(dir => of(...dir)),
-            mergeMap(filename => from(scanFile(absolutePath, filename))),
+        from(readdir(absolutePath, {withFileTypes: true})).pipe(
+            switchMap(entries => of(...entries)),
+            mergeMap(entry => from(scanEntry(absolutePath, entry))),
             filter(fileInfo => !!fileInfo),
             reduce((acc, {name, ...fileInfo}) => ({...acc, [name]: fileInfo}), {}),
             map(items => ({username, clientId, subscriptionId, data: {path, items}})),
@@ -171,38 +171,38 @@ const createWatcher = async ({send, stop$}) => {
             })
         )
 
-    const scanFile = async (path, filename) => {
+    // Only symlinks can lead outside the scanned directory, so only they need resolving.
+    const scanEntry = async (dir, entry) => {
+        const entryPath = Path.join(dir, entry.name)
         try {
-            const {absolutePath, isSubPath} = resolvePath(path, filename)
-            if (isSubPath) {
-                try {
-                    const node = await stat(absolutePath)
-                    const info = {
-                        name: filename,
-                        mtime: node.mtimeMs
-                    }
-                    if (node.isDirectory()) {
-                        info.dir = true
-                    }
-                    if (node.isFile()) {
-                        info.file = true
-                        info.size = node.size
-                    }
-                    return info
-                } catch (error) {
-                    log.warn(() => [`Ignoring unresolvable path: ${path}`, error])
-                }
-            } else {
-                log.debug(() => `Ignoring non-subdir path: ${path}`)
+            if (entry.isSymbolicLink() && isExternal(dir, await realpath(entryPath))) {
+                log.debug(() => `Ignoring non-subdir path: ${entryPath}`)
+                return
             }
+            const node = await stat(entryPath)
+            const info = {
+                name: entry.name,
+                mtime: node.mtimeMs
+            }
+            if (node.isDirectory()) {
+                info.dir = true
+            }
+            if (node.isFile()) {
+                info.file = true
+                info.size = node.size
+            }
+            return info
         } catch (error) {
             if (error.code === 'ENOENT') {
-                log.debug(() => `Ignored non-existing path: ${path}`)
+                log.debug(() => `Ignored non-existing path: ${entryPath}`)
             } else {
-                log.error(error)
+                log.warn(() => [`Ignoring unresolvable path: ${entryPath}`, error])
             }
         }
     }
+
+    const isExternal = (dir, path) =>
+        Path.relative(dir, path).startsWith('..')
 
     const removePath = async ({username, clientId, subscriptionId, path}) => {
         if (_.isArray(path)) {

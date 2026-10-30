@@ -217,6 +217,29 @@ describe('reconciling after a restart', () => {
         assert.equal((await repository.getTask('t-1')).state, State.CANCELED)
     })
 
+    test('a running container whose task is being cancelled is stopped', async () => {
+        const {repository, docker, newSupervisor} = setup()
+        await repository.add(aTask({state: State.CANCELING}))
+        docker.containers.set('task.alice.t-1', {taskId: 't-1', running: true})
+
+        await newSupervisor().reconcile()
+
+        assert.deepEqual(docker.stopped, [{name: 'task.alice.t-1', seconds: 120}])
+    })
+
+    test('a container already being stopped is not stopped again', async () => {
+        const {supervisor, repository, docker} = setup()
+        await repository.add(aTask())
+        await supervisor.dispatch()
+        const task = await repository.getTask('t-1')
+        await repository.transition(task, {from: [State.ACTIVE], to: State.CANCELING})
+        await supervisor.stopContainer(task)
+
+        await supervisor.reconcile()
+
+        assert.deepEqual(docker.stopped, [{name: 'task.alice.t-1', seconds: 120}])
+    })
+
     test('a container whose wait was interrupted is watched again', async () => {
         const {supervisor, repository, docker, workspace} = setup()
         docker.failWaits = true

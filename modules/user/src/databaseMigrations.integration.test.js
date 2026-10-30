@@ -37,6 +37,16 @@ describe('user database migrations', () => {
         })
     })
 
+    test('stores emails with non-ASCII characters', async () => {
+        const dbName = await reserveDatabase()
+        await initDb(dbName, SCHEMA_PATH)
+
+        const stored = await insertUser(dbName, aUser({email: 'ramón.cortés@example.org'}))
+
+        const [found] = await admin.query('SELECT email FROM ??.sepal_user WHERE username = ?', [dbName, stored.username])
+        assert.deepEqual(found, [{email: stored.email}])
+    })
+
     describe('schema migrations', () => {
         test('create the sepal_user table in the selected database', async () => {
             const dbName = await reserveDatabase()

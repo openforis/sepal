@@ -104,7 +104,7 @@ on every file save. Four mechanisms carry instance management across it:
   provisioning nobody is driving any more. Provisioning is deduplicated by instance id in an
   in-process registry (`workerInstance/provisioningRegistry.js`), because `provisionInstance`
   opens by deleting the instance's containers — re-entering it destroys the work in flight.
-  `releaseInstance` forgets the entry first, so an instance back in the pool cannot drop the next
+  `releaseInstance` forgets the entry before it undeploys, so an instance back in the pool cannot drop the next
   session's provisioning as a duplicate, and the forgotten provision stops at its next check
   instead of rebuilding, or closing, the next session's sandbox. The api key is looked up by
   session, before any container is deleted, so a provision mid-attempt also leaves it alone. Re-provisioning re-reads the instance's PENDING session
@@ -112,6 +112,11 @@ on every file save. Four mechanisms carry instance management across it:
 - **`releaseInstance` undeploys before dropping the claim.** The invariant is *claim row absent ⇒
   container definitely gone*: die mid-release and the claim survives, so `ReclaimStaleClaims`
   runs the whole release again. `backfillClaims` is permanent reconciliation, not an upgrade shim.
+- **A release belongs to one session.** It drops only that session's claim, leaves alone an
+  instance that is idle or reserved for another session, and joins a release of the same pair
+  already in flight, so a late or duplicate release (Stop racing `ReclaimStaleClaims`) cannot tear
+  down the instance the pool has handed on. Scheduled jobs run at a fixed delay after their previous
+  run completes, so runs of one job never overlap.
 - **No startup grace.** `ReconcilePendingSessions` and `CloseTimedOutSessions` run as one job, in
   that order, so a restart lands a missed activation before the timed-out sweep can see the PENDING
   row. `ExpireSessions` needs no head start: a deadline that passed during an outage earns a
@@ -156,7 +161,8 @@ members; only `stopped` ones are candidates.
   terminated. It pools or terminates a surplus instance only under an `instance_claim` (session id
   `pool-cycle`), the election a request runs before reserving, so it never takes an instance a
   request is reserving; that instance's pool slot goes to the next surplus instance. Warm-up launches (`T3aSmall`, user data = `prewarmVolume.sh` + `poweroff`) fill the
-  rest. User data runs on the first boot only, so a pooled instance does not power off when started.
+  rest, at most two warming at a time: with `VOLUME_INITIALIZATION_RATE` set, every launch draws on
+  EC2's regional volume initialization quota, which session launches share. User data runs on the first boot only, so a pooled instance does not power off when started.
 - `sweep` terminates pooled instances of another version, pooled instances still running an hour
   after their start (failed warm-up or stop), and stopped instances outside the pool — every other
   query sees only pending/running instances, so those would otherwise bill for their disk forever.
