@@ -14,10 +14,11 @@
     white-space: nowrap;
 }
 
-/* As faint, and as far from the house, as the breadcrumb's. */
-.separator {
-    margin-left: .35rem;
-    opacity: .4;
+/* As far from the house as the breadcrumb's segment padding sets it. */
+.root {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
 }
 
 /* Room for five folders, held whether the open folder has one or fifty. */

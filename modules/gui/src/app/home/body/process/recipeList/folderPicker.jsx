@@ -11,6 +11,7 @@ import {NoData} from '~/widget/noData'
 import {Scrollable} from '~/widget/scrollable'
 import {Tooltip} from '~/widget/tooltip'
 
+import {Separator} from './breadcrumb'
 import styles from './folderPicker.module.css'
 import {at, childFolders, isSelfOrDescendant, parentFolderId, ROOT} from './recipeTree'
 
@@ -79,11 +80,9 @@ export class FolderPicker extends React.Component {
                 </Tooltip>
             )
             : (
-                <div className={styles.folder} aria-label={msg('process.recipeList.root')}>
+                <div className={styles.root} aria-label={msg('process.recipeList.root')}>
                     <Icon name='house'/>
-                    <span className={styles.separator} aria-hidden='true'>
-                        <Icon name='chevron-right' size='xs'/>
-                    </span>
+                    <Separator/>
                 </div>
             )
     }

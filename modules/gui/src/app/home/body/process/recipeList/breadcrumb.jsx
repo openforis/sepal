@@ -13,7 +13,7 @@ import {DropTargetContext} from './dropTargetContext'
 import {ROOT_LABEL} from './recipeListConstants'
 import {at, folderPath, ROOT} from './recipeTree'
 
-const Separator = () => (
+export const Separator = () => (
     <span className={styles.separator} aria-hidden='true'>
         <Icon name='chevron-right' size='xs'/>
     </span>
