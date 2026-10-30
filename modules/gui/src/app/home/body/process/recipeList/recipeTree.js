@@ -72,8 +72,14 @@ export const folderCounts = (folders, recipes, folderId) => ({
 export const isSelfOrDescendant = (folders, candidateId, folderId) =>
     !!candidateId && folderPath(folders, candidateId).some(({id}) => id === folderId)
 
+// What a drag of a navigator row carries: {kind, id, folderId}, where folderId is the folder holding it —
+// for a folder, its parent. A folder carries itself as well, for the move to update.
+export const asDragged = item => item.kind === 'folder'
+    ? {kind: 'folder', id: item.folder.id, folderId: item.folder.parentId, folder: item.folder}
+    : {kind: 'recipe', id: item.recipe.id, folderId: item.recipe.folderId}
+
 // A move has to change something, and a folder can go neither into itself nor below itself. `dragged`
-// is {kind, id, folderId}, where folderId is the folder holding it — for a folder, its parent.
+// is what asDragged gives.
 export const canDropInto = ({folders, dragged, targetFolderId}) =>
     at(dragged.folderId) !== at(targetFolderId)
         && !(dragged.kind === 'folder' && isSelfOrDescendant(folders, targetFolderId, dragged.id))

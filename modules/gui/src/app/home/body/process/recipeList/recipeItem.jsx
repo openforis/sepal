@@ -10,7 +10,7 @@ import {DropTargetContext} from './dropTargetContext'
 import {PATH_SEPARATOR} from './recipeListConstants'
 
 export const RecipeItem = ({
-    recipe, typeName, path, highlight, hovered, edit, selected, drag$,
+    recipe, typeName, path, highlight, hovered, edit, selected, drag$, dragValue,
     onClick, onSelect, onDuplicate, onRemove
 }) => {
     const drag = useContext(DropTargetContext)
@@ -18,7 +18,7 @@ export const RecipeItem = ({
         <ListItem
             hovered={drag ? false : hovered}
             drag$={drag$ || undefined}
-            dragValue={{kind: 'recipe', id: recipe.id, folderId: recipe.folderId}}
+            dragValue={dragValue}
             dragPointer='mouse'
             showDragHandle={false}
             dragCloneClassName={dragStyles.hiddenClone}
@@ -50,6 +50,7 @@ RecipeItem.propTypes = {
     recipe: PropTypes.object.isRequired,
     onClick: PropTypes.func.isRequired,
     drag$: PropTypes.object,
+    dragValue: PropTypes.object,
     edit: PropTypes.bool,
     highlight: PropTypes.any,
     hovered: PropTypes.any,

@@ -38,6 +38,7 @@ class _RecipeListConfirm extends React.Component {
                 <CrudItem
                     icon='folder-open'
                     iconSize='lg'
+                    iconVariant='info'
                     description={this.isDisabled(folder.id)
                         ? [folder.name, msg('process.folder.remove.stays')].join(' · ')
                         : folder.name}

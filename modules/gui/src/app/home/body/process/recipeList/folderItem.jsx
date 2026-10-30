@@ -15,14 +15,14 @@ export const folderDescription = ({folders, recipes}) =>
         msg('process.folder.description', {count: recipes})
     ].filter(part => part).join(' · ')
 
-export const FolderItem = ({folder, counts, highlight, hovered, edit, selected, drag$, onClick, onSelect, onEdit, onRemove}) => {
+export const FolderItem = ({folder, counts, highlight, hovered, edit, selected, drag$, dragValue, onClick, onSelect, onEdit, onRemove}) => {
     const drag = useContext(DropTargetContext)
     return (
         <div data-drop-folder-id={folder.id}>
             <ListItem
                 hovered={drag ? drag.target?.folderId === folder.id : hovered}
                 drag$={drag$ || undefined}
-                dragValue={{kind: 'folder', id: folder.id, folderId: folder.parentId, folder}}
+                dragValue={dragValue}
                 dragPointer='mouse'
                 showDragHandle={false}
                 dragCloneClassName={dragStyles.hiddenClone}
@@ -57,6 +57,7 @@ FolderItem.propTypes = {
     folder: PropTypes.object.isRequired,
     onClick: PropTypes.func.isRequired,
     drag$: PropTypes.object,
+    dragValue: PropTypes.object,
     edit: PropTypes.bool,
     highlight: PropTypes.any,
     hovered: PropTypes.any,

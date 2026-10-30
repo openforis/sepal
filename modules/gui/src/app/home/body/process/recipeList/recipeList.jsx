@@ -39,8 +39,8 @@ import {offerMoveUndo} from './moveNotification'
 import {RecipeItem} from './recipeItem'
 import {RecipeListConfirm} from './recipeListConfirm'
 import {
-    canDropInto, childFolders, folderCounts, folderPathLabel, locationLabel, navigatorItems, ROOT, searchHighlight,
-    searchValues, splitByNameClash
+    asDragged, canDropInto, childFolders, folderCounts, folderPathLabel, locationLabel, navigatorItems, ROOT,
+    searchHighlight, searchValues, splitByNameClash
 } from './recipeTree'
 
 const EMPTY_ARRAY = []
@@ -71,11 +71,6 @@ const notEmptyCounts = ({folders, recipes}) => {
 
 const notEmptyMessage = (name, counts) =>
     msg('process.folder.remove.notEmpty', {name, counts: notEmptyCounts(counts)})
-
-// A row and the value a drag carries say the same thing in different shapes.
-const asDragged = item => item.kind === 'folder'
-    ? {kind: 'folder', id: item.folder.id, folderId: item.folder.parentId, folder: item.folder}
-    : {kind: 'recipe', id: item.recipe.id, folderId: item.recipe.folderId}
 
 const getItems = memoizeOne((folders, recipes, folderId, filterValues, sortingOrder, sortingDirection) =>
     navigatorItems({folders, recipes, folderId, filterValues, sortingOrder, sortingDirection})
@@ -552,6 +547,7 @@ class _RecipeList extends React.Component {
                     hovered={hovered}
                     edit={edit}
                     drag$={this.drag$}
+                    dragValue={asDragged(item)}
                     selected={this.isSelected(item.folder.id)}
                     onClick={folder => this.navigateTo(folder.id)}
                     onSelect={folderId => this.toggleOne(folderId)}
@@ -570,6 +566,7 @@ class _RecipeList extends React.Component {
                     hovered={hovered}
                     edit={edit}
                     drag$={this.drag$}
+                    dragValue={asDragged(item)}
                     selected={this.isSelected(item.recipe.id)}
                     onClick={recipe => this.handleClick(recipe)}
                     onSelect={recipeId => this.toggleOne(recipeId)}
