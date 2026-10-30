@@ -7,11 +7,17 @@
     "license": "ISC",
     "dependencies": {
         "@google/earthengine": "^1.7.50",
+        "googleapis": "file:./stub/googleapis",
         "lodash": "^4.18.1",
         "moment": "^2.31.0",
         "rxjs": "^7.8.2",
         "sepal": "../shared",
         "uuid": "^14.0.3"
+    },
+    "overrides": {
+        "@google/earthengine": {
+            "googleapis": "$googleapis"
+        }
     },
     "imports": {
         "#sepal/*": "sepal/src/*.js",

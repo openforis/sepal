@@ -1,4 +1,5 @@
-import {google} from 'googleapis'
+import {drive_v3} from '@googleapis/drive'
+import {OAuth2Client} from 'google-auth-library'
 import moment from 'moment'
 import {catchError, defer, EMPTY, expand, map, of, reduce, switchMap, throwError} from 'rxjs'
 
@@ -199,7 +200,7 @@ export const drive = ({sepalUser}) => {
         )
 
     const auth = () => {
-        const oAuth2Client = new google.auth.OAuth2()
+        const oAuth2Client = new OAuth2Client()
         const expiration = moment(accessTokenExpiryDate)
         log.debug(() => `Authenticating with token expiring ${expiration.fromNow()} (${expiration})`)
         oAuth2Client.setCredentials({
@@ -210,7 +211,7 @@ export const drive = ({sepalUser}) => {
 
     const drive$ = (message, op, retryConfig = RETRY_CONFIG) => {
         log.debug(() => message)
-        const drive = google.drive({version: 'v3', auth: auth()})
+        const drive = new drive_v3.Drive({auth: auth()})
         return defer(() => op(drive)).pipe(
             map(({data}) => data),
             autoRetry(retryConfig)
