@@ -4,6 +4,7 @@ import React from 'react'
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 
+import {ErrorIndicator} from './errorIndicator'
 import {Icon} from './icon'
 import styles from './label.module.css'
 import {Layout} from './layout'
@@ -85,34 +86,12 @@ class _Label extends React.Component {
 
     renderWarning() {
         const {warning} = this.props
-        return warning ? (
-            <Icon
-                name='triangle-exclamation'
-                variant='warning'
-                attributes={{'data-feedback': 'warning'}}
-                tooltip={warning}
-                tooltipPlacement='right'
-                tooltipDelay={0}
-                tooltipClickTrigger
-            />
-        ) : null
+        return warning ? <ErrorIndicator error={warning} severity='warning'/> : null
     }
 
     renderError() {
         const {error} = this.props
-        return error ? (
-            <Icon
-                name='triangle-exclamation'
-                variant='error'
-                tooltip={error}
-                tooltipPlacement='right'
-                tooltipDelay={0}
-                attributes={{
-                    fade: true,
-                    'data-feedback': 'error'
-                }}
-            />
-        ) : null
+        return error ? <ErrorIndicator error={error}/> : null
     }
 }
 

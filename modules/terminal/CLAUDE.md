@@ -31,7 +31,5 @@ npm run testWatch     # Node test runner watch mode
 
 ## Non-Obvious Conventions
 
-- **Uses Express.js** (not Koa) with `express-ws` for WebSocket integration
 - **Temp SSH keys**: Written to `/tmp/${username}-${sessionId}.key`, cleaned up on disconnect
-- **RxJS streams**: `merge()` combines heartbeat interval with terminal data observable
 - **User extraction**: Parses `sepal-user` header from WebSocket upgrade request

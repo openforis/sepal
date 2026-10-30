@@ -34,10 +34,12 @@ export const Section = ({path, children}) => {
     )
 
     const renderInitialized = () => (
-        <div className={[
-            styles.section,
-            enabled ? styles.active : null,
-        ].join(' ')}>
+        <div
+            className={[
+                styles.section,
+                enabled ? styles.active : null,
+            ].join(' ')}
+            inert={!enabled}>
             {renderEnabled()}
         </div>
     )

@@ -16,7 +16,7 @@ applies.
 ## Output
 
 Declared in `lib/js/shared/src/recipe/type/planetMosaic.js` from the configuration alone (see the
-[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)): `blue`, `green`,
+[output contract](../design/recipes/output-products.md#declaration-and-description)): `blue`, `green`,
 `red`, `nir`, then `ndvi`, `ndwi`, `evi`, `evi2`, `savi` and `kndvi`, the indexes those bands support, in the order
 execution adds them. Every band is scalar and averaged at coarser pyramid levels.
 
@@ -44,33 +44,14 @@ choices: the spectral bands and `ndvi`, `ndwi`, `evi`, `evi2` and `savi` (`TEMPO
 `modules/gui/src/app/home/body/process/recipe/planetMosaic/bands.js`). Change Alerts' Planet collection mosaic is a
 declared product delegating to this declaration.
 
-## Open issues
-
-- **Daily without histogram matching duplicates its spectral bands.** `createCollection`
-  (`lib/js/ee/src/planet/collection.js`) adds `addDates(image)`, which already holds the image's bands, to the image,
-  so each spectral band is carried twice (`blue_1`...), built by an empty request and computed per image.
-- **Daily without histogram matching fails over four-band and eight-band imagery together.** Its median needs one
-  schema across the collection; the band metadata reads as the four-band schema, but Earth Engine refuses any pixel
-  ("Expected a homogeneous image collection"). With matching, each image is narrowed to four bands first and it runs.
-- **Temporal choices differ from the collection's measures.** The choices above omit `kndvi`, which the collection
-  computes, and the bands PSB.SD-only Daily imagery carries, both of which CCDC declares among its measures
-  (`lib/js/shared/src/recipe/type/ccdc.js`).
-- **NICFI's encoding is not stated.** Authoritative documentation of that exact product could justify declaring it;
-  the migration deferred it.
+Known limitations and follow-ups are tracked in the [workplan](../design/workplan.md#planet-mosaic).
 
 ## Verification
 
-- `modules/gee/verify/planetMosaicOutputBands.mjs` - on live Earth Engine over synthetic collections in each Planet
-  schema run through the real processing, which verifies the algorithm and not ingestion: the catalogue, every
-  declared band asked for, the empty requests each branch builds, subsets, working bands asked for, the mixed Daily
-  refusal once a pixel is computed, histogram matching for schema only, and each index stored per ten thousand. Real
-  NICFI and Daily coverage is blocked without Planet access, and a requested real check fails on it.
-- `lib/js/shared/test/recipe/output/type/planetMosaic.test.js` - the declaration per branch, and through Masking and
-  Stack.
-- `modules/gee/test/jobs/ee/planet/mosaicBands.test.js` - the catalogue, whatever is selected.
-- `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js` - the common read, presentation, presets,
-  Retrieve's groups and policies, broken dependencies, and Change Alerts' Planet mosaics.
-- `modules/gui/src/app/home/body/process/recipe/planetMosaic/planetMosaicOutput.test.js` - Masking and Stack over it.
-- `modules/gui/src/sources.test.js` and `modules/gui/src/app/home/body/process/recipe/ccdc/planetTemplates.test.js` -
-  the temporal choices and CCDC's presets, unchanged.
-- `modules/gee/test/jobs/task/export/imageAssetExport.test.js` - the encoding an export records, directly and through Masking.
+- `lib/js/shared/test/recipe/output/type/planetMosaic.test.js`: each branch and wrapper inheritance.
+- `modules/gee/test/jobs/ee/planet/mosaicBands.test.js`: catalogue; server export tests cover recorded encoding.
+- `modules/gui/src/app/home/body/process/recipe/planetMosaic/`, `recipe/modelDerivedOutput.test.js`,
+  `recipe/ccdc/planetTemplates.test.js` and `modules/gui/src/sources.test.js`: presentation, Retrieve,
+  temporal choices and CCDC presets.
+- [Planet live probe](../../modules/gee/verify/README.md): synthetic branch schemas, mixed-member refusal and
+  index scaling. Matching is schema-only; real NICFI/Daily ingestion needs explicit access-enabled checks.

@@ -1,6 +1,6 @@
 # CLAUDE.md - lib/js/ee
 
-Google Earth Engine JavaScript wrapper library used by `gee` and `task` modules.
+Google Earth Engine JavaScript wrapper used by `gee`, including its task endpoints. Task containers call those endpoints through the gateway; they do not load this library.
 
 ## Import Pattern
 
@@ -14,7 +14,7 @@ Consuming modules use two import maps:
   It loads this library's own install, whose `googleapis` dependency `package.json` overrides with `stub/googleapis`:
   the client library needs it only for `ee.data.authenticateViaPrivateKey`, and the real package costs every worker
   thread ~60 MB of heap.
-- **`extensions/`**: Patches the EE API with custom methods on `ee.Image`, `ee.ImageCollection`, `ee.Number`. These are applied at load time via `require('#sepal/ee/extensions')(ee)`.
+- **`extensions/`**: Patches the EE API with custom methods on `ee.Image`, `ee.ImageCollection`, `ee.Number`. These are applied when `ee.js` calls the imported `extensions(ee)` initializer.
 
 ## Processing Pipelines
 
@@ -35,7 +35,7 @@ Consuming modules use two import maps:
 
 ## Non-Obvious Conventions
 
-- **`imageFactory.js`**: Central factory that creates EE images from various sources (recipes, assets, collections). This is the main entry point for image creation in both `gee` and `task` modules.
+- **`imageFactory.js`**: Central factory that creates EE images from various sources (recipes, assets, collections). Interactive and task jobs in `gee` use this entry point.
 - **Optical data sets**: band mappings, native encodings and band availability live in the shared library
   (`#sepal/recipe/optical/dataSetSpecs`, `#sepal/recipe/optical/opticalBands`), because the output declaration and
   the GUI answer the same questions execution does. `OPTICAL_STORED_PER_UNIT` (`#sepal/recipe/optical/encoding`)
@@ -49,9 +49,9 @@ Consuming modules use two import maps:
 
 ## Transports and request context
 
-Every Earth Engine request goes through the extensions in `extensions/utils.js`, which hand each single request
-to a transport. `task` uses the default `LibraryTransport`: the client library's own, with its global
-credentials, correct only for one user per process. `gee` installs `EERestClient` (`rest/`) through
+Earth Engine requests through `extensions/utils.js` are handed to the installed transport.
+The default `LibraryTransport` uses the client library's global credentials and requires one identity per process.
+`gee` installs `EERestClient` (`rest/`) through
 `EERestRuntime`: the library, initialized once as the service account, only builds requests, and each request is
 sent as the `EEContext` (`eeContext.js`) it is subscribed in.
 
@@ -59,7 +59,7 @@ sent as the `EEContext` (`eeContext.js`) it is subscribed in.
   service account.
 - Asset reads that need the Cloud API record (including `updateTime` and band ranks) use
   `ee.getAssetRecord$`; `ee.getAsset$` returns the legacy shape. Both use the installed transport.
-  GEE jobs must not use `ee.$` around client-library calls: it uses the Task transport and its limiter.
+  GEE jobs must not use `ee.$` around client-library calls: it bypasses the installed REST transport and uses the library limiter.
 - Never share an observable between requests. A value shared across requests is a plain value or a Promise, so
   each subscriber resumes in its own async context. Work started on unsubscription (cleanup) captures the context
   when the work it cleans up starts, and runs inside it.

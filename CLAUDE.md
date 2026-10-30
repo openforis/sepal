@@ -18,12 +18,12 @@ not implementation history; recipe-specific issues are deferred unless explicitl
 
 ### Module Types
 
-**Node.js microservices** (most modules use Koa web framework + RxJS; the former Java/Groovy services — `sepal-server` and the old `user` module — were rewritten as Node.js modules and deleted, along with the Gradle build):
+**Node.js modules** (most services use Koa + RxJS):
 - `gui` - React 19 frontend with Redux, React Router, react-intl (Vite build, Vitest tests)
 - `gateway` - HTTP gateway/proxy (uses Express, not Koa; Redis for sessions); also proxies user sandboxes (`/api/sandbox/*`)
 - `gee` - Google Earth Engine integration
-- `user` - User management, authentication, credentials (formerly `user-node`; replaced the Java `user` module and LDAP)
-- `worker` - Worker instances, sandbox sessions (replaced the sepal-server `sdms` cluster)
+- `user` - User management, authentication and credentials
+- `worker` - Worker instances and sandbox sessions
 - `task-manager` - Runs each export task in its own detached container on the main host
 - `task` - One-shot task runner image, started by task-manager per task
 - `app-manager` / `app-launcher` - Application management
@@ -38,7 +38,7 @@ not implementation history; recipe-specific issues are deferred unless explicitl
 ### Shared Libraries
 
 - `lib/js/shared` - Core Node.js library used by most Node modules. Provides HTTP server/client (`httpServer.js`, `httpClient.js`), message queue (`messageQueue.js` via amqplib), database (`db/` via mysql2), logging (`log.js` via log4js), metrics (`metrics.js` via prom-client), RxJS utilities, and service base class (`service.js`).
-- `lib/js/ee` - Google Earth Engine JavaScript wrapper (used by `gee` only)
+- `lib/js/ee` - Google Earth Engine JavaScript wrapper used by `gee`, including its task endpoints
 - `lib/python/shared` - Shared Python utilities
 
 The Node.js libraries carry no lockfile of their own: each module locks the dependencies of the libraries it installs in
@@ -49,7 +49,7 @@ The Node.js libraries carry no lockfile of their own: each module locks the depe
 ### Inter-Service Communication
 
 - **RabbitMQ** `sepal.topic` exchange for async events (user lifecycle, file operations, worker sessions, email, storage metrics). See `RABBITMQ.md` for message format details.
-- **HTTP** for synchronous service-to-service calls via the gateway.
+- **HTTP** for synchronous calls. Internal services can call one another directly; browser, sandbox and task traffic enters through the gateway.
 
 ### Key Infrastructure
 
@@ -205,7 +205,7 @@ context) — don't pad messages with long bullet lists, restated diffs, or boile
 
 ## Service Ports
 
-See `PORTS.txt` for complete port mapping. Key ports: Caddy 80/443, MySQL 3306, RabbitMQ 5672, Prometheus 9090. Most application modules expose port 80 internally. Node debug: 9229.
+See [PORTS.txt](PORTS.txt) for container ports and host bindings. Most HTTP services listen on port 80 internally; Compose files determine which ports are published.
 
 ## Deployment
 
@@ -227,6 +227,4 @@ from it will not be deployed.
 
 ## Contributing
 
-- Discuss changes via issue before submitting PRs
-- Follow SemVer versioning
-- PRs require sign-off from two developers
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution and review policy.

@@ -33,7 +33,4 @@ npm run testWatch     # Node test runner watch mode
 
 ## Non-Obvious Conventions
 
-- **Uses Express.js**, not Koa like most other Node modules
-- **Injects `sepal-user` header** into proxied requests for downstream authentication
-- **Security headers**: CSP, HSTS, X-Content-Type-Options set on all proxied responses
 - **GEE credentials**: `src/gee.js` creates Earth Engine credentials file if configured

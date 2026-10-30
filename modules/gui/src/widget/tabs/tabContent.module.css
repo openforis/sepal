@@ -12,3 +12,15 @@
     opacity: 1;
     z-index: 1;
 }
+
+/* The content a tab's dialogs cover: a stacking context of its own, so nothing in it rises above them. */
+.covered {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    isolation: isolate;
+}
+
+.dialogs {
+    z-index: 1;
+}

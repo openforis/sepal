@@ -61,4 +61,3 @@ MySQL (`storage` schema):
 - **Thundering herd prevention**: Inactivity grace period spreads notifications over configurable hours
 - **Scan parameters**: Min delay 5s (enforced), exponential backoff with configurable factor
 - **Concurrent scan limits**: Configurable concurrency and retry budgets
-- **Dual storage**: MySQL for event history, Redis for session state

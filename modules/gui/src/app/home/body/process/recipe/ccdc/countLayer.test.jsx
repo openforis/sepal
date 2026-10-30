@@ -10,6 +10,7 @@ import {Recipe, withRecipe} from '~/app/home/body/process/recipeContext'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {compose} from '~/compose'
 import {initStore} from '~/store'
+import {tooltipText} from '~/widget/tooltip.test.fixtures'
 
 // The count a CCDC's map shows by default is a named map product (type/ccdc.js), described from configuration, and held
 // to the analysis prerequisites of its type (analysisPrerequisites, #sepal/recipe/output/readiness): the Classification
@@ -268,7 +269,7 @@ const marked = () => Object.keys(JSON.parse(container.querySelector('output[aria
 
 // The sections the toolbar marks, as it watches what marking them needs.
 const SectionMarks = compose(
-    ({sourceProblems}) => <output aria-label='marks' data-marks={JSON.stringify(sourceProblems)}/>,
+    ({sourceProblems}) => <output aria-label='marks' data-marks={JSON.stringify(tooltipText(sourceProblems))}/>,
     withSourceProblems(),
     withRecipe(recipe => ({recipeId: recipe.id}))
 )

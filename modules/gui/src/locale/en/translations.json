@@ -6922,6 +6922,7 @@
     },
     "recipeInput": {
       "label": "Recipe",
+      "open": "Open selected recipe",
       "placeholder": "Select a recipe...",
       "all": {
         "tooltip": "Show all recipes or only recipes in current project"
@@ -6944,6 +6945,7 @@
       "addTab": {
         "tooltip": "New tab"
       },
+      "closeWithOpenDialog": "Apply or cancel the open panel before closing this tab.",
       "newTab": "New_Tab"
     }
   },

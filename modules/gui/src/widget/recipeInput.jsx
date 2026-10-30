@@ -4,6 +4,7 @@ import React from 'react'
 import {map, Subject, switchMap, takeUntil} from 'rxjs'
 
 import api from '~/apiRegistry'
+import {openRecipeById$} from '~/app/home/body/process/recipe'
 import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
@@ -11,7 +12,9 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {select} from '~/store'
 import {msg} from '~/translate'
+import {Button} from '~/widget/button'
 import {Buttons} from '~/widget/buttons'
+import {Notifications} from '~/widget/notifications'
 
 import {Form} from './form'
 
@@ -62,7 +65,26 @@ class _RecipeInput extends React.Component {
                 onChange={() => {
                     this.setState({all: !all})
                 }}
-            />
+            />,
+            <span key='open' onKeyDown={event => {
+                if (['Enter', ' '].includes(event.key)) {
+                    event.stopPropagation()
+                }
+            }}>
+                <Button
+                    chromeless
+                    shape='none'
+                    air='none'
+                    size='small'
+                    icon='arrow-up-right-from-square'
+                    ariaLabel={msg('widget.recipeInput.open')}
+                    tooltip={msg('widget.recipeInput.open')}
+                    disabled={!input.value}
+                    busy={stream('OPEN_RECIPE').active}
+                    onClick={() => stream('OPEN_RECIPE', openRecipeById$(input.value), null,
+                        error => Notifications.error({message: msg('widget.recipeInput.loadError'), error}))}
+                />
+            </span>
         ]
         
         return (

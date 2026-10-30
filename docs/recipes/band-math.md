@@ -56,26 +56,9 @@ band names or list position. Ambiguous legacy source identities are not chosen a
 preserved calculations does not restore deleted direct output selections, custom names from those deleted outputs,
 deleted calculations, or Stack aliases.
 
-The input editor works as Stack's does ([Stack](stack.md#inputs)). The kind of source - an asset or a recipe - is chosen
-beside its picker, a new input starting as an asset; each kind keeps a draft of its own while the editor is open - its
-source and the bands selected for it - so switching back restores it, and no band crosses from one kind to the other. A
-kind not yet shown starts with nothing selected. It learns what a source holds by reading it, and nothing it learns is
-an edit: opening a saved input leaves it unchanged, offering no Apply. Each selected band is a row of its own, named in
-its header and chosen when it is added: a different band is taken by removing the row and adding one, which takes
-nothing of the removed band. Re-including a band still referenced by a preserved calculation can reclaim its retained
-id at Apply, as described above; deleted direct output selections stay deleted. The header chooses the band's type, continuous or categorical, over its source's default
-either way, without opening or closing the row. A categorical band shows its legend, open until its row collapses it and
-opened when the band is switched to categorical; a continuous band has none. A legend set aside by switching its band to
-continuous returns if the band is switched back while the editor is open; the configuration keeps no legend for a
-continuous band. Each legend is edited in an editor of its own, however many are shown. A long name is cut short in its
-row, named in full by its tooltip. A read of the source the input was saved with keeps every selected band as saved,
-with its id. One that read finds absent stays selected, marked on its row with the reason as its tooltip, and refuses
-Apply until it is removed or its source has it again. Absence is judged from that read alone: never from the band list
-saved with the input, nor while the read is pending or after it fails. Choosing another source reconciles the selection
-once that source answers: bands it holds are kept and the others dropped; no band is selected for the user. Once a
-source just chosen answers with bands, none of them selected, the bands to add are offered, once: not again after they
-are dismissed, nor when a draft returns or its source is read again, and never while it loads, after its read fails or
-when it has no bands. An answer about a source no longer selected changes nothing.
+The input editor follows [Stack's shared input-editor contract](stack.md#shared-input-editor).
+Band Math additionally reclaims retained band IDs at Apply when reconnecting preserved calculations, as above.
+Deleted direct output selections stay deleted.
 
 Output bands follow the bands they were copied from by id, an output band's identity being its id within its output
 image. Deliberately unselecting an input band removes every output taken from it: the one copied under its id, and any a
@@ -87,51 +70,39 @@ same-named one is still offered. A choice is checked again when it is added, alo
 includes it then. Two outputs of one band a saved recipe holds are kept as saved. A FUNCTION calculation's band keeps
 its id when the calculation is edited, so its output, and any name given to it, follows.
 
-The forms generate unique default output names - two inputs' `red` become `red` and `red_1` - in output order, by
-one rule (`outputImages.js`): custom names are taken first and never renamed, a default nothing earlier takes keeps its
-name, and each other takes its band's name with the lowest free suffix, names given earlier in the same change counting
-as taken - whether shown as a value or a placeholder. A name given automatically stays the band's - another output added
-or removed, saved or reopened, changes none - and the model keeps it apart from a custom one (`defaultOutputName`,
-`outputName`). Output bands shows a saved name, automatic or custom, as the field's value; a default allocated while the
-panel is open - for a band added, a saved collision repaired as it opens, or a band reset - is a suggestion, the
-placeholder of an empty field, which Apply saves and the next opening shows as the value. Typing a name gives a custom
-one; clearing the field resets that band alone to the default now available to it, by the same rule, as the field's
-tooltip says. Typing in one field renames no other band: a name another band is output under, automatically or not, is refused as a duplicate,
-holding Apply back. A calculation whose
-renaming gives several of its bands one name - a pattern matching each whole name - names them apart in order, `x`,
-`x_1`, `x_2`, a repeat taking the suffix after the highest `x_<n>` already among them; each band keeps its identity. A
-band renamed under its id - a calculation's band renamed or derived again - keeps its
-outputs, the sync giving each the new name as its default, made unique as the forms make it against every other
-output's final name: custom names count, and so do names given earlier in the same change, while the old names of the
-bands renamed or removed in it, inputs' and calculations' alike, hold back none. Its custom name is kept, and no other
-output is renamed; custom names stay taken, those of bands renamed in the change included. A saved recipe outputting
-defaults alike keeps them as saved, and judged so, until Output bands is opened: its draft names them apart, its rows
-no longer marked, Apply saves that and Cancel discards it. Custom names alike are not renamed, and stay marked. A
-custom name is optional; when given it must start with a letter or underscore, continue with letters, digits and
-underscores, and be at most 30 characters long. No two final names may be alike. Output bands checks both rules over
-every configured output, a saved configuration included, and Apply stays unavailable while any fails; each row shows the
-same rules as its own feedback.
+### Output names
+
+`outputImages.js` allocates unique defaults in output order, reserving custom names first. A free base name
+is retained; collisions take the lowest free suffix (`red`, `red_1`). Assigned defaults survive unrelated
+add/remove, save and reopen. `defaultOutputName` and explicit `outputName` remain separate.
+
+Saved names appear as values. A default allocated in the open panel is an empty field's placeholder; Apply
+persists it. Typing creates an override; clearing resets only that band to its available default. Neither
+operation renames another output. Final names must match `[a-zA-Z_][a-zA-Z0-9_]{0,29}` and be unique.
+Rows and Apply judge the same draft rules; toolbar marks judge the applied model.
+
+A calculation renaming several bands to the same base assigns suffixes in order, after the largest existing
+suffix. Band IDs survive renaming. Synchronization updates each affected output's default against other
+final names, counting earlier assignments and custom names but releasing the old names changed in that
+operation. Custom overrides remain intact; unrelated outputs do not change.
+
+Opening a saved collision among automatic names proposes distinct draft defaults; Apply commits and Cancel
+discards them. Duplicate custom names remain errors. Opening alone never repairs the applied model.
 
 ## Output boundary
 
-Band Math keeps its first-input geometry policy. `getGeometry$()` resolves that input through `imageFactory`; the
-geometry map endpoint uses it for the AOI outline, and the bounds endpoint uses it for map fitting. The GUI's `Aoi`
-component watches the first input. Image construction now uses that same `getGeometry$()` to clip the final image,
-after calculation, output naming and output-band selection. The policy applies to full output and selected-band
-builds, including direct bands, expressions and reducers. No AOI section or additional boundary model is introduced.
+The final image is clipped to the first input's `getGeometry$()`, after calculation, naming and band selection.
+The AOI outline and fit bounds use that same geometry. This applies to direct, expression and reducer outputs,
+including single-band requests. Other inputs can supply pixels inside this boundary even where the first input
+is masked, but cannot extend it. There is no separate AOI setting or fallback region.
 
-Previously the output was clipped to the union of bounded input and calculation footprints, which could extend
-beyond the outline. Pixels from other inputs outside the first input's finite geometry are now intentionally excluded,
-including in existing recipes. Other inputs can still supply values inside that geometry, even where the first input
-has masked pixels. Band selection, output names, casts and projections are unchanged. Clipping retains interior
-values and masks; boundary-straddling pixels receive Earth Engine's normal clipping coverage.
+Failed/null geometry refuses construction; EE rejects empty clipping geometry. An unbounded geometry skips
+clipping because EE rejects `clip` on it. With no inputs, image construction emits nothing and direct geometry
+requests fail; normal configuration gates block that state.
 
-There is no fallback region. A failed geometry resolution propagates its error; a null geometry refuses image
-construction. Earth Engine rejects an empty geometry when clipping. An unbounded reported geometry imposes no
-restriction and skips clipping, because EE refuses `clip` on an unbounded geometry. Previously a bounded later input
-could restrict such a recipe through the union; that incidental restriction is removed. With no inputs, image
-construction still completes without emitting an image, and a direct geometry request still fails; the normal GUI
-and shared configuration gates prevent executing that configuration.
+**Compatibility:** older computations clipped to the union of bounded input/calculation footprints. Recomputing
+can remove pixels outside the first input, or remove an incidental later-input restriction when the first input
+is unbounded. Interior values, masks and projections retain normal EE clipping semantics.
 
 ## Configuration checks
 
@@ -240,7 +211,7 @@ closes. A layer, Retrieve or Task export reads nothing to explain it.
 ## Output
 
 Declared in `lib/js/shared/src/recipe/type/bandMath.js` (see the
-[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)): the configured output
+[output contract](../design/recipes/output-products.md#declaration-and-description)): the configured output
 bands in configured order, each under its final name, `outputName` or else `defaultOutputName`.
 
 Whether a band is an array is not configured. A cast sets only the element type and keeps an array an array; an
@@ -282,96 +253,21 @@ input whose own selection means something else - CCDC's names the measures to fi
 for no bands or an empty selection, Earth Engine builds every configured output band; a selection returns exactly
 the bands selected, in the order selected. The catalogue answers the configured names without building anything.
 
-## Open issues
-
-Shared calculation-reference validation and automatic recovery of preserved input references are implemented.
-Deleted output selections and their custom names still require a separate retention decision. See the
-[validation and source recovery roadmap](../design/recipes/source-resolution.md#validation-and-source-recovery-roadmap-2026-10-15)
-for the audit evidence, completed packets and remaining boundaries.
-
-- **Earth Engine renames a repeated output name.** Output images are concatenated, so a second `x` is built as `x_1`.
-  The declaration refuses such a configuration; execution still builds it.
+Known limitations and follow-ups are tracked in the [workplan](../design/workplan.md#band-math).
 
 ## Verification
 
-- `modules/gee/test/jobs/ee/bandMath/bandMathGeometry.test.js` checks geometry-resolution wiring for full and selected
-  direct/expression/reducer outputs, resolution failures, null/unbounded/empty geometry and existing empty-input behavior.
-- `modules/gee/verify/bandMathGeometry.mjs` is a live, read-only check over two in-memory Asset Mosaic recipes using
-  public SRTM imagery, different polygon extents and different elevation masks. It checks full output and each single
-  output band on the native grid: reported geometry equals the first input, interior values/masks and band projections
-  match an independent reference, no pixels are valid outside the boundary, and edge coverage matches an explicitly
-  clipped reference. No recipes, assets or export tasks are written. Run with
-  `docker exec -w /usr/local/src/sepal/modules/gee gee node verify/bandMathGeometry.mjs`.
-  On 2026-10-16 the live check reproduced outside pixels before the fix for full output and the second-input,
-  expression and reducer selections. After the fix all five builds passed: no outside pixels or interior
-  value/mask differences, unchanged projections, and matching clipped edge coverage. Browser tiles were not checked.
+Live schema/geometry probes and their limitations are indexed in
+[EE verification](../../modules/gee/verify/README.md). Automated coverage lives in:
 
+- `lib/js/shared/test/recipe/output/type/bandMath*.test.js`: declaration and calculation-reference rules.
+- `modules/gee/test/jobs/ee/bandMath/`: catalogue and geometry; `jobs/ee/image/inputBandReads.test.js`
+  covers physical CCDC input selection, and `jobs/task/export/imageAssetExport.test.js` covers export refusal.
+- `modules/gui/src/app/home/body/process/recipe/bandMath/`: source recovery, isolated draft repair, output
+  naming/identity, missing-selection chips, section marks, downstream gates and synchronization.
+- `modules/gui/src/app/home/body/process/sourceRuntime/`: explanation acquisition and asset-evidence recovery.
 
-- `modules/gee/verify/bandMathOutputBands.mjs` - on live Earth Engine: the catalogue, the running image asked for
-  nothing, an empty selection and a subset out of order, the description from an observed running image, an
-  expression cast over CCDC's coefficients and its segment starts passed through, observed as arrays and sampled,
-  the dimensionality of casts, expressions and reducers over arrays, repeated names and no output bands as the
-  declaration and Earth Engine each answer them, an input band the asset lacks as Earth Engine refuses it, the
-  dimensionality of every band of representative input assets, and one pixel value.
-- `modules/gui/src/app/home/body/process/recipe/bandMath/inputRecovery.test.jsx` - real input add/remove/apply with
-  Sync, expressions and reducers, asset/recipe identity, save/reopen, missing bands, Cancel, source changes, name
-  collisions, legacy ambiguity, whole-image reference capture, preserved calculated output names and deleted direct
-  outputs staying deleted; shared findings, Retrieve and a mounted downstream Remapping preview recover together.
-- `lib/js/shared/test/recipe/output/type/bandMathReferences.test.js` - applied reference, syntax, arity and band-count
-  findings, self/forward references and cycles, preserved descriptions, pending/failed evidence, downstream attribution
-  through Remapping and repair.
-- `lib/js/shared/test/recipe/output/type/bandMath.test.js` - the declaration's outcomes, through the read and the
-  observer, over asset, declared-recipe, Masking and nested Band Math inputs.
-- `modules/gee/test/jobs/task/export/imageAssetExport.test.js` - Band Math's asset export, refused for a missing input band, an
-  input that cannot be described or read, an input Band Math naming two outputs alike, and broken calculation references
-  here and through Remapping, exported after repair.
-- `modules/gui/src/app/home/body/process/recipe/bandMath/inputBandProblems.test.jsx` - the inputs and toolbar button
-  marked for a missing band, Retrieve withheld and refused naming Input imagery until the band is back, and nothing
-  marked for pending, failed or superseded reads, the output read shared. Confirmed upstream failures
-  additionally mark their declaring recipe input through shared reference feedback. It names the selected recipe and
-  any confirmed originating recipes, deduplicated by ID. The input editor shows the same message beside the recipe
-  selector; a healthy draft replacement clears it without repairing the applied model. Cancel keeps the applied warning,
-  and upstream repair clears it while the editor is open. The explanation adds no Apply rule; navigation is deferred.
-- `modules/gui/src/app/home/body/process/recipe/bandMath/panels/inputImagery/inputImageBands.test.jsx` - an input opened
-  unchanged, a band its source no longer has kept, marked and refused until removed, another band taken by removing and
-  adding, never judged from saved bands, pending or failed reads, edits kept while reading, source switches reconciled,
-  each kind's draft kept and restored with no band crossing, no band selected for the user, the bands to add offered
-  once, and a band's type chosen either way, its legend open, collapsed and kept through a switch to continuous and
-  back, over asset and recipe inputs.
-- `modules/gui/src/app/home/body/process/sourceRuntime/outputExplanation.test.js` - a refusal explained for the editor
-  alone: immediate, adding a missing input band once read, keeping one input's evidence when another fails, retried
-  and checking the assets named when none could be read, a cold editor loading what it reads, cancellation once closed,
-  reuse of a read that completed but never of one that failed, withdrawal on a new token, credentials or refresh.
-- `modules/gui/src/app/home/body/process/sourceRuntime/assetFreshness.test.js` - a missing input band found, then
-  recovered on a changed token or an explicit refresh, and an answer about an edited configuration ignored.
-- `modules/gee/test/jobs/ee/bandMath/bandMathBands.test.js` - the catalogue, whatever is selected.
-- `modules/gee/test/jobs/ee/image/inputBandReads.node.test.mjs` - the bands read from a CCDC input.
-- `modules/gui/src/app/home/body/process/recipe/bandMath/bandMathOutput.test.js` - the common read, Retrieve's
-  policies and destinations, Retrieve refused and allowed by the configuration checks, and Masking over Band Math.
-- `modules/gui/src/app/home/body/process/recipe/bandMath/chainRequirements.test.js` - the configuration checks.
-- `modules/gui/src/app/home/body/process/recipe/bandMath/panels/outputBands/outputBandRows.test.jsx` - Output bands:
-  copies of one band, output names, orphaned outputs, and the bands offered and added - those the input includes now,
-  never a band removed from it, a same-named replacement offered; saved defaults alike named apart in the draft, applied
-  or cancelled, rows judging the draft while the toolbar and gates judge what is applied, around custom names and unique
-  defaults, custom names alike refused, a custom name taking a saved or suggested name refused; and a name allocated
-  in the panel suggested as a placeholder, kept through another output's removal, saved by Apply and shown as the value
-  on reopening, and a saved name cleared to the default now available.
-- `modules/gui/src/app/home/body/process/recipe/bandMath/bandMathLayer.test.jsx` - a layer on another map refused,
-  withdrawn and drawn again.
-- `modules/gui/src/app/home/body/process/recipe/bandMath/panels/calculations/calculation.test.jsx` - a calculation
-  edited in its panel keeping its bands' identities, bands renamed alike named apart beside suffixed names of any
-  length, and one saved with names alike opened unchanged and named apart once applied, its custom output name kept.
-- `modules/gui/src/app/home/body/process/recipe/bandMath/panels/calculations/calculationRequirements.test.jsx` - the
-  originating calculation marks, isolated draft Apply/Cancel, missing function bands and groups kept visible/removable,
-  shared-scope validation, live configuration updates, metadata preservation and repairs beside another invalid calculation.
-- `modules/gui/src/app/home/body/process/recipe/bandMath/sectionMarks.test.jsx` - the toolbar buttons and Output bands
-  rows marked for an output image left without bands by unselecting its band, and cleared once it has one; a section
-  without any output image; an output
-  of an unmet calculation leaving Output bands unmarked, refused naming Calculations, beside its own problems; duplicate and invalid output names; an input
-  lacking a band beside an output problem.
-- `modules/gui/src/app/home/body/process/recipe/bandMath/sync/` - derivation through failure, recovery and renames,
-  and the output names a rename or added band is given: apart from other outputs, custom names and earlier renames in
-  the same change, a custom name kept, and a saved collision left as saved on opening.
+These suites use controlled external boundaries; browser tiles and live EE pixels need their own checks.
 
 Manual calculation-readiness check:
 

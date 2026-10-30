@@ -12,6 +12,7 @@ import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Layout} from '~/widget/layout'
 import {Notifications} from '~/widget/notifications'
+import {ModalScope} from '~/widget/panel/modalScope'
 import {Panel} from '~/widget/panel/panel'
 
 import styles from './ceoLogin.module.css'
@@ -34,23 +35,25 @@ export class _CeoLogin extends React.Component {
     render() {
         const {form} = this.props
         return (
-            <Form.Panel
-                className={styles.panel}
-                placement='modal'
-                form={form}
-                isActionForm
-                onApply={this.login$}
-                onClose={this.close}>
-                <Panel.Header
-                    icon='key'
-                    title={msg('process.classification.panel.trainingData.form.ceo.login.title')}/>
-                <Panel.Content>
-                    {this.renderForm()}
-                </Panel.Content>
-                <Form.PanelButtons
-                    applyLabel={msg('process.classification.panel.trainingData.form.ceo.login.connect.label')}
-                />
-            </Form.Panel>
+            <ModalScope scope='application'>
+                <Form.Panel
+                    className={styles.panel}
+                    placement='modal'
+                    form={form}
+                    isActionForm
+                    onApply={this.login$}
+                    onClose={this.close}>
+                    <Panel.Header
+                        icon='key'
+                        title={msg('process.classification.panel.trainingData.form.ceo.login.title')}/>
+                    <Panel.Content>
+                        {this.renderForm()}
+                    </Panel.Content>
+                    <Form.PanelButtons
+                        applyLabel={msg('process.classification.panel.trainingData.form.ceo.login.connect.label')}
+                    />
+                </Form.Panel>
+            </ModalScope>
         )
     }
     

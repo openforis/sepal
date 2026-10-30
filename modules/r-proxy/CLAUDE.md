@@ -41,8 +41,6 @@ npm run testWatch     # Node test runner watch mode
 
 ## Non-Obvious Conventions
 
-- **Platform-specific repos**: `platformVersion` derived from OS release and kernel version determines repository paths
 - **Package path structure**: `src/contrib`, `bin/contrib`, `.bin/contrib` (temporary builds)
-- **Raw HTTP server**: Only SEPAL module that uses neither Koa nor Express
 - **Version parsing regex**: `^(.+?)(?:_(.+?))?(\\.[a-zA-Z.]+)?$` captures name, version, extension
 - **Auto-update interval**: Default 24 hours, configurable via `--auto-update-interval-hours`

@@ -3,9 +3,6 @@
 Technical notes for working on the Sampling Design recipe: the invariants, the reasoning behind them, and the
 mistakes that are cheap to make. The user-facing guide lives in the separate `sepal-doc` repository.
 
-These notes deliberately avoid naming files and functions, so that refactoring does not silently invalidate
-them. Earth Engine API names are kept, because several constraints are precisely about how those behave.
-
 ## Orientation
 
 The recipe spans the GUI, the task module, the gee module and both shared libraries — look for
@@ -178,27 +175,13 @@ not round-trip exactly does not reproduce a design.
 
 ## Why the implementation looks the way it does
 
-Both draws look over-engineered until you try the obvious thing. Finding a Systematic lattice that completes at
-national scale took many attempts, and the failures share a pattern: **what makes a graph fail here is
-materialised work, not output size.** Every rejected approach produced a small result and died producing it.
-Cost tracks the extent a computation must be realised over, and the number of separate places it must be
-realised — not the number of rows that come out.
+Earth Engine cost depends on materialized extent and repeated reads, not just result size. Enumerating the
+national-scale frame would require hundreds of millions of features. Per-candidate spatial reads and
+neighborhood operations also proved expensive. The raster-lattice approach materializes accepted markers
+rather than the full frame or a separate neighborhood per candidate.
 
-Some examples. Enumerating the frame as points needed about 722 million features before anything could be
-exported. An overlap-and-dilation hybrid was cancelled after 53 minutes and 128,904 batch EECU-seconds. Reading
-the class at a thousand scattered points cost 18,701 EECU-seconds in 40 seconds and was still climbing when it
-was stopped — while the same reads bounded to small areas cost a fraction of that. And `Image.displace` failed
-on semantics rather than cost: zero displacement changed both class and mask.
-
-The accepted approach completes in about 13 minutes and 1.59 EECU-seconds — roughly five orders of magnitude
-below the most expensive rejected attempt at the same task. It works because representing
-the lattice as raster projections whose pixel centres are the sample locations means Earth Engine only ever
-materialises accepted markers: never the frame, never a neighbourhood around each candidate, never a separate
-read per point.
-
-So before simplifying something here, check whether the simplification is one of these. A common trap is an
-approach that nominates candidates cheaply and verifies them expensively — the two costs have to be judged
-together, not separately.
+Measure candidate generation and validation together before replacing it. Wall-clock completion on the
+production graph is the useful gate; reported EECU from cancelled and successful runs is not comparable.
 
 ## The sampling frame at AOI edges
 
@@ -251,135 +234,91 @@ Each was established by measurement, and each is cheap to break by accident.
 
 ## Derived-result freshness
 
-Stratum areas and per-stratum probabilities are materialized Earth Engine results. Their source IDs may stay
-unchanged while a referenced recipe is edited or an Earth Engine asset is replaced, so comparing the current form
-fields with the saved fields cannot establish that those results remain current.
+### Current invalidation
 
-Sampling Design is the first consumer of the generic derived-resource contract in
-[source freshness](../design/recipes/source-freshness.md). It declares two named calculations:
+The recipe compares successive applied models while its tab is mounted and writes section-level `requiresUpdate`
+flags together. An AOI edit invalidates stratified areas and propagates to proportions and allocation. Proportions
+also track the stratification frame and stratum identities; manual proportions depend on identities rather than
+weights. Allocation tracks the ordered strata, applicable weights, proportions and their readiness. Panels calculate
+against their own candidate settings and Apply saves those settings with the result. Retrieve refuses applicable
+sections marked `requiresUpdate`, alongside its allocation and grid checks.
 
-- `SAMPLING_STRATUM_AREAS` consumes the resolved AOI geometry, stratification product and selected band, and the
-  configured Stratification CRS and Scale;
-- `SAMPLING_STRATUM_PROBABILITIES` consumes the resolved AOI geometry, optional stratification product and grid,
-  categorical or probability product and selected bands, proportions mode and target class, and Proportions Scale.
+Two in-memory caches hold successful raw area/probability responses for the recipe tab's lifetime, across panel
+closure and tab switching. Access with a different AOI clears the cache's scope; form-derived keys distinguish
+source references, selected bands, grids, mode and target class. Percentage interpretation, overall target and
+weights are applied locally to raw probabilities, rather than making another Earth Engine calculation. Panel
+request cancellation handles changed candidate inputs.
 
-Anticipated proportions are not a third calculation. They are derived locally from the per-stratum probabilities
-together with the percentage interpretation, the overall-proportion target and the current stratum weights, and
-ordinary form edits rewrite them without any Earth Engine call. Evidence therefore attaches to the two calculated
-results, and anticipated proportions inherit staleness through that local derivation.
+Those keys and flags do not establish persisted calculation provenance. No `calculatedFrom` sidecars or generic
+derived resources are implemented, and no recipe revisions or asset replacement tokens are attached to the stored
+results or these cache keys. Closing the tab drops the caches; reopening does not prove saved areas/probabilities
+current when a referenced recipe or same-ID asset changed. General source-runtime freshness does not supply that
+missing evidence for materialized results.
 
-Each stored result carries `calculatedFrom` evidence containing the normalized operation question and a fingerprint
-of its resolved inputs, produced by the calculating operation itself. Recipe snapshots are exact — one snapshot and
-revision per recipe ID per operation — while Earth Engine asset evidence is a contemporaneous observation such as
-`system:version`, revalidated before the result is committed and never a claim that the evaluated pixels were
-pinned. Evidence is persisted as section-level sidecars written atomically with the results they describe:
+### Target: persisted calculation evidence
+
+Sampling Design is the proposed first consumer of the
+[generic persisted-result contract](../design/recipes/source-freshness.md#persisted-derived-result-evidence).
+That contract owns operation-produced evidence, product fingerprints, comparison, sharing and superseded-response
+rejection. The dependencies and propagation below belong to this recipe and are not current behavior.
+
+| Calculation | Inputs |
+| --- | --- |
+| `SAMPLING_STRATUM_AREAS` | Resolved AOI geometry product; stratification image product and selected band; configured Stratification CRS and Scale; relevant product/calculation contracts. |
+| `SAMPLING_STRATUM_PROBABILITIES` | Resolved AOI geometry; optional stratification product, band and applicable grid; categorical/probability product and selected band; mode, target class and Proportions Scale; relevant product/calculation contracts. |
+
+The probability-only source is an operation-scoped dependency, not automatically an execution edge of the final
+design. Anticipated proportions are not a third Earth Engine calculation: their local derivation reads raw
+probabilities, percentage interpretation, the overall-proportion target and current stratum weights. Stale areas
+or probabilities propagate to the dependent proportions and allocation; manual choices retain their own semantics.
+Sampling Design owns these propagation rules, recalculation controls, messages and submission blocking.
+
+AOI evidence follows its kind: canonical inline geometry; asset/table reference and geometry-affecting selection
+with verified replacement evidence; a recipe's resolved AOI product and transitive dependencies; the concrete source
+product for `ASSET_BOUNDS`; or immutable GeoID plus buffer. A GeoID is not polled for change, though lookup can fail.
+The AOI product owner decides what affects geometry. Until its shared declaration agrees with execution, use
+conservative whole persisted-source evidence, never a consumer-maintained field list. Unrelated source edits avoid
+recalculation only where a migrated product provider establishes unchanged inputs.
+
+Write evidence atomically with its result in section-level sidecars:
 
 ```
 model.stratification.strataCalculatedFrom
 model.proportions.probabilityPerStratumCalculatedFrom
 ```
 
-The existing arrays and their owner-first joins are unchanged: `strata`, `probabilityPerStratum` and
-`anticipatedProportions` keep their current ownership locations and legacy joined-row compatibility.
+Keep `strata`, `probabilityPerStratum` and `anticipatedProportions` in their existing ownership locations, with
+owner-first joins and legacy joined-row compatibility. The generic result/evidence envelope does not wrap or
+relocate these arrays.
 
-Opening the recipe refreshes the revision vector of its dependencies. A result stays current only when **all**
-applicable evidence matches: the normalized operation question, the resource and contract versions, the recipe
-revision vector, refreshed asset evidence, and inline inputs such as polygon geometry. When it all matches, no
-recipe content is loaded. A changed revision triggers a reload and product re-resolution, and the operation-input
-fingerprint still decides reuse — a revision that moved for an unrelated reason can leave the result current.
-Differing fingerprints keep the old values only as stale context, block their use for submission and direct the
-user to recalculate. Retrieve revalidates afresh before submission rather than trusting the state established at
-open.
+On open and before submission, refresh dependency evidence and compare it under the shared contract. A dependency
+edited while this recipe was closed must be detected without requiring both recipes open or a revision event stream.
+A changed revision triggers product re-resolution; unchanged operation inputs preserve the expensive result.
+Mismatches keep old values only as stale context and require recalculation. Legacy results without sidecars become
+`UNKNOWN`, block submission like `STALE` and need one recalculation, potentially in batch, before their next submission.
+This is a target migration consequence, not an existing restriction on saved designs.
 
-A legacy result without sidecar evidence is `UNKNOWN`, which blocks submission exactly as `STALE` does: a result
-whose inputs cannot be established must not be presented as current. Every result that predates this design is in
-that position, so each such recipe needs one recalculation — potentially a batch calculation — before its next
-submission, with the existing values visible as context until then.
-
-A recipe selected as the AOI is consumed through the AOI geometry product it exposes, not as an undifferentiated
-recipe model. A changed source recipe revision causes that product to be resolved again. Where the referenced
-recipe type has a migrated AOI-product declaration, an unrelated edit leaves its AOI fingerprint unchanged and no
-new areas are needed; where it does not, the conservative fallback is whole persisted-source evidence and such an
-edit may mark the areas stale. A changed polygon, a replaced AOI asset observed through `system:version`, or a
-changed transitive recipe AOI always does.
-
-This works when the dependency was changed while Sampling Design was closed, and it depends on server-owned
-`revision` from the Node recipe-storage replacement. Revision events and future patch transport make
-already-open updates cheaper and faster; neither is required for correctness.
-
-Sampling Design owns these dependency descriptions, how stale areas and probabilities propagate to anticipated
-proportions and allocation, the recalculation controls and submission rules. The shared graph owns closure; the
-product resolver owns product fingerprints; and the freshness layer owns recipe and asset observation, replay,
-in-flight sharing and rejection of late results from superseded inputs.
+Migrate areas first, then probabilities, replacing the existing calculation caches rather than keeping two
+freshness implementations. Recipe revisions already exist; exact returned calculation evidence and the generic
+resource integration remain unfinished. No interim timestamp or browser whole-model hashing scheme is planned.
 
 ## Verification
 
-A directory of verification scripts sits alongside the gee module's source, outside the test suites, because
-the scripts need live Earth Engine and its credentials. Its own README
-describes what each covers and how to run them.
+[Live EE probes](../../modules/gee/verify/README.md) cover grid shape, Random/Systematic exactness and
+area-weighted proportions. They are hand-run, outside CI; rerun the relevant probes for grid changes.
+Recording stubs cover job graph construction, projection selection and metadata evaluation count, not EE pixels.
 
-They are **evidence, not regression protection** — nothing runs them automatically. Any change to grid
-handling should re-run all of them before it is considered done.
+Stratification/Proportions panel wiring lacks mounted integration coverage. Until covered, exercise a
+non-default source CRS/scale, late metadata, cleared overrides, Apply/Cancel and reopened placeholders in the
+browser. Pure helper tests do not establish that the panel uses their results correctly.
 
-Two structural obstacles explain the shape of the coverage:
-
-- A gee job module runs its worker plumbing on import, so reaching a job's graph means mocking `#gee/jobs/job`
-  (and `#sepal/ee/ee`) with recording stubs and asserting the structure the worker BUILDS. That is how the
-  projection rule, its three consumers and the `/assetMetadata` evaluation count are covered.
-- The Stratification and Proportions panel wiring is untested, because mounting a recipe form panel needs Redux
-  and recipe context that the existing widget tests never required. The obstacle is panel mounting, not missing
-  tooling: `widget/form/form.test.jsx` mounts a form-wrapped component with only the Redux HOC stubbed.
-  **This is where the defects actually land.** Four have reached a reviewer from this one component: a derived
-  CRS that was never adopted, one that was adopted and then read back stale, a flex value constraining the wrong
-  axis, and two placeholders reading keys the object did not have. Every pure function was correct every time,
-  and every suite was green every time.
-
-  It was first recorded as tolerable because the failures degrade silently rather than breaking loudly. That
-  reasoning is backwards: silent degradation is precisely why they survived every automated gate and were found
-  by eye. The gap is not a coverage nicety.
-
-  Until it is closed, the mitigation that has actually worked is moving decisions out of the panel into pure
-  functions — each one shrinks the untestable surface — and having a person exercise the panel against a source
-  that is not the default before shipping grid changes.
-
-## Deliberately not done
-
-- **Letting recipes declare their own source grid.** A recipe source defaults to `EPSG:4326` at 30 m because a
-  recipe declares no preferred grid. Where a recipe has exactly one unambiguous source grid it could declare
-  one, without forcing evaluation and therefore at no cost. Two assumptions to measure first: a single-asset
-  classification may already propagate the projection, since per-pixel operations preserve it and only
-  compositing loses it; and it is unconfirmed whether a declared projection surfaces in the band metadata the
-  GUI reads. Until then `/bands` returns band names and nothing is invented.
-- **Collection uniformity detection.** Priced and rejected: the check almost never changes the decision, since
-  the first member's grid is weakly better than a default even when members differ.
-- **Structured errors from the area and proportion calculations.** They throw a plain error where the task
-  boundary produces a renderable structured message. Latent, because both call sites supply a default. Not a
-  fix in passing — those jobs have no structured-exception plumbing, and the GUI consumes their failures
-  through a different path from task errors.
-- **Tiled candidate and final exports**, until real workloads justify the complexity.
-- **Promising sample retention** across enlarged, restratified or annual designs, until deterministic tests
-  establish the overlap contract.
+Deferred scope and unresolved experiments are tracked in the [workplan](../design/workplan.md#sampling-design-deferred-scope).
 
 ## Working with Earth Engine here
 
-Learned on this recipe, but none of it is specific to it.
-
-- **A failing fixture is carrying information.** Adjusting a fixture until it passes discards the finding, and
-  the suite stays green either way, so it leaves no trace. It happened here: a fixture failed on an AOI-edge
-  tie, an offset removed the tie, and a real behaviour became a recorded observation instead of an assertion.
-  The tell is that "removing a tie" and "removing a finding" describe the same edit, and the first phrasing is
-  what makes it feel safe.
-- **A poll-based cost guard bounds damage but cannot prevent overshoot.** In one withdrawn run EECU grew
-  roughly 3700 times in 30 seconds. Size a graph before submitting it; the guard is a backstop, not the control.
-- **Validate the shape that will ship.** A measurement taken on a different composition certifies a graph
-  nobody runs.
-- **Finite acceptance must include the configuration production actually runs**, not a neighbouring one, and
-  must compare against an independently derived oracle.
-- Set Earth Engine automatic retries to zero. Stop after the first unexpected semantic failure and understand
-  the failed graph and oracle before submitting a corrected variant.
-- **Heuristic thresholds failed here four times.** None could separate the good case from the bad one:
-  detecting a "real" projection by nominal scale, comparing raw floats for equality, a resolution sanity bound,
-  and a coarseness bound on derived grids. When a threshold cannot distinguish them, either measure the real
-  signal or leave the value visible and let a person judge. What replaced them is not a fifth threshold: the
-  comparison is exact canonical WKT, and the one remaining tolerance is the display rounding it has to undo,
-  measured against the real asset rather than guessed.
+- Preserve edge-case fixtures, including AOI-boundary ties; changing a fixture to avoid a failure loses evidence.
+- Measure the exact composed graph and configuration that will ship against an independent oracle.
+- Bound graph work before submission. Poll-based cost guards can overshoot between polls.
+- Set automatic retries to zero for probes; investigate the first unexpected semantic failure before rerunning.
+- Compare canonical WKT and the measured display-rounding tolerance. Nominal-scale heuristics do not establish
+  projection identity; keep uncertain values visible rather than inventing another threshold.

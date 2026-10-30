@@ -25,6 +25,17 @@
     max-height: 100dvh;
 }
 
+/* A recipe's dialog covers its tab's content, clear of the menu beside it. */
+.modalWrapper.tabDialog {
+    padding-left: var(--menu-clearance);
+    box-sizing: border-box;
+}
+
+.modalWrapper.tabDialog > * > .panel.modal {
+    max-width: calc(100% - 1rem);
+    max-height: calc(100% - 1rem);
+}
+
 .panel {
     --margin-left: calc(var(--menu-clearance) + .5rem);
     --margin-right: 3.5rem;

@@ -1,0 +1,19 @@
+.recipeLink {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.recipeLink:focus-visible {
+    outline: 1px solid var(--focus-ring-color) !important;
+    outline-offset: 2px;
+}
+
+.recipeLink:disabled {
+    opacity: .6;
+    cursor: wait;
+}

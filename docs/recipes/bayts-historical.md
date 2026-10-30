@@ -12,7 +12,7 @@ speckle filtering, outlier removal, masking - and `dates` bound it. The AOI is i
 ## Output
 
 Declared in `lib/js/shared/src/recipe/type/baytsHistorical.js` from the configuration alone (see the
-[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)): for each pass, in the
+[output contract](../design/recipes/output-products.md#declaration-and-description)): for each pass, in the
 order the model stores them, `VV_mean`, `VV_std`, `VH_mean`, `VH_std`, `orbit`, `VV_speckle` and `VH_speckle`,
 suffixed `_asc` or `_desc`. That is the order execution builds them in: each pass's radar time scan, then the speckle
 statistics added to it. Every band is scalar and stored as computed, with no encoding. Coarser pyramid levels keep the
@@ -75,27 +75,10 @@ the new monitoring observations are tested against the corrected ones.
 
 ## Verification
 
-- `modules/gee/verify/baytsHistoricalOutputBands.mjs` - on live Earth Engine and real Sentinel-1 imagery, over small
-  areas whose scenes it establishes first: the catalogue and the image built for no request, an empty selection and a
-  bare selection, per pass, for both passes either way round, and with speckle filtering off, QUEGAN and RABASAR;
-  output bands out of order, directly and through Masking; an unbuilt band refused. Each pass of a recipe of both,
-  with LEE either way round, without spatial filtering, with QUEGAN, RABASAR and every orbit number, equals a freshly
-  built recipe of that pass alone, band for band, and holds one of that pass's relative orbits. In an area without
-  ascending scenes: the complete output, the descending pass alone and the ascending pass alone, in the order asked,
-  the ascending bands masked throughout the area, the descending ones equal to a descending-only recipe's, and the
-  image bounded; the ascending pass alone refused, as is a recipe of both where neither has scenes; too few
-  observations masked, not refused; BAYTS Alerts alerting as over a descending-only history. Over a monitoring period
-  ending on an ascending scene, with normalization off and on and continuing initial alerts, a valid ascending pass
-  changes BAYTS' alerts, and a masked one gives exactly the descending-only alerts. Alerts are compared pixel by pixel
-  on one grid, every band: no pixel whose mask differs and no difference where both are valid, with pixels valid in
-  both for every band.
-- `lib/js/shared/test/recipe/output/type/baytsHistorical.test.js` - the declaration, its refusals, the capability BAYTS
-  Alerts reads, and Masking and Stack over it.
-- `modules/gee/test/jobs/ee/bayts/historicalOutputBands.node.test.mjs` - which bands a request returns, directly and
-  through Masking, with a pass without scenes and with none; the recipe each pass is built from.
-- `modules/gee/test/jobs/ee/bayts/historicalBands.test.js` - the catalogue, whatever is asked.
-- `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js` - the common read, presentation, presets,
-  Retrieve's order and policies, refused orbits, broken dependencies, and BAYTS Alerts over a historical recipe.
-- `modules/gui/src/app/home/body/process/recipe/baytsHistorical/baytsHistoricalOutput.test.js` - Masking and Stack over
-  it.
-- `modules/gee/test/jobs/task/export/imageAssetExport.test.js` - no encoding recorded, and refused orbits failing the export.
+- `lib/js/shared/test/recipe/output/type/baytsHistorical.test.js`: declaration, orbit refusals and inherited facts.
+- `modules/gee/test/jobs/ee/bayts/`: catalogue, requested output and per-pass construction; server export tests
+  cover metadata/refusal in `jobs/task/export/imageAssetExport.test.js`.
+- `modules/gui/src/app/home/body/process/recipe/baytsHistorical/` and `recipe/modelDerivedOutput.test.js`:
+  common reads, Retrieve, wrappers and broken dependencies.
+- [Historical live probe](../../modules/gee/verify/README.md): per-pass statistics, missing-pass masks and
+  refusals, filtering variants and downstream alert equivalence with valid comparison pixels.

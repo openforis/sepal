@@ -60,6 +60,13 @@ export const msg = (id, values = {}, defaultMessage) => {
 
 const languageKey = 'sepal:language'
 
+// Rich presentation uses the same catalogues and fallback, while leaving msg()'s string-only contract unchanged.
+export const richMsg = (id, values = {}) => {
+    const key = String(flattenDeep(id).join('.'))
+    const formatter = Object.hasOwn(intl.messages, key) ? intl : intlEn
+    return formatter.formatMessage({id: key, defaultMessage: key}, values)
+}
+
 export const getLanguage = () => {
     let language = localStorage.getItem(languageKey)
     if (!language) {

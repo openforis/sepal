@@ -11,10 +11,25 @@ makes a point in time, whatever period is also stated, and anything else is a ti
 a time scan and refused when run. `options` configures the collection: orbits, geometric correction, speckle
 filtering, outlier removal, border masking and the minimum number of observations.
 
+A target date supplies each missing bound independently: ±30 days with `outlierRemoval: 'NONE'`, also the execution
+default when omitted, or ±183 days with `CONSERVATIVE`, `MODERATE` or `AGGRESSIVE` (and numeric thresholds).
+New GUI recipes select `MODERATE`; that creation default does not change the execution default for omitted settings.
+An explicit `fromDate` or `toDate` wins for that side, even alongside a target date. Without a target date, execution
+passes the stated bounds through as a time scan. The collection applies these dates through `filterDate`.
+
+This rule also governs BAYTS first/last radar observations, which force `NONE`, and Change Alerts' latest radar
+mosaics, which retain their effective outlier-removal setting. BAYTS Historical and Change Alerts' radar time scans
+retain their explicit periods; BAYTS' alert-scoring collection has its own explicit monitoring interval.
+
+The corrected `NONE` window replaces the previous accidental ±183-day window. Recomputing an existing recipe with
+`NONE` or an omitted setting can therefore change contributing observations, masks or values wherever a bound is
+target-derived, including the reused map products. Saved models and user dates are not migrated; fully explicit
+intervals and wider-window modes retain their behavior.
+
 ## Output
 
 Each configuration declares its bands in `lib/js/shared/src/recipe/type/radarMosaic.js` (see the
-[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)), all scalar and
+[output contract](../design/recipes/output-products.md#declaration-and-description)), all scalar and
 without encoding:
 
 | Configuration | Bands, in order | Pyramiding |
@@ -36,29 +51,14 @@ observation and Change Alerts' radar collection mosaics are declared products de
 Sentinel-1 collection's measures for temporal consumers - CCDC, time series, charts - are a separate contract
 (`lib/js/shared/src/recipe/radar/collectionMeasures.js`).
 
-## Open issues
-
-- **Outlier removal never shortens the window.** `getDates` in `lib/js/ee/src/radar/mosaic.js` compares
-  `outlierRemoval === 'NONE   '`, with trailing spaces, so a point in time always composites ±183 days around its
-  target date and never the ±30 days intended without outlier removal. Correcting it changes pixels.
-- **A time scan reduces work it discards.** `toTimeScan` selects `VV.*` and `VH.*`, which sweeps the per-image
-  harmonic terms into the reduction whenever harmonics are computed; the final selection drops them.
-- **A recipe stating no dates fails with Earth Engine's own error**
-  (`Required argument (start) missing to function: DateRange`) rather than a stated reason.
-- **Its Orbits field names an undefined message.** The options panel
-  (`modules/gui/src/app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options.jsx`) requires a pass with
-  `process.recipeMosaic.panel.options.form.orbits.required`, which the translations do not define. The locale test only
-  checks literal `msg()` calls, not constraint messages, so it does not catch it.
-- **An unused style entry.** `constant` in `lib/js/ee/src/radar/visParams.js` matches no band.
-- Whether a point in time should offer `unixTimeDays` is an open product decision.
+Known limitations and follow-ups are tracked in the [workplan](../design/workplan.md#radar-mosaic).
 
 ## Verification
 
-- `modules/gee/verify/radarMosaicOutputBands.mjs` - on live Earth Engine, for both configurations under minimal and
-  saved-default options: the catalogue, unselected, empty and full requests, subsets out of order, harmonic subsets,
-  a target date beside a period, the refusal without dates and valid harmonic pixels. A point in time asked for
-  nothing is compared pixel by pixel, values and masks, with the same bands of an image computing harmonics.
-- `modules/gee/test/jobs/ee/radar/mosaicBands.test.js` - the catalogue per configuration, whatever is selected.
-- `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js` - the declaration, presentation,
-  presets, Retrieve groups and export policies through the real registration, and the BAYTS and Change Alerts views
-  that show a radar mosaic.
+- `modules/gee/test/jobs/ee/radar/mosaicBands.test.js`: configuration-dependent catalogue.
+- `modules/gee/test/jobs/ee/radar/mosaicDates.test.js`: dates passed to collection construction, execution defaults,
+  independent bound precedence, time scans and reused BAYTS/Change Alerts products.
+- `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js`: declaration, presentation,
+  Retrieve and delegated BAYTS/Change Alerts views.
+- [Radar live probe](../../modules/gee/verify/README.md): both schemas/defaults, selection order, harmonic
+  subsets, missing-date refusal and native-grid value/mask equivalence with/without harmonic construction.

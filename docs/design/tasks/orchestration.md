@@ -1,18 +1,28 @@
 # Task orchestration
 
-Proposal for running tasks (exports today, compute workloads later) from a shared, durable orchestrator on the
-main instance instead of on task-executor instances. Nothing described here is implemented.
+Current task ownership and container supervision are implemented. The durable-workflow, execution-bundle and
+compute-step architecture below remains a proposal. The
+[workplan](../workplan.md#tasks-and-exports) owns delivery slices and open work.
 
-## Problem
+## Current implementation and limits
 
-- **Cost.** A user's tasks share a task-executor instance per instance type. It stays up while any task runs,
-  billing through hours or days spent mostly waiting for Earth Engine exports.
-- **Compute workloads.** Workloads such as super-resolution need substantial local processing. Keeping a large
-  or GPU instance idle while EE exports makes the current model unsuitable for them.
-- **Sprawl.** A task's lifecycle is spread over `worker` (task rows, API, GUI websocket, dispatch), `modules/task`
-  (execution) and the EE recipe code. Understanding or changing one task means visiting all of them.
+`task-manager` owns persisted task rows, the GUI API, task-list websocket, dispatch and container supervision.
+Each task runs in a detached `openforis/task` container on the **main host**, with a task workspace, the user's
+home and a per-task API key. It no longer needs a worker session or a task-executor instance while waiting for EE.
+Task containers call gee through the gateway for EE work. The current contract is in
+[task-manager's module notes](../../../modules/task-manager/CLAUDE.md).
 
-## Goals
+Containers survive deploys and task-manager restarts and are rediscovered by label. This is container continuity,
+not durable step resumption: a Docker daemon restart or host reboot interrupts the task, which is marked failed
+and must be run again. Persisted task parameters are not coherent dependency bundles; recipe references still
+resolve live. Operation-specific loops, such as Sampling Design's staged calls, do not supply a general persisted
+workflow engine.
+
+The remaining problems are recoverable workflows and external effects, coherent accepted inputs, main-host
+capacity for local file work, and future resource-intensive/GPU steps. Task-type logic remains split between
+`modules/task` execution and gee's task endpoints; task-manager supplies generic lifecycle management.
+
+## Goals (target)
 
 - No task instance runs while a task only waits on Earth Engine.
 - Tasks survive deploys and restarts, including tasks that run for days.
@@ -42,9 +52,10 @@ main instance instead of on task-executor instances. Nothing described here is i
 
 ### Responsibilities
 
-A new `task-orchestrator` service on the main instance, shared by all users, owns tasks end to end: task state, the
-task API, the GUI websocket and the policies that apply to tasks. `worker` owns sessions and instances only, behind
-a session contract that knows nothing about tasks. The orchestrator requests sessions when a task needs an instance.
+The target orchestrator extends or replaces task-manager's current lifecycle ownership with durable workflows and
+session-independent policies. Its service/module packaging remains proposed. `worker` owns sessions and instances
+only, behind a session contract that knows nothing about tasks. The orchestrator requests sessions when a task needs
+an instance.
 A **task instance** is a worker instance running a session for a task.
 
 ### One module, several runtimes
@@ -90,9 +101,9 @@ work stays linked to its SEPAL task even after SEPAL loses control of it.
 
 ### Earth Engine through gee
 
-gee becomes the single service for task and interactive Earth Engine requests, building on the REST access model
-on the `sepal-server` branch. Its per-user, per-project and global request limits cover task traffic too, with
-interactive requests taking priority; a task request that cannot be admitted is told to retry later.
+Task containers already reach Earth Engine through gee. The target is shared admission for task and interactive
+traffic, with per-user, per-project and global limits, interactive priority and an explicit retry-later response for
+unadmitted task requests. Audit the existing gee request path before claiming those scheduling guarantees.
 
 ### Policies without sessions
 
@@ -123,23 +134,5 @@ A compute step declares its runtime requirements and instance type. The orchestr
 `worker`, runs the step on the runner and releases the session when the step ends. Task instances stay generic;
 how task environments are defined and provided is outside this proposal.
 
-## Stages
-
-Each stage can be deployed on its own.
-
-1. **Move task ownership, unchanged execution.** The orchestrator takes over tasks from `worker`, and `worker`
-   stops depending on task state. Every operation still runs on a task-executor session using today's image.
-2. **Durable engine and Earth Engine admission, for operations without file steps:** `image.DRIVE`, `image.GEE`,
-   `ccdc.GEE` and `samplingDesign.GEE`. Requires the Retrieve execution bundles specified in
-   [source-resolution.md](../recipes/source-resolution.md#retrieve), which are not yet implemented.
-3. **File steps:** `image.SEPAL`, `timeseries.download` and `samplingDesign.SEPAL`.
-4. **Retire task executors.** The task image leaves the worker AMI.
-5. **Compute steps.** Runner, task environments and the first compute task.
-
-## Open questions
-
-- **Recovering lost launch responses.** Stable EE request ids prevent duplicate exports, but recovery must also
-  find an accepted export whose launch response was lost. A reliable mechanism remains to be validated.
-- **Main-instance capacity.** Which file work is cheap enough to stay on the main instance at current task volumes,
-  and when the orchestrator needs an instance of its own.
-- **Compute environments.** How task-specific runtime requirements are defined and provided on task instances.
+Delivery slices, asset-mutation integration, scheduling and export extensions are tracked in the
+[workplan](../workplan.md#tasks-and-exports).

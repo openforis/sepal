@@ -11,6 +11,7 @@ import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/
 import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
+import {tooltipText} from '~/widget/tooltip.test.fixtures'
 
 // A Classification or Regression trained on another recipe's training data, which that recipe cannot produce - it has
 // no input imagery to sample its points over (TRAINING_DATA) - or whose imagery lacks a feature it trains on, or matches
@@ -36,7 +37,7 @@ vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => msg && !disabled && typeof msg !== 'function'
-        ? <span data-tooltip={JSON.stringify([msg].flat().filter(Boolean))}>{children}</span>
+        ? <span data-tooltip={JSON.stringify([msg].flat().map(tooltipText).filter(Boolean))}>{children}</span>
         : children
 }))
 // The Training data panel is open; the data set editor it opens is not.

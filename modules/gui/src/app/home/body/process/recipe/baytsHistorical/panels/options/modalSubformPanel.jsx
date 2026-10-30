@@ -38,7 +38,7 @@ export const modalSubformPanel = ({id, toTitle, toClassName, fields}) =>
                 const {inputsToUpdate, inputs} = this.props
                 Object.keys(inputsToUpdate)
                     .filter(name => Object.keys(inputs).includes(name))
-                    .forEach(name => inputs[name].set(inputsToUpdate[name].value))
+                    .forEach(name => inputs[name].setInitialValue(inputsToUpdate[name].value))
             }
     
             // A setting the source recipe's reference owns stays its current value, as the outer form presents it.

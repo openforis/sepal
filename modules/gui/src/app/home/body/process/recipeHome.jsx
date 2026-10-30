@@ -1,17 +1,17 @@
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {map, tap} from 'rxjs'
+import {tap} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
-import api from '~/apiRegistry'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {select} from '~/store'
+import {ModalScope} from '~/widget/panel/modalScope'
 import {Content, SectionLayout} from '~/widget/sectionLayout'
 import {closeTab} from '~/widget/tabs/tabActions'
 
-import {duplicateRecipe$, isRecipeOpen, moveRecipes$, openRecipe, openRecipeRevision, removeRecipes$, selectRecipe} from './recipe'
+import {duplicateRecipe$, moveRecipes$, openRecipeById$, removeRecipes$} from './recipe'
 import styles from './recipeHome.module.css'
 // import {publishEvent} from '~/eventPublisher'
 import {RecipeList} from './recipeList/recipeList'
@@ -25,37 +25,25 @@ class _RecipeHome extends React.Component {
     render() {
         const {recipeId} = this.props
         return (
-            <SectionLayout>
-                <Content className={styles.container} horizontalPadding verticalPadding menuPadding>
-                    <RecipeList
-                        recipeId={recipeId}
-                        onClick={recipeId => this.openRecipe(recipeId)}
-                        onDuplicate={recipeId => this.duplicateRecipe(recipeId)}
-                        onMove={(recipeIds, projectId) => this.moveRecipes(recipeIds, projectId)}
-                        onRemove={recipeIds => this.removeRecipes(recipeIds)}
-                    />
-                </Content>
-            </SectionLayout>
+            <ModalScope scope='application'>
+                <SectionLayout>
+                    <Content className={styles.container} horizontalPadding verticalPadding menuPadding>
+                        <RecipeList
+                            recipeId={recipeId}
+                            onClick={recipeId => this.openRecipe(recipeId)}
+                            onDuplicate={recipeId => this.duplicateRecipe(recipeId)}
+                            onMove={(recipeIds, projectId) => this.moveRecipes(recipeIds, projectId)}
+                            onRemove={recipeIds => this.removeRecipes(recipeIds)}
+                        />
+                    </Content>
+                </SectionLayout>
+            </ModalScope>
         )
     }
 
     openRecipe(recipeId) {
         const {stream} = this.props
-        if (isRecipeOpen(recipeId)) {
-            selectRecipe(recipeId)
-        } else {
-            stream('LOAD_RECIPE',
-                this.loadRecipe$(recipeId),
-                recipe => openRecipe(recipe)
-            )
-        }
-    }
-
-    // Bypass the dependency cache so content and the first save revision come from one authoritative load.
-    loadRecipe$(recipeId) {
-        return api.recipe.load$(recipeId).pipe(
-            map(recipe => openRecipeRevision(recipe))
-        )
+        stream('LOAD_RECIPE', openRecipeById$(recipeId, {inNewTab: false}))
     }
 
     duplicateRecipe(recipeIdToDuplicate) {

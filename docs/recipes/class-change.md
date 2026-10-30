@@ -52,7 +52,7 @@ step, neither its button nor an untouched legend says it yet. The legend's ten-e
 ## Output
 
 Class Change always declares two scalar bands (see the
-[output-declaration migration](../design/recipes/data-sources.md#output-declaration-migration)):
+[output contract](../design/recipes/output-products.md#declaration-and-description)):
 
 - `transition`, exported with `mode` pyramiding;
 - `confidence`, exported with `mean` pyramiding.
@@ -75,25 +75,10 @@ rewritten; recompute or re-export to get codes that match their labels.
 
 ## Verification
 
-- `lib/js/shared/test/recipe/output/type/changeSelectedBands.test.js` - Class Change and Index Change refused at a
-  band, or error band, the source lacks, described once both images are, and from a recipe image's configuration.
-- `lib/js/shared/test/recipe/output/readiness.test.js` - a Class Change without either legend, or both, described and
-  refused at each legend, and a Masking of it held until the legend is configured.
-- `modules/gui/src/app/home/body/process/recipe/changeImageRequirements.test.jsx` - both recipes' marks, Retrieve and
-  preview gates for a band gone, repair, Cancel, pending and failed reads, the saved band kept in the editor; Index
-  Change's error band; a recipe gone or failing to load; one image's recipe gone beside the other's still being read
-  or failing otherwise, before or after it; an asset found missing, alone and beside a recipe gone, whichever is
-  found last; a missing recipe attributed to the edge that names it; a Class Change image without a legend:
-  marked, gated, said beside its legend in the editor, repaired by applying a draft with classes, quiet when the
-  set-up wizard arrives at it and beside a legend the draft leaves empty; and, for both recipes, a replaced source
-  keeping a band it provides and clearing one it lacks quietly (Index Change's error band too), and a kind switch
-  starting the new selector focused and neutral, the saved recipe unchanged until applied.
-- `lib/js/shared/test/recipe/source/recipeClosureLoader.test.js` - a failed read naming its record and ending the
-  others at once.
-
-- `modules/gee/test/jobs/ee/image/classChangeNumbering.node.test.mjs` - execution gives every transition the code
-  `classTransitions` gives it, for ascending, text-ordered-differently, reordered and mixed legends.
-- `modules/gee/test/jobs/ee/image/modelDerivedOutputBands.node.test.mjs` - both execution branches build the declared
-  bands.
-- `modules/gee/verify/classChangeConfidence.mjs` - on live Earth Engine: both bands' values and masks for every way
-  the images can carry probabilities, and the pixel code of every transition between reordered legends.
+- `lib/js/shared/test/recipe/output/type/changeSelectedBands.test.js` and `output/readiness.test.js`:
+  missing bands/legends and downstream holds; `source/recipeClosureLoader.test.js` covers failed reads.
+- `modules/gui/src/app/home/body/process/recipe/changeImageRequirements.test.jsx`: source replacement,
+  saved missing choices, unavailable evidence, isolated draft repair, marks and preview/Retrieve recovery.
+- `modules/gee/test/jobs/ee/image/classChangeNumbering.test.js` and `modelDerivedOutputBands.test.js`:
+  execution/declaration numbering and both output branches.
+- [Live confidence probe](../../modules/gee/verify/README.md): transition codes, probabilities, values and masks.

@@ -14,6 +14,7 @@ import {ActivationContext} from '~/widget/activation/activationContext'
 import {EventShield} from '~/widget/eventShield'
 import {PanelWizard} from '~/widget/panelWizard'
 import {PortalContainer, PortalContext} from '~/widget/portal'
+import {tooltipText} from '~/widget/tooltip.test.fixtures'
 
 // What CCDC Retrieve is held to, as the server holds the export (imageOutput.js, modules/gee): its image output - the
 // Classification its Sources select trainable among it, whatever measures are selected or breakpoint bands fitted
@@ -702,7 +703,7 @@ const RecordingWatches = ({children}) => {
 
 // The sections the toolbar marks, as it watches what marking them needs.
 const SectionMarks = compose(
-    ({sourceProblems}) => <output aria-label='marks' data-marks={JSON.stringify(sourceProblems)}/>,
+    ({sourceProblems}) => <output aria-label='marks' data-marks={JSON.stringify(tooltipText(sourceProblems))}/>,
     withSourceProblems(),
     withRecipe(recipe => ({recipeId: recipe.id}))
 )
