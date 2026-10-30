@@ -9,6 +9,8 @@ echo "*****************************"
 export JAVA_HOME=/usr/local/lib/sdkman/candidates/java/current
 export JAVA_CPPFLAGS="-I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux"
 export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/lib/server:${JAVA_HOME}/lib
+# XLConnect runs java when it loads
+export PATH=${JAVA_HOME}/bin:${PATH}
 export R_DEFAULT_INTERNET_TIMEOUT=7200
 
 CRAN_REPO=http://localhost:8180
@@ -306,9 +308,16 @@ R -e "remotes::install_url(c($(rVector "${GITHUB_URLS[@]}")), repos='$CRAN_REPO/
 
 R -e "torch::install_torch(cuda_version = '12.8')"
 
-# install.packages() and install_url() only warn when a package fails to install
-R -e "
-    missing <- setdiff(c($(rVector remotes "${CRAN_PACKAGES[@]}" "${GITHUB_PACKAGES[@]##*/}")), rownames(installed.packages()))
-    if (length(missing)) stop('Packages not installed: ', paste(missing, collapse = ', '))
-    if (!torch::torch_is_installed()) stop('libtorch not installed')
-"
+# install.packages() and install_url() only warn when a package fails to install, and a binary package
+# installs even when its compiled code can't load. Each package loads in its own R process, to stay below
+# R's limit on loaded DLLs.
+FAILED_PACKAGES=()
+for package in remotes "${CRAN_PACKAGES[@]}" "${GITHUB_PACKAGES[@]##*/}"; do
+    Rscript -e "loadNamespace('$package')" > /dev/null || FAILED_PACKAGES+=("$package")
+done
+if (( ${#FAILED_PACKAGES[@]} )); then
+    echo "Packages that fail to load: ${FAILED_PACKAGES[*]}" >&2
+    exit 1
+fi
+
+R -e "if (!torch::torch_is_installed()) stop('libtorch not installed')"
