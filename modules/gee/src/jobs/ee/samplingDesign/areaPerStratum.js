@@ -6,17 +6,27 @@ import ee from '#sepal/ee/ee'
 import imageFactory from '#sepal/ee/imageFactory'
 import {stratificationProjection} from '#sepal/ee/samplingDesign/stratificationImage'
 import {fileName} from '#sepal/path'
+import {
+    STRATUM_AREAS,
+    STRATUM_AREAS_CONTRACT,
+    STRATUM_FRAME,
+    stratumAreasQuestionOf,
+    stratumFrameQuestionOf
+} from '#sepal/recipe/samplingDesign/stratumFrame'
 
+import {withDependencyEvidence$} from '../../dependencyEvidence.js'
 import {userStorageSerializerService} from '../../service/userStorageSerializer.js'
 import {exportToCSV$} from '../batch/exportToCSV.js'
 import {parseGroups} from '../batch/parse.js'
 
+// With `evidence`, the areas are answered with what they were calculated from (calculation/freshness.js): the stratum
+// frame as this request read it, and the Scale. Without it, the areas alone, as callers that never ask still expect.
 const worker$ = ({
-    requestArgs: {aoi, stratification, band, scale, crs, batch},
+    requestArgs: {aoi, stratification, band, scale, crs, batch, evidence},
     credentials: {sepalUser}
 }) => {
     const description = 'area-per-stratum'
-    return toGeometry$(aoi).pipe(
+    const areas$ = () => toGeometry$(aoi).pipe(
         switchMap(geometry =>
             eeSelectedBand$().pipe(
                 map(selected => reduceRegion(selected, geometry)),
@@ -37,6 +47,22 @@ const worker$ = ({
         ),
         map(o => o.groups)
     )
+    return evidence
+        ? withDependencyEvidence$({
+            dependency: STRATUM_FRAME,
+            question: stratumFrameQuestionOf({aoi, stratification, band, crs}),
+            calculate$: areas$
+        }).pipe(
+            map(({result, evidence}) => ({
+                groups: result,
+                calculatedFrom: {
+                    resource: {id: STRATUM_AREAS, contractVersion: STRATUM_AREAS_CONTRACT},
+                    question: stratumAreasQuestionOf({scale}),
+                    dependencies: {[STRATUM_FRAME]: evidence}
+                }
+            }))
+        )
+        : areas$()
 
     // Unstratified (stratification: null): a single constant stratum covering the whole AOI, so the AOI
     // area is returned as [{stratum: 1, area}]. Mirrors probabilityPerStratum.js's constant-stratum path.

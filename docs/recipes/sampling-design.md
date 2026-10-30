@@ -234,73 +234,109 @@ Each was established by measurement, and each is cheap to break by accident.
 
 ## Derived-result freshness
 
-### Current invalidation
+### Stratum areas and the stratum frame
 
-The recipe compares successive applied models while its tab is mounted and writes section-level `requiresUpdate`
-flags together. An AOI edit invalidates stratified areas and propagates to proportions and allocation. Proportions
-also track the stratification frame and stratum identities; manual proportions depend on identities rather than
-weights. Allocation tracks the ordered strata, applicable weights, proportions and their readiness. Panels calculate
-against their own candidate settings and Apply saves those settings with the result. Retrieve refuses applicable
-sections marked `requiresUpdate`, alongside its allocation and grid checks.
+The stratum frame is which pixels belong to which stratum: the stratification product and its selected band, where
+stratified; the AOI, with whatever recipe or table it references; and the Stratification CRS
+(`lib/js/shared/src/recipe/samplingDesign/stratumFrame.js`). Areas read it at their Scale under the reduction
+contract; automatic proportions read it with their own probability settings. Equal stratum totals or weights never
+establish that two frames group the same pixels.
 
-Two in-memory caches hold successful raw area/probability responses for the recipe tab's lifetime, across panel
-closure and tab switching. Access with a different AOI clears the cache's scope; form-derived keys distinguish
-source references, selected bands, grids, mode and target class. Percentage interpretation, overall target and
-weights are applied locally to raw probabilities, rather than making another Earth Engine calculation. Panel
-request cancellation handles changed candidate inputs.
+`areaPerStratum` asked for evidence answers `{groups, calculatedFrom}`; `probabilityPerStratum` answers
+`{probabilityPerStratum, stratumFrameEvidence}`. The evidence is what that request read: the frame's closure through
+its `RecipeScope`, each recipe projected by its own type (the whole persisted model where a type declares no
+`dependencyProjection`), and each asset's `updateTime`, read before the calculation and again before it answers - a
+token that moved refuses the answer (`modules/gee/src/jobs/dependencyEvidence.js`). Callers that do not ask keep the
+bare response. Apply saves `stratification.strataCalculatedFrom` with `strata`, and `proportions.stratumFrameEvidence`
+with automatic proportions; the latter establishes the frame's currency only.
 
-Those keys and flags do not establish persisted calculation provenance. No `calculatedFrom` sidecars or generic
-derived resources are implemented, and no recipe revisions or asset replacement tokens are attached to the stored
-results or these cache keys. Closing the tab drops the caches; reopening does not prove saved areas/probabilities
-current when a referenced recipe or same-ID asset changed. General source-runtime freshness does not supply that
-missing evidence for materialized results.
+Results are compared by the shared rule (`lib/js/shared/src/recipe/calculation/freshness.js`), by the meaning of what
+was read rather than its provenance: a different question is `STALE`; the same frame digest is `CURRENT` at whatever
+revisions, so a title-only revision changes nothing and proportions calculated at a newer revision match older areas;
+another digest or token is `STALE`; no evidence is `UNKNOWN`; a source without a token (a Cloud GeoTIFF, an asset
+without `updateTime`) is `UNVERSIONED`, which only selecting another source repairs. `CURRENT` means no change was
+observed: a token does not pin the pixels Earth Engine reads.
 
-### Target: persisted calculation evidence
+While a design is open the source runtime keeps the frame's current evidence (`sourceRuntime/calculationEvidence.js`),
+acquired from `POST /api/gee/dependencyEvidence` and published runtime-only on the recipe. Reads and calculations are
+shared only under the same credentials, compared by identity. What an answer reports it read is the session's to know:
+a revision storage held advances the recipe listing, or is kept as observed for a recipe it does not list
+(`recipeListing.js`), which every runtime answer is judged against (`recordCurrency.js`); a token other than the one the
+session read before the request began is held as a known asset change until the session reads the asset again - so a
+later answer reporting what is older never overrides newer evidence. Evidence is judged by the same rules as every other runtime answer
+(`sourceRuntime/evidenceStanding.js`): its credentials, its age, and a ledger of what it read with the listing and
+recipe and asset refresh counts taken when it was asked. Other credentials, a newer revision, a recipe no longer listed,
+another asset token or an explicit Refresh - one made while it ran included - withdraw it to be read again. A recipe it
+read open as a draft storage does not hold (`draftAgreement.js`), or an asset without current authority - not yet
+checked, its check lapsed or failing, or a known mutation still settling - holds it back without reading storage. It is
+read again before Retrieve's five-minute authority lapses, and whoever reads what is published judges its age as it
+reads, at submission too.
 
-Sampling Design is the proposed first consumer of the
-[generic persisted-result contract](../design/recipes/source-freshness.md#persisted-derived-result-evidence).
-That contract owns operation-produced evidence, product fingerprints, comparison, sharing and superseded-response
-rejection. The dependencies and propagation below belong to this recipe and are not current behavior.
+The panels calculate through one shared binding (`recipe/calculatedResult.js`) the type declares
+(`calculatedResults`, `calculations.js`): each result names its panel, how its question is built from the edited model,
+whether the model holds a result, its Online/Batch mode, where an answer carries the frame's evidence, the operation it
+is held to and how an answer must fit the applied design; the panel supplies only what it makes of an answer. While a
+panel is open the binding calculates what the edit requires, in the mode chosen beside the result: as the panel opens
+and as it is edited, once the question can be asked and the frame's evidence for it is usable, where the edit holds no
+result, one answering another question, or one `STALE` or saved without evidence (`UNKNOWN`). The evidence itself is
+judged, not the result's state - empty proportions report `CURRENT` - so a frame still being read, unreadable,
+expired or read from a source without a token starts nothing, and the panel says so in place of a result it has not
+calculated. A current result is reused, and elapsed time only reads the frame's evidence again; manual proportions are
+never calculated. Each question is
+asked once in each mode for each state of the edit: a failure or a superseded answer is not asked again as evidence is
+read again, only on an edit, another mode, or the panel's Retry. Calculated results are drafts: Apply takes them,
+Cancel leaves the saved design as it was, and Apply waits while one is being calculated. The binding shares the
+calculation through the runtime, cancels it once the edit asks something else, refuses an answer superseded or read
+from a disagreeing draft (`SOURCE_BASIS_CHANGED`), and keeps the frame's evidence for the edited question current, so a
+draft calculated for another CRS or source stays applicable through a revision that leaves its frame meaning the same.
+The Proportions calculation waits on the declared `STRATUM_PROBABILITIES` gate while a stratified design's areas are not
+current - asking nothing, and asking once they are - and takes a stratified answer only over the frame those areas were
+calculated from. Recalculated strata keep their labels and colours; strata of a newly selected source or band take its
+legend first.
 
-| Calculation | Inputs |
-| --- | --- |
-| `SAMPLING_STRATUM_AREAS` | Resolved AOI geometry product; stratification image product and selected band; configured Stratification CRS and Scale; relevant product/calculation contracts. |
-| `SAMPLING_STRATUM_PROBABILITIES` | Resolved AOI geometry; optional stratification product, band and applicable grid; categorical/probability product and selected band; mode, target class and Proportions Scale; relevant product/calculation contracts. |
+The panels say how the result shown stands beside it, as the result's own feedback (`editedResultFeedback`): not
+current, not confirmed, still being checked, or waiting on the areas. While it is calculated, a short status beside the
+spinner says so. Recalculation after input changes uses one line; legacy results retain an explanation directly
+beneath the status text, indented past the spinner
+(`panels/calculationProgress.jsx`). Through the binding, the form panel judges what is edited against the frame it configures, whatever the applied
+design says: Apply, Enter and a set-up wizard's Next refuse areas or automatic proportions established `STALE`, or
+whose currency cannot be established yet, so a fresh calculation repairs a stale design while a draft overtaken by a
+change is not applied. `UNKNOWN` and `UNVERSIONED` results can still be applied.
 
-The probability-only source is an operation-scoped dependency, not automatically an execution edge of the final
-design. Anticipated proportions are not a third Earth Engine calculation: their local derivation reads raw
-probabilities, percentage interpretation, the overall-proportion target and current stratum weights. Stale areas
-or probabilities propagate to the dependent proportions and allocation; manual choices retain their own semantics.
-Sampling Design owns these propagation rules, recalculation controls, messages and submission blocking.
+The sections are declared as Sampling Design's requirements (`freshnessRequirements.js`), and the toolbar marks them
+through the shared section presentation (`sectionButton.jsx`, `selectedSourceStatus.js`): amber for unfinished setup -
+nothing set up yet, or a result saved without evidence that opening its panel calculates once - and red for a result
+established stale, a source that cannot report replacement, or what the planner flags. Each finding waits on what it
+reads: Proportions on the areas, and the allocation on the areas and the proportions - its counts or the uncertainty
+it shows read them, whatever the strategy and with manual counts too - unless proportions are skipped, which leaves
+nothing to wait on. A waiting section is neutral, with its ordinary tooltip, and says nothing of its own
+until what it waits on is sound; findings that do not depend on it stay marked. An incomplete design can be saved
+between steps; Retrieve (`SAMPLES`) waits, is unavailable, is out of date or is refused through the shared requirement
+gates and its own checks. Each task stage
+that reads the AOI or stratification again compares the design with what its own request reads before exporting
+anything (`modules/gee/src/jobs/task/samplingDesign/freshnessGate.js`), refusing changed inputs and designs submitted
+without evidence.
 
-AOI evidence follows its kind: canonical inline geometry; asset/table reference and geometry-affecting selection
-with verified replacement evidence; a recipe's resolved AOI product and transitive dependencies; the concrete source
-product for `ASSET_BOUNDS`; or immutable GeoID plus buffer. A GeoID is not polled for change, though lookup can fail.
-The AOI product owner decides what affects geometry. Until its shared declaration agrees with execution, use
-conservative whole persisted-source evidence, never a consumer-maintained field list. Unrelated source edits avoid
-recalculation only where a migrated product provider establishes unchanged inputs.
+Saved designs without evidence read `UNKNOWN` until their areas, and automatic proportions, are recalculated once.
+Unstratified designs have no area calculation; manual proportions follow stratum identities only. Calculation evidence
+is kept out of the samples' `recipe_*` properties.
 
-Write evidence atomically with its result in section-level sidecars:
+### Remaining edit-driven invalidation
 
-```
-model.stratification.strataCalculatedFrom
-model.proportions.probabilityPerStratumCalculatedFrom
-```
+The planner (`planDerivedUpdates.js`) compares successive applied models while the tab is mounted and writes
+`proportions.requiresUpdate` and `sampleAllocation.requiresUpdate`: proportions follow stratum identities; allocation
+follows the ordered strata, applicable weights, proportions and their readiness, and its own settings. Retrieve
+refuses those flags alongside its allocation and grid checks; the toolbar marks them only through the section
+requirements, so a flag on a section waiting on another marks nothing yet, and a flagged section holding no result
+yet is unfinished rather than wrong. Whether the probability source itself changed elsewhere is not evidenced yet:
+probabilities are reused while their frame evidence is current and the Proportions panel asks nothing else of them.
 
-Keep `strata`, `probabilityPerStratum` and `anticipatedProportions` in their existing ownership locations, with
-owner-first joins and legacy joined-row compatibility. The generic result/evidence envelope does not wrap or
-relocate these arrays.
+### Target: probability evidence
 
-On open and before submission, refresh dependency evidence and compare it under the shared contract. A dependency
-edited while this recipe was closed must be detected without requiring both recipes open or a revision event stream.
-A changed revision triggers product re-resolution; unchanged operation inputs preserve the expensive result.
-Mismatches keep old values only as stale context and require recalculation. Legacy results without sidecars become
-`UNKNOWN`, block submission like `STALE` and need one recalculation, potentially in batch, before their next submission.
-This is a target migration consequence, not an existing restriction on saved designs.
-
-Migrate areas first, then probabilities, replacing the existing calculation caches rather than keeping two
-freshness implementations. Recipe revisions already exist; exact returned calculation evidence and the generic
-resource integration remain unfinished. No interim timestamp or browser whole-model hashing scheme is planned.
+`SAMPLING_STRATUM_PROBABILITIES` adds to the stratum frame the categorical/probability product and selected band, mode,
+target class and Proportions Scale, as `model.proportions.probabilityPerStratumCalculatedFrom`, composing the frame
+evidence unchanged and replacing `proportions.requiresUpdate` for automatic proportions. Anticipated proportions remain
+a local derivation from raw probabilities, percentage interpretation, the overall-proportion target and current weights.
 
 ## Verification
 
@@ -308,9 +344,10 @@ resource integration remain unfinished. No interim timestamp or browser whole-mo
 area-weighted proportions. They are hand-run, outside CI; rerun the relevant probes for grid changes.
 Recording stubs cover job graph construction, projection selection and metadata evaluation count, not EE pixels.
 
-Stratification/Proportions panel wiring lacks mounted integration coverage. Until covered, exercise a
-non-default source CRS/scale, late metadata, cleared overrides, Apply/Cancel and reopened placeholders in the
-browser. Pure helper tests do not establish that the panel uses their results correctly.
+Mounted Stratification/Proportions tests exercise the real panels, forms, store and source runtime with substituted
+Earth Engine reads. They cover automatic calculation, dependency evidence, edited grids, prerequisite ordering and
+Apply/Cancel. Browser checks have accepted the panel behaviour and presentation. Live verification of the new
+evidence path, Online/Batch calculations and task-stage checks remains outstanding.
 
 Deferred scope and unresolved experiments are tracked in the [workplan](../design/workplan.md#sampling-design-deferred-scope).
 

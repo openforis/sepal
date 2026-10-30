@@ -111,24 +111,25 @@ describe('planDerivedUpdates - proportions', () => {
         ['manual, weights changed', manualProportions(base), manualProportions(withStrata(base, SHIFTED_WEIGHTS)), 'keep'],
         ['manual, areas rescaled', manualProportions(base), manualProportions(withStrata(base, RESCALED_AREAS)), 'keep'],
         ['manual, Stratification Scale changed', manualProportions(base), manualProportions(_.merge({}, base, {stratification: {scale: 100}})), 'keep'],
-        // ...but a new AOI makes the strata themselves an outstanding Earth Engine result, so the strata the
-        // rows would be reconciled against are not known yet.
-        ['manual, AOI changed', manualProportions(base), manualProportions(_.merge({}, base, {aoi: {id: 'countries/KEN'}})), 'recalculate'],
+        // A new AOI reaches manual answers only through the identities recalculated areas bring; until then the areas'
+        // evidence holds the section (freshnessRequirements.js).
+        ['manual, AOI changed', manualProportions(base), manualProportions(_.merge({}, base, {aoi: {id: 'countries/KEN'}})), 'keep'],
         ['manual, source changed', manualProportions(base), manualProportions(_.merge({}, base, {stratification: {assetId: 'users/x/other'}})), 'keep'],
         // A new stratum has no manual answer, so the panel has to be opened for one.
         ['manual, stratum added', manualProportions(base), manualProportions(withStrata(base, EXTRA_STRATUM)), 'recalculate'],
 
-        // Calculated proportions come out of an Earth Engine reduction over the frame, so the frame and the
-        // stratum identities are exactly what they depend on.
+        // Calculated proportions come out of an Earth Engine reduction over the stratum frame. Whether that frame is
+        // still the one they were calculated over is their frame evidence's (stratumFrame.js), whichever setting or
+        // source moved; the planner follows only the stratum identities their rows are keyed by.
         // The reduction runs at the PROPORTIONS Scale, which is concrete configuration. The Stratification
         // Scale changes how large a stratum turns out - its weight - but the reduction still groups by stratum
         // over the same AOI in the same CRS at the same resolution, so the proportions it produces do not move.
         ['calculated, Stratification Scale changed', base, _.merge({}, base, {stratification: {scale: 100}}), 'keep'],
         ['calculated, own Scale changed', _.merge({}, base, {proportions: {scale: 50}}), _.merge({}, base, {proportions: {scale: 80}}), 'keep'],
-        ['calculated, CRS changed', base, _.merge({}, base, {stratification: {crs: 'EPSG:6933'}}), 'recalculate'],
-        ['calculated, source changed', base, _.merge({}, base, {stratification: {assetId: 'users/x/other'}}), 'recalculate'],
-        ['calculated, band changed', base, _.merge({}, base, {stratification: {band: 'other'}}), 'recalculate'],
-        ['calculated, AOI changed', base, _.merge({}, base, {aoi: {id: 'countries/KEN'}}), 'recalculate'],
+        ['calculated, CRS changed', base, _.merge({}, base, {stratification: {crs: 'EPSG:6933'}}), 'keep'],
+        ['calculated, source changed', base, _.merge({}, base, {stratification: {assetId: 'users/x/other'}}), 'keep'],
+        ['calculated, band changed', base, _.merge({}, base, {stratification: {band: 'other'}}), 'keep'],
+        ['calculated, AOI changed', base, _.merge({}, base, {aoi: {id: 'countries/KEN'}}), 'keep'],
         ['calculated, stratum added', base, withStrata(base, EXTRA_STRATUM), 'recalculate'],
         // Area and weight are outputs of the same stratification the proportions were computed against, not
         // inputs to the reduction.
@@ -311,29 +312,6 @@ describe('planDerivedUpdates - a missing allocation target', () => {
     })
 })
 
-describe('planDerivedUpdates - stratification', () => {
-    // The strata themselves are an Earth Engine result over the AOI, so a new AOI makes them stale.
-    it('marks stratification stale when the AOI changes', () => {
-        const plan = planDerivedUpdates(base, _.merge({}, base, {aoi: {id: 'countries/KEN'}}))
-        expect(plan.stratification).toEqual({action: 'recalculate', requiresUpdate: true})
-    })
-
-    it('leaves stratification alone when only its own strata change', () => {
-        expect(planDerivedUpdates(base, withStrata(base, SHIFTED_WEIGHTS)).stratification.action).toBe('keep')
-    })
-
-    // Unstratified: the single synthetic stratum takes its area from the AOI geometry at the export boundary,
-    // so there is no Earth Engine result for a new AOI to invalidate.
-    it('never marks a skipped stratification stale', () => {
-        const unstratified = _.merge({}, base, {stratification: {skip: true}})
-        const plan = planDerivedUpdates(unstratified, _.merge({}, unstratified, {aoi: {id: 'countries/KEN'}}))
-        expect(plan.stratification).toEqual({action: 'notApplicable', requiresUpdate: false})
-    })
-})
-
-// The plan is applied by writing it back into the same model it was planned from, so a plan that reacted to
-// its own writes would dispatch forever. Settling is the property that rules that out, and it is not visible
-// from a single plan.
 describe('planModelUpdates settles', () => {
     it('writes nothing at all when no semantic input moved', () => {
         expect(planModelUpdates(base, withStrata(base, RENAMED))).toEqual([])
@@ -697,34 +675,24 @@ describe('planDerivedUpdates - invalidation reaches every section in one plan', 
         sampleAllocation: {...base.sampleAllocation, requiresUpdate: false}
     }
     const flags = updates => updates.map(([path, value]) => [path.join('.'), value]).sort()
-    const sourceChanged = {...ready, stratification: {...ready.stratification, assetId: 'users/x/other'}}
+    const strataChanged = withStrata(ready, EXTRA_STRATUM)
 
     it('flags the allocation in the same plan that flags the proportions', () => {
-        expect(flags(planModelUpdates(ready, sourceChanged))).toEqual([
+        expect(flags(planModelUpdates(ready, strataChanged))).toEqual([
             ['proportions.requiresUpdate', true],
             ['sampleAllocation.requiresUpdate', true]
         ])
     })
 
-    // The strata are an Earth Engine result over the AOI, so a new AOI stales all three at once.
-    it('flags all three sections when the AOI moves', () => {
-        const relocated = {...ready, aoi: {type: 'EE_TABLE', id: 'countries/KEN'}}
-        expect(flags(planModelUpdates(ready, relocated))).toEqual([
-            ['proportions.requiresUpdate', true],
-            ['sampleAllocation.requiresUpdate', true],
-            ['stratification.requiresUpdate', true]
-        ])
-    })
-
     it('settles after the flags are applied', () => {
-        const flagged = applyUpdates(sourceChanged, planModelUpdates(ready, sourceChanged))
-        expect(planModelUpdates(sourceChanged, flagged)).toEqual([])
+        const flagged = applyUpdates(strataChanged, planModelUpdates(ready, strataChanged))
+        expect(planModelUpdates(strataChanged, flagged)).toEqual([])
     })
 
     // Recalculated proportions can land on exactly the numbers they replaced. The allocation was flagged
     // because its input became stale, and only its own panel can clear that.
     it('leaves the allocation flagged when the recalculated proportions are identical', () => {
-        const flagged = applyUpdates(sourceChanged, planModelUpdates(ready, sourceChanged))
+        const flagged = applyUpdates(strataChanged, planModelUpdates(ready, strataChanged))
         const reapplied = {...flagged, proportions: {...flagged.proportions, requiresUpdate: false}}
         expect(planModelUpdates(flagged, reapplied))
             .not.toContainEqual([['sampleAllocation', 'requiresUpdate'], false])
@@ -761,74 +729,23 @@ describe('planDerivedUpdates - invalidation reaches every section in one plan', 
     })
 })
 
-// Stratification is upstream of everything. While its own result is stale, the strata the recipe still
-// carries are the OLD ones - the identities and weights every downstream section reads are about to be
-// replaced by numbers nobody has computed yet. Waiting for those numbers to arrive before flagging the
-// sections that consume them makes one edit take several sequential passes, and leaves an allocation
-// reading superseded strata looking settled in between.
-describe('planDerivedUpdates - a stale stratification invalidates its consumers at once', () => {
+// Whether the stratum areas and automatic proportions are still about the AOI, the stratification and what they read is
+// judged by the evidence saved with them (freshnessRequirements.js), never by this plan. What a recalculation brings
+// - new identities, new weights - is what the plan follows.
+describe('planDerivedUpdates - the stratum frame is not the planner\'s', () => {
     const settled = overrides => _.merge({}, base, {
-        stratification: {requiresUpdate: false},
         proportions: {requiresUpdate: false},
         sampleAllocation: {requiresUpdate: false}
     }, overrides)
-    const relocate = model => ({...model, aoi: {type: 'EE_TABLE', id: 'countries/KEN'}})
     const flags = updates => updates.map(([path, value]) => [path.join('.'), value]).sort()
 
-    // Manual proportions are a within-stratum judgement, and the strata they will have to be judged against
-    // are exactly what is being recalculated - so the rows cannot be reconciled until they arrive.
-    it('flags manual proportions and a manual allocation when the AOI moves', () => {
-        const previous = manualAllocation(manualProportions(settled()))
-        expect(flags(planModelUpdates(previous, relocate(previous)))).toEqual([
-            ['proportions.requiresUpdate', true],
-            ['sampleAllocation.requiresUpdate', true],
-            ['stratification.requiresUpdate', true]
-        ])
-    })
-
-    // Skipped proportions have nothing to recompute, so they stay unflagged - but the allocation still reads
-    // the stratum identities, so it does not.
-    it('flags the allocation but not skipped proportions when the AOI moves', () => {
-        const previous = skippedProportions(settled())
-        const updates = planModelUpdates(previous, relocate(previous))
-        expect(flags(updates)).toEqual([
-            ['sampleAllocation.requiresUpdate', true],
-            ['stratification.requiresUpdate', true]
-        ])
-        expect(updates).not.toContainEqual([['proportions', 'requiresUpdate'], true])
-    })
-
     it.each([
-        ['manual proportions and allocation', manualAllocation(manualProportions(settled()))],
-        ['skipped proportions', skippedProportions(settled())],
-        ['automatic proportions', settled()]
-    ])('writes no value of any kind for %s', (_name, previous) => {
-        planModelUpdates(previous, relocate(previous))
-            .forEach(([path]) => expect(path[1]).toBe('requiresUpdate'))
-    })
-
-    it.each([
-        ['manual proportions and allocation', manualAllocation(manualProportions(settled()))],
-        ['skipped proportions', skippedProportions(settled())],
-        ['automatic proportions', settled()]
-    ])('settles once the flags are applied for %s', (_name, previous) => {
-        const relocated = relocate(previous)
-        const flagged = applyUpdates(relocated, planModelUpdates(previous, relocated))
-        expect(planModelUpdates(relocated, flagged)).toEqual([])
-    })
-
-    // Recalculated strata can land on exactly the identities and weights they replaced. The downstream flags
-    // were raised because their input became unknown, and only their own panels can clear them.
-    it('leaves downstream flags raised when the recalculated strata are identical', () => {
-        const previous = manualAllocation(manualProportions(settled()))
-        const relocated = relocate(previous)
-        const flagged = applyUpdates(relocated, planModelUpdates(previous, relocated))
-        const stratificationApplied = _.merge({}, flagged, {stratification: {requiresUpdate: false}})
-
-        const updates = planModelUpdates(flagged, stratificationApplied)
-        expect(updates.filter(([, value]) => value === false)).toEqual([])
-        expect(stratificationApplied.proportions.requiresUpdate).toBe(true)
-        expect(stratificationApplied.sampleAllocation.requiresUpdate).toBe(true)
+        ['the AOI', model => ({...model, aoi: {type: 'EE_TABLE', id: 'countries/KEN'}})],
+        ['the stratification source', model => ({...model, stratification: {...model.stratification, assetId: 'users/x/other'}})],
+        ['the selected band', model => ({...model, stratification: {...model.stratification, band: 'other'}})]
+    ])('writes no flag when %s changes', (_name, change) => {
+        const previous = settled()
+        expect(planModelUpdates(previous, change(previous))).toEqual([])
     })
 
     // The counterpart: a Stratification Apply that carries fresh strata is not an unresolved result. What it
@@ -845,11 +762,4 @@ describe('planDerivedUpdates - a stale stratification invalidates its consumers 
         ])
     })
 
-    // Unstratified: the single synthetic stratum takes its area from the AOI geometry at the export boundary,
-    // so a new AOI leaves no Earth Engine result to invalidate.
-    it('does not flag an unstratified stratification when the AOI moves', () => {
-        const unstratified = _.merge({}, settled(), {stratification: {skip: true}})
-        expect(planModelUpdates(unstratified, relocate(unstratified)))
-            .not.toContainEqual([['stratification', 'requiresUpdate'], true])
-    })
 })

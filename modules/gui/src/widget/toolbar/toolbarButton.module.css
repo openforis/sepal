@@ -85,9 +85,10 @@
     z-index: 2;
 }
 
-/* error state */
+/* error and warning states */
 
-.toolbarButton.activationButton.error::after {
+.toolbarButton.activationButton.error::after,
+.toolbarButton.activationButton.warning::after {
     content: '';
     position: absolute;
     bottom: .2rem;
@@ -97,10 +98,16 @@
     background-color: var(--error-color);
 }
 
-.toolbarButton.activationButton.panel.horizontal.selected.error::after {
+.toolbarButton.activationButton.warning::after {
+    background-color: var(--warning-color);
+}
+
+.toolbarButton.activationButton.panel.horizontal.selected.error::after,
+.toolbarButton.activationButton.panel.horizontal.selected.warning::after {
     bottom: calc(var(--button-panel-margin) + .2rem);
 }
 
-.toolbarButton.activationButton.panel.vertical.selected.error::after {
+.toolbarButton.activationButton.panel.vertical.selected.error::after,
+.toolbarButton.activationButton.panel.vertical.selected.warning::after {
     left: calc(var(--button-panel-margin) + .2rem);
 }

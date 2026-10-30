@@ -250,9 +250,10 @@ export default {
             }
         }),
 
-    areaPerStratum$: ({aoi, stratification, band, scale, crs, batch}) =>
+    // With `evidence`, answered {groups, calculatedFrom}: what the areas were calculated from.
+    areaPerStratum$: ({aoi, stratification, band, scale, crs, batch, evidence}) =>
         postJson$('/api/gee/samplingDesign/areaPerStratum', {
-            body: {aoi, stratification, band, scale, crs, batch},
+            body: {aoi, stratification, band, scale, crs, batch, evidence},
             // No HTTP retry: Online should surface EE failures promptly, and Batch task submission should
             // not be repeated by the client.
             retry: {
@@ -260,14 +261,21 @@ export default {
             }
         }),
 
-    probabilityPerStratum$: ({aoi, stratification, stratificationBand, probability, probabilityBand, mode, targetClass, scale, crs, batch}) =>
+    // With `evidence`, answered {probabilityPerStratum, stratumFrameEvidence}: the stratum frame they were calculated over.
+    probabilityPerStratum$: ({aoi, stratification, stratificationBand, probability, probabilityBand, mode, targetClass, scale, crs, batch, evidence}) =>
         postJson$('/api/gee/samplingDesign/probabilityPerStratum', {
-            body: {aoi, stratification, stratificationBand, probability, probabilityBand, mode, targetClass, scale, crs, batch},
+            body: {aoi, stratification, stratificationBand, probability, probabilityBand, mode, targetClass, scale, crs, batch, evidence},
             // No HTTP retry: Online should surface EE failures promptly, and Batch task submission should
             // not be repeated by the client.
             retry: {
                 maxRetries: 0
             }
+        }),
+
+    // What a declared dependency's question reads now (#sepal/recipe/calculation/freshness).
+    dependencyEvidence$: ({dependency, question}) =>
+        postJson$('/api/gee/dependencyEvidence', {
+            body: {dependency, question}
         }),
 
     landsatProductId$: ({sceneId}) =>

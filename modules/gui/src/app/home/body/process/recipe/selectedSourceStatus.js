@@ -43,8 +43,12 @@ import {
 // `UNMET_CONFIGURATION` by what it finds itself, each item's diagnosis named by the item. A read held only by
 // prerequisites in its own section marks its item (itemStatusesOf), naming them, and holds its section back too, by
 // that short summary alone: what is wrong is said where it is, but a section with an item that cannot be used is not
-// shown as sound. Prerequisites in another section are that section's to say: a read held only by them marks nothing -
-// what it holds back stays held, naming the section the first unmet requirement lies in (sourceRequirements.js).
+// shown as sound. Prerequisites in another section are that section's to say: a read waiting on them marks nothing, not
+// even what it finds itself, which is acted on once they are met - what it holds back stays held, naming the section the
+// first unmet requirement lies in (sourceRequirements.js). Other reads of its section still say what they find.
+//
+// A diagnosis of work not done yet rather than of something wrong (`incomplete`, in the verdict's diagnostic) leaves its
+// section `incomplete`: what is wrong is said first, and a section is incomplete only while nothing else is.
 export const CHECKING_SOURCE = 'CHECKING_SOURCE'
 export const UNAVAILABLE_SOURCE = 'UNAVAILABLE_SOURCE'
 export const UNSUITABLE_SOURCE = 'UNSUITABLE_SOURCE'
@@ -150,7 +154,8 @@ export const sourceProblemsOfState = (state, recipeId, evidenceOwnerOf, now = Da
 
 // The same from one read of the requirements, beside what a toolbar says of the section a wizard has open as its step
 // (`wizardStepProblems`): without what a declaration waits to say until the wizard has moved on from it
-// (`wizardStepMark: false`, sourceRequirements.js) - the same object where no declaration waits.
+// (`wizardStepMark: false`, sourceRequirements.js) - the same object where no declaration waits. `incompleteSections`
+// and `wizardStepIncompleteSections` name, {[sectionId]: true}, those of them held back only by work not done yet.
 export const sectionProblemsOfState = (state, recipeId, evidenceOwnerOf, now = Date.now(), heldFor) => {
     const reads = readsOf(state, recipeId, evidenceOwnerOf, now, heldFor)
     const listing = selectFrom(state, 'process.recipes')
@@ -167,7 +172,9 @@ export const sectionProblemsOfState = (state, recipeId, evidenceOwnerOf, now = D
         sourceProblems,
         wizardStepProblems: atStepStatuses === statuses ? sourceProblems : _.mapValues(atStepStatuses, ({message}) => message),
         sourceProblemContents: _.mapValues(statuses, ({messageContent}) => messageContent),
-        wizardStepProblemContents: _.mapValues(atStepStatuses, ({messageContent}) => messageContent)
+        wizardStepProblemContents: _.mapValues(atStepStatuses, ({messageContent}) => messageContent),
+        incompleteSections: incompleteSectionsOf(statuses),
+        wizardStepIncompleteSections: incompleteSectionsOf(atStepStatuses)
     }
     SOURCE_PROBLEMS.set(reads, {listing, problems})
     return problems
@@ -181,6 +188,8 @@ const sourceProblemStatuses = (state, reads) => {
         .map(section => [section, sectionStatusOf(state, reads, section)])
         .filter(([_section, status]) => [UNAVAILABLE_SOURCE, UNSUITABLE_SOURCE, UNMET_CONFIGURATION].includes(status?.state)))
 }
+
+const incompleteSectionsOf = statuses => _.mapValues(_.pickBy(statuses, ({incomplete}) => incomplete), () => true)
 
 const readsOf = (state, recipeId, evidenceOwnerOf, now, heldFor) => {
     const recipe = selectFrom(state, ['process.loadedRecipes', recipeId])
@@ -222,26 +231,31 @@ const operationLabel = ({operations = []}) =>
 // themselves before what holds them only by their prerequisites, which is said by the prerequisites' names alone.
 // A declaration with a `summary(reads)` says its items' problems in that one sentence, naming none of them.
 const configurationStatusOf = (reads, sectionId) => {
-    const unmet = reads.filter(read => read.local && read.declaration.section.id === sectionId && read.verdict.status === UNSUPPORTED)
+    const unmet = reads.filter(read => read.local && read.declaration.section.id === sectionId && read.verdict.status === UNSUPPORTED
+        && !waitsOnAnotherSection(read))
     const summarizing = _.uniq(unmet.map(({declaration}) => declaration).filter(({summary}) => summary))
     const itemized = unmet.filter(({declaration}) => !declaration.summary)
-    const problems = [
-        ...summarizing.map(declaration => ({
-            message: declaration.summary(unmet.filter(read => read.declaration === declaration)),
-            ...(declaration.summaryContent && {messageContent: declaration.summaryContent(unmet.filter(read => read.declaration === declaration))}),
-            details: []
-        })),
+    const problems = _.sortBy([
+        ...summarizing.map(declaration => {
+            const summarized = unmet.filter(read => read.declaration === declaration)
+            return {
+                message: declaration.summary(summarized),
+                ...(declaration.summaryContent && {messageContent: declaration.summaryContent(summarized)}),
+                details: [],
+                incomplete: summarized.every(isIncomplete)
+            }
+        }),
         ...[
-            ...itemized.filter(read => read.ownVerdict.status === UNSUPPORTED).map(read => ({read, ...ownDiagnosis(read)})),
+            ...itemized.filter(read => read.ownVerdict.status === UNSUPPORTED).map(read => ({read, ...ownDiagnosis(read), incomplete: isIncomplete(read)})),
             ...itemized.filter(read => read.ownVerdict.status !== UNSUPPORTED && localPrerequisites(read).length)
-                .map(read => ({read, message: prerequisitesMessage(localPrerequisites(read)), details: []}))
+                .map(read => ({read, message: prerequisitesMessage(localPrerequisites(read)), details: [], incomplete: false}))
         ]
-            .map(({read, message, messageContent, details}) => read.item
+            .map(({read, message, messageContent, details, incomplete}) => read.item
                 ? {...(messageContent
                     ? describeFeedback(feedbackMessage('process.requirement.itemProblem', {item: read.item.label, message: messageContent}))
-                    : {message: msg('process.requirement.itemProblem', {item: read.item.label, message})}), details}
-                : {message, messageContent, details})
-    ]
+                    : {message: msg('process.requirement.itemProblem', {item: read.item.label, message})}), details, incomplete}
+                : {message, messageContent, details, incomplete})
+    ], ({incomplete}) => incomplete ? 1 : 0)
     return problems.length
         ? {
             state: UNMET_CONFIGURATION,
@@ -249,15 +263,16 @@ const configurationStatusOf = (reads, sectionId) => {
             ...(problems[0].messageContent && {messageContent: problems[0].messageContent}),
             details: [...problems[0].details, ...problems.slice(1).map(({message}) => message)],
             refresh: false,
-            advisories: []
+            advisories: [],
+            incomplete: problems.every(({incomplete}) => incomplete)
         }
         : null
 }
 
 // What a local read says: its own diagnosis, followed by the prerequisites in its section it waits on, named - not by
-// what they say. Held by nothing else, it says nothing.
+// what they say. Held by nothing else, or waiting on another section, it says nothing.
 const localStatusOf = read => {
-    if (read.verdict.status === SUPPORTED) {
+    if (read.verdict.status === SUPPORTED || waitsOnAnotherSection(read)) {
         return null
     }
     const own = read.ownVerdict.status === UNSUPPORTED ? ownDiagnosis(read) : null
@@ -283,6 +298,11 @@ const prerequisitesMessage = prerequisites =>
 // The unmet prerequisites of a read not known to lie in another section.
 const localPrerequisites = ({declaration, unmetPrerequisites}) =>
     unmetPrerequisites.filter(({section}) => !section || section === declaration.section.id)
+
+const waitsOnAnotherSection = ({declaration, unmetPrerequisites = []}) =>
+    unmetPrerequisites.some(({section}) => section && section !== declaration.section.id)
+
+const isIncomplete = ({ownVerdict}) => Boolean(ownVerdict.diagnostic?.incomplete)
 
 const ownDiagnosis = ({ownVerdict, declaration}) =>
     declaration.requirement.describe(ownVerdict.diagnostic)

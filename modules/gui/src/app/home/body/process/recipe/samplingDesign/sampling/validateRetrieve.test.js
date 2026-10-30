@@ -153,7 +153,7 @@ describe('stale sections (requiresUpdate)', () => {
         [section]: {...(stratifiedValid[section] || {}), requiresUpdate: true}
     })
 
-    it.each(['stratification', 'proportions', 'sampleAllocation', 'sampleArrangement'])(
+    it.each(['proportions', 'sampleAllocation', 'sampleArrangement'])(
         'reports requiresUpdate for a stale %s section',
         section => {
             expect(validateRetrieve(stale(section))).toContainEqual({section, code: 'requiresUpdate'})
@@ -187,9 +187,16 @@ describe('stale sections (requiresUpdate)', () => {
     })
 
     it('rejects a stale but otherwise-complete design, reporting the stale section first', () => {
-        const model = {...stratifiedValid, stratification: {...stratifiedValid.stratification, requiresUpdate: true}}
+        const model = {...stratifiedValid, proportions: {...stratifiedValid.proportions, requiresUpdate: true}}
         expect(validateRetrieve(model)).not.toEqual([])
-        expect(validateRetrieve(model)[0]).toEqual({section: 'stratification', code: 'requiresUpdate'})
+        expect(validateRetrieve(model)[0]).toEqual({section: 'proportions', code: 'requiresUpdate'})
+    })
+
+    // Whether the areas are still about their inputs is their evidence's (freshnessRequirements.js): a flag an older
+    // design still carries says nothing.
+    it('ignores a stratification flag an older design still carries', () => {
+        const model = {...stratifiedValid, stratification: {...stratifiedValid.stratification, requiresUpdate: true}}
+        expect(validateRetrieve(model)).not.toContainEqual({section: 'stratification', code: 'requiresUpdate'})
     })
 })
 

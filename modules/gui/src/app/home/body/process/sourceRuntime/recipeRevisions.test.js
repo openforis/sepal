@@ -229,6 +229,20 @@ describe('a cached record the listing has moved past', () => {
         expect(fake.loads).toHaveLength(1)
     })
 
+    it('is read again once a read elsewhere reports a newer revision, though the listing does not list it', () => {
+        const session = sessionHolding([stack(), mosaic(7)], {listing: [listed(stack())]})
+        session.watch('stack-1')
+        expect(session.read('stack-1').status).toBe('READY')
+
+        store(mosaic(8))
+        session.dispatch(process => ({recipeListing: {...process.recipeListing, observed: {'mosaic-1': 8}}}))
+
+        expect(session.read('stack-1').status).toBe('NEEDS_EVIDENCE')
+        answerLoads()
+        expect(session.cached('mosaic-1').revision).toBe(8)
+        expect(session.read('stack-1').status).toBe('READY')
+    })
+
     it('is never read again while it is open, whatever storage holds', () => {
         const session = sessionHolding([stack(), mosaic(7)], {listing: [listed(stack()), listed(mosaic(7))], open: ['mosaic-1']})
         session.watch('stack-1')

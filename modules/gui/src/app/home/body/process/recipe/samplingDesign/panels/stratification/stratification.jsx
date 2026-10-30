@@ -1,9 +1,7 @@
 import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {Subject, takeUntil} from 'rxjs'
 
-import api from '~/apiRegistry'
 import {recipeVisualizationsNaming} from '~/app/home/body/process/recipe/visualizations'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
@@ -16,16 +14,18 @@ import {ButtonSelect} from '~/widget/buttonSelect'
 import {downloadCsv} from '~/widget/download'
 import {Form} from '~/widget/form'
 import {FormCombo} from '~/widget/form/combo'
-import {Icon} from '~/widget/icon'
 import {Layout} from '~/widget/layout'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 import {RecipeInput} from '~/widget/recipeInput'
 import {Widget} from '~/widget/widget'
 
+import {STRATUM_AREAS_CALCULATION} from '../../calculations'
+import {awaitedResultFeedback, editedResultFeedback} from '../../freshnessRequirements'
 import {getDefaultModel} from '../../sampling/defaultModel'
-import {effectiveStratificationGrid, isValidGridScale, stratificationGridFromBand} from '../../samplingGridValidation'
+import {effectiveStratificationGrid, stratificationGridFromBand} from '../../samplingGridValidation'
 import {CalculationErrorContent} from '../calculationErrorContent'
+import {CalculationProgress} from '../calculationProgress'
 import {StrataTable} from './strataTable'
 import styles from './stratification.module.css'
 import {strataCalculationError as toStrataCalculationError} from './stratificationError'
@@ -34,12 +34,10 @@ import {modelToValues, syntheticUnstratifiedStratum, valuesToModel} from './stra
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
     importedLegendEntries: selectFrom(recipe, 'ui.importedLegendEntries'),
-    title: recipe.title || recipe.placeholder,
-    stratificationRequiresUpdate: selectFrom(recipe, 'model.stratification.requiresUpdate'),
+    title: recipe.title || recipe.placeholder
 })
 
 const fields = {
-    requiresUpdate: new Form.Field(),
     skip: new Form.Field(),
     type: new Form.Field(),
     assetId: new Form.Field()
@@ -70,10 +68,12 @@ const fields = {
         // Required even when skipped: unstratified mode still needs the single synthetic stratum (area is
         // filled at the export boundary), so an empty strata is invalid.
         .notEmpty('process.samplingDesign.panel.stratification.form.strata.required'),
+    // What the strata were calculated from (#sepal/recipe/samplingDesign/stratumFrame), set with them and only
+    // with them.
+    strataCalculatedFrom: new Form.Field()
 }
 
 class _Stratification extends React.Component {
-    cancel$ = new Subject()
     // Not React state: nothing renders from it, and the band defaults are applied from the same callback that
     // receives it, where a queued setState would not have landed yet.
     bandMetadata = undefined
@@ -82,7 +82,6 @@ class _Stratification extends React.Component {
         prevStrata: [],
         entriesByBand: {},
         showHexColorCode: false,
-        strataCalculationError: null,
         more: false
     }
 
@@ -94,10 +93,9 @@ class _Stratification extends React.Component {
         this.onAssetLoaded = this.onAssetLoaded.bind(this)
         this.onRecipeBandsLoaded = this.onRecipeBandsLoaded.bind(this)
         this.onBandChanged = this.onBandChanged.bind(this)
-        this.onGridChanged = this.onGridChanged.bind(this)
-        this.onEEStrategyChanged = this.onEEStrategyChanged.bind(this)
-        this.onAreaPerStratumLoaded = this.onAreaPerStratumLoaded.bind(this)
         this.onSkipToggled = this.onSkipToggled.bind(this)
+        // Stratified only - unstratified mode never calculates areas (its synthetic row is set directly).
+        this.areas().onAnswer(({groups, calculatedFrom}) => this.onAreaPerStratumLoaded(groups, calculatedFrom))
     }
 
     render() {
@@ -291,7 +289,6 @@ class _Stratification extends React.Component {
                 input={scale}
                 type='number'
                 suffix={msg('process.samplingDesign.panel.stratification.form.scale.suffix')}
-                onChange={this.onGridChanged}
             />
         )
     }
@@ -300,20 +297,19 @@ class _Stratification extends React.Component {
         const {inputs: {crs}} = this.props
         // Free text, not the curated combo: Stratification names the projection the categorical source is
         // interpreted in, which is whatever the source was authored in - not one of the equal-area placement
-        // options. onGridChanged still runs, so a grid change invalidates areas, proportions and allocation.
+        // options. A grid change asks the areas again, and the planner invalidates proportions and allocation.
         return (
             <Form.Input
                 label={msg('process.samplingDesign.panel.stratification.form.crs.label')}
                 placeholder={effectiveCrs}
                 tooltip={msg('process.samplingDesign.panel.stratification.form.crs.tooltip')}
                 input={crs}
-                onChange={this.onGridChanged}
             />
         )
     }
 
     renderStrata() {
-        const {stream, inputs: {eeStrategy, strata}} = this.props
+        const {inputs: {eeStrategy, strata}} = this.props
         const {showHexColorCode} = this.state
         const hexCodeButton = (
             <Button
@@ -323,7 +319,7 @@ class _Stratification extends React.Component {
                 shape='pill'
                 label={msg('process.samplingDesign.panel.stratification.form.hexButton.label')}
                 tooltip={msg('process.samplingDesign.panel.stratification.form.hexButton.tooltip')}
-                disabled={stream('AREA_PER_STRATUM').active || !strata.value?.length}
+                disabled={this.areas().calculating() || !strata.value?.length}
                 onClick={() => this.toggleshowHexColorCode()}
             />
         )
@@ -347,38 +343,41 @@ class _Stratification extends React.Component {
                         tooltip: msg('process.samplingDesign.panel.stratification.form.eeStrategy.batch.tooltip')
                     },
                 ]}
-                onChange={this.onEEStrategyChanged}
             />
         )
 
         return (
             <Widget
                 label={msg('process.samplingDesign.panel.stratification.form.strata.label')}
-                labelButtons={[hexCodeButton, eeStrategyButtons]}>
+                labelButtons={[hexCodeButton, eeStrategyButtons]}
+                {...editedResultFeedback('stratification', this.areas())}>
                 {this.renderStrataContent()}
             </Widget>
         )
     }
 
     renderStrataContent() {
-        const {stream, inputs: {band, strata}} = this.props
-        const {showHexColorCode, strataCalculationError} = this.state
-        if (stream('AREA_PER_STRATUM').active) {
+        const {inputs: {band, eeStrategy, strata}} = this.props
+        const {showHexColorCode} = this.state
+        const failure = this.areas().failure()
+        const awaited = awaitedResultFeedback('stratification', this.areas())
+        if (this.areas().calculating() || awaited?.checking) {
             return (
                 <NoData
                     className={styles.noData}
                     alignment='left'
-                    message={(
-                        <div>
-                            <Icon name='spinner'/>
-                            {' ' + msg('process.samplingDesign.panel.stratification.form.strata.loading')}
-                        </div>
-                    )}
+                    message={this.renderProgress(awaited)}
                 />
             )
         }
-        if (strataCalculationError) {
-            return this.renderStrataError(strataCalculationError)
+        if (failure?.superseded) {
+            return this.renderStrataError({
+                strategy: eeStrategy.value,
+                message: msg('process.samplingDesign.panel.stratification.form.result.superseded')
+            })
+        }
+        if (failure?.error) {
+            return this.renderStrataError(toStrataCalculationError({error: failure.error, strategy: eeStrategy.value}))
         }
         if (strata.value?.length && band.value) {
             return (
@@ -392,11 +391,24 @@ class _Stratification extends React.Component {
             <NoData
                 className={styles.noData}
                 alignment='left'
-                message={msg(
+                message={awaited?.message || msg(
                     band.value
                         ? 'process.samplingDesign.panel.stratification.form.strata.noData'
                         : 'process.samplingDesign.panel.stratification.form.strata.select'
                 )}
+            />
+        )
+    }
+
+    // A short calculation status, with a separate explanation only for legacy results.
+    renderProgress(awaited) {
+        const updating = this.areas().updating()
+        return (
+            <CalculationProgress
+                status={awaited?.message || msg(updating
+                    ? `process.samplingDesign.panel.stratification.form.strata.updating.${updating}`
+                    : 'process.samplingDesign.panel.stratification.form.strata.loading')}
+                explanation={updating === 'UNKNOWN' ? msg('process.samplingDesign.panel.stratification.form.strata.updatingReason.UNKNOWN') : null}
             />
         )
     }
@@ -409,7 +421,7 @@ class _Stratification extends React.Component {
                 message={
                     <CalculationErrorContent
                         error={error}
-                        onRetry={() => this.scheduleAreaPerStratum()}
+                        onRetry={() => this.areas().retry()}
                         onUseBatch={() => this.useBatch()}
                     />
                 }
@@ -417,17 +429,16 @@ class _Stratification extends React.Component {
         )
     }
 
+    // Asked again as a batch task: the binding asks once in each mode.
     useBatch() {
         const {inputs: {eeStrategy}} = this.props
         eeStrategy.set('BATCH')
-        // set() doesn't fire the eeStrategy onChange (that's a UI-only callback), so schedule explicitly.
-        // scheduleAreaPerStratum defers via setImmediate, by which point eeStrategy.value has settled to BATCH.
-        this.scheduleAreaPerStratum()
     }
 
+    // What opening the panel calculates is its binding's (calculatedResult.js): areas this design does not hold yet, or
+    // holds stale or without evidence, in the mode chosen beside them.
     componentDidMount() {
-        const {stratificationRequiresUpdate, inputs: {requiresUpdate, skip, crs, type, eeStrategy, strata}} = this.props
-        requiresUpdate.set(false)
+        const {inputs: {skip, crs, type, eeStrategy, strata}} = this.props
         skip.value || skip.set([])
         type.value || type.set('ASSET')
         eeStrategy.value || eeStrategy.set('ONLINE')
@@ -437,17 +448,7 @@ class _Stratification extends React.Component {
             this.revealNonDefaultCrs(this.effectiveGrid().crs)
         }
 
-        if (stratificationRequiresUpdate) {
-            if (skip.value?.length) {
-                strata.set([this.unstratifiedStratum()])
-            } else {
-                if (strata.value) {
-                    this.setState({prevStrata: strata.value})
-                }
-                strata.set(null)
-                this.calculateAreaPerStratum()
-            }
-        } else if (skip.value?.length && !strata.value?.length) {
+        if (skip.value?.length && !strata.value?.length) {
             strata.set([this.unstratifiedStratum()])
         }
     }
@@ -478,27 +479,19 @@ class _Stratification extends React.Component {
     }
 
     onTypeChanged() {
-        const {inputs: {assetId, recipeId, band, strata}} = this.props
+        const {inputs: {assetId, recipeId, band}} = this.props
         recipeId.set(null)
         assetId.set(null)
         band.set(null)
         this.clearSelectionGrid()
-        if (strata.value) {
-            this.setState({prevStrata: strata.value})
-        }
-        this.clearStrataCalculationError()
-        strata.set(null)
+        this.invalidateStrata(true)
     }
 
     onImageChanged() {
-        const {inputs: {band, strata}} = this.props
+        const {inputs: {band}} = this.props
         band.set(null)
         this.clearSelectionGrid()
-        if (strata.value) {
-            this.setState({prevStrata: strata.value})
-        }
-        this.clearStrataCalculationError()
-        strata.set(null)
+        this.invalidateStrata(true)
     }
 
     // Loading also happens when a saved recipe opens, so this must not touch the grid: the saved CRS and Scale
@@ -605,7 +598,7 @@ class _Stratification extends React.Component {
         scale.set(null)
         // The override was just cleared, so the new source CRS is the effective one.
         this.revealNonDefaultCrs(grid.crs)
-        this.scheduleAreaPerStratum()
+        this.invalidateStrata(true)
     }
 
     // A projected CRS is persisted and drives every area, so it must not sit hidden behind the More button
@@ -616,32 +609,26 @@ class _Stratification extends React.Component {
         }
     }
 
-    onGridChanged() {
-        this.scheduleAreaPerStratum()
-    }
-
-    onEEStrategyChanged() {
-        this.scheduleAreaPerStratum()
-    }
-
-    // Stratified only - unstratified mode never runs areaPerStratum$ (its synthetic row is set directly).
-    onAreaPerStratumLoaded(areaPerStratum) {
-        const {inputs: {band, strata}} = this.props
+    // Recalculated strata keep their own labels and colors. Strata replacing another selection's take the source's
+    // legend, and those of the strata they replace only where it has none.
+    onAreaPerStratumLoaded(areaPerStratum, calculatedFrom) {
+        const {inputs: {band, strata, strataCalculatedFrom}} = this.props
         const {prevStrata, entriesByBand} = this.state
-        this.clearStrataCalculationError()
+        const recalculated = strata.value?.length ? strata.value : null
         const totalArea = areaPerStratum.reduce((acc, {area}) => acc + area, 0)
         const entries = entriesByBand[band.value] || []
         const labeledStrata = areaPerStratum.map(({stratum, area}) => {
             const entry = entries.find(({value}) => value === stratum)
-            const prevEntry = prevStrata?.find(({value}) => value == stratum)
+            const prevEntry = (recalculated || prevStrata)?.find(({value}) => value == stratum)
             const weight = area / totalArea
             return {
-                ...(entry || prevEntry || {value: stratum, label: '' + stratum, color: '#000000'}),
+                ...((recalculated ? prevEntry || entry : entry || prevEntry) || {value: stratum, label: '' + stratum, color: '#000000'}),
                 area,
                 weight
             }
         })
         strata.set(labeledStrata)
+        strataCalculatedFrom.set(calculatedFrom)
     }
 
     // Form.Buttons calls onChange(nextSkip) AFTER input.set(nextSkip); skip.value can still be stale here, so
@@ -653,90 +640,27 @@ class _Stratification extends React.Component {
         this.invalidateStrata(unstratified)
         if (unstratified) {
             strata.set([this.unstratifiedStratum()])
-        } else {
-            setImmediate(() => this.calculateAreaPerStratum())
         }
     }
 
-    // Clear first so stale strata cannot be applied while the replacement calculation is pending.
-    scheduleAreaPerStratum() {
-        this.invalidateStrata()
-        setImmediate(() => this.calculateAreaPerStratum())
-    }
-
-    // Preserve label/color for real strata, never for the synthetic unstratified row.
+    // Strata of a selection replaced: kept for their labels and colors, never the synthetic unstratified row's. What a
+    // calculation still running answers is not these strata's once what it was asked changes; the binding cancels it then.
     invalidateStrata(preserveStrata) {
-        const {inputs: {skip, strata}} = this.props
+        const {inputs: {skip, strata, strataCalculatedFrom}} = this.props
         const preserve = preserveStrata === undefined ? !skip.value?.length : preserveStrata
         if (strata.value && preserve) {
             this.setState({prevStrata: strata.value})
         }
-        this.clearStrataCalculationError()
         strata.set(null)
+        strataCalculatedFrom.set(null)
     }
 
-    // The EE calculation error is kept in component state rather than the `strata` form field, so it never
-    // collides with the field's `.notEmpty` required message: the required message keeps gating Apply while
-    // the friendly select/no-data body copy still shows for ordinary empty state.
-    clearStrataCalculationError() {
-        if (this.state.strataCalculationError) {
-            this.setState({strataCalculationError: null})
-        }
+    // Stratified area per stratum, through the binding the panel is given for it (calculatedResult.js). Unstratified
+    // mode calculates none: it sets the synthetic row directly and the AOI area is computed at the export boundary.
+    areas() {
+        return this.props.calculatedResults[STRATUM_AREAS_CALCULATION]
     }
 
-    // Stratified area per stratum. Unstratified mode never calls this - it sets the synthetic row directly
-    // and the AOI area is computed at the export boundary.
-    calculateAreaPerStratum() {
-        const {aoi, areaCache, stream, inputs: {type, assetId, recipeId, band, eeStrategy}} = this.props
-        const id = type.value === 'RECIPE' ? recipeId.value : assetId.value
-        // The effective grid: the overrides where they are filled in, the source values where they are not.
-        // Built once so the cache key and the request body cannot describe different grids. onChange fires
-        // while typing, so a half-typed Scale is simply not calculated yet.
-        const grid = this.effectiveGrid()
-        if (!isValidGridScale(grid.scale) || !grid.crs || !id || !band.value) {
-            return
-        }
-        const stratification = {
-            type: type.value === 'RECIPE' ? 'RECIPE_REF' : 'ASSET',
-            id,
-        }
-        // What the areas actually depend on. The processing strategy is absent because Online and Batch
-        // compute the same thing, and presentation is absent because the loader applies the CURRENT labels
-        // and colors to whatever raw response it is handed.
-        const key = {stratification, band: band.value, ...grid}
-
-        if (stream('AREA_PER_STRATUM').active) {
-            this.cancel$.next()
-        }
-
-        const cached = areaCache?.get({aoi, key})
-        if (cached) {
-            this.onAreaPerStratumLoaded(cached)
-            return
-        }
-
-        stream('AREA_PER_STRATUM',
-            api.gee.areaPerStratum$({
-                aoi,
-                stratification,
-                band: band.value,
-                ...grid,
-                batch: eeStrategy.value === 'BATCH'
-            }).pipe(
-                takeUntil(this.cancel$)
-            ),
-            // Cached BEFORE the join, so a hit is the raw response and picks up current presentation. A
-            // failure never reaches here, so it can never displace an older successful entry.
-            areaPerStratum => {
-                areaCache?.set({aoi, key, result: areaPerStratum})
-                this.onAreaPerStratumLoaded(areaPerStratum)
-            },
-            error => this.setState({
-                strataCalculationError: toStrataCalculationError({error, strategy: eeStrategy.value})
-            })
-        )
-    }
-    
     exportStratification() {
         const {title, inputs: {strata}} = this.props
         const csv = [

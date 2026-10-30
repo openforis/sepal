@@ -1,8 +1,9 @@
 # Source freshness, caching and invalidation
 
 The current live runtime shares descriptions and observations, tracks recipe revision/save agreement and asset
-metadata evidence, and invalidates authority synchronously. Persisted derived-result freshness is target work
-specified separately below. [Source resolution](source-resolution.md) owns authorization, graph structure and
+metadata evidence, and invalidates authority synchronously. Persisted derived-result evidence is current for Sampling
+Design's stratum areas and its automatic proportions' stratum frame; the rest of persisted-result freshness is target
+work specified separately below. [Source resolution](source-resolution.md) owns authorization, graph structure and
 execution guards; no cache provides task atomicity.
 
 ## Current design
@@ -227,10 +228,18 @@ local draft. Keep dependency snapshots private to an operation rather than writi
 
 ## Target: persisted-result freshness
 
-All result-evidence, resource-retention and integration sections below are target design. This machinery is not
-yet implemented for Sampling Design; its [current edit-driven invalidation](../../recipes/sampling-design.md#derived-result-freshness)
-remains until replaced by this contract. Do not add a temporary browser content-hash bridge or use `update_time` as
-an intermediate freshness tier.
+Sampling Design's stratum areas and its automatic proportions' frame evidence follow the contract below
+([its integration](../../recipes/sampling-design.md#derived-result-freshness)): operation-produced evidence
+(`modules/gee/src/jobs/dependencyEvidence.js`), the shared comparison (`lib/js/shared/src/recipe/calculation`), and
+the runtime's calculation and dependency-evidence owner (`sourceRuntime/calculationEvidence.js`), which teaches the
+session the revisions and tokens its answers report, holds what it acquires to the same source currency, draft
+agreement, asset authority and credentials as every other runtime answer (`sourceRuntime/evidenceStanding.js`), and
+refuses a calculation answer superseded in flight. Shared requirements judge its published evidence's age as they read
+it, and form panels calculate what an edit requires while open, and judge what they are about to apply, through one
+binding a type declares (`recipe/calculatedResult.js`). Toolbars mark unfinished and stale sections through the shared
+requirement presentation, a section waiting on another left neutral (`recipe/selectedSourceStatus.js`). Product projections are each type's `dependencyProjection`, the whole persisted model where a type
+declares none. The remaining result-evidence, resource-retention and integration sections are target design. Do not
+add a temporary browser content-hash bridge or use `update_time` as an intermediate freshness tier.
 
 ### Snapshot authority
 
@@ -315,9 +324,10 @@ one recalculation before it can establish durable freshness. Likewise, an asset 
 evidence cannot establish cross-session `CURRENT` merely because its ID and schema still match; the consumer must
 recalculate or acquire stronger evidence under its declared policy.
 
-Consumers own stale presentation, recalculation and submission policy; the shared resource layer reports evidence
-and state. [Sampling Design's integration](../../recipes/sampling-design.md#target-persisted-calculation-evidence)
-defines its two calculations, sidecars, propagation and legacy migration. None of those rules is current behavior.
+Consumers own stale presentation and submission policy, and declare the results their panels calculate; the shared
+binding calculates what an edit requires while its panel is open, and the shared resource layer reports evidence and
+state. [Sampling Design's integration](../../recipes/sampling-design.md#derived-result-freshness) defines its
+calculations, sidecars, propagation and legacy migration; its probabilities' own evidence is still target.
 
 ### Exact calculation evidence
 
@@ -330,8 +340,8 @@ Recipes and Earth Engine assets support different strengths of claim, and the de
 **Recipe snapshots are exact per ID.** The existing
 [operation-scoped reader](source-resolution.md#operation-scoped-recipe-loading) retains one raw record/revision
 per ID, including transitive and concurrent reads; factories may still be constructed repeatedly.
-Returning that exact revision vector as calculation evidence remains target work. This does not establish
-graph-wide coherence across different IDs.
+A calculating operation's evidence is the closure it reads through that reader, so it records exactly the revisions
+the calculation was built from. This does not establish graph-wide coherence across different IDs.
 
 **Asset evidence is contemporaneous observation, not a snapshot.** An operation records the asset observations it
 made and revalidates them before the result is committed. Current live evidence uses metadata `updateTime`;
@@ -355,8 +365,8 @@ be enough.
 Memoizing per ID also removes the possibility of one operation mixing two revisions of the same recipe, so no
 separate conflicting-read detection is needed — one snapshot per ID makes the conflict unrepresentable.
 
-The existing operation-owned recipe reader supplies record sharing. Extending its output with exact calculation
-evidence is separate work; a browser observation taken before execution cannot stand in for that evidence.
+The operation-owned recipe reader supplies record sharing and, through the closure an operation reads, its exact
+calculation evidence; a browser observation taken before execution cannot stand in for that evidence.
 
 Task atomicity remains separate. Persisted execution bundles are target design, not a guarantee of current tasks.
 

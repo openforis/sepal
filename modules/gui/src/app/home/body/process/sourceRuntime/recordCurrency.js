@@ -6,8 +6,9 @@ import {AGREED, draftAgreement, isDraft, SAVE_PENDING} from '../draftAgreement'
 // records it holds, the recipe listing and how current it is (recipeListing.js), the open recipes, and what their
 // saves have made persistent (saveCoordinator.js).
 //
-// A record is a draft while it is open or its saves are unsettled (draftAgreement.js). The newest revision known of a recipe is the newest the listing, its
-// acknowledged saves or a cached copy that is not a draft says.
+// A record is a draft while it is open or its saves are unsettled (draftAgreement.js). The newest revision known of a
+// recipe is the newest the listing, a read elsewhere of a recipe it does not list (`observed`), its acknowledged saves or
+// a cached copy that is not a draft says.
 //
 // A revision here is the best evidence this session has, not what Earth Engine read: storage can move between the
 // listing, the browser's load and Earth Engine's own load, and nothing reports what Earth Engine read. So an answer
@@ -40,7 +41,8 @@ export const recordCurrency = ({catalogue = {}, listing = [], listingState = {},
     return currency
 }
 
-export const knownRevisionOf = ({listed, saveState, cached}) => newest(newest(listed, saveState?.revision), cached)
+export const knownRevisionOf = ({listed, observed, saveState, cached}) =>
+    newest(newest(newest(listed, observed), saveState?.revision), cached)
 
 // The drafts among these records that are not what storage holds - what a dependency is executed from is storage's copy -
 // each {recipeId, code, wait}: waited for while its save is pending, otherwise not to be executed over.
@@ -49,6 +51,7 @@ export const draftDisagreementsOfState = (state, ids) => {
     const open = new Set((selectFrom(state, 'process.tabs') || []).map(({id}) => id))
     const saves = selectFrom(state, 'process.saveStates') || {}
     const listed = new Map((selectFrom(state, 'process.recipes') || []).map(({id, revision}) => [id, revision]))
+    const observed = selectFrom(state, 'process.recipeListing')?.observed || EMPTY
     return ids
         .filter(id => loadedRecipes[id] && isDraft({open: open.has(id), saveState: saves[id]}))
         .map(id => ({
@@ -56,7 +59,7 @@ export const draftDisagreementsOfState = (state, ids) => {
             code: draftAgreement({
                 draft: loadedRecipes[id],
                 saveState: saves[id],
-                knownRevision: knownRevisionOf({listed: listed.get(id), saveState: saves[id]})
+                knownRevision: knownRevisionOf({listed: listed.get(id), observed: observed[id], saveState: saves[id]})
             })
         }))
         .filter(({code}) => code !== AGREED)
@@ -90,6 +93,7 @@ let latestStaleness = null
 
 const stalenessOf = ({listing, listingState, tabs, saves}) => {
     const listed = new Map(listing.map(({id, revision}) => [id, revision]))
+    const observed = listingState.observed || EMPTY
     const withdrawn = new Set(listingState.withdrawn || [])
     const open = new Set(tabs.map(({id}) => id))
     return record => {
@@ -100,7 +104,7 @@ const stalenessOf = ({listing, listingState, tabs, saves}) => {
         if (withdrawn.has(id)) {
             return {id, withdrawn: true}
         }
-        const known = listed.get(id)
+        const known = newest(listed.get(id), observed[id])
         return isRevision(known) && isRevision(record.revision) && known > record.revision
             ? {id, revision: known}
             : null
@@ -109,10 +113,11 @@ const stalenessOf = ({listing, listingState, tabs, saves}) => {
 
 const currencyOf = ({catalogue, listing, listingState, tabs, saves}) => {
     const listed = new Map(listing.map(({id, revision}) => [id, revision]))
+    const observed = listingState.observed || EMPTY
     const open = new Set(tabs.map(({id}) => id))
     const draft = id => isDraft({open: open.has(id), saveState: saves[id]})
     const knownRevision = id => knownRevisionOf({
-        listed: listed.get(id), saveState: saves[id], cached: draft(id) ? undefined : catalogue[id]?.revision
+        listed: listed.get(id), observed: observed[id], saveState: saves[id], cached: draft(id) ? undefined : catalogue[id]?.revision
     })
     return {
         evidence: (record, origin) => {

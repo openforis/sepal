@@ -12,8 +12,9 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
+import {SectionButton} from '../../sectionButton'
+import {samplesGate, samplesGateMessage} from '../freshnessRequirements'
 import {retrieveButtonState} from '../sampling/retrieveButtonState'
-import {isSectionStale} from '../sampling/validateRetrieve'
 import {RecipeActions} from '../samplingDesignRecipe'
 import {Proportions} from './proportions/proportions'
 import {Retrieve} from './retrieve/retrieve'
@@ -30,21 +31,19 @@ const mapStateToProps = state => ({
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
     model: recipe.model,
-    initialized: selectFrom(recipe, 'ui.initialized'),
-    // Applicability-filtered, exactly as Retrieve reads them: a skipped section computes nothing, so a flag
-    // an old recipe still carries for one must not light its button either.
-    stratificationRequiresUpdate: isSectionStale(recipe.model, 'stratification'),
-    proportionsRequiresUpdate: isSectionStale(recipe.model, 'proportions'),
-    sampleAllocationRequiresUpdate: isSectionStale(recipe.model, 'sampleAllocation'),
-    sampleArrangementRequiresUpdate: isSectionStale(recipe.model, 'sampleArrangement')
+    samplesGate: samplesGate(recipe),
+    initialized: selectFrom(recipe, 'ui.initialized')
 })
 
-const retrieveTooltip = ({kind, code, args}) => {
+const retrieveTooltip = ({kind, code, args, gate}) => {
     if (kind === 'model') {
         return `${msg('process.samplingDesign.retrieve.invalid')} ${msg(`process.samplingDesign.retrieve.invalid.${code}`, args)}`
     }
     if (kind === 'capability') {
         return msg(`process.samplingDesign.retrieve.capability.${code}`)
+    }
+    if (kind === 'freshness') {
+        return samplesGateMessage(gate)
     }
     return undefined
 }
@@ -56,8 +55,8 @@ class _SamplingDesignToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, model, areaCache, probabilityCache, googleAccount, assetRoots, initialized, stratificationRequiresUpdate, proportionsRequiresUpdate, sampleAllocationRequiresUpdate, sampleArrangementRequiresUpdate} = this.props
-        const buttonState = retrieveButtonState({model, googleAccount, assetRoots})
+        const {recipeId, model, samplesGate, googleAccount, assetRoots, initialized} = this.props
+        const buttonState = retrieveButtonState({model, googleAccount, assetRoots, gate: samplesGate})
         return (
             <PanelWizard
                 panels={['aoi', 'stratification']}
@@ -65,8 +64,8 @@ class _SamplingDesignToolbar extends React.Component {
                 onDone={() => setInitialized(recipeId)}>
                 <Retrieve/>
                 <Aoi/>
-                <Stratification areaCache={areaCache}/>
-                <Proportions probabilityCache={probabilityCache}/>
+                <Stratification/>
+                <Proportions/>
                 <SampleAllocation/>
                 <SampleArrangement/>
 
@@ -86,30 +85,26 @@ class _SamplingDesignToolbar extends React.Component {
                         tooltip={msg('process.mosaic.panel.areaOfInterest.tooltip')}
                         disabled={!initialized}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='stratification'
-                        error={stratificationRequiresUpdate}
                         label={msg('process.samplingDesign.panel.stratification.button')}
                         tooltip={msg('process.samplingDesign.panel.stratification.tooltip')}
                         disabled={!initialized}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='proportions'
-                        error={proportionsRequiresUpdate}
                         label={msg('process.samplingDesign.panel.proportions.button')}
                         tooltip={msg('process.samplingDesign.panel.proportions.tooltip')}
                         disabled={!initialized}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='sampleAllocation'
-                        error={sampleAllocationRequiresUpdate}
                         label={msg('process.samplingDesign.panel.sampleAllocation.button')}
                         tooltip={msg('process.samplingDesign.panel.sampleAllocation.tooltip')}
                         disabled={!initialized}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='sampleArrangement'
-                        error={sampleArrangementRequiresUpdate}
                         label={msg('process.samplingDesign.panel.sampleArrangement.button')}
                         tooltip={msg('process.samplingDesign.panel.sampleArrangement.tooltip')}
                         disabled={!initialized}

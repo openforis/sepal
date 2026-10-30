@@ -4,6 +4,7 @@ import React from 'react'
 
 import {actionBuilder} from '~/action-builder'
 import {initValues} from '~/app/home/body/process/recipe'
+import {CalculatedResult} from '~/app/home/body/process/recipe/calculatedResult'
 import {feedbackContent, joinFeedbackContent} from '~/app/home/body/process/recipe/feedbackMessageContent'
 import {OutputCandidate} from '~/app/home/body/process/recipe/outputCandidate'
 import {SourceCandidate} from '~/app/home/body/process/recipe/sourceCandidate'
@@ -91,6 +92,18 @@ export const recipeFormPanel = (
         return declarations.filter(({outputDiagnostics, editor}) => outputDiagnostics && editor?.panel === id)
     }
 
+    // A panel a result its recipe's type declares calculated names (`calculatedResults`, calculatedResult.js) is given
+    // one binding for each, by its id (`calculatedResults`): while the panel is open it calculates what the edit requires
+    // through the source runtime, keeps the evidence of what the edit asks current, and holds Apply back while the edited
+    // result is not applicable.
+    const calculatedResultsOf = (props, onChange) => {
+        const {recipeId, sourceRuntime} = props
+        const declarations = getRecipeType(select(['process.loadedRecipes', recipeId, 'type']))?.calculatedResults || []
+        return Object.fromEntries(declarations
+            .filter(({panel}) => panel === id)
+            .map(declaration => [declaration.id, new CalculatedResult({sourceRuntime, recipeId, declaration, valuesToModel, onChange})]))
+    }
+
     const outputCandidateOf = (declaration, props, onChange) => {
         const {recipeId, sourceRuntime} = props
         return declaration && sourceRuntime
@@ -129,6 +142,10 @@ export const recipeFormPanel = (
                         ))
                     }))
     
+                    this.calculatedResults = calculatedResultsOf(props, () => this.mounted && this.setState(
+                        ({calculationChanges = 0}) => ({calculationChanges: calculationChanges + 1})
+                    ))
+
                     form.onDirtyChanged(dirty => setDirty({evaluatedPath: path(props), statePath, dirty}))
                 }
     
@@ -142,6 +159,7 @@ export const recipeFormPanel = (
                             form,
                             sourceCandidate: this.sourceCandidate,
                             outputEditors: this.outputEditors,
+                            calculatedResults: Object.values(this.calculatedResults),
                             statePath,
                             // List panels deliberately have no serializer: their entries are already applied.
                             valuesToModel: valuesToModel && this.props.modelToApply
@@ -151,6 +169,7 @@ export const recipeFormPanel = (
                         }}>
                             <FormContext form={form}>
                                 {React.createElement(WrappedComponent, {...this.props, form, sourceCandidate: this.sourceCandidate,
+                                    calculatedResults: this.calculatedResults,
                                     inputs: this.props.presentInputs ? this.props.presentInputs(this.props.inputs, modelToValues) : this.props.inputs})}
                             </FormContext>
                         </Context.Provider>
@@ -174,26 +193,33 @@ export const recipeFormPanel = (
 
                 componentDidMount() {
                     this.mounted = true
-                    this.sourceCandidate?.update(this.props.form.values())
-                    this.outputEditors.forEach(({candidate}) => candidate?.update(this.props.form.values()))
+                    this.updateCandidates()
                 }
 
                 componentDidUpdate() {
-                    this.sourceCandidate?.update(this.props.form.values())
-                    this.outputEditors.forEach(({candidate}) => candidate?.update(this.props.form.values()))
+                    this.updateCandidates()
                 }
 
                 componentWillUnmount() {
                     this.mounted = false
                     this.sourceCandidate?.stop()
                     this.outputEditors.forEach(({candidate}) => candidate?.stop())
+                    Object.values(this.calculatedResults).forEach(result => result.stop())
+                }
+
+                updateCandidates() {
+                    const values = this.props.form.values()
+                    this.sourceCandidate?.update(values)
+                    this.outputEditors.forEach(({candidate}) => candidate?.update(values))
+                    Object.values(this.calculatedResults).forEach(result => result.update(values))
                 }
 
                 form() {
                     const {form} = this.props
                     const sourceCandidate = this.sourceCandidate
                     const outputEditors = this.outputEditors
-                    if (!sourceCandidate && !outputEditors.length) {
+                    const calculatedResults = Object.values(this.calculatedResults)
+                    if (!sourceCandidate && !outputEditors.length && !calculatedResults.length) {
                         return form
                     }
                     const sourceInput = sourceCandidate && this.sourceSection.input?.(form.values(), sourceCandidate.refusal())
@@ -208,7 +234,7 @@ export const recipeFormPanel = (
                         feedbackOf: name => _.mergeWith({}, name === sourceInput ? sourceFeedback : null, outputFeedback[name], combineFeedback),
                         blocked: () => Boolean(sourceCandidate?.refused() || outputEditors.some(({declaration, candidate}) =>
                             declaration.editor.blocksApply !== false && candidate?.refused()
-                        ))
+                        ) || calculatedResults.some(result => result.refused()))
                     })
                 }
             },
@@ -225,7 +251,7 @@ export const recipeFormPanel = (
 
 export const RecipeFormPanel = ({className, placement, isActionForm, additionalUpdates, accepts, onApply, onCancel, onClose, children}) =>
     <Context.Consumer>
-        {({id, evaluatedPath, form, sourceCandidate, outputEditors, statePath, valuesToModel, deactivate, prevValues}) => {
+        {({id, evaluatedPath, form, sourceCandidate, outputEditors, calculatedResults, statePath, valuesToModel, deactivate, prevValues}) => {
             const wrappedOnApply = values => {
                 if (isActionForm) {
                     setValues({evaluatedPath, statePath, values})
@@ -249,8 +275,10 @@ export const RecipeFormPanel = ({className, placement, isActionForm, additionalU
                         // Recheck the submitted draft, including Enter/Next and changes since the last render.
                         sourceCandidate?.update(values)
                         outputEditors.forEach(({candidate}) => candidate?.update(values))
+                        calculatedResults.forEach(result => result.update(values))
                         return !sourceCandidate?.refused()
                             && !outputEditors.some(({declaration, candidate}) => declaration.editor.blocksApply !== false && candidate?.refused())
+                            && !calculatedResults.some(result => result.refused())
                             && (!accepts || accepts(values))
                     }}
                     isActionForm={isActionForm}

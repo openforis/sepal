@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import {describe, it, mock} from 'node:test'
 
-import {of} from 'rxjs'
+import {lastValueFrom, of} from 'rxjs'
 
 import {EASE_GRID_2_GLOBAL_WKT, resolveStratificationCrs} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 
@@ -106,6 +106,14 @@ mock.module('#gee/jobs/ee/batch/parse', {
     }
 })
 
+// Asset metadata, which an area calculation asked for its evidence reads before and after it answers.
+mock.module('#gee/jobs/ee/asset/versions', {
+    exports: {
+        assetVersions$: ids => of(ids.map(id => ({id, type: 'IMAGE', version: 't1'})))
+    }
+})
+
+const {RecipeScope, inRecipeScope} = await import('#sepal/ee/recipeScope')
 const {stratificationImage$, stratificationProjection} = await import('#sepal/ee/samplingDesign/stratificationImage')
 const {weightedAreaSums} = await import('#gee/jobs/ee/samplingDesign/weightedAreaSums')
 const {default: areaPerStratum} = await import('#gee/jobs/ee/samplingDesign/areaPerStratum')
@@ -203,6 +211,30 @@ describe('ordered candidates', () => {
         const [, first, rest] = decision([property])
         assert.deepEqual(first, property.spec)
         assert.deepEqual(rest, {atScale: [{Projection: 'EPSG:4326'}, 30]})
+    })
+})
+
+describe('area per stratum asked for its evidence', () => {
+    const gridArgs = {aoi: {}, stratification: {type: 'ASSET', id: 'users/x/strata'}, band: 'label', crs: 'EPSG:4326', scale: '10'}
+    const calculate = requestArgs => lastValueFrom(inRecipeScope(
+        new RecipeScope(() => of(null)),
+        areaPerStratum.worker$({requestArgs, credentials: {}})
+    ))
+
+    it('answers its areas with the frame this request read and the Scale they were reduced at', async () => {
+        const {groups, calculatedFrom} = await calculate({...gridArgs, evidence: true})
+
+        assert.ok(groups.reduceRegion)
+        assert.deepEqual(calculatedFrom.resource, {id: 'SAMPLING_STRATUM_AREAS', contractVersion: 1})
+        assert.deepEqual(calculatedFrom.question, {scale: 10})
+        assert.deepEqual(calculatedFrom.dependencies.SAMPLING_STRATUM_FRAME.question, {
+            aoi: {}, stratification: {reference: {type: 'ASSET', id: 'users/x/strata'}, band: 'label'}, crs: 'EPSG:4326'
+        })
+        assert.deepEqual(calculatedFrom.dependencies.SAMPLING_STRATUM_FRAME.provenance.assets, [{id: 'users/x/strata', version: 't1'}])
+    })
+
+    it('answers the areas alone to a caller that does not ask', async () => {
+        assert.ok((await calculate(gridArgs)).reduceRegion)
     })
 })
 

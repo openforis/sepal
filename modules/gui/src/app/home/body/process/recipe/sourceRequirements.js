@@ -15,6 +15,7 @@ import {
     isDefinitiveFailure,
     WAITING as ASSET_WAITING
 } from '../sourceRuntime/assetEvidence'
+import {expiredDependencyEvidence, publishedDependencyEvidence} from '../sourceRuntime/calculationEvidence'
 import {FAILED, PENDING} from '../sourceRuntime/evidenceRegistry'
 import {recordStalenessOfState} from '../sourceRuntime/recordCurrency'
 import {buildMapDependencyGraph} from './mapDependencyGraph'
@@ -81,14 +82,19 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 //
 // A type may also declare requirements over its own configuration, judged from facts the recipe itself holds:
 //
-//   {id, section, requirement, localFacts: recipe => facts, items: facts => [...], parameters, operations}
+//   {id, section, requirement, localFacts: (recipe, dependencyEvidence) => facts, items: facts => [...], parameters,
+//    operations}
 //
-// `localFacts` supplies the facts in place of a role and its evidence, so such a read is always CHECKED and selects
-// nothing; `requirement` is {id, evaluate(facts, parameters), describe(diagnostic)}. Where the facts concern several items
+// `localFacts` supplies the facts in place of a role and its evidence, so such a read is CHECKED and selects nothing -
+// unless the facts include the current evidence of a dependency the type declares, which the source runtime acquires
+// and publishes on the recipe (calculationEvidence.js): `dependencyEvidence(id)` is that evidence as it stands when it is
+// read, expired once it is older than Retrieve's authority. `acquisition(facts)` then says its state (CHECKING,
+// UNAVAILABLE, EXPIRED, UNCHECKED), the verdict waiting until it is CHECKED and the operations it holds held as a source
+// requirement's are; `requirement` is {id, evaluate(facts, parameters), describe(diagnostic)}. Where the facts concern several items
 // of a section - the calculations of a list, say - `items` enumerates them: [{id, path, label, facts, prerequisites}],
 // `id` stable across edits, `path` where the item lies in the model, and
 // `prerequisites` the reads it depends on, [{declaration, item}] by declaration id and item id. Without `items` the
-// facts are judged once, for the section.
+// facts are judged once, for the section, depending on the reads `prerequisites(facts)` names.
 //
 // A local read keeps its own verdict (`ownVerdict`) apart from its effective one (`verdict`): a read met itself, whose
 // prerequisites are not all met - or not read at all - is UNSUPPORTED (`PREREQUISITE_UNMET`), and a read that is not
@@ -174,7 +180,7 @@ export {PIXEL_SEGMENTS}
 // are read from the answers the source runtime holds (`heldFor`), which a type declaring them requires.
 export const readSourceRequirements = ({state, recipe, evidenceOwnerOf, heldFor, now}) => {
     const declarations = getRecipeType(recipe.type)?.sourceRequirements || []
-    const local = readLocalRequirements(recipe)
+    const local = readLocalRequirements(recipe, now)
     const output = readOutputRequirementsOfState({state, recipe, heldFor})
     // Without a requirement over a selected source, the reads are the recipe's local and output reads alone, each
     // reused while unchanged, and so is their list.
@@ -325,13 +331,17 @@ export const outputRequirementGate = ({recipe, output, operation}) => {
         : null
 }
 
-// The reads of the requirements over the recipe's own configuration alone: they need nothing of the session.
-export const readLocalRequirements = recipe => {
-    if (!LOCAL_READS.has(recipe)) {
+// The reads of the requirements over the recipe's own configuration alone, at `now`: they need nothing of the session.
+export const readLocalRequirements = (recipe, now = Date.now()) => {
+    const expired = expiredDependencyEvidence(recipe, now)
+    const cached = LOCAL_READS.get(recipe)
+    if (cached?.expired !== expired) {
         const declarations = (getRecipeType(recipe.type)?.sourceRequirements || []).filter(isLocal)
-        LOCAL_READS.set(recipe, withPrerequisites(declarations.flatMap(declaration => readLocal(recipe, declaration))))
+        const dependencyEvidence = dependency => publishedDependencyEvidence(recipe, dependency, now)
+        const reads = withPrerequisites(declarations.flatMap(declaration => readLocal(recipe, declaration, dependencyEvidence)))
+        LOCAL_READS.set(recipe, {expired, reads})
     }
-    return LOCAL_READS.get(recipe)
+    return LOCAL_READS.get(recipe).reads
 }
 
 // The identity of a local read: its declaration's id and its item's.
@@ -482,7 +492,7 @@ const DISCOVERY_CODES = {
 }
 
 const retrieveReason = ({local, acquisition, verdict}) => {
-    if (local) {
+    if (local && acquisition === CHECKED) {
         return {wait: false, code: CONFIGURATION_UNMET}
     }
     if (verdict.status === UNSUPPORTED) {
@@ -696,24 +706,28 @@ const NO_LISTING = Object.freeze([])
 
 const keyOf = (declarationId, itemId) => `${declarationId}|${itemId ?? ''}`
 
-// Local reads are read once for each recipe the session holds: each edit of it is another.
+// Local reads are read once for each recipe the session holds, each edit of it being another, and again as dependency
+// evidence published on it expires.
 const LOCAL_READS = new WeakMap()
 
-const readLocal = (recipe, declaration) => {
-    const facts = declaration.localFacts(recipe)
+const readLocal = (recipe, declaration, dependencyEvidence) => {
+    const facts = declaration.localFacts(recipe, dependencyEvidence)
     const parameters = declaration.parameters?.(recipe) || {}
     const items = declaration.items
         ? declaration.items(facts)
-        : [{facts}]
-    return items.map(({id, path, label, facts, prerequisites = []}) => ({
-        declaration,
-        local: true,
-        item: declaration.items ? {id, path, label} : null,
-        acquisition: CHECKED,
-        providerChain: CHECKED,
-        ownVerdict: declaration.requirement.evaluate(facts, parameters),
-        prerequisites
-    }))
+        : [{facts, prerequisites: declaration.prerequisites?.(facts)}]
+    return items.map(({id, path, label, facts, prerequisites = []}) => {
+        const acquisition = declaration.acquisition?.(facts) || CHECKED
+        return {
+            declaration,
+            local: true,
+            item: declaration.items ? {id, path, label} : null,
+            acquisition,
+            providerChain: CHECKED,
+            ownVerdict: acquisition === CHECKED ? declaration.requirement.evaluate(facts, parameters) : NEEDS,
+            prerequisites
+        }
+    })
 }
 
 // Each read's effective verdict, from its own and those of its prerequisites, each resolved once. A prerequisite that was

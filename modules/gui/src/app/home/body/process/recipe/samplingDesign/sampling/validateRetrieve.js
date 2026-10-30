@@ -23,26 +23,24 @@ const hasFiniteArea = value =>
 
 // Sections whose persisted `requiresUpdate` flag means their computed output is stale relative to upstream
 // edits. Checked first so a stale section reports a clear "update this first" instead of a downstream
-// stale-data symptom.
-const REQUIRES_UPDATE_SECTIONS = ['stratification', 'proportions', 'sampleAllocation', 'sampleArrangement']
+// stale-data symptom. Whether the stratum areas are still about their inputs is not a flag: the evidence saved with
+// them is compared with the current one (freshnessRequirements.js), which holds Retrieve on its own.
+const REQUIRES_UPDATE_SECTIONS = ['proportions', 'sampleAllocation', 'sampleArrangement']
 
 // A skipped section computes nothing, so it has nothing to be stale about. Saved recipes can carry a flag
 // raised before the section was skipped, and nothing rewrites it on load - so the flag is filtered by
 // applicability HERE rather than relying on an edit to come along and normalize it away.
 const isSectionApplicable = (model, section) => {
-    if (section === 'stratification') {
-        return !isStratificationSkipped(model?.stratification)
-    }
     if (section === 'proportions') {
         return !model?.proportions?.skip
     }
     return true
 }
 
-// Exported because the toolbar marks the same sections: a button that reports a section as needing attention
-// while Retrieve considers it fine is the same defect read from the other end.
+// Exported because the section requirements mark the same sections (freshnessRequirements.js): a button that reports a
+// section as needing attention while Retrieve considers it fine is the same defect read from the other end.
 export const isSectionStale = (model, section) =>
-    model?.[section]?.requiresUpdate === true && isSectionApplicable(model, section)
+    REQUIRES_UPDATE_SECTIONS.includes(section) && model?.[section]?.requiresUpdate === true && isSectionApplicable(model, section)
 
 export const validateRetrieve = model => {
     const errors = []
