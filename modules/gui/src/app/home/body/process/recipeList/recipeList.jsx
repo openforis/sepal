@@ -602,8 +602,8 @@ class _RecipeList extends React.Component {
     }
 
     hasData() {
-        const {recipes} = this.props
-        return recipes && recipes.length
+        const {folders, recipes} = this.props
+        return hasItems({folders, recipes})
     }
 
     setFilter(filterValue) {
@@ -764,8 +764,8 @@ class _RecipeList extends React.Component {
         return filteredSelectedIds
     }
 
-    static getDerivedStateFromProps({recipes}) {
-        if (!recipes || !recipes.length) {
+    static getDerivedStateFromProps({folders, recipes}) {
+        if (!hasItems({folders, recipes})) {
             return {
                 edit: false
             }
@@ -787,3 +787,6 @@ RecipeList.propTypes = {
     onRemove: PropTypes.func,
     onSelect: PropTypes.func
 }
+
+// Edit mode selects folders as well as recipes, so either is something to edit.
+const hasItems = ({folders, recipes}) => !!(folders?.length || recipes?.length)

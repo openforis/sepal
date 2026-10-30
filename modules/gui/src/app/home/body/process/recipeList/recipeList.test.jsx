@@ -248,6 +248,14 @@ describe('edit mode', () => {
         expect(dispatched.some(({type}) => type === 'NAVIGATE_TO_FOLDER')).toBe(false)
     })
 
+    it('is open to folders when there are no recipes', () => {
+        mount({recipes: []})
+
+        editMode()
+
+        expect(button('process.recipe.select.label')).toBeDefined()
+    })
+
     it('opens the folder again once edit mode is off', () => {
         mount()
 
