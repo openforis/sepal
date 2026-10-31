@@ -4,8 +4,8 @@
 //      than launching, so an available idle instance is always used.
 //   3. Won → tag the reservation, wait for the address, emit InstancePendingProvisioning.
 //   4. Every candidate taken → start the oldest ready POOLED (stopped) instance as the requested
-//      type: claim it, startPooled, wait for the address, emit InstancePendingProvisioning. A
-//      failed start releases the claim.
+//      type: claim pooled candidates in order until one wins, startPooled, wait for the address,
+//      emit InstancePendingProvisioning. A failed start releases the claim.
 //   5. No pooled instance, or its start failed → launchReserved, record the claim, then wait for
 //      the address.
 //   6. On any exception → emit FailedToRequestInstance, rethrow.
@@ -65,15 +65,23 @@ const requestInstance = async ({workerType, instanceType, username, sessionId}, 
     }
 }
 
-// startPooledInstance — resolves null when there is no pooled instance to start, or its start failed.
-// Only one candidate is tried: capacity and type-compatibility failures belong to the requested
-// type, not to the instance, so the next one would fail the same way.
+// startPooledInstance — resolves null when there is no pooled instance left to claim, or its start
+// failed. A lost claim moves to the next candidate, as for idle instances: simultaneous requests all
+// see the same oldest one. Only one START is tried: capacity and type-compatibility failures belong
+// to the requested type, not to the instance, so the next one would fail the same way.
 const startPooledInstance = async ({instanceType, reservation}, {claims, provider}) => {
-    const [candidate] = [...await provider.pooledInstances({ready: true})]
+    const candidates = [...await provider.pooledInstances({ready: true})]
         .sort((a, b) => launchedAt(a) - launchedAt(b))
-    if (!candidate || !await claims.claim(candidate.id, reservation.sessionId)) {
-        return null
+    for (const candidate of candidates) {
+        if (await claims.claim(candidate.id, reservation.sessionId)) {
+            return await startClaimedPooledInstance(candidate, {instanceType, reservation}, {claims, provider})
+        }
+        log.debug(`Lost claim on pooled ${instanceTag(candidate)}, trying the next candidate`)
     }
+    return null
+}
+
+const startClaimedPooledInstance = async (candidate, {instanceType, reservation}, {claims, provider}) => {
     let started
     try {
         started = await provider.startPooled(candidate, instanceType, reservation)
