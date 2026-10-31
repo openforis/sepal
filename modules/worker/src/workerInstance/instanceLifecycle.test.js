@@ -331,10 +331,11 @@ describe('requestInstance', () => {
     // Capacity and type-compatibility failures belong to the requested type, not to the pooled
     // instance, so a second pooled candidate would fail the same way: launch instead.
     test('a failed pooled start releases the claim and launches', async () => {
-        const pooled = makeInstance({id: 'i-pooled', host: null, running: false})
+        const pooled = makeInstance({id: 'i-pooled', host: null, running: false, launchTime: new Date(1000)})
+        const another = makeInstance({id: 'i-pooled-another', host: null, running: false, launchTime: new Date(2000)})
         const claims = makeClaims()
         const provider = makeProvider({
-            pooledInstances: mock.fn(async () => [pooled]),
+            pooledInstances: mock.fn(async () => [pooled, another]),
             startPooled: mock.fn(async () => {
                 throw new Error('InsufficientInstanceCapacity')
             }),
@@ -342,13 +343,29 @@ describe('requestInstance', () => {
 
         const result = await requestInstance(REQUEST, {claims, provider})
 
+        assert.deepEqual(callsOf(provider.startPooled), [[pooled, REQUEST.instanceType, RESERVATION]])
         assert.deepEqual(callsOf(claims.release), [['i-pooled', REQUEST.sessionId]])
         assert.equal(result.id, 'i-new')
     })
 
-    test('a lost claim on the pooled instance launches', async () => {
+    // Simultaneous requests all see the same oldest pooled instance; the losers must not cold-launch
+    // while the pool still holds instances.
+    test('a lost claim on a pooled instance starts the next one', async () => {
+        const taken = makeInstance({id: 'i-pooled-taken', host: null, running: false, launchTime: new Date(1000)})
+        const next = makeInstance({id: 'i-pooled-next', host: null, running: false, launchTime: new Date(2000)})
+        const claims = makeClaims({claim: mock.fn(async instanceId => instanceId !== taken.id)})
+        const provider = makeProvider({pooledInstances: mock.fn(async () => [next, taken])})
+
+        const result = await requestInstance(REQUEST, {claims, provider})
+
+        assert.deepEqual(callsOf(provider.startPooled), [[next, REQUEST.instanceType, RESERVATION]])
+        assert.equal(provider.launchReserved.mock.callCount(), 0)
+        assert.equal(result.id, next.id)
+    })
+
+    test('launches when every pooled claim is lost', async () => {
         const pooled = makeInstance({id: 'i-pooled', host: null, running: false})
-        const claims = makeClaims({claim: mock.fn(inSequence([async () => false, async () => true]))})
+        const claims = makeClaims({claim: mock.fn(async instanceId => instanceId !== pooled.id)})
         const provider = makeProvider({pooledInstances: mock.fn(async () => [pooled])})
 
         const result = await requestInstance(REQUEST, {claims, provider})

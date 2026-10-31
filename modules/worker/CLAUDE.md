@@ -152,8 +152,10 @@ any instance type, so one type-agnostic pool serves every request. EC2 tag `Stat
 members; only `stopped` ones are candidates.
 
 - `requestInstance` order: running idle instance of the type → oldest ready pooled instance
-  (`ModifyInstanceAttribute` → `StartInstances` → tag reserved) → cold launch. A
-  failed pooled start (capacity, incompatible type) leaves it in the pool and cold-launches. It is
+  (`ModifyInstanceAttribute` → `StartInstances` → tag reserved) → cold launch. A lost claim on a
+  pooled instance moves to the next, so simultaneous requests share the pool instead of
+  cold-launching past it. A failed pooled start (capacity, incompatible type) leaves it in the pool
+  and cold-launches. It is
   tagged only once started: nothing but the pool may leave a worker stopped.
   The request emits `InstancePendingProvisioning` itself, as for an idle instance; a pooled start is
   never tagged `Starting=true`, since the started-instance poll would provision it a second time.

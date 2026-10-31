@@ -19,6 +19,11 @@ describe('launchFailureCode', () => {
         assert.equal(launchFailureCode(namedError('VcpuLimitExceeded')), 'QUOTA_EXCEEDED')
     })
 
+    it('classifies the volume initialization rate quota as QUOTA_EXCEEDED', () => {
+        const error = new Error('You\'ve reached your quota for the cumulative volume initialization rate that you can request across simultaneous volume creation requests. To increase your quota, you can use Service Quotas.')
+        assert.equal(launchFailureCode(error), 'QUOTA_EXCEEDED')
+    })
+
     it('finds the code through a cause chain (wrapped errors)', () => {
         const wrapped = new Error('FailedToTagInstance: ...', {cause: namedError('InsufficientInstanceCapacity')})
         assert.equal(launchFailureCode(wrapped), 'INSTANCE_UNAVAILABLE')
