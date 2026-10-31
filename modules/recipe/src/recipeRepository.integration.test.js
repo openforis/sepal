@@ -4,7 +4,6 @@ import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
-import {failingDb} from '#sepal/testSupport/db/faultyConnection'
 import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 import {RecipeRepository} from './recipeRepository.js'
@@ -38,7 +37,7 @@ describe('recipe repository', () => {
             assert.equal(created.owner, 'alice')
             assert.deepEqual(result, {outcome: 'saved', revision: revision + 1})
             assert.deepEqual(found, {
-                owner: 'alice', recipe: {...updated.content, projectId: recipe.projectId, revision: revision + 1}
+                owner: 'alice', recipe: {...updated.content, folderId: recipe.folderId, revision: revision + 1}
             })
         })
 
@@ -57,7 +56,7 @@ describe('recipe repository', () => {
 
                     assert.deepEqual(result, {outcome, currentRevision: revision})
                     const found = await repository.findRecipe(recipe.id)
-                    assert.deepEqual(found.recipe, {...recipe.content, projectId: recipe.projectId, revision})
+                    assert.deepEqual(found.recipe, {...recipe.content, folderId: recipe.folderId, revision})
                 }
             )
         }
@@ -71,14 +70,14 @@ describe('recipe repository', () => {
             const found = await repository.findRecipe(recipe.id)
             assert.deepEqual(
                 found,
-                {owner: recipe.owner, recipe: {...recipe.content, projectId: recipe.projectId, revision: 1}}
+                {owner: recipe.owner, recipe: {...recipe.content, folderId: recipe.folderId, revision: 1}}
             )
         })
 
         // A client may echo back the placement and revision a load injected; neither may reach the column.
         test('strips server metadata a client echoed back when creating', async () => {
             const content = aRecipeContent()
-            const recipe = aRecipe({content: {...content, revision: 97, projectId: 'echoed-project'}})
+            const recipe = aRecipe({content: {...content, revision: 97, folderId: 'echoed-folder'}})
 
             await repository.saveRecipe(recipe)
 
@@ -91,7 +90,7 @@ describe('recipe repository', () => {
             const recipe = aRecipe()
             const {revision} = await repository.saveRecipe(recipe)
             const updatedRecipe = aRecipe({
-                expectedRevision: revision, content: {...content, revision: 97, projectId: 'echoed-project'}
+                expectedRevision: revision, content: {...content, revision: 97, folderId: 'echoed-folder'}
             })
 
             await repository.saveRecipe(updatedRecipe)
@@ -119,7 +118,7 @@ describe('recipe repository', () => {
             const found = await repository.findRecipe(recipe.id)
             assert.deepEqual(
                 found.recipe,
-                {...updatedRecipe.content, projectId: recipe.projectId, revision: revision + 1}
+                {...updatedRecipe.content, folderId: recipe.folderId, revision: revision + 1}
             )
         })
 
@@ -157,7 +156,7 @@ describe('recipe repository', () => {
 
             assert.deepEqual(result, {outcome: 'notFound'})
             const found = await repository.findRecipe(recipe.id)
-            assert.deepEqual(found.recipe, {...recipe.content, projectId: recipe.projectId, revision})
+            assert.deepEqual(found.recipe, {...recipe.content, folderId: recipe.folderId, revision})
         })
 
         test('can never resurrect a removed recipe', async () => {
@@ -187,20 +186,57 @@ describe('recipe repository', () => {
             assert.equal(found.recipe.revision, revision)
         })
 
-        // A retry at the unchanged revision must not write stale project placement back.
-        test('leaves the project alone, so a retry after a move cannot undo it', async () => {
-            const recipe = aRecipe({projectId: A_PROJECT_ID})
+        // A retry at the unchanged revision must not write stale folder placement back.
+        test('leaves the folder alone, so a retry after a move cannot undo it', async () => {
+            const original = aFolder()
+            const destination = aFolder({id: DESTINATION_FOLDER_ID})
+            await repository.saveFolder(original)
+            await repository.saveFolder(destination)
+            const recipe = aRecipe({folderId: original.id})
             const {revision} = await repository.saveRecipe(recipe)
             await repository.moveRecipes({
-                projectId: DESTINATION_PROJECT_ID, recipeIds: [recipe.id], owner: OWNER
+                folderId: destination.id, recipeIds: [recipe.id], owner: OWNER
             })
 
-            await repository.saveRecipe(aRecipe({
-                projectId: A_PROJECT_ID, expectedRevision: revision, content: aRecipeContent({retried: true})
-            }))
+            await repository.saveRecipe({
+                ...recipe, expectedRevision: revision, content: aRecipeContent({retried: true})
+            })
 
             const found = await repository.findRecipe(recipe.id)
-            assert.equal(found.recipe.projectId, DESTINATION_PROJECT_ID)
+            assert.equal(found.recipe.folderId, destination.id)
+        })
+
+        test('places a new recipe in a folder its owner has', async () => {
+            const folder = aFolder()
+            await repository.saveFolder(folder)
+            const recipe = aRecipe({folderId: folder.id})
+
+            await repository.saveRecipe(recipe)
+
+            const found = await repository.findRecipe(recipe.id)
+            assert.equal(found.recipe.folderId, folder.id)
+        })
+
+        // The tree shows a recipe only in a folder that exists or at the root; anywhere else it would vanish.
+        test('places a new recipe at the root when its folder does not exist, and still saves it', async () => {
+            const recipe = aRecipe({folderId: 'removed-folder'})
+
+            const result = await repository.saveRecipe(recipe)
+
+            assert.deepEqual(result, {outcome: 'saved', revision: 1})
+            const found = await repository.findRecipe(recipe.id)
+            assert.equal(found.recipe.folderId, null)
+        })
+
+        test('places a new recipe at the root when its folder is another user\'s', async () => {
+            const foreign = aFolder({owner: ANOTHER_OWNER})
+            await repository.saveFolder(foreign)
+            const recipe = aRecipe({folderId: foreign.id})
+
+            await repository.saveRecipe(recipe)
+
+            const found = await repository.findRecipe(recipe.id)
+            assert.equal(found.recipe.folderId, null)
         })
     })
 
@@ -213,7 +249,7 @@ describe('recipe repository', () => {
 
             assert.deepEqual(found, {
                 owner: recipe.owner,
-                recipe: {...recipe.content, projectId: recipe.projectId, revision}
+                recipe: {...recipe.content, folderId: recipe.folderId, revision}
             })
         })
 
@@ -231,25 +267,27 @@ describe('recipe repository', () => {
             const recipe = aRecipe()
             const {revision} = await repository.saveRecipe(recipe)
             await storeLegacyDocument(recipe.id, {
-                ...recipe.content, revision: 97, projectId: 'echoed-project'
+                ...recipe.content, revision: 97, folderId: 'echoed-folder', projectId: 'a-folder-by-its-old-name'
             })
 
             const found = await repository.findRecipe(recipe.id)
 
-            assert.deepEqual(found.recipe, {...recipe.content, projectId: recipe.projectId, revision})
+            assert.deepEqual(found.recipe, {...recipe.content, folderId: recipe.folderId, revision})
         })
 
-        test('injects the new project after a move, which advances no revision', async () => {
+        test('injects the new folder after a move, which advances no revision', async () => {
+            const destination = aFolder({id: DESTINATION_FOLDER_ID})
+            await repository.saveFolder(destination)
             const recipe = aRecipe()
             const {revision} = await repository.saveRecipe(recipe)
             await repository.moveRecipes({
-                projectId: DESTINATION_PROJECT_ID, recipeIds: [recipe.id], owner: OWNER
+                folderId: destination.id, recipeIds: [recipe.id], owner: OWNER
             })
 
             const found = await repository.findRecipe(recipe.id)
 
             assert.deepEqual(found.recipe, {
-                ...recipe.content, projectId: DESTINATION_PROJECT_ID, revision
+                ...recipe.content, folderId: destination.id, revision
             })
         })
     })
@@ -263,7 +301,7 @@ describe('recipe repository', () => {
             const [summary] = await repository.listRecipes(OWNER)
 
             const {creationTime, updateTime, ...rest} = summary
-            assert.deepEqual(rest, {id: recipe.id, projectId: recipe.projectId, name: recipe.name, type: recipe.type, revision})
+            assert.deepEqual(rest, {id: recipe.id, folderId: recipe.folderId, name: recipe.name, type: recipe.type, revision})
             assert.ok(creationTime instanceof Date)
             assert.ok(updateTime instanceof Date)
         })
@@ -295,6 +333,64 @@ describe('recipe repository', () => {
             const anothersRecipe = await repository.findRecipe(anothers.id)
             assert.equal(ownRecipe, null)
             assert.notEqual(anothersRecipe, null)
+        })
+    })
+
+    describe('moveRecipes', () => {
+        test('moves the recipes into a folder their owner has', async () => {
+            const destination = aFolder({id: DESTINATION_FOLDER_ID})
+            await repository.saveFolder(destination)
+            const recipe = aRecipe()
+            await repository.saveRecipe(recipe)
+
+            const result = await repository.moveRecipes({
+                folderId: destination.id, recipeIds: [recipe.id], owner: OWNER
+            })
+
+            assert.deepEqual(result, {outcome: 'moved'})
+            const found = await repository.findRecipe(recipe.id)
+            assert.equal(found.recipe.folderId, destination.id)
+        })
+
+        test('moves the recipes to the root', async () => {
+            const folder = aFolder()
+            await repository.saveFolder(folder)
+            const recipe = aRecipe({folderId: folder.id})
+            await repository.saveRecipe(recipe)
+
+            const result = await repository.moveRecipes({folderId: null, recipeIds: [recipe.id], owner: OWNER})
+
+            assert.deepEqual(result, {outcome: 'moved'})
+            const found = await repository.findRecipe(recipe.id)
+            assert.equal(found.recipe.folderId, null)
+        })
+
+        test('refuses a destination that does not exist, moving nothing', async () => {
+            const recipe = aRecipe()
+            await repository.saveRecipe(recipe)
+
+            const result = await repository.moveRecipes({
+                folderId: 'removed-folder', recipeIds: [recipe.id], owner: OWNER
+            })
+
+            assert.deepEqual(result, {outcome: 'folderNotFound'})
+            const found = await repository.findRecipe(recipe.id)
+            assert.equal(found.recipe.folderId, recipe.folderId)
+        })
+
+        test('refuses a destination another user owns, moving nothing', async () => {
+            const foreign = aFolder({owner: ANOTHER_OWNER})
+            await repository.saveFolder(foreign)
+            const recipe = aRecipe()
+            await repository.saveRecipe(recipe)
+
+            const result = await repository.moveRecipes({
+                folderId: foreign.id, recipeIds: [recipe.id], owner: OWNER
+            })
+
+            assert.deepEqual(result, {outcome: 'folderNotFound'})
+            const found = await repository.findRecipe(recipe.id)
+            assert.equal(found.recipe.folderId, recipe.folderId)
         })
     })
 
@@ -331,7 +427,7 @@ describe('recipe repository', () => {
             const found = await repository.findRecipe(recipe.id)
             assert.deepEqual(
                 found.recipe,
-                {...migration.content, projectId: recipe.projectId, revision: revision + 1}
+                {...migration.content, folderId: recipe.folderId, revision: revision + 1}
             )
         })
 
@@ -341,7 +437,7 @@ describe('recipe repository', () => {
             await repository.saveRecipe(recipe)
 
             await repository.saveMigratedRecipe(aRecipeMigration({
-                content: {...content, revision: 97, projectId: 'echoed-project'}
+                content: {...content, revision: 97, folderId: 'echoed-folder'}
             }))
 
             const stored = await storedRow(recipe.id)
@@ -355,98 +451,218 @@ describe('recipe repository', () => {
         })
     })
 
-    describe('saveProject', () => {
-        test('stores a lowercase owner and updates the project using another spelling of its case', async () => {
-            const project = aProject({owner: 'Alice'})
-            await repository.saveProject(project)
-            const renamed = {...project, owner: 'ALICE', name: 'Renamed'}
+    describe('saveFolder', () => {
+        test('stores a lowercase owner and updates the folder using another spelling of its case', async () => {
+            const folder = aFolder({owner: 'Alice'})
+            await repository.saveFolder(folder)
+            const renamed = {...folder, owner: 'ALICE', name: 'Renamed'}
 
-            await repository.saveProject(renamed)
+            await repository.saveFolder(renamed)
 
-            const projects = await repository.listProjects('Alice')
-            assert.deepEqual(projects, [{
-                id: project.id, username: 'alice', name: renamed.name,
-                defaultAssetFolder: project.defaultAssetFolder,
-                defaultWorkspaceFolder: project.defaultWorkspaceFolder
+            const folders = await repository.listFolders('Alice')
+            assert.deepEqual(folders, [{
+                id: folder.id, username: 'alice', name: renamed.name, parentId: folder.parentId,
+                defaultAssetFolder: folder.defaultAssetFolder,
+                defaultWorkspaceFolder: folder.defaultWorkspaceFolder
             }])
         })
 
         test('creates, then updates in place', async () => {
-            const project = aProject()
-            await repository.saveProject(project)
-            const renamedProject = aProject({name: 'Renamed', defaultAssetFolder: 'assets'})
+            const folder = aFolder()
+            await repository.saveFolder(folder)
+            const renamedFolder = aFolder({name: 'Renamed', defaultAssetFolder: 'assets'})
 
-            await repository.saveProject(renamedProject)
+            await repository.saveFolder(renamedFolder)
 
-            const projects = await repository.listProjects(OWNER)
-            assert.deepEqual(projects, [{
-                id: renamedProject.id, username: OWNER, name: renamedProject.name,
-                defaultAssetFolder: renamedProject.defaultAssetFolder,
-                defaultWorkspaceFolder: renamedProject.defaultWorkspaceFolder
+            const folders = await repository.listFolders(OWNER)
+            assert.deepEqual(folders, [{
+                id: renamedFolder.id, username: OWNER, name: renamedFolder.name, parentId: renamedFolder.parentId,
+                defaultAssetFolder: renamedFolder.defaultAssetFolder,
+                defaultWorkspaceFolder: renamedFolder.defaultWorkspaceFolder
             }])
         })
 
-        // An upsert that updated unconditionally would let anyone overwrite a project by guessing its id.
+        // An upsert that updated unconditionally would let anyone overwrite a folder by guessing its id.
         test('changes nothing and claims nothing when another user saves the same id', async () => {
-            const project = aProject()
-            await repository.saveProject(project)
+            const folder = aFolder()
+            await repository.saveFolder(folder)
 
-            await repository.saveProject(aProject({
+            await repository.saveFolder(aFolder({
                 owner: ANOTHER_OWNER, name: 'Hijacked',
                 defaultAssetFolder: 'theirs', defaultWorkspaceFolder: 'theirs'
             }))
 
-            const owners = await repository.listProjects(OWNER)
-            const hijackers = await repository.listProjects(ANOTHER_OWNER)
+            const owners = await repository.listFolders(OWNER)
+            const hijackers = await repository.listFolders(ANOTHER_OWNER)
             assert.deepEqual(owners, [{
-                id: project.id, username: OWNER, name: project.name,
+                id: folder.id, username: OWNER, name: folder.name, parentId: null,
                 defaultAssetFolder: null, defaultWorkspaceFolder: null
             }])
             assert.deepEqual(hijackers, [])
         })
+
+        test('stores a parent, and defaults to no parent', async () => {
+            const parent = aFolder({id: 'parent-folder', name: 'Parent'})
+            const child = aFolder({id: 'child-folder', name: 'Child', parentId: parent.id})
+            await repository.saveFolder(parent)
+
+            await repository.saveFolder(child)
+
+            const folders = await repository.listFolders(OWNER)
+            assert.equal(folders.find(({id}) => id === parent.id).parentId, null)
+            assert.equal(folders.find(({id}) => id === child.id).parentId, parent.id)
+        })
+
+        test('reparents an existing folder', async () => {
+            const parent = aFolder({id: 'parent-folder', name: 'Parent'})
+            const child = aFolder({id: 'child-folder', name: 'Child'})
+            await repository.saveFolder(parent)
+            await repository.saveFolder(child)
+
+            await repository.saveFolder({...child, parentId: parent.id})
+
+            const folders = await repository.listFolders(OWNER)
+            assert.equal(folders.find(({id}) => id === child.id).parentId, parent.id)
+        })
+
+        test('refuses to reparent a folder another user owns', async () => {
+            const foreign = aFolder({owner: ANOTHER_OWNER})
+            await repository.saveFolder(foreign)
+
+            await repository.saveFolder({...foreign, owner: OWNER, parentId: 'somewhere-else'})
+
+            const folders = await repository.listFolders(ANOTHER_OWNER)
+            assert.deepEqual(folders, [{
+                id: foreign.id, username: ANOTHER_OWNER, name: foreign.name, parentId: null,
+                defaultAssetFolder: null, defaultWorkspaceFolder: null
+            }])
+        })
+
+        // A parentId the attacker legitimately owns clears both parent guards, so this is what reaches
+        // the upsert and exercises the row's own ownership guard rather than one of the parent's.
+        test('refuses to reparent a folder another user owns, even to a parent the attacker legitimately owns', async () => {
+            const foreign = aFolder({owner: ANOTHER_OWNER})
+            await repository.saveFolder(foreign)
+            const ownParent = aFolder({id: 'own-parent'})
+            await repository.saveFolder(ownParent)
+
+            const result = await repository.saveFolder({...foreign, owner: OWNER, parentId: ownParent.id})
+
+            assert.deepEqual(result, {outcome: 'saved'})
+            const folders = await repository.listFolders(ANOTHER_OWNER)
+            assert.equal(folders.find(({id}) => id === foreign.id).parentId, null)
+        })
+
+        test('refuses a folder that is its own parent', async () => {
+            const folder = aFolder()
+            await repository.saveFolder(folder)
+
+            const result = await repository.saveFolder({...folder, parentId: folder.id})
+
+            assert.deepEqual(result, {outcome: 'cycle'})
+            const folders = await repository.listFolders(OWNER)
+            assert.equal(folders.find(({id}) => id === folder.id).parentId, null)
+        })
+
+        test('refuses a parent that sits below the folder being saved', async () => {
+            const grandparent = aFolder({id: 'grandparent', name: 'Grandparent'})
+            const parent = aFolder({id: 'parent', name: 'Parent', parentId: grandparent.id})
+            const child = aFolder({id: 'child', name: 'Child', parentId: parent.id})
+            await repository.saveFolder(grandparent)
+            await repository.saveFolder(parent)
+            await repository.saveFolder(child)
+
+            const result = await repository.saveFolder({...grandparent, parentId: child.id})
+
+            assert.deepEqual(result, {outcome: 'cycle'})
+        })
+
+        test('refuses a parent that does not exist', async () => {
+            const result = await repository.saveFolder(aFolder({parentId: 'no-such-folder'}))
+
+            assert.deepEqual(result, {outcome: 'parentNotFound'})
+            assert.deepEqual(await repository.listFolders(OWNER), [])
+        })
+
+        test('refuses a parent another user owns, reporting it absent', async () => {
+            await repository.saveFolder(aFolder({id: 'foreign-parent', owner: ANOTHER_OWNER}))
+
+            const result = await repository.saveFolder(aFolder({parentId: 'foreign-parent'}))
+
+            assert.deepEqual(result, {outcome: 'parentNotFound'})
+        })
+
+        test('accepts a save with no parent', async () => {
+            const result = await repository.saveFolder(aFolder())
+
+            assert.deepEqual(result, {outcome: 'saved'})
+        })
+
+        // POST /folder lets through 255 characters, so the column must hold that many of the widest kind.
+        test('stores a name of 255 four-byte characters', async () => {
+            const folder = aFolder({name: '🌍'.repeat(255)})
+
+            await repository.saveFolder(folder)
+
+            const [stored] = await repository.listFolders(OWNER)
+            assert.equal(stored.name, folder.name)
+        })
     })
 
-    describe('removeProject', () => {
-        test('deletes the project and soft-deletes the recipes it held', async () => {
-            const project = aProject()
-            const held = aRecipe({projectId: project.id})
-            await repository.saveProject(project)
-            await repository.saveRecipe(held)
+    describe('removeFolder', () => {
+        test('removes a folder holding nothing', async () => {
+            const folder = aFolder()
+            await repository.saveFolder(folder)
 
-            await repository.removeProject(project.id, OWNER)
+            const result = await repository.removeFolder(folder.id, OWNER)
 
-            const projects = await repository.listProjects(OWNER)
-            assert.deepEqual(projects, [])
-            const found = await repository.findRecipe(held.id)
-            assert.equal(found, null)
+            assert.deepEqual(result, {outcome: 'removed'})
+            assert.deepEqual(await repository.listFolders(OWNER), [])
         })
 
-        test('rolls back when the recipe soft-delete fails', async () => {
-            const project = aProject()
-            const held = aRecipe({projectId: project.id})
-            await repository.saveProject(project)
+        test('refuses a folder holding a recipe, keeping both', async () => {
+            const folder = aFolder()
+            const held = aRecipe({folderId: folder.id})
+            await repository.saveFolder(folder)
             await repository.saveRecipe(held)
-            const refusingTheSoftDelete = new RecipeRepository(failingDb(testDb.db, {
-                when: theRecipeSoftDelete, error: new Error('soft delete refused')
-            }))
 
-            const interrupted = refusingTheSoftDelete.removeProject(project.id, OWNER)
+            const result = await repository.removeFolder(folder.id, OWNER)
 
-            await assert.rejects(interrupted, /soft delete refused/)
-            const projects = await repository.listProjects(OWNER)
-            assert.deepEqual(projects.map(({id}) => id), [project.id])
-            const found = await repository.findRecipe(held.id)
-            assert.notEqual(found, null)
+            assert.deepEqual(result, {outcome: 'notEmpty', folders: 0, recipes: 1})
+            assert.deepEqual((await repository.listFolders(OWNER)).map(({id}) => id), [folder.id])
+            assert.notEqual(await repository.findRecipe(held.id), null)
         })
 
-        test('leaves another user\'s project alone', async () => {
-            const project = aProject()
-            await repository.saveProject(project)
+        test('refuses a folder holding another folder', async () => {
+            const parent = aFolder({id: 'parent-folder', name: 'Parent'})
+            await repository.saveFolder(parent)
+            await repository.saveFolder(aFolder({id: 'child-folder', name: 'Child', parentId: parent.id}))
 
-            await repository.removeProject(project.id, ANOTHER_OWNER)
+            const result = await repository.removeFolder(parent.id, OWNER)
 
-            const projects = await repository.listProjects(OWNER)
-            assert.deepEqual(projects.map(({id}) => id), [project.id])
+            assert.deepEqual(result, {outcome: 'notEmpty', folders: 1, recipes: 0})
+        })
+
+        test('ignores a removed recipe when deciding whether a folder is empty', async () => {
+            const folder = aFolder()
+            const held = aRecipe({folderId: folder.id})
+            await repository.saveFolder(folder)
+            await repository.saveRecipe(held)
+            await repository.removeRecipes([held.id], OWNER)
+
+            const result = await repository.removeFolder(folder.id, OWNER)
+
+            assert.deepEqual(result, {outcome: 'removed'})
+        })
+
+        test('leaves another user\'s folder alone', async () => {
+            const folder = aFolder()
+            await repository.saveFolder(folder)
+
+            await repository.removeFolder(folder.id, ANOTHER_OWNER)
+
+            const folders = await repository.listFolders(OWNER)
+            assert.deepEqual(folders.map(({id}) => id), [folder.id])
         })
     })
 
@@ -481,31 +697,31 @@ describe('recipe repository', () => {
             assert.equal(stored.recipe.revision, revision + 1)
         })
 
-        // Two browsers creating the same project must converge, not surface a duplicate-key failure.
-        test('lets concurrent creates of the same id all succeed, leaving one project', async () => {
-            const project = aProject()
+        // Two browsers creating the same folder must converge, not surface a duplicate-key failure.
+        test('lets concurrent creates of the same id all succeed, leaving one folder', async () => {
+            const folder = aFolder()
 
             const results = await Promise.allSettled(
-                Array.from({length: COMPETING_WRITERS}, () => concurrentRepository.saveProject(project))
+                Array.from({length: COMPETING_WRITERS}, () => concurrentRepository.saveFolder(folder))
             )
 
             assert.deepEqual(
                 results.map(({status}) => status),
                 Array(COMPETING_WRITERS).fill('fulfilled')
             )
-            const projects = await concurrentRepository.listProjects(OWNER)
-            assert.deepEqual(projects.map(({id}) => id), [project.id])
+            const folders = await concurrentRepository.listFolders(OWNER)
+            assert.deepEqual(folders.map(({id}) => id), [folder.id])
         })
     })
 
     const aRecipe = (over = {}) => ({
-        id: A_RECIPE_ID, owner: OWNER, name: 'A recipe', type: 'MOSAIC', projectId: A_PROJECT_ID,
+        id: A_RECIPE_ID, owner: OWNER, name: 'A recipe', type: 'MOSAIC', folderId: null,
         typeVersion: OUTDATED_TYPE_VERSION, content: aRecipeContent(),
         ...over
     })
 
-    const aProject = (over = {}) => ({
-        id: A_PROJECT_ID, owner: OWNER, name: 'A project',
+    const aFolder = (over = {}) => ({
+        id: A_FOLDER_ID, owner: OWNER, name: 'A folder', parentId: null,
         defaultAssetFolder: null, defaultWorkspaceFolder: null, ...over
     })
 
@@ -526,12 +742,9 @@ describe('recipe repository', () => {
         'UPDATE recipe SET contents = ? WHERE id = ?', [JSON.stringify(document), id]
     )
 
-    // Names the statement the transaction must undo: the soft delete that follows the project delete.
-    const theRecipeSoftDelete = sql => /UPDATE recipe SET removed/i.test(sql)
-
     const A_RECIPE_ID = 'a-recipe'
-    const A_PROJECT_ID = 'a-project'
-    const DESTINATION_PROJECT_ID = 'destination-project'
+    const A_FOLDER_ID = 'a-folder'
+    const DESTINATION_FOLDER_ID = 'destination-folder'
     const OWNER = 'bob'
     const ANOTHER_OWNER = 'alice'
     const CURRENT_TYPE_VERSION = 8

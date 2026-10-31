@@ -22,12 +22,12 @@ import {tooltipText} from '~/widget/tooltip.test.fixtures'
 // while SRC, where it is repaired, says why; repair offers it again, opening on what was last submitted. What is still
 // being read, or cannot be, and a save not yet acknowledged, hold the export with the panel open, keeping the selection,
 // as a selection or asset the form leaves incomplete does. Nothing is submitted while held, by Apply or by the form
-// itself, judged from the session as it stands when submitted, and the project's destination is left as it was. The
+// itself, judged from the session as it stands when submitted, and the folder's destination is left as it was. The
 // registrations, runtime, activation, Retrieve action, section marks, form, panel and submission are real; storage,
 // Earth Engine, task submission and the asset destination's check are the substitutes.
 
 const {inputBands$, saveRecipe$} = vi.hoisted(() => ({inputBands$: vi.fn(), saveRecipe$: vi.fn()}))
-const fake = vi.hoisted(() => ({stored: {}, submitted: [], projects: [], assetId: null}))
+const fake = vi.hoisted(() => ({stored: {}, submitted: [], folders: [], assetId: null}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
@@ -35,13 +35,13 @@ vi.mock('~/apiRegistry', () => ({default: {
     },
     recipe: {
         load$: id => of(fake.stored[id]),
-        loadAll$: () => of(fake.creation ? Object.values(fake.stored).map(({id, type, revision, projectId}) => ({id, type, revision, projectId, name: id})) : LISTING),
+        loadAll$: () => of(fake.creation ? Object.values(fake.stored).map(({id, type, revision, folderId}) => ({id, type, revision, folderId, name: id})) : LISTING),
         save$: request => saveRecipe$(request)
     },
-    project: {
-        save$: project => {
-            fake.projects.push(project)
-            return of([project])
+    folder: {
+        save$: folder => {
+            fake.folders.push(folder)
+            return of([folder])
         }
     },
     tasks: {
@@ -102,7 +102,7 @@ beforeEach(() => {
     inputBands$.mockReset().mockReturnValue(of(INPUT_BANDS))
     saveRecipe$.mockReset().mockReturnValue(of({revision: 2}))
     fake.submitted = []
-    fake.projects = []
+    fake.folders = []
     fake.assetId = null
     fake.creation = false
     firstListener = () => {}
@@ -261,7 +261,7 @@ describe('an open CCDC Retrieve whose Classification loses its points', () => {
         await settled()
         expect(panelOpen()).toBe(false)
         expect(fake.submitted).toEqual([])
-        expect(fake.projects).toEqual([])
+        expect(fake.folders).toEqual([])
     })
 
     it('is offered again once they are restored, without opening, and opens on what was last submitted, not on what was edited since', async () => {
@@ -289,7 +289,7 @@ describe('an open CCDC Retrieve whose Classification loses its points', () => {
             scale: 30,
             tileSize: 0.5
         })
-        expect(fake.projects).toMatchObject([{id: PROJECT, defaultAssetFolder: 'projects/p/assets'}])
+        expect(fake.folders).toMatchObject([{id: FOLDER, defaultAssetFolder: 'projects/p/assets'}])
     })
 
     it.each([['one it computes', CLASSIFIED_MEASURE], ['one of the scenes', NATIVE_MEASURE]])('submits nothing of %s, leaving the destination remembered, where they are removed in the event submitting it', async (_case, selected) => {
@@ -306,7 +306,7 @@ describe('an open CCDC Retrieve whose Classification loses its points', () => {
         await settled()
 
         expect(fake.submitted).toEqual([])
-        expect(fake.projects).toEqual([])
+        expect(fake.folders).toEqual([])
         expect(panelOpen()).toBe(false)
     })
 })
@@ -382,7 +382,7 @@ describe('an open CCDC Retrieve submitted from the keyboard while its Classifica
         expect(panelOpen()).toBe(true)
         expect(savedSettings()).toMatchObject({assetId: ASSET_ID})
         expect(fake.submitted).toEqual([])
-        expect(fake.projects).toEqual([])
+        expect(fake.folders).toEqual([])
 
         await act(async () => observed.next(INPUT_BANDS))
         await settled()
@@ -500,7 +500,7 @@ describe('what an open CCDC Retrieve watches', () => {
 const CCDC = 'ccdc-1'
 const CLASSIFICATION = 'classification-1'
 const MOSAIC = 'mosaic-1'
-const PROJECT = 'project-1'
+const FOLDER = 'folder-1'
 const ASSET_ID = 'projects/p/assets/ccdc'
 const OTHER_ASSET_ID = 'projects/p/assets/other'
 const NATIVE = 'ndvi'
@@ -529,7 +529,7 @@ const ccdcRecipe = ({selected, breakpointBands}) => ({
     id: CCDC,
     type: 'CCDC',
     title: 'CCDC',
-    projectId: PROJECT,
+    folderId: FOLDER,
     revision: 1,
     model: {
         aoi: {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]},
@@ -739,11 +739,11 @@ const open = async ({selected, breakpointBands = [NATIVE], input = MOSAIC_INPUT,
             records.push({...reference, id: 'healthy-ccdc', model: {...reference.model, sources}})
         }
     }
-    if (creation) records.forEach(record => record.projectId = PROJECT)
+    if (creation) records.forEach(record => record.folderId = FOLDER)
     if (sourcesWizard) {
         records[0].ui.initialized = false
         records[0].model.sources = {...records[0].model.sources, classification: null}
-        records.push({...classificationRecipe({input, trainingData: [COLLECTED]}), id: 'healthy-classification', projectId: PROJECT})
+        records.push({...classificationRecipe({input, trainingData: [COLLECTED]}), id: 'healthy-classification', folderId: FOLDER})
     }
     const RetrievePanel = alerts ? AlertsRetrieve : Retrieve
     fake.stored = Object.fromEntries(records.map(record => [record.id, record]))
@@ -754,9 +754,9 @@ const open = async ({selected, breakpointBands = [NATIVE], input = MOSAIC_INPUT,
             loadedRecipes: Object.fromEntries(records.map(record => [record.id, record])),
             tabs: [{id: CCDC}, ...(classificationOpen ? [{id: CLASSIFICATION}] : [])],
             saveStates: classificationOpen ? {[CLASSIFICATION]: {status: 'SAVED', revision: 1, model: records[1].model}} : {},
-            recipes: records.map(({id, type, revision, projectId}) => ({id, type, revision, projectId, name: id})),
+            recipes: records.map(({id, type, revision, folderId}) => ({id, type, revision, folderId, name: id})),
             recipeListing: {checkedAt: Date.now()},
-            projects: [{id: PROJECT, name: 'Project', defaultAssetFolder: 'projects/p/assets/earlier'}]
+            folders: [{id: FOLDER, name: 'Folder', defaultAssetFolder: 'projects/p/assets/earlier'}]
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)

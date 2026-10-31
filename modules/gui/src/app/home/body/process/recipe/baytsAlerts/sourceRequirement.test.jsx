@@ -811,7 +811,7 @@ const sessionState = ({selection, options = HISTORICAL_OPTIONS, tabs, initialize
         recipes: LISTING,
         recipeListing: {checkedAt: Date.now()},
         saveStates: {},
-        projects: [],
+        folders: [],
         tabs
     },
     assets: {user: [STATS_ASSET, OTHER_ASSET].map(id => ({id, updateTime: 'T1'})), other: []},

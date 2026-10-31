@@ -115,7 +115,7 @@ const open = async model => {
     store = createStore(
         (state = {
             dimensions: {width: 1024, height: 768},
-            process: {loadedRecipes: {[model.id]: model}, recipes: LISTING, projects: [], tabs: []}
+            process: {loadedRecipes: {[model.id]: model}, recipes: LISTING, folders: [], tabs: []}
         }, action) => action.reduce ? action.reduce(state) : state
     )
     initStore(store)

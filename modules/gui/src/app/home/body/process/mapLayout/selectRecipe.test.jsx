@@ -64,11 +64,11 @@ afterEach(async () => {
 })
 
 describe('editing a recipe layer source', () => {
-    // Only the owner's project is offered until ALL is chosen; the layer may show a recipe from any.
-    it('shows the recipe it references when that recipe is in another project', () => {
-        show({id: 'elsewhere', name: 'In another project', type: 'MOSAIC', projectId: 'p2'})
+    // Only the owner's folder is offered until ALL is chosen; the layer may show a recipe from any.
+    it('shows the recipe it references when that recipe is in another folder', () => {
+        show({id: 'elsewhere', name: 'In another folder', type: 'MOSAIC', folderId: 'p2'})
 
-        expect(container.querySelector('input').placeholder).toBe('In another project')
+        expect(container.querySelector('input').placeholder).toBe('In another folder')
     })
 })
 
@@ -155,10 +155,10 @@ const mount = (layers, referenced = []) => {
         dimensions: {width: 1024, height: 768},
         process: {
             loadedRecipes: {
-                [OWNER]: {id: OWNER, type: 'MOSAIC', projectId: 'p1', model: {}, layers, ui: {}}
+                [OWNER]: {id: OWNER, type: 'MOSAIC', folderId: 'p1', model: {}, layers, ui: {}}
             },
-            recipes: [{id: OWNER, name: 'The owner', type: 'MOSAIC', projectId: 'p1'}, ...referenced],
-            projects: [{id: 'p1', name: 'Project one'}, {id: 'p2', name: 'Project two'}],
+            recipes: [{id: OWNER, name: 'The owner', type: 'MOSAIC', folderId: 'p1'}, ...referenced],
+            folders: [{id: 'p1', name: 'Folder one'}, {id: 'p2', name: 'Folder two'}],
             tabs: []
         }
     }

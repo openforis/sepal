@@ -319,7 +319,7 @@ const mount = async (type, panels, retrieveBands = ['regression']) => {
             saveStates: {},
             recipes: fake.listing,
             recipeListing: {checkedAt: Date.now()},
-            projects: []
+            folders: []
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)

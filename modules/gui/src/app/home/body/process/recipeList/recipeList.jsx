@@ -2,66 +2,100 @@ import _ from 'lodash'
 import memoizeOne from 'memoize-one'
 import PropTypes from 'prop-types'
 import React from 'react'
+import {catchError, concat, filter, last, map, Subject, switchMap, takeUntil, throwError} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
+import api from '~/apiRegistry'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {select} from '~/store'
-import {simplifyString, splitString} from '~/string'
+import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
+import {uuid} from '~/uuid'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {ButtonPopup} from '~/widget/buttonPopup'
 import {CheckButton} from '~/widget/checkButton'
-import {Combo} from '~/widget/combo'
 import {Confirm} from '~/widget/confirm'
-import {CrudItem} from '~/widget/crudItem'
 import {FastList} from '~/widget/fastList'
 import {Layout} from '~/widget/layout'
-import {ListItem} from '~/widget/listItem'
+import {NoData} from '~/widget/noData'
+import {Notifications} from '~/widget/notifications'
 import {CenteredProgress} from '~/widget/progress'
 import {SearchBox} from '~/widget/searchBox'
 import {SortButtons} from '~/widget/sortButtons'
 
 import {CreateRecipe} from '../createRecipe'
+import {loadFolders$, loadRecipes$} from '../recipe'
 import {getRecipeType, listRecipeTypes} from '../recipeTypeRegistry'
-import {ProjectsButton} from './projectsButton'
+import {Breadcrumb} from './breadcrumb'
+import {DragPreview} from './dragPreview'
+import {DropTargetContext} from './dropTargetContext'
+import {moveItems, updateFolder} from './folderActions'
+import {FolderForm} from './folderForm'
+import {FolderItem} from './folderItem'
+import {FolderPicker} from './folderPicker'
+import {RecipeItem} from './recipeItem'
 import {RecipeListConfirm} from './recipeListConfirm'
-import {NO_PROJECT_OPTION, NO_PROJECT_SYMBOL, PROJECT_RECIPE_SEPARATOR} from './recipeListConstants'
-import {SelectProject} from './selectProject'
+import {
+    asDragged, canDropInto, childFolders, folderCounts, folderNameKey, folderPathLabel, locationLabel,
+    navigatorItems, placedRecipes, ROOT, searchHighlight, searchValues
+} from './recipeTree'
 
 const EMPTY_ARRAY = []
 
+const getPlacedRecipes = memoizeOne(placedRecipes)
+
 const mapStateToProps = () => ({
-    projects: select('process.projects'),
-    projectId: select('process.projectId'),
-    recipes: select('process.recipes'),
+    folders: select('process.folders') ?? EMPTY_ARRAY,
+    folderId: select('process.folderId'),
+    recipes: getPlacedRecipes(select('process.folders'), select('process.recipes')),
     sortingOrder: select('process.sortingOrder') ?? 'updateTime',
     sortingDirection: select('process.sortingDirection') ?? -1,
     filterValue: select('process.filterValue'),
     filterValues: select('process.filterValues') ?? EMPTY_ARRAY,
-    selectedIds: select('process.selectedIds') ?? EMPTY_ARRAY,
-    filteredRecipes: select('process.filteredRecipes') ?? EMPTY_ARRAY
+    selectedIds: select('process.selectedIds') ?? EMPTY_ARRAY
 })
 
-const getHighlightMatcher = memoizeOne(
-    filterValues => filterValues.length
-        ? new RegExp(`(?:${filterValues.join('|')})`, 'i')
-        : ''
+const getHighlightMatcher = memoizeOne(searchHighlight)
+
+// Called only when at least one count is nonzero, so `parts` is never empty.
+const notEmptyCounts = ({folders, recipes}) => {
+    const parts = [
+        folders ? msg('process.folder.folderCount', {count: folders}) : null,
+        recipes ? msg('process.folder.description', {count: recipes}) : null
+    ].filter(part => part)
+    return parts.length === 2
+        ? msg('process.folder.remove.notEmpty.and', {a: parts[0], b: parts[1]})
+        : parts[0]
+}
+
+const notEmptyMessage = (name, counts) =>
+    msg('process.folder.remove.notEmpty', {name, counts: notEmptyCounts(counts)})
+
+const getItems = memoizeOne((folders, recipes, folderId, filterValues, sortingOrder, sortingDirection) =>
+    navigatorItems({folders, recipes, folderId, filterValues, sortingOrder, sortingDirection})
 )
 
 class _RecipeList extends React.Component {
+    drag$ = new Subject()
+
     state = {
         edit: false,
         move: false,
         remove: false,
+        editFolder: null,
         preselectedIds: null,
-        confirmedIds: null
+        confirmedIds: null,
+        navigationCount: 0,
+        dragging: false,
+        dragCoords: null,
+        dropTarget: null
     }
 
     constructor() {
         super()
-        this.renderRecipe = this.renderRecipe.bind(this)
+        this.renderItem = this.renderItem.bind(this)
         this.toggleEdit = this.toggleEdit.bind(this)
         this.setFilter = this.setFilter.bind(this)
         this.toggleAll = this.toggleAll.bind(this)
@@ -82,48 +116,169 @@ class _RecipeList extends React.Component {
         return <CenteredProgress title={msg('process.recipe.loading')}/>
     }
 
-    renderList() {
-        const {filteredRecipes} = this.props
-        const {edit, move, remove} = this.state
-        const highlightKey = this.getHighlightMatcher().toString()
-        const itemKey = recipe => `${recipe.id}|${edit}|${highlightKey}`
-        return (
-            <Layout type='vertical' spacing='compact'>
-                {this.renderHeader1()}
-                {this.renderHeader2()}
-                <FastList
-                    items={filteredRecipes}
-                    itemKey={itemKey}
-                    itemRenderer={this.renderRecipe}
-                    spacing='tight'
-                    overflow={50}
-                    onEnter={this.handleClick}
-                />
-                {move && this.renderMoveConfirmation()}
-                {remove && this.renderRemoveConfirmation()}
-            </Layout>
+    componentDidMount() {
+        const {addSubscription} = this.props
+        const release$ = this.drag$.pipe(filter(({dragging}) => dragging === false))
+        addSubscription(
+            this.drag$.pipe(
+                filter(({dragging}) => dragging === true),
+                switchMap(({value, coords}) => {
+                    this.dragged = value
+                    this.setState({dragging: true, dragCoords: coords, dropTarget: coords ? this.validTargetAt(coords) : null})
+                    return this.drag$.pipe(
+                        takeUntil(release$),
+                        map(({coords}) => ({dragCoords: coords, dropTarget: coords ? this.validTargetAt(coords) : null}))
+                    )
+                })
+            ).subscribe(state => this.setState(state)),
+            release$.subscribe(() => this.drop())
         )
     }
 
+    // The preview ignores the pointer, so hit testing reaches the destination beneath it.
+    validTargetAt({x, y}) {
+        const {folders} = this.props
+        const element = document.elementFromPoint(x, y)?.closest('[data-drop-folder-id], [data-drop-home]')
+        if (!element) {
+            return null
+        }
+        const folderId = element.hasAttribute('data-drop-home')
+            ? ROOT
+            : element.getAttribute('data-drop-folder-id')
+        return this.draggedItems().every(dragged => canDropInto({folders, dragged, targetFolderId: folderId}))
+            ? {folderId}
+            : null
+    }
+
+    drop() {
+        const {dropTarget} = this.state
+        const items = this.draggedItems()
+        const fromSelection = !!this.dragged && this.isSelected(this.dragged.id)
+        this.dragged = null
+        this.setState({dragging: false, dragCoords: null, dropTarget: null})
+        if (items.length && dropTarget) {
+            moveItems(items, dropTarget.folderId)
+            if (fromSelection) {
+                this.leaveEdit()
+            }
+        }
+    }
+
+    // Dragging one of the selected rows takes the whole selection with it, as the Move button does.
+    draggedItems() {
+        const dragged = this.dragged
+        if (!dragged) {
+            return []
+        }
+        return this.isSelected(dragged.id)
+            ? this.getFilteredSelectedItems().map(asDragged)
+            : [dragged]
+    }
+
+    folderLabel(folderId) {
+        const {folders} = this.props
+        return locationLabel(folders, folderId)
+    }
+
+    renderDragPreview() {
+        const {folders, recipes} = this.props
+        const {dragCoords, dropTarget} = this.state
+        if (!dragCoords || !this.dragged) {
+            return null
+        }
+        const {kind, id, folder} = this.dragged
+        const destination = dropTarget
+            ? dropTarget.folderId === ROOT
+                ? msg('process.recipeList.root')
+                : folders.find(({id}) => id === dropTarget.folderId)?.name
+            : undefined
+        return (
+            <DragPreview
+                coords={dragCoords}
+                name={kind === 'folder' ? folder.name : recipes.find(recipe => recipe.id === id)?.name}
+                icon={kind === 'folder' ? 'folder-open' : 'globe'}
+                count={this.draggedItems().length}
+                destination={destination}
+            />
+        )
+    }
+
+    renderList() {
+        const {edit, move, remove, editFolder, dragging, dropTarget} = this.state
+        const items = this.getItems()
+        const highlightKey = this.getHighlightMatcher().toString()
+        // FastList rows are pure and the derived items are referentially stable across a selection
+        // change, so anything that alters how a row draws has to reach it through the key.
+        const selectedIds = edit ? this.getFilteredSelectedIds() : EMPTY_ARRAY
+        const itemKey = item => `${item.kind}|${item.id}|${edit}|${selectedIds.includes(item.id)}|${highlightKey}`
+        return (
+            // The drag reaches the rows through the context rather than through itemKey: a key change
+            // makes a new row, and a new dragged row would end the drag it is in the middle of.
+            <DropTargetContext.Provider value={dragging ? {target: dropTarget} : null}>
+                <Layout type='vertical' spacing='compact'>
+                    {this.renderHeader1()}
+                    {this.renderHeader2()}
+                    {items.length
+                        ? (
+                            <FastList
+                                items={items}
+                                itemKey={itemKey}
+                                itemRenderer={this.renderItem}
+                                spacing='tight'
+                                overflow={50}
+                                onEnter={item => item.kind === 'folder'
+                                    ? this.navigateTo(item.folder.id)
+                                    : this.handleClick(item.recipe)}
+                            />
+                        )
+                        : this.renderEmpty()}
+                    {move && this.renderMoveConfirmation()}
+                    {remove && this.renderRemoveConfirmation()}
+                    {editFolder && this.renderFolderForm()}
+                </Layout>
+                {dragging && this.renderDragPreview()}
+            </DropTargetContext.Provider>
+        )
+    }
+
+    // An empty list is silent about why. Say whether nothing matched or the folder simply holds nothing.
+    renderEmpty() {
+        const {filterValue, filterValues} = this.props
+        return (
+            <NoData message={filterValues.length
+                ? msg('process.recipeList.noMatch', {search: filterValue})
+                : msg('process.recipeList.empty')}/>
+        )
+    }
+
+    getItems() {
+        const {folders, recipes, folderId, filterValues, sortingOrder, sortingDirection} = this.props
+        return getItems(folders, recipes ?? EMPTY_ARRAY, folderId ?? ROOT,
+            filterValues, sortingOrder, sortingDirection)
+    }
+
     renderHeader1() {
+        const {recipeId} = this.props
         return (
             <Layout type='horizontal' spacing='compact'>
                 {this.renderSearch()}
+                <CreateRecipe recipeId={recipeId} recipeTypes={listRecipeTypes()}/>
+                <Layout.Spacer/>
+                {this.renderNewFolderButton()}
                 {this.renderEditButtons()}
             </Layout>
         )
     }
 
     renderHeader2() {
-        const {recipeId} = this.props
+        const {folders, folderId} = this.props
         return (
-            <Layout type='horizontal' spacing='compact'>
-                <CreateRecipe recipeId={recipeId} recipeTypes={listRecipeTypes()}/>
-                <Layout type='horizontal' spacing='compact'>
-                    <ProjectsButton/>
-                    <SelectProject/>
-                </Layout>
-                <Layout.Spacer/>
+            <Layout type='horizontal-nowrap' spacing='compact'>
+                <Breadcrumb
+                    folders={folders}
+                    folderId={folderId ?? ROOT}
+                    onNavigate={folderId => this.navigateTo(folderId)}
+                />
                 <Layout type='horizontal' spacing='compact' alignment='right'>
                     {this.renderSortButtons()}
                 </Layout>
@@ -131,10 +286,51 @@ class _RecipeList extends React.Component {
         )
     }
 
+    renderNewFolderButton() {
+        return (
+            <Button
+                look='add'
+                shape='pill'
+                icon='folder-plus'
+                label={msg('process.folder.add')}
+                onClick={() => this.editFolder({id: uuid(), name: '', parentId: this.props.folderId ?? ROOT})}
+            />
+        )
+    }
+
+    editFolder(folder) {
+        this.setState({editFolder: folder})
+    }
+
+    renderFolderForm() {
+        const {folders} = this.props
+        const {editFolder} = this.state
+        return (
+            <FolderForm
+                folder={editFolder}
+                // A name is taken only beside the folder, as a file's is: the same name elsewhere is another place.
+                folderNames={childFolders(folders, editFolder.parentId)
+                    .filter(({id}) => id !== editFolder.id)
+                    .map(({name}) => folderNameKey(name))}
+                // The form leaves the placement alone, so the folder keeps the parent it was given.
+                onApply={folder => {
+                    updateFolder({...editFolder, ...folder})
+                    this.editFolder(null)
+                }}
+                onCancel={() => this.editFolder(null)}
+            />
+        )
+    }
+
+    // SearchBox seeds its value on mount only, so a navigation that clears the filter reaches the box
+    // by remounting it. The key counts navigations rather than naming the folder, so navigating to the
+    // folder you are already in still clears it.
     renderSearch() {
         const {filterValue} = this.props
+        const {navigationCount} = this.state
         return (
             <SearchBox
+                key={navigationCount}
                 value={filterValue}
                 placeholder={msg('process.menu.searchRecipes')}
                 onSearchValue={this.setFilter}
@@ -167,6 +363,12 @@ class _RecipeList extends React.Component {
         this.unselectAll()
     }
 
+    // An action that used the selection leaves nothing to work on, so the mode it needed ends with it.
+    leaveEdit() {
+        this.setState({edit: false})
+        this.unselectAll()
+    }
+
     renderSelectButton() {
         const selected = this.isSelected()
         return (
@@ -190,15 +392,14 @@ class _RecipeList extends React.Component {
                 disabled={!this.isSelected()}
                 tooltip={msg('process.recipe.move.tooltip')}>
                 {onBlur => (
-                    <Combo
-                        alignment='left'
-                        placeholder={msg('process.recipe.move.destinationProject')}
-                        options={this.getDestinations()}
-                        autoOpen
-                        autoFocus
-                        onCancel={onBlur}
-                        onChange={({value: projectId, label: projectName}) => {
-                            this.setMove({projectId, projectName})
+                    <FolderPicker
+                        folders={this.props.folders}
+                        excludeFolderIds={this.selectedFolderIds()}
+                        onSelect={folderId => {
+                            this.setMove({
+                                folderId: folderId,
+                                folderName: this.folderLabel(folderId)
+                            })
                             onBlur()
                         }}
                     />
@@ -207,20 +408,24 @@ class _RecipeList extends React.Component {
         )
     }
 
+    selectedFolderIds() {
+        return this.getFilteredSelectedItems().filter(({kind}) => kind === 'folder').map(({id}) => id)
+    }
+
     renderMoveConfirmation() {
-        const {move: {projectId, projectName}, confirmedIds} = this.state
+        const {move: {folderId, folderName}, confirmedIds} = this.state
         const selected = confirmedIds?.length
         return (
             <Confirm
                 title={msg('process.recipe.move.title')}
-                message={msg('process.recipe.move.confirm', {count: selected, project: projectName})}
+                message={msg('process.recipe.move.confirm', {count: selected, folder: folderName})}
                 disabled={!selected}
-                onConfirm={() => this.moveSelected(projectId)}
+                onConfirm={() => this.moveSelected(folderId)}
                 onCancel={() => this.setMove(false)}>
                 <RecipeListConfirm
-                    recipes={this.getFilteredPreselectedIds()}
-                    isSelected={recipeId => this.isConfirmed(recipeId)}
-                    onSelect={recipeId => this.toggleConfirmed(recipeId)}
+                    items={this.getFilteredPreselectedItems()}
+                    isSelected={id => this.isConfirmed(id)}
+                    onSelect={id => this.toggleConfirmed(id)}
                 />
             </Confirm>
         )
@@ -250,9 +455,10 @@ class _RecipeList extends React.Component {
                 onConfirm={() => this.removeSelected()}
                 onCancel={() => this.setRemove(false)}>
                 <RecipeListConfirm
-                    recipes={this.getFilteredPreselectedIds()}
-                    isSelected={recipeId => this.isConfirmed(recipeId)}
-                    onSelect={recipeId => this.toggleConfirmed(recipeId)}
+                    items={this.getFilteredPreselectedItems()}
+                    disabledIds={this.keptFolderIds()}
+                    isSelected={id => this.isConfirmed(id)}
+                    onSelect={id => this.toggleConfirmed(id)}
                 />
             </Confirm>
         )
@@ -263,15 +469,9 @@ class _RecipeList extends React.Component {
         return getHighlightMatcher(filterValues)
     }
 
-    getFilteredPreselectedIds() {
-        const {filteredRecipes} = this.props
+    getFilteredPreselectedItems() {
         const {preselectedIds} = this.state
-        return filteredRecipes.filter(({id}) => preselectedIds.includes(id))
-    }
-
-    getDestinations() {
-        const {projects} = this.props
-        return [(NO_PROJECT_OPTION()), ...projects.map(({id, name}) => ({value: id, label: name}))]
+        return this.getItems().filter(({id}) => preselectedIds.includes(id))
     }
 
     renderSortButtons() {
@@ -289,30 +489,46 @@ class _RecipeList extends React.Component {
         )
     }
 
-    renderRecipe(recipe, hovered) {
-        const {onDuplicate, onRemove} = this.props
+    renderItem(item, hovered) {
+        const {folders, recipes, folderId, filterValues} = this.props
         const {edit} = this.state
-        return (
-            <ListItem
-                key={recipe.id}
-                hovered={hovered}
-                onClick={() => edit ? this.toggleOne(recipe.id) : this.handleClick(recipe)}>
-                <CrudItem
-                    title={this.getRecipeTypeName(recipe.type)}
-                    description={this.getRecipePath(recipe)}
-                    timestamp={recipe.updateTime}
+        if (item.kind === 'folder') {
+            return (
+                <FolderItem
+                    folder={item.folder}
+                    counts={folderCounts(folders, recipes, item.folder.id)}
                     highlight={this.getHighlightMatcher()}
-                    highlightTitle={false}
-                    duplicateTooltip={msg('process.menu.duplicateRecipe.tooltip')}
-                    removeTooltip={msg('process.menu.removeRecipe.tooltip')}
-                    selectTooltip={msg('process.menu.selectRecipe.tooltip')}
-                    selected={edit ? this.isSelected(recipe.id) : undefined}
-                    onDuplicate={!edit && onDuplicate ? () => onDuplicate(recipe.id) : undefined}
-                    onRemove={!edit && onRemove ? () => onRemove(recipe.id) : undefined}
-                    onSelect={edit ? () => this.toggleOne(recipe.id) : undefined}
+                    hovered={hovered}
+                    edit={edit}
+                    drag$={this.drag$}
+                    dragValue={asDragged(item)}
+                    selected={this.isSelected(item.folder.id)}
+                    onClick={folder => this.navigateTo(folder.id)}
+                    onSelect={folderId => this.toggleOne(folderId)}
+                    onEdit={folder => this.editFolder(folder)}
+                    onRemove={folder => this.removeFolder(folder)}
                 />
-            </ListItem>
-        )
+            )
+        } else {
+            const {onDuplicate, onRemove} = this.props
+            return (
+                <RecipeItem
+                    recipe={item.recipe}
+                    typeName={this.getRecipeTypeName(item.recipe.type)}
+                    path={filterValues.length ? folderPathLabel(folders, item.recipe.folderId, folderId ?? ROOT) : ''}
+                    highlight={this.getHighlightMatcher()}
+                    hovered={hovered}
+                    edit={edit}
+                    drag$={this.drag$}
+                    dragValue={asDragged(item)}
+                    selected={this.isSelected(item.recipe.id)}
+                    onClick={recipe => this.handleClick(recipe)}
+                    onSelect={recipeId => this.toggleOne(recipeId)}
+                    onDuplicate={onDuplicate}
+                    onRemove={onRemove}
+                />
+            )
+        }
     }
 
     handleClick(recipe) {
@@ -320,14 +536,16 @@ class _RecipeList extends React.Component {
         onClick && onClick(recipe.id)
     }
 
-    getRecipePath(recipe) {
-        const {projects} = this.props
-        const name = recipe.name
-        const project = _.find(projects, ({id}) => id === recipe.projectId)
-        return [
-            project?.name ?? NO_PROJECT_SYMBOL,
-            name
-        ].join(PROJECT_RECIPE_SEPARATOR)
+    // Navigating answers where you asked to go, so a search that took you here has done its job.
+    navigateTo(folderId) {
+        const builder = actionBuilder('NAVIGATE_TO_FOLDER', {folderId})
+        folderId ? builder.set('process.folderId', folderId) : builder.del('process.folderId')
+        builder
+            .set('process.filterValue', '')
+            .set('process.filterValues', [])
+            .dispatch()
+        this.setState(({navigationCount}) => ({navigationCount: navigationCount + 1}))
+        this.unselectAll()
     }
 
     setMove(move) {
@@ -342,19 +560,26 @@ class _RecipeList extends React.Component {
     setRemove(remove) {
         const filteredSelectedIds = this.getFilteredSelectedIds()
         if (remove) {
-            this.setState({remove, preselectedIds: filteredSelectedIds, confirmedIds: filteredSelectedIds})
+            const kept = this.keptFolderIds()
+            this.setState({
+                remove,
+                preselectedIds: filteredSelectedIds,
+                confirmedIds: filteredSelectedIds.filter(id => !kept.includes(id))
+            })
         } else {
             this.setState({remove: false, preselectedIds: null, confirmedIds: null})
         }
     }
 
-    getHandleIcon({column, sortingOrder, sortingDirection}) {
-        const sorted = sortingOrder === column
-        return sorted
-            ? sortingDirection === 1
-                ? 'sort-down'
-                : 'sort-up'
-            : 'sort'
+    // folderCounts counts direct children only, same as the server's own check.
+    removeFolder(folder) {
+        const {folders, recipes} = this.props
+        const counts = folderCounts(folders, recipes, folder.id)
+        if (counts.folders || counts.recipes) {
+            Notifications.warning({message: notEmptyMessage(folder.name, counts)})
+        } else {
+            this.removeFolders([folder])
+        }
     }
 
     getRecipeTypeName(type) {
@@ -368,12 +593,12 @@ class _RecipeList extends React.Component {
     }
 
     hasData() {
-        const {recipes} = this.props
-        return recipes && recipes.length
+        const {folders, recipes} = this.props
+        return hasItems({folders, recipes})
     }
 
     setFilter(filterValue) {
-        const filterValues = splitString(simplifyString(filterValue))
+        const filterValues = searchValues(filterValue)
         actionBuilder('SET_FILTER_VALUES', {filterValue, filterValues})
             .set(['process.filterValue'], filterValue)
             .set(['process.filterValues'], filterValues)
@@ -438,23 +663,86 @@ class _RecipeList extends React.Component {
         this.setSelectedIds([])
     }
 
-    moveSelected(projectId) {
-        const {onMove} = this.props
-        const {confirmedIds} = this.state
-        onMove(confirmedIds, projectId)
+    moveSelected(folderId) {
+        moveItems(this.getConfirmedItems().map(asDragged), folderId)
         this.setMove(false)
+        this.leaveEdit()
     }
 
+    getConfirmedItems() {
+        const {confirmedIds} = this.state
+        return this.getItems().filter(({id}) => confirmedIds.includes(id))
+    }
+
+    // A folder that still holds something cannot be removed, so it stays behind and says so.
     removeSelected() {
         const {onRemove} = this.props
-        const {confirmedIds} = this.state
-        onRemove(confirmedIds)
+        const items = this.getConfirmedItems()
+        const recipeIds = items.filter(({kind}) => kind === 'recipe').map(({id}) => id)
+        const [removable, kept] = _.partition(
+            items.filter(({kind}) => kind === 'folder').map(({folder}) => folder),
+            folder => this.isEmptyFolder(folder)
+        )
+        if (recipeIds.length) {
+            onRemove(recipeIds)
+        }
+        if (removable.length) {
+            this.removeFolders(removable)
+        }
+        if (kept.length) {
+            Notifications.warning({
+                message: msg('process.folder.remove.skipped', {names: kept.map(({name}) => name).join(', ')})
+            })
+        }
         this.setRemove(false)
+        this.leaveEdit()
+    }
+
+    // One request at a time: each answer carries the whole folder list, and the last one must be the
+    // list with every removal in it. A failure means our copy of the tree may disagree with the server's,
+    // so both are loaded again, for the next attempt and for the counts shown meanwhile.
+    removeFolders(removable) {
+        const {stream} = this.props
+        stream('REMOVE_FOLDERS',
+            concat(...removable.map(folder => api.folder.remove$(folder.id).pipe(
+                catchError(error => throwError(() => ({folder, error})))
+            ))).pipe(last()),
+            folders => actionBuilder('REMOVE_FOLDERS', {folders: removable})
+                .set('process.folders', folders)
+                .dispatch(),
+            ({folder, error}) => {
+                const refusal = error.response?.code === 'FOLDER_NOT_EMPTY' ? error.response : null
+                if (refusal) {
+                    Notifications.warning({message: notEmptyMessage(folder.name, refusal)})
+                } else {
+                    Notifications.error({message: msg('process.folder.remove.error'), error})
+                }
+                stream('LOAD_FOLDERS', loadFolders$())
+                stream('LOAD_RECIPES', loadRecipes$())
+            }
+        )
+    }
+
+    isEmptyFolder(folder) {
+        const {folders, recipes} = this.props
+        const counts = folderCounts(folders, recipes ?? EMPTY_ARRAY, folder.id)
+        return !counts.folders && !counts.recipes
+    }
+
+    keptFolderIds() {
+        return this.getFilteredSelectedItems()
+            .filter(({kind, folder}) => kind === 'folder' && !this.isEmptyFolder(folder))
+            .map(({id}) => id)
     }
 
     getFilteredIds() {
-        const {filteredRecipes} = this.props
-        return filteredRecipes.map(({id}) => id)
+        return this.getItems().map(({id}) => id)
+    }
+
+    // The rows carry what an action needs: a folder to put back where it was, a recipe to move.
+    getFilteredSelectedItems() {
+        const selectedIds = this.getFilteredSelectedIds()
+        return this.getItems().filter(({id}) => selectedIds.includes(id))
     }
 
     getFilteredSelectedIds() {
@@ -463,92 +751,8 @@ class _RecipeList extends React.Component {
         return filteredSelectedIds
     }
 
-    recipeMatchesProject(recipe) {
-        const {projectId} = this.props
-        return projectId
-            ? projectId === NO_PROJECT_SYMBOL
-                ? _.isEmpty(recipe.projectId)
-                : recipe.projectId === projectId
-            : true
-    }
-
-    recipeMatchesFilter(recipe, searchMatchers) {
-        const searchProperties = ['project', 'name']
-        return searchMatchers.length
-            ? _.every(searchMatchers, matcher =>
-                _.find(searchProperties, property =>
-                    matcher.test(simplifyString(recipe[property], {
-                        removeNonAlphanumeric: true,
-                        removeAccents: true
-                    }))
-                )
-            )
-            : true
-    }
-
-    getSorter(recipe, sortingOrder) {
-        switch (sortingOrder) {
-            case 'updateTime':
-                return this.getSorterByUpdateTime(recipe)
-            case 'name':
-                return this.getSorterByName(recipe)
-        }
-    }
-
-    getSorterByUpdateTime(recipe) {
-        return recipe.updateTime
-    }
-
-    getSorterByName(recipe) {
-        const project = recipe?.project
-        const sorter = project
-            ? `1:${recipe?.project}:${recipe.name}`
-            : `0:${recipe.name}`
-        return sorter.toUpperCase()
-    }
-
-    updateFilteredRecipes() {
-        const {projects = [], recipes, filterValues, selectedIds} = this.props
-        const {sortingOrder, sortingDirection} = this.props
-        const searchMatchers = filterValues.map(filter => RegExp(filter, 'i'))
-        const filteredRecipes = _.chain(recipes)
-            .map(recipe => {
-                const project = projects.find(project => project.id === recipe.projectId)
-                return {...recipe, project: project?.name}
-            })
-            .filter(recipe => this.recipeMatchesProject(recipe) && this.recipeMatchesFilter(recipe, searchMatchers))
-            .orderBy(recipe => this.getSorter(recipe, sortingOrder), sortingDirection === 1 ? 'asc' : 'desc')
-            .value()
-        actionBuilder('SET_FILTERED_RECIPES', {filteredRecipes})
-            .set(['process.filteredRecipes'], filteredRecipes)
-            .dispatch()
-        if (recipes) {
-            this.setSelectedIds(_.intersection(selectedIds, recipes.map(({id}) => id)))
-        }
-    }
-
-    componentDidMount() {
-        this.updateFilteredRecipes()
-    }
-    
-    componentDidUpdate(prevProps) {
-        const {recipes, projects, filterValues, projectId,
-            sortingOrder, sortingDirection, selectedIds} = this.props
-        if (
-            recipes !== prevProps.recipes
-            || projects !== prevProps.projects
-            || filterValues !== prevProps.filterValues
-            || projectId !== prevProps.projectId
-            || sortingOrder !== prevProps.sortingOrder
-            || sortingDirection !== prevProps.sortingDirection
-            || selectedIds !== prevProps.selectedIds
-        ) {
-            this.updateFilteredRecipes()
-        }
-    }
-
-    static getDerivedStateFromProps({recipes}) {
-        if (!recipes || !recipes.length) {
+    static getDerivedStateFromProps({folders, recipes}) {
+        if (!hasItems({folders, recipes})) {
             return {
                 edit: false
             }
@@ -559,7 +763,8 @@ class _RecipeList extends React.Component {
 
 export const RecipeList = compose(
     _RecipeList,
-    connect(mapStateToProps)
+    connect(mapStateToProps),
+    withSubscriptions()
 )
 
 RecipeList.propTypes = {
@@ -569,3 +774,6 @@ RecipeList.propTypes = {
     onRemove: PropTypes.func,
     onSelect: PropTypes.func
 }
+
+// Edit mode selects folders as well as recipes, so either is something to edit.
+const hasItems = ({folders, recipes}) => !!(folders?.length || recipes?.length)

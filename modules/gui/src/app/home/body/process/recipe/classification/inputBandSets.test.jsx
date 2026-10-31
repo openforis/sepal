@@ -286,7 +286,7 @@ const open = async (images, recipes = [], {trainingData = TRAINED} = {}) => {
             recipes: [{id: ID, name: 'Land cover', type: 'CLASSIFICATION', revision: 1}, {id: MOSAIC.id, name: 'Covariates', type: 'MOSAIC', revision: 1}],
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: ID}]
         },
         assets: {user: [ASSET_A, ASSET_B].map(id => ({id, type: 'Image', updateTime: 'T1'})), other: []},

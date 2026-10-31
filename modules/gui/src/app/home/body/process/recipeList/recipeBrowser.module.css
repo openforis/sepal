@@ -1,0 +1,15 @@
+.panel {
+    width: 40rem;
+    height: 64vh;
+}
+
+/* Around the Layout rather than on it: a vertical Layout may shrink in the column it shares with the
+   list, and cut the breadcrumb. */
+.header {
+    margin-bottom: 1rem;
+}
+
+/* In capitals, as the recipe list shows a type. */
+.type {
+    text-transform: uppercase;
+}

@@ -17,6 +17,9 @@ export const listRecipeTypes = () =>
 export const getRecipeType = id =>
     registry.find(recipeType => recipeType.id === id)
 
+export const getRecipeTypeName = id =>
+    getRecipeType(id)?.labels.name
+
 export const isImageSource = recipeType =>
     recipeType.imageSource
 

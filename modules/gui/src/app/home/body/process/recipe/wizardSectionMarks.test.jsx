@@ -402,7 +402,7 @@ async function open(recipe, RecipeToolbar) {
             recipes: [{id: recipe.id, name: 'Model', type: recipe.type, revision: 1}, {id: COMPOSITE.id, name: 'Composite', type: 'MOSAIC', revision: 1}],
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: recipe.id}]
         },
         dimensions: {width: 1024, height: 768}

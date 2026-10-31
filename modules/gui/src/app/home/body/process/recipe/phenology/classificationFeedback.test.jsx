@@ -251,7 +251,7 @@ async function open({band, classifier, points, inputs}) {
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: PHENOLOGY}]
         }
     }

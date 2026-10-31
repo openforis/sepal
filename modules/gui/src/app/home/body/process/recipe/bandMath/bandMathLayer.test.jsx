@@ -155,7 +155,7 @@ async function onAnotherMap(expression, downstream = false) {
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: HOST}]
         },
         assets: {user: [], other: []},

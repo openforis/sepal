@@ -54,7 +54,7 @@ const open = async (type, Inputs) => {
     const model = {inputImagery: {images: [image]}, calculations: {calculations: []}, bandNames: {bandNames: []}, outputBands: {outputImages: []}}
     const initial = {dimensions: {width: 1024, height: 768}, process: {
         loadedRecipes: {recipe: {id: 'recipe', type, revision: 1, model, ui: {initialized: false}}},
-        recipes: [{id: 'recipe', type, name: 'Recipe', revision: 1}], projects: [], tabs: []
+        recipes: [{id: 'recipe', type, name: 'Recipe', revision: 1}], folders: [], tabs: []
     }}
     store = createStore((state = initial, action) => action.reduce ? action.reduce(state) : state)
     initStore(store)

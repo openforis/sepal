@@ -47,7 +47,7 @@ export class Confirm extends React.Component {
                     icon='exclamation-triangle'
                     title={title || msg('widget.confirm.title')}/>
                 <Panel.Content>
-                    <Layout type='vertical' spacing='compact'>
+                    <Layout type='vertical' spacing='compact' shrink>
                         {this.renderMessage()}
                         {children}
                     </Layout>

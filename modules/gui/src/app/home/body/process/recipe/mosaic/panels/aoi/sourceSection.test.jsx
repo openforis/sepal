@@ -111,7 +111,7 @@ const show = ({recipeId, recipes = []}) => {
                 }
             },
             recipes,
-            projects: [],
+            folders: [],
             tabs: []
         }
     }

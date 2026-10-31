@@ -359,7 +359,7 @@ async function open(saved) {
             recipes: [{id: ID, type: 'BAND_MATH', name: 'Math', revision: 1},
                 {id: SOURCE, type: 'STACK', name: 'Source recipe', revision: 1},
                 {id: 'over', type: 'REMAPPING', name: 'Over', revision: 1}],
-            recipeListing: {checkedAt: Date.now()}, saveStates: {}, projects: [], tabs: [{id: ID}, {id: SOURCE}]},
+            recipeListing: {checkedAt: Date.now()}, saveStates: {}, folders: [], tabs: [{id: ID}, {id: SOURCE}]},
         assets: {user: [SOURCE, OTHER, 'users/x/remaining'].map(id => ({id, type: 'Image', updateTime: 'T1'})), other: []},
         dimensions: {width: 1024, height: 768}
     }
