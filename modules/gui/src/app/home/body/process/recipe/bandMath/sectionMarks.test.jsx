@@ -10,6 +10,7 @@ import {Recipe} from '~/app/home/body/process/recipeContext'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
+import crudItemStyles from '~/widget/crudItem.module.css'
 import errorIndicatorStyles from '~/widget/errorIndicator.module.css'
 import listItemStyles from '~/widget/listItem.module.css'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
@@ -112,22 +113,23 @@ describe('an output image left without bands by unselecting the band it output',
 // Nothing output yet is setup still to do, as Classification without training points is: Output bands is not marked,
 // its list says how to begin, and the image stays held until something is output.
 describe('Output bands without any output image', () => {
-    it('is not marked, guides choosing output bands, and holds the image output naming it, as after reopening', async () => {
+    it('is marked unfinished, saying what to output, guides choosing output bands, and holds the image output naming it, as after reopening', async () => {
         await open(recipe({images: [input('i-1', 'i1', ['red'])], outputImages: []}))
 
         expect(inError(OUTPUT_BANDS)).toBe(false)
-        expect(buttonTooltip(OUTPUT_BANDS)).not.toEqual(expect.stringContaining('process.bandMath.requirement.noOutputImages'))
+        expect(unfinished(OUTPUT_BANDS)).toBe(true)
+        expect(buttonTooltip(OUTPUT_BANDS)).toEqual(expect.stringContaining('process.bandMath.requirement.noOutputImages'))
         expect(document.body.textContent).toContain(OUTPUT_GUIDANCE)
         expect(ownConfigurationGate()).toMatchObject({code: 'CONFIGURATION_UNMET'})
         expect(imageOutputGate()).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET', section: OUTPUT_BANDS})
 
         await reopen()
 
-        expect(inError(OUTPUT_BANDS)).toBe(false)
+        expect(unfinished(OUTPUT_BANDS)).toBe(true)
         expect(imageOutputGate()).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET', section: OUTPUT_BANDS})
     })
 
-    it('releases the image output once an input band is output directly, with no calculation', async () => {
+    it('is complete, releasing the image output, once an input band is output directly, with no calculation, and unfinished again once none is', async () => {
         await open(recipe({images: [input('i-1', 'i1', ['red'])], outputImages: []}))
 
         await setModel(model => ({...model, outputBands: {outputImages: [outputImage('i-1', ['red'])]}}))
@@ -136,7 +138,68 @@ describe('Output bands without any output image', () => {
         expect(ownConfigurationGate()).toBe(null)
         expect(imageOutputGate()).toMatchObject({withdraw: false})
         expect(inError(OUTPUT_BANDS)).toBe(false)
+        expect(unfinished(OUTPUT_BANDS)).toBe(false)
         expect(document.body.textContent).not.toContain(OUTPUT_GUIDANCE)
+
+        await setModel(model => ({...model, outputBands: {outputImages: []}}))
+
+        expect(unfinished(OUTPUT_BANDS)).toBe(true)
+        expect(imageOutputGate()).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET', section: OUTPUT_BANDS})
+    })
+
+    it('is marked wrong, not unfinished, for an output image without bands', async () => {
+        await open(recipe({outputImages: [outputImage('i-1', [])]}))
+
+        expect(inError(OUTPUT_BANDS)).toBe(true)
+        expect(unfinished(OUTPUT_BANDS)).toBe(false)
+        expect(buttonTooltip(OUTPUT_BANDS)).toEqual(expect.stringContaining('process.bandMath.requirement.noOutputBands'))
+    })
+})
+
+// Setting up is guided one section at a time: Output bands, empty, waits on Input imagery listing something to output.
+describe('Input imagery and Output bands being set up', () => {
+    it('with no input and nothing output, mark only Input imagery unfinished, then Output bands once an input is added, and neither once its band is output', async () => {
+        await open(recipe({images: [], outputImages: []}))
+
+        expect(unfinished(INPUT_IMAGERY)).toBe(true)
+        expect(buttonTooltip(INPUT_IMAGERY)).toEqual(expect.stringContaining(NO_IMAGERY))
+        expect(unfinished(OUTPUT_BANDS)).toBe(false)
+        expect(inError(OUTPUT_BANDS)).toBe(false)
+        expect(buttonTooltip(OUTPUT_BANDS)).toBe(OUTPUT_BANDS_TOOLTIP)
+
+        await setModel(model => ({...model, inputImagery: {images: [input('i-1', 'i1', ['red'])]}}))
+
+        expect(unfinished(INPUT_IMAGERY)).toBe(false)
+        expect(buttonTooltip(INPUT_IMAGERY)).not.toEqual(expect.stringContaining(NO_IMAGERY))
+        expect(unfinished(OUTPUT_BANDS)).toBe(true)
+        expect(imageOutputGate()).toMatchObject({withdraw: true, section: OUTPUT_BANDS})
+
+        await setModel(model => ({...model, outputBands: {outputImages: [outputImage('i-1', ['red'])]}}))
+
+        expect(unfinished(INPUT_IMAGERY)).toBe(false)
+        expect(unfinished(OUTPUT_BANDS)).toBe(false)
+        expect(ownConfigurationGate()).toBe(null)
+    })
+
+    it('mark Input imagery alone unfinished once its last input is removed through its list, nothing being output', async () => {
+        await open(recipe({images: [input('i-1', 'i1', ['red'])], outputImages: []}))
+        expect(unfinished(OUTPUT_BANDS)).toBe(true)
+
+        await removeInput(ASSET)
+
+        expect(selectFrom(store.getState(), ['process.loadedRecipes', ID, 'model.inputImagery.images'])).toEqual([])
+        expect(unfinished(INPUT_IMAGERY)).toBe(true)
+        expect(unfinished(OUTPUT_BANDS)).toBe(false)
+        expect(imageOutputGate()).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET'})
+    })
+
+    it('keep an output image\'s own error marked while Input imagery lists nothing', async () => {
+        // Saved with what it was taken from, as every output image is.
+        await open(recipe({images: [], outputImages: [{...input('i-1', 'i1', ['red']), ...outputImage('i-1', ['red'])}]}))
+
+        expect(unfinished(INPUT_IMAGERY)).toBe(true)
+        expect(inError(OUTPUT_BANDS)).toBe(true)
+        expect(buttonTooltip(OUTPUT_BANDS)).toEqual(expect.stringContaining('process.bandMath.requirement.missingImage'))
     })
 })
 
@@ -236,6 +299,8 @@ const UNAVAILABLE_BANDS = 'process.panels.inputImagery.unavailableBands.inputs'
 const CALCULATIONS = 'process.bandMath.panel.calculations.button'
 const OUTPUT_BANDS = 'process.bandMath.panel.outputBands.button'
 const OUTPUT_GUIDANCE = 'process.bandMath.panel.outputBands.noImages'
+const OUTPUT_BANDS_TOOLTIP = 'process.bandMath.panel.outputBands.tooltip'
+const NO_IMAGERY = 'process.panels.inputImagery.form.noImagery'
 
 const band = (imageId, name) => ({id: `${imageId}-${name}`, name})
 
@@ -323,6 +388,20 @@ async function setModel(change) {
     await settled()
 }
 
+// An input removed through its row in Input imagery's list, as a user removes it: pressed, then confirmed.
+async function removeInput(source) {
+    const row = [...document.querySelectorAll(`.${classOf(listItemStyles, 'verticalWrapper')}`)]
+        .find(row => row.querySelector(`.${classOf(crudItemStyles, 'description')}`)?.textContent === source)
+    await press(row.querySelector('svg[data-icon="trash"]').closest('button'))
+    await press(button('button.remove'))
+}
+
+async function press(element) {
+    await act(async () => ['mouseenter', 'mousedown', 'mouseup', 'click']
+        .forEach(type => element.dispatchEvent(new MouseEvent(type, {bubbles: true}))))
+    await settled()
+}
+
 const waiting = () => earthEngine.requests.filter(({subscriber}) => !subscriber.closed)
 
 // Answers every request still waiting: an asset with its bands; the Band Math image refused, as Earth Engine refuses
@@ -351,8 +430,10 @@ const outputImageOf = imageId => selectFrom(store.getState(), ['process.loadedRe
 
 const button = label => [...document.querySelectorAll('button')].find(button => button.textContent.includes(label))
 
-// Whether a section's toolbar button is in its error state.
+// Whether a section's toolbar button is in its error state, or marked as unfinished.
 const inError = label => button(label).classList.contains(classOf(toolbarButtonStyles, 'error'))
+
+const unfinished = label => button(label).classList.contains(classOf(toolbarButtonStyles, 'warning'))
 
 // What a section's toolbar button says of it.
 const buttonTooltip = label => [...document.querySelectorAll('[data-tooltip]')]

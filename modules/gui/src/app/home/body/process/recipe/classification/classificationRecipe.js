@@ -1,7 +1,5 @@
 import _ from 'lodash'
 
-import {noTrainingData} from '#sepal/recipe/trainingData'
-import {requiresTraining} from '#sepal/recipe/type/classification'
 import {removeInputImage} from '~/app/home/body/process/inputImages'
 import {removeImageLayerSource} from '~/app/home/body/process/mapLayout/imageLayerSources'
 import {recipeActionBuilder, recipePath} from '~/app/home/body/process/recipe'
@@ -155,20 +153,3 @@ export const RecipeActions = id => {
 export const retrieveTask = {
     includeTimeRange: false
 }
-
-export const hasTrainingData = recipe => {
-    const hasRecipeDataType = recipe.model.trainingData.dataSets.find(({type}) => type === 'RECIPE')
-    if (hasRecipeDataType) {
-        return true
-    }
-    if (recipe.ui.collect) {
-        const countPerClass = recipe.ui.collect.countPerClass || {}
-        return Object.values(countPerClass).filter(count => count > 0).length >= 2
-    } else {
-        return !noTrainingData(recipe.model)
-    }
-}
-
-// Whether the classifier has what it is trained on: a supplied decision tree is used as given.
-export const canClassify = recipe =>
-    !requiresTraining(recipe.model.classifier?.type) || hasTrainingData(recipe)

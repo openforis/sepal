@@ -1,13 +1,15 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {removeInputImage} from '~/app/home/body/process/inputImages'
-import {INPUT_IMAGERY} from '~/app/home/body/process/panels/inputImagery/inputImageryRequirements'
+import {inputImageNames, removeInputImage} from '~/app/home/body/process/inputImages'
+import {INPUT_IMAGERY, lacksInputImagery} from '~/app/home/body/process/panels/inputImagery/inputImageryRequirements'
+import {recipePath} from '~/app/home/body/process/recipe'
 import {withItemProblems} from '~/app/home/body/process/recipe/selectedSource'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
+import {select} from '~/store'
 import {msg} from '~/translate'
 import {uuid} from '~/uuid'
 import {withActivators} from '~/widget/activation/activator'
@@ -21,20 +23,16 @@ import {Panel} from '~/widget/panel/panel'
 import {InputImage} from './inputImage'
 import styles from './inputImagery.module.css'
 
+// The list holds the images applied: each is applied as its own editor applies it. It is complete once it lists one.
+// Its submission is judged by the list applied then, not as last rendered: the last image can go just before it.
 const mapRecipeToProps = recipe => ({
-    images: selectFrom(recipe, 'model.inputImagery.images') || []
+    images: selectFrom(recipe, 'model.inputImagery.images') || [],
+    missing: lacksInputImagery(recipe.model)
 })
 
-const mapStateToProps = (state, ownProps) => {
-    const {images} = ownProps
-    const recipeNameById = {}
-    images
-        .filter(image => image.type === 'RECIPE_REF')
-        .map(image => selectFrom(state, ['process.recipes', {id: image.id}]))
-        .filter(recipe => recipe)
-        .forEach(recipe => recipeNameById[recipe.id] = recipe.name)
-    return {recipeNameById}
-}
+const mapStateToProps = (state, {images}) => ({
+    names: inputImageNames(state, images)
+})
 
 class _InputImagery extends React.Component {
     constructor(props) {
@@ -43,19 +41,20 @@ class _InputImagery extends React.Component {
     }
 
     render() {
-        const {images} = this.props
+        const {missing, recipeId} = this.props
         return (
             <React.Fragment>
                 <RecipeFormPanel
                     className={styles.panel}
-                    placement='bottom-right'>
+                    placement='bottom-right'
+                    accepts={() => !lacksInputImagery(select(recipePath(recipeId, 'model')))}>
                     <Panel.Header
                         icon='image'
                         title={msg('process.panels.inputImagery.title')}/>
                     <Panel.Content>
                         {this.renderContent()}
                     </Panel.Content>
-                    <Form.PanelButtons invalid={!images.length}>
+                    <Form.PanelButtons invalid={missing}>
                         <Panel.Buttons.Add onClick={() => this.addImage()}/>
                     </Form.PanelButtons>
                 </RecipeFormPanel>
@@ -65,10 +64,10 @@ class _InputImagery extends React.Component {
     }
 
     renderContent() {
-        const {images = []} = this.props
-        return images.length
-            ? this.renderImages(images)
-            : this.renderNoImageryMessage()
+        const {images, missing} = this.props
+        return missing
+            ? this.renderNoImageryMessage()
+            : this.renderImages(images)
     }
 
     renderImages(images) {
@@ -79,26 +78,23 @@ class _InputImagery extends React.Component {
         )
     }
 
+    // Every input configured is shown, to be edited or removed, whether or not its source is listed (inputImageNames),
+    // under its source's name - its variable alias beside it.
     renderImage(image) {
-        const {recipeNameById, itemProblems} = this.props
-        const description = image.type === 'RECIPE_REF'
-            ? recipeNameById[image.id]
-            : image.id
-        return description
-            ? (
-                <ListItem
-                    key={image.imageId}
-                    onClick={() => this.editImage(image)}>
-                    <CrudItem
-                        title={msg(`process.panels.inputImagery.form.type.${image.type}`)}
-                        error={itemProblems[image.imageId]}
-                        description={description}
-                        metadata={image.name}
-                        onRemove={() => this.removeImage(image)}
-                    />
-                </ListItem>
-            )
-            : null
+        const {names, itemProblems} = this.props
+        return (
+            <ListItem
+                key={image.imageId}
+                onClick={() => this.editImage(image)}>
+                <CrudItem
+                    title={msg(`process.panels.inputImagery.form.type.${image.type}`)}
+                    error={itemProblems[image.imageId]}
+                    description={names[image.imageId]}
+                    metadata={image.name}
+                    onRemove={() => this.removeImage(image)}
+                />
+            </ListItem>
+        )
     }
 
     renderNoImageryMessage() {

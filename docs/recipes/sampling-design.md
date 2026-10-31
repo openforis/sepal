@@ -346,8 +346,9 @@ Recording stubs cover job graph construction, projection selection and metadata 
 
 Mounted Stratification/Proportions tests exercise the real panels, forms, store and source runtime with substituted
 Earth Engine reads. They cover automatic calculation, dependency evidence, edited grids, prerequisite ordering and
-Apply/Cancel. Browser checks have accepted the panel behaviour and presentation. Live verification of the new
-evidence path, Online/Batch calculations and task-stage checks remains outstanding.
+Apply/Cancel. User-confirmed browser checks against real Earth Engine cover source changes, recalculation, repair
+progression, presentation and Retrieve. The full GUI suite passes. Race handling and task-stage guards have
+automated coverage; individual live timing and asset-replacement scenarios were not separately established.
 
 Deferred scope and unresolved experiments are tracked in the [workplan](../design/workplan.md#sampling-design-deferred-scope).
 

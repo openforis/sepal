@@ -10,6 +10,7 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: typ
 
 const {readKey, readSourceRequirements, requestGate} = await import('./sourceRequirements')
 const {itemStatusesOf, sectionStatusOf, UNMET_CONFIGURATION} = await import('./selectedSourceStatus')
+const {describeFeedback, feedbackMessage, recipeReference} = await import('./feedbackMessage')
 
 describe('a local requirement', () => {
     it('is checked from the recipe alone, selecting nothing', () => {
@@ -132,6 +133,22 @@ describe('what a section says', () => {
         expect(sectionStatusOf({}, reads(), SECTION.id)).toMatchObject({message: 'BROKEN', incomplete: false})
     })
 
+    it('says every finding on one item in turn - what is wrong first, each once - keeping the recipes they name', () => {
+        registry.OTHER = {sourceRequirements: [
+            declaration({id: 'first', section: SECTION, items: [item('a', {ok: false, incomplete: true})]}),
+            declaration({id: 'second', section: SECTION, items: [item('a', {ok: false})], requirement: NAMING}),
+            declaration({id: 'third', section: SECTION, items: [item('a', {ok: false})], requirement: NAMING}),
+            declaration({id: 'fourth', section: SECTION, items: [item('b', {ok: false})]})
+        ]}
+
+        const statuses = itemStatusesOf(readsOf({id: 'r', type: 'OTHER', model: {}}), SECTION.id)
+
+        expect(statuses.a).toMatchObject({state: UNMET_CONFIGURATION, message: 'NAMES UNFINISHED', incomplete: false})
+        expect(statuses.a.messageContent.parts).toEqual([{key: 'NAMES', values: {recipe: {recipeId: 'other-recipe', name: 'Other'}}}, 'UNFINISHED'])
+        expect(statuses.b).toMatchObject({message: 'BROKEN'})
+        expect(statuses.b).not.toHaveProperty('messageContent')
+    })
+
     it('says what an item finds itself before what another is held by', () => {
         registry.OTHER = {sourceRequirements: [
             declaration({id: 'first', section: SECTION, items: [item('a', {ok: false}), item('b', {needs: ['a'], from: 'first'})]})
@@ -168,8 +185,14 @@ function item(id, {ok = true, incomplete = false, needs = [], from = 'items'} = 
     }
 }
 
-function declaration({id, section, items, operations = ['OUTPUT']}) {
-    return {id, section, requirement: REQUIREMENT, localFacts: () => ({}), items: () => items, operations}
+// A requirement naming another recipe, as structured feedback does.
+const NAMING = {
+    ...REQUIREMENT,
+    describe: () => ({...describeFeedback(feedbackMessage('NAMES', {recipe: recipeReference('other-recipe', 'Other')})), details: []})
+}
+
+function declaration({id, section, items, operations = ['OUTPUT'], requirement = REQUIREMENT}) {
+    return {id, section, requirement, localFacts: () => ({}), items: () => items, operations}
 }
 
 function recipe({items, operations}) {

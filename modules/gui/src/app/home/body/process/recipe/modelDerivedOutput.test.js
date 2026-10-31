@@ -316,7 +316,7 @@ describe('a classification', () => {
     })
 
     it('is described with the bands its classifier supports while its legend has no entries yet', () => {
-        const {output} = read(classificationOf({values: []}))
+        const {output} = read(classificationOf({values: [], points: [{x: 0.5, y: 0.5, class: 1}, {x: 1.5, y: 0.5, class: 2}]}))
 
         expect(output.bands.map(({name}) => name)).toEqual(['class', 'class_probability', 'regression'])
     })
@@ -1179,7 +1179,7 @@ describe.each([
 
 const ID = 'model-1'
 
-// A recipe whose training data another reuses: over the covariates, with points of its own.
+// A recipe whose training data another reuses: over the covariates, with points of its own, one of each class.
 const TRAINING = 'training-1'
 const trainingProviderOf = type => ({
     id: TRAINING,
@@ -1188,7 +1188,7 @@ const trainingProviderOf = type => ({
         inputImagery: {images: [COVARIATES_IMAGE]},
         legend: {entries: [{value: 1, label: 'One', color: '#000000'}, {value: 2, label: 'Two', color: '#ffffff'}]},
         classifier: {type: 'RANDOM_FOREST'},
-        trainingData: {dataSets: [{type: 'EE_TABLE', referenceData: [{x: 0.5, y: 0.5, class: 1, value: 1}]}]}
+        trainingData: {dataSets: [{type: 'EE_TABLE', referenceData: [{x: 0.5, y: 0.5, class: 1, value: 1}, {x: 1.5, y: 0.5, class: 2, value: 2}]}]}
     }
 })
 
@@ -1264,7 +1264,8 @@ const classChangeOf = ({images: [from, to] = [LAND_COVER_IMAGE, LAND_COVER_IMAGE
     }
 })
 
-const classificationOf = ({classifier = 'RANDOM_FOREST', values = [1, 2], trainingRecipe} = {}) => ({
+// Trained on a point of each class it is to tell apart, unless it reuses a recipe's training data.
+const classificationOf = ({classifier = 'RANDOM_FOREST', values = [1, 2], points = values.map((value, i) => ({x: 0.5 + i, y: 0.5, class: value})), trainingRecipe} = {}) => ({
     id: ID,
     type: 'CLASSIFICATION',
     title: 'Land cover',
@@ -1273,7 +1274,7 @@ const classificationOf = ({classifier = 'RANDOM_FOREST', values = [1, 2], traini
         legend: {entries: values.map(value => ({id: `entry-${value}`, value, label: `class ${value}`, color: '#000000'}))},
         trainingData: {dataSets: trainingRecipe
             ? [{type: 'RECIPE', recipe: trainingRecipe}]
-            : [{type: 'SAMPLE_CLASSIFICATION', referenceData: [{x: 0.5, y: 0.5, class: values[0]}]}]},
+            : [{type: 'SAMPLE_CLASSIFICATION', referenceData: points}]},
         classifier: {type: classifier}
     }
 })

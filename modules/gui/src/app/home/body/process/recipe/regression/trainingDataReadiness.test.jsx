@@ -137,12 +137,12 @@ describe('a Regression without training data', () => {
     it.each([
         ['no data set', () => []],
         ['a plots table read as empty', () => [plotsTable([])]]
-    ])('with %s says how to add some in Training data, unmarked, drawing nothing and holding Retrieve, and so is a Remapping of it', async (_case, dataSetsOf) => {
+    ])('with %s says how to add some in Training data and on its button, as unfinished, drawing nothing and holding Retrieve, and so is a Remapping of it', async (_case, dataSetsOf) => {
         await open(dataSetsOf())
 
         expect(shown()).toContain(MISSING)
-        expect(trainingDataMark()).toEqual([])
-        expect(sectionProblems(REGRESSION)).toEqual({})
+        expect(trainingDataMark()).toEqual({warning: [MISSING]})
+        expect(sectionProblems(REGRESSION)).toEqual({trainingData: MISSING})
         expect(map.shown).toBeNull()
         expect(retrieveAvailable(REGRESSION)).toBe(false)
         expect(previewGate(REMAPPING)).toMatchObject({withdraw: true})
@@ -163,7 +163,7 @@ describe('a Regression with training data', () => {
     ])('with %s is marked nowhere, drawn, and Retrieve is available, for it and a Remapping of it', async (_case, dataSetsOf) => {
         await open(dataSetsOf())
 
-        expect(trainingDataMark()).toEqual([])
+        expect(trainingDataMark()).toEqual({})
         expect(shown()).not.toContain(MISSING)
         expect(map.shown).toBeTruthy()
         expect(retrieveAvailable(REGRESSION)).toBe(true)
@@ -358,12 +358,13 @@ const previewGate = id => requestGate({
 
 const sectionProblems = id => sourceProblemsOfState(store.getState(), id, evidenceOwnerOf, Date.now(), heldFor)
 
-// What the Training data button says, while it is in its error state.
+// How the Training data button is marked - as wrong, or as unfinished - and what it says then.
 const trainingDataMark = () => {
     const sectionButton = button('process.classification.panel.trainingData.button')
-    return sectionButton.classList.contains(toolbarButtonStyles.error)
-        ? JSON.parse(sectionButton.closest('[data-tooltip]').dataset.tooltip)
-        : []
+    const mark = ['error', 'warning'].find(name => sectionButton.classList.contains(toolbarButtonStyles[name]))
+    return mark
+        ? {[mark]: JSON.parse(sectionButton.closest('[data-tooltip]').dataset.tooltip)}
+        : {}
 }
 
 const shown = () => document.body.textContent

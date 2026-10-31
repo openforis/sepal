@@ -35,10 +35,10 @@ Band Math's explicit [reference recovery](band-math.md#inputs) can reclaim retai
 ### Applied input and naming checks
 
 Running it needs one input image at least: a Stack listing none cannot run
-([Execution readiness](../design/recipes/source-resolution.md#execution-readiness)). Its Input imagery button says
-"Please add at least one image." - except while the set-up wizard has that section open, where the list holds Next
-until it has one - its layer is not drawn, Retrieve is held and the asset export is refused, as for every recipe over
-it. Adding an input restores them.
+([Execution readiness](../design/recipes/source-resolution.md#execution-readiness)). Its Input imagery button is marked
+as unfinished, saying "Please add at least one image." - except while the set-up wizard has that section open, where
+the list holds Next, Done and Enter until it has one - its layer is not drawn, Retrieve is held and the asset export is
+refused, as for every recipe over it. Adding an input restores them.
 
 The editor marks an input found to lack a band it maps: its row in Input imagery says some of its bands are
 unavailable, to be reviewed in it, and the Input imagery toolbar button that some inputs' are; the input's editor names

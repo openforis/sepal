@@ -2698,6 +2698,11 @@
             }
           },
           "missing": "Collect points on the map or add a training data set.",
+          "insufficient": {
+            "MINIMUM_CLASSES": "This classifier needs training points of {minimum} classes or more, but all are of {classes}. Collect some of another class on the map or add a training data set holding them.",
+            "TRAINED_CLASS": "A one-class SVM trains on points of {classes}, and no training point is of it. Collect some on the map or add a training data set holding them, or choose the class to train on in the Classifier panel.",
+            "MINIMUM_CLASS_SAMPLES": "Mahalanobis minimum distance needs {minimum} training points or more of a class, but none of {classes} has as many. Collect more on the map or add a training data set holding them."
+          },
           "missingFeatures": "No input image of {recipe} supplies {features}, which this recipe trains on.",
           "derivedFeature": "{feature} is built of {bands}, which one input image of it must hold.",
           "ambiguousFeatures": "In {recipe}, more than one band matches {conflicts}. Give the bands distinct names in a Stack's Band names panel, and use that Stack in both recipes.",
@@ -3045,7 +3050,7 @@
         "invalidBandCount": "\"{imageName}\" has {bandCount} bands, while another image read whole has {expectedBandCount}.",
         "missingInputBands": "Its source no longer has {bands}.",
         "noOutputBands": "\"{variable}\" outputs no bands.",
-        "noOutputImages": "No image or calculation is output.",
+        "noOutputImages": "Select the input bands or calculations to output.",
         "invalidOutputName": "\"{outputName}\" is not a valid band name.",
         "duplicateOutputName": "\"{outputName}\" is the name of more than one output band."
       },

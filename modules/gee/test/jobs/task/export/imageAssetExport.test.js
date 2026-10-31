@@ -285,6 +285,7 @@ describe('exporting the bands of a CCDC over its Classification', () => {
 
     for (const [_case, catalogue, code] of [
         ['stores no points', () => ({'classification-1': trainable({points: []})}), 'NO_TRAINING_DATA'],
+        ['stores points of one class alone, which its random forest cannot train on', () => ({'classification-1': trainable({points: POINTS.filter(point => point.class === 1)})}), 'INSUFFICIENT_TRAINING_SAMPLES'],
         ['reuses a recipe without input imagery', () => ({'classification-1': trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, images: []})}), 'MISSING_ROLE'],
         ['reuses a recipe sampling fewer features', () => ({'classification-1': trainable({reuses: [PROVIDER]}), [PROVIDER]: trainable({id: PROVIDER, included: ['red']})}), 'MISSING_TRAINING_FEATURES']
     ]) {
@@ -753,6 +754,20 @@ describe('exporting a Classification reusing training data that stores no point'
         assert.deepEqual(state.exported, [])
 
         state.catalogue['nested-1'] = classificationOf('nested-1', {points: POINTS})
+        await submit({recipe, bands: ['class']})
+    })
+
+    it('fails the export while its points and those along its reuse are of one class, saying why, and exports once one upstream is of another', async () => {
+        const recipe = classificationOf('consumer-1', {points: POINTS.filter(point => point.class === 1), reuses: ['provider-1']})
+        state.catalogue = {
+            'provider-1': classificationOf('provider-1', {reuses: ['nested-1']}),
+            'nested-1': classificationOf('nested-1', {points: POINTS.filter(point => point.class === 1)})
+        }
+
+        await assert.rejects(submit({recipe, bands: ['class']}), /cannot run: INSUFFICIENT_TRAINING_SAMPLES$/)
+        assert.deepEqual(state.exported, [])
+
+        state.catalogue['nested-1'] = classificationOf('nested-1', {points: POINTS.filter(point => point.class === 2)})
         await submit({recipe, bands: ['class']})
     })
 })

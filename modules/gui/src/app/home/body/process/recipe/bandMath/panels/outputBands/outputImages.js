@@ -100,6 +100,12 @@ export const bandsToOutput = (outputImage, image) => {
     )
 }
 
+// Whether anything is output at all, and whether each image output outputs a band: what Output bands' form refuses to
+// apply and its requirements find (chainRequirements.js), one rule for both.
+export const outputsAnything = outputImages => outputImages.length > 0
+
+export const outputsBands = ({outputBands}) => outputBands.length > 0
+
 // The name a band is output under: its custom name, if given, or else its default.
 export const outputNameOf = ({outputName, defaultOutputName}) =>
     outputName || defaultOutputName

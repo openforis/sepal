@@ -59,8 +59,9 @@ in Mapping. Their former source cannot safely be inferred from a name or band. D
 are not resolved by choosing an arbitrary match; ambiguous or malformed orphan references stay invalid. Already-orphaned recipes need that explicit repair before future removal/restoration can recover automatically.
 
 Running it needs one input image at least: a Remapping listing none cannot run, though its class is described from
-its legend. Input imagery says "Please add at least one image." - except while the set-up wizard has it open, where its
-list holds Next until it has one - its layer is not drawn, Retrieve is held and the asset export is refused. Its
+its legend. Input imagery is marked as unfinished, saying "Please add at least one image." - except while the set-up
+wizard has it open, where its list holds Next, Done and Enter until it has one - its layer is not drawn, Retrieve is
+held and the asset export is refused. Its
 constraints, reading inputs no longer listed, are found too. While what its image builds is being read, Retrieve waits.
 
 A successful current source description is also checked for each included band a constraint actually reads.

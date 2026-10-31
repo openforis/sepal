@@ -29,16 +29,17 @@ Regression whose data sets store no point, and read none from another recipe, ca
 requirement (`NO_TRAINING_DATA`, `lib/js/shared/src/recipe/trainingData.js`), judged by the output read like every
 readiness finding ([Execution readiness](../design/recipes/source-resolution.md#execution-readiness)):
 
-- the TRN button is marked "Add training data" - while the recipe is being set up, once its wizard reaches Training
-  data;
+- the TRN button is marked as unfinished (amber), saying "Add a training data set." - once its wizard reaches Training
+  data, at once for a Regression already set up, and again whenever its last data set is removed;
 - the layer is not drawn, here or on another map, and Retrieve is held and refused at submission;
 - a recipe whose image builds the Regression - a Remapping or Masking of its predictions - is held the same way, naming
   the Regression, though its own description reads nothing of it;
 - the asset export refuses it: `Recipe X cannot run: NO_TRAINING_DATA`.
 
 Applying a data set that stores points, or reads them from another recipe, clears all of these. Input imagery is
-judged the same way: a Regression listing no input image cannot run, and its IMG button says "Please add at least one
-image." once its wizard has moved on from it, or at once for a Regression already set up. The Regression stays
+judged by the shared input rule: a Regression listing no input image cannot run, and its IMG button is marked as
+unfinished, saying "Please add at least one image.", once its wizard has moved on from it, or at once for a Regression
+already set up. The Regression stays
 described meanwhile: its single band is known from its declaration.
 
 The data set editor keeps its own draft rules - a name, a table and value column or an image to sample, and reference

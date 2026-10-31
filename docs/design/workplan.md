@@ -64,9 +64,9 @@ representative real-data segmentation, inverse outputs and chart/Slice/export in
 contract also needs a distinct enforceable Resume contract; retaining units or matching pixel types cannot make
 old/new fits compatible. Existing assets/downloads must retain their interpretation and metadata.
 
-Remaining verification limits include representative real-data fits, rendered styles and a live Optical regression
-asset write: live asset writes, Resume and refusal are verified for Radar regression, and file output for an Optical
-Drive export. Generic provenance and adapter/composer architecture remain separate work.
+Verification gaps include representative real-data fits, rendered styles and a live Optical regression asset write.
+See [output products](recipes/output-products.md#regression-precision-compatibility) for the current export contract
+and verification scope. Generic provenance and adapter/composer architecture remain separate work.
 
 **Separate collection work.** Radar still has no equivalent final requested-band selection. Family routing still
 sends non-radar/non-optical input, including empty/unknown shapes, to Planet without establishing executability.
@@ -120,9 +120,12 @@ Preserve established output order and producer-specific internal selection seman
 
 - **Explain the classifier.** Define whether the request is algorithm/parameter help, explanation of the trained
   model, or both. Inventory existing outputs and expose supported explanations with their limitations.
-- **Validation.** Separate configuration/readiness, training-sample adequacy and predictive evaluation. Identify
-  missing checks and define evaluation data/metrics before promising model quality; account for spatial leakage
-  and reused training data. Extend existing shared requirements where applicable.
+- **Validation.** Extend the [shared training prerequisites](recipes/source-resolution.md#execution-readiness) only
+  where adequate facts establish a missing check. Assess Regression's single-point refusal and whether a
+  regression-only selection should have mode-specific readiness rather than the canonical image's class requirements.
+  NU-SVC feasibility, surviving singleton classes and Mahalanobis covariance quality need effective sampled facts,
+  not stored counts alone. Keep these execution checks separate from predictive evaluation; define evaluation
+  data/metrics, spatial leakage and reused-data policy before promising model quality.
 - **Polygon training data.** Assess one labelled feature row built from statistics over each training polygon,
   rather than implicitly treating every EE polygon pixel as an independent training point. Define per-band
   statistics, scale/projection, masks, empty polygons, feature naming and matching training/prediction transforms.
@@ -151,7 +154,8 @@ Remapping's proposed [default class](#default-or-fallback-class) is specified be
 - **Training-data feedback.** Decide how an explicitly selected empty Provider is presented when other branches
   provide enough points. Do not invalidate an otherwise trainable Consumer merely because a branch is empty.
   Sampling scale, unit/encoding compatibility, legend/value compatibility and post-mask sample adequacy need
-  separate requirements before any stricter promise is made.
+  separate requirements before any stricter promise is made. Combine an editor's multiple causes before giving
+  their common repair, rather than repeating that repair after each finding.
 - **Form interaction consistency.** Separate validity from error visibility; new required fields stay neutral
   initially, report errors after interaction and clear promptly on repair. Review autofocus, picker interaction,
   programmatic resets, duplicated input editors and field/group accessibility. Broken saved configurations still
@@ -161,6 +165,21 @@ Remapping's proposed [default class](#default-or-fallback-class) is specified be
 - **Draft/close interaction.** Warning about unapplied drafts on browser close and revisiting the current recipe-tab
   close guard remain separate decisions. A "Use reference settings" copy-again button is not planned; creation
   seeding and automatic ownership cover its useful purpose.
+
+### Unfinished setup feedback
+
+Extend the [shared section feedback](recipes/source-resolution.md#section-feedback) only for concrete remaining gaps:
+
+- **Further adoption.** Establish a reachable incomplete configuration before adopting amber for Masking, Class
+  Change, required reference selectors or other wizard-protected sections. A required field alone is insufficient:
+  demonstrate removal, recovery or another path that can leave saved setup unfinished. An already-selected source
+  becoming unusable is an error; optional settings stay neutral.
+- **Prerequisite chains.** Assess cross-section prerequisites for output-derived training and input-band findings,
+  which currently wait on no local item. Local prerequisites resolve local reads only; empty Band Math output also
+  does not wait on an input's source failures. Reproduce the desired repair order before extending the resolver.
+
+Keep completion in authoritative requirements or their declarative presentation mapping. Preserve wizard timing,
+independent draft repair, saving and operation gates; add no separate toolbar predicate or persisted "new recipe" flag.
 
 ### Stack automatic names
 
@@ -287,13 +306,9 @@ unverified for these follow-ups.
 
 ### Sampling Design derived-result freshness
 
-Stratum areas and automatic proportions' stratum frame carry operation-produced evidence, compared by meaning. Their
-panels calculate what an edit requires through the shared calculation binding, and the toolbar marks unfinished and
-stale sections through the shared requirement presentation, with waiting sections neutral
-([Sampling Design's notes](../recipes/sampling-design.md#derived-result-freshness)). Remaining:
+Extend [Sampling Design's result evidence](../recipes/sampling-design.md#derived-result-freshness) for the remaining
+dependencies:
 
-- **Unfinished-setup adoption.** Classification's incomplete training is a later consumer of the shared unfinished
-  presentation (`incomplete` diagnoses, `sectionButton.jsx`); other recipes keep their marks until they adopt it.
 - **Probability evidence.** Add `SAMPLING_STRATUM_PROBABILITIES` - the probability product and band, mode, target
   class and Proportions Scale - composing the frame evidence unchanged, and replace `proportions.requiresUpdate` for
   automatic proportions. Until then an edit in the Proportions panel is calculated again, but a change to the
@@ -302,12 +317,6 @@ stale sections through the shared requirement presentation, with waiting section
   their flags mark sections only through the declared section requirements and prerequisites. Migrate the
   transitions themselves to declared section dependencies only where that replaces the planner rather than
   duplicating it.
-- **Verification.** The slice is covered by shared, gee and GUI behavioural tests, and its panel behaviour and
-  presentation have passed browser acceptance. Live Earth Engine verification of the evidence path, Online/Batch
-  calculations, task stages and real asset tokens remains outstanding.
-
-Accepted limitations: an asset's token detects observed changes and does not pin the pixels Earth Engine reads, and
-revalidation narrows rather than closes the replacement window; the whole-model fallback causes extra recalculations.
 
 ### Capability projection and visualization ownership
 

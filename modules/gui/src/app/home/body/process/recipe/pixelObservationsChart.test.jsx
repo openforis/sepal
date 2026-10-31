@@ -278,7 +278,7 @@ describe.each([
         openChart(ChartPixel, recipeOf(type), classificationOver(COMPATIBLE, {type: 'SVM', svmType: 'C_SVC'}))
         chooseBand('probability_1')
 
-        holdClassification(classificationOver(COMPATIBLE, {type: 'SVM', svmType: 'ONE_CLASS'}))
+        holdClassification(classificationOver(COMPATIBLE, {type: 'SVM', svmType: 'ONE_CLASS', oneClass: 1}))
 
         expect(loadTimeSeriesObservations$.mock.calls.map(([{bands}]) => bands)).toEqual([['ndvi'], ['probability_1'], ['ndvi']])
     })

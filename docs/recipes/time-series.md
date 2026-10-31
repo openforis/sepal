@@ -32,8 +32,9 @@ A selected Classification is part of the configured analysis: every Time Series 
 chart's observations, the download - needs its classifier trainable (`CLASSIFIER`), whatever bands are asked for, a
 band of the images included. That is a policy rather than an execution need: a native band reads nothing of the
 Classification and execution trains nothing for it, but readiness acquires the evidence training would read. While the
-Classification cannot be trained (no points, an unusable reused recipe, reused features missing), SRC names it beside
-the classification field (`classificationReferenceFeedback`), the chart and Retrieve actions are withdrawn, and an
+Classification cannot be trained (no points, points its classifier cannot train on, an unusable reused recipe, reused
+features missing), SRC names it beside the classification field (`classificationReferenceFeedback`), the chart and
+Retrieve actions are withdrawn, and an
 open chart or Retrieve closes, the chart cancelling its request; SRC alone explains it. While what training needs is
 still being read, or cannot be, an open chart reads nothing and an open Retrieve holds its submission, both staying
 open, nothing found. Repairing the Classification, or selecting none, offers them again without reopening them; the

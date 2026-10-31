@@ -2,7 +2,7 @@ import {act} from 'react'
 import {createRoot} from 'react-dom/client'
 import {Provider} from 'react-redux'
 import {legacy_createStore as createStore} from 'redux'
-import {of} from 'rxjs'
+import {NEVER, of, throwError} from 'rxjs'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
@@ -22,14 +22,18 @@ import {tooltipText} from '~/widget/tooltip.test.fixtures'
 // to add some, while the button marks nothing wrong. The panels, store, source runtime and recipe types are real; Earth
 // Engine answers an asset's bands at once - red and nir, unless `evidence` says otherwise.
 
-const stored = vi.hoisted(() => ({records: {}}))
+// The records the recipe service holds, and those it is still reading, or cannot.
+const stored = vi.hoisted(() => ({records: {}, reading: {}}))
 const evidence = vi.hoisted(() => ({'users/x/red': ['red'], 'users/x/case': ['red', 'Red', 'nir'], 'users/x/again': ['red']}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         bands$: ({asset}) => of((evidence[asset] || ['red', 'nir']).map(name => ({name, arrayDimensions: 0}))),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
     },
-    recipe: {load$: id => of(stored.records[id]), loadAll$: () => of(LISTING)}
+    recipe: {
+        load$: id => ({pending: NEVER, unreadable: throwError(() => new Error('unreadable'))})[stored.reading[id]] || of(stored.records[id]),
+        loadAll$: () => of(LISTING)
+    }
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
@@ -55,7 +59,7 @@ const {default: classification} = await import('./classification')
 const {default: regression} = await import('../regression/regression')
 const {TrainingData: ClassificationTrainingData} = await import('./panels/trainingData/trainingData')
 const {TrainingData: RegressionTrainingData} = await import('../regression/panels/trainingData/trainingData')
-const {sourceProblemsOfState} = await import('../selectedSourceStatus')
+const {sectionProblemsOfState, sourceProblemsOfState} = await import('../selectedSourceStatus')
 const {retrieveAvailability} = await import('../operationAvailability')
 
 addRecipeType(classification())
@@ -117,11 +121,12 @@ describe.each([
     ['CLASSIFICATION', ClassificationTrainingData, 'process.classification.panel.trainingData.missing'],
     ['REGRESSION', RegressionTrainingData, 'process.regression.panel.trainingData.missing']
 ])('a %s without training data', (type, TrainingData, missing) => {
-    it('says how to add some in its Training data panel, marking neither the button nor a data set, and holds its Retrieve', async () => {
+    it('says how to add some in its Training data panel and on its button, as unfinished, marking no data set, and holds its Retrieve', async () => {
         await open(type, TrainingData, {images: [ASSET_IMAGE], points: false, reuse: false})
 
         expect(shown()).toContain(missing)
-        expect(toolbarProblems().trainingData).toBe(undefined)
+        expect(toolbarProblems().trainingData).toBe(missing)
+        expect(incompleteSections()).toEqual({trainingData: true})
         expect(marked()).toEqual([])
         expect(retrieveGate()).toMatchObject({code: 'CONFIGURATION_UNMET', section: 'process.classification.panel.trainingData.button'})
     })
@@ -140,11 +145,12 @@ describe.each([
         expect(marked()).toEqual([])
     })
 
-    it('says how to add some in its Training data panel, its button unmarked', async () => {
+    it('says how to add some in its Training data panel and on its button, as unfinished', async () => {
         await open(type, TrainingData, {images: [ASSET_IMAGE], points: false})
 
         expect(shown()).toContain(missing)
-        expect(toolbarProblems().trainingData).toBe(undefined)
+        expect(toolbarProblems().trainingData).toBe(missing)
+        expect(incompleteSections()).toEqual({trainingData: true})
     })
 
     it('can be retrieved once the recipe it reuses stores a point', async () => {
@@ -202,6 +208,40 @@ describe.each([
     })
 })
 
+// The imagery of the recipe it reuses lacks nir, and gives red twice: the data set reusing it says both, and still says
+// one once the other is repaired.
+describe.each([
+    ['CLASSIFICATION', ClassificationTrainingData],
+    ['REGRESSION', RegressionTrainingData]
+])('a %s trained on a recipe whose imagery lacks one feature it trains on and matches another more than once', (type, TrainingData) => {
+    it('says both at the data set reusing it, naming that recipe', async () => {
+        await open(type, TrainingData, {images: [RED_ONLY, RED_AGAIN]})
+
+        const [{item, message}, ...others] = marked()
+        expect(others).toEqual([])
+        expect(item).toBe(REUSED)
+        expect(message).toContain(MISSING_NIR)
+        expect(message).toMatch(/process\.classification\.panel\.trainingData\.ambiguousFeatures .*"recipe":"Provider"/)
+        expect(retrieveGate()).toMatchObject({code: 'CONFIGURATION_UNMET'})
+    })
+
+    it.each([
+        ['nir given', [ASSET_IMAGE, RED_AGAIN], 'ambiguousFeatures', MISSING_NIR],
+        ['red given once', [RED_ONLY], MISSING_NIR, 'ambiguousFeatures']
+    ])('still says the other once %s', async (_case, repaired, still, gone) => {
+        await open(type, TrainingData, {images: [RED_ONLY, RED_AGAIN]})
+
+        await act(async () => actionBuilder('REPAIR')
+            .set(['process.loadedRecipes', PROVIDER, 'model.inputImagery.images'], repaired)
+            .dispatch())
+        await settled()
+
+        const [{message}] = marked()
+        expect(message).toContain(still)
+        expect(message).not.toContain(gone)
+    })
+})
+
 describe.each([
     ['CLASSIFICATION', ClassificationTrainingData],
     ['REGRESSION', RegressionTrainingData]
@@ -215,6 +255,41 @@ describe.each([
     })
 })
 
+// What a Classification trains on - its own points and those of the recipe it reuses together - must hold what its
+// classifier needs, points of two classes for a random forest; what that recipe holds is not known while it is being read,
+// or cannot be.
+describe('a CLASSIFICATION whose training points are of one class', () => {
+    it('says which in its Training data panel and on its button, as unfinished, marking no data set, and holds its Retrieve', async () => {
+        await open('CLASSIFICATION', ClassificationTrainingData, {images: [ASSET_IMAGE], consumerPoints: pointsOf(1), reuse: false})
+
+        expect(shown()).toContain(ONE_CLASS_A)
+        expect(toolbarProblems().trainingData).toBe(ONE_CLASS_A)
+        expect(incompleteSections()).toEqual({trainingData: true})
+        expect(marked()).toEqual([])
+        expect(retrieveGate()).toMatchObject({code: 'CONFIGURATION_UNMET', section: 'process.classification.panel.trainingData.button'})
+    })
+
+    it('can be retrieved where the recipe it reuses stores points of another class', async () => {
+        await open('CLASSIFICATION', ClassificationTrainingData, {images: [ASSET_IMAGE], consumerPoints: pointsOf(1), providerPoints: pointsOf(2)})
+
+        expect(shown()).not.toContain(INSUFFICIENT)
+        expect(toolbarProblems()).toEqual({})
+        expect(retrieveGate()).toBe(null)
+    })
+
+    it.each([
+        ['being read', 'pending', 'SOURCE_PENDING'],
+        ['unreadable', 'unreadable', 'SOURCE_UNAVAILABLE']
+    ])('says nothing its points lack while the recipe it reuses is %s, its Retrieve held for that', async (_case, reading, held) => {
+        await open('CLASSIFICATION', ClassificationTrainingData, {images: [ASSET_IMAGE], consumerPoints: pointsOf(1), reading})
+
+        expect(shown()).not.toContain(INSUFFICIENT)
+        expect(toolbarProblems()).toEqual({})
+        expect(incompleteSections()).toEqual({})
+        expect(retrieveGate()).toMatchObject({code: held})
+    })
+})
+
 const CONSUMER = 'consumer-1'
 const PROVIDER = 'provider-1'
 const REUSED = 'Reused'
@@ -224,7 +299,15 @@ const ASSET_IMAGE = {imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSet
 const SELECTING_MISSING_BAND = {...ASSET_IMAGE, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red', 'swir']}]}
 // An input over an asset of red alone.
 const RED_ONLY = {...ASSET_IMAGE, id: 'users/x/red', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red']}]}
+// Another, over another asset of red alone.
+const RED_AGAIN = {...RED_ONLY, imageId: 'i-2', id: 'users/x/again'}
+const MISSING_NIR = 'process.classification.panel.trainingData.missingFeatures {"recipe":"Provider","features":"nir"}'
 const POINTS = [{x: 1, y: 1, class: 1, value: 1}, {x: 2, y: 2, class: 2, value: 2}]
+const INSUFFICIENT = 'process.classification.panel.trainingData.insufficient'
+const ONE_CLASS_A = `${INSUFFICIENT}.MINIMUM_CLASSES {"classes":"A","minimum":2}`
+
+// A point of each of these classes.
+const pointsOf = (...values) => values.map(value => ({x: value, y: value, class: value, value}))
 
 const LISTING = [
     {id: CONSUMER, name: 'Consumer', revision: 1},
@@ -246,21 +329,24 @@ const recipeOf = (type, id, {images = [ASSET_IMAGE], dataSets}) => ({
 })
 
 // The consumer, trained on its own points and on the provider's, which is over `images`. `points` false: neither stores
-// a point of its own - a Classification keeping the data set its map collects into, empty. `reuse` false: the consumer
-// reuses nothing.
-const recipesOf = (type, {images, consumerImages, points = true, reuse = true}) => [
+// a point of its own - a Classification keeping the data set its map collects into, empty - unless `consumerPoints` or
+// `providerPoints` say what each stores. `reuse` false: the consumer reuses nothing.
+const recipesOf = (type, {images, consumerImages, points = true, reuse = true, consumerPoints = points ? POINTS : [], providerPoints = points ? POINTS : []}) => [
     recipeOf(type, CONSUMER, {images: consumerImages, dataSets: [
-        ...(points ? [{dataSetId: 'collected', type: 'COLLECTED', name: COLLECTED, referenceData: POINTS}] : []),
-        ...(!points && type === 'CLASSIFICATION' ? [{dataSetId: 'collected', type: 'COLLECTED', name: COLLECTED, referenceData: []}] : []),
+        ...(consumerPoints.length || type === 'CLASSIFICATION' ? [{dataSetId: 'collected', type: 'COLLECTED', name: COLLECTED, referenceData: consumerPoints}] : []),
         ...(reuse ? [{dataSetId: 'reused', type: 'RECIPE', name: REUSED, recipe: PROVIDER}] : [])
     ]}),
-    recipeOf(type, PROVIDER, {images, dataSets: points ? [{dataSetId: 'collected', type: 'COLLECTED', name: COLLECTED, referenceData: POINTS}] : []})
+    recipeOf(type, PROVIDER, {images, dataSets: providerPoints.length ? [{dataSetId: 'collected', type: 'COLLECTED', name: COLLECTED, referenceData: providerPoints}] : []})
 ]
 
 const shown = () => document.body.textContent
 
 const toolbarProblems = () =>
     sourceProblemsOfState(store.getState(), CONSUMER, id => runtime.evidenceOwnerOf(id), Date.now(), key => runtime.heldFor(key))
+
+// The sections the toolbar marks as unfinished.
+const incompleteSections = () =>
+    sectionProblemsOfState(store.getState(), CONSUMER, id => runtime.evidenceOwnerOf(id), Date.now(), key => runtime.heldFor(key)).incompleteSections
 
 // Why Retrieve of the consumer is held, as far as what its type declares decides it.
 const retrieveGate = () => retrieveAvailability({
@@ -296,14 +382,17 @@ const RuntimeProbe = withSourceRuntime()(({sourceRuntime}) => {
     return null
 })
 
-async function open(type, TrainingData, {images, consumerImages, points, reuse}) {
-    const records = recipesOf(type, {images, consumerImages, points, reuse})
+// The consumer and the provider, as the session holds them - the provider not yet, where the recipe service is still
+// `reading` it, or cannot.
+async function open(type, TrainingData, {images, consumerImages, points, reuse, consumerPoints, providerPoints, reading}) {
+    const records = recipesOf(type, {images, consumerImages, points, reuse, consumerPoints, providerPoints})
     stored.records = Object.fromEntries(records.map(record => [record.id, record]))
+    stored.reading = reading ? {[PROVIDER]: reading} : {}
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: Object.fromEntries(records.map(record => [record.id, record])),
+            loadedRecipes: Object.fromEntries(records.filter(({id}) => !stored.reading[id]).map(record => [record.id, record])),
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},

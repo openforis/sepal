@@ -75,11 +75,14 @@ export const sectionRefusalOf = (state, reads, sectionId) =>
         : null
 
 // What each item of a section its local requirements enumerate, or its output read refuses, says, where anything does:
-// {[itemId]: status}.
-export const itemStatusesOf = (reads, sectionId) => Object.fromEntries(reads
-    .filter(read => read.local && read.item && read.declaration.section.id === sectionId)
-    .map(read => [read.item.id, localStatusOf(read)])
-    .filter(([_id, status]) => status))
+// {[itemId]: status}. An item several requirements find something of says each of them (itemStatusOf).
+export const itemStatusesOf = (reads, sectionId) => _.mapValues(
+    _.groupBy(reads
+        .filter(read => read.local && read.item && read.declaration.section.id === sectionId)
+        .map(read => ({id: read.item.id, status: localStatusOf(read)}))
+        .filter(({status}) => status), 'id'),
+    found => itemStatusOf(found.map(({status}) => status))
+)
 
 export const itemStatusesOfState = (state, recipeId, sectionId, heldFor) => {
     const recipe = selectFrom(state, ['process.loadedRecipes', recipeId])
@@ -288,9 +291,28 @@ const localStatusOf = read => {
         details: own ? [...own.details, ...(prerequisites ? [prerequisites] : [])] : [],
         ...(own?.referenceFeedback && {referenceFeedback: own.referenceFeedback}),
         refresh: false,
-        advisories: []
+        advisories: [],
+        incomplete: Boolean(own) && isIncomplete(read)
     }
 }
+
+// What an item says of everything found of it, in turn: what is wrong before what is unfinished, each once, with the
+// recipes it names and the repairs it gives. A single finding is said as it is.
+const itemStatusOf = statuses => {
+    if (statuses.length === 1) {
+        return statuses[0]
+    }
+    const said = _.uniqBy(_.sortBy(statuses, ({incomplete}) => incomplete ? 1 : 0), status => JSON.stringify(saying(status)))
+    const content = joinFeedback(said.map(saying))
+    return {
+        ..._.omit(said[0], 'messageContent'),
+        ...typeof content === 'string' ? {message: content} : describeFeedback(content),
+        details: said.flatMap(({details}) => details),
+        incomplete: said.every(({incomplete}) => incomplete)
+    }
+}
+
+const saying = ({message, messageContent}) => messageContent || message
 
 const prerequisitesMessage = prerequisites =>
     msg('process.requirement.prerequisiteUnmet', {items: prerequisites.map(({label, item}) => label || item).join(', ')})

@@ -77,7 +77,7 @@ explicit compatibility rules.
 
 | State | Feedback | Operation policy |
 | --- | --- | --- |
-| Incomplete setup | Neutral guidance listing valid completion paths. | Hold unmet operations. |
+| Incomplete setup | Amber on the actionable section, with guidance listing valid completion paths. Waiting sections stay neutral. | Hold unmet operations. |
 | Confirmed broken/incompatible choice | Actionable field/item error and section mark. | Withdraw affected operations. |
 | Pending evidence | Checking indication when useful. | Wait without inventing a finding. |
 | Unavailable evidence | Distinct failure and recovery path. | Hold work requiring that evidence. |
@@ -94,7 +94,7 @@ unapplied edits and never automatically reopens after repair. Current-state subm
 necessary because closing can race submission.
 
 An empty Classification can be completed on the map or by adding a dataset; Regression has different paths.
-Band Math permits direct input outputs without calculations. Neutral setup guidance must reflect those
+Band Math permits direct input outputs without calculations. Setup guidance must reflect those
 paths while execution remains held.
 
 ## Put feedback where the user can repair the cause

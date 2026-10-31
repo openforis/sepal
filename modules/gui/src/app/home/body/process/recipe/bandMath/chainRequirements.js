@@ -3,7 +3,7 @@ import _ from 'lodash'
 import {MISSING_IMAGE, UNKNOWN_BAND, UNRESOLVED_REFERENCES} from '#sepal/recipe/bandMath/calculationReferences'
 import {SUPPORTED, unsupported} from '#sepal/recipe/requirement/verdict'
 
-import {allOutputNames, isUniqueOutputName, isValidOutputName, outputNameOf} from './panels/outputBands/outputImages'
+import {allOutputNames, isUniqueOutputName, isValidOutputName, outputNameOf, outputsAnything, outputsBands} from './panels/outputBands/outputImages'
 
 export * from '#sepal/recipe/bandMath/calculationReferences'
 
@@ -50,7 +50,7 @@ export const OUTPUT_REFERENCES = {
         ...bands
             ? outputBands.filter(band => !bands.includes(band)).map(band => ({code: UNKNOWN_BAND, variable: name, band}))
             : [{code: MISSING_IMAGE, variable: name}],
-        ...outputBands.length ? [] : [{code: NO_OUTPUT_BANDS, variable: name}],
+        ...outputsBands({outputBands}) ? [] : [{code: NO_OUTPUT_BANDS, variable: name}],
         ...customNames.filter(outputName => !isValidOutputName(outputName))
             .map(outputName => ({code: INVALID_OUTPUT_NAME, outputName})),
         ...outputNames.filter(outputName => !isUniqueOutputName(outputName, allOutputNames))
@@ -58,10 +58,13 @@ export const OUTPUT_REFERENCES = {
     ])
 }
 
-// UNRESOLVED_REFERENCES with NO_OUTPUT_IMAGES where nothing is output at all: judged once, for the section.
+// UNRESOLVED_REFERENCES with NO_OUTPUT_IMAGES where nothing is output at all, as set-up not yet done (`incomplete`):
+// judged once, for the section. An input band output directly is output; calculations are optional.
 export const OUTPUT_PRESENCE = {
     id: OUTPUT_IMAGES_REQUIREMENT,
-    evaluate: ({outputImages}) => verdictOf(outputImages.length ? [] : [{code: NO_OUTPUT_IMAGES}])
+    evaluate: ({outputImages}) => outputsAnything(outputImages)
+        ? {status: SUPPORTED}
+        : unsupported({code: UNRESOLVED_REFERENCES, problems: [{code: NO_OUTPUT_IMAGES}], incomplete: true})
 }
 
 const verdictOf = problems => {

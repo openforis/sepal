@@ -3,6 +3,7 @@ import _ from 'lodash'
 import {CALCULATION_REFERENCES, calculationItem} from '#sepal/recipe/bandMath/calculationReferences'
 import {SUPPORTED} from '#sepal/recipe/requirement/verdict'
 import {recipeActionBuilder, recipePath} from '~/app/home/body/process/recipe'
+import {selectFrom} from '~/stateUtils'
 import {select} from '~/store'
 
 // The source of an input image is its type and id. Inputs are told apart by their imageId: a saved recipe can hold two
@@ -24,6 +25,17 @@ export const isTakenSource = (otherSources, type, id) =>
     (otherSources || []).includes(inputSourceKey({type, id}))
 
 export const DUPLICATE_SOURCE = 'process.panels.inputImagery.form.duplicateSource'
+
+// What the lists of inputs call each one, {[imageId]: name}: a recipe by the name the recipe listing holds for it, or
+// else the title of the recipe as the session has it loaded, and anything else - an asset, or a recipe known by neither -
+// by its source id. A recipe the listing does not hold is not established to be gone or unreadable, so it is still shown,
+// to be edited or removed; a variable alias an input is given is not its name.
+export const inputImageNames = (state, images) => Object.fromEntries((images || []).map(image => [
+    image.imageId,
+    image.type === 'RECIPE_REF'
+        ? selectFrom(state, ['process.recipes', {id: image.id}])?.name || selectFrom(state, ['process.loadedRecipes', image.id, 'title']) || image.id
+        : image.id
+]))
 
 // A field predicate refusing a source of the given type that another input takes, read from the form's otherSources.
 export const isFreeSource = type =>

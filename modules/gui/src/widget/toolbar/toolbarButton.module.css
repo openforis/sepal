@@ -87,8 +87,8 @@
 
 /* error and warning states */
 
-.toolbarButton.activationButton.error::after,
-.toolbarButton.activationButton.warning::after {
+.toolbarButton.error::after,
+.toolbarButton.warning::after {
     content: '';
     position: absolute;
     bottom: .2rem;
@@ -98,7 +98,7 @@
     background-color: var(--error-color);
 }
 
-.toolbarButton.activationButton.warning::after {
+.toolbarButton.warning::after {
     background-color: var(--warning-color);
 }
 

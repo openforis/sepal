@@ -106,7 +106,7 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 // its configuration for, over what its sources are described to provide:
 //
 //   {id, section, requirement: {id, describe}, outputDiagnostics: {codes, itemOf}, editor, summary, operations,
-//    toolbarMark}
+//    toolbarMark, incomplete}
 //
 // `codes` are the refusals of the recipe's IMAGE_OUTPUT it states. `references`, where a declaration names any, are the
 // roles of the recipe's own declared edges whose source is found gone: the recipe the edge names, where its own read is
@@ -122,9 +122,11 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 // candidate(recipe, model)}, `input` the name of the panel's form input or a function of a finding and the panel's values
 // naming one, with `describe(findings, values)` - binds the panel editing one item, judged before it is applied by the same refusals of
 // the recipe its candidate builds from that item alone (outputCandidate.js). The output read lies below this: it never
-// asks what these say. `toolbarMark: false` is presentation alone: what the declaration finds holds its operations and
-// is said wherever they are held, but its section's toolbar button does not say it (selectedSourceStatus.js), while
-// what other declarations of the section find still does. `wizardStepMark: false` is the same while a set-up wizard
+// asks what these say. `incomplete: true` says that what the declaration finds is set-up not yet done rather than
+// something wrong, as a local requirement's diagnostic does (selectedSourceStatus.js). `toolbarMark: false` is
+// presentation alone: what the declaration finds holds its operations and is said wherever they are held, but its
+// section's toolbar button does not say it (selectedSourceStatus.js), while what other declarations of the section find
+// still does. `wizardStepMark: false` is the same while a set-up wizard
 // has the section open as its step - where the panel's own form says what is missing - and no longer once it is not;
 // meanwhile its `editor` says it only beside an input already saying its own error (recipeFormPanel.jsx).
 //
@@ -554,7 +556,7 @@ const readOutputDeclaration = ({recipe, output, recipeNames, declaration}) => {
     }
     return [...byItem.values()].map(({item, diagnostics}) => {
         const {id, path, label} = item
-        const verdict = unsupported({code: declaration.requirement.id, diagnostics, item})
+        const verdict = unsupported({code: declaration.requirement.id, diagnostics, item, ...declaration.incomplete && {incomplete: true}})
         return {
             declaration,
             local: true,

@@ -28,17 +28,19 @@ import {
     hasUniqueOutputNames,
     hasValidOutputNames,
     namedApart,
+    outputsAnything,
+    outputsBands,
     withUniqueDefaultNames
 } from './outputImages'
 
 const ADD_ALL_BANDS = Symbol('addAllBands')
 
+// What is output is applied only where something is, and every image output outputs a band, by the rules its requirements
+// judge the applied recipe by (outputImages.js): the draft is judged, so a repair applies whatever was saved.
 const fields = {
     outputImages: new Form.Field()
-        .notEmpty()
-        .predicate(value => !value.find(({outputBands}) => !outputBands.length),
-            'process.bandMath.panel.outputBands.missingBands'
-        )
+        .predicate(outputImages => outputsAnything(outputImages || []), 'fieldValidation.notEmpty')
+        .predicate(outputImages => outputImages.every(outputsBands), 'process.bandMath.panel.outputBands.missingBands')
         .predicate(hasValidOutputNames, 'process.bandMath.panel.outputBands.invalidFormat')
         .predicate(hasUniqueOutputNames, 'process.bandMath.panel.outputBands.duplicateBand')
 }
@@ -130,7 +132,7 @@ class _OutputBands extends React.Component {
         const {inputs: {outputImages}} = this.props
         return (
             <Layout>
-                {outputImages.value?.length
+                {outputsAnything(outputImages.value || NO_OUTPUT_IMAGES)
                     ? outputImages.value.map(this.renderOutputImage)
                     : <NoData message={msg('process.bandMath.panel.outputBands.noImages')}/>}
             </Layout>
@@ -168,7 +170,7 @@ class _OutputBands extends React.Component {
         const allOutputBandNames = allOutputNames(outputImages.value)
         return (
             <Layout type='horizontal' alignment='fill'>
-                {outputImage.outputBands.length
+                {outputsBands(outputImage)
                     ? outputImage.outputBands.map(band => {
                         return <OutputBand
                             key={band.id}

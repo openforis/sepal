@@ -120,13 +120,18 @@ Execution builds every calculation in order, over the inputs and the calculation
   later calculation and the calculation itself are each diagnosed.
 - An output band must be a band of the image it is taken from, by physical name, and that image must exist.
 - At least one input image is listed: running it zips them, and builds nothing from none. Without one, Input imagery
-  says "Please add at least one image." beside what Output bands says of having none - except while the set-up
-  wizard has Input imagery open, where its list holds Next until it has one - and its layer, Retrieve and the asset
-  export are held, as for every recipe over it
-  ([Execution readiness](../design/recipes/source-resolution.md#execution-readiness)).
+  is marked as unfinished (amber), saying "Please add at least one image." - except while the set-up wizard has it
+  open, where its list holds Next, Done and Enter until it has one - and its layer, Retrieve and the asset export are
+  held, as for every recipe over it
+  ([Execution readiness](../design/recipes/source-resolution.md#execution-readiness)). The list shows every configured
+  input under its source's name, or its id where the recipe listing does not hold it, with its variable alias apart.
 - At least one image is output, each outputting at least one band, under names that are valid and that no other output
   band has - the rules Output bands applies to its own Apply (`outputImages.js`), so its fields, rows and toolbar
-  button agree. An empty section is judged once, for the section; the rest per output image.
+  button agree (`outputsAnything`, `outputsBands`). An empty section is judged once, for the section, as setup still
+  to do: its toolbar button is marked as unfinished (amber), saying what to output, once the set-up wizard is done and
+  Input imagery lists an input - until then it waits, neutral. Calculations are optional - an input band output
+  directly completes it. The rest is judged per output image, and is wrong (red) whatever Input imagery lists. Output
+  bands' form judges its draft, so a repair of what was saved applies, by Apply or Enter.
 - A calculation reading an unmet calculation, and an output taken from one, remain blocked by the recipe's shared
   readiness. Only originating problems produce calculation findings and row marks; dependent rows do not repeat them.
   Output bands stays unmarked for calculation failures, but still reports its own output-selection problems.
