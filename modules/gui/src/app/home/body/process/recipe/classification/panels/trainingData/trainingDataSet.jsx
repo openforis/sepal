@@ -267,7 +267,9 @@ const valuesToModel = values => {
     return {
         ...values,
         inputData: values.type === 'CSV_UPLOAD' ? values.inputData : undefined,
-        referenceData: values.referenceData.referenceData,
+        // The editor's checks build a model from the values as edited, including while the class mapping step has unset
+        // the reference data to map the rows again.
+        referenceData: values.referenceData?.referenceData,
 
         institution: values.institution,
         project: values.project,
