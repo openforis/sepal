@@ -24,6 +24,6 @@
     },
     "type": "module",
     "devDependencies": {
-        "amqplib": "^2.2.0"
+        "amqplib": "^2.2.1"
     }
 }

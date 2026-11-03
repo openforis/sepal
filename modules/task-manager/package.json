@@ -15,8 +15,8 @@
         "sepal": "../../lib/js/shared"
     },
     "devDependencies": {
-        "@koa/router": "^15.7.0",
-        "koa": "^3.2.1",
+        "@koa/router": "^15.7.1",
+        "koa": "^3.3.0",
         "koa-bodyparser": "^4.4.1"
     },
     "imports": {
