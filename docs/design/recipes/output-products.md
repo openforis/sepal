@@ -433,6 +433,40 @@ consumed, which is what lets one description stand for the whole.
 consumer needs physical values; derived quantities need their own rules, and phase and timing do not inherit a base
 band's multiplier. Other producers, export destinations, charts and legends adopt the contract separately.
 
+### Regression precision compatibility
+
+New computations preserve [temporal regression scales](../../recipes/time-series.md#collection-encoding) while
+recovering fractions and range. Generic image exports and the CCDC export capture actual regression collection
+construction during their image build, including nested inputs. An attached Classification or submitted properties
+alone establish nothing. Reading an existing asset does not infer or upgrade its encoding.
+
+Affected asset exports write server-derived `sepal_regression_precision` (the bounded floating-result contract and
+executed public multipliers) and `sepal_regression_schema` (a digest of ordered names, array ranks and pixel types).
+Caller-supplied and inherited claims cannot override them. Resume preparation requires the parent and every
+retained member to match before folder/property writes or starting tiles; every listing page and members outside
+the requested tiling count. Full asset IDs retain distinct members such as `01` and `1`; physical member schemas are checked
+against the new image's evaluated schema. Tile submission rechecks only the parent and destination tile, without
+rereading the other members. A non-visible destination requires a zero-result query for that exact `system:index`
+in the readable parent collection; a failed query or a matching member refuses submission. Preparation identifies
+missing members from its successful complete listing. An ambiguous parent lookup must be reconciled with a
+readable ancestor listing.
+Missing/incompatible/unreadable evidence refuses Resume with a fresh-destination/Replace/retry remedy. Old unmarked
+affected collections cannot be retroactively marked or mixed with corrected tiles. Unrelated exports retain their
+existing encoding/Resume policy.
+
+This marker is not a recipe/configuration provenance framework and does not guarantee arbitrary runs have equal
+pixels. Regression precision can change fits/breakpoints without changing units. New matching corrected exports
+can Resume; old assets/downloads and their metadata keep their interpretation. Workspace downloads have their
+separate [fresh indicator destination guard](../../recipes/time-series.md#collection-encoding).
+
+Asset exports preserve per-band types. File exports use `castToLargest`: mixed Float32/integer images promote to
+double when the declared integer range exceeds Float32's exact-integer range (±2^24), preserving representative
+large counts and acquisition timestamps; small integers can share Float32 without losing their values. This does
+not change their units or reinterpret stored assets. A Float32 file states no nodata value: masked pixels are NaN.
+Live Radar asset writes, Resume and refusal, and an Optical Drive file export, are checked by
+[regressionExportResume.mjs](../../../modules/gee/verify/regressionExportResume.mjs); live Optical asset writes are
+not yet established.
+
 ## Target design
 
 The following planning and capability-projection contracts are not yet implemented as a general API. Current

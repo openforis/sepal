@@ -10,6 +10,12 @@ import {assertMatches} from '#sepal/testSupport/assert'
 
 const earthEngine = {}
 
+// Whether the design is still current is the freshness gate's question (freshnessGate.test.js), not these stages'.
+mock.module('#gee/jobs/task/samplingDesign/freshnessGate', {
+    exports: {
+        freshnessGate$: () => of(null)
+    }
+})
 mock.module('#sepal/ee/ee', {
     exports: {
         default: {

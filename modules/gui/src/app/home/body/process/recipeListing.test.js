@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {listingAuthority, mergedListing, touchedListing} from './recipeListing'
+import {listingAuthority, mergedListing, observedListing, touchedListing} from './recipeListing'
 
 // Merging a refreshed listing into the one this session holds. A refresh reports storage as it was when it was asked;
 // whatever this session did with its listing after that must survive it.
@@ -118,6 +118,34 @@ describe('a listing whose request started before one already merged', () => {
 
         expect(recipes).toEqual([entry('a', 5), entry('b', 2)])
         expect(listingState).toMatchObject({checkedAt: 500, withdrawn: ['c']})
+    })
+})
+
+describe('a listing told the revisions an operation read elsewhere', () => {
+    it('advances a recipe it lists to a newer revision, keeping its other fields', () => {
+        const listed = {...entry('a', 4), name: 'A'}
+
+        const {recipes} = observedListing({recipes: [listed, entry('b', 2)]}, [{id: 'a', revision: 5}])
+
+        expect(recipes).toEqual([{...listed, revision: 5}, entry('b', 2)])
+    })
+
+    it('keeps one of a recipe it does not list as observed, without listing it', () => {
+        const listing = {recipes: [entry('a', 4)], listingState: {checkedAt: 1}}
+
+        const {recipes, listingState} = observedListing(listing, [{id: 'unlisted', revision: 2}])
+
+        expect(recipes).toBe(listing.recipes)
+        expect(listingState).toEqual({checkedAt: 1, observed: {unlisted: 2}})
+    })
+
+    it('moves no revision back, handing back the same listing', () => {
+        const listing = {recipes: [entry('a', 4)], listingState: {observed: {unlisted: 2}}}
+
+        const observed = observedListing(listing, [{id: 'a', revision: 3}, {id: 'unlisted', revision: 1}])
+
+        expect(observed.recipes).toBe(listing.recipes)
+        expect(observed.listingState).toBe(listing.listingState)
     })
 })
 

@@ -8,8 +8,8 @@ import {Recipe} from '~/app/home/body/process/recipeContext'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
 
-// A calculation edited in its panel, with the sync that keeps the output bands following it, as the Band Math editor
-// composes them, over a real store.
+// A calculation edited in its panel, its Apply committing what Band Math derives from it (derivations.js) - the output
+// bands following it - over a real store.
 
 // Storage never answers: what is saved is not the concern here.
 vi.mock('~/apiRegistry', async () => {
@@ -33,9 +33,12 @@ vi.mock('~/widget/activation/activatable', async () => {
 })
 
 const {Calculation, updateIncludedBands} = await import('./calculation')
-const {Sync} = await import('../../sync/sync')
+const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
+const {default: bandMath} = await import('../../bandMath')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
+
+addRecipeType(bandMath())
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -67,6 +70,33 @@ describe('a FUNCTION calculation edited in its panel', () => {
         await apply()
 
         expect(outputBand()).toMatchObject({id: MAXIMUM_BAND.id, name: 'brightest', defaultOutputName: 'brightest', outputName: 'peak'})
+    })
+})
+
+describe('a calculation another reads, edited in its panel', () => {
+    it('changes nothing applied while edited, and is applied with the bands the other derives from it, in one write', async () => {
+        await editCalculation(MAXIMUM, undefined, [DOUBLED])
+        const saved = model()
+        const writes = modelWrites()
+
+        await type(BAND_NAME, 'brightest')
+
+        expect(model()).toBe(saved)
+
+        await apply()
+
+        expect(writes).toEqual([model()])
+        expect(model().calculations.calculations[1].includedBands.map(({id, name}) => `${id}:${name}`)).toEqual(['max-id:brightest'])
+    })
+
+    it('leaves everything applied as it was when cancelled', async () => {
+        await editCalculation(MAXIMUM, undefined, [DOUBLED])
+        const saved = model()
+
+        await type(BAND_NAME, 'brightest')
+        await cancel()
+
+        expect(model()).toBe(saved)
     })
 })
 
@@ -158,6 +188,12 @@ const MAXIMUM = {
     includedBands: [MAXIMUM_BAND]
 }
 
+// An expression doubling MAXIMUM, read whole.
+const DOUBLED = {
+    imageId: 'calc-3', name: 'c3', type: 'EXPRESSION', expression: 'c1 * 2', dataType: 'auto', bandRenameStrategy: 'SUFFIX',
+    bandRename: '', usedBands: [MAXIMUM_BAND], includedBands: [MAXIMUM_BAND]
+}
+
 // An expression yielding every band of its input, each renamed by a pattern matching the whole name.
 const RENAMED_ALIKE = {
     imageId: 'calc-2', name: 'c2', type: 'EXPRESSION', expression: 'i1', dataType: 'auto',
@@ -176,14 +212,14 @@ const SAVED_ALIKE_OUTPUTS = SAVED_ALIKE.includedBands.map(band => ({
     ...band, defaultOutputName: band.name, ...(band.id === SWIR.id && {outputName: 'water'})
 }))
 
-const sessionState = (calculation, outputBands = [{...MAXIMUM_BAND, defaultOutputName: 'max', outputName: 'peak'}]) => ({
+const sessionState = (calculation, outputBands = [{...MAXIMUM_BAND, defaultOutputName: 'max', outputName: 'peak'}], later = []) => ({
     process: {
         loadedRecipes: {
             [ID]: {
                 id: ID, type: 'BAND_MATH', revision: 1,
                 model: {
                     inputImagery: {images: [INPUT]},
-                    calculations: {calculations: [calculation]},
+                    calculations: {calculations: [calculation, ...later]},
                     outputBands: {outputImages: [{...calculation, outputBands}]}
                 },
                 ui: {initialized: true}
@@ -196,9 +232,10 @@ const sessionState = (calculation, outputBands = [{...MAXIMUM_BAND, defaultOutpu
     dimensions: {width: 1024, height: 768}
 })
 
-const editCalculation = async (calculation, outputBands) => {
+// The panel opened on `calculation`, saved before the `later` calculations.
+const editCalculation = async (calculation, outputBands, later) => {
     activation.imageId = calculation.imageId
-    const initialState = sessionState(calculation, outputBands)
+    const initialState = sessionState(calculation, outputBands, later)
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     initStore(store)
     container = document.createElement('div')
@@ -207,7 +244,6 @@ const editCalculation = async (calculation, outputBands) => {
     await act(async () => root.render(
         <Provider store={store}>
             <Recipe id={ID}>
-                <Sync/>
                 <EventShield>
                     <PortalContainer/>
                     <PortalContainer id='panels'/>
@@ -232,6 +268,19 @@ const type = async (label, text) => {
 const apply = async () => {
     await act(async () => [...document.querySelectorAll('button')].find(button => button.textContent === 'button.apply').click())
     await settled()
+}
+
+const cancel = async () => {
+    await act(async () => [...document.querySelectorAll('button')].find(button => button.textContent === 'button.cancel').click())
+    await settled()
+}
+
+// Each model the store holds from now on, as it is written.
+const modelWrites = () => {
+    const writes = []
+    let last = model()
+    store.subscribe(() => model() !== last && writes.push(last = model()))
+    return writes
 }
 
 const model = () => selectFrom(store.getState(), ['process.loadedRecipes', ID, 'model'])

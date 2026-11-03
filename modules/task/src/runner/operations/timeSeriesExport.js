@@ -19,7 +19,17 @@ export const timeSeriesExport = async (params, {sepal, report, signal, sleep, lo
     const {description, image: {workspacePath, recipe, indicator, indicators = [indicator], additionalOutputs}} = params
     const downloadDir = workspacePath ? join(process.env.HOME, workspacePath) : join(process.env.HOME, 'downloads', description)
     await mkdir(downloadDir, {recursive: true})
-    const {tileIds} = await sepal.gee('task/timeseries/tiles', params)
+    const {tileIds, freshIndicators = []} = await sepal.gee('task/timeseries/tiles', params)
+    for (const indicator of freshIndicators) {
+        try {
+            await mkdir(join(downloadDir, indicator))
+        } catch (error) {
+            if (error.code === 'EEXIST') {
+                throw new Error(`Regression download destination ${join(downloadDir, indicator)} already exists. Choose a fresh destination; existing downloads will not be combined or removed.`, {cause: error})
+            }
+            throw error
+        }
+    }
     const totalTiles = tileIds.length
     for (const [tileIndex, tileId] of tileIds.entries()) {
         if (signal.aborted) {
@@ -37,7 +47,7 @@ export const timeSeriesExport = async (params, {sepal, report, signal, sleep, lo
             const indicatorDir = join(downloadDir, indicator, `${tileIndex}`)
             await forEachInParallel(dateRanges, CONCURRENT_CHUNKS, signal, async ({startDate, endDate}, chunkSignal) => {
                 await exportToWorkspace({
-                    start: () => sepal.startExport('task/export/timeseries/chunk', {...params, image: {...params.image, indicator}, tileId, tileIndex, startDate, endDate}),
+                    start: () => sepal.startExport('task/export/timeseries/chunk', {...params, image: {...params.image, indicator}, tileId, tileIndex, startDate, endDate, regressionDestinationChecked: freshIndicators.includes(indicator)}),
                     downloadDir: join(indicatorDir, `chunk-${startDate}_${endDate}`),
                     sepal, report: () => {}, signal: chunkSignal, sleep, localProcessing
                 })
@@ -49,7 +59,7 @@ export const timeSeriesExport = async (params, {sepal, report, signal, sleep, lo
                 const sits = additionalOutputs?.includes('SITS')
                     ? ['--band', indicator, '--sits-dir', join(downloadDir, 'sits', `${tileIndex}`)]
                     : []
-                await localProcessing.run(() => stack([indicatorDir, ...sits]), signal)
+                await localProcessing.run(() => stack([indicatorDir, ...sits, ...(freshIndicators.includes(indicator) ? ['--require-floating-point'] : [])]), signal)
             }
         }
     }

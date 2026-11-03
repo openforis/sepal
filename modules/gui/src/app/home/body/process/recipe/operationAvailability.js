@@ -121,8 +121,11 @@ const operationGate = (recipe, readiness, validity) => {
 // Retrieve of the recipe's image output: {available, gate}, `gate` being why it may not be retrieved, as far as its
 // sources decide that (requestGate). A gate that withdraws it is a finding: an open Retrieve closes for it, as a chart
 // does, and the section named explains it; one still checking, or unable to check, only holds the submission.
+// Retrieve exports a recipe's image, unless its type names another operation Retrieve carries out
+// (`retrieveOperation`) - Sampling Design's samples, say.
 export const retrieveAvailability = ({state, recipe, evidenceOwnerOf, heldFor, now}) => {
-    const gate = requestGate({state, recipe, operation: IMAGE_OUTPUT, evidenceOwnerOf, heldFor, now})
+    const operation = getRecipeType(recipe.type)?.retrieveOperation || IMAGE_OUTPUT
+    const gate = requestGate({state, recipe, operation, evidenceOwnerOf, heldFor, now})
     return {available: !gate, gate}
 }
 

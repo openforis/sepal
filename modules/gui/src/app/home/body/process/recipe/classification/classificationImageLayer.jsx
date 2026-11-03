@@ -9,7 +9,6 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
-import {canClassify} from './classificationRecipe'
 import {getPreSetVisualizations} from './visualizations'
 
 const defaultLayerConfig = {
@@ -21,7 +20,7 @@ class _ClassificationImageLayer extends React.Component {
         const {layer, map} = this.props
         return (
             <MapAreaLayout
-                layer={this.canRender() ? layer : null}
+                layer={layer}
                 form={this.renderImageLayerForm()}
                 map={map}
             />
@@ -56,11 +55,6 @@ class _ClassificationImageLayer extends React.Component {
     hasLegend() {
         const {recipe} = this.props
         return !_.isEmpty(selectFrom(recipe, 'model.legend.entries'))
-    }
-
-    canRender() {
-        const {recipe} = this.props
-        return canClassify(recipe)
     }
 }
 

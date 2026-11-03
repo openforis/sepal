@@ -4,7 +4,8 @@ vi.mock('~/translate', () => ({msg: id => id}))
 
 const {modelToValues, syntheticUnstratifiedStratum, unstratifiedStrata, valuesToModel} = await import('./stratificationModel')
 
-// A canonical saved stratification model: the exact shape valuesToModel produces (no transient requiresUpdate).
+// A canonical saved stratification model: the exact shape valuesToModel produces, with what the areas were calculated
+// from.
 const savedModel = {
     skip: false,
     scale: 30,
@@ -14,17 +15,18 @@ const savedModel = {
     recipeId: undefined,
     band: 'class',
     strata: [{value: 1, stratum: 1, area: 100, weight: 1}],
+    strataCalculatedFrom: {resource: {id: 'SAMPLING_STRATUM_AREAS', contractVersion: 1}, question: {scale: 30}, dependencies: {}},
     eeStrategy: 'ONLINE'
 }
 
 describe('modelToValues', () => {
-    it('initializes requiresUpdate to false for an up-to-date model, so requiresUpdate.set(false) is a no-op', () => {
-        expect(modelToValues({...savedModel, requiresUpdate: false}).requiresUpdate).toBe(false)
-        expect(modelToValues(savedModel).requiresUpdate).toBe(false)
+    // Whether the areas are current is their evidence's: a flag an older design carries is dropped once it is applied.
+    it('drops the stratification flag an older design carries', () => {
+        expect('requiresUpdate' in valuesToModel(modelToValues({...savedModel, requiresUpdate: true}))).toBe(false)
     })
 
-    it('preserves requiresUpdate: true so a stale model recalculates on open', () => {
-        expect(modelToValues({...savedModel, requiresUpdate: true}).requiresUpdate).toBe(true)
+    it('keeps no calculation evidence for an unstratified design', () => {
+        expect(valuesToModel(modelToValues({...savedModel, skip: true})).strataCalculatedFrom).toBe(null)
     })
 
     it('applies the ONLINE eeStrategy default only when missing', () => {

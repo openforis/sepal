@@ -9,6 +9,7 @@ import {msg} from '~/translate'
 import {isGoogleAccount} from '~/user'
 import {Notifications} from '~/widget/notifications'
 
+import {samplesGate, samplesGateMessage} from './freshnessRequirements'
 import {retrieveButtonState} from './sampling/retrieveButtonState'
 import {toTaskAllocation} from './sampling/taskAllocation'
 
@@ -73,22 +74,36 @@ export const toTaskRecipe = recipe => {
     }
 }
 
+// What a calculation was calculated from, and what the allocation was reviewed for, are the task's to check
+// (freshnessGate.js, samplingPreflight.js), not metadata of the samples: they repeat the AOI, its provenance and the
+// strata, and an Earth Engine string property longer than 16,384 bytes is dropped.
 const taskProperties = recipe => ({
     recipe_id: recipe.id,
     recipe_projectId: recipe.projectId,
     recipe_type: recipe.type,
     recipe_title: recipe.title || recipe.placeholder,
-    ..._(recipe.model)
+    ..._(withoutEvidence(recipe.model))
         .mapValues(value => JSON.stringify(value))
         .mapKeys((_value, key) => `recipe_${key}`)
         .value()
 })
 
+// Checked again as it is submitted, against the evidence the session holds then: the task checks once more itself.
 export const submitRetrieveRecipeTask = (recipe, capability) => {
-    const {disabled, kind, code, args} = retrieveButtonState({
+    const {disabled, kind, code, args, gate} = retrieveButtonState({
         model: recipe.model,
+        gate: samplesGate(recipe),
         ...capability
     })
+    if (disabled && kind === 'freshness') {
+        Notifications.error({
+            message: msg('process.samplingDesign.retrieve.freshness.title'),
+            error: samplesGateMessage(gate),
+            group: true,
+            timeout: 0
+        })
+        return
+    }
     if (disabled) {
         Notifications.error(kind === 'capability'
             ? {
@@ -136,3 +151,10 @@ export const submitRetrieveRecipeTask = (recipe, capability) => {
     })
     return submitExportTask(task)
 }
+
+const withoutEvidence = model => ({
+    ...model,
+    ...(model?.stratification && {stratification: _.omit(model.stratification, 'strataCalculatedFrom')}),
+    ...(model?.proportions && {proportions: _.omit(model.proportions, ['probabilityPerStratumCalculatedFrom', 'stratumFrameEvidence'])}),
+    ...(model?.sampleAllocation && {sampleAllocation: _.omit(model.sampleAllocation, 'reviewedInputs')})
+})

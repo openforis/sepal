@@ -8,8 +8,8 @@ const DEFAULT_SEED = 1
 // What a new Sampling Design recipe starts as, and the only definition of it.
 //
 // Pure, and deliberately not part of the recipe module that submits tasks and talks to the store: the panels
-// fill a recipe's missing values from here and the planner reads it to notice they are missing, and neither
-// should have to reach through API calls, Redux and notifications to learn what a default is.
+// fill a recipe's missing values from here, and should not have to reach through API calls, Redux and
+// notifications to learn what a default is.
 //
 // A factory rather than a shared literal, because the model carries mutable values - an allocation mode
 // array today, whatever a section grows tomorrow - and two recipes open at once must not share them.
@@ -27,7 +27,6 @@ export const getDefaultModel = () => ({
     // derive, and until it exists the section reports that it needs input rather than inventing a design
     // nobody chose.
     sampleAllocation: {
-        requiresUpdate: false,
         manual: [],
         estimateSampleSize: false,
         allocationStrategy: 'BALANCED',

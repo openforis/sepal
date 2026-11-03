@@ -185,7 +185,7 @@ const registryOver = ({maxUnclaimed = 64} = {}) => {
     let current = true
     const requests = []
     const registry = new ObservationRegistry({
-        observeBands$: request => new Observable(subscriber => {
+        request$: request => new Observable(subscriber => {
             const entry = {request, subscriber, answered: false, cancelled: false}
             requests.push(entry)
             return () => {

@@ -12,8 +12,8 @@ import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {getDefaultModel} from './bandMathRecipe'
 import {bandMathRequirements} from './bandMathRequirements'
+import {bandMathDerivations} from './derivations'
 import {BandMathToolbar} from './panels/bandMathToolbar'
-import {Sync} from './sync/sync'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -35,7 +35,6 @@ class _BandMath extends React.Component {
         const {images} = this.props
         return (
             <Map>
-                <Sync/>
                 <BandMathToolbar/>
                 <Aoi value={images && images.length && images[0]}/>
             </Map>
@@ -63,6 +62,7 @@ export default () => ({
     imageSource: true,
     // A band an input includes is refused where it is included: at the input itself.
     sourceRequirements: [...bandMathRequirements, ...inputImageryRequirements(({path}) => path[3])],
+    derivedResults: bandMathDerivations,
     getDateRange(_recipe) {
         return null
     },

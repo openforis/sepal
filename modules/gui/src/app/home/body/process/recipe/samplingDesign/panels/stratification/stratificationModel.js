@@ -44,16 +44,13 @@ export const valuesToModel = values => {
         strata: isSkipped
             ? unstratifiedStrata(values.strata)
             : values.strata,
+        // What the areas were calculated from, saved with them; an unstratified design calculates none.
+        strataCalculatedFrom: isSkipped ? null : values.strataCalculatedFrom || null,
         eeStrategy: values.eeStrategy
     }
 }
 
 export const modelToValues = model => ({
-    // Carry requiresUpdate into the form values (default false) so the mount-time requiresUpdate.set(false) is
-    // a no-op for an up-to-date recipe. Without it the field initializes to '' and set(false) flips ''->false,
-    // dirtying the panel on open. A stale model (requiresUpdate: true) initializes true and recalculates on
-    // mount, which legitimately dirties the form.
-    requiresUpdate: !!model.requiresUpdate,
     skip: model.skip ? [true] : [],
     scale: model.scale,
     crs: model.crs,
@@ -62,6 +59,7 @@ export const modelToValues = model => ({
     recipeId: model.recipeId,
     band: model.band,
     strata: model.strata,
+    strataCalculatedFrom: model.strataCalculatedFrom ?? null,
     // Effective default for recipes saved before eeStrategy existed, so eeStrategy.set('ONLINE') on mount is a
     // no-op rather than a dirtying ''->'ONLINE' change.
     eeStrategy: model.eeStrategy || 'ONLINE'

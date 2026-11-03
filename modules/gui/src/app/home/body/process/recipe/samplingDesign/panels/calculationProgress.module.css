@@ -1,0 +1,6 @@
+.progress {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: .35em;
+    align-items: start;
+}

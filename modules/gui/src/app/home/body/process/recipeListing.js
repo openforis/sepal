@@ -13,6 +13,7 @@ import {SAVING} from './saveCoordinator'
 //   touched     {id: epoch} of those changes: one per recipe, kept, since any response that started before one can still
 //               arrive - a refresh, a move and a project removal can each be in flight
 //   withdrawn   ids a successful refresh stopped listing, which says only that they are unlisted, not deleted
+//   observed    {id: revision} storage was read at by an operation elsewhere, of recipes the listing does not list
 //
 // A response is merged, never swapped in - whether a refresh's, the session's first listing's, or the one a move or a
 // project removal answers with. Revisions only advance, and an entry's fields stay with its newest revision. An id
@@ -82,6 +83,22 @@ export const mergedListing = ({
                 ? listingState.withdrawn || []
                 : _.uniq([...listingState.withdrawn || [], ...dropped]).filter(id => !listed.has(id))
         }
+    }
+}
+
+// Revisions storage was read at by an operation elsewhere - Earth Engine's, say. One of a recipe the listing lists
+// advances its entry; one of a recipe it does not list is kept as observed, since which recipes storage holds is the
+// listing's to say. Only newer revisions count, and whatever nothing changed is handed back as it was.
+export const observedListing = ({recipes = [], listingState = {}}, revisions) => {
+    const read = new Map(revisions.map(({id, revision}) => [id, revision]))
+    const advanced = recipes.map(entry => isNewer(read.get(entry.id), entry.revision) ? {...entry, revision: read.get(entry.id)} : entry)
+    const listed = new Set(recipes.map(({id}) => id))
+    const observed = [...read].filter(([id, revision]) => !listed.has(id) && isNewer(revision, listingState.observed?.[id]))
+    return {
+        recipes: advanced.some((entry, index) => entry !== recipes[index]) ? advanced : recipes,
+        listingState: observed.length
+            ? {...listingState, observed: {...listingState.observed, ...Object.fromEntries(observed)}}
+            : listingState
     }
 }
 

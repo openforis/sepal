@@ -40,10 +40,12 @@ const {readRetrieveOutput} = await import('./retrieveOutput')
 const {OutputRegistry} = await import('../sourceRuntime/outputRegistry')
 const {compatibleBasis, outputLoading} = await import('./recipeOutput')
 const {NEVER, Subject} = await import('rxjs')
-const {heldSourceStatusOfState, itemStatusesOf, itemStatusesOfState, sourceProblemsOfState} = await import('./selectedSourceStatus')
+const {heldSourceStatusOfState, itemStatusesOf, itemStatusesOfState, sectionProblemsOfState, sourceProblemsOfState} = await import('./selectedSourceStatus')
 const {readLocalRequirements, readOutputRequirements, readOutputRequirementsOfState, requestGate, requestGateOf} = await import('./sourceRequirements')
 const {SUPPORTED, unsupported} = await import('#sepal/recipe/requirement/verdict')
 const {IMAGE_OUTPUT} = await import('./recipeOutput')
+const {inputImageryRequirement} = await import('#sepal/recipe/source/inputImagery')
+const {MISSING_INPUT_IMAGERY} = await import('../panels/inputImagery/inputImageryRequirements')
 
 addRecipeType(classification())
 addRecipeType(regression())
@@ -337,23 +339,25 @@ describe('a recipe whose output read refuses nothing', () => {
     })
 })
 
-// No training data at all is set-up not yet done: neither type's Training data button is marked for it, while what it holds
-// is held all the same.
+// No training data at all is set-up not yet done: each type's Training data section is marked as unfinished, saying how to
+// add some, while what it holds is held all the same.
 describe('a Classification without training data', () => {
-    it('leaves its Training data section unmarked, while Retrieve and its previews are held, naming that section', () => {
+    it('marks its Training data section as unfinished, while Retrieve and its previews are held, naming that section', () => {
         const state = sessionWith(modelOf([image('image-1', MOSAIC, ['red'])], {trainingData: NO_TRAINING_DATA}))
 
-        expect(sourceProblems(state)).toEqual({})
+        expect(sourceProblems(state)).toEqual({trainingData: 'process.classification.panel.trainingData.missing'})
+        expect(incompleteSections(state)).toEqual({trainingData: true})
         expect(retrieve(state)).toMatchObject({available: false, gate: {code: 'CONFIGURATION_UNMET', section: TRAINING_DATA_SECTION}})
         expect(previewGate(state)).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET', section: TRAINING_DATA_SECTION})
         expect(heldSourceStatusOfState(state, recipeOf(state), previewGate(state))).toMatchObject({section: TRAINING_DATA_SECTION})
         expect(retrieveRead(state).output.diagnostics).toEqual([{code: 'CONFIGURATION_UNMET', section: TRAINING_DATA_SECTION}])
     })
 
-    it('beside an input lacking a band, is marked on its input imagery alone', () => {
+    it('beside an input lacking a band, is marked as unfinished while its input imagery is marked wrong', () => {
         const state = sessionWith(modelOf([image('image-1', MOSAIC, ['elevation'])], {trainingData: NO_TRAINING_DATA}))
 
-        expect(sourceProblems(state)).toEqual({inputImagery: UNAVAILABLE_SUMMARY})
+        expect(sourceProblems(state)).toEqual({inputImagery: UNAVAILABLE_SUMMARY, trainingData: 'process.classification.panel.trainingData.missing'})
+        expect(incompleteSections(state)).toEqual({trainingData: true})
         expect(retrieve(state)).toMatchObject({available: false, gate: {code: 'CONFIGURATION_UNMET'}})
     })
 
@@ -370,10 +374,11 @@ describe('a Classification without training data', () => {
 })
 
 describe('a Regression without training data', () => {
-    it('leaves its Training data section unmarked, while Retrieve and its previews are held, naming that section', () => {
+    it('marks its Training data section as unfinished, while Retrieve and its previews are held, naming that section', () => {
         const state = sessionWith(modelOf([image('image-1', MOSAIC, ['red'])], {trainingData: {dataSets: []}}), {type: 'REGRESSION'})
 
-        expect(sourceProblems(state)).toEqual({})
+        expect(sourceProblems(state)).toEqual({trainingData: 'process.regression.panel.trainingData.missing'})
+        expect(incompleteSections(state)).toEqual({trainingData: true})
         expect(retrieve(state)).toMatchObject({available: false, gate: {code: 'CONFIGURATION_UNMET', section: TRAINING_DATA_SECTION}})
         expect(previewGate(state)).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET', section: TRAINING_DATA_SECTION})
     })
@@ -391,21 +396,37 @@ describe('a recipe without input imagery', () => {
         // Its output bands, which it has none of either, are what its type declares first.
         ['BAND_MATH', 'process.bandMath.panel.outputBands.button'],
         ['REMAPPING', IMAGERY_SECTION]
-    ])('of type %s is marked on Input imagery, saying to add an image, and Retrieve and its previews are held, naming %s', (type, section) => {
+    ])('of type %s is marked unfinished on Input imagery, saying to add an image, and Retrieve and its previews are held, naming %s', (type, section) => {
         const state = sessionWith(emptyModels[type](), {type})
 
         expect(sourceProblems(state)).toMatchObject({inputImagery: NO_IMAGERY})
+        expect(incompleteSections(state)).toMatchObject({inputImagery: true})
         expect(retrieve(state).available).toBe(false)
         expect(previewGate(state)).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET'})
         expect(retrieveRead(state).output.readiness.findings).toContainEqual(expect.objectContaining({code: 'MISSING_ROLE'}))
         expect(retrieve(state).gate.section).toBe(section)
     })
 
-    // Nothing output yet is setup still to do (bandMathRequirements.js): Output bands holds the output unmarked.
-    it('of type BAND_MATH leaves its Output bands unmarked for having none, beside it', () => {
+    // One rule decides it, here as in server readiness (#sepal/recipe/source/inputImagery), read for the list as one item
+    // whether or not it holds an image, so what waits on it has a read to wait on.
+    it.each(Object.keys(emptyModels))('of type %s is judged by the shared rule, a missing or empty list unmet and one input met', type => {
+        const {inputImagery: _inputImagery, ...withoutList} = emptyModels[type]()
+        const empty = emptyModels[type]()
+        const listing = {...empty, inputImagery: {images: [image('image-1', MOSAIC, ['red'])]}}
+
+        expect([withoutList, empty, listing].map(model => inputListRead(type, model))).toEqual([
+            {item: 'images', status: 'UNSUPPORTED', incomplete: true, ruleFinds: true},
+            {item: 'images', status: 'UNSUPPORTED', incomplete: true, ruleFinds: true},
+            {item: 'images', status: 'SUPPORTED', incomplete: false, ruleFinds: false}
+        ])
+    })
+
+    // Nothing output yet is setup still to do (bandMathRequirements.js), which waits on there being an input to output.
+    it('of type BAND_MATH marks only its Input imagery, its Output bands waiting on it', () => {
         const state = sessionWith(emptyModels.BAND_MATH(), {type: 'BAND_MATH'})
 
         expect(Object.keys(sourceProblems(state))).toEqual(['inputImagery'])
+        expect(incompleteSections(state)).toEqual({inputImagery: true})
     })
 
     it('holds a Remapping over it and marks its input reference, keeping the diagnosis upstream', () => {
@@ -574,11 +595,11 @@ const image = (imageId, source, included, otherSets = []) => ({
 
 const ratio = (...included) => ({id: 'ratio', type: 'PAIR_WISE_EXPRESSION', operation: 'RATIO', included})
 
-// Trained on points collected on the map, unless a test says otherwise.
+// Trained on points of both its classes collected on the map, unless a test says otherwise.
 const modelOf = (images, model = {}) => ({
     inputImagery: {images},
-    legend: {entries: [{id: 'entry-1', value: 1, label: 'Forest', color: '#000000'}]},
-    trainingData: {dataSets: [{dataSetId: 'collected', type: 'COLLECTED', referenceData: [{x: 0.5, y: 0.5, class: 1}]}]},
+    legend: {entries: [{id: 'entry-1', value: 1, label: 'Forest', color: '#000000'}, {id: 'entry-2', value: 2, label: 'Water', color: '#0000ff'}]},
+    trainingData: {dataSets: [{dataSetId: 'collected', type: 'COLLECTED', referenceData: [{x: 0.5, y: 0.5, class: 1}, {x: 1.5, y: 0.5, class: 2}]}]},
     classifier: {type: 'RANDOM_FOREST'},
     ...model
 })
@@ -616,6 +637,18 @@ const sessionWith = (model, {assets = {}, type = 'CLASSIFICATION'} = {}) => ({
 })
 
 const recipeOf = state => state.process.loadedRecipes[ID]
+
+// The read of a recipe's requirement that its input list holds an image: its item, verdict, and whether it is unfinished
+// rather than wrong - beside whether the shared rule finds the list lacking.
+const inputListRead = (type, model) => {
+    const read = readLocalRequirements({id: ID, type, model}).find(({declaration}) => declaration.id === MISSING_INPUT_IMAGERY)
+    return {
+        item: read.item.id,
+        status: read.verdict.status,
+        incomplete: Boolean(read.verdict.diagnostic?.incomplete),
+        ruleFinds: inputImageryRequirement.findings(model).length > 0
+    }
+}
 
 // The session with another recipe edited, the map resized and an output settled elsewhere: nothing this recipe reads.
 const unrelatedEditOf = state => ({
@@ -661,6 +694,9 @@ const itemProblems = (state, held = heldFor) => Object.fromEntries(Object.entrie
     .map(([id, {message}]) => [id, message]))
 
 const sourceProblems = (state, held = heldFor) => sourceProblemsOfState(state, ID, () => null, Date.now(), held)
+
+// The sections held back only by set-up not yet done.
+const incompleteSections = (state, held = heldFor) => sectionProblemsOfState(state, ID, () => null, Date.now(), held).incompleteSections
 
 const retrieve = (state, held = heldFor) => retrieveAvailability({state, recipe: recipeOf(state), heldFor: held, now: Date.now()})
 

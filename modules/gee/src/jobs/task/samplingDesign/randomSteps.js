@@ -20,6 +20,7 @@ import {swallow} from '#sepal/rxjs'
 import {startTableToAssetExport$} from '../export/toAsset.js'
 import {startTableToWorkspaceExport$} from '../export/toWorkspace.js'
 import {finalCountError} from './finalValidationGate.js'
+import {freshnessGate$} from './freshnessGate.js'
 import {RANDOM_PROGRESS as PROGRESS} from './progress.js'
 import {stratifiedGridError} from './samplingGridValidation.js'
 import {samplingDesignPreflightError} from './samplingPreflight.js'
@@ -29,6 +30,14 @@ import {tempAssetPrefix$} from './tempAssets.js'
 // candidates -> inspect -> repair rounds with disjoint rank intervals -> selected -> validate -> publish. Every
 // count reads a materialised temp asset, never the lazy graph, so only plain JSON crosses steps.
 export const randomStep$ = (request, {sepalUser}) => defer(() => {
+    const {state, recipe} = request
+    // Every stage but the finished one reads the AOI or the stratification again, in a request of its own.
+    return state?.stage === 'final'
+        ? stage$(request, {sepalUser})
+        : freshnessGate$(recipe, {admission: !state}).pipe(switchMap(() => stage$(request, {sepalUser})))
+})
+
+const stage$ = (request, {sepalUser}) => defer(() => {
     const {state, recipe} = request
     if (!state) {
         const gateError = randomGateError(recipe)

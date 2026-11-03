@@ -1,5 +1,6 @@
+import {ALLOCATION_STRATEGIES} from '#sepal/recipe/samplingDesign/allocationStrategy'
+
 import {allocate} from './allocate'
-import {ALLOCATION_STRATEGIES} from './allocationStrategy'
 
 it('equal allocation of 10 samples between two stratums gives 5 in each stratum', () => {
     expect(allocate({

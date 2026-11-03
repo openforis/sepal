@@ -9,7 +9,7 @@ import styles from './toolbarButton.module.css'
 
 class _ToolbarActivationButton extends React.Component {
     render() {
-        const {className, icon, iconVariant, label, tooltip, tooltipAllowedWhenDisabled, tooltipOnVisible, panel, disabled, error, onClick, activator: {activatables: {button: {active, canActivate, toggle}}}} = this.props
+        const {className, icon, iconVariant, label, tooltip, tooltipAllowedWhenDisabled, tooltipOnVisible, panel, disabled, error, warning, onClick, activator: {activatables: {button: {active, canActivate, toggle}}}} = this.props
         return (
             <ToolbarButton
                 className={[className || '', styles.activationButton, active ? styles.selected : null].join(' ')}
@@ -23,6 +23,7 @@ class _ToolbarActivationButton extends React.Component {
                 disabled={disabled || (!active && !canActivate)}
                 selected={active}
                 error={error}
+                warning={warning}
                 onClick={e => {
                     toggle()
                     onClick && onClick(e)
@@ -51,5 +52,6 @@ ToolbarActivationButton.propTypes = {
     tooltip: PropTypes.any,
     tooltipAllowedWhenDisabled: PropTypes.any,
     tooltipOnVisible: PropTypes.func,
+    warning: PropTypes.any,
     onClick: PropTypes.func
 }

@@ -4,11 +4,13 @@ import {Provider} from 'react-redux'
 import {legacy_createStore as createStore} from 'redux'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
+import {actionBuilder} from '~/action-builder'
 import {initStore} from '~/store'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 
 // What a recipe's toolbar marks while its wizard sets it up: a section the wizard has not reached is not marked yet, one
-// it has reached is marked as usual, and once the wizard is done every section is - as far as its type marks it. Only the marks wait - what holds the
+// it has reached is marked as usual - as wrong, or as unfinished - and once the wizard is done every section is, as far
+// as its type marks it, with Classification's collection button marked as its Training data is unfinished. Only the marks wait - what holds the
 // recipe back holds it all along. Through the real Classification and Regression toolbars, wizard, activation, section
 // buttons and requirement reads over a real store; each panel is a stand-in that opens and closes as its section does,
 // offering the wizard's steps.
@@ -126,29 +128,41 @@ afterEach(async () => {
     container?.remove()
 })
 
-// No training data at all is set-up not yet done, which Training data's own panel guides: its button is not marked for it.
+// No training data at all is set-up not yet done: Training data is marked as unfinished, saying how to add some, once
+// the wizard reaches it - its button not saying it while its panel is open.
 describe('a Regression without training data', () => {
-    it('leaves Training data unmarked through its wizard and once it is done, and is held back all the same', async () => {
+    it('marks Training data as unfinished once the wizard reaches it and once it is done, and is held back all the same', async () => {
         await open(regressionOf(), RegressionToolbar)
-        expect(markedSections()).toEqual({})
+        expect(unfinished()).toEqual({})
 
         await click(button('wizard.next'))
         expect(openPanels()).toEqual(['trainingData'])
-        expect(markedSections()).toEqual({})
+        expect(unfinished()).toEqual({[TRAINING_DATA]: null})
         await click(button('wizard.done'))
 
+        expect(unfinished()).toEqual({[TRAINING_DATA]: [MISSING_REGRESSION]})
         expect(markedSections()).toEqual({})
-        expect(sectionProblems()).toEqual({})
         expect(findings()).toEqual(['NO_TRAINING_DATA'])
         expect(retrieveAvailable()).toBe(false)
         expect(previewGate()).toMatchObject({withdraw: true, section: TRAINING_DATA})
     })
 
-    it('leaves Training data unmarked once set up', async () => {
+    it('marks Training data as unfinished once set up', async () => {
         await open(regressionOf({initialized: true}), RegressionToolbar)
 
-        expect(markedSections()).toEqual({})
+        expect(unfinished()).toEqual({[TRAINING_DATA]: [MISSING_REGRESSION]})
         expect(retrieveAvailable()).toBe(false)
+    })
+
+    it('is complete once a data set stores a point, and unfinished again once it stores none', async () => {
+        await open(regressionOf({initialized: true}), RegressionToolbar)
+
+        await setDataSets([PLOTS])
+        expect(unfinished()).toEqual({})
+        expect(markedSections()).toEqual({})
+
+        await setDataSets([])
+        expect(unfinished()).toEqual({[TRAINING_DATA]: [MISSING_REGRESSION]})
     })
 })
 
@@ -213,67 +227,198 @@ describe('a Classification without training data, an input selecting a band its 
         expect(markedSections()).toEqual({[INPUT_IMAGERY]: null})
     })
 
-    it('marks the input imagery once the wizard is done, and not Training data', async () => {
+    it('marks the input imagery wrong once the wizard is done, and Training data and the collection button unfinished', async () => {
         await open(classificationOf({included: ['red', 'elevation']}), ClassificationToolbar)
+        expect(unfinished()).toEqual({})
 
         await click(button('wizard.next'))
+        expect(unfinished()).toEqual({})
         await click(button('wizard.done'))
 
         expect(markedSections()).toEqual({[INPUT_IMAGERY]: [UNAVAILABLE_SELECTIONS]})
+        expect(unfinished()).toEqual({[TRAINING_DATA]: [MISSING_CLASSIFICATION], [COLLECT]: [MISSING_CLASSIFICATION]})
     })
 })
 
 describe('a Classification without training data alone, once its wizard is done', () => {
-    it('leaves Training data unmarked, and cannot run, its previews held naming Training data', async () => {
+    it('marks Training data and the collection button unfinished, saying how to add some, and cannot run, its previews held naming Training data', async () => {
         await open(classificationOf(), ClassificationToolbar)
 
         await click(button('wizard.next'))
         await click(button('wizard.done'))
 
+        expect(unfinished()).toEqual({[TRAINING_DATA]: [MISSING_CLASSIFICATION], [COLLECT]: [MISSING_CLASSIFICATION]})
         expect(markedSections()).toEqual({})
         expect(findings()).toEqual(['NO_TRAINING_DATA'])
         expect(retrieveAvailable()).toBe(false)
         expect(previewGate()).toMatchObject({withdraw: true, section: TRAINING_DATA})
     })
 
-    it('marks Training data for what a data set is found to lack beside it', async () => {
+    it('marks Training data wrong for what a data set is found to lack beside it, and neither it nor the collection button unfinished', async () => {
         await open(classificationOf({dataSetName: ''}), ClassificationToolbar)
 
         await click(button('wizard.next'))
         await click(button('wizard.done'))
 
         expect(markedSections()).toEqual({[TRAINING_DATA]: [UNNAMED]})
+        expect(unfinished()).toEqual({})
         expect(retrieveAvailable()).toBe(false)
     })
 })
 
-// What Input imagery says while it lists no image: nothing while the wizard has it open, being filled - its form holds
-// Next meanwhile - and that one is needed once it has moved on, or for a recipe already set up. What holds the recipe
-// back holds it all along.
+describe('a Classification set up without training data', () => {
+    it('is complete, Training data and the collection button alike, once a point of each class is collected, and unfinished again once none is left', async () => {
+        await open(classificationOf({initialized: true}), ClassificationToolbar)
+
+        await setDataSets([collected(1, 2)])
+        expect(unfinished()).toEqual({})
+        expect(retrieveAvailable()).toBe(true)
+
+        await setDataSets([])
+        expect(unfinished()).toEqual({[TRAINING_DATA]: [MISSING_CLASSIFICATION], [COLLECT]: [MISSING_CLASSIFICATION]})
+    })
+
+    it('leaves the collection button unmarked while points are being collected, Training data still unfinished', async () => {
+        await open(classificationOf({initialized: true}), ClassificationToolbar)
+
+        await act(async () => actionBuilder('COLLECTING').set(['process.loadedRecipes', ID, 'ui.collect.collecting'], true).dispatch())
+        await settled()
+
+        expect(unfinished()).toEqual({[TRAINING_DATA]: [MISSING_CLASSIFICATION]})
+    })
+
+    it('marks neither where its classifier is a supplied decision tree, which trains on nothing, and can run', async () => {
+        await open(classificationOf({initialized: true, classifier: {type: 'DECISION_TREE', decisionTree: '1) root 9 0 0 (0 1) *'}}), ClassificationToolbar)
+
+        expect(unfinished()).toEqual({})
+        expect(markedSections()).toEqual({})
+        expect(retrieveAvailable()).toBe(true)
+    })
+})
+
+// Training points its classifier cannot train on are set-up still to do as well, said naming the classes concerned: all
+// its data sets' points judged together, whatever the map last counted of each class, by what the classifier needs.
+describe('a Classification set up with training points its classifier cannot train on', () => {
+    it('marks Training data and the collection button unfinished for points of one class, naming it, and cannot run, its previews held', async () => {
+        await open(classificationOf({initialized: true}), ClassificationToolbar)
+
+        await setDataSets([collected(1, 1)])
+
+        expect(unfinished()).toEqual(marking(insufficient('MINIMUM_CLASSES', {classes: 'Forest', minimum: 2})))
+        expect(markedSections()).toEqual({})
+        expect(findings()).toEqual(['INSUFFICIENT_TRAINING_SAMPLES'])
+        expect(retrieveAvailable()).toBe(false)
+        expect(previewGate()).toMatchObject({withdraw: true, section: TRAINING_DATA})
+    })
+
+    it('is complete once a point of another class is in any data set, and unfinished again once it is gone', async () => {
+        await open(classificationOf({initialized: true}), ClassificationToolbar)
+
+        await setDataSets([collected(1), uploaded(2)])
+        expect(unfinished()).toEqual({})
+        expect(retrieveAvailable()).toBe(true)
+        expect(previewGate()).toBeNull()
+
+        await setDataSets([collected(1), uploaded()])
+        expect(unfinished()).toEqual(marking(insufficient('MINIMUM_CLASSES', {classes: 'Forest', minimum: 2})))
+        expect(retrieveAvailable()).toBe(false)
+        expect(previewGate()).toMatchObject({withdraw: true})
+    })
+
+    it('is complete with points of two classes, though a third legend class has none', async () => {
+        await open(classificationOf({initialized: true, legend: THREE_CLASSES}), ClassificationToolbar)
+
+        await setDataSets([collected(1, 2)])
+
+        expect(unfinished()).toEqual({})
+        expect(retrieveAvailable()).toBe(true)
+    })
+
+    it('is complete once its classifier trains on points of one class, and unfinished again once it does not', async () => {
+        await open(classificationOf({initialized: true}), ClassificationToolbar)
+        await setDataSets([collected(1, 1)])
+
+        await setClassifier({type: 'SVM', svmType: 'C_SVC'})
+        expect(unfinished()).toEqual({})
+        expect(retrieveAvailable()).toBe(true)
+        expect(previewGate()).toBeNull()
+
+        await setClassifier({type: 'NAIVE_BAYES'})
+        expect(unfinished()).toEqual(marking(insufficient('MINIMUM_CLASSES', {classes: 'Forest', minimum: 2})))
+        expect(retrieveAvailable()).toBe(false)
+    })
+
+    it('is judged by its points alone, whatever the map last counted of each class', async () => {
+        await open(classificationOf({initialized: true}), ClassificationToolbar)
+
+        await setDataSets([collected(1, 2)])
+        await setCountPerClass({1: 1})
+        expect(unfinished()).toEqual({})
+        expect(retrieveAvailable()).toBe(true)
+        expect(previewGate()).toBeNull()
+
+        await setDataSets([collected(1)])
+        await setCountPerClass({1: 1, 2: 1})
+        expect(unfinished()).toEqual(marking(insufficient('MINIMUM_CLASSES', {classes: 'Forest', minimum: 2})))
+        expect(retrieveAvailable()).toBe(false)
+        expect(previewGate()).toMatchObject({withdraw: true})
+    })
+
+    it.each([
+        ['is complete with points of the class it is configured with alone', {oneClass: 1}, {}],
+        ['names the class it is configured with while no point is of it', {oneClass: 2}, marking(insufficient('TRAINED_CLASS', {classes: 'Water'}))],
+        ['names class 0, which it trains on configured with none, by its value', {}, marking(insufficient('TRAINED_CLASS', {classes: '0'}))]
+    ])('by a one-class SVM %s', async (_case, settings, expected) => {
+        await open(classificationOf({initialized: true, classifier: {type: 'SVM', svmType: 'ONE_CLASS', ...settings}}), ClassificationToolbar)
+
+        await setDataSets([collected(1)])
+
+        expect(unfinished()).toEqual(expected)
+        expect(retrieveAvailable()).toBe(!Object.keys(expected).length)
+    })
+
+    it.each([
+        ['names its classes while none has two points', [1, 2], marking(insufficient('MINIMUM_CLASS_SAMPLES', {classes: 'Forest, Water', minimum: 2}))],
+        ['is complete with a class of one point beside two of another, which masking can take away', [1, 2, 2], {}]
+    ])('by Mahalanobis minimum distance %s', async (_case, classes, expected) => {
+        await open(classificationOf({initialized: true, classifier: {type: 'MINIMUM_DISTANCE', metric: 'mahalanobis'}}), ClassificationToolbar)
+
+        await setDataSets([collected(...classes)])
+
+        expect(unfinished()).toEqual(expected)
+        expect(retrieveAvailable()).toBe(!Object.keys(expected).length)
+    })
+})
+
+// What Input imagery says while it lists no image: nothing while the wizard has it open, being filled - its panel holds
+// Next meanwhile - and, as set-up still to do, that one is needed once it has moved on, or for a recipe already set up.
+// What holds the recipe back holds it all along.
 describe('an empty Input imagery', () => {
     it.each(TOOLBARS)('of a %s is not marked while the wizard has it open, and holds the recipe back', async (_type, toolbar) => {
         await open(toolbar.recipe({initialized: false}), toolbar.Toolbar)
 
         expect(openPanels()).toEqual(['inputImagery'])
         expect(markedSections()).toEqual({})
+        expect(unfinished()).toEqual({})
         expect(findings()).toContain('MISSING_ROLE')
         expect(retrieveAvailable()).toBe(false)
         expect(previewGate()).toMatchObject({withdraw: true})
     })
 
-    it.each(TOOLBARS)('of a %s is marked, saying to add an image, once the wizard is done', async (_type, toolbar) => {
+    it.each(TOOLBARS)('of a %s is marked unfinished, saying to add an image, once the wizard is done, beside what else is left to set up', async (_type, toolbar) => {
         await open(toolbar.recipe({initialized: false}), toolbar.Toolbar)
 
         await finishWizard()
 
-        expect(markedSections()[toolbar.imagery]).toEqual([NO_IMAGERY])
+        expect(unfinished()).toEqual({[toolbar.imagery]: [NO_IMAGERY], ...toolbar.unfinished})
+        expect(markedSections()).toEqual({})
         expect(retrieveAvailable()).toBe(false)
     })
 
-    it.each(TOOLBARS)('of a %s already set up is marked at once', async (_type, toolbar) => {
+    it.each(TOOLBARS)('of a %s already set up is marked unfinished at once', async (_type, toolbar) => {
         await open(toolbar.recipe({initialized: true}), toolbar.Toolbar)
 
-        expect(markedSections()[toolbar.imagery]).toEqual([NO_IMAGERY])
+        expect(unfinished()[toolbar.imagery]).toEqual([NO_IMAGERY])
     })
 })
 
@@ -305,6 +450,10 @@ const UNNAMED = 'Name each training data set'
 const NO_IMAGERY = 'process.panels.inputImagery.form.noImagery'
 const IMAGERY = 'process.panels.inputImagery.button'
 const UNAVAILABLE_SELECTIONS = 'process.classification.panel.inputImagery.unavailableSelections.inputs'
+const MISSING_CLASSIFICATION = 'process.classification.panel.trainingData.missing'
+const MISSING_REGRESSION = 'process.regression.panel.trainingData.missing'
+// Classification's collection button, which shows only its icon.
+const COLLECT = 'collect'
 
 // A Landsat composite, described from its configuration.
 const COMPOSITE = {
@@ -319,8 +468,22 @@ const compositeImage = included => ({
     bandSetSpecs: [{id: 'image-bands', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included}]
 })
 
-// Plots uploaded, of a value each, under no name.
+// Plots uploaded, of a value each, under no name, and under one.
 const UNNAMED_PLOTS = {dataSetId: 'plots', name: '', type: 'CSV_UPLOAD', referenceData: [{x: 1, y: 1, value: 10}, {x: 2, y: 2, value: 20}]}
+const PLOTS = {...UNNAMED_PLOTS, name: 'Plots'}
+
+const FOREST = {id: 'forest', value: 1, label: 'Forest', color: '#006400'}
+const WATER = {id: 'water', value: 2, label: 'Water', color: '#0000ff'}
+const THREE_CLASSES = [FOREST, WATER, {id: 'bare', value: 3, label: 'Bare', color: '#999999'}]
+
+// What the training points lack of what the classifier needs, as Training data and the collection button both say it.
+const insufficient = (need, values) => `process.classification.panel.trainingData.insufficient.${need} ${JSON.stringify(values)}`
+const marking = message => ({[TRAINING_DATA]: [message], [COLLECT]: [message]})
+
+// A point of each of these classes, in turn, collected on the map, or uploaded.
+const collected = (...classes) => ({dataSetId: 'collected', name: 'Collected', type: 'COLLECTED', referenceData: classes.map(pointOf)})
+const uploaded = (...classes) => ({dataSetId: 'uploaded', name: 'Uploaded', type: 'CSV_UPLOAD', referenceData: classes.map(pointOf)})
+const pointOf = (value, i) => ({x: i, y: value, class: value})
 
 const regressionOf = ({initialized = false, dataSets = []} = {}) => ({
     id: ID, type: 'REGRESSION', revision: 1, ui: {initialized},
@@ -332,32 +495,37 @@ const regressionOf = ({initialized = false, dataSets = []} = {}) => ({
     }
 })
 
-const classificationOf = ({included = ['red', 'nir'], dataSetName = 'Collected'} = {}) => ({
-    id: ID, type: 'CLASSIFICATION', revision: 1, ui: {initialized: false},
+const classificationOf = ({included = ['red', 'nir'], dataSetName = 'Collected', initialized = false, legend = [FOREST, WATER], classifier = {type: 'RANDOM_FOREST', numberOfTrees: 25}} = {}) => ({
+    id: ID, type: 'CLASSIFICATION', revision: 1, ui: {initialized},
     model: {
         inputImagery: {images: [compositeImage(included)]},
-        legend: {entries: [{id: 'forest', value: 1, label: 'Forest', color: '#006400'}, {id: 'water', value: 2, label: 'Water', color: '#0000ff'}]},
+        legend: {entries: legend},
         trainingData: {dataSets: [{dataSetId: 'collected', name: dataSetName, type: 'COLLECTED', referenceData: []}]},
         auxiliaryImagery: [],
-        classifier: {type: 'RANDOM_FOREST', numberOfTrees: 25}
+        classifier
     }
 })
 
 const emptyImagery = (recipe, initialized) =>
     ({...recipe, ui: {initialized}, model: {...recipe.model, inputImagery: {images: []}}})
 
-// Each toolbar, over a recipe of its type listing no input image, and the label of its Input imagery button.
+// Each toolbar, over a recipe of its type listing no input image, the label of its Input imagery button, and what else
+// it marks as unfinished once set up.
 const TOOLBARS = [
     ['Classification', {
         Toolbar: ClassificationToolbar, imagery: INPUT_IMAGERY,
+        unfinished: {[TRAINING_DATA]: [MISSING_CLASSIFICATION], [COLLECT]: [MISSING_CLASSIFICATION]},
         recipe: ({initialized}) => emptyImagery(classificationOf(), initialized)
     }],
     ['Regression', {
         Toolbar: RegressionToolbar, imagery: INPUT_IMAGERY,
+        unfinished: {[TRAINING_DATA]: [MISSING_REGRESSION]},
         recipe: ({initialized}) => emptyImagery(regressionOf(), initialized)
     }],
     ['Band Math', {
         Toolbar: BandMathToolbar, imagery: IMAGERY,
+        // Its Output bands, empty, waits on there being an input to output.
+        unfinished: {},
         recipe: ({initialized}) => emptyImagery({
             id: ID, type: 'BAND_MATH', revision: 1,
             model: {calculations: {calculations: []}, outputBands: {outputImages: []}}
@@ -365,6 +533,7 @@ const TOOLBARS = [
     }],
     ['Remapping', {
         Toolbar: RemappingToolbar, imagery: IMAGERY,
+        unfinished: {},
         recipe: ({initialized}) => emptyImagery({
             id: ID, type: 'REMAPPING', revision: 1,
             model: {legend: {entries: [{id: 'l-1', value: 1, label: 'Forest', color: '#006400', constraints: []}]}}
@@ -448,6 +617,29 @@ const openPanels = () => [...document.querySelectorAll('[data-panel]')].map(pane
 const markedSections = () => Object.fromEntries([...document.querySelectorAll('button')]
     .filter(button => button.classList.contains(toolbarButtonStyles.error))
     .map(button => [button.textContent, tooltipOf(button)]))
+
+// The buttons marked as unfinished, as markedSections.
+const unfinished = () => Object.fromEntries([...document.querySelectorAll('button')]
+    .filter(button => button.classList.contains(toolbarButtonStyles.warning))
+    .map(button => [button.textContent || (button.querySelector('[data-icon="location-pin"]') ? COLLECT : null), tooltipOf(button)]))
+
+// The recipe's data sets as a Training data Apply would leave them.
+const setDataSets = async dataSets => {
+    await act(async () => actionBuilder('SET_DATA_SETS').set(['process.loadedRecipes', ID, 'model.trainingData.dataSets'], dataSets).dispatch())
+    await settled()
+}
+
+// The classifier as the Classifier panel's Apply leaves it.
+const setClassifier = async classifier => {
+    await act(async () => actionBuilder('SET_CLASSIFIER').set(['process.loadedRecipes', ID, 'model.classifier'], classifier).dispatch())
+    await settled()
+}
+
+// What the map's collection last counted of each class, as it sets it.
+const setCountPerClass = async countPerClass => {
+    await act(async () => actionBuilder('SET_COUNT_PER_CLASS').set(['process.loadedRecipes', ID, 'ui.collect.countPerClass'], countPerClass).dispatch())
+    await settled()
+}
 
 const tooltipOf = button => {
     const tooltip = button.closest('[data-tooltip]')

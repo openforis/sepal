@@ -43,11 +43,15 @@ describe('getDefaultModel().sampleAllocation', () => {
     // before anyone has anticipated a proportion.
     it('starts a new recipe automatic, fixed-size and Balanced', () => {
         expect(getDefaultModel().sampleAllocation).toMatchObject({
-            requiresUpdate: false,
             manual: [],
             estimateSampleSize: false,
             allocationStrategy: 'BALANCED'
         })
+    })
+
+    // An allocation saved beside the flag earlier versions wrote is not trusted to be the one it was reviewed for.
+    it('carries no update flag', () => {
+        expect('requiresUpdate' in getDefaultModel().sampleAllocation).toBe(false)
     })
 
     // The total is the one number the design cannot derive, and the counts follow from it. Inventing one

@@ -1,6 +1,6 @@
 import _ from 'lodash'
 
-import {AMBIGUOUS_TRAINING_FEATURES, MISSING_TRAINING_FEATURES, NO_TRAINING_DATA} from '#sepal/recipe/trainingData'
+import {AMBIGUOUS_TRAINING_FEATURES, INSUFFICIENT_TRAINING_SAMPLES, MISSING_TRAINING_FEATURES, NO_TRAINING_DATA} from '#sepal/recipe/trainingData'
 import {TRAINING_DATA_SOURCE} from '#sepal/recipe/type/classification'
 import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
 import {msg} from '~/translate'
@@ -21,9 +21,12 @@ import {causesOf, referenceFeedback, unsuitabilityMessage} from '../referenceFee
 // where that is known. A name this recipe's own input images give more than once is said at those images
 // (inputImageryRequirements.js).
 //
-// No training data at all is set-up not yet done rather than a data set that cannot be used: it holds the operations as
-// any finding does, and the Training data panel says how to add some (`missing`, a message key), but its toolbar button
-// is not marked for it.
+// No training data at all, where the classifier is trained, is set-up not yet done rather than a data set that cannot be
+// used (`incomplete`): it holds the operations as any finding does, the Training data panel says how to add some
+// (`missing`, a message key), and its toolbar button is marked as unfinished, saying the same - as is Classification's
+// collection button, from the same section mark, where collecting is what to do next (classificationToolbar.jsx). So is
+// Classification's training data lacking what its classifier's training needs of its points (INSUFFICIENT_TRAINING_SAMPLES),
+// said of the same list, naming the classes concerned as its legend labels them.
 
 export const TRAINING_DATA = {id: 'trainingData', label: 'process.classification.panel.trainingData.button'}
 
@@ -67,8 +70,22 @@ function featuresEditorMessage({message, messageContent, referenceFeedback}) {
     return joinFeedback([messageContent || message, repairMessage(referenceFeedback)])
 }
 
-// Classification's, whose points can also be collected on its map, and Regression's.
-export const classificationTrainingDataRequirements = trainingDataRequirements('process.classification.panel.trainingData.missing')
+// Classification's, whose points can also be collected on its map, and are of its legend's classes, and Regression's.
+export const classificationTrainingDataRequirements = [
+    ...trainingDataRequirements('process.classification.panel.trainingData.missing'),
+    {
+        id: INSUFFICIENT_TRAINING_SAMPLES,
+        section: TRAINING_DATA,
+        requirement: {id: INSUFFICIENT_TRAINING_SAMPLES, describe: diagnostic => ({message: insufficientSamplesMessage(diagnostic), details: []})},
+        summary: ([{ownVerdict: {diagnostic}}]) => insufficientSamplesMessage(diagnostic),
+        outputDiagnostics: {
+            codes: [INSUFFICIENT_TRAINING_SAMPLES],
+            itemOf: (_finding, recipe) => ({...trainingDataList(), classLabels: classLabelsOf(recipe)})
+        },
+        operations: [IMAGE_OUTPUT],
+        incomplete: true
+    }
+]
 
 export const regressionTrainingDataRequirements = trainingDataRequirements('process.regression.panel.trainingData.missing')
 
@@ -80,14 +97,10 @@ function trainingDataRequirements(missing) {
         summary: () => msg(missing),
         outputDiagnostics: {
             codes: [NO_TRAINING_DATA],
-            itemOf: () => ({
-                id: TRAINING_DATA_LIST,
-                path: ['model', 'trainingData', 'dataSets'],
-                label: msg(TRAINING_DATA.label)
-            })
+            itemOf: () => trainingDataList()
         },
         operations: [IMAGE_OUTPUT],
-        toolbarMark: false
+        incomplete: true
     },
     {
         id: MISSING_TRAINING_FEATURES,
@@ -144,6 +157,25 @@ function trainingDataRequirements(missing) {
         editor: REUSED_RECIPE_EDITOR
     }]
 }
+
+const trainingDataList = () => ({
+    id: TRAINING_DATA_LIST,
+    path: ['model', 'trainingData', 'dataSets'],
+    label: msg(TRAINING_DATA.label)
+})
+
+// What the classifier needs of the training points and they lack, naming the classes concerned by their legend labels,
+// or values where they have none.
+const insufficientSamplesMessage = ({diagnostics, item: {classLabels}}) => diagnostics
+    .map(({need, classes, minimum}) => msg(`process.classification.panel.trainingData.insufficient.${need}`, {
+        classes: listed(classes.map(value => classLabels[value] || String(value)), 'process.source.segments.andMore'),
+        minimum
+    }))
+    .join(' ')
+
+const classLabelsOf = recipe => Object.fromEntries((recipe.model?.legend?.entries || [])
+    .filter(({label}) => typeof label === 'string' && label.trim())
+    .map(({value, label}) => [value, label]))
 
 // Each recipe reused through a data set whose samples lack features, by name, those features, and the bands each derived
 // one is built of.

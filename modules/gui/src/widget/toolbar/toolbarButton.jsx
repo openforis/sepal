@@ -21,7 +21,7 @@ export class ToolbarButton extends React.Component {
     }
 
     renderContext({horizontal, vertical}) {
-        const {className, icon, iconVariant, label, tooltip, tooltipAllowedWhenDisabled, tooltipDelay, tooltipOnVisible, tooltipPlacement, panel, disabled, selected, error, onClick} = this.props
+        const {className, icon, iconVariant, label, tooltip, tooltipAllowedWhenDisabled, tooltipDelay, tooltipOnVisible, tooltipPlacement, panel, disabled, selected, error, warning, onClick} = this.props
         return (
             <Button
                 className={[
@@ -31,6 +31,7 @@ export class ToolbarButton extends React.Component {
                     horizontal ? styles.horizontal : null,
                     vertical ? styles.vertical : null,
                     error ? styles.error : null,
+                    warning && !error ? styles.warning : null,
                     className
                 ].join(' ')}
                 icon={icon}
@@ -63,5 +64,6 @@ ToolbarButton.propTypes = {
     tooltipDelay: PropTypes.number,
     tooltipOnVisible: PropTypes.func,
     tooltipPlacement: PropTypes.string,
+    warning: PropTypes.any,
     onClick: PropTypes.func
 }

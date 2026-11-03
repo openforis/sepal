@@ -6,7 +6,6 @@ import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'
 import {Form} from '~/widget/form'
 import {FormCombo} from '~/widget/form/combo'
-import {Icon} from '~/widget/icon'
 import {Layout} from '~/widget/layout'
 import {NoData} from '~/widget/noData'
 import {RecipeInput} from '~/widget/recipeInput'
@@ -15,6 +14,7 @@ import {Widget} from '~/widget/widget'
 import {categoricalLegendEntries} from '../../sampling/categoricalLegend'
 import {byStratumKey, stratumView} from '../../sampling/designModel'
 import {CalculationErrorContent} from '../calculationErrorContent'
+import {CalculationProgress} from '../calculationProgress'
 import styles from './proportions.module.css'
 import {ProportionTable} from './proportionTable'
 
@@ -83,7 +83,6 @@ export const ImageSelection = ({
     onAssetLoaded,
     onRecipeBandsLoaded,
     onBandChanged,
-    onScaleChanged,
     onPercentageChanged
 }) => {
     const typeButtons = <SourceTypeButtons type={type} onChange={onTypeChanged}/>
@@ -117,7 +116,7 @@ export const ImageSelection = ({
                     onBandChanged={onBandChanged}
                     onPercentageChanged={onPercentageChanged}
                 />
-                <ScaleInput scale={scale} effectiveScale={effectiveScale} onChange={onScaleChanged}/>
+                <ScaleInput scale={scale} effectiveScale={effectiveScale}/>
             </Layout>
             {anticipationStrategy.value === 'CATEGORICAL'
                 ? <TargetClassInput
@@ -146,7 +145,9 @@ export const OverallProportionInput = ({anticipatedOverallProportion, onChange})
         onChange={onChange}
     />
 
-export const StrataProportion = ({eeStrategy, anticipatedProportions, strata, manual, streamActive, calculationError, onEEStrategyChanged, onRetryCalculation, onUseBatch}) => {
+// `feedback` is what the panel says of the proportions shown ({errorMessage, warningMessage, busyMessage}); while they are
+// calculated, `loading` says so instead ({status, explanation}), and while there are none to show, `emptyMessage` why not.
+export const StrataProportion = ({eeStrategy, anticipatedProportions, strata, manual, streamActive, loading, emptyMessage, calculationError, feedback, onRetryCalculation, onUseBatch}) => {
     // Weights come from the current stratification, joined by stratum key. The rows carry a weight of their
     // own only because they were written by a join at calculation time; using that copy would report an
     // overall proportion against strata that have since been recalculated.
@@ -159,23 +160,19 @@ export const StrataProportion = ({eeStrategy, anticipatedProportions, strata, ma
     return (
         <Widget
             label={msg('process.samplingDesign.panel.proportions.form.strataProportion.label')}
-            labelButtons={manual ? [] : [<EEStrategyButtons key='eeStrategy' eeStrategy={eeStrategy} onChange={onEEStrategyChanged}/>]}>
-            {anticipatedProportions.value
-                ? <ProportionTable
-                    proportions={anticipatedProportions}
-                    strata={strata}
-                    overallProportion={overallProportion}
-                    manual={manual}
+            labelButtons={manual ? [] : [<EEStrategyButtons key='eeStrategy' eeStrategy={eeStrategy}/>]}
+            {...feedback}>
+            {streamActive
+                ? <NoData
+                    alignment='left'
+                    message={<CalculationProgress {...loading}/>}
                 />
-                : streamActive
-                    ? <NoData
-                        alignment='left'
-                        message={(
-                            <div>
-                                <Icon name='spinner'/>
-                                {' ' + msg('process.samplingDesign.panel.proportions.form.calculating')}
-                            </div>
-                        )}
+                : anticipatedProportions.value && !calculationError
+                    ? <ProportionTable
+                        proportions={anticipatedProportions}
+                        strata={strata}
+                        overallProportion={overallProportion}
+                        manual={manual}
                     />
                     : calculationError
                         ? <NoData
@@ -190,7 +187,7 @@ export const StrataProportion = ({eeStrategy, anticipatedProportions, strata, ma
                         />
                         : <NoData
                             alignment='left'
-                            message={msg('process.samplingDesign.panel.proportions.form.selectImageAndBand')}
+                            message={emptyMessage || msg('process.samplingDesign.panel.proportions.form.selectImageAndBand')}
                         />}
         </Widget>
     )
@@ -284,7 +281,7 @@ const BandInput = ({band, percentage, probabilityPerStratum, anticipationStrateg
 }
 
 // Blank means "use what this selection provides", so the placeholder names the value blank resolves to.
-const ScaleInput = ({scale, effectiveScale, onChange}) =>
+const ScaleInput = ({scale, effectiveScale}) =>
     <Form.Input
         className={styles.compactField}
         label={msg('process.samplingDesign.panel.proportions.form.scale.label')}
@@ -293,7 +290,6 @@ const ScaleInput = ({scale, effectiveScale, onChange}) =>
         input={scale}
         type='number'
         suffix={msg('process.samplingDesign.panel.proportions.form.scale.suffix')}
-        onChange={onChange}
     />
 
 const TargetClassInput = ({band, targetClass, visualizations = [], distinctClassOptions, loading, canLoad, onLoad}) => {
@@ -359,7 +355,7 @@ const ClassOption = ({option: {color, label}}) =>
         <span>{label}</span>
     </div>
 
-const EEStrategyButtons = ({eeStrategy, onChange}) =>
+const EEStrategyButtons = ({eeStrategy}) =>
     <Form.Buttons
         spacing='none'
         groupSpacing='none'
@@ -378,5 +374,4 @@ const EEStrategyButtons = ({eeStrategy, onChange}) =>
                 tooltip: msg('process.samplingDesign.panel.proportions.form.eeStrategy.batch.tooltip')
             },
         ]}
-        onChange={onChange}
     />

@@ -26,17 +26,27 @@ const worker$ = ({requestArgs: {ids}}) => {
             userMessage: {message: 'Invalid asset ids', key: 'gee.asset.error.invalidIds', args: {max: MAX_IDS}}
         })
     }
-    const unique = _.uniq(ids)
-    return from(unique).pipe(
-        mergeMap(id => assetVersion$(id).pipe(
-            catchError(error => of({id, failure: failureOf(error)}))
-        ), CONCURRENCY),
-        toArray(),
-        map(answers => {
-            const byId = _.keyBy(answers, 'id')
-            return {assets: unique.map(id => byId[id])}
-        })
+    return assetVersions$(ids).pipe(
+        map(assets => ({assets}))
     )
+}
+
+// The token of each asset, in the order first named, each {id, type, version} - version null and `unversioned` where it
+// has none - or {id, failure}. Read under the credentials of the request it is made in.
+export const assetVersions$ = ids => {
+    const unique = _.uniq(ids)
+    return unique.length
+        ? from(unique).pipe(
+            mergeMap(id => assetVersion$(id).pipe(
+                catchError(error => of({id, failure: failureOf(error)}))
+            ), CONCURRENCY),
+            toArray(),
+            map(answers => {
+                const byId = _.keyBy(answers, 'id')
+                return unique.map(id => byId[id])
+            })
+        )
+        : of([])
 }
 
 const assetVersion$ = id => id.startsWith('gs://')

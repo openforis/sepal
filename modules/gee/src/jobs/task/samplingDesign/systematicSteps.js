@@ -19,6 +19,7 @@ import {effectiveMinSamplesPerStratum} from '#sepal/recipe/samplingDesign/minSam
 import {startTableToAssetExport$} from '../export/toAsset.js'
 import {startTableToWorkspaceExport$} from '../export/toWorkspace.js'
 import {finalCountError, gateFinalExport$} from './finalValidationGate.js'
+import {freshnessGate$} from './freshnessGate.js'
 import {SYSTEMATIC_PROGRESS as PROGRESS} from './progress.js'
 import {stratifiedGridError, stratifiedMinDistanceError, unstratifiedSystematicGridError} from './samplingGridValidation.js'
 import {samplingDesignPreflightError} from './samplingPreflight.js'
@@ -32,6 +33,14 @@ const BASE_OFFSET = 0
 // final export. Candidates are materialised to temporary assets, so every later stage reads them back and only
 // plain JSON crosses steps.
 export const systematicStep$ = (request, {sepalUser}) => defer(() => {
+    const {state, recipe} = request
+    // Every stage but the finished one reads the AOI or the stratification again, in a request of its own.
+    return state?.stage === 'final'
+        ? stage$(request, {sepalUser})
+        : freshnessGate$(recipe, {admission: !state}).pipe(switchMap(() => stage$(request, {sepalUser})))
+})
+
+const stage$ = (request, {sepalUser}) => defer(() => {
     const {state, recipe} = request
     if (!state) {
         const gateError = systematicGateError(recipe)

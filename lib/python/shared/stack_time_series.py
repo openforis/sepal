@@ -21,13 +21,13 @@ tile_dir_pattern = re.compile(r'.*-(\d{10}-\d{10})')
 nodata_value = 0
 
 
-def stack_time_series(directory, band=None, sits_dir=None):
+def stack_time_series(directory, band=None, sits_dir=None, require_floating_point=False):
     chunk_dirs = sorted(glob(join(directory, 'chunk-*')))
     if not chunk_dirs:
         print('    Skipping. No chunk-* directories')
         return
     print('    Assembling tiles...', end='', flush=True)
-    metadata = get_metadata(chunk_dirs)
+    metadata = get_metadata(chunk_dirs, require_floating_point)
     chunks = get_chunks(chunk_dirs)
     tiles = get_tiles(chunk_dirs)
     create_tile_stacks(metadata, chunks, tiles)
@@ -39,15 +39,24 @@ def stack_time_series(directory, band=None, sits_dir=None):
     print('    Done.')
 
 
-def get_metadata(chunk_dirs):
+def get_metadata(chunk_dirs, require_floating_point=False):
     chunk_dir = chunk_dirs[0]
     tif_file = get_tif_files(chunk_dir)[0]
     os.chdir(chunk_dir)
     rel_tif_file = relpath(tif_file, chunk_dir)
     ds = gdal.Open(rel_tif_file, GA_ReadOnly)
-    return {
-        'dataType': gdal.GetDataTypeName(ds.GetRasterBand(1).DataType)
-    }
+    data_type = ds.GetRasterBand(1).DataType
+    if require_floating_point:
+        if data_type not in (gdal.GDT_Float32, gdal.GDT_Float64):
+            raise ValueError('Regression chunks must be floating point. Use a fresh download destination.')
+        for directory in chunk_dirs:
+            for path in get_tif_files(directory):
+                path = join(directory, path)
+                chunk = gdal.Open(path, GA_ReadOnly)
+                if chunk is None or any(chunk.GetRasterBand(i).DataType != data_type
+                                        for i in range(1, chunk.RasterCount + 1)):
+                    raise ValueError(f'Incompatible regression chunk types: {path}. Use a fresh download destination.')
+    return {'dataType': gdal.GetDataTypeName(data_type)}
 
 
 def get_chunks(chunk_dirs):
@@ -302,11 +311,12 @@ if __name__ == '__main__':
     parser.add_argument('directories', nargs='+')
     parser.add_argument('--band', help='Indicator name; also writes sits-readable per-date VRTs')
     parser.add_argument('--sits-dir', help='Where to write the sits VRTs (default: <directory>/sits)')
+    parser.add_argument('--require-floating-point', action='store_true', help='Refuse non-floating or inconsistent regression chunk types')
     args = parser.parse_args()
 
     for d in args.directories:
         if exists(d):
             print('Stacking time-series in {}'.format(d))
-            stack_time_series(abspath(d), args.band, args.sits_dir)
+            stack_time_series(abspath(d), args.band, args.sits_dir, args.require_floating_point)
         else:
             print('Not found: {}'.format(d))

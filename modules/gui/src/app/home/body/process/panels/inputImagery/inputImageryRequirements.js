@@ -1,5 +1,6 @@
-import {MISSING_INPUT_BAND, MISSING_ROLE} from '#sepal/recipe/output/diagnostic'
-import {INPUT_IMAGE, INPUT_IMAGERY_PATH} from '#sepal/recipe/source/inputImagery'
+import {MISSING_INPUT_BAND} from '#sepal/recipe/output/diagnostic'
+import {SUPPORTED, unsupported} from '#sepal/recipe/requirement/verdict'
+import {INPUT_IMAGE, INPUT_IMAGERY_PATH, inputImageryRequirement} from '#sepal/recipe/source/inputImagery'
 import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
 import {referenceFeedback} from '~/app/home/body/process/recipe/referenceFeedback'
 import {msg} from '~/translate'
@@ -19,25 +20,35 @@ export const INPUT_BANDS = 'INPUT_BANDS'
 
 export const MISSING_INPUT_IMAGERY = 'MISSING_INPUT_IMAGERY'
 
-// What every recipe zipping its input images needs of the list, as its shared definition finds it
-// (lib/js/shared/src/recipe/source/inputImagery.js): one image at least. Its output read judges that, so the section
-// and the operations over the output say what that read establishes. An image selected but not yet read, unreadable or
-// gone is not this: what its source establishes is said as that.
+// The input list, as the one item of its section the requirement that it lists an image is read for.
+export const INPUT_IMAGES_ITEM = 'images'
+
+// What every recipe zipping its input images needs of the list, by its shared definition
+// (lib/js/shared/src/recipe/source/inputImagery.js), which server readiness evaluates too: one image at least. Judged
+// here over the recipe's own model, so it needs no output read, as set-up not yet done (`incomplete`), and read for the
+// list as one item (`INPUT_IMAGES_ITEM`), met or not, for what depends on there being inputs to wait on it. An image
+// selected but not yet read, unreadable or gone is not this: what its source establishes is said as that.
 export const missingInputImageryRequirement = section => ({
     id: MISSING_INPUT_IMAGERY,
     section,
-    requirement: {id: MISSING_INPUT_IMAGERY, describe: () => ({message: noImageryMessage(), details: []})},
-    summary: () => noImageryMessage(),
-    outputDiagnostics: {
-        codes: [MISSING_ROLE],
-        itemOf: ({path}) => isImageryPath(path)
-            ? {id: 'images', path: INPUT_IMAGERY_PATH, label: msg(section.label)}
-            : null
+    localFacts: recipe => ({missing: lacksInputImagery(recipe.model)}),
+    items: facts => [{id: INPUT_IMAGES_ITEM, path: INPUT_IMAGERY_PATH, label: msg(section.label), facts}],
+    requirement: {
+        id: MISSING_INPUT_IMAGERY,
+        evaluate: ({missing}) => missing
+            ? unsupported({code: MISSING_INPUT_IMAGERY, incomplete: true})
+            : {status: SUPPORTED},
+        describe: () => ({message: noImageryMessage(), details: []})
     },
-    // While the wizard has the section open, the list is being filled: its form holds Next until it is.
+    summary: () => noImageryMessage(),
+    // While the wizard has the section open, the list is being filled: its panel holds Next until it is.
     wizardStepMark: false,
     operations: [IMAGE_OUTPUT]
 })
+
+// Whether a model lists no input image, by the shared rule: for its requirement, and for the list panels showing and
+// submitting the list.
+export const lacksInputImagery = model => inputImageryRequirement.findings(model).length > 0
 
 export const inputImageryRequirements = imageIndexOf => [
     missingInputImageryRequirement(INPUT_IMAGERY),
@@ -74,9 +85,6 @@ export const inputRecipeFeedback = section => ({
         })
     }
 })
-
-const isImageryPath = (path = []) =>
-    path.length === INPUT_IMAGERY_PATH.length && path.every((step, index) => step === INPUT_IMAGERY_PATH[index])
 
 const noImageryMessage = () => msg('process.panels.inputImagery.form.noImagery')
 

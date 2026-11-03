@@ -15,15 +15,18 @@ import {isJudgedByOutput, readOutputRequirementsOfState} from './sourceRequireme
 
 // `sourceProblems`: {[sectionId]: message} for the sections whose selected source is unavailable or unsuitable, or whose
 // own configuration does not meet its requirements, for a toolbar to mark them; `wizardStepProblems` the same, for the
-// section a wizard has open as its step. Needs the recipe's id, as a recipe-connected component has it.
+// section a wizard has open as its step; `incompleteSections` and `wizardStepIncompleteSections` those of them held back
+// only by work not done yet. Needs the recipe's id, as a recipe-connected component has it.
 export const withSourceProblems = () => composeHoC(
     connect((state, {recipeId, sourceRuntime}) => {
-        const {sourceProblems, wizardStepProblems, sourceProblemContents, wizardStepProblemContents} = sectionProblemsOfState(
+        const {sourceProblems, wizardStepProblems, sourceProblemContents, wizardStepProblemContents, incompleteSections, wizardStepIncompleteSections} = sectionProblemsOfState(
             state, recipeId, id => sourceRuntime?.evidenceOwnerOf(id), Date.now(), key => sourceRuntime?.heldFor(key)
         )
         return {
             sourceProblems: _.mapValues(sourceProblems, (message, id) => feedbackContent({message, messageContent: sourceProblemContents[id]})),
-            wizardStepProblems: _.mapValues(wizardStepProblems, (message, id) => feedbackContent({message, messageContent: wizardStepProblemContents[id]}))
+            wizardStepProblems: _.mapValues(wizardStepProblems, (message, id) => feedbackContent({message, messageContent: wizardStepProblemContents[id]})),
+            incompleteSections,
+            wizardStepIncompleteSections
         }
     }),
     withOutputRequirementWatch(),
