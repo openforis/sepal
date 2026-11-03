@@ -70,6 +70,7 @@ ScrollableList.propTypes = {
             indent: PropTypes.any,
             key: PropTypes.any,
             label: PropTypes.any,
+            popup: PropTypes.elementType,
             render: PropTypes.func,
             value: PropTypes.any
         })
@@ -155,11 +156,13 @@ export class ListContent extends React.Component {
     renderOption(option, index) {
         return option.value !== undefined && !option.disabled
             ? this.renderSelectableOption(option, index)
-            : option.group
-                ? option.render || option.label
-                    ? this.renderGroup(option, index)
-                    : this.renderSeparator(option, index)
-                : this.renderNonSelectableOption(option, index)
+            : option.popup
+                ? this.renderPopupOption(option, index)
+                : option.group
+                    ? option.render || option.label
+                        ? this.renderGroup(option, index)
+                        : this.renderSeparator(option, index)
+                    : this.renderNonSelectableOption(option, index)
     }
 
     renderGroup(option, index) {
@@ -195,6 +198,33 @@ export class ListContent extends React.Component {
                 linkUrl={tooltipLinkUrl}
             />
         ) : null
+    }
+
+    // An option that shows its own control on hover instead of being selected.
+    renderPopupOption(option, index) {
+        const {tooltipPlacement, alignment, air} = this.props
+        const Popup = option.popup
+        return (
+            <li key={option.key || index} style={this.getOptionStyle(option)}>
+                <Button
+                    innerButton
+                    chromeless
+                    look='transparent'
+                    air={air}
+                    icon={option.icon}
+                    iconType={option.iconType}
+                    iconAttributes={{
+                        fixedWidth: true
+                    }}
+                    label={option.label}
+                    width='max'
+                    alignment={alignment}
+                    tooltip={<Popup/>}
+                    tooltipPlacement={tooltipPlacement}
+                    tooltipDelay={0}
+                />
+            </li>
+        )
     }
 
     // A disabled option may say why it is.

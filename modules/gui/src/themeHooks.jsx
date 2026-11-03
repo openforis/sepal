@@ -16,13 +16,6 @@ export const useThemePreference = () =>
 export const useTheme = () =>
     useSyncExternalStore(subscribeToTheme, () => themeManager.theme)
 
-export const withThemePreference = () =>
-    WrappedComponent => {
-        const WithThemePreference = props =>
-            <WrappedComponent {...props} themePreference={useThemePreference()}/>
-        return WithThemePreference
-    }
-
 export const withTheme = () =>
     WrappedComponent => {
         const WithTheme = props =>

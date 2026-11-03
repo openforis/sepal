@@ -1,5 +1,6 @@
 // The user menu in the footer. ButtonSelect is a passthrough that shows what its button would carry and
-// lists its options as buttons; the activation HOC is replaced by the activator prop it would inject.
+// lists its options as buttons, or with their popup inline; the activation HOC is replaced by the activator prop it would
+// inject. The theme and language selectors have their own tests.
 
 import {act} from 'react'
 import {createRoot} from 'react-dom/client'
@@ -12,21 +13,22 @@ vi.mock('~/widget/buttonSelect', () => ({
     ButtonSelect: ({label, icon, iconType, hint, options}) =>
         <div className='select' data-icon={icon} data-icon-type={iconType} data-hint={String(hint)}>
             <div className='label'>{label}</div>
-            {options.map(({key, value, group, label, icon, iconType, disabled, onSelect}) =>
+            {options.map(({key, value, group, label, icon, iconType, disabled, popup: Popup, onSelect}) =>
                 group
-                    ? label
-                        ? <div key={key} className='option group'>{label}</div>
-                        : <hr key={key} className='option separator'/>
-                    : <button key={value} className='option' data-icon={icon} data-icon-type={iconType} disabled={disabled}
-                        onClick={() => onSelect()}>{label}</button>
+                    ? <hr key={key} className='option separator'/>
+                    : Popup
+                        ? <div key={key} className='option' data-icon={icon}>{label}<div className='popup'><Popup/></div></div>
+                        : <button key={value} className='option' data-icon={icon} data-icon-type={iconType} disabled={disabled}
+                            onClick={() => onSelect()}>{label}</button>
             )}
         </div>
 }))
+vi.mock('~/app/landing/themeSelector', () => ({ThemeSelector: () => 'theme selector'}))
+vi.mock('~/app/landing/languageSelector', () => ({LanguageSelector: () => 'language selector'}))
 
 import {of} from 'rxjs'
 
-import {themeManager} from '~/theme'
-import {getLanguage, setLanguage, TranslationProvider} from '~/translate'
+import {setLanguage, TranslationProvider} from '~/translate'
 import {logout$} from '~/user'
 
 import {UserMenuButton} from './userMenu'
@@ -56,12 +58,9 @@ describe('the user menu', () => {
 
     beforeEach(() => {
         mounted = []
-        themeManager.setPreference('dark')
-        setLanguage('en')
     })
     afterEach(() => {
         mounted.forEach(unmount => unmount())
-        vi.unstubAllGlobals()
     })
 
     it('is labelled with the username and offers user details, password, Google account, SSH keys, theme and language, then logout', () => {
@@ -70,10 +69,16 @@ describe('the user menu', () => {
         expect(container.querySelector('.label').textContent).toBe('alice')
         expect(optionLabels(container)).toEqual([
             'User details', 'Password', 'Google account', 'SSH keys',
-            'Theme', 'Dark', 'Light', 'System',
-            'Language', 'English', 'Español', 'Français',
+            '—', 'Theme', 'Language',
             '—', 'Logout'
         ])
+    })
+
+    it('offers the theme and language selectors as popups of their entries', () => {
+        const container = render()
+
+        expect(popup(container, 'Theme')).toEqual({icon: 'palette', content: 'theme selector'})
+        expect(popup(container, 'Language')).toEqual({icon: 'language', content: 'language selector'})
     })
 
     it('logs the user out from its last entry', () => {
@@ -88,22 +93,13 @@ describe('the user menu', () => {
     it('gives each entry the icon of its panel', () => {
         const container = render()
 
-        const icons = [...container.querySelectorAll('.option')]
-            .map((option, i) => [optionLabels(container)[i], option.dataset.icon, option.dataset.iconType])
+        const icons = [...container.querySelectorAll('button.option')]
+            .map(option => [option.textContent, option.dataset.icon, option.dataset.iconType])
         expect(icons).toEqual([
             ['User details', 'user', undefined],
             ['Password', 'key', undefined],
             ['Google account', 'google', 'brands'],
             ['SSH keys', 'terminal', undefined],
-            ['Theme', undefined, undefined],
-            ['Dark', 'circle-dot', 'regular'],
-            ['Light', 'circle', 'regular'],
-            ['System', 'circle', 'regular'],
-            ['Language', undefined, undefined],
-            ['English', 'circle-dot', 'regular'],
-            ['Español', 'circle', 'regular'],
-            ['Français', 'circle', 'regular'],
-            ['—', undefined, undefined],
             ['Logout', 'sign-out-alt', undefined]
         ])
     })
@@ -144,47 +140,6 @@ describe('the user menu', () => {
 
         expect(select.dataset.hint).toBe('true')
     })
-
-    describe('theme', () => {
-        it('marks the active theme', () => {
-            themeManager.setPreference('system')
-            const container = render()
-
-            expect(option(container, 'System').dataset.icon).toBe('circle-dot')
-            expect(option(container, 'Dark').dataset.icon).toBe('circle')
-        })
-
-        it('switches the theme and marks the new choice', () => {
-            const container = render()
-
-            act(() => option(container, 'Light').click())
-
-            expect(themeManager.preference).toBe('light')
-            expect(option(container, 'Light').dataset.icon).toBe('circle-dot')
-            expect(option(container, 'Dark').dataset.icon).toBe('circle')
-        })
-    })
-
-    describe('language', () => {
-        it('marks the active language', () => {
-            setLanguage('fr')
-            const container = render()
-
-            expect(option(container, 'Français').dataset.icon).toBe('circle-dot')
-            expect(option(container, 'English').dataset.icon).toBe('circle')
-        })
-
-        it('stores the chosen language and reloads the page to apply it', () => {
-            const reload = vi.fn()
-            vi.stubGlobal('location', {...window.location, reload})
-            const container = render()
-
-            act(() => option(container, 'Español').click())
-
-            expect(getLanguage()).toBe('es')
-            expect(reload).toHaveBeenCalled()
-        })
-    })
 })
 
 const anActivatable = ({canActivate = true} = {}) => ({canActivate, activate: vi.fn()})
@@ -203,7 +158,12 @@ const stream = (_name, stream$) => {
 }
 
 const optionLabels = container =>
-    [...container.querySelectorAll('.option')].map(option => option.classList.contains('separator') ? '—' : option.textContent)
+    [...container.querySelectorAll('.option')].map(option => option.classList.contains('separator') ? '—' : option.firstChild.textContent)
 
 const option = (container, label) =>
     [...container.querySelectorAll('.option')].find(option => option.textContent === label)
+
+const popup = (container, label) => {
+    const option = [...container.querySelectorAll('.option')].find(option => option.firstChild?.textContent === label)
+    return {icon: option.dataset.icon, content: option.querySelector('.popup').textContent}
+}

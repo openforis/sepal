@@ -10,8 +10,10 @@ vi.mock('~/widget/scrollable', async () => {
     return {Scrollable: ({children}) => <div>{children(scrollable)}</div>}
 })
 vi.mock('~/widget/button', () => ({
-    Button: ({label, icon, iconType, disabled}) =>
-        <button data-icon={icon} data-icon-type={iconType} disabled={disabled}>{label}</button>
+    Button: ({label, icon, iconType, disabled, tooltip}) =>
+        <div className='option' data-icon={icon} data-icon-type={iconType} data-disabled={disabled}>
+            {label}{tooltip ? <div className='tooltip'>{tooltip}</div> : null}
+        </div>
 }))
 
 import {ScrollableList} from './list'
@@ -43,11 +45,25 @@ describe('ScrollableList', () => {
             />
         ))
 
-        const options = [...container.querySelectorAll('button')].map(({textContent, disabled, dataset}) =>
-            ({label: textContent, disabled, icon: dataset.icon, iconType: dataset.iconType}))
+        const options = [...container.querySelectorAll('.option')].map(({textContent, dataset}) =>
+            ({label: textContent, disabled: dataset.disabled === 'true', icon: dataset.icon, iconType: dataset.iconType}))
         expect(options).toEqual([
             {label: 'Details', disabled: false, icon: 'user', iconType: undefined},
             {label: 'Google', disabled: true, icon: 'google', iconType: 'brands'}
         ])
+    })
+
+    it('shows an option holding its own control in a popup', () => {
+        const Popup = () => <span className='control'/>
+        act(() => root.render(
+            <ScrollableList
+                options={[{key: 'language', label: 'Language', icon: 'language', popup: Popup}]}
+                onSelect={() => {}}
+            />
+        ))
+
+        const option = container.querySelector('.option')
+        expect([option.textContent, option.dataset.icon]).toEqual(['Language', 'language'])
+        expect(option.querySelector('.tooltip .control')).not.toBeNull()
     })
 })
