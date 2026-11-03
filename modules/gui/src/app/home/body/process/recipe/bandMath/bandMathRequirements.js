@@ -53,6 +53,9 @@ export const bandMathRequirements = [
         requirement: {...OUTPUT_REFERENCES, describe: diagnostic => describeProblems(diagnostic)},
         localFacts: chainFacts,
         items: outputItems,
+        // Output bands says what it finds of each output image on its row as edited. Its own fields decide what may be
+        // applied: an output whose image is gone, say, is shown to be removed, and the rest applied meanwhile.
+        editor: {panel: OUTPUT_BANDS.id, input: 'outputImages', blocksApply: false},
         operations: [IMAGE_OUTPUT]
     },
     // Nothing output yet is setup still to do, not an error (OUTPUT_PRESENCE): the image stays held, Output bands' own

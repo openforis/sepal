@@ -1,10 +1,18 @@
+import {allocationReviewState, INPUTS_CHANGED, REVIEWED} from '#sepal/recipe/samplingDesign/allocationReview'
+import {readsProportions} from '#sepal/recipe/samplingDesign/allocationStrategy'
 import {allocationStrataMismatch, belowConfiguredMinimum} from '#sepal/recipe/samplingDesign/allocationValidation'
-import {effectiveMinSamplesPerStratum, isValidMinSamplesPerStratum, isValidStratumSampleSize, usesConfiguredMinSamplesPerStratum} from '#sepal/recipe/samplingDesign/minSamples'
+import {
+    effectiveMinSamplesPerStratum,
+    isManualAllocation,
+    isValidMinSamplesPerStratum,
+    isValidStratumSampleSize,
+    usesConfiguredMinSamplesPerStratum
+} from '#sepal/recipe/samplingDesign/minSamples'
 import {formatDistance, gridPixelSize, isValidMinDistanceForGrid, requiredMinDistance} from '#sepal/recipe/samplingDesign/samplingGrid'
 import {isValidSamplingSeed, requiresSamplingSeed} from '#sepal/recipe/samplingDesign/samplingSeed'
 import {isStratificationSkipped} from '#sepal/recipe/samplingDesign/stratificationSkip'
 
-import {readsProportions} from './allocationStrategy'
+import {hasProportions, proportionsRequireUpdate} from './designModel'
 import {toTaskAllocation} from './taskAllocation'
 
 // Pure retrieve preflight over the persisted Sampling Design model. Returns an ordered array of
@@ -21,35 +29,42 @@ const isPositiveInteger = value =>
 const hasFiniteArea = value =>
     value != null && value !== '' && Number.isFinite(Number(value)) && Number(value) > 0
 
-// Sections whose persisted `requiresUpdate` flag means their computed output is stale relative to upstream
-// edits. Checked first so a stale section reports a clear "update this first" instead of a downstream
-// stale-data symptom. Whether the stratum areas are still about their inputs is not a flag: the evidence saved with
-// them is compared with the current one (freshnessRequirements.js), which holds Retrieve on its own.
+// Sections whose output has to be settled again for upstream edits: proportions by their rows (designModel.js), the
+// allocation by what it was reviewed for (#sepal/recipe/samplingDesign/allocationReview), and the arrangement by the
+// `requiresUpdate` flag an earlier version saved. Checked first so a stale section reports a clear "update this first"
+// instead of a downstream stale-data symptom. Whether the stratum areas and automatic proportions are still about their
+// inputs is the evidence saved with them, compared with the current one (freshnessRequirements.js), which holds Retrieve
+// on its own.
 const REQUIRES_UPDATE_SECTIONS = ['proportions', 'sampleAllocation', 'sampleArrangement']
 
-// A skipped section computes nothing, so it has nothing to be stale about. Saved recipes can carry a flag
-// raised before the section was skipped, and nothing rewrites it on load - so the flag is filtered by
-// applicability HERE rather than relying on an edit to come along and normalize it away.
-const isSectionApplicable = (model, section) => {
-    if (section === 'proportions') {
-        return !model?.proportions?.skip
-    }
-    return true
-}
-
 // Exported because the section requirements mark the same sections (freshnessRequirements.js): a button that reports a
-// section as needing attention while Retrieve considers it fine is the same defect read from the other end.
-export const isSectionStale = (model, section) =>
-    REQUIRES_UPDATE_SECTIONS.includes(section) && model?.[section]?.requiresUpdate === true && isSectionApplicable(model, section)
+// section as needing attention while Retrieve considers it fine is the same defect read from the other end. Skipped
+// proportions compute nothing, so a flag saved before they were skipped says nothing. An allocation not reviewed for the
+// design as it is now is stale whether its inputs changed or it has no trustworthy record of them.
+export const isSectionStale = (model, section) => {
+    switch (section) {
+        case 'proportions':
+            return proportionsRequireUpdate(model)
+        case 'sampleAllocation':
+            return allocationReviewState(model) !== REVIEWED
+        default:
+            return REQUIRES_UPDATE_SECTIONS.includes(section) && model?.[section]?.requiresUpdate === true
+    }
+}
 
 export const validateRetrieve = model => {
     const errors = []
     // `args` is optional: an error carries message arguments only when it has exact values to report.
     const add = (section, code, args) => errors.push(args ? {section, code, args} : {section, code})
 
+    // An allocation not computed yet says so below, as `noAllocation`. One that is, but was not reviewed for the design as
+    // it is now - saved before allocations recorded that, or last applied by an earlier version - is reviewed once.
     REQUIRES_UPDATE_SECTIONS.forEach(section => {
+        if (section === 'sampleAllocation' && !model?.sampleAllocation?.allocation?.length) {
+            return
+        }
         if (isSectionStale(model, section)) {
-            add(section, 'requiresUpdate')
+            add(section, section === 'sampleAllocation' && allocationReviewState(model) !== INPUTS_CHANGED ? 'reviewRequired' : 'requiresUpdate')
         }
     })
 
@@ -65,16 +80,15 @@ export const validateRetrieve = model => {
         add('stratification', 'strataAreaMissing')
     }
 
-    // Authoritative on the proportions skip flag; OPTIMAL/POWER and sample-size estimation all need
-    // per-stratum proportions and are invalid without them.
-    const hasProportions = !model?.proportions?.skip && !!model?.proportions?.anticipatedProportions?.length
+    // OPTIMAL/POWER and sample-size estimation all need per-stratum proportions and are invalid without them.
+    const withProportions = hasProportions(model)
     const strategy = model?.sampleAllocation?.allocationStrategy
     const estimateSampleSize = !!model?.sampleAllocation?.estimateSampleSize
     // Manual allocation reads neither the strategy nor the sample-size estimate, so a value left dormant
     // behind those hidden fields is not a reason to send the user to the Proportions panel. Required only
     // where the mode genuinely consumes proportions.
-    const isManual = !!model?.sampleAllocation?.manual?.length
-    if (!hasProportions && !isManual && (readsProportions(strategy) || estimateSampleSize)) {
+    const isManual = isManualAllocation(model?.sampleAllocation?.manual)
+    if (!withProportions && !isManual && (readsProportions(strategy) || estimateSampleSize)) {
         add('sampleAllocation', 'proportionsRequired')
     }
 

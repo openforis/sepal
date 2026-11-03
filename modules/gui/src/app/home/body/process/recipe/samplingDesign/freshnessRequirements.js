@@ -1,6 +1,11 @@
+import _ from 'lodash'
+
 import {CURRENT, STALE, UNKNOWN, UNVERSIONED} from '#sepal/recipe/calculation/freshness'
 import {NEEDS_EVIDENCE, SUPPORTED, unsupported} from '#sepal/recipe/requirement/verdict'
-import {proportionsFrameFreshness, strataFreshness, STRATUM_FRAME, usesStratumAreas} from '#sepal/recipe/samplingDesign/stratumFrame'
+import {allocationReviewState, INPUTS_CHANGED, REVIEWED, UNREVIEWED, UNTRUSTED} from '#sepal/recipe/samplingDesign/allocationReview'
+import {isProportionsSkipped} from '#sepal/recipe/samplingDesign/proportionsSkip'
+import {strataFreshness, STRATUM_FRAME, usesManualProportions, usesStratumAreas} from '#sepal/recipe/samplingDesign/stratumFrame'
+import {PROBABILITY_SOURCE, proportionsFreshness} from '#sepal/recipe/samplingDesign/stratumProbabilities'
 import {msg} from '~/translate'
 
 import {EXPIRED as EVIDENCE_EXPIRED, FAILED, OBSERVED, PENDING} from '../../sourceRuntime/calculationEvidence'
@@ -17,6 +22,7 @@ import {
     UNAVAILABLE,
     UNCHECKED
 } from '../sourceRequirements'
+import {isManualAllocation, unansweredStrata} from './sampling/allocationOutcome'
 import {unansweredProportions} from './sampling/designModel'
 import {isSectionStale} from './sampling/validateRetrieve'
 
@@ -25,25 +31,30 @@ import {isSectionStale} from './sampling/validateRetrieve'
 // (STRATUM_PROBABILITIES) to be held by.
 //
 // Whether its saved stratum areas and automatic proportions are still about their inputs is judged by the shared
-// declarations (#sepal/recipe/samplingDesign/stratumFrame) against the stratum frame's current evidence, which the source
-// runtime acquires while the design is open and publishes on it (calculationEvidence.js), as it stands when they are
-// read. Areas not set up, or not current, hold Retrieve and the Proportions calculation; automatic proportions not current
-// hold Retrieve. What the planner flags for Proportions, the allocation and the arrangement (planDerivedUpdates.js) marks
-// them too; Retrieve refuses those flags itself (validateRetrieve.js).
+// declarations (#sepal/recipe/samplingDesign/stratumFrame, stratumProbabilities) against the current evidence of what
+// they read - the stratum frame, and for the proportions the probability source too - which the source runtime acquires
+// while the design is open and publishes on it (calculationEvidence.js), as it stands when they are read. Areas not set
+// up, or not current, hold Retrieve and the Proportions calculation; automatic proportions not current hold Retrieve.
+// Proportions whose rows no longer cover the strata, manual answers an earlier version flagged, an allocation not
+// reviewed for the design as it is now (#sepal/recipe/samplingDesign/allocationReview) and an arrangement an earlier
+// version flagged mark them too; Retrieve refuses those itself (validateRetrieve.js).
 //
 // A section not set up yet, or whose result was saved without evidence and is calculated once when its panel opens, is
-// unfinished (`incomplete`); one whose result is established not to be about its inputs, or that only selecting another
-// source repairs, is wrong. Each finding waits on the sections what it is about reads (`prerequisites`): proportions
+// unfinished (`incomplete`), and so is an allocation without a trustworthy record of what it was reviewed for, reviewed
+// once; one whose result is established not to be about its inputs, or that only selecting another source repairs, is
+// wrong. Each finding waits on the sections what it is about reads (`prerequisites`): proportions
 // read the strata, and the allocation reads them and the proportions - its counts or the uncertainty it shows, whatever
 // its strategy, manual counts included. Skipped proportions are sound, so an allocation does not wait on them. A section
 // waiting on another says nothing of its own until that one is sound (selectedSourceStatus.js), so only what can be
 // acted on now is marked.
 //
-// These bind no panel: what the applied design says is no reason to refuse an edit. What a panel is about to apply is
-// judged on its own (`editedStrataStatus`, `editedProportionsStatus`), against what the source runtime holds for the
-// frame it configures: refused while established STALE, or while that cannot be established yet, so a draft overtaken
-// by a change to its inputs is not applied as it stands. Results saved without evidence, or over a source that cannot
-// report replacement, claim nothing an edit could make untrue.
+// What the applied design says is no reason to refuse an edit. What a panel is about to apply is judged on its own: the
+// areas and automatic proportions it calculates (`editedStrataStatus`, `editedProportionsStatus`) against what the source
+// runtime holds for what it configures, refused while established STALE, or while that cannot be established yet, so a
+// draft overtaken by a change to its inputs is not applied as it stands - results saved without evidence, or over a
+// source that cannot report replacement, claim nothing an edit could make untrue; manual answers by the same requirement
+// as the applied design (`editor`, localCandidate.js), refused while they are not the strata's; and the allocation by
+// its derivation (derivations.js).
 
 export const SAMPLES = 'SAMPLES'
 export const STRATUM_PROBABILITIES = 'STRATUM_PROBABILITIES'
@@ -51,12 +62,13 @@ export const STRATUM_PROBABILITIES = 'STRATUM_PROBABILITIES'
 export const STRATA_CURRENT = 'samplingDesign.strataCurrent'
 export const PROPORTIONS_CURRENT = 'samplingDesign.proportionsCurrent'
 const PROPORTIONS_SETTLED = 'samplingDesign.proportionsSettled'
+const MANUAL_PROPORTIONS = 'samplingDesign.manualProportions'
 const ALLOCATION_SETTLED = 'samplingDesign.allocationSettled'
 const ARRANGEMENT_SETTLED = 'samplingDesign.arrangementSettled'
 
 // Nothing to judge yet: the section has not been set up.
 const UNCONFIGURED = 'UNCONFIGURED'
-// What the planner flags: its panel has to settle it again.
+// Its panel has to settle it again for the inputs it reads now.
 const REQUIRES_UPDATE = 'REQUIRES_UPDATE'
 
 const STRATIFICATION = {id: 'stratification', label: 'process.samplingDesign.panel.stratification.button'}
@@ -65,13 +77,25 @@ const SAMPLE_ALLOCATION = {id: 'sampleAllocation', label: 'process.samplingDesig
 const SAMPLE_ARRANGEMENT = {id: 'sampleArrangement', label: 'process.samplingDesign.panel.sampleArrangement.button'}
 
 const READS_STRATA = [{declaration: STRATA_CURRENT}]
-const READS_PROPORTIONS = [{declaration: PROPORTIONS_CURRENT}, {declaration: PROPORTIONS_SETTLED}]
+const READS_PROPORTIONS = [{declaration: PROPORTIONS_CURRENT}, {declaration: PROPORTIONS_SETTLED}, {declaration: MANUAL_PROPORTIONS}]
 
-// A result's state against the frame's current evidence ({status, evidence}), and how far its acquisition has got.
-const freshnessFacts = (model, frame, freshnessOf) => ({
-    state: freshnessOf(model, frame.status === OBSERVED ? frame.evidence : null),
-    evidence: frame.status
+// A result's state against the current evidence of what it reads ({[dependency]: {status, evidence}}), and how far
+// acquiring that evidence has got: as far as the least advanced of them.
+const freshnessFacts = (model, read, freshnessOf) => ({
+    state: freshnessOf(model, _.mapValues(read, ({status, evidence}) => status === OBSERVED ? evidence : null)),
+    evidence: leastAcquired(Object.values(read).map(({status}) => status))
 })
+
+// What says most about acquiring the evidence of several dependencies: what failed or lapsed, then what is not being
+// read, then what is still being read.
+const ACQUISITION_ORDER = [FAILED, EVIDENCE_EXPIRED, null, PENDING]
+
+const leastAcquired = statuses => {
+    const index = ACQUISITION_ORDER.findIndex(status => statuses.includes(status))
+    return index < 0 ? OBSERVED : ACQUISITION_ORDER[index]
+}
+
+const strataState = (model, current) => strataFreshness(model, current[STRATUM_FRAME])
 
 // Established states are judged; a state needing current evidence waits on its acquisition.
 const acquisition = ({state, evidence}) => {
@@ -98,7 +122,7 @@ const sectionRequirement = (section, aspect) => ({
     describe: ({code}) => ({message: msg(`process.samplingDesign.sectionStatus.${section}.${code}`), details: []})
 })
 
-const INCOMPLETE = [UNCONFIGURED, UNKNOWN]
+const INCOMPLETE = [UNCONFIGURED, UNKNOWN, UNREVIEWED, UNTRUSTED]
 
 // What a finding depends on, once there is one.
 const waitingOn = prerequisites => ({state}) => state === CURRENT ? [] : prerequisites
@@ -109,7 +133,7 @@ export const samplingDesignRequirements = [
         section: STRATIFICATION,
         localFacts: (recipe, dependencyEvidence) => usesStratumAreas(recipe.model) && !recipe.model.stratification?.strata?.length
             ? NOT_SET_UP
-            : freshnessFacts(recipe.model, dependencyEvidence(STRATUM_FRAME), strataFreshness),
+            : freshnessFacts(recipe.model, readOf(dependencyEvidence, [STRATUM_FRAME]), strataState),
         acquisition,
         requirement: sectionRequirement('stratification', 'areas'),
         operations: [SAMPLES, STRATUM_PROBABILITIES]
@@ -118,18 +142,28 @@ export const samplingDesignRequirements = [
         id: PROPORTIONS_CURRENT,
         section: PROPORTIONS,
         localFacts: (recipe, dependencyEvidence) =>
-            freshnessFacts(recipe.model, dependencyEvidence(STRATUM_FRAME), proportionsFrameFreshness),
+            freshnessFacts(recipe.model, readOf(dependencyEvidence, [STRATUM_FRAME, PROBABILITY_SOURCE]), proportionsFreshness),
         acquisition,
         prerequisites: waitingOn(READS_STRATA),
-        requirement: sectionRequirement('proportions', 'frame'),
+        requirement: sectionRequirement('proportions', 'inputs'),
         operations: [SAMPLES]
     },
     {
         id: PROPORTIONS_SETTLED,
         section: PROPORTIONS,
-        localFacts: recipe => ({state: proportionsSettlement(recipe.model)}),
+        localFacts: recipe => ({state: automaticProportionsSettlement(recipe.model)}),
         prerequisites: waitingOn(READS_STRATA),
         requirement: sectionRequirement('proportions', 'settled')
+    },
+    // The Proportions panel reconciles manual answers with the strata as it opens, and its draft is judged by the same
+    // rule: answers for other strata than the design's are refused, while what is not answered yet is its rows' to say.
+    {
+        id: MANUAL_PROPORTIONS,
+        section: PROPORTIONS,
+        localFacts: recipe => ({state: manualProportionsSettlement(recipe.model)}),
+        prerequisites: waitingOn(READS_STRATA),
+        requirement: sectionRequirement('proportions', 'answers'),
+        editor: {panel: PROPORTIONS.id, input: 'anticipatedProportions', blocksApply: ({ownVerdict}) => !ownVerdict.diagnostic?.incomplete}
     },
     {
         id: ALLOCATION_SETTLED,
@@ -146,12 +180,12 @@ export const samplingDesignRequirements = [
     }
 ]
 
-// How a panel's edited areas or automatic proportions stand, `model` the design as the edit would leave it and `frame`
-// the source runtime's current evidence ({status, evidence}) of the frame it configures (`dependencyEvidence`,
-// calculationEvidence.js): {state, acquisition, applicable}.
-export const editedStrataStatus = (model, frame) => editedStatus(model, frame, strataFreshness)
+// How a panel's edited areas or automatic proportions stand, `model` the design as the edit would leave it and `read`
+// the source runtime's current evidence of what it configures, {[dependency]: {status, evidence}} for each dependency
+// the edit asks (`dependencyEvidence`, calculationEvidence.js): {state, acquisition, applicable}.
+export const editedStrataStatus = (model, read) => editedStatus(model, read, strataState)
 
-export const editedProportionsStatus = (model, frame) => editedStatus(model, frame, proportionsFrameFreshness)
+export const editedProportionsStatus = (model, read) => editedStatus(model, read, proportionsFreshness)
 
 // What a panel says of the result it calculates (calculatedResult.js), `section` 'stratification' or 'proportions', as
 // the widget showing that result is told it: {errorMessage, warningMessage, busyMessage}. Nothing while it calculates,
@@ -207,39 +241,52 @@ export const samplesGateMessage = gate => gate.read?.acquisition === CHECKED
     ? gate.read.declaration.requirement.describe(gate.read.verdict.diagnostic).message
     : msg(`process.samplingDesign.retrieve.evidence.${gate.code}`)
 
-const editedStatus = (model, frame, freshnessOf) => {
-    const status = statusOf(freshnessFacts(model, frame || NO_EVIDENCE, freshnessOf))
+const editedStatus = (model, read, freshnessOf) => {
+    const status = statusOf(freshnessFacts(model, read || {}, freshnessOf))
     return {...status, applicable: status.state !== null && status.state !== STALE}
 }
 
-const NOT_SET_UP = Object.freeze({state: UNCONFIGURED, evidence: null})
+const readOf = (dependencyEvidence, dependencies) => Object.fromEntries(dependencies.map(id => [id, dependencyEvidence(id)]))
 
-const NO_EVIDENCE = Object.freeze({status: null, evidence: null})
+const NOT_SET_UP = Object.freeze({state: UNCONFIGURED, evidence: null})
 
 const NO_FEEDBACK = Object.freeze({})
 
 const EVIDENCE_CODES = {[CHECKING]: SOURCE_PENDING, [UNAVAILABLE]: SOURCE_UNAVAILABLE, [EXPIRED]: SOURCE_EXPIRED}
 
-// Proportions not skipped need rows, every manual one answered, and to be settled again once the planner flags them.
-const proportionsSettlement = model => {
-    const proportions = model?.proportions
-    if (isSet(proportions?.skip)) {
+// Automatic proportions not skipped need rows for the strata as they are.
+const automaticProportionsSettlement = model => {
+    if (isProportionsSkipped(model?.proportions) || usesManualProportions(model)) {
         return CURRENT
     }
-    if (!proportions?.anticipatedProportions?.length) {
+    if (!model?.proportions?.anticipatedProportions?.length) {
+        return UNCONFIGURED
+    }
+    return isSectionStale(model, 'proportions') ? REQUIRES_UPDATE : CURRENT
+}
+
+// Manual proportions need an answer for every stratum and none for another: answers kept by stratum while the strata are
+// reordered, and settled again where an earlier version flagged them, until they are applied.
+const manualProportionsSettlement = model => {
+    if (isProportionsSkipped(model?.proportions) || !usesManualProportions(model)) {
+        return CURRENT
+    }
+    if (!model.proportions.anticipatedProportions?.length) {
         return UNCONFIGURED
     }
     if (isSectionStale(model, 'proportions')) {
         return REQUIRES_UPDATE
     }
-    return isSet(proportions.manual) && unansweredProportions(model).length ? UNCONFIGURED : CURRENT
+    return unansweredProportions(model).length ? UNCONFIGURED : CURRENT
 }
 
+// An allocation needs counts, every manual one entered, reviewed for the inputs it reads now.
 const allocationSettlement = model => {
-    if (!model?.sampleAllocation?.allocation?.length) {
+    const allocation = model?.sampleAllocation?.allocation
+    if (!allocation?.length || (isManualAllocation(model) && unansweredStrata(allocation).length)) {
         return UNCONFIGURED
     }
-    return isSectionStale(model, 'sampleAllocation') ? REQUIRES_UPDATE : CURRENT
+    return REVIEW_STATES[allocationReviewState(model)]
 }
 
-const isSet = value => Array.isArray(value) ? value.length > 0 : Boolean(value)
+const REVIEW_STATES = {[REVIEWED]: CURRENT, [UNREVIEWED]: UNREVIEWED, [UNTRUSTED]: UNTRUSTED, [INPUTS_CHANGED]: REQUIRES_UPDATE}

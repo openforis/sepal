@@ -274,6 +274,9 @@ Live schema/geometry probes and their limitations are indexed in
 
 These suites use controlled external boundaries; browser tiles and live EE pixels need their own checks.
 
+User-confirmed browser acceptance covers Output bands validation feedback, repair and Apply through the shared
+local-requirement binding.
+
 Manual calculation-readiness check:
 
 1. In Band Math, include `red` and `nir` from an input named `i1`, create `c1 = i1.red * 2`, and keep a valid output.

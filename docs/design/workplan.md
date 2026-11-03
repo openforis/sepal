@@ -143,6 +143,7 @@ Remapping's proposed [default class](#default-or-fallback-class) is specified be
 | Standalone asset visualization selection | Reconcile to the first candidate only after a successful current read; preserve intent through pending/failed/empty answers and never delete local styles. |
 | Large categorical default palettes | Assess shared interpolation by entry position/count. Preserve saved colors and verify Class Change's one-based codes. |
 | Radar RGB preset range | Audit the ratio range against its x1000 encoding, separate from VV/VH's x100. Keep this a presentation correction with unchanged pixel encoding. |
+| Sampling Design allocation tooltip | When proportions are skipped, the Samples tooltip should describe a fixed total without promising a calculated margin of error. |
 | Chart zoom handles | Reported: CCDC initially draws correctly but dragging is extremely slow; Time Series handles are usually absent, or one disappears when dragged. Other charts are untested. Reproduce through shared chart controls; verify responsive dragging, retained range, tab return and cleanup for representative chart families. |
 | Chart CSV export | Inventory existing chart downloads, then define export of the displayed series, timestamps, missing/masked values, units/encoding and fitted versus observed data. Decide full versus visible range and use shared serialization/download behavior. |
 | Interactive multi-sensor time series | Assess comparison of multiple sensors with explicit time alignment, units/encoding, processing differences and missing observations. Reuse chart/collection contracts; separate this feature from repairing zoom controls. |
@@ -225,14 +226,17 @@ The shared mechanism exists: types declare `dependencies` and their products' `d
 operations return evidence of what they read (`modules/gee/src/jobs/dependencyEvidence.js`); the shared rule compares
 it (`lib/js/shared/src/recipe/calculation`); the source runtime owns calculation work and current evidence
 (`sourceRuntime/calculationEvidence.js`); and local requirements read runtime-acquired evidence with its acquisition
-state (`sourceRequirements.js`). Sampling Design is its first consumer.
+state (`sourceRequirements.js`). Sampling Design is its first consumer. Form panels judge drafts by local requirements
+naming them as `editor` (`recipe/localCandidate.js`) and keep synchronous results derived in their drafts
+(`recipe/derivedResult.js`): Sampling Design's manual proportions and allocation, and Band Math's Output bands, use them.
 
 - **Band Math derived bands.** Each calculation's `includedBands` is a cheap local derivation: keep it synchronous in
   the existing pure rules (`deriveCalculations.js`), with declared dependencies on the described bands of the inputs
   and earlier calculations its expression reads (Band Math's own `usedBands`), compared as current projections - no
   persisted digests or asynchronous hashing. Feedback stays with `CALCULATIONS_REQUIREMENT` items and
-  `OUTPUT_REFERENCES`. Remove only the change detection in `bandMath/sync/` that this supersedes; keep the
-  synchronization that preserves expressions, aliases and user choices.
+  `OUTPUT_REFERENCES`, which Output bands already reads for its draft through the shared binding. Remove only the
+  change detection in `bandMath/sync/` that this supersedes; keep the synchronization that preserves expressions,
+  aliases and user choices.
 - **Stack automatic names.** The same shape: the naming projection reads input order, reserved explicit names and the
   described input bands; overrides stay user-owned.
 - **Product projections.** Tighten what counts as a meaningful input change at each product owner, through
@@ -263,7 +267,7 @@ Use the part of the mechanism each responsibility needs:
 
 | Recipes | Concrete reuse and existing owner | Migration boundary |
 | --- | --- | --- |
-| Band Math | `bandMath/sync/` compares input/calculation changes and stages re-derivation; `deriveCalculations.js` and shared expression analysis already supply the domain rules. | Best next consumer: declare each calculation's actual band dependencies and reuse item prerequisites. Replace scheduling/change detection; preserve expression rewrites, band identities, output selections and custom names. |
+| Band Math | `bandMath/sync/` compares input/calculation changes and stages re-derivation; `deriveCalculations.js` and shared expression analysis already supply the domain rules. Output bands judges its draft through the shared local-requirement binding. | Best next consumer: declare each calculation's actual band dependencies and reuse item prerequisites. Replace scheduling/change detection; preserve expression rewrites, band identities, output selections and custom names. |
 | Stack | `stack/panels/stackToolbar.jsx` invokes `toBandNames` after Input imagery changes. | Combine with [automatic names](#stack-automatic-names): synchronous derivation from ordered inputs and explicit overrides. The existing callback is small; adoption must simplify it and preserve saved names as explicit. |
 | Class Change | `classChange/panels/legend/legend.jsx` rebuilds transition entries, IDs, labels and default colours when either whole input record changes. | Declare the input-legend projection and derive transitions locally. Define transition identity and preservation of edited labels/colours first; keep the established transition-code order. Optional confidence availability is a separate dependency on both inputs. |
 | CCDC, Time Series, Phenology | Their Sources panels separately load Classification metadata and derive band choices. CCDC also derives TMask choices from breakpoint bands in PRC. `selectedClassification.js`, `collectionClassifierRequirements.js` and CCDC's `segmentDescription.js` already establish reusable owners. | Read current resolved facts once and declare Sources-to-processing dependencies. Keep pending/failed facts distinct from unavailable bands; retain invalid selections with actionable feedback. This is compatibility and acquisition work, without persisted fit evidence. |
@@ -278,7 +282,7 @@ Use the part of the mechanism each responsibility needs:
 | Change Alerts, BAYTS Alerts | Shared effective-processing functions, reference observations, creation seeding and operation requirements already own reference-dependent settings. | Preserve these owners. Remaining cross-section compatibility can use the same requirement declarations; reference-owned values stay derived, and editable monitoring settings remain user-owned. No renewed background copying or parallel evidence cache. |
 | CCDC Slice | `sourceRequirement.js` and shared segment evidence already govern the source; Dates use source coverage, while OPT's break settings depend on date mode and the selected analysis band. | Declare these conditional dependencies and the existing [break-band validation follow-up](#validation-and-execution-coverage). Preserve extrapolation policy and independent chart availability; metadata date extents do not prove per-pixel coverage. |
 | PyEO Alerts | `sourcesRequirements.js` and `gateIndexCandidates.js` already share candidate evaluation. Sources separately acquires baseline metadata and proposes dates/processing at selection Apply. | Reuse existing candidates and acquisition ownership; declare the baseline-to-gate prerequisites where this removes local coordination. Preserve explicit proposal/defaulting policy and manual settings. Broader index/encoding work stays separate. |
-| Sampling Design | Areas and the automatic-proportions frame are the first persisted-result consumers; full probability evidence and local allocation transitions have distinct dependencies. | Complete the [remaining probability and section work](#sampling-design-derived-result-freshness) separately, retaining manual answers and replacing planner transitions only when declarations own them completely. |
+| Sampling Design | Areas and automatic proportions consume persisted-result evidence; manual proportions and the allocation consume the draft bindings, the allocation with an explicit review record. | Complete the [remaining live checks, compatibility cleanup and optional derivations](#sampling-design-derived-result-freshness). |
 
 **Shared workflows.** Review these at their common owners rather than migrating every recipe independently:
 
@@ -293,7 +297,7 @@ Use the part of the mechanism each responsibility needs:
   Retrieve panel already coordinate relevant consumers. Extend those owners where a migration exposes a gap;
   do not add a second chart/request coordinator or duplicate server-preview readiness work.
 
-**Adoption order and acceptance.** After Sampling Design, use Band Math to establish the synchronous declaration
+**Adoption order and acceptance.** Band Math's calculations are the next consumer of the synchronous declaration
 path, then Stack alongside automatic naming. Class Change and temporal section dependencies are the next focused
 candidates. Other rows are an inventory, not a commitment to migrate working code. Product-owned input projections
 can be added independently where the conservative fallback causes unnecessary recalculation.
@@ -306,17 +310,24 @@ unverified for these follow-ups.
 
 ### Sampling Design derived-result freshness
 
-Extend [Sampling Design's result evidence](../recipes/sampling-design.md#derived-result-freshness) for the remaining
-dependencies:
+Remaining work on [Sampling Design's result evidence](../recipes/sampling-design.md#derived-result-freshness):
 
-- **Probability evidence.** Add `SAMPLING_STRATUM_PROBABILITIES` - the probability product and band, mode, target
-  class and Proportions Scale - composing the frame evidence unchanged, and replace `proportions.requiresUpdate` for
-  automatic proportions. Until then an edit in the Proportions panel is calculated again, but a change to the
-  probability source elsewhere is undetected.
-- **Section transitions.** Proportions' identity rule and the allocation's transitions stay in `planDerivedUpdates.js`;
-  their flags mark sections only through the declared section requirements and prerequisites. Migrate the
-  transitions themselves to declared section dependencies only where that replaces the planner rather than
-  duplicating it.
+- **Remaining live checks and costs.** Verify probability-asset replacement tokens after export overwrite, copy or
+  move, and Proportions-only invalidation after same-id replacement with the design open and after reopening it.
+  Measure the added evidence-read cost and check temporary-asset cleanup when a later stage is refused after a frame
+  change. Mid-task changes still need separate live verification.
+- **Compatibility impact.** Assess how many saved designs use unversioned or missing probability sources or lack a
+  trustworthy allocation review record, and how often old-client task submissions are refused after deployment.
+- **Compatibility removal.** Each has its own lifetime. Drop the probability response's `stratumFrameEvidence` alias
+  once no client of the previous release can call it. Drop the later stages' reading of frame-only proportions
+  (`admittedProportionsFrameFreshness`), and their sampling of allocations admitted without a review record, once no
+  task admitted by the previous release can survive. The persisted markers stay while designs an older client saved may
+  remain untouched: `stratumFrameEvidence`, which keeps proportions `UNKNOWN` until they are calculated;
+  `sampleAllocation.requiresUpdate`, true or false, which keeps an allocation `UNTRUSTED` until it is reviewed; and the
+  `requiresUpdate` on manual proportions, honoured until they are applied.
+- **Optional derivation work.** Rows could be recomputed locally, without Earth Engine, when only the strata
+  identities changed; and re-derived when weights change under an overall-proportion override, where today they keep
+  the earlier weights.
 
 ### Capability projection and visualization ownership
 

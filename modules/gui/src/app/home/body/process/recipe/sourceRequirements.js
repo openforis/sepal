@@ -83,7 +83,7 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 // A type may also declare requirements over its own configuration, judged from facts the recipe itself holds:
 //
 //   {id, section, requirement, localFacts: (recipe, dependencyEvidence) => facts, items: facts => [...], parameters,
-//    operations}
+//    operations, editor}
 //
 // `localFacts` supplies the facts in place of a role and its evidence, so such a read is CHECKED and selects nothing -
 // unless the facts include the current evidence of a dependency the type declares, which the source runtime acquires
@@ -99,8 +99,9 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 // A local read keeps its own verdict (`ownVerdict`) apart from its effective one (`verdict`): a read met itself, whose
 // prerequisites are not all met - or not read at all - is UNSUPPORTED (`PREREQUISITE_UNMET`), and a read that is not
 // keeps its own diagnosis. `unmetPrerequisites` names them either way, with the section each lies in, so what a
-// prerequisite's own read says need not be repeated, while the operations it holds stay held. Evidence acquisition never reads these, and they bind no form
-// panel: they judge the configuration applied (recipeFormPanel.jsx).
+// prerequisite's own read says need not be repeated, while the operations it holds stay held. Evidence acquisition never
+// reads these. They judge the configuration applied, and, where they name the form panel editing their section as their
+// `editor` - {panel, input, blocksApply} - its values before they are applied too (localCandidate.js).
 //
 // And requirements over its configuration that its own output read judges - what the type's shared declaration refuses
 // its configuration for, over what its sources are described to provide:

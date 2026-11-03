@@ -7,22 +7,28 @@ import {FAILED, OBSERVED, PENDING} from '../sourceRuntime/calculationEvidence'
 import {SOURCE_BASIS_CHANGED} from '../sourceRuntime/sourceRuntimeError'
 import {configurationGate} from './sourceRequirements'
 
+// What holds a calculation back, said in this order: what only selecting another source repairs, what failed, what is
+// still being read.
+const UNUSABLE = [UNVERSIONED, FAILED, PENDING]
+
 // A result a form panel calculates and applies with the evidence of what it was calculated from, declared by the recipe's
 // type (`calculatedResults`):
 //
-//   {id, panel, kind, dependency, candidate(recipe, model), question(model), answered(model), batch(model),
-//    request$(question, {batch}), evidenceOf(answer), status(model, evidence), operation?, fits?(answer, recipe)}
+//   {id, panel, kind, dependencies, candidate?(recipe, model), question(model), answered(model), batch(model),
+//    request$(question, {batch}), evidenceOf?(answer), status(model, evidence), operation?, fits?(answer, recipe)}
 //
-// `panel` is the form panel editing it, `candidate` the recipe's model as the panel's values would leave it, `question`
-// what the calculation is asked of that model, null while it cannot be asked, `answered` whether that model holds a
-// result, and `batch` whether it is calculated as a batch task rather than online. `kind` and the question identify it
-// to the source runtime, which shares it and answers only while what it read is current (calculationEvidence.js);
-// `evidenceOf` is where an answer carries the evidence of `dependency`, the type's shared declaration, and `status` how
-// the edited result stands against that dependency's current evidence: {state, acquisition, applicable}. A calculation
-// over the applied recipe is held while the type's requirements hold `operation` (sourceRequirements.js), and an answer
-// is taken only where it `fits` the applied recipe.
+// `panel` is the form panel editing it, `candidate` the recipe's model as the panel's values would leave it - by default
+// the recipe's model with the panel's section replaced - `question` what the calculation is asked of that model, null
+// while it cannot be asked, `answered` whether that model holds a result, and `batch` whether it is calculated as a batch
+// task rather than online. `kind` and the question identify it to the source runtime, which shares it and answers only
+// while what it read is current (calculationEvidence.js); `evidenceOf` is where an answer carries the evidence of its
+// `dependencies`, the type's shared declarations - by default the dependencies of the calculation it records
+// (`calculatedFrom`, #sepal/recipe/calculation/freshness) - and `status` how the edited result stands against their
+// current evidence, {[dependency]: {status, evidence}} for each one the edit asks: {state, acquisition, applicable}. A dependency whose question is null for the edit is not read. A
+// calculation over the applied recipe is held while the type's requirements hold `operation` (sourceRequirements.js),
+// and an answer is taken only where it `fits` the applied recipe.
 //
-// While its panel is open the binding calculates what the edit requires, once it can be asked and the evidence of the
+// While its panel is open the binding calculates what the edit requires, once it can be asked and the evidence of every
 // dependency as the edit asks it is usable - read, current and from sources that report replacement: a result where the
 // edit holds none, holds one answering another question - what the panel opened with answers the question it opened
 // with - or one established STALE or saved without evidence (UNKNOWN). Evidence still being read, unreadable, expired or
@@ -33,7 +39,7 @@ import {configurationGate} from './sourceRequirements'
 // The panel makes of an answer what it does (`onAnswer`), in its draft: Apply takes it with the rest of the edit,
 // Cancel leaves the recipe as it was.
 //
-// The binding keeps the evidence of the dependency as the edit asks it current, so a draft already calculated stays
+// The binding keeps the evidence of the dependencies as the edit asks them current, so a draft already calculated stays
 // applicable through a change that leaves what it read meaning the same; the edit's result is refused while it is not,
 // while it answers another question, and while it is being calculated (recipeFormPanel.jsx). An answer is taken only
 // while the edit still asks what it was asked: changing the question cancels what is running.
@@ -47,8 +53,8 @@ export class CalculatedResult {
     #model = null
     #question = null
     #answers = undefined
-    #dependencyQuestion = null
-    #evidence = null
+    #dependencyQuestions = {}
+    #evidence = new Map()
     #running = null
     #failure = null
     #held = null
@@ -60,7 +66,7 @@ export class CalculatedResult {
     constructor({sourceRuntime, recipeId, declaration, valuesToModel, onChange}) {
         this.#sourceRuntime = sourceRuntime
         this.#recipeId = recipeId
-        this.#declaration = declaration
+        this.#declaration = {candidate: sectionCandidate(declaration.panel), evidenceOf: recordedEvidence, ...declaration}
         this.#valuesToModel = valuesToModel
         this.#onChange = onChange
     }
@@ -83,7 +89,7 @@ export class CalculatedResult {
         if (this.#answers === undefined) {
             this.#answers = this.answered() ? question : null
         }
-        this.#watchDependency(model ? this.#declaration.dependency.question(model) : null)
+        this.#watchDependencies(model)
         this.#settleSoon()
     }
 
@@ -105,8 +111,8 @@ export class CalculatedResult {
         return this.#model ? this.#declaration.status(this.#model, this.#dependencyEvidence()) : null
     }
 
-    // Why what the edit requires is not being calculated: the evidence of its dependency, as the edit asks it, still to be
-    // read (PENDING), unreadable (FAILED) or read from a source without a token (UNVERSIONED) - or null.
+    // Why what the edit requires is not being calculated: the evidence of a dependency, as the edit asks it, read from a
+    // source without a token (UNVERSIONED), unreadable (FAILED) or still to be read (PENDING) - or null.
     awaiting() {
         return this.#question && !this.calculating() && this.#resultRequired() ? this.#unusable() : null
     }
@@ -143,8 +149,8 @@ export class CalculatedResult {
         clearTimeout(this.#settling)
         this.#stopRunning()
         this.#watchHeld(false)
-        this.#evidence?.unsubscribe()
-        this.#evidence = null
+        this.#evidence.forEach(subscription => subscription.unsubscribe())
+        this.#evidence.clear()
     }
 
     // After what changed has settled: an edit lands over several renders, and evidence arrives for every watch at once.
@@ -192,11 +198,13 @@ export class CalculatedResult {
     // Calculating over what is not read yet, cannot be read or cannot report replacement would answer nothing the result
     // could be judged current by: an empty result reports no state of its own, so the evidence itself is judged.
     #unusable() {
-        const {status, evidence} = this.#dependencyEvidence() || {}
-        if (status === OBSERVED) {
-            return evidence?.unversioned?.length ? UNVERSIONED : null
-        }
-        return status === FAILED ? FAILED : PENDING
+        const reasons = Object.values(this.#dependencyEvidence()).map(({status, evidence}) => {
+            if (status === OBSERVED) {
+                return evidence?.unversioned?.length ? UNVERSIONED : null
+            }
+            return status === FAILED ? FAILED : PENDING
+        })
+        return UNUSABLE.find(reason => reasons.includes(reason)) || null
     }
 
     #answersAnother() {
@@ -270,22 +278,31 @@ export class CalculatedResult {
         }
     }
 
-    #watchDependency(question) {
-        if (_.isEqual(question, this.#dependencyQuestion)) {
-            return
-        }
-        this.#evidence?.unsubscribe()
-        this.#dependencyQuestion = question
-        this.#evidence = question && this.#sourceRuntime
-            ? this.#sourceRuntime.watchDependencyQuestion$({dependency: this.#declaration.dependency.id, question}).subscribe(() => {
-                this.#settleSoon()
-                this.#onChange()
-            })
-            : null
+    #watchDependencies(model) {
+        const questions = Object.fromEntries(this.#declaration.dependencies
+            .map(({id, question}) => [id, model ? question(model) : null])
+            .filter(([_id, question]) => question))
+        this.#declaration.dependencies.forEach(({id}) => {
+            if (!_.isEqual(questions[id], this.#dependencyQuestions[id])) {
+                this.#evidence.get(id)?.unsubscribe()
+                this.#evidence.delete(id)
+                questions[id] && this.#sourceRuntime && this.#evidence.set(id, this.#watchDependency(id, questions[id]))
+            }
+        })
+        this.#dependencyQuestions = questions
     }
 
+    #watchDependency(dependency, question) {
+        return this.#sourceRuntime.watchDependencyQuestion$({dependency, question}).subscribe(() => {
+            this.#settleSoon()
+            this.#onChange()
+        })
+    }
+
+    // {[dependency]: {status, evidence}}, for each dependency the edit asks.
     #dependencyEvidence() {
-        return this.#sourceRuntime?.dependencyEvidence({dependency: this.#declaration.dependency.id, question: this.#dependencyQuestion})
+        return _.mapValues(this.#dependencyQuestions, (question, dependency) =>
+            this.#sourceRuntime?.dependencyEvidence({dependency, question}) || {status: null, evidence: null})
     }
 
     #batch() {
@@ -296,3 +313,7 @@ export class CalculatedResult {
         return select(['process.loadedRecipes', this.#recipeId])
     }
 }
+
+const sectionCandidate = section => (recipe, model) => ({...recipe.model, [section]: model})
+
+const recordedEvidence = ({calculatedFrom}) => Object.values(calculatedFrom.dependencies)

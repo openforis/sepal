@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
+import {isProportionsSkipped} from '#sepal/recipe/samplingDesign/proportionsSkip'
 import api from '~/apiRegistry'
 import {recipeVisualizationsNaming} from '~/app/home/body/process/recipe/visualizations'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
@@ -11,6 +12,7 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {toUserErrorMessage} from '~/userError'
 import {Form} from '~/widget/form'
+import {inputFeedback} from '~/widget/form/inputFeedback'
 import {Layout} from '~/widget/layout'
 import {NoData} from '~/widget/noData'
 import {Notifications} from '~/widget/notifications'
@@ -19,7 +21,7 @@ import {Panel} from '~/widget/panel/panel'
 import {STRATUM_PROBABILITIES_CALCULATION} from '../../calculations'
 import {awaitedResultFeedback, editedResultFeedback} from '../../freshnessRequirements'
 import {isNumericClassValue, toClassOptions} from '../../sampling/categoricalLegend'
-import {reconcileManualProportions} from '../../sampling/designModel'
+import {proportionsCoverStrata, reconcileManualProportions} from '../../sampling/designModel'
 import {isValidOptionalProportionPercentage} from '../../sampling/numericRanges'
 import {maxAnticipatedTargetProportion, smartRound, toProportions} from '../../sampling/proportionMath'
 import {effectiveProportionsScale, proportionsScaleFromBand} from '../../samplingGridValidation'
@@ -35,6 +37,8 @@ const mapRecipeToProps = recipe => ({
 })
 
 const fields = {
+    // Saved by an earlier version on manual answers whose strata changed: dropped from the draft as the panel reconciles
+    // them, so applying them settles them.
     requiresUpdate: new Form.Field(),
     skip: new Form.Field(),
     manual: new Form.Field(),
@@ -80,8 +84,12 @@ const fields = {
     anticipatedProportions: new Form.Field()
         .skip((_value, {skip}) => skip.length)
         .notBlank('process.samplingDesign.panel.proportions.form.anticipatedProportions.required'),
-    // The stratum frame the probabilities were calculated over (#sepal/recipe/samplingDesign/stratumFrame), set with
-    // them and only with them.
+    // What the probabilities were calculated from (#sepal/recipe/samplingDesign/stratumProbabilities), set with them and
+    // only with them.
+    probabilityPerStratumCalculatedFrom: new Form.Field(),
+    // Saved by a client of the previous release, and so the probabilities beside it are not established by the evidence
+    // saved with them: kept until probabilities are calculated or cleared here. A design without it reads '', as the
+    // form gives any field its model lacks.
     stratumFrameEvidence: new Form.Field()
 }
 
@@ -108,8 +116,8 @@ class _Proportions extends React.Component {
         this.onOverallProportionChanged = this.onOverallProportionChanged.bind(this)
         this.onSkipToggled = this.onSkipToggled.bind(this)
         this.loadClassValues = this.loadClassValues.bind(this)
-        this.probabilities().onAnswer(({probabilityPerStratum, stratumFrameEvidence}) =>
-            this.onProbabilitiyPerStratumCalculated(probabilityPerStratum, stratumFrameEvidence))
+        this.probabilities().onAnswer(({probabilityPerStratum, calculatedFrom}) =>
+            this.onProbabilitiyPerStratumCalculated(probabilityPerStratum, calculatedFrom))
     }
 
     render() {
@@ -208,8 +216,9 @@ class _Proportions extends React.Component {
     }
 
     renderStrataProportion() {
-        const {strata, inputs: {eeStrategy, anticipatedProportions}} = this.props
+        const {form, strata, inputs: {eeStrategy, anticipatedProportions}} = this.props
         const awaited = awaitedResultFeedback('proportions', this.probabilities())
+        const answers = inputFeedback(form, anticipatedProportions).error
         return <StrataProportion
             eeStrategy={eeStrategy}
             anticipatedProportions={anticipatedProportions}
@@ -219,7 +228,7 @@ class _Proportions extends React.Component {
             loading={this.progress(awaited)}
             emptyMessage={awaited?.message}
             calculationError={this.calculationError()}
-            feedback={editedResultFeedback('proportions', this.probabilities())}
+            feedback={answers ? {errorMessage: answers} : editedResultFeedback('proportions', this.probabilities())}
             onRetryCalculation={() => this.probabilities().retry()}
             onUseBatch={() => this.useBatch()}
         />
@@ -247,21 +256,24 @@ class _Proportions extends React.Component {
     }
 
     // What opening the panel calculates is its binding's (calculatedResult.js): automatic proportions this design does not
-    // hold yet, or holds flagged, stale or without evidence, in the mode chosen beside them.
+    // hold yet, or holds for other strata, stale or without evidence, in the mode chosen beside them.
     componentDidMount() {
-        const {inputs: {requiresUpdate, skip, manual, anticipationStrategy, type, eeStrategy}} = this.props
+        const {strata, inputs: {requiresUpdate, skip, anticipationStrategy, type, eeStrategy, anticipatedProportions}} = this.props
         skip.value || skip.set([])
-        manual.value || manual.set([])
         anticipationStrategy.value || anticipationStrategy.set('PROBABILITY')
         type.value || type.set('ASSET')
         eeStrategy.value || eeStrategy.set('ONLINE')
-        
-        // Manual rows are settled by reconciling them against the strata that moved underneath them - an answered
-        // proportion follows its stratum, a vanished one goes, and a new stratum arrives unanswered for the user to
-        // fill in. Nothing is asked of Earth Engine for that.
-        if (requiresUpdate.value && this.isManual()) {
-            this.reconcileManualRows()
-            requiresUpdate.set(false)
+
+        // Manual rows are settled by reconciling them against the strata as they are now - an answered proportion follows
+        // its stratum, a vanished one goes, and a new stratum arrives unanswered for the user to fill in - and those an
+        // earlier version flagged by applying them. Nothing is asked of Earth Engine for that.
+        if (this.isManual() && anticipatedProportions.value) {
+            const flagged = requiresUpdate.value === true
+            const rows = {stratification: {strata}, proportions: {anticipatedProportions: anticipatedProportions.value}}
+            if (flagged || !proportionsCoverStrata(rows)) {
+                this.reconcileManualRows()
+            }
+            flagged && requiresUpdate.set(undefined)
         }
     }
 
@@ -460,15 +472,20 @@ class _Proportions extends React.Component {
         anticipatedProportions.set(proportions)
     }
 
+    // Either way the rows are those of the strata as they are now.
     onManualToggled(manual) {
         const {strata, inputs: {anticipatedProportions}} = this.props
-        if (manual && !anticipatedProportions.value) {
+        if (!manual) {
+            anticipatedProportions.set(null)
+            return
+        }
+        if (anticipatedProportions.value) {
+            // Anticipated rows kept as answers follow the strata as they are, as manual rows do.
+            this.reconcileManualRows()
+        } else {
             // Rows own the stratum and its proportion, nothing else: presentation and weight are joined from
             // the stratification when the table renders, so they cannot go stale here.
-            const initialProportions = strata.map(stratum => ({stratum: stratum.value, proportion: 0}))
-            anticipatedProportions.set(initialProportions)
-        } else if (!manual) {
-            anticipatedProportions.set(null)
+            anticipatedProportions.set(strata.map(stratum => ({stratum: stratum.value, proportion: 0})))
         }
     }
 
@@ -524,10 +541,11 @@ class _Proportions extends React.Component {
     // What a calculation still running answers is not these proportions' once what it was asked changes; the binding
     // cancels it then.
     invalidateCalculatedProportions() {
-        const {inputs: {probabilityPerStratum, anticipatedProportions, stratumFrameEvidence}} = this.props
+        const {inputs: {probabilityPerStratum, anticipatedProportions, probabilityPerStratumCalculatedFrom, stratumFrameEvidence}} = this.props
         probabilityPerStratum.set(null)
         anticipatedProportions.set(null)
-        stratumFrameEvidence.set(null)
+        probabilityPerStratumCalculatedFrom.set(null)
+        stratumFrameEvidence.set(undefined)
     }
 
     calculateMaxAnticipatedTargetProportion() {
@@ -541,13 +559,13 @@ class _Proportions extends React.Component {
         return this.props.calculatedResults[STRATUM_PROBABILITIES_CALCULATION]
     }
 
-    onProbabilitiyPerStratumCalculated(loadedProbabilityPerStratum, frameEvidence) {
-        const {strata, inputs: {requiresUpdate, stratumFrameEvidence, anticipationStrategy, probabilityPerStratum, anticipatedOverallProportion, anticipatedProportions}} = this.props
+    onProbabilitiyPerStratumCalculated(loadedProbabilityPerStratum, calculatedFrom) {
+        const {strata, inputs: {probabilityPerStratumCalculatedFrom, stratumFrameEvidence, anticipationStrategy, probabilityPerStratum, anticipatedOverallProportion, anticipatedProportions}} = this.props
         if (this.isManual()) {
             return // Ignore the result when manual
         }
-        stratumFrameEvidence.set(frameEvidence)
-        requiresUpdate.set(false)
+        probabilityPerStratumCalculatedFrom.set(calculatedFrom)
+        stratumFrameEvidence.set(undefined)
         // Categorical proportions are fractions [0,1] - never interpret them as percentages.
         const adjustedPercentage = anticipationStrategy.value !== 'CATEGORICAL'
             && (this.isPercentage()
@@ -591,10 +609,11 @@ class _Proportions extends React.Component {
 }
 
 const valuesToModel = values => {
-    const isSkipped = !!values.skip?.length
+    const isSkipped = isProportionsSkipped(values)
     // The recipe stores a concrete Scale. `scale` is an override and `defaultScale` is what a blank one
     // resolves to, so both are consolidated here and the transient field never reaches the model.
-    const {defaultScale: _defaultScale, ...persisted} = values
+    // An earlier version's flag is settled by what is applied here.
+    const {defaultScale: _defaultScale, requiresUpdate: _requiresUpdate, stratumFrameEvidence, ...persisted} = values
     return {
         ...persisted,
         scale: effectiveProportionsScale(values),
@@ -603,9 +622,10 @@ const valuesToModel = values => {
         probabilityPerStratum: isSkipped
             ? null
             : values.probabilityPerStratum,
-        stratumFrameEvidence: isSkipped || values.manual?.length
+        probabilityPerStratumCalculatedFrom: isSkipped || values.manual?.length
             ? null
-            : values.stratumFrameEvidence || null,
+            : values.probabilityPerStratumCalculatedFrom || null,
+        ...stratumFrameEvidence !== undefined && stratumFrameEvidence !== '' && {stratumFrameEvidence},
         anticipatedOverallProportion: isSkipped
             ? null
             : values.anticipatedOverallProportion
@@ -620,10 +640,12 @@ const valuesToModel = values => {
     }
 }
 
+// Skip and Manual are the form's toggles, however they were saved.
 const modelToValues = model => {
     return {
         ...model,
-        skip: model.skip ? [true] : [],
+        skip: isProportionsSkipped(model) ? [true] : [],
+        manual: isSet(model.manual) ? [true] : [],
         percentage: model.percentage ? [true] : [],
         anticipatedOverallProportion: model.anticipatedOverallProportion
             && model.anticipatedOverallProportion * 100,
@@ -634,6 +656,8 @@ const modelToValues = model => {
             }))
     }
 }
+
+const isSet = value => Array.isArray(value) ? value.length > 0 : Boolean(value)
 
 export const Proportions = compose(
     _Proportions,

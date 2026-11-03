@@ -1,25 +1,41 @@
-import {effectiveMinSamplesPerStratum} from '#sepal/recipe/samplingDesign/minSamples'
+import _ from 'lodash'
+
+import {allocationReviewInputs} from '#sepal/recipe/samplingDesign/allocationReview'
+import {isAllocationStrategy, readsProportions} from '#sepal/recipe/samplingDesign/allocationStrategy'
+import {effectiveMinSamplesPerStratum, isManualAllocation as isManual} from '#sepal/recipe/samplingDesign/minSamples'
 
 import {allocate} from './allocate'
-import {isAllocationStrategy, readsProportions} from './allocationStrategy'
 import {calculateBounds} from './confidenceInterval'
-import {allocationStrata, byStratumKey, hasProportions, isProportionsApplicable, stratumKey, toCountRow, toCountRows} from './designModel'
+import {allocationStrata, byStratumKey, hasProportions, orderedStratumKeys, stratumKey, toCountRow, toCountRows} from './designModel'
 import {boundsToMarginOfError, calculateMarginOfError} from './marginOfError'
 import {calculateSampleSize} from './sampleSize'
 
 export const isPositiveIntegerSampleSize = value =>
     value != null && value !== '' && /^[1-9]\d*$/.test(String(value))
 
-export const isManualAllocation = model => !!model?.sampleAllocation?.manual?.length
+// Saved as the form's toggle or as the boolean flag of older recipes alike.
+export const isManualAllocation = model => isManual(model?.sampleAllocation?.manual)
 
 // The strata as count rows carrying no counts. Enough for the panel to show which strata exist, while a row
 // with no count still reads as unanswered - it is not an allocation.
 export const blankAllocation = model =>
     allocationStrata(model).map(({stratum}) => ({stratum}))
 
+// The allocation a design derives as its Allocation panel shows it (derivations.js): manual counts kept by stratum, with
+// the uncertainty they imply, or the automatic outcome - and the record of the inputs it was derived from, which it is
+// reviewed by (#sepal/recipe/samplingDesign/allocationReview), dropping the flag of an older client that record replaces.
+export const derivedAllocation = model => {
+    const outcome = isManualAllocation(model) ? manualOutcome(model) : allocationOutcome(model)
+    const derived = {...model, sampleAllocation: {...model.sampleAllocation, ...outcome}}
+    return {
+        ...outcome,
+        reviewedInputs: allocationReviewInputs(derived),
+        ...(model.sampleAllocation?.requiresUpdate !== undefined && {requiresUpdate: undefined})
+    }
+}
+
 // The whole automatic outcome - counts, the total the counts add up to, and the derived uncertainty - as one
-// pure function over a design. The Allocation panel is its owner and its only caller: an allocation exists
-// because that panel calculated one and the user applied it.
+// pure function over a design.
 export const allocationOutcome = model => {
     const {
         estimateSampleSize, sampleSize, marginOfError, confidenceLevel,
@@ -87,22 +103,6 @@ export const effectiveAllocationStrategy = ({allocationStrategy, proportionsAppl
         ? allocationStrategy
         : defaultStrategy
 
-// A saved allocation as the calculation has to see it: every explicitly saved value wins, and anything a
-// recipe saved before that field existed falls back to what a new recipe starts with. Resolved here, where
-// an allocation is being planned or edited, rather than by rewriting old recipes on load - opening a recipe
-// must not change it.
-export const effectiveSampleAllocation = ({model, defaults}) => {
-    const merged = {...defaults, ...model?.sampleAllocation}
-    return {
-        ...merged,
-        allocationStrategy: effectiveAllocationStrategy({
-            allocationStrategy: merged.allocationStrategy,
-            proportionsApplicable: isProportionsApplicable(model),
-            defaultStrategy: defaults.allocationStrategy
-        })
-    }
-}
-
 // Keyed, order-independent reconciliation: an answered count follows its stratum wherever it moves, a
 // vanished stratum leaves, and a new one arrives with no count at all rather than an invented zero.
 export const reconcileManualAllocation = ({allocation, stratumKeys}) => {
@@ -126,4 +126,13 @@ export const marginOfErrorFor = model => {
     })
     const confidenceLevel = parseFloat(model?.sampleAllocation?.confidenceLevel) / 100
     return boundsToMarginOfError({bounds: calculateBounds({confidenceLevel, allocation: rows})}) * 100
+}
+
+// Manual counts are the user's and are never recalculated: rows follow the strata as they are now, by stratum, and the
+// uncertainty they imply is derived from them. Rows already the strata's are kept as they are being edited.
+const manualOutcome = model => {
+    const rows = model?.sampleAllocation?.allocation
+    const stratumKeys = orderedStratumKeys(model)
+    const allocation = _.isEqual(rows?.map(stratumKey), stratumKeys) ? rows : reconcileManualAllocation({allocation: rows, stratumKeys})
+    return {allocation, marginOfError: marginOfErrorFor({...model, sampleAllocation: {...model.sampleAllocation, allocation}})}
 }

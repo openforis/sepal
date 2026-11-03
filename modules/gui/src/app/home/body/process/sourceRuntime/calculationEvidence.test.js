@@ -3,6 +3,7 @@ import {Subject} from 'rxjs'
 import {beforeEach, describe, expect, it} from 'vitest'
 
 import {stratumFrameQuestion} from '#sepal/recipe/samplingDesign/stratumFrame'
+import {probabilitySourceQuestion} from '#sepal/recipe/samplingDesign/stratumProbabilities'
 
 import {observedListing} from '../recipeListing'
 import {CalculationEvidence, DEFAULT_DEPENDENCY_EVIDENCE_POLICY} from './calculationEvidence'
@@ -14,17 +15,19 @@ import {SOURCE_BASIS_CHANGED} from './sourceRuntimeError'
 // listing's merge of the revisions answers report are production's.
 
 const FRAME = 'SAMPLING_STRATUM_FRAME'
+const PROBABILITY = 'SAMPLING_PROBABILITY_SOURCE'
 // Opaque, as the Redux adapter's are: replaced credentials are another token equal to the first by value.
 const CREDENTIALS = Object.freeze({})
 const ASSET = {id: 'users/x/training', version: 't1'}
 
-let session, changes, clock, requests, calculations, owner
+let session, changes, clock, requests, calculations, owner, claimed
 
 beforeEach(() => {
     changes = new Subject()
     clock = fakeClock()
     requests = []
     calculations = []
+    claimed = []
     session = {
         catalogue: {'design-1': design()},
         listing: [{id: 'classification-1', revision: 1}],
@@ -41,7 +44,10 @@ beforeEach(() => {
             changes.next()
             return true
         },
-        claimAssets: () => () => {},
+        claimAssets: ids => {
+            claimed.push(...ids)
+            return () => ids.forEach(id => claimed.splice(claimed.indexOf(id), 1))
+        },
         learnSources: ({recipes}) => {
             const {recipes: listing, listingState} = observedListing({recipes: session.listing, listingState: session.listingState}, recipes)
             if (listing !== session.listing || listingState !== session.listingState) {
@@ -326,6 +332,32 @@ describe('the stratum frame of an open design', () => {
     })
 })
 
+describe('the probability source of an open design', () => {
+    it('is read beside the frame for the source its automatic proportions select, and the asset it names is claimed', () => {
+        session = {...session, catalogue: {'design-1': withProportions(design())}, assetEvidence: {[PROBABILITY_ASSET.id]: checked('t1')}}
+        owner.watch$('design-1').subscribe()
+
+        respondTo(PROBABILITY, sourceEvidence())
+
+        expect(requests.map(({request}) => request)).toContainEqual({dependency: PROBABILITY, question: probabilitySourceQuestion(withProportions(design()).model)})
+        expect(publishedFor(PROBABILITY)).toMatchObject({status: 'OBSERVED', evidence: {digest: 'source'}})
+        expect(claimed).toEqual([PROBABILITY_ASSET.id])
+    })
+
+    it('is withdrawn, and its asset released, once the proportions are entered by hand', () => {
+        session = {...session, catalogue: {'design-1': withProportions(design())}, assetEvidence: {[PROBABILITY_ASSET.id]: checked('t1')}}
+        owner.watch$('design-1').subscribe()
+        respondTo(PROBABILITY, sourceEvidence())
+        const opened = session.catalogue['design-1']
+
+        session = {...session, catalogue: {'design-1': {...opened, model: withProportions(design(), {manual: [true]}).model}}}
+        changes.next()
+
+        expect(publishedFor(PROBABILITY)).toBeUndefined()
+        expect(claimed).toEqual([])
+    })
+})
+
 describe('a question an editor asks of the frame', () => {
     it('is read again after a revision leaving it meaning the same, so what was calculated for it stays established', () => {
         const question = {...stratumFrameQuestion(design().model), crs: 'EPSG:32631'}
@@ -390,7 +422,28 @@ const answer = (index, evidence) => {
     calculations[index].complete()
 }
 
-const published = () => session.catalogue['design-1'].ui?.dependencyEvidence?.[FRAME]
+const published = () => publishedFor(FRAME)
+
+const publishedFor = dependency => session.catalogue['design-1'].ui?.dependencyEvidence?.[dependency]
+
+const PROBABILITY_ASSET = {id: 'users/x/probability', version: 't1'}
+
+// Automatic proportions anticipated from a probability asset.
+const withProportions = (recipe, proportions = {}) => ({
+    ...recipe,
+    model: {...recipe.model, proportions: {anticipationStrategy: 'PROBABILITY', type: 'ASSET', assetId: PROBABILITY_ASSET.id, band: 'p', scale: 30, ...proportions}}
+})
+
+const sourceEvidence = () => ({
+    dependency: PROBABILITY,
+    contractVersion: 1,
+    question: probabilitySourceQuestion(withProportions(design()).model),
+    digest: 'source',
+    provenance: {recipes: [], assets: [PROBABILITY_ASSET]},
+    unversioned: []
+})
+
+const respondTo = (dependency, evidence) => requests.find(({request}) => request.dependency === dependency).response$.next(evidence)
 
 // An asset's evidence as the session holds it once checked, at this token.
 const checked = version => ({version, unversioned: false, checkedAt: 0, changedAt: null, failure: null})

@@ -6,6 +6,13 @@ import ee from '#sepal/ee/ee'
 import imageFactory from '#sepal/ee/imageFactory'
 import {fileName} from '#sepal/path'
 import {STRATUM_FRAME, stratumFrameQuestionOf} from '#sepal/recipe/samplingDesign/stratumFrame'
+import {
+    PROBABILITY_SOURCE,
+    probabilitySourceQuestionOf,
+    STRATUM_PROBABILITIES,
+    STRATUM_PROBABILITIES_CONTRACT,
+    stratumProbabilitiesQuestionOf
+} from '#sepal/recipe/samplingDesign/stratumProbabilities'
 
 import {withDependencyEvidence$} from '../../dependencyEvidence.js'
 import {userStorageSerializerService} from '../../service/userStorageSerializer.js'
@@ -14,8 +21,10 @@ import {parseGroups} from '../batch/parse.js'
 import {toAreaWeightedProportions} from './areaWeightedProportions.js'
 import {weightedAreaSums} from './weightedAreaSums.js'
 
-// With `evidence`, the probabilities are answered with the evidence of the stratum frame this request read
-// (stratumFrame.js) - which pixels belong to which stratum - and nothing about the probability source itself.
+// With `evidence`, the probabilities are answered with what they were calculated from (stratumProbabilities.js): the
+// stratum frame and the probability source as this request read them, and the mode, target class and Scale. The frame
+// is answered again as `stratumFrameEvidence`, where a client of the previous release takes it from. Without
+// `evidence`, the probabilities alone.
 const worker$ = ({
     requestArgs: {aoi, stratification, stratificationBand = 'constant', probability, probabilityBand, mode = 'PROBABILITY', targetClass, scale, crs, batch, evidence},
     credentials: {sepalUser}
@@ -54,11 +63,21 @@ const worker$ = ({
     )
     return evidence
         ? withDependencyEvidence$({
-            dependency: STRATUM_FRAME,
-            question: stratumFrameQuestionOf({aoi, stratification, band: stratification ? stratificationBand : null, crs}),
+            dependencies: {
+                [STRATUM_FRAME]: stratumFrameQuestionOf({aoi, stratification, band: stratification ? stratificationBand : null, crs}),
+                [PROBABILITY_SOURCE]: probabilitySourceQuestionOf({probability, probabilityBand})
+            },
             calculate$: probabilities$
         }).pipe(
-            map(({result, evidence}) => ({probabilityPerStratum: result, stratumFrameEvidence: evidence}))
+            map(({result, evidence}) => ({
+                probabilityPerStratum: result,
+                calculatedFrom: {
+                    resource: {id: STRATUM_PROBABILITIES, contractVersion: STRATUM_PROBABILITIES_CONTRACT},
+                    question: stratumProbabilitiesQuestionOf({mode, targetClass, scale}),
+                    dependencies: evidence
+                },
+                stratumFrameEvidence: evidence[STRATUM_FRAME]
+            }))
         )
         : probabilities$()
 }

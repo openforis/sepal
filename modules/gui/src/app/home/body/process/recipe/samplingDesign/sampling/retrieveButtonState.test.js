@@ -1,6 +1,11 @@
+import {allocationReviewInputs} from '#sepal/recipe/samplingDesign/allocationReview'
+
 import {retrieveButtonState} from './retrieveButtonState'
 
-const validModel = {
+// The allocation as the Allocation panel applies it: with the record of what it was reviewed for.
+const reviewed = model => ({...model, sampleAllocation: {...model.sampleAllocation, reviewedInputs: allocationReviewInputs(model)}})
+
+const validModel = reviewed({
     stratification: {strata: [
         {value: 1, label: 'Forest', color: '#0a0', area: 3e8, weight: 0.3},
         {value: 2, label: 'Non-forest', color: '#a00', area: 7e8, weight: 0.7}
@@ -15,7 +20,7 @@ const validModel = {
         ]
     },
     sampleArrangement: {arrangementStrategy: 'RANDOM', seed: 1}
-}
+})
 const linked = {googleAccount: true, assetRoots: ['users/me']}
 
 describe('retrieveButtonState', () => {
@@ -24,7 +29,7 @@ describe('retrieveButtonState', () => {
     })
 
     it('reports the first model error (with args) before any capability check', () => {
-        const model = {
+        const model = reviewed({
             stratification: {skip: false, scale: 10, strata: [{value: 1, stratum: 1, label: 'Forest', color: '#0a0', area: 3e8, weight: 1}]},
             proportions: {skip: true},
             sampleAllocation: {
@@ -32,7 +37,7 @@ describe('retrieveButtonState', () => {
                 allocation: [{stratum: 1, label: 'Forest', color: '#0a0', area: 3e8, weight: 1, sampleSize: 30}]
             },
             sampleArrangement: {arrangementStrategy: 'SYSTEMATIC', sampleSizeStrategy: 'OVER', gridOrigin: 'FIXED', minDistance: 1, seed: 1}
-        }
+        })
         expect(retrieveButtonState({model, googleAccount: false, assetRoots: undefined}))
             .toEqual({disabled: true, kind: 'model', code: 'minDistanceBelowGrid', args: {value: 1, pixelSize: 10, minimum: 20}})
     })

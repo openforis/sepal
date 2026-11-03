@@ -1,20 +1,26 @@
-import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
 import {
     sameFrame,
     STRATUM_AREAS,
     STRATUM_FRAME,
     STRATUM_FRAME_DEPENDENCY,
+    stratumFrameQuestion,
     usesStratumAreas
 } from '#sepal/recipe/samplingDesign/stratumFrame'
+import {
+    PROBABILITY_SOURCE_DEPENDENCY,
+    probabilitySourceQuestion,
+    STRATUM_PROBABILITIES
+} from '#sepal/recipe/samplingDesign/stratumProbabilities'
 import api from '~/apiRegistry'
 
-import {editedProportionsStatus, editedStrataStatus, STRATUM_PROBABILITIES} from './freshnessRequirements'
+import {editedProportionsStatus, editedStrataStatus, STRATUM_PROBABILITIES as PROBABILITIES_OPERATION} from './freshnessRequirements'
+import {proportionsCoverStrata} from './sampling/designModel'
 import {isValidGridScale} from './samplingGridValidation'
 
-// What Sampling Design's panels calculate (calculatedResult.js): the stratum areas, and the probabilities automatic
-// proportions are anticipated from, each with the evidence of the stratum frame it read. Online and Batch answer the same
-// question, so neither is part of it - the mode chosen beside the result is how it is asked; presentation is applied to
-// whatever is answered.
+// What Sampling Design's panels calculate (calculatedResult.js): the stratum areas, with the evidence of the stratum frame
+// they read, and the probabilities automatic proportions are anticipated from, with the evidence of the frame and the
+// probability source. Online and Batch answer the same question, so neither is part of it - the mode chosen beside the
+// result is how it is asked; presentation is applied to whatever is answered.
 
 export const STRATUM_AREAS_CALCULATION = 'stratumAreas'
 export const STRATUM_PROBABILITIES_CALCULATION = 'stratumProbabilities'
@@ -24,33 +30,29 @@ export const samplingDesignCalculations = [
         id: STRATUM_AREAS_CALCULATION,
         panel: 'stratification',
         kind: STRATUM_AREAS,
-        dependency: STRATUM_FRAME_DEPENDENCY,
-        candidate: (recipe, stratification) => ({...recipe.model, stratification}),
+        dependencies: [STRATUM_FRAME_DEPENDENCY],
         question: model => areaQuestion(model),
         answered: ({stratification}) => Boolean(stratification?.strata?.length),
         batch: ({stratification}) => stratification?.eeStrategy === 'BATCH',
         request$: (question, {batch}) => api.gee.areaPerStratum$({...question, batch, evidence: true}),
-        evidenceOf: ({calculatedFrom}) => [calculatedFrom.dependencies[STRATUM_FRAME]],
         status: editedStrataStatus
     },
     {
         id: STRATUM_PROBABILITIES_CALCULATION,
         panel: 'proportions',
-        kind: 'SAMPLING_STRATUM_PROBABILITIES',
-        dependency: STRATUM_FRAME_DEPENDENCY,
-        candidate: (recipe, proportions) => ({...recipe.model, proportions}),
+        kind: STRATUM_PROBABILITIES,
+        dependencies: [STRATUM_FRAME_DEPENDENCY, PROBABILITY_SOURCE_DEPENDENCY],
         question: model => probabilityQuestion(model),
-        // Rows the planner flagged are answered for strata that have since changed.
-        answered: ({proportions}) => Boolean(proportions?.anticipatedProportions?.length) && !proportions.requiresUpdate,
+        // Rows for strata that have since changed answer for other strata: recalculated areas over an unchanged frame.
+        answered: model => proportionsCoverStrata(model),
         batch: ({proportions}) => proportions?.eeStrategy === 'BATCH',
         // A stratified design's probabilities group pixels by its strata, so they are calculated over current areas only,
         // and taken only over the frame those areas were calculated from: equal areas and weights say nothing about which
-        // pixels belong to each stratum. Whether the probability source itself changed is not evidenced yet.
-        operation: STRATUM_PROBABILITIES,
-        fits: ({stratumFrameEvidence}, recipe) => !usesStratumAreas(recipe.model)
-            || sameFrame(stratumFrameEvidence, recipe.model.stratification.strataCalculatedFrom?.dependencies?.[STRATUM_FRAME]),
+        // pixels belong to each stratum.
+        operation: PROBABILITIES_OPERATION,
+        fits: ({calculatedFrom}, recipe) => !usesStratumAreas(recipe.model)
+            || sameFrame(calculatedFrom.dependencies[STRATUM_FRAME], recipe.model.stratification.strataCalculatedFrom?.dependencies?.[STRATUM_FRAME]),
         request$: (question, {batch}) => api.gee.probabilityPerStratum$({...question, batch, evidence: true}),
-        evidenceOf: ({stratumFrameEvidence}) => [stratumFrameEvidence],
         status: editedProportionsStatus
     }
 ]
@@ -65,29 +67,26 @@ const areaQuestion = ({aoi, stratification = {}}) => {
     return {aoi, stratification: {type: type === 'RECIPE' ? 'RECIPE_REF' : 'ASSET', id}, band, crs, scale}
 }
 
-// The raw probabilities: the AOI and strata, the probability source and band, its mode and Scale, in the Stratification
-// CRS. The percentage interpretation, the overall-proportion override and the weights are applied to the answer.
-const probabilityQuestion = ({aoi, stratification = {}, proportions = {}}) => {
-    const {skip, manual, anticipationStrategy, type, recipeId, assetId, band, targetClass, scale} = proportions
-    const id = type === 'RECIPE' ? recipeId : assetId
+// The raw probabilities: the AOI and strata, the probability source and band, its mode and Scale, in the frame's CRS -
+// asked as the evidence of both dependencies records them, so nothing is asked of a selection they read nothing for. The
+// percentage interpretation, the overall-proportion override and the weights are applied to the answer.
+const probabilityQuestion = model => {
+    const {anticipationStrategy, targetClass, scale} = model.proportions || {}
+    const source = probabilitySourceQuestion(model)
     const categorical = anticipationStrategy === 'CATEGORICAL'
-    if (skip || isSet(manual) || !id || !band || (categorical && (targetClass == null || targetClass === '')) || !isValidGridScale(scale)) {
+    if (!source || (categorical && (targetClass == null || targetClass === '')) || !isValidGridScale(scale)) {
         return null
     }
-    const stratified = usesStratumAreas({stratification})
+    const frame = stratumFrameQuestion(model)
     return {
-        aoi,
-        stratification: stratified
-            ? {type: stratification.type === 'RECIPE' ? 'RECIPE_REF' : 'ASSET', id: stratification.type === 'RECIPE' ? stratification.recipeId : stratification.assetId}
-            : null,
-        stratificationBand: stratification.band,
-        probability: {type: type === 'RECIPE' ? 'RECIPE_REF' : 'ASSET', id},
-        probabilityBand: band,
+        aoi: model.aoi,
+        stratification: frame.stratification?.reference || null,
+        stratificationBand: model.stratification?.band,
+        probability: source.reference,
+        probabilityBand: source.band,
         mode: anticipationStrategy,
         targetClass: categorical ? Number(targetClass) : undefined,
         scale,
-        crs: stratification.crs || DEFAULT_SAMPLING_GRID_CRS
+        crs: frame.crs
     }
 }
-
-const isSet = value => Array.isArray(value) ? value.length > 0 : Boolean(value)

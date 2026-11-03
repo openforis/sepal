@@ -6,7 +6,9 @@ import {legacy_createStore as createStore} from 'redux'
 import {NEVER, Subject} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {allocationReviewInputs} from '#sepal/recipe/samplingDesign/allocationReview'
 import {stratumFrameQuestion} from '#sepal/recipe/samplingDesign/stratumFrame'
+import {probabilitySourceQuestion, stratumProbabilitiesQuestion} from '#sepal/recipe/samplingDesign/stratumProbabilities'
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {SourceRuntimeProvider, useSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
@@ -16,12 +18,12 @@ import {PortalContainer, PortalContext} from '~/widget/portal'
 
 // The stratum areas and automatic proportions Sampling Design's panels calculate as they open and as they are edited:
 // answered, failed, answered late or over other inputs, and applied by Apply, Enter or a set-up wizard's Next, or
-// cancelled. The panels, their form panel and its
-// calculation binding, the store and the source runtime the app composes over it are real, the design's frame evidence
-// watched as its editor watches it; Earth Engine, the panel chrome's activation, the pickers and the tables are
-// substituted.
+// cancelled - and what a design closed to them says once what they read changes. The panels, their form panel and its
+// calculation binding, the requirements, the store and the source runtime the app composes over it are real, the
+// design's dependency evidence watched as its editor watches it; Earth Engine, the panel chrome's activation, the
+// pickers and the tables are substituted.
 
-const harness = vi.hoisted(() => ({frameReads: [], calculations: [], wizard: null, inputs: {}}))
+const harness = vi.hoisted(() => ({evidenceReads: [], calculations: [], wizard: null, inputs: {}}))
 
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/apiRegistry', () => {
@@ -33,7 +35,7 @@ vi.mock('~/apiRegistry', () => {
     return {
         default: {
             gee: {
-                dependencyEvidence$: read(harness.frameReads),
+                dependencyEvidence$: read(harness.evidenceReads),
                 areaPerStratum$: read(harness.calculations),
                 probabilityPerStratum$: read(harness.calculations),
                 assetVersions$: () => NEVER
@@ -76,7 +78,13 @@ vi.mock('./proportions/proportionControls', () => ({
         return null
     },
     OverallProportionInput: () => null,
-    ProportionsHeaderButtons: () => null,
+    ProportionsHeaderButtons: ({manual, onManualToggled}) => {
+        harness.toggleManual = on => {
+            manual.set(on ? [true] : [])
+            onManualToggled(on)
+        }
+        return null
+    },
     StrataProportion: ({anticipatedProportions, calculationError, feedback, emptyMessage}) => {
         harness.inputs.anticipatedProportions = anticipatedProportions
         harness.proportions = {calculationError, feedback, emptyMessage}
@@ -84,21 +92,24 @@ vi.mock('./proportions/proportionControls', () => ({
     }
 }))
 
-const {samplingDesignRequirements} = await import('../freshnessRequirements')
+const {samplingDesignRequirements, samplesGate} = await import('../freshnessRequirements')
+const {sectionProblemsOfState} = await import('../../selectedSourceStatus')
 const {samplingDesignCalculations} = await import('../calculations')
 const {Stratification} = await import('./stratification/stratification')
 const {Proportions} = await import('./proportions/proportions')
+const {isSectionStale} = await import('../sampling/validateRetrieve')
 
 harness.type = {sourceRequirements: samplingDesignRequirements, calculatedResults: samplingDesignCalculations}
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 const FRAME = 'SAMPLING_STRATUM_FRAME'
+const PROBABILITY = 'SAMPLING_PROBABILITY_SOURCE'
 const AOI = {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1], [0, 0]]}
 
 let store, root, container
 
 beforeEach(() => {
-    harness.frameReads.length = 0
+    harness.evidenceReads.length = 0
     harness.calculations.length = 0
     harness.inputs = {}
     harness.wizard = {next: vi.fn()}
@@ -140,7 +151,7 @@ describe('the Stratification panel', () => {
 
         expect(harness.calculations).toEqual([])
 
-        await answerFrames({digest: 'after'})
+        await answerEvidence({digest: 'after'})
 
         expect(harness.calculations).toHaveLength(1)
     })
@@ -155,7 +166,7 @@ describe('the Stratification panel', () => {
     it('asks nothing for areas while the frame cannot be read', async () => {
         await open(Stratification, selected(), null)
 
-        await failFrames()
+        await failEvidence()
 
         expect(harness.calculations).toEqual([])
         expect(text()).toContain('process.samplingDesign.retrieve.evidence.SOURCE_UNAVAILABLE')
@@ -172,7 +183,7 @@ describe('the Stratification panel', () => {
         await open(Stratification, stratified({}), {})
 
         await answer({groups: [{stratum: 1, area: 100}], calculatedFrom: areasFrom(frameOf(applied(), {}))})
-        await answerFrames()
+        await answerEvidence()
 
         expect(harness.calculations).toHaveLength(1)
     })
@@ -182,7 +193,7 @@ describe('the Stratification panel', () => {
 
         await list(2)
 
-        expect(harness.frameReads.length).toBeGreaterThan(1)
+        expect(harness.evidenceReads.length).toBeGreaterThan(1)
         expect(harness.calculations).toEqual([])
     })
 
@@ -291,7 +302,7 @@ describe('the Stratification panel', () => {
         // A CRS other than the default is shown without asking for more.
         await open(Stratification, stratified({areas: 'frame'}), {})
         await type('process.samplingDesign.panel.stratification.form.crs.label', 'EPSG:32631')
-        await answerFrames({digest: EDITED_FRAME})
+        await answerEvidence({digest: EDITED_FRAME})
         await answer({groups: [{stratum: 1, area: 200}], calculatedFrom: areasFrom(frameOf(edited(), {digest: 'edited'}))})
 
         await list(2, {digest: EDITED_FRAME})
@@ -303,8 +314,8 @@ describe('the Stratification panel', () => {
 })
 
 describe('the Proportions panel', () => {
-    it.each([['ONLINE', false], ['BATCH', true]])('opened %s over proportions marked for update, calculates them in that mode over the current areas', async (eeStrategy, batch) => {
-        await open(Proportions, stratified({areas: 'after', proportions: {requiresUpdate: true, frame: 'after', eeStrategy}}), {digest: 'after'})
+    it.each([['ONLINE', false], ['BATCH', true]])('opened %s over proportions for strata the design no longer has, calculates them in that mode over the current areas', async (eeStrategy, batch) => {
+        await open(Proportions, stratified({areas: 'after', proportions: {frame: 'after', rows: [{stratum: 2, proportion: 0.5}], eeStrategy}}), {digest: 'after'})
 
         expect(harness.calculations.map(({body}) => _.pick(body, ['batch', 'evidence']))).toEqual([{batch, evidence: true}])
     })
@@ -312,12 +323,12 @@ describe('the Proportions panel', () => {
     it.each([
         ['not calculated yet', {empty: true}],
         ['saved without evidence', {}]
-    ])('opened over proportions %s, waits for the frame\'s evidence, and calculates them once it is read', async (_name, proportions) => {
+    ])('opened over proportions %s, waits for the evidence of what they read, and calculates them once it is read', async (_name, proportions) => {
         await open(Proportions, unstratified(proportions), null)
 
         expect(harness.calculations).toEqual([])
 
-        await answerFrames({digest: 'aoi'})
+        await answerEvidence({digest: 'aoi'})
 
         expect(harness.calculations).toHaveLength(1)
     })
@@ -325,7 +336,7 @@ describe('the Proportions panel', () => {
     it('asks nothing for proportions not calculated yet while the frame cannot be read', async () => {
         await open(Proportions, unstratified({empty: true}), null)
 
-        await failFrames()
+        await failEvidence()
 
         expect(harness.calculations).toEqual([])
         expect(harness.proportions.emptyMessage).toBe('process.samplingDesign.retrieve.evidence.SOURCE_UNAVAILABLE')
@@ -338,8 +349,41 @@ describe('the Proportions panel', () => {
         expect(harness.proportions.emptyMessage).toBe('process.samplingDesign.panel.proportions.form.result.UNVERSIONED')
     })
 
+    it('asks nothing for proportions not calculated yet over a probability source that cannot report replacement', async () => {
+        await open(Proportions, unstratified({empty: true}), {digest: 'aoi', source: {unversioned: ['gs://bucket/probability.tif']}})
+
+        expect(harness.calculations).toEqual([])
+        expect(harness.proportions.emptyMessage).toBe('process.samplingDesign.panel.proportions.form.result.UNVERSIONED')
+    })
+
     it('opened over current proportions, asks nothing', async () => {
         await open(Proportions, stratified({areas: 'areas', proportions: {frame: 'areas'}}), {digest: 'areas'})
+
+        expect(harness.calculations).toEqual([])
+    })
+
+    it.each([
+        ['the probability recipe', {'probability-1': 2}],
+        ['a recipe the probability recipe reads', {'mosaic-1': 2}]
+    ])('opened over current proportions, calculates them again once %s changes, though the frame does not', async (_name, revisions) => {
+        await open(Proportions, stratified({areas: 'areas', proportions: {frame: 'areas'}}), {digest: 'areas'})
+
+        await relist(revisions, {source: {digest: 'changed'}})
+
+        expect(harness.calculations).toHaveLength(1)
+        expect(harness.calculations[0].body.probability).toEqual({type: 'RECIPE_REF', id: 'probability-1'})
+    })
+
+    it('opened over proportions whose probability source changed since they were saved, calculates them again', async () => {
+        await open(Proportions, stratified({areas: 'areas', proportions: {frame: 'areas'}}), {digest: 'areas', source: {digest: 'changed'}})
+
+        expect(harness.calculations).toHaveLength(1)
+    })
+
+    it('opened over current proportions, asks nothing once the probability recipe only changed its title', async () => {
+        await open(Proportions, stratified({areas: 'areas', proportions: {frame: 'areas'}}), {digest: 'areas'})
+
+        await relist({'probability-1': 2}, {source: {digest: 'source'}})
 
         expect(harness.calculations).toEqual([])
     })
@@ -353,9 +397,41 @@ describe('the Proportions panel', () => {
         expect(harness.calculations.map(({body}) => body.scale)).toEqual([60])
     })
 
-    it('opened over manual proportions, asks nothing', async () => {
+    it('switched to manual over rows for strata the design no longer has, keeps their answers for the strata it has', async () => {
+        const restratified = stratified({areas: 'areas', proportions: {frame: 'areas', rows: [{stratum: 1, proportion: 0.5}, {stratum: 3, proportion: 0.2}]}})
+        restratified.model.stratification.strata = [...restratified.model.stratification.strata, {value: 2, label: 'New', color: '#0000aa', area: 100, weight: 1}]
+        await open(Proportions, restratified, {digest: 'areas'})
+
+        await act(async () => harness.toggleManual(true))
+        await click('button.apply')
+
+        expect(applied().proportions.anticipatedProportions).toEqual([{stratum: 1, proportion: 0.5}, {stratum: 2}])
+        expect('requiresUpdate' in applied().proportions).toBe(false)
+    })
+
+    it('switched to manual over flagged proportions holding no rows, settles the answers entered', async () => {
+        await open(Proportions, stratified({areas: 'areas', proportions: {empty: true, requiresUpdate: true}}), {digest: 'areas'})
+
+        await act(async () => harness.toggleManual(true))
+        await act(async () => harness.inputs.anticipatedProportions.set([{stratum: 1, proportion: 40}]))
+        await click('button.apply')
+
+        expect(applied().proportions).toMatchObject({manual: [true], anticipatedProportions: [{stratum: 1, proportion: 0.4}]})
+        expect(isSectionStale(applied(), 'proportions')).toBe(false)
+    })
+
+    it('asks nothing of a probability source of no known type, though an asset id is retained', async () => {
+        const malformed = stratified({areas: 'areas', proportions: {empty: true, eeStrategy: 'BATCH'}})
+        malformed.model.proportions = {...malformed.model.proportions, type: 'UNKNOWN', assetId: 'users/x/probability'}
+        await open(Proportions, malformed, {digest: 'areas'})
+
+        expect(harness.calculations).toEqual([])
+    })
+
+    it('opened over manual proportions, reads no probability source and asks nothing', async () => {
         await open(Proportions, stratified({areas: 'areas', proportions: {manual: true}}), {digest: 'areas'})
 
+        expect(harness.evidenceReads.map(({body}) => body.dependency)).not.toContain(PROBABILITY)
         expect(harness.calculations).toEqual([])
     })
 
@@ -364,7 +440,7 @@ describe('the Proportions panel', () => {
 
         expect(harness.calculations).toEqual([])
 
-        await answerFrames({digest: 'areas'})
+        await answerEvidence({digest: 'areas'})
 
         expect(harness.calculations).toHaveLength(1)
     })
@@ -380,31 +456,68 @@ describe('the Proportions panel', () => {
         await open(Proportions, stratified({areas: 'areas', proportions: {}}), {digest: 'areas'})
         const opened = harness.inputs.anticipatedProportions.value
 
-        await answer({probabilityPerStratum: PROBABILITIES, stratumFrameEvidence: frameOf(applied(), {digest: 'another frame'})})
+        await answer(probabilitiesAnswer({frame: 'another frame'}))
 
         expect(harness.proportions.calculationError.message).toBe('process.samplingDesign.panel.proportions.form.result.superseded')
         expect(harness.inputs.anticipatedProportions.value).toEqual(opened)
         expect(harness.calculations).toHaveLength(1)
     })
 
-    it('takes probabilities over the frame the current areas were calculated from, with that evidence', async () => {
+    it('does not take probabilities answered over a probability recipe revision the session already knows was superseded, nor ask again', async () => {
         await open(Proportions, stratified({areas: 'areas', proportions: {}}), {digest: 'areas'})
 
-        await answer({probabilityPerStratum: PROBABILITIES, stratumFrameEvidence: frameOf(applied(), {digest: 'areas'})})
+        await relist({'probability-1': 2}, {source: {digest: 'source'}})
+        await answer(probabilitiesAnswer({frame: 'areas', sourceRevision: 1}))
+
+        expect(harness.proportions.calculationError.message).toBe('process.samplingDesign.panel.proportions.form.result.superseded')
+        expect(harness.calculations).toHaveLength(1)
+    })
+
+    it('takes probabilities with what they were calculated from, and applies that evidence alone', async () => {
+        await open(Proportions, stratified({areas: 'areas', proportions: {}}), {digest: 'areas'})
+
+        await answer(probabilitiesAnswer({frame: 'areas', source: 'calculated'}))
         await click('button.apply')
 
-        expect(applied().proportions.stratumFrameEvidence.digest).toBe('areas')
+        const {probabilityPerStratumCalculatedFrom: calculatedFrom} = applied().proportions
+        expect(calculatedFrom.dependencies[FRAME].digest).toBe('areas')
+        expect(calculatedFrom.dependencies[PROBABILITY].digest).toBe('calculated')
         expect(applied().proportions.probabilityPerStratum).toEqual(PROBABILITIES)
+        expect('stratumFrameEvidence' in applied().proportions).toBe(false)
+    })
+
+    it('keeps recalculated probabilities in the draft: Cancel leaves the saved ones applied', async () => {
+        await open(Proportions, stratified({areas: 'areas', proportions: {frame: 'areas'}}), {digest: 'areas', source: {digest: 'changed'}})
+
+        await answer(probabilitiesAnswer({frame: 'areas', source: 'changed'}))
+        await click('button.cancel')
+
+        expect(applied().proportions.probabilityPerStratumCalculatedFrom.dependencies[PROBABILITY].digest).toBe('source')
+        expect(applied().proportions.probabilityPerStratum).toEqual([{stratum: 1, probability: 0.5}])
     })
 
     it('takes an unstratified design\'s probabilities over its AOI and CRS, without any area evidence', async () => {
         await open(Proportions, unstratified({}), {})
 
-        await answer({probabilityPerStratum: PROBABILITIES, stratumFrameEvidence: frameOf(applied(), {digest: 'aoi'})})
+        await answer(probabilitiesAnswer({frame: 'aoi'}))
         await click('button.apply')
 
         expect(harness.calculations[0].body).toMatchObject({stratification: null, evidence: true})
-        expect(applied().proportions.stratumFrameEvidence.digest).toBe('aoi')
+        expect(applied().proportions.probabilityPerStratumCalculatedFrom.dependencies[FRAME].digest).toBe('aoi')
+    })
+
+    it('asks an unstratified design stating no CRS in the CRS its frame is read in, and holds the answer current', async () => {
+        const noCrs = unstratified({})
+        delete noCrs.model.stratification.crs
+        await open(Proportions, noCrs, {})
+
+        await answer(probabilitiesAnswer({frame: 'aoi'}))
+        await click('button.apply')
+        await answerEvidence({digest: 'aoi'})
+
+        expect(harness.calculations[0].body.crs).toBe('EPSG:6933')
+        expect(harness.evidenceReads.find(({body}) => body.dependency === FRAME).body.question.crs).toBe('EPSG:6933')
+        expect(harness.calculations).toHaveLength(1)
     })
 
     it.each(SUBMISSIONS)('refuses %s of edited proportions once the frame they were calculated over changed, calculating them again', async (_name, submit) => {
@@ -418,13 +531,154 @@ describe('the Proportions panel', () => {
         expect(harness.calculations).toHaveLength(1)
         expect(harness.wizard.next).not.toHaveBeenCalled()
     })
+
+    it('refuses Apply of edited proportions once their probability source changed, calculating them again', async () => {
+        await open(Proportions, unstratified({frame: 'frame'}), {})
+        await act(async () => harness.inputs.anticipatedProportions.set([{stratum: 1, proportion: 40}]))
+
+        await relist({'probability-1': 2}, {source: {digest: 'changed'}})
+        await click('button.apply')
+
+        expect(applied().proportions.anticipatedProportions).toEqual([{stratum: 1, proportion: 0.5}])
+        expect(harness.calculations).toHaveLength(1)
+    })
+})
+
+describe('manual proportions', () => {
+    it.each([
+        ['the form\'s toggle', true],
+        ['an earlier version\'s flag', 'flag']
+    ])('saved as %s, opened over strata that changed, keep each answer with its stratum in the draft, a new one unanswered and a vanished one gone; Cancel leaves them as saved', async (_name, manual) => {
+        const restratified = stratified({areas: 'areas', proportions: {manual, rows: [{stratum: 1, proportion: 0.5}, {stratum: 2, proportion: 0.2}]}})
+        restratified.model.stratification.strata = [{value: 3, label: 'New', color: '#0000aa', area: 100, weight: 0.5}, {value: 1, label: 'Original', color: '#00aa00', area: 100, weight: 0.5}]
+        const saved = restratified.model.proportions.anticipatedProportions
+        await open(Proportions, restratified, {digest: 'areas'})
+
+        expect(harness.inputs.anticipatedProportions.value).toEqual([{stratum: 3}, {stratum: 1, proportion: 50}])
+
+        await click('button.cancel')
+
+        expect(applied().proportions.anticipatedProportions).toEqual(saved)
+        expect(marks()).toEqual({proportions: 'error'})
+    })
+
+    it('saved with an empty skip toggle, are not skipped: Apply keeps the answers edited', async () => {
+        const design = stratified({areas: 'areas', proportions: {manual: true}})
+        design.model.proportions.skip = []
+        await open(Proportions, design, {digest: 'areas'})
+
+        await act(async () => harness.inputs.anticipatedProportions.set([{stratum: 1, proportion: 40}]))
+        await click('button.apply')
+
+        expect(applied().proportions).toMatchObject({skip: false, anticipatedProportions: [{stratum: 1, proportion: 0.4}]})
+    })
+
+    it('opened over answers the strata were reordered under, keep them as they are, asking nothing', async () => {
+        const reordered = stratified({areas: 'areas', proportions: {manual: true, rows: [{stratum: 1, proportion: 0.5}, {stratum: 2, proportion: 0.2}]}})
+        reordered.model.stratification.strata = [{value: 2, label: 'Other', color: '#0000aa', area: 100, weight: 0.5}, {value: 1, label: 'Original', color: '#00aa00', area: 100, weight: 0.5}]
+        await open(Proportions, reordered, {digest: 'areas'})
+
+        expect(harness.inputs.anticipatedProportions.value).toEqual([{stratum: 1, proportion: 50}, {stratum: 2, proportion: 20}])
+        expect(marks()).not.toHaveProperty('proportions')
+        expect(harness.calculations).toEqual([])
+    })
+
+    it('an earlier version flagged, though they answer for every stratum, are settled by Apply', async () => {
+        await open(Proportions, stratified({areas: 'areas', proportions: {manual: true, requiresUpdate: true}}), {digest: 'areas'})
+        expect(marks()).toEqual({proportions: 'error'})
+
+        await click('button.apply')
+
+        expect('requiresUpdate' in applied().proportions).toBe(false)
+        expect(applied().proportions.anticipatedProportions).toEqual([{stratum: 1, proportion: 0.5}])
+        expect(marks()).not.toHaveProperty('proportions')
+    })
+
+    it('an earlier version flagged stay flagged when the panel is cancelled', async () => {
+        await open(Proportions, stratified({areas: 'areas', proportions: {manual: true, requiresUpdate: true}}), {digest: 'areas'})
+
+        await click('button.cancel')
+
+        expect(applied().proportions.requiresUpdate).toBe(true)
+        expect(marks()).toEqual({proportions: 'error'})
+    })
+
+    it.each([
+        ['Apply', () => button('button.apply').click()],
+        ['Enter', () => document.querySelector('form').dispatchEvent(new Event('submit', {bubbles: true, cancelable: true}))]
+    ])('are refused by %s once the strata change under them before the panel renders again, saying so', async (_name, submit) => {
+        await open(Proportions, stratified({areas: 'areas', proportions: {manual: true}}), {digest: 'areas'})
+        await act(async () => harness.inputs.anticipatedProportions.set([{stratum: 1, proportion: 40}]))
+        await settled()
+
+        await act(async () => {
+            actionBuilder('RESTRATIFIED')
+                .set('process.loadedRecipes.design.model.stratification.strata', [{value: 2, label: 'Other', color: '#0000aa', area: 100, weight: 1}])
+                .dispatch()
+            submit()
+        })
+        await settled()
+
+        expect(applied().proportions.anticipatedProportions).toEqual([{stratum: 1, proportion: 0.5}])
+        expect(harness.proportions.feedback).toEqual({errorMessage: 'process.samplingDesign.sectionStatus.proportions.REQUIRES_UPDATE'})
+    })
+})
+
+describe('proportions a client of the previous release saved', () => {
+    it.each([
+        ['with frame evidence alone', {legacyFrame: 'frame'}],
+        ['beside full evidence a newer client recorded, though the sources read as it says', {frame: 'frame', legacyFrame: null}]
+    ])('%s, are calculated once as the panel opens, and applied without that frame evidence', async (_name, proportions) => {
+        await open(Proportions, unstratified(proportions), {})
+
+        expect(harness.calculations).toHaveLength(1)
+
+        await answer(probabilitiesAnswer({frame: 'frame'}))
+        await click('button.apply')
+
+        expect('stratumFrameEvidence' in applied().proportions).toBe(false)
+        expect(applied().proportions.probabilityPerStratumCalculatedFrom.dependencies[PROBABILITY].digest).toBe('source')
+    })
+
+    it('keep that frame evidence through an Apply that calculates nothing', async () => {
+        await open(Proportions, unstratified({frame: 'frame', legacyFrame: null}), null)
+        await failEvidence()
+        await act(async () => harness.inputs.anticipatedProportions.set([{stratum: 1, proportion: 40}]))
+
+        await click('button.apply')
+
+        expect(applied().proportions.anticipatedProportions).toEqual([{stratum: 1, proportion: 0.4}])
+        expect(applied().proportions.stratumFrameEvidence).toBe(null)
+    })
+})
+
+describe('a design no panel is open on', () => {
+    it.each([
+        ['the probability recipe', {'probability-1': 2}],
+        ['a recipe the probability recipe reads', {'mosaic-1': 2}]
+    ])('once %s changes, marks proportions alone and holds Retrieve, calculating nothing', async (_name, revisions) => {
+        await open(NoPanel, stratified({areas: 'areas', proportions: {frame: 'areas'}, allocation: true}), {digest: 'areas'})
+        expect(marks()).toEqual({})
+
+        await relist(revisions, {source: {digest: 'changed'}})
+
+        expect(marks()).toEqual({proportions: 'error'})
+        expect(samplesGate(design(), Date.now())).not.toBe(null)
+        expect(harness.calculations).toEqual([])
+    })
+
+    it('reopened over proportions whose probability source changed while it was closed, marks proportions alone', async () => {
+        await open(NoPanel, stratified({areas: 'areas', proportions: {frame: 'areas'}, allocation: true}), {digest: 'areas', source: {digest: 'changed'}})
+
+        expect(marks()).toEqual({proportions: 'error'})
+    })
 })
 
 const PROBABILITIES = [{stratum: 1, probability: 0.25}]
 
 // A design stratified by a classification, its areas calculated over a frame of this digest, or saved without
-// evidence, and its proportions skipped unless given.
-const stratified = ({eeStrategy = 'ONLINE', areas, proportions}) => {
+// evidence, its proportions skipped unless given, and its allocation, where asked for, reviewed over them.
+const stratified = ({eeStrategy = 'ONLINE', areas, proportions, allocation}) => {
     const model = {
         aoi: AOI,
         stratification: {
@@ -439,7 +693,11 @@ const stratified = ({eeStrategy = 'ONLINE', areas, proportions}) => {
     if (proportions) {
         model.proportions = anticipated(model, proportions)
     }
-    return {sources: ['classification-1'], model}
+    if (allocation) {
+        model.sampleAllocation = {manual: [true], allocationStrategy: 'EQUAL', allocation: [{stratum: 1, sampleSize: 30}]}
+        model.sampleAllocation.reviewedInputs = allocationReviewInputs(model)
+    }
+    return {sources: ['classification-1', ...SOURCE_RECIPES], model}
 }
 
 // A design whose stratification source and band are selected, its areas not calculated yet.
@@ -457,17 +715,29 @@ const unstratified = proportions => {
         stratification: {skip: true, crs: 'EPSG:6933', strata: [{value: 1, label: 'All', color: '#000000', weight: 1}]}
     }
     model.proportions = anticipated(model, proportions)
-    return {sources: ['aoi-recipe'], model}
+    return {sources: ['aoi-recipe', ...SOURCE_RECIPES], model}
 }
 
-// Proportions anticipated from a probability image, or entered by hand.
-const anticipated = (model, {requiresUpdate = false, frame, manual = false, empty = false, eeStrategy = 'ONLINE'}) => ({
-    skip: false, manual: manual ? [true] : [], anticipationStrategy: 'PROBABILITY', type: 'ASSET', assetId: 'users/x/probability', band: 'p',
-    scale: 30, eeStrategy, percentage: false, requiresUpdate,
-    probabilityPerStratum: empty ? null : [{stratum: 1, probability: 0.5}],
-    anticipatedProportions: empty ? null : [{stratum: 1, proportion: 0.5}],
-    ...(frame && {stratumFrameEvidence: frameOf(model, {digest: frame})})
-})
+// The probability recipe the proportions select, and a recipe it reads.
+const SOURCE_RECIPES = ['probability-1', 'mosaic-1']
+
+// Proportions anticipated from a probability recipe, calculated over a frame and probability source of these digests, or
+// entered by hand - `manual` true for the form's toggle, or 'flag' as an earlier version saved it - `legacyFrame` the frame evidence
+// a client of the previous release saved with them, null included, and `requiresUpdate` the flag an earlier version did.
+const anticipated = (model, {frame, source = 'source', legacyFrame, rows, manual = false, empty = false, eeStrategy = 'ONLINE', requiresUpdate}) => {
+    const proportions = {
+        skip: false, manual: manual === 'flag' ? true : manual ? [true] : [], anticipationStrategy: 'PROBABILITY', type: 'RECIPE', recipeId: 'probability-1', band: 'p',
+        scale: 30, eeStrategy, percentage: false, ...requiresUpdate !== undefined && {requiresUpdate},
+        probabilityPerStratum: empty ? null : [{stratum: 1, probability: 0.5}],
+        anticipatedProportions: empty ? null : rows || [{stratum: 1, proportion: 0.5}]
+    }
+    const design = {...model, proportions}
+    return {
+        ...proportions,
+        ...(frame && {probabilityPerStratumCalculatedFrom: probabilitiesFrom(design, {frame, source})}),
+        ...(legacyFrame !== undefined && {stratumFrameEvidence: legacyFrame && frameOf(design, {digest: legacyFrame})})
+    }
+}
 
 // The frame's evidence as Earth Engine answers it for a model, read from the one recipe its sources name.
 const frameOf = (model, {digest = 'frame', revision = 1, unversioned = []}) => ({
@@ -475,9 +745,27 @@ const frameOf = (model, {digest = 'frame', revision = 1, unversioned = []}) => (
     provenance: {recipes: [{id: model.stratification.recipeId || model.aoi.id, revision}], assets: []}, unversioned
 })
 
+// The probability source's evidence as Earth Engine answers it for a model: the probability recipe and what it reads.
+const sourceOf = (model, {digest = 'source', revision = 1, upstream = 1, unversioned = []} = {}) => ({
+    dependency: PROBABILITY, contractVersion: 1, question: probabilitySourceQuestion(model), digest,
+    provenance: {recipes: [{id: 'mosaic-1', revision: upstream}, {id: 'probability-1', revision}], assets: []}, unversioned
+})
+
 const areasFrom = evidence => ({
     resource: {id: 'SAMPLING_STRATUM_AREAS', contractVersion: 1}, question: {scale: 30}, dependencies: {[FRAME]: evidence}
 })
+
+const probabilitiesFrom = (model, {frame, source, sourceRevision = 1}) => ({
+    resource: {id: 'SAMPLING_STRATUM_PROBABILITIES', contractVersion: 1},
+    question: stratumProbabilitiesQuestion(model),
+    dependencies: {[FRAME]: frameOf(model, {digest: frame}), [PROBABILITY]: sourceOf(model, {digest: source, revision: sourceRevision})}
+})
+
+// The probabilities as the operation answers them for the applied design, the frame again where older clients read it.
+const probabilitiesAnswer = ({frame = 'frame', source = 'source', sourceRevision} = {}) => {
+    const calculatedFrom = probabilitiesFrom(applied(), {frame, source, sourceRevision})
+    return {probabilityPerStratum: PROBABILITIES, calculatedFrom, stratumFrameEvidence: calculatedFrom.dependencies[FRAME]}
+}
 
 // The design open in a session, its frame's current evidence answered as `current` says, or still being read.
 const open = async (Panel, {sources, model}, current) => {
@@ -495,7 +783,7 @@ const open = async (Panel, {sources, model}, current) => {
     document.body.appendChild(container)
     root = createRoot(container)
     await act(async () => root.render(view(Panel)))
-    current ? await answerFrames(current) : await settled()
+    current ? await answerEvidence(current) : await settled()
 }
 
 const view = Panel =>
@@ -522,23 +810,35 @@ const DesignEvidence = () => {
     return null
 }
 
-// Every frame evidence read waiting is answered for the question it asked, `digest` that question's or a function of it.
-const answerFrames = async ({digest = 'frame', revision = 1, unversioned = []} = {}) => {
+// Every evidence read waiting is answered for the question it asked: the frame's at `digest` - that question's, or a
+// function of it - and the probability source's as `source` says, at the revisions the listing holds unless told.
+const answerEvidence = async ({digest = 'frame', revision = 1, unversioned = [], source = {}} = {}) => {
     await settled()
-    const waiting = harness.frameReads.filter(read => !read.answered)
+    const waiting = harness.evidenceReads.filter(read => !read.answered)
     await act(async () => waiting.forEach(read => {
-        const {question} = read.body
+        const {dependency, question} = read.body
         read.answered = true
-        read.response$.next({...frameOf(applied(), {digest: _.isFunction(digest) ? digest(question) : digest, revision, unversioned}), question})
+        read.response$.next(dependency === PROBABILITY
+            ? {...sourceOf(applied(), {revision: listed('probability-1'), upstream: listed('mosaic-1'), ...source}), question}
+            : {...frameOf(applied(), {digest: _.isFunction(digest) ? digest(question) : digest, revision, unversioned}), question})
     }))
     await settled()
 }
 
-// The recipe the frame reads is listed at a newer revision, and the frame read again answers for it.
+// The recipes the design reads are listed at a newer revision, and what read them is read again and answered for it.
 const list = async (revision, {digest = 'frame'} = {}) => {
     await act(async () => actionBuilder('LISTED').set('process.recipes', harness.sources().map(id => ({id, revision}))).dispatch())
-    await answerFrames({digest, revision})
+    await answerEvidence({digest, revision})
 }
+
+// Some recipes are listed at newer revisions, {[id]: revision}, and what read them is read again and answered.
+const relist = async (revisions, answers) => {
+    const recipes = store.getState().process.recipes.map(recipe => ({...recipe, revision: revisions[recipe.id] ?? recipe.revision}))
+    await act(async () => actionBuilder('LISTED').set('process.recipes', recipes).dispatch())
+    await answerEvidence(answers)
+}
+
+const listed = id => store.getState().process.recipes.find(recipe => recipe.id === id)?.revision ?? 1
 
 harness.sources = () => store.getState().process.recipes.map(({id}) => id)
 
@@ -548,12 +848,14 @@ const answer = async response => {
         harness.calculations.at(-1).response$.next(response)
         harness.calculations.at(-1).response$.complete()
     })
-    await answerFrames({digest: response.calculatedFrom?.dependencies[FRAME].digest ?? response.stratumFrameEvidence.digest})
+    const {[FRAME]: frame, [PROBABILITY]: source} = response.calculatedFrom.dependencies
+    await answerEvidence({digest: frame.digest, source: source ? {digest: source.digest} : {}})
 }
 
-const failFrames = async () => {
+// Every evidence read waiting fails.
+const failEvidence = async () => {
     await settled()
-    const waiting = harness.frameReads.filter(read => !read.answered)
+    const waiting = harness.evidenceReads.filter(read => !read.answered)
     await act(async () => waiting.forEach(read => {
         read.answered = true
         read.response$.error(new Error('Unreadable'))
@@ -567,7 +869,18 @@ const fail = async error => {
     await settled()
 }
 
-const applied = () => store.getState().process.loadedRecipes.design.model
+const design = () => store.getState().process.loadedRecipes.design
+
+const applied = () => design().model
+
+// Each section the toolbar marks, as unfinished or wrong.
+const marks = () => {
+    const {sourceProblems, incompleteSections} = sectionProblemsOfState(store.getState(), 'design', null, Date.now())
+    return Object.fromEntries(Object.keys(sourceProblems).map(section => [section, incompleteSections[section] ? 'incomplete' : 'error']))
+}
+
+// The design open with none of its panels.
+const NoPanel = () => null
 
 // The design as the Stratification panel's edited CRS would leave it, and the digest of each frame it reads.
 const edited = () => ({...applied(), stratification: {...applied().stratification, crs: 'EPSG:32631'}})

@@ -74,8 +74,9 @@ export const toTaskRecipe = recipe => {
     }
 }
 
-// What a calculation was calculated from is the task's to check (freshnessGate.js), not metadata of the samples:
-// it repeats the AOI and its provenance, and an Earth Engine string property longer than 16,384 bytes is dropped.
+// What a calculation was calculated from, and what the allocation was reviewed for, are the task's to check
+// (freshnessGate.js, samplingPreflight.js), not metadata of the samples: they repeat the AOI, its provenance and the
+// strata, and an Earth Engine string property longer than 16,384 bytes is dropped.
 const taskProperties = recipe => ({
     recipe_id: recipe.id,
     recipe_projectId: recipe.projectId,
@@ -154,5 +155,6 @@ export const submitRetrieveRecipeTask = (recipe, capability) => {
 const withoutEvidence = model => ({
     ...model,
     ...(model?.stratification && {stratification: _.omit(model.stratification, 'strataCalculatedFrom')}),
-    ...(model?.proportions && {proportions: _.omit(model.proportions, 'stratumFrameEvidence')})
+    ...(model?.proportions && {proportions: _.omit(model.proportions, ['probabilityPerStratumCalculatedFrom', 'stratumFrameEvidence'])}),
+    ...(model?.sampleAllocation && {sampleAllocation: _.omit(model.sampleAllocation, 'reviewedInputs')})
 })

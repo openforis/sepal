@@ -274,7 +274,7 @@ const configurationStatusOf = (reads, sectionId) => {
 
 // What a local read says: its own diagnosis, followed by the prerequisites in its section it waits on, named - not by
 // what they say. Held by nothing else, or waiting on another section, it says nothing.
-const localStatusOf = read => {
+export const localStatusOf = read => {
     if (read.verdict.status === SUPPORTED || waitsOnAnotherSection(read)) {
         return null
     }

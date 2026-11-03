@@ -37,7 +37,7 @@ export const systematicStep$ = (request, {sepalUser}) => defer(() => {
     // Every stage but the finished one reads the AOI or the stratification again, in a request of its own.
     return state?.stage === 'final'
         ? stage$(request, {sepalUser})
-        : freshnessGate$(recipe).pipe(switchMap(() => stage$(request, {sepalUser})))
+        : freshnessGate$(recipe, {admission: !state}).pipe(switchMap(() => stage$(request, {sepalUser})))
 })
 
 const stage$ = (request, {sepalUser}) => defer(() => {

@@ -12,11 +12,11 @@ import {recipeAccess} from '../../recipeAccess'
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {samplingDesignCalculations} from './calculations'
+import {samplingDesignDerivations} from './derivations'
 import {SAMPLES, samplingDesignRequirements} from './freshnessRequirements'
 import {SamplingDesignToolbar} from './panels/samplingDesignToolbar'
 import {getDefaultModel} from './sampling/defaultModel'
 import {normalizeSavedLayers, RecipeActions} from './samplingDesignRecipe'
-import {Sync} from './sync'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -46,7 +46,6 @@ class _SamplingDesign extends React.Component {
         const {aoi} = this.props
         return (
             <Map>
-                <Sync/>
                 <SamplingDesignToolbar/>
                 <Aoi value={aoi}/>
             </Map>
@@ -88,6 +87,7 @@ export default () => ({
     imageSource: false,
     sourceRequirements: samplingDesignRequirements,
     calculatedResults: samplingDesignCalculations,
+    derivedResults: samplingDesignDerivations,
     retrieveOperation: SAMPLES,
     getDateRange: () => undefined,
     getPreSetVisualizations

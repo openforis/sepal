@@ -261,7 +261,8 @@ export default {
             }
         }),
 
-    // With `evidence`, answered {probabilityPerStratum, stratumFrameEvidence}: the stratum frame they were calculated over.
+    // With `evidence`, answered {probabilityPerStratum, calculatedFrom, stratumFrameEvidence}: what they were calculated
+    // from, and the frame alone again for clients of the previous release.
     probabilityPerStratum$: ({aoi, stratification, stratificationBand, probability, probabilityBand, mode, targetClass, scale, crs, batch, evidence}) =>
         postJson$('/api/gee/samplingDesign/probabilityPerStratum', {
             body: {aoi, stratification, stratificationBand, probability, probabilityBand, mode, targetClass, scale, crs, batch, evidence},

@@ -49,8 +49,7 @@ const worker$ = ({
     )
     return evidence
         ? withDependencyEvidence$({
-            dependency: STRATUM_FRAME,
-            question: stratumFrameQuestionOf({aoi, stratification, band, crs}),
+            dependencies: {[STRATUM_FRAME]: stratumFrameQuestionOf({aoi, stratification, band, crs})},
             calculate$: areas$
         }).pipe(
             map(({result, evidence}) => ({
@@ -58,7 +57,7 @@ const worker$ = ({
                 calculatedFrom: {
                     resource: {id: STRATUM_AREAS, contractVersion: STRATUM_AREAS_CONTRACT},
                     question: stratumAreasQuestionOf({scale}),
-                    dependencies: {[STRATUM_FRAME]: evidence}
+                    dependencies: evidence
                 }
             }))
         )

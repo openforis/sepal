@@ -1,10 +1,15 @@
 import _ from 'lodash'
-import {defer, from, map, switchMap} from 'rxjs'
+import {defer, forkJoin, from, map, switchMap} from 'rxjs'
 
 import {ClientException} from '#sepal/exception'
 import {digestOf} from '#sepal/recipe/calculation/digest'
 import {productProjection} from '#sepal/recipe/calculation/productProjection'
 import {STRATUM_FRAME, STRATUM_FRAME_CONTRACT, stratumFrameRoot} from '#sepal/recipe/samplingDesign/stratumFrame'
+import {
+    PROBABILITY_SOURCE,
+    PROBABILITY_SOURCE_CONTRACT,
+    probabilitySourceRoot
+} from '#sepal/recipe/samplingDesign/stratumProbabilities'
 import {RECIPE_REF} from '#sepal/recipe/source/reference'
 
 import {assetVersions$} from './ee/asset/versions.js'
@@ -18,7 +23,8 @@ import {recipeClosure$} from './executionReadiness.js'
 // A token detects the changes Earth Engine reports; it does not pin the pixels a later evaluation reads.
 
 const PRODUCERS = new Map([
-    [STRATUM_FRAME, {contractVersion: STRATUM_FRAME_CONTRACT, root: stratumFrameRoot}]
+    [STRATUM_FRAME, {contractVersion: STRATUM_FRAME_CONTRACT, root: stratumFrameRoot}],
+    [PROBABILITY_SOURCE, {contractVersion: PROBABILITY_SOURCE_CONTRACT, root: probabilitySourceRoot}]
 ])
 
 export const SUPERSEDED = 'CALCULATION_INPUTS_CHANGED'
@@ -72,27 +78,38 @@ export const dependencyEvidence$ = (dependency, question) => defer(() => {
     )
 })
 
-// A calculation answered with the evidence of what it read. The dependency is read first, through the request's
-// RecipeScope, so the calculation builds from the same records; the assets are read again once it has answered, and
-// a token that moved meanwhile refuses the answer rather than attach evidence it was not calculated from.
-export const withDependencyEvidence$ = ({dependency, question, calculate$}) =>
-    dependencyEvidence$(dependency, question).pipe(
+// A calculation answered with the evidence of what it read: `dependencies` is {[dependency]: question}, answered as
+// `evidence`, {[dependency]: evidence}. Each is read first, through the request's RecipeScope, so the calculation builds
+// from the same records; the assets are read again once it has answered, and a token that moved meanwhile refuses the
+// answer rather than attach evidence it was not calculated from. An asset two dependencies read is checked against
+// what each of them observed, which differ where it was replaced between their reads.
+export const withDependencyEvidence$ = ({dependencies, calculate$}) =>
+    forkJoin(_.mapValues(dependencies, (question, dependency) => dependencyEvidence$(dependency, question))).pipe(
         switchMap(evidence => calculate$().pipe(
-            switchMap(result => assetVersions$(evidence.provenance.assets.map(({id}) => id)).pipe(
-                map(answers => {
-                    const changed = answers
-                        .filter(({id, version, failure}) => failure || (version ?? null) !== tokenOf(evidence, id))
-                        .map(({id}) => id)
-                    if (changed.length) {
-                        throw supersededError(changed)
-                    }
-                    return {result, evidence}
-                })
-            ))
+            switchMap(result => {
+                const observed = Object.values(evidence).flatMap(({provenance}) => provenance.assets)
+                return assetVersions$(_.uniq(observed.map(({id}) => id))).pipe(
+                    map(answers => {
+                        const changed = movedSince(observed, answers)
+                        if (changed.length) {
+                            throw supersededError(changed)
+                        }
+                        return {result, evidence}
+                    })
+                )
+            })
         ))
     )
 
-const tokenOf = (evidence, assetId) => evidence.provenance.assets.find(({id}) => id === assetId)?.version ?? null
+const movedSince = (observed, answers) => {
+    const reread = new Map(answers.map(answer => [answer.id, answer]))
+    return _.uniq(observed
+        .filter(({id, version}) => {
+            const answer = reread.get(id)
+            return !answer || answer.failure || (answer.version ?? null) !== version
+        })
+        .map(({id}) => id))
+}
 
 const supersededError = assetIds => new ClientException(`Inputs changed during the calculation: ${assetIds.join(', ')}`, {
     userMessage: {

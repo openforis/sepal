@@ -69,6 +69,9 @@ const ee = {
     // wrapped Earth Engine object.
     Algorithms: {If: (condition, ifTrue, ifFalse) => ({If: [condition.spec, ifTrue.spec ?? ifTrue, ifFalse.spec ?? ifFalse]})},
     Reducer: {sum: () => reducer({sum: true}), first: () => reducer({first: true})},
+    // What a batch calculation exports, which the substituted export never runs.
+    Feature: (geometry, properties) => ({geometry, properties}),
+    FeatureCollection: features => ({features}),
     // The area job unwraps `groups` from the evaluated dictionary, so this hands the graph itself back and the
     // test can read the reduction it built.
     getInfo$: value => of({groups: value})
@@ -117,6 +120,7 @@ const {RecipeScope, inRecipeScope} = await import('#sepal/ee/recipeScope')
 const {stratificationImage$, stratificationProjection} = await import('#sepal/ee/samplingDesign/stratificationImage')
 const {weightedAreaSums} = await import('#gee/jobs/ee/samplingDesign/weightedAreaSums')
 const {default: areaPerStratum} = await import('#gee/jobs/ee/samplingDesign/areaPerStratum')
+const {default: probabilityPerStratum} = await import('#gee/jobs/ee/samplingDesign/probabilityPerStratum')
 
 const emit = obs => {
     let value
@@ -235,6 +239,52 @@ describe('area per stratum asked for its evidence', () => {
 
     it('answers the areas alone to a caller that does not ask', async () => {
         assert.ok((await calculate(gridArgs)).reduceRegion)
+    })
+})
+
+describe('probability per stratum asked for its evidence', () => {
+    const probabilityArgs = {
+        aoi: {}, stratification: {type: 'ASSET', id: 'users/x/strata'}, stratificationBand: 'label',
+        probability: {type: 'ASSET', id: 'users/x/probability'}, probabilityBand: 'p',
+        mode: 'CATEGORICAL', targetClass: '2', scale: '30', crs: 'EPSG:4326'
+    }
+    const calculate = requestArgs => lastValueFrom(inRecipeScope(
+        new RecipeScope(() => of(null)),
+        probabilityPerStratum.worker$({requestArgs, credentials: {}})
+    ))
+    const GROUPS = [{stratum: 1, weighted: 25, area: 100}]
+
+    it('answers with the frame and the probability source this request read, and the question it reduced', async t => {
+        t.mock.method(ee, 'getInfo$', () => of({groups: GROUPS}))
+
+        const {probabilityPerStratum: probabilities, calculatedFrom} = await calculate({...probabilityArgs, evidence: true})
+
+        assert.deepEqual(probabilities, [{stratum: 1, probability: 0.25}])
+
+        assert.deepEqual(calculatedFrom.resource, {id: 'SAMPLING_STRATUM_PROBABILITIES', contractVersion: 1})
+        assert.deepEqual(calculatedFrom.question, {mode: 'CATEGORICAL', targetClass: 2, scale: 30})
+        assert.deepEqual(calculatedFrom.dependencies.SAMPLING_STRATUM_FRAME.question, {
+            aoi: {}, stratification: {reference: {type: 'ASSET', id: 'users/x/strata'}, band: 'label'}, crs: 'EPSG:4326'
+        })
+        assert.deepEqual(calculatedFrom.dependencies.SAMPLING_PROBABILITY_SOURCE.question, {
+            reference: {type: 'ASSET', id: 'users/x/probability'}, band: 'p'
+        })
+        assert.deepEqual(calculatedFrom.dependencies.SAMPLING_PROBABILITY_SOURCE.provenance.assets, [{id: 'users/x/probability', version: 't1'}])
+    })
+
+    it('answers the frame where a client of the previous release takes it from, online and as a batch task', async t => {
+        t.mock.method(ee, 'getInfo$', () => of({groups: GROUPS}))
+        for (const batch of [false, true]) {
+            const {calculatedFrom, stratumFrameEvidence} = await calculate({...probabilityArgs, batch, evidence: true})
+
+            assert.deepEqual(stratumFrameEvidence, calculatedFrom.dependencies.SAMPLING_STRATUM_FRAME)
+        }
+    })
+
+    it('answers the probabilities alone to a caller that does not ask', async t => {
+        t.mock.method(ee, 'getInfo$', () => of({groups: GROUPS}))
+
+        assert.deepEqual(await calculate(probabilityArgs), [{stratum: 1, probability: 0.25}])
     })
 })
 

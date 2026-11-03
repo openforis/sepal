@@ -25,7 +25,8 @@ import {SOURCE_BASIS_CHANGED, SOURCE_REVISION_BEHIND, sourceRuntimeError} from '
 //
 // Dependency evidence is acquired while it is watched: for each dependency a recipe's type declares, as the recipe
 // configures it now, published on the recipe (`ui.dependencyEvidence`), runtime only, for synchronous reads; or for one
-// question an editor asks of a dependency, told to the editor (`watchQuestion$`). Either is:
+// question an editor asks of a dependency, told to the editor (`watchQuestion$`). A dependency whose question is null
+// for the configuration is not read, and what was published for it is withdrawn. Either is:
 //
 //   {status: PENDING | OBSERVED | FAILED, question, evidence?, observedAt?, acquisition?, retryAt?}
 //
@@ -159,7 +160,7 @@ export class CalculationEvidence {
         return this.#watch$(() => [{id: dependency, question}], subscriber => {
             let told = null
             return (_id, entry) => {
-                if (!samePublication(told, entry)) {
+                if (entry && !samePublication(told, entry)) {
                     told = entry
                     subscriber.next(entry)
                 }
@@ -192,9 +193,21 @@ export class CalculationEvidence {
     #update(watch) {
         const dependencies = this.#closed || !this.#watches.has(watch) ? null : watch.dependencies()
         if (dependencies) {
-            const held = dependencies.map(({id, question}) => this.#keep(watch, id, question))
+            const held = dependencies.map(({id, question}) =>
+                question == null ? this.#drop(watch, id) : this.#keep(watch, id, question))
             this.#claim(watch, held.filter(Boolean))
         }
+    }
+
+    // A dependency the configuration asks nothing of: nothing is read for it, and nothing is held or published.
+    #drop(watch, id) {
+        const entry = watch.entries.get(id)
+        if (entry) {
+            this.#cancel(entry)
+            watch.entries.delete(id)
+        }
+        watch.publish(id, null)
+        return null
     }
 
     // What a watch is told of one dependency as it asks it now, and whether it is read for it. Returns the evidence held
@@ -316,8 +329,9 @@ export class CalculationEvidence {
 
     #publish(recipeId, id, entry) {
         const published = this.#session().catalogue?.[recipeId]?.ui?.dependencyEvidence?.[id]
-        if (!this.#closed && !samePublication(published, entry)) {
-            this.#write({recipeId, type: 'DEPENDENCY_EVIDENCE', writes: [{path: `ui.dependencyEvidence.${id}`, value: entry}]})
+        const changed = entry ? !samePublication(published, entry) : Boolean(published)
+        if (!this.#closed && changed) {
+            this.#write({recipeId, type: 'DEPENDENCY_EVIDENCE', writes: [{path: `ui.dependencyEvidence.${id}`, value: entry || undefined}]})
         }
     }
 

@@ -1,9 +1,14 @@
+import {allocationReviewInputs} from '#sepal/recipe/samplingDesign/allocationReview'
+
 import {isSectionStale, validateRetrieve} from './validateRetrieve'
 
 const codes = model => validateRetrieve(model).map(({code}) => code)
 
+// The allocation as the Allocation panel applies it: with the record of what it was reviewed for.
+const reviewed = model => ({...model, sampleAllocation: {...model.sampleAllocation, reviewedInputs: allocationReviewInputs(model)}})
+
 // Valid unstratified + skipped proportions + manual allocation (the auto-unstratified happy path).
-const unstratifiedValid = {
+const unstratifiedValid = reviewed({
     stratification: {skip: true, strata: [{value: 1, stratum: 1, label: 'Area of interest', color: '#000000', area: 1.2e9, weight: 1}]},
     proportions: {skip: true},
     sampleAllocation: {
@@ -11,10 +16,10 @@ const unstratifiedValid = {
         allocationStrategy: 'EQUAL',
         allocation: [{stratum: 1, label: 'Area of interest', color: '#000000', area: 1.2e9, weight: 1, sampleSize: 100}]
     }
-}
+})
 
 // Valid stratified + proportions + OPTIMAL (the classic happy path).
-const stratifiedValid = {
+const stratifiedValid = reviewed({
     stratification: {strata: [
         {value: 1, label: 'Forest', color: '#0a0', area: 3e8, weight: 0.3},
         {value: 2, label: 'Non-forest', color: '#a00', area: 7e8, weight: 0.7}
@@ -28,7 +33,7 @@ const stratifiedValid = {
             {stratum: 2, label: 'Non-forest', color: '#a00', area: 7e8, weight: 0.7, proportion: 0.08, sampleSize: 70}
         ]
     }
-}
+})
 
 it('accepts a valid unstratified, no-proportions, manual design', () => {
     expect(validateRetrieve(unstratifiedValid)).toEqual([])
@@ -91,7 +96,7 @@ it('reports strataAreaMissing when a STRATIFIED stratum lacks a finite area', ()
 
 it('accepts an UNSTRATIFIED design (skip) whose synthetic stratum/allocation have no area yet', () => {
     // Area is filled at the export boundary from the AOI geometry, so a missing area must not block Done.
-    const unstratifiedNoArea = {
+    const unstratifiedNoArea = reviewed({
         stratification: {skip: true, strata: [{value: 1, stratum: 1, label: 'Area of interest', color: '#000000', weight: 1}]},
         proportions: {skip: true},
         sampleAllocation: {
@@ -99,7 +104,7 @@ it('accepts an UNSTRATIFIED design (skip) whose synthetic stratum/allocation hav
             allocationStrategy: 'EQUAL',
             allocation: [{stratum: 1, label: 'Area of interest', color: '#000000', weight: 1, sampleSize: 100}]
         }
-    }
+    })
     expect(validateRetrieve(unstratifiedNoArea)).toEqual([])
 })
 
@@ -135,6 +140,11 @@ it('reports areaMissing when a task row resolves without a finite area', () => {
 
 const withArrangement = sampleArrangement => ({...stratifiedValid, sampleArrangement})
 
+const withRowsFor = strata => ({
+    ...stratifiedValid,
+    proportions: {anticipatedProportions: strata.map(stratum => ({stratum, proportion: 0.5}))}
+})
+
 it('rejects a required seed of zero', () => {
     expect(codes(withArrangement({arrangementStrategy: 'RANDOM', seed: 0}))).toContain('seedInvalid')
 })
@@ -153,19 +163,51 @@ describe('stale sections (requiresUpdate)', () => {
         [section]: {...(stratifiedValid[section] || {}), requiresUpdate: true}
     })
 
-    it.each(['proportions', 'sampleAllocation', 'sampleArrangement'])(
-        'reports requiresUpdate for a stale %s section',
-        section => {
-            expect(validateRetrieve(stale(section))).toContainEqual({section, code: 'requiresUpdate'})
-        }
-    )
+    it('reports requiresUpdate for an arrangement an earlier version flagged', () => {
+        expect(validateRetrieve(stale('sampleArrangement'))).toContainEqual({section: 'sampleArrangement', code: 'requiresUpdate'})
+    })
 
-    it('accepts a complete design with all requiresUpdate flags false', () => {
+    it('reports requiresUpdate for an allocation whose inputs changed since it was reviewed', () => {
+        const model = {...stratifiedValid, proportions: {anticipatedProportions: [{stratum: 1, proportion: 0.5}, {stratum: 2, proportion: 0.08}]}}
+        expect(validateRetrieve(model)).toContainEqual({section: 'sampleAllocation', code: 'requiresUpdate'})
+    })
+
+    it.each([
+        ['saved without a record of what it was reviewed for', {reviewedInputs: undefined}],
+        ['an earlier version last applied, its flag false', {requiresUpdate: false}],
+        ['an earlier version flagged', {requiresUpdate: true}]
+    ])('reports reviewRequired for an allocation %s', (_name, sampleAllocation) => {
+        const model = {...stratifiedValid, sampleAllocation: {...stratifiedValid.sampleAllocation, ...sampleAllocation}}
+        expect(validateRetrieve(model)).toContainEqual({section: 'sampleAllocation', code: 'reviewRequired'})
+    })
+
+    it('reports an allocation not computed yet as such, not as one to review', () => {
+        const model = {...stratifiedValid, sampleAllocation: {allocationStrategy: 'OPTIMAL', minSamplesPerStratum: 2, allocation: []}}
+        expect(codes(model)).toContain('noAllocation')
+        expect(codes(model)).not.toContain('reviewRequired')
+    })
+
+    // `manual` is the form's toggle, a list, or a flag in older models.
+    it.each([[[true]], [true]])('reports requiresUpdate for manual proportions flagged for reconciliation, saved as %j', manual => {
+        const model = {...stratifiedValid, proportions: {...stratifiedValid.proportions, manual, requiresUpdate: true}}
+        expect(validateRetrieve(model)).toContainEqual({section: 'proportions', code: 'requiresUpdate'})
+    })
+
+    // Recalculated areas over an unchanged frame, which no evidence of what the probabilities read sees.
+    it('reports requiresUpdate for automatic proportions whose rows no longer cover the strata', () => {
+        expect(validateRetrieve(withRowsFor([1, 3]))).toContainEqual({section: 'proportions', code: 'requiresUpdate'})
+    })
+
+    // Whether automatic proportions are still about their inputs is their evidence's (freshnessRequirements.js).
+    it('ignores a flag automatic proportions still carry while their rows cover the strata', () => {
+        expect(validateRetrieve(stale('proportions'))).toEqual([])
+    })
+
+    it('accepts a complete design whose other sections carry flags false', () => {
         const model = {
             ...stratifiedValid,
             stratification: {...stratifiedValid.stratification, requiresUpdate: false},
             proportions: {...stratifiedValid.proportions, requiresUpdate: false},
-            sampleAllocation: {...stratifiedValid.sampleAllocation, requiresUpdate: false},
             sampleArrangement: {requiresUpdate: false}
         }
         expect(validateRetrieve(model)).toEqual([])
@@ -187,7 +229,7 @@ describe('stale sections (requiresUpdate)', () => {
     })
 
     it('rejects a stale but otherwise-complete design, reporting the stale section first', () => {
-        const model = {...stratifiedValid, proportions: {...stratifiedValid.proportions, requiresUpdate: true}}
+        const model = withRowsFor([1, 3])
         expect(validateRetrieve(model)).not.toEqual([])
         expect(validateRetrieve(model)[0]).toEqual({section: 'proportions', code: 'requiresUpdate'})
     })
@@ -325,7 +367,7 @@ describe('shared allocation rules at the retrieve boundary', () => {
 // Manual allocation reads neither the allocation strategy nor the sample-size estimate. A value left dormant
 // behind those hidden fields must not send the user to a Proportions panel they have nothing to do in.
 describe('proportion-dependent modes vs actual applicability', () => {
-    const withoutProportions = sampleAllocation => ({
+    const withoutProportions = sampleAllocation => reviewed({
         ...stratifiedValid,
         proportions: {skip: true},
         sampleAllocation: {...stratifiedValid.sampleAllocation, ...sampleAllocation}
@@ -358,6 +400,19 @@ describe('proportion-dependent modes vs actual applicability', () => {
 
 // The toolbar marks section buttons from this same predicate, so a section can never be flagged in one place
 // and clear in the other.
+// Skip is saved as a boolean or as the form's toggle.
+describe('proportions, however their skip was saved', () => {
+    const withSkip = skip => ({...stratifiedValid, proportions: {...stratifiedValid.proportions, skip}})
+
+    it.each([['an empty toggle', []], ['false', false]])('not skipped, saved as %s, give an Optimal allocation the proportions it reads', (_name, skip) => {
+        expect(codes(withSkip(skip))).not.toContain('proportionsRequired')
+    })
+
+    it.each([['a set toggle', [true]], ['true', true]])('skipped, saved as %s, leave an Optimal allocation without them', (_name, skip) => {
+        expect(codes(withSkip(skip))).toContain('proportionsRequired')
+    })
+})
+
 describe('isSectionStale', () => {
     it('is false for a flag an old recipe carries on a skipped section', () => {
         expect(isSectionStale({proportions: {skip: true, requiresUpdate: true}}, 'proportions')).toBe(false)
@@ -365,7 +420,7 @@ describe('isSectionStale', () => {
     })
 
     it('is true for a flag on a section that computes something', () => {
-        expect(isSectionStale({proportions: {requiresUpdate: true}}, 'proportions')).toBe(true)
+        expect(isSectionStale({proportions: {manual: [true], requiresUpdate: true, anticipatedProportions: [{stratum: 1, proportion: 0.5}]}}, 'proportions')).toBe(true)
         expect(isSectionStale({sampleAllocation: {requiresUpdate: true}}, 'sampleAllocation')).toBe(true)
     })
 

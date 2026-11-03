@@ -228,7 +228,7 @@ local draft. Keep dependency snapshots private to an operation rather than writi
 
 ## Target: persisted-result freshness
 
-Sampling Design's stratum areas and its automatic proportions' frame evidence follow the contract below
+Sampling Design's stratum areas and automatic proportions follow the contract below
 ([its integration](../../recipes/sampling-design.md#derived-result-freshness)): operation-produced evidence
 (`modules/gee/src/jobs/dependencyEvidence.js`), the shared comparison (`lib/js/shared/src/recipe/calculation`), and
 the runtime's calculation and dependency-evidence owner (`sourceRuntime/calculationEvidence.js`), which teaches the
@@ -290,6 +290,25 @@ stored results use operation-produced evidence. User-authored choices are neithe
 normalization targets. Distinguish compatibility, freshness and a user decision needing review. Migrate concrete
 workflows incrementally and replace superseded caches/flags rather than running parallel mechanisms.
 
+Two shared form bindings carry this into the panels (`recipeFormPanel.jsx`); a type declares, the binding evaluates,
+presents and enforces:
+
+- **Local requirements on drafts.** A requirement over the recipe's own configuration names the panel editing its
+  section as its `editor` - {panel, input, blocksApply}. The binding reads every local requirement of the type over the
+  recipe as the panel's values would leave it, prerequisites resolved there, tells the input what the named ones find
+  - an item's status by item, anything else as an error unless it is set-up not yet done - and holds Apply as the
+  editor's policy says, rechecking against the recipe as it stands at submission (`recipe/localCandidate.js`). Band
+  Math's Output bands says each output image's problems on its row and holds nothing back; Sampling Design's manual
+  proportions refuse answers for other strata.
+- **Synchronous derived results.** A type declares `derivedResults` - {panel, current(model), derive(model)} - for
+  results its panels derive from the model alone (`recipe/derivedResult.js`). Whenever the edit, or the recipe under
+  it, leaves the draft not current, the binding derives it again into the draft; a submission it is not derived for is
+  refused and derived anew. Nothing is acquired, polled or enters the calculation cache. A result a person must approve
+  records, as it is derived, the canonical inputs it read, and `current` compares that record with what the model reads
+  now; the shared library owns the projection and comparison so GUI and server judge alike - Sampling Design's
+  allocation (`lib/js/shared/src/recipe/samplingDesign/allocationReview.js`). Cheap derivations need no persisted
+  record.
+
 ## Persisted derived-result evidence
 
 A result that must remain valid after its panel and recipe close stores the evidence from which it was calculated.
@@ -327,7 +346,17 @@ recalculate or acquire stronger evidence under its declared policy.
 Consumers own stale presentation and submission policy, and declare the results their panels calculate; the shared
 binding calculates what an edit requires while its panel is open, and the shared resource layer reports evidence and
 state. [Sampling Design's integration](../../recipes/sampling-design.md#derived-result-freshness) defines its
-calculations, sidecars, propagation and legacy migration; its probabilities' own evidence is still target.
+calculations, sidecars, propagation and legacy migration.
+
+A result that reads several declared dependencies - Sampling Design's probabilities read the stratum frame and the
+probability source - persists each one's evidence under its id and is `CURRENT` only while all are
+(`calculationState`). Its operation reads them all through one `RecipeScope` before calculating, and the assets of all
+again before answering (`withDependencyEvidence$`), comparing each token with every observation of it, so an asset two
+dependencies read and replaced between their reads is refused. The binding watches each dependency the edit asks and
+calculates only while all are usable. Composing unchanged a dependency another result records keeps the two comparable
+by digest. A dependency whose question is null for a configuration is not read, and the runtime withdraws what it
+published for it. An operation's answer only gains fields within a release, so a client of the previous release still
+accepts it.
 
 ### Exact calculation evidence
 

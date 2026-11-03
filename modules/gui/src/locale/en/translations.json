@@ -5458,13 +5458,15 @@
         "proportions": {
           "UNCONFIGURED": "Anticipate a proportion for every stratum, or skip proportions.",
           "REQUIRES_UPDATE": "The strata changed since these proportions were anticipated. Open Proportions to update them.",
-          "STALE": "The anticipated proportions were calculated over a stratification or AOI that has since changed. Open Proportions to update them.",
-          "UNKNOWN": "These anticipated proportions were saved without evidence of the stratification and AOI they were calculated over. Open Proportions to calculate them once.",
-          "UNVERSIONED": "A source of the stratification or AOI cannot report replacement, so these proportions cannot be confirmed current. Select a source with supported replacement evidence."
+          "STALE": "The anticipated proportions were calculated over a stratification, AOI or probability source that has since changed. Open Proportions to update them.",
+          "UNKNOWN": "These anticipated proportions were saved without evidence of what they were calculated from. Open Proportions to calculate them once.",
+          "UNVERSIONED": "A source of the stratification, AOI or probability image cannot report replacement, so these proportions cannot be confirmed current. Select a source with supported replacement evidence."
         },
         "sampleAllocation": {
           "UNCONFIGURED": "Allocate the samples to the strata.",
-          "REQUIRES_UPDATE": "What this allocation was calculated from has changed. Open Sample allocation to update it."
+          "REQUIRES_UPDATE": "What this allocation was calculated from has changed. Open Sample allocation to update it.",
+          "UNREVIEWED": "This allocation was saved before allocations recorded what they were reviewed for. Open Sample allocation, check it and apply it once.",
+          "UNTRUSTED": "This allocation was last applied by an earlier version of SEPAL. Open Sample allocation, check it and apply it once."
         },
         "sampleArrangement": {
           "REQUIRES_UPDATE": "This arrangement needs to be updated. Open Sample arrangement and apply it."
@@ -5486,6 +5488,7 @@
         "evidence.SOURCE_UNCHECKED": "The stratification and AOI have not been checked yet.",
         "evidence.SOURCE_EXPIRED": "The check of the stratification and AOI is out of date.",
         "invalid.requiresUpdate": "One or more sampling design sections need to be updated. Open the highlighted section and apply or recompute it before retrieving.",
+        "invalid.reviewRequired": "The sample allocation has not been reviewed for this design as it is now. Open Sample allocation, check it and apply it before retrieving.",
         "invalid.noStrata": "No strata have been computed. Open Stratification and compute the strata.",
         "invalid.strataAreaMissing": "A stratum is missing its area. Recompute the strata in Stratification.",
         "invalid.proportionsRequired": "The chosen allocation needs anticipated proportions. Provide them, or use a fixed sample size with Equal, Proportional, or Balanced allocation.",
@@ -5633,7 +5636,7 @@
               "UNKNOWN": "Updating anticipated proportions…"
             },
             "updatingReason": {
-              "UNKNOWN": "They were saved without a record of the stratification and AOI they were calculated over."
+              "UNKNOWN": "They were saved without a record of what they were calculated from."
             },
             "selectImageAndBand": "Select an image and band to calculate anticipated proportions.",
             "anticipationStrategy": {
@@ -5706,12 +5709,12 @@
               "suffix": "%"
             },
             "result": {
-              "checking": "Checking the stratification and AOI…",
-              "superseded": "The stratification or AOI changed while the proportions were calculated.",
+              "checking": "Checking the stratification, AOI and probability source…",
+              "superseded": "The stratification, AOI or probability source changed while the proportions were calculated.",
               "held": "Proportions are calculated once the stratum areas are current.",
-              "STALE": "These proportions were calculated over a stratification or AOI that has since changed.",
-              "UNKNOWN": "These proportions were saved without evidence of the stratification and AOI they were calculated over.",
-              "UNVERSIONED": "A source of the stratification or AOI cannot report replacement, so these proportions cannot be confirmed current. Select a source with supported replacement evidence."
+              "STALE": "These proportions were calculated over a stratification, AOI or probability source that has since changed.",
+              "UNKNOWN": "These proportions were saved without evidence of what they were calculated from.",
+              "UNVERSIONED": "A source of the stratification, AOI or probability image cannot report replacement, so these proportions cannot be confirmed current. Select a source with supported replacement evidence."
             },
             "strataProportion": {
               "label": "Anticipated proportion per stratum",
@@ -6222,9 +6225,9 @@
           "UNVERSIONED": "A stratification source cannot report replacement. Select a source with supported replacement evidence."
         },
         "proportions": {
-          "STALE": "The anticipated proportions no longer match their stratification and AOI. Open the design, recalculate them and retrieve again.",
-          "UNKNOWN": "The anticipated proportions were saved without evidence of their stratification and AOI. Reload the page, recalculate them and retrieve again.",
-          "UNVERSIONED": "A source of the stratification or AOI cannot report replacement. Select a source with supported replacement evidence."
+          "STALE": "The anticipated proportions no longer match their stratification, AOI or probability source. Open the design, recalculate them and retrieve again.",
+          "UNKNOWN": "The anticipated proportions were saved without evidence of what they were calculated from. Reload the page, recalculate them and retrieve again.",
+          "UNVERSIONED": "A source of the stratification, AOI or probability image cannot report replacement. Select a source with supported replacement evidence."
         }
       },
       "progress": {
@@ -6255,6 +6258,11 @@
           "minDistanceBelowGrid": "Minimum distance is {value} m, but the current stratification grid uses {pixelSize} m pixels and requires at least {minimum} m. Enter {minimum} m or more, or leave the field empty to use {minimum} m automatically.",
           "invalidMinDistance": "The minimum distance is not a number. Provide a distance in metres, or leave it unset to use the smallest distance the sampling grid allows."
         }
+      },
+      "allocationReview": {
+        "UNREVIEWED": "The sample allocation was saved without a record of what it was reviewed for. Open the design, review Sample Allocation, apply it and retrieve again.",
+        "UNTRUSTED": "The sample allocation was last applied by an earlier version of SEPAL. Open the design, review Sample Allocation, apply it and retrieve again.",
+        "INPUTS_CHANGED": "The strata, proportions or settings the sample allocation reads changed since it was reviewed. Open the design, review Sample Allocation, apply it and retrieve again."
       },
       "preflight": {
         "invalidMinimum": "Minimum samples per stratum is {value}. It must be a whole number of at least {floor}.",
