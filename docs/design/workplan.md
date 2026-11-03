@@ -21,21 +21,6 @@ These are bounded assessments or contract gaps, independent of the larger archit
 behavior is identified below; suspected symptoms still need reproduction. This list schedules no algorithm changes
 or new release checks.
 
-### Regression table-import response ownership
-
-**Next implementation item.** Changing the selected table in
-Regression's training-data editor clears its draft rows but leaves the previous row request running
-(`regression/panels/trainingData/eeTableSection.jsx`, `loadColumns`). A mounted reproduction confirms that table A's
-late answer enables Apply and can be saved as table B's points. This is separate from Classification's corrected
-null access during class mapping; Regression's draft conversion already tolerates unset rows.
-
-Cancel the pending row request when the table changes, using the existing `cancel$` and subscription lifecycle.
-Keep imported points as snapshots and preserve draft isolation; no calculation-evidence mechanism is needed.
-Acceptance: select B while A's rows are pending, then deliver A's answer. It must populate nothing and leave Apply
-and Enter held until B's valid rows arrive. Applying saves B's ID with B's points; Cancel preserves the saved dataset.
-Retain the existing successful import and empty-result checks. Classification's table importer already cancels
-superseded requests; sampled-image imports should retain their cancellation behavior.
-
 ### Collection-output correctness
 
 Current [collection regression storage](../recipes/time-series.md#collection-encoding) and

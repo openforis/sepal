@@ -43,7 +43,8 @@ already set up. The Regression stays
 described meanwhile: its single band is known from its declaration.
 
 The data set editor keeps its own draft rules - a name, a table and value column or an image to sample, and reference
-data - and holds Apply until they are met. A data set being edited changes nothing applied until it is applied, and
+data - and holds Apply until they are met. A table chosen while the rows of the one before it load takes none of them:
+Apply waits for the chosen table's rows. A data set being edited changes nothing applied until it is applied, and
 Cancel leaves the recipe as saved. The data set list holds Apply while it lists none.
 
 Not checked: whether training succeeds - how many points there are, whether their values vary, whether they survive the
@@ -61,6 +62,6 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
 
 - `lib/js/shared/test/recipe/output/type/regression.test.js`: training presence, classifiers and downstream repair.
 - `modules/gui/src/app/home/body/process/recipe/regression/trainingDataReadiness.test.jsx`: TRN/layer/Retrieve
-  agreement, empty data and draft Apply/Cancel.
+  agreement, empty data, draft Apply/Cancel and a table changed while its rows load.
 - `modules/gee/test/jobs/task/export/imageAssetExport.test.js`: direct/downstream refusal and export after repair.
 These establish readiness, not statistical adequacy or successful training on arbitrary inputs.
