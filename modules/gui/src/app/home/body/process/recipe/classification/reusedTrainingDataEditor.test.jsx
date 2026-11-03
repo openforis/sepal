@@ -9,7 +9,9 @@ import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {initStore} from '~/store'
+import {ActivationContext} from '~/widget/activation/activationContext'
 import {EventShield} from '~/widget/eventShield'
+import {PanelWizard} from '~/widget/panelWizard'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 import {tooltipText} from '~/widget/tooltip.test.fixtures'
 
@@ -18,8 +20,10 @@ import {tooltipText} from '~/widget/tooltip.test.fixtures'
 // reuse where it is that one, fixed, or another recipe selected - after what that recipe lacks, where that is known; it
 // offers no action of its own on that recipe. What it confirms holds Apply, a submitted form included: another recipe can
 // be chosen, which is judged afresh, Cancel keeps what was applied, and opened and left as it is, it offers Close, not
-// Apply. What is said of another data set's recipe stays on that data set, and holds nothing there. The panels, store, source runtime and recipe types are real; storage answers
-// from stored records, Earth Engine an asset's bands at once.
+// Apply. What is said of another data set's recipe stays on that data set, and holds nothing there. The same checks run
+// over a data set mapped from table rows while its class mapping maps them again, and leave that editor working. The
+// panels, store, source runtime and recipe types are real; storage answers from stored records, Earth Engine an asset's
+// bands at once.
 
 // `answers`: what storage answers for a recipe, where not at once.
 const stored = vi.hoisted(() => ({records: {}, answers: {}}))
@@ -249,6 +253,22 @@ describe.each([
     })
 })
 
+describe('the editor of a CLASSIFICATION data set mapped from CSV rows', () => {
+    it('maps its rows to classes at the class mapping, Done saving them', async () => {
+        await open('CLASSIFICATION', ClassificationTrainingDataSet, {editing: CSV_ID, dataSets: [COLLECTED, mappedFromCsv([])]})
+
+        await press(button('button.next'))
+        await press(button('button.next'))
+        await press(button('button.next'))
+        await press(button('button.done'))
+
+        expect(dataSet(CSV_ID).referenceData).toEqual([
+            {x: 1, y: 1, crs: null, class: 1},
+            {x: 2, y: 2, crs: null, class: 2}
+        ])
+    })
+})
+
 const CONSUMER = 'consumer-1'
 const PROVIDER = 'provider-1'
 const MIDDLE = 'middle-1'
@@ -268,6 +288,8 @@ const RECIPE_LABEL = 'widget.recipeInput.label'
 const ASSET_IMAGE = {imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red', 'nir']}]}
 const POINTS = [{x: 1, y: 1, class: 1, value: 1}, {x: 2, y: 2, class: 2, value: 2}]
 const COLLECTED = {dataSetId: 'collected', type: 'COLLECTED', name: 'Collected', referenceData: POINTS}
+const CSV_ID = 'csv'
+const BOUNDS = [[0, 0], [3, 3]]
 
 const REPAIR = 'process.classification.panel.trainingData.reusedRecipe.repair'
 
@@ -290,16 +312,34 @@ const recipeOf = (type, id, {images = [ASSET_IMAGE], dataSets = [COLLECTED]} = {
         classifier: {type: 'RANDOM_FOREST'},
         trainingData: {dataSets}
     },
-    ui: {initialized: true}
+    ui: {initialized: true, bounds: BOUNDS}
 })
 
 const reusing = (recipe, dataSetId = REUSED_ID) => ({dataSetId, type: 'RECIPE', name: NAMES[recipe], recipe})
 
+// Rows of a CSV file within the recipe's bounds, forest mapped to class 1 and water to class 2, saved holding
+// `referenceData`.
+const mappedFromCsv = referenceData => ({
+    dataSetId: CSV_ID,
+    type: 'CSV_UPLOAD',
+    name: 'Plots',
+    inputData: [{lon: 1, lat: 1, cover: 'forest'}, {lon: 2, lat: 2, cover: 'water'}],
+    columns: ['lon', 'lat', 'cover'],
+    locationType: 'XY_COLUMNS',
+    xColumn: 'lon',
+    yColumn: 'lat',
+    classColumnFormat: 'SINGLE_COLUMN',
+    valueColumn: 'cover',
+    valueMapping: {1: ['forest'], 2: ['water']},
+    referenceData
+})
+
 // The consumer, trained on its own points, on those of `reused` and on those of the other recipe - saved under
-// `savedName` where given. The provider is over `providerImages`, by default none to sample its points over; the middle
-// recipe reuses the provider's; the other recipe, and a spare one, can produce their own.
-const recipesOf = (type, {reused, providerImages = [], savedName}) => [
-    recipeOf(type, CONSUMER, {dataSets: [
+// `savedName` where given - unless `dataSets` says what it trains on. The provider is over `providerImages`, by default
+// none to sample its points over; the middle recipe reuses the provider's; the other recipe, and a spare one, can produce
+// their own.
+const recipesOf = (type, {reused, providerImages = [], savedName, dataSets}) => [
+    recipeOf(type, CONSUMER, {dataSets: dataSets || [
         COLLECTED,
         reusing(reused),
         {...reusing(OTHER, HEALTHY_ID), ...(savedName && {name: savedName})}
@@ -363,8 +403,8 @@ const RuntimeProbe = withSourceRuntime()(({sourceRuntime}) => {
 })
 
 // `editing`: the data set whose editor is open. `held`: the recipes the session holds, by default all of them.
-async function open(type, TrainingDataSet, {reused = PROVIDER, editing: dataSetId = REUSED_ID, providerImages, savedName, held} = {}) {
-    const records = recipesOf(type, {reused, providerImages, savedName})
+async function open(type, TrainingDataSet, {reused = PROVIDER, editing: dataSetId = REUSED_ID, providerImages, savedName, held, dataSets} = {}) {
+    const records = recipesOf(type, {reused, providerImages, savedName, dataSets})
     stored.records = Object.fromEntries(records.map(record => [record.id, record]))
     editing.dataSetId = dataSetId
     const initialState = {
@@ -393,9 +433,13 @@ async function open(type, TrainingDataSet, {reused = PROVIDER, editing: dataSetI
                 <PortalContainer id='test-portal'/>
                 <PortalContext id='test-portal'>
                     <EventShield>
-                        <Recipe id={CONSUMER}>
-                            <TrainingDataSet dataCollectionManager={{updateAll: () => {}}}/>
-                        </Recipe>
+                        <ActivationContext id='root'>
+                            <Recipe id={CONSUMER}>
+                                <PanelWizard initialized>
+                                    <TrainingDataSet dataCollectionManager={{updateAll: () => {}}}/>
+                                </PanelWizard>
+                            </Recipe>
+                        </ActivationContext>
                     </EventShield>
                 </PortalContext>
             </SourceRuntimeProvider>
