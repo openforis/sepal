@@ -19,6 +19,7 @@ try {
         .addOption(
             new Option('--ceo-url <value>')
                 .env('CEO_URL')
+                .argParser(value => new URL(value.endsWith('/') ? value : `${value}/`))
                 .makeOptionMandatory()
         )
         .addOption(
