@@ -410,6 +410,10 @@
       "failedToLoadRecipe": "",
       "title": ""
     },
+    "dependencyEvidence": {
+      "assetUnreadable": "",
+      "superseded": ""
+    },
     "geoId": {
       "error": {
         "invalidBuffer": "",
@@ -2694,6 +2698,11 @@
             }
           },
           "missing": "",
+          "insufficient": {
+            "MINIMUM_CLASSES": "",
+            "TRAINED_CLASS": "",
+            "MINIMUM_CLASS_SAMPLES": ""
+          },
           "missingFeatures": "",
           "derivedFeature": "",
           "ambiguousFeatures": "",
@@ -5439,6 +5448,30 @@
       }
     },
     "samplingDesign": {
+      "sectionStatus": {
+        "stratification": {
+          "UNCONFIGURED": "",
+          "STALE": "",
+          "UNKNOWN": "",
+          "UNVERSIONED": ""
+        },
+        "proportions": {
+          "UNCONFIGURED": "",
+          "REQUIRES_UPDATE": "",
+          "STALE": "",
+          "UNKNOWN": "",
+          "UNVERSIONED": ""
+        },
+        "sampleAllocation": {
+          "UNCONFIGURED": "",
+          "REQUIRES_UPDATE": "",
+          "UNREVIEWED": "",
+          "UNTRUSTED": ""
+        },
+        "sampleArrangement": {
+          "REQUIRES_UPDATE": ""
+        }
+      },
       "bands": {},
       "create": "",
       "description": "",
@@ -5449,7 +5482,13 @@
       },
       "retrieve": {
         "invalid": "",
+        "freshness.title": "",
+        "evidence.SOURCE_PENDING": "",
+        "evidence.SOURCE_UNAVAILABLE": "",
+        "evidence.SOURCE_UNCHECKED": "",
+        "evidence.SOURCE_EXPIRED": "",
         "invalid.requiresUpdate": "",
+        "invalid.reviewRequired": "",
         "invalid.noStrata": "",
         "invalid.strataAreaMissing": "",
         "invalid.proportionsRequired": "",
@@ -5523,6 +5562,13 @@
               "label": "",
               "tooltip": ""
             },
+            "result": {
+              "checking": "",
+              "superseded": "",
+              "STALE": "",
+              "UNKNOWN": "",
+              "UNVERSIONED": ""
+            },
             "hexButton": {
               "label": "",
               "tooltip": ""
@@ -5532,6 +5578,13 @@
               "required": "",
               "select": "",
               "loading": "",
+              "updating": {
+                "STALE": "",
+                "UNKNOWN": ""
+              },
+              "updatingReason": {
+                "UNKNOWN": ""
+              },
               "noData": "",
               "error": {
                 "eeOnline": "",
@@ -5578,6 +5631,13 @@
               "tooltip": ""
             },
             "calculating": "",
+            "updating": {
+              "STALE": "",
+              "UNKNOWN": ""
+            },
+            "updatingReason": {
+              "UNKNOWN": ""
+            },
             "selectImageAndBand": "",
             "anticipationStrategy": {
               "label": "",
@@ -5647,6 +5707,14 @@
               "placeholder": "",
               "tooltip": "",
               "suffix": ""
+            },
+            "result": {
+              "checking": "",
+              "superseded": "",
+              "held": "",
+              "STALE": "",
+              "UNKNOWN": "",
+              "UNVERSIONED": ""
             },
             "strataProportion": {
               "label": "",
@@ -6150,6 +6218,18 @@
       }
     },
     "samplingDesign": {
+      "freshness": {
+        "stratification": {
+          "STALE": "",
+          "UNKNOWN": "",
+          "UNVERSIONED": ""
+        },
+        "proportions": {
+          "STALE": "",
+          "UNKNOWN": "",
+          "UNVERSIONED": ""
+        }
+      },
       "progress": {
         "prepare": ""
       },
@@ -6178,6 +6258,11 @@
           "minDistanceBelowGrid": "",
           "invalidMinDistance": ""
         }
+      },
+      "allocationReview": {
+        "UNREVIEWED": "",
+        "UNTRUSTED": "",
+        "INPUTS_CHANGED": ""
       },
       "preflight": {
         "invalidMinimum": "",
