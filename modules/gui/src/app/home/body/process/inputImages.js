@@ -3,6 +3,7 @@ import _ from 'lodash'
 import {CALCULATION_REFERENCES, calculationItem} from '#sepal/recipe/bandMath/calculationReferences'
 import {SUPPORTED} from '#sepal/recipe/requirement/verdict'
 import {recipeActionBuilder, recipePath} from '~/app/home/body/process/recipe'
+import {commitRecipe} from '~/app/home/body/process/recipe/derivedResult'
 import {selectFrom} from '~/stateUtils'
 import {select} from '~/store'
 
@@ -166,8 +167,9 @@ const bandMathInputUpdates = (recipe, images) => {
         })
     })
     const references = calculationBands(reconnected)
-    // A returning selected band keeps the id still used by preserved calculations. Otherwise normal Sync would
-    // replace expression output bands and discard their custom names. No deleted output selection is recreated.
+    // A returning selected band keeps the id still used by preserved calculations. Otherwise the derivation committed
+    // with it would replace expression output bands and discard their custom names. No deleted output selection is
+    // recreated.
     const restored = images.map(image => ({...image, includedBands: (image.includedBands || []).map(band => {
         const previous = previousImages.find(previous => previous.imageId === image.imageId)
         if (previous?.includedBands?.some(old => old.name === band.name)) return band
@@ -198,8 +200,7 @@ export const removeInputImage = (recipeId, imageToRemove) => {
     const images = (recipe.model.inputImagery?.images || []).filter(image => image.imageId !== imageToRemove.imageId)
     const builder = recipeActionBuilder(recipeId)('REMOVE_INPUT_IMAGE', {imageToRemove})
     inputUpdates(recipe, images).forEach(({path, value}) => builder.set(path, value))
-    return builder
+    return commitRecipe(recipePath(recipeId), builder
         .del(['model.inputImagery.images', {imageId: imageToRemove.imageId}])
-        .del(['ui.inputImagery.images', {imageId: imageToRemove.imageId}])
-        .dispatch()
+        .del(['ui.inputImagery.images', {imageId: imageToRemove.imageId}]))
 }

@@ -17,7 +17,7 @@ import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 
 // What the Band Math editor marks about its sections: the toolbar buttons, and the rows of the lists their panels show,
 // each from what the section's own rules or the output read find - one section's problem never hiding another's. The
-// real toolbar, lists and sync over a real store and source runtime; Earth Engine answers each request when a test says
+// real toolbar, lists and commits over a real store and source runtime; Earth Engine answers each request when a test says
 // so.
 
 const earthEngine = vi.hoisted(() => ({requests: []}))
@@ -55,7 +55,7 @@ vi.mock('~/widget/tooltip', () => ({
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: bandMath} = await import('./bandMath')
 const {BandMathToolbar} = await import('./panels/bandMathToolbar')
-const {Sync} = await import('./sync/sync')
+const {commitRecipe} = await import('~/app/home/body/process/recipe/derivedResult')
 const {configurationGate, requestGate} = await import('../sourceRequirements')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
@@ -336,7 +336,6 @@ const tree = () =>
     <Provider store={store}>
         <SourceRuntimeProvider>
             <Recipe id={ID}>
-                <Sync/>
                 <EventShield>
                     <PortalContainer/>
                     <PortalContainer id='panels'/>
@@ -379,12 +378,11 @@ async function reopen() {
     await settled()
 }
 
-// The model as a panel's Apply would leave it, for the sync to follow.
+// The model as a panel's Apply commits it, with what Band Math derives from it.
 async function setModel(change) {
     const model = selectFrom(store.getState(), ['process.loadedRecipes', ID, 'model'])
-    await act(async () => actionBuilder('SET_MODEL')
-        .set(['process.loadedRecipes', ID, 'model'], change(model))
-        .dispatch())
+    await act(async () => commitRecipe(['process.loadedRecipes', ID], actionBuilder('SET_MODEL')
+        .set(['process.loadedRecipes', ID, 'model'], change(model))))
     await settled()
 }
 

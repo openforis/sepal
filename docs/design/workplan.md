@@ -2,8 +2,8 @@
 
 The single backlog for SEPAL recipes, tasks, applications and infrastructure. Reports need reproduction;
 proposals need bounded scope and acceptance criteria; research questions do not select an implementation.
-No ordering, delivery date or deployment is implied. Server-preview readiness and the broader band-presentation
-review remain explicitly deferred.
+Except where an item is explicitly marked next, no ordering, delivery date or deployment is implied.
+Server-preview readiness and the broader band-presentation review remain explicitly deferred.
 
 Technical documents retain current behavior, compatibility constraints and detailed target contracts.
 Add and maintain planned work here; link to those documents for design detail instead of keeping parallel roadmaps.
@@ -20,6 +20,21 @@ Add and maintain planned work here; link to those documents for design detail in
 These are bounded assessments or contract gaps, independent of the larger architecture proposals. Code-confirmed
 behavior is identified below; suspected symptoms still need reproduction. This list schedules no algorithm changes
 or new release checks.
+
+### Regression table-import response ownership
+
+**Next implementation item.** Changing the selected table in
+Regression's training-data editor clears its draft rows but leaves the previous row request running
+(`regression/panels/trainingData/eeTableSection.jsx`, `loadColumns`). A mounted reproduction confirms that table A's
+late answer enables Apply and can be saved as table B's points. This is separate from Classification's corrected
+null access during class mapping; Regression's draft conversion already tolerates unset rows.
+
+Cancel the pending row request when the table changes, using the existing `cancel$` and subscription lifecycle.
+Keep imported points as snapshots and preserve draft isolation; no calculation-evidence mechanism is needed.
+Acceptance: select B while A's rows are pending, then deliver A's answer. It must populate nothing and leave Apply
+and Enter held until B's valid rows arrive. Applying saves B's ID with B's points; Cancel preserves the saved dataset.
+Retain the existing successful import and empty-result checks. Classification's table importer already cancels
+superseded requests; sampled-image imports should retain their cancellation behavior.
 
 ### Collection-output correctness
 
@@ -271,14 +286,9 @@ it (`lib/js/shared/src/recipe/calculation`); the source runtime owns calculation
 state (`sourceRequirements.js`). Sampling Design is its first consumer. Form panels judge drafts by local requirements
 naming them as `editor` (`recipe/localCandidate.js`) and keep synchronous results derived in their drafts
 (`recipe/derivedResult.js`): Sampling Design's manual proportions and allocation, and Band Math's Output bands, use them.
+Commits keep applied results derived in the same action (`commitRecipe`, same file):
+[Band Math's calculation bands](../recipes/band-math.md).
 
-- **Band Math derived bands.** Each calculation's `includedBands` is a cheap local derivation: keep it synchronous in
-  the existing pure rules (`deriveCalculations.js`), with declared dependencies on the described bands of the inputs
-  and earlier calculations its expression reads (Band Math's own `usedBands`), compared as current projections - no
-  persisted digests or asynchronous hashing. Feedback stays with `CALCULATIONS_REQUIREMENT` items and
-  `OUTPUT_REFERENCES`, which Output bands already reads for its draft through the shared binding. Remove only the
-  change detection in `bandMath/sync/` that this supersedes; keep the synchronization that preserves expressions,
-  aliases and user choices.
 - **Stack automatic names.** The same shape: the naming projection reads input order, reserved explicit names and the
   described input bands; overrides stay user-owned.
 - **Product projections.** Tighten what counts as a meaningful input change at each product owner, through
@@ -293,8 +303,8 @@ naming them as `editor` (`recipe/localCandidate.js`) and keep synchronous result
 #### Recipe adoption inventory
 
 The code assessment covers all 23 current shared recipe types and the common workflows below. It identifies
-reuse opportunities, not reproduced defects in every listed path. Sampling Design is the first implementation;
-the other migrations remain separate work. Paths in the table are relative to
+reuse opportunities, not reproduced defects in every listed path. Sampling Design and Band Math use the shared
+bindings; the remaining migrations are separate work. Paths in the table are relative to
 `modules/gui/src/app/home/body/process/recipe/` unless qualified.
 
 Use the part of the mechanism each responsibility needs:
@@ -309,7 +319,6 @@ Use the part of the mechanism each responsibility needs:
 
 | Recipes | Concrete reuse and existing owner | Migration boundary |
 | --- | --- | --- |
-| Band Math | `bandMath/sync/` compares input/calculation changes and stages re-derivation; `deriveCalculations.js` and shared expression analysis already supply the domain rules. Output bands judges its draft through the shared local-requirement binding. | Best next consumer: declare each calculation's actual band dependencies and reuse item prerequisites. Replace scheduling/change detection; preserve expression rewrites, band identities, output selections and custom names. |
 | Stack | `stack/panels/stackToolbar.jsx` invokes `toBandNames` after Input imagery changes. | Combine with [automatic names](#stack-automatic-names): synchronous derivation from ordered inputs and explicit overrides. The existing callback is small; adoption must simplify it and preserve saved names as explicit. |
 | Class Change | `classChange/panels/legend/legend.jsx` rebuilds transition entries, IDs, labels and default colours when either whole input record changes. | Declare the input-legend projection and derive transitions locally. Define transition identity and preservation of edited labels/colours first; keep the established transition-code order. Optional confidence availability is a separate dependency on both inputs. |
 | CCDC, Time Series, Phenology | Their Sources panels separately load Classification metadata and derive band choices. CCDC also derives TMask choices from breakpoint bands in PRC. `selectedClassification.js`, `collectionClassifierRequirements.js` and CCDC's `segmentDescription.js` already establish reusable owners. | Read current resolved facts once and declare Sources-to-processing dependencies. Keep pending/failed facts distinct from unavailable bands; retain invalid selections with actionable feedback. This is compatibility and acquisition work, without persisted fit evidence. |
@@ -339,8 +348,8 @@ Use the part of the mechanism each responsibility needs:
   Retrieve panel already coordinate relevant consumers. Extend those owners where a migration exposes a gap;
   do not add a second chart/request coordinator or duplicate server-preview readiness work.
 
-**Adoption order and acceptance.** Band Math's calculations are the next consumer of the synchronous declaration
-path, then Stack alongside automatic naming. Class Change and temporal section dependencies are the next focused
+**Adoption order and acceptance.** Within derivation migrations, Stack's automatic naming is next.
+Class Change and temporal section dependencies are the next focused
 candidates. Other rows are an inventory, not a commitment to migrate working code. Product-owned input projections
 can be added independently where the conservative fallback causes unnecessary recalculation.
 
@@ -497,6 +506,11 @@ the entries below retain the concrete differences and local policy questions.
 The declaration refuses repeated final names, while direct EE construction renames a second `x` to `x_1`.
 Include that discrepancy in requested-output/server-boundary assessment. Deleted-output retention remains
 under the shared source-recovery policy above.
+
+A multi-band PREFIX/SUFFIX calculation whose model lacks `bandRename` derives names ending in `undefined`
+(`updateIncludedBands`). This is confirmed for such a model. Whether the editor saves a suffix left untouched as
+absent is unverified: `modelToValues` passes the field through as `undefined`, and the form keeps that value. This is
+separate from the derived-bands migration, which keeps the rule unchanged.
 
 ### BAYTS Alerts
 

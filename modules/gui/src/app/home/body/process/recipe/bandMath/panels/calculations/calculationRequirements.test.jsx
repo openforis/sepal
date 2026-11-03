@@ -57,7 +57,7 @@ const {requestGate} = await import('../../../sourceRequirements')
 const {retrieveAvailability} = await import('../../../operationAvailability')
 const {Calculation} = await import('./calculation')
 const {Calculations} = await import('./calculations')
-const {Sync} = await import('../../sync/sync')
+const {commitRecipe} = await import('~/app/home/body/process/recipe/derivedResult')
 const {sourceProblemsOfState} = await import('../../../selectedSourceStatus')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
@@ -91,6 +91,23 @@ describe('the list of calculations', () => {
 })
 
 describe('a calculation edited in its panel', () => {
+    it.each([
+        ['no inputs', () => []],
+        ['an input with no selected bands', () => [{...INPUT, includedBands: []}]]
+    ])('opens with %s, keeping its expression and leaving the saved calculation unchanged on Cancel', async (_case, images) => {
+        const saved = expression('calc-1', 'c1', 'i1.red * 2')
+        await open('calc-1', {images: images(), calculations: [saved]})
+
+        const view = EditorView.findFromDOM(document.querySelector('.cm-editor'))
+        expect(view.state.doc.toString()).toBe(saved.expression)
+        expect(calculation('calc-1')).toEqual(saved)
+        expect(sourceProblems()).toHaveProperty('calculations')
+
+        await click(button('button.cancel'))
+
+        expect(calculation('calc-1')).toEqual(saved)
+    })
+
     it('can be repaired while another stays unmet, which still marks Calculations', async () => {
         await open('calc-2', {calculations: [expression('calc-1', 'a', 'i1.swir'), expression('calc-2', 'b', 'i1.nir')]})
 
@@ -321,8 +338,8 @@ async function click(element) {
     await linted()
 }
 async function setImages(images) {
-    await act(async () => actionBuilder('TEST_CONFIGURE_INPUTS')
-        .set(['process.loadedRecipes', ID, 'model.inputImagery.images'], images).dispatch())
+    await act(async () => commitRecipe(['process.loadedRecipes', ID], actionBuilder('TEST_CONFIGURE_INPUTS')
+        .set(['process.loadedRecipes', ID, 'model.inputImagery.images'], images)))
     await linted()
 }
 
@@ -380,7 +397,6 @@ async function open(imageId, {images = [INPUT], calculations = []}, panel = <Cal
     await act(async () => root.render(
         <Provider store={store}>
             <Recipe id={ID}>
-                <Sync/>
                 <EventShield>
                     <PortalContainer/>
                     <PortalContainer id='panels'/>

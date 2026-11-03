@@ -12,8 +12,8 @@ import {initStore} from '~/store'
 import lookStyles from '~/style/look.module.css'
 import {ActivationContext} from '~/widget/activation/activationContext'
 
-// Real input add/remove/apply and Sync over saved-model-shaped references. Source observations are synthetic;
-// readiness, section feedback and the downstream gates are the real shared reads.
+// Real input add/remove/apply, and what their commits derive, over saved-model-shaped references. Source observations
+// are synthetic; readiness, section feedback and the downstream gates are the real shared reads.
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         bands$: ({asset, recipe, includeDataTypes}) => of((asset || recipe?.id === SOURCE ? ['red', 'nir'] : ['expr', 'mean'])
@@ -43,7 +43,6 @@ const {default: bandMath} = await import('./bandMath')
 const {default: remapping} = await import('../remapping/remapping')
 const {default: stack} = await import('../stack/stack')
 const {BandMathToolbar} = await import('./panels/bandMathToolbar')
-const {Sync} = await import('./sync/sync')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
 const {readImageOutput} = await import('#sepal/recipe/output/readImageOutput')
@@ -88,7 +87,7 @@ describe.each(['ASSET', 'RECIPE_REF'])('restoring a %s input', type => {
         await draftInput(type, SOURCE, ['red'])
         expect(calculations()).toEqual(before)
         expectAvailable(false)
-        // Observe the apply action itself, before mounted Sync can publish anything else.
+        // Observe the apply action itself.
         const applied = []
         const unsubscribe = store.subscribe(() => {
             if (images().some(image => image.id === SOURCE && image.type === type)) applied.push(model())
@@ -284,7 +283,7 @@ it('retains references added by whole-image derivation before removing the input
     await click(innermost(SOURCE))
     await addBand('nir')
     await press('button.apply')
-    // Sync derived another output, but the editor's original usedBands snapshot still held only red.
+    // The commit derived another band, but the editor's original usedBands snapshot still held only red.
     expect(calculations()[0].includedBands.map(({name}) => name)).toEqual(['s_red', 's_nir'])
     const outputs = model().outputBands
     await removeInput()
@@ -369,7 +368,7 @@ async function open(saved) {
     document.body.appendChild(container)
     root = createRoot(container)
     await act(async () => root.render(<Provider store={store}><ActivationContext id='root'><SourceRuntimeProvider>
-        <Recipe id={ID}><Sync/>
+        <Recipe id={ID}>
             <TabContext id={ID} busyIn$={new Subject()}>
                 <RecipeImageLayer source={{id: 'over-layer', sourceConfig: {recipeId: 'over'}}}
                     layerConfig={{visParams: getPreSetVisualizations(downstream)[0]}} map={{}}/>

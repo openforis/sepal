@@ -309,6 +309,57 @@ presents and enforces:
   allocation (`lib/js/shared/src/recipe/samplingDesign/allocationReview.js`). Cheap derivations need no persisted
   record.
 
+**Applied derivations.** A cheap result that must stay current with its editors closed is derived when the applied
+recipe changes, not in a draft and not by a mounted watcher. A `derivedResults` declaration with `applied` in place of
+`panel` is evaluated by the shared commit (`commitRecipe`, `recipe/derivedResult.js`). Commits are a form panel's Apply
+(`setModelAndValues`, after its `additionalUpdates`), and the list operations that commit outside a panel: removing an
+input (`inputImages.js`) or a calculation.
+The commit reads the recipe as its own action leaves it, evaluates the declaration over that recipe and the one before
+it, and adds what changes to the same action. Nothing is derived when a recipe opens, when its tab returns, or from a
+subscription. Drafts are never read, and Cancel commits nothing. There is no reducer hook: loading and caching a
+recipe are not commits.
+
+The declaration names an ordered item list and existing domain functions; shared code owns the order and the rules:
+
+```js
+// bandMath/derivations.js
+export const bandMathDerivations = [{
+    id: 'bandMath.calculationBands',
+    applied: {
+        items: 'calculations.calculations',
+        // Earlier items only, as derived in this commit: the existing requirement read and its item prerequisites.
+        read: (model, index) => calculationItem(chainFacts({model}), index),
+        requirement: CALCULATION_REFERENCES,
+        // Its own settings, and the bands its expression's analysis reads: not the rest of its scope.
+        inputs: calculationInputs,
+        // updateCalculation - every renamed input, calculation and band it reads - over findChanges between the
+        // previous model and the scope as derived so far.
+        follow: followedReferences,
+        // updateIncludedBands over analysis.includedBands; an unchanged item is returned as it was.
+        derive: derivedBands,
+        // updateOutputBands over findChanges(previous, derived), and visualization band renames.
+        followRecipe: followedOutputs
+    }
+}]
+```
+
+Each item is evaluated in order over the model as derived so far:
+
+1. It first follows what the commit renamed in its scope (`follow`).
+2. It is then read as its requirement reads it.
+3. It is derived only when all three hold:
+   - its `requirement` is met;
+   - every prerequisite item was met earlier in the same pass;
+   - its `inputs` differ from those it had in the recipe before the commit.
+
+Any other item keeps its value. A chain is therefore derived in one pass, an unrelated edit derives nothing, and an
+item that cannot be derived keeps its last derived value until repair. `followRecipe` then reconciles the rest of the
+recipe, as recipe-relative updates, step by step: first the commit's own change, then each derived item in order. Each
+step is reconciled against what the later items still hold, so a generated name stays with its owner until that owner
+changes. Paths are written only where their final value changes.
+Everything is synchronous over the two models of the commit: no acquired facts, credentials, polling, calculation
+cache, hash or persisted record. A declaration may also carry `panel` for its editor's draft; Band Math's does not.
+
 ## Persisted derived-result evidence
 
 A result that must remain valid after its panel and recipe close stores the evidence from which it was calculated.

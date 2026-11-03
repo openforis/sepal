@@ -9,16 +9,17 @@ export const updateCalculation = ({changes, calculations}) =>
         handleUpdatedImages(changes.calculationsWithChangedBands)
     )
 
+// Every renamed image a calculation reads is renamed in it, each in turn.
 const handleRenameImages = renamedImages =>
     calculations =>
-        calculations.map(calculation => {
-            const renamedImage = renamedImages.find(renamedImage =>
-                calculation.usedBands.find(usedBand => usedBand.imageId === renamedImage.imageId)
-            )
-            return renamedImage
-                ? renameImage(calculation, renamedImage)
-                : calculation
-        })
+        calculations.map(calculation =>
+            renamedImages
+                .filter(renamedImage => reads(calculation, renamedImage))
+                .reduce(renameImage, calculation)
+        )
+
+const reads = (calculation, image) =>
+    calculation.usedBands.some(usedBand => usedBand.imageId === image.imageId)
 
 const renameImage = (calculation, renamedImage) => {
     const usedBands = calculation.usedBands.map(usedBand => usedBand.imageId === renamedImage.imageId
@@ -44,16 +45,14 @@ const renameImage = (calculation, renamedImage) => {
         : calculation
 }
 
+// The renamed bands of every image a calculation reads are renamed in it, image by image.
 const handleUpdatedImages = updatedImages =>
     calculations =>
-        calculations.map(calculation => {
-            const updatedImage = updatedImages.find(updatedImage =>
-                calculation.usedBands.find(usedBand => usedBand.imageId === updatedImage.imageId)
-            )
-            return updatedImage?.renamedBands?.length
-                ? renameBands(calculation, updatedImage)
-                : calculation
-        })
+        calculations.map(calculation =>
+            updatedImages
+                .filter(updatedImage => updatedImage.renamedBands?.length && reads(calculation, updatedImage))
+                .reduce(renameBands, calculation)
+        )
 
 const renameBands = (calculation, updatedImage) => {
     return updatedImage.renamedBands.reduce(

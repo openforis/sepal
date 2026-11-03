@@ -5,7 +5,7 @@ import React from 'react'
 import {actionBuilder} from '~/action-builder'
 import {initValues} from '~/app/home/body/process/recipe'
 import {CalculatedResult} from '~/app/home/body/process/recipe/calculatedResult'
-import {DerivedResult} from '~/app/home/body/process/recipe/derivedResult'
+import {commitRecipe, DerivedResult} from '~/app/home/body/process/recipe/derivedResult'
 import {feedbackContent, joinFeedbackContent} from '~/app/home/body/process/recipe/feedbackMessageContent'
 import {LocalCandidate} from '~/app/home/body/process/recipe/localCandidate'
 import {OutputCandidate} from '~/app/home/body/process/recipe/outputCandidate'
@@ -350,11 +350,12 @@ RecipeFormPanel.propTypes = {
     onClose: PropTypes.func
 }
 
-// One action, so no subscriber observes this panel's new model beside settings it was applied to replace.
+// One action, so no subscriber observes this panel's new model beside settings it was applied to replace, or before what
+// the recipe's type derives from it (commitRecipe).
 const setModelAndValues = ({evaluatedPath, statePath, model, values, updates = []}) => {
     if (!evaluatedPath)
         return
-    return updates
+    return commitRecipe(statePath, updates
         .reduce(
             (builder, {path, value, merge}) => merge
                 ? builder.assign([statePath, path], value)
@@ -362,8 +363,7 @@ const setModelAndValues = ({evaluatedPath, statePath, model, values, updates = [
             actionBuilder('SET_MODEL_AND_VALUES', {evaluatedPath, model, values})
                 .setIfChanged([statePath, 'ui', evaluatedPath], values)
                 .setIfChanged([statePath, 'model', evaluatedPath], model)
-        )
-        .dispatch()
+        ))
 }
 
 const setValues = ({evaluatedPath, statePath, values}) => {

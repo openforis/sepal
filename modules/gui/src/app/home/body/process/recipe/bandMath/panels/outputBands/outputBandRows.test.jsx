@@ -248,7 +248,7 @@ describe('an output image', () => {
 })
 
 describe('an output image whose input no longer includes a band', () => {
-    it('is not offered it once Sync has removed its outputs', async () => {
+    it('is not offered it once the input\'s change has removed its outputs', async () => {
         const input = removedFromInput(RATIO)
         const changes = findChanges({prevImages: [INPUT], images: [input], prevCalculations: [], calculations: []})
         const [{outputBands}] = updateOutputBands({changes, outputImages: [{...INPUT, outputBands: OUTPUT_BANDS}]})
