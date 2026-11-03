@@ -1,6 +1,5 @@
 import {map} from 'rxjs'
 import setCookieParser from 'set-cookie-parser'
-import urljoin from 'url-join'
 
 import {ClientException} from '#sepal/exception'
 import {post$} from '#sepal/httpClient'
@@ -17,7 +16,7 @@ const loginToken$ = ctx => {
         })
     }
 
-    return post$(urljoin(ceoUrl, 'login'), {
+    return post$(new URL('login', ceoUrl), {
         body: {
             email,
             password,

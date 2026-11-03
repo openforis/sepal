@@ -1,5 +1,4 @@
 import {map, of, switchMap, throwError} from 'rxjs'
-import urljoin from 'url-join'
 
 import {ClientException} from '#sepal/exception'
 import {get$} from '#sepal/httpClient'
@@ -10,7 +9,7 @@ const getFromCeo$ = (ctx, {path, query}) => {
     const token = ctx.request.headers['x-ceo-token']
     return validateToken$(token).pipe(
         switchMap(() =>
-            get$(urljoin(ceoUrl, path), {
+            get$(new URL(path, ceoUrl), {
                 headers: {Cookie: token},
                 query
             })
@@ -20,7 +19,7 @@ const getFromCeo$ = (ctx, {path, query}) => {
 }
 
 const validateToken$ = token =>
-    get$(urljoin(ceoUrl, 'account'), {
+    get$(new URL('account', ceoUrl), {
         redirect: 'manual',
         headers: {Cookie: token}
     }).pipe(
