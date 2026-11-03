@@ -314,6 +314,31 @@ describe('the Stratification panel', () => {
 })
 
 describe('the Proportions panel', () => {
+    it.each([
+        ['no Proportions section', undefined],
+        ['an empty Proportions section', {}]
+    ])('opened with %s, waits for configuration and accepts manual answers', async (_name, proportions) => {
+        const design = stratified({areas: 'frame'})
+        if (proportions === undefined) {
+            delete design.model.proportions
+        } else {
+            design.model.proportions = proportions
+        }
+        await open(Proportions, design, {})
+
+        expect(harness.calculations).toEqual([])
+        expect(button('button.apply').disabled).toBe(true)
+        expect(applied().proportions).toEqual(proportions)
+
+        await act(async () => harness.toggleManual(true))
+        await act(async () => harness.inputs.anticipatedProportions.set([{stratum: 1, proportion: 40}]))
+        await click('button.apply')
+
+        expect(applied().proportions).toMatchObject({
+            manual: [true], skip: false, anticipatedProportions: [{stratum: 1, proportion: 0.4}]
+        })
+    })
+
     it.each([['ONLINE', false], ['BATCH', true]])('opened %s over proportions for strata the design no longer has, calculates them in that mode over the current areas', async (eeStrategy, batch) => {
         await open(Proportions, stratified({areas: 'after', proportions: {frame: 'after', rows: [{stratum: 2, proportion: 0.5}], eeStrategy}}), {digest: 'after'})
 

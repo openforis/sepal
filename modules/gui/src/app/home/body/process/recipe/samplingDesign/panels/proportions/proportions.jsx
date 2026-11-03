@@ -630,10 +630,10 @@ const valuesToModel = values => {
             ? null
             : values.anticipatedOverallProportion
                 && values.anticipatedOverallProportion / 100,
-        anticipatedProportions: isSkipped
+        anticipatedProportions: isSkipped || !values.anticipatedProportions
             ? null
             : values.anticipatedProportions
-                ?.map(entry => ({
+                .map(entry => ({
                     ...entry,
                     proportion: entry.proportion && entry.proportion / 100
                 }))
