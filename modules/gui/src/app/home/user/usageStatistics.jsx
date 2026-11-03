@@ -14,19 +14,21 @@ import {Widget} from '~/widget/widget'
 
 import styles from './usageStatistics.module.css'
 
-// Resource usage month by month, newest first: the given user's (admin), or the current user's own
-// when no username is given. Months are UTC calendar months, the ones the budget limits run on;
+// Resource usage month by month, newest first: every user's summed (admin, global), the given
+// user's (admin), or the current user's own when no username is given. Months are UTC calendar months, the ones the budget limits run on;
 // hovering one shows its usage per instance type in a tooltip. Types go by their tag ("t1"), as
 // everywhere else a user picks one; a type without a tag by its name.
 class _UsageStatistics extends React.Component {
     state = {usage: null, failed: false}
 
     componentDidMount() {
-        const {username, stream} = this.props
+        const {global, username, stream} = this.props
         stream('LOAD_USER_USAGE',
-            username
-                ? api.sessions.userUsage$(username)
-                : api.sessions.usage$(),
+            global
+                ? api.sessions.globalUsage$()
+                : username
+                    ? api.sessions.userUsage$(username)
+                    : api.sessions.usage$(),
             usage => this.setState({usage}),
             () => this.setState({failed: true})
         )
@@ -137,5 +139,6 @@ export const UsageStatistics = compose(
 
 UsageStatistics.propTypes = {
     framed: PropTypes.any,
+    global: PropTypes.any,
     username: PropTypes.string
 }

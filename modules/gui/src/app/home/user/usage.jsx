@@ -7,6 +7,7 @@ import format from '~/format'
 import {select} from '~/store'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
+import {currentUser} from '~/user'
 import {withActivatable} from '~/widget/activation/activatable'
 import {hasBudget, hourlyInstanceSpending, isBudgetWarning} from '~/widget/budgetRules'
 import {Layout} from '~/widget/layout'
@@ -99,6 +100,38 @@ const Usage = compose(
 
 Usage.propTypes = {}
 
+class _GlobalUsage extends React.Component {
+    render() {
+        const {activatable: {deactivate}} = this.props
+        return (
+            <Panel
+                className={styles.panel}
+                placement='modal'
+                onBackdropClick={deactivate}>
+                <Panel.Header
+                    icon='users'
+                    title={msg('user.report.globalUsage')}/>
+                <Panel.Content>
+                    <UsageStatistics global/>
+                </Panel.Content>
+                <Panel.Buttons>
+                    <Panel.Buttons.Main>
+                        <Panel.Buttons.Close
+                            keybinding={['Enter', 'Escape']}
+                            onClick={deactivate}
+                        />
+                    </Panel.Buttons.Main>
+                </Panel.Buttons>
+            </Panel>
+        )
+    }
+}
+
+const GlobalUsage = compose(
+    _GlobalUsage,
+    withActivatable({id: 'globalUsage', policy, alwaysAllow: true})
+)
+
 const hint$ = new Subject()
 
 class _UsageButton extends React.Component {
@@ -111,6 +144,7 @@ class _UsageButton extends React.Component {
             <React.Fragment>
                 <Usage/>
                 <UserSessions/>
+                {currentUser()?.admin ? <GlobalUsage/> : null}
                 {this.renderButton()}
             </React.Fragment>
         )

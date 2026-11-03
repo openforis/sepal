@@ -9,7 +9,7 @@ import {of, throwError} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 vi.mock('~/connect', () => ({connect: () => component => component}))
-vi.mock('~/apiRegistry', () => ({default: {sessions: {usage$: vi.fn(), userUsage$: vi.fn()}}}))
+vi.mock('~/apiRegistry', () => ({default: {sessions: {usage$: vi.fn(), userUsage$: vi.fn(), globalUsage$: vi.fn()}}}))
 vi.mock('~/widget/icon', () => ({Icon: ({name}) => <span className={name}/>}))
 vi.mock('~/widget/scrollable', () => ({Scrollable: ({children}) => <div>{children}</div>}))
 vi.mock('~/widget/widget', () => ({
@@ -44,6 +44,7 @@ describe('the usage statistics', () => {
         mounted = []
         vi.mocked(api.sessions.usage$).mockReset().mockReturnValue(of(usage))
         vi.mocked(api.sessions.userUsage$).mockReset().mockReturnValue(of(usage))
+        vi.mocked(api.sessions.globalUsage$).mockReset().mockReturnValue(of(usage))
     })
     afterEach(() => mounted.forEach(unmount => unmount()))
 
@@ -59,6 +60,14 @@ describe('the usage statistics', () => {
 
         expect(api.sessions.userUsage$).toHaveBeenCalledWith('bob')
         expect(api.sessions.usage$).not.toHaveBeenCalled()
+    })
+
+    it('shows every user\'s usage when global', () => {
+        render({global: true})
+
+        expect(api.sessions.globalUsage$).toHaveBeenCalled()
+        expect(api.sessions.usage$).not.toHaveBeenCalled()
+        expect(api.sessions.userUsage$).not.toHaveBeenCalled()
     })
 
     it('lists the totals of each month, as reported', () => {

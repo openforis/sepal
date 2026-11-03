@@ -269,6 +269,10 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
         ctx.body = await sessionManager.generateUserUsageReport({username})
     }
 
+    const globalUsage = async ctx => {
+        ctx.body = await sessionManager.generateUserUsageReport({username: null})
+    }
+
     // userSessions — {sessions} for the SELF report, no Koa ctx, for the session ws (./ws.js).
     // Built by the same buildReport the REST route uses, so each session is serialised identically
     // — but instanceTypes is dropped: it is a static list (instanceManager config, changes only on
@@ -558,6 +562,7 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
         generateReportOther: generateReport(pathUser),
         userUsageSelf: userUsage(selfUser),
         userUsageOther: userUsage(pathUser),
+        globalUsage,
         userSessions,
         mostRecentlyClosedByUser,
         mostRecentlyClosed,

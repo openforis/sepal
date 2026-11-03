@@ -1,5 +1,5 @@
-// GenerateUserUsageReport — time-weighted per-instance-type resource usage for one user, month by
-// month, from the instance_usage_hourly rollups. Months are UTC calendar months ('YYYY-MM'), the
+// GenerateUserUsageReport — time-weighted per-instance-type resource usage for one user (every user
+// when username is null), month by month, from the instance_usage_hourly rollups. Months are UTC calendar months ('YYYY-MM'), the
 // ones the monthly budgets run on, newest first: the current one so far, back to the oldest one the
 // hourly retention keeps whole. Only months with recorded usage are reported.
 //

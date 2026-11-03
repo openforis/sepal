@@ -12,8 +12,10 @@ vi.mock('~/widget/buttonSelect', () => ({
     ButtonSelect: ({label, additionalClassName, hint, options}) =>
         <div className='select' data-class-name={additionalClassName} data-hint={String(hint)}>
             <div className='label'>{label}</div>
-            {options.map(({value, label, disabled, onSelect}) =>
-                <button key={value} className='option' disabled={disabled} onClick={() => onSelect()}>{label}</button>
+            {options.map(({key, value, group, label, disabled, onSelect}) =>
+                group
+                    ? <hr key={key} className='option separator'/>
+                    : <button key={value} className='option' disabled={disabled} onClick={() => onSelect()}>{label}</button>
             )}
         </div>
 }))
@@ -58,6 +60,18 @@ describe('the usage menu', () => {
 
         expect(container.querySelector('.label').textContent).toBe('$1.23/h')
         expect(optionLabels(container)).toEqual(['Usage', 'Sessions'])
+    })
+
+    it('offers the global usage first, set apart, when its panel is there, as it is for admins', () => {
+        const activatables = {...allActivatable(), globalUsage: anActivatable()}
+        const container = render({activatables})
+
+        expect(optionLabels(container)).toEqual(['Global usage', '—', 'Usage', 'Sessions'])
+
+        act(() => option(container, 'Global usage').click())
+
+        expect(activatables.globalUsage.activate).toHaveBeenCalled()
+        expect(activatables.userReport.activate).not.toHaveBeenCalled()
     })
 
     it('opens the sessions panel, and only that one', () => {
@@ -112,7 +126,7 @@ const allActivatable = () => ({
 })
 
 const optionLabels = container =>
-    [...container.querySelectorAll('.option')].map(option => option.textContent)
+    [...container.querySelectorAll('.option')].map(option => option.classList.contains('separator') ? '—' : option.textContent)
 
 const option = (container, label) =>
     [...container.querySelectorAll('.option')].find(option => option.textContent === label)

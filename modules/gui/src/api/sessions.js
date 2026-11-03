@@ -11,6 +11,9 @@ export default {
     userUsage$: username =>
         get$(`/api/sessions/${username}/usage`),
 
+    globalUsage$: () =>
+        get$('/api/sessions/global-usage'),
+
     // The Extend button on the expiry notification. Answers 409 when no ACTIVE session matched,
     // so the caller can tell "extended" from "there was nothing left to extend".
     extendNow$: sessionId =>

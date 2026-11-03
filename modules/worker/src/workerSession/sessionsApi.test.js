@@ -810,6 +810,18 @@ test('userUsageSelf → currentUser (lowercased), never a path param', async () 
     )
 })
 
+test('globalUsage → every user, body passthrough', async () => {
+    const report = {months: []}
+    sessionManager.generateUserUsageReport.mock.mockImplementation(async () => report)
+    const c = ctx()
+    await api.globalUsage(c)
+    assert.deepEqual(
+        callsOf(sessionManager.generateUserUsageReport),
+        [[{username: null}]]
+    )
+    assert.deepEqual(c.body, report)
+})
+
 test('serializes fresh usage and nulls stale or missing usage', () => {
     // The module-level api's clock is fixed at 2026-07-01T12:00:00Z; usage older than 5 minutes
     // is stale.

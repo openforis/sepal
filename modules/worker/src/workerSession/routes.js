@@ -44,6 +44,8 @@ const registerSessionRoutes = (router, api) => router
     // GET /sessions/usage — the current user's own aggregate resource usage, for the Usage panel.
     // Literal, BEFORE the :username wildcard routes.
     .get('/sessions/usage', requireAuth, api.userUsageSelf)
+    // GET /sessions/global-usage (admin) — every user's usage summed, for the admin Global usage panel.
+    .get('/sessions/global-usage', requireAdmin, api.globalUsage)
     .get('/sessions/:username/report', requireAdmin, api.generateReportOther)
     // GET /sessions/:username/usage (admin) — aggregate resource usage for the user-details form.
     .get('/sessions/:username/usage', requireAdmin, api.userUsageOther)

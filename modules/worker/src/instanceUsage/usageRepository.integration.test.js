@@ -134,6 +134,15 @@ describe('UsageRepository', () => {
             assert.partialDeepStrictEqual(rollup, [{instanceType: INSTANCE_TYPE, hours: 1}])
         })
 
+        test('rolls up every user when no user is named', async () => {
+            await givenRolledUpHour({hour: at('09:00')})
+            await givenRolledUpHour({sessionId: 'x', username: ANOTHER_USERNAME, hour: at('09:00')})
+
+            const rollup = await repository.userUsageRollup(null, FROM_TIME, TO_TIME)
+
+            assert.partialDeepStrictEqual(rollup, [{instanceType: INSTANCE_TYPE, hours: 2}])
+        })
+
         test('reports nothing for a user with no recorded hours', async () => {
             const rollup = await repository.userUsageRollup('nobody', FROM_TIME, TO_TIME)
 

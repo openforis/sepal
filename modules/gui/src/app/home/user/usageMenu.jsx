@@ -32,14 +32,21 @@ class _UsageMenuButton extends React.Component {
     }
 
     getOptions() {
-        const {activator: {activatables: {userReport, userSessions}}} = this.props
+        const {activator: {activatables: {userReport, userSessions, globalUsage}}} = this.props
         return [
+            // Only admins have the global usage panel, so only they get an activatable for it.
+            ...(globalUsage?.activate
+                ? [
+                    this.option({value: 'globalUsage', label: msg('user.report.globalUsage'), icon: 'users'}, globalUsage),
+                    {key: 'separator', group: true}
+                ]
+                : []),
             this.option({value: 'userReport', label: msg('user.report.title'), icon: 'chart-bar'}, userReport),
             this.option({value: 'userSessions', label: msg('user.report.sessions.title'), icon: 'server'}, userSessions)
         ]
     }
 
-    // Both panels show figures that drift between pushes, so each opens on fresh ones.
+    // The panels show figures that drift between pushes, so each opens on fresh ones.
     option(entry, {activate, canActivate}) {
         return {
             ...entry,
@@ -55,7 +62,7 @@ class _UsageMenuButton extends React.Component {
 
 export const UsageMenuButton = compose(
     _UsageMenuButton,
-    withActivators('userReport', 'userSessions')
+    withActivators('userReport', 'userSessions', 'globalUsage')
 )
 
 UsageMenuButton.propTypes = {

@@ -6318,6 +6318,7 @@
       "title": "Google account"
     },
     "report": {
+      "globalUsage": "Global usage",
       "resources": {
         "info": "Shows your monthly instance and storage budgets, and the storage space in use.",
         "max": "Max",
