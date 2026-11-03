@@ -182,6 +182,48 @@ Extend the [shared section feedback](recipes/source-resolution.md#section-feedba
 Keep completion in authoritative requirements or their declarative presentation mapping. Preserve wizard timing,
 independent draft repair, saving and operation gates; add no separate toolbar predicate or persisted "new recipe" flag.
 
+### Untouched recipe panels
+
+Confirmed with mounted panels over the real shared form/buttons and mocked API/evidence reads: the cases below
+show Apply and mark the draft dirty without a configuration edit. The callers write initialization or presentation
+state with ordinary field `set`; keep the shared form's detection of genuine edits. Paths below are relative to
+`modules/gui/src/app/home/body/process/recipe/`.
+
+- **Source validation.** [Planet Sources](../../modules/gui/src/app/home/body/process/recipe/planetMosaic/panels/sources/sources.jsx)
+  initializes `validAsset` to `true`, then sets `'valid'` on mount, including for NICFI. The Sources panels in
+  `ccdc`, `timeSeries`, `phenology` and `changeAlerts` repeat the boolean/string mismatch when an unchanged saved
+  Planet collection reloads (`onLoading` also sets `''`). Keep loading/validity checks effective without treating
+  their state as user edits; use existing validation or field-initialization operations, not just matching the
+  success sentinel.
+- **Band Math calculation fields.** [Calculation](../../modules/gui/src/app/home/body/process/recipe/bandMath/panels/calculations/calculation.jsx)
+  sets the derived `otherNames` field on opening; `panels/calculations/functionSection.jsx` also sets
+  `defaultBandName` from the reducer. A saved FUNCTION calculation opens dirty with unchanged inputs and settings.
+  Establish these derived fields as initial values; preserve actual name, reducer and band edits.
+- **CCDC Slice hidden dates.** [Date](../../modules/gui/src/app/home/body/process/recipe/ccdcSlice/panels/date/date.jsx)
+  fills `startDate`/`endDate` with `set` even for a complete SINGLE selection. Reproduction: saved date
+  `2020-06-01`, no range fields, source extent `2018-01-01`–`2024-01-01`. Learn defaults as initial field values,
+  including when evidence arrives later, without replacing explicit dates or clearing unrelated edits.
+- **Missing-field defaults.** The same post-initialization writes occur in
+  [Planet Options](../../modules/gui/src/app/home/body/process/recipe/planetMosaic/panels/options/options.jsx)
+  (absent thresholds become 85/60 in the form),
+  [Change Alerts Options](../../modules/gui/src/app/home/body/process/recipe/changeAlerts/panels/options/options.jsx)
+  (absent `mustBeConfirmedInMonitoring`, `mustBeStableBeforeChange`, `mustStayChanged` become `true`),
+  [Sampling Design arrangement](../../modules/gui/src/app/home/body/process/recipe/samplingDesign/panels/sampleArrangement/sampleArrangement.jsx)
+  (absent seed becomes 1), and shared AOI `mosaic/panels/aoi/{countrySection,eeTableSection}.jsx`
+  (absent buffer becomes 0). Seed these defaults before comparison, or adopt each learned field's initial value.
+  Retain explicit saved choices and existing default semantics; do not migrate models on opening.
+- **Change Alerts More/Less.** `changeAlerts/panels/options/options.jsx` stores disclosure in the form's `advanced`
+  field. With otherwise complete default settings and no saved `advanced`, More → Less leaves `false` against an
+  initially absent value, so Apply remains. Keep presentation state separate from configuration edits.
+
+Acceptance: untouched opening, metadata completion, More/Less, Close/reopen and Cancel leave the model unchanged
+and no spurious Apply; real edits still enable Apply and survive unrelated learned defaults. Preserve pending/failed
+validation and submission blocking. Cover each cause through real form/button wiring, with clean controls for
+complete settings, supported LandTrendr Sources/Options and Classification/Class Change/Index Change/Remapping
+legends. These controls were clean in the bounded assessment; this does not establish every panel or browser path.
+Retrieval action forms and required setup defaults are not blanket candidates for suppressing Apply. Keep this a
+local form correction, independent of calculation freshness or source-adapter architecture.
+
 ### Stack automatic names
 
 Separate generated defaults from explicit `outputName` overrides. Compute one effective-name rule for description,
