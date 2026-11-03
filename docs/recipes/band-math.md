@@ -42,10 +42,10 @@ When the same unambiguous source is added back, the new-input form suggests its 
 other input or calculation uses it and no conflicting retained reference claims it. Other sources keep the existing
 name-allocation guard. A name explicitly typed in the draft is respected. Applying with the former name reconnects
 preserved references to the new input's `imageId`; expression text, reducer settings, selected physical band names,
-casts and calculated output names remain unchanged. Referenced selected bands reuse their retained band IDs so
-normal synchronization preserves outputs still taken from calculations. A required band not yet selected stays
-invalid under shared readiness; selecting it and applying clears that finding. Input and reference updates are
-published in one action. Draft source changes, name suggestions and Cancel do not repair the saved recipe.
+casts and calculated output names remain unchanged. Referenced selected bands reuse their retained band IDs, so
+the derivation committed with them preserves outputs still taken from calculations. A required band not yet selected
+stays invalid under shared readiness; selecting it and applying clears that finding. Input and reference updates are
+published in one action, with what is derived from them. Draft source changes, name suggestions and Cancel do not repair the saved recipe.
 
 An occupied name is never stolen, and expressions are never rewritten to avoid a collision. Reducer references
 then remain unresolved. Expressions retain their existing variable-name semantics: if a user has manually assigned
@@ -82,7 +82,7 @@ operation renames another output. Final names must match `[a-zA-Z_][a-zA-Z0-9_]{
 Rows and Apply judge the same draft rules; toolbar marks judge the applied model.
 
 A calculation renaming several bands to the same base assigns suffixes in order, after the largest existing
-suffix. Band IDs survive renaming. Synchronization updates each affected output's default against other
+suffix. Band IDs survive renaming. The commit updates each affected output's default against other
 final names, counting earlier assignments and custom names but releasing the old names changed in that
 operation. Custom overrides remain intact; unrelated outputs do not change.
 
@@ -120,13 +120,18 @@ Execution builds every calculation in order, over the inputs and the calculation
   later calculation and the calculation itself are each diagnosed.
 - An output band must be a band of the image it is taken from, by physical name, and that image must exist.
 - At least one input image is listed: running it zips them, and builds nothing from none. Without one, Input imagery
-  says "Please add at least one image." beside what Output bands says of having none - except while the set-up
-  wizard has Input imagery open, where its list holds Next until it has one - and its layer, Retrieve and the asset
-  export are held, as for every recipe over it
-  ([Execution readiness](../design/recipes/source-resolution.md#execution-readiness)).
+  is marked as unfinished (amber), saying "Please add at least one image." - except while the set-up wizard has it
+  open, where its list holds Next, Done and Enter until it has one - and its layer, Retrieve and the asset export are
+  held, as for every recipe over it
+  ([Execution readiness](../design/recipes/source-resolution.md#execution-readiness)). The list shows every configured
+  input under its source's name, or its id where the recipe listing does not hold it, with its variable alias apart.
 - At least one image is output, each outputting at least one band, under names that are valid and that no other output
   band has - the rules Output bands applies to its own Apply (`outputImages.js`), so its fields, rows and toolbar
-  button agree. An empty section is judged once, for the section; the rest per output image.
+  button agree (`outputsAnything`, `outputsBands`). An empty section is judged once, for the section, as setup still
+  to do: its toolbar button is marked as unfinished (amber), saying what to output, once the set-up wizard is done and
+  Input imagery lists an input - until then it waits, neutral. Calculations are optional - an input band output
+  directly completes it. The rest is judged per output image, and is wrong (red) whatever Input imagery lists. Output
+  bands' form judges its draft, so a repair of what was saved applies, by Apply or Enter.
 - A calculation reading an unmet calculation, and an output taken from one, remain blocked by the recipe's shared
   readiness. Only originating problems produce calculation findings and row marks; dependent rows do not repeat them.
   Output bands stays unmarked for calculation failures, but still reports its own output-selection problems.
@@ -166,16 +171,29 @@ its chip. Restoring a configured band clears the existing chip's error. The sour
 returning source before the calculation is reopened; no chip needs to be removed and added again. This editor work
 neither restores deleted calculations nor changes the source-recovery identity/name policy.
 
-After a change, the sync derives each expression's bands again, in order, from the calculations before it as just
-derived, but only where everything it reads is met. One that is not keeps the bands it was derived with, and with them
-the names its outputs were given. Renamed inputs, calculations and bands are still renamed in expressions, used bands,
-outputs and visualizations.
+Each commit derives what it changes in the same action. Commits are an editor's Apply, and removing an input or a
+calculation from its list. This is an applied derivation
+([declarative evaluation](../design/recipes/source-freshness.md#declarative-dependency-evaluation),
+`derivations.js`):
+
+- **Order.** Calculations are taken in order. Each first follows every rename of the inputs, calculations and bands it
+  reads into its expression and used bands. It is then derived from the inputs and the calculations before it, as just
+  derived.
+- **When a calculation is derived.** Only when it and every calculation it reads are met, and the bands its analysis
+  reads, or its own settings, have changed.
+- **When it keeps its bands.** A calculation that is not derived keeps the bands it was derived with, and with them
+  the names its outputs were given. So does a calculation saved with bands its expression no longer yields, until what
+  it reads changes.
+- **Outputs and visualizations.** Outputs, and the user visualizations naming them, follow the removed, added and
+  renamed bands in the same action. They follow the edit itself first, then each derived calculation in order, so an
+  output keeps the default name it was given while a calculation renamed before it could take it.
+- **Nothing else derives.** Opening a recipe, returning to its tab and editing a draft derive and write nothing.
 
 Whether an input's bands exist in the asset or recipe it is taken from is judged by its output description
 ([Output](#output)), not by calculation-reference checks. Configured inputs and calculation bands are read from the
 model, independently of source evidence: pending or failed source loading never fabricates a missing reference.
 Descriptions still need their normal observations; a known calculation failure can block execution before those
-observations succeed. The editor and synchronization reuse the same analyzer and scope rules, with the existing
+observations succeed. The editor and the derivation reuse the same analyzer and scope rules, with the existing
 JavaScript grammar and `jsep` versions pinned in the shared package. No new parser or validity flag is introduced.
 
 Compatibility: asset, Drive and SEPAL image exports and dependent recipes with broken calculation references are now refused
@@ -264,10 +282,13 @@ Live schema/geometry probes and their limitations are indexed in
 - `modules/gee/test/jobs/ee/bandMath/`: catalogue and geometry; `jobs/ee/image/inputBandReads.test.js`
   covers physical CCDC input selection, and `jobs/task/export/imageAssetExport.test.js` covers export refusal.
 - `modules/gui/src/app/home/body/process/recipe/bandMath/`: source recovery, isolated draft repair, output
-  naming/identity, missing-selection chips, section marks, downstream gates and synchronization.
+  naming/identity, missing-selection chips, section marks, downstream gates and what commits derive.
 - `modules/gui/src/app/home/body/process/sourceRuntime/`: explanation acquisition and asset-evidence recovery.
 
 These suites use controlled external boundaries; browser tiles and live EE pixels need their own checks.
+
+User-confirmed browser acceptance covers Output bands validation feedback, repair and Apply through the shared
+local-requirement binding.
 
 Manual calculation-readiness check:
 

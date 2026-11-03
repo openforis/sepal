@@ -28,7 +28,18 @@ export const castToLargest = image => {
             })
         })
     )
-    const precision = precisions.getString(collection.aggregate_max('precisionIndex'))
+    const largestPrecision = precisions.getString(collection.aggregate_max('precisionIndex'))
+    const integerBands = collection.filter(ee.Filter.eq('precisionIndex', 0))
+    const integerExtent = ee.Number(ee.Algorithms.If(integerBands.size(),
+        ee.Number(integerBands.aggregate_min('minValue')).abs().max(integerBands.aggregate_max('maxValue')),
+        0
+    ))
+    // Float32 cannot preserve every integer beyond 2^24 (for example counts and acquisition dates).
+    const precision = ee.String(ee.Algorithms.If(
+        largestPrecision.equals('float'),
+        ee.Algorithms.If(integerExtent.gt(2 ** 24), 'double', largestPrecision),
+        largestPrecision
+    ))
     const minValue = ee.Algorithms.If(
         precision.equals('int'),
         collection.aggregate_min('minValue'),

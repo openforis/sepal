@@ -10,13 +10,12 @@ import {ButtonSelect} from '~/widget/buttonSelect'
 import {Combo} from '~/widget/combo'
 import {CrudItem} from '~/widget/crudItem'
 import {Form} from '~/widget/form'
+import {inputFeedback} from '~/widget/form/inputFeedback'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 
-import {itemStatusesOf} from '../../../selectedSourceStatus'
-import {readLocalRequirements} from '../../../sourceRequirements'
 import {ImageDescription} from '../../imageDescription'
 import {OutputBand} from './outputBand'
 import styles from './outputBands.module.css'
@@ -28,24 +27,25 @@ import {
     hasUniqueOutputNames,
     hasValidOutputNames,
     namedApart,
+    outputsAnything,
+    outputsBands,
     withUniqueDefaultNames
 } from './outputImages'
 
 const ADD_ALL_BANDS = Symbol('addAllBands')
 
+// What is output is applied only where something is, and every image output outputs a band, by the rules its requirements
+// judge the applied recipe by (outputImages.js): the draft is judged, so a repair applies whatever was saved.
 const fields = {
     outputImages: new Form.Field()
-        .notEmpty()
-        .predicate(value => !value.find(({outputBands}) => !outputBands.length),
-            'process.bandMath.panel.outputBands.missingBands'
-        )
+        .predicate(outputImages => outputsAnything(outputImages || []), 'fieldValidation.notEmpty')
+        .predicate(outputImages => outputImages.every(outputsBands), 'process.bandMath.panel.outputBands.missingBands')
         .predicate(hasValidOutputNames, 'process.bandMath.panel.outputBands.invalidFormat')
         .predicate(hasUniqueOutputNames, 'process.bandMath.panel.outputBands.duplicateBand')
 }
 
 const mapRecipeToProps = recipe => {
     return ({
-        recipe,
         images: selectFrom(recipe, 'model.inputImagery.images'),
         calculations: selectFrom(recipe, 'model.calculations.calculations'),
         outputImages: selectFrom(recipe, 'model.outputBands.outputImages') || []
@@ -130,7 +130,7 @@ class _OutputBands extends React.Component {
         const {inputs: {outputImages}} = this.props
         return (
             <Layout>
-                {outputImages.value?.length
+                {outputsAnything(outputImages.value || NO_OUTPUT_IMAGES)
                     ? outputImages.value.map(this.renderOutputImage)
                     : <NoData message={msg('process.bandMath.panel.outputBands.noImages')}/>}
             </Layout>
@@ -141,7 +141,7 @@ class _OutputBands extends React.Component {
     renderOutputImage(outputImage) {
         const current = this.currentImage(outputImage.imageId)
         const image = current || outputImage
-        const problem = this.draftProblems()[outputImage.imageId]
+        const problem = this.draftProblem(outputImage)
         return (
             <ListItem
                 key={outputImage.imageId}
@@ -168,7 +168,7 @@ class _OutputBands extends React.Component {
         const allOutputBandNames = allOutputNames(outputImages.value)
         return (
             <Layout type='horizontal' alignment='fill'>
-                {outputImage.outputBands.length
+                {outputsBands(outputImage)
                     ? outputImage.outputBands.map(band => {
                         return <OutputBand
                             key={band.id}
@@ -303,25 +303,11 @@ class _OutputBands extends React.Component {
         outputImages.set(draft)
     }
 
-    // What Band Math's own requirements (bandMathRequirements.js) find wrong with each output image as the draft
-    // configures it, the rest of the recipe as applied: its rows follow the draft, while the toolbar and the operations
-    // judge what is applied until Apply.
-    draftProblems() {
-        const {recipe, inputs: {outputImages}} = this.props
-        const draft = outputImages.value || NO_OUTPUT_IMAGES
-        if (this.judged?.model !== recipe.model || this.judged?.draft !== draft) {
-            const candidate = {
-                ...recipe,
-                model: {...recipe.model, outputBands: {...recipe.model.outputBands, outputImages: draft}}
-            }
-            const statuses = itemStatusesOf(readLocalRequirements(candidate), 'outputBands')
-            this.judged = {
-                model: recipe.model,
-                draft,
-                problems: Object.fromEntries(Object.entries(statuses).map(([id, {message}]) => [id, message]))
-            }
-        }
-        return this.judged.problems
+    // What Band Math's own requirements (bandMathRequirements.js) find wrong with an output image as the draft configures
+    // it, told to its rows by the form (localCandidate.js): the toolbar and the operations judge what is applied until Apply.
+    draftProblem(outputImage) {
+        const {form, inputs: {outputImages}} = this.props
+        return inputFeedback(form, outputImages).items?.[outputImage.imageId]?.message
     }
 
     // The input or calculation an output image is taken from, as configured now.

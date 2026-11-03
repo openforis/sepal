@@ -26,7 +26,7 @@ export const subscribe = (path, listener) => {
 export const state = () =>
     storeInstance.getState() || {}
 
-// only used by action-builder.js
+// only used by action-builder.js, and recipe commits (derivedResult.js)
 export const dispatch = action =>
     storeInstance.dispatch(action)
 

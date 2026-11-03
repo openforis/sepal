@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
-import {DEFAULT_SAMPLING_GRID_CRS} from '#sepal/recipe/samplingDesign/samplingGridCrs'
+import {isProportionsSkipped} from '#sepal/recipe/samplingDesign/proportionsSkip'
 import api from '~/apiRegistry'
 import {recipeVisualizationsNaming} from '~/app/home/body/process/recipe/visualizations'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
@@ -12,16 +12,19 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {toUserErrorMessage} from '~/userError'
 import {Form} from '~/widget/form'
+import {inputFeedback} from '~/widget/form/inputFeedback'
 import {Layout} from '~/widget/layout'
 import {NoData} from '~/widget/noData'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
+import {STRATUM_PROBABILITIES_CALCULATION} from '../../calculations'
+import {awaitedResultFeedback, editedResultFeedback} from '../../freshnessRequirements'
 import {isNumericClassValue, toClassOptions} from '../../sampling/categoricalLegend'
-import {reconcileManualProportions} from '../../sampling/designModel'
+import {proportionsCoverStrata, reconcileManualProportions} from '../../sampling/designModel'
 import {isValidOptionalProportionPercentage} from '../../sampling/numericRanges'
 import {maxAnticipatedTargetProportion, smartRound, toProportions} from '../../sampling/proportionMath'
-import {effectiveProportionsScale, isValidGridScale, proportionsScaleFromBand} from '../../samplingGridValidation'
+import {effectiveProportionsScale, proportionsScaleFromBand} from '../../samplingGridValidation'
 import {AnticipationStrategy, ImageSelection, OverallProportionInput, ProportionsHeaderButtons, StrataProportion} from './proportionControls'
 import styles from './proportions.module.css'
 import {proportionsCalculationError as toProportionsCalculationError} from './proportionsError'
@@ -29,16 +32,13 @@ import {proportionsCalculationError as toProportionsCalculationError} from './pr
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi') || [],
     unstratified: selectFrom(recipe, 'model.stratification.skip'),
-    stratificationType: selectFrom(recipe, 'model.stratification.type'),
-    stratificationAssetId: selectFrom(recipe, 'model.stratification.assetId'),
-    stratificationRecipeId: selectFrom(recipe, 'model.stratification.recipeId'),
-    stratificationBand: selectFrom(recipe, 'model.stratification.band'),
     stratificationScale: selectFrom(recipe, 'model.stratification.scale'),
-    stratificationCrs: selectFrom(recipe, 'model.stratification.crs') || DEFAULT_SAMPLING_GRID_CRS,
     strata: selectFrom(recipe, 'model.stratification.strata')
 })
 
 const fields = {
+    // Saved by an earlier version on manual answers whose strata changed: dropped from the draft as the panel reconciles
+    // them, so applying them settles them.
     requiresUpdate: new Form.Field(),
     skip: new Form.Field(),
     manual: new Form.Field(),
@@ -84,18 +84,23 @@ const fields = {
     anticipatedProportions: new Form.Field()
         .skip((_value, {skip}) => skip.length)
         .notBlank('process.samplingDesign.panel.proportions.form.anticipatedProportions.required'),
+    // What the probabilities were calculated from (#sepal/recipe/samplingDesign/stratumProbabilities), set with them and
+    // only with them.
+    probabilityPerStratumCalculatedFrom: new Form.Field(),
+    // Saved by a client of the previous release, and so the probabilities beside it are not established by the evidence
+    // saved with them: kept until probabilities are calculated or cleared here. A design without it reads '', as the
+    // form gives any field its model lacks.
+    stratumFrameEvidence: new Form.Field()
 }
 
 class _Proportions extends React.Component {
-    cancel$ = new Subject()
     cancelClassValues$ = new Subject()
     // Not React state: nothing renders from it, and the Scale default is written from the same callback that
     // receives it, where a queued setState would not have landed yet.
     bandMetadata = undefined
     state = {
         bands: undefined,
-        distinctClassOptions: undefined,
-        proportionsCalculationError: null
+        distinctClassOptions: undefined
     }
 
     constructor(props) {
@@ -109,11 +114,10 @@ class _Proportions extends React.Component {
         this.onAnticipationStrategyChanged = this.onAnticipationStrategyChanged.bind(this)
         this.onPercentageChanged = this.onPercentageChanged.bind(this)
         this.onOverallProportionChanged = this.onOverallProportionChanged.bind(this)
-        this.onScaleChanged = this.onScaleChanged.bind(this)
-        this.onEEStrategyChanged = this.onEEStrategyChanged.bind(this)
-        this.onProbabilitiyPerStratumCalculated = this.onProbabilitiyPerStratumCalculated.bind(this)
         this.onSkipToggled = this.onSkipToggled.bind(this)
         this.loadClassValues = this.loadClassValues.bind(this)
+        this.probabilities().onAnswer(({probabilityPerStratum, calculatedFrom}) =>
+            this.onProbabilitiyPerStratumCalculated(probabilityPerStratum, calculatedFrom))
     }
 
     render() {
@@ -199,7 +203,6 @@ class _Proportions extends React.Component {
             onAssetLoaded={this.onAssetLoaded}
             onRecipeBandsLoaded={this.onRecipeBandsLoaded}
             onBandChanged={this.onBandChanged}
-            onScaleChanged={this.onScaleChanged}
             onPercentageChanged={this.onPercentageChanged}
         />
     }
@@ -213,38 +216,64 @@ class _Proportions extends React.Component {
     }
 
     renderStrataProportion() {
-        const {strata, inputs: {eeStrategy, anticipatedProportions}} = this.props
+        const {form, strata, inputs: {eeStrategy, anticipatedProportions}} = this.props
+        const awaited = awaitedResultFeedback('proportions', this.probabilities())
+        const answers = inputFeedback(form, anticipatedProportions).error
         return <StrataProportion
             eeStrategy={eeStrategy}
             anticipatedProportions={anticipatedProportions}
             strata={strata}
             manual={this.isManual()}
-            streamActive={this.props.stream('PROBABILITY_PER_STRATUM').active}
-            calculationError={this.state.proportionsCalculationError}
-            onEEStrategyChanged={this.onEEStrategyChanged}
-            onRetryCalculation={() => this.scheduleAnticipatedProportions()}
+            streamActive={this.probabilities().calculating() || Boolean(awaited?.checking)}
+            loading={this.progress(awaited)}
+            emptyMessage={awaited?.message}
+            calculationError={this.calculationError()}
+            feedback={answers ? {errorMessage: answers} : editedResultFeedback('proportions', this.probabilities())}
+            onRetryCalculation={() => this.probabilities().retry()}
             onUseBatch={() => this.useBatch()}
         />
     }
 
+    // A short calculation status, with a separate explanation only for legacy results.
+    progress(awaited) {
+        const updating = this.probabilities().updating()
+        return {
+            status: awaited?.message || msg(updating
+                ? `process.samplingDesign.panel.proportions.form.updating.${updating}`
+                : 'process.samplingDesign.panel.proportions.form.calculating'),
+            explanation: updating === 'UNKNOWN' ? msg('process.samplingDesign.panel.proportions.form.updatingReason.UNKNOWN') : null
+        }
+    }
+
+    // An Earth Engine failure, or an answer about inputs that changed while it ran, as the table explains one.
+    calculationError() {
+        const {inputs: {eeStrategy}} = this.props
+        const failure = this.probabilities().failure()
+        if (failure?.superseded) {
+            return {strategy: eeStrategy.value, message: msg('process.samplingDesign.panel.proportions.form.result.superseded')}
+        }
+        return failure?.error ? toProportionsCalculationError({error: failure.error, strategy: eeStrategy.value}) : null
+    }
+
+    // What opening the panel calculates is its binding's (calculatedResult.js): automatic proportions this design does not
+    // hold yet, or holds for other strata, stale or without evidence, in the mode chosen beside them.
     componentDidMount() {
-        const {inputs: {requiresUpdate, skip, manual, anticipationStrategy, type, eeStrategy}} = this.props
-        requiresUpdate.set(false)
+        const {strata, inputs: {requiresUpdate, skip, anticipationStrategy, type, eeStrategy, anticipatedProportions}} = this.props
         skip.value || skip.set([])
-        manual.value || manual.set([])
         anticipationStrategy.value || anticipationStrategy.set('PROBABILITY')
         type.value || type.set('ASSET')
         eeStrategy.value || eeStrategy.set('ONLINE')
-        
-        // Stale means "open this panel and settle it". Manual rows are settled by reconciling them against the
-        // strata that moved underneath them - an answered proportion follows its stratum, a vanished one goes,
-        // and a new stratum arrives unanswered for the user to fill in.
-        if (requiresUpdate.value) {
-            if (this.isManual()) {
+
+        // Manual rows are settled by reconciling them against the strata as they are now - an answered proportion follows
+        // its stratum, a vanished one goes, and a new stratum arrives unanswered for the user to fill in - and those an
+        // earlier version flagged by applying them. Nothing is asked of Earth Engine for that.
+        if (this.isManual() && anticipatedProportions.value) {
+            const flagged = requiresUpdate.value === true
+            const rows = {stratification: {strata}, proportions: {anticipatedProportions: anticipatedProportions.value}}
+            if (flagged || !proportionsCoverStrata(rows)) {
                 this.reconcileManualRows()
-            } else {
-                this.calculateAnticipatedProportions()
             }
+            flagged && requiresUpdate.set(undefined)
         }
     }
 
@@ -275,19 +304,14 @@ class _Proportions extends React.Component {
         }
         // FormCombo sets the band synchronously but fires its onChange in setImmediate, so this update
         // can see the new band while the (band-specific) target class is still the old one. Invalidate
-        // here, BEFORE any recompute, so a stale class can't start a GEE request for the new band - and
-        // cancel any request already in flight. The subsequent targetClass change re-triggers the normal
-        // (now safely blank) recompute path.
+        // here, before the binding asks again, so a stale class can't start a GEE request for the new band;
+        // the question it asks changes, which cancels any request in flight.
         if (anticipationStrategy.value === 'CATEGORICAL' && prevProps.inputs.band.value !== band.value) {
             this.invalidateCalculatedProportions()
             targetClass.value == null || targetClass.set(null)
             // Discovered class options are band-specific; clear them here too (the band combo's onChange,
             // which also clears them, is deferred and would briefly show stale options for the new band).
             this.clearClassValues()
-            return
-        }
-        if (!_.isEqual(proportionsDeps(prevProps), proportionsDeps(this.props))) {
-            this.calculateAnticipatedProportions()
         }
     }
 
@@ -313,7 +337,7 @@ class _Proportions extends React.Component {
 
     onAnticipationStrategyChanged(strategy) {
         const {inputs: {percentage, targetClass}} = this.props
-        // Clear stale results; recompute is triggered by the dependency change in componentDidUpdate.
+        // Clear stale results; the binding asks again once the strategy can be calculated.
         this.invalidateCalculatedProportions()
         if (strategy === 'CATEGORICAL') {
             // Categorical proportions are fractions, so the percentage interpretation must not carry over.
@@ -324,23 +348,6 @@ class _Proportions extends React.Component {
             targetClass.set(null)
             this.clearClassValues()
         }
-    }
-
-    // Scale is excluded from proportionsDeps and recalculates here instead, so one edit produces exactly one
-    // calculation rather than a dependency-driven one plus this.
-    onScaleChanged() {
-        this.scheduleAnticipatedProportions()
-    }
-
-    onEEStrategyChanged() {
-        this.scheduleAnticipatedProportions()
-    }
-
-    // Explicit recompute: invalidate cancels any in-flight request and clears stale results/error, then
-    // defer so a just-changed input value (e.g. eeStrategy) has settled before recalculating.
-    scheduleAnticipatedProportions() {
-        this.invalidateCalculatedProportions()
-        setImmediate(() => this.calculateAnticipatedProportions())
     }
 
     effectiveScale() {
@@ -359,12 +366,10 @@ class _Proportions extends React.Component {
         defaultScale.setInitialValue(proportionsScaleFromBand(this.bandMetadata, band.value, {unstratified, stratificationScale}))
     }
 
+    // Asked again as a batch task: the binding asks once in each mode.
     useBatch() {
         const {inputs: {eeStrategy}} = this.props
         eeStrategy.set('BATCH')
-        // set() doesn't fire the eeStrategy onChange (UI-only callback), so schedule explicitly. The
-        // deferred recompute sees eeStrategy.value settled to BATCH.
-        this.scheduleAnticipatedProportions()
     }
 
     // Loading also happens when a saved recipe opens, so this discards the metadata the Scale default is
@@ -412,7 +417,7 @@ class _Proportions extends React.Component {
     }
 
     onBandChanged() {
-        const {inputs: {anticipationStrategy, band, targetClass, scale}} = this.props
+        const {inputs: {band, targetClass, scale}} = this.props
         const {visualizations = []} = this.state
         // Classes are band-specific, so a class chosen for a previous band must not silently carry over.
         targetClass.set(null)
@@ -434,17 +439,9 @@ class _Proportions extends React.Component {
         if (min >= 0) {
             this.setPercentage(max > 1)
         }
-        if (anticipationStrategy.value === 'CATEGORICAL') {
-            // Categorical needs an explicit target class before it can calculate; just drop stale results.
-            // The recompute happens later when targetClass is selected (via proportionsDeps).
-            this.invalidateCalculatedProportions()
-        } else {
-            // Probability mode has everything it needs once the band is set. Schedule the recompute
-            // explicitly: band is excluded from proportionsDeps, and FormCombo fires this onChange deferred,
-            // so a dependency-triggered request would be started early and then cancelled by the
-            // invalidation below.
-            this.scheduleAnticipatedProportions()
-        }
+        // Probabilities belong to the band they were calculated for. Categorical mode is asked once a target class is
+        // selected, probability mode at once.
+        this.invalidateCalculatedProportions()
     }
 
     onPercentageChanged(percentageValue) {
@@ -475,18 +472,20 @@ class _Proportions extends React.Component {
         anticipatedProportions.set(proportions)
     }
 
+    // Either way the rows are those of the strata as they are now.
     onManualToggled(manual) {
         const {strata, inputs: {anticipatedProportions}} = this.props
-        // manual && this.cancel$.next()
-        this.clearProportionsCalculationError()
-        if (manual && !anticipatedProportions.value) {
+        if (!manual) {
+            anticipatedProportions.set(null)
+            return
+        }
+        if (anticipatedProportions.value) {
+            // Anticipated rows kept as answers follow the strata as they are, as manual rows do.
+            this.reconcileManualRows()
+        } else {
             // Rows own the stratum and its proportion, nothing else: presentation and weight are joined from
             // the stratification when the table renders, so they cannot go stale here.
-            const initialProportions = strata.map(stratum => ({stratum: stratum.value, proportion: 0}))
-            anticipatedProportions.set(initialProportions)
-        } else if (!manual) {
-            anticipatedProportions.set(null)
-            this.calculateAnticipatedProportions()
+            anticipatedProportions.set(strata.map(stratum => ({stratum: stratum.value, proportion: 0})))
         }
     }
 
@@ -539,23 +538,14 @@ class _Proportions extends React.Component {
         }
     }
 
+    // What a calculation still running answers is not these proportions' once what it was asked changes; the binding
+    // cancels it then.
     invalidateCalculatedProportions() {
-        const {stream, inputs: {probabilityPerStratum, anticipatedProportions}} = this.props
-        if (stream('PROBABILITY_PER_STRATUM').active) {
-            this.cancel$.next()
-        }
-        this.clearProportionsCalculationError()
+        const {inputs: {probabilityPerStratum, anticipatedProportions, probabilityPerStratumCalculatedFrom, stratumFrameEvidence}} = this.props
         probabilityPerStratum.set(null)
         anticipatedProportions.set(null)
-    }
-
-    // The EE calculation error is kept in component state rather than the `anticipatedProportions` form
-    // field, so it never collides with that field's `.notBlank` required message: the required message keeps
-    // gating Apply/export while the friendly select/empty body copy still shows for ordinary empty state.
-    clearProportionsCalculationError() {
-        if (this.state.proportionsCalculationError) {
-            this.setState({proportionsCalculationError: null})
-        }
+        probabilityPerStratumCalculatedFrom.set(null)
+        stratumFrameEvidence.set(undefined)
     }
 
     calculateMaxAnticipatedTargetProportion() {
@@ -563,103 +553,19 @@ class _Proportions extends React.Component {
         return maxAnticipatedTargetProportion({strata, probabilityPerStratum: probabilityPerStratum.value})
     }
 
-    calculateAnticipatedProportions() {
-        const {aoi, probabilityCache, stream,
-            unstratified, stratificationType, stratificationRecipeId, stratificationAssetId, stratificationBand, stratificationCrs,
-            inputs: {manual, anticipationStrategy, type, assetId, recipeId, band, targetClass, eeStrategy, anticipatedProportions}
-        } = this.props
-        this.clearProportionsCalculationError()
-        if (manual.value?.length) {
-            return
-        }
-
-        const id = type.value === 'RECIPE' ? recipeId.value : assetId.value
-        if (!id || !band.value) {
-            return
-        }
-        const categorical = anticipationStrategy.value === 'CATEGORICAL'
-        if (categorical && (targetClass.value == null || targetClass.value === '')) {
-            return
-        }
-        // The override where it is filled in, this selection's default where it is not. One number for both the
-        // cache key and the request, so a hit can never describe another grid. onChange fires while typing, so
-        // a half-typed Scale is simply not calculated yet.
-        const calculationScale = this.effectiveScale()
-        if (!isValidGridScale(calculationScale)) {
-            return
-        }
-
-        anticipatedProportions.set(null)
-        const stratification = unstratified
-            ? null
-            : {
-                type: stratificationType === 'RECIPE' ? 'RECIPE_REF' : 'ASSET',
-                id: stratificationType === 'RECIPE' ? stratificationRecipeId : stratificationAssetId,
-            }
-        const probability = {
-            type: type.value === 'RECIPE' ? 'RECIPE_REF' : 'ASSET',
-            id,
-        }
-
-        // What the raw probabilities actually depend on. The processing strategy is absent because Online and
-        // Batch compute the same thing; the percentage interpretation, the overall-proportion override and
-        // the current weights are absent because the handler applies all three to whatever raw response it is
-        // handed, so a hit reflects the form as it is now rather than as it was when this was calculated.
-        const key = {
-            stratification,
-            stratificationBand,
-            probability,
-            probabilityBand: band.value,
-            mode: anticipationStrategy.value,
-            ...(categorical ? {targetClass: Number(targetClass.value)} : {}),
-            // Proportion estimation has its own Scale but uses the Stratification CRS.
-            scale: calculationScale,
-            crs: stratificationCrs
-        }
-
-        if (stream('PROBABILITY_PER_STRATUM').active) {
-            this.cancel$.next()
-        }
-
-        const cached = probabilityCache?.get({aoi, key})
-        if (cached) {
-            this.onProbabilitiyPerStratumCalculated(cached)
-            return
-        }
-
-        stream('PROBABILITY_PER_STRATUM',
-            api.gee.probabilityPerStratum$({
-                aoi,
-                stratification,
-                stratificationBand: stratificationBand,
-                probability,
-                probabilityBand: band.value,
-                mode: anticipationStrategy.value,
-                targetClass: categorical ? Number(targetClass.value) : undefined,
-                scale: calculationScale,
-                crs: stratificationCrs,
-                batch: eeStrategy.value === 'BATCH'
-            }).pipe(
-                takeUntil(this.cancel$)
-            ),
-            // Cached BEFORE the proportions are derived, so a hit is the raw probabilities. A failure never
-            // reaches here, so it can never displace an older successful entry.
-            probabilityPerStratum => {
-                probabilityCache?.set({aoi, key, result: probabilityPerStratum})
-                this.onProbabilitiyPerStratumCalculated(probabilityPerStratum)
-            },
-            error => this.setState({
-                proportionsCalculationError: toProportionsCalculationError({error, strategy: eeStrategy.value})
-            })
-        )
+    // Through the binding the panel is given for it (calculatedResult.js), held while the design's requirements hold the
+    // probabilities (STRATUM_PROBABILITIES): a stratified design's are calculated over current areas only.
+    probabilities() {
+        return this.props.calculatedResults[STRATUM_PROBABILITIES_CALCULATION]
     }
 
-    onProbabilitiyPerStratumCalculated(loadedProbabilityPerStratum) {
-        const {strata, inputs: {anticipationStrategy, probabilityPerStratum, anticipatedOverallProportion, anticipatedProportions}} = this.props
-        this.clearProportionsCalculationError()
+    onProbabilitiyPerStratumCalculated(loadedProbabilityPerStratum, calculatedFrom) {
+        const {strata, inputs: {probabilityPerStratumCalculatedFrom, stratumFrameEvidence, anticipationStrategy, probabilityPerStratum, anticipatedOverallProportion, anticipatedProportions}} = this.props
         if (this.isManual()) {
             return // Ignore the result when manual
         }
+        probabilityPerStratumCalculatedFrom.set(calculatedFrom)
+        stratumFrameEvidence.set(undefined)
         // Categorical proportions are fractions [0,1] - never interpret them as percentages.
         const adjustedPercentage = anticipationStrategy.value !== 'CATEGORICAL'
             && (this.isPercentage()
@@ -702,25 +608,12 @@ class _Proportions extends React.Component {
     }
 }
 
-// eeStrategy, band and scale are intentionally excluded: each recomputes explicitly (the Direct/Queued strategy
-// toggle via onEEStrategyChanged, band via onBandChanged, Scale via onScaleChanged). Including them would
-// trigger a second recomputation - and for band, FormCombo's deferred onChange means the dependency-triggered
-// request would be started and then cancelled by onBandChanged's invalidation, leaving the table empty.
-const proportionsDeps = props => {
-    const {stratificationCrs, inputs: {manual, anticipationStrategy, type, assetId, recipeId, targetClass}} = props
-    return [
-        ...[manual, anticipationStrategy, type, assetId, recipeId, targetClass].map(input => input?.value),
-        // The Stratification CRS changes the estimate, so it must invalidate it. The Stratification Scale does
-        // not: the Proportions Scale is concrete configuration and is not derived from it after the fact.
-        stratificationCrs
-    ]
-}
-
 const valuesToModel = values => {
-    const isSkipped = !!values.skip?.length
+    const isSkipped = isProportionsSkipped(values)
     // The recipe stores a concrete Scale. `scale` is an override and `defaultScale` is what a blank one
     // resolves to, so both are consolidated here and the transient field never reaches the model.
-    const {defaultScale: _defaultScale, ...persisted} = values
+    // An earlier version's flag is settled by what is applied here.
+    const {defaultScale: _defaultScale, requiresUpdate: _requiresUpdate, stratumFrameEvidence, ...persisted} = values
     return {
         ...persisted,
         scale: effectiveProportionsScale(values),
@@ -729,24 +622,30 @@ const valuesToModel = values => {
         probabilityPerStratum: isSkipped
             ? null
             : values.probabilityPerStratum,
+        probabilityPerStratumCalculatedFrom: isSkipped || values.manual?.length
+            ? null
+            : values.probabilityPerStratumCalculatedFrom || null,
+        ...stratumFrameEvidence !== undefined && stratumFrameEvidence !== '' && {stratumFrameEvidence},
         anticipatedOverallProportion: isSkipped
             ? null
             : values.anticipatedOverallProportion
                 && values.anticipatedOverallProportion / 100,
-        anticipatedProportions: isSkipped
+        anticipatedProportions: isSkipped || !values.anticipatedProportions
             ? null
             : values.anticipatedProportions
-                ?.map(entry => ({
+                .map(entry => ({
                     ...entry,
                     proportion: entry.proportion && entry.proportion / 100
                 }))
     }
 }
 
+// Skip and Manual are the form's toggles, however they were saved.
 const modelToValues = model => {
     return {
         ...model,
-        skip: model.skip ? [true] : [],
+        skip: isProportionsSkipped(model) ? [true] : [],
+        manual: isSet(model.manual) ? [true] : [],
         percentage: model.percentage ? [true] : [],
         anticipatedOverallProportion: model.anticipatedOverallProportion
             && model.anticipatedOverallProportion * 100,
@@ -757,6 +656,8 @@ const modelToValues = model => {
             }))
     }
 }
+
+const isSet = value => Array.isArray(value) ? value.length > 0 : Boolean(value)
 
 export const Proportions = compose(
     _Proportions,

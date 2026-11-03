@@ -685,19 +685,6 @@ class _CompositeOptions extends React.Component {
         )
     }
 
-    componentDidMount() {
-        const {inputs: {orbitOverlap, tileOverlap, cloudBuffer}} = this.props
-        if (cloudBuffer.value === undefined) {
-            cloudBuffer.set(0)
-        }
-        if (!orbitOverlap.value) {
-            orbitOverlap.set('KEEP')
-        }
-        if (!tileOverlap.value) {
-            tileOverlap.set('KEEP')
-        }
-    }
-
     setAdvanced(enabled) {
         this.setState({advanced: enabled})
     }
@@ -776,8 +763,8 @@ const modelToValues = model => {
         hazePercentile: getPercentile('HAZE'),
         ndviPercentile: getPercentile('NDVI'),
         dayOfYearPercentile: getPercentile('DAY_OF_YEAR'),
-        orbitOverlap: model.orbitOverlap,
-        tileOverlap: model.tileOverlap,
+        orbitOverlap: model.orbitOverlap || 'KEEP',
+        tileOverlap: model.tileOverlap || 'KEEP',
         includedCloudMasking: model.includedCloudMasking,
         sentinel2CloudProbabilityMaxCloudProbability: model.sentinel2CloudProbabilityMaxCloudProbability,
         sentinel2CloudScorePlusBand: model.sentinel2CloudScorePlusBand,
@@ -788,7 +775,7 @@ const modelToValues = model => {
         landsatCFMaskDilatedCloud: model.landsatCFMaskDilatedCloud,
         sepalCloudScoreMaxCloudProbability: model.sepalCloudScoreMaxCloudProbability,
 
-        cloudBuffer: model.cloudBuffer,
+        cloudBuffer: model.cloudBuffer === undefined ? 0 : model.cloudBuffer,
         holes: model.holes,
         snowMasking: model.snowMasking,
         compose: model.compose,

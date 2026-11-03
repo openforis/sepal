@@ -127,6 +127,14 @@ class Num {
         this.value = value
     }
 
+    abs() {
+        return new Num(Math.abs(this.value))
+    }
+
+    max(other) {
+        return new Num(Math.max(this.value, valueOf(other)))
+    }
+
     eq(other) {
         return new Num(this.value === valueOf(other) ? 1 : 0)
     }
@@ -207,6 +215,10 @@ class List {
         return new Num(this.items.length)
     }
 
+    getString(index) {
+        return new Str(String(this.items[valueOf(index)]))
+    }
+
     getNumber(index) {
         return new Num(this.items[valueOf(index)])
     }
@@ -237,6 +249,9 @@ class List {
     }
 
     reduce(reducer) {
+        if (reducer === 'first') {
+            return this.items[0] ?? null
+        }
         assert.equal(reducer, 'sum')
         return new Num(this.items.reduce((sum, item) => sum + valueOf(item), 0))
     }
@@ -282,6 +297,18 @@ class Dictionary {
         return defaultValue.length ? defaultValue[0] : failed(`Dictionary.get: Dictionary does not contain key: '${key}'.`)
     }
 
+    select(keys) {
+        return new Dictionary(Object.fromEntries(keys.filter(key => Object.hasOwn(this, key)).map(key => [key, this[key]])))
+    }
+
+    values() {
+        return new List(Object.values(this))
+    }
+
+    getString(key) {
+        return new Str(String(this.get(key)))
+    }
+
     contains(key) {
         return new Bool(Object.hasOwn(this, String(key)))
     }
@@ -319,10 +346,19 @@ class Feature {
 
 // Each band an array of pixel values; a classified probability pixel is an array, one value per class.
 class Image {
-    constructor(bands, {footprint = 'aoi', properties = {}} = {}) {
+    constructor(bands, {footprint = 'aoi', properties = {}, types = {}} = {}) {
         this.bands = bands
+        this.types = Object.fromEntries(Object.keys(bands).map(name => [name, types[name] || {precision: 'double'}]))
         this.footprint = footprint
         this.properties = properties
+    }
+
+    bandTypes() {
+        return this.types
+    }
+
+    date() {
+        return {format: () => this.properties.date || '2020-01-01'}
     }
 
     bandNames() {
@@ -338,7 +374,7 @@ class Image {
             return failed(`Image.select: Pattern '${missing}' did not match any bands.`)
         }
         const outputs = renamed ? [...listOf(renamed)].map(String) : names
-        return this.#withBands(Object.fromEntries(names.map((name, i) => [outputs[i], this.bands[name]])))
+        return new Image(Object.fromEntries(names.map((name, i) => [outputs[i], this.bands[name]])), {footprint: this.footprint, properties: this.properties, types: Object.fromEntries(names.map((name, i) => [outputs[i], this.types[name]]))})
     }
 
     selectOrDefault(names, defaultImage) {
@@ -355,7 +391,12 @@ class Image {
     }
 
     set(name, value) {
-        return new Image(this.bands, {footprint: this.footprint, properties: {...this.properties, [name]: valueOf(value)}})
+        const added = typeof name === 'object' ? name : {[name]: valueOf(value)}
+        return new Image(this.bands, {footprint: this.footprint, properties: {...this.properties, ...added}, types: this.types})
+    }
+
+    toDictionary(keys = Object.keys(this.properties)) {
+        return Object.fromEntries(keys.filter(key => key in this.properties).map(key => [key, this.properties[key]]))
     }
 
     projection() {
@@ -368,14 +409,13 @@ class Image {
 
     rename(names) {
         const renamed = [names].flat().map(String)
-        return this.#withBands(Object.fromEntries(Object.values(this.bands).map((values, i) => [renamed[i], values])))
+        return new Image(Object.fromEntries(Object.values(this.bands).map((values, i) => [renamed[i], values])), {footprint: this.footprint, properties: this.properties, types: Object.fromEntries(Object.values(this.types).map((type, i) => [renamed[i], type]))})
     }
 
     // As Earth Engine documents it: overwritten in place, or renamed with a numerical suffix.
     addBands(image, _names, overwrite) {
-        return this.#withBands(overwrite
-            ? {...this.bands, ...image.bands}
-            : concatenated([this, image]))
+        const bands = overwrite ? {...this.bands, ...image.bands} : concatenated([this, image])
+        return new Image(bands, {footprint: this.footprint, properties: this.properties, types: {...this.types, ...image.types}})
     }
 
     combinePairwise(expression, suffix) {
@@ -398,7 +438,13 @@ class Image {
     }
 
     multiply(value) {
-        return this.#arithmetic(x => x * value)
+        if (value instanceof Image) {
+            const factors = Object.values(value.bands)
+            return this.#withBands(Object.fromEntries(Object.entries(this.bands).map(([name, values], i) => [name,
+                values.map((x, p) => x === null || factors[i]?.[p] === null ? null : x * factors[i][p])
+            ])))
+        }
+        return this.#arithmetic(x => x * valueOf(value))
     }
 
     arrayGet(index) {
@@ -425,11 +471,25 @@ class Image {
     }
 
     uint8() {
-        return this
+        return this.cast(Object.fromEntries(Object.keys(this.bands).map(name => [name, {precision: 'int', min: 0, max: 255}])))
+    }
+
+    int16() {
+        return this.cast(Object.fromEntries(Object.keys(this.bands).map(name => [name, {precision: 'int', min: -32768, max: 32767}])))
     }
 
     float() {
-        return this
+        return this.cast(Object.fromEntries(Object.keys(this.bands).map(name => [name, {precision: 'float'}])))
+    }
+
+    cast(types) {
+        const bands = Object.fromEntries(Object.entries(this.bands).map(([name, values]) => {
+            const type = types[name]
+            const cast = x => x === null ? null : Array.isArray(x) ? x.map(cast) : type.precision === 'float' ? Math.fround(x)
+                : type.precision === 'int' ? Math.max(type.min, Math.min(type.max, Math.trunc(x))) : x
+            return [name, values.map(cast)]
+        }))
+        return new Image(bands, {footprint: this.footprint, properties: this.properties, types})
     }
 
     reduceRegion({reducer}) {
@@ -446,7 +506,7 @@ class Image {
     }
 
     clip(geometry) {
-        return new Image(this.bands, {footprint: geometry, properties: this.properties})
+        return new Image(this.bands, {footprint: geometry, properties: this.properties, types: this.types})
     }
 
     propertyNames() {
@@ -501,7 +561,7 @@ class Image {
     }
 
     #withBands(bands) {
-        return new Image(bands, {footprint: this.footprint, properties: this.properties})
+        return new Image(bands, {footprint: this.footprint, properties: this.properties, types: this.types})
     }
 }
 
@@ -515,6 +575,10 @@ const COMBINATIONS = {
 class ImageCollection {
     constructor(images) {
         this.images = images
+    }
+
+    toBands() {
+        return image(this.images)
     }
 
     filter(predicate) {
@@ -551,8 +615,24 @@ const uniqueName = (band, taken, n = 0) => {
 // Flattening keeps the features, not the properties of the collections flattened.
 class FeatureCollection {
     constructor(items, properties = {}) {
-        this.items = items
+        this.items = [...listOf(items)]
         this.properties = properties
+    }
+
+    size() {
+        return new Num(this.items.length)
+    }
+
+    filter(predicate) {
+        return new FeatureCollection(this.items.filter(predicate))
+    }
+
+    aggregate_min(name) {
+        return Math.min(...this.items.map(item => valueOf(item.properties[name])).filter(x => x != null))
+    }
+
+    aggregate_max(name) {
+        return Math.max(...this.items.map(item => valueOf(item.properties[name])).filter(x => x != null))
     }
 
     flatten() {
@@ -614,13 +694,13 @@ mock.module('#sepal/ee/ee', {
     exports: {
         default: {
             Image: image,
-            ImageCollection: {fromImages: images => new ImageCollection([...listOf(images)])},
+            ImageCollection: Object.assign(images => new ImageCollection([...listOf(images)]), {fromImages: images => new ImageCollection([...listOf(images)])}),
             Filter: {
                 listContains: (property, value) => image => {
                     assert.equal(property, 'system:band_names')
                     return Object.keys(image.bands).includes(String(value))
                 },
-                eq: (property, value) => image => image.properties[property] === valueOf(value)
+                eq: (property, value) => image => valueOf(image.properties[property]) === valueOf(value)
             },
             Projection: projection => projection,
             FeatureCollection: items => new FeatureCollection(items),
@@ -630,6 +710,7 @@ mock.module('#sepal/ee/ee', {
                 fromLists: Dictionary.fromLists
             }),
             List: Object.assign(items => items instanceof List ? items : new List(items), {
+                repeat: (value, count) => new List(Array(valueOf(count)).fill(value)),
                 sequence: (start, end) => new List(Array.from({length: valueOf(end) - start + 1}, (_value, i) => start + i))
             }),
             Number: value => {
@@ -639,10 +720,13 @@ mock.module('#sepal/ee/ee', {
                 return value instanceof Num ? value : new Num(value)
             },
             String: value => new Str(String(value)),
-            Reducer: {minMax: () => 'minMax', max: () => 'max', sum: () => 'sum'},
+            getInfo$: value => of(value),
+            PixelType: ({precision, minValue, maxValue}) => ({precision: String(precision), ...(minValue !== null && {min: valueOf(minValue)}), ...(maxValue !== null && {max: valueOf(maxValue)})}),
+            Reducer: {first: () => 'first', minMax: () => 'minMax', max: () => 'max', sum: () => 'sum'},
             Algorithms: {
                 If: (condition, whenTrue, whenFalse) => valueOf(condition) ? whenTrue : whenFalse,
-                IsEqual: isEqual
+                IsEqual: isEqual,
+                Describe: image => ({bands: Object.entries(image.types).map(([id, data_type]) => ({id, data_type}))})
             },
             Classifier: {libsvm: classifier, minimumDistance: classifier, smileRandomForest: classifier}
         }

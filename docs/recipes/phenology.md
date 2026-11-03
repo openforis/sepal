@@ -28,7 +28,7 @@ chosen, and opening the panel leaves it unedited, until another band is chosen
 
 Phenology declares 35 scalar bands, whatever its configuration (see the
 [output contract](../design/recipes/output-products.md#declaration-and-description)), all exported with
-`mean` pyramiding and no encoding:
+`mean` pyramiding:
 
 - the metrics `background`, `amplitude` and `median`, then `dayOfYear`, `days`, `median`, `slope` and `offset` for
   each of four segments, `_1` to `_4`;
@@ -44,6 +44,18 @@ A month without observations is its band with no valid pixels, not a missing ban
 needs observations over the analysis period to compute its metrics; that is a requirement of running it, separate
 from its schema.
 
+Regression value metrics, segment medians, background/amplitude and CUSUM extrema retain floating precision.
+Month composites and segment slopes/offsets also preserve fractional values. Day-of-year outputs and segment
+lengths stay int16; native/probability processing retains its existing casts. Masks retain their existing behavior,
+including zero-filled slopes/offsets where a fit is missing. More precise extrema can change seasonal dates;
+integer timing types do not imply identical results.
+
+The analysed collection's [public scales](time-series.md#collection-encoding) remain authoritative: Optical
+regression ×1,000, Radar/Planet target units, and unchanged probability scales. Newly computed regression value
+bands describe encoding scale `0.001` or `1` respectively, with no invented physical unit; timing bands declare
+none. Old asset metadata is not rewritten. Asset Resume follows the bounded
+[regression compatibility check](../design/recipes/output-products.md#regression-precision-compatibility).
+
 The GUI groups the bands by segment and by month and sets their cursor precision. That is presentation only.
 
 Known limitations and follow-ups are tracked in the [workplan](../design/workplan.md#phenology).
@@ -52,5 +64,8 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
 
 - `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js`: output declaration,
   presentation and export policy through registration.
+- [Regression precision verifier](../../modules/gee/verify/phenologyRegressionPrecision.mjs): controlled seasonal
+  regression values/range, masks, integer timing, the complete native control and mixed file promotion. Read-only;
+  it does not submit exports or establish classifier quality.
 - [Phenology/PyEO live probe](../../modules/gee/verify/README.md): complete/selected schema, empty-month masks,
   and median values, pixel type and projection. It does not settle the two-month window policy.

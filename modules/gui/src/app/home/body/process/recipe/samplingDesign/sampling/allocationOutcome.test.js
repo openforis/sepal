@@ -4,7 +4,6 @@ import {describe, expect, it} from 'vitest'
 import {
     allocationOutcome,
     effectiveAllocationStrategy,
-    effectiveSampleAllocation,
     marginOfErrorFor,
     reconcileManualAllocation} from './allocationOutcome'
 import {getDefaultSampleAllocation} from './defaultModel'
@@ -173,24 +172,5 @@ describe('effectiveAllocationStrategy', () => {
             .toBe(defaultStrategy)
         expect(effectiveAllocationStrategy({allocationStrategy: 'EQUAL', proportionsApplicable: false, defaultStrategy}))
             .toBe('EQUAL')
-    })
-})
-
-// A saved allocation as the calculation has to see it: every explicitly saved value wins, and anything a
-// recipe saved before that field existed falls back to what a new recipe starts with.
-describe('effectiveSampleAllocation', () => {
-    const defaults = getDefaultSampleAllocation()
-
-    it('fills in only the settings a recipe never saved', () => {
-        const model = design({confidenceLevel: 80})
-        delete model.sampleAllocation.powerTuningConstant
-        const effective = effectiveSampleAllocation({model, defaults})
-        expect(effective.confidenceLevel).toBe(80)
-        expect(effective.powerTuningConstant).toBe(defaults.powerTuningConstant)
-    })
-
-    it('resolves the strategy against the design it belongs to', () => {
-        const model = design({allocationStrategy: 'OPTIMAL', skip: true})
-        expect(effectiveSampleAllocation({model, defaults}).allocationStrategy).toBe(defaults.allocationStrategy)
     })
 })

@@ -48,6 +48,8 @@ vi.mock('~/app/home/map/layer/earthEngineImageLayer', () => ({
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: bandMath} = await import('./bandMath/bandMath')
 const {default: stack} = await import('./stack/stack')
+const {default: classification} = await import('./classification/classification')
+const {getPreSetVisualizations: classificationPresets} = await import('./classification/visualizations')
 const {registerRecipeImageLayers} = await import('../recipeImageLayers')
 const {registerImageLayerSources} = await import('../imageLayerSources')
 const {getImageLayerSource} = await import('../imageLayerSourceRegistry')
@@ -61,6 +63,7 @@ const {SplitContext} = await import('~/widget/split/splitContext')
 
 addRecipeType(bandMath())
 addRecipeType(stack())
+addRecipeType(classification())
 registerRecipeImageLayers()
 registerImageLayerSources()
 
@@ -70,6 +73,7 @@ let root, container, store
 
 beforeEach(() => {
     previews.constructed = []
+    mapped.image = null
 })
 
 afterEach(async () => {
@@ -123,6 +127,45 @@ describe('a Stack map area', () => {
     })
 })
 
+// Whether a Classification's image can run is its training data's, by its points - a random forest's of two classes at
+// least - as every other operation over it judges it, never what the map last counted of each class.
+describe('a Classification map area', () => {
+    it('keeps its menu and overlays while its points are of one class, requesting no preview, and draws once two have points', async () => {
+        const recipe = classificationRecipe([point(1)])
+        await open(recipe, classificationPresets(recipe)[0])
+
+        expect(menuButton()?.disabled).toBe(false)
+        await openMenu()
+        await toggleOverlay(LABELS)
+        expect(overlayEnabled(LABELS)).toBe(true)
+        expect(previews.constructed).toEqual([])
+        expect(mapped.image).toBeNull()
+
+        await setPoints([point(1), point(2)])
+
+        expect(previews.constructed).toHaveLength(1)
+        expect(mapped.image).toBe(previews.constructed[0])
+    })
+
+    it('draws by its points alone, whatever the map last counted of each class', async () => {
+        const recipe = classificationRecipe([point(1), point(2)], {collect: {countPerClass: {1: 1}}})
+
+        await open(recipe, classificationPresets(recipe)[0])
+
+        expect(previews.constructed).toHaveLength(1)
+        expect(mapped.image).toBe(previews.constructed[0])
+    })
+
+    it('requests no preview while its points are of one class, whatever the map last counted of each class', async () => {
+        const recipe = classificationRecipe([point(1)], {collect: {countPerClass: {1: 1, 2: 1}}})
+
+        await open(recipe, classificationPresets(recipe)[0])
+
+        expect(previews.constructed).toEqual([])
+        expect(mapped.image).toBeNull()
+    })
+})
+
 const ID = 'recipe-1'
 const LISTING = [{id: ID, name: 'Recipe', type: 'BAND_MATH', revision: 1}]
 const LABELS = 'featureLayerSources.Labels.type'
@@ -140,8 +183,24 @@ const bandMathRecipe = outputImages => ({
     model: {inputImagery: {images: [INPUT]}, calculations: {calculations: []}, outputBands: {outputImages}}
 })
 
-// The recipe's own image in its center area, as a recipe opens with no saved layers, showing STYLE.
-async function open(recipe) {
+const point = value => ({x: value, y: value, class: value})
+
+const classificationRecipe = (referenceData, ui = {}) => ({
+    id: ID,
+    type: 'CLASSIFICATION',
+    revision: 1,
+    ui: {initialized: true, ...ui},
+    model: {
+        inputImagery: {images: [{imageId: 'img-1', type: 'ASSET', id: 'users/x/image', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red', 'nir']}]}]},
+        legend: {entries: [{id: 'forest', value: 1, label: 'Forest', color: '#006400'}, {id: 'water', value: 2, label: 'Water', color: '#0000ff'}]},
+        trainingData: {dataSets: [{dataSetId: 'collected', name: 'Collected', type: 'COLLECTED', referenceData}]},
+        auxiliaryImagery: [],
+        classifier: {type: 'RANDOM_FOREST', numberOfTrees: 25}
+    }
+})
+
+// The recipe's own image in its center area, as a recipe opens with no saved layers, showing `style`.
+async function open(recipe, style = STYLE) {
     const initialState = {
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
@@ -159,7 +218,7 @@ async function open(recipe) {
     initStore(store)
     initializeLayers({recipeId: ID})
     actionBuilder('SELECT_VISUALIZATION')
-        .set(['process.loadedRecipes', ID, 'layers.areas.center.imageLayer.layerConfig'], {visParams: STYLE})
+        .set(['process.loadedRecipes', ID, 'layers.areas.center.imageLayer.layerConfig'], {visParams: style})
         .dispatch()
     container = document.createElement('div')
     document.body.appendChild(container)
@@ -207,12 +266,25 @@ const CenterArea = () => {
     )
 }
 
-const MAP = {setLayer: () => {}, removeLayer: () => {}}
+// The map the area draws on, holding the image layer it was last given (mapAreaLayout.jsx), among its overlays.
+const mapped = {image: null}
+const MAP = {
+    setLayer: ({id, layer}) => id === 'imageLayer' && (mapped.image = layer),
+    removeLayer: id => id === 'imageLayer' && (mapped.image = null)
+}
 
 // The output images as Output bands' Apply leaves them.
 async function setOutputs(outputImages) {
     await act(async () => actionBuilder('SET_OUTPUTS')
         .set(['process.loadedRecipes', ID, 'model.outputBands.outputImages'], outputImages)
+        .dispatch())
+    await settled()
+}
+
+// The points collected on the map, as the collection sets them.
+async function setPoints(referenceData) {
+    await act(async () => actionBuilder('SET_POINTS')
+        .set(['process.loadedRecipes', ID, 'model.trainingData.dataSets', {dataSetId: 'collected'}, 'referenceData'], referenceData)
         .dispatch())
     await settled()
 }

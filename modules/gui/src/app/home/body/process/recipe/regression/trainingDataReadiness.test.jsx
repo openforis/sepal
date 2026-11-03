@@ -13,19 +13,21 @@ import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 // runtime and recipe types. Regression trains whichever classifier it is configured with, so one whose data sets store
 // no point - and read none from another recipe - cannot run: its Training data panel says how to add some, without its
 // button marking anything wrong, nothing is drawn, and Retrieve is held, for it and for the Remapping alike. A data set reloaded in its editor changes nothing until it is
-// applied; cancelled, it never does. Earth Engine is faked: the plots table answers its rows when a test says so.
+// applied; cancelled, it never does. A table chosen instead of another takes none of the rows asked of the one before it.
+// Earth Engine is faked: a plots table answers the rows asked of it when a test says so.
 
 const fake = vi.hoisted(() => ({rows: []}))
 vi.mock('~/apiRegistry', async () => {
-    const {NEVER, of, Subject} = await import('rxjs')
+    const {asapScheduler, NEVER, observeOn, of, Subject} = await import('rxjs')
     return {default: {
         recipe: {save$: () => NEVER, load$: () => NEVER, loadAll$: () => of(LISTING)},
         gee: {
-            loadEETableColumns$: () => of(['agb', 'plot_id']),
-            // The table's rows, answered when a test answers.
-            loadEETableRows$: () => {
+            // A table's columns, answered once it is chosen, as Earth Engine answers: later.
+            loadEETableColumns$: () => of(['agb', 'plot_id']).pipe(observeOn(asapScheduler)),
+            // A table's rows, answered when a test answers for that table.
+            loadEETableRows$: eeTable => {
                 const rows$ = new Subject()
-                fake.rows.push(rows$)
+                fake.rows.push({eeTable, rows$})
                 return rows$
             },
             assetMetadata$: ({asset}) => of({type: 'Table', id: asset, properties: {}}),
@@ -137,12 +139,12 @@ describe('a Regression without training data', () => {
     it.each([
         ['no data set', () => []],
         ['a plots table read as empty', () => [plotsTable([])]]
-    ])('with %s says how to add some in Training data, unmarked, drawing nothing and holding Retrieve, and so is a Remapping of it', async (_case, dataSetsOf) => {
+    ])('with %s says how to add some in Training data and on its button, as unfinished, drawing nothing and holding Retrieve, and so is a Remapping of it', async (_case, dataSetsOf) => {
         await open(dataSetsOf())
 
         expect(shown()).toContain(MISSING)
-        expect(trainingDataMark()).toEqual([])
-        expect(sectionProblems(REGRESSION)).toEqual({})
+        expect(trainingDataMark()).toEqual({warning: [MISSING]})
+        expect(sectionProblems(REGRESSION)).toEqual({trainingData: MISSING})
         expect(map.shown).toBeNull()
         expect(retrieveAvailable(REGRESSION)).toBe(false)
         expect(previewGate(REMAPPING)).toMatchObject({withdraw: true})
@@ -163,7 +165,7 @@ describe('a Regression with training data', () => {
     ])('with %s is marked nowhere, drawn, and Retrieve is available, for it and a Remapping of it', async (_case, dataSetsOf) => {
         await open(dataSetsOf())
 
-        expect(trainingDataMark()).toEqual([])
+        expect(trainingDataMark()).toEqual({})
         expect(shown()).not.toContain(MISSING)
         expect(map.shown).toBeTruthy()
         expect(retrieveAvailable(REGRESSION)).toBe(true)
@@ -177,7 +179,7 @@ describe('a plots table read as empty, reloaded in its editor', () => {
         await open([plotsTable([])])
 
         await editDataSet('biomass_plots')
-        await answerRows(PLOTS)
+        await answerRows(PLOTS_TABLE, PLOTS)
         expect(applyEnabled()).toBe(true)
         expect(shown()).toContain(MISSING)
         expect(retrieveAvailable(REGRESSION)).toBe(false)
@@ -194,7 +196,7 @@ describe('a plots table read as empty, reloaded in its editor', () => {
         await open([plotsTable([])])
 
         await editDataSet('biomass_plots')
-        await answerRows(PLOTS)
+        await answerRows(PLOTS_TABLE, PLOTS)
         await click(button('button.apply'))
 
         expect(savedDataSets()[0].referenceData).toEqual(PLOTS)
@@ -206,10 +208,42 @@ describe('a plots table read as empty, reloaded in its editor', () => {
     })
 })
 
+describe('a plots table changed in its editor while its rows load', () => {
+    it('takes none of the rows of the table before it, holding Apply and Enter', async () => {
+        await open([plotsTable(PLOTS)])
+        await editDataSet('biomass_plots')
+        await choose(TABLE_LABEL, REMEASURED_TABLE)
+
+        await answerRows(PLOTS_TABLE, PLOTS)
+
+        expect(applyEnabled()).toBe(false)
+        await submit()
+        expect(savedDataSets()).toEqual([plotsTable(PLOTS)])
+    })
+
+    it('once the rows of the table chosen load, applies that table with its points', async () => {
+        await open([plotsTable(PLOTS)])
+        await editDataSet('biomass_plots')
+        await choose(TABLE_LABEL, REMEASURED_TABLE)
+        await answerRows(PLOTS_TABLE, PLOTS)
+
+        await choose(VALUE_COLUMN_LABEL, 'agb')
+        await answerRows(REMEASURED_TABLE, REMEASURED_PLOTS)
+        await click(button('button.apply'))
+
+        expect(savedDataSets()).toMatchObject([
+            {eeTable: REMEASURED_TABLE, name: 'remeasured_plots', referenceData: REMEASURED_PLOTS}
+        ])
+    })
+})
+
 const REGRESSION = 'regression-1'
 const REMAPPING = 'remapping-1'
 const COMPOSITE = 'composite-1'
 const PLOTS_TABLE = 'users/x/biomass_plots'
+const REMEASURED_TABLE = 'users/x/remeasured_plots'
+const TABLE_LABEL = 'process.classification.panel.trainingData.form.eeTable.label'
+const VALUE_COLUMN_LABEL = 'process.regression.panel.trainingData.form.eeTable.valueColumn.label'
 const MISSING = 'process.regression.panel.trainingData.missing'
 
 const LISTING = [
@@ -221,6 +255,7 @@ const LISTING = [
 
 // Above-ground biomass in tonnes per hectare, measured on field plots, as the plots table's rows are read into points.
 const PLOTS = [{x: 9.71, y: 4.05, value: 212.4}, {x: 9.72, y: 4.07, value: 87.9}, {x: 9.75, y: 4.02, value: 154.1}]
+const REMEASURED_PLOTS = [{x: 9.81, y: 4.11, value: 198.2}, {x: 9.83, y: 4.16, value: 64.5}]
 
 const plotsTable = referenceData => ({
     dataSetId: 'plots', name: 'biomass_plots', type: 'EE_TABLE', eeTable: PLOTS_TABLE, valueColumn: 'agb', referenceData
@@ -279,7 +314,7 @@ async function open(dataSets) {
             projects: [],
             tabs: [{id: REGRESSION}]
         },
-        assets: {user: [{id: PLOTS_TABLE, type: 'Table', updateTime: 'T1'}], other: []},
+        assets: {user: [PLOTS_TABLE, REMEASURED_TABLE].map(id => ({id, type: 'Table', updateTime: 'T1'})), other: []},
         dimensions: {width: 1024, height: 768}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
@@ -326,9 +361,9 @@ async function open(dataSets) {
 const editDataSet = name => click([...document.querySelectorAll('*')].reverse()
     .find(element => element.textContent === name))
 
-// The plots table answers the rows it is asked for: a point and its biomass for each.
-const answerRows = async plots => {
-    await act(async () => fake.rows.forEach(rows$ => {
+// A plots table answers the rows asked of it: a point and its biomass for each.
+const answerRows = async (eeTable, plots) => {
+    await act(async () => fake.rows.filter(request => request.eeTable === eeTable).forEach(({rows$}) => {
         rows$.next({
             columns: {agb: 'Number'},
             features: plots.map(({x, y, value}) => ({geometry: {coordinates: [x, y]}, properties: {agb: value}}))
@@ -358,17 +393,37 @@ const previewGate = id => requestGate({
 
 const sectionProblems = id => sourceProblemsOfState(store.getState(), id, evidenceOwnerOf, Date.now(), heldFor)
 
-// What the Training data button says, while it is in its error state.
+// How the Training data button is marked - as wrong, or as unfinished - and what it says then.
 const trainingDataMark = () => {
     const sectionButton = button('process.classification.panel.trainingData.button')
-    return sectionButton.classList.contains(toolbarButtonStyles.error)
-        ? JSON.parse(sectionButton.closest('[data-tooltip]').dataset.tooltip)
-        : []
+    const mark = ['error', 'warning'].find(name => sectionButton.classList.contains(toolbarButtonStyles[name]))
+    return mark
+        ? {[mark]: JSON.parse(sectionButton.closest('[data-tooltip]').dataset.tooltip)}
+        : {}
 }
 
 const shown = () => document.body.textContent
 
 const applyEnabled = () => button('button.apply')?.disabled === false
+
+// Enter in one of the editor's fields: it submits the editor's form.
+const submit = async () => {
+    await act(async () => document.querySelector('form').requestSubmit())
+    await settled()
+}
+
+// An option chosen from the list of the field so labelled, found by typing it.
+async function choose(label, option) {
+    const input = document.querySelector(`[data-label="${label}"] input`)
+    await act(async () => input.click())
+    await act(async () => setValue(input, option))
+    await click([...document.querySelectorAll('[data-hook="option"]')].find(element => element.textContent.includes(option)))
+}
+
+const setValue = (input, text) => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, text)
+    input.dispatchEvent(new Event('input', {bubbles: true}))
+}
 
 const button = label => [...document.querySelectorAll('button')].find(button => button.textContent === label)
 

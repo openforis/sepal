@@ -28,7 +28,7 @@ import {tooltipText} from '~/widget/tooltip.test.fixtures'
 // `answers`: what storage answers for a recipe, where not at once.
 const stored = vi.hoisted(() => ({records: {}, answers: {}}))
 // What Earth Engine answers an asset holding, where not red and nir.
-const evidence = vi.hoisted(() => ({'users/x/red': ['red']}))
+const evidence = vi.hoisted(() => ({'users/x/red': ['red'], 'users/x/red-again': ['red']}))
 const editing = vi.hoisted(() => ({dataSetId: null}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
@@ -91,6 +91,21 @@ describe.each([
 
     it('says what that recipe samples without before the repair, where that is what it lacks', async () => {
         await open(type, TrainingDataSet, {providerImages: [SELECTING_RED]})
+
+        expect(errorsOf(RECIPE_LABEL)).toEqual([missingNir(PROVIDER_NAME)])
+    })
+
+    it('says both what that recipe lacks and what it gives more than once, and the one left once the other is repaired', async () => {
+        await open(type, TrainingDataSet, {providerImages: [SELECTING_RED, SELECTING_RED_AGAIN]})
+
+        const [both] = errorsOf(RECIPE_LABEL)
+        expect(both).toContain(missingNir(PROVIDER_NAME))
+        expect(both).toMatch(/process\.classification\.panel\.trainingData\.ambiguousFeatures .*"recipe":"Provider"/)
+
+        await act(async () => actionBuilder('REPAIR')
+            .set(['process.loadedRecipes', PROVIDER, 'model.inputImagery.images'], [SELECTING_RED])
+            .dispatch())
+        await settled()
 
         expect(errorsOf(RECIPE_LABEL)).toEqual([missingNir(PROVIDER_NAME)])
     })
@@ -267,6 +282,8 @@ const REUSED_ID = 'reused'
 const HEALTHY_ID = 'healthy'
 // An input over an asset of red alone.
 const SELECTING_RED = {imageId: 'i-1', type: 'ASSET', id: 'users/x/red', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red']}]}
+// Another input giving red alone.
+const SELECTING_RED_AGAIN = {...SELECTING_RED, imageId: 'i-2', id: 'users/x/red-again'}
 const RECIPE_LABEL = 'widget.recipeInput.label'
 const ASSET_IMAGE = {imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red', 'nir']}]}
 const POINTS = [{x: 1, y: 1, class: 1, value: 1}, {x: 2, y: 2, class: 2, value: 2}]

@@ -1,7 +1,7 @@
 import Path from 'node:path'
 
 import _ from 'lodash'
-import {catchError, concat, defer, EMPTY, from, ignoreElements, last, map, mergeMap, of, switchMap, throwError, toArray} from 'rxjs'
+import {catchError, concat, defer, EMPTY, forkJoin, from, ignoreElements, last, map, mergeMap, of, switchMap, throwError, toArray} from 'rxjs'
 
 import ee from '#sepal/ee/ee'
 import {isServiceAccount} from '#sepal/ee/eeContext'
@@ -19,6 +19,8 @@ import {
 } from '#sepal/recipe/output/bandEncoding'
 import {swallow} from '#sepal/rxjs'
 
+import {assertRegressionCompatible, listRegressionAssets$, readExportAsset$, regressionCompatibility$, regressionProperties} from './regressionCompatibility.js'
+
 export const startImageToAssetExport$ = ({
     image,
     description,
@@ -34,7 +36,8 @@ export const startImageToAssetExport$ = ({
     maxPixels,
     shardSize,
     properties,
-    bandEncoding
+    bandEncoding,
+    regressionPrecision
 }) => defer(() => {
     if (assetType === 'ImageCollection') {
         throw new Error('An ImageCollection asset is exported tile by tile, not as one image')
@@ -44,21 +47,26 @@ export const startImageToAssetExport$ = ({
     // What this export establishes about its own values, stated on everything it writes. Establishing nothing is
     // stated too: an encoding the image inherited describes what it was read from, not what is written here.
     const encoding = bandEncoding || {}
-    return carriedEncodingProperties$(image).pipe(
-        switchMap(carried => {
-            const exportProperties = statedProperties(projectAssetId, properties, encoding, carried)
+    return forkJoin({carried: carriedEncodingProperties$(image), compatibility: regressionCompatibility$(image, regressionPrecision)}).pipe(
+        switchMap(({carried, compatibility}) => {
+            const exportProperties = statedProperties(projectAssetId, properties, encoding, carried, compatibility)
             return assetDestination$(description, projectAssetId).pipe(
-                switchMap(({description, assetId}) =>
-                    concat(
-                        createParentFolder$(assetId),
-                        imageToAsset$({
-                            image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs,
-                            crsTransform, maxPixels, shardSize, properties: exportProperties
-                        }).pipe(
-                            map(eeTaskId => ({eeTaskId, assetId}))
+                switchMap(({description, assetId}) => (compatibility && strategy === 'resume'
+                    ? readExportAsset$(assetId, compatibility)
+                    : of(null)).pipe(
+                    switchMap(asset => {
+                        assertRegressionCompatible(assetId, asset, compatibility)
+                        return concat(
+                            createParentFolder$(assetId),
+                            imageToAsset$({
+                                image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs,
+                                crsTransform, maxPixels, shardSize, properties: exportProperties
+                            }).pipe(
+                                map(eeTaskId => ({eeTaskId, assetId}))
+                            )
                         )
-                    )
-                )
+                    })
+                ))
             )
         }),
         last()
@@ -86,31 +94,27 @@ export const startTableToAssetExport$ = ({collection, description, assetId, stra
 
 // Prepares the collection before any tile is started: which tiles a resume keeps, whether those and the
 // collection agree with this export's encoding, and the collection itself with its properties.
-export const prepareImageCollection$ = ({image, description, assetId, strategy, region, tileSize, properties, bandEncoding}) => defer(() => {
+export const prepareImageCollection$ = ({image, description, assetId, strategy, region, tileSize, properties, bandEncoding, regressionPrecision}) => defer(() => {
     assertUserAccount()
     const encoding = bandEncoding || {}
-    return carriedEncodingProperties$(image).pipe(
-        switchMap(carried => assetDestination$(description, assetId && getProjectAssetId(assetId)).pipe(
+    return forkJoin({carried: carriedEncodingProperties$(image), compatibility: regressionCompatibility$(image, regressionPrecision)}).pipe(
+        switchMap(({carried, compatibility}) => assetDestination$(description, assetId && getProjectAssetId(assetId)).pipe(
             switchMap(({assetId}) => {
-                // Settled before any tile is read or anything is written, so an encoding the tiles cannot store
-                // stops the export even where the collection would state none.
-                statedProperties(assetId, properties, encoding, carried)
-                return ee.getInfo$(collectionTiles(region, tileSize).aggregate_array('system:index'), 'load tile ids').pipe(
-                    switchMap(tileIds => retainedTiles$(assetId, strategy, tileIds).pipe(
-                        switchMap(retained => {
-                            assertRetainedTilesAgree(assetId, encoding, retained)
-                            return concat(
-                                createParentFolder$(assetId),
-                                prepareCollection$({image, assetId, strategy, properties, encoding})
-                            ).pipe(
-                                last(null, null),
-                                map(() => ({
-                                    assetId,
-                                    tiles: tileIds.map((tileId, tileIndex) => ({tileIndex, tileId, retained: Boolean(retained.get(tileIndex))}))
-                                }))
-                            )
-                        })
-                    ))
+                statedProperties(assetId, properties, encoding, carried, compatibility)
+                return checkedCollection$({assetId, strategy, region, tileSize, encoding, compatibility}).pipe(
+                    switchMap(({asset, tileIds, retained}) => {
+                        const collectionProperties = statedProperties(assetId, properties, collectionEncoding({asset, assetId, strategy, encoding}), [], compatibility)
+                        return concat(
+                            createParentFolder$(assetId),
+                            prepareCollection$({image, assetId, strategy, asset, collectionProperties})
+                        ).pipe(
+                            last(null, null),
+                            map(() => ({
+                                assetId,
+                                tiles: tileIds.map((tileId, tileIndex) => ({tileIndex, tileId, retained: Boolean(retained.get(getProjectAssetId(`${assetId}/${tileIndex}`)))}))
+                            }))
+                        )
+                    })
                 )
             })
         ))
@@ -131,26 +135,31 @@ export const startCollectionTileExport$ = ({
     shardSize,
     tileSize,
     properties,
-    bandEncoding
+    bandEncoding,
+    regressionPrecision
 }, {tileIndex, tileId}) => defer(() => {
     assertUserAccount()
-    return carriedEncodingProperties$(image).pipe(
-        switchMap(carried => assetDestination$(description, assetId && getProjectAssetId(assetId)).pipe(
-            switchMap(({description, assetId}) => imageToAsset$({
-                image,
-                description: `${description}_${tileIndex}`,
-                assetId: `${assetId}/${tileIndex}`,
-                strategy: 'resume',
-                pyramidingPolicy,
-                dimensions,
-                region: collectionTiles(region, tileSize).filter(ee.Filter.eq('system:index', tileId)).geometry(),
-                scale,
-                crs,
-                crsTransform,
-                maxPixels,
-                shardSize,
-                properties: statedProperties(assetId, properties, bandEncoding || {}, carried)
-            }))
+    return forkJoin({carried: carriedEncodingProperties$(image), compatibility: regressionCompatibility$(image, regressionPrecision)}).pipe(
+        switchMap(({carried, compatibility}) => assetDestination$(description, assetId && getProjectAssetId(assetId)).pipe(
+            switchMap(({description, assetId}) => (compatibility
+                ? checkedTile$({assetId, tileIndex, encoding: bandEncoding || {}, compatibility})
+                : of(null)).pipe(
+                switchMap(() => imageToAsset$({
+                    image,
+                    description: `${description}_${tileIndex}`,
+                    assetId: `${assetId}/${tileIndex}`,
+                    strategy: 'resume',
+                    pyramidingPolicy,
+                    dimensions,
+                    region: collectionTiles(region, tileSize).filter(ee.Filter.eq('system:index', tileId)).geometry(),
+                    scale,
+                    crs,
+                    crsTransform,
+                    maxPixels,
+                    shardSize,
+                    properties: statedProperties(assetId, properties, bandEncoding || {}, carried, compatibility)
+                }))
+            ))
         )),
         map(eeTaskId => ({eeTaskId}))
     )
@@ -168,11 +177,8 @@ const collectionTiles = (region, tileSize) => tile(ee.FeatureCollection([ee.Feat
 // readings then decide which tiles are missing.
 const retainedTiles$ = (assetId, strategy, tileIds) => strategy === 'resume'
     ? from(tileIds.map((_tileId, tileIndex) => tileIndex)).pipe(
-        mergeMap(tileIndex => ee.getAsset$(`${assetId}/${tileIndex}`, 0).pipe(
-            map(asset => [tileIndex, asset]),
-            // Absent, or a reading that did not succeed: neither states an encoding, and the tile's export
-            // settles it either way.
-            catchError(() => of([tileIndex, null]))
+        mergeMap(tileIndex => readExportAsset$(`${assetId}/${tileIndex}`).pipe(
+            map(asset => [getProjectAssetId(`${assetId}/${tileIndex}`), asset])
         ), 3),
         toArray(),
         map(readings => new Map(readings))
@@ -189,32 +195,80 @@ const assertRetainedTilesAgree = (assetId, encoding, retained) => {
     }
 }
 
-const prepareCollection$ = ({image, assetId, strategy, properties, encoding}) =>
-    ee.getAsset$(assetId).pipe(
-        catchError(() => of(null)),
+const checkedCollection$ = ({assetId, strategy, region, tileSize, encoding, compatibility}) =>
+    readExportAsset$(assetId, compatibility).pipe(
         switchMap(asset => {
-            // Settled before anything is created, deleted, replaced or updated, so an encoding that cannot be
-            // stored stops the export instead of being written as something else.
-            const collectionProperties = statedProperties(assetId, properties, collectionEncoding({asset, assetId, strategy, encoding}))
-            const prepare$ = asset && strategy === 'replace'
-                ? replaceAsset$(asset, assetId)
-                : asset
-                    ? of(true)
-                    : ee.createImageCollection$(assetId, {}, 1)
-            return prepare$.pipe(
-                last(null, null),
-                switchMap(() => ee.getInfo$(image.toDictionary(), 'Extract image properties')),
-                switchMap((imageProperties = {}) =>
-                    ee.replaceAssetProperties$(
-                        assetId,
-                        {...withoutEncodingProperties(imageProperties), ...collectionProperties},
-                        1
-                    )
-                )
+            if (strategy !== 'replace') {
+                assertRegressionCompatible(assetId, asset, compatibility, {collection: true})
+                collectionEncoding({asset, assetId, strategy, encoding})
+            }
+            return ee.getInfo$(collectionTiles(region, tileSize).aggregate_array('system:index'), 'load tile ids').pipe(
+                switchMap(tileIds => (compatibility
+                    ? regressionTiles$({assetId, asset, strategy, compatibility})
+                    : retainedTiles$(assetId, strategy, tileIds)).pipe(
+                    map(retained => {
+                        assertRetainedTilesAgree(assetId, encoding, retained)
+                        for (const [id, tile] of retained) {
+                            assertRegressionCompatible(id, tile, compatibility)
+                        }
+                        return {asset, tileIds, retained}
+                    })
+                ))
             )
-        }),
+        })
+    )
+
+const checkedTile$ = ({assetId, tileIndex, encoding, compatibility}) =>
+    readExportAsset$(assetId, compatibility, {allowAbsent: false}).pipe(
+        switchMap(asset => {
+            assertRegressionCompatible(assetId, asset, compatibility, {required: true, collection: true})
+            collectionEncoding({asset, assetId, strategy: 'resume', encoding})
+            const destination = `${assetId}/${tileIndex}`
+            return readExportAsset$(destination, compatibility, {parentCollection: assetId}).pipe(
+                map(tile => {
+                    assertRetainedTilesAgree(assetId, encoding, new Map([[destination, tile]]))
+                    assertRegressionCompatible(destination, tile, compatibility)
+                    return tile
+                })
+            )
+        })
+    )
+
+const regressionTiles$ = ({assetId, asset, strategy, compatibility}) => asset && strategy !== 'replace'
+    ? listRegressionAssets$(assetId).pipe(
+        catchError(error => throwError(() => new ClientException(`Cannot read retained regression tiles of ${assetId}. Retry, or use a fresh destination or Replace.`, {cause: error}))),
+        switchMap(assets => from(assets).pipe(
+            mergeMap(record => {
+                const id = record.name || record.id
+                return readExportAsset$(id, compatibility, {allowAbsent: false}).pipe(
+                    map(tile => [getProjectAssetId(id), tile])
+                )
+            }, 3),
+            toArray(),
+            map(tiles => new Map(tiles))
+        ))
+    )
+    : of(new Map())
+
+const prepareCollection$ = ({image, assetId, strategy, asset, collectionProperties}) => {
+    const prepare$ = asset && strategy === 'replace'
+        ? replaceAsset$(asset, assetId)
+        : asset
+            ? of(true)
+            : ee.createImageCollection$(assetId, {}, 1)
+    return prepare$.pipe(
+        last(null, null),
+        switchMap(() => ee.getInfo$(image.toDictionary(), 'Extract image properties')),
+        switchMap((imageProperties = {}) =>
+            ee.replaceAssetProperties$(
+                assetId,
+                {...withoutEncodingProperties(imageProperties), ...collectionProperties},
+                1
+            )
+        ),
         ignoreElements()
     )
+}
 
 // Resumed collections keep their tiles, so the collection's encoding must describe those too. The tiles this run
 // writes keep the encoding they are written with, whatever the collection can say about all of them.
@@ -254,12 +308,13 @@ const getProjectAssetId = id =>
         ? `projects/earthengine-legacy/assets/${id}`
         : id
 
-const statedProperties = (assetId, properties, encoding, carried = []) => {
+const statedProperties = (assetId, properties, encoding, carried = [], compatibility) => {
     const stated = statedEncoding(assetId, encoding)
     return {
         ...withoutEncodingProperties(properties),
         ...clearedEncodingProperties(carried, stated),
-        ...stated
+        ...stated,
+        ...regressionProperties(compatibility)
     }
 }
 

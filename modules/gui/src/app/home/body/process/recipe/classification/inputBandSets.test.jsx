@@ -183,14 +183,15 @@ describe('a Classification without training data', () => {
 
 // Running it needs one input image at least: without one, Input imagery says to add one, and Retrieve is held.
 describe('a Classification whose last input is removed', () => {
-    it('is marked on Input imagery, saying to add an image, and holds Retrieve, until an input is added and applied', async () => {
+    it('is marked unfinished on Input imagery, saying to add an image, and holds Retrieve, until an input is added and applied', async () => {
         await open([image('image-a', ASSET_A, ['red', 'nir'])])
         await answer(ASSET_A, ['red', 'nir', 'swir1'])
         expect(retrieveAvailable()).toBe(true)
 
         await removeInput()
         expect(savedImages()).toEqual([])
-        expect(sectionMark()).toEqual([NO_IMAGERY])
+        expect(sectionUnfinished()).toEqual([NO_IMAGERY])
+        expect(sectionMark()).toEqual([])
         expect(retrieveAvailable()).toBe(false)
 
         await click(button('button.add'))
@@ -200,26 +201,27 @@ describe('a Classification whose last input is removed', () => {
         await answer(ASSET_B, ['red', 'swir1'])
 
         expect(savedImages().map(({id}) => id)).toEqual([ASSET_B])
+        expect(sectionUnfinished()).toEqual([])
         expect(sectionMark()).toEqual([])
         expect(retrieveAvailable()).toBe(true)
     })
 })
 
 describe('a Classification without input imagery, an input being added', () => {
-    it('stays marked and held while the input is only in its editor, and once it is cancelled', async () => {
+    it('stays marked unfinished and held while the input is only in its editor, and once it is cancelled', async () => {
         await open([])
-        expect(sectionMark()).toEqual([NO_IMAGERY])
+        expect(sectionUnfinished()).toEqual([NO_IMAGERY])
 
         await click(button('button.add'))
         await chooseAsset(ASSET_B)
         await addBand('red', 0)
         expect(applyEnabled()).toBe(true)
-        expect(sectionMark()).toEqual([NO_IMAGERY])
+        expect(sectionUnfinished()).toEqual([NO_IMAGERY])
         expect(retrieveAvailable()).toBe(false)
         await click(button('button.cancel'))
 
         expect(savedImages()).toEqual([])
-        expect(sectionMark()).toEqual([NO_IMAGERY])
+        expect(sectionUnfinished()).toEqual([NO_IMAGERY])
         expect(retrieveAvailable()).toBe(false)
     })
 })
@@ -241,7 +243,8 @@ describe('a band combination given its first band in its editor', () => {
     })
 })
 
-const TRAINED = {dataSets: [{dataSetId: 'collected', type: 'COLLECTED', referenceData: [{x: 0.5, y: 0.5, class: 1}]}]}
+// Points of both classes, collected on the map.
+const TRAINED = {dataSets: [{dataSetId: 'collected', type: 'COLLECTED', referenceData: [{x: 0.5, y: 0.5, class: 1}, {x: 1.5, y: 0.5, class: 2}]}]}
 
 const ID = 'classification-1'
 const ASSET_A = 'users/x/covariates-a'
@@ -276,7 +279,7 @@ const open = async (images, recipes = [], {trainingData = TRAINED} = {}) => {
                     id: ID, type: 'CLASSIFICATION', revision: 1, ui: {initialized: true},
                     model: {
                         inputImagery: {images},
-                        legend: {entries: [{id: 'entry-1', value: 1, label: 'Forest', color: '#000000'}]},
+                        legend: {entries: [{id: 'entry-1', value: 1, label: 'Forest', color: '#000000'}, {id: 'entry-2', value: 2, label: 'Water', color: '#0000ff'}]},
                         trainingData,
                         classifier: {type: 'RANDOM_FOREST'}
                     }
@@ -413,9 +416,14 @@ const inputRows = () => [...document.querySelectorAll(`.${listItemStyles.vertica
 const assetOf = row => [ASSET_A, ASSET_B, 'Covariates'].find(asset => row.textContent.includes(asset) && !row.textContent.includes('bandSetSpec'))
 
 // What the Input imagery button says, while it is in its error state.
-const sectionMark = () => {
+const sectionMark = () => markedAs(toolbarButtonStyles.error)
+
+// The same, while it is marked as unfinished.
+const sectionUnfinished = () => markedAs(toolbarButtonStyles.warning)
+
+const markedAs = className => {
     const sectionButton = button('process.classification.panel.inputImagery.button')
-    return sectionButton.classList.contains(toolbarButtonStyles.error)
+    return sectionButton.classList.contains(className)
         ? JSON.parse(sectionButton.closest('[data-tooltip]').dataset.tooltip)
         : []
 }

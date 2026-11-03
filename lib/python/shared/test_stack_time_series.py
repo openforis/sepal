@@ -83,6 +83,36 @@ class StackTimeSeriesTest(unittest.TestCase):
         moved_sits_dir = self.move_export() / 'sits'
         self.assert_pixels(moved_sits_dir / 'SEPAL_0000000512-0000000512_NDVI_2026-10-10.vrt', '2026-10-10', 142)
 
+    def test_preserves_float_regression_pixels_through_vrt_stacking(self):
+        self.write_chunks(separators=(None, None), data_type=gdal.GDT_Float32,
+                          values=[0.125, -1.8755, 40000.75, 0.1255])
+
+        stacker.stack_time_series(str(self.directory), require_floating_point=True)
+
+        dataset = gdal.Open(str(self.directory / 'stack.vrt'))
+        for index, expected in enumerate([0.125, -1.8755, 40000.75, 0.1255], start=1):
+            band = dataset.GetRasterBand(index)
+            self.assertEqual(band.DataType, gdal.GDT_Float32)
+            for value in struct.unpack('=4f', band.ReadRaster()):
+                self.assertAlmostEqual(value, expected, places=6)
+
+    def test_refuses_mixed_chunk_types_before_writing_vrts(self):
+        self.write_chunks(separators=(None, None), data_types=[gdal.GDT_Float32, gdal.GDT_Float64])
+
+        with self.assertRaisesRegex(ValueError, 'Incompatible regression chunk types'):
+            stacker.stack_time_series(str(self.directory), require_floating_point=True)
+
+        self.assertFalse(list(self.directory.glob('tile-*')))
+        self.assertFalse((self.directory / 'stack.vrt').exists())
+
+    def test_refuses_integer_regression_chunks(self):
+        self.write_chunks(separators=(None, None))
+
+        with self.assertRaisesRegex(ValueError, 'Regression chunks must be floating point'):
+            stacker.stack_time_series(str(self.directory), require_floating_point=True)
+
+        self.assertFalse((self.directory / 'stack.vrt').exists())
+
     def move_export(self):
         moved = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, moved)
@@ -124,7 +154,7 @@ class StackTimeSeriesTest(unittest.TestCase):
             actual = struct.unpack('=' + 'H' * width * height, band.ReadRaster())
             self.assertEqual(actual, expected)
 
-    def write_chunks(self, separators):
+    def write_chunks(self, separators, data_type=gdal.GDT_UInt16, data_types=None, values=None):
         chunks = [
             ('2026-07-01_2026-10-01', ['2026-07-01', '2026-08-01']),
             ('2026-10-01_2026-10-20', ['2026-10-01', '2026-10-10'])
@@ -138,14 +168,16 @@ class StackTimeSeriesTest(unittest.TestCase):
             for chip_index, (row, column) in enumerate(chips):
                 suffix = '' if separator is None else f'{separator}{row:010d}-{column:010d}'
                 path = chunk_dir / f'TIME_SERIES_EXPORT_0_{chunk_name}{suffix}.tif'
-                dataset = gdal.GetDriverByName('GTiff').Create(str(path), 2, 2, 2, gdal.GDT_UInt16)
+                current_type = data_types[chunk_index] if data_types else data_type
+                dataset = gdal.GetDriverByName('GTiff').Create(str(path), 2, 2, 2, current_type)
                 dataset.SetProjection(projection.ExportToWkt())
                 dataset.SetGeoTransform((column // 256, 1, 0, 4 - row // 256, 0, -1))
                 for band_index, date in enumerate(dates, start=1):
                     band = dataset.GetRasterBand(band_index)
                     band.SetDescription(date)
-                    value = chunk_index * 100 + (chip_index + 1) * 10 + band_index
-                    band.WriteRaster(0, 0, 2, 2, struct.pack('=4H', *([value] * 4)))
+                    value = values[chunk_index * 2 + band_index - 1] if values else chunk_index * 100 + (chip_index + 1) * 10 + band_index
+                    fmt = 'f' if current_type == gdal.GDT_Float32 else 'd' if current_type == gdal.GDT_Float64 else 'H'
+                    band.WriteRaster(0, 0, 2, 2, struct.pack('=4' + fmt, *([value] * 4)))
                 dataset = None
 
 

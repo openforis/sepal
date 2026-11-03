@@ -1,8 +1,9 @@
 # Source freshness, caching and invalidation
 
 The current live runtime shares descriptions and observations, tracks recipe revision/save agreement and asset
-metadata evidence, and invalidates authority synchronously. Persisted derived-result freshness is target work
-specified separately below. [Source resolution](source-resolution.md) owns authorization, graph structure and
+metadata evidence, and invalidates authority synchronously. Persisted derived-result evidence is current for Sampling
+Design's stratum areas and its automatic proportions' stratum frame; the rest of persisted-result freshness is target
+work specified separately below. [Source resolution](source-resolution.md) owns authorization, graph structure and
 execution guards; no cache provides task atomicity.
 
 ## Current design
@@ -227,10 +228,18 @@ local draft. Keep dependency snapshots private to an operation rather than writi
 
 ## Target: persisted-result freshness
 
-All result-evidence, resource-retention and integration sections below are target design. This machinery is not
-yet implemented for Sampling Design; its [current edit-driven invalidation](../../recipes/sampling-design.md#derived-result-freshness)
-remains until replaced by this contract. Do not add a temporary browser content-hash bridge or use `update_time` as
-an intermediate freshness tier.
+Sampling Design's stratum areas and automatic proportions follow the contract below
+([its integration](../../recipes/sampling-design.md#derived-result-freshness)): operation-produced evidence
+(`modules/gee/src/jobs/dependencyEvidence.js`), the shared comparison (`lib/js/shared/src/recipe/calculation`), and
+the runtime's calculation and dependency-evidence owner (`sourceRuntime/calculationEvidence.js`), which teaches the
+session the revisions and tokens its answers report, holds what it acquires to the same source currency, draft
+agreement, asset authority and credentials as every other runtime answer (`sourceRuntime/evidenceStanding.js`), and
+refuses a calculation answer superseded in flight. Shared requirements judge its published evidence's age as they read
+it, and form panels calculate what an edit requires while open, and judge what they are about to apply, through one
+binding a type declares (`recipe/calculatedResult.js`). Toolbars mark unfinished and stale sections through the shared
+requirement presentation, a section waiting on another left neutral (`recipe/selectedSourceStatus.js`). Product projections are each type's `dependencyProjection`, the whole persisted model where a type
+declares none. The remaining result-evidence, resource-retention and integration sections are target design. Do not
+add a temporary browser content-hash bridge or use `update_time` as an intermediate freshness tier.
 
 ### Snapshot authority
 
@@ -281,6 +290,76 @@ stored results use operation-produced evidence. User-authored choices are neithe
 normalization targets. Distinguish compatibility, freshness and a user decision needing review. Migrate concrete
 workflows incrementally and replace superseded caches/flags rather than running parallel mechanisms.
 
+Two shared form bindings carry this into the panels (`recipeFormPanel.jsx`); a type declares, the binding evaluates,
+presents and enforces:
+
+- **Local requirements on drafts.** A requirement over the recipe's own configuration names the panel editing its
+  section as its `editor` - {panel, input, blocksApply}. The binding reads every local requirement of the type over the
+  recipe as the panel's values would leave it, prerequisites resolved there, tells the input what the named ones find
+  - an item's status by item, anything else as an error unless it is set-up not yet done - and holds Apply as the
+  editor's policy says, rechecking against the recipe as it stands at submission (`recipe/localCandidate.js`). Band
+  Math's Output bands says each output image's problems on its row and holds nothing back; Sampling Design's manual
+  proportions refuse answers for other strata.
+- **Synchronous derived results.** A type declares `derivedResults` - {panel, current(model), derive(model)} - for
+  results its panels derive from the model alone (`recipe/derivedResult.js`). Whenever the edit, or the recipe under
+  it, leaves the draft not current, the binding derives it again into the draft; a submission it is not derived for is
+  refused and derived anew. Nothing is acquired, polled or enters the calculation cache. A result a person must approve
+  records, as it is derived, the canonical inputs it read, and `current` compares that record with what the model reads
+  now; the shared library owns the projection and comparison so GUI and server judge alike - Sampling Design's
+  allocation (`lib/js/shared/src/recipe/samplingDesign/allocationReview.js`). Cheap derivations need no persisted
+  record.
+
+**Applied derivations.** A cheap result that must stay current with its editors closed is derived when the applied
+recipe changes, not in a draft and not by a mounted watcher. A `derivedResults` declaration with `applied` in place of
+`panel` is evaluated by the shared commit (`commitRecipe`, `recipe/derivedResult.js`). Commits are a form panel's Apply
+(`setModelAndValues`, after its `additionalUpdates`), and the list operations that commit outside a panel: removing an
+input (`inputImages.js`) or a calculation.
+The commit reads the recipe as its own action leaves it, evaluates the declaration over that recipe and the one before
+it, and adds what changes to the same action. Nothing is derived when a recipe opens, when its tab returns, or from a
+subscription. Drafts are never read, and Cancel commits nothing. There is no reducer hook: loading and caching a
+recipe are not commits.
+
+The declaration names an ordered item list and existing domain functions; shared code owns the order and the rules:
+
+```js
+// bandMath/derivations.js
+export const bandMathDerivations = [{
+    id: 'bandMath.calculationBands',
+    applied: {
+        items: 'calculations.calculations',
+        // Earlier items only, as derived in this commit: the existing requirement read and its item prerequisites.
+        read: (model, index) => calculationItem(chainFacts({model}), index),
+        requirement: CALCULATION_REFERENCES,
+        // Its own settings, and the bands its expression's analysis reads: not the rest of its scope.
+        inputs: calculationInputs,
+        // updateCalculation - every renamed input, calculation and band it reads - over findChanges between the
+        // previous model and the scope as derived so far.
+        follow: followedReferences,
+        // updateIncludedBands over analysis.includedBands; an unchanged item is returned as it was.
+        derive: derivedBands,
+        // updateOutputBands over findChanges(previous, derived), and visualization band renames.
+        followRecipe: followedOutputs
+    }
+}]
+```
+
+Each item is evaluated in order over the model as derived so far:
+
+1. It first follows what the commit renamed in its scope (`follow`).
+2. It is then read as its requirement reads it.
+3. It is derived only when all three hold:
+   - its `requirement` is met;
+   - every prerequisite item was met earlier in the same pass;
+   - its `inputs` differ from those it had in the recipe before the commit.
+
+Any other item keeps its value. A chain is therefore derived in one pass, an unrelated edit derives nothing, and an
+item that cannot be derived keeps its last derived value until repair. `followRecipe` then reconciles the rest of the
+recipe, as recipe-relative updates, step by step: first the commit's own change, then each derived item in order. Each
+step is reconciled against what the later items still hold, so a generated name stays with its owner until that owner
+changes. Paths are written only where their final value changes.
+Everything is synchronous over the two models of the commit: no acquired facts, credentials, polling, calculation
+cache, hash or persisted record. A declaration may also carry `panel` for its editor's draft; Band Math's does not.
+
 ## Persisted derived-result evidence
 
 A result that must remain valid after its panel and recipe close stores the evidence from which it was calculated.
@@ -315,9 +394,20 @@ one recalculation before it can establish durable freshness. Likewise, an asset 
 evidence cannot establish cross-session `CURRENT` merely because its ID and schema still match; the consumer must
 recalculate or acquire stronger evidence under its declared policy.
 
-Consumers own stale presentation, recalculation and submission policy; the shared resource layer reports evidence
-and state. [Sampling Design's integration](../../recipes/sampling-design.md#target-persisted-calculation-evidence)
-defines its two calculations, sidecars, propagation and legacy migration. None of those rules is current behavior.
+Consumers own stale presentation and submission policy, and declare the results their panels calculate; the shared
+binding calculates what an edit requires while its panel is open, and the shared resource layer reports evidence and
+state. [Sampling Design's integration](../../recipes/sampling-design.md#derived-result-freshness) defines its
+calculations, sidecars, propagation and legacy migration.
+
+A result that reads several declared dependencies - Sampling Design's probabilities read the stratum frame and the
+probability source - persists each one's evidence under its id and is `CURRENT` only while all are
+(`calculationState`). Its operation reads them all through one `RecipeScope` before calculating, and the assets of all
+again before answering (`withDependencyEvidence$`), comparing each token with every observation of it, so an asset two
+dependencies read and replaced between their reads is refused. The binding watches each dependency the edit asks and
+calculates only while all are usable. Composing unchanged a dependency another result records keeps the two comparable
+by digest. A dependency whose question is null for a configuration is not read, and the runtime withdraws what it
+published for it. An operation's answer only gains fields within a release, so a client of the previous release still
+accepts it.
 
 ### Exact calculation evidence
 
@@ -330,8 +420,8 @@ Recipes and Earth Engine assets support different strengths of claim, and the de
 **Recipe snapshots are exact per ID.** The existing
 [operation-scoped reader](source-resolution.md#operation-scoped-recipe-loading) retains one raw record/revision
 per ID, including transitive and concurrent reads; factories may still be constructed repeatedly.
-Returning that exact revision vector as calculation evidence remains target work. This does not establish
-graph-wide coherence across different IDs.
+A calculating operation's evidence is the closure it reads through that reader, so it records exactly the revisions
+the calculation was built from. This does not establish graph-wide coherence across different IDs.
 
 **Asset evidence is contemporaneous observation, not a snapshot.** An operation records the asset observations it
 made and revalidates them before the result is committed. Current live evidence uses metadata `updateTime`;
@@ -355,8 +445,8 @@ be enough.
 Memoizing per ID also removes the possibility of one operation mixing two revisions of the same recipe, so no
 separate conflicting-read detection is needed — one snapshot per ID makes the conflict unrepresentable.
 
-The existing operation-owned recipe reader supplies record sharing. Extending its output with exact calculation
-evidence is separate work; a browser observation taken before execution cannot stand in for that evidence.
+The operation-owned recipe reader supplies record sharing and, through the closure an operation reads, its exact
+calculation evidence; a browser observation taken before execution cannot stand in for that evidence.
 
 Task atomicity remains separate. Persisted execution bundles are target design, not a guarantee of current tasks.
 

@@ -478,6 +478,8 @@ export const withRecipePath = () =>
         return connect(mapStateToProps)(RecipeComponent)
     }
 
+// `modelToValues(model, props)` is given the component's props beside the model: what the values default to can depend on
+// the rest of the recipe.
 export const initValues = ({getModel, getValues, modelToValues, onInitialized}) =>
     WrappedComponent =>
         class RecipeComponent extends React.Component {
@@ -510,7 +512,7 @@ export const initValues = ({getModel, getValues, modelToValues, onInitialized}) 
             }
 
             convertModelToValues(model) {
-                const valuesFromModel = modelToValues(model)
+                const valuesFromModel = modelToValues(model, this.props)
                 onInitialized({
                     model,
                     values: valuesFromModel,

@@ -59,7 +59,7 @@ describe.each([
 ])('a %s choosing classified outputs at its %s', (type, field, valueOf) => {
     it.each([
         ['an SVM classifying C_SVC', {type: 'SVM', svmType: 'C_SVC'}, ['regression']],
-        ['an SVM of one class', {type: 'SVM', svmType: 'ONE_CLASS'}, ['probability_1']]
+        ['an SVM of one class', {type: 'SVM', svmType: 'ONE_CLASS', oneClass: 1}, ['probability_1']]
     ])('marks the field where %s does not provide what it chooses, holding back previews and Retrieve', (_case, classifier, chosen) => {
         const recipe = recipeOf(type, {classification: CLASSIFICATION, [field]: valueOf(chosen)})
         const state = stateOf(recipe, classifiedBy(classifier), MOSAIC)
@@ -73,7 +73,7 @@ describe.each([
     it.each([
         ['a regression a classifier able to regress provides', {type: 'RANDOM_FOREST'}, ['regression']],
         ['class probabilities an SVM classifying NU_SVC provides', {type: 'SVM', svmType: 'NU_SVC'}, ['probability_1']],
-        ['a band of the images themselves', {type: 'SVM', svmType: 'ONE_CLASS'}, ['ndvi']]
+        ['a band of the images themselves', {type: 'SVM', svmType: 'ONE_CLASS', oneClass: 1}, ['ndvi']]
     ])('marks nothing for %s', (_case, classifier, chosen) => {
         const recipe = recipeOf(type, {classification: CLASSIFICATION, [field]: valueOf(chosen)})
 

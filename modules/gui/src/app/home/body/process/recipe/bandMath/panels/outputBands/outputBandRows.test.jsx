@@ -203,12 +203,30 @@ describe('an output whose image no longer exists', () => {
 })
 
 describe('an output image', () => {
-    it('cannot be applied without bands once its last is removed', async () => {
+    it('cannot be applied without bands once its last is removed, by Apply or Enter', async () => {
         await openOutputBands([LEGACY_COPY])
 
         await remove(rowOf(LEGACY_COPY))
 
         expect(applyEnabled()).toBe(false)
+        await submitForm()
+        expect(savedCopies()).toEqual([LEGACY_COPY])
+    })
+
+    it.each([
+        ['Apply', () => apply()],
+        ['Enter', () => submitForm()]
+    ])('saved without bands, is repaired in the draft and saved by %s, what is applied refused until then', async (_name, submit) => {
+        await openOutputBands([])
+        expect(appliedGate()).toMatchObject({code: 'CONFIGURATION_UNMET'})
+
+        // An image outputting no band offers its bands as the panel opens.
+        await act(async () => option(VV.name).click())
+        await settled()
+        await submit()
+
+        expect(savedOutputNames()).toEqual([VV.name])
+        expect(appliedGate()).toBeNull()
     })
 
     it('is not offered a band a saved recipe outputs under a legacy id', async () => {
@@ -230,7 +248,7 @@ describe('an output image', () => {
 })
 
 describe('an output image whose input no longer includes a band', () => {
-    it('is not offered it once Sync has removed its outputs', async () => {
+    it('is not offered it once the input\'s change has removed its outputs', async () => {
         const input = removedFromInput(RATIO)
         const changes = findChanges({prevImages: [INPUT], images: [input], prevCalculations: [], calculations: []})
         const [{outputBands}] = updateOutputBands({changes, outputImages: [{...INPUT, outputBands: OUTPUT_BANDS}]})
@@ -560,6 +578,13 @@ const applyEnabled = () => panelButton('button.apply')?.disabled === false
 
 const apply = async () => {
     await act(async () => panelButton('button.apply').click())
+    await settled()
+}
+
+// Enter in the panel's form.
+const submitForm = async () => {
+    const form = document.querySelector('form')
+    await act(async () => form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', {bubbles: true, cancelable: true})))
     await settled()
 }
 

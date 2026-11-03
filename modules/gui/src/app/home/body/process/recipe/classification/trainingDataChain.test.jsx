@@ -112,10 +112,10 @@ afterEach(async () => {
 })
 
 describe('a Classification without training data', () => {
-    it('holds its own Retrieve and previews, naming its Training data section, which its toolbar leaves unmarked', async () => {
+    it('holds its own Retrieve and previews, naming its Training data section, which its toolbar marks as unfinished', async () => {
         await onChangeMap()
 
-        expect(sectionProblems(CLASSIFICATION)).toEqual({})
+        expect(sectionProblems(CLASSIFICATION)).toEqual({trainingData: 'process.classification.panel.trainingData.missing'})
         expect(retrieveAvailable(CLASSIFICATION)).toBe(false)
         expect(previewGate(CLASSIFICATION)).toMatchObject({withdraw: true, section: 'process.classification.panel.trainingData.button'})
     })

@@ -934,7 +934,7 @@ const CLASSIFICATION = {
     model: {
         inputImagery: {images: [MODEL_IMAGERY]},
         legend: {entries: CLASSES},
-        trainingData: {dataSets: [{type: 'SAMPLE_CLASSIFICATION', referenceData: [{x: 0.5, y: 0.5, class: 1}]}]},
+        trainingData: {dataSets: [{type: 'SAMPLE_CLASSIFICATION', referenceData: [{x: 0.5, y: 0.5, class: 1}, {x: 1.5, y: 0.5, class: 2}]}]},
         classifier: {type: 'RANDOM_FOREST'}
     }
 }

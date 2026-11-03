@@ -2,7 +2,8 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {recipeActionBuilder} from '~/app/home/body/process/recipe'
+import {recipeActionBuilder, recipePath} from '~/app/home/body/process/recipe'
+import {commitRecipe} from '~/app/home/body/process/recipe/derivedResult'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -110,10 +111,9 @@ class _Calculations extends React.Component {
     removeCalculation(calculationToRemove) {
         const {recipeId} = this.props
         const actionBuilder = recipeActionBuilder(recipeId)
-        actionBuilder('REMOVE_CALCULATION', {calculationToRemove})
+        commitRecipe(recipePath(recipeId), actionBuilder('REMOVE_CALCULATION', {calculationToRemove})
             .del(['model.calculations.calculations', {imageId: calculationToRemove.imageId}])
-            .del(['ui.calculations.calculations', {imageId: calculationToRemove.imageId}])
-            .dispatch()
+            .del(['ui.calculations.calculations', {imageId: calculationToRemove.imageId}]))
     }
 }
 

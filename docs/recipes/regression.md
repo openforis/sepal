@@ -29,20 +29,22 @@ Regression whose data sets store no point, and read none from another recipe, ca
 requirement (`NO_TRAINING_DATA`, `lib/js/shared/src/recipe/trainingData.js`), judged by the output read like every
 readiness finding ([Execution readiness](../design/recipes/source-resolution.md#execution-readiness)):
 
-- the TRN button is marked "Add training data" - while the recipe is being set up, once its wizard reaches Training
-  data;
+- the TRN button is marked as unfinished (amber), saying "Add a training data set." - once its wizard reaches Training
+  data, at once for a Regression already set up, and again whenever its last data set is removed;
 - the layer is not drawn, here or on another map, and Retrieve is held and refused at submission;
 - a recipe whose image builds the Regression - a Remapping or Masking of its predictions - is held the same way, naming
   the Regression, though its own description reads nothing of it;
 - the asset export refuses it: `Recipe X cannot run: NO_TRAINING_DATA`.
 
 Applying a data set that stores points, or reads them from another recipe, clears all of these. Input imagery is
-judged the same way: a Regression listing no input image cannot run, and its IMG button says "Please add at least one
-image." once its wizard has moved on from it, or at once for a Regression already set up. The Regression stays
+judged by the shared input rule: a Regression listing no input image cannot run, and its IMG button is marked as
+unfinished, saying "Please add at least one image.", once its wizard has moved on from it, or at once for a Regression
+already set up. The Regression stays
 described meanwhile: its single band is known from its declaration.
 
 The data set editor keeps its own draft rules - a name, a table and value column or an image to sample, and reference
-data - and holds Apply until they are met. A data set being edited changes nothing applied until it is applied, and
+data - and holds Apply until they are met. A table chosen while the rows of the one before it load takes none of them:
+Apply waits for the chosen table's rows. A data set being edited changes nothing applied until it is applied, and
 Cancel leaves the recipe as saved. The data set list holds Apply while it lists none.
 
 Not checked: whether training succeeds - how many points there are, whether their values vary, whether they survive the
@@ -60,6 +62,6 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
 
 - `lib/js/shared/test/recipe/output/type/regression.test.js`: training presence, classifiers and downstream repair.
 - `modules/gui/src/app/home/body/process/recipe/regression/trainingDataReadiness.test.jsx`: TRN/layer/Retrieve
-  agreement, empty data and draft Apply/Cancel.
+  agreement, empty data, draft Apply/Cancel and a table changed while its rows load.
 - `modules/gee/test/jobs/task/export/imageAssetExport.test.js`: direct/downstream refusal and export after repair.
 These establish readiness, not statistical adequacy or successful training on arbitrary inputs.

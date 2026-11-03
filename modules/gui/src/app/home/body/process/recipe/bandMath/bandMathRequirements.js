@@ -1,4 +1,5 @@
 import {INVALID_CALCULATION} from '#sepal/recipe/bandMath/calculationReferences'
+import {INPUT_IMAGES_ITEM, MISSING_INPUT_IMAGERY} from '~/app/home/body/process/panels/inputImagery/inputImageryRequirements'
 import {msg} from '~/translate'
 
 import {IMAGE_OUTPUT} from '../recipeOutput'
@@ -23,6 +24,7 @@ import {
     UNKNOWN_BAND,
     UNKNOWN_VARIABLE
 } from './chainRequirements'
+import {outputsAnything} from './panels/outputBands/outputImages'
 
 // Applied calculation problems come from shared readiness. Output-selection rules remain local.
 // Both are said on the sections and items they concern. Every calculation is built whenever its output is, read by
@@ -51,17 +53,21 @@ export const bandMathRequirements = [
         requirement: {...OUTPUT_REFERENCES, describe: diagnostic => describeProblems(diagnostic)},
         localFacts: chainFacts,
         items: outputItems,
+        // Output bands says what it finds of each output image on its row as edited. Its own fields decide what may be
+        // applied: an output whose image is gone, say, is shown to be removed, and the rest applied meanwhile.
+        editor: {panel: OUTPUT_BANDS.id, input: 'outputImages', blocksApply: false},
         operations: [IMAGE_OUTPUT]
     },
-    // Nothing output yet is setup still to do, not an error: the image stays held, and Output bands' own list says how
-    // to begin, so its toolbar button is not marked for it.
+    // Nothing output yet is setup still to do, not an error (OUTPUT_PRESENCE): the image stays held, Output bands' own
+    // list says how to begin, and its toolbar button is marked as unfinished - once Input imagery lists something to
+    // output, which nothing output waits on.
     {
         id: OUTPUT_IMAGES_REQUIREMENT,
         section: OUTPUT_BANDS,
         requirement: {...OUTPUT_PRESENCE, describe: diagnostic => describeProblems(diagnostic)},
         localFacts: chainFacts,
-        operations: [IMAGE_OUTPUT],
-        toolbarMark: false
+        prerequisites: ({outputImages}) => outputsAnything(outputImages) ? [] : [{declaration: MISSING_INPUT_IMAGERY, item: INPUT_IMAGES_ITEM}],
+        operations: [IMAGE_OUTPUT]
     }
 ]
 

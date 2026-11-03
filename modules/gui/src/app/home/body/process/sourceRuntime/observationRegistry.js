@@ -1,13 +1,15 @@
 import _ from 'lodash'
 import {Observable} from 'rxjs'
 
-// Band observations - what Earth Engine answers about one image - shared between every description asking the same
-// question, whichever output question it describes.
+// Answers to the runtime's Earth Engine requests, shared between every consumer asking the same question: band
+// observations - what Earth Engine answers about one image, whichever output question it describes - and calculations
+// with the evidence they answer with.
 //
-// An observation is identified by what Earth Engine evaluates: what is asked (`observes`), of which reference, the
-// recipe exactly as it is sent, the evidence about every record Earth Engine reads for it itself (recordCurrency.js),
-// the assets it reads, and the credentials it is asked under. That evidence is the best this session has, not what
-// Earth Engine read, so an answer is kept only while nothing known since supersedes it.
+// A request is identified by what Earth Engine evaluates. For an observation that is what is asked (`observes`), of
+// which reference, the recipe exactly as it is sent, the evidence about every record Earth Engine reads for it itself
+// (recordCurrency.js), the assets it reads, and the credentials it is asked under. That evidence is the best this
+// session has, not what Earth Engine read, so an answer is kept only while nothing known since supersedes it. A
+// calculation answers with the evidence of what it read, which `isCurrent` is given with its identity.
 //
 //   - Requests with equal identities share one request while it is in flight. Closing one leaves the others' running;
 //     the request is cancelled once nobody waits for it.
@@ -27,16 +29,17 @@ const SYSTEM_CLOCK = {
 }
 
 export class ObservationRegistry {
-    #observeBands$
+    #request$
     #isCurrent
     #retention
     #clock
     #entries = []
 
-    // observeBands$(request)   the request to Earth Engine
-    // isCurrent(identity)      whether nothing known now supersedes the evidence an identity was taken with
-    constructor({observeBands$, isCurrent, retention = DEFAULT_OBSERVATION_RETENTION, clock = SYSTEM_CLOCK}) {
-        this.#observeBands$ = observeBands$
+    // request$(request)            the request to Earth Engine
+    // isCurrent(identity, answer)  whether nothing known now supersedes the evidence an identity was taken with, or
+    //                              the evidence its answer reports
+    constructor({request$, isCurrent, retention = DEFAULT_OBSERVATION_RETENTION, clock = SYSTEM_CLOCK}) {
+        this.#request$ = request$
         this.#isCurrent = isCurrent
         this.#retention = retention
         this.#clock = clock
@@ -46,9 +49,9 @@ export class ObservationRegistry {
     observe$(request, {key, complete}) {
         return new Observable(subscriber => {
             const found = this.#reusable(key)
-            if (found?.bands) {
+            if (found?.answer) {
                 this.#used(found)
-                subscriber.next(found.bands)
+                subscriber.next(found.answer)
                 subscriber.complete()
                 return
             }
@@ -63,29 +66,29 @@ export class ObservationRegistry {
 
     // Nothing kept is reused, and nothing in flight is kept: what is waited for still reaches who waits.
     clear() {
-        ;[...this.#entries].forEach(entry => entry.bands ? this.#remove(entry) : this.#detach(entry))
+        ;[...this.#entries].forEach(entry => entry.answer ? this.#remove(entry) : this.#detach(entry))
     }
 
     // Decided when asked: the timers only clean up, so an answer is reused only within its bounds and while nothing
     // known now supersedes its evidence, whether or not its cleanup has run.
     #reusable(key) {
         const entry = this.#entries.find(entry => _.isEqual(entry.key, key))
-        if (!entry?.bands || this.#reusableNow(entry)) {
+        if (!entry?.answer || this.#reusableNow(entry)) {
             return entry
         }
         this.#remove(entry)
         return null
     }
 
-    #reusableNow({key, observedAt, usedAt}) {
+    #reusableNow({key, answer, observedAt, usedAt}) {
         const now = this.#clock.now()
         const {maxAgeMs, graceMs} = this.#retention
-        return now - observedAt < maxAgeMs && now - usedAt < graceMs && this.#isCurrent(key)
+        return now - observedAt < maxAgeMs && now - usedAt < graceMs && this.#isCurrent(key, answer)
     }
 
     #added(key, complete) {
         const entry = {
-            key, complete, waiting: new Set(), bands: null, observedAt: null, usedAt: null, timer: null,
+            key, complete, waiting: new Set(), answer: null, observedAt: null, usedAt: null, timer: null,
             subscription: null, settled: false
         }
         this.#entries.push(entry)
@@ -94,8 +97,8 @@ export class ObservationRegistry {
 
     // A request answering inside subscribe() has settled before its subscription is known.
     #request(entry, request) {
-        const subscription = this.#observeBands$(request).subscribe({
-            next: bands => this.#answered(entry, bands),
+        const subscription = this.#request$(request).subscribe({
+            next: answer => this.#answered(entry, answer),
             error: error => this.#failed(entry, error)
         })
         if (entry.settled) {
@@ -105,7 +108,7 @@ export class ObservationRegistry {
         }
     }
 
-    #answered(entry, bands) {
+    #answered(entry, answer) {
         if (entry.settled) {
             return
         }
@@ -113,15 +116,15 @@ export class ObservationRegistry {
         const waiting = [...entry.waiting]
         entry.waiting.clear()
         entry.subscription = null
-        if (this.#entries.includes(entry) && entry.complete && this.#isCurrent(entry.key)) {
-            entry.bands = bands
+        if (this.#entries.includes(entry) && entry.complete && this.#isCurrent(entry.key, answer)) {
+            entry.answer = answer
             entry.observedAt = this.#clock.now()
             this.#used(entry)
         } else {
             this.#remove(entry)
         }
         waiting.forEach(subscriber => {
-            subscriber.next(bands)
+            subscriber.next(answer)
             subscriber.complete()
         })
     }
@@ -155,7 +158,7 @@ export class ObservationRegistry {
     }
 
     #evictBeyondCap() {
-        const kept = _.sortBy(this.#entries.filter(({bands}) => bands), 'usedAt')
+        const kept = _.sortBy(this.#entries.filter(({answer}) => answer), 'usedAt')
         kept.slice(0, Math.max(0, kept.length - this.#retention.maxUnclaimed)).forEach(entry => this.#remove(entry))
     }
 

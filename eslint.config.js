@@ -22,7 +22,9 @@ const baseConfig = {
         'modules/gee/verify/filteredCollectionEvidence.mjs',
         'modules/gee/verify/ccdcOutputBandSelection.mjs',
         'modules/gee/verify/bandMathGeometry.mjs',
-        'modules/gee/verify/remappingSourceBands.mjs'
+        'modules/gee/verify/remappingSourceBands.mjs',
+        'modules/gee/verify/phenologyRegressionPrecision.mjs',
+        'modules/gee/verify/regressionExportResume.mjs'
     ],
     languageOptions: {
         ecmaVersion: 'latest',

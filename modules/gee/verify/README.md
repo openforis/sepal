@@ -35,6 +35,8 @@ Script assertions own the full fixture matrix; this index states scope and mater
 | [planetMosaicOutputBands.mjs](planetMosaicOutputBands.mjs) | Synthetic basemap/Daily schemas and index encoding; mixed-member failure. Matching is schema-only. Optional real ingestion needs Planet access. |
 | [baytsHistoricalOutputBands.mjs](baytsHistoricalOutputBands.mjs) | Per-pass schema/statistics, filtering, absent-pass masking/refusal and downstream alert equivalence on a common grid. |
 | [timeSeriesOutputBands.mjs](timeSeriesOutputBands.mjs) | Optical/radar count schema and independently counted valid first-band pixels. No Planet coverage; unknown-band/no-scene results are observations. |
+| [phenologyRegressionPrecision.mjs](phenologyRegressionPrecision.mjs) | Controlled regression precision/range, masks, integer timing, complete native control and mixed file promotion; read-only, no exports. Requires module mocks. |
+| [regressionExportResume.mjs](regressionExportResume.mjs) | Linked-user Radar regression asset writes through the generic image and CCDC collection paths: read-back values, masks, types, encodings and compatibility metadata; Resume exporting only a missing tile; refusal before writes. An Optical Phenology Drive export through the production file path, downloaded for GDAL. No Optical asset write. Requires module mocks. |
 | [phenologyPyeoOutputBands.mjs](phenologyPyeoOutputBands.mjs) | Phenology schema/month masks, median values and grids; synthetic PyEO report schema with/without index gate, not alert correctness. |
 | [proportionsAreaWeighting.mjs](proportionsAreaWeighting.mjs) | Production reducer sums and area-weighted proportions versus masked-sum and latitude-integral oracles. |
 | [restTransport.mjs](restTransport.mjs) | Request-context transport, tile serving, metadata/listings and refusal messages; optional linked-user computation. |
@@ -50,7 +52,7 @@ docker exec -w /usr/local/src/sepal/modules/gee gee node verify/samplingDesignGr
 ```
 
 Most read-only gates use the configured service account; diagnostic/probe exceptions are noted above.
-Modes that write an asset normally read linked-user credentials from stdin and are selected with an `SD_*`, `EE_PROPS_*` or `EE_ENC_*` environment variable; each script's
+Modes that write an asset normally read linked-user credentials from stdin and are selected with an `SD_*`, `EE_PROPS_*`, `EE_ENC_*` or `REG_EXPORT_*` environment variable; each script's
 `main()` lists its own modes. Credentials arrive on stdin as one line of JSON - never as an argument or an
 environment variable.
 
@@ -66,6 +68,16 @@ environment variable.
 | `EE_ENC_SERVICE_ACCOUNT` | - | `1` authenticates with the service account instead of reading stdin |
 | `EE_ENC_TASK_TIMEOUT_MS` | `900000` | how long a task may run before cancellation is requested |
 | `EE_ENC_CANCEL_CONFIRM_MS` | `120000` | how long a terminal state is awaited after that request |
+
+`regressionExportResume.mjs` sends its Earth Engine calls through the gee module's REST transport, as the linked
+user, so it needs `docker exec -i` and `--experimental-test-module-mocks`. `REG_EXPORT_RUN` names a fresh
+`sepal_regression_export_<run>` folder that only that run writes and `cleanup` removes; `resume` continues a `ccdc`
+run whose collection holds tile 0 only. `file` prints its task and Drive destination as soon as they are
+submitted and never cancels; after credentials expire, `file-status` with `REG_EXPORT_TASK` reconnects to that task
+instead of submitting another. Copy the download out with `docker cp` and read it with GDAL in the dev container:
+the Float32 file has no nodata value, and masked pixels are NaN. `file-cleanup` removes `SEPAL/exports/<run>_file`;
+`cleanup` removes the run's input asset and folder. Its exports take a few minutes, so start with a token that has
+well over that left: cleanup needs it too.
 
 Set Earth Engine automatic retries to zero, start one batch task at a time, and confirm a terminal state plus
 asset cleanup or intentional retention before starting another.

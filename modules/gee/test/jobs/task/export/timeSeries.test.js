@@ -417,6 +417,33 @@ describe('a time-series download of a recipe stated as another type', () => {
     })
 })
 
+describe('regression download destination protocol', () => {
+    const configured = () => ({...image, indicator: 'regression', recipe: {...recipe, model: {...recipe.model, sources: {...recipe.model.sources, classification: CLASSIFICATION}}}})
+
+    it('requires a fresh regression destination based on the executed request', async () => {
+        const requested = configured()
+        state.catalogue[CLASSIFICATION] = trainable()
+
+        const result = await lastValueFrom(timeSeriesTiles$({image: requested}))
+
+        assert.deepEqual(result.freshIndicators, ['regression'])
+    })
+
+    it('refuses an older runner before building or exporting a corrected regression chunk', async () => {
+        state.catalogue[CLASSIFICATION] = trainable()
+        await assert.rejects(lastValueFrom(startTimeSeriesChunkExport$({image: configured()}, {sepalUser: {}})), /fresh indicator destination/)
+        assert.equal(state.getCollection, undefined)
+        assert.equal(state.export, undefined)
+    })
+
+    it('exports a regression chunk only after the runner has reserved its destination', async () => {
+        state.catalogue[CLASSIFICATION] = trainable()
+        await lastValueFrom(startTimeSeriesChunkExport$({image: configured(), regressionDestinationChecked: true, tileId: 'tile-0'}, {sepalUser: {}}))
+        assert.deepEqual(state.getCollection.bands, ['regression'])
+        assert.equal(state.export.args.image, 'time-series image')
+    })
+})
+
 describe('timeSeriesTiles$', () => {
     it('tiles the once-resolved aoi and answers the tile ids', async () => {
         const result = await lastValueFrom(timeSeriesTiles$({description: 'ts', image}))

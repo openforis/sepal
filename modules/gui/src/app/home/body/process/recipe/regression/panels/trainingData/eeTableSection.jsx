@@ -72,6 +72,7 @@ export class EETableSection extends React.Component {
     loadColumns(eeTable) {
         const {inputs: {name, referenceData}} = this.props
         this.setState({column: []})
+        this.cancel$.next()
         name.set(null)
         referenceData.set(null)
         this.props.inputs.eeTable.setInvalid() // Reset any eventual error

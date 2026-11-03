@@ -15,11 +15,14 @@ import {operationLoading, READINESS, recipeForOperation} from '../recipe/operati
 import {recipeContent} from '../recipe/recipeContent'
 import {compatibleBasis, DEPENDENCIES, DESCRIBE, EXPLAIN, graphAssets, outputLoading, REFRESH} from '../recipe/recipeOutput'
 import {initializeRecipe} from '../recipeCache'
+import {observedListing} from '../recipeListing'
 import {getRecipeType} from '../recipeTypeRegistry'
 import {DEFAULT_ASSET_POLICY, isDefinitiveFailure} from './assetEvidence'
 import {assetsFailedBy} from './assetFailure'
 import {AssetInterest} from './assetInterest'
 import {AssetRefresh} from './assetRefresh'
+import {CalculationEvidence} from './calculationEvidence'
+import {credentialId} from './credentialId'
 import {EvidenceRegistry} from './evidenceRegistry'
 import {DEFAULT_LISTING_POLICY, ListingRefresh} from './listingRefresh'
 import {DEFAULT_OBSERVATION_RETENTION, ObservationRegistry} from './observationRegistry'
@@ -132,6 +135,8 @@ export const createSourceRuntime = ({
     evidenceSession = () => null,
     recipeCacheClaimant = privateClaimant,
     writeRecipe = () => false,
+    loadDependencyEvidence$ = request => api.gee.dependencyEvidence$(request),
+    calculationRetention,
     listingPolicy = DEFAULT_LISTING_POLICY,
     assetPolicy = DEFAULT_ASSET_POLICY,
     clock
@@ -139,7 +144,7 @@ export const createSourceRuntime = ({
     const currencyOf = current => sourceCurrency(current)
     const now = () => clock ? clock.now() : Date.now()
     const observations = new ObservationRegistry({
-        observeBands$,
+        request$: observeBands$,
         isCurrent: key => {
             const current = session()
             const currency = currencyOf(current)
@@ -415,6 +420,34 @@ export const createSourceRuntime = ({
         requirementsOf: recipe => (getRecipeType(recipe.type)?.sourceRequirements || []).filter(({role}) => role),
         ...(clock && {clock})
     })
+    // What a calculation or evidence read says it read: a revision storage held is listing evidence (recipeListing.js),
+    // and a token other than one the session read before that request began is a change it now knows of, held as a
+    // mutation is until a read of its own answers (assetRefresh.js).
+    const learnSources = ({recipes, assets: read, askedAt}) => {
+        updateRecipeListing(listing => {
+            const observed = observedListing(listing, recipes)
+            return {
+                ...observed.recipes !== listing.recipes && {recipes: observed.recipes},
+                ...observed.listingState !== listing.listingState && {listingState: observed.listingState}
+            }
+        })
+        const known = session().assetEvidence || {}
+        const changed = read.filter(({id, version}) => {
+            const entry = known[id]
+            return entry && entry.checkedAt !== null && entry.checkedAt < askedAt && !entry.stale && entry.version !== version
+        })
+        changed.length && assets.invalidate(changed.map(({id}) => id))
+    }
+    const calculations = new CalculationEvidence({
+        session,
+        sessionChanges$,
+        write: writeRecipe,
+        claimAssets: ids => assets.claim(ids),
+        learnSources,
+        loadEvidence$: loadDependencyEvidence$,
+        ...(calculationRetention && {retention: calculationRetention}),
+        ...(clock && {clock})
+    })
     const joined = (key, refresh) => {
         if (!refreshing.has(key)) {
             refreshing.set(key, refresh().finally(() => refreshing.delete(key)))
@@ -488,6 +521,17 @@ export const createSourceRuntime = ({
             assets.refresh([id], {force: true}).then(() => closed || refreshSources({assets: [id]}))
         ),
         claimAssets: ids => assets.claim(ids),
+        // A calculation a panel asks for, shared and kept while its evidence is current (calculationEvidence.js).
+        calculate$: calculation => calculations.calculate$(calculation),
+        // A dependency's current evidence for a question, as an editor judges what it is about to apply against it.
+        dependencyEvidence: request => calculations.dependencyEvidence(request),
+        // The dependencies a recipe's type declares kept evidenced while it is open, with the recipe listing behind them.
+        watchDependencyEvidence$: recipeId => defer(() => {
+            refreshRecipeListing()
+            return calculations.watch$(recipeId)
+        }),
+        // One question an editor asks of a dependency, kept evidenced while it asks it.
+        watchDependencyQuestion$: request => calculations.watchQuestion$(request),
         evidenceOwnerOf: recipeId => evidence.ownerOf(recipeId),
         invalidateAssets: ids => assets.invalidate(ids),
         // A failure of something drawn or read from these assets, which may be about any of them (assetFailure.js).
@@ -499,6 +543,7 @@ export const createSourceRuntime = ({
             interest.close()
             assets.close()
             observations.clear()
+            calculations.close()
             evidence.close()
         }
     }
@@ -519,20 +564,6 @@ const NO_READS = Object.freeze({read: () => {}, unread: () => {}, assets: () => 
 const NOT_EXECUTED = ['ui', 'layers', 'title', 'revision']
 
 const EVIDENCE = ['id', 'revision', 'listed', 'agreement']
-
-// Credential tokens are opaque and equal by value, so an observation names them by identity.
-const CREDENTIAL_IDS = new WeakMap()
-let credentialIds = 0
-
-const credentialId = token => {
-    if (!token || typeof token !== 'object') {
-        return 0
-    }
-    if (!CREDENTIAL_IDS.has(token)) {
-        CREDENTIAL_IDS.set(token, ++credentialIds)
-    }
-    return CREDENTIAL_IDS.get(token)
-}
 
 // The records and assets Earth Engine reads itself for the observed reference: everything its recipe reaches, but not
 // the recipe, which is sent. `missing` is a reference the graph does not hold.

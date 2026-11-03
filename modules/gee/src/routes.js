@@ -11,6 +11,7 @@ import assetVersions$ from '#gee/jobs/ee/asset/versions'
 import loadCCDCSegments$ from '#gee/jobs/ee/ccdc/loadSegments'
 import check$ from '#gee/jobs/ee/check'
 import nextReferenceDataPoints$ from '#gee/jobs/ee/classification/nextReferenceDataPoints'
+import dependencyEvidence$ from '#gee/jobs/ee/dependencyEvidence'
 import imageBands$ from '#gee/jobs/ee/image/bands'
 import imageBounds$ from '#gee/jobs/ee/image/bounds'
 import distinctBandValues$ from '#gee/jobs/ee/image/distinctBandValues'
@@ -65,6 +66,7 @@ export default router =>
         .post('/image/sample', stream(ctx => sampleImage$(ctx)))
         .post('/assetMetadata', stream(ctx => assetMetadata$(ctx)))
         .post('/assetVersions', stream(ctx => assetVersions$(ctx)))
+        .post('/dependencyEvidence', stream(ctx => dependencyEvidence$(ctx)))
         .get('/projects', stream(ctx => projects$(ctx)))
         .get('/asset/descendants', stream(ctx => listAssets$(ctx)))
         .post('/asset/createFolder', stream(ctx => createFolder$(ctx)))

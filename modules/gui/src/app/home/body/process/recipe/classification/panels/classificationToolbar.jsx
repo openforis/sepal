@@ -11,9 +11,10 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
-import {SectionButton} from '../../sectionButton'
+import {SectionButton, withSectionMarks} from '../../sectionButton'
 import {RecipeActions} from '../classificationRecipe'
 import {Legend} from '../legend/legend'
+import {TRAINING_DATA} from '../trainingDataRequirements'
 import {AuxiliaryImagery} from './auxiliaryImagery/auxiliaryImagery'
 import styles from './classificationToolbar.module.css'
 import {Classifier} from './classifier/classifier'
@@ -45,14 +46,7 @@ class _ClassificationToolbar extends React.Component {
                     vertical
                     placement='top-right'
                     className={styles.top}>
-                    <Toolbar.Button
-                        selected={collecting}
-                        onClick={() => RecipeActions(recipeId).setCollecting(!collecting)}
-                        icon={'map-marker'}
-                        tooltip={msg(collecting
-                            ? 'process.classification.collect.disable.tooltip'
-                            : 'process.classification.collect.enable.tooltip')}
-                        panel/>
+                    <CollectButton collecting={collecting}/>
                     <RetrieveButton/>
                 </Toolbar>
                 <Toolbar
@@ -91,6 +85,29 @@ class _ClassificationToolbar extends React.Component {
         )
     }
 }
+
+// Collecting reference data on the map, marked as Training data is while it is unfinished - with nothing to train on,
+// collecting points is what to do next - unless it is being collected already.
+const _CollectButton = ({recipeId, collecting, sectionMark}) => {
+    const {problem, incomplete} = sectionMark(TRAINING_DATA.id)
+    const next = incomplete && !collecting
+    return (
+        <Toolbar.Button
+            selected={collecting}
+            onClick={() => RecipeActions(recipeId).setCollecting(!collecting)}
+            icon={'map-marker'}
+            warning={next}
+            tooltip={next ? problem : msg(collecting
+                ? 'process.classification.collect.disable.tooltip'
+                : 'process.classification.collect.enable.tooltip')}
+            panel/>
+    )
+}
+
+const CollectButton = compose(
+    _CollectButton,
+    withSectionMarks()
+)
 
 export const ClassificationToolbar = compose(
     _ClassificationToolbar,

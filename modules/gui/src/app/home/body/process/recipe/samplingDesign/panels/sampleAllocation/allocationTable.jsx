@@ -15,7 +15,7 @@ import styles from './allocationTable.module.css'
 // is exactly the joined row this recipe stopped writing. The join is the shared owner-first one, keyed on
 // `stratum ?? value` from both sides: a lookup that missed would silently fall through to the row's cached
 // copy and show a label the stratification has already replaced.
-export const AllocationTable = ({allocation, strata, sampleSize, marginOfError, manual, noProportions, onChange}) => {
+export const AllocationTable = ({allocation, strata, sampleSize, marginOfError, manual, noProportions}) => {
     const owners = byStratumKey(strata)
     const presentationOf = entry => stratumView(owners, entry)
     return (
@@ -34,7 +34,6 @@ export const AllocationTable = ({allocation, strata, sampleSize, marginOfError, 
                             entry={{sampleSize: '', ...entry}}
                             presentation={presentationOf(entry)}
                             autoFocus={manual && index === 0}
-                            onChange={onChange}
                         />
                     )
                     : (

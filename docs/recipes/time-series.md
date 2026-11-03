@@ -32,8 +32,9 @@ A selected Classification is part of the configured analysis: every Time Series 
 chart's observations, the download - needs its classifier trainable (`CLASSIFIER`), whatever bands are asked for, a
 band of the images included. That is a policy rather than an execution need: a native band reads nothing of the
 Classification and execution trains nothing for it, but readiness acquires the evidence training would read. While the
-Classification cannot be trained (no points, an unusable reused recipe, reused features missing), SRC names it beside
-the classification field (`classificationReferenceFeedback`), the chart and Retrieve actions are withdrawn, and an
+Classification cannot be trained (no points, points its classifier cannot train on, an unusable reused recipe, reused
+features missing), SRC names it beside the classification field (`classificationReferenceFeedback`), the chart and
+Retrieve actions are withdrawn, and an
 open chart or Retrieve closes, the chart cancelling its request; SRC alone explains it. While what training needs is
 still being read, or cannot be, an open chart reads nothing and an open Retrieve holds its submission, both staying
 open, nothing found. Repairing the Classification, or selecting none, offers them again without reopening them; the
@@ -109,7 +110,7 @@ it does not comprehensively validate absent AOI, sources or dates before Earth E
 
 - **Output modes.** The classifier is asked only for the output modes those outputs need. Class probabilities use
   `MULTIPROBABILITY` and build no regression, so an SVM classifying `C_SVC` charts and downloads its probabilities.
-- **Unchanged values.** Probability names, values, masks and each branch's scaling are as before.
+- **Probabilities.** Names, values, masks and each branch's scaling retain their established representation.
 - **Refusal.** A requested output the Classification does not declare, such as an SVM's regression, is refused with
   `UNSUPPORTED_CLASSIFIED_OUTPUT` before anything is evaluated.
 - **Native bands.** A request naming only the images' own bands, such as the count's band `0`, reads nothing of the
@@ -119,6 +120,39 @@ it does not comprehensively validate absent AOI, sources or dates before Earth E
   output, so none is validated beyond the request.
 - **Readiness.** A selected Classification must be trainable and its inputs must suit the collection for every
   operation, including native bands/counts, under the configured-analysis policy described in Inputs.
+
+### Collection encoding
+
+Classification predicts from each scene's existing features before native storage scaling/casting. Its temporal
+`regression` stays floating point: Optical stores the prediction ×1,000; Radar and Planet store target units.
+For `r=0.125` the values are `125` and `0.125`; `r=-1.8755` gives approximately `-1875.5` and `-1.8755`.
+Optical `r=40.00075` gives approximately `40000.75`, without int16 clipping. Float32 approximation remains.
+Native and probability bands keep their existing integer encoding, masks, order and scene properties.
+
+Probability quantization is unchanged: Classification returns integer percentage `q=uint8(100*p)`, Optical stores
+`100*q`, and Radar/Planet store `q`. Thus `p=0.376` remains `3700` versus `37`. These are public storage scales;
+charts and downloads return the stored numbers. No saved stretches, thresholds or lambda settings are rewritten.
+CCDC still fits these collection values directly, with its configured lambda; probability fitting normalization
+remains [deferred](../design/workplan.md#collection-output-correctness).
+
+Regression precision also reaches CCDC coefficients/Slice and [Phenology](phenology.md#output), where applicable.
+New computed CCDC regression value bands and Phenology value bands describe target units with encoding scale
+`0.001` for Optical or `1` for Radar/Planet, offset zero; the training target supplies the unit. Existing assets'
+units are never inferred from their names or today's producer configuration. Recomputing recovers fractions/range
+and may change fits, breaks, seasonal timing and threshold crossings despite retaining public units. Previously
+truncated or clipped pixels in old assets/downloads cannot be recovered without recomputation.
+
+Affected asset exports use the bounded [regression Resume check](../design/recipes/output-products.md#regression-precision-compatibility).
+Affected workspace regression downloads reserve a new indicator directory before any chunk export; an existing
+directory is refused, including an empty one, so concurrent tasks cannot share it. Native/probability indicators
+retain their existing destination behavior. The server identifies affected indicators during planning and refuses
+regression chunk exports from runners that have not acknowledged destination reservation; an older running task
+must be restarted with the updated runner and a fresh destination. Submitted numeric metadata is not compatibility
+evidence. Stacking these regression downloads checks every TIFF band/chip/chunk for one floating type
+(`--require-floating-point`); mixed types or integer chunks fail before VRTs are written. Existing files are never
+removed by these guards. The VRTs declare 0 as NoData, including a legitimate regression zero, and do not declare the
+NaN Earth Engine writes for masked floating pixels; see
+[time-series download NoData](../design/workplan.md#time-series-download-nodata).
 
 Known limitations and follow-ups are tracked in the [workplan](../design/workplan.md#time-series).
 
@@ -133,5 +167,7 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
   indicator requests, feedback, submission races, chart/Retrieve withdrawal, pending states and recovery.
 - `modules/task/src/runner/operations/timeSeriesExport.test.js` and `lib/python/shared/test_stack_time_series.py`:
   band-first download layout, chunk stacking, relative SITS VRTs and relocation.
+- `modules/gee/test/ee/timeSeries/regressionPrecision.test.js`: collection values/types/masks, pre-encoding
+  prediction features, public units through real file/asset export boundaries, and execution-evidence isolation.
 - [Live count probe](../../modules/gee/verify/README.md): optical/radar schema and valid first-band pixel counts;
   Planet is not covered. Unknown-band and no-scene behavior are recorded rather than treated as valid output.

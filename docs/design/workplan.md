@@ -2,8 +2,8 @@
 
 The single backlog for SEPAL recipes, tasks, applications and infrastructure. Reports need reproduction;
 proposals need bounded scope and acceptance criteria; research questions do not select an implementation.
-No ordering, delivery date or deployment is implied. Server-preview readiness and the broader band-presentation
-review remain explicitly deferred.
+Except where an item is explicitly marked next, no ordering, delivery date or deployment is implied.
+Server-preview readiness and the broader band-presentation review remain explicitly deferred.
 
 Technical documents retain current behavior, compatibility constraints and detailed target contracts.
 Add and maintain planned work here; link to those documents for design detail instead of keeping parallel roadmaps.
@@ -23,29 +23,57 @@ or new release checks.
 
 ### Collection-output correctness
 
-Assess Classification regression/probability encoding across Optical, Radar and Planet separately from source
-planning. Confirmed in [Classification execution](../../lib/js/ee/src/classification/classification.js),
-[temporal collection construction](../../lib/js/ee/src/timeSeries/collection.js) and
-[family selection](../../lib/js/shared/src/recipe/collectionType.js):
+Current [collection regression storage](../recipes/time-series.md#collection-encoding) and
+[Phenology](../recipes/phenology.md#output) preserve fractions/range in established public units: Optical ×1,000,
+Radar/Planet target units. Probabilities retain Optical `100*q` versus Radar/Planet `q`, where Classification already
+quantizes `q=uint8(100*p)`. Scripts, saved stretches and absolute thresholds depend on these scales; numerical
+agreement across families is not itself a correction criterion. The bounded
+[export compatibility check](recipes/output-products.md#regression-precision-compatibility) prevents old/corrected
+regression tiles or download chunks being combined. These contracts do not require an adapter/composer refactor.
 
-- Classification produces floating regression values and per-class probabilities multiplied by 100 and cast to
-  `uint8`.
-- Optical then multiplies regression by 1,000 and those probabilities by another 100. Radar and Planet add the
-  Classification outputs without those extra multipliers. All three collection branches finally cast to `int16`.
-- Optical and Planet project the requested bands; Radar's collection branch has no equivalent final selection.
-  Shared family selection sends non-radar/non-optical input to the Planet fallback, including empty/unknown input;
-  that routing does not validate whether it can execute.
+**CCDC probability fitting remains deferred.** CCDC still fits public collection values directly with the configured
+lambda. Scale-sensitive LASSO behavior is expected and requires suitable tuning; lambda 20 flattening a small signal
+is not proof that an encoding or algorithm is defective. Do not remove Optical's probability ×100 or regression
+×1,000, change lambda, improve Classification probability quantization or rewrite saved settings in this work.
 
-Still to reproduce: effects on stored values, fractional regression precision/range, chart interpretation and each
-consuming algorithm/export, using supported classifiers and explicit/default requests. The branch differences alone
-do not establish which user outputs are wrong or choose the intended common encoding. Inventory consumers and any
-existing-data compatibility consequences before proposing a correction.
+A candidate for separate assessment is an explicit internal fitting scale, with public values unchanged. For
+probabilities, fit `z=k*y`, where `y` is the public value, `k=1` for Optical and native bands, and `k=100` for
+Radar/Planet probabilities. Inverse every probability coefficient (intercept, slope and harmonics), RMSE and
+magnitude before the shared CCDC result reaches charts, Slice or exports. Do not multiply native outputs, timing,
+counts, phase, change probability or dimensionless confidence ratios. No regression normalization is selected:
+regression targets have arbitrary units and need their own scale/regularization assessment. Keep prediction on
+its pre-encoding features and standalone Classification/training-data contracts separate.
 
-Include unknown/empty/mixed selections, default versus explicit output, GUI omissions such as optical date bands,
-and Planet Daily mixed members in that bounded inventory. Planet's four/eight-band cases and histogram-matching
-narrowing are described by [the current output catalogue](recipes/output-products.md#declaration-and-description); they do
-not establish temporal-collection homogeneity. Require an explicit selection/filter/missing-band policy before
-promising it. Do not make this assessment wait for an adapter/composer refactor.
+Useful controlled EE evidence for this candidate:
+
+- With 36 monthly `p=0.5+0.05*sin(2*pi*month/12)` observations and lambda 20, Optical retains harmonic amplitude
+  `475.776483` and RMSE `45.837557` in its existing public units. Radar/Planet's current fits are flat, RMSE
+  `4.425306`. Internal scaling/inverse conversion preserved the complete Optical result and recovered amplitude
+  `4.757765`, RMSE `0.458376`, and Slice `52.820227` at 2021-06-01 in Radar/Planet percentage units.
+- Native-only outputs remained identical. Mixed native/probability fits matched the Optical reference internally,
+  with only probability value outputs inverse-scaled. A 72-month mixed step series detected the same break
+  (`2023.037645448323`). Full coefficients, masks and types were compared; this establishes neither universal
+  breakpoint invariance nor an appropriate lambda for other data.
+- A mixed native/probability/regression fit recovered fractional regression intercepts after the precision
+  correction, but its small regression seasonality still fitted flat at 20. Probability normalization does not
+  solve general regularization selection or establish classifier quality/calibration.
+
+Before implementing fitting changes, settle explicit activation and suitable internal scales without changing
+public encodings or silently retuning saved lambda. Cover the seasonal witness, native-only and mixed fits,
+representative real-data segmentation, inverse outputs and chart/Slice/export interpretation. A changed fitting
+contract also needs a distinct enforceable Resume contract; retaining units or matching pixel types cannot make
+old/new fits compatible. Existing assets/downloads must retain their interpretation and metadata.
+
+Verification gaps include representative real-data fits, rendered styles and a live Optical regression asset write.
+See [output products](recipes/output-products.md#regression-precision-compatibility) for the current export contract
+and verification scope. Generic provenance and adapter/composer architecture remain separate work.
+
+**Separate collection work.** Radar still has no equivalent final requested-band selection. Family routing still
+sends non-radar/non-optical input, including empty/unknown shapes, to Planet without establishing executability.
+Unknown/empty/mixed selections, default versus explicit output, GUI omissions such as optical date bands, and Planet
+Daily homogeneity remain separate assessments. Its four/eight-band cases and histogram-matching narrowing are
+in [the current output catalogue](recipes/output-products.md#declaration-and-description); an explicit selection,
+filter or missing-band policy must establish homogeneity before it is promised.
 
 **Requested output projection.** Audit producer `selection`/`outputBands` behavior, including internal callers and
 unselected defaults, then consolidate final export projection and remove redundant per-producer projection.
@@ -92,9 +120,12 @@ Preserve established output order and producer-specific internal selection seman
 
 - **Explain the classifier.** Define whether the request is algorithm/parameter help, explanation of the trained
   model, or both. Inventory existing outputs and expose supported explanations with their limitations.
-- **Validation.** Separate configuration/readiness, training-sample adequacy and predictive evaluation. Identify
-  missing checks and define evaluation data/metrics before promising model quality; account for spatial leakage
-  and reused training data. Extend existing shared requirements where applicable.
+- **Validation.** Extend the [shared training prerequisites](recipes/source-resolution.md#execution-readiness) only
+  where adequate facts establish a missing check. Assess Regression's single-point refusal and whether a
+  regression-only selection should have mode-specific readiness rather than the canonical image's class requirements.
+  NU-SVC feasibility, surviving singleton classes and Mahalanobis covariance quality need effective sampled facts,
+  not stored counts alone. Keep these execution checks separate from predictive evaluation; define evaluation
+  data/metrics, spatial leakage and reused-data policy before promising model quality.
 - **Polygon training data.** Assess one labelled feature row built from statistics over each training polygon,
   rather than implicitly treating every EE polygon pixel as an independent training point. Define per-band
   statistics, scale/projection, masks, empty polygons, feature naming and matching training/prediction transforms.
@@ -112,7 +143,7 @@ Remapping's proposed [default class](#default-or-fallback-class) is specified be
 | Standalone asset visualization selection | Reconcile to the first candidate only after a successful current read; preserve intent through pending/failed/empty answers and never delete local styles. |
 | Large categorical default palettes | Assess shared interpolation by entry position/count. Preserve saved colors and verify Class Change's one-based codes. |
 | Radar RGB preset range | Audit the ratio range against its x1000 encoding, separate from VV/VH's x100. Keep this a presentation correction with unchanged pixel encoding. |
-| Optical Mosaic CMP opening | Reproduce Apply being offered immediately on opening Composite options. Inspect mount-time defaulting of cloud buffer and overlap controls; opening/closing an unchanged panel must not silently persist defaults or make the recipe dirty. Check new and older models, More/Less and Cancel. |
+| Sampling Design allocation tooltip | When proportions are skipped, the Samples tooltip should describe a fixed total without promising a calculated margin of error. |
 | Chart zoom handles | Reported: CCDC initially draws correctly but dragging is extremely slow; Time Series handles are usually absent, or one disappears when dragged. Other charts are untested. Reproduce through shared chart controls; verify responsive dragging, retained range, tab return and cleanup for representative chart families. |
 | Chart CSV export | Inventory existing chart downloads, then define export of the displayed series, timestamps, missing/masked values, units/encoding and fitted versus observed data. Decide full versus visible range and use shared serialization/download behavior. |
 | Interactive multi-sensor time series | Assess comparison of multiple sensors with explicit time alignment, units/encoding, processing differences and missing observations. Reuse chart/collection contracts; separate this feature from repairing zoom controls. |
@@ -124,7 +155,8 @@ Remapping's proposed [default class](#default-or-fallback-class) is specified be
 - **Training-data feedback.** Decide how an explicitly selected empty Provider is presented when other branches
   provide enough points. Do not invalidate an otherwise trainable Consumer merely because a branch is empty.
   Sampling scale, unit/encoding compatibility, legend/value compatibility and post-mask sample adequacy need
-  separate requirements before any stricter promise is made.
+  separate requirements before any stricter promise is made. Combine an editor's multiple causes before giving
+  their common repair, rather than repeating that repair after each finding.
 - **Form interaction consistency.** Separate validity from error visibility; new required fields stay neutral
   initially, report errors after interaction and clear promptly on repair. Review autofocus, picker interaction,
   programmatic resets, duplicated input editors and field/group accessibility. Broken saved configurations still
@@ -134,6 +166,63 @@ Remapping's proposed [default class](#default-or-fallback-class) is specified be
 - **Draft/close interaction.** Warning about unapplied drafts on browser close and revisiting the current recipe-tab
   close guard remain separate decisions. A "Use reference settings" copy-again button is not planned; creation
   seeding and automatic ownership cover its useful purpose.
+
+### Unfinished setup feedback
+
+Extend the [shared section feedback](recipes/source-resolution.md#section-feedback) only for concrete remaining gaps:
+
+- **Further adoption.** Establish a reachable incomplete configuration before adopting amber for Masking, Class
+  Change, required reference selectors or other wizard-protected sections. A required field alone is insufficient:
+  demonstrate removal, recovery or another path that can leave saved setup unfinished. An already-selected source
+  becoming unusable is an error; optional settings stay neutral.
+- **Prerequisite chains.** Assess cross-section prerequisites for output-derived training and input-band findings,
+  which currently wait on no local item. Local prerequisites resolve local reads only; empty Band Math output also
+  does not wait on an input's source failures. Reproduce the desired repair order before extending the resolver.
+
+Keep completion in authoritative requirements or their declarative presentation mapping. Preserve wizard timing,
+independent draft repair, saving and operation gates; add no separate toolbar predicate or persisted "new recipe" flag.
+
+### Untouched recipe panels
+
+Confirmed with mounted panels over the real shared form/buttons and mocked API/evidence reads: the cases below
+show Apply and mark the draft dirty without a configuration edit. The callers write initialization or presentation
+state with ordinary field `set`; keep the shared form's detection of genuine edits. Paths below are relative to
+`modules/gui/src/app/home/body/process/recipe/`.
+
+- **Source validation.** [Planet Sources](../../modules/gui/src/app/home/body/process/recipe/planetMosaic/panels/sources/sources.jsx)
+  initializes `validAsset` to `true`, then sets `'valid'` on mount, including for NICFI. The Sources panels in
+  `ccdc`, `timeSeries`, `phenology` and `changeAlerts` repeat the boolean/string mismatch when an unchanged saved
+  Planet collection reloads (`onLoading` also sets `''`). Keep loading/validity checks effective without treating
+  their state as user edits; use existing validation or field-initialization operations, not just matching the
+  success sentinel.
+- **Band Math calculation fields.** [Calculation](../../modules/gui/src/app/home/body/process/recipe/bandMath/panels/calculations/calculation.jsx)
+  sets the derived `otherNames` field on opening; `panels/calculations/functionSection.jsx` also sets
+  `defaultBandName` from the reducer. A saved FUNCTION calculation opens dirty with unchanged inputs and settings.
+  Establish these derived fields as initial values; preserve actual name, reducer and band edits.
+- **CCDC Slice hidden dates.** [Date](../../modules/gui/src/app/home/body/process/recipe/ccdcSlice/panels/date/date.jsx)
+  fills `startDate`/`endDate` with `set` even for a complete SINGLE selection. Reproduction: saved date
+  `2020-06-01`, no range fields, source extent `2018-01-01`–`2024-01-01`. Learn defaults as initial field values,
+  including when evidence arrives later, without replacing explicit dates or clearing unrelated edits.
+- **Missing-field defaults.** The same post-initialization writes occur in
+  [Planet Options](../../modules/gui/src/app/home/body/process/recipe/planetMosaic/panels/options/options.jsx)
+  (absent thresholds become 85/60 in the form),
+  [Change Alerts Options](../../modules/gui/src/app/home/body/process/recipe/changeAlerts/panels/options/options.jsx)
+  (absent `mustBeConfirmedInMonitoring`, `mustBeStableBeforeChange`, `mustStayChanged` become `true`),
+  [Sampling Design arrangement](../../modules/gui/src/app/home/body/process/recipe/samplingDesign/panels/sampleArrangement/sampleArrangement.jsx)
+  (absent seed becomes 1), and shared AOI `mosaic/panels/aoi/{countrySection,eeTableSection}.jsx`
+  (absent buffer becomes 0). Seed these defaults before comparison, or adopt each learned field's initial value.
+  Retain explicit saved choices and existing default semantics; do not migrate models on opening.
+- **Change Alerts More/Less.** `changeAlerts/panels/options/options.jsx` stores disclosure in the form's `advanced`
+  field. With otherwise complete default settings and no saved `advanced`, More → Less leaves `false` against an
+  initially absent value, so Apply remains. Keep presentation state separate from configuration edits.
+
+Acceptance: untouched opening, metadata completion, More/Less, Close/reopen and Cancel leave the model unchanged
+and no spurious Apply; real edits still enable Apply and survive unrelated learned defaults. Preserve pending/failed
+validation and submission blocking. Cover each cause through real form/button wiring, with clean controls for
+complete settings, supported LandTrendr Sources/Options and Classification/Class Change/Index Change/Remapping
+legends. These controls were clean in the bounded assessment; this does not establish every panel or browser path.
+Retrieval action forms and required setup defaults are not blanket candidates for suppressing Apply. Keep this a
+local form correction, independent of calculation freshness or source-adapter architecture.
 
 ### Stack automatic names
 
@@ -171,20 +260,110 @@ explicitly deferred.
 ### Current-input dependency evaluation
 
 Extend the existing pure requirement declarations, not a second rule engine. Local configuration, calculation
-outputs and described external inputs use the same evaluation boundary with different acquisition owners.
-Band Math's input → calculation → output chain is the bounded reference case; retain current shared reference
-analysis and remove only synchronization a replacement actually supersedes.
+outputs and described external inputs use the same evaluation boundary with different acquisition owners. An AOI
+change alone is not reason for another warning. See
+[declarative evaluation](recipes/source-freshness.md#declarative-dependency-evaluation).
 
-Sampling Design's edit-driven planner remains until its result-evidence migration. Review actual compatibility,
-normal invalidation/recalculation and user decisions separately; an AOI change alone is not reason for another
-warning. See [declarative evaluation](recipes/source-freshness.md#declarative-dependency-evaluation).
+The shared mechanism exists: types declare `dependencies` and their products' `dependencyProjection`; calculating
+operations return evidence of what they read (`modules/gee/src/jobs/dependencyEvidence.js`); the shared rule compares
+it (`lib/js/shared/src/recipe/calculation`); the source runtime owns calculation work and current evidence
+(`sourceRuntime/calculationEvidence.js`); and local requirements read runtime-acquired evidence with its acquisition
+state (`sourceRequirements.js`). Sampling Design is its first consumer. Form panels judge drafts by local requirements
+naming them as `editor` (`recipe/localCandidate.js`) and keep synchronous results derived in their drafts
+(`recipe/derivedResult.js`): Sampling Design's manual proportions and allocation, and Band Math's Output bands, use them.
+Commits keep applied results derived in the same action (`commitRecipe`, same file):
+[Band Math's calculation bands](../recipes/band-math.md).
+
+- **Stack automatic names.** The same shape: the naming projection reads input order, reserved explicit names and the
+  described input bands; overrides stay user-owned.
+- **Product projections.** Tighten what counts as a meaningful input change at each product owner, through
+  `dependencyProjection`, so every consumer benefits from the same rule. For stratum areas, preserve changes to
+  pixel values, masks, the selected band, AOI and grid; exclude labels and colours where they affect presentation
+  only. Do not globally ignore a field that another product uses in computation. Start with recipe types used as
+  stratification, then extend to other consumers that recalculate unnecessarily. Acceptance pairs a display-only
+  edit that keeps results current with a computational edit that invalidates them, including transitive inputs.
+  Until these declarations exist, retain the conservative whole-model fallback. This follow-up is separate from
+  Sampling Design's panel behaviour.
+
+#### Recipe adoption inventory
+
+The code assessment covers all 23 current shared recipe types and the common workflows below. It identifies
+reuse opportunities, not reproduced defects in every listed path. Sampling Design and Band Math use the shared
+bindings; the remaining migrations are separate work. Paths in the table are relative to
+`modules/gui/src/app/home/body/process/recipe/` unless qualified.
+
+Use the part of the mechanism each responsibility needs:
+
+- **Local derivation and compatibility:** synchronous projections and pure requirements, with declared section or
+  item prerequisites. Cheap derived names and band lists need no persisted evidence or hashing.
+- **Acquired facts and temporary results:** the existing source runtime and candidate/output watches, with shared
+  request identity, cancellation and rejection of superseded answers. Loading facts must not rewrite user choices.
+- **Persisted calculated results:** operation-produced evidence and currency checks, including execution checks
+  where later work reads live inputs. Saved imports and manual selections need their own policy before being
+  treated as recalculable results.
+
+| Recipes | Concrete reuse and existing owner | Migration boundary |
+| --- | --- | --- |
+| Stack | `stack/panels/stackToolbar.jsx` invokes `toBandNames` after Input imagery changes. | Combine with [automatic names](#stack-automatic-names): synchronous derivation from ordered inputs and explicit overrides. The existing callback is small; adoption must simplify it and preserve saved names as explicit. |
+| Class Change | `classChange/panels/legend/legend.jsx` rebuilds transition entries, IDs, labels and default colours when either whole input record changes. | Declare the input-legend projection and derive transitions locally. Define transition identity and preservation of edited labels/colours first; keep the established transition-code order. Optional confidence availability is a separate dependency on both inputs. |
+| CCDC, Time Series, Phenology | Their Sources panels separately load Classification metadata and derive band choices. CCDC also derives TMask choices from breakpoint bands in PRC. `selectedClassification.js`, `collectionClassifierRequirements.js` and CCDC's `segmentDescription.js` already establish reusable owners. | Read current resolved facts once and declare Sources-to-processing dependencies. Keep pending/failed facts distinct from unavailable bands; retain invalid selections with actionable feedback. This is compatibility and acquisition work, without persisted fit evidence. |
+| LandTrendr | `landTrendr/panels/sources/sources.jsx` calls `ensureValidIndex` on opening and dataset changes; dataset choices also read Dates. | Declare date/dataset/index compatibility. Settle the explicit replacement/defaulting policy before changing it; opening or temporarily empty options must preserve deliberate choices. |
+| Optical Mosaic | `sceneAreas.jsx`, `sceneSelection.jsx`, `autoSelectScenes.jsx` and `sceneDeselection.jsx` separately coordinate AOI/source/date-dependent reads and selected scenes. | Shared question identity and request lifecycle can replace local coordination. Scene discovery results are temporary; manual selections remain user-owned. Preserve explicit auto-selection and define retention/reconciliation before changing scene deletion behaviour. |
+| Classification, Regression | Shared input-band and training-data requirements already judge live dependencies. `panels/trainingData/sample*Section.jsx` and table-import sections own similar asynchronous import requests and mapping stages. | Reuse acquisition lifecycle and declared stage prerequisites where duplicated. Sampled/imported rows are persisted snapshots, and source IDs there record provenance; do not turn them into live execution dependencies or invalidate them automatically. Keep training adequacy and value/encoding policy separate. |
+| Unsupervised Classification | Shared derived-input requirements already validate its band sets; sampling and clustering run during execution. Cluster-dependent preset legends are computed synchronously by `visualizations.js`. | No persisted calculation sidecar is justified by these paths. Conditional sampling/clusterer rules can use shared requirements when their validation is migrated; retain the domain parameter rules and cheap preset derivation. |
+| Remapping, Masking | `remappingRequirements.js`, `maskRequirements.js` and shared input/constraint requirements already locate source problems and permit isolated draft repair. | Extend those declarations for concrete missing dependencies. Preserve mapping constraints and independent entry repair; no new result-freshness layer is needed for the current configuration-only workflows. |
+| Index Change | Shared selected-band rules judge both change/error bands; `hasErrorBands` controls optional confidence settings, while legend/mapping choices are explicit. | Use conditional requirements for the optional error/confidence path and retain the existing input-source lifecycle. A confidence prerequisite must not hold ordinary difference outputs. Thresholds, mappings and legends stay user-owned. |
+| Asset Mosaic | `asset/panels/assetDetails` saves metadata for the filter/mask editors; the current output description already reads the asset through shared machinery. | Feed metadata-dependent controls from current acquired facts and declare their dependencies on asset kind, bands or properties. Keep filters/masks explicit. A first collection member's properties alone do not prove every member's schema. |
+| Radar Mosaic, Planet Mosaic, BAYTS Historical | Processing panels have source/mode-dependent fields; Radar shares its PRC panel, and Historical shares monitoring presentation with BAYTS Alerts. Their computed images/statistics are built during execution. | Reuse conditional requirements and product-owned projections as concrete rules migrate. No separate persisted panel calculation was identified. Keep processing defaults, effective values and numerical algorithms with their existing owners. |
+| Change Alerts, BAYTS Alerts | Shared effective-processing functions, reference observations, creation seeding and operation requirements already own reference-dependent settings. | Preserve these owners. Remaining cross-section compatibility can use the same requirement declarations; reference-owned values stay derived, and editable monitoring settings remain user-owned. No renewed background copying or parallel evidence cache. |
+| CCDC Slice | `sourceRequirement.js` and shared segment evidence already govern the source; Dates use source coverage, while OPT's break settings depend on date mode and the selected analysis band. | Declare these conditional dependencies and the existing [break-band validation follow-up](#validation-and-execution-coverage). Preserve extrapolation policy and independent chart availability; metadata date extents do not prove per-pixel coverage. |
+| PyEO Alerts | `sourcesRequirements.js` and `gateIndexCandidates.js` already share candidate evaluation. Sources separately acquires baseline metadata and proposes dates/processing at selection Apply. | Reuse existing candidates and acquisition ownership; declare the baseline-to-gate prerequisites where this removes local coordination. Preserve explicit proposal/defaulting policy and manual settings. Broader index/encoding work stays separate. |
+| Sampling Design | Areas and automatic proportions consume persisted-result evidence; manual proportions and the allocation consume the draft bindings, the allocation with an explicit review record. | Complete the [remaining live checks, compatibility cleanup and optional derivations](#sampling-design-derived-result-freshness). |
+
+**Shared workflows.** Review these at their common owners rather than migrating every recipe independently:
+
+- **Input descriptions and AOI lookup:** the shared input editors, `mosaic/panels/aoi/` and source candidates combine
+  selected sources, table columns/rows, buffers and geometry lookups. Reuse acquired facts and request identity;
+  preserve draft isolation and each AOI kind's meaning. The resolved AOI belongs to its existing geometry owner.
+- **Histograms and image values:** `app/home/map/visParams/visParamsPanel.jsx` owns temporary histogram results,
+  explicit stretching and legend-value requests. Request identity includes the image/product, band and spatial
+  question. Sharing/currency must preserve edited ranges and legends; a fresh result does not authorize replacing
+  them. Retain the existing Paste cancellation safeguards.
+- **Charts and Retrieve:** `pixelChartUpdate.js`, operation watches, selected-Classification reads and the shared
+  Retrieve panel already coordinate relevant consumers. Extend those owners where a migration exposes a gap;
+  do not add a second chart/request coordinator or duplicate server-preview readiness work.
+
+**Adoption order and acceptance.** Within derivation migrations, Stack's automatic naming is next.
+Class Change and temporal section dependencies are the next focused
+candidates. Other rows are an inventory, not a commitment to migrate working code. Product-owned input projections
+can be added independently where the conservative fallback causes unnecessary recalculation.
+
+Each migration must name the domain projection, the old coordination it deletes and the user choices it preserves.
+Verify irrelevant edits, prerequisites, valid draft repair and Apply/Cancel; asynchronous migrations additionally
+cover superseded responses and shared-work teardown. Reproduce suspected behavioural defects before treating them
+as confirmed. This assessment used code inspection; browser behaviour, request costs and end-to-end races remain
+unverified for these follow-ups.
 
 ### Sampling Design derived-result freshness
 
-Migrate areas, then probabilities, under the [generic evidence contract](recipes/source-freshness.md#persisted-derived-result-evidence).
-[Sampling Design's notes](../recipes/sampling-design.md#derived-result-freshness) own current flags/caches and the
-target calculation dependencies, sidecars, propagation and compatibility rules. Replace the old mechanism rather
-than keeping parallel freshness implementations.
+Remaining work on [Sampling Design's result evidence](../recipes/sampling-design.md#derived-result-freshness):
+
+- **Remaining live checks and costs.** Verify probability-asset replacement tokens after export overwrite, copy or
+  move, and Proportions-only invalidation after same-id replacement with the design open and after reopening it.
+  Measure the added evidence-read cost and check temporary-asset cleanup when a later stage is refused after a frame
+  change. Mid-task changes still need separate live verification.
+- **Compatibility impact.** Assess how many saved designs use unversioned or missing probability sources or lack a
+  trustworthy allocation review record, and how often old-client task submissions are refused after deployment.
+- **Compatibility removal.** Each has its own lifetime. Drop the probability response's `stratumFrameEvidence` alias
+  once no client of the previous release can call it. Drop the later stages' reading of frame-only proportions
+  (`admittedProportionsFrameFreshness`), and their sampling of allocations admitted without a review record, once no
+  task admitted by the previous release can survive. The persisted markers stay while designs an older client saved may
+  remain untouched: `stratumFrameEvidence`, which keeps proportions `UNKNOWN` until they are calculated;
+  `sampleAllocation.requiresUpdate`, true or false, which keeps an allocation `UNTRUSTED` until it is reviewed; and the
+  `requiresUpdate` on manual proportions, honoured until they are applied.
+- **Optional derivation work.** Rows could be recomputed locally, without Earth Engine, when only the strata
+  identities changed; and re-derived when weights change under an overall-proportion override, where today they keep
+  the earlier weights.
 
 ### Capability projection and visualization ownership
 
@@ -312,6 +491,11 @@ the entries below retain the concrete differences and local policy questions.
 The declaration refuses repeated final names, while direct EE construction renames a second `x` to `x_1`.
 Include that discrepancy in requested-output/server-boundary assessment. Deleted-output retention remains
 under the shared source-recovery policy above.
+
+A multi-band PREFIX/SUFFIX calculation whose model lacks `bandRename` derives names ending in `undefined`
+(`updateIncludedBands`). This is confirmed for such a model. Whether the editor saves a suffix left untouched as
+absent is unverified: `modelToValues` passes the field through as `undefined`, and the form keeps that value. This is
+separate from the derived-bands migration, which keeps the rule unchanged.
 
 ### BAYTS Alerts
 
@@ -488,6 +672,20 @@ already freeze their dependency graph or resume durable steps.
   super-resolution algorithm. State native information limits, projection/resampling and storage/runtime costs;
   do not promise added spatial detail from an export-scale change alone. Define validation and compatibility
   before choosing an implementation.
+
+### Time-series download NoData
+
+Pre-existing, outside the regression-precision slice. The workspace stacker (`lib/python/shared/stack_time_series.py`)
+declares NoData 0 on every VRT it writes: each tile's `stack.vrt`, the per-date stacks and the SITS files. A
+legitimate zero, including a regression or index value of exactly 0, therefore reads as missing. Earth Engine writes
+masked Float32 pixels as NaN with no nodata value (seen in a live Float32 Drive export), and the VRTs do not declare
+NaN, so masked floating pixels read as valid NaN values. Reproduce by stacking a floating chunk holding both an exact
+zero and a masked pixel and reading both through the VRT with GDAL.
+
+Decide the NoData policy per data type before changing it: a floating stack could declare NaN, while an integer
+stack needs a value outside its valid range or an explicit mask. Downloads already written, and readers that treat
+0 as missing, keep their interpretation unless they are migrated explicitly. Cover zero, NaN and masked pixels for
+floating and integer chunks through `stack.vrt`, the per-date stacks and SITS.
 
 ### Task design questions
 

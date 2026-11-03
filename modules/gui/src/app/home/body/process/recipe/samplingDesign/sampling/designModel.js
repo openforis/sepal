@@ -1,3 +1,6 @@
+import {isProportionsApplicable} from '#sepal/recipe/samplingDesign/proportionsSkip'
+import {usesManualProportions} from '#sepal/recipe/samplingDesign/stratumFrame'
+
 // Canonical persisted ownership of a Sampling Design row:
 //   stratification.strata              owns the stratum key, label, color, area and weight
 //   proportions.anticipatedProportions owns the stratum key and proportion
@@ -34,15 +37,10 @@ export const stratumView = (strata, row) => {
     }
 }
 
-// Authoritative on the proportions panel's skip flag - never infer the mode from anticipatedProportions
-// truthiness alone, which can be stale or empty across mode switches.
-// Whether the design uses anticipated proportions at all - the user's choice, not a lifecycle state. A
-// design can have them applicable while its rows are still being calculated; readiness is a separate
-// question, answered by the planner, and confusing the two turns a moment with no rows into a permanent
-// change of allocation strategy.
-export const isProportionsApplicable = model => !model?.proportions?.skip
-
-// Whether proportion values are there to read right now.
+// Whether proportion values are there to read right now: proportions not skipped, by the shared rule
+// (#sepal/recipe/samplingDesign/proportionsSkip) - never inferred from anticipatedProportions truthiness alone, which
+// can be stale or empty across mode switches - and rows to read. Applicability is the user's choice, not a lifecycle
+// state: a design can have proportions applicable while its rows are still being calculated.
 export const hasProportions = model =>
     isProportionsApplicable(model) && !!model?.proportions?.anticipatedProportions?.length
 
@@ -90,3 +88,29 @@ export const unansweredProportions = model =>
     reconcileManualProportions(model)
         .filter(({proportion}) => proportion == null)
         .map(({stratum}) => stratum)
+
+// Whether the anticipated rows are keyed by exactly the design's strata. Automatic rows that are not answer for strata
+// the design no longer has - recalculated areas over an unchanged frame, which no evidence of the frame or the
+// probability source sees - so they are calculated again.
+export const proportionsCoverStrata = model => {
+    const rows = model?.proportions?.anticipatedProportions || []
+    return rows.length > 0 && sameKeys(rows.map(stratumKey), orderedStratumKeys(model))
+}
+
+// Whether proportions have to be settled again for the strata as they are now: rows - answered by hand or calculated -
+// that no longer cover the strata, or manual answers an earlier version flagged for reconciliation, until they are
+// applied again. Whether automatic proportions are about their inputs is their evidence's
+// (#sepal/recipe/samplingDesign/stratumProbabilities).
+export const proportionsRequireUpdate = model => {
+    const proportions = model?.proportions
+    if (!isProportionsApplicable(model) || !proportions?.anticipatedProportions?.length) {
+        return false
+    }
+    return !proportionsCoverStrata(model) || (usesManualProportions(model) && proportions.requiresUpdate === true)
+}
+
+const sameKeys = (a, b) => {
+    const sorted = keys => [...keys].sort((x, y) => x - y)
+    const [left, right] = [sorted(a), sorted(b)]
+    return left.length === right.length && left.every((key, index) => key === right[index])
+}

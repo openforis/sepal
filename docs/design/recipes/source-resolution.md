@@ -96,7 +96,25 @@ operation gates and candidate feedback.
 ### Execution readiness
 
 Description answers which bands are available; readiness answers whether a declared operation may run.
-A Classification without training data can remain described while its execution is refused.
+A Classification without training data can remain described while its execution is refused, as can one whose points -
+every data set's and those of the recipes it reuses, however far, together - lack what its classifier's training needs of
+them (`INSUFFICIENT_TRAINING_SAMPLES`, `trainingNeeds` in `lib/js/shared/src/recipe/type/classification.js`):
+
+| Classifier | Needs of its points |
+| --- | --- |
+| Random forest, gradient tree boost, CART, naive Bayes | points of two classes at least |
+| One-class SVM | points of its configured class, class 0 where none is configured |
+| Mahalanobis minimum distance | two points at least of some class |
+| C-SVC, NU-SVC, Euclidean and cosine minimum distance | none beyond presence |
+| Supplied decision tree | nothing: it is not trained |
+
+These are the refusals Earth Engine was observed to make, training each classifier over synthetic samples; no legend
+class needs points, an unrepresented class getting a probability of zero. They are judged of the points stored, which
+bound those sampled: masking and the imagery's footprint only take points away, so each is a need that what is sampled
+cannot meet where the points stored do not. A reused recipe not yet held, or unreadable, establishes nothing. What
+depends on the samples themselves is left to execution: points masked or beyond the imagery; a Mahalanobis class of one
+point beside a larger one, refused where it is sampled though masking can remove it; whether a NU-SVC's nu is feasible
+for how the samples divide between classes; and whether a Mahalanobis covariance can be inverted.
 
 The shared readiness read combines configuration requirements, applicable description refusals, the needs declared
 for each dependency role and structural dependency validity. It uses the existing graph, acquisition loop and
@@ -161,12 +179,36 @@ Opening a reference preserves the originating panel draft.
 
 A stated local, located or selected-source refusal takes priority over the generic output-refused fallback for
 operations it covers. A generic refusal still protects operations with no stated reason. Presentation-only
-suppression such as `toolbarMark: false` removes a mark, never an operation hold. Empty Band Math output and
-Classification training setup can consequently be neutral without being executable.
+suppression such as `toolbarMark: false` removes a mark, never an operation hold.
 
 Attribution follows the paths actually returned by readiness. In a diamond graph only one route to a shared origin
 may be present; another affected route must not be invented. Execution remains blocked even when every route is
 not marked. Complete multi-route attribution is an open follow-up.
+
+### Section feedback
+
+An actionable unfinished section is amber; an established configuration error is red and takes precedence over
+unfinished findings in that section. A section waiting on a declared prerequisite stays neutral with its ordinary
+tooltip. None of these presentation choices authorizes an operation or prevents saving an incomplete recipe.
+
+The authoritative requirement or its finding mapping classifies setup as `incomplete`: local diagnoses carry it,
+and output-derived declarations set `incomplete: true` where `sourceRequirements.js` turns findings into reads.
+`withSectionMarks` gives every control acting on a section the same evaluated mark, including wizard reachability
+and the declaration's current-step presentation. Classification's collection button consumes Training data's mark,
+shown only while collection is off; it adds no training predicate. Preview, Retrieve and server readiness use the
+shared training findings, never the collection's cached class counts.
+
+Shared input lists read presence synchronously through `inputImageryRequirement.findings`, as the stable local item
+`images`, whether met or not. Their list edits apply immediately; Done, Next and Enter evaluate the same pure rule
+against the current applied model at submission, rather than the last rendered button state. A selected input with
+source problems remains a nonempty list and is judged by its source requirements. Empty Band Math output names the
+input-presence item as its prerequisite; configured-output errors remain independent. Its form and requirements
+share `outputsAnything` and `outputsBands`, with the form judging its draft.
+
+Every configured input row remains editable and removable. `inputImageNames` uses the listing name, then the loaded
+recipe's title, then the source ID, without another metadata request. Band Math keeps its variable alias separate
+from the source name. `itemStatusesOf` combines all findings on one item, errors before unfinished findings, retaining
+distinct messages, recipe links and repairs rather than letting declaration order overwrite them.
 
 ### Reused training data
 
@@ -195,7 +237,9 @@ The named-feature contract is shared between readiness and `classification/featu
   establish missing or unique supply; two known suppliers can establish ambiguity beside an unknown input.
   Execution also enforces exactly one supplier with readiness bypassed.
 
-`TRAINING_DATA` checks imagery needed for sampling, not the Provider's own band selection or classified image.
+`TRAINING_DATA` checks imagery needed for sampling, not the Provider's own band selection or classified image, nor what
+the Consumer's classifier needs of the points: a Provider may supply points of one class, the Consumer's needs being
+judged over all it trains on, a Provider reached along two routes counted along each, as execution samples it.
 An intermediate storing no points forwards definitions without building its own samples. Training assembly stays
 outside per-scene collection prediction. Shared Providers receive definitions per call rather than caching a
 Consumer-dependent answer on the Provider.
