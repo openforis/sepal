@@ -5,6 +5,7 @@ import api from '~/apiRegistry'
 import {appList} from '~/apps'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
+import {select} from '~/store'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {Combo} from '~/widget/combo'
@@ -16,16 +17,22 @@ import {conflictingAssociations} from './appOpenPlan'
 import styles from './instancePicker.module.css'
 import {appRequirements, buildPickerOptions, defaultPickerValue, requirementSpecs} from './instanceSuitability'
 
+const mapStateToProps = () => ({
+    sessions: select('user.currentUserReport.sessions')
+})
+
 // Modal picker shown before starting a sandbox app that has no live instance
 // association. Combo sections: the user's running instances and the new instance types
 // (in catalog order). An app's requirements are a recommendation, not a restriction: the
 // instances below them are listed dimmed, and picking one shows a warning.
 // Default: first suitable running instance, else the cheapest suitable type.
 // Without an app it picks the type of a new instance: no running instances, no requirements.
+// Running instances follow the store, which the session ws keeps live, so instances started or
+// stopped while the picker is open come and go; a picked instance that stops falls back to the default.
 class _InstancePicker extends React.Component {
     state = {
         report: null,
-        value: null
+        picked: null
     }
 
     constructor(props) {
@@ -39,17 +46,16 @@ class _InstancePicker extends React.Component {
         const {addSubscription} = this.props
         addSubscription(
             api.user.loadCurrentUserReport$({}).subscribe({
-                next: report => this.setState({
-                    report,
-                    value: defaultPickerValue(this.pickerInputs(report))
-                })
+                next: report => this.setState({report})
             })
         )
     }
 
+    // The REST report supplies the instance types, which the session ws does not push, and the
+    // sessions until the ws has delivered its first push.
     pickerInputs(report) {
-        const {app} = this.props
-        const sessions = app ? report?.sessions || [] : []
+        const {app, sessions: liveSessions} = this.props
+        const sessions = app ? liveSessions || report?.sessions || [] : []
         return {
             sessions,
             instanceTypes: report?.instanceTypes || [],
@@ -68,12 +74,12 @@ class _InstancePicker extends React.Component {
     }
 
     onChange(option) {
-        this.setState({value: option.value})
+        this.setState({picked: option.value})
     }
 
     onConfirm() {
         const {onConfirm} = this.props
-        const {value} = this.state
+        const value = this.value()
         if (!value) {
             return
         }
@@ -113,6 +119,16 @@ class _InstancePicker extends React.Component {
         )
     }
 
+    value() {
+        const {report, picked} = this.state
+        if (!report) {
+            return null
+        }
+        const inputs = this.pickerInputs(report)
+        const offered = buildPickerOptions(inputs).some(({options}) => options.some(({value}) => value === picked))
+        return offered ? picked : defaultPickerValue(inputs)
+    }
+
     pickerOptions(report) {
         return buildPickerOptions(this.pickerInputs(report)).map(section => ({
             ...section,
@@ -121,7 +137,8 @@ class _InstancePicker extends React.Component {
     }
 
     renderContent() {
-        const {report, value} = this.state
+        const {report} = this.state
+        const value = this.value()
         const options = report ? this.pickerOptions(report) : []
         if (report && !options.length) {
             return (
@@ -143,7 +160,7 @@ class _InstancePicker extends React.Component {
 
     belowRequirementsMessage(options) {
         const {app} = this.props
-        const {value} = this.state
+        const value = this.value()
         const selected = options.flatMap(({options}) => options).find(option => option.value === value)
         return selected?.dimmed
             ? msg('apps.instancePicker.belowRequirements', {specs: requirementSpecs(appRequirements(app))})
@@ -152,7 +169,7 @@ class _InstancePicker extends React.Component {
 
     render() {
         const {app, onCancel} = this.props
-        const {value} = this.state
+        const value = this.value()
         return (
             <Panel className={styles.panel} placement='modal' onBackdropClick={onCancel}>
                 <Panel.Header
@@ -183,7 +200,7 @@ class _InstancePicker extends React.Component {
 
 export const InstancePicker = compose(
     _InstancePicker,
-    connect(),
+    connect(mapStateToProps),
     withSubscriptions()
 )
 
