@@ -83,8 +83,6 @@ test('downloads a workspace export into its relative path and cleans temporary s
 test('mosaics the tiles of a workspace image into a VRT with their band names', async () => {
     const tiles = ['ndvi-0000000000-0000000000.tif', 'ndvi-0000000000-0000032768.tif']
     const dir = join(home, 'downloads/ndvi')
-    await mkdir(dir, {recursive: true})
-    await writeFile(join(dir, 'ndvi-2-0000000000-0000000000.tif'), 'an earlier export')
     const {sepal} = client({files: [...tiles].reverse()})
 
     await operations['ee.export'](params('SEPAL'), context(sepal))
@@ -138,6 +136,36 @@ test('cleans temporary storage when Earth Engine fails', async () => {
     const {sepal, calls} = client({states: ['FAILED']})
     await assert.rejects(operations['ee.export'](params('SEPAL'), context(sepal)), /Earth Engine export FAILED/)
     assert.equal(calls.at(-1).path, 'task/download/cleanup')
+})
+
+for (const existing of ['earlier.tif', '.hidden']) {
+    test(`refuses a workspace folder that already holds ${existing}, before starting an export`, async () => {
+        const dir = join(home, 'module_results/demo')
+        await mkdir(dir, {recursive: true})
+        await writeFile(join(dir, existing), 'an earlier export')
+        const {sepal, calls} = client()
+
+        await assert.rejects(
+            operations['ee.export'](params('SEPAL', {workspacePath: 'module_results/demo'}), context(sepal)),
+            {userMessage: {
+                key: 'tasks.status.workspaceNotEmpty',
+                message: 'The folder ~/module_results/demo is not empty. Export to an empty or new folder, or remove its contents.',
+                args: {path: 'module_results/demo'}
+            }}
+        )
+
+        assert.deepEqual(calls, [])
+        assert.equal(await readFile(join(dir, existing), 'utf8'), 'an earlier export')
+    })
+}
+
+test('exports into an empty workspace folder that already exists', async () => {
+    await mkdir(join(home, 'module_results/demo'), {recursive: true})
+    const {sepal} = client()
+
+    await operations['ee.export'](params('SEPAL', {workspacePath: 'module_results/demo'}), context(sepal))
+
+    assert.equal(await readFile(join(home, 'module_results/demo/ndvi.tif'), 'utf8'), 'data')
 })
 
 for (const workspacePath of ['../outside', '/tmp/outside', 'out/../../outside']) {

@@ -4,6 +4,7 @@ import {dirname, isAbsolute, join, relative, resolve, sep} from 'node:path'
 import {lastValueFrom} from 'rxjs'
 
 import {assertEEObjectExport, eeObjectFilenamePrefix, eeObjectWorkspacePath} from '#sepal/eeObjectExport'
+import {ClientException} from '#sepal/exception'
 import {createVrt$, getBandNames$, setBandNames$} from '#sepal/gdal'
 import {escapeRegExp} from '#sepal/string'
 
@@ -16,7 +17,9 @@ export const eeObjectExport = async (params, context) => {
     const {sepal, report, signal, sleep} = context
     const start = () => sepal.startExport('task/export/ee', params)
     if (spec.destination === 'SEPAL') {
-        const downloadDir = await workspaceDirectory(eeObjectWorkspacePath(spec, params.description))
+        const workspacePath = eeObjectWorkspacePath(spec, params.description)
+        const downloadDir = await workspaceDirectory(workspacePath)
+        await requireNoFiles(downloadDir, workspacePath)
         await mkdir(downloadDir, {recursive: true})
         const {downloaded} = await exportToWorkspace({...context, start, downloadDir})
         if (downloaded && spec.kind === 'IMAGE') {
@@ -31,6 +34,18 @@ export const eeObjectExport = async (params, context) => {
         if (spec.destination === 'GEE') {
             await shareIfPublic({sharing: spec.sharing, assetId: assetId || spec.assetId, sepal, report, signal})
         }
+    }
+}
+
+// As the GUI requires of recipe exports: files already there would mix with this export's.
+const requireNoFiles = async (dir, workspacePath) => {
+    const entries = await readdir(dir).catch(error => error.code === 'ENOENT' ? [] : Promise.reject(error))
+    if (entries.length) {
+        throw new ClientException(`workspacePath ${workspacePath} already holds files`, {userMessage: {
+            key: 'tasks.status.workspaceNotEmpty',
+            message: `The folder ~/${workspacePath} is not empty. Export to an empty or new folder, or remove its contents.`,
+            args: {path: workspacePath}
+        }})
     }
 }
 
