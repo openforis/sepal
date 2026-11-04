@@ -2,9 +2,8 @@ import {randomUUID} from 'node:crypto'
 
 import {defer} from 'rxjs'
 
-import {sanitizeEarthEngineTaskName} from '#sepal/earthEngineExportNames'
 import ee from '#sepal/ee/ee'
-import {assertEEObjectExport} from '#sepal/eeObjectExport'
+import {assertEEObjectExport, eeObjectImageName, eeObjectTaskName} from '#sepal/eeObjectExport'
 
 import {startTableToDriveExport$} from './eeObjectTableDriveExport.js'
 import {startImageToAssetExport$, startTableToAssetExport$} from './toAsset.js'
@@ -20,7 +19,7 @@ export const startEEObjectExport$ = ({export: spec, description}, context) => de
     assertEEObjectExport(spec)
     const {kind, destination, expression, region, driveFolder, ...options} = spec
     const object = ee.Deserializer.decodeCloudApi(expression)
-    const exportName = sanitizeEarthEngineTaskName(description)
+    const exportName = eeObjectTaskName(description)
     const output = {
         ...options,
         description: exportName,
@@ -38,7 +37,7 @@ export const startEEObjectExport$ = ({export: spec, description}, context) => de
             output.pyramidingPolicy = {'.default': output.pyramidingPolicy}
         }
         if (destination !== 'GEE') {
-            output.description = options.filenamePrefix || exportName
+            output.description = eeObjectImageName(spec, description)
         }
     } else {
         output.collection = ee.FeatureCollection(object)
@@ -50,7 +49,7 @@ export const startEEObjectExport$ = ({export: spec, description}, context) => de
         if (kind === 'IMAGE') {
             output.folder = `${exportName}_${randomUUID()}`
         } else {
-            output.description = `${exportName}_${randomUUID()}`
+            output.description = eeObjectTaskName(description, `_${randomUUID()}`)
             output.filenamePrefix = options.filenamePrefix || exportName
         }
     }
