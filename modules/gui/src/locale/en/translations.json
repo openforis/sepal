@@ -66,7 +66,7 @@
     "sessionTakenOver": "{app} was closed in this window because it was opened in another browser window",
     "confirmReopen": {
       "title": "App already open",
-      "instance": "instance {number} ({type})",
+      "instance": "instance {instance}",
       "unknownInstance": "another instance",
       "otherBrowser": "{app} is already open in another browser window.|Opening it here will close the other one.",
       "otherInstance": "{app} is already open on {instance}.|Opening it on the selected instance will close the other one.",
@@ -6674,7 +6674,7 @@
         "extendUnknown": "Keep it running",
         "idle": "{instance} has not been used for a while and will be stopped to avoid unnecessary cost.",
         "idleClosed": "{instance} had not been used for a while and was stopped to avoid unnecessary cost.",
-        "instance": "Session {name} ({type})",
+        "instance": "Session {name}",
         "instanceUnnamed": "One of your sessions",
         "runningClosed": "{instance} had not been used for a while and was stopped to avoid unnecessary cost, closing:",
         "terminate": "Terminate now"

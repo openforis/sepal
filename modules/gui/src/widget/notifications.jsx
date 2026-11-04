@@ -12,6 +12,7 @@ import {uuid} from '~/uuid'
 
 import {CopyButton} from './copyButton'
 import {Layout} from './layout'
+import {messageLines, messageTextLines} from './messageLines'
 import styles from './notifications.module.css'
 import {setNotificationsContainer} from './notificationsContainer'
 import {Scrollable} from './scrollable'
@@ -116,7 +117,7 @@ class _Notifications extends React.Component {
     renderMessage(message) {
         return (
             <div className={styles.message}>
-                {message.split('|').map(this.renderMessageLine)}
+                {messageLines(message).map(this.renderMessageLine)}
             </div>
         )
     }
@@ -303,7 +304,7 @@ const getErrorMessage = error =>
 const getCopyableText = ({title, message, error}) =>
     [
         title,
-        ...(message ? message.split('|') : []),
+        ...(message ? messageTextLines(message) : []),
         error ? getErrorMessage(error) : null
     ].filter(Boolean).join('\n')
 
@@ -351,7 +352,7 @@ Notifications.propTypes = {
     id: PropTypes.string,
     level: PropTypes.string,
     link: PropTypes.string,
-    message: PropTypes.string,
+    message: PropTypes.node,
     timeout: PropTypes.number,
     title: PropTypes.string,
     onDismiss: PropTypes.func

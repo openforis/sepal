@@ -95,7 +95,7 @@ export const ModalConfirmationButton = compose(
 )
 
 ModalConfirmationButton.propTypes = {
-    message: PropTypes.string.isRequired,
+    message: PropTypes.node.isRequired,
     onConfirm: PropTypes.func.isRequired,
     air: PropTypes.any,
     busy: PropTypes.any,

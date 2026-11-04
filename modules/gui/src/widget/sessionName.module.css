@@ -1,0 +1,31 @@
+.sessionName {
+    display: inline-flex;
+    border: 1px solid var(--session-name-color);
+    border-radius: .25em;
+    overflow: hidden;
+    font-family: "Ubuntu Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: .85rem;
+    font-weight: bold;
+    text-transform: lowercase;
+    line-height: 1.2rem;
+    white-space: nowrap;
+    vertical-align: baseline;
+}
+
+.name,
+.type {
+    padding: 0 .35em;
+}
+
+.name {
+    background:
+        linear-gradient(var(--session-name-background-color), var(--session-name-background-color)),
+        var(--session-name-ground-color);
+    color: var(--session-name-color);
+}
+
+/* Reversed, so the type reads as a qualifier of the name rather than more of it */
+.type {
+    background-color: var(--session-name-color);
+    color: var(--session-name-reverse-color);
+}

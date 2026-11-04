@@ -92,23 +92,17 @@ describe('the session list', () => {
 
     // Titled by the name the expiry notification, the email and its management page show — no list
     // number, which is the SSH menu's business.
-    it('titles each instance by its name', () => {
+    it('titles each instance by its name and type', () => {
         const titles = render([
             session({id: 's1', name: 'humble-robin'}),
-            session({id: 's2', name: 'lunar-owl'}),
+            session({id: 's2', name: 'lunar-owl', instanceType: {...session().instanceType, tag: 'm4'}}),
         ]).querySelectorAll('.title > div')
-        expect([...titles].map(({firstChild}) => firstChild.textContent)).toEqual(['humble-robin', 'lunar-owl'])
-    })
-
-    it('puts the type on the line below the name', () => {
-        const [, type] = render([session({name: 'humble-robin'})]).querySelector('.title > div').children
-        expect(type.firstChild.textContent).toBe('t1')
+        expect([...titles].map(({firstChild}) => tagParts(firstChild))).toEqual([['humble-robin', 't1'], ['lunar-owl', 'm4']])
     })
 
     it('titles a session with no name by its type alone', () => {
         const title = render([session({name: null})]).querySelector('.title > div')
-        expect(title.children).toHaveLength(1)
-        expect(title.firstChild.firstChild.textContent).toBe('t1')
+        expect(tagParts(title.firstChild)).toEqual(['t1'])
     })
 
     // One pill under the label, in the title: capacity first, then what it costs, separated the
@@ -214,22 +208,21 @@ describe('the session list', () => {
     // The confirmation is the last thing between a user and an instance they cannot get back, so it
     // says which one — by the name the list, the SSH menu and the expiry notification all use.
     it('names the session in the stop confirmation', () => {
-        const container = render([session({name: 'humble-robin'})])
-        expect(container.querySelector('.remove-message').textContent)
-            .toBe('You are stopping session humble-robin.')
+        const message = render([session({name: 'humble-robin'})]).querySelector('.remove-message')
+        expect(message.textContent).toMatch(/^You are stopping session .+\.$/)
+        expect(tagParts(message.querySelector('span'))).toEqual(['humble-robin', 't1'])
     })
 
     it('still names it when warning about what is running on it', () => {
         const running = session({name: 'humble-robin', apps: [{path: '/sandbox/jupyter', label: 'Jupyter'}]})
-        const message = render([running]).querySelector('.remove-message').textContent
-        expect(message).toContain('You are stopping session humble-robin.')
-        expect(message).toContain('will be closed')
+        const message = render([running]).querySelector('.remove-message')
+        expect(tagParts(message.querySelector('span'))).toEqual(['humble-robin', 't1'])
+        expect(message.textContent).toContain('will be closed')
     })
 
     it('falls back to the type when confirming a session with no name', () => {
-        const container = render([session({name: null})])
-        expect(container.querySelector('.remove-message').textContent)
-            .toBe('You are stopping session t1.')
+        const message = render([session({name: null})]).querySelector('.remove-message')
+        expect(tagParts(message.querySelector('span'))).toEqual(['t1'])
     })
 
     it('shows the deadline as a time and a distance', () => {
@@ -300,7 +293,7 @@ describe('the session list', () => {
         it('names the user of each instance before its name', () => {
             const [user, name] = render$([session({username: 'alice', name: 'humble-robin'})])
                 .querySelector('.title > div').firstChild.children
-            expect([user.textContent, name.textContent]).toEqual(['alice', 'humble-robin'])
+            expect([user.textContent, tagParts(name)]).toEqual(['alice', ['humble-robin', 't1']])
         })
 
         // The keep-alive and the SSH login belong to the instance's user.
@@ -325,3 +318,6 @@ describe('the session list', () => {
         })
     })
 })
+
+// The session tag's parts in reading order: the name, then the type.
+const tagParts = tag => [...tag.children].map(({textContent}) => textContent)

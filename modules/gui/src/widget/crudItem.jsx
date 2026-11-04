@@ -374,7 +374,7 @@ CrudItem.propTypes = {
     removeContent: PropTypes.any,
     removeConfirmationLabel: PropTypes.string,
     removeDisabled: PropTypes.any,
-    removeMessage: PropTypes.string,
+    removeMessage: PropTypes.node,
     removePending: PropTypes.any,
     removeTitle: PropTypes.string,
     removeTooltip: PropTypes.any,

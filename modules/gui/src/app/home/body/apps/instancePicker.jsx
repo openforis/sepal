@@ -9,6 +9,7 @@ import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {Combo} from '~/widget/combo'
 import {Panel} from '~/widget/panel/panel'
+import {SessionName} from '~/widget/sessionName'
 
 import {InstanceSpecsTag} from '../../instanceSpecs'
 import {conflictingAssociations} from './appOpenPlan'
@@ -84,11 +85,11 @@ class _InstancePicker extends React.Component {
     // provides and costs right-aligned, so the options can be compared straight down the column
     // instead of across a separator. A running instance shows its title only, and lists the apps it
     // hosts dimmed underneath.
-    renderOption({title, instanceType, apps}) {
+    renderOption({title, instance, instanceType, apps}) {
         return (
             <div className={styles.option}>
                 <div className={styles.instance}>
-                    <div className={styles.title}>{title}</div>
+                    <div className={styles.title}>{instance ? this.renderInstanceTitle(instance) : title}</div>
                     {instanceType ? <InstanceSpecsTag instanceType={instanceType}/> : null}
                 </div>
                 {apps?.length
@@ -100,6 +101,10 @@ class _InstancePicker extends React.Component {
                     : null}
             </div>
         )
+    }
+
+    renderInstanceTitle({name, type}) {
+        return <SessionName name={name} type={type}/>
     }
 
     renderApp(app, i) {

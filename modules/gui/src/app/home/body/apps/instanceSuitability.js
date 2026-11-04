@@ -4,7 +4,7 @@
 // No React, no store — unit-testable.
 
 import {instanceSpecs} from '../../instanceSpecs'
-import {instanceLabel} from '../../user/userSessionSummary'
+import {instanceLabel, instanceTypeLabel} from '../../user/userSessionSummary'
 
 export const DEFAULT_REQUIREMENTS = {minRamGiB: 0, minCpuCount: 0, minGpuCount: 0}
 
@@ -50,19 +50,6 @@ const instanceTypeTitle = instanceType =>
 const oneLine = (title, instanceType) =>
     `${title} — ${instanceSpecs(instanceType)}`
 
-// The user-facing instance number is the session's 1-based position in the report's
-// session list (ordered oldest-first by the worker). Derived, not stored: numbers
-// shift down when an older instance closes. Shown as a "N:" prefix in the picker and
-// on app tabs, matching the ID column of the ssh-gateway terminal menu, which numbers
-// the same list the same way.
-export const sessionNumber = (sessions, sessionId) => {
-    if (!sessions || !sessionId) {
-        return null
-    }
-    const index = sessions.findIndex(({id}) => id === sessionId)
-    return index >= 0 ? index + 1 : null
-}
-
 // A running instance is identified by the apps it hosts. The apps are kept as a
 // separate field so the picker can render them on their own line; searchableText
 // keeps them matchable by the combo filter.
@@ -73,19 +60,20 @@ const sessionApps = session =>
 // requirements dimmed. Option values: 'session:<id>' / 'type:<id>'.
 //
 // `title`/`instanceType` are the two columns of a new instance type's row; a running instance's row
-// has only its title, since its specs are what the session list shows. `label` is the closed field's one
+// has only its title, since its specs are what the session list shows, and the parts of that title
+// as `instance`, so the row can show the name as every other surface does. `label` is the closed field's one
 // line, which names the instance and how many apps it hosts and leaves the specs to the list — they
 // are what a choice is made on, not what a made choice needs to keep repeating. `searchableText`
 // is what the typed filter matches, and it says everything.
 export const buildPickerOptions = ({sessions, instanceTypes, requirements, runningLabel = 'Running instances', newLabel = 'New instance without SSD', newSsdLabel = 'New instance with SSD', appCountLabel = count => `${count} app${count === 1 ? '' : 's'}`}) => {
-    const runningOptions = (sessions || []).map((session, index) => {
-        // index + 1 IS sessionNumber(sessions, session.id) — same list, same order.
-        const title = instanceLabel(session, index)
+    const runningOptions = (sessions || []).map(session => {
+        const title = instanceLabel(session)
         const apps = sessionApps(session)
         return {
             value: `session:${session.id}`,
             label: apps.length ? `${title} — ${appCountLabel(apps.length)}` : title,
             title,
+            instance: {name: session.name, type: instanceTypeLabel(session)},
             apps,
             searchableText: [title, ...apps].join(' '),
             dimmed: !isSuitableInstanceType(session.instanceType, requirements)

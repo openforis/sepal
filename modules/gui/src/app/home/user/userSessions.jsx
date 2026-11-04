@@ -13,6 +13,7 @@ import {ModalConfirmationButton} from '~/widget/modalConfirmationButton'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 import {refreshSessions} from '~/widget/sessionMonitor'
+import {SessionName} from '~/widget/sessionName'
 
 import {InstancePicker} from '../body/apps/instancePicker'
 import {UserSession} from './userSession'
@@ -121,7 +122,8 @@ class _UserSessions extends React.Component {
                     const apps = runningItems(session).map(({label}) => label)
                     return (
                         <li key={session.id}>
-                            {[session.name || instanceTypeLabel(session), apps.join(', ')].filter(Boolean).join(' — ')}
+                            <SessionName name={session.name} type={instanceTypeLabel(session)}/>
+                            {apps.length ? ` — ${apps.join(', ')}` : null}
                         </li>
                     )
                 })}

@@ -114,21 +114,6 @@ inside keyframes of an attached animation (bugzilla 1763376 et al.). */
     background-color: var(--tab-default-background-color);
 }
 
-.tab .prefix {
-    align-self: center;
-    padding-left: .5rem;
-    font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
-    font-weight: 600;
-    color: var(--tab-text-color);
-    white-space: nowrap;
-    user-select: none;
-    pointer-events: none;
-}
-
-.tab.selected .prefix {
-    color: var(--text-header-color);
-}
-
 .tab .title {
     position: relative;
     flex-grow: 1;

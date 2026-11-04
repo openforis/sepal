@@ -46,6 +46,12 @@ html {
     --warning-color: hsl(39, 80%, 40%);
     --success-color: hsl(90, 80%, 35%);
 
+    /* session names; the tint is laid over its own opaque ground, so the tag looks the same on any surface */
+    --session-name-color: hsl(40, 70%, 65%);
+    --session-name-background-color: hsla(40, 56%, 60%, .16);
+    --session-name-reverse-color: hsl(40, 33%, 14%);
+    --session-name-ground-color: hsl(36, 8%, 15%);
+
     /* accent */
     --selected-hue: 40;
     --selected-sat: 60%;
@@ -292,6 +298,11 @@ html[data-theme=light] {
     --info-color: hsl(202, 80%, 36%);
     --warning-color: hsl(35, 85%, 34%);
     --success-color: hsl(95, 65%, 28%);
+
+    --session-name-color: hsl(40, 47%, 34%);
+    --session-name-background-color: hsla(40, 56%, 50%, .1);
+    --session-name-reverse-color: #fff;
+    --session-name-ground-color: hsl(39, 40%, 95%);
 
     --selected-sat: 70%;
     --selected-accent-color: hsl(38, 75%, 47%);

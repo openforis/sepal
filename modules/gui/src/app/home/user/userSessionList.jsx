@@ -9,13 +9,14 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import format from '~/format'
 import {select} from '~/store'
-import {msg} from '~/translate'
+import {msg, richMsg} from '~/translate'
 import {stopCurrentUserSession$} from '~/user'
 import {CrudItem} from '~/widget/crudItem'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Notifications} from '~/widget/notifications'
+import {SessionName} from '~/widget/sessionName'
 
 import {InstanceSpecsTag} from '../instanceSpecs'
 import {SessionUsageChart} from './sessionUsageChart'
@@ -68,24 +69,22 @@ class _UserSessionList extends React.Component {
         return (
             <div className={styles.title}>
                 {this.renderName(session)}
-                <div className={styles.type}>
-                    <span>{instanceTypeLabel(session)}</span>
-                    <InstanceSpecsTag instanceType={instanceType} compact/>
-                </div>
+                <InstanceSpecsTag instanceType={instanceType} compact/>
             </div>
         )
     }
 
-    renderName({username, name}) {
+    renderName(session) {
         const {global} = this.props
+        const name = <SessionName name={session.name} type={instanceTypeLabel(session)}/>
         return global
             ? (
                 <div className={styles.name}>
-                    <span className={styles.user}>{username}</span>
-                    {name ? <span>{name}</span> : null}
+                    <span className={styles.user}>{session.username}</span>
+                    {name}
                 </div>
             )
-            : name ? <span>{name}</span> : null
+            : name
     }
 
     renderDescription(session) {
@@ -203,9 +202,9 @@ class _UserSessionList extends React.Component {
     // its type, as the list titles it.
     renderRemoveMessage(session) {
         const running = runningItems(session).length
-        return msg(
+        return richMsg(
             running ? 'user.userSession.stop.messageWithRunning' : 'user.userSession.stop.message',
-            {name: session.name || instanceTypeLabel(session)}
+            {name: <SessionName name={session.name} type={instanceTypeLabel(session)}/>}
         )
     }
 
