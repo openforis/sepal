@@ -16,22 +16,19 @@ import {Confirm} from '~/widget/confirm'
 import {Notifications} from '~/widget/notifications'
 import {closeTab} from '~/widget/tabs/tabActions'
 
+import {instanceLabel} from '../../user/userSessionSummary'
 import {AppInstance} from './appInstance'
 import {AppList} from './appList/appList'
 import {conflictingAssociations, openPlan} from './appOpenPlan'
 import {InstancePicker} from './instancePicker'
-import {sessionNumber} from './instanceSuitability'
 
 const log = getLogger('app')
 
-// "instance 2 (m4)" — the same 1-based numbering and instance type tag the instance
-// picker and the sessions panel show.
-const instanceLabel = (sessions, sessionId) => {
-    const number = sessionNumber(sessions, sessionId)
-    const instanceType = (sessions || []).find(({id}) => id === sessionId)?.instanceType
-    const type = instanceType?.tag ?? instanceType?.name
-    return number && type
-        ? msg('apps.confirmReopen.instance', {number, type})
+// "instance humble-robin - t1", named as the instance picker names it.
+const confirmInstanceLabel = (sessions, sessionId) => {
+    const session = (sessions || []).find(({id}) => id === sessionId)
+    return session
+        ? msg('apps.confirmReopen.instance', {instance: instanceLabel(session)})
         : msg('apps.confirmReopen.unknownInstance')
 }
 
@@ -185,7 +182,7 @@ class _App extends React.Component {
                 app: picker,
                 selection,
                 plan,
-                instance: instanceLabel(sessions, plan.sessionId)
+                instance: confirmInstanceLabel(sessions, plan.sessionId)
             }})
             return
         }

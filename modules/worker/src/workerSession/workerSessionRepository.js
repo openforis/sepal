@@ -202,14 +202,18 @@ export class WorkerSessionRepository {
         })
     }
 
-    sessions(states) {
+    // sessions — every user's sessions in any of the given states, optionally of one worker type,
+    // grouped by user in starting order.
+    sessions(states, workerType = null) {
         return this.#db.withConnection(async connection => {
             const [rows] = await connection.query(
                 `
                     SELECT ${SESSION_COLUMNS}
                     FROM worker_session
-                    WHERE state in (${placeholders(states.length)})`,
-                states
+                    WHERE state in (${placeholders(states.length)})${workerType ? `
+                    AND worker_type = ?` : ''}
+                    ORDER BY username, creation_time`,
+                workerType ? [...states, workerType] : states
             )
             return rows.map(toSession)
         })

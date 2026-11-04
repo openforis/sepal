@@ -2,7 +2,7 @@ import {describe, expect, it} from 'vitest'
 
 import {
     appRequirements, buildPickerOptions, cheapestSuitableInstanceType, defaultPickerValue,
-    isSuitableInstanceType, requirementSpecs, sessionNumber, suitableInstanceTypes
+    isSuitableInstanceType, requirementSpecs, suitableInstanceTypes
 } from './instanceSuitability'
 
 const T3 = {id: 'T3aSmall', name: 't3a.small', tag: 't1', cpuCount: 1, ramGiB: 2, hourlyCost: 0.0204, gpuCount: 0, description: '1 CPU, 2 GB'}
@@ -54,22 +54,6 @@ describe('suitableInstanceTypes', () => {
     })
 })
 
-describe('sessionNumber', () => {
-    it('numbers sessions by their position in the report list, oldest first', () => {
-        const sessions = [session('s-1', T3), session('s-2', M6)]
-        expect(sessionNumber(sessions, 's-1')).toBe(1)
-        expect(sessionNumber(sessions, 's-2')).toBe(2)
-    })
-
-    it('returns null when the session is absent or inputs are missing', () => {
-        const sessions = [session('s-1', T3)]
-        expect(sessionNumber(sessions, 's-9')).toBe(null)
-        expect(sessionNumber(sessions, undefined)).toBe(null)
-        expect(sessionNumber(undefined, 's-1')).toBe(null)
-        expect(sessionNumber([], 's-1')).toBe(null)
-    })
-})
-
 describe('buildPickerOptions', () => {
     it('lists every running instance and new type, dimming the ones below the requirements', () => {
         const sessions = [session('s-1', T3), session('s-2', M6)]
@@ -92,9 +76,9 @@ describe('buildPickerOptions', () => {
         ]}]
         const options = buildPickerOptions({sessions, instanceTypes: TYPES, requirements: {minRamGiB: 0, minCpuCount: 0, minGpuCount: 0}})
         const [option] = options[0].options
-        expect(option.label).toBe('1: t1 — 2 apps')
+        expect(option.label).toBe('t1 — 2 apps')
         expect(option.apps).toEqual(['Foo', '/sandbox/jupyter/bar.ipynb'])
-        expect(option.searchableText).toBe('1: t1 Foo /sandbox/jupyter/bar.ipynb')
+        expect(option.searchableText).toBe('t1 Foo /sandbox/jupyter/bar.ipynb')
     })
 
     // A new type's row is two columns: the picker puts the title left and right-aligns the specs
@@ -102,16 +86,15 @@ describe('buildPickerOptions', () => {
     it('gives only new instance types the specs of their type', () => {
         const sessions = [{id: 's-1', instanceType: T3, apps: [{path: '/sandbox/shiny/foo', label: 'Foo'}]}]
         const options = buildPickerOptions({sessions, instanceTypes: TYPES, requirements: {minRamGiB: 0, minCpuCount: 0, minGpuCount: 0}})
-        expect(options[0].options[0].title).toBe('1: t1')
+        expect(options[0].options[0].title).toBe('t1')
         expect(options[0].options[0]).not.toHaveProperty('instanceType')
         expect(options[1].options[0]).toMatchObject({title: 'm4', instanceType: M6})
     })
 
-    it('prefixes running instances with their 1-based report position', () => {
+    it('labels running instances and new types by their type tag', () => {
         const sessions = [session('s-1', T3), session('s-2', M6)]
         const options = buildPickerOptions({sessions, instanceTypes: TYPES, requirements: {minRamGiB: 8, minCpuCount: 2, minGpuCount: 0}})
-        expect(options[0].options.map(({label}) => label)).toEqual(['1: t1', '2: m4'])
-        // new-instance types are not numbered
+        expect(options[0].options.map(({label}) => label)).toEqual(['t1', 'm4'])
         expect(options[1].options.map(({label}) => label)).toEqual(['m4', 't1', 'g4'])
         // the filter still matches what the right-hand column says
         expect(options[1].options.map(({searchableText}) => searchableText)).toEqual([
@@ -128,20 +111,20 @@ describe('buildPickerOptions', () => {
         ]
         const options = buildPickerOptions({sessions, instanceTypes: TYPES, requirements: {minRamGiB: 0, minCpuCount: 0, minGpuCount: 0}})
         const [withApp, withoutApps] = options[0].options
-        expect(withApp.label).toBe('1: t1 — 1 app')
-        expect(withoutApps.label).toBe('2: m4')
+        expect(withApp.label).toBe('t1 — 1 app')
+        expect(withoutApps.label).toBe('m4')
     })
 
     it('names a running instance the way the session list does', () => {
         const options = buildPickerOptions({sessions: [{...session('s-1', T3), name: 'humble-robin'}], instanceTypes: TYPES, requirements: {minRamGiB: 0, minCpuCount: 0, minGpuCount: 0}})
-        expect(options[0].options[0]).toMatchObject({title: '1: humble-robin - t1', label: '1: humble-robin - t1'})
+        expect(options[0].options[0]).toMatchObject({title: 'humble-robin - t1', label: 'humble-robin - t1'})
         expect(options[0].options[0].searchableText).toContain('humble-robin')
     })
 
     // Legacy types are not offered as new instances, but a session can still be running on one.
     it('falls back to the AWS name for a running untagged type', () => {
         const options = buildPickerOptions({sessions: [session('s-1', LEGACY)], instanceTypes: TYPES, requirements: {minRamGiB: 0, minCpuCount: 0, minGpuCount: 0}})
-        expect(options[0].options[0]).toMatchObject({title: '1: t2.small'})
+        expect(options[0].options[0]).toMatchObject({title: 't2.small'})
     })
 
     it('omits the running section when no instance is running', () => {

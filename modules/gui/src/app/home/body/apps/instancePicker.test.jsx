@@ -2,7 +2,7 @@
 // and the DOM in ways a unit test cannot serve, so they are passthroughs that show their sections and
 // value; the HOCs are replaced by the props they would inject.
 
-import {act} from 'react'
+import {act, useState} from 'react'
 import {createRoot} from 'react-dom/client'
 import {of} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
@@ -57,18 +57,24 @@ const report = {
 describe('the instance picker', () => {
     let mounted
 
-    const render = ({app, onConfirm = vi.fn()} = {}) => {
+    const render = ({app, sessions, onConfirm = vi.fn()} = {}) => {
         const subscriptions = []
         const container = document.createElement('div')
         document.body.appendChild(container)
         const root = createRoot(container)
+        const store = {}
         act(() => root.render(
             <TranslationProvider>
-                <InstancePicker
-                    app={app}
-                    onConfirm={onConfirm}
-                    onCancel={vi.fn()}
-                    addSubscription={subscription => subscriptions.push(subscription)}/>
+                <StoreSessions initial={sessions} store={store}>
+                    {sessions =>
+                        <InstancePicker
+                            app={app}
+                            sessions={sessions}
+                            onConfirm={onConfirm}
+                            onCancel={vi.fn()}
+                            addSubscription={subscription => subscriptions.push(subscription)}/>
+                    }
+                </StoreSessions>
             </TranslationProvider>
         ))
         mounted.push(() => {
@@ -76,7 +82,7 @@ describe('the instance picker', () => {
             subscriptions.forEach(subscription => subscription.unsubscribe())
             container.remove()
         })
-        return container
+        return {container, updateSessions: sessions => act(() => store.update(sessions))}
     }
 
     beforeEach(() => {
@@ -87,7 +93,7 @@ describe('the instance picker', () => {
 
     describe('without an app', () => {
         it('offers only new instance types, preselecting the cheapest', () => {
-            const container = render()
+            const {container} = render()
 
             expect(container.querySelector('h1').textContent).toBe('Start new instance')
             expect(sectionLabels(container)).toEqual(['New instance without SSD'])
@@ -97,7 +103,7 @@ describe('the instance picker', () => {
 
         it('confirms the picked instance type', () => {
             const onConfirm = vi.fn()
-            const container = render({onConfirm})
+            const {container} = render({onConfirm})
 
             act(() => container.querySelector('.confirm').click())
 
@@ -109,7 +115,7 @@ describe('the instance picker', () => {
         const app = {path: '/sandbox/jupyter', label: 'Jupyter', endpoint: 'jupyter'}
 
         it('also offers the running instances, preselecting the first suitable one', () => {
-            const container = render({app})
+            const {container} = render({app})
 
             expect(container.querySelector('h1').textContent).toBe('Start Jupyter')
             expect(sectionLabels(container)).toEqual(['Running instances', 'New instance without SSD'])
@@ -117,10 +123,36 @@ describe('the instance picker', () => {
         })
 
         it('dims nothing when the app has no requirements', () => {
-            const container = render({app})
+            const {container} = render({app})
 
             expect(dimmed(container)).toEqual([])
             expect(container.querySelector('.warning')).toBeNull()
+        })
+    })
+
+    describe('while open', () => {
+        const app = {path: '/sandbox/jupyter', label: 'Jupyter', endpoint: 'jupyter'}
+        const s1 = report.sessions[0]
+        const s2 = {id: 's2', name: 'brave-otter', instanceType: T3, apps: []}
+
+        it('offers an instance started meanwhile', () => {
+            const {container, updateSessions} = render({app, sessions: []})
+
+            updateSessions([s2])
+
+            expect(options(container)).toEqual(['session:s2', 'type:M6aXlarge', 'type:T3aSmall'])
+        })
+
+        it('falls back to the default when the picked instance stops', () => {
+            const onConfirm = vi.fn()
+            const {container, updateSessions} = render({app, sessions: [s1, s2], onConfirm})
+            act(() => option(container, 'session:s2').click())
+
+            updateSessions([s1])
+            act(() => container.querySelector('.confirm').click())
+
+            expect(options(container)).toEqual(['session:s1', 'type:M6aXlarge', 'type:T3aSmall'])
+            expect(onConfirm).toHaveBeenCalledWith({sessionId: s1.id})
         })
     })
 
@@ -135,14 +167,14 @@ describe('the instance picker', () => {
         })
 
         it('lists every instance, dimming the ones below the requirements', () => {
-            const container = render({app})
+            const {container} = render({app})
 
             expect(options(container)).toEqual(['session:s1', 'type:M6aXlarge', 'type:T3aSmall'])
             expect(dimmed(container)).toEqual(['session:s1', 'type:T3aSmall'])
         })
 
         it('preselects an instance that meets the requirements, without a warning', () => {
-            const container = render({app})
+            const {container} = render({app})
 
             expect(container.querySelector('.combo').dataset.value).toBe('type:M6aXlarge')
             expect(container.querySelector('.warning')).toBeNull()
@@ -150,7 +182,7 @@ describe('the instance picker', () => {
 
         it('lets the user confirm an instance below the requirements, with a warning', () => {
             const onConfirm = vi.fn()
-            const container = render({app, onConfirm})
+            const {container} = render({app, onConfirm})
 
             act(() => option(container, 'session:s1').click())
             act(() => container.querySelector('.confirm').click())
@@ -160,13 +192,21 @@ describe('the instance picker', () => {
         })
 
         it('preselects as if there were no requirements, with a warning, when no instance meets them', () => {
-            const container = render({app: {...app, requirements: {minRamGiB: 4096}}})
+            const {container} = render({app: {...app, requirements: {minRamGiB: 4096}}})
 
             expect(container.querySelector('.combo').dataset.value).toBe('session:s1')
             expect(container.querySelector('.warning').textContent).toBe('This app recommends an instance with at least 4096 GB.')
         })
     })
 })
+
+// Stands in for the store's user.currentUserReport.sessions, which connect would map to the prop.
+// TranslationProvider never re-renders its children, so the update has to start below it.
+const StoreSessions = ({initial, store, children}) => {
+    const [sessions, setSessions] = useState(initial)
+    store.update = setSessions
+    return children(sessions)
+}
 
 const sectionLabels = container =>
     [...container.querySelectorAll('section')].map(({dataset}) => dataset.label)

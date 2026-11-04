@@ -1,0 +1,47 @@
+/* The look of the visualization parameters' histogram (map/visParams/histogram.module.css). */
+.chart {
+    position: relative;
+    display: flex;
+    height: 5rem;
+    width: 100%;
+    background-color: hsla(0, 0%, 50%, .1);
+    justify-content: center;
+}
+
+.graph {
+    pointer-events: none;
+    position: relative;
+    display: flex;
+    flex-grow: 1;
+    margin-left: 1.2rem;
+    margin-right: 1.2rem;
+    /* Inherited by Dygraph's axis labels. It reserves a band of the label's font size plus a tick
+       above and below, and places the label one tick down; at the page's line height the label is
+       taller than its font and runs out of the bottom of the box. */
+    color: var(--text-muted-color);
+    line-height: 1;
+}
+
+.key {
+    position: absolute;
+    top: .2rem;
+    left: .4rem;
+    display: flex;
+    gap: .5rem;
+}
+
+.key > button {
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    font-size: .7rem;
+    font-weight: 800;
+    color: var(--color);
+    cursor: pointer;
+}
+
+.key > button.hidden {
+    color: var(--text-muted-color);
+    text-decoration: line-through;
+}

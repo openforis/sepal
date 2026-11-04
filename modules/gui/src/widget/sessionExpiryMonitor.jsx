@@ -7,12 +7,13 @@ import {usageHint} from '~/app/home/user/usage'
 import {runningItems} from '~/app/home/user/userSessionSummary'
 import {getLogger} from '~/log'
 import {subscribe} from '~/store'
-import {msg} from '~/translate'
+import {msg, richMsg} from '~/translate'
 import {stopCurrentUserSession$} from '~/user'
 import {Button} from '~/widget/button'
 import {Layout} from '~/widget/layout'
 import {Notifications} from '~/widget/notifications'
 import {staleWarnings} from '~/widget/sessionExpiryRules'
+import {SessionName} from '~/widget/sessionName'
 
 import styles from './sessionExpiryMonitor.module.css'
 
@@ -42,12 +43,12 @@ const warningId = sessionId => `session-expiry-${sessionId}`
 // Clicking in the notification is input in the SEPAL shell, not in an app iframe, so it extends
 // nothing by itself — which is exactly why Extend has to be an explicit call.
 
-// instanceText — "Session crazy-banana (t1)". The name is derived from the session id by the
+// instanceText — "Session crazy-banana t1", the type inside the name's tag. The name is derived from the session id by the
 // worker and travels on the event, so the notification, the session list, the expiry email and the
 // SSH menu all name the instance identically.
 const instanceText = ({name, typeName}) =>
     name
-        ? msg('user.userSession.expiry.instance', {name, type: typeName || '?'})
+        ? richMsg('user.userSession.expiry.instance', {name: <SessionName name={name} type={typeName}/>})
         : msg('user.userSession.expiry.instanceUnnamed')
 
 // What is running, as a bullet list — the same items, ordering and wording as the session list and
@@ -66,13 +67,13 @@ const runningList = data => {
 // The warning says the same thing either way — what is running is the bullet list below it, not
 // part of the sentence. The close notice still needs both, because there its list is what was lost.
 const message = (data, {closed}) => {
-    const instance = instanceText(data)
+    const instance = <>{instanceText(data)}</>
     if (!closed) {
-        return msg('user.userSession.expiry.idle', {instance})
+        return richMsg('user.userSession.expiry.idle', {instance})
     }
     return runningItems(data).length
-        ? msg('user.userSession.expiry.runningClosed', {instance})
-        : msg('user.userSession.expiry.idleClosed', {instance})
+        ? richMsg('user.userSession.expiry.runningClosed', {instance})
+        : richMsg('user.userSession.expiry.idleClosed', {instance})
 }
 
 // The worker decides how much an Extend buys, so the button quotes it rather than guessing. The

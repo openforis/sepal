@@ -15,6 +15,7 @@ vi.mock('~/store', () => ({select: () => null}))
 vi.mock('~/user', () => ({startCurrentUserSession$: vi.fn(), stopCurrentUserSession$: vi.fn()}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: vi.fn()}}))
 vi.mock('~/widget/sessionMonitor', () => ({refreshSessions: vi.fn()}))
+vi.mock('~/widget/sessionName', () => ({SessionName: ({name, type}) => <span>{`${name} ${type}`}</span>}))
 vi.mock('./userSessionList', () => ({
     UserSessionList: ({stoppingAll}) => <div className='list' data-stopping-all={String(stoppingAll)}/>
 }))
@@ -211,7 +212,7 @@ describe('the sessions panel', () => {
 
             expect(confirmation.textContent).toContain('You are stopping all your instances (2).')
             expect([...confirmation.querySelectorAll('li')].map(({textContent}) => textContent))
-                .toEqual(['humble-robin — Jupyter', 'lunar-owl'])
+                .toEqual(['humble-robin t1 — Jupyter', 'lunar-owl m2'])
         })
 
         it('keeps stopping the others when one fails, and says so once', () => {

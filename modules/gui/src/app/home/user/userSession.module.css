@@ -1,3 +1,10 @@
 .panel {
     width: 35rem;
 }
+
+/* The header lays its title out as a flex row, which drops a space between the tag and the text */
+.title {
+    display: flex;
+    align-items: baseline;
+    gap: .5rem;
+}

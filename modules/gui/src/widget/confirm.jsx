@@ -6,6 +6,7 @@ import {Panel} from '~/widget/panel/panel'
 
 import styles from './confirm.module.css'
 import {Layout} from './layout'
+import {messageLines} from './messageLines'
 
 export class Confirm extends React.Component {
     constructor(props) {
@@ -22,7 +23,7 @@ export class Confirm extends React.Component {
         const {message} = this.props
         return (
             <div className={styles.message}>
-                {message.split('|').map(this.renderMessageLine)}
+                {messageLines(message).map(this.renderMessageLine)}
             </div>
         )
     }
@@ -94,7 +95,7 @@ Confirm.propTypes = {
     children: PropTypes.any,
     disabled: PropTypes.any,
     label: PropTypes.string,
-    message: PropTypes.string,
+    message: PropTypes.node,
     skip: PropTypes.any,
     title: PropTypes.string
 }

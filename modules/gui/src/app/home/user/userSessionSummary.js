@@ -37,17 +37,14 @@ export const usageMetrics = session => {
 export const runningItems = session =>
     (session?.apps || []).map(({path, label}) => ({type: 'app', key: path, label: label || path}))
 
-// instanceLabel — "1: humble-robin - t1", how the instance picker identifies a running instance.
-//
-// The NUMBER leads because it is the position in the session report and the same number the SSH
-// menu accepts to join or stop (`1`, `1s`) — it is what a user acts on. The name follows as the
-// identity every other surface uses for this machine: the session list, the expiry notification,
-// the expiry email and its management page all say `humble-robin`.
+// instanceLabel — "humble-robin - t1", how the instance picker identifies a running instance: by the
+// name every other surface uses for this machine (the session list, the expiry notification, the
+// expiry email and its management page).
 //
 // A session with no name (one predating them, or an event that arrived without one) collapses to
-// "1: t1" rather than leaving a dangling separator.
-export const instanceLabel = (session, index) =>
-    [`${index + 1}:`, session?.name, session?.name ? '-' : null, instanceTypeLabel(session)]
+// "t1" rather than leaving a dangling separator.
+export const instanceLabel = session =>
+    [session?.name, session?.name ? '-' : null, instanceTypeLabel(session)]
         .filter(Boolean)
         .join(' ')
 

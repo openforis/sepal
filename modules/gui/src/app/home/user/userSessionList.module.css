@@ -2,12 +2,17 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    gap: .25rem;
 }
 
-.type {
+.name {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     gap: .5rem;
+}
+
+.user {
+    font-weight: 800;
 }
 
 /* Lines the strip up with the row's text above it, instead of the expansion's default inset. The
@@ -15,6 +20,7 @@
 .expansion {
     --expansion-shade: var(--row-expansion-shade-color);
     padding: .5rem;
+    gap: .5rem;
 }
 
 .stats {

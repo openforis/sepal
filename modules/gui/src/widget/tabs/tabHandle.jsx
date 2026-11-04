@@ -79,24 +79,14 @@ class _TabHandle extends React.Component {
                 style={{'--close-animation-duration': `${CLOSE_ANIMATION_DURATION_MS}ms`}}
                 onMouseDown={this.onMouseDown}
                 onAuxClick={this.onAuxClick}>
-                {this.renderPrefix()}
                 {this.renderInput()}
                 {this.renderCloseButton()}
             </Layout>
         )
     }
 
-    // Non-editable marker (e.g. the app tab's instance number, "2:") rendered outside
-    // the title input so renaming the tab cannot eat or duplicate it.
-    renderPrefix() {
-        const {prefix} = this.props
-        return prefix
-            ? <div className={styles.prefix}>{prefix}</div>
-            : null
-    }
-
     renderInput() {
-        const {placeholder, prefix} = this.props
+        const {placeholder} = this.props
         const {title, editing} = this.state
         const keymap = {
             Enter: this.saveTitle,
@@ -115,7 +105,7 @@ class _TabHandle extends React.Component {
                     placeholder={placeholder}
                     border={false}
                     readOnly={!editing}
-                    tooltip={[prefix, title || placeholder].filter(Boolean).join(' ')}
+                    tooltip={title || placeholder}
                     tooltipPlacement='bottom'
                     onClick={this.onClick}
                     onChange={this.onTitleChange}
@@ -262,7 +252,6 @@ TabHandle.propTypes = {
     dragging: PropTypes.any,
     id: PropTypes.string,
     placeholder: PropTypes.string,
-    prefix: PropTypes.string,
     readOnlyTitle: PropTypes.any,
     selected: PropTypes.any,
     statePath: PropTypes.string,

@@ -4,29 +4,36 @@
 
 import {act} from 'react'
 import {createRoot} from 'react-dom/client'
+import {of} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 vi.mock('~/connect', () => ({connect: () => component => component}))
 vi.mock('~/store', () => ({select: () => null}))
 vi.mock('~/action-builder', () => ({actionBuilder: () => ({set: () => ({dispatch: () => {}})})}))
-vi.mock('~/user', () => ({stopCurrentUserSession$: () => {}}))
+vi.mock('~/user', () => ({stopCurrentUserSession$: vi.fn()}))
+vi.mock('~/apiRegistry', () => ({default: {sessions: {stopUserSession$: vi.fn()}}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/widget/listItem', () => ({
-    ListItem: ({children, expansion}) => <div>{children}<div className='expansion'>{expansion}</div></div>
+    ListItem: ({children, expansion, expansionInteractive}) =>
+        <div>{children}<div className='expansion' data-interactive={String(!!expansionInteractive)}>{expansion}</div></div>
 }))
+vi.mock('./sessionUsageChart', () => ({SessionUsageChart: () => null}))
 vi.mock('~/widget/noData', () => ({NoData: ({message}) => <div>{message}</div>}))
 vi.mock('~/widget/tag', () => ({Tag: ({label}) => <span className='pill'>{label}</span>}))
 vi.mock('~/widget/crudItem', () => ({
-    CrudItem: ({title, description, removeMessage, editDisabled, removePending, copyValue, copyDisabled}) =>
+    CrudItem: ({title, description, removeMessage, editDisabled, removePending, copyValue, copyDisabled, onEdit, onRemove}) =>
         <div className='session' data-edit-disabled={editDisabled} data-remove-pending={removePending}
-            data-copy-value={copyValue ?? ''} data-copy-disabled={copyDisabled}>
+            data-copy-value={copyValue ?? ''} data-copy-disabled={copyDisabled} data-editable={String(!!onEdit)}>
             <div className='title'>{title}</div>
             <div className='description'>{description}</div>
             <div className='remove-message'>{removeMessage}</div>
+            <button className='remove' onClick={onRemove}/>
         </div>
 }))
 
+import api from '~/apiRegistry'
 import {setLanguage, TranslationProvider} from '~/translate'
+import {stopCurrentUserSession$} from '~/user'
 
 import {UserSessionList} from './userSessionList'
 
@@ -56,14 +63,17 @@ describe('the session list', () => {
 
     // connect() is mocked away, so the stream prop it would inject is stubbed here: a name is
     // active while its session is being stopped, nothing else is.
-    const render = (sessions, {stopping = [], stoppingAll = false} = {}) => {
-        const stream = name => ({active: stopping.some(id => name === `STOP_USER_SESSION_${id}`)})
+    const render = (sessions, {stopping = [], stoppingAll = false, global, onStopped} = {}) => {
+        const stream = (name, stream$, onNext) => {
+            stream$?.subscribe({next: onNext})
+            return {active: stopping.some(id => name === `STOP_USER_SESSION_${id}`)}
+        }
         const container = document.createElement('div')
         document.body.appendChild(container)
         const root = createRoot(container)
         act(() => root.render(
             <TranslationProvider>
-                <UserSessionList sessions={sessions} stoppingAll={stoppingAll} stream={stream}/>
+                <UserSessionList sessions={sessions} stoppingAll={stoppingAll} stream={stream} global={global} onStopped={onStopped}/>
             </TranslationProvider>
         ))
         mounted.push(() => {
@@ -73,28 +83,26 @@ describe('the session list', () => {
         return container
     }
 
-    beforeEach(() => mounted = [])
+    beforeEach(() => {
+        mounted = []
+        vi.mocked(stopCurrentUserSession$).mockReset()
+        vi.mocked(api.sessions.stopUserSession$).mockReset()
+    })
     afterEach(() => mounted.forEach(unmount => unmount()))
 
     // Titled by the name the expiry notification, the email and its management page show — no list
     // number, which is the SSH menu's business.
-    it('titles each instance by its name', () => {
+    it('titles each instance by its name and type', () => {
         const titles = render([
             session({id: 's1', name: 'humble-robin'}),
-            session({id: 's2', name: 'lunar-owl'}),
+            session({id: 's2', name: 'lunar-owl', instanceType: {...session().instanceType, tag: 'm4'}}),
         ]).querySelectorAll('.title > div')
-        expect([...titles].map(({firstChild}) => firstChild.textContent)).toEqual(['humble-robin', 'lunar-owl'])
-    })
-
-    it('puts the type on the line below the name', () => {
-        const [, type] = render([session({name: 'humble-robin'})]).querySelector('.title > div').children
-        expect(type.firstChild.textContent).toBe('t1')
+        expect([...titles].map(({firstChild}) => tagParts(firstChild))).toEqual([['humble-robin', 't1'], ['lunar-owl', 'm4']])
     })
 
     it('titles a session with no name by its type alone', () => {
         const title = render([session({name: null})]).querySelector('.title > div')
-        expect(title.children).toHaveLength(1)
-        expect(title.firstChild.firstChild.textContent).toBe('t1')
+        expect(tagParts(title.firstChild)).toEqual(['t1'])
     })
 
     // One pill under the label, in the title: capacity first, then what it costs, separated the
@@ -117,6 +125,13 @@ describe('the session list', () => {
     const stat = (container, label) => stats(container).find(([statLabel]) => statLabel === label)[1]
 
     const COLUMNS = ['CPU', 'GPU', 'RAM', 'NET', 'Cost', 'Keep alive until', 'Stops at']
+
+    // ListItem makes an expansion inert to the pointer unless told otherwise, and the usage chart's
+    // keys under the row are buttons.
+    it('lets what is under the row be clicked', () => {
+        const expansion = render([session()]).querySelector('.expansion')
+        expect(expansion.dataset.interactive).toBe('true')
+    })
 
     it('reports the sampled usage and the cost so far under the row', () => {
         expect(stats(render([session({expiry: null})]))).toEqual([
@@ -193,22 +208,21 @@ describe('the session list', () => {
     // The confirmation is the last thing between a user and an instance they cannot get back, so it
     // says which one — by the name the list, the SSH menu and the expiry notification all use.
     it('names the session in the stop confirmation', () => {
-        const container = render([session({name: 'humble-robin'})])
-        expect(container.querySelector('.remove-message').textContent)
-            .toBe('You are stopping session humble-robin.')
+        const message = render([session({name: 'humble-robin'})]).querySelector('.remove-message')
+        expect(message.textContent).toMatch(/^You are stopping session .+\.$/)
+        expect(tagParts(message.querySelector('span'))).toEqual(['humble-robin', 't1'])
     })
 
     it('still names it when warning about what is running on it', () => {
         const running = session({name: 'humble-robin', apps: [{path: '/sandbox/jupyter', label: 'Jupyter'}]})
-        const message = render([running]).querySelector('.remove-message').textContent
-        expect(message).toContain('You are stopping session humble-robin.')
-        expect(message).toContain('will be closed')
+        const message = render([running]).querySelector('.remove-message')
+        expect(tagParts(message.querySelector('span'))).toEqual(['humble-robin', 't1'])
+        expect(message.textContent).toContain('will be closed')
     })
 
     it('falls back to the type when confirming a session with no name', () => {
-        const container = render([session({name: null})])
-        expect(container.querySelector('.remove-message').textContent)
-            .toBe('You are stopping session t1.')
+        const message = render([session({name: null})]).querySelector('.remove-message')
+        expect(tagParts(message.querySelector('span'))).toEqual(['t1'])
     })
 
     it('shows the deadline as a time and a distance', () => {
@@ -272,4 +286,38 @@ describe('the session list', () => {
         })
         expect(stat(render([notified]), 'Stops at')).toBe('—')
     })
+
+    describe('of every user', () => {
+        const render$ = (sessions, options) => render(sessions, {global: true, ...options})
+
+        it('names the user of each instance before its name', () => {
+            const [user, name] = render$([session({username: 'alice', name: 'humble-robin'})])
+                .querySelector('.title > div').firstChild.children
+            expect([user.textContent, tagParts(name)]).toEqual(['alice', ['humble-robin', 't1']])
+        })
+
+        // The keep-alive and the SSH login belong to the instance's user.
+        it('offers neither editing nor the SSH login', () => {
+            const row = render$([session()]).querySelector('.session')
+            expect(row.dataset.editable).toBe('false')
+            expect(row.dataset.copyValue).toBe('')
+            expect(row.dataset.copyDisabled).toBe('false')
+        })
+
+        it('stops a session as its user\'s, and says when it has', () => {
+            const alices = session({username: 'alice'})
+            vi.mocked(api.sessions.stopUserSession$).mockReturnValue(of(null))
+            const onStopped = vi.fn()
+            const container = render$([alices], {onStopped})
+
+            act(() => container.querySelector('.remove').click())
+
+            expect(api.sessions.stopUserSession$).toHaveBeenCalledWith(alices)
+            expect(stopCurrentUserSession$).not.toHaveBeenCalled()
+            expect(onStopped).toHaveBeenCalledWith(alices)
+        })
+    })
 })
+
+// The session tag's parts in reading order: the name, then the type.
+const tagParts = tag => [...tag.children].map(({textContent}) => textContent)

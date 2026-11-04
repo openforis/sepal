@@ -62,6 +62,40 @@ describe('UsageRepository', () => {
         })
     })
 
+    describe('sessionHistory', () => {
+        test('averages the session\'s samples per bucket, oldest first, each timed by its newest sample', async () => {
+            await repository.insertSample(aSample({sampleTime: at('09:00'), cpuPct: 10, ramPct: 20}))
+            await repository.insertSample(aSample({sampleTime: at('09:01'), cpuPct: 30, ramPct: 40}))
+            await repository.insertSample(aSample({sampleTime: at('09:02'), cpuPct: 50, ramPct: 60}))
+
+            const history = await repository.sessionHistory(SESSION_ID, {fromTime: at('09:00'), bucketSeconds: 120})
+
+            assert.deepEqual(history.map(({sampleTime, cpuPct, ramPct}) => ({sampleTime, cpuPct, ramPct})), [
+                {sampleTime: at('09:01'), cpuPct: 20, ramPct: 30},
+                {sampleTime: at('09:02'), cpuPct: 50, ramPct: 60}
+            ])
+        })
+
+        test('leaves out other sessions and samples from before fromTime', async () => {
+            await repository.insertSample(aSample({sampleTime: at('08:59')}))
+            await repository.insertSample(aSample({sampleTime: at('09:05')}))
+            await repository.insertSample(aSample({sessionId: ANOTHER_SESSION_ID, sampleTime: at('09:05')}))
+
+            const history = await repository.sessionHistory(SESSION_ID, {fromTime: at('09:00'), bucketSeconds: 60})
+
+            assert.deepEqual(history.map(({sampleTime}) => sampleTime), [at('09:05')])
+        })
+
+        test('sums the network counters, and reports no GPU where none was measured', async () => {
+            await repository.insertSample(aSample({netRxBytesPerS: 100, netTxBytesPerS: 200, gpuPct: null}))
+
+            const [sample] = await repository.sessionHistory(SESSION_ID, {fromTime: at('09:00'), bucketSeconds: 60})
+
+            assert.equal(sample.netBytesPerS, 300)
+            assert.equal(sample.gpuPct, null)
+        })
+    })
+
     describe('rollupHours', () => {
         test('aggregates each whole hour in the window, and rerunning it changes nothing', async () => {
             await repository.insertSample(aSample({sampleTime: at('09:10'), cpuPct: 10, gpuPct: 40}))

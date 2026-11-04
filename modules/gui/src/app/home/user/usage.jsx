@@ -14,6 +14,7 @@ import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
 
+import {GlobalSessions} from './globalSessions'
 import styles from './usage.module.css'
 import {UsageMenuButton} from './usageMenu'
 import {UsageStatistics} from './usageStatistics'
@@ -144,8 +145,17 @@ class _UsageButton extends React.Component {
             <React.Fragment>
                 <Usage/>
                 <UserSessions/>
-                {currentUser()?.admin ? <GlobalUsage/> : null}
+                {currentUser()?.admin ? this.renderAdminPanels() : null}
                 {this.renderButton()}
+            </React.Fragment>
+        )
+    }
+
+    renderAdminPanels() {
+        return (
+            <React.Fragment>
+                <GlobalUsage/>
+                <GlobalSessions/>
             </React.Fragment>
         )
     }
