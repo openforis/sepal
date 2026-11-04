@@ -1,7 +1,11 @@
-import {mkdir, realpath} from 'node:fs/promises'
-import {dirname, isAbsolute, relative, resolve, sep} from 'node:path'
+import {mkdir, readdir, realpath} from 'node:fs/promises'
+import {dirname, isAbsolute, join, relative, resolve, sep} from 'node:path'
 
-import {assertEEObjectExport, eeObjectWorkspacePath} from '#sepal/eeObjectExport'
+import {lastValueFrom} from 'rxjs'
+
+import {assertEEObjectExport, eeObjectImageName, eeObjectWorkspacePath} from '#sepal/eeObjectExport'
+import {createVrt$, getBandNames$, setBandNames$} from '#sepal/gdal'
+import {escapeRegExp} from '#sepal/string'
 
 import {followEEExport} from '../eeExport.js'
 import {exportToWorkspace} from '../workspaceExport.js'
@@ -14,7 +18,10 @@ export const eeObjectExport = async (params, context) => {
     if (spec.destination === 'SEPAL') {
         const downloadDir = await workspaceDirectory(eeObjectWorkspacePath(spec, params.description))
         await mkdir(downloadDir, {recursive: true})
-        await exportToWorkspace({...context, start, downloadDir})
+        const {downloaded} = await exportToWorkspace({...context, start, downloadDir})
+        if (downloaded && spec.kind === 'IMAGE') {
+            await mosaicTiles(downloadDir, eeObjectImageName(spec, params.description))
+        }
     } else {
         const {eeTaskId, assetId} = await start()
         if (!eeTaskId) {
@@ -24,6 +31,21 @@ export const eeObjectExport = async (params, context) => {
         if (!signal.aborted && spec.destination === 'GEE' && spec.sharing === 'PUBLIC') {
             await sepal.gee('task/asset/share', {assetId: assetId || spec.assetId})
         }
+    }
+}
+
+// Earth Engine splits a large image into <name>-<row>-<column>.tif tiles; the VRT opens them as one raster.
+const mosaicTiles = async (dir, name) => {
+    const tile = new RegExp(`^${escapeRegExp(name)}-\\d+-\\d+\\.tif$`)
+    const tiles = (await readdir(dir)).filter(file => tile.test(file)).sort().map(file => join(dir, file))
+    if (tiles.length < 2) {
+        return
+    }
+    const vrtPath = join(dir, `${name}.vrt`)
+    const bandNames = await lastValueFrom(getBandNames$(tiles[0]))
+    await lastValueFrom(createVrt$({inputPaths: tiles, outputPath: vrtPath}), {defaultValue: null})
+    if (bandNames.some(Boolean)) {
+        await lastValueFrom(setBandNames$(vrtPath, bandNames), {defaultValue: null})
     }
 }
 

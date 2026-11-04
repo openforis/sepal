@@ -1,10 +1,21 @@
 import assert from 'node:assert/strict'
-import {mkdtemp, readFile, rm, stat, symlink} from 'node:fs/promises'
+import {mkdir, mkdtemp, readFile, rm, stat, symlink, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import {afterEach, beforeEach, test} from 'node:test'
+import {afterEach, beforeEach, mock, test} from 'node:test'
 
-import {operations} from '../operations.js'
+import {of} from 'rxjs'
+
+const gdalCalls = []
+mock.module('#sepal/gdal', {
+    exports: {
+        getBandNames$: () => of(['nd']),
+        createVrt$: options => { gdalCalls.push({createVrt: options}); return of(null) },
+        setBandNames$: (path, names) => { gdalCalls.push({setBandNames: [path, names]}); return of(null) }
+    }
+})
+
+const {operations} = await import('../operations.js')
 
 const EXPRESSION = {result: '0', values: {'0': {constantValue: 1}}}
 const originalHome = process.env.HOME
@@ -13,6 +24,7 @@ let home
 beforeEach(async () => {
     home = await mkdtemp(join(tmpdir(), 'ee-object-export-'))
     process.env.HOME = home
+    gdalCalls.length = 0
 })
 
 afterEach(async () => {
@@ -25,7 +37,7 @@ const params = (destination, extra = {}) => ({
     export: {kind: 'IMAGE', destination, expression: EXPRESSION, ...extra}
 })
 
-const client = ({states = ['COMPLETED'], startError} = {}) => {
+const client = ({states = ['COMPLETED'], startError, files = ['ndvi.tif']} = {}) => {
     const calls = []
     const destination = {type: 'drive', folderId: 'folder-1'}
     return {
@@ -44,7 +56,7 @@ const client = ({states = ['COMPLETED'], startError} = {}) => {
                     return {state: states.shift()}
                 }
                 if (path === 'task/download/files') {
-                    return {files: [{name: 'ndvi.tif', url: 'https://storage.invalid/ndvi', size: 4}], expiresAt: Date.now() + 3600000}
+                    return {files: files.map(name => ({name, url: `https://storage.invalid/${name}`, size: 4})), expiresAt: Date.now() + 3600000}
                 }
                 return {}
             }
@@ -99,6 +111,27 @@ test('downloads a workspace export into its relative path and cleans temporary s
     assert.deepEqual(calls.map(({path}) => path), [
         'task/export/ee', 'task/operation/status', 'task/download/files', 'task/download/cleanup'
     ])
+})
+
+test('mosaics the tiles of a workspace image into a VRT with their band names', async () => {
+    const tiles = ['ndvi-0000000000-0000000000.tif', 'ndvi-0000000000-0000032768.tif']
+    const dir = join(home, 'downloads/ndvi')
+    await mkdir(dir, {recursive: true})
+    await writeFile(join(dir, 'ndvi-2-0000000000-0000000000.tif'), 'an earlier export')
+    const {sepal} = client({files: [...tiles].reverse()})
+
+    await operations['ee.export'](params('SEPAL'), context(sepal))
+
+    assert.deepEqual(gdalCalls, [
+        {createVrt: {inputPaths: tiles.map(tile => join(dir, tile)), outputPath: join(dir, 'ndvi.vrt')}},
+        {setBandNames: [join(dir, 'ndvi.vrt'), ['nd']]}
+    ])
+})
+
+test('leaves a workspace image that arrives as one file as it is', async () => {
+    const {sepal} = client()
+    await operations['ee.export'](params('SEPAL'), context(sepal))
+    assert.deepEqual(gdalCalls, [])
 })
 
 test('uses a safe default workspace directory from the description', async () => {
