@@ -32,15 +32,25 @@ afterEach(async () => {
     await rm(home, {recursive: true, force: true})
 })
 
-test('starts an object asset export, follows it and shares it when requested', async () => {
+test('starts an object asset export, follows it and shares it when requested, reporting the sharing', async () => {
     const {sepal, calls} = client()
+    const reports = []
     const request = params('GEE', {assetId: 'projects/p/assets/out', sharing: 'PUBLIC'})
 
-    await operations['ee.export'](request, context(sepal))
+    await operations['ee.export'](request, context(sepal, {report: progress => reports.push(progress)}))
 
     assert.deepEqual(calls.map(({path}) => path), ['task/export/ee', 'task/operation/status', 'task/asset/share'])
     assert.deepEqual(calls[0].body, request)
     assert.deepEqual(calls[2].body, {assetId: 'projects/p/assets/out'})
+    assert.equal(reports.at(-1).messageKey, 'tasks.ee.export.asset.sharing')
+})
+
+test('does not share a private asset export', async () => {
+    const {sepal, calls} = client()
+
+    await operations['ee.export'](params('GEE', {assetId: 'projects/p/assets/out', sharing: 'PRIVATE'}), context(sepal))
+
+    assert.deepEqual(calls.map(({path}) => path), ['task/export/ee', 'task/operation/status'])
 })
 
 test('follows a table export to Drive', async () => {

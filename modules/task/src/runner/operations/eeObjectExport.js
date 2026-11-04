@@ -7,7 +7,7 @@ import {assertEEObjectExport, eeObjectFilenamePrefix, eeObjectWorkspacePath} fro
 import {createVrt$, getBandNames$, setBandNames$} from '#sepal/gdal'
 import {escapeRegExp} from '#sepal/string'
 
-import {followEEExport} from '../eeExport.js'
+import {followEEExport, shareIfPublic} from '../eeExport.js'
 import {exportToWorkspace} from '../workspaceExport.js'
 
 export const eeObjectExport = async (params, context) => {
@@ -28,8 +28,8 @@ export const eeObjectExport = async (params, context) => {
             throw new Error('No Earth Engine export was started; Drive exports require a Google account')
         }
         await followEEExport({eeTaskId, sepal, report, signal, sleep})
-        if (!signal.aborted && spec.destination === 'GEE' && spec.sharing === 'PUBLIC') {
-            await sepal.gee('task/asset/share', {assetId: assetId || spec.assetId})
+        if (spec.destination === 'GEE') {
+            await shareIfPublic({sharing: spec.sharing, assetId: assetId || spec.assetId, sepal, report, signal})
         }
     }
 }
