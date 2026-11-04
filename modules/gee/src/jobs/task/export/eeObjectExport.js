@@ -3,7 +3,7 @@ import {randomUUID} from 'node:crypto'
 import {defer} from 'rxjs'
 
 import ee from '#sepal/ee/ee'
-import {assertEEObjectExport, eeObjectImageName, eeObjectTaskName} from '#sepal/eeObjectExport'
+import {assertEEObjectExport, eeObjectDriveFolder, eeObjectFilenamePrefix, eeObjectTaskName} from '#sepal/eeObjectExport'
 
 import {startTableToDriveExport$} from './eeObjectTableDriveExport.js'
 import {startImageToAssetExport$, startTableToAssetExport$} from './toAsset.js'
@@ -17,15 +17,11 @@ const exporters = {
 
 export const startEEObjectExport$ = ({export: spec, description}, context) => defer(() => {
     assertEEObjectExport(spec)
-    const {kind, destination, expression, region, driveFolder, ...options} = spec
+    const {kind, destination, expression, region, driveFolder: _driveFolder, filenamePrefix: _filenamePrefix, ...options} = spec
     const object = ee.Deserializer.decodeCloudApi(expression)
     const exportName = eeObjectTaskName(description)
-    const output = {
-        ...options,
-        description: exportName,
-        folder: driveFolder,
-        fileFormat: {GEO_TIFF: 'GeoTIFF', TF_RECORD: 'TFRecord'}[options.fileFormat] || options.fileFormat
-    }
+    const filenamePrefix = eeObjectFilenamePrefix(spec, description)
+    const output = {...options, description: exportName, folder: eeObjectDriveFolder(spec, description)}
     if (kind === 'IMAGE') {
         output.image = ee.Image(object)
         output.region = region ? ee.Geometry(ee.Deserializer.decodeCloudApi(region)) : output.image.geometry()
@@ -36,21 +32,15 @@ export const startEEObjectExport$ = ({export: spec, description}, context) => de
         if (typeof output.pyramidingPolicy === 'string') {
             output.pyramidingPolicy = {'.default': output.pyramidingPolicy}
         }
-        if (destination !== 'GEE') {
-            output.description = eeObjectImageName(spec, description)
+        output.fileNamePrefix = filenamePrefix
+        if (destination === 'SEPAL') {
+            output.folder = `${exportName}_${randomUUID()}`
         }
     } else {
         output.collection = ee.FeatureCollection(object)
+        output.filenamePrefix = filenamePrefix
         if (destination === 'GEE' && options.selectors) {
             output.collection = output.collection.select(options.selectors)
-        }
-    }
-    if (destination === 'SEPAL') {
-        if (kind === 'IMAGE') {
-            output.folder = `${exportName}_${randomUUID()}`
-        } else {
-            output.description = eeObjectTaskName(description, `_${randomUUID()}`)
-            output.filenamePrefix = options.filenamePrefix || exportName
         }
     }
     return exporters[kind][destination](output, context)

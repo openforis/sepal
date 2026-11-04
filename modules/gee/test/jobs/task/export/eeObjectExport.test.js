@@ -62,13 +62,9 @@ for (const [kind, destination, name] of [
         assert.equal(calls[0].name, name)
         const {options, context} = calls[0]
         assert.equal(options[kind === 'IMAGE' ? 'image' : 'collection'], kind === 'IMAGE' ? IMAGE : TABLE)
-        if (kind === 'TABLE' && destination === 'SEPAL') {
-            assert.match(options.description, /^my_export_/)
-        } else {
-            assert.equal(options.description, kind === 'IMAGE' && destination !== 'GEE' ? 'output' : 'my_export')
-        }
-        assert.equal(options.filenamePrefix, 'output')
-        assert.equal(options.fileFormat, kind === 'IMAGE' ? 'GeoTIFF' : 'SHP')
+        assert.equal(options.description, 'my_export')
+        assert.equal(options[kind === 'IMAGE' ? 'fileNamePrefix' : 'filenamePrefix'], 'output')
+        assert.equal(options.fileFormat, request.export.fileFormat)
         assert.equal(options.assetId, 'projects/p/assets/out')
         assert.deepEqual(options.selectors, ['id'])
         assert.deepEqual(options.properties, {source: 'notebook'})
@@ -104,26 +100,37 @@ test('workspace image exports get separate temporary folders even for the same n
     assert.equal(calls[0].options.region, REGION)
 })
 
-test('workspace table exports also get separate temporary folders', async () => {
-    const request = {description: 'plots', export: {kind: 'TABLE', destination: 'SEPAL', expression: EXPRESSION}}
-    await lastValueFrom(startEEObjectExport$(request, {sepalUser: USER}))
-    await lastValueFrom(startEEObjectExport$(request, {sepalUser: USER}))
-    assert.match(calls[0].options.description, /^plots_/)
-    assert.notEqual(calls[0].options.description, calls[1].options.description)
-    assert.equal(calls[0].options.filenamePrefix, 'plots')
-})
-
-for (const destination of ['DRIVE', 'SEPAL']) {
-    test(`an image to ${destination} is named after its prefix in the characters Earth Engine accepts`, async () => {
-        const request = {description: 'ndvi', export: {
-            kind: 'IMAGE', destination, expression: EXPRESSION, filenamePrefix: 'NDVI 2024 (v2)'
+for (const [kind, destination, prefixOption] of [
+    ['IMAGE', 'DRIVE', 'fileNamePrefix'], ['IMAGE', 'SEPAL', 'fileNamePrefix'],
+    ['TABLE', 'DRIVE', 'filenamePrefix'], ['TABLE', 'SEPAL', 'filenamePrefix']
+]) {
+    test(`a ${kind} to ${destination} keeps its file name prefix as written, under a description Earth Engine accepts`, async () => {
+        const request = {description: 'ndvi (v2)', export: {
+            kind, destination, expression: EXPRESSION, filenamePrefix: 'NDVI 2024 (v2)'
         }}
 
         await lastValueFrom(startEEObjectExport$(request, {sepalUser: USER}))
 
-        assert.equal(calls[0].options.description, 'NDVI_2024_v2_')
+        assert.equal(calls[0].options[prefixOption], 'NDVI 2024 (v2)')
+        assert.equal(calls[0].options.description, 'ndvi_v2_')
+    })
+
+    test(`a ${kind} file name prefix to ${destination} stays one path segment`, async () => {
+        const request = {description: 'ndvi', export: {kind, destination, expression: EXPRESSION, filenamePrefix: '2024/ndvi'}}
+
+        await lastValueFrom(startEEObjectExport$(request, {sepalUser: USER}))
+
+        assert.equal(calls[0].options[prefixOption], '2024_ndvi')
     })
 }
+
+test('an export to Drive without a folder goes to a folder named after it', async () => {
+    const request = {description: 'forest/loss', export: {kind: 'IMAGE', destination: 'DRIVE', expression: EXPRESSION}}
+
+    await lastValueFrom(startEEObjectExport$(request, {sepalUser: USER}))
+
+    assert.equal(calls[0].options.folder, 'forest_loss')
+})
 
 for (const [kind, destination] of [['IMAGE', 'DRIVE'], ['TABLE', 'GEE'], ['TABLE', 'SEPAL']]) {
     test(`a long ${kind} name to ${destination} fits Earth Engine's 100-character description`, async () => {
@@ -139,15 +146,6 @@ for (const [kind, destination] of [['IMAGE', 'DRIVE'], ['TABLE', 'GEE'], ['TABLE
         assert.match(description, /^n{50}/)
     })
 }
-
-test('long workspace table names keep their unique suffix', async () => {
-    const request = {description: 'n'.repeat(120), export: {kind: 'TABLE', destination: 'SEPAL', expression: EXPRESSION}}
-
-    await lastValueFrom(startEEObjectExport$(request, {sepalUser: USER}))
-    await lastValueFrom(startEEObjectExport$(request, {sepalUser: USER}))
-
-    assert.notEqual(calls[0].options.description, calls[1].options.description)
-})
 
 for (const destination of ['GEE', 'SEPAL']) {
     test(`rejects maxVertices for ${destination} because its unchanged exporter cannot apply it`, async () => {

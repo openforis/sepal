@@ -9,8 +9,8 @@ import {castToLargest} from './castToLargest.js'
 // Earth Engine writes into a folder of that name anywhere in the user's Drive; SEPAL creates it in its own tree
 // first so the export lands there.
 export const startImageToDriveExport$ = ({
-    image, folder: requestedFolder, description, dimensions, region, scale, crs, crsTransform, maxPixels = 1e13, shardSize,
-    fileDimensions, skipEmptyTiles, fileFormat, formatOptions
+    image, folder: requestedFolder, description, fileNamePrefix = description, dimensions, region, scale, crs, crsTransform,
+    maxPixels = 1e13, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
 }, {sepalUser}) => defer(() => {
     if (isServiceAccount()) {
         return of({eeTaskId: null})
@@ -22,7 +22,7 @@ export const startImageToDriveExport$ = ({
         switchMap(region => {
             const serverConfig = ee.batch.Export.convertToServerParams(
                 {
-                    image: castImage, description, folder, fileNamePrefix: description, dimensions, region, scale, crs,
+                    image: castImage, description, folder, fileNamePrefix, dimensions, region, scale, crs,
                     crsTransform: crsTransform || undefined, maxPixels, shardSize, fileDimensions, skipEmptyTiles,
                     fileFormat, formatOptions
                 },
