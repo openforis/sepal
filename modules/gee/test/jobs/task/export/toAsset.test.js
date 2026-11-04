@@ -132,10 +132,11 @@ describe('exporting a single image', () => {
         assert.equal(submittedImage().sepal_band_encoding_3, removed)
     })
 
-    it('submits the default projection, pixel limit and shard size where the export names none', async () => {
+    it('submits the default pixel limit and shard size where the export names none, leaving the projection to Earth Engine', async () => {
         await exportImage({bandEncoding: {}})
 
-        assert.partialDeepStrictEqual(state.submitted[0], {crs: 'EPSG:4326', maxPixels: 1e13, shardSize: 256})
+        assert.partialDeepStrictEqual(state.submitted[0], {maxPixels: 1e13, shardSize: 256})
+        assert.equal(state.submitted[0].crs, undefined)
         assert.equal(state.submitted[0].crsTransform, undefined)
     })
 

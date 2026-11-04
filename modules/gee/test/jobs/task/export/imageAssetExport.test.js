@@ -59,6 +59,18 @@ describe('exporting an optical mosaic', () => {
         assert.deepEqual(bandEncoding, {red: REFLECTANCE})
     })
 
+    it('is exported in EPSG:4326 where the request names no projection', async () => {
+        const {crs} = await submit({recipe: landsatMosaic(), bands: ['red']})
+
+        assert.equal(crs, 'EPSG:4326')
+    })
+
+    it('is exported in the projection the request names', async () => {
+        const {crs} = await submit({recipe: landsatMosaic(), bands: ['red'], crs: 'EPSG:32633'})
+
+        assert.equal(crs, 'EPSG:32633')
+    })
+
     it('reads no other recipe to describe its own output', async () => {
         const recipe = landsatMosaic()
 
@@ -1278,7 +1290,7 @@ const masking = ({primary, mask = {type: 'ASSET', id: MASK_ASSET}}) => ({
 
 const state = {}
 
-const submit = async ({recipe, bands, pyramidingPolicy, properties = {}, visualizations}) => {
+const submit = async ({recipe, bands, pyramidingPolicy, properties = {}, visualizations, crs}) => {
     const {startImageAssetExport$} = await import('#gee/jobs/task/export/imageAssetExport')
     await lastValueFrom(startImageAssetExport$({
         image: {
@@ -1288,7 +1300,8 @@ const submit = async ({recipe, bands, pyramidingPolicy, properties = {}, visuali
             properties,
             ...(visualizations && {visualizations}),
             assetId: 'projects/p/assets/out',
-            ...(pyramidingPolicy && {pyramidingPolicy})
+            ...(pyramidingPolicy && {pyramidingPolicy}),
+            ...(crs && {crs})
         }
     }))
     assert.equal((state.exported).length, 1)
