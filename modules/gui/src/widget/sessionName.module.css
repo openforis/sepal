@@ -5,7 +5,7 @@
     background-color: var(--session-name-ground-color);
     overflow: hidden;
     font-family: "Ubuntu Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    font-size: .85rem;
+    font-size: 1rem;
     font-weight: bold;
     line-height: 1.2rem;
     white-space: nowrap;
@@ -14,12 +14,11 @@
 
 .name,
 .type {
-    padding: 0 .35rem;
+    padding: 0 .25rem;
 }
 
-/* On the parts themselves, to outrank containers that uppercase every descendant (panel headers' .header *) */
 .sessionName > span {
-    text-transform: lowercase;
+    text-transform: none;
 }
 
 .name {
