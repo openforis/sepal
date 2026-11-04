@@ -1,5 +1,5 @@
 import {mkdir, readdir, realpath} from 'node:fs/promises'
-import {dirname, isAbsolute, join, relative, resolve, sep} from 'node:path'
+import {dirname, join, relative, resolve, sep} from 'node:path'
 
 import {lastValueFrom} from 'rxjs'
 
@@ -64,19 +64,21 @@ const mosaicTiles = async (dir, name) => {
     }
 }
 
+// assertEEObjectExport keeps the path itself inside the home; a symlink on the way can still lead out of it.
 const workspaceDirectory = async path => {
     const home = resolve(process.env.HOME)
     const dir = resolve(home, path)
-    if (isAbsolute(path) || relative(home, dir).split(sep)[0] === '..') {
-        throw new Error('workspacePath must be relative to the SEPAL home directory')
-    }
     const actualHome = await realpath(home)
     let ancestor = dir
     while (true) {
         try {
             const actual = await realpath(ancestor)
             if (relative(actualHome, actual).split(sep)[0] === '..') {
-                throw new Error('workspacePath must resolve inside the SEPAL home directory')
+                throw new ClientException('workspacePath must resolve inside the SEPAL home directory', {userMessage: {
+                    key: 'tasks.status.workspaceOutsideHome',
+                    message: `The folder ~/${path} leads outside your home folder. Export to a folder inside it.`,
+                    args: {path}
+                }})
             }
             break
         } catch (error) {

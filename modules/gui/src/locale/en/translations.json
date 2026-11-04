@@ -6359,7 +6359,8 @@
       "launchFailed": "The task could not be started. Run the task again.",
       "stalled": "The task stopped responding. Run the task again.",
       "waitingForLocalProcessing": "Waiting for other exports to finish downloading...",
-      "workspaceNotEmpty": "The folder ~/{path} is not empty. Export to an empty or new folder, or remove its contents."
+      "workspaceNotEmpty": "The folder ~/{path} is not empty. Export to an empty or new folder, or remove its contents.",
+      "workspaceOutsideHome": "The folder ~/{path} leads outside your home folder. Export to a folder inside it."
     }
   },
   "terminal": {

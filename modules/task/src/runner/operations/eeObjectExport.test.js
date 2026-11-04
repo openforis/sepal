@@ -181,7 +181,14 @@ test('rejects a symlink outside the home before creating directories or starting
     try {
         await symlink(outside, join(home, 'linked'))
         const {sepal, calls} = client()
-        await assert.rejects(operations['ee.export'](params('SEPAL', {workspacePath: 'linked/output'}), context(sepal)), /workspacePath/)
+        await assert.rejects(
+            operations['ee.export'](params('SEPAL', {workspacePath: 'linked/output'}), context(sepal)),
+            {userMessage: {
+                key: 'tasks.status.workspaceOutsideHome',
+                message: 'The folder ~/linked/output leads outside your home folder. Export to a folder inside it.',
+                args: {path: 'linked/output'}
+            }}
+        )
         assert.deepEqual(calls, [])
         await assert.rejects(stat(join(outside, 'output')), {code: 'ENOENT'})
     } finally {
