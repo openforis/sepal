@@ -29,7 +29,7 @@ npm run testWatch     # Node test runner watch mode
 - WebSocket upgrade handling via manual server listeners
 
 ### Git Operations
-`src/git.js` - Clone, checkout of the catalog's branch or pinned commit, and commit info retrieval with error handling and retry. The catalog is the only source of updates; nothing pulls.
+`src/git.js` - Clone (retried), checkout of the catalog's pinned commit, and commit info retrieval. The catalog is the only source of updates; nothing pulls. An app without a commit stays at the commit it was cloned at, so the catalog requires one for docker apps.
 
 ## Non-Obvious Conventions
 
