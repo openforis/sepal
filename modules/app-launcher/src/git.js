@@ -30,7 +30,7 @@ const cloneRepository = async (repository, branch, appPath) => {
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
             await executeCommand(
-                'git', ['clone', `--branch=${branch}`, repository, appPath]
+                'git', ['clone', `--branch=${branch}`, '--end-of-options', repository, appPath]
             )
             return
         } catch (err) {
@@ -52,7 +52,7 @@ const checkBranchExists = async (repository, branch) => {
     log.debug(`Checking branch ${branch} in ${repository}`)
     try {
         await executeCommand(
-            'git', ['ls-remote', '--exit-code', '--heads', repository, branch]
+            'git', ['ls-remote', '--exit-code', '--heads', '--end-of-options', repository, branch]
         )
         return true
     } catch (err) {
@@ -68,8 +68,8 @@ const checkBranchExists = async (repository, branch) => {
 const checkoutBranch = async (appPath, branch) => {
     try {
         log.info(`Setting repository to branch '${branch}' (fetching from remote)`)
-        await executeCommand('git', ['fetch', 'origin', branch], {cwd: appPath})
-        await executeCommand('git', ['checkout', branch], {cwd: appPath})
+        await executeCommand('git', ['fetch', '--end-of-options', 'origin', branch], {cwd: appPath})
+        await executeCommand('git', ['checkout', '--end-of-options', branch], {cwd: appPath})
         
     } catch (err) {
         log.error(`Failed to checkout branch '${branch}': ${err.message}`)
@@ -124,8 +124,8 @@ const getRepoInfo = async appPath => {
 const checkoutCommit = async (appPath, branch, commit) => {
     log.info(`Pinning repository at ${appPath} to commit ${commit}`)
     try {
-        await executeCommand('git', ['fetch', 'origin', branch], {cwd: appPath})
-        await executeCommand('git', ['checkout', '--detach', commit], {cwd: appPath})
+        await executeCommand('git', ['fetch', '--end-of-options', 'origin', branch], {cwd: appPath})
+        await executeCommand('git', ['checkout', '--detach', '--end-of-options', commit], {cwd: appPath})
     } catch (err) {
         log.error(`Failed to checkout commit '${commit}': ${err.message}`)
         throw new ClientException(`Failed to checkout commit '${commit}': ${err.message}`)
