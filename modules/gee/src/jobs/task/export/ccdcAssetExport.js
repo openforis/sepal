@@ -23,7 +23,7 @@ export const startCcdcAssetExport$ = params =>
 // itself read Earth Engine - the closure, and the evidence its requirements need - and its failures are passed on as
 // they are.
 export const ccdcAssetSource$ = ({image, description}) => {
-    const {recipe, bands, scale, visualizations, properties, ...other} = image
+    const {recipe, bands, scale, crs = 'EPSG:4326', visualizations, properties, ...other} = image
     const built = {...recipe, type: ccdcType.type}
     return resolveImageOutput$(built).pipe(
         switchMap(imageOutput => requireCcdcRequestedOutputs$(built, {selection: bands}).pipe(map(() => imageOutput))),
@@ -46,6 +46,7 @@ export const ccdcAssetSource$ = ({image, description}) => {
                 bandEncoding: encodingOfBands(selectedBandEncoding(imageOutput, ccdcOutputBands(fittedMeasures(built.model, bands)))),
                 region: geometry.bounds(),
                 scale,
+                crs,
                 pyramidingPolicy: {'.default': 'sample'},
                 maxPixels: 1e13,
                 properties: {

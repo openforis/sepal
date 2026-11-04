@@ -128,7 +128,7 @@ const HARMONIC = {
     gamma: [1, 1, 1]
 }
 
-const submit = async ({model = recipe(), bands = ['ndvi'], visualizations = [], properties, scale = 30} = {}) => {
+const submit = async ({model = recipe(), bands = ['ndvi'], visualizations = [], properties, scale = 30, crs} = {}) => {
     await lastValueFrom(startCcdcAssetExport$({
         image: {
             recipe: model,
@@ -136,7 +136,8 @@ const submit = async ({model = recipe(), bands = ['ndvi'], visualizations = [], 
             scale,
             visualizations,
             properties,
-            assetId: 'users/me/my-ccdc'
+            assetId: 'users/me/my-ccdc',
+            ...(crs && {crs})
         },
         description: 'my-ccdc'
     }))
@@ -438,6 +439,11 @@ describe('the CCDC Segments asset export', () => {
         assert.equal(region, 'region-bounds')
         assert.equal(scale, 30)
         assert.equal(image, 'segments-image')
+    })
+
+    it('is exported in EPSG:4326 where the request names no projection, and in the one it names otherwise', async () => {
+        assert.equal((await submit()).crs, 'EPSG:4326')
+        assert.equal((await submit({crs: 'EPSG:32633'})).crs, 'EPSG:32633')
     })
 
     it('passes the retrieve band selection to the segment builder', async () => {
