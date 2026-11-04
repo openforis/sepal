@@ -141,13 +141,6 @@
       "timestamp": {
         "never": ""
       },
-      "update": {
-        "available": "",
-        "checkForUpdates": "",
-        "error": "",
-        "success": "",
-        "noChanges": ""
-      },
       "tooltip": ""
     }
   },
@@ -6403,6 +6396,7 @@
       "title": "Compte Google"
     },
     "report": {
+      "globalSessions": "",
       "globalUsage": "",
       "resources": {
         "info": "",
@@ -6421,6 +6415,7 @@
         "hourlyCost": "Coût horaire",
         "instanceDescription": "Description de l'instance",
         "instanceType": "Type d'instance",
+        "loadError": "",
         "noSessions": "Pas de session active",
         "time": "Date/heure démarrage",
         "title": ""
