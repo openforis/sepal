@@ -85,8 +85,8 @@ class _Label extends React.Component {
     }
 
     renderWarning() {
-        const {warning} = this.props
-        return warning ? <ErrorIndicator error={warning} severity='warning'/> : null
+        const {warning, error} = this.props
+        return warning && !error ? <ErrorIndicator error={warning} severity='warning'/> : null
     }
 
     renderError() {

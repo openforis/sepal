@@ -3027,6 +3027,9 @@
           "title": "Band names",
           "tooltip": "Set the band names of the stack.",
           "duplicateBand": "Duplicate band name",
+          "displaced": "Named {name}: another band now takes {previousName}. This Stack's visualizations of this band follow it, but other recipes reading {previousName} will read that other band.",
+          "takesName": "{name} named another band before. Other recipes reading {name} will read this band instead.",
+          "unresolved": "Its saved name cannot be told apart from another band's of this input. Name it to keep it.",
           "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters",
           "problem": {
             "duplicate": "\"{outputName}\" is the name of more than one band.",

@@ -295,11 +295,11 @@ presents and enforces:
 
 - **Local requirements on drafts.** A requirement over the recipe's own configuration names the panel editing its
   section as its `editor` - {panel, input, blocksApply}. The binding reads every local requirement of the type over the
-  recipe as the panel's values would leave it, prerequisites resolved there, tells the input what the named ones find
-  - an item's status by item, anything else as an error unless it is set-up not yet done - and holds Apply as the
-  editor's policy says, rechecking against the recipe as it stands at submission (`recipe/localCandidate.js`). Band
-  Math's Output bands says each output image's problems on its row and holds nothing back; Sampling Design's manual
-  proportions refuse answers for other strata.
+  recipe as the panel's values would leave it, with what committing them derives (`committedRecipe`), prerequisites
+  resolved there, tells the input what the named ones find - an item's status by item, anything else as an error
+  unless it is set-up not yet done - and holds Apply as the editor's policy says, rechecking against the recipe as it
+  stands at submission (`recipe/localCandidate.js`). Band Math's Output bands says each output image's problems on its
+  row and holds nothing back; Sampling Design's manual proportions refuse answers for other strata.
 - **Synchronous derived results.** A type declares `derivedResults` - {panel, current(model), derive(model)} - for
   results its panels derive from the model alone (`recipe/derivedResult.js`). Whenever the edit, or the recipe under
   it, leaves the draft not current, the binding derives it again into the draft; a submission it is not derived for is
@@ -359,6 +359,11 @@ step is reconciled against what the later items still hold, so a generated name 
 changes. Paths are written only where their final value changes.
 Everything is synchronous over the two models of the commit: no acquired facts, credentials, polling, calculation
 cache, hash or persisted record. A declaration may also carry `panel` for its editor's draft; Band Math's does not.
+
+**Whole-recipe derivations.** A result that projects the whole recipe, not an ordered list of items, declares
+`followRecipe` alone: `{id, applied: {followRecipe(previous, recipe)}}`. The commit evaluates it once over the two
+models and writes only the paths whose value changes, as for item declarations. Stack's band names use it
+([Stack](../../recipes/stack.md#band-names)).
 
 ## Persisted derived-result evidence
 

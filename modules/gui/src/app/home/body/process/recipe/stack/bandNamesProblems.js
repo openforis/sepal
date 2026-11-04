@@ -35,7 +35,7 @@ export const bandNamesProblemMessage = ({code, outputName}) =>
     msg(`process.stack.panel.bandNames.problem.${MESSAGES[code]}`, {outputName})
 
 const CODES = new Set([DUPLICATE_BAND_NAME, INCOMPLETE_IMAGE_OUTPUT, UNMAPPED_INPUT])
-const INVALID_FORMAT = 'INVALID_FORMAT'
+export const INVALID_FORMAT = 'INVALID_FORMAT'
 
 const MESSAGES = {
     [DUPLICATE_BAND_NAME]: 'duplicate',

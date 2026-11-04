@@ -13,24 +13,16 @@ import {RetrieveButton} from '../../retrieveButton'
 import {SectionButton} from '../../sectionButton'
 import {withOutputProblems} from '../../withOutputProblems'
 import {bandNamesProblemMessage, bandNamesProblems} from '../bandNamesProblems'
-import {RecipeActions} from '../stackRecipe'
 import {BandNames} from './bandNames/bandNames'
-import {toBandNames} from './bandNames/bandNamesUpdate'
 import {Retrieve} from './retrieve/retrieve'
 import styles from './stackToolbar.module.css'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
-    bandNames: selectFrom(recipe, 'model.bandNames'),
     initialized: selectFrom(recipe, 'ui.initialized'),
 })
 
 class _StackToolbar extends React.Component {
-    constructor(props) {
-        super(props)
-        this.syncBandNames = this.syncBandNames.bind(this)
-    }
-
     render() {
         const {recipeId, initialized, bandNamesProblems} = this.props
         const bandNamesProblem = bandNamesProblems[0]
@@ -40,7 +32,7 @@ class _StackToolbar extends React.Component {
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
                 <Retrieve/>
-                <InputImagery onChange={this.syncBandNames}/>
+                <InputImagery/>
                 <BandNames/>
 
                 <Toolbar
@@ -71,13 +63,6 @@ class _StackToolbar extends React.Component {
                 </Toolbar>
             </PanelWizard>
         )
-    }
-
-    syncBandNames(images) {
-        const {recipeId, bandNames: {bandNames: prevBandNames}} = this.props
-        // const bandNames = toBandNames(images, undefined)
-        const bandNames = toBandNames(images, prevBandNames)
-        RecipeActions(recipeId).syncBandNames(bandNames)
     }
 }
 

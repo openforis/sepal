@@ -59,7 +59,7 @@ vi.mock('~/widget/tooltip', () => ({
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: stack} = await import('./stack')
 const {StackToolbar} = await import('./panels/stackToolbar')
-const {toBandNames} = await import('./panels/bandNames/bandNamesUpdate')
+const {commitRecipe} = await import('~/app/home/body/process/recipe/derivedResult')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
 
@@ -244,16 +244,19 @@ describe('band names saved alike', () => {
 })
 
 describe('a band name saved blank', () => {
-    it('marks Band names at once, and is refused in its field once the panel opens', async () => {
+    it('marks Band names at once, and is named automatically once the panel opened is applied', async () => {
         await open(named(stackOver([input('i-1', ASSET_A, ['red', 'nir'])]), {'i-1-nir': ''}))
         expect(bandNamesMark()).toEqual({item: ASSET_A, message: expect.stringContaining('process.stack.panel.bandNames.problem.blank')})
 
         await openBandNames()
-
         expect(nameFields()).toEqual([
             {value: 'red', error: null},
-            {value: '', error: expect.stringContaining('fieldValidation.notBlank')}
+            {value: '', error: null}
         ])
+        await apply()
+
+        expect(bandNamesInError()).toBe(false)
+        expect(model().bandNames.bandNames[0].bands[1]).toEqual({id: 'i-1-nir', originalName: 'nir', outputName: 'nir', automaticName: 'nir'})
     })
 })
 
@@ -317,7 +320,7 @@ describe('an input its band names do not map', () => {
         await open(unmapped())
         await openBandNames()
         expect(nameFields()).toEqual([
-            {value: '', error: expect.stringContaining('fieldValidation.notBlank')},
+            {value: '', error: null},
             {value: 'swir', error: null}
         ])
 
@@ -326,9 +329,19 @@ describe('an input its band names do not map', () => {
 
         expect(bandNamesInError()).toBe(false)
         expect(model().bandNames.bandNames).toEqual([
-            {imageId: 'i-2', bands: [{id: 'i-2-swir', originalName: 'swir', outputName: 'swir'}]},
-            {imageId: 'i-1', bands: [{id: 'i-1-red', originalName: 'red', outputName: 'elevation'}]}
+            {imageId: 'i-1', bands: [{id: 'i-1-red', originalName: 'red', outputName: 'elevation'}]},
+            {imageId: 'i-2', bands: [{id: 'i-2-swir', originalName: 'swir', outputName: 'swir'}]}
         ])
+    })
+
+    it('is named automatically once the panel opened is applied', async () => {
+        await open(unmapped())
+        await openBandNames()
+
+        await apply()
+
+        expect(bandNamesInError()).toBe(false)
+        expect(model().bandNames.bandNames[0]).toEqual({imageId: 'i-1', bands: [{id: 'i-1-red', originalName: 'red', outputName: 'red', automaticName: 'red'}]})
     })
 })
 
@@ -358,10 +371,7 @@ describe('band names saved alike beside an input lacking a band', () => {
     it('leaves Band names marked, and the names refused in their fields, when the input is repaired', async () => {
         await both()
 
-        await setModel(model => {
-            const images = [{...model.inputImagery.images[0], includedBands: model.inputImagery.images[0].includedBands.slice(0, 1)}, model.inputImagery.images[1]]
-            return {...model, inputImagery: {images}, bandNames: {bandNames: toBandNames(images, model.bandNames.bandNames)}}
-        })
+        await commitImages(images => [{...images[0], includedBands: images[0].includedBands.slice(0, 1)}, images[1]])
         await answer({[ASSET_A]: ['red'], [ASSET_B]: ['swir']})
 
         expect(inputImageryInError()).toBe(false)
@@ -496,6 +506,14 @@ async function apply() {
 }
 
 const model = () => selectFrom(store.getState(), ['process.loadedRecipes', ID, 'model'])
+
+// The inputs as their editor applies them: committed, with what the commit derives.
+async function commitImages(change) {
+    const images = selectFrom(store.getState(), ['process.loadedRecipes', ID, 'model.inputImagery.images'])
+    await act(async () => commitRecipe(['process.loadedRecipes', ID], actionBuilder('SET_MODEL_AND_VALUES')
+        .set(['process.loadedRecipes', ID, 'model.inputImagery.images'], change(images))))
+    await settled()
+}
 
 // The model as its panels would leave it.
 async function setModel(change) {

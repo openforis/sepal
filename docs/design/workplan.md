@@ -151,7 +151,8 @@ Remapping's proposed [default class](#default-or-fallback-class) is specified be
 
 - **Source-recovery retention policy.** Decide whether deleted Stack aliases and Band Math output selections/custom
   names should be restored when an input returns. Recovery must not steal occupied names or guess ambiguous old
-  identities. Existing calculation-reference and used-source-band checks stay authoritative.
+  identities. Existing calculation-reference and used-source-band checks stay authoritative. Stack's
+  `bandNames.retired` only keeps automatic names from moving to another source; it restores no explicit alias.
 - **Training-data feedback.** Decide how an explicitly selected empty Provider is presented when other branches
   provide enough points. Do not invalidate an otherwise trainable Consumer merely because a branch is empty.
   Sampling scale, unit/encoding compatibility, legend/value compatibility and post-mask sample adequacy need
@@ -224,17 +225,6 @@ legends. These controls were clean in the bounded assessment; this does not esta
 Retrieval action forms and required setup defaults are not blanket candidates for suppressing Apply. Keep this a
 local form correction, independent of calculation freshness or source-adapter architecture.
 
-### Stack automatic names
-
-Separate generated defaults from explicit `outputName` overrides. Compute one effective-name rule for description,
-execution and forms. Reserve explicit names first, allocate unique defaults in Stack order and retain overrides by
-source-band identity. Clearing an override opts back into automatic naming; explicit collisions fail validation.
-
-Existing saved names have no provenance and must be treated as explicit, not guessed from suffixes. Defaults
-recompute on input changes, not panel opening or metadata refresh. Preserve local style/selection identity where
-possible and never silently bind an old name to a different source. Downstream missing-name repair remains explicit.
-Check add/remove/reorder, clear/duplicate overrides, save compatibility and affected dependent references.
-
 ### Categorical class visibility
 
 Assess a reversible disable/hide control for categorical legend entries instead of requiring their deletion.
@@ -268,14 +258,12 @@ The shared mechanism exists: types declare `dependencies` and their products' `d
 operations return evidence of what they read (`modules/gee/src/jobs/dependencyEvidence.js`); the shared rule compares
 it (`lib/js/shared/src/recipe/calculation`); the source runtime owns calculation work and current evidence
 (`sourceRuntime/calculationEvidence.js`); and local requirements read runtime-acquired evidence with its acquisition
-state (`sourceRequirements.js`). Sampling Design is its first consumer. Form panels judge drafts by local requirements
-naming them as `editor` (`recipe/localCandidate.js`) and keep synchronous results derived in their drafts
+state (`sourceRequirements.js`). Sampling Design is its first consumer. Form panels judge drafts, as committing them
+would leave the recipe, by local requirements naming them as `editor` (`recipe/localCandidate.js`) and keep synchronous results derived in their drafts
 (`recipe/derivedResult.js`): Sampling Design's manual proportions and allocation, and Band Math's Output bands, use them.
 Commits keep applied results derived in the same action (`commitRecipe`, same file):
-[Band Math's calculation bands](../recipes/band-math.md).
+[Band Math's calculation bands](../recipes/band-math.md) and [Stack's band names](../recipes/stack.md#band-names).
 
-- **Stack automatic names.** The same shape: the naming projection reads input order, reserved explicit names and the
-  described input bands; overrides stay user-owned.
 - **Product projections.** Tighten what counts as a meaningful input change at each product owner, through
   `dependencyProjection`, so every consumer benefits from the same rule. For stratum areas, preserve changes to
   pixel values, masks, the selected band, AOI and grid; exclude labels and colours where they affect presentation
@@ -288,7 +276,7 @@ Commits keep applied results derived in the same action (`commitRecipe`, same fi
 #### Recipe adoption inventory
 
 The code assessment covers all 23 current shared recipe types and the common workflows below. It identifies
-reuse opportunities, not reproduced defects in every listed path. Sampling Design and Band Math use the shared
+reuse opportunities, not reproduced defects in every listed path. Sampling Design, Band Math and Stack use the shared
 bindings; the remaining migrations are separate work. Paths in the table are relative to
 `modules/gui/src/app/home/body/process/recipe/` unless qualified.
 
@@ -304,7 +292,6 @@ Use the part of the mechanism each responsibility needs:
 
 | Recipes | Concrete reuse and existing owner | Migration boundary |
 | --- | --- | --- |
-| Stack | `stack/panels/stackToolbar.jsx` invokes `toBandNames` after Input imagery changes. | Combine with [automatic names](#stack-automatic-names): synchronous derivation from ordered inputs and explicit overrides. The existing callback is small; adoption must simplify it and preserve saved names as explicit. |
 | Class Change | `classChange/panels/legend/legend.jsx` rebuilds transition entries, IDs, labels and default colours when either whole input record changes. | Declare the input-legend projection and derive transitions locally. Define transition identity and preservation of edited labels/colours first; keep the established transition-code order. Optional confidence availability is a separate dependency on both inputs. |
 | CCDC, Time Series, Phenology | Their Sources panels separately load Classification metadata and derive band choices. CCDC also derives TMask choices from breakpoint bands in PRC. `selectedClassification.js`, `collectionClassifierRequirements.js` and CCDC's `segmentDescription.js` already establish reusable owners. | Read current resolved facts once and declare Sources-to-processing dependencies. Keep pending/failed facts distinct from unavailable bands; retain invalid selections with actionable feedback. This is compatibility and acquisition work, without persisted fit evidence. |
 | LandTrendr | `landTrendr/panels/sources/sources.jsx` calls `ensureValidIndex` on opening and dataset changes; dataset choices also read Dates. | Declare date/dataset/index compatibility. Settle the explicit replacement/defaulting policy before changing it; opening or temporarily empty options must preserve deliberate choices. |
@@ -333,9 +320,8 @@ Use the part of the mechanism each responsibility needs:
   Retrieve panel already coordinate relevant consumers. Extend those owners where a migration exposes a gap;
   do not add a second chart/request coordinator or duplicate server-preview readiness work.
 
-**Adoption order and acceptance.** Within derivation migrations, Stack's automatic naming is next.
-Class Change and temporal section dependencies are the next focused
-candidates. Other rows are an inventory, not a commitment to migrate working code. Product-owned input projections
+**Adoption order and acceptance.** Within derivation migrations, Class Change and temporal section dependencies are
+the next focused candidates. Other rows are an inventory, not a commitment to migrate working code. Product-owned input projections
 can be added independently where the conservative fallback causes unnecessary recalculation.
 
 Each migration must name the domain projection, the old coordination it deletes and the user choices it preserves.
@@ -584,6 +570,9 @@ export behavior, then verify matched, unmatched and partially/fully masked cases
 A selected input contributing no mapped bands can supply an empty clip geometry when other selected inputs
 are unbounded; selecting no mapped output fails similarly. An empty Stack emits no image. Include these cases
 in empty-input geometry and output-projection assessment. Discarded aliases follow the shared retention decision.
+
+A model without a `bandNames` section makes Band names fail as it opens. The panel expects the section, which every
+Stack the GUI creates holds; a model written elsewhere without it should open with its inputs offered unnamed.
 
 ### Time Series
 

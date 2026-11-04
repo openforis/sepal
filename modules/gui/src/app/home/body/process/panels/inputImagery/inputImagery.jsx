@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types'
 import React from 'react'
 
 import {inputImageNames, removeInputImage} from '~/app/home/body/process/inputImages'
@@ -35,11 +34,6 @@ const mapStateToProps = (state, {images}) => ({
 })
 
 class _InputImagery extends React.Component {
-    constructor(props) {
-        super(props)
-        this.onChange = this.onChange.bind(this)
-    }
-
     render() {
         const {missing, recipeId} = this.props
         return (
@@ -58,7 +52,7 @@ class _InputImagery extends React.Component {
                         <Panel.Buttons.Add onClick={() => this.addImage()}/>
                     </Form.PanelButtons>
                 </RecipeFormPanel>
-                <InputImage onChange={this.onChange}/>
+                <InputImage/>
             </React.Fragment>
         )
     }
@@ -115,11 +109,6 @@ class _InputImagery extends React.Component {
         const {recipeId} = this.props
         removeInputImage(recipeId, imageToRemove)
     }
-
-    onChange() {
-        const {images, onChange} = this.props
-        onChange && onChange(images)
-    }
 }
 
 const additionalPolicy = () => ({inputImage: 'allow'})
@@ -134,7 +123,3 @@ export const InputImagery = compose(
     recipeFormPanel({id: 'inputImagery', mapRecipeToProps, valuesToModel, additionalPolicy}),
     withActivators('inputImage')
 )
-
-InputImagery.propTypes = {
-    onChange: PropTypes.func
-}

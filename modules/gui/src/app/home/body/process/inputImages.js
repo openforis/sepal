@@ -2,15 +2,13 @@ import _ from 'lodash'
 
 import {CALCULATION_REFERENCES, calculationItem} from '#sepal/recipe/bandMath/calculationReferences'
 import {SUPPORTED} from '#sepal/recipe/requirement/verdict'
+import {inputSourceKey} from '#sepal/recipe/source/inputImagery'
 import {recipeActionBuilder, recipePath} from '~/app/home/body/process/recipe'
 import {commitRecipe} from '~/app/home/body/process/recipe/derivedResult'
 import {selectFrom} from '~/stateUtils'
 import {select} from '~/store'
 
-// The source of an input image is its type and id. Inputs are told apart by their imageId: a saved recipe can hold two
-// that share a source, and each stays its own entry, edited and removed alone.
-export const inputSourceKey = ({type, id}) =>
-    type && id ? `${type}:${id}` : null
+export {inputSourceKey}
 
 // The sources an input may not take: those of the recipe's other inputs. An input keeps the source it was saved with,
 // even where another input shares it, so leaving it unchanged refuses nothing.

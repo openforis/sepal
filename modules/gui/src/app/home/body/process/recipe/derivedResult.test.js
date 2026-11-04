@@ -51,7 +51,31 @@ describe('a commit', () => {
     })
 })
 
+describe('a commit for a type deriving from the recipe as a whole', () => {
+    it('derives, in its own action, what the declaration follows', () => {
+        openSums([1, 2])
+        const writes = []
+        const unsubscribe = store.subscribe(() => writes.push(sumsModel()))
+
+        setTerms([1, 2, 3])
+        unsubscribe()
+
+        expect(sumsModel().summary).toEqual({sum: 6})
+        expect(writes).toEqual([sumsModel()])
+    })
+
+    it('leaves what it follows as it was where the commit changes nothing it follows', () => {
+        openSums([1, 2])
+        const summary = sumsModel().summary
+
+        setTerms([2, 1])
+
+        expect(sumsModel().summary).toBe(summary)
+    })
+})
+
 const ID = 'cells-1'
+const SUMS_ID = 'sums-1'
 
 let store
 
@@ -88,6 +112,19 @@ addRecipeType({
     }]
 })
 
+addRecipeType({
+    id: 'SUMS',
+    imageSource: false,
+    derivedResults: [{
+        id: 'sums.summary',
+        applied: {
+            followRecipe: (_previous, recipe) => [
+                {path: 'model.summary', value: {sum: recipe.model.terms.reduce((sum, term) => sum + term, 0)}}
+            ]
+        }
+    }]
+})
+
 const cell = (name, properties) => ({id: `${name}-id`, name, reads: null, ...properties})
 
 function open(cells) {
@@ -113,4 +150,21 @@ function cells() {
 
 function values() {
     return cells().map(({value}) => value)
+}
+
+function openSums(terms) {
+    const initialState = {
+        process: {loadedRecipes: {[SUMS_ID]: {id: SUMS_ID, type: 'SUMS', model: {terms, summary: {sum: 3}}}}}
+    }
+    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
+    initStore(store)
+}
+
+function setTerms(terms) {
+    commitRecipe(['process.loadedRecipes', SUMS_ID], actionBuilder('SET_TERMS')
+        .set(['process.loadedRecipes', SUMS_ID, 'model.terms'], terms))
+}
+
+function sumsModel() {
+    return selectFrom(store.getState(), ['process.loadedRecipes', SUMS_ID, 'model'])
 }

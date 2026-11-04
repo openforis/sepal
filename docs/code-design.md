@@ -108,6 +108,7 @@ Presentation policy:
   reads as proof that choices are incompatible.
 - Use ordinary field errors, warnings and existing busy indications. Put the explanation where the user can act;
   do not insert status rows that change form height or repeat every dependent error at the field being edited.
+  An error suppresses a widget's warnings; any remaining warning becomes visible after the error clears.
 - Cross-section advisories are deliberate domain decisions, not an automatic consequence of dependency edges or
   invalidation. Use one short aggregate advisory when an edit leaves retained settings incompatible and advance
   notice helps the user choose whether to proceed. Name the affected sections and the available remedies. Update
