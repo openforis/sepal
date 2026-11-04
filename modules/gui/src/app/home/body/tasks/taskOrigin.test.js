@@ -17,6 +17,13 @@ describe('exportOrigin', () => {
         expect(exportOrigin(exportTaskInfo())).toEqual({type: 'SANDBOX'})
     })
 
+    it.each([
+        ['text', 'analysis.ipynb'],
+        ['a list', [{type: 'NOTEBOOK'}]]
+    ])('places an export whose origin is %s in the sandbox', (_case, origin) => {
+        expect(exportOrigin(exportTaskInfo({origin}))).toEqual({type: 'SANDBOX'})
+    })
+
     it('is absent for a recipe task', () => {
         expect(exportOrigin(recipeTaskInfo())).toBeNull()
     })
@@ -77,6 +84,14 @@ describe('originName', () => {
         ['an app', {type: 'APP'}],
         ['the sandbox', {type: 'SANDBOX'}]
     ])('says the origin was not recorded for %s without a path or name', (_case, origin) => {
+        expect(originName(origin)).toBe('tasks.details.originNotRecorded')
+    })
+
+    it.each([
+        ['a numeric path', {type: 'SCRIPT', path: 123}],
+        ['an object path', {type: 'SCRIPT', path: {dir: 'work'}}],
+        ['an object name', {type: 'APP', name: {id: 'se.plan'}}]
+    ])('says the origin was not recorded for %s', (_case, origin) => {
         expect(originName(origin)).toBe('tasks.details.originNotRecorded')
     })
 })

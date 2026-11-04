@@ -7,7 +7,7 @@ import {msg} from '~/translate'
 
 export const exportOrigin = taskInfo =>
     isExport(taskInfo)
-        ? taskInfo.origin ?? {type: 'SANDBOX'}
+        ? isObject(taskInfo.origin) ? taskInfo.origin : {type: 'SANDBOX'}
         : null
 
 export const taskTitle = taskInfo => {
@@ -21,10 +21,11 @@ export const taskTitle = taskInfo => {
 export const originType = origin =>
     msg(`tasks.details.originNames.${ORIGIN_TYPES.includes(origin.type) ? origin.type : 'SANDBOX'}`)
 
-export const originName = origin =>
-    origin.path
-        ? homePath(origin.path)
-        : origin.name || msg('tasks.details.originNotRecorded')
+// task-manager stores the origin as the client sent it.
+export const originName = ({path, name}) =>
+    isText(path)
+        ? homePath(path)
+        : isText(name) ? name : msg('tasks.details.originNotRecorded')
 
 export const originText = origin =>
     `${originType(origin)} · ${originName(origin)}`
@@ -46,3 +47,9 @@ const ORIGIN_TYPES = ['RECIPE', 'NOTEBOOK', 'SCRIPT', 'APP', 'SANDBOX']
 
 const isExport = taskInfo =>
     Boolean(taskInfo?.kind)
+
+const isObject = value =>
+    value !== null && typeof value === 'object' && !Array.isArray(value)
+
+const isText = value =>
+    typeof value === 'string' && value !== ''
