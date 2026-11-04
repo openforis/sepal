@@ -76,8 +76,8 @@ const exportFailure = (state, errorMessage) => {
     return Object.assign(new Error(`Earth Engine export ${state}: ${reason}`), {earthEngineMessage: reason})
 }
 
-export const shareIfPublic = async ({params, assetId, sepal, report, signal}) => {
-    if (!signal.aborted && params.image?.sharing === 'PUBLIC') {
+export const shareIfPublic = async ({sharing, assetId, sepal, report, signal}) => {
+    if (!signal.aborted && sharing === 'PUBLIC') {
         report({messageKey: 'tasks.ee.export.asset.sharing', defaultMessage: `Sharing asset ${assetId}`, messageArgs: {assetId}})
         await sepal.gee('task/asset/share', {assetId})
     }
