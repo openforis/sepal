@@ -5,6 +5,7 @@ import Docker from 'dockerode'
 
 import {getLogger} from '#sepal/log'
 
+import {deployEnvironment} from './config.js'
 import {getCurrentCommitHash} from './git.js'
 import executeCommand from './terminal.js'
 
@@ -30,7 +31,7 @@ const composeFiles = async (appPath, includeOverride = true) => {
     const files = [path.join(appPath, 'docker-compose.yml')]
     if (
         includeOverride &&
-    process.env.DEPLOY_ENVIRONMENT === 'DEV' &&
+    deployEnvironment === 'DEV' &&
     await pathExists(path.join(appPath, 'docker-compose.override.yml'))
     ) {
         files.push(path.join(appPath, 'docker-compose.override.yml'))

@@ -30,7 +30,7 @@ const cloneRepository = async (repository, branch, appPath) => {
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
             await executeCommand(
-                'git', ['clone', `--branch=${branch}`, repository, appPath]
+                'git', ['clone', `--branch=${branch}`, '--end-of-options', repository, appPath]
             )
             return
         } catch (err) {
@@ -52,7 +52,7 @@ const checkBranchExists = async (repository, branch) => {
     log.debug(`Checking branch ${branch} in ${repository}`)
     try {
         await executeCommand(
-            'git', ['ls-remote', '--exit-code', '--heads', repository, branch]
+            'git', ['ls-remote', '--exit-code', '--heads', '--end-of-options', repository, branch]
         )
         return true
     } catch (err) {
@@ -68,8 +68,8 @@ const checkBranchExists = async (repository, branch) => {
 const checkoutBranch = async (appPath, branch) => {
     try {
         log.info(`Setting repository to branch '${branch}' (fetching from remote)`)
-        await executeCommand('git', ['fetch', 'origin', branch], {cwd: appPath})
-        await executeCommand('git', ['checkout', branch], {cwd: appPath})
+        await executeCommand('git', ['fetch', '--end-of-options', 'origin', branch], {cwd: appPath})
+        await executeCommand('git', ['checkout', '--end-of-options', branch], {cwd: appPath})
         
     } catch (err) {
         log.error(`Failed to checkout branch '${branch}': ${err.message}`)
@@ -112,9 +112,7 @@ const getRepoInfo = async appPath => {
         lastCommitId: commitId.trim(),
         url: originUrl,
         commitUrl,
-        branch,
-        // Catalog is the only sanctioned source of updates; upstream branch tip is not actionable from the GUI.
-        updateAvailable: false
+        branch
     }
 
     log.debug(`Repository info for ${appPath}:`, appInfo)
@@ -126,8 +124,8 @@ const getRepoInfo = async appPath => {
 const checkoutCommit = async (appPath, branch, commit) => {
     log.info(`Pinning repository at ${appPath} to commit ${commit}`)
     try {
-        await executeCommand('git', ['fetch', 'origin', branch], {cwd: appPath})
-        await executeCommand('git', ['checkout', '--detach', commit], {cwd: appPath})
+        await executeCommand('git', ['fetch', '--end-of-options', 'origin', branch], {cwd: appPath})
+        await executeCommand('git', ['checkout', '--detach', '--end-of-options', commit], {cwd: appPath})
     } catch (err) {
         log.error(`Failed to checkout commit '${commit}': ${err.message}`)
         throw new ClientException(`Failed to checkout commit '${commit}': ${err.message}`)
@@ -142,7 +140,7 @@ const stampSepalBranch = async (appPath, branch) => {
     }
 }
 
-const cloneOrPull = async ({path: appPath, repository, branch, commit}) => {
+const cloneOrCheckout = async ({path: appPath, repository, branch, commit}) => {
     try {
         const exists = await pathExists(appPath)
         if (!exists) {
@@ -167,12 +165,11 @@ const cloneOrPull = async ({path: appPath, repository, branch, commit}) => {
             await stampSepalBranch(appPath, branch)
             return {action: 'updated', success: true}
         }
-        const result = await pullUpdates(appPath, branch)
+        await checkoutBranch(appPath, branch)
         await stampSepalBranch(appPath, branch)
-        return result
-
+        return {action: 'none', success: true}
     } catch (err) {
-        log.error(`Error in cloneOrPull: ${err.message}`)
+        log.error(`Error in cloneOrCheckout: ${err.message}`)
         if (err.statusCode === 500) {
             return {action: 'system-error', success: false, error: err.message}
         }
@@ -190,30 +187,8 @@ const getCurrentCommitHash = async appPath => {
     }
 }
 
-const pullUpdates = async (appPath, branch) => {
-    try {
-        log.info(`Ensuring repository is on branch '${branch}'`)
-        await checkoutBranch(appPath, branch)
-        
-        const {updateAvailable} = await getRepoInfo(appPath)
-        
-        if (updateAvailable) {
-            log.info(`Updates available for ${appPath} → pulling`)
-            await executeCommand('git', ['pull', 'origin', branch], {cwd: appPath})
-            log.info(`Successfully pulled updates for ${appPath}`)
-            return {action: 'updated', success: true}
-        }
-        log.info(`No updates available for ${appPath}`)
-        return {action: 'none', success: true}
-    } catch (err) {
-        log.error(`Failed to pull updates: ${err.message}`)
-        throw new ClientException(`Failed to pull updates: ${err.message}`)
-    }
-}
-
 export {
-    cloneOrPull,
+    cloneOrCheckout,
     getCurrentCommitHash,
     getRepoInfo,
-    pullUpdates,
 }

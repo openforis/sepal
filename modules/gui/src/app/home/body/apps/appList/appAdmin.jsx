@@ -24,7 +24,6 @@ export class AppAdmin extends React.Component {
             loadingContainer: true,
             loadingLogs: true,
             loadingRepo: true,
-            updatingRepo: false,
             restarting: false,
             buildingAndRestarting: false,
             container: {
@@ -39,7 +38,6 @@ export class AppAdmin extends React.Component {
                 lastCloneTimestamp: null,
                 lastCommitId: null,
                 commitUrl: null,
-                updateAvailable: false,
                 branch: null
             },
             resourcez: {
@@ -135,7 +133,6 @@ export class AppAdmin extends React.Component {
                         lastCloneTimestamp: info.repo?.lastCloneTimestamp || null,
                         lastCommitId: info.repo?.lastCommitId || null,
                         commitUrl: info.repo?.commitUrl || null,
-                        updateAvailable: info.repo?.updateAvailable || false,
                         branch: info.repo?.branch || null
                     },
                     error: info.error || null
@@ -230,27 +227,6 @@ export class AppAdmin extends React.Component {
         )
     }
     
-    updateApp() {
-        const {branch} = this.state.repo
-        this.setState({updatingRepo: true})
-        api.appLauncher.pullUpdatesOnly$(this.containerAppName(), branch).subscribe(
-            response => {
-                this.setState({updatingRepo: false})
-                this.loadRepoInfo()
-                if (response.updated) {
-                    Notifications.success({message: response.message || msg('apps.admin.update.success')})
-                } else {
-                    Notifications.info({message: response.message || msg('apps.admin.update.noChanges')})
-                }
-            },
-            error => {
-                this.setState({updatingRepo: false})
-                Notifications.error({message: error.error || msg('apps.admin.update.error')})
-                log.error('Failed to update app', error)
-            }
-        )
-    }
-    
     reloadStatus() {
         this.setState({loadingContainer: true})
         this.loadContainerStatus()
@@ -315,7 +291,7 @@ export class AppAdmin extends React.Component {
         const {url: repoUrl, lastCloneTimestamp, lastCommitId, commitUrl, branch} = repo
         
         return (
-            <Widget label={msg('apps.admin.repo.title')} framed labelButtons={this.renderRepositoryButtons()}>
+            <Widget label={msg('apps.admin.repo.title')} framed>
                 <div className={styles.row}>
                     <Label className={styles.fieldLabel}>{msg('apps.admin.repo.url')}:</Label>
                     <div className={styles.fieldValue}>
@@ -534,24 +510,6 @@ export class AppAdmin extends React.Component {
 
         </Layout>
         
-    }
-
-    renderRepositoryButtons() {
-        const {updatingRepo, repo} = this.state
-        return (
-            <Layout type='horizontal' spacing='compact'>
-                <Button
-                    icon={updatingRepo ? 'spinner' : 'cloud-download-alt'}
-                    chromeless
-                    shape='none'
-                    onClick={() => this.updateApp()}
-                    disabled={updatingRepo}
-                    tooltip={repo.updateAvailable
-                        ? msg('apps.admin.update.available')
-                        : msg('apps.admin.update.checkForUpdates')}
-                />
-            </Layout>
-        )
     }
 
     renderLogButton() {
