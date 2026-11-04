@@ -13,6 +13,7 @@ import {Aoi} from '../aoi'
 import {changeImageRequirements} from '../changeImageRequirements'
 import {bandPresentation} from './bands'
 import {defaultModel} from './classChangeRecipe'
+import {classChangeDerivations} from './derivations'
 import {legendRequirements} from './legendRequirements'
 import {ClassChangeToolbar} from './panels/classChangeToolbar'
 import {getPreSetVisualizations} from './visualizations'
@@ -72,6 +73,7 @@ export default () => ({
         recipe: ClassChange
     },
     sourceRequirements: [...changeImageRequirements(IMAGES), ...legendRequirements(IMAGES)],
+    derivedResults: classChangeDerivations,
     imageSource: true,
     getDateRange,
     bandPresentation,

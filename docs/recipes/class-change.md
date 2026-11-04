@@ -73,6 +73,29 @@ the values' text order does (`[2, 10]` sorts as `[10, 2]`). Images computed and 
 correction carry those codes, and the labels attached to them may name other transitions. Stored results are not
 rewritten; recompute or re-export to get codes that match their labels.
 
+### Transition legend
+
+The transition legend (`model.legend`) labels the `transition` codes for the map, exports and recipes reading this one
+(`classChange/visualizations.js`); execution never reads it. Every commit keeps it derived, in its own action, whichever
+panel commits (`classChange/derivations.js`, an applied derivation). It derives from each image's classes: their
+values and labels, in entry order. A class's colour or entry id, the class band, the source and the band snapshot
+change no transition, so nothing else of an image rewrites the legend. Neither does opening the recipe, reading its
+sources or opening the Legend panel.
+
+Where a commit changes the classes, each transition is coded as above and known by its two classes' values. A
+transition is identified where the saved codes are those the classes before the commit give, and neither of its values
+repeats in its image's legend. An identified transition keeps its entry's id, label and colour, unless they were their
+defaults, which are derived again: `<from> -> <to>` from the current labels, and `defaultColor` of its new code. So a
+customised transition follows its classes to a new code as classes are added, removed or reordered. A class whose
+value changes is a new class, and a removed class's transitions go with it. Every other transition takes the defaults,
+with an id derived from its code and classes, as does every transition of a legend not coded from its classes.
+
+While either image has no classes, the legend is kept as saved. It then describes classes that image no longer holds,
+so the commit giving it classes again derives defaults, resetting customisations. A legend missing, or saved empty, is
+derived at the next commit. The Legend panel edits labels and colours only; values are locked. This recipe's own
+styles of `transition` keep their codes when codes shift, so a shifted code can change what such a style depicts. Older
+clients regenerate the whole legend whenever either image changes, discarding customisations.
+
 ## Verification
 
 - `lib/js/shared/test/recipe/output/type/changeSelectedBands.test.js` and `output/readiness.test.js`:
@@ -81,4 +104,7 @@ rewritten; recompute or re-export to get codes that match their labels.
   saved missing choices, unavailable evidence, isolated draft repair, marks and preview/Retrieve recovery.
 - `modules/gee/test/jobs/ee/image/classChangeNumbering.test.js` and `modelDerivedOutputBands.test.js`:
   execution/declaration numbering and both output branches.
+- `modules/gui/src/app/home/body/process/recipe/classChange/derivations.test.js`: the transition-legend rule.
+  `transitionLegend.test.jsx`, beside it: one action per image Apply, nothing written on opening or reading sources,
+  Legend Apply, and a draft judged through `committedRecipe` saving as judged.
 - [Live confidence probe](../../modules/gee/verify/README.md): transition codes, probabilities, values and masks.

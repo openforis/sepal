@@ -362,8 +362,9 @@ cache, hash or persisted record. A declaration may also carry `panel` for its ed
 
 **Whole-recipe derivations.** A result that projects the whole recipe, not an ordered list of items, declares
 `followRecipe` alone: `{id, applied: {followRecipe(previous, recipe)}}`. The commit evaluates it once over the two
-models and writes only the paths whose value changes, as for item declarations. Stack's band names use it
-([Stack](../../recipes/stack.md#band-names)).
+models and writes only the paths whose value changes, as for item declarations. Stack's band names and Class Change's
+transition legend use it ([Stack](../../recipes/stack.md#band-names),
+[Class Change](../../recipes/class-change.md#transition-legend)).
 
 ## Persisted derived-result evidence
 

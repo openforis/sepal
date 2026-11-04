@@ -1,18 +1,12 @@
-import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {classTransitions} from '#sepal/recipe/type/classChange'
-import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {LegendBuilder, legendEntriesToModel} from '~/app/home/map/legendBuilder'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
-import {uuid} from '~/uuid'
 import {Form} from '~/widget/form'
-import {defaultColor} from '~/widget/form/colorInput'
 import {Panel} from '~/widget/panel/panel'
 
 import styles from './legend.module.css'
@@ -24,51 +18,12 @@ const fields = {
         .predicate((entries, {invalidEntries}) => !invalidEntries && entries.length, 'invalid')
 }
 
-const mapRecipeToProps = recipe => {
-    return ({
-        toImage: selectFrom(recipe, 'model.toImage'),
-        legendEntries: selectFrom(recipe, 'model.legend.entries') || [],
-        fromImage: selectFrom(recipe, 'model.fromImage')
-    })
-}
+// The transition legend, as each commit derives it (derivations.js): its labels and colours are the user's to edit.
+const mapRecipeToProps = recipe => ({
+    legendEntries: selectFrom(recipe, 'model.legend.entries') || []
+})
 
 class _Legend extends React.Component {
-    render() {
-        const {legendEntries} = this.props
-        return <LegendPanel legendEntries={legendEntries}/>
-    }
-
-    componentDidUpdate(prevProps) {
-        const {fromImage: prevFromImage, toImage: prevToImage} = prevProps
-        const {fromImage, toImage} = this.props
-
-        if (!_.isEqual([prevFromImage, prevToImage], [fromImage, toImage])) {
-            this.updateLegend()
-        }
-    }
-
-    updateLegend() {
-        const {recipeId, fromImage, toImage} = this.props
-
-        if (!fromImage || !toImage) {
-            return
-        }
-
-        const entries = classTransitions(fromImage.legendEntries, toImage.legendEntries)
-            .map(({value, from, to}) => ({
-                id: uuid(),
-                value,
-                color: defaultColor(value),
-                label: `${from.label} -> ${to.label}`
-            }))
-        const actionBuilder = recipeActionBuilder(recipeId)
-        actionBuilder('UPDATE_LEGEND', {fromImage, toImage, entries})
-            .set('model.legend.entries', entries)
-            .dispatch()
-    }
-}
-
-class _LegendPanel extends React.Component {
     render() {
         return (
             <RecipeFormPanel
@@ -115,14 +70,9 @@ const valuesToModel = ({entries}) => ({
     entries: legendEntriesToModel(entries)
 })
 
-const LegendPanel = compose(
-    _LegendPanel,
-    recipeFormPanel({id: 'legend', fields, valuesToModel})
-)
-
 export const Legend = compose(
     _Legend,
-    withRecipe(mapRecipeToProps)
+    recipeFormPanel({id: 'legend', fields, mapRecipeToProps, valuesToModel})
 )
 
 Legend.propTypes = {

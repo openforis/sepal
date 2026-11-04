@@ -262,7 +262,8 @@ state (`sourceRequirements.js`). Sampling Design is its first consumer. Form pan
 would leave the recipe, by local requirements naming them as `editor` (`recipe/localCandidate.js`) and keep synchronous results derived in their drafts
 (`recipe/derivedResult.js`): Sampling Design's manual proportions and allocation, and Band Math's Output bands, use them.
 Commits keep applied results derived in the same action (`commitRecipe`, same file):
-[Band Math's calculation bands](../recipes/band-math.md) and [Stack's band names](../recipes/stack.md#band-names).
+[Band Math's calculation bands](../recipes/band-math.md), [Stack's band names](../recipes/stack.md#band-names) and
+[Class Change's transition legend](../recipes/class-change.md#transition-legend).
 
 - **Product projections.** Tighten what counts as a meaningful input change at each product owner, through
   `dependencyProjection`, so every consumer benefits from the same rule. For stratum areas, preserve changes to
@@ -276,8 +277,8 @@ Commits keep applied results derived in the same action (`commitRecipe`, same fi
 #### Recipe adoption inventory
 
 The code assessment covers all 23 current shared recipe types and the common workflows below. It identifies
-reuse opportunities, not reproduced defects in every listed path. Sampling Design, Band Math and Stack use the shared
-bindings; the remaining migrations are separate work. Paths in the table are relative to
+reuse opportunities, not reproduced defects in every listed path. Sampling Design, Band Math, Stack and Class Change
+use the shared bindings; the remaining migrations are separate work. Paths in the table are relative to
 `modules/gui/src/app/home/body/process/recipe/` unless qualified.
 
 Use the part of the mechanism each responsibility needs:
@@ -292,7 +293,6 @@ Use the part of the mechanism each responsibility needs:
 
 | Recipes | Concrete reuse and existing owner | Migration boundary |
 | --- | --- | --- |
-| Class Change | `classChange/panels/legend/legend.jsx` rebuilds transition entries, IDs, labels and default colours when either whole input record changes. | Declare the input-legend projection and derive transitions locally. Define transition identity and preservation of edited labels/colours first; keep the established transition-code order. Optional confidence availability is a separate dependency on both inputs. |
 | CCDC, Time Series, Phenology | Their Sources panels separately load Classification metadata and derive band choices. CCDC also derives TMask choices from breakpoint bands in PRC. `selectedClassification.js`, `collectionClassifierRequirements.js` and CCDC's `segmentDescription.js` already establish reusable owners. | Read current resolved facts once and declare Sources-to-processing dependencies. Keep pending/failed facts distinct from unavailable bands; retain invalid selections with actionable feedback. This is compatibility and acquisition work, without persisted fit evidence. |
 | LandTrendr | `landTrendr/panels/sources/sources.jsx` calls `ensureValidIndex` on opening and dataset changes; dataset choices also read Dates. | Declare date/dataset/index compatibility. Settle the explicit replacement/defaulting policy before changing it; opening or temporarily empty options must preserve deliberate choices. |
 | Optical Mosaic | `sceneAreas.jsx`, `sceneSelection.jsx`, `autoSelectScenes.jsx` and `sceneDeselection.jsx` separately coordinate AOI/source/date-dependent reads and selected scenes. | Shared question identity and request lifecycle can replace local coordination. Scene discovery results are temporary; manual selections remain user-owned. Preserve explicit auto-selection and define retention/reconciliation before changing scene deletion behaviour. |
@@ -320,8 +320,8 @@ Use the part of the mechanism each responsibility needs:
   Retrieve panel already coordinate relevant consumers. Extend those owners where a migration exposes a gap;
   do not add a second chart/request coordinator or duplicate server-preview readiness work.
 
-**Adoption order and acceptance.** Within derivation migrations, Class Change and temporal section dependencies are
-the next focused candidates. Other rows are an inventory, not a commitment to migrate working code. Product-owned input projections
+**Adoption order and acceptance.** Within derivation migrations, temporal section dependencies are the next focused
+candidate. Other rows are an inventory, not a commitment to migrate working code. Product-owned input projections
 can be added independently where the conservative fallback causes unnecessary recalculation.
 
 Each migration must name the domain projection, the old coordination it deletes and the user choices it preserves.
@@ -329,6 +329,13 @@ Verify irrelevant edits, prerequisites, valid draft repair and Apply/Cancel; asy
 cover superseded responses and shared-work teardown. Reproduce suspected behavioural defects before treating them
 as confirmed. This assessment used code inspection; browser behaviour, request costs and end-to-end races remain
 unverified for these follow-ups.
+
+#### Class Change transition styles
+
+When class edits shift transition codes, this recipe's saved `transition` styles keep their numeric codes and can
+depict different transitions. Assess following identifiable class-value pairs in those styles, preserving their
+labels, colours and identity. Define retention for removed or ambiguous transitions before implementing; keep
+confidence styles and execution's transition encoding unchanged.
 
 ### Sampling Design derived-result freshness
 
