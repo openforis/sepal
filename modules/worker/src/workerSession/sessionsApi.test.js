@@ -9,6 +9,7 @@ import {createSessionsApi} from './sessionsApi.js'
 const sessionManager = {
     generateUserSessionReport: mock.fn(),
     generateUserUsageReport: mock.fn(),
+    sessionUsageHistory: mock.fn(),
     mostRecentlyClosedSessionByUser: mock.fn(),
     mostRecentlyClosedSession: mock.fn(),
     requestSession: mock.fn(),
@@ -421,6 +422,28 @@ describe('the email management link', () => {
         await tokenApi.redeemExpiryToken(c)
         assert.equal(c.status, 410)
     })
+})
+
+// ── session usage history ────────────────────────────────────────────────────
+
+test('sessionUsageSelf → the caller\'s session history, timed as UTC instants', async () => {
+    const sample = {sampleTime: new Date('2026-07-01T10:01:00.000Z'), cpuPct: 12, ramPct: 30, gpuPct: null, netBytesPerS: 300}
+    sessionManager.sessionUsageHistory.mock.mockImplementation(async () => ({samples: [sample]}))
+    const c = ctx({params: {sessionId: 's1'}})
+
+    await api.sessionUsageSelf(c)
+
+    assert.deepEqual(callsOf(sessionManager.sessionUsageHistory), [[{sessionId: 's1', username: 'alice'}]])
+    assert.deepEqual(c.body, {samples: [{time: '2026-07-01T10:01:00.000Z', cpuPct: 12, ramPct: 30, gpuPct: null, netBytesPerS: 300}]})
+})
+
+test('sessionUsageOther → scoped to the path user', async () => {
+    sessionManager.sessionUsageHistory.mock.mockImplementation(async () => ({samples: []}))
+    const c = ctx({params: {username: 'Bob', sessionId: 's1'}})
+
+    await api.sessionUsageOther(c)
+
+    assert.deepEqual(callsOf(sessionManager.sessionUsageHistory), [[{sessionId: 's1', username: 'bob'}]])
 })
 
 // ── close ────────────────────────────────────────────────────────────────────

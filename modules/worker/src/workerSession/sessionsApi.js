@@ -269,6 +269,14 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
         ctx.body = await sessionManager.generateUserUsageReport({username})
     }
 
+    // One session's usage since it started, for the chart in the session list. Self routes are
+    // limited to the caller's own sessions; admin routes to the path user's.
+    const sessionUsage = resolve => async ctx => {
+        const {username} = resolve(ctx)
+        const {samples} = await sessionManager.sessionUsageHistory({sessionId: ctx.params.sessionId, username})
+        ctx.body = {samples: samples.map(({sampleTime, ...sample}) => ({time: sampleTime.toISOString(), ...sample}))}
+    }
+
     const globalUsage = async ctx => {
         ctx.body = await sessionManager.generateUserUsageReport({username: null})
     }
@@ -568,6 +576,8 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
         generateReportOther: generateReport(pathUser),
         userUsageSelf: userUsage(selfUser),
         userUsageOther: userUsage(pathUser),
+        sessionUsageSelf: sessionUsage(selfUser),
+        sessionUsageOther: sessionUsage(pathUser),
         globalUsage,
         globalSessions,
         userSessions,

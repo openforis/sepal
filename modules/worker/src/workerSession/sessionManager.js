@@ -36,6 +36,7 @@ import {generateUserUsageReport as _generateUserUsageReport} from './query/gener
 import {mostRecentlyClosedSession as _mostRecentlyClosedSession} from './query/mostRecentlyClosedSession.js'
 import {mostRecentlyClosedSessionByUser as _mostRecentlyClosedSessionByUser} from './query/mostRecentlyClosedSessionByUser.js'
 import {sessionOrdinals} from './query/sessionOrdinals.js'
+import {sessionUsageHistory as _sessionUsageHistory} from './query/sessionUsageHistory.js'
 import {userWorkerSessions as _userWorkerSessions} from './query/userWorkerSessions.js'
 import {createApiKeyGenerator, State, withApiKey} from './workerSession.js'
 
@@ -296,6 +297,7 @@ const createSessionManager = ({
         _generateUserSessionReport(query, {repo, appRepo, instanceManager, usageRepo, terminals, verdicts})
     const generateUserUsageReport = query =>
         _generateUserUsageReport(query, {usageRepo, instanceManager, clock, hourlyRetentionDays: usageHourlyRetentionDays})
+    const sessionUsageHistory = query => _sessionUsageHistory(query, {repo, usageRepo, clock})
     const findSessionByApiKey = apiKey => _findSessionByApiKey(apiKey, {repo})
     const allOpenSessions = () => _allOpenSessions(null, {repo})
 
@@ -430,6 +432,7 @@ const createSessionManager = ({
         userWorkerSessions,
         generateUserSessionReport,
         generateUserUsageReport,
+        sessionUsageHistory,
         findSessionByApiKey,
         allOpenSessions,
         mostRecentlyClosedSessionByUser,

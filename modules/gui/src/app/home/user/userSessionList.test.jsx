@@ -14,8 +14,10 @@ vi.mock('~/user', () => ({stopCurrentUserSession$: vi.fn()}))
 vi.mock('~/apiRegistry', () => ({default: {sessions: {stopUserSession$: vi.fn()}}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/widget/listItem', () => ({
-    ListItem: ({children, expansion}) => <div>{children}<div className='expansion'>{expansion}</div></div>
+    ListItem: ({children, expansion, expansionInteractive}) =>
+        <div>{children}<div className='expansion' data-interactive={String(!!expansionInteractive)}>{expansion}</div></div>
 }))
+vi.mock('./sessionUsageChart', () => ({SessionUsageChart: () => null}))
 vi.mock('~/widget/noData', () => ({NoData: ({message}) => <div>{message}</div>}))
 vi.mock('~/widget/tag', () => ({Tag: ({label}) => <span className='pill'>{label}</span>}))
 vi.mock('~/widget/crudItem', () => ({
@@ -129,6 +131,13 @@ describe('the session list', () => {
     const stat = (container, label) => stats(container).find(([statLabel]) => statLabel === label)[1]
 
     const COLUMNS = ['CPU', 'GPU', 'RAM', 'NET', 'Cost', 'Keep alive until', 'Stops at']
+
+    // ListItem makes an expansion inert to the pointer unless told otherwise, and the usage chart's
+    // keys under the row are buttons.
+    it('lets what is under the row be clicked', () => {
+        const expansion = render([session()]).querySelector('.expansion')
+        expect(expansion.dataset.interactive).toBe('true')
+    })
 
     it('reports the sampled usage and the cost so far under the row', () => {
         expect(stats(render([session({expiry: null})]))).toEqual([

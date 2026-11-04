@@ -18,6 +18,7 @@ import {NoData} from '~/widget/noData'
 import {Notifications} from '~/widget/notifications'
 
 import {InstanceSpecsTag} from '../instanceSpecs'
+import {SessionUsageChart} from './sessionUsageChart'
 import styles from './userSessionList.module.css'
 import {instanceTypeLabel, runningItems, usageMetrics} from './userSessionSummary'
 
@@ -176,6 +177,12 @@ class _UserSessionList extends React.Component {
         )
     }
 
+    renderUsageChart(session) {
+        return (
+            <SessionUsageChart session={session}/>
+        )
+    }
+
     // The stop confirmation lists the same things, so what a user is about to lose is described
     // identically to what the list says is running.
     renderRunning(session) {
@@ -207,8 +214,15 @@ class _UserSessionList extends React.Component {
         return (
             <ListItem
                 key={session.id}
-                expansion={this.renderStats(session)}
+                expansion={
+                    <React.Fragment>
+                        {this.renderStats(session)}
+                        {this.renderUsageChart(session)}
+                    </React.Fragment>
+                }
                 expansionClassName={styles.expansion}
+                // The usage chart's keys toggle its lines.
+                expansionInteractive
                 expanded>
                 <CrudItem
                     title={this.renderTitle(session)}

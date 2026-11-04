@@ -56,6 +56,31 @@ export class UsageRepository {
         })
     }
 
+    // One session's samples since fromTime, averaged into buckets of bucketSeconds counted from
+    // fromTime, oldest first. Each bucket is timed by its newest sample, so the last point is the
+    // latest reading rather than a bucket boundary still in the future.
+    sessionHistory(sessionId, {fromTime, bucketSeconds}) {
+        return this.#db.withConnection(async connection => {
+            const [rows] = await connection.query(
+                `SELECT MAX(sample_time) AS sample_time,
+                    AVG(cpu_pct) AS cpu_pct, AVG(ram_pct) AS ram_pct, AVG(gpu_pct) AS gpu_pct,
+                    AVG(net_rx_bytes_per_s + net_tx_bytes_per_s) AS net_bytes_per_s
+                    FROM instance_usage_sample
+                    WHERE session_id = ? AND sample_time >= ?
+                    GROUP BY TIMESTAMPDIFF(SECOND, ?, sample_time) DIV ?
+                    ORDER BY sample_time`,
+                [sessionId, fromTime, fromTime, bucketSeconds]
+            )
+            return rows.map(row => ({
+                sampleTime: new Date(row.sample_time),
+                cpuPct: toNumber(row.cpu_pct),
+                ramPct: toNumber(row.ram_pct),
+                gpuPct: toNumber(row.gpu_pct),
+                netBytesPerS: toNumber(row.net_bytes_per_s),
+            }))
+        })
+    }
+
     // Re-running for an hour that already has rows overwrites them with the same aggregates, which
     // is what makes the heal window safe.
     rollupHours(hoursBack = 2) {

@@ -25,6 +25,7 @@
 .expansion {
     --expansion-shade: var(--row-expansion-shade-color);
     padding: .5rem;
+    gap: .5rem;
 }
 
 .stats {

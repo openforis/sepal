@@ -17,6 +17,11 @@ export default {
     globalSessions$: () =>
         get$('/api/sessions/global-sessions'),
 
+    // One session's usage since it started. `path` is the session's own, in the self or admin form
+    // the report gave it.
+    sessionUsage$: ({path}) =>
+        get$(`/api/${path}/usage`),
+
     // Admin: stops any user's session.
     stopUserSession$: ({username, id}) =>
         delete$(`/api/sessions/${encodeURIComponent(username)}/session/${id}`),

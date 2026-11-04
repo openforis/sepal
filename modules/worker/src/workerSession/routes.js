@@ -48,6 +48,9 @@ const registerSessionRoutes = (router, api) => router
     .get('/sessions/global-usage', requireAdmin, api.globalUsage)
     // GET /sessions/global-sessions (admin) — every user's open sessions, for the admin Global sessions panel.
     .get('/sessions/global-sessions', requireAdmin, api.globalSessions)
+    // GET one session's usage since it started, for the session list's chart.
+    .get('/sessions/session/:sessionId/usage', requireAuth, api.sessionUsageSelf)
+    .get('/sessions/:username/session/:sessionId/usage', requireAdmin, api.sessionUsageOther)
     .get('/sessions/:username/report', requireAdmin, api.generateReportOther)
     // GET /sessions/:username/usage (admin) — aggregate resource usage for the user-details form.
     .get('/sessions/:username/usage', requireAdmin, api.userUsageOther)
