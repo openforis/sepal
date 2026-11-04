@@ -10,7 +10,7 @@ const session = overrides => ({
 })
 
 const deps = ({sessions, apps = new Map(), usage = new Map(), terminals, verdicts} = {}) => ({
-    repo: {userSessions: async () => sessions},
+    repo: {userSessions: async () => sessions, sessions: async () => []},
     appRepo: {appsForSessions: async () => apps},
     usageRepo: {latestForSessions: async () => usage},
     instanceManager: {getInstanceTypes: () => [{id: 'T3aSmall'}]},
@@ -49,5 +49,19 @@ describe('generateUserSessionReport', () => {
         const report = await generateUserSessionReport(query, deps({sessions: [session()]}))
         assert.equal(report.sessions[0].terminals, 0)
         assert.equal(report.sessions[0].verdict, 'unknown')
+    })
+
+    it('reports every user\'s open sessions of the type when no user is named', async () => {
+        const alices = session({id: 's1', username: 'alice'})
+        const bobs = session({id: 's2', username: 'bob'})
+        const repo = {
+            userSessions: async () => [alices],
+            sessions: async (states, workerType) =>
+                states.includes('ACTIVE') && workerType === 'sandbox' ? [alices, bobs] : [],
+        }
+        const report = await generateUserSessionReport(
+            {username: null, workerType: 'sandbox'}, {...deps(), repo}
+        )
+        assert.deepEqual(report.sessions.map(({id}) => id), ['s1', 's2'])
     })
 })

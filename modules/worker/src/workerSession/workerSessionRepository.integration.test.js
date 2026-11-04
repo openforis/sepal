@@ -715,6 +715,17 @@ describe('WorkerSessionRepository', () => {
 
             assert.deepEqual(found.map(({id}) => id).sort(), ['a', 'p'])
         })
+
+        test('narrows to a worker type, grouping each user\'s sessions in starting order', async () => {
+            await repository.insert(aSession({id: 'b', username: ANOTHER_USERNAME, creationTime: minutesAgo(9)}))
+            await repository.insert(aSession({id: 'a2', creationTime: minutesAgo(1), instance: {id: 'i-2', host: HOST}}))
+            await repository.insert(aSession({id: 'a1', creationTime: minutesAgo(5), instance: {id: 'i-3', host: HOST}}))
+            await repository.insert(aSession({id: 't', workerType: 'TASK_EXECUTOR', instance: {id: 'i-4', host: HOST}}))
+
+            const found = await repository.sessions([State.PENDING], 'SANDBOX')
+
+            assert.deepEqual(found.map(({id}) => id), ['a1', 'a2', 'b'])
+        })
     })
 
     describe('allOpenSessions', () => {

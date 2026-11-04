@@ -27,6 +27,7 @@ const makeApi = () => ({
     userUsageSelf: mock.fn(),
     userUsageOther: mock.fn(),
     globalUsage: mock.fn(),
+    globalSessions: mock.fn(),
     mostRecentlyClosedByUser: mock.fn(),
     mostRecentlyClosed: mock.fn(),
     activeSessions: mock.fn(),
@@ -69,6 +70,7 @@ const expected = [
     ['get', '/sessions/usage', requireAuth, 'userUsageSelf'],
     ['get', '/sessions/:username/usage', requireAdmin, 'userUsageOther'],
     ['get', '/sessions/global-usage', requireAdmin, 'globalUsage'],
+    ['get', '/sessions/global-sessions', requireAdmin, 'globalSessions'],
     ['get', '/sessions/mostRecentlyClosedByUser', requireAdmin, 'mostRecentlyClosedByUser'],
     ['get', '/sessions/mostRecentlyClosed', requireAdmin, 'mostRecentlyClosed'],
     ['get', '/sessions/active', requireAuth, 'activeSessions'],
@@ -91,8 +93,8 @@ const expected = [
     ['post', '/sessions/api-key-authenticate', requireAdmin, 'apiKeyAuthenticate'],
 ]
 
-test('registers exactly 27 routes', () => {
-    assert.equal(router.routes.length, 27)
+test('registers exactly 28 routes', () => {
+    assert.equal(router.routes.length, 28)
 })
 
 // The email links are clicked from a mail client, typically on a phone with no SEPAL session, so

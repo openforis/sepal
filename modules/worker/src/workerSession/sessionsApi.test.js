@@ -679,6 +679,29 @@ test('generateReportOther → admin path form in session + instanceType', async 
     assert.equal(c.body.sessions[0].status, 'STARTING')
 })
 
+test('globalSessions → every user\'s sessions, each in its owner\'s admin form', async () => {
+    sessionManager.generateUserSessionReport.mock.mockImplementation(async () => ({
+        sessions: [
+            pendingSession({id: 's1', username: 'alice', instanceType: 'T3aSmall'}),
+            pendingSession({id: 's2', username: 'bob', instanceType: 'T3aSmall'}),
+        ],
+        instanceTypes: [{id: 'T3aSmall', hourlyCost: 0.02}]
+    }))
+    const c = ctx()
+    await api.globalSessions(c)
+    assert.deepEqual(callsOf(sessionManager.generateUserSessionReport), [[{
+        username: null, workerType: 'sandbox',
+    }]])
+    assert.deepEqual(
+        c.body.sessions.map(({username, path, sshLogin}) => ({username, path, sshLogin})),
+        [
+            {username: 'alice', path: 'sessions/alice/session/s1', sshLogin: `alice+${instanceName('s1')}`},
+            {username: 'bob', path: 'sessions/bob/session/s2', sshLogin: `bob+${instanceName('s2')}`},
+        ]
+    )
+    assert.ok(!('instanceTypes' in c.body))
+})
+
 test('report sessions include their associated apps', () => {
     const instanceType = {
         id: 'T3aSmall', name: 't3a.small', tag: 't1', cpuCount: 1, ramGiB: 2,

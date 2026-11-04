@@ -214,7 +214,7 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
         )
         return {
             sessions: report.sessions.map(session =>
-                sessionAsMap(session, instanceTypeById[session.instanceType], username, forCurrentUser)),
+                sessionAsMap(session, instanceTypeById[session.instanceType], username ?? session.username, forCurrentUser)),
             instanceTypes: report.instanceTypes.map(it => instanceTypeAsMap(it, username, forCurrentUser)),
         }
     }
@@ -271,6 +271,12 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
 
     const globalUsage = async ctx => {
         ctx.body = await sessionManager.generateUserUsageReport({username: null})
+    }
+
+    // Every user's open sessions, each under its owner's username. No instanceTypes: their paths
+    // are per user, and the admin panel this serves starts no session.
+    const globalSessions = async ctx => {
+        ctx.body = {sessions: (await buildReport(null, false)).sessions}
     }
 
     // userSessions — {sessions} for the SELF report, no Koa ctx, for the session ws (./ws.js).
@@ -563,6 +569,7 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
         userUsageSelf: userUsage(selfUser),
         userUsageOther: userUsage(pathUser),
         globalUsage,
+        globalSessions,
         userSessions,
         mostRecentlyClosedByUser,
         mostRecentlyClosed,

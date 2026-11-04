@@ -4,6 +4,16 @@
     align-items: flex-start;
 }
 
+.name {
+    display: flex;
+    align-items: baseline;
+    gap: .5rem;
+}
+
+.user {
+    font-weight: 800;
+}
+
 .type {
     display: flex;
     align-items: center;

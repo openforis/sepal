@@ -4,12 +4,14 @@
 
 import {act} from 'react'
 import {createRoot} from 'react-dom/client'
+import {of} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 vi.mock('~/connect', () => ({connect: () => component => component}))
 vi.mock('~/store', () => ({select: () => null}))
 vi.mock('~/action-builder', () => ({actionBuilder: () => ({set: () => ({dispatch: () => {}})})}))
-vi.mock('~/user', () => ({stopCurrentUserSession$: () => {}}))
+vi.mock('~/user', () => ({stopCurrentUserSession$: vi.fn()}))
+vi.mock('~/apiRegistry', () => ({default: {sessions: {stopUserSession$: vi.fn()}}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/widget/listItem', () => ({
     ListItem: ({children, expansion}) => <div>{children}<div className='expansion'>{expansion}</div></div>
@@ -17,16 +19,19 @@ vi.mock('~/widget/listItem', () => ({
 vi.mock('~/widget/noData', () => ({NoData: ({message}) => <div>{message}</div>}))
 vi.mock('~/widget/tag', () => ({Tag: ({label}) => <span className='pill'>{label}</span>}))
 vi.mock('~/widget/crudItem', () => ({
-    CrudItem: ({title, description, removeMessage, editDisabled, removePending, copyValue, copyDisabled}) =>
+    CrudItem: ({title, description, removeMessage, editDisabled, removePending, copyValue, copyDisabled, onEdit, onRemove}) =>
         <div className='session' data-edit-disabled={editDisabled} data-remove-pending={removePending}
-            data-copy-value={copyValue ?? ''} data-copy-disabled={copyDisabled}>
+            data-copy-value={copyValue ?? ''} data-copy-disabled={copyDisabled} data-editable={String(!!onEdit)}>
             <div className='title'>{title}</div>
             <div className='description'>{description}</div>
             <div className='remove-message'>{removeMessage}</div>
+            <button className='remove' onClick={onRemove}/>
         </div>
 }))
 
+import api from '~/apiRegistry'
 import {setLanguage, TranslationProvider} from '~/translate'
+import {stopCurrentUserSession$} from '~/user'
 
 import {UserSessionList} from './userSessionList'
 
@@ -56,14 +61,17 @@ describe('the session list', () => {
 
     // connect() is mocked away, so the stream prop it would inject is stubbed here: a name is
     // active while its session is being stopped, nothing else is.
-    const render = (sessions, {stopping = [], stoppingAll = false} = {}) => {
-        const stream = name => ({active: stopping.some(id => name === `STOP_USER_SESSION_${id}`)})
+    const render = (sessions, {stopping = [], stoppingAll = false, global, onStopped} = {}) => {
+        const stream = (name, stream$, onNext) => {
+            stream$?.subscribe({next: onNext})
+            return {active: stopping.some(id => name === `STOP_USER_SESSION_${id}`)}
+        }
         const container = document.createElement('div')
         document.body.appendChild(container)
         const root = createRoot(container)
         act(() => root.render(
             <TranslationProvider>
-                <UserSessionList sessions={sessions} stoppingAll={stoppingAll} stream={stream}/>
+                <UserSessionList sessions={sessions} stoppingAll={stoppingAll} stream={stream} global={global} onStopped={onStopped}/>
             </TranslationProvider>
         ))
         mounted.push(() => {
@@ -73,7 +81,11 @@ describe('the session list', () => {
         return container
     }
 
-    beforeEach(() => mounted = [])
+    beforeEach(() => {
+        mounted = []
+        vi.mocked(stopCurrentUserSession$).mockReset()
+        vi.mocked(api.sessions.stopUserSession$).mockReset()
+    })
     afterEach(() => mounted.forEach(unmount => unmount()))
 
     // Titled by the name the expiry notification, the email and its management page show — no list
@@ -271,5 +283,36 @@ describe('the session list', () => {
             }
         })
         expect(stat(render([notified]), 'Stops at')).toBe('—')
+    })
+
+    describe('of every user', () => {
+        const render$ = (sessions, options) => render(sessions, {global: true, ...options})
+
+        it('names the user of each instance before its name', () => {
+            const [user, name] = render$([session({username: 'alice', name: 'humble-robin'})])
+                .querySelector('.title > div').firstChild.children
+            expect([user.textContent, name.textContent]).toEqual(['alice', 'humble-robin'])
+        })
+
+        // The keep-alive and the SSH login belong to the instance's user.
+        it('offers neither editing nor the SSH login', () => {
+            const row = render$([session()]).querySelector('.session')
+            expect(row.dataset.editable).toBe('false')
+            expect(row.dataset.copyValue).toBe('')
+            expect(row.dataset.copyDisabled).toBe('false')
+        })
+
+        it('stops a session as its user\'s, and says when it has', () => {
+            const alices = session({username: 'alice'})
+            vi.mocked(api.sessions.stopUserSession$).mockReturnValue(of(null))
+            const onStopped = vi.fn()
+            const container = render$([alices], {onStopped})
+
+            act(() => container.querySelector('.remove').click())
+
+            expect(api.sessions.stopUserSession$).toHaveBeenCalledWith(alices)
+            expect(stopCurrentUserSession$).not.toHaveBeenCalled()
+            expect(onStopped).toHaveBeenCalledWith(alices)
+        })
     })
 })

@@ -6403,6 +6403,7 @@
       "title": "Google account"
     },
     "report": {
+      "globalSessions": "Global sessions",
       "globalUsage": "Global usage",
       "resources": {
         "info": "Shows your monthly instance and storage budgets, and the storage space in use.",
@@ -6421,6 +6422,7 @@
         "hourlyCost": "Hourly cost",
         "instanceDescription": "Instance description",
         "instanceType": "Instance type",
+        "loadError": "Could not load the sessions.",
         "noSessions": "No active sessions",
         "time": "Date/time started",
         "title": "Sessions"

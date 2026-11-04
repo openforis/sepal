@@ -1,5 +1,6 @@
 // Builds a UserSessionReport { sessions, instanceTypes }:
-//   sessions      — the user's PENDING+ACTIVE sessions filtered by workerType, each carrying
+//   sessions      — the user's (every user's when username is null) PENDING+ACTIVE sessions
+//                   filtered by workerType, each carrying
 //                   apps: [{path, label}] (the app ↔ session associations on that session, from
 //                   appRepo.appsForSessions), usage (the latest resource-usage sample from
 //                   usageRepo.latestForSessions, or null), and what the sampler last observed:
@@ -15,7 +16,10 @@ import {State} from '../workerSession.js'
 const generateUserSessionReport = async (
     {username, workerType}, {repo, appRepo, instanceManager, usageRepo, terminals, verdicts}
 ) => {
-    const sessions = await repo.userSessions(username, [State.PENDING, State.ACTIVE], workerType)
+    const open = [State.PENDING, State.ACTIVE]
+    const sessions = username == null
+        ? await repo.sessions(open, workerType)
+        : await repo.userSessions(username, open, workerType)
     const sessionIds = sessions.map(({id}) => id)
     const appsBySession = await appRepo.appsForSessions(sessionIds)
     const usageBySession = usageRepo
