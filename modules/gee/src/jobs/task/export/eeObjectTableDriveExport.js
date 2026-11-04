@@ -1,7 +1,7 @@
-import {concat, defer, last, map} from 'rxjs'
+import {concat, defer, last, map, of} from 'rxjs'
 
 import ee from '#sepal/ee/ee'
-import {currentEEContext} from '#sepal/ee/eeContext'
+import {isServiceAccount} from '#sepal/ee/eeContext'
 
 import {exportFolderName, prepareDestination$} from '../storage/destination.js'
 import {eeTableFileFormat} from './toWorkspace.js'
@@ -9,8 +9,8 @@ import {eeTableFileFormat} from './toWorkspace.js'
 export const startTableToDriveExport$ = ({
     collection, description, folder: requestedFolder, filenamePrefix, fileFormat, selectors, maxVertices
 }, {sepalUser}) => defer(() => {
-    if (currentEEContext().auth.type === 'serviceAccount') {
-        throw new Error('Cannot export to Drive using service account.')
+    if (isServiceAccount()) {
+        return of({eeTaskId: null})
     }
     const folder = exportFolderName(requestedFolder)
     const serverConfig = ee.batch.Export.convertToServerParams({

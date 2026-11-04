@@ -45,10 +45,11 @@ test('the object table Drive adapter prepares storage and forwards its output op
     }}])
 })
 
-test('the object table Drive adapter rejects a service account before preparing storage', async () => {
-    await assert.rejects(lastValueFrom(inEEContext(context('serviceAccount'), startTableToDriveExport$({
+test('the object table Drive adapter starts nothing for a user without a Google account', async () => {
+    const result = await lastValueFrom(inEEContext(context('serviceAccount'), startTableToDriveExport$({
         collection: COLLECTION, description: 'plots'
-    }, {sepalUser: USER}))), /Cannot export to Drive using service account/)
+    }, {sepalUser: USER})))
+    assert.deepEqual(result, {eeTaskId: null})
     assert.deepEqual(started, [])
     assert.deepEqual(prepared, [])
 })
