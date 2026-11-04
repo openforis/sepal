@@ -77,6 +77,7 @@ mock.module('#sepal/ee/ee', {
 
 const {inEEContext} = await import('#sepal/ee/eeContext')
 const {startImageWorkspaceExport$} = await import('#gee/jobs/task/export/imageWorkspaceExport')
+const {startImageToWorkspaceExport$} = await import('#gee/jobs/task/export/toWorkspace')
 
 const ALICE = {username: 'alice'}
 const MOSAIC = {
@@ -208,6 +209,18 @@ test('the folder named for a title with a slash is the same sanitised folder in 
     assert.match(result.destination.folder, /^North_South_\d{4}-\d{2}-\d{2}_/)
     assert.deepEqual(state.prepared, [result.destination.folder])
     assert.equal(state.started[0].config.folder, result.destination.folder)
+})
+
+test('an export with its own file name prefix names its files with it, not with its task description', async () => {
+    const options = {image: {}, folder: 'ndvi_1', description: 'ndvi', fileNamePrefix: 'NDVI 2024 (v2)', region: {bounds: () => 'bounds'}}
+
+    const toDrive = await lastValueFrom(inEEContext(context('user'), startImageToWorkspaceExport$(options, {sepalUser: ALICE})))
+    const toBucket = await lastValueFrom(inEEContext(context('serviceAccount'), startImageToWorkspaceExport$(options, {sepalUser: ALICE})))
+
+    assert.partialDeepStrictEqual(state.started, [
+        {destination: 'DRIVE', config: {description: 'ndvi', fileNamePrefix: 'NDVI 2024 (v2)', folder: toDrive.destination.folder}},
+        {destination: 'GCS', config: {description: 'ndvi', fileNamePrefix: `${toBucket.destination.prefix}NDVI 2024 (v2)`}}
+    ])
 })
 
 test('a region that cannot be resolved fails the start before any destination is prepared', async () => {

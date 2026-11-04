@@ -3,7 +3,7 @@ import {dirname, isAbsolute, join, relative, resolve, sep} from 'node:path'
 
 import {lastValueFrom} from 'rxjs'
 
-import {assertEEObjectExport, eeObjectImageName, eeObjectWorkspacePath} from '#sepal/eeObjectExport'
+import {assertEEObjectExport, eeObjectFilenamePrefix, eeObjectWorkspacePath} from '#sepal/eeObjectExport'
 import {createVrt$, getBandNames$, setBandNames$} from '#sepal/gdal'
 import {escapeRegExp} from '#sepal/string'
 
@@ -20,7 +20,7 @@ export const eeObjectExport = async (params, context) => {
         await mkdir(downloadDir, {recursive: true})
         const {downloaded} = await exportToWorkspace({...context, start, downloadDir})
         if (downloaded && spec.kind === 'IMAGE') {
-            await mosaicTiles(downloadDir, eeObjectImageName(spec, params.description))
+            await mosaicTiles(downloadDir, eeObjectFilenamePrefix(spec, params.description))
         }
     } else {
         const {eeTaskId, assetId} = await start()

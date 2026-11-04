@@ -3,14 +3,15 @@ import {defer, map, switchMap} from 'rxjs'
 
 import ee from '#sepal/ee/ee'
 import {currentEEContext} from '#sepal/ee/eeContext'
+import {eeTableFormat} from '#sepal/eeObjectExport'
 
 import {exportFolderName, prepareDestination$} from '../storage/destination.js'
 import {castToLargest} from './castToLargest.js'
 
 // Into the user's Drive, or their bucket when they have no Google account; the container downloads from there.
 export const startImageToWorkspaceExport$ = ({
-    image, folder: requestedFolder, description, region, dimensions, scale, crs, crsTransform, maxPixels = 1e13, shardSize,
-    fileDimensions, skipEmptyTiles, fileFormat, formatOptions
+    image, folder: requestedFolder, description, fileNamePrefix = description, region, dimensions, scale, crs, crsTransform,
+    maxPixels = 1e13, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
 }, {sepalUser}) => defer(() => {
     const auth = currentEEContext().auth
     // The destination and the Earth Engine export must name the same folder.
@@ -25,8 +26,8 @@ export const startImageToWorkspaceExport$ = ({
                     maxPixels, shardSize, fileDimensions, skipEmptyTiles, fileFormat, formatOptions
                 }
                 const serverConfig = exportTarget.type === 'drive'
-                    ? ee.batch.Export.convertToServerParams({...common, folder, fileNamePrefix: description}, ee.data.ExportDestination.DRIVE, ee.data.ExportType.IMAGE)
-                    : ee.batch.Export.convertToServerParams({...common, bucket: exportTarget.bucket, fileNamePrefix: `${exportTarget.fileNamePrefix}${description}`}, ee.data.ExportDestination.GCS, ee.data.ExportType.IMAGE)
+                    ? ee.batch.Export.convertToServerParams({...common, folder, fileNamePrefix}, ee.data.ExportDestination.DRIVE, ee.data.ExportType.IMAGE)
+                    : ee.batch.Export.convertToServerParams({...common, bucket: exportTarget.bucket, fileNamePrefix: `${exportTarget.fileNamePrefix}${fileNamePrefix}`}, ee.data.ExportDestination.GCS, ee.data.ExportType.IMAGE)
                 return ee.startImageExport$(ee.batch.ExportTask.create(serverConfig), `export to SEPAL (${description})`).pipe(
                     map(eeTaskId => ({eeTaskId, destination}))
                 )
@@ -40,10 +41,8 @@ const formatRegion$ = region =>
         map(geometry => ee.Geometry(geometry))
     )
 
-const SUPPORTED_TABLE_FORMATS = ['CSV', 'GeoJSON', 'KML', 'KMZ', 'SHP']
-
 export const eeTableFileFormat = fileFormat =>
-    SUPPORTED_TABLE_FORMATS.includes(fileFormat) ? fileFormat : 'CSV'
+    eeTableFormat(fileFormat) || 'CSV'
 
 // Table exports have no region or CRS.
 export const startTableToWorkspaceExport$ = ({collection, description, filenamePrefix, fileFormat, selectors}, {sepalUser}) => defer(() => {

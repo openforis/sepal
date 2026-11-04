@@ -6,16 +6,12 @@ import {ClientException, ERROR_CODES, NotFoundException} from '#sepal/exception'
 
 import {ensureUserBucket$, findUserBucket$, storage} from './userBucket.js'
 
+export {exportFolderName} from '#sepal/earthEngineExportNames'
+
 const SIGNED_URL_MS = 60 * 60 * 1000
 const MAX_CONCURRENT_SIGNINGS = 5
 
 const drivePath = folder => `SEPAL/exports/${folder}`
-
-// A folder that requireFolder accepts, made from user text such as a recipe title.
-export const exportFolderName = text => {
-    const name = String(text ?? '').replace(/[/\\"]/g, '_').trim()
-    return name === '' || name === '.' || name === '..' ? 'export' : name
-}
 
 export const prepareDestination$ = ({folder}, {sepalUser, auth}) => defer(() => {
     requireUser(sepalUser)

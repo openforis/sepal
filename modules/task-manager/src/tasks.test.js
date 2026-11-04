@@ -66,17 +66,34 @@ describe('submitting', () => {
         })})
 
         assert.equal(task.params.export.workspacePath, 'downloads/_my_export')
-        assert.deepEqual(task.params.taskInfo, {kind: 'IMAGE', destination: 'SEPAL', outputPath: 'downloads/_my_export'})
+        assert.deepEqual(task.params.taskInfo, {
+            kind: 'IMAGE', destination: 'SEPAL', outputPath: 'downloads/_my_export', filenamePrefix: '_my_export'
+        })
     })
 
-    for (const [operation, destination] of [['ee.export', 'GEE'], ['ee.export', 'DRIVE'], ['image.SEPAL', 'SEPAL']]) {
-        test(`preserves other task parameters for ${operation} to ${destination}`, async () => {
-            const {tasks} = setup()
-            const params = {description: 'ndvi', export: {destination}, taskInfo: {outputPath: 'original'}}
-            const task = await tasks.submit({username: 'alice', operation, params})
-            assert.deepEqual(task.params, params)
-        })
-    }
+    test('stores the Drive folder an export lands in', async () => {
+        const {tasks, repository} = setup()
+        const params = {
+            description: 'plots',
+            export: {kind: 'TABLE', destination: 'DRIVE', driveFolder: 'exports/tables'},
+            taskInfo: {kind: 'TABLE', destination: 'DRIVE', outputPath: 'exports/tables', source: 'pysepal-api'}
+        }
+
+        const task = await tasks.submit({username: 'alice', operation: 'ee.export', params})
+        const stored = await repository.getTask(task.id)
+
+        assert.equal(stored.params.export.driveFolder, 'exports_tables')
+        assert.equal(stored.params.taskInfo.outputPath, 'exports_tables')
+    })
+
+    test('stores the params of other operations as sent', async () => {
+        const {tasks} = setup()
+        const params = {description: 'ndvi', export: {destination: 'SEPAL'}, taskInfo: {outputPath: 'original'}}
+
+        const task = await tasks.submit({username: 'alice', operation: 'image.SEPAL', params})
+
+        assert.deepEqual(task.params, params)
+    })
 
     test('stores a task under the id the client named', async () => {
         const {tasks} = setup()

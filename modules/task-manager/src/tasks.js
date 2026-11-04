@@ -1,6 +1,6 @@
 import {randomUUID} from 'node:crypto'
 
-import {eeObjectWorkspacePath} from '#sepal/eeObjectExport'
+import {eeObjectTaskParams} from '#sepal/eeObjectExport'
 import {getLogger} from '#sepal/log'
 
 import {hashApiKey} from './apiKey.js'
@@ -133,15 +133,7 @@ export class Tasks {
 
 const normalizeParams = (operation, params) => {
     const parsed = typeof params === 'string' ? JSON.parse(params) : params
-    if (operation !== 'ee.export' || parsed?.export?.destination !== 'SEPAL') {
-        return parsed
-    }
-    const workspacePath = eeObjectWorkspacePath(parsed.export, parsed.description)
-    return {
-        ...parsed,
-        export: {...parsed.export, workspacePath},
-        taskInfo: {...parsed.taskInfo, kind: parsed.export.kind, destination: 'SEPAL', outputPath: workspacePath}
-    }
+    return operation === 'ee.export' ? eeObjectTaskParams(parsed) : parsed
 }
 
 const ownedTask = (task, {taskId, username}) => {
