@@ -42,11 +42,13 @@ class _SessionUsageChart extends React.Component {
 
     render() {
         const {samples} = this.state
-        return (
-            <div className={styles.chart}>
-                {samples?.length > 1 ? this.renderChart(samples) : null}
-            </div>
-        )
+        return samples?.length > 1
+            ? (
+                <div className={styles.chart}>
+                    {this.renderChart(samples)}
+                </div>
+            )
+            : null
     }
 
     componentDidMount() {

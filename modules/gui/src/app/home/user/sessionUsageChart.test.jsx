@@ -4,7 +4,7 @@
 
 import {act} from 'react'
 import {createRoot} from 'react-dom/client'
-import {of, throwError} from 'rxjs'
+import {NEVER, of, throwError} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 vi.mock('~/subscription', () => ({withSubscriptions: () => component => component}))
@@ -164,12 +164,20 @@ describe('the session usage chart', () => {
         expect(lastGraph().valueRange).toEqual([0, 100])
     })
 
-    it('draws nothing until there are two samples to join', () => {
+    it('shows nothing until there are two samples to join', () => {
         vi.mocked(api.sessions.sessionUsage$).mockReturnValue(of({samples: [SAMPLES[0]]}))
 
-        render(aSession())
+        const container = render(aSession())
 
-        expect(graphs).toEqual([])
+        expect(container.innerHTML).toBe('')
+    })
+
+    it('shows nothing while the first samples are loading', () => {
+        vi.mocked(api.sessions.sessionUsage$).mockReturnValue(NEVER)
+
+        const container = render(aSession())
+
+        expect(container.innerHTML).toBe('')
     })
 
     it('picks up new samples every minute', () => {
