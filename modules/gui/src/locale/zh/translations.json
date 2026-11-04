@@ -141,13 +141,6 @@
       "timestamp": {
         "never": ""
       },
-      "update": {
-        "available": "",
-        "checkForUpdates": "",
-        "error": "",
-        "success": "",
-        "noChanges": ""
-      },
       "tooltip": ""
     }
   },
@@ -6403,6 +6396,7 @@
       "title": ""
     },
     "report": {
+      "globalSessions": "",
       "globalUsage": "",
       "resources": {
         "info": "",
@@ -6421,6 +6415,7 @@
         "hourlyCost": "",
         "instanceDescription": "",
         "instanceType": "",
+        "loadError": "",
         "noSessions": "",
         "time": "",
         "title": ""
