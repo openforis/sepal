@@ -113,6 +113,42 @@ test('workspace table exports also get separate temporary folders', async () => 
     assert.equal(calls[0].options.filenamePrefix, 'plots')
 })
 
+for (const destination of ['DRIVE', 'SEPAL']) {
+    test(`an image to ${destination} is named after its prefix in the characters Earth Engine accepts`, async () => {
+        const request = {description: 'ndvi', export: {
+            kind: 'IMAGE', destination, expression: EXPRESSION, filenamePrefix: 'NDVI 2024 (v2)'
+        }}
+
+        await lastValueFrom(startEEObjectExport$(request, {sepalUser: USER}))
+
+        assert.equal(calls[0].options.description, 'NDVI_2024_v2_')
+    })
+}
+
+for (const [kind, destination] of [['IMAGE', 'DRIVE'], ['TABLE', 'GEE'], ['TABLE', 'SEPAL']]) {
+    test(`a long ${kind} name to ${destination} fits Earth Engine's 100-character description`, async () => {
+        const name = 'n'.repeat(120)
+        const request = {description: name, export: {
+            kind, destination, expression: EXPRESSION, assetId: 'projects/p/assets/out'
+        }}
+
+        await lastValueFrom(startEEObjectExport$(request, {sepalUser: USER}))
+
+        const {description} = calls[0].options
+        assert.ok(description.length <= 100, `${description.length} characters`)
+        assert.match(description, /^n{50}/)
+    })
+}
+
+test('long workspace table names keep their unique suffix', async () => {
+    const request = {description: 'n'.repeat(120), export: {kind: 'TABLE', destination: 'SEPAL', expression: EXPRESSION}}
+
+    await lastValueFrom(startEEObjectExport$(request, {sepalUser: USER}))
+    await lastValueFrom(startEEObjectExport$(request, {sepalUser: USER}))
+
+    assert.notEqual(calls[0].options.description, calls[1].options.description)
+})
+
 for (const destination of ['GEE', 'SEPAL']) {
     test(`rejects maxVertices for ${destination} because its unchanged exporter cannot apply it`, async () => {
         await assert.rejects(lastValueFrom(startEEObjectExport$({export: {
