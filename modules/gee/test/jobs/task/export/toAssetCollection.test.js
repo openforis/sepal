@@ -211,10 +211,10 @@ describe('exporting a new image collection', () => {
         assertMatches(state.submitted, [{description: 'mosaic_1', assetId: `${COLLECTION}/1`}])
     })
 
-    it('starts a tile with the default projection, pixel limit and shard size, deleting nothing even when replacing', async () => {
+    it('starts a tile with the default pixel limit and shard size, deleting nothing even when replacing', async () => {
         await exportTile({bandEncoding: {}, strategy: 'replace'}, {tileIndex: 1, tileId: 'tile-1'})
 
-        assert.partialDeepStrictEqual(state.submitted[0], {crs: 'EPSG:4326', maxPixels: 1e13, shardSize: 256})
+        assert.partialDeepStrictEqual(state.submitted[0], {maxPixels: 1e13, shardSize: 256})
         assert.equal(state.submitted[0].crsTransform, undefined)
         assert.deepEqual(state.deleted, [])
     })

@@ -22,7 +22,8 @@ export const imageAssetSource$ = ({image: {recipe, ...retrieveOptions}}) => {
 
 // The encoding is what this recipe establishes about the bands it names, never what the submitter claims or the
 // exported image inherited. How it is stored, and that it is stored even when empty, belongs to the exporter.
-const source$ = ({recipe, bands, visualizations, scale, properties, ...retrieveOptions}) =>
+// A recipe export that names no projection is in the retrieve panel's default one.
+const source$ = ({recipe, bands, visualizations, scale, crs = 'EPSG:4326', properties, ...retrieveOptions}) =>
     built$(recipe, withOutputBands(bands)).pipe(
         map(({result: {image, regressionPrecision}, geometry, imageOutput}) => {
             const encoding = encodingOfBands(selectedBandEncoding(imageOutput, bands.selection))
@@ -35,6 +36,7 @@ const source$ = ({recipe, bands, visualizations, scale, properties, ...retrieveO
                 regressionPrecision,
                 region: geometry.bounds(scale),
                 scale,
+                crs,
                 bandEncoding: encoding,
                 properties: {...formattedProperties, ...visualizationProperties,
                     ...(imageOutput.processing && {processing: JSON.stringify(imageOutput.processing),

@@ -8,6 +8,7 @@ import {Tasks} from './tasks.js'
 import {InMemoryRepository} from './testSupport/inMemoryRepository.js'
 
 const GRANTED = new Date('2026-10-15T08:00:00.000Z')
+const EXPRESSION = {result: '0', values: {'0': {constantValue: 1}}}
 const TASK_ID = '3f2b8c1e-6d4a-4f7e-9b2c-1a5d8e7f6c3b'
 
 describe('submitting', () => {
@@ -33,6 +34,120 @@ describe('submitting', () => {
 
     test('refuses a task without an operation', async () => {
         await assert.rejects(setup().tasks.submit({username: 'alice', params: {}}), InvalidCommand)
+    })
+
+    for (const kind of ['IMAGE', 'TABLE']) {
+        for (const workspacePath of [undefined, '', 'module_results/my export']) {
+            test(`stores the actual ${kind} workspace destination for path ${JSON.stringify(workspacePath)}`, async () => {
+                const {tasks, repository} = setup()
+                const origin = {type: 'NOTEBOOK', path: 'analysis.ipynb'}
+                const params = {
+                    description: 'my export',
+                    export: {kind, destination: 'SEPAL', expression: EXPRESSION, workspacePath, filenamePrefix: 'output'},
+                    taskInfo: {kind, destination: 'SEPAL', outputPath: 'output', source: 'pysepal-api', origin}
+                }
+
+                const task = await tasks.submit({username: 'alice', operation: 'ee.export', params})
+                const stored = await repository.getTask(task.id)
+                const expectedPath = workspacePath || 'downloads/my_export'
+
+                assert.equal(stored.params.export.workspacePath, expectedPath)
+                assert.equal(stored.params.taskInfo.outputPath, expectedPath)
+                assert.deepEqual(stored.params.taskInfo.origin, origin)
+                assert.equal(stored.params.export.filenamePrefix, 'output')
+                assert.equal(params.taskInfo.outputPath, 'output')
+            })
+        }
+    }
+
+    test('normalizes workspace exports received as JSON without task metadata', async () => {
+        const {tasks} = setup()
+        const task = await tasks.submit({username: 'alice', operation: 'ee.export', params: JSON.stringify({
+            description: '../my export', export: {kind: 'IMAGE', destination: 'SEPAL', expression: EXPRESSION}
+        })})
+
+        assert.equal(task.params.export.workspacePath, 'downloads/_my_export')
+        assert.deepEqual(task.params.taskInfo, {
+            kind: 'IMAGE', destination: 'SEPAL', outputPath: 'downloads/_my_export', filenamePrefix: '_my_export'
+        })
+    })
+
+    test('stores the Drive folder an export lands in', async () => {
+        const {tasks, repository} = setup()
+        const params = {
+            description: 'plots',
+            export: {kind: 'TABLE', destination: 'DRIVE', expression: EXPRESSION, driveFolder: 'exports/tables'},
+            taskInfo: {kind: 'TABLE', destination: 'DRIVE', outputPath: 'exports/tables', source: 'pysepal-api'}
+        }
+
+        const task = await tasks.submit({username: 'alice', operation: 'ee.export', params})
+        const stored = await repository.getTask(task.id)
+
+        assert.equal(stored.params.export.driveFolder, 'exports_tables')
+        assert.equal(stored.params.taskInfo.outputPath, 'exports_tables')
+    })
+
+    test('refuses an export the task could not run, saying why, without storing a task', async () => {
+        const {tasks, repository} = setup()
+        const params = {description: 'plots', export: {kind: 'TABLE', destination: 'SEPAL', expression: EXPRESSION, fileFormat: 'TIFF'}}
+
+        await assert.rejects(
+            tasks.submit({username: 'alice', operation: 'ee.export', params}),
+            error => error instanceof InvalidCommand && /Unsupported table export fileFormat: TIFF/.test(error.message)
+        )
+
+        assert.deepEqual(await repository.userTasks('alice'), [])
+    })
+
+    for (const [operation, writerParams] of [
+        ['ee.export', () => workspaceExport({workspacePath: 'module_results/demo'})],
+        ['image.SEPAL', () => ({taskInfo: {recipeType: 'MOSAIC', destination: 'SEPAL', outputPath: 'module_results/demo'}})]
+    ]) {
+        test(`refuses a workspace export into the folder of an unfinished ${operation} task`, async () => {
+            const {tasks} = setup()
+            await tasks.submit({username: 'alice', operation, params: writerParams()})
+
+            await assert.rejects(
+                tasks.submit({username: 'alice', operation: 'ee.export', params: workspaceExport({workspacePath: '~/module_results/demo'})}),
+                error => error instanceof InvalidCommand && error.message === 'A task is already exporting into ~/module_results/demo'
+            )
+        })
+    }
+
+    test('accepts a workspace export into the folder of a finished task', async () => {
+        const {tasks, repository} = setup()
+        const earlier = await tasks.submit({username: 'alice', operation: 'ee.export', params: workspaceExport({workspacePath: 'module_results/demo'})})
+        await repository.transition(earlier, {from: [State.PENDING], to: State.COMPLETED})
+
+        const task = await tasks.submit({username: 'alice', operation: 'ee.export', params: workspaceExport({workspacePath: 'module_results/demo'})})
+
+        assert.equal(task.state, State.PENDING)
+    })
+
+    test('accepts a workspace export into a folder another user\'s task is writing to', async () => {
+        const {tasks} = setup()
+        await tasks.submit({username: 'bob', operation: 'ee.export', params: workspaceExport({workspacePath: 'module_results/demo'})})
+
+        const task = await tasks.submit({username: 'alice', operation: 'ee.export', params: workspaceExport({workspacePath: 'module_results/demo'})})
+
+        assert.equal(task.state, State.PENDING)
+    })
+
+    test('returns the task already created when a workspace export is submitted again under its id', async () => {
+        const {tasks} = setup()
+        const params = workspaceExport({workspacePath: 'module_results/demo'})
+        const task = await tasks.submit({id: TASK_ID, username: 'alice', operation: 'ee.export', params})
+
+        assert.equal((await tasks.submit({id: TASK_ID, username: 'alice', operation: 'ee.export', params})).id, task.id)
+    })
+
+    test('stores the params of other operations as sent', async () => {
+        const {tasks} = setup()
+        const params = {description: 'ndvi', export: {destination: 'SEPAL'}, taskInfo: {outputPath: 'original'}}
+
+        const task = await tasks.submit({username: 'alice', operation: 'image.SEPAL', params})
+
+        assert.deepEqual(task.params, params)
     })
 
     test('stores a task under the id the client named', async () => {
@@ -275,6 +390,11 @@ describe('resubmitting and removing', () => {
     test('a task that does not exist is not found', async () => {
         await assert.rejects(setup().tasks.getTask({taskId: 'nope', username: 'alice'}), NotFound)
     })
+})
+
+const workspaceExport = exportOverrides => ({
+    description: 'ndvi',
+    export: {kind: 'IMAGE', destination: 'SEPAL', expression: EXPRESSION, ...exportOverrides}
 })
 
 const setup = () => {

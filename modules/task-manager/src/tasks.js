@@ -1,5 +1,6 @@
 import {randomUUID} from 'node:crypto'
 
+import {assertEEObjectExport, eeObjectTaskParams} from '#sepal/eeObjectExport'
 import {getLogger} from '#sepal/log'
 
 import {hashApiKey} from './apiKey.js'
@@ -30,13 +31,17 @@ export class Tasks {
         if (existing) {
             return ownedTask(existing, {taskId: id, username})
         }
+        const taskParams = normalizeParams(operation, params)
+        if (operation === 'ee.export') {
+            await this.#requireFreeWorkspace(username, taskParams.taskInfo)
+        }
         const now = this.#clock()
         const task = createTask({
             id: id ?? this.#newId(),
             state: State.PENDING,
             username,
             operation,
-            params: typeof params === 'string' ? JSON.parse(params) : params,
+            params: taskParams,
             recipeId,
             creationTime: now,
             updateTime: now
@@ -110,6 +115,21 @@ export class Tasks {
         return task ? {username: task.username, taskId: task.id} : null
     }
 
+    // As the GUI requires of recipe exports: two tasks writing into one folder would mix their files.
+    async #requireFreeWorkspace(username, {destination, outputPath}) {
+        if (destination !== 'SEPAL') {
+            return
+        }
+        const writing = (await this.#repository.userTasks(username)).some(task =>
+            !isFinished(task)
+                && task.params?.taskInfo?.destination === 'SEPAL'
+                && task.params.taskInfo.outputPath === outputPath
+        )
+        if (writing) {
+            throw new InvalidCommand(`A task is already exporting into ~/${outputPath}`)
+        }
+    }
+
     async #finishedTask({taskId, username}, action) {
         const task = await this.getTask({taskId, username})
         if (!isFinished(task)) {
@@ -128,6 +148,21 @@ export class Tasks {
         }
         return task
     }
+}
+
+const normalizeParams = (operation, params) => {
+    const parsed = typeof params === 'string' ? JSON.parse(params) : params
+    return operation === 'ee.export' ? eeObjectTaskParams(validEEObjectExport(parsed)) : parsed
+}
+
+// Refused here, the client learns why at once instead of from a task that fails when it runs.
+const validEEObjectExport = params => {
+    try {
+        assertEEObjectExport(params?.export)
+    } catch (error) {
+        throw new InvalidCommand(error.message)
+    }
+    return params
 }
 
 const ownedTask = (task, {taskId, username}) => {
