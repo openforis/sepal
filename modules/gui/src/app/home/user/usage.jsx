@@ -64,7 +64,7 @@ class _Usage extends React.Component {
 
     renderResources() {
         return (
-            <Widget label={msg('user.report.resources.title')} framed>
+            <Widget label={msg('user.report.resources.title')}>
                 <UserResources/>
             </Widget>
         )

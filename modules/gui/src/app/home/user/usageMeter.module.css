@@ -1,0 +1,30 @@
+/* The margin keeps a tick at 100% inside its cell. */
+.meter {
+    position: relative;
+    height: .25rem;
+    min-width: 4rem;
+    margin: 0 .25rem;
+}
+
+.meter::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: var(--color);
+    opacity: .25;
+}
+
+.bar {
+    position: absolute;
+    inset: 0 auto 0 0;
+    background-color: var(--color);
+}
+
+.tick {
+    position: absolute;
+    top: 50%;
+    width: 1px;
+    height: .5rem;
+    background-color: var(--color);
+    transform: translate(-50%, -50%);
+}

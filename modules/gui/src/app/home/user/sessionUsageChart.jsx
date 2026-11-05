@@ -10,15 +10,16 @@ import {ElementResizeDetector} from '~/widget/elementResizeDetector'
 import {Graph} from '~/widget/graph'
 
 import styles from './sessionUsageChart.module.css'
+import {USAGE_COLORS} from './usageColors'
 
 // The worker samples every minute, so refreshing faster would only fetch the same points again.
 const REFRESH_INTERVAL_MS = 60000
 
 // Percentages only: they share the chart's 0-100 scale. Network is in bytes/s and stays in the strip.
 const SERIES = [
-    {key: 'cpu', value: 'cpuPct', color: '#FFB300'},
-    {key: 'ram', value: 'ramPct', color: '#4FC3F7'},
-    {key: 'gpu', value: 'gpuPct', color: '#81C784', gpuOnly: true}
+    {key: 'cpu', value: 'cpuPct', color: USAGE_COLORS.cpu},
+    {key: 'ram', value: 'ramPct', color: USAGE_COLORS.ram},
+    {key: 'gpu', value: 'gpuPct', color: USAGE_COLORS.gpu, gpuOnly: true}
 ]
 
 // Neutral grey at low alpha reads on either theme's background.

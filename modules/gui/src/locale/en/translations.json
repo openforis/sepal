@@ -6588,13 +6588,16 @@
         },
         "usage": {
           "label": "Computing resource usage",
-          "avgMax": "{metric} (avg/max)",
+          "avgMaxValue": "avg {avg}%, max {max}%",
           "cost": "Cost",
           "hours": "Hours",
           "instanceType": "Instance type",
+          "meterExample": "CPU, RAM and GPU show the average using a solid bar, and the maximum with a tick.",
+          "meterExampleValues": "Example, {avg}% average, {max}% max:",
           "month": "Month",
           "network": "Network",
           "noData": "No usage recorded",
+          "notAvailable": "Not available",
           "error": "Could not load usage data"
         },
         "username": {

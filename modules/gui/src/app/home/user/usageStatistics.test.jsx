@@ -13,7 +13,12 @@ vi.mock('~/apiRegistry', () => ({default: {sessions: {usage$: vi.fn(), userUsage
 vi.mock('~/widget/icon', () => ({Icon: ({name}) => <span className={name}/>}))
 vi.mock('~/widget/scrollable', () => ({Scrollable: ({children}) => <div>{children}</div>}))
 vi.mock('~/widget/widget', () => ({
-    Widget: ({label, children}) => <div><label>{label}</label><div className='content'>{children}</div></div>
+    Widget: ({label, tooltip, children}) =>
+        <div>
+            <label>{label}</label>
+            <div className='content'>{children}</div>
+            <div data-widget-tooltip>{tooltip}</div>
+        </div>
 }))
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, children}) =>
@@ -26,6 +31,7 @@ vi.mock('~/widget/tooltip', () => ({
 import api from '~/apiRegistry'
 import {setLanguage, TranslationProvider} from '~/translate'
 
+import {USAGE_COLORS} from './usageColors'
 import {UsageStatistics} from './usageStatistics'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -72,8 +78,8 @@ describe('the usage statistics', () => {
 
     it('lists the totals of each month, as reported', () => {
         expect(rows(render())).toEqual([
-            ['Aug 2026', '12', '$ 3.20', '20 / 90%', '40 / 60%', '1.00 kB/s'],
-            ['Jun 2026', '3', '$ 0.06', '5 / 10%', '20 / 30%', '—']
+            ['Aug 2026', '12', '$ 3.20', 'avg 20%, max 90%', 'avg 40%, max 60%', 'Not available', '1.00 kB/s'],
+            ['Jun 2026', '3', '$ 0.06', 'avg 5%, max 10%', 'avg 20%, max 30%', 'Not available', '—']
         ])
     })
 
@@ -82,15 +88,51 @@ describe('the usage statistics', () => {
         render()
 
         expect(rows(tooltips()[0])).toEqual([
-            ['t1', '10', '$ 0.20', '12 / 96%', '35 / 50%', '1.00 kB/s'],
-            ['m3.medium', '2', '—', '50 / 80%', '60 / 70%', '—']
+            ['t1', '10', '$ 0.20', 'avg 12%, max 96%', 'avg 35%, max 50%', 'Not available', '1.00 kB/s'],
+            ['m3.medium', '2', '—', 'avg 50%, max 80%', 'avg 60%, max 70%', 'Not available', '—']
         ])
     })
 
     it('heads each column', () => {
         const headers = [...render().querySelectorAll('th')].map(({textContent}) => textContent)
 
-        expect(headers).toEqual(['Month', 'Hours', 'Cost', 'CPU (avg/max)', 'RAM (avg/max)', 'Network'])
+        expect(headers).toEqual(['Month', 'Hours', 'Cost', 'CPU', 'RAM', 'GPU', 'Network'])
+    })
+
+    it('places the average and maximum of a metric along its line, in the colour of the metric', () => {
+        const [cpu, ram] = render().querySelectorAll('[role=img]')
+        const [average, maximum] = cpu.children
+
+        expect(average.style.width).toBe('20%')
+        expect(maximum.style.left).toBe('90%')
+        expect(cpu.style.getPropertyValue('--color')).toBe(USAGE_COLORS.cpu)
+        expect(ram.style.getPropertyValue('--color')).toBe(USAGE_COLORS.ram)
+    })
+
+    it('explains the line with an example of 40% average and 90% maximum', () => {
+        const [text, example] = render().querySelector('[data-widget-tooltip]').firstChild.children
+        const [average, maximum] = example.querySelector('[role=img]').children
+
+        expect(text.textContent).toBe('CPU, RAM and GPU show the average using a solid bar, and the maximum with a tick.')
+        expect(example.textContent).toBe('Example, 40% average, 90% max:')
+        expect(average.style.width).toBe('40%')
+        expect(maximum.style.left).toBe('90%')
+    })
+
+    it('leaves the bare line for a metric that was not measured', () => {
+        const gpu = render().querySelector('[aria-label="Not available"]')
+
+        expect(gpu.style.getPropertyValue('--color')).toBe(USAGE_COLORS.gpu)
+        expect(gpu.childElementCount).toBe(0)
+    })
+
+    it('shows the GPU usage of a month that has one', () => {
+        const [month] = usage.months
+        vi.mocked(api.sessions.usage$).mockReturnValue(of({
+            months: [{...month, overall: {...month.overall, gpu: metric(30, 70)}}]
+        }))
+
+        expect(rows(render())[0][5]).toBe('avg 30%, max 70%')
     })
 
     it('says so when nothing has been recorded', () => {
@@ -142,6 +184,8 @@ const usage = {
 }
 
 const rows = element => [...element.querySelector('table').querySelectorAll(':scope > tbody > tr')]
-    .map(row => [...row.querySelectorAll('td')].map(({textContent}) => textContent))
+    .map(row => [...row.querySelectorAll('td')].map(cell =>
+        cell.querySelector('[role=img]')?.getAttribute('aria-label') ?? cell.textContent
+    ))
 const tooltips = () => [...document.querySelectorAll('[data-tooltip]')]
 const content = container => container.querySelector('.content').textContent
