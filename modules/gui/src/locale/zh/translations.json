@@ -6588,13 +6588,16 @@
         },
         "usage": {
           "label": "",
-          "avgMax": "",
+          "avgMaxValue": "",
           "cost": "",
           "hours": "",
           "instanceType": "",
+          "meterExample": "",
+          "meterExampleValues": "",
           "month": "",
           "network": "",
           "noData": "",
+          "notAvailable": "",
           "error": ""
         },
         "username": {
@@ -6887,6 +6890,10 @@
     "confirm": {
       "title": "",
       "label": ""
+    },
+    "datePicker": {
+      "yearStart": "",
+      "rangeInfo": ""
     },
     "error": "",
     "fileSelect": {
