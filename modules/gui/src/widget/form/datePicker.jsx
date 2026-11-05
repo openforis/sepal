@@ -4,9 +4,12 @@ import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 
 import {compose} from '~/compose'
+import {msg} from '~/translate'
 import {withActivatable} from '~/widget/activation/activatable'
 import {withActivators} from '~/widget/activation/activator'
 import {Button} from '~/widget/button'
+import {ButtonGroup} from '~/widget/buttonGroup'
+import {Icon} from '~/widget/icon'
 import {Input} from '~/widget/input'
 import {Label} from '~/widget/label'
 import {ScrollableList} from '~/widget/list'
@@ -207,12 +210,16 @@ class _DatePickerPanel extends React.Component {
                 onBackdropClick={this.leave}>
                 <Panel.Header
                     icon='calendar-alt'
-                    title={title}/>
+                    title={title}
+                    label={this.renderRangeInfo()}/>
                 <Panel.Content noVerticalPadding>
                     <div className={styles.panelContent}>
                         {this.renderYears()}
-                        {this.renderMonths()}
-                        {this.renderDays()}
+                        <div className={styles.calendar}>
+                            {this.renderYearStart()}
+                            {this.renderMonths()}
+                            {this.renderDays()}
+                        </div>
                     </div>
                 </Panel.Content>
                 <Panel.Buttons>
@@ -221,6 +228,32 @@ class _DatePickerPanel extends React.Component {
                     </Panel.Buttons.Main>
                 </Panel.Buttons>
             </Panel>
+        )
+    }
+
+    renderRangeInfo() {
+        return (
+            <Icon
+                name='question-circle'
+                tooltip={msg('widget.datePicker.rangeInfo')}
+                tooltipPlacement='bottom'
+                tooltipClickTrigger
+            />
+        )
+    }
+
+    renderYearStart() {
+        return (
+            <ButtonGroup
+                className={styles.yearBoundaries}
+                layout='horizontal-nowrap'
+                alignment='distribute'>
+                <Button
+                    label={msg('widget.datePicker.yearStart')}
+                    size='small'
+                    onClick={() => this.updateDate(date => date.startOf('year'))}
+                />
+            </ButtonGroup>
         )
     }
 
@@ -238,9 +271,10 @@ class _DatePickerPanel extends React.Component {
         return (
             <div className={styles.years}>
                 <ScrollableList
+                    className={styles.yearList}
                     options={options}
                     selectedValue={selectedYear}
-                    onSelect={option => this.updateDate('year', option.value)}
+                    onSelect={option => this.updateDate(date => date.year(option.value))}
                     alignment='center'
                     autoCenter
                 />
@@ -275,7 +309,7 @@ class _DatePickerPanel extends React.Component {
                 label={month}
                 selected={selected}
                 disabled={disabled}
-                onClick={() => this.updateDate('month', month)}/>
+                onClick={() => this.updateDate(date => date.month(month))}/>
         )
     }
 
@@ -327,7 +361,7 @@ class _DatePickerPanel extends React.Component {
                 label={dayOfMonth}
                 selected={buttonDate.isSame(date, 'day')}
                 disabled={disabled}
-                onClick={() => this.updateDate('date', dayOfMonth)}/>
+                onClick={() => this.updateDate(date => date.date(dayOfMonth))}/>
         )
     }
 
@@ -360,11 +394,10 @@ class _DatePickerPanel extends React.Component {
         })
     }
 
-    updateDate(unit, value) {
+    updateDate(change) {
         this.setState(prevState => ({
-            date: this.toValidRange(prevState.date.set(unit, value))
+            date: this.toValidRange(change(moment(prevState.date)))
         }))
-
     }
 
     toValidRange(date) {
