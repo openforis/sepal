@@ -127,7 +127,7 @@ vi.mock('~/widget/tooltip', () => ({
 // The graph renderer is the chart's output boundary: what it is given to draw is recorded.
 vi.mock('../ccdc/ccdcGraph', () => ({
     CCDCGraph: props => {
-        fake.graphs.push(props)
+        fake.graphs.push(props.chart)
         return null
     }
 }))

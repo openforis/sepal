@@ -51,7 +51,7 @@ vi.mock('~/widget/form', async importOriginal => {
     }
 })
 vi.mock('./ccdc/ccdcGraph', () => ({
-    CCDCGraph: ({observations}) => <output aria-label='chart'>{JSON.stringify({observations})}</output>
+    CCDCGraph: ({chart: {observations}}) => <output aria-label='chart'>{JSON.stringify({observations})}</output>
 }))
 
 const {supportProbability, supportRegression} = await import('#sepal/recipe/type/classification')
@@ -78,7 +78,7 @@ beforeEach(() => {
         ]
     })
     flatBandOptions.mockClear()
-    loadCCDCSegments$.mockReset().mockReturnValue(of([]))
+    loadCCDCSegments$.mockReset().mockReturnValue(of({tStart: [], tEnd: [], tBreak: [], changeProb: [], numObs: []}))
     loadTimeSeriesObservations$.mockReset().mockReturnValue(of({features: []}))
 })
 

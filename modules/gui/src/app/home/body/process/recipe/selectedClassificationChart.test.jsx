@@ -93,7 +93,7 @@ let root, container, map
 
 beforeEach(() => {
     loadTimeSeriesObservations$.mockReset().mockReturnValue(of({features: []}))
-    loadCCDCSegments$.mockReset().mockReturnValue(of([]))
+    loadCCDCSegments$.mockReset().mockReturnValue(of({tStart: [], tEnd: [], tBreak: [], changeProb: [], numObs: []}))
     inputBands$.mockReset().mockReturnValue(of(['red', 'nir'].map(name => ({name, arrayDimensions: 0}))))
     saveRecipe$.mockReset().mockReturnValue(of({revision: 2}))
     watched.length = 0

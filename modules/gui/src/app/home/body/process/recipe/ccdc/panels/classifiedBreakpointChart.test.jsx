@@ -76,7 +76,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 let root, container, map
 
 beforeEach(() => {
-    loadCCDCSegments$.mockReset().mockReturnValue(of([]))
+    loadCCDCSegments$.mockReset().mockReturnValue(of({tStart: [], tEnd: [], tBreak: [], changeProb: [], numObs: []}))
     loadTimeSeriesObservations$.mockReset().mockReturnValue(of({features: []}))
 })
 

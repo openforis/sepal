@@ -146,7 +146,8 @@ Remapping's proposed [default class](#default-or-fallback-class) is specified be
 | Radar RGB preset range | Audit the ratio range against its x1000 encoding, separate from VV/VH's x100. Keep this a presentation correction with unchanged pixel encoding. |
 | Sampling Design allocation tooltip | When proportions are skipped, the Samples tooltip should describe a fixed total without promising a calculated margin of error. |
 | Chart zoom handles | Time Series handles are separately reported as usually absent, or disappearing during dragging; reproduce that through the shared controls. Verify retained range, tab return and cleanup for representative chart families. |
-| Chart CSV export | Inventory existing chart downloads, then define export of the displayed series, timestamps, missing/masked values, units/encoding and fitted versus observed data. Decide full versus visible range and use shared serialization/download behavior. |
+| Chart CSV export acceptance | Browser-check the [five pixel charts](../recipes/time-series.md#chart-csv-export): button placement and loading, full-period export after zoom, current band/pixel, interpolated and extrapolated values and readouts, annual LandTrendr rows, and spreadsheet import. |
+| Legend CSV encoding | Move legend downloads from `downloadCsv`'s `escape()` data URL to the shared UTF-8 Blob download. Preserve Unicode labels and CSV quoting. |
 | Interactive multi-sensor time series | Assess comparison of multiple sensors with explicit time alignment, units/encoding, processing differences and missing observations. Reuse chart/collection contracts; separate this feature from repairing zoom controls. |
 | Categorical class visibility | Assess class disable/mask controls and treatment of unlisted pixel values under the [policy below](#categorical-class-visibility). |
 

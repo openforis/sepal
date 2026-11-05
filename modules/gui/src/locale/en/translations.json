@@ -1191,6 +1191,10 @@
         "tooltip": "Enter coordinates",
         "withinBounds": "Within recipe bounds"
       },
+      "exportCsv": {
+        "label": "Export CSV",
+        "tooltip": "Download the observations and model charted for this pixel, over the whole chart period, as a CSV file"
+      },
       "start.tooltip": "Chart time-series for pixel"
     },
     "ccdc": {

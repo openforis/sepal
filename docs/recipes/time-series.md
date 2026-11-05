@@ -93,7 +93,48 @@ Null points follow the series' `connectSeparatedPoints` setting; explicit NaN ga
 follow the series settings. The library still draws the lines and points, and supplies the renderer for stepped and
 custom-bar charts. A caller's own plotter remains authoritative.
 Hover readouts appear opposite the highlighted point and let pointer events reach the chart beneath them, for both
-observations and fitted points. Moving into the zoom strip clears the hovered point and its readout.
+observations and fitted points. Moving into the zoom strip clears the hovered point and its readout. A model day's
+readout shows the value drawn and describes the segment it is fitted to or extrapolated from. For an interpolated day
+it describes the segment the gap follows; a masked day shows none.
+
+What a chart draws is prepared once per response, for the band and pixel read: `ccdcChart.js` for the `CCDCGraph`
+family, `landTrendrChart.js` for LandTrendr. The CCDC family evaluates the model for each day of the period. Segment
+days and the gaps following them use browser local midnight; a gap before the first segment steps from the configured
+start instant. Within a segment the value is fitted. Around and between segments the gap strategy fills it:
+- interpolation needs a segment on both sides;
+- extrapolation uses the closest, previous or next segment within the maximum days;
+- before the first segment or after the last, only the segment there is can be used;
+- a day without the segment asked for is masked.
+
+### Chart CSV export
+
+Each pixel chart panel has an Export CSV button at the left of its buttons. It downloads one CSV of the selected band
+(LandTrendr: the recipe's index) at the charted pixel, over the whole prepared period; zooming does not restrict it.
+- **When it is enabled:** once every response the chart needs for the current band and pixel has arrived (segments and
+  observations for CCDC and Change Alerts) and something was read. It is disabled while a new band or pixel is read.
+- **What it reads and changes:** it serializes the prepared chart the drawing uses (`pixelChartExport.jsx`,
+  `pixelChartCsv.js`). It requests nothing more from Earth Engine and leaves the recipe unchanged.
+- **Encoding:** the file is UTF-8 without a byte-order mark, written by `papaparse`. Excel may need it imported as UTF-8.
+- **Period:** the export includes all prepared model days, including segments before the chart's initial date window.
+
+Columns: `band,latitude,longitude,timestamp,year,series,value,rmse,lower,upper,model_method,is_vertex`.
+- **Order:** rows are in time. At one instant an observation precedes the model; observations sharing an instant keep
+  the order they were read in.
+- **Observations:** every observation in the response, at its own timestamp, including several on one day, which the
+  fitted drawing shows one of. LandTrendr's are annual composites: a `year` and no timestamp.
+- **Model, CCDC family:** a row for each day of the period. The timestamp is the actual instant the model is evaluated
+  at, written in UTC with the chart's existing timezone handling preserved. `model_method` is `fitted`, `interpolated`,
+  `extrapolated` or `masked`; a masked day keeps its row with no numbers.
+- **Model, LandTrendr:** a row a year, `fitted` (or `masked` where no value was fitted), with `is_vertex` from the flags
+  LandTrendr returned.
+- **`rmse`:** the RMSE of the one segment a fitted or extrapolated value comes from. It is blank for an interpolated
+  value.
+- **`lower` and `upper`:** the band the chart draws around the value, which for an interpolated value is a weighted
+  combination of both segments' RMSE. They are not statistical confidence intervals.
+- **Where there is no uncertainty:** `rmse`, `lower` and `upper` are blank for observations and for LandTrendr. The
+  zeros the chart plots there are placeholders.
+- **Values:** as charted, with no unit conversion and at full precision. Timestamps are ISO 8601 in UTC, with
+  milliseconds. Anything unavailable is blank.
 
 ## Output
 
@@ -224,6 +265,12 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
   fallback, the current label winning - with Apply refused, and while the Classification is read and after repair.
   `mosaic/panels/retrieve/retrieveDestinationCompatibility.test.jsx`: Retrieve's kept selection named only as its
   owner says.
+- `modules/gui/src/app/home/body/process/recipe/pixelChartExport.test.jsx`: each pixel chart's Export CSV through its
+  panel - when it is enabled, a new band or pixel, zoom, empty results and an unchanged recipe.
+  `ccdc/ccdcChart.test.js`, `landTrendr/panels/landTrendrChart.test.js` and `pixelChartCsv.test.js`: the prepared
+  model's methods, RMSE and drawn bounds, segment edges, timezones and leap days, annual rows, and CSV order, blanks,
+  quoting and Unicode.
+  `ccdc/ccdcGraph.test.jsx`: readout placement, extrapolated values and their segment details, and masked days.
 - `modules/task/src/runner/operations/timeSeriesExport.test.js` and `lib/python/shared/test_stack_time_series.py`:
   band-first download layout, chunk stacking, relative SITS VRTs and relocation.
 - `modules/gee/test/ee/timeSeries/regressionPrecision.test.js`: collection values/types/masks, pre-encoding

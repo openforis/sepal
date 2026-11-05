@@ -28,7 +28,7 @@ vi.mock('~/apiRegistry', () => ({default: {
         },
         loadCCDCSegments$: ({bands}) => {
             fake.requests.push(bands)
-            return of([])
+            return of({tStart: [], tEnd: [], tBreak: [], changeProb: [], numObs: []})
         },
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
         bands$: () => of(['red', 'nir'].map(name => ({name, arrayDimensions: 0})))

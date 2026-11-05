@@ -18,10 +18,12 @@ import {Panel} from '~/widget/panel/panel'
 
 import {withRecipe} from '../../../recipeContext'
 import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
+import {ccdcChart, ccdcExportRecords} from '../../ccdc/ccdcChart'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import {resolveChartBand} from '../../chartBandSelection'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
 import {pixelChartAvailability, pixelOperationsAvailability, watchOperations} from '../../operationAvailability'
+import {exportableChart, PixelChartExport} from '../../pixelChartExport'
 import {pixelGenerationOfState} from '../../pixelGeneration'
 import {segmentBandLabelsOf} from '../../segmentCapability'
 import {segmentDescription} from '../../segmentEvidence'
@@ -74,8 +76,8 @@ class _ChartPixel extends React.Component {
     }
 
     renderPanel() {
-        const {latLng, noChartableBand} = this.props
-        const {segments} = this.state
+        const {recipe, latLng, noChartableBand, inputs: {selectedBand}} = this.props
+        const {segments, chart} = this.state
         const loading = !noChartableBand && (!segments || !segments.length)
         return (
             <Panel
@@ -93,6 +95,11 @@ class _ChartPixel extends React.Component {
                 </Panel.Content>
 
                 <Panel.Buttons>
+                    <PixelChartExport
+                        recipe={recipe}
+                        chart={exportableChart(chart, {band: selectedBand.value, latLng})}
+                        records={ccdcExportRecords}
+                    />
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Close
                             keybinding='Escape'
@@ -124,11 +131,9 @@ class _ChartPixel extends React.Component {
     }
 
     renderChart() {
-        const {
-            dateType, date, startDate, endDate, harmonics, gapStrategy, extrapolateSegment, extrapolateMaxDays, dateFormat, inputs: {selectedBand}
-        } = this.props
+        const {dateType, date, startDate, endDate} = this.props
         const {segmentsGate, noChartableBand} = this.props
-        const {segments} = this.state
+        const {segments, chart} = this.state
         const [highlightStart, highlightEnd] = dateType === 'RANGE'
             ? [startDate, endDate]
             : [date, date]
@@ -142,9 +147,7 @@ class _ChartPixel extends React.Component {
         else {
             return (
                 <CCDCGraph
-                    band={selectedBand.value}
-                    dateFormat={dateFormat}
-                    segments={segments}
+                    chart={chart}
                     highlights={[{
                         startDate: moment(highlightStart, 'YYYY-MM-DD').subtract(0.5, 'days').toDate(),
                         endDate: moment(highlightEnd, 'YYYY-MM-DD').add(0.5, 'days').toDate(),
@@ -153,10 +156,6 @@ class _ChartPixel extends React.Component {
 
                     }]}
                     highlightGaps
-                    gapStrategy={gapStrategy}
-                    extrapolateMaxDays={extrapolateMaxDays}
-                    extrapolateSegment={extrapolateSegment}
-                    harmonics={harmonics}
                 />
             )
         }
@@ -220,13 +219,21 @@ class _ChartPixel extends React.Component {
         }
     }
 
+    // What is read is charted as read for this band at this pixel, as the slice's options say to fill its gaps.
     loadSegments() {
         const {stream, recipe, latLng, inputs: {selectedBand}} = this.props
+        const band = selectedBand.value
         stream('LOAD_CCDC_SEGMENTS',
-            loadCCDCSegments$({recipe, latLng, bands: [selectedBand.value]}).pipe(
+            loadCCDCSegments$({recipe, latLng, bands: [band]}).pipe(
                 takeUntil(this.cancel$)
             ),
-            segments => this.setState({segments}),
+            segments => {
+                const {dateFormat, harmonics, gapStrategy, extrapolateSegment, extrapolateMaxDays} = this.props
+                this.setState({
+                    segments,
+                    chart: ccdcChart({band, latLng, segments, dateFormat, harmonics, gapStrategy, extrapolateSegment, extrapolateMaxDays})
+                })
+            },
             error => {
                 this.close()
                 Notifications.error({
@@ -259,7 +266,7 @@ class _ChartPixel extends React.Component {
         this.cancel$.next(true)
         this.segmentsHeld = false
         if (this.state.segments !== undefined)
-            this.setState({segments: undefined})
+            this.setState({segments: undefined, chart: undefined})
     }
 
     close() {

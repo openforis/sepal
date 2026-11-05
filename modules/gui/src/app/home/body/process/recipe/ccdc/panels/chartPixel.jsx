@@ -19,8 +19,10 @@ import {withRecipe} from '../../../recipeContext'
 import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
 import {pixelOperationsAvailability, watchOperations} from '../../operationAvailability'
+import {exportableChart, PixelChartExport} from '../../pixelChartExport'
 import {pixelChartUpdate} from '../../pixelChartUpdate'
 import {selectedClassificationOfState} from '../../selectedClassification'
+import {ccdcChart, ccdcExportRecords} from '../ccdcChart'
 import {CCDCGraph} from '../ccdcGraph'
 import {loadCCDCObservations$, loadCCDCSegments$, RecipeActions} from '../ccdcRecipe'
 import styles from './chartPixel.module.css'
@@ -63,8 +65,8 @@ class _ChartPixel extends React.Component {
     }
 
     renderPanel() {
-        const {latLng} = this.props
-        const {segments, observations} = this.state
+        const {recipe, latLng, inputs: {selectedBand}} = this.props
+        const {segments, observations, chart} = this.state
         const loading = (!segments || !segments.length) && (!observations || !observations.length)
         return (
             <Panel
@@ -82,6 +84,11 @@ class _ChartPixel extends React.Component {
                 </Panel.Content>
 
                 <Panel.Buttons>
+                    <PixelChartExport
+                        recipe={recipe}
+                        chart={observations ? exportableChart(chart, {band: selectedBand.value, latLng}) : null}
+                        records={ccdcExportRecords}
+                    />
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Close
                             keybinding='Escape'
@@ -122,24 +129,11 @@ class _ChartPixel extends React.Component {
     }
 
     renderChart() {
-        const {dateFormat, startDate, endDate, inputs: {selectedBand}} = this.props
-        const {segments, observations} = this.state
-        const loading = !segments
-        if (loading) {
+        const {chart} = this.state
+        if (!chart) {
             return this.renderSpinner()
         } else {
-            return (
-                <CCDCGraph
-                    band={selectedBand.value}
-                    dateFormat={dateFormat}
-                    startDate={startDate}
-                    endDate={endDate}
-                    segments={segments}
-                    observations={observations}
-                    highlightGaps
-                    harmonics={3}
-                />
-            )
+            return <CCDCGraph chart={chart} highlightGaps/>
         }
     }
 
@@ -177,7 +171,7 @@ class _ChartPixel extends React.Component {
             loadCCDCSegments$({recipe, latLng, bands: [band]}).pipe(
                 takeUntil(this.cancel$)
             ),
-            segments => this.setState({segments}),
+            segments => this.received({band, latLng, segments}),
             error => {
                 this.close()
                 Notifications.error({
@@ -192,7 +186,7 @@ class _ChartPixel extends React.Component {
             loadCCDCObservations$({recipe, latLng, bands: [band]}).pipe(
                 takeUntil(this.cancel$)
             ),
-            observations => this.setState({observations}),
+            observations => this.received({band, latLng, observations}),
             error => {
                 this.close()
                 Notifications.error({
@@ -205,10 +199,23 @@ class _ChartPixel extends React.Component {
         )
     }
 
+    // The chart is drawn once the segments are read, and prepared again with the observations, all read for this band at
+    // this pixel.
+    received({band, latLng, ...response}) {
+        const {dateFormat, startDate, endDate} = this.props
+        this.setState(state => {
+            const {segments, observations} = {...state, ...response}
+            return {
+                ...response,
+                chart: segments ? ccdcChart({band, latLng, segments, observations, dateFormat, startDate, endDate}) : undefined
+            }
+        })
+    }
+
     clearData() {
         this.cancel$.next(true)
         if (this.state.segments !== undefined || this.state.observations !== undefined)
-            this.setState({segments: undefined, observations: undefined})
+            this.setState({segments: undefined, observations: undefined, chart: undefined})
     }
 
     close() {
