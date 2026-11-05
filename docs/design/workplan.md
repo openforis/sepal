@@ -163,11 +163,18 @@ Remapping's proposed [default class](#default-or-fallback-class) is specified be
   initially, report errors after interaction and clear promptly on repair. Review autofocus, picker interaction,
   programmatic resets, duplicated input editors and field/group accessibility. Broken saved configurations still
   explain themselves immediately, and invalid submission stays blocked regardless of visible error timing.
+- **Enter while renaming a recipe tab.** Reported: with a recipe panel open, Enter is captured by the panel while
+  the selected tab's title is being edited. Reproduce through the real tab-title editor and shared keybinding/modal
+  scopes. Enter in the title editor should finish the rename without applying, advancing or closing the panel;
+  preserve normal Enter submission from panel fields. Cover both clean and edited panels.
 - **Feedback attribution.** Decide whether all routes of a diamond should be marked. Current readiness reports
   established paths without fabricating alternate routes.
-- **Draft/close interaction.** Warning about unapplied drafts on browser close and revisiting the current recipe-tab
-  close guard remain separate decisions. A "Use reference settings" copy-again button is not planned; creation
-  seeding and automatic ownership cover its useful purpose.
+- **Draft/close interaction.** Reported: an open recipe modal prevents closing its SEPAL tab and shows an information
+  notification asking the user to close the modal first; an ordinary recipe form permits tab closure even with
+  unapplied edits. Decide the intended policy for clean and dirty forms and modals before changing the shared tab
+  close guard. Make draft retention or discard explicit, and cover the close button and middle-click closure.
+  Warning about unapplied drafts on browser close remains a separate decision. A "Use reference settings" copy-again
+  button is not planned; creation seeding and automatic ownership cover its useful purpose.
 
 ### Unfinished setup feedback
 
