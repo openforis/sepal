@@ -84,6 +84,17 @@ selection is the one the type declares (`CLASSIFICATION_SOURCE`). CCDC and Pheno
 Nothing of the Classification is copied into the recipe: opening a recipe and a read completing leave its model and
 drafts as they were.
 
+### Chart drawing
+
+Time Series, CCDC, CCDC Slice and Change Alerts use `CCDCGraph`; LandTrendr uses the same shared `Graph` widget.
+For ordinary error bars, `errorBandPlotter` shades each continuous uncertainty band with one outline. All observations,
+fitted values and uncertainty bounds remain in the chart, so zooming and hover lookups use the full series.
+Null points follow the series' `connectSeparatedPoints` setting; explicit NaN gaps stay gaps. Band colour and opacity
+follow the series settings. The library still draws the lines and points, and supplies the renderer for stepped and
+custom-bar charts. A caller's own plotter remains authoritative.
+Hover readouts appear opposite the highlighted point and let pointer events reach the chart beneath them, for both
+observations and fitted points. Moving into the zoom strip clears the hovered point and its readout.
+
 ## Output
 
 Declared in `lib/js/shared/src/recipe/type/timeSeries.js` (see the

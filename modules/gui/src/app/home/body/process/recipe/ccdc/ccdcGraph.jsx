@@ -198,6 +198,7 @@ class _CCDCGraph extends React.Component {
         const observationInfo = points.find(point => point.name === 'observations')
             ? {observation}
             : {}
+        const pointInfo = {date, left: point.x <= 0.5, ...observationInfo}
         if (segments) {
             const segmentIndexes = sequence(0, segments.tStart.length - 1)
             const findSegmentIndex = () => {
@@ -228,13 +229,12 @@ class _CCDCGraph extends React.Component {
                         : null,
                     magnitude: segments[`${band}_magnitude`][segmentIndex],
                     rmse: segments[`${band}_rmse`][segmentIndex],
-                    observationCount: segments.numObs[segmentIndex],
-                    left: point.x <= 0.5
+                    observationCount: segments.numObs[segmentIndex]
                 }
                 : {}
-            this.setState({point: {date, ...observationInfo, ...segmentInfo}})
+            this.setState({point: {...pointInfo, ...segmentInfo}})
         } else {
-            this.setState({point: {date, ...observationInfo}})
+            this.setState({point: pointInfo})
         }
     }
 

@@ -8,7 +8,10 @@ import {compose} from '~/compose'
 import {withEnabled} from '~/enabled'
 import {withTheme} from '~/themeHooks'
 
+import {errorBandPlotter} from './errorBandPlotter'
 import styles from './graph.module.css'
+
+const ERROR_BARS_PLOTTERS = [Dygraph.Plotters.fillPlotter, errorBandPlotter, Dygraph.Plotters.linePlotter]
 
 class _Graph extends React.Component {
     state = {}
@@ -24,7 +27,7 @@ class _Graph extends React.Component {
         const {className} = this.props
         return (
             <div className={[styles.wrapper, className].join(' ')}>
-                <div ref={this.graphRef} className={styles.graph}/>
+                <div ref={this.graphRef} className={styles.graph} onMouseOut={this.onMouseOut}/>
             </div>
         )
     }
@@ -35,6 +38,23 @@ class _Graph extends React.Component {
 
     componentDidUpdate() {
         this.update()
+    }
+
+    // Dygraph keeps a hover when moving between its plot and range-selector canvases.
+    onMouseOut = event => {
+        const {graph} = this
+        const element = this.graphRef.current
+        if (!graph || !element.contains(event.relatedTarget)) {
+            return
+        }
+        const {left, top} = element.getBoundingClientRect()
+        const {x, y, w, h} = graph.getArea()
+        const outside = event.clientX < left + x || event.clientX > left + x + w
+            || event.clientY < top + y || event.clientY > top + y + h
+        if (outside && graph.getSelection() >= 0) {
+            graph.clearSelection()
+            this.props.unhighlightCallback?.call(graph, event)
+        }
     }
 
     // Dygraph sizes a chart by its element when it builds it, and keeps that size: one built where it is not displayed -
@@ -67,7 +87,7 @@ class _Graph extends React.Component {
     }
 
     getOptions(props) {
-        return resolveGraphColors(props.theme, _.pick(props, [
+        const options = resolveGraphColors(props.theme, _.pick(props, [
             'animatedZooms',
             'annotationClickHandler',
             'annotationDblClickHandler',
@@ -185,6 +205,10 @@ class _Graph extends React.Component {
             'yRangePad',
             'zoomCallback',
         ]))
+        if (options.errorBars && options.plotter == null) {
+            options.plotter = ERROR_BARS_PLOTTERS
+        }
+        return options
     }
 }
 

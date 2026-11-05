@@ -6,6 +6,7 @@
 
 .point {
     position: absolute;
+    pointer-events: none;
     z-index: 10;
     background-color: var(--graph-tooltip-background-color);
     border: var(--wireframe);

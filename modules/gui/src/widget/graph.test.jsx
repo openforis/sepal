@@ -8,15 +8,38 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 const charts = vi.hoisted(() => [])
 const built = vi.hoisted(() => [])
 const redrawn = vi.hoisted(() => [])
+const graphs = vi.hoisted(() => [])
+const plotters = vi.hoisted(() => ({fillPlotter: vi.fn(), errorPlotter: vi.fn(), linePlotter: vi.fn()}))
 vi.mock('dygraphs', () => ({
     default: class {
-        constructor(_element, data, options) {
+        static Plotters = plotters
+
+        constructor(element, data, options) {
+            this.element = element
+            this.selection = -1
+            graphs.push(this)
             charts.push(options)
             built.push(data)
         }
 
         updateOptions({file}) {
             redrawn.push(file)
+        }
+
+        getArea() {
+            return {x: 10, y: 10, w: 80, h: 60}
+        }
+
+        setSelection(row) {
+            this.selection = row
+        }
+
+        getSelection() {
+            return this.selection
+        }
+
+        clearSelection() {
+            this.selection = -1
         }
     }
 }))
@@ -25,6 +48,7 @@ import {Enabled} from '~/enabled'
 import {initStore} from '~/store'
 import {themeManager} from '~/theme'
 
+import {errorBandPlotter} from './errorBandPlotter'
 import {Graph, graphColor} from './graph'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -131,6 +155,69 @@ describe('a Graph in what is disabled and enabled again', () => {
 
         expect(built).toEqual([FIRST])
         expect(redrawn).toEqual([])
+    })
+})
+
+describe('Graph drawing', () => {
+    let root, container
+
+    beforeEach(() => {
+        charts.splice(0)
+        initStore(createStore((state = {dimensions: {width: 1024, height: 768}}) => state))
+        container = document.createElement('div')
+        document.body.appendChild(container)
+        root = createRoot(container)
+    })
+    afterEach(() => {
+        act(() => root.unmount())
+        container.remove()
+    })
+
+    const render = props => act(() => root.render(<Graph data={FIRST} {...props}/>))
+
+    it('draws continuous uncertainty bands before the lines and points', () => {
+        render({errorBars: true})
+
+        expect(charts.at(-1).plotter).toEqual([plotters.fillPlotter, errorBandPlotter, plotters.linePlotter])
+    })
+
+    it('keeps a caller\'s own plotter', () => {
+        const plotter = () => {}
+
+        render({errorBars: true, plotter})
+
+        expect(charts.at(-1).plotter).toBe(plotter)
+    })
+
+    it('leaves ordinary filled graphs on their usual renderer', () => {
+        render({fillGraph: true})
+
+        expect(charts.at(-1).plotter).toBeUndefined()
+    })
+
+    it('clears a hovered point on entering the zoom strip, while keeping hover inside the plot', () => {
+        const unhighlight = vi.fn()
+        render({unhighlightCallback: unhighlight})
+        const graph = graphs.at(-1)
+        const plot = document.createElement('canvas')
+        const zoom = document.createElement('canvas')
+        graph.element.append(plot, zoom)
+        graph.element.getBoundingClientRect = () => ({left: 100, top: 200})
+        graph.setSelection(0)
+
+        act(() => plot.dispatchEvent(new MouseEvent('mouseout', {bubbles: true, relatedTarget: zoom, clientX: 150, clientY: 240})))
+
+        expect(graph.getSelection()).toBe(0)
+        expect(unhighlight).not.toHaveBeenCalled()
+
+        act(() => plot.dispatchEvent(new MouseEvent('mouseout', {bubbles: true, relatedTarget: zoom, clientX: 150, clientY: 285})))
+
+        expect(graph.getSelection()).toBe(-1)
+        expect(unhighlight).toHaveBeenCalledTimes(1)
+
+        act(() => zoom.dispatchEvent(new MouseEvent('mouseout', {bubbles: true, relatedTarget: plot, clientX: 150, clientY: 285})))
+
+        expect(unhighlight).toHaveBeenCalledTimes(1)
     })
 })
 
