@@ -24,7 +24,6 @@ export const landTrendrExportRecords = ({years, raw, fitted, isVertex}) => [
         series: 'model',
         year,
         value: finiteOrNull(fitted[i]),
-        method: _.isFinite(fitted[i]) ? 'fitted' : 'masked',
         vertex: _.isNil(isVertex[i]) ? null : Boolean(isVertex[i])
     }))
 ]

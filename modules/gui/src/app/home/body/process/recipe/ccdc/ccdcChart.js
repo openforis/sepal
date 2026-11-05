@@ -35,7 +35,10 @@ export const ccdcChart = ({
 // be several. Without one, a row an observation.
 export const ccdcChartRows = ({model, observations}) => {
     if (!model) {
-        return observations.features.map(({properties: {date, value}}) => [new Date(date.value), [value, 0], null])
+        // Chunks can arrive out of order; Dygraph takes its time limits from the first and last rows.
+        return observations.features
+            .map(({properties: {date, value}}) => [new Date(date.value), [value, 0], null])
+            .sort(([a], [b]) => a - b)
     }
     const observationByDay = {}
     observations?.features.forEach(({properties: {date, value}}) =>

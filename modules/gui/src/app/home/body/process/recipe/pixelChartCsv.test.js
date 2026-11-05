@@ -4,13 +4,33 @@ import {describe, expect, it} from 'vitest'
 import {pixelChartCsv} from './pixelChartCsv'
 
 describe('a pixel chart CSV', () => {
-    it('names the columns in their fixed order, with the band and pixel on every row', () => {
+    it('names the applicable columns in their fixed order, with the band and pixel on every row', () => {
         const csv = pixelChartCsv({band: 'ndvi', latLng: PIXEL, records: [observation(JAN_1, 0.5), model(JAN_1, 0.4)]})
 
         expect(parse(csv)).toEqual([
-            COLUMNS,
-            ['ndvi', '12.5', '-3.25', '2020-01-01T00:00:00.000Z', '', 'observation', '0.5', '', '', '', '', ''],
-            ['ndvi', '12.5', '-3.25', '2020-01-01T00:00:00.000Z', '', 'model', '0.4', '0.1', '0.30000000000000004', '0.5', 'fitted', '']
+            MIXED_COLUMNS,
+            ['ndvi', '12.5', '-3.25', '2020-01-01T00:00:00.000Z', 'observation', '0.5', '', '', '', ''],
+            ['ndvi', '12.5', '-3.25', '2020-01-01T00:00:00.000Z', 'model', '0.4', '0.1', '0.30000000000000004', '0.5', 'fitted']
+        ])
+    })
+
+    it('omits model, annual and series columns from observations alone, even with missing values', () => {
+        const csv = pixelChartCsv({band: 'ndvi', latLng: PIXEL, records: [observation(JAN_1, null)]})
+
+        expect(parse(csv)).toEqual([
+            ['band', 'latitude', 'longitude', 'timestamp', 'value'],
+            ['ndvi', '12.5', '-3.25', '2020-01-01T00:00:00.000Z', '']
+        ])
+    })
+
+    it('keeps applicable model columns when every value is masked, without a redundant series column', () => {
+        const csv = pixelChartCsv({band: 'ndvi', latLng: PIXEL, records: [
+            {...model(JAN_1, null), rmse: null, lower: null, upper: null, method: 'masked'}
+        ]})
+
+        expect(parse(csv)).toEqual([
+            ['band', 'latitude', 'longitude', 'timestamp', 'value', 'rmse', 'lower', 'upper', 'model_method'],
+            ['ndvi', '12.5', '-3.25', '2020-01-01T00:00:00.000Z', '', '', '', '', 'masked']
         ])
     })
 
@@ -24,9 +44,9 @@ describe('a pixel chart CSV', () => {
             observation(JAN_1, 1)
         ]
 
-        const rows = parse(pixelChartCsv({band: 'ndvi', latLng: PIXEL, records})).slice(1)
+        const rows = objects(pixelChartCsv({band: 'ndvi', latLng: PIXEL, records}))
 
-        expect(rows.map(row => [row[TIMESTAMP], row[SERIES], row[VALUE]])).toEqual([
+        expect(rows.map(({timestamp, series, value}) => [timestamp, series, value])).toEqual([
             ['2020-01-01T00:00:00.000Z', 'observation', '1'],
             ['2020-01-01T00:00:00.000Z', 'model', '2'],
             ['2020-01-01T10:00:00.000Z', 'observation', '3'],
@@ -44,9 +64,9 @@ describe('a pixel chart CSV', () => {
             observation(JAN_3, null)
         ]
 
-        const rows = parse(pixelChartCsv({band: 'ndvi', latLng: PIXEL, records})).slice(1)
+        const rows = objects(pixelChartCsv({band: 'ndvi', latLng: PIXEL, records}))
 
-        expect(rows.map(row => row.slice(VALUE, METHOD + 1))).toEqual([
+        expect(rows.map(({value, rmse, lower, upper, model_method}) => [value, rmse, lower, upper, model_method])).toEqual([
             ['0', '0', '0', '0', 'fitted'],
             ['-0.25', '', '-0.5', '0', 'fitted'],
             ['', '', '', '', ''],
@@ -57,16 +77,18 @@ describe('a pixel chart CSV', () => {
     it('gives annual rows their year and no timestamp, with vertex flags only where they are given', () => {
         const records = [
             {series: 'observation', year: 2001, value: 20},
-            {series: 'model', year: 2000, value: 11, method: 'fitted', vertex: true},
-            {series: 'model', year: 2001, value: 21, method: 'fitted', vertex: false}
+            {series: 'model', year: 2000, value: 11, vertex: true},
+            {series: 'model', year: 2001, value: 21, vertex: false}
         ]
 
-        const rows = parse(pixelChartCsv({band: 'nbr', latLng: PIXEL, records})).slice(1)
+        const csv = pixelChartCsv({band: 'nbr', latLng: PIXEL, records})
+        const rows = objects(csv)
 
-        expect(rows.map(row => [row[TIMESTAMP], row[YEAR], row[SERIES], row[VALUE], row[VERTEX]])).toEqual([
-            ['', '2000', 'model', '11', 'true'],
-            ['', '2001', 'observation', '20', ''],
-            ['', '2001', 'model', '21', 'false']
+        expect(parse(csv)[0]).toEqual(['band', 'latitude', 'longitude', 'year', 'series', 'value', 'is_vertex'])
+        expect(rows.map(({year, series, value, is_vertex}) => [year, series, value, is_vertex])).toEqual([
+            ['2000', 'model', '11', 'true'],
+            ['2001', 'observation', '20', ''],
+            ['2001', 'model', '21', 'false']
         ])
     })
 
@@ -79,6 +101,19 @@ describe('a pixel chart CSV', () => {
         expect(parse(csv)[1][0]).toBe(band)
     })
 
+    it('keeps columns whose only supplied values are zero or false', () => {
+        const csv = pixelChartCsv({band: 'nbr', latLng: PIXEL, records: [
+            {series: 'observation', year: 2000, value: 0},
+            {series: 'model', year: 2000, value: 0, vertex: false}
+        ]})
+
+        expect(parse(csv)).toEqual([
+            ['band', 'latitude', 'longitude', 'year', 'series', 'value', 'is_vertex'],
+            ['nbr', '12.5', '-3.25', '2000', 'observation', '0', ''],
+            ['nbr', '12.5', '-3.25', '2000', 'model', '0', 'false']
+        ])
+    })
+
     it('keeps the full precision of values and coordinates', () => {
         const csv = pixelChartCsv({
             band: 'ndvi',
@@ -86,15 +121,13 @@ describe('a pixel chart CSV', () => {
             records: [observation(JAN_1 + 123, 0.12345678901234568), observation(JAN_1, 1e-7)]
         })
 
-        expect(parse(csv)[1].slice(1, VALUE + 1)).toEqual(['59.91386812345679', '10.752245987654321', '2020-01-01T00:00:00.000Z', '', 'observation', '1e-7'])
-        expect(parse(csv)[2][TIMESTAMP]).toBe('2020-01-01T00:00:00.123Z')
-        expect(parse(csv)[2][VALUE]).toBe('0.12345678901234568')
+        expect(parse(csv)[1].slice(1)).toEqual(['59.91386812345679', '10.752245987654321', '2020-01-01T00:00:00.000Z', '1e-7'])
+        expect(objects(csv)[1].timestamp).toBe('2020-01-01T00:00:00.123Z')
+        expect(objects(csv)[1].value).toBe('0.12345678901234568')
     })
 })
 
-const COLUMNS = ['band', 'latitude', 'longitude', 'timestamp', 'year', 'series', 'value', 'rmse', 'lower', 'upper', 'model_method', 'is_vertex']
-const [TIMESTAMP, YEAR, SERIES, VALUE, METHOD, VERTEX] = ['timestamp', 'year', 'series', 'value', 'model_method', 'is_vertex']
-    .map(column => COLUMNS.indexOf(column))
+const MIXED_COLUMNS = ['band', 'latitude', 'longitude', 'timestamp', 'series', 'value', 'rmse', 'lower', 'upper', 'model_method']
 
 const PIXEL = {lat: 12.5, lng: -3.25}
 const HOUR = 3600000
@@ -111,3 +144,4 @@ function model(time, value) {
 }
 
 const parse = csv => Papa.parse(csv, {skipEmptyLines: true}).data
+const objects = csv => Papa.parse(csv, {header: true, skipEmptyLines: true}).data

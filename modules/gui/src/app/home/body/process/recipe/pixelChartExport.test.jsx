@@ -101,8 +101,9 @@ describe('a Time Series chart', () => {
             feature(Date.UTC(2020, 0, 15, 10, 30), 0.41)
         ]})
         const recipe = recipeHeld()
-        const {rows, filename} = await exported()
+        const {rows, filename, columns} = await exported()
 
+        expect(columns).toEqual(OBSERVATION_COLUMNS)
         expect(rows).toEqual([
             observation('2019-04-01T00:00:00.000Z', '0'),
             observation('2020-01-15T10:30:00.000Z', '0.41'),
@@ -146,12 +147,13 @@ describe('a CCDC chart', () => {
         open(CcdcChart, ccdc())
         const recipe = recipeHeld()
 
-        const {rows} = await exported()
+        const {rows, columns} = await exported()
 
+        expect(columns).toEqual(MIXED_COLUMNS)
         const modelRows = rows.filter(({series}) => series === 'model')
         expect(rows.filter(({series}) => series === 'observation')).toEqual([
-            observation('2020-01-15T10:30:00.000Z', '0.6'),
-            observation('2020-01-15T14:45:00.000Z', '0.4')
+            mixedObservation('2020-01-15T10:30:00.000Z', '0.6'),
+            mixedObservation('2020-01-15T14:45:00.000Z', '0.4')
         ])
         expect(modelRows).toHaveLength(731)
         expect([modelRows[0].timestamp, modelRows.at(-1).timestamp]).toEqual(['2019-01-01T00:00:00.000Z', '2020-12-31T00:00:00.000Z'])
@@ -229,10 +231,10 @@ describe('a CCDC Slice chart', () => {
             tStart: [2019.0, 2020.0], tEnd: [2019.5, 2020.5], tBreak: [0, 0], changeProb: [0, 0], numObs: [10, 10],
             ndvi_coefs: [[0.2, 0, 0, 0, 0, 0, 0, 0], [0.6, 0, 0, 0, 0, 0, 0, 0]], ndvi_rmse: [0.03, 0.04], ndvi_magnitude: [0, 0]
         })
-        const {rows} = await exported()
+        const {rows, columns} = await exported()
 
         const interpolated = rows.filter(({model_method}) => model_method === 'interpolated')
-        expect(rows.every(({series}) => series === 'model')).toBe(true)
+        expect(columns).toEqual(MODEL_COLUMNS)
         expect(runs(rows.map(({model_method}) => model_method))).toEqual(['fitted', 'interpolated', 'fitted'])
         expect(interpolated.length).toBeGreaterThan(150)
         expect(interpolated.every(({rmse, lower, upper, value}) =>
@@ -254,10 +256,11 @@ describe('a Change Alerts chart', () => {
         })
         expect(exportButton().disabled).toBe(true)
         answer(observations, {features: [feature(Date.UTC(2023, 11, 10, 10, 12), 0.31)]})
-        const {rows} = await exported()
+        const {rows, columns} = await exported()
 
+        expect(columns).toEqual(MIXED_COLUMNS)
         const modelRows = rows.filter(({series}) => series === 'model')
-        expect(rows.filter(({series}) => series === 'observation')).toEqual([observation('2023-12-10T10:12:00.000Z', '0.31')])
+        expect(rows.filter(({series}) => series === 'observation')).toEqual([mixedObservation('2023-12-10T10:12:00.000Z', '0.31')])
         expect([modelRows[0], modelRows.at(-1)]).toEqual([
             model('2022-10-01T00:00:00.000Z', {model_method: 'masked'}),
             model('2024-01-02T00:00:00.000Z', {model_method: 'masked'})
@@ -278,13 +281,14 @@ describe('a LandTrendr chart', () => {
 
         answer(segments, {LandTrendr: [[2000, 2001], [-120, 0], [-110, 15], [1, 0]]})
         const recipe = recipeHeld()
-        const {rows} = await exported()
+        const {rows, columns} = await exported()
 
+        expect(columns).toEqual(ANNUAL_COLUMNS)
         expect(rows).toEqual([
             annual(2000, {series: 'observation', value: '-120'}),
-            annual(2000, {series: 'model', value: '-110', model_method: 'fitted', is_vertex: 'true'}),
+            annual(2000, {series: 'model', value: '-110', is_vertex: 'true'}),
             annual(2001, {series: 'observation', value: '0'}),
-            annual(2001, {series: 'model', value: '15', model_method: 'fitted', is_vertex: 'false'})
+            annual(2001, {series: 'model', value: '15', is_vertex: 'false'})
         ])
         expect(recipeHeld()).toBe(recipe)
     })
@@ -315,15 +319,21 @@ const ELSEWHERE = {lat: -1.5, lng: 100.125}
 const SEGMENTS_ASSET = 'users/x/segments'
 
 const BLANK_ROW = {
-    band: 'ndvi', latitude: '12.5', longitude: '-3.25', timestamp: '', year: '', series: '',
-    value: '', rmse: '', lower: '', upper: '', model_method: '', is_vertex: ''
+    band: 'ndvi', latitude: '12.5', longitude: '-3.25', value: ''
 }
 
-const observation = (timestamp, value) => ({...BLANK_ROW, timestamp, series: 'observation', value})
+const OBSERVATION_COLUMNS = ['band', 'latitude', 'longitude', 'timestamp', 'value']
+const MODEL_COLUMNS = [...OBSERVATION_COLUMNS, 'rmse', 'lower', 'upper', 'model_method']
+const MIXED_COLUMNS = [...OBSERVATION_COLUMNS.slice(0, -1), 'series', 'value', 'rmse', 'lower', 'upper', 'model_method']
+const ANNUAL_COLUMNS = ['band', 'latitude', 'longitude', 'year', 'series', 'value', 'is_vertex']
 
-const model = (timestamp, values) => ({...BLANK_ROW, timestamp, series: 'model', ...values})
+const observation = (timestamp, value) => ({...BLANK_ROW, timestamp, value})
 
-const annual = (year, values) => ({...BLANK_ROW, band: 'nbr', year: String(year), ...values})
+const model = (timestamp, values) => ({...BLANK_ROW, timestamp, series: 'model', rmse: '', lower: '', upper: '', model_method: '', ...values})
+
+const mixedObservation = (timestamp, value) => ({...model(timestamp, {}), series: 'observation', value})
+
+const annual = (year, values) => ({...BLANK_ROW, band: 'nbr', year: String(year), is_vertex: '', ...values})
 
 function feature(time, value) {
     return {properties: {date: {value: time}, value}}
@@ -458,7 +468,8 @@ const exported = async () => {
     act(() => exportButton().click())
     const {blob, filename} = downloads.at(-1)
     expect(blob.type).toBe('text/csv;charset=utf-8')
-    return {rows: Papa.parse(await blob.text(), {header: true, skipEmptyLines: true}).data, filename}
+    const {data, meta} = Papa.parse(await blob.text(), {header: true, skipEmptyLines: true})
+    return {rows: data, columns: meta.fields, filename}
 }
 
 // Consecutive repeats as one.

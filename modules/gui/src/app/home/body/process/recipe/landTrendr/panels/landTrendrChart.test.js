@@ -19,7 +19,7 @@ describe('a LandTrendr chart exported', () => {
 
         expect(landTrendrExportRecords(chart)).toStrictEqual([
             observation(2000, 0), observation(2001, null),
-            model(2000, -5, true), {...model(2001, null, false), method: 'masked'}
+            model(2000, -5, true), model(2001, null, false)
         ])
     })
 
@@ -36,5 +36,5 @@ function observation(year, value) {
 }
 
 function model(year, value, vertex) {
-    return {series: 'model', year, value, method: 'fitted', vertex}
+    return {series: 'model', year, value, vertex}
 }

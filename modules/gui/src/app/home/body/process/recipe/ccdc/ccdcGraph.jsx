@@ -29,6 +29,7 @@ export class CCDCGraph extends React.Component {
             return null
 
         const unhighlightCallback = () => this.setState({point: null})
+        const hasTimeRange = data.length > 1 && data[0][0] < data.at(-1)[0]
 
         return (
             <div className={styles.wrapper}>
@@ -60,7 +61,7 @@ export class CCDCGraph extends React.Component {
                     highlightSeriesBackgroundAlpha={1}
                     highlightSeriesBackgroundColor={graphColor('highlightBackground')}
                     dateWindow={[startDate, endDate]}
-                    showRangeSelector={!isMobile()}
+                    showRangeSelector={!isMobile() && hasTimeRange}
                     rangeSelectorPlotFillColor={graphColor('rangeSelectorPlot')}
                     rangeSelectorPlotFillGradientColor={graphColor('rangeSelectorPlot')}
                     rangeSelectorPlotStrokeColor={graphColor('rangeSelectorPlot')}

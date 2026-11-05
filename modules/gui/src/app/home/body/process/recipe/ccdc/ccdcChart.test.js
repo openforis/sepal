@@ -100,6 +100,19 @@ describe('the model of a CCDC chart', () => {
 })
 
 describe('the observations of a CCDC chart', () => {
+    it('draws asynchronously returned observations in time order without changing the response or losing duplicates', () => {
+        const read = Object.freeze([at(20, 10), at(1, 12), at(10, 10), at(1, 12)]
+            .map((time, index) => Object.freeze(feature(time, index))))
+        const chart = ccdcChart({band: 'ndvi', latLng: PIXEL, observations: {features: read}})
+
+        expect(ccdcChartRows(chart).map(([date, [value]]) => [date.getTime(), value])).toEqual([
+            [at(1, 12), 1], [at(1, 12), 3], [at(10, 10), 2], [at(20, 10), 0]
+        ])
+        expect(chart.observations.features).toBe(read)
+        expect(observationRecords(chart).map(({timestamp, value}) => [timestamp.getTime(), value]))
+            .toEqual(read.map(({properties: {date, value}}) => [date.value, value]))
+    })
+
     it('are exported as read, each at its own instant, though the drawing shows one a day', () => {
         const read = [at(6, 15), at(6, 10), at(6, 10), at(-1, 12)].map((time, index) => feature(time, index))
         const chart = chartOf({gapStrategy: 'MASK', observations: {features: read}})

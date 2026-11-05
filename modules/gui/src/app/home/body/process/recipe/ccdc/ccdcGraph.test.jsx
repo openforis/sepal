@@ -69,6 +69,18 @@ describe('the model readout', () => {
     })
 })
 
+describe('the chart range selector', () => {
+    it.each([
+        {dates: [START], available: false},
+        {dates: [START, START], available: false},
+        {dates: [START, START + DAY], available: true}
+    ])('is available only when observations span an interval: $dates', ({dates, available}) => {
+        show(undefined, {observations: {features: dates.map(date => ({properties: {date: {value: date}, value: 0.5}}))}})
+
+        expect(graph.props.showRangeSelector).toBe(available)
+    })
+})
+
 const DAY = 86400000
 const START = Date.UTC(2020, 0, 1)
 const END = START + 10 * DAY

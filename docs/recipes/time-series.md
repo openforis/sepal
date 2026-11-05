@@ -92,6 +92,9 @@ fitted values and uncertainty bounds remain in the chart, so zooming and hover l
 Null points follow the series' `connectSeparatedPoints` setting; explicit NaN gaps stay gaps. Band colour and opacity
 follow the series settings. The library still draws the lines and points, and supplies the renderer for stepped and
 custom-bar charts. A caller's own plotter remains authoritative.
+Observation-only drawing orders rows by timestamp because observation chunks can finish out of order. All values and
+duplicate timestamps are kept; the response itself is unchanged. The zoom strip is shown only when charted rows span
+more than one instant, so a one-instant series cannot collapse its date window by dragging a handle.
 Hover readouts appear opposite the highlighted point and let pointer events reach the chart beneath them, for both
 observations and fitted points. Moving into the zoom strip clears the hovered point and its readout. A model day's
 readout shows the value drawn and describes the segment it is fitted to or extrapolated from. For an interpolated day
@@ -117,7 +120,21 @@ Each pixel chart panel has an Export CSV button at the left of its buttons. It d
 - **Encoding:** the file is UTF-8 without a byte-order mark, written by `papaparse`. Excel may need it imported as UTF-8.
 - **Period:** the export includes all prepared model days, including segments before the chart's initial date window.
 
-Columns: `band,latitude,longitude,timestamp,year,series,value,rmse,lower,upper,model_method,is_vertex`.
+Every file includes `band`, `latitude`, `longitude` and `value`. Other columns depend on the records exported:
+
+| Chart | Additional columns |
+| --- | --- |
+| Time Series | `timestamp` |
+| CCDC | `timestamp`, `series`, `rmse`, `lower`, `upper`, `model_method` |
+| CCDC Slice | `timestamp`, `rmse`, `lower`, `upper`, `model_method` |
+| Change Alerts | `timestamp`, `series`, `rmse`, `lower`, `upper`, `model_method` |
+| LandTrendr | `year`, `series`, `is_vertex` |
+
+`series` is included only when the file contains both observations and model records. Model-specific columns are
+omitted when only observations were returned. Applicable columns stay present when their values are missing, including
+an entirely masked model. Columns keep this relative order:
+`band,latitude,longitude,timestamp,year,series,value,rmse,lower,upper,model_method,is_vertex`.
+
 - **Order:** rows are in time. At one instant an observation precedes the model; observations sharing an instant keep
   the order they were read in.
 - **Observations:** every observation in the response, at its own timestamp, including several on one day, which the
@@ -125,14 +142,15 @@ Columns: `band,latitude,longitude,timestamp,year,series,value,rmse,lower,upper,m
 - **Model, CCDC family:** a row for each day of the period. The timestamp is the actual instant the model is evaluated
   at, written in UTC with the chart's existing timezone handling preserved. `model_method` is `fitted`, `interpolated`,
   `extrapolated` or `masked`; a masked day keeps its row with no numbers.
-- **Model, LandTrendr:** a row a year, `fitted` (or `masked` where no value was fitted), with `is_vertex` from the flags
-  LandTrendr returned.
+- **Model, LandTrendr:** a row a year, with `is_vertex` from the flags LandTrendr returned. A missing fitted value is
+  blank; no separate method column is needed for this fitted annual series.
 - **`rmse`:** the RMSE of the one segment a fitted or extrapolated value comes from. It is blank for an interpolated
   value.
 - **`lower` and `upper`:** the band the chart draws around the value, which for an interpolated value is a weighted
   combination of both segments' RMSE. They are not statistical confidence intervals.
-- **Where there is no uncertainty:** `rmse`, `lower` and `upper` are blank for observations and for LandTrendr. The
-  zeros the chart plots there are placeholders.
+- **Where there is no uncertainty:** observations sharing a file with a CCDC model leave its `rmse`, `lower` and
+  `upper` cells blank. Observation-only and LandTrendr files omit these columns. The zeros the chart plots there are
+  placeholders.
 - **Values:** as charted, with no unit conversion and at full precision. Timestamps are ISO 8601 in UTC, with
   milliseconds. Anything unavailable is blank.
 
@@ -269,7 +287,7 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
   panel - when it is enabled, a new band or pixel, zoom, empty results and an unchanged recipe.
   `ccdc/ccdcChart.test.js`, `landTrendr/panels/landTrendrChart.test.js` and `pixelChartCsv.test.js`: the prepared
   model's methods, RMSE and drawn bounds, segment edges, timezones and leap days, annual rows, and CSV order, blanks,
-  quoting and Unicode.
+  quoting, Unicode and applicable columns for each chart family.
   `ccdc/ccdcGraph.test.jsx`: readout placement, extrapolated values and their segment details, and masked days.
 - `modules/task/src/runner/operations/timeSeriesExport.test.js` and `lib/python/shared/test_stack_time_series.py`:
   band-first download layout, chunk stacking, relative SITS VRTs and relocation.
