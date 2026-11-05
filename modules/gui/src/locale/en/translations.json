@@ -6888,6 +6888,10 @@
       "title": "Confirmation required",
       "label": "Confirm"
     },
+    "datePicker": {
+      "yearStart": "Year start",
+      "rangeInfo": "Please note that the start date is inclusive, but the end date is exclusive."
+    },
     "error": "Error",
     "fileSelect": {
       "multiple": {
