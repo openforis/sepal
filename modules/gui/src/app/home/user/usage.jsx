@@ -11,6 +11,7 @@ import {currentUser} from '~/user'
 import {withActivatable} from '~/widget/activation/activatable'
 import {hasBudget, hourlyInstanceSpending, isBudgetWarning} from '~/widget/budgetRules'
 import {Layout} from '~/widget/layout'
+import {Message} from '~/widget/message'
 import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
 
@@ -39,6 +40,7 @@ class _Usage extends React.Component {
                     title={msg('user.report.title')}/>
                 <Panel.Content>
                     <Layout>
+                        {this.renderCostsCovered()}
                         {this.renderResources()}
                         {this.renderStatistics()}
                     </Layout>
@@ -59,6 +61,17 @@ class _Usage extends React.Component {
                     </Panel.Buttons.Extra>
                 </Panel.Buttons>
             </Panel>
+        )
+    }
+
+    renderCostsCovered() {
+        return (
+            <Message type='info' icon='comment' iconSize='2x'>
+                <Layout type='vertical' spacing='tight'>
+                    <div>{msg('user.report.costsCovered1')}</div>
+                    <div>{msg('user.report.costsCovered2')}</div>
+                </Layout>
+            </Message>
         )
     }
 

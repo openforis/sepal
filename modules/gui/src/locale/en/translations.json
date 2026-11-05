@@ -6396,6 +6396,8 @@
       "title": "Google account"
     },
     "report": {
+      "costsCovered1": "Please note all costs shown as spending are covered by SEPAL.",
+      "costsCovered2": "Users are never charged.",
       "globalSessions": "Global sessions",
       "globalUsage": "Global usage",
       "resources": {

@@ -120,7 +120,7 @@ export class _BudgetUpdateRequest extends React.Component {
     renderMessage() {
         return (
             <Message type='info' icon='comment' iconSize='2x'>
-                <Layout type='vertical' spacing='compact'>
+                <Layout type='vertical' spacing='tight'>
                     <div>{msg('user.quotaUpdate.info1')}</div>
                     <div>{msg('user.quotaUpdate.info2')}</div>
                 </Layout>
