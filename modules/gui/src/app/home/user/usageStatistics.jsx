@@ -14,6 +14,8 @@ import {Widget} from '~/widget/widget'
 
 import styles from './usageStatistics.module.css'
 
+const COST_PREFIX = '$ '
+
 // Resource usage month by month, newest first: every user's summed (admin, global), the given
 // user's (admin), or the current user's own when no username is given. Months are UTC calendar months, the ones the budget limits run on;
 // hovering one shows its usage per instance type in a tooltip. Types go by their tag ("t1"), as
@@ -113,13 +115,13 @@ class _UsageStatistics extends React.Component {
     }
 
     renderRow(label, {hours, cost, cpu, ram, gpu, netBytesPerS}, hasGpu, rowProps) {
-        // avg/max in one cell: "12% / 96%"
-        const avgMax = metric => metric ? `${Math.round(metric.avg)}% / ${Math.round(metric.max)}%` : '—'
+        // avg/max in one cell: "12 / 96%"
+        const avgMax = metric => metric ? `${Math.round(metric.avg)} / ${Math.round(metric.max)}%` : '—'
         return (
             <tr key={label} {...rowProps}>
                 <td>{label}</td>
                 <td>{hours}</td>
-                <td>{cost != null ? format.dollars(cost) : '—'}</td>
+                <td>{cost != null ? format.dollars(cost, {prefix: COST_PREFIX}) : '—'}</td>
                 <td>{avgMax(cpu)}</td>
                 <td>{avgMax(ram)}</td>
                 {hasGpu ? <td>{avgMax(gpu)}</td> : null}
