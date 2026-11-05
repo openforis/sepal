@@ -3,6 +3,7 @@
 // text this component hands them.
 
 import {act} from 'react'
+import {createPortal} from 'react-dom'
 import {createRoot} from 'react-dom/client'
 import {of} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
@@ -19,7 +20,13 @@ vi.mock('~/widget/listItem', () => ({
 }))
 vi.mock('./sessionUsageChart', () => ({SessionUsageChart: () => null}))
 vi.mock('~/widget/noData', () => ({NoData: ({message}) => <div>{message}</div>}))
-vi.mock('~/widget/tag', () => ({Tag: ({label}) => <span className='pill'>{label}</span>}))
+vi.mock('~/widget/tooltip', () => ({
+    Tooltip: ({msg, children}) =>
+        <>
+            {children}
+            {msg ? createPortal(<div data-tooltip>{msg}</div>, document.body) : null}
+        </>
+}))
 vi.mock('~/widget/crudItem', () => ({
     CrudItem: ({title, description, removeMessage, editDisabled, removePending, copyValue, copyDisabled, onEdit, onRemove}) =>
         <div className='session' data-edit-disabled={editDisabled} data-remove-pending={removePending}
@@ -96,27 +103,29 @@ describe('the session list', () => {
         const titles = render([
             session({id: 's1', name: 'humble-robin'}),
             session({id: 's2', name: 'lunar-owl', instanceType: {...session().instanceType, tag: 'm4'}}),
-        ]).querySelectorAll('.title > div')
+        ]).querySelectorAll('.title')
         expect([...titles].map(({firstChild}) => tagParts(firstChild))).toEqual([['humble-robin', 't1'], ['lunar-owl', 'm4']])
     })
 
     it('titles a session with no name by its type alone', () => {
-        const title = render([session({name: null})]).querySelector('.title > div')
+        const title = render([session({name: null})]).querySelector('.title')
         expect(tagParts(title.firstChild)).toEqual(['t1'])
     })
 
-    // One pill under the label, in the title: capacity first, then what it costs, separated the
-    // way the usage line separates its metrics.
-    it('sizes and prices the instance in a pill under its label', () => {
-        const pill = render([session()]).querySelector('.title .pill')
-        expect(pill.textContent).toBe('1 CPU · 2 GB · $0.02/h')
+    // Capacity first, then what it costs, separated the way the usage line separates its metrics.
+    it('sizes and prices the instance in the tooltip of its name', () => {
+        render([session()])
+
+        expect(tooltips()).toEqual(['1 CPU · 2 GB · $0.02/h'])
     })
 
     it('counts the GPUs of a GPU instance', () => {
         const gpu = session({
             instanceType: {name: 'g5.xlarge', tag: 'g4', cpuCount: 4, gpuCount: 1, ramGiB: 16, hourlyCost: 1.123}
         })
-        expect(render([gpu]).querySelector('.title .pill').textContent).toBe('4 CPU · 1 GPU · 16 GB · $1.12/h')
+        render([gpu])
+
+        expect(tooltips()).toEqual(['4 CPU · 1 GPU · 16 GB · $1.12/h'])
     })
 
     // Each value under its own label, in the expansion under the row rather than in its description.
@@ -292,7 +301,7 @@ describe('the session list', () => {
 
         it('names the user of each instance before its name', () => {
             const [user, name] = render$([session({username: 'alice', name: 'humble-robin'})])
-                .querySelector('.title > div').firstChild.children
+                .querySelector('.title > div').children
             expect([user.textContent, tagParts(name)]).toEqual(['alice', ['humble-robin', 't1']])
         })
 
@@ -321,3 +330,4 @@ describe('the session list', () => {
 
 // The session tag's parts in reading order: the name, then the type.
 const tagParts = tag => [...tag.children].map(({textContent}) => textContent)
+const tooltips = () => [...document.querySelectorAll('[data-tooltip]')].map(({textContent}) => textContent)

@@ -18,7 +18,7 @@ import {NoData} from '~/widget/noData'
 import {Notifications} from '~/widget/notifications'
 import {SessionName} from '~/widget/sessionName'
 
-import {InstanceSpecsTag} from '../instanceSpecs'
+import {instanceSpecs} from '../instanceSpecs'
 import {SessionUsageChart} from './sessionUsageChart'
 import styles from './userSessionList.module.css'
 import {instanceTypeLabel, runningItems, usageMetrics} from './userSessionSummary'
@@ -65,18 +65,14 @@ class _UserSessionList extends React.Component {
 
     // The name is the one the expiry notification, the email and its management page use.
     renderTitle(session) {
-        const {instanceType} = session
-        return (
-            <div className={styles.title}>
-                {this.renderName(session)}
-                <InstanceSpecsTag instanceType={instanceType} compact/>
-            </div>
-        )
-    }
-
-    renderName(session) {
         const {global} = this.props
-        const name = <SessionName name={session.name} type={instanceTypeLabel(session)}/>
+        const name = (
+            <SessionName
+                name={session.name}
+                type={instanceTypeLabel(session)}
+                tooltip={instanceSpecs(session.instanceType, {compact: true})}
+            />
+        )
         return global
             ? (
                 <div className={styles.name}>

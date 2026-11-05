@@ -10,6 +10,8 @@
     line-height: 1.2rem;
     white-space: nowrap;
     vertical-align: baseline;
+    /* Rows such as CrudItem turn pointer events off for their content, which would disable the tooltip. */
+    pointer-events: auto;
 }
 
 .name,

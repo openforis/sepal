@@ -17,12 +17,10 @@ export const instanceSpecs = ({cpuCount, gpuCount, ramGiB, ssdGB, performance, h
         format.dollarsPerHour(hourlyCost)
     ].filter(Boolean).join(' · ')
 
-// The pill every surface shows an instance's specs in, so the session list and the instance
-// picker describe the same machine the same way.
-export const InstanceSpecsTag = ({instanceType, compact}) =>
-    <Tag shape='none' size='small' label={instanceSpecs(instanceType, {compact})} upperCase={false}/>
+// The pill the instance picker compares instance types with.
+export const InstanceSpecsTag = ({instanceType}) =>
+    <Tag shape='none' size='small' label={instanceSpecs(instanceType)} upperCase={false}/>
 
 InstanceSpecsTag.propTypes = {
-    instanceType: PropTypes.object.isRequired,
-    compact: PropTypes.bool
+    instanceType: PropTypes.object.isRequired
 }
