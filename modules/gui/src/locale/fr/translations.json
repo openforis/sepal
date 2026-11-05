@@ -755,7 +755,7 @@
         },
         "colorColumnType": {
           "label": "Format des colonnes de couleur",
-          "tooltip": "Spécifiez si la couleur est dans une seule colonne, ou si le rouge, le vert, le bleu sont dans des colonnes séparées.",
+          "tooltip": "",
           "single": "Colonne unique",
           "multiple": "Colonnes multiples"
         },
@@ -948,14 +948,14 @@
           "tooltip": "Afficher et modifier la palette à l'aide de sélecteurs de couleurs.",
           "empty": "La palette est vide. Utilisation d'une échelle de gris.",
           "add": {
-            "tooltip": "Ajoutez une palette de couleurs."
+            "tooltip": ""
           },
           "preset": {
             "placeholder": "Sélectionnez une palette prédéfinie...",
-            "attribution": "Pré-réglages de {url}."
+            "attribution": ""
           },
           "text": {
-            "tooltip": "Afficher et modifier la palette comme du texte.",
+            "tooltip": "",
             "placeholder": "Entrez une liste de couleurs au format csv...",
             "invalid": ""
           }
@@ -1233,14 +1233,14 @@
               "label": "Date de fin",
               "malformed": "Date invalide",
               "required": "Date requise",
-              "tooltip": "La dernière date de la série temporelle, exclusif."
+              "tooltip": ""
             },
             "startDate": {
               "beforeEnd": "doit être antérieure à la date de fin",
               "label": "Date de début",
               "malformed": "Date invalide",
               "required": "Date requise",
-              "tooltip": "La première date de la serie temporelle, inclusif."
+              "tooltip": ""
             }
           },
           "title": "Dates",
@@ -1261,7 +1261,7 @@
               "label": "Détection des ruptures",
               "moderate": {
                 "label": "Modéré",
-                "tooltip": "Être modéré dans la détection des ruptures dans les séries temporelles."
+                "tooltip": ""
               }
             },
             "chiSquareProbability": "probabilité X²",
@@ -1295,7 +1295,7 @@
             "classification": {
               "label": "Classification",
               "placeholder": "Sélectionnez une classification...",
-              "tooltip": "(Facultatif) Sélectionnez une formule de classification et appliquez le classificateur à chaque acquisition de la série chronologique."
+              "tooltip": ""
             },
             "cloudPercentageThreshold": {
               "label": "Couverture nuageuse max %",
@@ -1413,22 +1413,22 @@
             "extrapolateSegment": {
               "closest": {
                 "label": "Au plus proche",
-                "tooltip": "Extrapoler le segment le plus proche de la date"
+                "tooltip": ""
               },
               "label": "Segmenter à extrapoler",
               "next": {
                 "label": "Suivant",
-                "tooltip": "Extrapoler à rebours le segment après la date"
+                "tooltip": ""
               },
               "previous": {
                 "label": "Précédent",
-                "tooltip": "Extrapoler le segment avant la date"
+                "tooltip": ""
               }
             },
             "gapStrategy": {
               "extrapolate": {
                 "label": "Extrapoler",
-                "tooltip": "Générer un nouveau modèle basé sur le segment avant ou après l'espace."
+                "tooltip": ""
               },
               "interpolate": {
                 "label": "Interpoler",
@@ -1437,13 +1437,13 @@
               "label": "Gestion des espaces",
               "mask": {
                 "label": "Masque",
-                "tooltip": "Masquer tous les pixels qui tombent sur un espace."
+                "tooltip": ""
               },
               "tooltip": "Décider de la stratégie à utiliser pour les pixels où il n'y a pas de segment CCDC. Il y aura des espaces pendant les ruptures détectées ou pour les dates avant et après la plage de dates CCDC."
             },
             "harmonics": {
               "label": "Harmoniques",
-              "tooltip": "Préciser le nombre d'harmoniques du modèle de régression du CCDC à utiliser lors de la création de la coupe"
+              "tooltip": ""
             },
             "minBreakConfidence": {
               "label": "Confiance de rupture minimale",
@@ -2132,15 +2132,15 @@
               "label": "Sources",
               "latitude": {
                 "label": "Latitude",
-                "tooltip": "Inclure la latitude de chaque pixel"
+                "tooltip": ""
               },
               "terrain": {
                 "label": "Relief",
-                "tooltip": "Inclure les données SRTM"
+                "tooltip": ""
               },
               "water": {
                 "label": "Eau",
-                "tooltip": "Inclure les couches du Global Surface Water mapping du CCR"
+                "tooltip": ""
               }
             }
           },
@@ -2444,11 +2444,11 @@
                 },
                 "SIMPLE": {
                   "label": "",
-                  "tooltip": "Incluez le rouge, le nir, le swir1, le swir2 et les ratios entre eux"
+                  "tooltip": ""
                 }
               }
             },
-            "tooltip": "Ajouter des bandes dérivées supplémentaires à utiliser dans la classification."
+            "tooltip": ""
           },
           "form": {
             "asset": {
@@ -2719,22 +2719,22 @@
             "CSV_UPLOAD": {
               "label": "Fichier CSV",
               "title": "TÉLÉCHARGEMENT DU CSV",
-              "tooltip": "Téléchargez un fichier CSV."
+              "tooltip": ""
             },
             "EE_TABLE": {
               "label": "Table Earth Engine",
               "title": "",
-              "tooltip": "Chargement des données de référence à partir d'une table EE."
+              "tooltip": ""
             },
             "RECIPE": {
               "label": "Formules SEPAL sauvegardée",
               "title": "FORMULE SEPAL",
-              "tooltip": "Utiliser les données d'apprentissage d'une formule Sepal sauvegardée."
+              "tooltip": ""
             },
             "SAMPLE_CLASSIFICATION": {
               "label": "Classification des échantillons",
               "title": "CLASSIFICATION DES ÉCHANTILLONS",
-              "tooltip": "Echantillonner une classification préexistante."
+              "tooltip": ""
             },
             "CEO": {
               "label": "",
@@ -2957,7 +2957,7 @@
               "seed": {
                 "label": "Graine",
                 "placeholder": "Graine...",
-                "tooltip": ""
+                "tooltip": "graine de randomisation"
               },
               "learningRate": {
                 "label": "",
@@ -3563,7 +3563,7 @@
             "buffer": {
               "info": "buffer de {buffer} km",
               "label": "Buffer",
-              "tooltip": "La zone d'intérêt et l'aperçu mettent plus de temps à s'afficher lorsque le buffer est activée."
+              "tooltip": ""
             },
             "assetBounds": {
               "description": "",
@@ -3733,7 +3733,7 @@
         },
         "clearSelectedScenes": {
           "apply": "Nettoyer les scènes",
-          "message": "Vous allez nettoyer la sélection de scènes",
+          "message": "",
           "title": "Nettoyer les scènes sélectionnées",
           "tooltip": "Nettoyer les scènes sélectionnées"
         },
@@ -3854,22 +3854,22 @@
               },
               "medoid": {
                 "label": "Médoide",
-                "tooltip": "Utiliser le médoide des pixels restants"
+                "tooltip": ""
               }
             },
             "corrections": {
               "brdf": {
                 "label": "",
-                "tooltip": "Corriger les effets de réflectance bi-directionnelle sur la distribution (BRDF)"
+                "tooltip": ""
               },
               "calibrate": {
                 "label": "Calibrer",
-                "tooltip": "Calibrer les bandes pour améliorer la mosaique multi-capteur"
+                "tooltip": ""
               },
               "label": "Corrections",
               "surfaceReflectance": {
                 "label": "",
-                "tooltip": "Utiliser la réflectance de surface corrigée des effets atmosphère"
+                "tooltip": ""
               }
             },
             "brdfMultiplier": {
@@ -3981,17 +3981,17 @@
               "malformed": "Date non valide",
               "tooEarly": "Ne peut être avant {min}",
               "tooLate": "Ne peut être après {max}",
-              "tooltip": "Restreindre les périodes de l'année pour l'acquisition d'images"
+              "tooltip": ""
             },
             "targetDate": {
               "label": "Date cible",
               "malformed": "Data non valide",
-              "tooltip": "La date cible pour laquelle chaque pixel devrait idéalement être acquis"
+              "tooltip": ""
             },
             "targetYear": {
               "label": "Année",
               "malformed": "Pas une année",
-              "tooltip": "L'année pour laquelle chaque pixel devrait être acquis"
+              "tooltip": ""
             }
           },
           "title": "Dates",
@@ -4240,16 +4240,16 @@
             "type": {
               "CUSTOM_TIME_SCAN": {
                 "label": "Intervalle temporel",
-                "tooltip": "Construire un time-scan avec intervalle temporel personnalisé"
+                "tooltip": ""
               },
               "label": "intervalle de dates",
               "POINT_IN_TIME_MOSAIC": {
                 "label": "Date",
-                "tooltip": "Construire une mosaique avec des dates les plus proches possibles de la cible."
+                "tooltip": ""
               },
               "YEARLY_TIME_SCAN": {
                 "label": "Année",
-                "tooltip": "Construire un time-scan pour une année"
+                "tooltip": ""
               }
             },
             "year": {
@@ -4266,26 +4266,26 @@
             "geometricCorrection": {
               "ellipsoid": {
                 "label": "Ellipsoide",
-                "tooltip": "La correction ellipsoide (gamma0) est appliquée"
+                "tooltip": ""
               },
               "label": "Correction géométrique",
               "none": {
                 "label": "Aucune",
-                "tooltip": "Aucune correction géométrique appliquée"
+                "tooltip": ""
               },
               "terrain": {
                 "label": "Relief",
-                "tooltip": "Correction de relief appliquée"
+                "tooltip": ""
               }
             },
             "orbits": {
               "ascending": {
                 "label": "Ascendante",
-                "tooltip": "Inclure les scènes des orbites ascendantes"
+                "tooltip": ""
               },
               "descending": {
                 "label": "Descendante",
-                "tooltip": "Inclure les scènes des orbites descendantes"
+                "tooltip": ""
               },
               "label": "Orbites"
             },
@@ -4307,16 +4307,16 @@
             "outlierRemoval": {
               "aggressive": {
                 "label": "Aggressif",
-                "tooltip": "Enlever plus d'outliers"
+                "tooltip": ""
               },
               "label": "Supprimer les outliers",
               "moderate": {
                 "label": "Modéré",
-                "tooltip": "Enlever les outliers"
+                "tooltip": ""
               },
               "none": {
                 "label": "Aucun",
-                "tooltip": "Ne pas supprimer les outliers"
+                "tooltip": ""
               }
             },
             "mask": {
@@ -4671,26 +4671,26 @@
             "geometricCorrection": {
               "ellipsoid": {
                 "label": "Ellipsoide",
-                "tooltip": "La correction ellipsoide (gamma0) est appliquée"
+                "tooltip": ""
               },
               "label": "Correction géométrique",
               "none": {
                 "label": "Aucun",
-                "tooltip": "Aucune correction géométrique appliquée"
+                "tooltip": ""
               },
               "terrain": {
                 "label": "Relief",
-                "tooltip": "Correction de relief appliquée"
+                "tooltip": ""
               }
             },
             "orbits": {
               "ascending": {
                 "label": "Ascendante",
-                "tooltip": "Inclure les scènes des orbites ascendantes"
+                "tooltip": ""
               },
               "descending": {
                 "label": "Descendante",
-                "tooltip": "Inclure les scènes des orbites descendantes"
+                "tooltip": ""
               },
               "label": "Orbites",
               "required": ""
@@ -4698,16 +4698,16 @@
             "outlierRemoval": {
               "aggressive": {
                 "label": "Agressif",
-                "tooltip": "Enlever plus d'outliers"
+                "tooltip": ""
               },
               "label": "Supprimer les outliers",
               "moderate": {
                 "label": "Modéré",
-                "tooltip": "Enlever les outliers"
+                "tooltip": ""
               },
               "none": {
                 "label": "Aucun",
-                "tooltip": "Ne pas supprimer les outliers"
+                "tooltip": ""
               }
             },
             "mask": {
@@ -4867,7 +4867,7 @@
             "classification": {
               "label": "Classification",
               "placeholder": "Sélectionnez une classification...",
-              "tooltip": "(Facultatif) Sélectionnez une formule de classification et appliquez le classificateur à chaque acquisition de la série chronologique."
+              "tooltip": ""
             },
             "band": {
               "label": ""
@@ -5210,14 +5210,14 @@
               "label": "Date de fin",
               "malformed": "Date non valide",
               "required": "Une date est nécessaire",
-              "tooltip": "La dernière date de la série à exclure."
+              "tooltip": ""
             },
             "startDate": {
               "beforeEnd": "Doit être avant la fin",
               "label": "Date de début",
               "malformed": "Date non valide",
               "required": "Date requise",
-              "tooltip": "La première date de la série, inclusif."
+              "tooltip": ""
             }
           },
           "title": "Dates",
@@ -5235,7 +5235,7 @@
             "classification": {
               "label": "Classification",
               "placeholder": "Sélectionnez une classification...",
-              "tooltip": "(Facultatif) Sélectionnez une formule de classification et appliquez le classificateur à chaque acquisition de la série chronologique."
+              "tooltip": ""
             },
             "dataSets": {
               "optical": {
@@ -6588,13 +6588,16 @@
         },
         "usage": {
           "label": "",
-          "avgMax": "",
+          "avgMaxValue": "",
           "cost": "Coût",
           "hours": "",
           "instanceType": "Type d'instance",
+          "meterExample": "",
+          "meterExampleValues": "",
           "month": "",
           "network": "",
           "noData": "",
+          "notAvailable": "",
           "error": ""
         },
         "username": {
@@ -6610,7 +6613,7 @@
       },
       "resetPassword": {
         "label": "",
-        "tooltip": "Envoyer un email de réinitialisation du mot de passe à l'utilisateur.",
+        "tooltip": "",
         "message": ""
       },
       "lock": {
@@ -6658,7 +6661,7 @@
         "message": "",
         "messageWithRunning": "",
         "success": "Session arrêtée.",
-        "tooltip": "Arrêter la session courante. Les sessions interrompues sont perdues"
+        "tooltip": ""
       },
       "expiry": {
         "currentlyRunning": "",
@@ -6686,7 +6689,7 @@
       "update": {
         "error": "Echec de la mise à jour de la session",
         "success": "La session a été mise à jour",
-        "tooltip": "Éditer la session."
+        "tooltip": ""
       },
       "sshLogin": {
         "tooltip": ""
@@ -6823,11 +6826,11 @@
       "validating": "",
       "replace": {
         "label": "Remplacer",
-        "tooltip": "Remplacer l'Asset précédent par celui-ci."
+        "tooltip": ""
       },
       "resume": {
         "label": "Reprendre",
-        "tooltip": "Garder les images existantes dans la collection et exporter uniquement les images manquantes."
+        "tooltip": ""
       },
       "strategy": {
         "label": "Stratégie"
@@ -6887,6 +6890,10 @@
     "confirm": {
       "title": "Confirmation requise",
       "label": "Confirmer"
+    },
+    "datePicker": {
+      "yearStart": "",
+      "rangeInfo": ""
     },
     "error": "Erreur",
     "fileSelect": {
