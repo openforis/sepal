@@ -54,11 +54,6 @@ export const RecipeActions = id => {
                 })
                 .sideEffect(recipe => submitRetrieveRecipeTask(recipe))
                 .dispatch()
-        },
-        setClassification({classificationLegend, classifierType, classifier} = {}) {
-            actionBuilder('SET_CLASSIFICATION', {classificationLegend, classifierType})
-                .set('ui.classification', {classificationLegend, classifierType, classifier})
-                .dispatch()
         }
     }
 }

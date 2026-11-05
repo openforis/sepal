@@ -10,6 +10,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 const capture = vi.hoisted(() => ({
     destinationButtons: null,
+    bandButtons: null,
     googleAccount: true,
     onApply: null,
     accepts: null,
@@ -62,6 +63,16 @@ vi.mock('~/widget/form', async importOriginal => {
         }
     }
 })
+
+// The band choices as given, read from what the panel hands them.
+vi.mock('~/widget/buttons', () => ({
+    Buttons: props => {
+        if (props.label === 'process.retrieve.form.bands.label') {
+            capture.bandButtons = props
+        }
+        return null
+    }
+}))
 
 const {MosaicRetrievePanel} = await import('./retrievePanel')
 
@@ -220,6 +231,7 @@ beforeEach(() => {
     capture.read = resolving()
     capture.rerender = null
     capture.destinationButtons = null
+    capture.bandButtons = null
     capture.googleAccount = true
     capture.onApply = null
     capture.panelButtons = null
@@ -479,6 +491,23 @@ describe('resolution and submission lifecycle', () => {
         answer(ready([band('scalar', 0)]))
 
         expect(capture.destinationButtons.disabled).not.toBe(true)
+    })
+
+    // A request's owner says what its values mean; the panel interprets none of them. A user's band may be named like a
+    // classified output.
+    it('shows a selection its pending options do not carry by its value, unless the owner names it', () => {
+        const pending = {
+            formInputs: inputs({bands: ['probability_1', 'anything']}),
+            requestOptions: [[{value: 'anything', label: 'Anything'}]],
+            pendingRequestOptions: []
+        }
+        const kept = () => capture.bandButtons.options.at(-1).options
+
+        mount(baseProps(pending))
+        expect(kept()).toEqual([{value: 'probability_1', label: 'probability_1'}])
+
+        mount(baseProps({...pending, requestLabel: value => `Named ${value}`}))
+        expect(kept()).toEqual([{value: 'probability_1', label: 'Named probability_1'}])
     })
 
     // Its choices are its own, so its destinations do not wait for the output; whether it may be submitted does.

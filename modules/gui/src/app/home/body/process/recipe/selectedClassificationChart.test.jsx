@@ -258,8 +258,8 @@ const LISTING = [
     {id: MOSAIC, name: 'Mosaic', type: 'MOSAIC', revision: 1}
 ]
 
-// A Time Series or CCDC over Landsat 8 scenes, its Sources selecting the Random Forest and having copied it when they
-// did; a CCDC fitting the breakpoint bands given.
+// A Time Series or CCDC over Landsat 8 scenes, its Sources selecting the Random Forest; a CCDC fitting the breakpoint
+// bands given.
 const chartedRecipe = ({type, aoi = {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]}, breakpointBands = ['ndvi']}) => ({
     id: SERIES,
     type,
@@ -275,7 +275,7 @@ const chartedRecipe = ({type, aoi = {type: 'POLYGON', path: [[0, 0], [0, 1], [1,
         options: {corrections: ['SR']},
         ...(type === 'CCDC' ? {opticalPreprocess: {corrections: ['SR']}, ccdcOptions: {dateFormat: 1}} : {})
     },
-    ui: {initialized: true, classification: {classificationLegend: LEGEND, classifierType: 'RANDOM_FOREST', classifier: {type: 'RANDOM_FOREST'}}}
+    ui: {initialized: true}
 })
 
 // A Sentinel-2 mosaic, described from its configuration: a Classification over it observes nothing.

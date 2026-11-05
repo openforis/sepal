@@ -523,8 +523,8 @@ const LISTING = [
     {id: MOSAIC, name: 'Mosaic', type: 'MOSAIC', revision: 1}
 ]
 
-// Over Landsat 8 scenes, its Sources selecting the Random Forest and having copied it when they did, fitting the
-// breakpoint bands given; Retrieve last asked for `selected`, to an asset.
+// Over Landsat 8 scenes, its Sources selecting the Random Forest, fitting the breakpoint bands given; Retrieve last asked
+// for `selected`, to an asset.
 const ccdcRecipe = ({selected, breakpointBands}) => ({
     id: CCDC,
     type: 'CCDC',
@@ -541,7 +541,6 @@ const ccdcRecipe = ({selected, breakpointBands}) => ({
     },
     ui: {
         initialized: true,
-        classification: {classificationLegend: LEGEND, classifierType: 'RANDOM_FOREST', classifier: {type: 'RANDOM_FOREST'}},
         retrieve: {
             bands: selected, scale: 30, tileSize: 0.5, shardSize: 256, fileDimensionsMultiple: 10, crs: 'EPSG:4326',
             destination: 'GEE', assetType: 'ImageCollection', assetId: ASSET_ID, sharing: 'PRIVATE', strategy: 'new'

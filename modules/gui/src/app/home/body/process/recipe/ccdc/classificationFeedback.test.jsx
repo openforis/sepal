@@ -147,7 +147,7 @@ describe('a CCDC saved fitting a regression its trainable Classification\'s SVM 
         await open({breakpointBands: ['ndvi', 'regression'], classifier: C_SVC, points: true})
 
         expect(errorsOf(BREAKPOINT_BANDS_LABEL)).toContainEqual(expect.stringContaining('process.source.classifiedOutputs.breakpointBands'))
-        expect(selectedLabelsOf(BREAKPOINT_BANDS_LABEL)).toContain('regression')
+        expect(selectedLabelsOf(BREAKPOINT_BANDS_LABEL)).toContain('process.classification.bands.regression')
         expect(retrieveGate()).toMatchObject({code: 'CONFIGURATION_UNMET', section: SOURCES_BUTTON})
     })
 })

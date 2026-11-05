@@ -29,6 +29,12 @@ export const bandPresentation = recipe => {
     }
 }
 
+// What a Classification's output is called where no record of it names it: a class's probability by the class's value,
+// which is all its name says of it, and the regression as itself.
+export const classifiedOutputFallbackLabel = band => band === 'regression'
+    ? msg('process.classification.bands.regression')
+    : msg('process.classification.bands.classValueProbability', {value: band.replace(/^probability_/, '')})
+
 export const groupedBandPresentation = recipe => [
     Object.entries(bandPresentation(recipe)).map(([value, entry]) => ({value, ...entry}))
 ]

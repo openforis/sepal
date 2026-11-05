@@ -465,18 +465,19 @@ class _MosaicRetrievePanel extends React.Component {
 
     // A request that is not about the recipe's output: what the recipe type supplies is the whole truth here, so
     // the control is free to drop a selected name its options no longer carry - once they are settled. While some are
-    // still to be established (`pendingRequestOptions`), what is selected is kept as it is, however few of the options
-    // offered so far carry it, and is held while it names one of those or one not offered. A selection its owner holds
-    // (`requestHold`) is kept, and the hold said.
+    // still to be established (`pendingRequestOptions`), what is selected is kept as it is, and shown chosen - named as its
+    // owner names it (`requestLabel`), otherwise by its value - however few of the options offered so far carry it, and is
+    // held while it names one of those or one not offered. A selection its owner holds (`requestHold`) is kept, and the
+    // hold said.
     renderRequestOptions(options) {
-        const {single, pendingRequestOptions, requestHold, inputs: {bands}} = this.props
+        const {single, pendingRequestOptions, requestHold, requestLabel, inputs: {bands}} = this.props
         const control = pendingRequestOptions
             ? (
                 <Buttons
                     label={msg('process.retrieve.form.bands.label')}
                     selected={bands.value}
                     multiple={!single}
-                    options={options}
+                    options={withKeptSelection(options, bands.value, requestLabel)}
                     onChange={selected => bands.set(selected)}
                     framed
                 />
@@ -1010,8 +1011,8 @@ export const MosaicRetrievePanel = compose(
 
 // A panel retrieves the recipe's image output unless it is given `requestOptions`: a request about something else,
 // whose options are the whole truth and which `onRetrieve` submits; `pendingRequestOptions` names those among them not
-// yet established, while any are: meanwhile nothing selected is dropped, and a selection naming one of them, or one
-// not offered, is held. Otherwise `bandOptions` only presents what the output holds, `selection` translates what is
+// yet established, while any are: meanwhile nothing selected is dropped - what the options do not carry is shown, as
+// `requestLabel` names it - and a selection naming one of them, or one not offered, is held. Otherwise `bandOptions` only presents what the output holds, `selection` translates what is
 // chosen into the bands it exports (physical names by default), `task` configures the generic image export, and
 // `submitTask` replaces it where the recipe has its own. Either way, `requestGate(state, selected)` holds the values
 // selected as their owner judges them from the session given - null, or {wait, message} - beside what else holds them,
@@ -1031,6 +1032,7 @@ MosaicRetrievePanel.propTypes = {
     className: PropTypes.any,
     defaultAssetType: PropTypes.any,
     pendingRequestOptions: PropTypes.array,
+    requestLabel: PropTypes.func,
     requestGate: PropTypes.func,
     requestOptions: PropTypes.array,
     scaleTicks: PropTypes.array,
@@ -1056,6 +1058,12 @@ const requestValues = groups => groups.flat()
 
 // A form field nothing was chosen in holds an empty value, not a selection of it.
 const selectedValues = value => [].concat(value ?? []).filter(selected => selected !== '')
+
+const withKeptSelection = (options, selected, labelOf = value => value) => {
+    const offered = options.flatMap(group => group.options).map(({value}) => value)
+    const kept = selectedValues(selected).filter(value => !offered.includes(value))
+    return kept.length ? [...options, {options: kept.map(value => ({value, label: labelOf(value)}))}] : options
+}
 
 const presentedChoices = (values, presentationGroups = []) => {
     const offered = new Set(values)

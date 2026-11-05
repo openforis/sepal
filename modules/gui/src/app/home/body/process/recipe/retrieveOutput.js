@@ -113,6 +113,15 @@ export const readRetrieveOutput = ({state, recipeId, heldFor, evidenceOwnerOf, n
         : {recipe, graph, output, pending, recordOf}
 }
 
+// A record of what is retrieved, as the answer the runtime holds for a Retrieve panel's output read read it.
+export const retrievedRecordOf = (state, recipeId, sourceRuntime) =>
+    readRetrieveOutput({
+        state,
+        recipeId,
+        heldFor: key => sourceRuntime?.heldFor(key),
+        evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id)
+    })?.recordOf || (() => null)
+
 // A selection of physical output names, in the output's order. "All bands" names every band the answer holds,
 // ignoring a manual selection kept beside it, as does a stored selection that predates the option and states neither.
 export const physicalRequest = ({output, retrieveOptions = {}}) => {

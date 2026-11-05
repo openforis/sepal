@@ -142,7 +142,7 @@ describe('a Phenology saved analysing a regression its trainable Classification\
         await open({band: 'regression', classifier: C_SVC, points: true})
 
         expect(errorsOf(BAND_LABEL)).toContainEqual(expect.stringContaining('process.source.classifiedOutputs.band'))
-        expect(selectedLabelsOf(BAND_LABEL)).toEqual(['regression'])
+        expect(selectedLabelsOf(BAND_LABEL)).toEqual(['process.classification.bands.regression'])
         expect(retrieveGate()).toMatchObject({code: 'CONFIGURATION_UNMET', section: SOURCES_BUTTON})
     })
 })

@@ -2,8 +2,10 @@ import _ from 'lodash'
 import React from 'react'
 
 import {breakDetectionOptions, RecipeActions} from '~/app/home/body/process/recipe/ccdc/ccdcRecipe'
+import {selectedClassificationOfState} from '~/app/home/body/process/recipe/selectedClassification'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
+import {connect} from '~/connect'
 import {groupedBandOptions, toDataSetIds} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -34,11 +36,12 @@ const fields = {
 
 const mapRecipeToProps = recipe => ({
     sources: selectFrom(recipe, 'model.sources'),
-    corrections: selectFrom(recipe, 'model.opticalPreprocess.corrections'),
-    classificationLegend: selectFrom(recipe, 'ui.classification.classificationLegend'),
-    classifierType: selectFrom(recipe, 'ui.classification.classifierType'),
-    classifier: selectFrom(recipe, 'ui.classification.classifier'),
+    corrections: selectFrom(recipe, 'model.opticalPreprocess.corrections')
 })
+
+// The Classification its Sources select, as the session holds it: the recipe's root holds it while its tab is open.
+const mapStateToProps = (state, {recipeId}) =>
+    selectedClassificationOfState(state, selectFrom(state, ['process.loadedRecipes', recipeId]))
 
 class _Options extends React.Component {
     constructor(props) {
@@ -203,6 +206,7 @@ const modelToBreakDetection = model =>
 
 export const Options = compose(
     _Options,
+    connect(mapStateToProps),
     recipeFormPanel({id: 'ccdcOptions', fields, mapRecipeToProps, modelToValues, valuesToModel})
 )
 

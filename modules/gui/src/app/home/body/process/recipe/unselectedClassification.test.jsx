@@ -14,10 +14,10 @@ import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
 // What a Time Series or CCDC chart, and Time Series Retrieve, offer of a Classification once Sources no longer select
-// one: nothing, whatever copy Sources took of the one selected before - the recipe's own view, which clears that copy,
-// is not mounted. The selection is cleared, kept or made again in the real Sources panel beside them. The registrations,
-// runtime, panels, forms and submission are real; storage, Earth Engine, task submission, the graph renderer, the
-// workspace destination's check and the chart's band picker widget are replaced.
+// one: nothing, though the session held the one selected before. The selection is cleared, kept or made again in the
+// real Sources panel beside them, under the recipe's root, which holds what is applied. The registrations, runtime,
+// root, panels, forms and submission are real; storage, Earth Engine, task submission, the root's map and toolbar, the
+// graph renderer, the workspace destination's check and the chart's band picker widget are replaced.
 
 const fake = vi.hoisted(() => ({stored: {}, listing: [], requests: [], submitted: []}))
 vi.mock('~/apiRegistry', () => ({default: {
@@ -53,6 +53,12 @@ vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
 vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
 vi.mock('./ccdc/ccdcGraph', () => ({CCDCGraph: () => null}))
+// The root's map and toolbar, so the panels it would open are the ones mounted beside it.
+vi.mock('~/app/home/map/map', async importOriginal => ({...await importOriginal(), Map: ({children}) => children}))
+vi.mock('./ccdc/panels/ccdcToolbar', () => ({CcdcToolbar: () => null}))
+vi.mock('./timeSeries/panels/timeSeriesToolbar', () => ({TimeSeriesToolbar: () => null}))
+vi.mock('./aoi', async importOriginal => ({...await importOriginal(), Aoi: () => null}))
+vi.mock('./recipeImageLayerSource', async importOriginal => ({...await importOriginal(), initializeLayers: () => {}}))
 vi.mock('~/widget/activation/activatable', () => ({
     withActivatable: () => Component => props => (
         <Component {...props} activatable={{active: true, activate: () => {}, deactivate: () => {}}}/>
@@ -204,7 +210,7 @@ const LISTING = [
     {id: CLASSIFICATION, name: CLASSIFICATION, type: 'CLASSIFICATION', revision: 1}
 ]
 
-// Sources select the Random Forest the session holds, and copied it when they did; Retrieve last asked for `retrieveBands`.
+// Sources select the Random Forest the session holds; Retrieve last asked for `retrieveBands`.
 const recipeOf = (type, retrieveBands) => ({
     id: ID,
     type,
@@ -220,7 +226,6 @@ const recipeOf = (type, retrieveBands) => ({
     },
     ui: {
         initialized: true,
-        classification: {classificationLegend: LEGEND, classifierType: RANDOM_FOREST.type, classifier: RANDOM_FOREST},
         retrieve: {bands: retrieveBands, scale: 30, tileSize: 2, shardSize: 256, fileDimensionsMultiple: 2, destination: 'SEPAL', filenamePrefix: 'series'}
     }
 })
@@ -309,7 +314,12 @@ const reopenSources = async () => {
 
 const openRetrieve = retrieveBands => mount('TIME_SERIES', <><TimeSeriesSources/><Retrieve/></>, retrieveBands)
 
+const ROOTS = {CCDC: ccdc().components.recipe, TIME_SERIES: timeSeries().components.recipe}
+
+let Root
+
 const mount = async (type, panels, retrieveBands = ['regression']) => {
+    Root = ROOTS[type]
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
@@ -339,6 +349,7 @@ const rendered = panels => (
             <PortalContext id='test-portal'>
                 <EventShield>
                     <Recipe id={ID}>
+                        <Root/>
                         {panels}
                     </Recipe>
                 </EventShield>

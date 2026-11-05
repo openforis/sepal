@@ -6,21 +6,18 @@ import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
-import {Notifications} from '~/widget/notifications'
 
-import {recipeAccess} from '../../recipeAccess'
 import {Aoi} from '../aoi'
 import {classificationReferenceFeedback, collectionClassifierRequirements} from '../collectionClassifierRequirements'
 import {initializeLayers} from '../recipeImageLayerSource'
+import {withSelectedClassification} from '../selectedClassification'
 import {bandPresentation} from './bands'
 import {TimeSeriesToolbar} from './panels/timeSeriesToolbar'
-import {defaultModel, RecipeActions} from './timeSeriesRecipe'
+import {defaultModel} from './timeSeriesRecipe'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
     aoi: selectFrom(recipe, 'model.aoi'),
-    classificationRecipeId: selectFrom(recipe, 'model.sources.classification'),
-    classificationLegend: selectFrom(recipe, 'ui.classification.classificationLegend'),
     savedLayers: selectFrom(recipe, 'layers')
 })
 
@@ -28,7 +25,6 @@ class _TimeSeries extends React.Component {
     constructor(props) {
         super(props)
         const {savedLayers, recipeId} = props
-        this.recipeActions = RecipeActions(recipeId)
         initializeLayers({recipeId, savedLayers, defaultGoogleSatellite: true})
     }
 
@@ -41,39 +37,13 @@ class _TimeSeries extends React.Component {
             </Map>
         )
     }
-
-    componentDidMount() {
-        this.initClassification()
-    }
-
-    componentDidUpdate() {
-        this.initClassification()
-    }
-
-    initClassification() {
-        const {stream, classificationLegend, classificationRecipeId, loadRecipe$} = this.props
-        if (classificationRecipeId && !classificationLegend && !stream('LOAD_CLASSIFICATION_RECIPE').active) {
-            stream('LOAD_CLASSIFICATION_RECIPE',
-                loadRecipe$(classificationRecipeId),
-                classification => {
-                    this.recipeActions.setClassification({
-                        classificationLegend: classification.model.legend,
-                        classifierType: classification.model.classifier.type,
-                        classifier: classification.model.classifier
-                    })
-                },
-                error => Notifications.error({message: msg('process.timeSeries.panel.sources.classificationLoadError', {error}), error})
-            )
-        } else if (!classificationRecipeId && classificationLegend && !stream('LOAD_CLASSIFICATION_RECIPE').active) {
-            this.recipeActions.setClassification({classificationLegend: null, classifierType: null, classifier: null})
-        }
-    }
 }
 
+// The root holds the Classification its Sources select for as long as its tab is open (selectedClassification.js).
 const TimeSeries = compose(
     _TimeSeries,
-    recipe({defaultModel, mapRecipeToProps}),
-    recipeAccess()
+    withSelectedClassification({loadError: 'process.timeSeries.panel.sources.classificationLoadError'}),
+    recipe({defaultModel, mapRecipeToProps})
 )
 
 const SOURCES = {id: 'sources', label: 'process.timeSeries.panel.sources.button'}

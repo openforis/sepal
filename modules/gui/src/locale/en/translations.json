@@ -2107,6 +2107,7 @@
       "bands": {
         "class": "Class",
         "classProbability": "Class probability",
+        "classValueProbability": "Class {value} probability",
         "probability": "{class} %",
         "regression": "Regression"
       },
@@ -6000,8 +6001,8 @@
         "dataSets": "The selected data sets don't provide the bands this classification reads: {missing}. Choose data sets that do, or another classification."
       },
       "classifiedOutputs": {
-        "band": "The selected classification's classifier can't provide {unsupported}. Choose another band, or another classification.",
-        "breakpointBands": "The selected classification's classifier can't provide {unsupported}. Choose other breakpoint bands, or another classification."
+        "band": "The selected classification does not provide {unsupported}. Choose another band, or another classification.",
+        "breakpointBands": "The selected classification does not provide {unsupported}. Choose other breakpoint bands, or another classification."
       },
       "segments": {
         "incompatible": "Asset {asset} does not have the CCDC segment layout alert detection reads: {problems}.",

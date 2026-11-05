@@ -44,6 +44,46 @@ An open chart reads again whenever what it is computed from changes, such as the
 settings. It waits while an edit to the Classification is not yet saved, since storage's copy is what is executed. Its
 band options follow the Classification record the session holds.
 
+### What is offered of the selected Classification
+
+What Sources, the chart, Retrieve and CCDC's OPT offer of the selected Classification - its outputs and their labels -
+reads its record as the session holds it, otherwise as the record the consumer's own runtime read resolved
+(`selectedClassificationOfState`, `modules/gui/src/app/home/body/process/recipe/selectedClassification.js`). The
+selection is the one the type declares (`CLASSIFICATION_SOURCE`). CCDC and Phenology are read the same way.
+
+- **One UI read.** Each recipe has one reader for the selected Classification, shared by its consumers. The root holds
+  the applied selection while its tab is open; Sources hold the one their draft selects. The root and Sources share the
+  pending request for the same record. The read lands in the session's recipe cache under its existing acceptance
+  rules: an open draft or a newer copy is kept.
+- **Releasing.** Letting one consumer go never cancels a read another still holds. A read no consumer holds is
+  cancelled, its late answer writing nothing, and its claim released, so a closed tab leaves nothing held.
+- **Pending and failed reads.** No further classified outputs are offered, but chosen ones stay chosen and shown.
+  Sources' selector is busy while the read is pending. Retrieve keeps a classified selection shown and held until the
+  record says what is provided. A failed read is notified once, and read again for a consumer that comes to hold it,
+  such as Sources selecting it again. A record the session gains by any other path, such as another tab opening or
+  editing it, is offered at once.
+- **Names.** A classified output chosen but not offered - CCDC's breakpoint band, Phenology's band, Time Series
+  Retrieve's indicator - is named the same way in its choice and in the finding refusing it (`classifiedOutputLabel`).
+  The finding keeps only which recipe and Classification it was judged under; both resolve the name each time they
+  render.
+  1. It takes the label of the Classification selected now, as the recipe's consumers last showed it.
+  2. Failing that, it takes the label they last showed the output called, from any Classification: the one applied
+     while another is edited, or one selected before. A class removed or renamed since does not undo that history,
+     and a rename replaces it.
+  3. Otherwise it is named by its class, "Class 1 probability", or as "Regression" (`classifiedOutputFallbackLabel`,
+     Classification's `bands.js`).
+
+  An output that is offered keeps its offered label. Remembered labels are presentation alone: they are kept in memory
+  while the recipe's tab is open, never saved, and never make an output available or lift a refusal. The shared
+  Retrieve panel names a kept selection only as its owner says, otherwise by its value, so a band a user named
+  `probability_1` elsewhere stays as named.
+- **Runtime reads.** The source runtime reads what its own work needs independently. Work started before the UI read
+  lands may request the record itself; work started after takes it from the session. Nothing promises one request
+  across both.
+
+Nothing of the Classification is copied into the recipe: opening a recipe and a read completing leave its model and
+drafts as they were.
+
 ## Output
 
 Declared in `lib/js/shared/src/recipe/type/timeSeries.js` (see the
@@ -165,6 +205,14 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
   construction, unsupported output and repair across collection families.
 - `modules/gui/src/app/home/body/process/recipe/timeSeries/` and `recipe/selectedClassificationChart.test.jsx`:
   indicator requests, feedback, submission races, chart/Retrieve withdrawal, pending states and recovery.
+- `modules/gui/src/app/home/body/process/recipe/selectedClassification.test.jsx`: the shared UI read through real roots,
+  panels and runtime (CCDC and Time Series) - one request for the root and Sources, independent runtime reads, release,
+  supersession, teardown, pending and failed reads, recovery, and labels in Sources, OPT and Retrieve.
+- `modules/gui/src/app/home/body/process/recipe/classifiedOutputSources.test.jsx`: CCDC's and Phenology's retained
+  classified outputs named in their choice and refusal - the label of the Classification selected before, the class
+  fallback, the current label winning - with Apply refused, and while the Classification is read and after repair.
+  `mosaic/panels/retrieve/retrieveDestinationCompatibility.test.jsx`: Retrieve's kept selection named only as its
+  owner says.
 - `modules/task/src/runner/operations/timeSeriesExport.test.js` and `lib/python/shared/test_stack_time_series.py`:
   band-first download layout, chunk stacking, relative SITS VRTs and relocation.
 - `modules/gee/test/ee/timeSeries/regressionPrecision.test.js`: collection values/types/masks, pre-encoding

@@ -13,11 +13,10 @@ import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
 // The indicators Time Series Retrieve offers of the Classification its Sources select: as the session holds it, otherwise as
-// the source runtime read it for the image output's readiness - over the recipe's own AOI - while that answer is current,
-// not as Sources copied it when it was selected. The download runs from storage's copy, so what a draft offers is held
-// until storage agrees. Until then what that copy offers of it is not
-// established: a selection naming such an output is kept and held, never discarded, and once the record says it is not
-// provided it is let go, to be replaced by the user. The registrations, runtime, form, panel and submission are real;
+// the source runtime read it for the image output's readiness - over the recipe's own AOI - while that answer is current.
+// The download runs from storage's copy, so what a draft offers is held until storage agrees. Until the Classification is
+// read, or storage agrees, what it offers is not established: a selection naming such an output is kept, shown and held,
+// never discarded, and once the record says it is not provided it is let go, to be replaced by the user. The registrations, runtime, form, panel and submission are real;
 // storage, Earth Engine, task submission and the workspace destination's check are the substitutes. The Classification
 // stores training points, so a classified output is held only for what it offers.
 
@@ -94,7 +93,7 @@ afterEach(async () => {
     document.body.innerHTML = ''
 })
 
-describe('Time Series Retrieve over a Classification Sources copied while it regressed', () => {
+describe('Time Series Retrieve over a Classification storage holds as an SVM, providing no regression', () => {
     it('does not offer the regression the stored SVM does not provide, letting go of it to be replaced', async () => {
         await open({selected: 'regression'})
 
@@ -128,10 +127,10 @@ describe('Time Series Retrieve over a Classification Sources copied while it reg
         expect(fake.submitted).toEqual([])
     })
 
-    // A one-class SVM, as copied, provides no class probability; the C_SVC storage holds does.
-    it('keeps an output the stored Classification provides selected while it is read, though the copy lacks it, and submits it once it is', async () => {
+    // The C_SVC storage holds provides class probabilities.
+    it('keeps an output the stored Classification provides selected while it is read, and submits it once it is', async () => {
         fake.heldLoads = []
-        await open({selected: 'probability_1', copied: {type: 'SVM', svmType: 'ONE_CLASS'}})
+        await open({selected: 'probability_1'})
         expect(applyEnabled()).toBe(false)
 
         await answerHeldLoads()
@@ -166,7 +165,7 @@ describe('Time Series Retrieve over a Classification Sources copied while it reg
         expect(indicators()).toEqual([[NATIVE]])
     })
 
-    it('offers the Classification as the session holds it once it does, over what storage and the copy say', async () => {
+    it('offers the Classification as the session holds it once it does, over what storage says', async () => {
         fake.stored = {[CLASSIFICATION]: classificationOf(RANDOM_FOREST)}
         await open({selected: NATIVE})
         expect(offers(REGRESSION)).toBe(true)
@@ -241,8 +240,8 @@ const listingAt = revision => [
     {id: CLASSIFICATION, type: 'CLASSIFICATION', revision}
 ]
 
-// Sources copied the Classification while it was `copied`; Retrieve was last asked for `selected`.
-const recipeOf = (selected, copied) => ({
+// Retrieve was last asked for `selected`.
+const recipeOf = selected => ({
     id: ID,
     type: 'TIME_SERIES',
     title: 'Series',
@@ -255,7 +254,6 @@ const recipeOf = (selected, copied) => ({
     },
     ui: {
         initialized: true,
-        classification: {classificationLegend: LEGEND, classifierType: copied.type, classifier: copied},
         retrieve: {bands: selected, scale: 30, tileSize: 2, shardSize: 256, fileDimensionsMultiple: 2, destination: 'SEPAL', filenamePrefix: 'series'}
     }
 })
@@ -326,8 +324,8 @@ const listRevision = async revision => {
 }
 
 // `saving`: the Classification as the session holds it, closed while its save is still settling.
-const open = async ({selected, copied = RANDOM_FOREST, saving}) => {
-    const recipe = recipeOf(selected, copied)
+const open = async ({selected, saving}) => {
+    const recipe = recipeOf(selected)
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},

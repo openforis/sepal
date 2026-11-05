@@ -1,12 +1,10 @@
 import _ from 'lodash'
 import React from 'react'
-import {Subject, takeUntil} from 'rxjs'
 
 import {getDataSetOptions as opticalDataSetOptions, isOpticalDataSet} from '~/app/home/body/process/recipe/opticalMosaic/sources'
-import {RecipeActions} from '~/app/home/body/process/recipe/phenology/phenologyRecipe'
 import {getDataSetOptions as planetDataSetOptions} from '~/app/home/body/process/recipe/planetMosaic/sources'
 import {getDataSetOptions as radarDataSetOptions, isRadarDataSet} from '~/app/home/body/process/recipe/radarMosaic/sources'
-import {recipeAccess} from '~/app/home/body/process/recipeAccess'
+import {draftSelection, withSelectedClassification} from '~/app/home/body/process/recipe/selectedClassification'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {groupedBandOptions, toSources, withChosenClassifiedOutputs} from '~/sources'
@@ -15,7 +13,6 @@ import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
-import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 import {RecipeInput} from '~/widget/recipeInput'
 
@@ -46,14 +43,7 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _Sources extends React.Component {
-    cancel$ = new Subject()
-
     state = {}
-
-    constructor(props) {
-        super(props)
-        this.recipeActions = RecipeActions(props.recipeId)
-    }
 
     render() {
         const {inputs: {dataSetType}} = this.props
@@ -150,15 +140,13 @@ class _Sources extends React.Component {
                 input={classification}
                 filter={type => type.id === 'CLASSIFICATION'}
                 allowClear
-                busyMessage={this.props.stream('LOAD_CLASSIFICATION_RECIPE').active && msg('widget.loading')}
-                onChange={id => this.loadClassification(id)}
+                busyMessage={this.props.selectedClassification.loading && msg('widget.loading')}
             />
         )
     }
 
     renderBand() {
-        const {corrections, form, inputs: {dataSets, band}} = this.props
-        const {classificationLegend, classifierType, classifier} = this.state
+        const {corrections, form, selectedClassification: {classificationLegend, classifierType, classifier, labelOf}, inputs: {dataSets, band}} = this.props
         var dataSetArray = dataSets.value && _.isArray(dataSets.value)
             ? dataSets.value
             : [dataSets.value]
@@ -169,7 +157,7 @@ class _Sources extends React.Component {
             classification
         })
         
-        const options = withChosenClassifiedOutputs(collectionGrouped, band.value)
+        const options = withChosenClassifiedOutputs(collectionGrouped, band.value, labelOf)
             .filter(group => group.length)
             .map(group => ({options: group}))
         return (
@@ -203,15 +191,10 @@ class _Sources extends React.Component {
     }
 
     componentDidMount() {
-        const {inputs: {dataSetType, classification}} = this.props
+        const {inputs: {dataSetType}} = this.props
         if (!dataSetType.value) {
             dataSetType.set('OPTICAL')
         }
-        this.loadClassification(classification.value)
-    }
-
-    componentWillUnmount() {
-        this.cancel$.next()
     }
 
     componentDidUpdate(prevProps) {
@@ -242,38 +225,6 @@ class _Sources extends React.Component {
             case 'PLANET': return planetDataSetOptions({...dates})
             default: return []
         }
-    }
-
-    // Band options depend on what the classifier produces, so a selected classification is read for its
-    // legend and classifier type. The panel owns that read: the controls needing it are not always shown
-    // beside the selector, and an unrendered selector reads nothing.
-    loadClassification(recipeId) {
-        const {stream, loadRecipe$} = this.props
-        this.cancel$.next()
-        this.deselectClassification()
-        if (!recipeId) {
-            return
-        }
-        stream('LOAD_CLASSIFICATION_RECIPE',
-            loadRecipe$(recipeId).pipe(takeUntil(this.cancel$)),
-            classification => this.setState({
-                classificationLegend: classification.model.legend,
-                classifierType: classification.model.classifier.type,
-                classifier: classification.model.classifier
-            }),
-            error => Notifications.error({
-                message: msg('process.phenology.panel.sources.classificationLoadError', {error}),
-                error
-            })
-        )
-    }
-
-    deselectClassification() {
-        this.setState({
-            classificationLegend: null,
-            classifierType: null,
-            classifier: null
-        })
     }
 }
 
@@ -308,10 +259,12 @@ const modelToValues = ({dataSetType, assets, dataSets, cloudPercentageThreshold,
     })
 }
 
+// Band options depend on what the classifier produces, so Sources hold the Classification their draft selects, whether
+// or not its selector is shown.
 export const Sources = compose(
     _Sources,
-    recipeFormPanel({id: 'sources', fields, mapRecipeToProps, modelToValues, valuesToModel}),
-    recipeAccess()
+    withSelectedClassification({candidate: draftSelection, loadError: 'process.phenology.panel.sources.classificationLoadError'}),
+    recipeFormPanel({id: 'sources', fields, mapRecipeToProps, modelToValues, valuesToModel})
 )
 
 Sources.propTypes = {}
