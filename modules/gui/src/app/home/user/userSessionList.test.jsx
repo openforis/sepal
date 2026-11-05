@@ -209,7 +209,7 @@ describe('the session list', () => {
     // says which one — by the name the list, the SSH menu and the expiry notification all use.
     it('names the session in the stop confirmation', () => {
         const message = render([session({name: 'humble-robin'})]).querySelector('.remove-message')
-        expect(message.textContent).toMatch(/^You are stopping session .+\.$/)
+        expect(message.textContent).toMatch(/^You are stopping session .+[^.]$/)
         expect(tagParts(message.querySelector('span'))).toEqual(['humble-robin', 't1'])
     })
 
