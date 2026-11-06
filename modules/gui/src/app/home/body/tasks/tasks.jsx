@@ -129,11 +129,12 @@ class _Tasks extends React.Component {
         }
     }
 
-    renderTask(task) {
+    renderTask(task, hovered) {
         const {icon, iconVariant} = this.getStatusIcon(task)
         return (
             <ListItem
                 key={task.id}
+                hovered={hovered}
                 onClick={() => this.showInfo(task)}>
                 <CrudItem
                     title={this.getTaskTitle(task)}
@@ -252,6 +253,7 @@ class _Tasks extends React.Component {
                 itemRenderer={this.renderTask}
                 spacing='tight'
                 overflow={50}
+                onEnter={this.showInfo}
             />
         )
     }
