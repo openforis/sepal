@@ -159,10 +159,13 @@ Remapping's proposed [default class](#default-or-fallback-class) is specified be
   initially, report errors after interaction and clear promptly on repair. Review autofocus, picker interaction,
   programmatic resets, duplicated input editors and field/group accessibility. Broken saved configurations still
   explain themselves immediately, and invalid submission stays blocked regardless of visible error timing.
-- **Enter while renaming a recipe tab.** Reported: with a recipe panel open, Enter is captured by the panel while
+- **Enter/Escape while renaming a recipe tab.** Reported: with a recipe panel open, Enter is captured by the panel while
   the selected tab's title is being edited. Reproduce through the real tab-title editor and shared keybinding/modal
   scopes. Enter in the title editor should finish the rename without applying, advancing or closing the panel;
-  preserve normal Enter submission from panel fields. Cover both clean and edited panels.
+  Escape should cancel the rename and restore its previous title without closing/cancelling the panel or losing its
+  draft. The title editor already declares both handlers; verify focus ownership and shortcut precedence rather
+  than assuming Escape is fixed. Preserve normal Enter submission and Escape behaviour from panel fields. Cover
+  clean and edited panels, ordinary and modal panels, and panel shortcuts after title editing ends.
 - **Feedback attribution.** Decide whether all routes of a diamond should be marked. Current readiness reports
   established paths without fabricating alternate routes.
 - **Draft/close interaction.** Reported: an open recipe modal prevents closing its SEPAL tab and shows an information
@@ -172,10 +175,44 @@ Remapping's proposed [default class](#default-or-fallback-class) is specified be
   Warning about unapplied drafts on browser close remains a separate decision. A "Use reference settings" copy-again
   button is not planned; creation seeding and automatic ownership cover its useful purpose.
 
+### Sampled Classification training data
+
+Code-confirmed: reopening a TRN `SAMPLE_CLASSIFICATION` entry loads its source and starts sampling again.
+`trainingDataSet.jsx` saves mapped training points but discards this type's raw sampled rows, which the mapping
+wizard needs. Preserve the sampled rows and mapping so opening, inspecting or remapping an entry needs no new
+sampling request. These are saved snapshots; source changes do not by themselves invalidate their samples.
+
+- **Source-change advisory.** One declarative finding marks the data-set item and TRN amber when evidence
+  establishes a meaningful source change since sampling or acknowledgement. It does not block classification or
+  Retrieve; independent training requirements remain authoritative. Pending, unavailable or unsupported evidence
+  must not be reported as a proven change; explain that changes could not be checked where appropriate.
+- **Explicit actions.** Offer Resample and Keep existing samples. Resampling or changing sampling settings produces
+  a draft result; Apply accepts it and Cancel preserves the saved snapshot. Keeping samples acknowledges the current
+  source evidence without rewriting the original sampling provenance. A subsequent meaningful change warns again.
+- **Shared ownership.** Reuse source-runtime acquisition, cancellation and semantic evidence comparison, with
+  recipe-declared dependencies and feedback. Cover transitive source inputs/assets, resolved sampling AOI, band,
+  scale and count; title-only revisions do not trigger resampling or a warning. Preserve snapshot semantics,
+  including sampling the recipe's own output: provenance references are not live execution dependencies.
+- **Compatibility.** Keep existing saved points usable when raw rows or sampling evidence are absent. Missing
+  evidence is unknown, not proof of change; any sampling needed to reconstruct legacy rows must be explicit.
+
+Acceptance: reopen/reload without sampling or edits; remap stored rows locally; meaningful versus title-only and
+transitive source changes; pending/failed checks; both advisory locations; acknowledgement followed by another
+change; explicit resampling and settings edits with Apply/Cancel; rejection of late answers; legacy entries.
+
 ### Unfinished setup feedback
 
 Extend the [shared section feedback](recipes/source-resolution.md#section-feedback) only for concrete remaining gaps:
 
+- **Generic training-data setup guidance.** Remove the repeated panel instruction for `NO_TRAINING_DATA` in
+  Classification and Regression, including "Collect points on the map or add a training data set." Keep the amber
+  TRN and collection-button marks, their explanatory tooltips and the Collect/Add controls; use ordinary empty-list
+  presentation. Preserve specific diagnostics, such as insufficient represented classes or samples and missing
+  training features, through normal feedback at the relevant field or item. This is presentation only: retain the
+  authoritative requirements, readiness holds and wizard timing. Use finding codes or declarative presentation
+  metadata rather than message-text matching or another training-data presence check. Acceptance covers both
+  recipes: generic guidance is not repeated in the panel, amber clears when setup is complete, and actionable
+  diagnostics remain visible where repaired.
 - **Further adoption.** Establish a reachable incomplete configuration before adopting amber for Masking, Class
   Change, required reference selectors or other wizard-protected sections. A required field alone is insufficient:
   demonstrate removal, recovery or another path that can leave saved setup unfinished. An already-selected source
@@ -479,20 +516,45 @@ choose an explicit unknown-range fallback rather than treating an encoding multi
 
 ### Map inspection
 
-Deferred exploration; scope and interaction remain undecided. General inspection reads raster values/feature
-attributes across layers, grouped by layer. Specialized actions require the selected layer/product's capability:
-a Masking output preserving CCDC could offer its segment chart, as could a CCDC layer added to an Optical map.
-The owning recipe type must not determine every layer action. Resolve interpretation through the capability
-provider while reading the selected outer layer's pixels, retaining its mask and other transformations. A Stack
-may preserve several instances; CCDC-derived names alone do not establish a usable one. Original observations
-alongside fitted segments need evidence a segments asset may not supply.
+Deferred proposal: one Inspect action across recipe maps with inspectable layers, showing raster values or feature
+attributes grouped by layer. An eyedropper is the proposed icon; charts are optional views of the inspected location,
+not a requirement for every recipe. Decide final placement and whether existing charts open alongside values.
 
-Decide action placement and layer/instance selection; all versus visible layers and feature-hit matching; which
-named product/parameters are queried; scalar/array/unit/encoded-value presentation and distinct masked/no-match/
-unavailable/failed states; and cancellation, refresh and reuse when layer, capability or location changes.
-Use existing [product](recipes/output-products.md), [provider](recipes/source-resolution.md#execution-identity-and-capability-providers),
-[runtime](recipes/gui-source-runtime.md), [freshness](recipes/source-freshness.md) and [style](recipes/visualizations.md) owners. These scenarios
-do not commit to a toolbar or tool-registration framework; physical-value presentation remains deferred separately.
+- **Values and layers.** Show selected display bands first; categorical bands show both numeric value and class
+  label, retaining unknown values without inventing a class. Offer other bands on expansion. Proposed default:
+  inspect layers displayed in the clicked pane, with explicit inclusion of sources not placed in the layout.
+  Query additional bands/sources on demand rather than starting every possible calculation. Read actual data
+  before palette/stretch rendering, not values reconstructed from tile colours. Distinguish masked pixels,
+  no matching feature, unsupported inspection, unavailable evidence and failed requests. Tables identify features
+  and their attributes; define hit tolerance and multiple-match behaviour separately from raster sampling.
+- **One spatial question.** Capture the clicked pane's map projection, resolution and pixel-grid alignment with
+  the location. Values and any chart opened for that inspection use that same grid; neither silently chooses its
+  own scale. Show the sampling scale beside the coordinates. Zooming alone leaves the result unchanged; another
+  inspection captures a new grid. Verify alignment against actual EE tiles, including zoom, latitude and display
+  pixel density; specifying a CRS and nominal scale alone does not establish the same pixel. Preserve categorical
+  codes with appropriate resampling. Arrays and fitted-model records need product-specific sampling semantics.
+- **Charts by capability.** Reuse existing charts first. A Masking output preserving CCDC could offer its segment
+  chart, as could a CCDC layer added to an Optical map; the owning recipe type must not determine every layer
+  action. Resolve interpretation through the capability provider while reading the selected outer layer's pixels,
+  retaining its mask and transformations. A Stack may preserve several instances; names alone do not establish
+  a usable one. Sampling stored segments on the map grid does not refit them: do not average unrelated model
+  coefficients. Original observations alongside fitted segments need evidence an asset may not supply. Generic
+  optical/radar observation charts are later work: declare their source and temporal scope rather than inferring
+  a unique series from any upstream imagery dependency.
+- **Shared ownership and compatibility.** Recipes declare supported products, interpretation and restrictions;
+  reuse existing [product](recipes/output-products.md),
+  [provider](recipes/source-resolution.md#execution-identity-and-capability-providers),
+  [runtime](recipes/gui-source-runtime.md), [freshness](recipes/source-freshness.md) and
+  [style](recipes/visualizations.md) owners for acquisition, cancellation and reuse. Current observation/CCDC chart
+  requests specify 10 m and LandTrendr 30 m; adopting map scale changes results with zoom, not only cost. Compare
+  representative results and timings before changing existing charts; no speedup is established. A product unable
+  to honour the common spatial question needs an explicit restriction, not a silently different chart scale.
+
+First slice: raster inspection and existing chart integration. Acceptance covers selected/all-band queries,
+categorical values/labels, layer inclusion, masked/failed states, common value/chart grids and stable results after
+zoom, outer-layer transformations, and superseded requests on location/source changes. Feature inspection and new
+generic charts can follow separately. Scalar/array and unit/encoded-value presentation still need decisions;
+physical-value presentation remains deferred separately. No new tool-registration framework is selected.
 
 ### Recipe packages and supporting work
 
