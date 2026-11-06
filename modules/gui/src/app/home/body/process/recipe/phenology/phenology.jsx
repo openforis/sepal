@@ -10,6 +10,7 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
 import {classificationReferenceFeedback, classifiedOutputRequirements, collectionClassifierRequirements} from '../collectionClassifierRequirements'
+import {withSelectedClassification} from '../selectedClassification'
 import {bandPresentation} from './bands'
 import {PhenologyToolbar} from './panels/phenologyToolbar'
 import {defaultModel} from './phenologyRecipe'
@@ -38,8 +39,10 @@ class _Phenology extends React.Component {
     }
 }
 
+// The root holds the Classification its Sources select for as long as its tab is open (selectedClassification.js).
 const Phenology = compose(
     _Phenology,
+    withSelectedClassification({loadError: 'process.phenology.panel.sources.classificationLoadError'}),
     recipe({defaultModel, mapRecipeToProps})
 )
 

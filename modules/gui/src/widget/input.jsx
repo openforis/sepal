@@ -61,7 +61,7 @@ class _Input extends React.Component {
     }
 
     render() {
-        const {className, disabled, label, labelButtons, tooltip, tooltipPlacement, tooltipTrigger, errorMessage, busyMessage, border} = this.props
+        const {className, disabled, label, labelButtons, tooltip, tooltipPlacement, tooltipTrigger, errorMessage, warningMessage, busyMessage, border} = this.props
         return (
             <Widget
                 className={[
@@ -75,6 +75,7 @@ class _Input extends React.Component {
                 tooltipPlacement={tooltipPlacement}
                 tooltipTrigger={tooltipTrigger}
                 errorMessage={errorMessage}
+                warningMessage={warningMessage}
                 busyMessage={busyMessage}
                 border={border}
                 onClick={this.onClick}
@@ -359,6 +360,7 @@ Input.propTypes = {
     tooltipTrigger: PropTypes.string,
     type: PropTypes.string,
     value: PropTypes.any,
+    warningMessage: PropTypes.any,
     onAccept: PropTypes.func,
     onBlur: PropTypes.func,
     onCancel: PropTypes.func,

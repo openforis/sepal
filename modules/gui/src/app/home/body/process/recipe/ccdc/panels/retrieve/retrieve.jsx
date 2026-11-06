@@ -2,11 +2,15 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {compose} from '~/compose'
+import {connect} from '~/connect'
 import {groupedBandOptions, toDataSetIds} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 
 import {withRecipe} from '../../../../recipeContext'
+import {withSourceRuntime} from '../../../../sourceRuntime/sourceRuntimeContext'
 import {MosaicRetrievePanel} from '../../../mosaic/panels/retrieve/retrievePanel'
+import {retrievedRecordOf} from '../../../retrieveOutput'
+import {selectedClassificationOfState} from '../../../selectedClassification'
 import {submitRetrieveTask} from '../../ccdcRecipe'
 import {ccdcMeasureSelection} from '../../retrieveSelection'
 
@@ -14,11 +18,12 @@ const mapRecipeToProps = recipe =>
     ({
         recipeId: recipe.id,
         sources: selectFrom(recipe, 'model.sources'),
-        classificationLegend: selectFrom(recipe, 'ui.classification.classificationLegend'),
-        classifierType: selectFrom(recipe, 'ui.classification.classifierType'),
-        classifier: selectFrom(recipe, 'ui.classification.classifier'),
         corrections: selectFrom(recipe, 'model.options.corrections')
     })
+
+// The Classification its Sources select, as the session holds it or as the output read of what is retrieved resolved it.
+const mapStateToProps = (state, {recipeId, sourceRuntime}) =>
+    selectedClassificationOfState(state, selectFrom(state, ['process.loadedRecipes', recipeId]), retrievedRecordOf(state, recipeId, sourceRuntime))
 
 // Retrieve exports the recipe's image output, which the panel holds the export to, as it stands at submission
 // (retrieveOutput.js): the Classification its Sources select trainable among it, whatever measures are selected
@@ -51,6 +56,8 @@ class _Retrieve extends React.Component {
 
 export const Retrieve = compose(
     _Retrieve,
+    connect(mapStateToProps),
+    withSourceRuntime(),
     withRecipe(mapRecipeToProps)
 )
 

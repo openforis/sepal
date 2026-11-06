@@ -44,6 +44,135 @@ An open chart reads again whenever what it is computed from changes, such as the
 settings. It waits while an edit to the Classification is not yet saved, since storage's copy is what is executed. Its
 band options follow the Classification record the session holds.
 
+### What is offered of the selected Classification
+
+What Sources, the chart, Retrieve and CCDC's OPT offer of the selected Classification - its outputs and their labels -
+reads its record as the session holds it, otherwise as the record the consumer's own runtime read resolved
+(`selectedClassificationOfState`, `modules/gui/src/app/home/body/process/recipe/selectedClassification.js`). The
+selection is the one the type declares (`CLASSIFICATION_SOURCE`). CCDC and Phenology are read the same way.
+
+- **One UI read.** Each recipe has one reader for the selected Classification, shared by its consumers. The root holds
+  the applied selection while its tab is open; Sources hold the one their draft selects. The root and Sources share the
+  pending request for the same record. The read lands in the session's recipe cache under its existing acceptance
+  rules: an open draft or a newer copy is kept.
+- **Releasing.** Letting one consumer go never cancels a read another still holds. A read no consumer holds is
+  cancelled, its late answer writing nothing, and its claim released, so a closed tab leaves nothing held.
+- **Pending and failed reads.** No further classified outputs are offered, but chosen ones stay chosen and shown.
+  Sources' selector is busy while the read is pending. Retrieve keeps a classified selection shown and held until the
+  record says what is provided. A failed read is notified once, and read again for a consumer that comes to hold it,
+  such as Sources selecting it again. A record the session gains by any other path, such as another tab opening or
+  editing it, is offered at once.
+- **Names.** A classified output chosen but not offered - CCDC's breakpoint band, Phenology's band, Time Series
+  Retrieve's indicator - is named the same way in its choice and in the finding refusing it (`classifiedOutputLabel`).
+  The finding keeps only which recipe and Classification it was judged under; both resolve the name each time they
+  render.
+  1. It takes the label the selected Classification gives it, from its record where the session holds it, so a rename
+     shows in the choice and the finding together; otherwise as the recipe's consumers last showed it.
+  2. Failing that, it takes the label they last showed the output called, from any Classification: the one applied
+     while another is edited, or one selected before. A class removed or renamed since does not undo that history,
+     and a rename replaces it.
+  3. Otherwise it is named by its class, "Class 1 probability", or as "Regression" (`classifiedOutputFallbackLabel`,
+     Classification's `bands.js`).
+
+  An output that is offered keeps its offered label. A band of the images is named by itself (`chosenBandLabel`).
+  Remembered labels are presentation alone: they are kept in memory while the recipe's tab is open, never saved, and
+  never make an output available or lift a refusal. The shared Retrieve panel names a kept selection only as its owner
+  says, otherwise by its value, so a band a user named `probability_1` elsewhere stays as named.
+- **Runtime reads.** The source runtime reads what its own work needs independently. Work started before the UI read
+  lands may request the record itself; work started after takes it from the session. Nothing promises one request
+  across both.
+
+Nothing of the Classification is copied into the recipe: opening a recipe and a read completing leave its model and
+drafts as they were.
+
+### CCDC's TMask bands
+
+TMask screens a pixel's observations with two of the bands CCDC segments. Execution passes it only as exactly two bands
+(`enabledTmaskBands`, `lib/js/shared/src/recipe/type/ccdc.js`). Any other selection runs no TMask, and presets save
+none.
+- **Rule.** An enabled TMask must use breakpoint bands. The CCDC type declares this as a configuration requirement,
+  `NON_BREAKPOINT_TMASK_BANDS`, found at `ccdcOptions.tmaskBands` and naming the `missing` bands. It refuses the image
+  (preview, Retrieve) and the pixel segments; the count and pixel observations are unaffected. The server's
+  `requireExecutable$` refuses the same configuration before Earth Engine is asked.
+- **Sources.** A Sources Apply that removes a band TMask uses is allowed. OPT's toolbar button is then marked, and the
+  held operations name OPT. Restoring the band as a breakpoint band repairs it.
+- **OPT.** TMask's choices are the applied breakpoint bands, in their order, named as Sources name them. A chosen band
+  that is no longer one stays shown as chosen, so it can be removed; opening, rendering and reads completing never drop
+  it. The control is enabled while anything can be chosen or removed. OPT's draft is judged against the applied
+  breakpoint bands (`ccdc/tmaskRequirement.js`). A draft keeping such a band says which bands are missing and the
+  repairs beside TMask, and its Apply and Enter are refused. Choosing another pair, clearing TMask or choosing a preset
+  repairs it. OPT's existing rule of exactly two bands or none is unchanged.
+
+### Chart drawing
+
+Time Series, CCDC, CCDC Slice and Change Alerts use `CCDCGraph`; LandTrendr uses the same shared `Graph` widget.
+For ordinary error bars, `errorBandPlotter` shades each continuous uncertainty band with one outline. All observations,
+fitted values and uncertainty bounds remain in the chart, so zooming and hover lookups use the full series.
+Null points follow the series' `connectSeparatedPoints` setting; explicit NaN gaps stay gaps. Band colour and opacity
+follow the series settings. The library still draws the lines and points, and supplies the renderer for stepped and
+custom-bar charts. A caller's own plotter remains authoritative.
+Observation-only drawing orders rows by timestamp because observation chunks can finish out of order. All values and
+duplicate timestamps are kept; the response itself is unchanged. The zoom strip is shown only when charted rows span
+more than one instant, so a one-instant series cannot collapse its date window by dragging a handle.
+Hover readouts appear opposite the highlighted point and let pointer events reach the chart beneath them, for both
+observations and fitted points. Moving into the zoom strip clears the hovered point and its readout. A model day's
+readout shows the value drawn and describes the segment it is fitted to or extrapolated from. For an interpolated day
+it describes the segment the gap follows; a masked day shows none.
+
+What a chart draws is prepared once per response, for the band and pixel read: `ccdcChart.js` for the `CCDCGraph`
+family, `landTrendrChart.js` for LandTrendr. The CCDC family evaluates the model for each day of the period. Segment
+days and the gaps following them use browser local midnight; a gap before the first segment steps from the configured
+start instant. Within a segment the value is fitted. Around and between segments the gap strategy fills it:
+- interpolation needs a segment on both sides;
+- extrapolation uses the closest, previous or next segment within the maximum days;
+- before the first segment or after the last, only the segment there is can be used;
+- a day without the segment asked for is masked.
+
+### Chart CSV export
+
+Each pixel chart panel has an Export CSV button at the left of its buttons. It downloads one CSV of the selected band
+(LandTrendr: the recipe's index) at the charted pixel, over the whole prepared period; zooming does not restrict it.
+- **When it is enabled:** once every response the chart needs for the current band and pixel has arrived (segments and
+  observations for CCDC and Change Alerts) and something was read. It is disabled while a new band or pixel is read.
+- **What it reads and changes:** it serializes the prepared chart the drawing uses (`pixelChartExport.jsx`,
+  `pixelChartCsv.js`). It requests nothing more from Earth Engine and leaves the recipe unchanged.
+- **Encoding:** the file is UTF-8 without a byte-order mark, written by `papaparse`. Excel may need it imported as UTF-8.
+- **Period:** the export includes all prepared model days, including segments before the chart's initial date window.
+
+Every file includes `band`, `latitude`, `longitude` and `value`. Other columns depend on the records exported:
+
+| Chart | Additional columns |
+| --- | --- |
+| Time Series | `timestamp` |
+| CCDC | `timestamp`, `series`, `rmse`, `lower`, `upper`, `model_method` |
+| CCDC Slice | `timestamp`, `rmse`, `lower`, `upper`, `model_method` |
+| Change Alerts | `timestamp`, `series`, `rmse`, `lower`, `upper`, `model_method` |
+| LandTrendr | `year`, `series`, `is_vertex` |
+
+`series` is included only when the file contains both observations and model records. Model-specific columns are
+omitted when only observations were returned. Applicable columns stay present when their values are missing, including
+an entirely masked model. Columns keep this relative order:
+`band,latitude,longitude,timestamp,year,series,value,rmse,lower,upper,model_method,is_vertex`.
+
+- **Order:** rows are in time. At one instant an observation precedes the model; observations sharing an instant keep
+  the order they were read in.
+- **Observations:** every observation in the response, at its own timestamp, including several on one day, which the
+  fitted drawing shows one of. LandTrendr's are annual composites: a `year` and no timestamp.
+- **Model, CCDC family:** a row for each day of the period. The timestamp is the actual instant the model is evaluated
+  at, written in UTC with the chart's existing timezone handling preserved. `model_method` is `fitted`, `interpolated`,
+  `extrapolated` or `masked`; a masked day keeps its row with no numbers.
+- **Model, LandTrendr:** a row a year, with `is_vertex` from the flags LandTrendr returned. A missing fitted value is
+  blank; no separate method column is needed for this fitted annual series.
+- **`rmse`:** the RMSE of the one segment a fitted or extrapolated value comes from. It is blank for an interpolated
+  value.
+- **`lower` and `upper`:** the band the chart draws around the value, which for an interpolated value is a weighted
+  combination of both segments' RMSE. They are not statistical confidence intervals.
+- **Where there is no uncertainty:** observations sharing a file with a CCDC model leave its `rmse`, `lower` and
+  `upper` cells blank. Observation-only and LandTrendr files omit these columns. The zeros the chart plots there are
+  placeholders.
+- **Values:** as charted, with no unit conversion and at full precision. Timestamps are ISO 8601 in UTC, with
+  milliseconds. Anything unavailable is blank.
+
 ## Output
 
 Declared in `lib/js/shared/src/recipe/type/timeSeries.js` (see the
@@ -165,6 +294,25 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
   construction, unsupported output and repair across collection families.
 - `modules/gui/src/app/home/body/process/recipe/timeSeries/` and `recipe/selectedClassificationChart.test.jsx`:
   indicator requests, feedback, submission races, chart/Retrieve withdrawal, pending states and recovery.
+- `modules/gui/src/app/home/body/process/recipe/selectedClassification.test.jsx`: the shared UI read through real roots,
+  panels and runtime (CCDC and Time Series) - one request for the root and Sources, independent runtime reads, release,
+  supersession, teardown, pending and failed reads, recovery, and labels in Sources, OPT and Retrieve.
+- `modules/gui/src/app/home/body/process/recipe/classifiedOutputSources.test.jsx`: CCDC's and Phenology's retained
+  classified outputs named in their choice and refusal - the label of the Classification selected before, the class
+  fallback, the current label winning - with Apply refused, and while the Classification is read and after repair.
+  `mosaic/panels/retrieve/retrieveDestinationCompatibility.test.jsx`: Retrieve's kept selection named only as its
+  owner says.
+- `lib/js/shared/test/recipe/output/type/ccdc.test.js`, `modules/gee/test/jobs/ee/ccdc/loadSegmentsReadiness.test.js`
+  and `modules/gui/src/app/home/body/process/recipe/ccdc/tmaskRequirement.test.jsx`: the TMask rule per operation,
+  presets and selections execution does not pass, the server refusal and the pair Earth Engine is given, and through
+  CCDC's root, toolbar, Sources and OPT the allowed Sources Apply, OPT's mark, held operations, retained choices,
+  refused drafts and each repair.
+- `modules/gui/src/app/home/body/process/recipe/pixelChartExport.test.jsx`: each pixel chart's Export CSV through its
+  panel - when it is enabled, a new band or pixel, zoom, empty results and an unchanged recipe.
+  `ccdc/ccdcChart.test.js`, `landTrendr/panels/landTrendrChart.test.js` and `pixelChartCsv.test.js`: the prepared
+  model's methods, RMSE and drawn bounds, segment edges, timezones and leap days, annual rows, and CSV order, blanks,
+  quoting, Unicode and applicable columns for each chart family.
+  `ccdc/ccdcGraph.test.jsx`: readout placement, extrapolated values and their segment details, and masked days.
 - `modules/task/src/runner/operations/timeSeriesExport.test.js` and `lib/python/shared/test_stack_time_series.py`:
   band-first download layout, chunk stacking, relative SITS VRTs and relocation.
 - `modules/gee/test/ee/timeSeries/regressionPrecision.test.js`: collection values/types/masks, pre-encoding

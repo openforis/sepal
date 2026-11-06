@@ -120,12 +120,13 @@ export const flatBandOptions = ({
 
 // Grouped options with a group of their own for each classified output chosen that none offers - one the Classification
 // no longer provides, or not yet known to - so a choice saved is shown as made, where what it is refused for is said, and
-// can be taken back. A band of the images themselves that is no longer offered is not kept.
-export const withChosenClassifiedOutputs = (groupedOptions, chosen) => {
+// can be taken back. Each is named as `labelOf` names it (classifiedOutputLabel). A band of the images themselves that is
+// no longer offered is not kept.
+export const withChosenClassifiedOutputs = (groupedOptions, chosen, labelOf) => {
     const offered = groupedOptions.flat().map(({value}) => value)
     const unoffered = [].concat(chosen ?? []).filter(isClassifiedOutput).filter(band => !offered.includes(band))
     return unoffered.length
-        ? [...groupedOptions, unoffered.map(band => ({value: band, label: band}))]
+        ? [...groupedOptions, unoffered.map(band => ({value: band, label: labelOf(band)}))]
         : groupedOptions
 }
 

@@ -1184,6 +1184,10 @@
         "tooltip": "Enter coordinates",
         "withinBounds": "Within recipe bounds"
       },
+      "exportCsv": {
+        "label": "Export CSV",
+        "tooltip": "Download the observations and model charted for this pixel, over the whole chart period, as a CSV file"
+      },
       "start.tooltip": "Chart time-series for pixel"
     },
     "ccdc": {
@@ -1271,7 +1275,8 @@
             "minObservations": "Min observations",
             "tmaskBands": {
               "label": "TMask bands",
-              "noneOrTwo": "Exactly two bands must be selected or none"
+              "noneOrTwo": "Exactly two bands must be selected or none",
+              "notBreakpointBands": "{count, plural, one {TMask band {bands} is not a breakpoint band} other {TMask bands {bands} are not breakpoint bands}}. Restore {count, plural, one {it} other {them}} as breakpoint bands in Sources, choose another pair, or clear TMask."
             }
           },
           "title": "CCDC options",
@@ -2100,6 +2105,7 @@
       "bands": {
         "class": "Class",
         "classProbability": "Class probability",
+        "classValueProbability": "Class {value} probability",
         "probability": "{class} %",
         "regression": "Regression"
       },
@@ -3020,6 +3026,9 @@
           "title": "Band names",
           "tooltip": "Set the band names of the stack",
           "duplicateBand": "Duplicate band name",
+          "displaced": "Named {name}: another band now takes {previousName}. This Stack's visualizations of this band follow it, but other recipes reading {previousName} will read that other band.",
+          "takesName": "{name} named another band before. Other recipes reading {name} will read this band instead.",
+          "unresolved": "Its saved name cannot be told apart from another band's of this input. Name it to keep it.",
           "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters",
           "problem": {
             "duplicate": "\"{outputName}\" is the name of more than one band.",
@@ -5990,8 +5999,8 @@
         "dataSets": "The selected data sets don't provide the bands this classification reads: {missing}. Choose data sets that do, or another classification."
       },
       "classifiedOutputs": {
-        "band": "The selected classification's classifier can't provide {unsupported}. Choose another band, or another classification.",
-        "breakpointBands": "The selected classification's classifier can't provide {unsupported}. Choose other breakpoint bands, or another classification."
+        "band": "The selected classification does not provide {unsupported}. Choose another band, or another classification.",
+        "breakpointBands": "The selected classification does not provide {unsupported}. Choose other breakpoint bands, or another classification."
       },
       "segments": {
         "incompatible": "Asset {asset} does not have the CCDC segment layout alert detection reads: {problems}.",

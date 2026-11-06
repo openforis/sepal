@@ -10,8 +10,10 @@ import {msg} from '~/translate'
 import {inputImageryRequirements} from '../../panels/inputImagery/inputImageryRequirements'
 import {Aoi} from '../aoi'
 import {initializeLayers} from '../recipeImageLayerSource'
+import {bandNamesRequirement} from './bandNamesRequirements'
+import {stackDerivations} from './derivations'
 import {StackToolbar} from './panels/stackToolbar'
-import {getDefaultModel, RecipeActions} from './stackRecipe'
+import {getDefaultModel} from './stackRecipe'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -25,7 +27,6 @@ class _Stack extends React.Component {
     constructor(props) {
         super(props)
         const {savedLayers, recipeId} = props
-        this.recipeActions = RecipeActions(recipeId)
         initializeLayers({
             recipeId,
             savedLayers
@@ -61,10 +62,14 @@ export default () => ({
         recipe: Stack
     },
     // A band an input maps is refused where it is mapped: at its band names entry, which knows its input by imageId.
-    sourceRequirements: inputImageryRequirements(({path}, recipe) => {
-        const entry = recipe.model?.bandNames?.bandNames?.[path[3]]
-        return (recipe.model?.inputImagery?.images || []).findIndex(({imageId}) => imageId === entry?.imageId)
-    }),
+    sourceRequirements: [
+        ...inputImageryRequirements(({path}, recipe) => {
+            const entry = recipe.model?.bandNames?.bandNames?.[path[3]]
+            return (recipe.model?.inputImagery?.images || []).findIndex(({imageId}) => imageId === entry?.imageId)
+        }),
+        bandNamesRequirement
+    ],
+    derivedResults: stackDerivations,
     imageSource: true,
     getDateRange(_recipe) {
         return null

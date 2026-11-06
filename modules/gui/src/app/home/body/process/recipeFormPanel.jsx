@@ -383,7 +383,8 @@ const setDirty = ({evaluatedPath, statePath, dirty}) => {
 }
 
 // What a candidate's findings tell each input of the panel: all of them to the editor's one input - as the editor says
-// them there (`editor.message(findings)`) or as the requirement does - or each to the input the editor names for it.
+// them there (`editor.message(findings)`) or as the requirement does - or each to the input the editor names for it, as
+// the editor says them given the candidate's item (`editor.describe(diagnostics, values, item)`).
 const outputFeedbackOf = (editor, findings, values) => {
     if (typeof editor.input !== 'function') {
         return {[editor.input]: {
@@ -396,7 +397,7 @@ const outputFeedbackOf = (editor, findings, values) => {
         }}
     }
     const byInput = _.groupBy(findings.diagnostics, diagnostic => editor.input(diagnostic, values))
-    return _.mapValues(byInput, diagnostics => ({error: editor.describe(diagnostics, values), diagnostics}))
+    return _.mapValues(byInput, diagnostics => ({error: editor.describe(diagnostics, values, findings.item), diagnostics}))
 }
 
 // Preserve all explanations when declarations address the same field.

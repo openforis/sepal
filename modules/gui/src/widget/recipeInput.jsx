@@ -158,9 +158,10 @@ class _RecipeInput extends React.Component {
         }]
     }
 
-    // ALL widens which projects are offered, never what the caller can use.
+    // ALL widens which projects are offered, never what the caller can use. The project shown narrows the alternatives
+    // to the selection, not the selection: one the caller can use is offered in its own project whichever is shown.
     offeredRecipes() {
-        const {projectId, recipes, filter} = this.props
+        const {input, projectId, recipes, filter} = this.props
         const {all} = this.state
         return recipes
             .map(recipe => ({...recipe, projectId: recipe.projectId || ''}))
@@ -169,7 +170,7 @@ class _RecipeInput extends React.Component {
                 const recipeType = getRecipeType(recipe.type)
                 return filter && recipeType ? filter(recipeType, recipe) : true
             })
-            .filter(({projectId: p}) => all || p === projectId || (!p && !projectId))
+            .filter(({id, projectId: p}) => all || id === input.value || p === projectId || (!p && !projectId))
     }
 
     orderedProjects(ids) {

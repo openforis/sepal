@@ -41,11 +41,16 @@ export class OutputCandidate {
         }
     }
 
-    // What the candidate's output read refuses that the declaration states: the diagnostics, and what they say.
+    // What the candidate's output read refuses that the declaration states: the diagnostics, the item they are about, as
+    // the candidate presents it, and what they say.
     findings() {
         const read = this.#reads()[0]
         return read
-            ? {diagnostics: read.ownVerdict.diagnostic.diagnostics, ...this.#declaration.requirement.describe(read.ownVerdict.diagnostic)}
+            ? {
+                diagnostics: read.ownVerdict.diagnostic.diagnostics,
+                item: read.ownVerdict.diagnostic.item,
+                ...this.#declaration.requirement.describe(read.ownVerdict.diagnostic)
+            }
             : null
     }
 

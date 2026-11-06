@@ -51,7 +51,7 @@ vi.mock('~/widget/form', async importOriginal => {
     }
 })
 vi.mock('./ccdc/ccdcGraph', () => ({
-    CCDCGraph: ({observations}) => <output aria-label='chart'>{JSON.stringify({observations})}</output>
+    CCDCGraph: ({chart: {observations}}) => <output aria-label='chart'>{JSON.stringify({observations})}</output>
 }))
 
 const {supportProbability, supportRegression} = await import('#sepal/recipe/type/classification')
@@ -78,7 +78,7 @@ beforeEach(() => {
         ]
     })
     flatBandOptions.mockClear()
-    loadCCDCSegments$.mockReset().mockReturnValue(of([]))
+    loadCCDCSegments$.mockReset().mockReturnValue(of({tStart: [], tEnd: [], tBreak: [], changeProb: [], numObs: []}))
     loadTimeSeriesObservations$.mockReset().mockReturnValue(of({features: []}))
 })
 
@@ -283,8 +283,8 @@ describe.each([
         expect(loadTimeSeriesObservations$.mock.calls.map(([{bands}]) => bands)).toEqual([['ndvi'], ['probability_1'], ['ndvi']])
     })
 
-    it('offers the outputs of its classification as the record holds them, not as copied when it was selected', () => {
-        openChart(ChartPixel, recipeOf(type, {copied: {classificationLegend: LEGEND, classifierType: 'RANDOM_FOREST'}}), classificationOver(COMPATIBLE))
+    it('offers the outputs of its classification as the record holds them once it is edited', () => {
+        openChart(ChartPixel, recipeOf(type), classificationOver(COMPATIBLE))
 
         holdClassification(classificationOver(COMPATIBLE, {type: 'SVM', svmType: 'C_SVC'}))
 
@@ -351,8 +351,7 @@ const CURRENT = {properties: {date: {value: 0}, value: 2}}
 
 const LEGEND = {entries: [{value: 1}, {value: 2}]}
 
-// `copied` is the Classification's legend and classifier as Sources copied them when it was selected.
-const recipeOf = (type, {aoi = {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]}, copied, breakpointBands = ['ndvi']} = {}) => ({
+const recipeOf = (type, {aoi = {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]}, breakpointBands = ['ndvi']} = {}) => ({
     id: ID,
     type,
     title: 'Recipe',
@@ -363,7 +362,7 @@ const recipeOf = (type, {aoi = {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]}
         options: {corrections: ['SR']},
         ccdcOptions: {dateFormat: 0}
     },
-    ui: copied ? {classification: copied} : {}
+    ui: {}
 })
 
 // A Landsat mosaic, described from its configuration: a Classification over it needs no observation.

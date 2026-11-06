@@ -3,8 +3,10 @@ import {UNSUPPLIED_CLASSIFIER_INPUTS} from '#sepal/recipe/classifierInputs'
 import {CLASSIFICATION_SOURCE} from '#sepal/recipe/source/collectionSources'
 import {msg} from '~/translate'
 
+import {classifiedOutputFallbackLabel} from './classification/bands'
 import {listed, sourcesFieldRequirement} from './fieldRequirement'
 import {referenceFeedback} from './referenceFeedback'
+import {classificationNaming, classifiedOutputLabel} from './selectedClassification'
 
 // What CCDC, Time Series and Phenology need of the Classification their Sources may select, as their shared definitions
 // find it (collectionClassifierRequirement, lib/js/shared/src/recipe/source/collectionSources.js): that the images of
@@ -28,13 +30,17 @@ export const collectionClassifierRequirements = sources => ['classification', 'd
 // What a recipe whose Sources choose classified outputs at `field` - CCDC's breakpoint bands, Phenology's band - needs of
 // the Classification they select, as its shared definition finds it (classifiedOutputRequirement,
 // lib/js/shared/src/recipe/classifiedOutputs.js): that it provides them, by what its classifier's configuration supports.
-// Said at that field, which is what chooses them, and a draft choosing one it does not provide cannot be applied.
+// Said at that field, which is what chooses them, naming each as its choice is named (classifiedOutputLabel), and a draft
+// choosing one it does not provide cannot be applied.
 export const classifiedOutputRequirements = (sources, field) => sourcesFieldRequirement({
     id: `sources.${field}.classifiedOutputs`,
     section: sources,
     field,
     code: UNSUPPORTED_CLASSIFIED_OUTPUT,
-    message: ({unsupported} = {}) => msg(`process.source.classifiedOutputs.${field}`, {unsupported: listed(unsupported, AND_MORE)})
+    presentation: (_diagnostic, recipe) => classificationNaming(recipe),
+    message: ({unsupported = []} = {}, naming) => msg(`process.source.classifiedOutputs.${field}`, {
+        unsupported: listed(unsupported.map(band => naming ? classifiedOutputLabel(naming, band) : classifiedOutputFallbackLabel(band)), AND_MORE)
+    })
 })
 
 // The Classification a recipe's Sources select, where what the recipe does with it needs that Classification to run

@@ -12,8 +12,8 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
 import {draftDisagreementsOfState} from '../../../../sourceRuntime/recordCurrency'
-import {readRetrieveOutput} from '../../../retrieveOutput'
-import {selectedClassificationOfState} from '../../../selectedClassification'
+import {retrievedRecordOf} from '../../../retrieveOutput'
+import {chosenBandLabel, classificationNaming, selectedClassificationId, selectedClassificationOfState} from '../../../selectedClassification'
 import {RecipeActions} from '../../timeSeriesRecipe'
 
 // A download is held, whatever indicators it names, to the recipe's image output - the analysis prerequisites of its
@@ -43,6 +43,7 @@ class _Retrieve extends React.Component {
             <MosaicRetrievePanel
                 requestOptions={options}
                 pendingRequestOptions={pending}
+                requestLabel={value => chosenBandLabel(classificationNaming(this.props.recipe), value)}
                 requestGate={this.requestGate}
                 defaultScale={30}
                 defaultTileSize={2}
@@ -73,20 +74,11 @@ class _Retrieve extends React.Component {
     }
 }
 
-// A record of what is retrieved, as the answer the runtime holds for the panel's output read read it (retrieveOutput.js).
-const retrievedRecordOf = (state, recipeId, sourceRuntime) =>
-    readRetrieveOutput({
-        state,
-        recipeId,
-        heldFor: key => sourceRuntime?.heldFor(key),
-        evidenceOwnerOf: id => sourceRuntime?.evidenceOwnerOf(id)
-    })?.recordOf || (() => null)
-
 // What is offered of the Classification its Sources select, as the session holds it or as `recordOf` resolved it
 // (selectedClassificationOfState). The download is run from storage's copy, so what a draft of it offers is not
 // established until storage agrees (draftDisagreementsOfState).
 const offeredClassificationOfState = (state, recipe, recordOf) => {
-    const id = selectFrom(recipe, 'model.sources.classification')
+    const id = selectedClassificationId(recipe)
     return {
         ...selectedClassificationOfState(state, recipe, recordOf),
         classificationDraft: Boolean(id) && draftDisagreementsOfState(state, [id]).length > 0
@@ -95,8 +87,8 @@ const offeredClassificationOfState = (state, recipe, recordOf) => {
 
 // The indicators a time series is downloaded for are measures of its collection, not bands of an image this recipe
 // outputs, so the options are the whole truth of what may be asked for: {options, pending}. While the Classification is
-// known only by the copy Sources took, or by a draft storage does not hold yet, the outputs offered of it are not
-// established (`pending`).
+// not yet read, or known only by a draft storage does not hold yet, the outputs offered of it are not established
+// (`pending`): while it is not read none is, and what is selected is kept, and held, as the panel keeps it.
 const requestOffer = (recipe, {classificationLegend, classifierType, classifier, classificationResolved, classificationDraft}) => {
     const options = groupedBandOptions({
         dataSets: toDataSetIds(selectFrom(recipe, 'model.sources.dataSets')),

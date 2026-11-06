@@ -4,24 +4,30 @@ import {IMAGE_OUTPUT} from './recipeOutput'
 
 // A requirement over a recipe's configuration that its output read judges (sourceRequirements.js), said at one field of
 // its model: the read's findings of `code` located at `path` are that field's, held against the output's operations,
-// and `message(diagnostic)` says them - on the section's toolbar button, in its summary, and, where `editor` binds the
-// field, beside it in the section's panel (recipeFormPanel.jsx), whose candidate is judged before Apply. `editor` is
-// as recipeFormPanel reads it beyond its panel and its message: the input, the candidate and any policy of its own.
-export const fieldRequirement = ({id, section, code, path, message, editor}) => ({
+// and `message(diagnostic, presented)` says them - on the section's toolbar button, in its summary, and, where `editor`
+// binds the field, beside it in the section's panel (recipeFormPanel.jsx), whose candidate is judged before Apply.
+// `presentation(diagnostic, recipe)`, where given, is what the message needs to name what the finding is about, taken from
+// the recipe judged - the applied one, or the candidate - and kept with the finding (`presented`): the message resolves
+// names from it each time it is said, so they follow the session. `editor` is as recipeFormPanel reads it beyond its
+// panel and its message: the input, the candidate and any policy of its own.
+export const fieldRequirement = ({id, section, code, path, message, presentation, editor}) => ({
     id,
     section,
-    requirement: {id, describe: ({diagnostics}) => ({message: message(diagnostics[0]), details: []})},
-    summary: reads => message(reads.flatMap(({verdict}) => verdict.diagnostic.diagnostics)[0]),
+    requirement: {id, describe: ({diagnostics, item}) => ({message: message(diagnostics[0], item?.presented), details: []})},
+    summary: reads => {
+        const {diagnostics, item} = reads[0].verdict.diagnostic
+        return message(diagnostics[0], item?.presented)
+    },
     outputDiagnostics: {
         codes: [code],
-        itemOf: diagnostic => samePath(diagnostic.path, path)
-            ? {id, path, label: msg(section.label)}
+        itemOf: (diagnostic, recipe) => samePath(diagnostic.path, path)
+            ? {id, path, label: msg(section.label), ...presentation && {presented: presentation(diagnostic, recipe)}}
             : null
     },
     ...editor && {
         editor: {
             panel: section.id,
-            describe: diagnostics => message(diagnostics[0]),
+            describe: (diagnostics, _values, item) => message(diagnostics[0], item?.presented),
             ...editor
         }
     },

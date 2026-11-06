@@ -21,8 +21,12 @@ vi.mock('~/apiRegistry', () => ({default: {gee: {loadCCDCSegments$, loadTimeSeri
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // The graph renderer is the output boundary; the chart, form, selection widget and Redux are real.
+const graph = vi.hoisted(() => ({chart: null}))
 vi.mock('../ccdcGraph', () => ({
-    CCDCGraph: ({band, segments}) => <output aria-label='chart'>{JSON.stringify({band, segments})}</output>
+    CCDCGraph: ({chart}) => {
+        graph.chart = chart
+        return <output aria-label='chart'/>
+    }
 }))
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -30,8 +34,9 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 let root, container
 
 beforeEach(() => {
-    loadCCDCSegments$.mockReset().mockReturnValue(of(['current segments']))
-    loadTimeSeriesObservations$.mockReset().mockReturnValue(of([]))
+    graph.chart = null
+    loadCCDCSegments$.mockReset().mockReturnValue(of(CURRENT))
+    loadTimeSeriesObservations$.mockReset().mockReturnValue(of({features: []}))
 })
 
 afterEach(() => {
@@ -56,12 +61,13 @@ describe('CCDC chart requests', () => {
         act(() => actionBuilder('CHANGE_SOURCE').set(['process.loadedRecipes', optical.id], radar).dispatch())
         expect(cancelled).toBe(true)
         act(() => {
-            pending.next(['obsolete optical segments'])
+            pending.next(noSegments())
             pending.complete()
         })
 
         expect(loadCCDCSegments$.mock.calls.map(([{bands}]) => bands)).toEqual([['ndvi'], ['VV']])
-        expect(chart()).toEqual({band: 'VV', segments: ['current segments']})
+        expect(chart().band).toBe('VV')
+        expect(chart().segments).toBe(CURRENT)
         expect(loadTimeSeriesObservations$.mock.calls.map(([{bands}]) => bands)).toEqual([['ndvi'], ['VV']])
     })
 })
@@ -91,7 +97,14 @@ it('withholds both CCDC requests when its band provider reports no available ban
     expect(container.querySelector('output')).toBeNull()
 })
 
-const chart = () => JSON.parse(container.querySelector('output').textContent)
+const chart = () => graph.chart
+
+// What Earth Engine answers for a pixel where CCDC found no segment: each answer its own, told apart by which is charted.
+function noSegments() {
+    return {tStart: [], tEnd: [], tBreak: [], changeProb: [], numObs: []}
+}
+
+const CURRENT = noSegments()
 
 const openChart = (recipe, selectedBand) => {
     const initialState = {

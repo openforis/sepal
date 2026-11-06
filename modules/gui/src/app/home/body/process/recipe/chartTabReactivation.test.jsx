@@ -26,6 +26,8 @@ vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 const drawn = vi.hoisted(() => [])
 vi.mock('dygraphs', () => ({
     default: class {
+        static Plotters = {fillPlotter() {}, errorPlotter() {}, linePlotter() {}}
+
         constructor(element, data) {
             drawn.push({data, hidden: Boolean(element.closest('[class*=disabled]'))})
         }

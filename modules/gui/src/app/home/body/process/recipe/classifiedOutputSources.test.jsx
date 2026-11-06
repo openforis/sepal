@@ -2,7 +2,7 @@ import {act} from 'react'
 import {createRoot} from 'react-dom/client'
 import {Provider} from 'react-redux'
 import {legacy_createStore as createStore} from 'redux'
-import {of} from 'rxjs'
+import {of, ReplaySubject} from 'rxjs'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
@@ -61,7 +61,7 @@ describe.each([
         label: 'process.ccdc.panel.sources.form.breakpointBands.label',
         saved: ['regression'],
         repair: async () => {
-            await press('regression')
+            await press(REGRESSION)
             await press('blue')
         },
         repaired: ['blue']
@@ -118,8 +118,92 @@ describe.each([
     })
 })
 
+// What a classified output it chose is called, as its choice and the finding refusing it say it: as the Classification
+// selected now names it, otherwise as the one selected before did, otherwise by its class - never by its identifier. The
+// name says nothing of whether it is provided: the finding and its hold on Apply are the shared rule's alone.
+describe.each([
+    {type: 'CCDC', Sources: CcdcSources, field: 'breakpointBands', label: 'process.ccdc.panel.sources.form.breakpointBands.label', classificationLabel: 'process.ccdc.panel.sources.form.classification.label', ofImages: ['blue']},
+    {type: 'PHENOLOGY', Sources: PhenologySources, field: 'band', label: 'process.phenology.panel.sources.form.band.label', classificationLabel: 'process.phenology.panel.sources.form.classification.label', ofImages: 'blue'}
+])('$type Sources naming a class probability chosen', ({type, Sources, field, label, classificationLabel, ofImages}) => {
+    it('keep the name an output chosen of one Classification had, once another that does not provide it is selected, Apply refused', async () => {
+        await open({type, Sources, sources: {classification: A.id, [field]: ofImages}, records: CLASSES})
+
+        await press(probabilityOf('A'))
+        await selectClassification(classificationLabel, B.id)
+
+        expect(chosenAt(label)).toContain(probabilityOf('A'))
+        expect(messagesOf(label)).toEqual([`process.source.classifiedOutputs.${field} ${probabilityOf('A')}`])
+        expect(shownAt(label)).not.toContain('probability_1')
+        expect(applyHeld()).toBe(true)
+    })
+
+    it('name one no Classification selected names by its class, never by its identifier', async () => {
+        await open({type, Sources, sources: {classification: B.id, [field]: chosen(field, 'probability_1')}, records: CLASSES})
+
+        expect(chosenAt(label)).toContain(CLASS_1_PROBABILITY)
+        expect(messagesOf(label)).toEqual([`process.source.classifiedOutputs.${field} ${CLASS_1_PROBABILITY}`])
+        expect(shownAt(label)).not.toContain('probability_1')
+    })
+
+    it('name it as the Classification selected now does, where that one provides it, refusing nothing', async () => {
+        await open({type, Sources, sources: {classification: A.id, [field]: ofImages}, records: CLASSES})
+
+        await press(probabilityOf('A'))
+        await selectClassification(classificationLabel, RENAMED.id)
+
+        expect(chosenAt(label)).toContain(probabilityOf('C'))
+        expect(shownAt(label)).not.toContain(probabilityOf('A'))
+        expect(messagesOf(label)).toEqual([])
+        expect(applyHeld()).toBe(false)
+    })
+
+    it('keep it, named by its class, while the Classification is read, refuse it by that name once read, and are repaired by another choice', async () => {
+        const read = new ReplaySubject(1)
+        await open({type, Sources, sources: {classification: B.id, [field]: chosen(field, 'probability_1')}, records: CLASSES, load$: () => read})
+
+        expect(chosenAt(label)).toContain(CLASS_1_PROBABILITY)
+        expect(messagesOf(label)).toEqual([])
+
+        await act(async () => {
+            read.next(B)
+            read.complete()
+        })
+        await settled()
+        expect(chosenAt(label)).toContain(CLASS_1_PROBABILITY)
+        expect(messagesOf(label)).toEqual([`process.source.classifiedOutputs.${field} ${CLASS_1_PROBABILITY}`])
+
+        await press('blue')
+        type === 'CCDC' && await press(CLASS_1_PROBABILITY)
+
+        expect(messagesOf(label)).toEqual([])
+        expect(button('button.apply').disabled).toBe(false)
+    })
+})
+
 const ID = 'recipe-1'
 const CLASSIFICATION = 'classification-svm'
+const CLASS_1_PROBABILITY = 'process.classification.bands.classValueProbability 1'
+
+const probabilityOf = classLabel => `process.classification.bands.probability ${classLabel}`
+
+// A Random Forest over optical bands Landsat supplies, providing a probability for each of its classes.
+const randomForestOf = (id, entries) => ({
+    id,
+    type: 'CLASSIFICATION',
+    model: {
+        legend: {entries: entries.map(([value, label]) => ({value, label}))},
+        classifier: {type: 'RANDOM_FOREST'},
+        inputImagery: {images: [{imageId: 'i-1', type: 'ASSET', id: 'users/x/input', bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', included: ['red', 'nir']}]}]}
+    }
+})
+const A = randomForestOf('classification-a', [[1, 'A'], [2, 'B']])
+const B = randomForestOf('classification-b', [[3, 'C'], [4, 'D']])
+const RENAMED = randomForestOf('classification-renamed', [[1, 'C'], [2, 'D']])
+const CLASSES = {[A.id]: A, [B.id]: B, [RENAMED.id]: RENAMED}
+
+// What a field choosing one band, or several, holds choosing `band`.
+const chosen = (field, band) => field === 'band' ? band : [band]
+const REGRESSION = 'process.classification.bands.regression'
 
 // An SVM classifying C_SVC over optical bands Landsat supplies: it provides class probabilities, and no regression.
 const SVM = {
@@ -132,8 +216,9 @@ const SVM = {
     }
 }
 
-async function open({type, Sources, sources}) {
-    loadRecipe$.mockImplementation(id => of(id === CLASSIFICATION ? SVM : undefined))
+// `records` are what storage holds, its reads answered at once unless `load$` answers them; the session holds the SVM alone.
+async function open({type, Sources, sources, records = {[CLASSIFICATION]: SVM}, load$ = id => of(records[id])}) {
+    loadRecipe$.mockImplementation(load$)
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
@@ -151,7 +236,7 @@ async function open({type, Sources, sources}) {
                 },
                 [CLASSIFICATION]: SVM
             },
-            recipes: [{id: CLASSIFICATION, name: CLASSIFICATION, type: 'CLASSIFICATION', revision: 1}],
+            recipes: [CLASSIFICATION, ...Object.keys(records)].map(id => ({id, name: id, type: 'CLASSIFICATION', revision: 1})),
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
             projects: [],
@@ -198,6 +283,22 @@ const press = async label => {
 }
 
 const applyHeld = () => !button('button.apply') || button('button.apply').disabled
+
+const chosenAt = label => [...document.querySelectorAll(`[data-label="${label}"] button`)]
+    .filter(button => /_highlight_/.test(button.className))
+    .map(({textContent}) => textContent)
+
+const shownAt = label => [...document.querySelectorAll(`[data-label="${label}"]`)].map(({textContent}) => textContent).join(' ')
+
+const selectClassification = async (label, name) => {
+    button('button.more') && await press('button.more')
+    const input = document.querySelector(`[data-label="${label}"] input`)
+    await act(async () => input.click())
+    const option = [...document.querySelectorAll('li')].map(item => item.firstElementChild).find(item => item?.textContent === name)
+    expect(option, `no option for ${name}`).toBeDefined()
+    await act(async () => option.click())
+    await settled()
+}
 
 const messagesOf = label => [...document.querySelectorAll(`[data-label="${label}"] [data-message]`)].map(({textContent}) => textContent)
     .filter(message => message.includes('classifiedOutputs'))

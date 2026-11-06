@@ -28,9 +28,12 @@ vi.mock('~/sources', () => ({
     groupedBandOptions: () => [[{value: 'ndvi', label: 'ndvi'}]]
 }))
 // The graph renderer is the output boundary; the chart, form and Redux are real.
+const graph = vi.hoisted(() => ({chart: null}))
 vi.mock('../../ccdc/ccdcGraph', () => ({
-    CCDCGraph: ({band, segments, dateFormat}) =>
-        <output aria-label='chart'>{JSON.stringify({band, segments, dateFormat})}</output>
+    CCDCGraph: ({chart}) => {
+        graph.chart = chart
+        return <output aria-label='chart'/>
+    }
 }))
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -41,8 +44,9 @@ const SOURCE = 'RECIPE_REF:masking-1'
 let root, container
 
 beforeEach(() => {
-    loadCCDCSegments$.mockReset().mockReturnValue(of(['current segments']))
-    loadTimeSeriesObservations$.mockReset().mockReturnValue(of([]))
+    graph.chart = null
+    loadCCDCSegments$.mockReset().mockReturnValue(of(CURRENT))
+    loadTimeSeriesObservations$.mockReset().mockReturnValue(of({features: []}))
 })
 
 afterEach(() => {
@@ -55,13 +59,16 @@ afterEach(() => {
 describe('a description accepted for the source being charted', () => {
     it('discards the samples taken under the previous one and asks again', () => {
         openChart(described({dateFormat: 1}))
-        expect(chart()).toMatchObject({dateFormat: 1, segments: ['current segments']})
+        expect(chart().dateFormat).toBe(1)
+        expect(chart().segments).toBe(CURRENT)
 
-        loadCCDCSegments$.mockReturnValue(of(['resampled segments']))
+        const resampled = noSegments()
+        loadCCDCSegments$.mockReturnValue(of(resampled))
         observe({dateFormat: 2})
 
         expect(loadCCDCSegments$).toHaveBeenCalledTimes(2)
-        expect(chart()).toMatchObject({dateFormat: 2, segments: ['resampled segments']})
+        expect(chart().dateFormat).toBe(2)
+        expect(chart().segments).toBe(resampled)
     })
 
     it('cancels a request the previous description was still waiting on', () => {
@@ -74,10 +81,11 @@ describe('a description accepted for the source being charted', () => {
 
         expect(cancelled).toBe(true)
         act(() => {
-            pending.next(['obsolete segments'])
+            pending.next(noSegments())
             pending.complete()
         })
-        expect(chart()).toMatchObject({dateFormat: 2, segments: ['current segments']})
+        expect(chart().dateFormat).toBe(2)
+        expect(chart().segments).toBe(CURRENT)
     })
 })
 
@@ -95,11 +103,12 @@ describe('the samples charted', () => {
         tokens({[SEGMENTS_ASSET]: {version: 'v1'}})
         expect(loadCCDCSegments$).toHaveBeenCalledTimes(1)
 
-        loadCCDCSegments$.mockReturnValue(of(['resampled segments']))
+        const resampled = noSegments()
+        loadCCDCSegments$.mockReturnValue(of(resampled))
         tokens({[SEGMENTS_ASSET]: {version: 'v2', changedAt: 1}})
 
         expect(loadCCDCSegments$).toHaveBeenCalledTimes(2)
-        expect(chart()).toMatchObject({segments: ['resampled segments']})
+        expect(chart().segments).toBe(resampled)
     })
 })
 
@@ -146,7 +155,15 @@ const overAsset = evidence => {
     return {...recipe, model: {...recipe.model, reference: {type: 'ASSET', id: SEGMENTS_ASSET}}}
 }
 
-const chart = () => JSON.parse(container.querySelector('output').textContent)
+const chart = () => graph.chart
+
+// What Earth Engine answers for a pixel where the reference has no segment: each answer its own, told apart by which is
+// charted.
+function noSegments() {
+    return {tStart: [], tEnd: [], tBreak: [], changeProb: [], numObs: []}
+}
+
+const CURRENT = noSegments()
 
 const observe = evidence => act(() => actionBuilder('OBSERVED')
     .set(['process.loadedRecipes', ALERTS, 'ui.sourceEvidence'], sourceEvidence(evidence))

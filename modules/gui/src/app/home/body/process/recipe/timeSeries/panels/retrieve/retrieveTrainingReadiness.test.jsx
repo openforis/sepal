@@ -483,8 +483,7 @@ const LISTING = [
     {id: MOSAIC, name: 'Mosaic', type: 'MOSAIC', revision: 1}
 ]
 
-// Over Landsat 8 scenes, its Sources selecting the Random Forest and having copied it when they did; Retrieve last asked
-// for `bands`, to the user's files.
+// Over Landsat 8 scenes, its Sources selecting the Random Forest; Retrieve last asked for `bands`, to the user's files.
 const seriesRecipe = bands => ({
     id: ID,
     type: 'TIME_SERIES',
@@ -499,7 +498,6 @@ const seriesRecipe = bands => ({
     },
     ui: {
         initialized: true,
-        classification: {classificationLegend: LEGEND, classifierType: 'RANDOM_FOREST', classifier: {type: 'RANDOM_FOREST'}},
         retrieve: {
             ...(bands !== undefined && {bands}), scale: 30, tileSize: 2, shardSize: 256, fileDimensionsMultiple: 2,
             destination: 'SEPAL', workspacePath: 'downloads/series', filenamePrefix: 'series'

@@ -84,13 +84,13 @@ vi.mock('~/apiRegistry', async () => {
             loadTimeSeriesObservations$: ({bands}) => {
                 fake.observationBands.push(...bands)
                 if (!fake.heldObservations) {
-                    return of([])
+                    return of({features: []})
                 }
                 return new Observable(subscriber => {
                     let answered = false
                     fake.heldObservations.push(() => {
                         answered = true
-                        subscriber.next([])
+                        subscriber.next({features: []})
                         subscriber.complete()
                     })
                     return () => answered || fake.cancelledObservations.push(...bands)
@@ -177,7 +177,7 @@ vi.mock('~/widget/tooltip', () => ({
 // The graph renderer is the chart's output boundary: what it is given to draw is recorded.
 vi.mock('../ccdc/ccdcGraph', () => ({
     CCDCGraph: props => {
-        fake.graphs.push(props)
+        fake.graphs.push(props.chart)
         return null
     }
 }))

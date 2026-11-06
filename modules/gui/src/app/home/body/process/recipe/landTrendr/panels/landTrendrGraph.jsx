@@ -8,8 +8,10 @@ import {Graph, graphColor} from '~/widget/graph'
 import {isMobile} from '~/widget/userAgent'
 import {Widget} from '~/widget/widget'
 
+import {landTrendrChartRows} from './landTrendrChart'
 import styles from './landTrendrGraph.module.css'
 
+// Draws a chart prepared for one pixel (landTrendrChart.js), as it is exported.
 export class LandTrendrGraph extends React.Component {
     state = {}
 
@@ -102,7 +104,7 @@ export class LandTrendrGraph extends React.Component {
     }
 
     highlightCallback(event, x, points, row) {
-        const {years, raw, fitted} = this.props
+        const {chart: {years, raw, fitted}} = this.props
         const point = points[0]
         this.setState({
             point: {
@@ -122,33 +124,13 @@ export class LandTrendrGraph extends React.Component {
         this.update(prevProps)
     }
 
-    // The Graph widget compares data by reference, so rebuilding it on every
-    // render would make dygraph redraw the whole chart on each mouse move.
-    // These arrays come straight out of the charted pixel's segments, so
-    // comparing them is enough to catch a new pixel.
+    // The Graph widget compares data by reference, so rebuilding it on every render would make dygraph redraw the
+    // whole chart on each mouse move: rows are built again only for another chart.
     update(prevProps = {}) {
-        const {years, raw, fitted, isVertex} = this.props
-        if (years !== prevProps.years
-            || raw !== prevProps.raw
-            || fitted !== prevProps.fitted
-            || isVertex !== prevProps.isVertex) {
-            this.setState({data: this.calculateData()})
+        const {chart} = this.props
+        if (chart !== prevProps.chart) {
+            this.setState({data: landTrendrChartRows(chart)})
         }
-    }
-
-    // LandTrendr fits a value for every year of the series - the vertices are
-    // only where the trajectory changes slope, so plotting vertices alone drew
-    // the same line but left the hovered year with nothing to report.
-    calculateData() {
-        const {years, raw, fitted} = this.props
-        if (!years || !years.length) {
-            return null
-        }
-        return years.map((year, i) => [
-            new Date(year, 6, 1),
-            _.isFinite(raw[i]) ? [raw[i], 0] : null,
-            _.isFinite(fitted[i]) ? [fitted[i], 0] : null
-        ])
     }
 }
 
@@ -170,8 +152,10 @@ const yearlyTicker = (a, b, _pixels, _opts, _dygraph) => {
 }
 
 LandTrendrGraph.propTypes = {
-    fitted: PropTypes.array,
-    isVertex: PropTypes.array,
-    raw: PropTypes.array,
-    years: PropTypes.array
+    chart: PropTypes.shape({
+        fitted: PropTypes.array,
+        isVertex: PropTypes.array,
+        raw: PropTypes.array,
+        years: PropTypes.array
+    }).isRequired
 }

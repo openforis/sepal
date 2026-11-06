@@ -78,17 +78,18 @@ describe('the classified outputs offered of a collection', () => {
 })
 
 // A choice a panel shows as made though nothing offers it: a classified output, which can be explained and taken back,
-// and never a band of the images themselves that is no longer offered.
+// and never a band of the images themselves that is no longer offered. It is named as the caller names it.
 describe('the choices shown beside what is offered', () => {
     const OFFERED = [[{value: 'blue', label: 'blue'}], [{value: 'probability_1', label: 'Forest'}]]
+    const labelOf = band => `named ${band}`
 
-    it('add a group for each classified output chosen that nothing offers', () => {
-        expect(withChosenClassifiedOutputs(OFFERED, ['blue', 'regression', 'probability_1']))
-            .toEqual([...OFFERED, [{value: 'regression', label: 'regression'}]])
+    it('add a group for each classified output chosen that nothing offers, named as the caller names it', () => {
+        expect(withChosenClassifiedOutputs(OFFERED, ['blue', 'regression', 'probability_1'], labelOf))
+            .toEqual([...OFFERED, [{value: 'regression', label: 'named regression'}]])
     })
 
     it('add nothing for a band of the images themselves that is no longer offered, or for no choice', () => {
-        expect(withChosenClassifiedOutputs(OFFERED, ['swir1'])).toBe(OFFERED)
-        expect(withChosenClassifiedOutputs(OFFERED, null)).toBe(OFFERED)
+        expect(withChosenClassifiedOutputs(OFFERED, ['swir1'], labelOf)).toBe(OFFERED)
+        expect(withChosenClassifiedOutputs(OFFERED, null, labelOf)).toBe(OFFERED)
     })
 })

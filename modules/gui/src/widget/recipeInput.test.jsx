@@ -91,6 +91,12 @@ describe('the recipe an input belongs to', () => {
         expect(form.isInvalid()).toBe(true)
     })
 
+    it('is not offered while it is the saved selection', async () => {
+        show({value: OWNER})
+
+        expect(await offered()).toEqual(['Another recipe', 'A table recipe', 'A CCDC'])
+    })
+
     it('is replaced, read and applicable again once another recipe is chosen', async () => {
         show({value: OWNER})
 
@@ -210,7 +216,7 @@ describe('opening the selected recipe', () => {
         expect(load$).toHaveBeenCalledExactlyOnceWith('elsewhere')
         expect(processState().selectedTabId).toBe('elsewhere')
         expect(selectedValue()).toBe('elsewhere')
-        expect(await offered()).toEqual(['In another project', 'Another recipe', 'A table recipe', 'A CCDC'])
+        expect(await offered()).toEqual(['Another recipe', 'A table recipe', 'A CCDC', 'In another project'])
     })
 
     it('reports a failed load without changing tabs, field validity or selection', async () => {
@@ -409,6 +415,42 @@ describe('a selection the input does not offer', () => {
     })
 })
 
+// The project view narrows the alternatives, not the selection: a recipe chosen through ALL is still shown once the
+// view is back to the recipe's own project, and nothing else from where it was found is.
+describe('a recipe chosen from another project', () => {
+    it('stays shown, unchanged and clean, when an unfiled recipe is reopened', async () => {
+        const recipes = [
+            {id: OWNER, name: 'The owner', type: 'MOSAIC'},
+            {id: 'unfiled', name: 'Also unfiled', type: 'MOSAIC'},
+            ...IN_PROJECT_TWO
+        ]
+        show({ownerProjectId: null, recipes})
+        await showAll()
+        await choose('In another project')
+
+        await reopen({ownerProjectId: null, recipes, value: selectedValue()})
+
+        expect(shownSelection()).toBe('In another project')
+        expect(selectedValue()).toBe('elsewhere')
+        expect(form.isDirty()).toBe(false)
+        expect(await offered()).toEqual(['Also unfiled', 'In another project'])
+    })
+
+    it('stays shown, unchanged and clean, when a recipe in another project is reopened', async () => {
+        const recipes = [...DEFAULT_RECIPES.filter(({projectId}) => projectId === 'p1'), ...IN_PROJECT_TWO]
+        show({recipes})
+        await showAll()
+        await choose('In another project')
+
+        await reopen({recipes, value: selectedValue()})
+
+        expect(shownSelection()).toBe('In another project')
+        expect(selectedValue()).toBe('elsewhere')
+        expect(form.isDirty()).toBe(false)
+        expect(await offered()).toEqual(['Another recipe', 'A table recipe', 'A CCDC', 'In another project'])
+    })
+})
+
 describe('the headings of the projects on offer', () => {
     it('leave none of a name behind when the view they belong to is left', async () => {
         show({
@@ -527,6 +569,11 @@ const DEFAULT_RECIPES = [
 
 const DEFAULT_PROJECTS = [{id: 'p1', name: 'Project one'}, {id: 'p2', name: 'Project two'}]
 
+const IN_PROJECT_TWO = [
+    {id: 'elsewhere', name: 'In another project', type: 'MOSAIC', projectId: 'p2'},
+    {id: 'neighbour', name: 'Its neighbour', type: 'MOSAIC', projectId: 'p2'}
+]
+
 const fields = {recipe: new Form.Field()}
 
 const bandsRequested = {
@@ -551,13 +598,13 @@ const Host = withForm({fields})(({form: theForm, inputs: {recipe}, allowOwnRecip
 
 const show = ({
     value, allowOwnRecipe, filter, keepSelection, requests = bandsRequested,
-    recipes = DEFAULT_RECIPES, projects = DEFAULT_PROJECTS
+    recipes = DEFAULT_RECIPES, projects = DEFAULT_PROJECTS, ownerProjectId = 'p1'
 } = {}) => {
     const initialState = {
         dimensions: {width: 1024, height: 768},
         process: {
             selectedTabId: OWNER,
-            loadedRecipes: {[OWNER]: {id: OWNER, type: 'MOSAIC', projectId: 'p1', model: {}}},
+            loadedRecipes: {[OWNER]: {id: OWNER, type: 'MOSAIC', projectId: ownerProjectId, model: {}}},
             recipes,
             projects,
             // No open tab: autosave is triggered from here and is not what a selector exercises.
@@ -587,7 +634,17 @@ const show = ({
     ))
 }
 
+// The panel closed and opened again on what it saved: a new selector, in the view it opens in.
+const reopen = async options => {
+    await act(async () => root.unmount())
+    container.remove()
+    show(options)
+}
+
 const combo = () => container.querySelector('input')
+
+// What the selector shows selected: a combo shows its selection in place of its placeholder.
+const shownSelection = () => combo().value || (container.querySelector('[class*="fakePlaceholder"]') ? combo().placeholder : '')
 
 // What a panel reads when it is applied.
 const recipeOf = recipeId => ({id: recipeId, type: 'MOSAIC', revision: 4, ui: {initialized: true}, model: {}})

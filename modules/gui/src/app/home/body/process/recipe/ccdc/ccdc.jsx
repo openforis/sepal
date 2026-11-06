@@ -2,34 +2,31 @@ import React from 'react'
 
 import {Aoi} from '~/app/home/body/process/recipe/aoi'
 import {initializeLayers} from '~/app/home/body/process/recipe/recipeImageLayerSource'
-import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
-import {Notifications} from '~/widget/notifications'
 
 import {classificationReferenceFeedback, classifiedOutputRequirements, collectionClassifierRequirements} from '../collectionClassifierRequirements'
+import {withSelectedClassification} from '../selectedClassification'
 import {bandPresentation, mapProducts} from './bands'
-import {dateRange, defaultModel, RecipeActions} from './ccdcRecipe'
+import {dateRange, defaultModel} from './ccdcRecipe'
 import {CcdcToolbar} from './panels/ccdcToolbar'
 import {describeSegments$, segmentBandLabels} from './segmentDescription'
+import {tmaskRequirement} from './tmaskRequirement'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
     initialized: selectFrom(recipe, 'ui.initialized'),
     aoi: selectFrom(recipe, 'model.aoi'),
-    savedLayers: selectFrom(recipe, 'layers'),
-    classificationRecipeId: selectFrom(recipe, 'model.sources.classification'),
-    classificationLegend: selectFrom(recipe, 'ui.classification.classificationLegend'),
+    savedLayers: selectFrom(recipe, 'layers')
 })
 
 class _CCDC extends React.Component {
     constructor(props) {
         super(props)
         const {savedLayers, recipeId} = props
-        this.recipeActions = RecipeActions(recipeId)
         initializeLayers({recipeId, savedLayers, defaultGoogleSatellite: true})
     }
 
@@ -42,42 +39,17 @@ class _CCDC extends React.Component {
             </Map>
         )
     }
-
-    componentDidMount() {
-        this.initClassification()
-    }
-
-    componentDidUpdate() {
-        this.initClassification()
-    }
-
-    initClassification() {
-        const {stream, classificationLegend, classificationRecipeId, loadRecipe$} = this.props
-        if (classificationRecipeId && !classificationLegend && !stream('LOAD_CLASSIFICATION_RECIPE').active) {
-            stream('LOAD_CLASSIFICATION_RECIPE',
-                loadRecipe$(classificationRecipeId),
-                classification => {
-                    this.recipeActions.setClassification({
-                        classificationLegend: classification.model.legend,
-                        classifierType: classification.model.classifier.type,
-                        classifier: classification.model.classifier
-                    })
-                },
-                error => Notifications.error({message: msg('process.ccdc.panel.sources.classificationLoadError', {error}), error})
-            )
-        } else if (!classificationRecipeId && classificationLegend && !stream('LOAD_CLASSIFICATION_RECIPE').active) {
-            this.recipeActions.setClassification({classificationLegend: null, classifierType: null, classifier: null})
-        }
-    }
 }
 
+// The root holds the Classification its Sources select for as long as its tab is open (selectedClassification.js).
 const CCDC = compose(
     _CCDC,
-    recipe({defaultModel, mapRecipeToProps}),
-    recipeAccess()
+    withSelectedClassification({loadError: 'process.ccdc.panel.sources.classificationLoadError'}),
+    recipe({defaultModel, mapRecipeToProps})
 )
 
 const SOURCES = {id: 'sources', label: 'process.ccdc.panel.sources.button'}
+const OPTIONS = {id: 'ccdcOptions', label: 'process.ccdc.panel.options.button'}
 
 export default () => ({
     id: 'CCDC',
@@ -93,7 +65,8 @@ export default () => ({
     sourceRequirements: [
         ...collectionClassifierRequirements(SOURCES),
         classifiedOutputRequirements(SOURCES, 'breakpointBands'),
-        classificationReferenceFeedback(SOURCES)
+        classificationReferenceFeedback(SOURCES),
+        tmaskRequirement(OPTIONS)
     ],
     imageSource: false,
     geometrySource: true,

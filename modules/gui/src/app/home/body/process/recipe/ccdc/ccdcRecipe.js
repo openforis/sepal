@@ -85,11 +85,6 @@ export const RecipeActions = id => {
                 .set('ui.chartPixel', latLng)
                 .build()
                 .dispatch()
-        },
-        setClassification({classificationLegend, classifierType, classifier} = {}) {
-            actionBuilder('SET_CLASSIFICATION', {classificationLegend, classifierType})
-                .set('ui.classification', {classificationLegend, classifierType, classifier})
-                .dispatch()
         }
     }
 }

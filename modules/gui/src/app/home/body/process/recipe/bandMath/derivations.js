@@ -1,5 +1,6 @@
 import _ from 'lodash'
 
+import {renamedVisualizationBands} from '../visualizationRenames'
 import {CALCULATION_REFERENCES, calculationItem, chainFacts} from './chainRequirements'
 import {updateIncludedBands} from './panels/calculations/calculation'
 import {outputNameOf} from './panels/outputBands/outputImages'
@@ -73,24 +74,16 @@ function changesBetween(previous, model) {
 // A visualization reading a band whose output name changed reads it by its new one. A band is the same output where its
 // output image and its id are: the copies two calculations output of one band carry the same metadata.
 function renamedVisualizations(visualizations, prevOutputImages, outputImages) {
-    const renamedBands = outputImages
+    const renames = outputImages
         .flatMap(({imageId, outputBands}) => {
             const prevOutputBands = prevOutputImages.find(prevOutputImage => prevOutputImage.imageId === imageId)?.outputBands || []
             return outputBands.map(band => {
                 const prevBand = prevOutputBands.find(prevBand => prevBand.id === band.id)
-                return {prevBandName: prevBand ? outputNameOf(prevBand) : null, bandName: outputNameOf(band)}
+                return {from: prevBand ? outputNameOf(prevBand) : null, to: outputNameOf(band)}
             })
         })
-        .filter(({prevBandName, bandName}) => prevBandName && prevBandName !== bandName)
-    return renamedBands.length
-        ? visualizations.map(visualization => ({
-            ...visualization,
-            bands: visualization.bands.map(band => {
-                const renamedBand = renamedBands.find(({prevBandName}) => prevBandName === band)
-                return renamedBand ? renamedBand.bandName : band
-            })
-        }))
-        : visualizations
+        .filter(({from, to}) => from && from !== to)
+    return renamedVisualizationBands(visualizations, renames)
 }
 
 // As the model holds them: a field left undefined is not held.

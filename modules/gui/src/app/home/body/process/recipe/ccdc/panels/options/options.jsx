@@ -2,9 +2,9 @@ import _ from 'lodash'
 import React from 'react'
 
 import {breakDetectionOptions, RecipeActions} from '~/app/home/body/process/recipe/ccdc/ccdcRecipe'
+import {withSelectedClassification} from '~/app/home/body/process/recipe/selectedClassification'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
-import {groupedBandOptions, toDataSetIds} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
@@ -33,11 +33,7 @@ const fields = {
 }
 
 const mapRecipeToProps = recipe => ({
-    sources: selectFrom(recipe, 'model.sources'),
-    corrections: selectFrom(recipe, 'model.opticalPreprocess.corrections'),
-    classificationLegend: selectFrom(recipe, 'ui.classification.classificationLegend'),
-    classifierType: selectFrom(recipe, 'ui.classification.classifierType'),
-    classifier: selectFrom(recipe, 'ui.classification.classifier'),
+    breakpointBands: selectFrom(recipe, 'model.sources.breakpointBands') || []
 })
 
 class _Options extends React.Component {
@@ -68,15 +64,8 @@ class _Options extends React.Component {
     }
 
     renderAdvanced() {
-        const {corrections, classificationLegend, classifierType, classifier, sources, inputs: {dateFormat, tmaskBands, minObservations, chiSquareProbability, minNumOfYearsScaler, lambda, maxIterations}} = this.props
-        const dataSets = sources.dataSets
-        const tmaskBandsOptions = groupedBandOptions({
-            dataSets: toDataSetIds(dataSets),
-            corrections,
-            classification: {classificationLegend, classifierType, classifier, include: ['regression', 'probabilities']}
-        })
-            .map(option => option.filter(({value}) => sources.breakpointBands.includes(value)))
-            .flat()
+        const {form, inputs: {dateFormat, tmaskBands, minObservations, chiSquareProbability, minNumOfYearsScaler, lambda, maxIterations}} = this.props
+        const tmaskBandsOptions = this.tmaskBandsOptions()
         return (
             <Layout>
                 <Form.Buttons
@@ -102,8 +91,9 @@ class _Options extends React.Component {
                     label={msg('process.ccdc.panel.options.form.tmaskBands.label')}
                     input={tmaskBands}
                     multiple={true}
-                    disabled={tmaskBandsOptions.length < 2}
+                    disabled={!tmaskBandsOptions.length}
                     options={tmaskBandsOptions}
+                    errorMessage={form.getErrorMessage(tmaskBands)}
                     framed
                 />
                 <Form.Input
@@ -128,6 +118,14 @@ class _Options extends React.Component {
                 />
             </Layout>
         )
+    }
+
+    // TMask screens with breakpoint bands: those applied are offered, in their order, named as Sources name them. A chosen
+    // band no longer among them stays shown as chosen, so it can be removed, while what is wrong with it is said here.
+    tmaskBandsOptions() {
+        const {breakpointBands, selectedClassification: {labelOf}, inputs: {tmaskBands}} = this.props
+        return _.uniq([...breakpointBands, ...(tmaskBands.value || [])])
+            .map(band => ({value: band, label: labelOf(band)}))
     }
 
     renderSimple() {
@@ -203,6 +201,7 @@ const modelToBreakDetection = model =>
 
 export const Options = compose(
     _Options,
+    withSelectedClassification({loadError: 'process.ccdc.panel.sources.classificationLoadError'}),
     recipeFormPanel({id: 'ccdcOptions', fields, mapRecipeToProps, modelToValues, valuesToModel})
 )
 

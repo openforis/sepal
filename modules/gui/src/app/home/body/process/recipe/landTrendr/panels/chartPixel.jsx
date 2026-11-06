@@ -11,8 +11,10 @@ import {Panel} from '~/widget/panel/panel'
 
 import {withRecipe} from '../../../recipeContext'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
+import {exportableChart, PixelChartExport} from '../../pixelChartExport'
 import {loadLandTrendrSegments$, RecipeActions} from '../landTrendrRecipe'
 import styles from './chartPixel.module.css'
+import {landTrendrChart, landTrendrExportRecords} from './landTrendrChart'
 import {LandTrendrGraph} from './landTrendrGraph'
 
 const mapRecipeToProps = recipe => ({
@@ -41,9 +43,9 @@ class _ChartPixel extends React.Component {
     }
 
     renderPanel() {
-        const {latLng, index} = this.props
-        const {segments} = this.state
-        const loading = !segments
+        const {recipe, latLng, index} = this.props
+        const {chart} = this.state
+        const loading = !chart
         return (
             <Panel
                 className={styles.panel}
@@ -62,6 +64,11 @@ class _ChartPixel extends React.Component {
                 </Panel.Content>
 
                 <Panel.Buttons>
+                    <PixelChartExport
+                        recipe={recipe}
+                        chart={exportableChart(chart, {band: index, latLng})}
+                        records={landTrendrExportRecords}
+                    />
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Close
                             keybinding='Escape'
@@ -82,9 +89,8 @@ class _ChartPixel extends React.Component {
     }
 
     renderChart() {
-        const {segments} = this.state
-        const [years, raw, fitted, isVertex] = segments.LandTrendr || []
-        if (!years || !years.length) {
+        const {chart} = this.state
+        if (chart.empty) {
             return (
                 <div className={styles.noData}>
                     {msg('process.landTrendr.chartPixel.noData')}
@@ -92,12 +98,7 @@ class _ChartPixel extends React.Component {
             )
         }
         return (
-            <LandTrendrGraph
-                years={years}
-                raw={raw}
-                fitted={fitted}
-                isVertex={isVertex}
-            />
+            <LandTrendrGraph chart={chart}/>
         )
     }
 
@@ -108,15 +109,16 @@ class _ChartPixel extends React.Component {
         }
     }
 
+    // What is read is charted as read for the recipe's index at this pixel.
     loadData() {
-        const {stream, recipe, latLng} = this.props
+        const {stream, recipe, latLng, index} = this.props
         this.cancel$.next(true)
-        this.setState({segments: undefined})
+        this.setState({chart: undefined})
         stream('LOAD_LANDTRENDR_SEGMENTS',
             loadLandTrendrSegments$({recipe, latLng}).pipe(
                 takeUntil(this.cancel$)
             ),
-            segments => this.setState({segments}),
+            segments => this.setState({chart: landTrendrChart({band: index, latLng, segments})}),
             error => {
                 this.close()
                 Notifications.error({
@@ -131,7 +133,7 @@ class _ChartPixel extends React.Component {
 
     close() {
         this.cancel$.next(true)
-        this.setState({segments: undefined})
+        this.setState({chart: undefined})
         this.recipeActions.setChartPixel(null)
     }
 }

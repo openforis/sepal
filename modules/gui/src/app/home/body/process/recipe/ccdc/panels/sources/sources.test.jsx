@@ -27,19 +27,9 @@ vi.mock('~/app/home/body/process/recipeFormPanel', () => ({
     RecipeFormPanel: ({children}) => <div>{children}</div>,
     recipeFormPanel: () => Component => Component
 }))
-// Reading recipes is what this substitutes; the form and the band vocabulary are real. Anything that reads
-// without being handed a reader is recorded, so a read nobody asked for is visible.
-vi.mock('~/app/home/body/process/recipeAccess', () => ({
-    recipeAccess: () => Component => props => (
-        <Component
-            usingRecipe={() => {}}
-            loadedRecipes={{}}
-            reloadRecipe$={recipeId => recipeRead(recipeId)}
-            loadRecipe$={recipeId => recipeRead(recipeId)}
-            {...props}
-        />
-    )
-}))
+// Reading recipes is what this substitutes; the form, the session's recipe cache and the band vocabulary are real.
+// Every read is recorded, so a read nobody asked for is visible.
+vi.mock('~/apiRegistry', () => ({default: {recipe: {load$: recipeId => recipeRead(recipeId)}}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 // Cuts an import cycle the form barrel would otherwise enter from the wrong side. Nothing here renders one.
 vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
@@ -68,7 +58,7 @@ describe('the breakpoint bands a saved classification contributes', () => {
         await open({classification: CLASSIFICATION})
 
         expect(offeredBands()).toEqual(expect.arrayContaining([REGRESSION, PROBABILITY]))
-        // One read, the panel's own - nothing was cached for it, and the selector is not even rendered.
+        // One read, for Sources - nothing was cached for it, and the selector is not even rendered.
         expect(read).toEqual([CLASSIFICATION])
     })
 
@@ -148,7 +138,7 @@ afterEach(async () => {
     vi.restoreAllMocks()
 })
 
-// A cold cache: nothing is loaded, so the panel's own read is what reaches the record.
+// A cold cache: nothing is loaded, so the read Sources hold is what reaches the record.
 const open = ({classification, advanced}, {load$: reads} = {}) => {
     if (reads) {
         load$ = reads
@@ -159,10 +149,6 @@ const open = ({classification, advanced}, {load$: reads} = {}) => {
             recipeId={RECIPE}
             inputs={inputs}
             corrections={['SR']}
-            loadRecipe$={recipeRead}
-            stream={(_name, stream$, onNext, onError) => stream$
-                ? stream$.subscribe({next: onNext, error: onError})
-                : {active: false}}
         />
     ))
     const initialState = {
@@ -174,7 +160,7 @@ const open = ({classification, advanced}, {load$: reads} = {}) => {
             tabs: []
         }
     }
-    store = createStore((state = initialState) => state)
+    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     initStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)

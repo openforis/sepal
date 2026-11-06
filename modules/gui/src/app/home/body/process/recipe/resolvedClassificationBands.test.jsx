@@ -12,9 +12,8 @@ import {initStore} from '~/store'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
 // The bands a Time Series or CCDC chart offers of the Classification its Sources select, where the session does not
-// hold that record: as the source runtime read it for the chart's own readiness, while that answer is current, not as
-// Sources copied it when it was selected. A copy taken while it regressed does not offer the regression an SVM it has
-// since become does not provide, so it is never requested. The registrations, runtime, readiness, band rules and chart
+// hold that record: as the source runtime read it for the chart's own readiness, while that answer is current. The
+// regression an SVM does not provide is not offered, so it is never requested. The registrations, runtime, readiness, band rules and chart
 // are real; Earth Engine, storage, the graph renderer and the band picker's widget are replaced.
 
 const fake = vi.hoisted(() => ({stored: {}, listing: [], loads: [], observations: []}))
@@ -24,7 +23,7 @@ vi.mock('~/apiRegistry', () => ({default: {
             fake.observations.push(bands)
             return of({features: []})
         },
-        loadCCDCSegments$: () => of([]),
+        loadCCDCSegments$: () => of({tStart: [], tEnd: [], tBreak: [], changeProb: [], numObs: []}),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
         bands$: () => of(['red', 'nir'].map(name => ({name, arrayDimensions: 0})))
     },
@@ -33,7 +32,8 @@ vi.mock('~/apiRegistry', () => ({default: {
             fake.loads.push(id)
             return of(fake.stored[id])
         },
-        loadAll$: () => of(fake.listing)
+        loadAll$: () => of(fake.listing),
+        save$: () => of()
     }
 }}))
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
@@ -84,7 +84,7 @@ describe.each([
     ['TIME_SERIES', TimeSeriesChartPixel],
     ['CCDC', CcdcChartPixel]
 ])('a %s chart over a Classification the session does not hold', (type, ChartPixel) => {
-    it('offers, and requests, no output the stored Classification no longer provides, though Sources copied it when it did', async () => {
+    it('offers, and requests, no output the stored Classification does not provide', async () => {
         await openChart(type, ChartPixel)
 
         expect(offered()).not.toContain('regression')
@@ -138,7 +138,7 @@ const listingAt = revision => [
     {id: CLASSIFICATION, type: 'CLASSIFICATION', revision}
 ]
 
-// Sources copied the Classification while it was a Random Forest; the chart was last charting its regression.
+// The chart was last charting the Classification's regression.
 const recipeOf = type => ({
     id: ID,
     type,
@@ -150,7 +150,7 @@ const recipeOf = type => ({
         opticalPreprocess: {corrections: ['SR']},
         ccdcOptions: {dateFormat: 0}
     },
-    ui: {classification: {classificationLegend: LEGEND, classifierType: 'RANDOM_FOREST', classifier: RANDOM_FOREST}}
+    ui: {}
 })
 
 const offered = () => [...document.querySelectorAll('select[aria-label=band] option')].map(({value}) => value)

@@ -143,8 +143,10 @@ the caller consumes:
 
 No loading callback means no acquisition; two callbacks share their record read. Selection changes/unmount cancel
 superseded work. Required/self-reference validation is independent of loading. ALL expands project scope, never
-eligibility. Candidate acquisition that supplies other panel fields belongs to the panel lifecycle, not whichever
-selector happens to be visible.
+eligibility, and opens off. The project view narrows the alternatives, not the selection: an eligible selection is
+offered under its own project's heading whichever project is shown. `keepSelection` shows one that is unlisted or
+ineligible under a heading of its own. Candidate acquisition that supplies other panel fields belongs to the panel
+lifecycle, not whichever selector happens to be visible.
 
 A panel deriving related settings keeps one selection/proposal/readiness record, compares it with the current
 field value at submit time and publishes selection plus extra updates atomically. A failed, pending or superseded

@@ -2,14 +2,15 @@ import _ from 'lodash'
 
 import {select} from '~/store'
 
+import {committedRecipe} from './derivedResult'
 import {itemStatusesOf, localStatusOf} from './selectedSourceStatus'
 import {readLocalRequirements, UNSUPPORTED} from './sourceRequirements'
 
 // What requirements over a recipe's own configuration (`localFacts`, sourceRequirements.js) say of a form panel's values
 // before they are applied, for the requirements naming the panel as their editor (`editor.panel`). The panel's values
-// become the recipe's model at its path, over the recipe as the session holds it now - the candidate - which is read as
-// the recipe is: every local requirement of its type, each prerequisite resolved over the candidate's reads, nothing
-// acquired. Nothing it finds is published as the recipe's, whose own requirements judge what was applied.
+// become the recipe's model at its path, over the recipe as the session holds it now, with what committing them derives
+// (commitRecipe) - the candidate - which is read as the recipe is: every local requirement of its type, each
+// prerequisite resolved over the candidate's reads, nothing acquired. Nothing it finds is published as the recipe's, whose own requirements judge what was applied.
 //
 // A requirement's editor - {panel, input, blocksApply} - names the form input its findings are told to: a finding about
 // an item of the section as that item's status ({items: {[itemId]: status}}, selectedSourceStatus.js), any other as the
@@ -66,7 +67,7 @@ export class LocalCandidate {
             return NO_READS
         }
         if (this.#read?.recipe !== recipe || this.#read.model !== this.#model) {
-            const candidate = {...recipe, model: {...recipe.model, [this.#path]: this.#model}}
+            const candidate = committedRecipe(recipe, {...recipe, model: {...recipe.model, [this.#path]: this.#model}})
             this.#read = {
                 recipe,
                 model: this.#model,

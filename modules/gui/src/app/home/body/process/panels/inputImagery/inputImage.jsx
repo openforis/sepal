@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types'
 import React from 'react'
 
 import {adoptOtherSources, appliedInputImageUpdates, DUPLICATE_SOURCE, inputSourceKey, isFreeSource} from '~/app/home/body/process/inputImages'
@@ -57,19 +56,13 @@ const mapRecipeToProps = recipe => ({
 })
 
 class _InputImage extends React.Component {
-    constructor(props) {
-        super(props)
-        this.notifyChange = this.notifyChange.bind(this)
-    }
-
     render() {
         const {recipeId} = this.props
         return (
             <RecipeFormPanel
                 className={styles.panel}
                 placement='modal'
-                additionalUpdates={values => appliedInputImageUpdates(recipeId, valuesToModel(values))}
-                onApply={this.notifyChange}>
+                additionalUpdates={values => appliedInputImageUpdates(recipeId, valuesToModel(values))}>
                 <Panel.Header icon='image' title={msg('process.panels.inputImagery.sections.title')}/>
                 <Panel.Content>
                     {this.renderImageForm()}
@@ -138,12 +131,6 @@ class _InputImage extends React.Component {
     setOtherSources() {
         const {images, activatable: {imageId}, inputs: {otherSources}} = this.props
         adoptOtherSources(otherSources, images, imageId)
-    }
-
-    // The list follows an applied input; the layout's sources follow the recipe's inputs (dependencyLayerSources.js).
-    notifyChange() {
-        const {onChange} = this.props
-        onChange && setTimeout(() => onChange())
     }
 
     addImage() {
@@ -245,7 +232,3 @@ export const InputImage = compose(
     _InputImage,
     recipeFormPanel(panelOptions)
 )
-
-InputImage.propTypes = {
-    onChange: PropTypes.func
-}

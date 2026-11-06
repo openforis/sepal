@@ -32,11 +32,19 @@ afterEach(() => {
 })
 
 describe('an input told about beyond its own constraints', () => {
-    it('shows the error it is told, a warning beside it, and the buttons it is given', () => {
-        show({told: {error: 'Not in the reference', warning: ['Chart: no magnitude'], buttons: [<button key='refresh'>Refresh</button>]}})
+    it('shows errors before warnings, retaining the warning and feedback buttons through repair', () => {
+        const warning = ['Chart: no magnitude']
+        const buttons = [<button key='refresh'>Refresh</button>]
+        show({told: {error: 'Not in the reference', warning, buttons}})
 
         expect(said('error')).toEqual(['Not in the reference'])
-        expect(said('warning')).toEqual(['Chart: no magnitude'])
+        expect(said('warning')).toEqual([])
+        expect(offersRefresh()).toBe(true)
+
+        show({told: {warning, buttons}})
+
+        expect(said('error')).toEqual([])
+        expect(said('warning')).toEqual(warning)
         expect(offersRefresh()).toBe(true)
     })
 

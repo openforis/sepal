@@ -19,9 +19,11 @@ import {Panel} from '~/widget/panel/panel'
 
 import {withRecipe} from '../../../recipeContext'
 import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
+import {ccdcChart, ccdcExportRecords} from '../../ccdc/ccdcChart'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
 import {combineOperationGates, pixelChartAvailability, pixelOperationsAvailability, watchOperations} from '../../operationAvailability'
+import {exportableChart, PixelChartExport} from '../../pixelChartExport'
 import {pixelChartUpdate} from '../../pixelChartUpdate'
 import {pixelGenerationOfState} from '../../pixelGeneration'
 import {dateFormatOf, segmentDescription} from '../../segmentEvidence'
@@ -68,8 +70,8 @@ class _ChartPixel extends React.Component {
     }
 
     renderPanel() {
-        const {latLng, noChartableBand} = this.props
-        const {segments, observations} = this.state
+        const {recipe, latLng, noChartableBand, inputs: {selectedBand}} = this.props
+        const {segments, observations, chart} = this.state
         const loading = !noChartableBand && (!segments || !segments.length) && (!observations || !observations.length)
         return (
             <Panel
@@ -87,6 +89,11 @@ class _ChartPixel extends React.Component {
                 </Panel.Content>
 
                 <Panel.Buttons>
+                    <PixelChartExport
+                        recipe={recipe}
+                        chart={observations ? exportableChart(chart, {band: selectedBand.value, latLng}) : null}
+                        records={ccdcExportRecords}
+                    />
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Close
                             keybinding='Escape'
@@ -118,10 +125,8 @@ class _ChartPixel extends React.Component {
     }
 
     renderChart() {
-        const {
-            recipe, harmonics, gapStrategy, extrapolateSegment, extrapolateMaxDays, dateFormat, inputs: {selectedBand}
-        } = this.props
-        const {segments, observations} = this.state
+        const {recipe} = this.props
+        const {chart} = this.state
         const {monitoringEnd, monitoringStart, calibrationStart} = monitoringDates(recipe.model)
         const highlights = [
             {
@@ -140,24 +145,15 @@ class _ChartPixel extends React.Component {
         const {noChartableBand} = this.props
         if (noChartableBand)
             return <Message type='info' text={msg('process.ccdc.chartPixel.noChartableBand')}/>
-        const loading = !segments
+        const loading = !chart
         if (loading)
             return this.renderSpinner()
         else {
             return (
                 <CCDCGraph
-                    band={selectedBand.value}
-                    startDate={moment.utc(calibrationStart, 'YYYY-MM-DD').subtract(1, 'year').toDate()}
-                    endDate={moment.utc(monitoringEnd, 'YYYY-MM-DD').add(2, 'days').toDate()}
-                    dateFormat={dateFormat}
-                    segments={segments}
-                    observations={observations}
+                    chart={chart}
                     highlights={highlights}
                     highlightGaps
-                    gapStrategy={gapStrategy}
-                    extrapolateMaxDays={extrapolateMaxDays}
-                    extrapolateSegment={extrapolateSegment}
-                    harmonics={harmonics}
                 />
             )
         }
@@ -195,9 +191,10 @@ class _ChartPixel extends React.Component {
 
     loadObservations() {
         const {stream, recipe, latLng, inputs: {selectedBand}} = this.props
+        const band = selectedBand.value
         stream('LOAD_CCDC_OBSERVATIONS',
-            loadCCDCObservations$({recipe, latLng, bands: [selectedBand.value]}).pipe(takeUntil(this.cancel$)),
-            observations => this.setState({observations}),
+            loadCCDCObservations$({recipe, latLng, bands: [band]}).pipe(takeUntil(this.cancel$)),
+            observations => this.received({band, latLng, observations}),
             error => {
                 this.close()
                 Notifications.error({
@@ -210,11 +207,12 @@ class _ChartPixel extends React.Component {
 
     loadSegments() {
         const {stream, recipe, latLng, inputs: {selectedBand}} = this.props
+        const band = selectedBand.value
         stream('LOAD_CCDC_SEGMENTS',
-            loadCCDCSegments$({recipe, latLng, bands: [selectedBand.value]}).pipe(
+            loadCCDCSegments$({recipe, latLng, bands: [band]}).pipe(
                 takeUntil(this.cancel$)
             ),
-            segments => this.setState({segments}),
+            segments => this.received({band, latLng, segments}),
             error => {
                 this.close()
                 Notifications.error({
@@ -223,6 +221,26 @@ class _ChartPixel extends React.Component {
                 })
             }
         )
+    }
+
+    // The chart is drawn once the reference's segments are read, and prepared again with the observations, all read for
+    // this band at this pixel, over the year before calibration through monitoring.
+    received({band, latLng, ...response}) {
+        const {recipe, dateFormat, harmonics, gapStrategy, extrapolateSegment, extrapolateMaxDays} = this.props
+        const {monitoringEnd, calibrationStart} = monitoringDates(recipe.model)
+        this.setState(state => {
+            const {segments, observations} = {...state, ...response}
+            return {
+                ...response,
+                chart: segments
+                    ? ccdcChart({
+                        band, latLng, segments, observations, dateFormat, harmonics, gapStrategy, extrapolateSegment, extrapolateMaxDays,
+                        startDate: moment.utc(calibrationStart, 'YYYY-MM-DD').subtract(1, 'year').toDate(),
+                        endDate: moment.utc(monitoringEnd, 'YYYY-MM-DD').add(2, 'days').toDate()
+                    })
+                    : undefined
+            }
+        })
     }
 
     // The measures the reference's segments can be plotted for and the observations show (pixelChartAvailability).
@@ -237,13 +255,13 @@ class _ChartPixel extends React.Component {
         const {segments, observations} = this.state
         this.cancel$.next(true)
         if (segments || observations) {
-            this.setState({segments: undefined, observations: undefined})
+            this.setState({segments: undefined, observations: undefined, chart: undefined})
         }
     }
 
     close() {
         this.cancel$.next(true)
-        this.setState({segments: undefined, observations: undefined})
+        this.setState({segments: undefined, observations: undefined, chart: undefined})
         this.recipeActions.setChartPixel(null)
     }
 

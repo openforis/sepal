@@ -3,13 +3,12 @@ import {vi} from 'vitest'
 vi.mock('~/translate', () => ({msg: id => id}))
 
 const {LandTrendrGraph} = await import('./landTrendrGraph')
+const {landTrendrChart} = await import('./landTrendrChart')
 
-const props = () => ({
-    years: [2000, 2001, 2002],
-    raw: [10, 20, 30],
-    fitted: [11, 21, 31],
-    isVertex: [1, 0, 1]
-})
+const chartOf = (years, raw, fitted, isVertex) =>
+    landTrendrChart({band: 'nbr', latLng: {lat: 0, lng: 0}, segments: {LandTrendr: [years, raw, fitted, isVertex]}})
+
+const props = () => ({chart: chartOf([2000, 2001, 2002], [10, 20, 30], [11, 21, 31], [1, 0, 1])})
 
 // Drives the component without rendering: React only ever calls these in this
 // order, and the assertions are about what lands in state.
@@ -39,7 +38,7 @@ it('keeps the same data array while hovering', () => {
 it('rebuilds the data when a different pixel is charted', () => {
     const graph = mount()
     const data = graph.state.data
-    const nextProps = {years: [2010, 2011], raw: [1, 2], fitted: [3, 4], isVertex: [1, 1]}
+    const nextProps = {chart: chartOf([2010, 2011], [1, 2], [3, 4], [1, 1])}
     const prevProps = graph.props
     graph.props = nextProps
     graph.componentDidUpdate(prevProps)

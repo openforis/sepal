@@ -18,9 +18,11 @@ import {Panel} from '~/widget/panel/panel'
 import {NoData} from '../../../../../../../widget/noData'
 import {withRecipe} from '../../../recipeContext'
 import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
+import {ccdcChart, ccdcExportRecords} from '../../ccdc/ccdcChart'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
 import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
 import {pixelOperationsAvailability, watchOperations} from '../../operationAvailability'
+import {exportableChart, PixelChartExport} from '../../pixelChartExport'
 import {pixelChartUpdate} from '../../pixelChartUpdate'
 import {selectedClassificationOfState} from '../../selectedClassification'
 import {loadObservations$, RecipeActions} from '../timeSeriesRecipe'
@@ -64,9 +66,9 @@ class _ChartPixel extends React.Component {
     }
 
     renderPanel() {
-        const {latLng} = this.props
-        const {observations} = this.state
-        const loading = !observations
+        const {recipe, latLng, inputs: {selectedBand}} = this.props
+        const {chart} = this.state
+        const loading = !chart
         return (
             <Panel
                 className={styles.panel}
@@ -83,6 +85,11 @@ class _ChartPixel extends React.Component {
                 </Panel.Content>
 
                 <Panel.Buttons>
+                    <PixelChartExport
+                        recipe={recipe}
+                        chart={exportableChart(chart, {band: selectedBand.value, latLng})}
+                        records={ccdcExportRecords}
+                    />
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Close
                             keybinding='Escape'
@@ -123,26 +130,13 @@ class _ChartPixel extends React.Component {
     }
 
     renderChart() {
-        const {dateFormat, startDate, endDate, inputs: {selectedBand}} = this.props
-        const {observations} = this.state
-        const loading = !observations
-        const noObservations = observations && !observations.features.length
-        if (loading) {
+        const {chart} = this.state
+        if (!chart) {
             return this.renderSpinner()
-        } else if (noObservations) {
+        } else if (chart.empty) {
             return <NoData message={msg('process.timeSeries.chartPixel.loadObservations.noData')}/>
         } else {
-            return (
-                <CCDCGraph
-                    band={selectedBand.value}
-                    dateFormat={dateFormat}
-                    startDate={startDate}
-                    endDate={endDate}
-                    observations={observations}
-                    highlightGaps
-                    harmonics={3}
-                />
-            )
+            return <CCDCGraph chart={chart} highlightGaps/>
         }
     }
 
@@ -173,13 +167,14 @@ class _ChartPixel extends React.Component {
         load && this.loadData(load)
     }
 
+    // What is read is charted as read for this band at this pixel.
     loadData(band) {
-        const {stream, recipe, latLng} = this.props
+        const {stream, recipe, latLng, dateFormat, startDate, endDate} = this.props
         stream('LOAD_OBSERVATIONS',
             loadObservations$({recipe, latLng, bands: [band]}).pipe(
                 takeUntil(this.cancel$)
             ),
-            observations => this.setState({observations}),
+            observations => this.setState({chart: ccdcChart({band, latLng, observations, dateFormat, startDate, endDate})}),
             error => {
                 this.close()
                 Notifications.error({
@@ -192,8 +187,8 @@ class _ChartPixel extends React.Component {
 
     clearData() {
         this.cancel$.next(true)
-        if (this.state.observations !== undefined)
-            this.setState({observations: undefined})
+        if (this.state.chart !== undefined)
+            this.setState({chart: undefined})
     }
 
     close() {
