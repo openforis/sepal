@@ -66,23 +66,42 @@ selection is the one the type declares (`CLASSIFICATION_SOURCE`). CCDC and Pheno
   Retrieve's indicator - is named the same way in its choice and in the finding refusing it (`classifiedOutputLabel`).
   The finding keeps only which recipe and Classification it was judged under; both resolve the name each time they
   render.
-  1. It takes the label of the Classification selected now, as the recipe's consumers last showed it.
+  1. It takes the label the selected Classification gives it, from its record where the session holds it, so a rename
+     shows in the choice and the finding together; otherwise as the recipe's consumers last showed it.
   2. Failing that, it takes the label they last showed the output called, from any Classification: the one applied
      while another is edited, or one selected before. A class removed or renamed since does not undo that history,
      and a rename replaces it.
   3. Otherwise it is named by its class, "Class 1 probability", or as "Regression" (`classifiedOutputFallbackLabel`,
      Classification's `bands.js`).
 
-  An output that is offered keeps its offered label. Remembered labels are presentation alone: they are kept in memory
-  while the recipe's tab is open, never saved, and never make an output available or lift a refusal. The shared
-  Retrieve panel names a kept selection only as its owner says, otherwise by its value, so a band a user named
-  `probability_1` elsewhere stays as named.
+  An output that is offered keeps its offered label. A band of the images is named by itself (`chosenBandLabel`).
+  Remembered labels are presentation alone: they are kept in memory while the recipe's tab is open, never saved, and
+  never make an output available or lift a refusal. The shared Retrieve panel names a kept selection only as its owner
+  says, otherwise by its value, so a band a user named `probability_1` elsewhere stays as named.
 - **Runtime reads.** The source runtime reads what its own work needs independently. Work started before the UI read
   lands may request the record itself; work started after takes it from the session. Nothing promises one request
   across both.
 
 Nothing of the Classification is copied into the recipe: opening a recipe and a read completing leave its model and
 drafts as they were.
+
+### CCDC's TMask bands
+
+TMask screens a pixel's observations with two of the bands CCDC segments. Execution passes it only as exactly two bands
+(`enabledTmaskBands`, `lib/js/shared/src/recipe/type/ccdc.js`). Any other selection runs no TMask, and presets save
+none.
+- **Rule.** An enabled TMask must use breakpoint bands. The CCDC type declares this as a configuration requirement,
+  `NON_BREAKPOINT_TMASK_BANDS`, found at `ccdcOptions.tmaskBands` and naming the `missing` bands. It refuses the image
+  (preview, Retrieve) and the pixel segments; the count and pixel observations are unaffected. The server's
+  `requireExecutable$` refuses the same configuration before Earth Engine is asked.
+- **Sources.** A Sources Apply that removes a band TMask uses is allowed. OPT's toolbar button is then marked, and the
+  held operations name OPT. Restoring the band as a breakpoint band repairs it.
+- **OPT.** TMask's choices are the applied breakpoint bands, in their order, named as Sources name them. A chosen band
+  that is no longer one stays shown as chosen, so it can be removed; opening, rendering and reads completing never drop
+  it. The control is enabled while anything can be chosen or removed. OPT's draft is judged against the applied
+  breakpoint bands (`ccdc/tmaskRequirement.js`). A draft keeping such a band says which bands are missing and the
+  repairs beside TMask, and its Apply and Enter are refused. Choosing another pair, clearing TMask or choosing a preset
+  repairs it. OPT's existing rule of exactly two bands or none is unchanged.
 
 ### Chart drawing
 
@@ -283,6 +302,11 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
   fallback, the current label winning - with Apply refused, and while the Classification is read and after repair.
   `mosaic/panels/retrieve/retrieveDestinationCompatibility.test.jsx`: Retrieve's kept selection named only as its
   owner says.
+- `lib/js/shared/test/recipe/output/type/ccdc.test.js`, `modules/gee/test/jobs/ee/ccdc/loadSegmentsReadiness.test.js`
+  and `modules/gui/src/app/home/body/process/recipe/ccdc/tmaskRequirement.test.jsx`: the TMask rule per operation,
+  presets and selections execution does not pass, the server refusal and the pair Earth Engine is given, and through
+  CCDC's root, toolbar, Sources and OPT the allowed Sources Apply, OPT's mark, held operations, retained choices,
+  refused drafts and each repair.
 - `modules/gui/src/app/home/body/process/recipe/pixelChartExport.test.jsx`: each pixel chart's Export CSV through its
   panel - when it is enabled, a new band or pixel, zoom, empty results and an unchanged recipe.
   `ccdc/ccdcChart.test.js`, `landTrendr/panels/landTrendrChart.test.js` and `pixelChartCsv.test.js`: the prepared

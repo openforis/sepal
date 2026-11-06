@@ -101,7 +101,7 @@ class _CcdcToolbar extends React.Component {
                         label={msg('process.ccdc.panel.preprocess.button')}
                         tooltip={msg('process.ccdc.panel.preprocess.tooltip')}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='ccdcOptions'
                         label={msg('process.ccdc.panel.options.button')}
                         tooltip={msg('process.ccdc.panel.options.tooltip')}

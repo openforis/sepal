@@ -300,7 +300,7 @@ Use the part of the mechanism each responsibility needs:
 
 | Recipes | Concrete reuse and existing owner | Migration boundary |
 | --- | --- | --- |
-| CCDC, Time Series, Phenology | The selected Classification is read once per recipe for its UI (`selectedClassification.js`). Band choices are still derived per panel; CCDC's OPT derives TMask choices from the breakpoint bands. `collectionClassifierRequirements.js` and CCDC's `segmentDescription.js` already establish reusable owners. | [Remaining slices](#temporal-sources-dependencies): CCDC's breakpoint-band → TMask rule, then collection-band compatibility with retained selections. No persisted fit evidence. |
+| CCDC, Time Series, Phenology | The selected Classification is read once per recipe for its UI (`selectedClassification.js`). Band choices are still derived per panel; CCDC's TMask is judged against the breakpoint bands in shared readiness. `collectionClassifierRequirements.js` and CCDC's `segmentDescription.js` already establish reusable owners. | [Remaining slice](#temporal-sources-dependencies): collection-band compatibility with retained selections. No persisted fit evidence. |
 | LandTrendr | `landTrendr/panels/sources/sources.jsx` calls `ensureValidIndex` on opening and dataset changes; dataset choices also read Dates. | Declare date/dataset/index compatibility. Settle the explicit replacement/defaulting policy before changing it; opening or temporarily empty options must preserve deliberate choices. |
 | Optical Mosaic | `sceneAreas.jsx`, `sceneSelection.jsx`, `autoSelectScenes.jsx` and `sceneDeselection.jsx` separately coordinate AOI/source/date-dependent reads and selected scenes. | Shared question identity and request lifecycle can replace local coordination. Scene discovery results are temporary; manual selections remain user-owned. Preserve explicit auto-selection and define retention/reconciliation before changing scene deletion behaviour. |
 | Classification, Regression | Shared input-band and training-data requirements already judge live dependencies. `panels/trainingData/sample*Section.jsx` and table-import sections own similar asynchronous import requests and mapping stages. | Reuse acquisition lifecycle and declared stage prerequisites where duplicated. Sampled/imported rows are persisted snapshots, and source IDs there record provenance; do not turn them into live execution dependencies or invalidate them automatically. Keep training adequacy and value/encoding policy separate. |
@@ -339,7 +339,8 @@ unverified for these follow-ups.
 
 #### Temporal Sources dependencies
 
-For CCDC, Time Series and Phenology. Slices 2 and 3 remain proposed below. "Confirmed" means
+For CCDC, Time Series and Phenology. Slice 3 remains proposed below; slice 2, CCDC's TMask bands, is
+[current behaviour](../recipes/time-series.md#ccdcs-tmask-bands). "Confirmed" means
 reproduced by temporary mounted probes over the real panels, form, store and source runtime, with recipe reads
 substituted; the rest is code inspection. Paths are relative to `modules/gui/src/app/home/body/process/recipe/`.
 
@@ -348,8 +349,8 @@ substituted; the rest is code inspection. Paths are relative to `modules/gui/src
 - **Classification metadata.** One UI read per recipe: [what is offered of the selected
   Classification](../recipes/time-series.md#what-is-offered-of-the-selected-classification).
 - **Band choices.** `groupedBandOptions` (`~/sources.js`) derives choices from data sets, corrections and the
-  Classification in CCDC Sources, OPT, Retrieve and chart, Phenology Sources, and Time Series' chart and Retrieve.
-  CCDC Sources and OPT read corrections from `model.opticalPreprocess`, which nothing writes; the others read
+  Classification in CCDC Sources, Retrieve and chart, Phenology Sources, and Time Series' chart and Retrieve.
+  CCDC Sources reads corrections from `model.opticalPreprocess`, which nothing writes; the others read
   `model.options`. Confirmed: under SR, CCDC Sources
   offers `pan`, `cirrus` and `thermal2`, which the SR collection and CCDC's declared measures (`ccdcMeasures`) lack.
   With corrections from `model.options`, the offered optical and radar bands equal the declared measures (Landsat 8,
@@ -365,17 +366,10 @@ substituted; the rest is code inspection. Paths are relative to `modules/gui/src
 - **Bands of the images are judged nowhere.** The shared declarations check classifier inputs and classified outputs
   only. CCDC Retrieve names an uncarried breakpoint band (`ccdc/retrieveSelection.js`). Preview, segment charts,
   Phenology and the server guards pass it to Earth Engine, where it is expected to fail (not verified live).
-- **TMask.** OPT offers the applied breakpoint bands that its own band list still offers. The control is disabled
-  below two choices and shows no error of its own. Confirmed: after Sources drop `swir1` from the breakpoint bands, a
-  saved TMask of `green` and `swir1` opens unflagged. The first OPT edit narrows the draft to `green`, disables the
-  control and refuses Apply without saying why. Only Less (a preset without TMask, discarding custom parameters) or
-  Cancel gets out. Execution passes TMask only as exactly two bands (`lib/js/ee/src/timeSeries/ccdc.js`). Earth Engine's
-  API documentation requires them to be breakpoint bands (not run live). No shared rule or server guard checks this.
 
 **What each choice reads.** Local derivations, needing no acquisition, evidence or hashing:
 
-- collection bands, from `sources.dataSets`, `options.corrections` (optical) and `options.histogramMatching` (Planet);
-- TMask choices, from `sources.breakpointBands`.
+- collection bands, from `sources.dataSets`, `options.corrections` (optical) and `options.histogramMatching` (Planet).
 
 Acquired:
 
@@ -393,27 +387,11 @@ to be the same case:
   Classification's record is not held.
 - The CCDC and Time Series chart band pickers list a charted classified output the Classification no longer offers
   by its value.
-- OPT's TMask choices narrow rather than keep a chosen band; that belongs to slice 2.
 - `~/sources.js` formats classified-output labels beside Classification's `bandPresentation`.
 
-**Proposal.** Two remaining separately reviewable slices. Neither adds or rewrites saved fields, or changes processing,
-fitting parameters, encodings, training prerequisites or execution inputs.
+**Proposal.** One remaining slice. It adds or rewrites no saved fields, and changes no processing, fitting parameters,
+encodings, training prerequisites or execution inputs.
 
-2. **CCDC breakpoint bands → TMask.**
-   - **Rule.** `lib/js/shared/src/recipe/type/ccdc.js` declares a configuration requirement: an enabled TMask (exactly
-     two bands, as execution passes it) must be among `sources.breakpointBands`. It is found at
-     `ccdcOptions.tmaskBands`, naming the others, for IMAGE_OUTPUT and PIXEL_SEGMENTS; the count runs no segmentation.
-     Presets and no TMask require nothing.
-   - **Editor.** The GUI routes it as an OPT field requirement (`fieldRequirement.js`), whose editor judges OPT's draft
-     and refuses its Apply.
-   - **Repair.** A Sources Apply removing a TMask band is a repairable intermediate. OPT's toolbar button becomes a
-     `SectionButton` and is marked, and the held operations name OPT. The message names the bands and the repairs: add
-     them as breakpoint bands, choose others, or none.
-   - **OPT choices** become the applied breakpoint bands, in order and labelled as Sources labels them. A chosen TMask
-     band no longer among them stays shown as chosen, so it can be removed. The control stays enabled while there is
-     anything to choose or remove.
-   - **Removed:** OPT's `groupedBandOptions` call, its `opticalPreprocess` read, and the silent narrowing. The server
-     guards (`requireExecutable$`) refuse the same configuration before Earth Engine is asked.
 3. **Collection bands and retention.** For CCDC's breakpoint bands and Phenology's band, after the decisions below.
    - **Rule.** Export the collection-measure rule now private to `type/ccdc.js`; it follows `collection.js`'s branches.
      Declare one configuration requirement over it: a chosen band of the images that the configured collection does
@@ -433,17 +411,17 @@ fitting parameters, encodings, training prerequisites or execution inputs.
    - **Ordering.** The corrections fix lands with retention. Alone, it would let the form drop a saved TOA-only band
      silently. Data-set defaulting is unchanged.
 
-**Compatibility.** Saved TMask, breakpoint and Phenology
+**Compatibility.** Saved breakpoint and Phenology
 bands stay as saved, refused ones included, until the user changes them. A recipe an older client saves is judged by
-the new rules when it is next read. The refusals added by slices 2 and 3 replace Earth Engine failures, for
-configurations expected not to run, with located findings.
+the new rules when it is next read. The refusals slice 3 adds replace Earth Engine failures, for configurations
+expected not to run, with located findings.
 
 **Decisions, settled in review.**
 
 - **Family or data-set change.** Chosen bands the new collection does not carry are kept, flagged at the field and
   refusing that Apply: they are fitting choices, not derived from the data set. Nothing changes while no data set is
   chosen.
-- **Where the slice 2 and 3 rules live.** In shared readiness: one definition for drafts, applied recipes, preview,
+- **Where the slice 3 rule lives.** In shared readiness: one definition for drafts, applied recipes, preview,
   Retrieve and the server.
 - **Advance notice.** None; the marked button and held operations say it.
 
@@ -451,13 +429,6 @@ Unmatched Daily's eight-band names stay deferred until the contributing imagery'
 
 **Acceptance.** Through real panels, form, store and runtime with substituted reads; rules tested directly.
 
-- **Slice 2:**
-  - a preset, advanced settings without TMask, a fitted pair, and a pair with one band dropped in Sources;
-  - the Sources Apply allowed, OPT marked, preview, segments and Retrieve held, the count not;
-  - OPT's draft refused until repaired in either section, cleared or replaced by a preset;
-  - OPT's untouched opening unchanged;
-  - the same finding for drafts, applied recipes and `requireExecutable$`;
-  - a valid TMask passed to Earth Engine unchanged.
 - **Slice 3:**
   - for CCDC's several bands and Phenology's one: TOA → SR with `thermal2`, OPTICAL → RADAR, an empty intermediate,
     and Sentinel-2;

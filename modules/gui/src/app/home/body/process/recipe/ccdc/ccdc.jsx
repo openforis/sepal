@@ -14,6 +14,7 @@ import {bandPresentation, mapProducts} from './bands'
 import {dateRange, defaultModel} from './ccdcRecipe'
 import {CcdcToolbar} from './panels/ccdcToolbar'
 import {describeSegments$, segmentBandLabels} from './segmentDescription'
+import {tmaskRequirement} from './tmaskRequirement'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -48,6 +49,7 @@ const CCDC = compose(
 )
 
 const SOURCES = {id: 'sources', label: 'process.ccdc.panel.sources.button'}
+const OPTIONS = {id: 'ccdcOptions', label: 'process.ccdc.panel.options.button'}
 
 export default () => ({
     id: 'CCDC',
@@ -63,7 +65,8 @@ export default () => ({
     sourceRequirements: [
         ...collectionClassifierRequirements(SOURCES),
         classifiedOutputRequirements(SOURCES, 'breakpointBands'),
-        classificationReferenceFeedback(SOURCES)
+        classificationReferenceFeedback(SOURCES),
+        tmaskRequirement(OPTIONS)
     ],
     imageSource: false,
     geometrySource: true,

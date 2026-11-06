@@ -2,6 +2,7 @@ import _ from 'lodash'
 import React from 'react'
 import {Subject} from 'rxjs'
 
+import {isClassifiedOutput} from '#sepal/recipe/classifiedOutputs'
 import {CLASSIFICATION_SOURCE} from '#sepal/recipe/source/collectionSources'
 import {sessionRecipeCache} from '~/app/home/body/process/recipe'
 import {RecipeCacheClaimant} from '~/app/home/body/process/recipeCacheClaims'
@@ -43,13 +44,17 @@ export const selectedClassificationId = recipe => selectedSourceOf(recipe, CLASS
 export const classificationNaming = recipe => ({recipeId: recipe?.id || null, classificationId: selectedClassificationId(recipe)})
 
 // What a classified output is called where a recipe's Sources select a Classification (`naming`), for presentation alone - it
-// says nothing of whether that output is provided. It is resolved each time it is said, from what the recipe's consumers
-// have shown: as that Classification names it as they last showed it; otherwise as they last showed the output named,
-// whichever Classification they showed it of - one applied while another is edited, or selected before - which a class
-// removed since does not undo; otherwise by what it is (classifiedOutputFallbackLabel). Its choices and what is said of
-// them name it alike.
-export const classifiedOutputLabel = ({recipeId, classificationId}, band) =>
+// says nothing of whether that output is provided. It is resolved each time it is said, while the recipe's consumers hold
+// a selection: as that Classification names it where the session holds its record; otherwise as they last showed that
+// Classification naming it; otherwise as they last showed the output named, whichever Classification they showed it of -
+// one applied while another is edited, or selected before - which a class removed since does not undo; otherwise by
+// what it is (classifiedOutputFallbackLabel). Its choices and what is said of them name it alike.
+export const classifiedOutputLabel = ({recipeId, classificationId} = {}, band) =>
     readers.get(recipeId)?.labelOf(classificationId, band) || classifiedOutputFallbackLabel(band)
+
+// What a band a recipe's Sources may choose is called: a band of the images by its name, as Sources offer it, and a
+// classified output as classifiedOutputLabel names it.
+export const chosenBandLabel = (naming, band) => isClassifiedOutput(band) ? classifiedOutputLabel(naming, band) : band
 
 // The recipe as Sources being edited would leave it: selecting the Classification their draft selects.
 export const draftSelection = (recipe, {inputs}) =>
@@ -57,9 +62,9 @@ export const draftSelection = (recipe, {inputs}) =>
 
 // Gives a recipe's component the Classification `candidate(recipe, props)` selects - by default the recipe as applied -
 // holding it while mounted: `selectedClassification`, what selectedClassificationOfState says of it as the session
-// holds it, with whether it is being read (`loading`) and what its outputs are called (`labelOf`, classifiedOutputLabel).
-// What it shows them called is remembered for the recipe, to name one nothing it holds names any longer. `loadError` is
-// the message a failed read is notified with.
+// holds it, with whether it is being read (`loading`) and what a band its Sources may choose is called (`labelOf`,
+// chosenBandLabel). What it shows them called is remembered for the recipe, to name one nothing it holds names any longer.
+// `loadError` is the message a failed read is notified with.
 export const withSelectedClassification = ({candidate = recipe => recipe, loadError}) =>
     WrappedComponent => {
         const mapStateToProps = (state, props) => {
@@ -82,7 +87,7 @@ export const withSelectedClassification = ({candidate = recipe => recipe, loadEr
                         selectedClassification: {
                             ...offer,
                             loading: !offer.classificationResolved && status === PENDING,
-                            labelOf: band => classifiedOutputLabel(classificationNaming(this.candidate()), band)
+                            labelOf: band => chosenBandLabel(classificationNaming(this.candidate()), band)
                         }
                     })
                 }
@@ -208,8 +213,10 @@ class Reader {
         Object.entries(labels).forEach(([band, label]) => this.#shown.set(band, label))
     }
 
+    // As the record the session holds names it now, so whatever says it follows a rename at once; otherwise as remembered.
     labelOf(id, band) {
-        return this.#labelsOf.get(id)?.[band] || this.#shown.get(band)
+        const legend = id && selectFrom(sessionRecipeCache.held(id), 'model.legend')
+        return (legend && legendLabels(legend)[band]) || this.#labelsOf.get(id)?.[band] || this.#shown.get(band)
     }
 
     hold(id, holder, loadError) {

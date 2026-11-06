@@ -1282,7 +1282,8 @@
             "minObservations": "Min observations",
             "tmaskBands": {
               "label": "TMask bands",
-              "noneOrTwo": "Exactly two bands must be selected or none"
+              "noneOrTwo": "Exactly two bands must be selected or none",
+              "notBreakpointBands": "{count, plural, one {TMask band {bands} is not a breakpoint band} other {TMask bands {bands} are not breakpoint bands}}. Restore {count, plural, one {it} other {them}} as breakpoint bands in Sources, choose another pair, or clear TMask."
             }
           },
           "title": "CCDC options",

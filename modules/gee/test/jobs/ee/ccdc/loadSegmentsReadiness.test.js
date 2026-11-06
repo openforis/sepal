@@ -47,7 +47,10 @@ mock.module('#sepal/ee/ee', {
             ImageCollection: id => eeImage(id),
             Geometry: Object.assign(geoJson => geoJson, {Point: coordinates => ({point: coordinates})}),
             Reducer: {first: () => 'first'},
-            Algorithms: {TemporalSegmentation: {Ccdc: () => eeImage('segments')}}
+            Algorithms: {TemporalSegmentation: {Ccdc: args => {
+                state.segmented.push(args)
+                return eeImage('segments')
+            }}}
         }
     }
 })
@@ -94,7 +97,7 @@ const operation = async fn => {
 }
 
 beforeEach(() => {
-    Object.assign(state, {catalogue: {}, assetBands: {}, unreadable: [], recipesRead: [], described: [], evaluated: [], evidence: [], collections: [], fitted: [], judged: []})
+    Object.assign(state, {catalogue: {}, assetBands: {}, unreadable: [], recipesRead: [], described: [], evaluated: [], evidence: [], collections: [], fitted: [], judged: [], segmented: []})
 })
 
 describe('the segments of a CCDC charted itself', () => {
@@ -298,6 +301,39 @@ describe('the segments of a recipe selected as a source', () => {
     })
 })
 
+// TMask screens observations with two of the bands CCDC segments. A CCDC charted itself whose TMask uses a band that is not a
+// breakpoint band is refused before anything is segmented, as its own readiness refuses it (type/ccdc.js); one using
+// breakpoint bands reaches Earth Engine as configured, and a selection execution does not pass stays unpassed.
+describe('the segments of a CCDC charted itself with TMask', () => {
+    inOperation('are refused, segmenting and reading nothing at the pixel, where a TMask band is not a breakpoint band', async () => {
+        state.catalogue[CLASSIFICATION] = trainable()
+
+        await assert.rejects(chart(ccdcOf({breakpointBands: ['green', 'ndvi'], tmaskBands: ['green', 'swir1']})), /ccdc-1 cannot run: NON_BREAKPOINT_TMASK_BANDS$/)
+
+        assertNothingCharted()
+        assert.deepEqual(state.segmented, [])
+    })
+
+    inOperation('are segmented with the TMask bands as configured where both are breakpoint bands', async () => {
+        state.catalogue[CLASSIFICATION] = trainable()
+
+        const segments = await chart(ccdcOf({breakpointBands: ['green', 'ndvi'], tmaskBands: ['green', 'ndvi']}))
+
+        assert.deepEqual(segments, SEGMENTS)
+        assert.deepEqual(state.segmented.map(({breakpointBands, tmaskBands}) => ({breakpointBands, tmaskBands})), [
+            {breakpointBands: ['green', 'ndvi'], tmaskBands: ['green', 'ndvi']}
+        ])
+    })
+
+    inOperation('are segmented without TMask where one band is chosen, which execution does not pass', async () => {
+        state.catalogue[CLASSIFICATION] = trainable()
+
+        await chart(ccdcOf({breakpointBands: ['green', 'ndvi'], tmaskBands: ['swir1']}))
+
+        assert.deepEqual(state.segmented.map(({tmaskBands}) => tmaskBands), [undefined])
+    })
+})
+
 describe('the segments of an asset', () => {
     inOperation('are read from it as before, reading no recipe', async () => {
         const segments = await chart({type: 'ASSET', id: SEGMENTS_ASSET})
@@ -319,7 +355,7 @@ const MASKED_REFERENCE = {type: 'RECIPE_REF', id: MASKING}
 // Every band of the segments read at the pixel, empty where a pixel has none.
 const SEGMENTS = {source: 'segments', masks: []}
 
-const ccdcOf = ({aoi = {type: 'ASSET', id: 'users/x/bounds'}, breakpointBands = ['ndvi']} = {}) => ({
+const ccdcOf = ({aoi = {type: 'ASSET', id: 'users/x/bounds'}, breakpointBands = ['ndvi'], tmaskBands} = {}) => ({
     id: 'ccdc-1',
     type: 'CCDC',
     model: {
@@ -327,7 +363,7 @@ const ccdcOf = ({aoi = {type: 'ASSET', id: 'users/x/bounds'}, breakpointBands = 
         sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands, classification: CLASSIFICATION},
         dates: {startDate: '2015-01-01', endDate: '2021-01-01'},
         options: {corrections: ['SR']},
-        ccdcOptions: {dateFormat: 1}
+        ccdcOptions: {dateFormat: 1, ...(tmaskBands && {tmaskBands})}
     }
 })
 

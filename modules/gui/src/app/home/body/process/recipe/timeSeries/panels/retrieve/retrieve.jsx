@@ -13,7 +13,7 @@ import {msg} from '~/translate'
 
 import {draftDisagreementsOfState} from '../../../../sourceRuntime/recordCurrency'
 import {retrievedRecordOf} from '../../../retrieveOutput'
-import {classificationNaming, classifiedOutputLabel, selectedClassificationId, selectedClassificationOfState} from '../../../selectedClassification'
+import {chosenBandLabel, classificationNaming, selectedClassificationId, selectedClassificationOfState} from '../../../selectedClassification'
 import {RecipeActions} from '../../timeSeriesRecipe'
 
 // A download is held, whatever indicators it names, to the recipe's image output - the analysis prerequisites of its
@@ -43,7 +43,7 @@ class _Retrieve extends React.Component {
             <MosaicRetrievePanel
                 requestOptions={options}
                 pendingRequestOptions={pending}
-                requestLabel={value => isClassifiedOutput(value) ? classifiedOutputLabel(classificationNaming(this.props.recipe), value) : value}
+                requestLabel={value => chosenBandLabel(classificationNaming(this.props.recipe), value)}
                 requestGate={this.requestGate}
                 defaultScale={30}
                 defaultTileSize={2}

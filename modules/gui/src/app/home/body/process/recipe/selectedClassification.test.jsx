@@ -282,6 +282,49 @@ describe('what is offered of the Classification a CCDC\'s Sources select', () =>
         expect(tmaskChoices()).toEqual([probability('Water'), probability('Land')])
     })
 
+    it('names OPT\'s TMask choices as the Classification is renamed in another tab', async () => {
+        await open({
+            breakpointBands: ['probability_1', 'probability_2'],
+            ccdcOptions: {...MODERATE, tmaskBands: ['probability_1', 'probability_2']},
+            panels: <CcdcOptions/>
+        })
+
+        await holdInSession(classificationOf(FORESTS, {entries: [{value: 1, label: 'Woodland'}, {value: 2, label: 'Other'}]}))
+
+        expect(tmaskChoices()).toEqual([probability('Woodland'), probability('Other')])
+    })
+
+    it('names a retained TMask output alike in OPT\'s choice and its error as its class is renamed in another tab', async () => {
+        await open({
+            breakpointBands: ['probability_1'],
+            ccdcOptions: {...MODERATE, tmaskBands: ['probability_1', 'probability_2']},
+            panels: <CcdcOptions/>
+        })
+        expect(tmaskChoices()).toEqual([probability('Forest'), probability('Other')])
+        expect(shown()).toContain(notBreakpointBand('Other'))
+
+        await holdInSession(classificationOf(FORESTS, {entries: [{value: 1, label: 'Forest'}, {value: 2, label: 'Rest'}]}))
+
+        expect(tmaskChoices()).toEqual([probability('Forest'), probability('Rest')])
+        expect(shown()).toContain(notBreakpointBand('Rest'))
+        expect(shown()).not.toContain(notBreakpointBand('Other'))
+    })
+
+    it('names a TMask output Sources no longer fit as Sources named it, keeping it chosen and saying it is missing', async () => {
+        await open({
+            breakpointBands: ['probability_1', 'probability_2'],
+            ccdcOptions: {...MODERATE, tmaskBands: ['probability_1', 'probability_2']},
+            panels: <CcdcSources/>
+        })
+        await act(async () => button(probability('Other'), document.querySelector(`[data-label="${BREAKPOINT_BANDS}"]`)).click())
+        await press('button.apply')
+
+        await show(<CcdcOptions/>)
+
+        expect(tmaskChoices()).toEqual([probability('Forest'), probability('Other')])
+        expect(shown()).toContain(`process.ccdc.panel.options.form.tmaskBands.notBreakpointBands ${probability('Other')} 1`)
+    })
+
     it('labels the measures CCDC Retrieve offers by it, following an edit to it in another tab', async () => {
         await open({panels: <CcdcRetrieve/>})
         await outlastRetrieveLoading()
@@ -474,15 +517,21 @@ const button = (label, within = document) => [...within.querySelectorAll('button
 
 const sourcesPanel = () => [...document.querySelectorAll('form')].find(form => form.textContent.includes('panel.sources.title'))
 
-const choicesAt = label => [...document.querySelectorAll(`[data-label="${label}"] button`)].map(({textContent}) => textContent)
+// The choices a field offers, by name: its buttons but the one marking its errors, which names nothing.
+const choicesAt = label => [...document.querySelectorAll(`[data-label="${label}"] button`)].map(({textContent}) => textContent).filter(Boolean)
 
-const breakpointChoices = () => choicesAt('process.ccdc.panel.sources.form.breakpointBands.label')
+const BREAKPOINT_BANDS = 'process.ccdc.panel.sources.form.breakpointBands.label'
+
+const breakpointChoices = () => choicesAt(BREAKPOINT_BANDS)
 
 const chosenBreakpointBands = () => [...document.querySelectorAll('[data-label="process.ccdc.panel.sources.form.breakpointBands.label"] button')]
     .filter(button => /_highlight_/.test(button.className))
     .map(({textContent}) => textContent)
 
 const tmaskChoices = () => choicesAt('process.ccdc.panel.options.form.tmaskBands.label')
+
+// What OPT says of a TMask band, named as a class of the Classification, that is not a breakpoint band.
+const notBreakpointBand = label => `process.ccdc.panel.options.form.tmaskBands.notBreakpointBands ${probability(label)} 1`
 
 const breakpointMessages = () => [...document.querySelectorAll('[data-label="process.ccdc.panel.sources.form.breakpointBands.label"] [data-message]')]
     .map(({textContent}) => textContent)
