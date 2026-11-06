@@ -44,13 +44,11 @@ class _Input extends React.Component {
     change$ = new Subject()
 
     state = {
-        value: '',
         focused: false
     }
 
     captureEvents(e) {
-        const {value} = this.state
-        if (value.length) {
+        if (e.target.value.length) {
             captureKeypress(e, [
                 'ArrowLeft',
                 'ArrowRight',
