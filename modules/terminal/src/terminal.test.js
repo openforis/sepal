@@ -14,7 +14,7 @@ before(async () => {
     process.env.IP = '127.0.0.1'
     process.env.HOME_DIR = homeDir
     process.env.SSH_SCRIPT_PATH = join(homeDir, 'ssh-script')
-    await writeFile(process.env.SSH_SCRIPT_PATH, '#!/bin/sh\nexec cat\n')
+    await writeFile(process.env.SSH_SCRIPT_PATH, '#!/bin/sh\nprintf "TERM=%s\\n" "$TERM"\nexec cat\n')
     await chmod(process.env.SSH_SCRIPT_PATH, 0o755)
     Session = await import('./session.js')
     Terminal = await import('./terminal.js')
@@ -23,6 +23,24 @@ before(async () => {
 after(() => rm(homeDir, {recursive: true, force: true}))
 
 describe('start', () => {
+    test('advertises modern xterm capabilities to the SSH process', {timeout: 5000}, async t => {
+        const websocket = aWebsocket()
+        const output = new Promise(resolve => {
+            let received = ''
+            websocket.send = data => {
+                received += data
+                if (received.includes('\n')) {
+                    resolve(received)
+                }
+            }
+        })
+
+        Terminal.start(websocket, aStartRequest({sessionId: 'terminal-capabilities'}))
+        t.after(() => websocket.emit('close'))
+
+        assert.match(await output, /TERM=xterm-256color\r?\n/)
+    })
+
     test('refuses to attach a user to another user\'s session', t => {
         const ownerSocket = aWebsocket()
         Terminal.start(ownerSocket, aStartRequest({sessionId: 'shared-id', username: 'alice'}))

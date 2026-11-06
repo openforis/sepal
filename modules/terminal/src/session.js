@@ -51,7 +51,7 @@ const getTerminal = ({id, username, keyFile, tempKeyFile, cols, rows}) => {
     }
     
     const terminal = pty.spawn(sshScriptPath, [username, keyFile, tempKeyFile], {
-        name: 'xterm-color',
+        name: 'xterm-256color',
         cols: cols || 80,
         rows: rows || 24,
         cwd: process.env.PWD,
