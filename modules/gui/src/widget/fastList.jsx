@@ -60,6 +60,7 @@ FastList.propTypes = {
 
 class _FastListContent extends React.PureComponent {
     update$ = new Subject()
+    mouseHoverItem = null
 
     state = {
         singleItemHeight: null,
@@ -70,8 +71,7 @@ class _FastListContent extends React.PureComponent {
         lastRenderedItem: 0,
         marginTop: 0,
         marginBottom: 0,
-        keyboardHover: NOT_HOVERED,
-        mouseHover: false
+        keyboardHover: NOT_HOVERED
     }
 
     constructor(props) {
@@ -80,8 +80,14 @@ class _FastListContent extends React.PureComponent {
         this.renderItem = this.renderItem.bind(this)
         this.handleArrowDown = this.handleArrowDown.bind(this)
         this.handleArrowUp = this.handleArrowUp.bind(this)
+        this.handlePageDown = this.handlePageDown.bind(this)
+        this.handlePageUp = this.handlePageUp.bind(this)
+        this.handleHome = this.handleHome.bind(this)
+        this.handleEnd = this.handleEnd.bind(this)
         this.handleEnter = this.handleEnter.bind(this)
-        this.handleEscape = this.handleEscape.bind(this)
+        this.handleMouseActivity = this.handleMouseActivity.bind(this)
+        this.handleItemMouseEnter = this.handleItemMouseEnter.bind(this)
+        this.handleItemMouseLeave = this.handleItemMouseLeave.bind(this)
     }
 
     render() {
@@ -121,35 +127,49 @@ class _FastListContent extends React.PureComponent {
     }
 
     getKeymap() {
-        const {mouseHover, keyboardHover} = this.state
-        if (mouseHover) {
-            return null
-        }
-        if (keyboardHover !== NOT_HOVERED) {
-            return {
-                'ArrowDown': this.handleArrowDown,
-                'ArrowUp': this.handleArrowUp,
-                'Enter': this.handleEnter,
-                'Escape': this.handleEscape
-            }
-        }
-        return {
+        const {keyboardHover} = this.state
+        const navigation = {
             'ArrowDown': this.handleArrowDown,
-            'ArrowUp': this.handleArrowUp
+            'ArrowUp': this.handleArrowUp,
+            'PageDown': this.handlePageDown,
+            'PageUp': this.handlePageUp,
+            'Home': this.handleHome,
+            'End': this.handleEnd
         }
+        return keyboardHover !== NOT_HOVERED
+            ? {...navigation, 'Enter': this.handleEnter}
+            : navigation
     }
 
     renderList() {
         const {firstRenderedItem, lastRenderedItem, marginTop, marginBottom} = this.state
         return (
             <Keybinding keymap={this.getKeymap()}>
-                <div ref={this.initScrollable}>
+                <div
+                    ref={this.initScrollable}
+                    className={styles.list}>
                     {this.renderFiller(marginTop)}
                     {this.renderItems(firstRenderedItem, lastRenderedItem)}
                     {this.renderFiller(marginBottom)}
+                    {this.renderMouseShield()}
                 </div>
             </Keybinding>
         )
+    }
+
+    // During keyboard navigation it keeps the mouse from the items: no hover, no tooltips, also for items scrolled under
+    // a resting cursor. It goes on any use of the mouse over it, as a click without moving would otherwise be lost.
+    renderMouseShield() {
+        const {keyboardHover} = this.state
+        return keyboardHover === NOT_HOVERED
+            ? null
+            : (
+                <div
+                    className={styles.mouseShield}
+                    onMouseMove={this.handleMouseActivity}
+                    onMouseDown={this.handleMouseActivity}
+                />
+            )
     }
 
     renderFiller(height) {
@@ -178,12 +198,14 @@ class _FastListContent extends React.PureComponent {
 
     renderItem(item, index, firstRenderedItem) {
         const {itemKey, itemRenderer, children} = this.props
-        const {keyboardHover, mouseHover} = this.state
+        const {keyboardHover} = this.state
         return (
             <FastListItem
                 item={item}
                 key={itemKey(item)}
-                hovered={!mouseHover && (keyboardHover - firstRenderedItem) === index}>
+                hovered={(keyboardHover - firstRenderedItem) === index}
+                onMouseEnter={this.handleItemMouseEnter}
+                onMouseLeave={this.handleItemMouseLeave}>
                 {itemRenderer || children}
             </FastListItem>
         )
@@ -210,28 +232,68 @@ class _FastListContent extends React.PureComponent {
         }
     }
 
-    isVisible(item) {
-        const {firstVisibleItem, lastVisibleItem} = this.state
-        return item >= firstVisibleItem && item <= lastVisibleItem
-    }
-
     handleArrowDown() {
-        const {items} = this.props
-        const {firstVisibleItem} = this.state
-        this.setState(({keyboardHover}) => ({
-            keyboardHover: this.isVisible(keyboardHover)
-                ? Math.min(keyboardHover + 1, items.length - 1)
-                : firstVisibleItem
-        }))
+        this.moveKeyboardHover(start => start + 1)
     }
 
     handleArrowUp() {
-        const {lastVisibleItem} = this.state
+        this.moveKeyboardHover(start => Math.max(start - 1, 0))
+    }
+
+    handlePageDown() {
+        this.moveKeyboardHover(start => start + this.getPageSize())
+    }
+
+    handlePageUp() {
+        this.moveKeyboardHover(start => Math.max(start - this.getPageSize(), 0))
+    }
+
+    handleHome() {
+        this.moveKeyboardHover(() => 0)
+    }
+
+    handleEnd() {
+        const {items} = this.props
+        this.moveKeyboardHover(() => items.length - 1)
+    }
+
+    moveKeyboardHover(getTarget) {
+        const {items} = this.props
         this.setState(({keyboardHover}) => ({
-            keyboardHover: this.isVisible(keyboardHover)
-                ? Math.max(keyboardHover - 1, NOT_HOVERED)
-                : lastVisibleItem - 1
-        }))
+            keyboardHover: Math.min(getTarget(this.getNavigationStart(keyboardHover)), items.length - 1)
+        }), this.scrollToKeyboardHover)
+    }
+
+    // One less than the items in view, so the item paged from stays in view.
+    getPageSize() {
+        const {scrollable: {clientHeight}} = this.props
+        const {itemHeight, itemSpacing} = this.getItemHeight()
+        return Math.max(1, Math.floor((clientHeight + itemSpacing) / itemHeight) - 1)
+    }
+
+    getNavigationStart(keyboardHover) {
+        return keyboardHover === NOT_HOVERED
+            ? this.getMouseHoverIndex()
+            : keyboardHover
+    }
+
+    getMouseHoverIndex() {
+        const {items, itemKey} = this.props
+        return this.mouseHoverItem
+            ? items.findIndex(item => itemKey(item) === itemKey(this.mouseHoverItem))
+            : NOT_HOVERED
+    }
+
+    // Calculated rather than scrolled to from the element, as the item might be outside the rendered ones.
+    scrollToKeyboardHover() {
+        const {scrollable: {scrollTop, clientHeight, setScrollTop}} = this.props
+        const {keyboardHover} = this.state
+        if (keyboardHover !== NOT_HOVERED) {
+            const {itemHeight, itemSpacing} = this.getItemHeight()
+            const itemTop = keyboardHover * itemHeight
+            const itemBottom = itemTop + itemHeight - itemSpacing
+            setScrollTop(Math.min(itemTop, Math.max(scrollTop, itemBottom - clientHeight)))
+        }
     }
 
     handleEnter() {
@@ -240,8 +302,16 @@ class _FastListContent extends React.PureComponent {
         onEnter && onEnter(items[keyboardHover])
     }
 
-    handleEscape() {
+    handleMouseActivity() {
         this.setState({keyboardHover: NOT_HOVERED})
+    }
+
+    handleItemMouseEnter(item) {
+        this.mouseHoverItem = item
+    }
+
+    handleItemMouseLeave() {
+        this.mouseHoverItem = null
     }
 
     update() {
@@ -273,12 +343,18 @@ class _FastListContent extends React.PureComponent {
     }
 
     componentDidUpdate({items: prevItems, scrollable: {scrollTop: prevScrollTop, clientHeight: prevClientHeight, dragging: prevDragging}}) {
-        const {items, scrollable: {scrollTop, clientHeight, dragging}} = this.props
-        if (!_.isEqual(prevItems, items)) {
+        const {scrollable: {scrollTop, clientHeight, dragging}} = this.props
+        if (this.isDifferentItems(prevItems)) {
             this.reset()
         } else if (scrollTop !== prevScrollTop || clientHeight !== prevClientHeight || dragging !== prevDragging) {
             this.update$.next()
         }
+    }
+
+    // Updates of the same items, such as the progress of a running task, leave the keyboard position and scroll alone.
+    isDifferentItems(prevItems) {
+        const {items, itemKey} = this.props
+        return prevItems !== items && !_.isEqual(_.map(prevItems, itemKey), _.map(items, itemKey))
     }
 }
 
@@ -290,25 +366,21 @@ const FastListContent = compose(
 
 class FastListItem extends React.PureComponent {
     render() {
-        const {item, hovered, children} = this.props
+        const {item, hovered, children, onMouseEnter, onMouseLeave} = this.props
         return (
-            <div ref={hovered ? this.hovered : null}>
+            <div
+                onMouseEnter={() => onMouseEnter(item)}
+                onMouseLeave={onMouseLeave}>
                 {children(item, hovered)}
             </div>
         )
-    }
-
-    hovered(element) {
-        if (element) {
-            element.scrollIntoViewIfNeeded
-                ? element.scrollIntoViewIfNeeded(false)
-                : element.scrollIntoView()
-        }
     }
 }
 
 FastListItem.propTypes = {
     children: PropTypes.func.isRequired,
     item: PropTypes.object.isRequired,
+    onMouseEnter: PropTypes.func.isRequired,
+    onMouseLeave: PropTypes.func.isRequired,
     hovered: PropTypes.any
 }

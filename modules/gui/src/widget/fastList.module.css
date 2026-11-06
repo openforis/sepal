@@ -1,3 +1,13 @@
+.list {
+    position: relative;
+}
+
+.mouseShield {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+}
+
 .filler {
     --height: 0;
     --itemHeight: 0;
