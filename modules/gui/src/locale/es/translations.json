@@ -1184,6 +1184,10 @@
         "tooltip": "",
         "withinBounds": ""
       },
+      "exportCsv": {
+        "label": "",
+        "tooltip": ""
+      },
       "start.tooltip": "Gráfico de series temporales para el pixel"
     },
     "ccdc": {
@@ -1271,7 +1275,8 @@
             "minObservations": "Observaciones mínimas",
             "tmaskBands": {
               "label": "Bandas de TMask",
-              "noneOrTwo": "Deben seleccionarse exactamente dos bandas o ninguna"
+              "noneOrTwo": "Deben seleccionarse exactamente dos bandas o ninguna",
+              "notBreakpointBands": ""
             }
           },
           "title": "Opciones de CCDC",
@@ -2100,6 +2105,7 @@
       "bands": {
         "class": "Clase",
         "classProbability": "Probabilidad de clase",
+        "classValueProbability": "",
         "probability": "",
         "regression": "Regresión"
       },
@@ -3020,6 +3026,9 @@
           "title": "",
           "tooltip": "",
           "duplicateBand": "",
+          "displaced": "",
+          "takesName": "",
+          "unresolved": "",
           "invalidFormat": "",
           "problem": {
             "duplicate": "",
