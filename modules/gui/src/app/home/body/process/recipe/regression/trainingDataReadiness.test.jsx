@@ -311,7 +311,7 @@ async function open(dataSets) {
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: REGRESSION}]
         },
         assets: {user: [PLOTS_TABLE, REMEASURED_TABLE].map(id => ({id, type: 'Table', updateTime: 'T1'})), other: []},

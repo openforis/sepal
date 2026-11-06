@@ -545,7 +545,7 @@ async function open({input, gate, classification, stack, renamed, options}) {
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: PYEO}]
         }
     }

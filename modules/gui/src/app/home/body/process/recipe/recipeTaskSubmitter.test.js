@@ -63,7 +63,7 @@ const {submitRetrieveRecipeTask} = await import('./recipeTaskSubmitter')
 
 const recipe = () => ({
     id: 'recipe-1',
-    projectId: 'project-1',
+    folderId: 'folder-1',
     type: 'SYNTHETIC',
     title: 'A synthetic recipe',
     model: {dates: {startDate: '2020-01-01'}},
@@ -98,7 +98,7 @@ const submitRecipe = (recipeInstance, config) => {
 
 const outerRecipe = (bands, destination = 'GEE') => ({
     id: 'masked-1',
-    projectId: 'project-1',
+    folderId: 'folder-1',
     type: 'SYNTHETIC',
     title: 'An outer recipe',
     model: {},
@@ -594,7 +594,7 @@ describe('submitRetrieveRecipeTask without a resolved image output', () => {
 describe('submitRetrieveRecipeTask with explicit retrieveOptions', () => {
     const staleRecipe = () => ({
         id: 'recipe-1',
-        projectId: 'project-1',
+        folderId: 'folder-1',
         type: 'SYNTHETIC',
         title: 'A synthetic recipe',
         model: {},

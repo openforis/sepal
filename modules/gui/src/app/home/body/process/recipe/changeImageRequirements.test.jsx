@@ -606,7 +606,7 @@ async function open(Toolbar, recipe, openPanels = []) {
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: ID}]
         },
         assets: {user: [NEW, ANOTHER].map(id => ({id, type: 'Image', updateTime: 'T1'})), other: []},

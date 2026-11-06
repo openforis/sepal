@@ -102,7 +102,7 @@ const show = () => {
         process: {
             loadedRecipes: {[OWNER]: {id: OWNER, type: 'MOSAIC', model: {}, layers, ui: {}}},
             recipes: [],
-            projects: [],
+            folders: [],
             tabs: []
         }
     }

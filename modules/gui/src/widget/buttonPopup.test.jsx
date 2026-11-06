@@ -8,6 +8,9 @@ vi.mock('~/widget/floatingBox', () => ({
 }))
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
 
+import {Button} from './button'
+import buttonStyles from './button.module.css'
+import {ButtonGroup} from './buttonGroup'
 import {ButtonPopup} from './buttonPopup'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -45,4 +48,40 @@ describe('ButtonPopup disabled state', () => {
         render(false)
         expect(container.querySelector('[data-testid="picker"]')).toBeNull()
     })
+})
+
+describe('ButtonPopup in a joined group', () => {
+    let container, root
+
+    beforeEach(() => {
+        container = document.createElement('div')
+        document.body.appendChild(container)
+        root = createRoot(container)
+    })
+
+    afterEach(() => {
+        act(() => root.unmount())
+        container.remove()
+    })
+
+    it('leaves the buttons in its popup out of the group', () => {
+        act(() => root.render(
+            <ButtonGroup spacing='none'>
+                <Button label='before'/>
+                <ButtonPopup label='open'>
+                    <Button label='inside'/>
+                </ButtonPopup>
+                <Button label='after'/>
+            </ButtonGroup>
+        ))
+        act(() => buttonLabelled('open').click())
+
+        expect(isJoined(buttonLabelled('inside'))).toBe(false)
+    })
+
+    const buttonLabelled = label =>
+        [...container.querySelectorAll('button')].find(({textContent}) => textContent.includes(label))
+
+    const isJoined = button =>
+        button.classList.contains(buttonStyles['join-left']) || button.classList.contains(buttonStyles['join-right'])
 })

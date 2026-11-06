@@ -1,7 +1,8 @@
 # CLAUDE.md - modules/recipe
 
-Processing-recipe persistence service. Owns the `recipe` MySQL schema (recipe and project tables) and
-serves `/api/processing-recipes`. Content and its monotonic revision are loaded together; updates require
+Processing-recipe persistence service. Owns the `recipe` MySQL schema (recipe and folder tables; the
+`project` table and `recipe.project_id` are the pre-folder originals, kept until the legacy import is removed)
+and serves `/api/processing-recipes`. Content and its monotonic revision are loaded together; updates require
 `expectedRevision`. See the [storage contract](../../docs/design/recipes/source-freshness.md#recipe-storage-contract).
 
 ## Database migrations
@@ -17,4 +18,4 @@ serves `/api/processing-recipes`. Content and its monotonic revision are loaded 
 ## Routes (served without the `/api/processing-recipes` gateway prefix)
 - `GET /healthcheck`
 - `GET /` (list recipes) / `DELETE /` (remove recipes by id list) / `GET /:id` (load) / `POST /:id` (save, gzip body) / `DELETE /:id` (remove)
-- `GET /project` / `POST /project` (save) / `DELETE /project/:id` (remove) / `POST /project/:id` (move recipes)
+- `GET /folder` / `POST /folder` (save) / `DELETE /folder/:id` (remove) / `POST /folder/:id` (move recipes, `:id` `none` for the root)

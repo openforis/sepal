@@ -239,7 +239,7 @@ async function open({type, Sources, sources, records = {[CLASSIFICATION]: SVM}, 
             recipes: [CLASSIFICATION, ...Object.keys(records)].map(id => ({id, name: id, type: 'CLASSIFICATION', revision: 1})),
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: []
         }
     }

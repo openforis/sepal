@@ -15,7 +15,7 @@ import {initStore} from '~/store'
 
 vi.mock('~/apiRegistry', () => ({default: {
     recipe: {loadAll$: () => of([]), save$: () => NEVER, load$: () => NEVER},
-    project: {loadAll$: () => of([])}
+    folder: {loadAll$: () => of([])}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
 // Loading the recipe modules closes an import cycle through the user module's forms; nothing here reads it.
@@ -129,7 +129,7 @@ async function openWithWizardDraft() {
 async function open(process) {
     const initialState = {
         user: {currentUser: {username: 'user'}},
-        process: {...process, recipes: [], projects: [], recipeListing: {checkedAt: Date.now()}, saveStates: {}},
+        process: {...process, recipes: [], folders: [], recipeListing: {checkedAt: Date.now()}, saveStates: {}},
         dimensions: {width: 1024, height: 768}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
@@ -142,7 +142,7 @@ async function open(process) {
             <ActivationContext id='root'>
                 <EventShield>
                     <PortalContainer/>
-                    <Process projects={[]} recipes={[]}/>
+                    <Process folders={[]} recipes={[]}/>
                 </EventShield>
             </ActivationContext>
         </Provider>

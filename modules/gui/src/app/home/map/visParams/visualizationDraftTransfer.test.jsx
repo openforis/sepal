@@ -477,7 +477,7 @@ beforeEach(async () => {
                 [RECIPE_B]: recipe(RECIPE_B, [B_NIR, B_YEARS], [B]),
                 [RECIPE_C]: recipe(RECIPE_C, [C_NIR], [C])
             },
-            recipes: [], saveStates: {}, projects: [], tabs: [{id: RECIPE_A}, {id: RECIPE_B}, {id: RECIPE_C}]
+            recipes: [], saveStates: {}, folders: [], tabs: [{id: RECIPE_A}, {id: RECIPE_B}, {id: RECIPE_C}]
         },
         dimensions: {width: 1024, height: 768}
     }

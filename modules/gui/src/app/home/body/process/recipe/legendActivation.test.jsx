@@ -141,7 +141,7 @@ async function open(editor) {
             recipes: [{id, name: 'Recipe', type: editor.type, revision: 1}],
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id}]
         },
         assets: {user: [], other: []},

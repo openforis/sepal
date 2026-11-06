@@ -269,7 +269,7 @@ async function open({gate, inputs}) {
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
+            folders: [],
             tabs: [{id: PYEO}]
         }
     }

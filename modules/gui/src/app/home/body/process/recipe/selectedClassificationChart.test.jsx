@@ -388,7 +388,7 @@ async function open({type, chart: {CHART_OPERATIONS, ChartPixel}, RecipeActions}
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: classificationOpen ? {[CLASSIFICATION]: {status: 'SAVED', revision: 1, model: records[1].model}} : {},
-            projects: [],
+            folders: [],
             tabs: [{id: SERIES}, ...(classificationOpen ? [{id: CLASSIFICATION}] : [])]
         }
     }

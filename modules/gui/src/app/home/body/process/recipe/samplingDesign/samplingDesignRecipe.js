@@ -79,7 +79,7 @@ export const toTaskRecipe = recipe => {
 // strata, and an Earth Engine string property longer than 16,384 bytes is dropped.
 const taskProperties = recipe => ({
     recipe_id: recipe.id,
-    recipe_projectId: recipe.projectId,
+    recipe_projectId: recipe.folderId,
     recipe_type: recipe.type,
     recipe_title: recipe.title || recipe.placeholder,
     ..._(withoutEvidence(recipe.model))

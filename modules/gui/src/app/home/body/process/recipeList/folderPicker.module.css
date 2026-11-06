@@ -1,0 +1,31 @@
+/* A preference, not a demand: the popup is clamped to the room between the button and the edge of the
+   window, and without the max-width the box keeps its 18rem and spills over its own padding. */
+.picker {
+    width: 18rem;
+    max-width: 100%;
+}
+
+/* The name takes what the button leaves it and no more, so a long one is cut rather than widening
+   the box. */
+.folder {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* As far from the house as the breadcrumb's segment padding sets it. */
+.root {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+}
+
+/* Room for five folders, held whether the open folder has one or fifty. */
+.options {
+    height: 11rem;
+}
+
+.select {
+    align-self: flex-end;
+}

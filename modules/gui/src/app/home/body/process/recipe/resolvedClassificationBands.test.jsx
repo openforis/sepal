@@ -183,7 +183,7 @@ const openChart = async (type, ChartPixel) => {
             saveStates: {},
             recipes: fake.listing,
             recipeListing: {checkedAt: Date.now()},
-            projects: []
+            folders: []
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)

@@ -156,7 +156,7 @@ const open = async (type, Inputs, {images = [ASSET_INPUT], listed = [], loaded =
             ...Object.fromEntries(loaded.map(recipe => [recipe.id, {type: 'MOSAIC', revision: 1, model: {}, ...recipe}]))
         },
         recipes: [{id: 'recipe', type, name: 'Recipe', revision: 1}, ...listed.map(recipe => ({type: 'MOSAIC', revision: 1, ...recipe}))],
-        projects: [],
+        folders: [],
         tabs: []
     }}
     store = createStore((state = initial, action) => action.reduce ? action.reduce(state) : state)

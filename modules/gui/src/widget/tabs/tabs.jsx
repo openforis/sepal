@@ -113,7 +113,7 @@ class _Tabs extends React.Component {
     }
 
     renderTabHandle(tab) {
-        const {selectedTabId, statePath, isLandingTab, readOnlyTitles, onTitleChanged} = this.props
+        const {selectedTabId, statePath, tabTooltip, isLandingTab, readOnlyTitles, onTitleChanged} = this.props
         const {dragging} = this.state
         return (
             <TabHandle
@@ -122,6 +122,7 @@ class _Tabs extends React.Component {
                 id={tab.id}
                 title={tab.title}
                 placeholder={tab.placeholder}
+                tooltip={tabTooltip ? tabTooltip(tab) : undefined}
                 readOnlyTitle={readOnlyTitles || (isLandingTab && isLandingTab(tab))}
                 selected={tab.id === selectedTabId}
                 tabBusy$={this.tabBusy$}
@@ -367,10 +368,10 @@ class _Tabs extends React.Component {
     }
 
     render() {
-        const {label, tabs} = this.props
+        const {tabs} = this.props
         return (
             <SectionLayout className={styles.container}>
-                <TopBar label={label}>
+                <TopBar label={this.getLabel()}>
                     {this.renderTabHandles()}
                 </TopBar>
                 <Content className={styles.tabContents}>
@@ -383,6 +384,12 @@ class _Tabs extends React.Component {
                 </Content>
             </SectionLayout>
         )
+    }
+
+    getLabel() {
+        const {label, selectedLabel, selectedTabId, tabs} = this.props
+        const selectedTab = tabs.find(({id}) => id === selectedTabId)
+        return (selectedLabel && selectedTab && selectedLabel(selectedTab)) || label
     }
 
     initialize() {
@@ -431,8 +438,10 @@ Tabs.propTypes = {
     maxTabs: PropTypes.number,
     newTabPlaceholder: PropTypes.string,
     readOnlyTitles: PropTypes.any,
+    selectedLabel: PropTypes.func,
     selectedTabId: PropTypes.string,
     tabActions: PropTypes.func,
+    tabTooltip: PropTypes.func,
     tabs: PropTypes.array,
     onAdd: PropTypes.func,
     onClose: PropTypes.func,

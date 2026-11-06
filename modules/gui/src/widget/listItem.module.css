@@ -8,10 +8,13 @@
     /* flex-shrink: 1; */
 }
 
+/* A row takes the width it is given. Without this a flex item is floored at the width of its own
+   contents, and one long name then widens the row, the list and whatever holds them. */
 .horizontalWrapper {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+    min-width: 0;
 }
 
 .dragHandle {
@@ -58,6 +61,7 @@
 .content {
     flex-grow: 1;
     flex-shrink: 1;
+    min-width: 0;
 }
 
 /* Let nested row content shrink while retaining its intrinsic size when the list sizes to its contents. */
@@ -125,6 +129,27 @@
     user-select: none;
 }
 
+/* The copy keeps the size of the item it copies, even where a line may not wrap. */
 .draggableClone > * {
     flex-grow: 1;
+    min-width: 0;
+}
+
+/* A copy beside the pointer stands on a solid surface and fades out over the first 30% of its width,
+   clear beyond, so a row as wide as its list reads as what is dragged rather than as one more row of
+   the list. A mask, unlike the overlay that fades tab titles, makes the copy itself transparent.
+   The tooltip's shadow is a drop shadow of the masked row, not a box shadow, which the mask would clip
+   and which would not follow the fade. */
+.draggableClone.besidePointer {
+    filter: drop-shadow(0 0 1rem var(--shadow-medium-color));
+}
+
+.draggableClone.besidePointer > * {
+    background-color: var(--popover-background-color);
+    mask-image: linear-gradient(to right, black, transparent 30%);
+}
+
+.dragCursor,
+.dragCursor * {
+    cursor: grabbing !important;
 }
