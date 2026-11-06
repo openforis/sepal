@@ -1184,6 +1184,10 @@
         "tooltip": "",
         "withinBounds": ""
       },
+      "exportCsv": {
+        "label": "",
+        "tooltip": ""
+      },
       "start.tooltip": ""
     },
     "ccdc": {
@@ -1271,7 +1275,8 @@
             "minObservations": "",
             "tmaskBands": {
               "label": "",
-              "noneOrTwo": ""
+              "noneOrTwo": "",
+              "notBreakpointBands": ""
             }
           },
           "title": "",
@@ -2100,6 +2105,7 @@
       "bands": {
         "class": "",
         "classProbability": "",
+        "classValueProbability": "",
         "probability": "",
         "regression": ""
       },
@@ -3020,6 +3026,9 @@
           "title": "",
           "tooltip": "",
           "duplicateBand": "",
+          "displaced": "",
+          "takesName": "",
+          "unresolved": "",
           "invalidFormat": "",
           "problem": {
             "duplicate": "",
