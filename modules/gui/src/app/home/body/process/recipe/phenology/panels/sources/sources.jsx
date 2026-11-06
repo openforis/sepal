@@ -7,7 +7,7 @@ import {getDataSetOptions as radarDataSetOptions, isRadarDataSet} from '~/app/ho
 import {draftSelection, withSelectedClassification} from '~/app/home/body/process/recipe/selectedClassification'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
-import {groupedBandOptions, toSources, withChosenClassifiedOutputs} from '~/sources'
+import {groupedBandOptions, toSources, withChosenBands} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
@@ -145,19 +145,10 @@ class _Sources extends React.Component {
         )
     }
 
+    // The band chosen stays shown, so the form has none to drop (form/buttons.jsx) and a refused one is explained beside it.
     renderBand() {
-        const {corrections, form, selectedClassification: {classificationLegend, classifierType, classifier, labelOf}, inputs: {dataSets, band}} = this.props
-        var dataSetArray = dataSets.value && _.isArray(dataSets.value)
-            ? dataSets.value
-            : [dataSets.value]
-        var classification = {classificationLegend, classifierType, classifier, include: ['regression', 'probabilities']}
-        const collectionGrouped = groupedBandOptions({
-            dataSets: dataSetArray,
-            corrections,
-            classification
-        })
-        
-        const options = withChosenClassifiedOutputs(collectionGrouped, band.value, labelOf)
+        const {form, selectedClassification: {labelOf}, inputs: {band}} = this.props
+        const options = withChosenBands(this.bandOptions(), band.value, labelOf)
             .filter(group => group.length)
             .map(group => ({options: group}))
         return (
@@ -170,6 +161,17 @@ class _Sources extends React.Component {
                 errorMessage={form.getErrorMessage(band)}
             />
         )
+    }
+
+    bandOptions() {
+        const {corrections, selectedClassification: {classificationLegend, classifierType, classifier}, inputs: {dataSets}} = this.props
+        return dataSets.value && dataSets.value.length
+            ? groupedBandOptions({
+                dataSets: [dataSets.value].flat(),
+                corrections,
+                classification: {classificationLegend, classifierType, classifier, include: ['regression', 'probabilities']}
+            })
+            : []
     }
 
     renderAssetId() {

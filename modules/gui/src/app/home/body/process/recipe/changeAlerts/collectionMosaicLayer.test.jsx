@@ -70,6 +70,8 @@ const {default: changeAlertsType} = await import('./changeAlerts')
 const {default: ccdcType} = await import('../ccdc/ccdc')
 const {SourceRuntimeProvider, withSourceRuntime} = await import('../../sourceRuntime/sourceRuntimeContext')
 const {initStore} = await import('~/store')
+const {RecipeCacheClaimant} = await import('../../recipeCacheClaims')
+const {sessionRecipeCache} = await import('../../recipe')
 
 addRecipeType(changeAlertsType())
 addRecipeType(ccdcType())
@@ -84,8 +86,11 @@ beforeEach(() => {
 })
 
 let root
+let unmountLayer
 
 afterEach(async () => {
+    await act(async () => unmountLayer?.())
+    unmountLayer = null
     await act(async () => root?.unmount())
     root = null
 })
@@ -248,7 +253,9 @@ const RuntimeProbe = withSourceRuntime()(({sourceRuntime, onRuntime}) => {
 })
 
 // The layer over a real store and the source runtime its provider builds, given the props its selector computes from
-// them, recomputed as the store or its config changes, as React Redux would.
+// them, recomputed as the store or its config changes, as React Redux would. The source component a map renders beside
+// the layer claims the recipe it shows while mounted (recipeImageLayerSource.jsx, through recipeAccess.jsx): that claim
+// alone keeps a recipe that is not open in the session. Unmounting releases the layer, then the claim.
 const show = async ({layerConfig, inAnotherRecipe = false}) => {
     const recipe = changeAlerts()
     const store = createStore((state = {
@@ -288,6 +295,8 @@ const show = async ({layerConfig, inAnotherRecipe = false}) => {
         dragging$: null,
         cursor$: null
     })
+    const sourceClaim = new RecipeCacheClaimant(sessionRecipeCache)
+    sourceClaim.use(recipe.id)
     const propsFor = config => ({...ownProps(config), ...layerSelector(store.getState(), ownProps(config))})
     const instance = new RecipeImageLayer(propsFor(layerConfig))
     const rerender = () => {
@@ -296,8 +305,13 @@ const show = async ({layerConfig, inAnotherRecipe = false}) => {
         instance.componentDidUpdate(previous)
     }
     instance.forceUpdate = rerender
-    store.subscribe(rerender)
+    const unsubscribe = store.subscribe(rerender)
     instance.componentDidMount()
+    unmountLayer = () => {
+        unsubscribe()
+        instance.componentWillUnmount()
+        sourceClaim.release()
+    }
     await settled()
     // Every read of the record still waiting is answered alike.
     const settle = async (id, deliver) => {

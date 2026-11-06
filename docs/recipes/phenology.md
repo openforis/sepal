@@ -17,14 +17,21 @@ or at the classification; SRC says why beside that field, the classification sho
 used, and a refused draft cannot be applied. Selecting none requires nothing. Map previews, the Retrieve button and
 image-to-asset, Drive and SEPAL exports follow the finding.
 
+A band of the images must be one the collection carries, as its data sets and processing configure it
+([Time Series](time-series.md#bands-of-the-images-ccdc-and-phenology-choose); `collectionBandRequirement`,
+`lib/js/shared/src/recipe/collectionBands.js`). Otherwise `UNSUPPORTED_COLLECTION_BANDS` refuses it at the band. SRC
+says why beside it, and a refused draft cannot be applied, while a PRC Apply leaving it uncarried is allowed and marks
+SRC. Map previews, the Retrieve button and exports follow the finding.
+
 A band the Classification computes - its regression or a class's probability - must be one its classifier's
 configuration provides (`classifiedOutputRequirement`, `lib/js/shared/src/recipe/classifiedOutputs.js`). An SVM
 offers no regression, and an SVM of one class offers no class probabilities. Otherwise `UNSUPPORTED_CLASSIFIED_OUTPUT`
-refuses it at the band; SRC says why beside it, and a refused draft cannot be applied. A band saved so stays shown as
-chosen, and opening the panel leaves it unedited, until another band is chosen
-(`modules/gui/src/app/home/body/process/recipe/classifiedOutputSources.test.jsx`). The outputs offered are read from
-the selected Classification as [Time Series](time-series.md#what-is-offered-of-the-selected-classification) reads it,
-and a band it no longer provides is named, in its choice and its refusal, as that section describes.
+refuses it at the band; SRC says why beside it, and a refused draft cannot be applied. A band refused by either rule
+stays shown as chosen, and opening the panel leaves it unedited, until another band is chosen
+(`classifiedOutputSources.test.jsx` and `collectionBands.test.jsx` in `modules/gui/src/app/home/body/process/recipe/`).
+The outputs offered are read from the selected Classification as
+[Time Series](time-series.md#what-is-offered-of-the-selected-classification) reads it, and a band it no longer
+provides is named, in its choice and its refusal, as that section describes.
 
 ## Output
 

@@ -9,6 +9,7 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
+import {collectionBandRequirements} from '../collectionBandRequirements'
 import {classificationReferenceFeedback, classifiedOutputRequirements, collectionClassifierRequirements} from '../collectionClassifierRequirements'
 import {withSelectedClassification} from '../selectedClassification'
 import {bandPresentation} from './bands'
@@ -65,6 +66,7 @@ export default () => ({
     },
     sourceRequirements: [
         ...collectionClassifierRequirements(SOURCES),
+        collectionBandRequirements(SOURCES, 'band'),
         classifiedOutputRequirements(SOURCES, 'band'),
         classificationReferenceFeedback(SOURCES)
     ],

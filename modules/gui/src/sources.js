@@ -1,4 +1,3 @@
-import {isClassifiedOutput} from '#sepal/recipe/classifiedOutputs'
 import {RADAR_MEASURES} from '#sepal/recipe/radar/collectionMeasures'
 import {supportProbability, supportRegression} from '#sepal/recipe/type/classification'
 import {getAvailableBands as getAvailableOpticalBands, getGroupedBandOptions as getGroupedOpticalBandOptions} from '~/app/home/body/process/recipe/opticalMosaic/bands'
@@ -118,13 +117,13 @@ export const flatBandOptions = ({
     }
 }).flat()
 
-// Grouped options with a group of their own for each classified output chosen that none offers - one the Classification
-// no longer provides, or not yet known to - so a choice saved is shown as made, where what it is refused for is said, and
-// can be taken back. Each is named as `labelOf` names it (classifiedOutputLabel). A band of the images themselves that is
-// no longer offered is not kept.
-export const withChosenClassifiedOutputs = (groupedOptions, chosen, labelOf) => {
+// Grouped options with a group of their own for each choice none offers - a band the configured collection no longer
+// carries, a classified output the Classification no longer provides, or one not yet known to - in the order chosen, so a
+// choice saved is shown as made, where what it is refused for is said, and can be taken back. Each is named as `labelOf`
+// names it (chosenBandLabel).
+export const withChosenBands = (groupedOptions, chosen, labelOf) => {
     const offered = groupedOptions.flat().map(({value}) => value)
-    const unoffered = [].concat(chosen ?? []).filter(isClassifiedOutput).filter(band => !offered.includes(band))
+    const unoffered = [].concat(chosen ?? []).filter(band => !offered.includes(band))
     return unoffered.length
         ? [...groupedOptions, unoffered.map(band => ({value: band, label: labelOf(band)}))]
         : groupedOptions

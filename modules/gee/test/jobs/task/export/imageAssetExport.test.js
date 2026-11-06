@@ -897,6 +897,13 @@ describe('exporting a Phenology analysing a band its Classification computes', (
 
         await submit({recipe: phenology('ndvi'), bands: ['amplitude']})
     })
+
+    it('fails the export of a band its collection does not carry, saying why', async () => {
+        state.catalogue = {'classification-1': classificationOf({points: POINTS})}
+
+        await assert.rejects(submit({recipe: phenology('thermal2'), bands: ['amplitude']}), /cannot run: UNSUPPORTED_COLLECTION_BANDS$/)
+        assert.deepEqual(state.exported, [])
+    })
 })
 
 // A recipe zipping no input image cannot run, nor can a recipe whose image builds it.

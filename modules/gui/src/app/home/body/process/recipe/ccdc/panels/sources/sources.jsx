@@ -7,7 +7,7 @@ import {getDataSetOptions as radarDataSetOptions, isRadarDataSet} from '~/app/ho
 import {draftSelection, withSelectedClassification} from '~/app/home/body/process/recipe/selectedClassification'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
-import {groupedBandOptions, toDataSetIds, toSources, withChosenClassifiedOutputs} from '~/sources'
+import {groupedBandOptions, toDataSetIds, toSources, withChosenBands} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
@@ -38,7 +38,7 @@ const fields = {
 
 const mapRecipeToProps = recipe => ({
     dates: selectFrom(recipe, 'model.dates'),
-    corrections: selectFrom(recipe, 'model.opticalPreprocess.corrections')
+    corrections: selectFrom(recipe, 'model.options.corrections')
 })
 
 class _Sources extends React.Component {
@@ -177,9 +177,10 @@ class _Sources extends React.Component {
         )
     }
 
+    // Every band chosen stays shown, so the form has none to drop (form/buttons.jsx) and a refused one is explained beside it.
     renderBreakpointBands() {
         const {form, selectedClassification: {labelOf}, inputs: {breakpointBands}} = this.props
-        const options = withChosenClassifiedOutputs(this.breakpointBandOptions(), breakpointBands.value, labelOf)
+        const options = withChosenBands(this.breakpointBandOptions(), breakpointBands.value, labelOf)
             .filter(group => group.length)
             .map(group => ({options: group}))
         return (

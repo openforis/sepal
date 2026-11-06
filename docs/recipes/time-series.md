@@ -14,9 +14,10 @@ A selected Classification must be one the collection's images can feed. Its clas
 band sets include, and readiness requires each image to carry them where `lib/js/ee/src/timeSeries/collection.js`
 classifies it (`collectionClassifierRequirement` in `lib/js/shared/src/recipe/source/collectionSources.js`, the rule in
 `classifierInputs.js`): an optical scene's common bands, tasseled cap and indexes; a radar scene's `VV`, `VH` and
-`orbit`, the ratio derived only afterwards; a Planet image's renamed bands, with the `brightness`, `dayOfYear`,
-`daysFromTarget`, `targetDayCloseness` and `unixTimeDays` its collection adds to every image (`PLANET_GENERATED_BANDS`)
-- and any index the classifier computes from them.
+`orbit`, the ratio derived only afterwards; a Planet image's renamed bands, with the `dayOfYear`, `daysFromTarget`,
+`targetDayCloseness` and `unixTimeDays` its collection adds to every image (`PLANET_DATE_BANDS`) - and any index the
+classifier computes from them. The RGB `brightness` a Planet collection also adds is an internal working band, not the
+tasseled cap's `brightness` a classifier reads, so it never supplies one.
 Latitude, terrain and water imagery the classifier generates itself. `UNSUPPLIED_CLASSIFIER_INPUTS` refuses it at the
 data sets where an optical data set alone or the radar collection would carry the features, otherwise at the
 classification; the output description stays. SRC is marked and its editor says why beside that field - the
@@ -84,6 +85,34 @@ selection is the one the type declares (`CLASSIFICATION_SOURCE`). CCDC and Pheno
 
 Nothing of the Classification is copied into the recipe: opening a recipe and a read completing leave its model and
 drafts as they were.
+
+### Bands of the images CCDC and Phenology choose
+
+CCDC's breakpoint bands and Phenology's band are bands of the collection's images or classified outputs. Classified
+outputs follow [their own rule](#classified-outputs).
+
+- **Rule.** A chosen band of the images must be one the configured collection carries (`collectionBandRequirement`,
+  `lib/js/shared/src/recipe/collectionBands.js`). Its data sets, optical corrections (`options.corrections`) and
+  Planet histogram matching (`options.histogramMatching`) decide that, by the branch `collection.js` takes
+  (`collectionMeasures`, which `ccdcMeasures` extends). Dates and cloud thresholds select images, not bands.
+  `UNSUPPORTED_COLLECTION_BANDS` is found at the field and names the `unsupported` bands. For CCDC it refuses the
+  image (preview, Retrieve), the pixel segments and the count; for Phenology, the image. The server's
+  `requireExecutable$` refuses the same configuration before Earth Engine is asked. While no data set is selected,
+  nothing is judged, and the required data sets refuse Apply.
+- **Planet.** Basemaps and histogram-matched Daily carry the four matched bands, so `green1` is refused there. Without
+  matching, Daily's bands depend on its imagery, which this rule does not read. A band or index that eight-band
+  imagery carries is not refused; one that no Daily imagery carries is. The RGB `brightness` and the date bands Planet
+  processing adds to every image (`PLANET_DATE_BANDS`) are internal working bands, not measures to analyse. That
+  `brightness` is not the tasseled cap's, whose SWIR inputs Planet lacks, so a chosen `brightness` is refused over
+  every Planet collection.
+- **Sources.** Choices come from the draft's data sets and the corrections applied, the catalogue the rule reads.
+  Planet offers its established subset. A chosen band that is not offered stays shown as chosen, after the offered
+  groups: after a family or data-set change, while no data set is chosen, or as saved. Opening, rendering and reads
+  completing leave the model and draft unchanged. The draft is judged against the processing applied, and again at
+  submission (`collectionBandRequirements.js`). A draft keeping an uncarried band says so beside the field, with the
+  repairs, and its Apply, Enter and wizard Done are refused. Data-set defaulting on a family change is unchanged.
+- **PRC.** A PRC Apply that leaves a chosen band uncarried is allowed. SRC is then marked and the held operations
+  name it. Choosing a carried band in Sources, or changing the data sets or processing back, repairs it.
 
 ### CCDC's TMask bands
 
@@ -307,6 +336,12 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
   presets and selections execution does not pass, the server refusal and the pair Earth Engine is given, and through
   CCDC's root, toolbar, Sources and OPT the allowed Sources Apply, OPT's mark, held operations, retained choices,
   refused drafts and each repair.
+- `lib/js/shared/test/recipe/collectionBands.test.js`, `modules/gee/test/jobs/ee/ccdc/loadSegmentsReadiness.test.js`,
+  `modules/gee/test/jobs/task/export/imageAssetExport.test.js`, `modules/gui/src/sources.test.js` and
+  `modules/gui/src/app/home/body/process/recipe/collectionBands.test.jsx`: the collection-band rule per operation and
+  family, Planet's boundary, empty data sets, the server refusal, offered bands agreeing with the catalogue, and,
+  through CCDC's and Phenology's roots, toolbars, Sources and PRC, retained choices, refused drafts and submissions,
+  the allowed PRC Apply, held operations and each repair.
 - `modules/gui/src/app/home/body/process/recipe/pixelChartExport.test.jsx`: each pixel chart's Export CSV through its
   panel - when it is enabled, a new band or pixel, zoom, empty results and an unchanged recipe.
   `ccdc/ccdcChart.test.js`, `landTrendr/panels/landTrendrChart.test.js` and `pixelChartCsv.test.js`: the prepared

@@ -6,7 +6,7 @@ import {isObservable, of, ReplaySubject, throwError} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
+import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
@@ -80,18 +80,21 @@ vi.mock('~/widget/assetDestination', () => ({
     }
 }))
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
+// Whether the panel closed itself, as it does when its action is withdrawn.
+const activation = vi.hoisted(() => ({closed: false}))
 vi.mock('~/widget/activation/activatable', () => ({
     withActivatable: () => Component => props => (
-        <Component {...props} activatable={{active: true, activate: () => {}, deactivate: () => {}}}/>
+        <Component {...props} activatable={{active: true, activate: () => {}, deactivate: () => (activation.closed = true)}}/>
     )
 }))
-// The registry as production wires Masking's own entry.
+// The registry as production wires Masking's and CCDC's entries.
+const registered = vi.hoisted(() => ({}))
 vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
     const {getPreSetVisualizations} = await import('../../visualizations')
     return {
         getRecipeType: type => type === 'MASKING'
             ? {id: 'MASKING', getPreSetVisualizations}
-            : {id: type, getDateRange: () => [], getPreSetVisualizations: () => []}
+            : registered[type] || {id: type, getDateRange: () => [], getPreSetVisualizations: () => []}
     }
 })
 
@@ -102,6 +105,9 @@ const {Retrieve} = await import('./retrieve')
 const {Retrieve: ClassificationRetrieve} = await import('../../../classification/panels/retrieve/retrieve')
 const {Retrieve: CcdcRetrieve} = await import('../../../ccdc/panels/retrieve/retrieve')
 const {Retrieve: PhenologyRetrieve} = await import('../../../phenology/panels/retrieve/retrieve')
+const {default: ccdc} = await import('../../../ccdc/ccdc')
+const {retrieveAvailability} = await import('../../../operationAvailability')
+registered.CCDC = ccdc()
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -406,15 +412,19 @@ describe('retrieving CCDC measures', () => {
         expect(submitted[0].params.image.bands).toEqual(['red'])
     })
 
-    // A breakpoint band is the recipe's configuration, not a saved choice: nothing chosen can be dropped to fix it.
-    it('still names a breakpoint band the collection no longer carries, and submits nothing', async () => {
+    // A breakpoint band is the recipe's configuration, not a saved choice: Retrieve is withdrawn for it, and Sources says
+    // why.
+    it('closes once its collection no longer carries a breakpoint band, naming Sources, and submits nothing', async () => {
         observed.answer = catalogue
         const breakingOnThermal = {...CCDC, model: {...CCDC.model, sources: {...CCDC.model.sources, breakpointBands: ['thermal']}}}
-        const saved = onSentinel2(retrieving(['red'], breakingOnThermal))
+        await open({recipes: [retrieving(['red'], breakingOnThermal)], id: CCDC.id, Panel: CcdcRetrieve})
+        expect(offers('red')).toBe(true)
+        expect(activation.closed).toBe(false)
 
-        await open({recipes: [saved], id: CCDC.id, Panel: CcdcRetrieve})
+        await editRecipe(CCDC.id, {model: onSentinel2(breakingOnThermal).model})
 
-        expect(shown()).toContain('process.retrieve.form.bands.unavailable thermal')
+        expect(activation.closed).toBe(true)
+        expect(retrieveGate(CCDC.id)).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET', section: CCDC_SOURCES})
 
         await click('process.retrieve.apply')
 
@@ -445,14 +455,15 @@ describe('retrieving CCDC measures', () => {
             expect(submitted[0].params.image.bands).toEqual(['red'])
         })
 
-        it('still names a configured date breakpoint, and submits nothing', async () => {
+        it('closes as it opens over a configured date breakpoint, naming Sources, and submits nothing', async () => {
             observed.answer = catalogue
             const breakingOnDates = {...CCDC, model: {...CCDC.model, sources: {...CCDC.model.sources, breakpointBands: ['unixTimeDays']}}}
             const saved = medoid(retrieving(['red'], breakingOnDates))
 
             await open({recipes: [saved], id: CCDC.id, Panel: CcdcRetrieve})
 
-            expect(shown()).toContain('process.retrieve.form.bands.unavailable unixTimeDays')
+            expect(activation.closed).toBe(true)
+            expect(retrieveGate(CCDC.id)).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET', section: CCDC_SOURCES})
 
             await click('process.retrieve.apply')
 
@@ -1060,6 +1071,9 @@ const maskingOver = source => ({
 
 let root
 let store
+let runtime
+
+const CCDC_SOURCES = 'process.ccdc.panel.sources.button'
 
 // The panel opens on a loading view held for a minimum, so a scenario about anything else waits that out
 // before looking. A scenario about the view itself mounts and advances the clock itself.
@@ -1094,6 +1108,7 @@ const mountPanel = ({recipes = [MASKING, MOSAIC], id = MASKING.id, Panel = Retri
             <PortalContext id='test-portal'>
                 <EventShield>
                     <SourceRuntimeProvider>
+                        <RuntimeProbe/>
                         <Recipe id={id}>
                             <SourceEvidenceSync observation={maskingObservation}/>
                             <Panel/>
@@ -1104,6 +1119,20 @@ const mountPanel = ({recipes = [MASKING, MOSAIC], id = MASKING.id, Panel = Retri
         </Provider>
     ))
 }
+
+const RuntimeProbe = withSourceRuntime()(({sourceRuntime}) => {
+    runtime = sourceRuntime
+    return null
+})
+
+// Why the recipe's Retrieve action is held, as its toolbar button says: the gate it is withdrawn or waits for.
+const retrieveGate = id => retrieveAvailability({
+    state: store.getState(),
+    recipe: store.getState().process.loadedRecipes[id],
+    evidenceOwnerOf: recipeId => runtime.evidenceOwnerOf(recipeId),
+    heldFor: key => runtime.heldFor(key),
+    now: Date.now()
+}).gate
 
 const buttons = () => [...document.querySelectorAll('button')]
 
@@ -1179,5 +1208,7 @@ afterEach(() => {
     submitted.length = 0
     geeReads.length = 0
     observed.answer = null
+    activation.closed = false
     store = null
+    runtime = null
 })

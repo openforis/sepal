@@ -5998,6 +5998,10 @@
         "classification": "No collection this recipe can use provides the bands this classification reads: {missing}. Choose another classification, or none.",
         "dataSets": "The selected data sets don't provide the bands this classification reads: {missing}. Choose data sets that do, or another classification."
       },
+      "collectionBands": {
+        "band": "The selected data sets, as PRC processes them, don't provide {bands}. Choose another band, or change the data sets or PRC.",
+        "breakpointBands": "The selected data sets, as PRC processes them, don't provide {count, plural, one {breakpoint band {bands}} other {breakpoint bands {bands}}}. Choose other breakpoint bands, or change the data sets or PRC."
+      },
       "classifiedOutputs": {
         "band": "The selected classification does not provide {unsupported}. Choose another band, or another classification.",
         "breakpointBands": "The selected classification does not provide {unsupported}. Choose other breakpoint bands, or another classification."
