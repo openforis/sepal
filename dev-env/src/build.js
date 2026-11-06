@@ -29,7 +29,8 @@ const ensurePackageLockExists = async (modulePath, lib) => {
         args: [
             '-R',
             '1000:1000',
-            `${path}`
+            `${path}/node_modules`,
+            `${path}/package-lock.json`
         ]
     })
 }
