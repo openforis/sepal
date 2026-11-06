@@ -61,12 +61,12 @@
     },
     "running": "App is running",
     "noInstanceRequired": "Instant",
-    "noInstanceRequiredTooltip": "This app doesn't require a dedicated instance to run.",
-    "gpuRequiredTooltip": "This app recommends an instance with at least {count, plural, one {# GPU} other {# GPUs}}.",
+    "noInstanceRequiredTooltip": "This app doesn't require a dedicated instance to run",
+    "gpuRequiredTooltip": "This app recommends an instance with at least {count, plural, one {# GPU} other {# GPUs}}",
     "sessionTakenOver": "{app} was closed in this window because it was opened in another browser window",
     "confirmReopen": {
       "title": "App already open",
-      "instance": "instance {number} ({type})",
+      "instance": "instance {instance}",
       "unknownInstance": "another instance",
       "otherBrowser": "{app} is already open in another browser window.|Opening it here will close the other one.",
       "otherInstance": "{app} is already open on {instance}.|Opening it on the selected instance will close the other one.",
@@ -141,13 +141,6 @@
       "timestamp": {
         "never": "Never"
       },
-      "update": {
-        "available": "Update available",
-        "checkForUpdates": "Check for updates",
-        "error": "Failed to update",
-        "success": "Updated successfully",
-        "noChanges": "No updates available"
-      },
       "tooltip": "Manage app"
     }
   },
@@ -169,11 +162,11 @@
     "datasets": {
       "community": {
         "label": "Awesome GEE Community Datasets ({matchingResults} matches)",
-        "tooltip": "The awesome-gee-community-datasets are community-sourced geospatial datasets made available for use by the larger Google Earth Engine community and shared publicly as Earth Engine assets."
+        "tooltip": "The awesome-gee-community-datasets are community-sourced geospatial datasets made available for use by the larger Google Earth Engine community and shared publicly as Earth Engine assets"
       },
       "gee": {
         "label": "GEE Catalog ({matchingResults} matches)",
-        "tooltip": "Earth Engine's public data archive includes more than forty years of historical imagery and scientific datasets, updated and expanded daily."
+        "tooltip": "Earth Engine's public data archive includes more than forty years of historical imagery and scientific datasets, updated and expanded daily"
       },
       "failedToLoad": "Failed to load Awesome GEE Community Datasets"
     },
@@ -694,11 +687,11 @@
           "label": "Match",
           "all": {
             "label": "All",
-            "tooltip": "Show features that meet every filter."
+            "tooltip": "Show features that meet every filter"
           },
           "any": {
             "label": "Any",
-            "tooltip": "Show features that meet at least one filter."
+            "tooltip": "Show features that meet at least one filter"
           }
         },
         "noFilters": "No filters added. All features are shown.",
@@ -721,7 +714,7 @@
         "water": "Water"
       },
       "opacity": {
-        "fixed": "Label opacity is fixed at 100%."
+        "fixed": "Label opacity is fixed at 100%"
       }
     },
     "legendBuilder": {
@@ -762,7 +755,7 @@
         },
         "colorColumnType": {
           "label": "Color column format",
-          "tooltip": "Specify if the color is in a single column, or if red, green, blue are in separate column.",
+          "tooltip": "Specify if the color is in a single column, or if red, green, blue are in separate column",
           "single": "Single column",
           "multiple": "Multiple columns"
         },
@@ -885,7 +878,7 @@
           "edit": "Edit source",
           "rename": "Rename source",
           "delete": "Delete source",
-          "deleteOwned": "Remove this source from the recipe’s inputs."
+          "deleteOwned": "Remove this source from the recipe’s inputs"
         },
         "delete": {
           "confirmation": "Delete {description} from Layers? Any map area showing it stops showing it."
@@ -918,7 +911,7 @@
       "draft": {
         "copy": {
           "label": "Copy settings",
-          "tooltip": "Copy these settings as they are, unapplied changes included, to paste into another visualization."
+          "tooltip": "Copy these settings as they are, unapplied changes included, to paste into another visualization"
         },
         "paste": {
           "label": "Paste settings",
@@ -955,14 +948,14 @@
           "tooltip": "Load a preset palette or create a new one. Use drag and drop for changing the order or removing colors. Warning: loading a palette will overwrite the current one.",
           "empty": "Empty palette, using gray scale.",
           "add": {
-            "tooltip": "Add a color to the palette."
+            "tooltip": "Add a color to the palette"
           },
           "preset": {
             "placeholder": "Load a preset palette...",
-            "attribution": "Presets from {url}."
+            "attribution": "Presets from {url}"
           },
           "text": {
-            "tooltip": "Show and edit palette as text.",
+            "tooltip": "Show and edit palette as text",
             "placeholder": "Enter comma-separated list of colors...",
             "invalid": "Not a color: {colors}"
           }
@@ -1082,7 +1075,7 @@
       "label": "Planet",
       "nicfiDescription": "NICFI Planet composites",
       "bands": {
-        "tooltip": "Description of false-color indices."
+        "tooltip": "Description of false-color indices"
       }
     },
     "GoogleSatellite": {
@@ -1244,14 +1237,14 @@
               "label": "End date",
               "malformed": "Invalid date",
               "required": "Date is required",
-              "tooltip": "The last date of the time-series, exclusive."
+              "tooltip": "The last date of the time-series, exclusive"
             },
             "startDate": {
               "beforeEnd": "Must be before end",
               "label": "Start date",
               "malformed": "Invalid date",
               "required": "Date is required",
-              "tooltip": "The first date of the time-series, inclusive."
+              "tooltip": "The first date of the time-series, inclusive"
             }
           },
           "title": "Dates",
@@ -1272,7 +1265,7 @@
               "label": "Break detection",
               "moderate": {
                 "label": "Moderate",
-                "tooltip": "Be moderate in detecting breaks in the time-series."
+                "tooltip": "Be moderate in detecting breaks in the time-series"
               }
             },
             "chiSquareProbability": "Chi square probability",
@@ -1307,7 +1300,7 @@
             "classification": {
               "label": "Classification",
               "placeholder": "Select a classification...",
-              "tooltip": "(Optional) Select a classification recipe and apply the classifier to every acquisition in the time-series."
+              "tooltip": "(Optional) Select a classification recipe and apply the classifier to every acquisition in the time-series"
             },
             "cloudPercentageThreshold": {
               "label": "Max cloud cover %",
@@ -1376,47 +1369,47 @@
             "breakAnalysisBand": {
               "label": "Break analysis band",
               "placeholder": "Select band...",
-              "tooltip": "The band to use when analyzing which breakpoint to provide data for."
+              "tooltip": "The band to use when analyzing which breakpoint to provide data for"
             },
             "breakMagnitudeDirection": {
               "options": {
                 "ANY": {
                   "label": "Any",
-                  "tooltip": "Include all breakpoints independent on their change magnitude direction."
+                  "tooltip": "Include all breakpoints independent on their change magnitude direction"
                 },
                 "DECREASE": {
                   "label": "Decrease",
-                  "tooltip": "Only include breakpoints with a negative break magnitude in the break analysis band."
+                  "tooltip": "Only include breakpoints with a negative break magnitude in the break analysis band"
                 },
                 "INCREASE": {
                   "label": "Increase",
-                  "tooltip": "Only include breakpoints with an positive break magnitude in the break analysis band."
+                  "tooltip": "Only include breakpoints with an positive break magnitude in the break analysis band"
                 }
               },
               "label": "Break magnitude direction",
-              "tooltip": "Specify which breakpoints to filter out, based on weather the break magnitude for the break analysis band decrease or increase."
+              "tooltip": "Specify which breakpoints to filter out, based on weather the break magnitude for the break analysis band decrease or increase"
             },
             "breakSelection": {
               "options": {
                 "CONFIDENCE": {
                   "label": "Confidence",
-                  "tooltip": "Select the breakpoint with the highest confidence."
+                  "tooltip": "Select the breakpoint with the highest confidence"
                 },
                 "FIRST": {
                   "label": "First",
-                  "tooltip": "Select the first breakpoint in the date range."
+                  "tooltip": "Select the first breakpoint in the date range"
                 },
                 "LAST": {
                   "label": "Last",
-                  "tooltip": "Select the last breakpoint in the date range."
+                  "tooltip": "Select the last breakpoint in the date range"
                 },
                 "MAGNITUDE": {
                   "label": "Magnitude",
-                  "tooltip": "Select the breakpoint with the highest break magnitude."
+                  "tooltip": "Select the breakpoint with the highest break magnitude"
                 }
               },
               "label": "Break selection",
-              "tooltip": "Specify which of the break points to provide data for."
+              "tooltip": "Specify which of the break points to provide data for"
             },
             "extrapolateMaxDays": {
               "label": "Max days to extrapolate",
@@ -1425,22 +1418,22 @@
             "extrapolateSegment": {
               "closest": {
                 "label": "Closest",
-                "tooltip": "Extrapolate the segment closest to the date."
+                "tooltip": "Extrapolate the segment closest to the date"
               },
               "label": "Segment to extrapolate",
               "next": {
                 "label": "Next",
-                "tooltip": "Back-extrapolate the segment after the date."
+                "tooltip": "Back-extrapolate the segment after the date"
               },
               "previous": {
                 "label": "Previous",
-                "tooltip": "Extrapolate the segment before the date."
+                "tooltip": "Extrapolate the segment before the date"
               }
             },
             "gapStrategy": {
               "extrapolate": {
                 "label": "Extrapolate",
-                "tooltip": "Generate a new model based on the segment before or after the gap."
+                "tooltip": "Generate a new model based on the segment before or after the gap"
               },
               "interpolate": {
                 "label": "Interpolate",
@@ -1449,13 +1442,13 @@
               "label": "Gap strategy",
               "mask": {
                 "label": "Mask",
-                "tooltip": "Mask all pixels that fall on a gap."
+                "tooltip": "Mask all pixels that fall on a gap"
               },
               "tooltip": "Decide which strategy to use for pixels where there is no CCDC segment. There will be gaps during detected breaks or for dates before and after the CCDC date range."
             },
             "harmonics": {
               "label": "Harmonics",
-              "tooltip": "Specify how many harmonics from the CCDC regression model to use when creating the slice."
+              "tooltip": "Specify how many harmonics from the CCDC regression model to use when creating the slice"
             },
             "minBreakConfidence": {
               "label": "Min break confidence",
@@ -1630,7 +1623,7 @@
         "dates": {
           "title": "Date ranges",
           "button": "DAT",
-          "tooltip": "Pick the baseline window (used to build the reference composite) and the monitoring window (whose individual acquisitions are compared to the baseline).",
+          "tooltip": "Pick the baseline window (used to build the reference composite) and the monitoring window (whose individual acquisitions are compared to the baseline)",
           "form": {
             "baseline": {
               "label": "Baseline window"
@@ -1666,7 +1659,7 @@
         "sources": {
           "title": "Sources",
           "button": "SRC",
-          "tooltip": "Pick the classification recipe and optical datasets, and choose which From→To class transitions count as change.",
+          "tooltip": "Pick the classification recipe and optical datasets, and choose which From→To class transitions count as change",
           "form": {
             "dataSets": {
               "label": "Optical datasets",
@@ -1676,7 +1669,7 @@
             },
             "cloudPercentageThreshold": {
               "label": "Maximum scene cloud cover",
-              "tooltip": "Drop scenes whose CLOUDY_PIXEL_PERCENTAGE exceeds this value before classification.",
+              "tooltip": "Drop scenes whose CLOUDY_PIXEL_PERCENTAGE exceeds this value before classification",
               "value": "{value}%"
             },
             "classification": {
@@ -1707,7 +1700,7 @@
         "options": {
           "title": "Detection rules",
           "button": "OPT",
-          "tooltip": "Optional spectral-index confirmation and the temporal-consistency threshold.",
+          "tooltip": "Optional spectral-index confirmation and the temporal-consistency threshold",
           "form": {
             "useIndexGate": {
               "label": "Require drop",
@@ -1741,22 +1734,22 @@
             },
             "minRepeatability": {
               "label": "Minimum repeatability",
-              "tooltip": "A pixel only flags as an alert if this percentage of classified images verifies an initial change detection.",
+              "tooltip": "A pixel only flags as an alert if this percentage of classified images verifies an initial change detection",
               "value": "{value}%"
             },
             "minCumulativeDetections": {
               "label": "Minimum cumulative detections",
-              "tooltip": "A pixel only flags as an alert after this many cumulative monitoring acquisitions show the same change.",
+              "tooltip": "A pixel only flags as an alert after this many cumulative monitoring acquisitions show the same change",
               "value": "{value} images"
             },
             "minFromDetections": {
               "label": "Minimum From detections",
-              "tooltip": "A pixel can only flag in the 'Binary from-to decision' layer after this many occurrences of any of the FROM classes.",
+              "tooltip": "A pixel can only flag in the 'Binary from-to decision' layer after this many occurrences of any of the FROM classes",
               "value": "{value} images"
             },
             "minToDetections": {
               "label": "Minimum To detections",
-              "tooltip": "A pixel can only flag in the 'Binary from-to decision' layer after this many occurrences of any of the TO classes.",
+              "tooltip": "A pixel can only flag in the 'Binary from-to decision' layer after this many occurrences of any of the TO classes",
               "value": "{value} images"
             }
           }
@@ -1846,7 +1839,7 @@
           "form": {
             "minConfidence": {
               "label": "Min confidence",
-              "tooltip": "Minimum number of errors from reference model to consider observation a change.",
+              "tooltip": "Minimum number of errors from reference model to consider observation a change",
               "value": "{value} (difference/rmse)"
             },
             "numberOfObservations": {
@@ -2145,15 +2138,15 @@
               "label": "Sources",
               "latitude": {
                 "label": "Latitude",
-                "tooltip": "Include the latitude of each pixel."
+                "tooltip": "Include the latitude of each pixel"
               },
               "terrain": {
                 "label": "Terrain",
-                "tooltip": "Include SRTM data."
+                "tooltip": "Include SRTM data"
               },
               "water": {
                 "label": "Water",
-                "tooltip": "Include JRC Global Surface Water Mapping Layers."
+                "tooltip": "Include JRC Global Surface Water Mapping Layers"
               }
             }
           },
@@ -2457,11 +2450,11 @@
                 },
                 "SIMPLE": {
                   "label": "Simple",
-                  "tooltip": "Include red, nir, swir1, swir2 and ratios between them."
+                  "tooltip": "Include red, nir, swir1, swir2 and ratios between them"
                 }
               }
             },
-            "tooltip": "Add additional derived bands to use in the classification."
+            "tooltip": "Add additional derived bands to use in the classification"
           },
           "form": {
             "asset": {
@@ -2732,22 +2725,22 @@
             "CSV_UPLOAD": {
               "label": "CSV file",
               "title": "CSV UPLOAD",
-              "tooltip": "Upload a CSV file."
+              "tooltip": "Upload a CSV file"
             },
             "EE_TABLE": {
               "label": "Earth Engine Table",
               "title": "EE TABLE",
-              "tooltip": "Load reference data from an EE table."
+              "tooltip": "Load reference data from an EE table"
             },
             "RECIPE": {
               "label": "Saved SEPAL recipe",
               "title": "SEPAL RECIPE",
-              "tooltip": "Use training data from a saved SEPAL recipe."
+              "tooltip": "Use training data from a saved SEPAL recipe"
             },
             "SAMPLE_CLASSIFICATION": {
               "label": "Sample classification",
               "title": "SAMPLE CLASSIFICATION",
-              "tooltip": "Sample a pre-existing classification."
+              "tooltip": "Sample a pre-existing classification"
             },
             "CEO": {
               "label": "Collect Earth Online",
@@ -2784,7 +2777,7 @@
               "valueColumn": {
                 "label": "Value column",
                 "placeholder": "Select value column...",
-                "tooltip": "Select column containing the values to train the regression classifier with."
+                "tooltip": "Select column containing the values to train the regression classifier with"
               }
             },
             "sampleImage": {
@@ -2798,7 +2791,7 @@
               "valueBand": {
                 "label": "Value band",
                 "placeholder": "Select band with value to sample...",
-                "tooltip": "The band to sample and use to train the regression classifier."
+                "tooltip": "The band to sample and use to train the regression classifier"
               },
               "noIntersection": "The image to sample does not intersect the recipe",
               "unableToSampleAllPixels": "Unable to sample {numPixels} from the image. It's either too few pixels or too large areas of the image is masked."
@@ -2840,7 +2833,7 @@
             "numberOfSamples": {
               "label": "Number of samples",
               "placeholder": "Count...",
-              "tooltip": "The number of samples to use to train the clusterer.",
+              "tooltip": "The number of samples to use to train the clusterer",
               "suffix": "samples"
             },
             "sampleScale": {
@@ -2861,19 +2854,19 @@
             },
             "kmeans": {
               "label": "KMeans",
-              "tooltip": "Cluster data using the k-means algorithm."
+              "tooltip": "Cluster data using the k-means algorithm"
             },
             "cascadeKMeans": {
               "label": "Cascade KMeans",
-              "tooltip": "Cascade simple k-means selects the best k according to the Calinski-Harabasz criterion."
+              "tooltip": "Cascade simple k-means selects the best k according to the Calinski-Harabasz criterion"
             },
             "xmeans": {
               "label": "XMeans",
-              "tooltip": "X-Means is K-Means with an efficient estimation of the number of clusters."
+              "tooltip": "X-Means is K-Means with an efficient estimation of the number of clusters"
             },
             "lvq": {
               "label": "LVQ",
-              "tooltip": "A Clusterer that implements the Learning Vector Quantization algorithm."
+              "tooltip": "A Clusterer that implements the Learning Vector Quantization algorithm"
             },
             "config": {
               "numberOfClusters": {
@@ -2894,7 +2887,7 @@
               "restarts": {
                 "label": "Restarts",
                 "placeholder": "Restarts...",
-                "tooltip": "Number of restarts."
+                "tooltip": "Number of restarts"
               },
               "init": {
                 "label": "Initialization method",
@@ -2916,11 +2909,11 @@
               "maxIterations": {
                 "label": "Max iterations",
                 "placeholder": "Max iterations...",
-                "tooltip": "Maximum number of iterations."
+                "tooltip": "Maximum number of iterations"
               },
               "canopies": {
                 "label": "Canopies",
-                "tooltip": "Specify whether to use canopies to reduce the number of distance calculations or not.",
+                "tooltip": "Specify whether to use canopies to reduce the number of distance calculations or not",
                 "options": {
                   "true.label": "Canopies",
                   "false.label": "No Canopies"
@@ -2934,12 +2927,12 @@
               "periodicPruning": {
                 "label": "Periodic pruning",
                 "placeholder": "Periodic pruning...",
-                "tooltip": "How often to prune low density canopies when using canopy clustering."
+                "tooltip": "How often to prune low density canopies when using canopy clustering"
               },
               "minDensity": {
                 "label": "Min density",
                 "placeholder": "Min density...",
-                "tooltip": "Minimum canopy density, when using canopy clustering, below which a canopy will be pruned during periodic pruning."
+                "tooltip": "Minimum canopy density, when using canopy clustering, below which a canopy will be pruned during periodic pruning"
               },
               "t1": {
                 "label": "T1",
@@ -2953,7 +2946,7 @@
               },
               "preserveOrder": {
                 "label": "Preserve order",
-                "tooltip": "Specify whether order of instances should be preserved or not.",
+                "tooltip": "Specify whether order of instances should be preserved or not",
                 "options": {
                   "true.label": "Preserve",
                   "false.label": "Don't preserve"
@@ -2970,7 +2963,7 @@
               "seed": {
                 "label": "Seed",
                 "placeholder": "Seed...",
-                "tooltip": "The randomization seed."
+                "tooltip": "The randomization seed"
               },
               "learningRate": {
                 "label": "Learning rate",
@@ -2985,21 +2978,21 @@
               "maxIterationsOverall": {
                 "label": "Max iterations",
                 "placeholder": "Max iterations...",
-                "tooltip": "Maximum number of overall iterations."
+                "tooltip": "Maximum number of overall iterations"
               },
               "maxKMeans": {
                 "label": "Max K-means",
                 "placeholder": "Max K-means...",
-                "tooltip": "The maximum number of iterations to perform in K-means."
+                "tooltip": "The maximum number of iterations to perform in K-means"
               },
               "maxForChildren": {
                 "label": "Max for children",
                 "placeholder": "Max for children...",
-                "tooltip": "The maximum number of iterations in KMeans that is performed on the child centers."
+                "tooltip": "The maximum number of iterations in KMeans that is performed on the child centers"
               },
               "useKD": {
                 "label": "Use K-D tree",
-                "tooltip": "Specifies whether a K-D tree should be used or not.",
+                "tooltip": "Specifies whether a K-D tree should be used or not",
                 "options": {
                   "true.label": "Use",
                   "false.label": "Don't use"
@@ -3008,11 +3001,11 @@
               "cutoffFactor": {
                 "label": "Cut-off factor",
                 "placeholder": "Cut-off factor...",
-                "tooltip": "Takes the given percentage of the split centroids if none of the children win."
+                "tooltip": "Takes the given percentage of the split centroids if none of the children win"
               },
               "normalizeInput": {
                 "label": "Normalize input",
-                "tooltip": "Specifies whether attributes should be normalized or not.",
+                "tooltip": "Specifies whether attributes should be normalized or not",
                 "options": {
                   "true.label": "Normalize",
                   "false.label": "Don't normalize"
@@ -3031,7 +3024,7 @@
         "bandNames": {
           "button": "NAM",
           "title": "Band names",
-          "tooltip": "Set the band names of the stack.",
+          "tooltip": "Set the band names of the stack",
           "duplicateBand": "Duplicate band name",
           "displaced": "Named {name}: another band now takes {previousName}. This Stack's visualizations of this band follow it, but other recipes reading {previousName} will read that other band.",
           "takesName": "{name} named another band before. Other recipes reading {name} will read this band instead.",
@@ -3071,13 +3064,13 @@
         "inputImagery": {
           "name": {
             "label": "Image name",
-            "tooltip": "The name of this image to use when referring to it within expressions."
+            "tooltip": "The name of this image to use when referring to it within expressions"
           }
         },
         "calculations": {
           "button": "CAL",
           "title": "Calculations",
-          "tooltip": "Generate calculated bands.",
+          "tooltip": "Generate calculated bands",
           "form": {
             "noCalculations": "No calculations provided",
             "usedBands": {
@@ -3087,22 +3080,22 @@
             "function": {
               "label": "Function",
               "placeholder": "Select Function...",
-              "tooltip": "Reduce the selected bands to a single band value using the selected function."
+              "tooltip": "Reduce the selected bands to a single band value using the selected function"
             },
             "bandName": {
               "label": "Band name",
               "placeholder": "Band name...",
-              "tooltip": "The name of the resulting band after applying the function."
+              "tooltip": "The name of the resulting band after applying the function"
             },
             "calculationName": {
               "label": "Calculation name",
               "placeholder": "Calculation name...",
-              "tooltip": "The name of this calculation to use when referring to it within expressions."
+              "tooltip": "The name of this calculation to use when referring to it within expressions"
             },
             "dataType": {
               "label": "Data type",
               "placeholder": "Data type...",
-              "tooltip": "The data type to cast the output band(s) to.",
+              "tooltip": "The data type to cast the output band(s) to",
               "auto": "[auto]",
               "int8": "int8",
               "int16": "int16",
@@ -3121,7 +3114,7 @@
             "expression": {
               "label": "Expression",
               "placeholder": "Expression...",
-              "tooltip": "The expression to evaluate."
+              "tooltip": "The expression to evaluate"
             },
             "type": {
               "FUNCTION": "Function",
@@ -3138,7 +3131,7 @@
               },
               "REGEX": {
                 "label": "Regular expression",
-                "tooltip": "Renames the bands outputted by the calculation by applying a regular expression replacement."
+                "tooltip": "Renames the bands outputted by the calculation by applying a regular expression replacement"
               }
             },
             "regex": {
@@ -3177,14 +3170,14 @@
         "outputBands": {
           "button": "OUT",
           "title": "Output band names",
-          "tooltip": "Select bands to output and their corresponding names.",
+          "tooltip": "Select bands to output and their corresponding names",
           "duplicateBand": "Duplicate band name",
           "invalidFormat": "Must start with a letter or underscore and then be followed by only numbers, letters and underscores. Cannot be longer than 30 characters",
           "noImages": "Choose the bands to output: press Add to pick an input image or a calculation, then its bands. Input bands can be output directly; a calculation is optional.",
           "noBands": "No bands added to output",
           "missingBands": "An image or calculation outputs no bands.",
           "resetName": {
-            "tooltip": "Clear to use an available default name."
+            "tooltip": "Clear to use an available default name"
           },
           "addImage": {
             "label": "Add",
@@ -3194,7 +3187,7 @@
           },
           "addBands": {
             "placeholder": "Add band...",
-            "tooltip": "Add band to include in recipe output.",
+            "tooltip": "Add band to include in recipe output",
             "all": {
               "label": "[All bands]"
             }
@@ -3264,7 +3257,7 @@
           },
           "minConfidence": {
             "label": "Min confidence",
-            "tooltip": "The minimum change in classification probability required to consider a change.",
+            "tooltip": "The minimum change in classification probability required to consider a change",
             "value": "{value}%"
           },
           "title": "Options"
@@ -3380,15 +3373,15 @@
               "label": "Type",
               "ALL_DATES": {
                 "label": "All dates",
-                "tooltip": "Include images from all dates."
+                "tooltip": "Include images from all dates"
               },
               "CUSTOM_DATE_RANGE": {
                 "label": "Date range",
-                "tooltip": "Include images from a custom date range."
+                "tooltip": "Include images from a custom date range"
               },
               "YEAR": {
                 "label": "Year",
-                "tooltip": "Include images from a specified calendar year."
+                "tooltip": "Include images from a specified calendar year"
               }
             },
             "year": {
@@ -3407,7 +3400,7 @@
           "noFilters": "No filters added.",
           "emptyFilters": "Empty",
           "remove": {
-            "tooltip": "Remove filters."
+            "tooltip": "Remove filters"
           },
           "title": "Collection Filter",
           "tooltip": "Filter down collection to images of interest"
@@ -3420,7 +3413,7 @@
           "noConstraints": "No constraints added.",
           "emptyConstraints": "Empty",
           "remove": {
-            "tooltip": "Remove masking constraints."
+            "tooltip": "Remove masking constraints"
           },
           "title": "Mask imagery",
           "tooltip": "Mask out unwanted areas of imagery"
@@ -3513,7 +3506,7 @@
     "menu": {
       "duplicateRecipe": {
         "label": "Duplicate recipe",
-        "tooltip": "Duplicate this recipe."
+        "tooltip": "Duplicate this recipe"
       },
       "exportRecipe": "Export recipe",
       "removeRecipe.tooltip": "Remove recipe",
@@ -3579,7 +3572,7 @@
             "buffer": {
               "info": "{buffer} km buffer",
               "label": "Buffer",
-              "tooltip": "Area of interest and preview will take longer to show up when buffering is enabled."
+              "tooltip": "Area of interest and preview will take longer to show up when buffering is enabled"
             },
             "assetBounds": {
               "description": "Use bounds of selected EE asset.",
@@ -3749,7 +3742,7 @@
         },
         "clearSelectedScenes": {
           "apply": "Clear scenes",
-          "message": "You are about to clear all selected scenes.",
+          "message": "You are about to clear all selected scenes",
           "title": "Clear selected scenes",
           "tooltip": "Clear selected scenes"
         },
@@ -3870,22 +3863,22 @@
               },
               "medoid": {
                 "label": "Medoid",
-                "tooltip": "Use the medoid of remaining pixels."
+                "tooltip": "Use the medoid of remaining pixels"
               }
             },
             "corrections": {
               "brdf": {
                 "label": "BRDF",
-                "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects."
+                "tooltip": "Correct for bidirectional reflectance distribution function (BRDF) effects"
               },
               "calibrate": {
                 "label": "Calibrate",
-                "tooltip": "Calibrate bands to improve cross-sensor mosaic."
+                "tooltip": "Calibrate bands to improve cross-sensor mosaic"
               },
               "label": "Corrections",
               "surfaceReflectance": {
                 "label": "SR",
-                "tooltip": "Use scenes atmospherically corrected surface reflectance."
+                "tooltip": "Use scenes atmospherically corrected surface reflectance"
               }
             },
             "brdfMultiplier": {
@@ -3924,14 +3917,14 @@
             },
             "holes": {
               "label": "Masked out pixels",
-              "tooltips": "Control if some pixels can be completely masked out due to cloud and/or snow masking or not.",
+              "tooltips": "Control if some pixels can be completely masked out due to cloud and/or snow masking or not",
               "prevent": {
                 "label": "Prevent",
                 "tooltip": "Prevent pixels from being completely masked out due to cloud and/or snow masking. Pixels that would be completely masked out will retrain cloudy and/or snowy pixels."
               },
               "allow": {
                 "label": "ALLOW",
-                "tooltip": "Allow pixels to be completely masked out if every acquisition are cloudy and/or snowy."
+                "tooltip": "Allow pixels to be completely masked out if every acquisition are cloudy and/or snowy"
               }
             },
             "orbitOverlap": {
@@ -3997,17 +3990,17 @@
               "malformed": "Invalid date",
               "tooEarly": "Must not be before {min}",
               "tooLate": "Must not be after {max}",
-              "tooltip": "Restrict the time of year to include imagery for."
+              "tooltip": "Restrict the time of year to include imagery for"
             },
             "targetDate": {
               "label": "Target date",
               "malformed": "Invalid date",
-              "tooltip": "The date in which pixels in the mosaic should ideally come from."
+              "tooltip": "The date in which pixels in the mosaic should ideally come from"
             },
             "targetYear": {
               "label": "Year",
               "malformed": "Not a year",
-              "tooltip": "The year which pixels in the mosaic should come from."
+              "tooltip": "The year which pixels in the mosaic should come from"
             }
           },
           "title": "Dates",
@@ -4256,16 +4249,16 @@
             "type": {
               "CUSTOM_TIME_SCAN": {
                 "label": "Date range",
-                "tooltip": "Build a time-scan with data from a custom date range."
+                "tooltip": "Build a time-scan with data from a custom date range"
               },
               "label": "Type",
               "POINT_IN_TIME_MOSAIC": {
                 "label": "Date",
-                "tooltip": "Build a mosaic with data coming as close to a specified date as possible."
+                "tooltip": "Build a mosaic with data coming as close to a specified date as possible"
               },
               "YEARLY_TIME_SCAN": {
                 "label": "Year",
-                "tooltip": "Build a time-scan with data from a specified calendar year."
+                "tooltip": "Build a time-scan with data from a specified calendar year"
               }
             },
             "year": {
@@ -4282,68 +4275,68 @@
             "geometricCorrection": {
               "ellipsoid": {
                 "label": "Ellipsoid",
-                "tooltip": "Ellipsoid correction (gamma0 correction) is applied."
+                "tooltip": "Ellipsoid correction (gamma0 correction) is applied"
               },
               "label": "Geometric correction",
               "none": {
                 "label": "None",
-                "tooltip": "No geometric correction is applied."
+                "tooltip": "No geometric correction is applied"
               },
               "terrain": {
                 "label": "Terrain",
-                "tooltip": "Terrain correction is applied."
+                "tooltip": "Terrain correction is applied"
               }
             },
             "orbits": {
               "ascending": {
                 "label": "Ascending",
-                "tooltip": "Include scenes from ascending orbits."
+                "tooltip": "Include scenes from ascending orbits"
               },
               "descending": {
                 "label": "Descending",
-                "tooltip": "Include scenes from descending orbits."
+                "tooltip": "Include scenes from descending orbits"
               },
               "label": "Orbits"
             },
             "orbitNumbers": {
               "all": {
                 "label": "All",
-                "tooltip": "Include values from all orbit numbers for a pixel."
+                "tooltip": "Include values from all orbit numbers for a pixel"
               },
               "dominant": {
                 "label": "Dominant",
-                "tooltip": "Only include values from the dominant orbit number for a pixel."
+                "tooltip": "Only include values from the dominant orbit number for a pixel"
               },
               "adjacent": {
                 "label": "Adjacent",
-                "tooltip": "Include values from the dominant orbit of both ascending and descending orbits."
+                "tooltip": "Include values from the dominant orbit of both ascending and descending orbits"
               },
               "label": "Orbit overlap"
             },
             "outlierRemoval": {
               "aggressive": {
                 "label": "Aggressive",
-                "tooltip": "Remove more outliers."
+                "tooltip": "Remove more outliers"
               },
               "label": "Outlier removal",
               "moderate": {
                 "label": "Moderate",
-                "tooltip": "Remove outliers."
+                "tooltip": "Remove outliers"
               },
               "none": {
                 "label": "None",
-                "tooltip": "Don't remove outliers."
+                "tooltip": "Don't remove outliers"
               }
             },
             "mask": {
               "label": "Border noise correction",
               "sides": {
                 "label": "Sides",
-                "tooltip": "Mask sides of slices."
+                "tooltip": "Mask sides of slices"
               },
               "firstLast": {
                 "label": "First/Last",
-                "tooltip": "Mask the beginning of the first slice and the end of the last slice."
+                "tooltip": "Mask the beginning of the first slice and the end of the last slice"
               }
             },
             "maskOptions": {
@@ -4360,19 +4353,19 @@
               "label": "Spatial speckle filter",
               "none": {
                 "label": "None",
-                "tooltip": "Don't apply any speckle filter."
+                "tooltip": "Don't apply any speckle filter"
               },
               "boxcar": {
                 "label": "Boxcar",
-                "tooltip": "Boxcar filtering is applied."
+                "tooltip": "Boxcar filtering is applied"
               },
               "gammaMap": {
                 "label": "Gamma Map",
-                "tooltip": "Gamma Map filtering is applied."
+                "tooltip": "Gamma Map filtering is applied"
               },
               "lee": {
                 "label": "Lee",
-                "tooltip": "Lee filtering is applied."
+                "tooltip": "Lee filtering is applied"
               },
               "refinedLee": {
                 "label": "Refined Lee",
@@ -4380,11 +4373,11 @@
               },
               "leeSigma": {
                 "label": "Lee Sigma",
-                "tooltip": "Lee Sigma filtering is applied."
+                "tooltip": "Lee Sigma filtering is applied"
               },
               "snic": {
                 "label": "SNIC",
-                "tooltip": "Simple Non-Iterative Clustering is used to filter out speckle."
+                "tooltip": "Simple Non-Iterative Clustering is used to filter out speckle"
               }
             },
             "spatialSpeckleFilterOptions": {
@@ -4407,11 +4400,11 @@
               },
               "strongScattererValue1": {
                 "label": "VV threshold",
-                "tooltip": "The threshold to consider VV a strong scatterer when performing Lee-Sigma spatial speckle filtering."
+                "tooltip": "The threshold to consider VV a strong scatterer when performing Lee-Sigma spatial speckle filtering"
               },
               "strongScattererValue2": {
                 "label": "VH threshold",
-                "tooltip": "The threshold to consider VH a strong scatterer when performing Lee-Sigma spatial speckle filtering."
+                "tooltip": "The threshold to consider VH a strong scatterer when performing Lee-Sigma spatial speckle filtering"
               },
               "snicSize": {
                 "label": "Seed spacing",
@@ -4435,15 +4428,15 @@
               "label": "Multitemporal speckle filter",
               "none": {
                 "label": "None",
-                "tooltip": "Don't apply any multitemporal speckle filter."
+                "tooltip": "Don't apply any multitemporal speckle filter"
               },
               "quegan": {
                 "label": "Quegan",
-                "tooltip": "Apply Quegan multi-temporal filter."
+                "tooltip": "Apply Quegan multi-temporal filter"
               },
               "rabasar": {
                 "label": "RABASAR",
-                "tooltip": "Apply RABASAR multi-temporal filter."
+                "tooltip": "Apply RABASAR multi-temporal filter"
               }
             },
             "minObservations": {
@@ -4618,7 +4611,7 @@
             }
           },
           "title": "BAYTS alert options",
-          "tooltip": "Configure algorithm parameters."
+          "tooltip": "Configure algorithm parameters"
         },
         "preprocess": {
           "button": "PRC",
@@ -4687,26 +4680,26 @@
             "geometricCorrection": {
               "ellipsoid": {
                 "label": "Ellipsoid",
-                "tooltip": "Ellipsoid correction (gamma0 correction) is applied."
+                "tooltip": "Ellipsoid correction (gamma0 correction) is applied"
               },
               "label": "Geometric correction",
               "none": {
                 "label": "None",
-                "tooltip": "No geometric correction is applied."
+                "tooltip": "No geometric correction is applied"
               },
               "terrain": {
                 "label": "Terrain",
-                "tooltip": "Terrain correction is applied."
+                "tooltip": "Terrain correction is applied"
               }
             },
             "orbits": {
               "ascending": {
                 "label": "Ascending",
-                "tooltip": "Include scenes from ascending orbits."
+                "tooltip": "Include scenes from ascending orbits"
               },
               "descending": {
                 "label": "Descending",
-                "tooltip": "Include scenes from descending orbits."
+                "tooltip": "Include scenes from descending orbits"
               },
               "label": "Orbits",
               "required": "Select at least one orbit."
@@ -4714,27 +4707,27 @@
             "outlierRemoval": {
               "aggressive": {
                 "label": "Aggressive",
-                "tooltip": "Remove more outliers."
+                "tooltip": "Remove more outliers"
               },
               "label": "Outlier removal",
               "moderate": {
                 "label": "Moderate",
-                "tooltip": "Remove outliers."
+                "tooltip": "Remove outliers"
               },
               "none": {
                 "label": "None",
-                "tooltip": "Don't remove outliers."
+                "tooltip": "Don't remove outliers"
               }
             },
             "mask": {
               "label": "Border noise correction",
               "sides": {
                 "label": "Sides",
-                "tooltip": "Mask sides of slices."
+                "tooltip": "Mask sides of slices"
               },
               "firstLast": {
                 "label": "First/Last",
-                "tooltip": "Mask the beginning of the first slice and the end of the last slice."
+                "tooltip": "Mask the beginning of the first slice and the end of the last slice"
               }
             },
             "maskOptions": {
@@ -4750,19 +4743,19 @@
               "label": "Spatial speckle filter",
               "none": {
                 "label": "None",
-                "tooltip": "Don't apply any speckle filter."
+                "tooltip": "Don't apply any speckle filter"
               },
               "boxcar": {
                 "label": "Boxcar",
-                "tooltip": "Boxcar filtering is applied."
+                "tooltip": "Boxcar filtering is applied"
               },
               "gammaMap": {
                 "label": "Gamma Map",
-                "tooltip": "Gamma Map filtering is applied."
+                "tooltip": "Gamma Map filtering is applied"
               },
               "lee": {
                 "label": "Lee",
-                "tooltip": "Lee filtering is applied."
+                "tooltip": "Lee filtering is applied"
               },
               "refinedLee": {
                 "label": "Refined Lee",
@@ -4770,11 +4763,11 @@
               },
               "leeSigma": {
                 "label": "Lee Sigma",
-                "tooltip": "Lee Sigma filtering is applied."
+                "tooltip": "Lee Sigma filtering is applied"
               },
               "snic": {
                 "label": "SNIC",
-                "tooltip": "Simple Non-Iterative Clustering is used to filter out speckle."
+                "tooltip": "Simple Non-Iterative Clustering is used to filter out speckle"
               }
             },
             "spatialSpeckleFilterOptions": {
@@ -4797,11 +4790,11 @@
               },
               "strongScattererValue1": {
                 "label": "VV threshold",
-                "tooltip": "The threshold to consider VV a strong scatterer when performing Lee-Sigma spatial speckle filtering."
+                "tooltip": "The threshold to consider VV a strong scatterer when performing Lee-Sigma spatial speckle filtering"
               },
               "strongScattererValue2": {
                 "label": "VH threshold",
-                "tooltip": "The threshold to consider VH a strong scatterer when performing Lee-Sigma spatial speckle filtering."
+                "tooltip": "The threshold to consider VH a strong scatterer when performing Lee-Sigma spatial speckle filtering"
               },
               "snicSize": {
                 "label": "Seed spacing",
@@ -4825,15 +4818,15 @@
               "label": "Multitemporal speckle filter",
               "none": {
                 "label": "None",
-                "tooltip": "Don't apply any multitemporal speckle filter."
+                "tooltip": "Don't apply any multitemporal speckle filter"
               },
               "quegan": {
                 "label": "Quegan",
-                "tooltip": "Apply Quegan multi-temporal filter."
+                "tooltip": "Apply Quegan multi-temporal filter"
               },
               "rabasar": {
                 "label": "RABASAR",
-                "tooltip": "Apply RABASAR multi-temporal filter."
+                "tooltip": "Apply RABASAR multi-temporal filter"
               }
             },
             "minObservations": {
@@ -4883,7 +4876,7 @@
             "classification": {
               "label": "Classification",
               "placeholder": "Select a classification...",
-              "tooltip": "(Optional) Select a classification recipe and apply the classifier to every acquisition in the time-series."
+              "tooltip": "(Optional) Select a classification recipe and apply the classifier to every acquisition in the time-series"
             },
             "band": {
               "label": "Analysis band"
@@ -4988,7 +4981,7 @@
       "remove": {
         "tooltip": "Remove project",
         "title": "Remove project",
-        "confirm": "All recipes belonging to this project will be removed as well.",
+        "confirm": "All recipes belonging to this project will be removed as well",
         "error": "Cannot remove project"
       },
       "update": {
@@ -5081,13 +5074,13 @@
         "assetId": {
           "label": "Asset ID",
           "placeholder": "Enter Asset ID...",
-          "tooltip": "Asset ID to export to."
+          "tooltip": "Asset ID to export to"
         },
         "assetType": {
           "label": "Asset type",
           "Image": {
             "label": "Image",
-            "tooltip": "Export recipe as a single image asset."
+            "tooltip": "Export recipe as a single image asset"
           },
           "ImageCollection": {
             "label": "Image collection",
@@ -5129,7 +5122,7 @@
           "label": "Additional outputs",
           "SITS": {
             "label": "SITS files",
-            "tooltip": "Adds per-date VRT files for the SITS R package."
+            "tooltip": "Adds per-date VRT files for the SITS R package"
           }
         },
         "scale": {
@@ -5168,7 +5161,7 @@
         "workspacePath": {
           "label": "Workspace path",
           "placeholder": "Enter workspace path...",
-          "tooltip": "Relative path in your workspace home directory where the image should be retrieved to."
+          "tooltip": "Relative path in your workspace home directory where the image should be retrieved to"
         },
         "filenamePrefix": {
           "label": "Filename prefix",
@@ -5226,14 +5219,14 @@
               "label": "End date",
               "malformed": "Invalid date",
               "required": "Date is required",
-              "tooltip": "The last date of the time-series, exclusive."
+              "tooltip": "The last date of the time-series, exclusive"
             },
             "startDate": {
               "beforeEnd": "Must be before end",
               "label": "Start date",
               "malformed": "Invalid date",
               "required": "Date is required",
-              "tooltip": "The first date of the time-series, inclusive."
+              "tooltip": "The first date of the time-series, inclusive"
             }
           },
           "title": "Dates",
@@ -5251,7 +5244,7 @@
             "classification": {
               "label": "Classification",
               "placeholder": "Select a classification...",
-              "tooltip": "(Optional) Select a classification recipe and apply the classifier to every acquisition in the time-series."
+              "tooltip": "(Optional) Select a classification recipe and apply the classifier to every acquisition in the time-series"
             },
             "dataSets": {
               "optical": {
@@ -5526,7 +5519,7 @@
             },
             "skip": {
               "label": "Unstratified",
-              "tooltip": "Use an unstratified sampling design.",
+              "tooltip": "Use an unstratified sampling design",
               "message": "An unstratified design treats the eligible area within the area of interest as one stratum. It is simpler, but it cannot assign samples separately among map classes. A useful stratification may reduce sampling error, although the gain is not guaranteed."
             },
             "type": {
@@ -5621,19 +5614,19 @@
           },
           "unstratified": "Area of interest",
           "title": "Stratification",
-          "tooltip": "Choose whether to stratify the design and, if so, select the map that defines the strata."
+          "tooltip": "Choose whether to stratify the design and, if so, select the map that defines the strata"
         },
         "proportions": {
           "button": "PRO",
           "form": {
             "skip": {
               "label": "No proportions",
-              "tooltip": "Do not use anticipated proportions.",
+              "tooltip": "Do not use anticipated proportions",
               "message": "Creating a sampling design without anticipated proportions. Optimal and Power allocation will not be available, and SEPAL cannot estimate precision for a target reporting category."
             },
             "manual": {
               "label": "Manual",
-              "tooltip": "Manually enter the anticipated target-category proportion in each stratum."
+              "tooltip": "Manually enter the anticipated target-category proportion in each stratum"
             },
             "percentage": {
               "label": "%",
@@ -5652,11 +5645,11 @@
               "label": "How to anticipate proportions",
               "MANUAL": {
                 "label": "Manual",
-                "tooltip": "Manually enter the anticipated proportion of the one target reporting category used to plan the design."
+                "tooltip": "Manually enter the anticipated proportion of the one target reporting category used to plan the design"
               },
               "PROBABILITY": {
                 "label": "Probability image",
-                "tooltip": "Use a probability band for the target reporting category, such as a Tree % band from a SEPAL classification."
+                "tooltip": "Use a probability band for the target reporting category, such as a Tree % band from a SEPAL classification"
               },
               "CATEGORICAL": {
                 "label": "Categorical image",
@@ -5666,17 +5659,17 @@
             "image": {
               "label": "Image",
               "placeholder": "Select an image...",
-              "tooltip": "Select the image used to anticipate the target reporting category."
+              "tooltip": "Select the image used to anticipate the target reporting category"
             },
             "type": {
               "label": "Type",
               "ASSET": {
                 "label": "Asset",
-                "tooltip": "Use an Earth Engine asset to anticipate the target reporting category."
+                "tooltip": "Use an Earth Engine asset to anticipate the target reporting category"
               },
               "RECIPE": {
                 "label": "Recipe",
-                "tooltip": "Use a SEPAL recipe output to anticipate the target reporting category."
+                "tooltip": "Use a SEPAL recipe output to anticipate the target reporting category"
               },
               "required": "You must select an image type"
             },
@@ -5693,7 +5686,7 @@
             "band": {
               "label": "Band",
               "placeholder": "Select a band...",
-              "tooltip": "Select the probability or categorical band used to anticipate the target reporting category.",
+              "tooltip": "Select the probability or categorical band used to anticipate the target reporting category",
               "required": "You must select a band"
             },
             "targetClass": {
@@ -5770,11 +5763,11 @@
             "estimateSampleSize": {
               "false": {
                 "label": "Samples",
-                "tooltip": "Enter a fixed total sample size and calculate the resulting margin of error."
+                "tooltip": "Enter a fixed total sample size and calculate the resulting margin of error"
               },
               "true": {
                 "label": "Error",
-                "tooltip": "Enter a target margin of error and calculate the total sample size needed."
+                "tooltip": "Enter a target margin of error and calculate the total sample size needed"
               }
             },
             "confidenceLevel": {
@@ -5789,13 +5782,13 @@
               "label": "Total sample size",
               "placeholder": "Sample size",
               "required": "You must specify the sample size",
-              "tooltip": "Total number of sample locations requested.",
+              "tooltip": "Total number of sample locations requested",
               "notEnough": "The total sample size is too small to give every stratum its required minimum. Increase the total or lower Min samples/stratum."
             },
             "marginOfError": {
               "label": "Target margin of error",
               "placeholder": "Margin of error...",
-              "tooltip": "The target margin of error used to calculate the sample size, relative to the anticipated overall target-category proportion."
+              "tooltip": "The target margin of error used to calculate the sample size, relative to the anticipated overall target-category proportion"
             },
             "minSamplesPerStratum": {
               "label": "Min samples/stratum",
@@ -5819,7 +5812,7 @@
               },
               "OPTIMAL": {
                 "label": "Optimal",
-                "tooltip": "Allocate using mapped stratum area and anticipated target-category variability, aiming to minimize planned uncertainty for a fixed total sample size."
+                "tooltip": "Allocate using mapped stratum area and anticipated target-category variability, aiming to minimize planned uncertainty for a fixed total sample size"
               },
               "POWER": {
                 "label": "Power",
@@ -5827,7 +5820,7 @@
               },
               "BALANCED": {
                 "label": "Balanced",
-                "tooltip": "Use the midpoint between Equal and Proportional allocation."
+                "tooltip": "Use the midpoint between Equal and Proportional allocation"
               }
             },
             "powerTuningConstant": {
@@ -5842,27 +5835,27 @@
               "table": {
                 "relativeMarginOfError": "Relative margin of error",
                 "samples": "Sample size",
-                "samplesTooltip": "Number of samples allocated to this stratum.",
+                "samplesTooltip": "Number of samples allocated to this stratum",
                 "overall": "Overall"
               }
             }
           },
           "title": "Sample Allocation",
-          "tooltip": "Set a fixed total sample size or a target margin of error and, when stratified, choose how samples are allocated."
+          "tooltip": "Set a fixed total sample size or a target margin of error and, when stratified, choose how samples are allocated"
         },
         "sampleArrangement": {
           "button": "ARR",
           "form": {
             "arrangementStrategy": {
               "label": "Arrangement strategy",
-              "tooltip": "Choose how sample locations are placed.",
+              "tooltip": "Choose how sample locations are placed",
               "RANDOM": {
                 "label": "Random",
                 "tooltip": "Select locations randomly. With stratification, select usable pixels within each stratum; without stratification, draw points directly within the area of interest."
               },
               "SYSTEMATIC": {
                 "label": "Systematic",
-                "tooltip": "Place sample locations on a regularly spaced grid for broad spatial coverage."
+                "tooltip": "Place sample locations on a regularly spaced grid for broad spatial coverage"
               }
             },
             "sampleSizeStrategy": {
@@ -5874,7 +5867,7 @@
               },
               "CLOSEST": {
                 "label": "Closest",
-                "tooltip": "Choose the available grid level nearest the requested count, which may be below it, while still meeting the minimum per stratum."
+                "tooltip": "Choose the available grid level nearest the requested count, which may be below it, while still meeting the minimum per stratum"
               },
               "EXACT": {
                 "label": "Exact",
@@ -5908,12 +5901,12 @@
             "seed": {
               "label": "Seed",
               "placeholder": "Seed...",
-              "tooltip": "Use the same seed and settings to reproduce the same random choice or randomized grid start.",
+              "tooltip": "Use the same seed and settings to reproduce the same random choice or randomized grid start",
               "invalid": "Enter a whole number from 1 to 9007199254740991."
             }
           },
           "title": "Sample Arrangement",
-          "tooltip": "Choose how sample locations are placed."
+          "tooltip": "Choose how sample locations are placed"
         },
         "retrieve": {
           "form": {
@@ -6412,6 +6405,9 @@
       "title": "Google account"
     },
     "report": {
+      "costsCovered1": "Please note all costs shown as spending are covered by SEPAL.",
+      "costsCovered2": "Users are never charged.",
+      "globalSessions": "Global sessions",
       "globalUsage": "Global usage",
       "resources": {
         "info": "Shows your monthly instance and storage budgets, and the storage space in use.",
@@ -6430,6 +6426,7 @@
         "hourlyCost": "Hourly cost",
         "instanceDescription": "Instance description",
         "instanceType": "Instance type",
+        "loadError": "Could not load the sessions.",
         "noSessions": "No active sessions",
         "time": "Date/time started",
         "title": "Sessions"
@@ -6583,7 +6580,7 @@
         },
         "monthlyLimits": {
           "label": "Limits",
-          "tooltip": "Maximum monthly spending (US$/month) for instances and storage, and maximum disk space (GB) allocated for storage."
+          "tooltip": "Maximum monthly spending (US$/month) for instances and storage, and maximum disk space (GB) allocated for storage"
         },
         "budgetUpdateRequest": {
           "label": "Budget update request"
@@ -6602,13 +6599,16 @@
         },
         "usage": {
           "label": "Computing resource usage",
-          "avgMax": "{metric} (avg/max)",
+          "avgMaxValue": "avg {avg}%, max {max}%",
           "cost": "Cost",
           "hours": "Hours",
           "instanceType": "Instance type",
+          "meterExample": "CPU, RAM and GPU show the average using a solid bar, and the maximum with a tick.",
+          "meterExampleValues": "Example, {avg}% average, {max}% max:",
           "month": "Month",
           "network": "Network",
           "noData": "No usage recorded",
+          "notAvailable": "Not available",
           "error": "Could not load usage data"
         },
         "username": {
@@ -6624,7 +6624,7 @@
       },
       "resetPassword": {
         "label": "Reset",
-        "tooltip": "Send a password reset email to the user.",
+        "tooltip": "Send a password reset email to the user",
         "message": "The user will receive an email for setting a new password. Until that, the current password will still be valid."
       },
       "lock": {
@@ -6669,10 +6669,10 @@
       "stop": {
         "error": "Could not stop session.",
         "label": "Stop",
-        "message": "You are stopping session {name}.",
+        "message": "You are stopping session {name}",
         "messageWithRunning": "You are stopping session {name}.|The following are running on it and will be closed.",
         "success": "Session stopped.",
-        "tooltip": "Stop session (cannot be resumed)."
+        "tooltip": "Stop session (cannot be resumed)"
       },
       "expiry": {
         "currentlyRunning": "Currently running:",
@@ -6681,7 +6681,7 @@
         "extendUnknown": "Keep it running",
         "idle": "{instance} has not been used for a while and will be stopped to avoid unnecessary cost.",
         "idleClosed": "{instance} had not been used for a while and was stopped to avoid unnecessary cost.",
-        "instance": "Session {name} ({type})",
+        "instance": "Session {name}",
         "instanceUnnamed": "One of your sessions",
         "runningClosed": "{instance} had not been used for a while and was stopped to avoid unnecessary cost, closing:",
         "terminate": "Terminate now"
@@ -6700,7 +6700,7 @@
       "update": {
         "error": "Could not update session.",
         "success": "Session has been updated.",
-        "tooltip": "Edit session."
+        "tooltip": "Edit session"
       },
       "sshLogin": {
         "tooltip": "Copy SSH login: {login}"
@@ -6837,11 +6837,11 @@
       "validating": "Validating asset destination...",
       "replace": {
         "label": "Replace",
-        "tooltip": "Replace previous asset with this one."
+        "tooltip": "Replace previous asset with this one"
       },
       "resume": {
         "label": "Resume",
-        "tooltip": "Keep existing images in the collection and only export missing ones."
+        "tooltip": "Keep existing images in the collection and only export missing ones"
       },
       "strategy": {
         "label": "Strategy"
@@ -6901,6 +6901,10 @@
     "confirm": {
       "title": "Confirmation required",
       "label": "Confirm"
+    },
+    "datePicker": {
+      "yearStart": "Year start",
+      "rangeInfo": "Please note that the start date is inclusive, but the end date is exclusive"
     },
     "error": "Error",
     "fileSelect": {

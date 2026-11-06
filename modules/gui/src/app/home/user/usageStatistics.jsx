@@ -12,7 +12,12 @@ import {Scrollable} from '~/widget/scrollable'
 import {Tooltip} from '~/widget/tooltip'
 import {Widget} from '~/widget/widget'
 
+import {USAGE_COLORS} from './usageColors'
+import {UsageMeter} from './usageMeter'
 import styles from './usageStatistics.module.css'
+
+const COST_PREFIX = '$ '
+const METER_EXAMPLE = {avg: 40, max: 90}
 
 // Resource usage month by month, newest first: every user's summed (admin, global), the given
 // user's (admin), or the current user's own when no username is given. Months are UTC calendar months, the ones the budget limits run on;
@@ -37,9 +42,24 @@ class _UsageStatistics extends React.Component {
     render() {
         const {framed} = this.props
         return (
-            <Widget label={msg('user.userDetails.form.usage.label')} framed={framed}>
+            <Widget
+                label={msg('user.userDetails.form.usage.label')}
+                tooltip={this.renderMeterExample()}
+                framed={framed}>
                 {this.renderContent()}
             </Widget>
+        )
+    }
+
+    renderMeterExample() {
+        return (
+            <div className={styles.meterExample}>
+                <div>{msg('user.userDetails.form.usage.meterExample')}</div>
+                <div className={styles.meterExampleValues}>
+                    {msg('user.userDetails.form.usage.meterExampleValues', METER_EXAMPLE)}
+                    {this.renderMeter('cpu', METER_EXAMPLE)}
+                </div>
+            </div>
         )
     }
 
@@ -58,20 +78,19 @@ class _UsageStatistics extends React.Component {
     }
 
     renderMonths(months) {
-        const hasGpu = months.some(({overall: {gpu}}) => gpu)
         return (
             <Scrollable direction='x' containerClassName={styles.months}>
                 <table className={styles.table}>
-                    {this.renderHeader(msg('user.userDetails.form.usage.month'), hasGpu)}
+                    {this.renderHeader(msg('user.userDetails.form.usage.month'))}
                     <tbody>
-                        {months.map(month => this.renderMonth(month, hasGpu))}
+                        {months.map(month => this.renderMonth(month))}
                     </tbody>
                 </table>
             </Scrollable>
         )
     }
 
-    renderMonth({month, overall, byInstanceType}, hasGpu) {
+    renderMonth({month, overall, byInstanceType}) {
         return (
             <Tooltip
                 key={month}
@@ -79,58 +98,60 @@ class _UsageStatistics extends React.Component {
                 placement='bottom'
                 delay={250}
                 styles={{root: {pointerEvents: 'none'}, body: {maxWidth: 'none'}}}>
-                {this.renderRow(moment.utc(month, 'YYYY-MM').format('MMM YYYY'), overall, hasGpu, {className: styles.month})}
+                {this.renderRow(moment.utc(month, 'YYYY-MM').format('MMM YYYY'), overall, {className: styles.month})}
             </Tooltip>
         )
     }
 
     renderMonthBreeakdown(byInstanceType) {
-        const hasGpu = byInstanceType.some(({gpu}) => gpu)
         return (
             <table className={styles.table}>
-                {this.renderHeader(msg('user.userDetails.form.usage.instanceType'), hasGpu)}
+                {this.renderHeader(msg('user.userDetails.form.usage.instanceType'))}
                 <tbody>
-                    {byInstanceType.map(row => this.renderRow(row.tag ?? row.name, row, hasGpu))}
+                    {byInstanceType.map(row => this.renderRow(row.tag ?? row.name, row))}
                 </tbody>
             </table>
         )
     }
 
-    renderHeader(label, hasGpu) {
+    renderHeader(label) {
         return (
             <thead>
                 <tr>
                     <th>{label}</th>
                     <th>{msg('user.userDetails.form.usage.hours')}</th>
                     <th>{msg('user.userDetails.form.usage.cost')}</th>
-                    <th>{avgMaxHeader(msg('user.userSession.usage.cpu'))}</th>
-                    <th>{avgMaxHeader(msg('user.userSession.usage.ram'))}</th>
-                    {hasGpu ? <th>{avgMaxHeader(msg('user.userSession.usage.gpu'))}</th> : null}
+                    <th className={styles.metric}>{msg('user.userSession.usage.cpu')}</th>
+                    <th className={styles.metric}>{msg('user.userSession.usage.ram')}</th>
+                    <th className={styles.metric}>{msg('user.userSession.usage.gpu')}</th>
                     <th>{msg('user.userDetails.form.usage.network')}</th>
                 </tr>
             </thead>
         )
     }
 
-    renderRow(label, {hours, cost, cpu, ram, gpu, netBytesPerS}, hasGpu, rowProps) {
-        // avg/max in one cell: "12% / 96%"
-        const avgMax = metric => metric ? `${Math.round(metric.avg)}% / ${Math.round(metric.max)}%` : '—'
+    renderRow(label, {hours, cost, cpu, ram, gpu, netBytesPerS}, rowProps) {
         return (
             <tr key={label} {...rowProps}>
                 <td>{label}</td>
                 <td>{hours}</td>
-                <td>{cost != null ? format.dollars(cost) : '—'}</td>
-                <td>{avgMax(cpu)}</td>
-                <td>{avgMax(ram)}</td>
-                {hasGpu ? <td>{avgMax(gpu)}</td> : null}
+                <td>{cost != null ? format.dollars(cost, {prefix: COST_PREFIX}) : '—'}</td>
+                <td>{this.renderMeter('cpu', cpu)}</td>
+                <td>{this.renderMeter('ram', ram)}</td>
+                <td>{this.renderMeter('gpu', gpu)}</td>
                 <td>{netBytesPerS !== null ? `${format.fileSize(netBytesPerS)}/s` : '—'}</td>
             </tr>
         )
     }
-}
 
-const avgMaxHeader = metric =>
-    msg('user.userDetails.form.usage.avgMax', {metric})
+    // Average and maximum on one line. A metric that was not measured leaves the bare line.
+    renderMeter(key, metric) {
+        const label = metric
+            ? msg('user.userDetails.form.usage.avgMaxValue', {avg: Math.round(metric.avg), max: Math.round(metric.max)})
+            : msg('user.userDetails.form.usage.notAvailable')
+        return <UsageMeter value={metric?.avg} tick={metric?.max} color={USAGE_COLORS[key]} label={label}/>
+    }
+}
 
 export const UsageStatistics = compose(
     _UsageStatistics,

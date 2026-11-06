@@ -74,6 +74,18 @@ describe('the usage menu', () => {
         expect(activatables.userReport.activate).not.toHaveBeenCalled()
     })
 
+    it('sets the global sessions apart with the global usage, when their panel is there', () => {
+        const activatables = {...allActivatable(), globalUsage: anActivatable(), globalSessions: anActivatable()}
+        const container = render({activatables})
+
+        expect(optionLabels(container)).toEqual(['Global usage', 'Global sessions', '—', 'Usage', 'Sessions'])
+
+        act(() => option(container, 'Global sessions').click())
+
+        expect(activatables.globalSessions.activate).toHaveBeenCalled()
+        expect(activatables.userSessions.activate).not.toHaveBeenCalled()
+    })
+
     it('opens the sessions panel, and only that one', () => {
         const activatables = allActivatable()
         const container = render({activatables})

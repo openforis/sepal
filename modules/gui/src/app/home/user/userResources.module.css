@@ -1,27 +1,25 @@
-.container {
-    padding: 0 .5rem;
-}
-
 .resources {
     display: grid;
-    grid-template-columns: 3fr 5rem 4rem 2fr;
-    grid-template-rows: auto;
-    column-gap: 1rem;
-    width: 100%;
+    grid-template-columns: max-content 3rem 1fr max-content;
+    gap: .35rem 1rem;
     align-items: center;
-    justify-items: right;
-    grid-template-areas: 'label quota used bar';
+    padding: 0 .5rem;
+    font-size: .8rem;
+    white-space: nowrap;
 }
 
-.resources .label {
-    grid-area: label;
-    justify-self: left;
+.heading {
+    opacity: .6;
 }
 
-.resources .quota {
-    grid-area: quota;
+.used,
+.max {
+    text-align: right;
 }
 
-.resources .used {
-    grid-area: used;
+/* Spans the columns, as the line under the head of the usage table does. */
+.line {
+    grid-column: 1 / -1;
+    border-bottom: 1px solid var(--wireframe-color);
+    margin-bottom: .25rem;
 }

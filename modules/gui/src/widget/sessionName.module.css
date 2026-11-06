@@ -1,0 +1,35 @@
+.sessionName {
+    display: inline-flex;
+    border: 1px solid var(--session-name-color);
+    border-radius: .25rem;
+    background-color: var(--session-name-ground-color);
+    overflow: hidden;
+    font-family: "Ubuntu Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 1rem;
+    font-weight: bold;
+    line-height: 1.2rem;
+    white-space: nowrap;
+    vertical-align: baseline;
+    /* Rows such as CrudItem turn pointer events off for their content, which would disable the tooltip. */
+    pointer-events: auto;
+}
+
+.name,
+.type {
+    padding: 0 .25rem;
+}
+
+.sessionName > span {
+    text-transform: none;
+}
+
+.name {
+    background-color: var(--session-name-background-color);
+    color: var(--session-name-color);
+}
+
+/* Reversed, so the type reads as a qualifier of the name rather than more of it */
+.type {
+    background-color: var(--session-name-color);
+    color: var(--session-name-reverse-color);
+}

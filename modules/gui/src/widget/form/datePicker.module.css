@@ -3,14 +3,7 @@
 }
 
 .panelContent {
-    display: grid;
-    grid-template-rows: 6rem 15rem;
-    /*grid-template-rows: 10rem 13rem;*/
-    grid-template-columns: auto 1fr;
-    grid-template-areas:
-        'years months'
-        'years days';
-    /* padding: .5rem; */
+    display: flex;
     column-gap: 1rem;
 }
 
@@ -19,33 +12,44 @@
     width: 7.5rem;
 }
 
-.years, .months, .days {
-    height: 100%;
-}
-
 .years {
-    grid-area: years;
-    /* width: 4rem; */
+    display: flex;
+    flex-direction: column;
     position: relative;
     padding-right: .75rem;
     border-right: var(--wireframe);
 }
 
+/* Zero basis keeps the years list from sizing the panel: it fills the height set by the calendar */
+.years .yearList {
+    flex: 1 1 0;
+}
+
+.yearBoundaries {
+    margin: 1rem 0
+}
+
+.calendar {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
 .months {
-    grid-area: months;
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     grid-template-rows: repeat(auto-fill, 2rem);
     justify-items: center;
+    height: 6rem;
     padding-top: .5rem;
 }
 
 .days {
-    grid-area: days;
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     grid-template-rows: repeat(auto-fill, 2rem);
     justify-items: center;
+    height: 15rem;
 }
 
 .input button:hover {

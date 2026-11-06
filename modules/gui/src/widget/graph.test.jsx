@@ -8,6 +8,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 const charts = vi.hoisted(() => [])
 const built = vi.hoisted(() => [])
 const redrawn = vi.hoisted(() => [])
+const updated = vi.hoisted(() => [])
 const graphs = vi.hoisted(() => [])
 const plotters = vi.hoisted(() => ({fillPlotter: vi.fn(), errorPlotter: vi.fn(), linePlotter: vi.fn()}))
 vi.mock('dygraphs', () => ({
@@ -22,8 +23,9 @@ vi.mock('dygraphs', () => ({
             built.push(data)
         }
 
-        updateOptions({file}) {
+        updateOptions({file, ...options}) {
             redrawn.push(file)
+            updated.push(options)
         }
 
         getArea() {
@@ -218,6 +220,43 @@ describe('Graph drawing', () => {
         act(() => zoom.dispatchEvent(new MouseEvent('mouseout', {bubbles: true, relatedTarget: plot, clientX: 150, clientY: 285})))
 
         expect(unhighlight).toHaveBeenCalledTimes(1)
+    })
+})
+
+describe('a Graph given new options', () => {
+    let root, container
+
+    beforeEach(() => {
+        built.splice(0)
+        updated.splice(0)
+        initStore(createStore((state = {dimensions: {width: 1024, height: 768}}) => state))
+        container = document.createElement('div')
+        document.body.appendChild(container)
+        root = createRoot(container)
+    })
+    afterEach(() => {
+        act(() => root.unmount())
+        container.remove()
+    })
+
+    const show = props => act(() => root.render(<Graph data={FIRST} {...props}/>))
+
+    it('applies them to the chart it has drawn, without building it again', () => {
+        show({visibility: [true, true], dateWindow: [0, 1]})
+
+        show({visibility: [true, false], dateWindow: [0, 1]})
+
+        expect(built).toEqual([FIRST])
+        expect(updated.at(-1).visibility).toEqual([true, false])
+    })
+
+    // Applying it again would undo a zoom the user made with the range selector since.
+    it('leaves the options that did not change alone', () => {
+        show({visibility: [true, true], dateWindow: [0, 1]})
+
+        show({visibility: [true, false], dateWindow: [0, 1]})
+
+        expect(updated.at(-1)).not.toHaveProperty('dateWindow')
     })
 })
 

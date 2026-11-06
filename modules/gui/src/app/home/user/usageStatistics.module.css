@@ -27,6 +27,10 @@
     opacity: .6;
 }
 
+.table th.metric {
+    text-align: center;
+}
+
 /* On the rows, not the cells: the header cells' opacity would dim the line. */
 .table thead tr {
     border-bottom: 1px solid var(--wireframe-color);
@@ -51,6 +55,19 @@
 .table tr.month:hover td {
     color: var(--look-highlight-color);
     background-color: var(--look-highlight-background-color);
+}
+
+.meterExample {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .5rem;
+}
+
+.meterExampleValues {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
 }
 
 .message {

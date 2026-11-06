@@ -5,12 +5,13 @@ import {connect} from '~/connect'
 import format from '~/format'
 import {select} from '~/store'
 import {msg} from '~/translate'
-import {Gauge} from '~/widget/gauge'
-import {Label} from '~/widget/label'
-import {Layout} from '~/widget/layout'
-import {Message} from '~/widget/message'
 
+import {UsageMeter} from './usageMeter'
 import styles from './userResources.module.css'
+
+const COST_PREFIX = '$ '
+const WARNING_PERCENTAGE = 70
+const ERROR_PERCENTAGE = 90
 
 const mapStateToProps = () => ({
     userReport: select('user.currentUserReport') || {}
@@ -19,74 +20,84 @@ const mapStateToProps = () => ({
 class _UserResources extends React.Component {
     render() {
         const {userReport: {spending}} = this.props
-        return spending ? (
-            <Layout type='vertical'>
-                {/* {this.renderInfo()} */}
-                <Layout
-                    className={styles.container}
-                    type='vertical'
-                    spacing='tight'>
+        return spending
+            ? (
+                <div className={styles.resources}>
                     {this.renderHeader()}
                     {this.renderInstanceBudget(spending)}
                     {this.renderStorageBudget(spending)}
                     {this.renderStorage(spending)}
-                </Layout>
-            </Layout>
-        ) : null
-    }
-
-    renderInfo() {
-        return (
-            <Message
-                type='info'
-                icon='comment'
-                iconSize='2x'
-                text={msg('user.report.resources.info')}/>
-        )
+                </div>
+            )
+            : null
     }
 
     renderHeader() {
         return (
-            <div className={styles.resources}>
-                <div className={styles.label}/>
-                <Label className={styles.quota} msg={msg('user.report.resources.max')}/>
-                <Label className={styles.user} msg={msg('user.report.resources.used')}/>
+            <React.Fragment>
                 <div/>
-            </div>
+                <div className={[styles.heading, styles.used].join(' ')}>{msg('user.report.resources.used')}</div>
+                <div/>
+                <div className={[styles.heading, styles.max].join(' ')}>{msg('user.report.resources.max')}</div>
+                <div className={styles.line}/>
+            </React.Fragment>
         )
     }
 
     renderInstanceBudget({monthlyInstanceSpending, monthlyInstanceBudget}) {
-        return (
-            <div className={styles.resources}>
-                <Label className={styles.label} msg={msg('user.report.resources.instanceSpending')}/>
-                <div className={styles.quota}>{format.dollars(monthlyInstanceBudget, {suffix: '/mo.'})}</div>
-                <div className={styles.used}>{format.percent(monthlyInstanceSpending, monthlyInstanceBudget, 0)}</div>
-                <Gauge value={monthlyInstanceSpending} maxValue={monthlyInstanceBudget}/>
-            </div>
+        return this.renderResource(
+            msg('user.report.resources.instanceSpending'),
+            monthlyInstanceSpending,
+            monthlyInstanceBudget,
+            this.formatBudget(monthlyInstanceBudget)
         )
     }
 
     renderStorageBudget({monthlyStorageSpending, monthlyStorageBudget}) {
-        return (
-            <div className={styles.resources}>
-                <Label className={styles.label} msg={msg('user.report.resources.storageSpending')}/>
-                <div className={styles.quota}>{format.dollars(monthlyStorageBudget, {suffix: '/mo.'})}</div>
-                <div className={styles.used}>{format.percent(monthlyStorageSpending, monthlyStorageBudget, 0)}</div>
-                <Gauge value={monthlyStorageSpending} maxValue={monthlyStorageBudget}/>
-            </div>
+        return this.renderResource(
+            msg('user.report.resources.storageSpending'),
+            monthlyStorageSpending,
+            monthlyStorageBudget,
+            this.formatBudget(monthlyStorageBudget)
         )
     }
 
     renderStorage({storageUsed, storageQuota}) {
-        return (
-            <div className={styles.resources}>
-                <Label className={styles.label} msg={msg('user.report.resources.storageSpace')}/>
-                <div className={styles.quota}>{format.number({value: storageQuota, scale: 'G', unit: 'B'})}</div>
-                <div className={styles.used}>{format.percent(storageUsed, storageQuota, 0)}</div>
-                <Gauge value={storageUsed} maxValue={storageQuota}/>
-            </div>
+        return this.renderResource(
+            msg('user.report.resources.storageSpace'),
+            storageUsed,
+            storageQuota,
+            format.number({value: storageQuota, scale: 'G', unit: 'B'})
         )
+    }
+
+    renderResource(label, used, max, formattedMax) {
+        const percentage = max > 0 ? Math.round(100 * used / max) : 0
+        return (
+            <React.Fragment>
+                <div>{label}</div>
+                <div className={styles.used}>{percentage}%</div>
+                <UsageMeter
+                    value={Math.min(percentage, 100)}
+                    color={this.usedColor(percentage)}
+                    label={msg('user.report.usage', {percentage})}
+                />
+                <div className={styles.max}>{formattedMax}</div>
+            </React.Fragment>
+        )
+    }
+
+    usedColor(percentage) {
+        if (percentage > ERROR_PERCENTAGE) {
+            return 'var(--error-color)'
+        }
+        return percentage > WARNING_PERCENTAGE
+            ? 'var(--warning-color)'
+            : 'var(--success-color)'
+    }
+
+    formatBudget(budget) {
+        return format.dollars(budget, {prefix: COST_PREFIX, suffix: '/mo.'})
     }
 }
 

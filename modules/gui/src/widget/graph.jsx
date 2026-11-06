@@ -74,9 +74,10 @@ class _Graph extends React.Component {
         if (!this.graph || !_.isEqual(dimensions, drawnDimensions) || theme !== drawnTheme) {
             this.graph = new Dygraph(this.graphRef.current, data, {...options, underlayCallback})
         } else {
-            this.graph.updateOptions({file: [...updatedData], underlayCallback})
+            this.graph.updateOptions({...changedOptions(this.drawnOptions, options), file: [...updatedData], underlayCallback})
         }
         this.drawn = this.props
+        this.drawnOptions = options
     }
 
     changed(props, nextProps) {
@@ -211,6 +212,11 @@ class _Graph extends React.Component {
         return options
     }
 }
+
+// Only what changed: re-applying an unchanged option would undo what the user did to the chart since, such as
+// zooming in on it with the range selector.
+const changedOptions = (drawnOptions, options) =>
+    _.omitBy(options, (value, name) => _.isEqual(value, drawnOptions?.[name]))
 
 const createUnderlayCallback = highlights =>
     (canvas, area, g) => {

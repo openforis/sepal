@@ -9,6 +9,7 @@ import {createSessionsApi} from './sessionsApi.js'
 const sessionManager = {
     generateUserSessionReport: mock.fn(),
     generateUserUsageReport: mock.fn(),
+    sessionUsageHistory: mock.fn(),
     mostRecentlyClosedSessionByUser: mock.fn(),
     mostRecentlyClosedSession: mock.fn(),
     requestSession: mock.fn(),
@@ -423,6 +424,28 @@ describe('the email management link', () => {
     })
 })
 
+// ── session usage history ────────────────────────────────────────────────────
+
+test('sessionUsageSelf → the caller\'s session history, timed as UTC instants', async () => {
+    const sample = {sampleTime: new Date('2026-07-01T10:01:00.000Z'), cpuPct: 12, ramPct: 30, gpuPct: null, netBytesPerS: 300}
+    sessionManager.sessionUsageHistory.mock.mockImplementation(async () => ({samples: [sample]}))
+    const c = ctx({params: {sessionId: 's1'}})
+
+    await api.sessionUsageSelf(c)
+
+    assert.deepEqual(callsOf(sessionManager.sessionUsageHistory), [[{sessionId: 's1', username: 'alice'}]])
+    assert.deepEqual(c.body, {samples: [{time: '2026-07-01T10:01:00.000Z', cpuPct: 12, ramPct: 30, gpuPct: null, netBytesPerS: 300}]})
+})
+
+test('sessionUsageOther → scoped to the path user', async () => {
+    sessionManager.sessionUsageHistory.mock.mockImplementation(async () => ({samples: []}))
+    const c = ctx({params: {username: 'Bob', sessionId: 's1'}})
+
+    await api.sessionUsageOther(c)
+
+    assert.deepEqual(callsOf(sessionManager.sessionUsageHistory), [[{sessionId: 's1', username: 'bob'}]])
+})
+
 // ── close ────────────────────────────────────────────────────────────────────
 
 test('closeSessionSelf → 204 with {status: OK}, self user', async () => {
@@ -677,6 +700,29 @@ test('generateReportOther → admin path form in session + instanceType', async 
         'sessions/bob/instance-type/T3aSmall'
     )
     assert.equal(c.body.sessions[0].status, 'STARTING')
+})
+
+test('globalSessions → every user\'s sessions, each in its owner\'s admin form', async () => {
+    sessionManager.generateUserSessionReport.mock.mockImplementation(async () => ({
+        sessions: [
+            pendingSession({id: 's1', username: 'alice', instanceType: 'T3aSmall'}),
+            pendingSession({id: 's2', username: 'bob', instanceType: 'T3aSmall'}),
+        ],
+        instanceTypes: [{id: 'T3aSmall', hourlyCost: 0.02}]
+    }))
+    const c = ctx()
+    await api.globalSessions(c)
+    assert.deepEqual(callsOf(sessionManager.generateUserSessionReport), [[{
+        username: null, workerType: 'sandbox',
+    }]])
+    assert.deepEqual(
+        c.body.sessions.map(({username, path, sshLogin}) => ({username, path, sshLogin})),
+        [
+            {username: 'alice', path: 'sessions/alice/session/s1', sshLogin: `alice+${instanceName('s1')}`},
+            {username: 'bob', path: 'sessions/bob/session/s2', sshLogin: `bob+${instanceName('s2')}`},
+        ]
+    )
+    assert.ok(!('instanceTypes' in c.body))
 })
 
 test('report sessions include their associated apps', () => {

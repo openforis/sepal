@@ -1,6 +1,5 @@
 import express from 'express'
 import {createProxyMiddleware} from 'http-proxy-middleware'
-import _ from 'lodash'
 
 import logConfig from '#config/log.json' with {type: 'json'}
 import * as server from '#sepal/httpServer'

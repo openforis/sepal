@@ -1,6 +1,7 @@
 import '@fontsource/ubuntu/300.css'
 import '@fontsource/ubuntu/400.css'
 import '@fontsource/ubuntu/500.css'
+import '@fontsource/ubuntu-mono/700.css'
 import '@fontsource/source-sans-pro/300.css'
 import '@fontsource/source-sans-pro/400.css'
 import '@fontsource/source-sans-pro/600.css'

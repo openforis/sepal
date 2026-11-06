@@ -1,38 +1,46 @@
 import _ from 'lodash'
 import moment from 'moment'
+import PropTypes from 'prop-types'
 import React from 'react'
 
 import {actionBuilder} from '~/action-builder'
+import api from '~/apiRegistry'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import format from '~/format'
 import {select} from '~/store'
-import {msg} from '~/translate'
+import {msg, richMsg} from '~/translate'
 import {stopCurrentUserSession$} from '~/user'
 import {CrudItem} from '~/widget/crudItem'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Notifications} from '~/widget/notifications'
+import {SessionName} from '~/widget/sessionName'
 
-import {InstanceSpecsTag} from '../instanceSpecs'
+import {instanceSpecs} from '../instanceSpecs'
+import {SessionUsageChart} from './sessionUsageChart'
 import styles from './userSessionList.module.css'
 import {instanceTypeLabel, runningItems, usageMetrics} from './userSessionSummary'
 
 // A GPU column on every strip, whether or not the instance has one, so the columns line up.
 const USAGE_METRICS = ['cpu', 'gpu', 'ram', 'net']
 
-const mapStateToProps = () => ({
-    sessions: select('user.currentUserReport.sessions')
+// Global: every user's sessions, as given, each showing its user. An admin can only stop them: the
+// keep-alive and the SSH login belong to their owner.
+const mapStateToProps = (_state, {global, sessions}) => ({
+    sessions: global ? sessions : select('user.currentUserReport.sessions')
 })
 
 class _UserSessionList extends React.Component {
     stopSession(session) {
-        const {stream} = this.props
+        const {global, stream, onStopped} = this.props
         stream('STOP_USER_SESSION_' + session.id,
-            stopCurrentUserSession$(session),
+            global
+                ? api.sessions.stopUserSession$(session)
+                : stopCurrentUserSession$(session),
             // no success toast — the session leaves the list (and its app tabs close)
-            null,
+            () => onStopped && onStopped(session),
             error => Notifications.error({message: msg('user.userSession.stop.error'), error})
         )
     }
@@ -57,16 +65,22 @@ class _UserSessionList extends React.Component {
 
     // The name is the one the expiry notification, the email and its management page use.
     renderTitle(session) {
-        const {name, instanceType} = session
-        return (
-            <div className={styles.title}>
-                {name ? <span>{name}</span> : null}
-                <div className={styles.type}>
-                    <span>{instanceTypeLabel(session)}</span>
-                    <InstanceSpecsTag instanceType={instanceType} compact/>
-                </div>
-            </div>
+        const {global} = this.props
+        const name = (
+            <SessionName
+                name={session.name}
+                type={instanceTypeLabel(session)}
+                tooltip={instanceSpecs(session.instanceType, {compact: true})}
+            />
         )
+        return global
+            ? (
+                <div className={styles.name}>
+                    <span className={styles.user}>{session.username}</span>
+                    {name}
+                </div>
+            )
+            : name
     }
 
     renderDescription(session) {
@@ -158,6 +172,12 @@ class _UserSessionList extends React.Component {
         )
     }
 
+    renderUsageChart(session) {
+        return (
+            <SessionUsageChart session={session}/>
+        )
+    }
+
     // The stop confirmation lists the same things, so what a user is about to lose is described
     // identically to what the list says is running.
     renderRunning(session) {
@@ -178,18 +198,26 @@ class _UserSessionList extends React.Component {
     // its type, as the list titles it.
     renderRemoveMessage(session) {
         const running = runningItems(session).length
-        return msg(
+        return richMsg(
             running ? 'user.userSession.stop.messageWithRunning' : 'user.userSession.stop.message',
-            {name: session.name || instanceTypeLabel(session)}
+            {name: <SessionName name={session.name} type={instanceTypeLabel(session)}/>}
         )
     }
 
     renderSession(session) {
+        const {global} = this.props
         return (
             <ListItem
                 key={session.id}
-                expansion={this.renderStats(session)}
+                expansion={
+                    <React.Fragment>
+                        {this.renderStats(session)}
+                        {this.renderUsageChart(session)}
+                    </React.Fragment>
+                }
                 expansionClassName={styles.expansion}
+                // The usage chart's keys toggle its lines.
+                expansionInteractive
                 expanded>
                 <CrudItem
                     title={this.renderTitle(session)}
@@ -197,14 +225,14 @@ class _UserSessionList extends React.Component {
                     timestamp={session.creationTime}
                     editTooltip={msg('user.userSession.update.tooltip')}
                     editDisabled={this.isStoppingSession(session)}
-                    copyValue={session.sshLogin}
+                    copyValue={global ? null : session.sshLogin}
                     copyTooltip={msg('user.userSession.sshLogin.tooltip', {login: session.sshLogin})}
-                    copyDisabled={!session.sshLogin || this.isStoppingSession(session)}
+                    copyDisabled={!global && (!session.sshLogin || this.isStoppingSession(session))}
                     removeMessage={this.renderRemoveMessage(session)}
                     removeContent={this.renderRunning(session)}
                     removeTooltip={msg('user.userSession.stop.tooltip')}
                     removePending={this.isStoppingSession(session)}
-                    onEdit={() => this.selectSession(session)}
+                    onEdit={global ? null : () => this.selectSession(session)}
                     onRemove={() => this.stopSession(session)}
                 />
             </ListItem>
@@ -232,4 +260,9 @@ export const UserSessionList = compose(
     connect(mapStateToProps)
 )
 
-UserSessionList.propTypes = {}
+UserSessionList.propTypes = {
+    global: PropTypes.any,
+    sessions: PropTypes.array,
+    stoppingAll: PropTypes.any,
+    onStopped: PropTypes.func
+}

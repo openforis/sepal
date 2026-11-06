@@ -71,32 +71,6 @@ export class SepalMap {
         })
         this.cursor.setMap(googleMap)
 
-        // const crosshairSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-        // crosshairSvg.setAttribute('path', `
-        //     M 0 0 L 100 0
-        //     M 0 0 L 0 -100
-        //     M 0 0 L -100 0
-        //     M 0 0 L 0 100
-        // `)
-        // crosshairSvg.setAttribute('strokeColor', 'white')
-        // crosshairSvg.setAttribute('strokeOpacity', 1)
-
-        this.crosshair = new google.maps.marker.Marker({
-            icon: {
-                path: `
-                    M 0 0 L 100 0
-                    M 0 0 L 0 -100
-                    M 0 0 L -100 0
-                    M 0 0 L 0 100
-                `,
-                // fillColor: 'white',
-                // fillOpacity: 1,
-                strokeColor: 'white',
-                strokeOpacity: 1
-            }
-        })
-        this.crosshair.setMap(googleMap)
-
         this.overlay = new google.maps.OverlayView()
         this.overlay.draw = () => {}
         this.overlay.setMap(googleMap)
@@ -327,10 +301,6 @@ export class SepalMap {
 
     setCursor(latLng) {
         this.cursor.setPosition(latLng)
-    }
-
-    setcrosshair(latLng) {
-        this.crosshair.setPosition(latLng)
     }
 
     latLngToPixel(latLng) {

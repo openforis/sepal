@@ -11,9 +11,11 @@ import {currentUser} from '~/user'
 import {withActivatable} from '~/widget/activation/activatable'
 import {hasBudget, hourlyInstanceSpending, isBudgetWarning} from '~/widget/budgetRules'
 import {Layout} from '~/widget/layout'
+import {Message} from '~/widget/message'
 import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
 
+import {GlobalSessions} from './globalSessions'
 import styles from './usage.module.css'
 import {UsageMenuButton} from './usageMenu'
 import {UsageStatistics} from './usageStatistics'
@@ -38,6 +40,7 @@ class _Usage extends React.Component {
                     title={msg('user.report.title')}/>
                 <Panel.Content>
                     <Layout>
+                        {this.renderCostsCovered()}
                         {this.renderResources()}
                         {this.renderStatistics()}
                     </Layout>
@@ -61,9 +64,20 @@ class _Usage extends React.Component {
         )
     }
 
+    renderCostsCovered() {
+        return (
+            <Message type='info' icon='comment' iconSize='2x'>
+                <Layout type='vertical' spacing='tight'>
+                    <div>{msg('user.report.costsCovered1')}</div>
+                    <div>{msg('user.report.costsCovered2')}</div>
+                </Layout>
+            </Message>
+        )
+    }
+
     renderResources() {
         return (
-            <Widget label={msg('user.report.resources.title')} framed>
+            <Widget label={msg('user.report.resources.title')}>
                 <UserResources/>
             </Widget>
         )
@@ -144,8 +158,17 @@ class _UsageButton extends React.Component {
             <React.Fragment>
                 <Usage/>
                 <UserSessions/>
-                {currentUser()?.admin ? <GlobalUsage/> : null}
+                {currentUser()?.admin ? this.renderAdminPanels() : null}
                 {this.renderButton()}
+            </React.Fragment>
+        )
+    }
+
+    renderAdminPanels() {
+        return (
+            <React.Fragment>
+                <GlobalUsage/>
+                <GlobalSessions/>
             </React.Fragment>
         )
     }

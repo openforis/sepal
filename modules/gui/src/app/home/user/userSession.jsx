@@ -12,6 +12,7 @@ import {withForm} from '~/widget/form/form'
 import {Layout} from '~/widget/layout'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
+import {SessionName} from '~/widget/sessionName'
 
 import styles from './userSession.module.css'
 
@@ -75,7 +76,12 @@ class _UserSession extends React.Component {
                 onApply={session => this.updateSession(session)}
                 onClose={() => this.unselectSession()}>
                 <Panel.Header
-                    title={`${session.instanceType.tag ?? session.instanceType.name} (${session.instanceType.description})`}
+                    title={
+                        <span className={styles.title}>
+                            <SessionName name={session.name} type={session.instanceType.tag ?? session.instanceType.name}/>
+                            <span>({session.instanceType.description})</span>
+                        </span>
+                    }
                     label={`${format.dollars(session.costSinceCreation)} (${format.dollarsPerHour(session.instanceType.hourlyCost)})`}
                 />
                 <Panel.Content>

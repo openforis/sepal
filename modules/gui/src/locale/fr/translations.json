@@ -112,13 +112,6 @@
       "timestamp": {
         "never": ""
       },
-      "update": {
-        "available": "",
-        "checkForUpdates": "",
-        "error": "",
-        "success": "",
-        "noChanges": ""
-      },
       "tooltip": ""
     }
   },
@@ -624,7 +617,7 @@
         },
         "colorColumnType": {
           "label": "Format des colonnes de couleur",
-          "tooltip": "Spécifiez si la couleur est dans une seule colonne, ou si le rouge, le vert, le bleu sont dans des colonnes séparées.",
+          "tooltip": "Spécifiez si la couleur est dans une seule colonne, ou si le rouge, le vert, le bleu sont dans des colonnes séparées",
           "single": "Colonne unique",
           "multiple": "Colonnes multiples"
         },
@@ -742,7 +735,7 @@
           "greenChannel.label": "Canal vert",
           "hue.label": "Teinte",
           "redChannel.label": "Canal rouge",
-          "reverse.tooltip": "Inverser la bande.",
+          "reverse.tooltip": "Inverser la bande",
           "saturation.label": "Saturation",
           "select.placeholder": "Sélectionnez une bande...",
           "value.label": "Valeur"
@@ -760,17 +753,17 @@
         },
         "palette": {
           "label": "Palette",
-          "tooltip": "Afficher et modifier la palette à l'aide de sélecteurs de couleurs.",
+          "tooltip": "Afficher et modifier la palette à l'aide de sélecteurs de couleurs",
           "empty": "La palette est vide. Utilisation d'une échelle de gris.",
           "add": {
-            "tooltip": "Ajoutez une palette de couleurs."
+            "tooltip": "Ajoutez une palette de couleurs"
           },
           "preset": {
             "placeholder": "Sélectionnez une palette prédéfinie...",
-            "attribution": "Pré-réglages de {url}."
+            "attribution": "Pré-réglages de {url}"
           },
           "text": {
-            "tooltip": "Afficher et modifier la palette comme du texte.",
+            "tooltip": "Afficher et modifier la palette comme du texte",
             "placeholder": "Entrez une liste de couleurs au format csv..."
           }
         },
@@ -796,11 +789,11 @@
         },
         "rgb": {
           "label": "RVB",
-          "tooltip": "Trois bandes correspondant aux canaux de couleur rouge, vert et bleu."
+          "tooltip": "Trois bandes correspondant aux canaux de couleur rouge, vert et bleu"
         },
         "hsv": {
           "label": "",
-          "tooltip": "Mappage à trois bandes pour la teinte, la saturation et la valeur."
+          "tooltip": "Mappage à trois bandes pour la teinte, la saturation et la valeur"
         }
       }
     },
@@ -998,14 +991,14 @@
               "label": "Date de fin",
               "malformed": "Date invalide",
               "required": "Date requise",
-              "tooltip": "La dernière date de la série temporelle, exclusif."
+              "tooltip": "La dernière date de la série temporelle, exclusif"
             },
             "startDate": {
               "beforeEnd": "doit être antérieure à la date de fin",
               "label": "Date de début",
               "malformed": "Date invalide",
               "required": "Date requise",
-              "tooltip": "La première date de la serie temporelle, inclusif."
+              "tooltip": "La première date de la serie temporelle, inclusif"
             }
           },
           "title": "Dates",
@@ -1026,7 +1019,7 @@
               "label": "Détection des ruptures",
               "moderate": {
                 "label": "Modéré",
-                "tooltip": "Être modéré dans la détection des ruptures dans les séries temporelles."
+                "tooltip": "Être modéré dans la détection des ruptures dans les séries temporelles"
               }
             },
             "chiSquareProbability": "probabilité X²",
@@ -1060,7 +1053,7 @@
             "classification": {
               "label": "Classification",
               "placeholder": "Sélectionnez une classification...",
-              "tooltip": "(Facultatif) Sélectionnez une formule de classification et appliquez le classificateur à chaque acquisition de la série chronologique."
+              "tooltip": "(Facultatif) Sélectionnez une formule de classification et appliquez le classificateur à chaque acquisition de la série chronologique"
             },
             "cloudPercentageThreshold": {
               "label": "Couverture nuageuse max %",
@@ -1193,7 +1186,7 @@
             "gapStrategy": {
               "extrapolate": {
                 "label": "Extrapoler",
-                "tooltip": "Générer un nouveau modèle basé sur le segment avant ou après l'espace."
+                "tooltip": "Générer un nouveau modèle basé sur le segment avant ou après l'espace"
               },
               "interpolate": {
                 "label": "Interpoler",
@@ -1202,7 +1195,7 @@
               "label": "Gestion des espaces",
               "mask": {
                 "label": "Masque",
-                "tooltip": "Masquer tous les pixels qui tombent sur un espace."
+                "tooltip": "Masquer tous les pixels qui tombent sur un espace"
               },
               "tooltip": "Décider de la stratégie à utiliser pour les pixels où il n'y a pas de segment CCDC. Il y aura des espaces pendant les ruptures détectées ou pour les dates avant et après la plage de dates CCDC."
             },
@@ -1777,7 +1770,7 @@
                 "shrinkage": {
                   "label": "Réduction",
                   "placeholder": "Réduction...",
-                  "tooltip": "Le paramètre de réduction dans [0, 1] contrôle le taux d'apprentissage de la méthode."
+                  "tooltip": "Le paramètre de réduction dans [0, 1] contrôle le taux d'apprentissage de la méthode"
                 }
               },
               "label": "Gradient de renforcement d'arbre"
@@ -1829,7 +1822,7 @@
                 "minLeafPopulation": {
                   "label": "Noeud externe min pop.",
                   "placeholder": "Noeud externe min pop....",
-                  "tooltip": "Ne créez que les nœuds dont les données d'entrainement contiennent au moins ce nombre de points."
+                  "tooltip": "Ne créez que les nœuds dont les données d'entrainement contiennent au moins ce nombre de points"
                 },
                 "numberOfTrees": {
                   "label": "Nombre d'arbres",
@@ -1854,7 +1847,7 @@
                 "coef0": {
                   "label": "",
                   "placeholder": "",
-                  "tooltip": "La valeur du coef₀ dans la fonction noyau."
+                  "tooltip": "La valeur du coef₀ dans la fonction noyau"
                 },
                 "cost": {
                   "label": "Coût",
@@ -1882,7 +1875,7 @@
                   "options": {
                     "LINEAR": {
                       "label": "Linéaire",
-                      "tooltip": "u′×v (fonctionne bien avec de grands ensembles de données d'entraînement)."
+                      "tooltip": "u′×v (fonctionne bien avec de grands ensembles de données d'entraînement)"
                     },
                     "POLY": {
                       "label": "Polynôme",
@@ -1929,7 +1922,7 @@
                     },
                     "ONE_CLASS": {
                       "label": "",
-                      "tooltip": "S'entraîner sur une seule classe, en utilisant les valeurs aberrantes comme exemples négatifs."
+                      "tooltip": "S'entraîner sur une seule classe, en utilisant les valeurs aberrantes comme exemples négatifs"
                     }
                   },
                   "tooltip": "La procédure de décision à utiliser pour la classification"
@@ -2039,7 +2032,7 @@
                 }
               }
             },
-            "tooltip": "Ajouter des bandes dérivées supplémentaires à utiliser dans la classification."
+            "tooltip": "Ajouter des bandes dérivées supplémentaires à utiliser dans la classification"
           },
           "form": {
             "asset": {
@@ -2152,7 +2145,7 @@
               "locationType": {
                 "GEO_JSON": {
                   "label": "Colonne GeoJSON",
-                  "tooltip": "Position dans une seule colonne GeoJSON."
+                  "tooltip": "Position dans une seule colonne GeoJSON"
                 },
                 "label": "Type de position",
                 "tooltip": "Sélectionnez le mode de représentation de la position dans les données de référence",
@@ -2296,22 +2289,22 @@
             "CSV_UPLOAD": {
               "label": "Fichier CSV",
               "title": "TÉLÉCHARGEMENT DU CSV",
-              "tooltip": "Téléchargez un fichier CSV."
+              "tooltip": "Téléchargez un fichier CSV"
             },
             "EE_TABLE": {
               "label": "Table Earth Engine",
               "title": "",
-              "tooltip": "Chargement des données de référence à partir d'une table EE."
+              "tooltip": "Chargement des données de référence à partir d'une table EE"
             },
             "RECIPE": {
               "label": "Formules SEPAL sauvegardée",
               "title": "FORMULE SEPAL",
-              "tooltip": "Utiliser les données d'apprentissage d'une formule Sepal sauvegardée."
+              "tooltip": "Utiliser les données d'apprentissage d'une formule Sepal sauvegardée"
             },
             "SAMPLE_CLASSIFICATION": {
               "label": "Classification des échantillons",
               "title": "CLASSIFICATION DES ÉCHANTILLONS",
-              "tooltip": "Echantillonner une classification préexistante."
+              "tooltip": "Echantillonner une classification préexistante"
             },
             "CEO": {
               "label": "",
@@ -3101,7 +3094,7 @@
             "buffer": {
               "info": "buffer de {buffer} km",
               "label": "Buffer",
-              "tooltip": "La zone d'intérêt et l'aperçu mettent plus de temps à s'afficher lorsque le buffer est activée."
+              "tooltip": "La zone d'intérêt et l'aperçu mettent plus de temps à s'afficher lorsque le buffer est activée"
             },
             "assetBounds": {
               "description": "",
@@ -3734,7 +3727,7 @@
               "label": "intervalle de dates",
               "POINT_IN_TIME_MOSAIC": {
                 "label": "Date",
-                "tooltip": "Construire une mosaique avec des dates les plus proches possibles de la cible."
+                "tooltip": "Construire une mosaique avec des dates les plus proches possibles de la cible"
               },
               "YEARLY_TIME_SCAN": {
                 "label": "Année",
@@ -4359,7 +4352,7 @@
             "classification": {
               "label": "Classification",
               "placeholder": "Sélectionnez une classification...",
-              "tooltip": "(Facultatif) Sélectionnez une formule de classification et appliquez le classificateur à chaque acquisition de la série chronologique."
+              "tooltip": "(Facultatif) Sélectionnez une formule de classification et appliquez le classificateur à chaque acquisition de la série chronologique"
             },
             "band": {
               "label": ""
@@ -4668,14 +4661,14 @@
               "label": "Date de fin",
               "malformed": "Date non valide",
               "required": "Une date est nécessaire",
-              "tooltip": "La dernière date de la série à exclure."
+              "tooltip": "La dernière date de la série à exclure"
             },
             "startDate": {
               "beforeEnd": "Doit être avant la fin",
               "label": "Date de début",
               "malformed": "Date non valide",
               "required": "Date requise",
-              "tooltip": "La première date de la série, inclusif."
+              "tooltip": "La première date de la série, inclusif"
             }
           },
           "title": "Dates",
@@ -4693,7 +4686,7 @@
             "classification": {
               "label": "Classification",
               "placeholder": "Sélectionnez une classification...",
-              "tooltip": "(Facultatif) Sélectionnez une formule de classification et appliquez le classificateur à chaque acquisition de la série chronologique."
+              "tooltip": "(Facultatif) Sélectionnez une formule de classification et appliquez le classificateur à chaque acquisition de la série chronologique"
             },
             "dataSets": {
               "optical": {
@@ -5168,7 +5161,7 @@
       },
       "resetPassword": {
         "label": "",
-        "tooltip": "Envoyer un email de réinitialisation du mot de passe à l'utilisateur.",
+        "tooltip": "Envoyer un email de réinitialisation du mot de passe à l'utilisateur",
         "message": ""
       },
       "lock": {
@@ -5221,7 +5214,7 @@
       "update": {
         "error": "Echec de la mise à jour de la session",
         "success": "La session a été mise à jour",
-        "tooltip": "Éditer la session."
+        "tooltip": "Éditer la session"
       }
     }
   },
@@ -5340,11 +5333,11 @@
       "taskPending": "",
       "replace": {
         "label": "Remplacer",
-        "tooltip": "Remplacer l'Asset précédent par celui-ci."
+        "tooltip": "Remplacer l'Asset précédent par celui-ci"
       },
       "resume": {
         "label": "Reprendre",
-        "tooltip": "Garder les images existantes dans la collection et exporter uniquement les images manquantes."
+        "tooltip": "Garder les images existantes dans la collection et exporter uniquement les images manquantes"
       },
       "strategy": {
         "label": "Stratégie"
