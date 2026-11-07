@@ -393,6 +393,41 @@ describe('exporting the bands of a CCDC over its Classification', () => {
     })
 })
 
+// What a LandTrendr's change map needs of its Sources (type/landTrendr.js) refuses its export before anything is built.
+describe('exporting a LandTrendr change map', () => {
+    const landTrendrOf = ({sources, dates = {startYear: 2014, endYear: 2021}}) => ({
+        id: 'landtrendr-1',
+        type: 'LANDTRENDR',
+        model: {
+            aoi: {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]},
+            dates,
+            sources: {cloudPercentageThreshold: 75, ...sources},
+            options: {corrections: ['SR']},
+            landTrendrOptions: {}
+        }
+    })
+
+    for (const [_case, sources, dates, code] of [
+        ['no data set', {dataSets: {}, index: 'nbr'}, undefined, 'MISSING_DATA_SETS'],
+        ['no index', {dataSets: {LANDSAT: ['LANDSAT_8']}}, undefined, 'MISSING_INDEX'],
+        ['an index its data sets cannot carry', {dataSets: {SENTINEL_2: ['SENTINEL_2']}, index: 'ebbi'}, undefined, 'UNSUPPORTED_COLLECTION_BANDS'],
+        ['years no data set chosen may cover', {dataSets: {LANDSAT: ['LANDSAT_9']}, index: 'nbr'}, {startYear: 2000, endYear: 2010}, 'NO_PERIOD_OVERLAP']
+    ]) {
+        it(format('refuses %s, building and exporting nothing', _case), async () => {
+            await assert.rejects(submit({recipe: landTrendrOf({sources, dates}), bands: ['yod']}), new RegExp(`landtrendr-1 cannot run: ${code}$`))
+
+            assert.deepEqual(state.built, [])
+            assert.deepEqual(state.exported, [])
+        })
+    }
+
+    it('exports one whose Sources it can build', async () => {
+        const recipe = landTrendrOf({sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, index: 'nbr'}})
+
+        assert.equal((await submit({recipe, bands: ['yod']})).image.builtFrom, recipe.id)
+    })
+})
+
 describe('exporting a Band Math recipe', () => {
     const bandMath = ({outputNames = ['dem2', 'coefs']} = {}) => ({
         id: 'band-math-1',

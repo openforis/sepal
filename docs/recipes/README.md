@@ -18,6 +18,7 @@ implementation histories. Distinguish existing behavior from proposals; recordin
 - [BAYTS Alerts](bayts-alerts.md)
 - [Time Series](time-series.md)
 - [Change Alerts](change-alerts.md)
+- [LandTrendr](landtrendr.md)
 
 Shared architecture and detailed design contracts live in
 [`docs/design/recipes/`](../design/recipes/data-sources.md). All planned work, local follow-ups and research

@@ -335,7 +335,7 @@ Use the part of the mechanism each responsibility needs:
 | Recipes | Concrete reuse and existing owner | Migration boundary |
 | --- | --- | --- |
 | CCDC, Time Series, Phenology | The selected Classification is read once per recipe for its UI (`selectedClassification.js`). Chosen bands of the images, classified outputs and CCDC's TMask are judged in shared readiness, and Sources keep chosen bands shown. `collectionClassifierRequirements.js`, `collectionBandRequirements.js` and CCDC's `segmentDescription.js` establish reusable owners. | [Remaining items](#temporal-sources-dependencies): unmatched Planet Daily's imagery-dependent bands and the Time Series chart's corrections. No persisted fit evidence. |
-| LandTrendr | `landTrendr/panels/sources/sources.jsx` calls `ensureValidIndex` on opening and dataset changes; dataset choices also read Dates. | Declare date/dataset/index compatibility. Settle the explicit replacement/defaulting policy before changing it; opening or temporarily empty options must preserve deliberate choices. |
+| LandTrendr | Sources' data-set, date and index dependencies are judged in shared readiness, and Sources keep chosen values shown and say which inputs an index lacks ([LandTrendr](../recipes/landtrendr.md#sources)). | Next: [the shared data-set/date migration](#landtrendr-sources-dependencies) across date-filtered Sources; chart gating stays with [server preview readiness](#server-preview-readiness). |
 | Optical Mosaic | `sceneAreas.jsx`, `sceneSelection.jsx`, `autoSelectScenes.jsx` and `sceneDeselection.jsx` separately coordinate AOI/source/date-dependent reads and selected scenes. | Shared question identity and request lifecycle can replace local coordination. Scene discovery results are temporary; manual selections remain user-owned. Preserve explicit auto-selection and define retention/reconciliation before changing scene deletion behaviour. |
 | Classification, Regression | Shared input-band and training-data requirements already judge live dependencies. `panels/trainingData/sample*Section.jsx` and table-import sections own similar asynchronous import requests and mapping stages. | Reuse acquisition lifecycle and declared stage prerequisites where duplicated. Sampled/imported rows are persisted snapshots, and source IDs there record provenance; do not turn them into live execution dependencies or invalidate them automatically. Keep training adequacy and value/encoding policy separate. |
 | Unsupervised Classification | Shared derived-input requirements already validate its band sets; sampling and clustering run during execution. Cluster-dependent preset legends are computed synchronously by `visualizations.js`. | No persisted calculation sidecar is justified by these paths. Conditional sampling/clusterer rules can use shared requirements when their validation is migrated; retain the domain parameter rules and cheap preset derivation. |
@@ -395,6 +395,34 @@ to be the same case:
 - The CCDC and Time Series chart band pickers list a charted classified output the Classification no longer offers
   by its value.
 - `~/sources.js` formats classified-output labels beside Classification's `bandPresentation`.
+
+#### LandTrendr Sources dependencies
+
+LandTrendr's data-set, date and index dependencies are [current behaviour](../recipes/landtrendr.md#sources). Remaining,
+from code inspection:
+
+- **Next: the shared data-set/date migration.** The agreed policy: a date change keeps the chosen data sets, Sources
+  identify those retained outside the period, and execution is held when none can contribute. No Dates Apply removes
+  data sets. LandTrendr keeps them and holds execution, but does not yet identify them. Other recipes take
+  `getDataSetOptions` (`opticalMosaic/sources.js`) without LandTrendr's retention, so `~/widget/form/buttons.jsx` drops
+  a chosen data set those options exclude on the panel's next update. Applying the policy across them needs:
+  - **Shared parts.** Availability logic over the catalogue years (`optical/dataSetYears.js`), picker behaviour that
+    keeps a retained data set and marks it as outside the period, LandTrendr's included, and readiness enforcement
+    holding execution when none overlaps, as LandTrendr's `NO_PERIOD_OVERLAP` does.
+  - **Recipe-owned periods.** Each recipe projects the period its execution actually reads, instead of each panel
+    adapting its own dates for `getDataSetOptions`.
+  - **Optical Mosaic.** Its projection covers the season widened by `yearsBefore` and `yearsAfter`, as its panel's
+    `dateRange` (`opticalMosaicRecipe.js`) does today, not the season alone.
+  - **Phenology.** Its date adapter is confirmed incorrect: Sources pass `{fromYear, toYear}` to `getDataSetOptions`,
+    which reads `startDate` and `endDate`, so data sets are judged against the current year.
+  - **PyEO Alerts and Change Alerts.** Their Sources likewise pass their own `model.dates` to the same options. Whether
+    those adapters misjudge the period still needs composed verification.
+  - **Classifier-input message.** "No collection this recipe can use provides the bands this classification reads"
+    (`process.source.classifierInputs.classification`) overlooks repairs through different processing settings.
+- **Chart gating.** LandTrendr's pixel chart is not held for these findings and declares no pixel operation; it stays
+  with [server preview readiness](#server-preview-readiness).
+- **Open drafts.** A form panel's draft is judged again when the panel renders. An applied change made elsewhere while it
+  is open is seen only then; panels open one at a time, so no current path reaches this.
 
 #### Class Change transition styles
 

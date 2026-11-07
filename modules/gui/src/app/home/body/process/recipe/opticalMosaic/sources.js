@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import moment from 'moment'
 
+import {overlapsYears} from '#sepal/recipe/optical/dataSetYears'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
@@ -57,12 +58,9 @@ export const getDataSetOptions = ({startDate, endDate}) =>
             neverSelected: !isDataSetInDateRange(dataSetId, startDate, endDate)
         }))
 
-export const isDataSetInDateRange = (dataSetId, fromDate, toDate) => {
-    const dataSet = dataSetById[dataSetId]
-    const startOk = !dataSet.toYear || moment(fromDate).year() <= dataSet.toYear
-    const endOk = moment(toDate).subtract(1, 'days').year() >= dataSet.fromYear
-    return startOk && endOk
-}
+// Whether the catalogue says a data set may hold imagery from `fromDate` until `toDate`, which is excluded.
+export const isDataSetInDateRange = (dataSetId, fromDate, toDate) =>
+    overlapsYears(dataSetId, moment(fromDate).year(), moment(toDate).subtract(1, 'days').year())
 
 export const minScale = recipe => {
     const dataSets = selectFrom(recipe, 'model.sources.dataSets') || {}
@@ -96,7 +94,6 @@ const imageSourceById = {
 
 const dataSetById = {
     LANDSAT_9: {
-        fromYear: 2021,
         quality: 1,
         scale: 30,
         name: 'Landsat 9',
@@ -117,7 +114,6 @@ const dataSetById = {
         }
     },
     LANDSAT_8: {
-        fromYear: 2013,
         quality: 1,
         scale: 30,
         name: 'Landsat 8',
@@ -138,7 +134,6 @@ const dataSetById = {
         }
     },
     LANDSAT_7: {
-        fromYear: 1999,
         quality: 2,
         scale: 30,
         name: 'Landsat 7',
@@ -159,8 +154,6 @@ const dataSetById = {
         }
     },
     LANDSAT_TM: {
-        fromYear: 1982,
-        toYear: 2012,
         quality: 2,
         scale: 30,
         name: 'Landsat 4-5',
@@ -181,7 +174,6 @@ const dataSetById = {
         }
     },
     LANDSAT_8_T2: {
-        fromYear: 2013,
         quality: 3,
         scale: 30,
         name: 'Landsat 8, tier 2',
@@ -202,7 +194,6 @@ const dataSetById = {
         }
     },
     LANDSAT_9_T2: {
-        fromYear: 2021,
         quality: 3,
         scale: 30,
         name: 'Landsat 9, tier 2',
@@ -223,7 +214,6 @@ const dataSetById = {
         }
     },
     LANDSAT_7_T2: {
-        fromYear: 1999,
         quality: 3,
         scale: 30,
         name: 'Landsat 7, tier 2',
@@ -244,8 +234,6 @@ const dataSetById = {
         }
     },
     LANDSAT_TM_T2: {
-        fromYear: 1984,
-        toYear: 2012,
         quality: 3,
         scale: 30,
         name: 'Landsat 4-5, tier 2',
@@ -266,7 +254,6 @@ const dataSetById = {
         }
     },
     SENTINEL_2: {
-        fromYear: 2015,
         quality: 1,
         scale: 10,
         name: 'Sentinel 2',

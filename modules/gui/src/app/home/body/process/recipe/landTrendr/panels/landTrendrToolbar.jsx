@@ -12,6 +12,7 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {RetrieveButton} from '../../retrieveButton'
+import {SectionButton} from '../../sectionButton'
 import {RecipeActions} from '../landTrendrRecipe'
 import {ChartPixel} from './chartPixel'
 import {Dates} from './dates/dates'
@@ -77,7 +78,7 @@ class _LandTrendrToolbar extends React.Component {
                         tooltip={msg('process.landTrendr.panel.dates.tooltip')}
                         disabled={!initialized}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='sources'
                         label={msg('process.landTrendr.panel.sources.button')}
                         tooltip={msg('process.landTrendr.panel.sources.tooltip')}

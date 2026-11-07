@@ -1,29 +1,31 @@
 import _ from 'lodash'
 import React from 'react'
 
-import {getIndexes} from '~/app/home/body/process/recipe/opticalMosaic/indexes'
+import {collectionIndexes} from '#sepal/recipe/collectionBands'
 import {getDataSetOptions as opticalDataSetOptions} from '~/app/home/body/process/recipe/opticalMosaic/sources'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
-import {toSources} from '~/sources'
+import {toSources, withChosenBands} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
+import {indexLabel} from '../../sourcesRequirements'
 import styles from './sources.module.css'
 
 const fields = {
     dataSets: new Form.Field()
-        .notEmpty(),
+        .notEmpty('process.landTrendr.panel.sources.form.dataSets.required'),
     cloudPercentageThreshold: new Form.Field(),
     index: new Form.Field()
-        .notBlank()
+        .notBlank('process.landTrendr.panel.sources.form.index.required')
 }
 
 const mapRecipeToProps = recipe => ({
-    dates: selectFrom(recipe, 'model.dates')
+    dates: selectFrom(recipe, 'model.dates'),
+    corrections: selectFrom(recipe, 'model.options.corrections')
 })
 
 class _Sources extends React.Component {
@@ -47,17 +49,22 @@ class _Sources extends React.Component {
         )
     }
 
+    // The dates stop a data set being chosen for years it cannot cover, but one chosen stays shown as chosen, and removable:
+    // what is wrong with it, if anything, is said here.
     renderDataSets() {
-        const {dates, inputs: {dataSets}} = this.props
+        const {form, dates, inputs: {dataSets}} = this.props
+        const chosen = chosenDataSets(dataSets.value)
+        const options = opticalDataSetOptions({
+            startDate: `${dates.startYear}-01-01`,
+            endDate: `${dates.endYear + 1}-01-01`
+        }).map(option => chosen.includes(option.value) ? {...option, neverSelected: false} : option)
         return (
             <Form.Buttons
                 label={msg('process.landTrendr.panel.sources.form.dataSets.label')}
                 input={dataSets}
-                options={opticalDataSetOptions({
-                    startDate: `${dates.startYear}-01-01`,
-                    endDate: `${dates.endYear + 1}-01-01`
-                })}
+                options={options}
                 multiple
+                errorMessage={form.getErrorMessage(dataSets)}
             />
         )
     }
@@ -80,9 +87,11 @@ class _Sources extends React.Component {
         )
     }
 
+    // The indexes the collection the draft's data sets configure, processed as PRC applies, can compute. The index chosen
+    // stays shown as chosen, so the form has none to drop, whether or not it is among them; a blank one is none.
     renderIndex() {
-        const {inputs: {dataSets, index}} = this.props
-        const options = this.indexOptions(dataSets.value)
+        const {form, inputs: {index}} = this.props
+        const options = withChosenBands([this.indexOptions()], index.value || null, indexLabel).flat()
         return (
             <Form.Buttons
                 label={msg('process.landTrendr.panel.sources.form.index.label')}
@@ -91,36 +100,19 @@ class _Sources extends React.Component {
                 options={options}
                 multiple={false}
                 disabled={!options.length}
+                errorMessage={form.getErrorMessage(index)}
             />
         )
     }
 
-    indexOptions(dataSets) {
-        const dataSetIds = _.isArray(dataSets) ? dataSets : [dataSets].filter(Boolean)
-        const indexes = getIndexes({model: {sources: {dataSets: toSources(dataSetIds)}}})
-        return indexes.map(value => ({value, label: value.toUpperCase()}))
-    }
-
-    componentDidMount() {
-        const {inputs: {dataSets, index}} = this.props
-        this.ensureValidIndex(dataSets.value, index)
-    }
-
-    componentDidUpdate(prevProps) {
-        const {inputs: {dataSets, index}} = this.props
-        if (!_.isEqual(prevProps.inputs.dataSets.value, dataSets.value)) {
-            this.ensureValidIndex(dataSets.value, index)
-        }
-    }
-
-    ensureValidIndex(dataSets, index) {
-        const options = this.indexOptions(dataSets)
-        if (!options.find(({value}) => value === index.value)) {
-            const preferred = options.find(({value}) => value === 'nbr')
-            index.set(preferred ? preferred.value : (options.length ? options[0].value : null))
-        }
+    indexOptions() {
+        const {corrections, inputs: {dataSets}} = this.props
+        return collectionIndexes({sources: {dataSets: toSources(chosenDataSets(dataSets.value))}, options: {corrections}})
+            .map(value => ({value, label: indexLabel(value)}))
     }
 }
+
+const chosenDataSets = dataSets => _.isArray(dataSets) ? dataSets : [dataSets].filter(Boolean)
 
 const valuesToModel = ({dataSets, cloudPercentageThreshold, index}) => ({
     dataSets: toSources(_.isArray(dataSets) ? dataSets : [dataSets]),
@@ -129,7 +121,7 @@ const valuesToModel = ({dataSets, cloudPercentageThreshold, index}) => ({
 })
 
 const modelToValues = ({dataSets, cloudPercentageThreshold, index}) => ({
-    dataSets: _.uniq(Object.values(dataSets).flat()),
+    dataSets: _.uniq(Object.values(dataSets || {}).flat()),
     cloudPercentageThreshold,
     index
 })

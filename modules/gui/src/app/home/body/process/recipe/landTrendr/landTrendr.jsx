@@ -12,6 +12,7 @@ import {msg} from '~/translate'
 import {bandPresentation, mapProducts} from './bands'
 import {defaultModel} from './landTrendrRecipe'
 import {LandTrendrToolbar} from './panels/landTrendrToolbar'
+import {sourcesRequirements} from './sourcesRequirements'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -42,6 +43,8 @@ const LandTrendr = compose(
     recipe({defaultModel, mapRecipeToProps})
 )
 
+const SOURCES = {id: 'sources', label: 'process.landTrendr.panel.sources.button'}
+
 const getDateRange = recipe => {
     const {startYear, endYear} = recipe.model.dates
     return [moment.utc(startYear, 'YYYY'), moment.utc(endYear, 'YYYY').endOf('year')]
@@ -58,6 +61,7 @@ export default () => ({
     components: {
         recipe: LandTrendr
     },
+    sourceRequirements: sourcesRequirements(SOURCES),
     imageSource: true,
     getDateRange,
     mapProducts,
