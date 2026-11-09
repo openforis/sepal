@@ -84,6 +84,10 @@
       vars:
         monit_instance: "SEPAL-storage"
 
+    # Before anything goes in /data or is mounted under it
+    - import_role:
+        name: storage-data-volume
+
     - name: Remove unused aws.properties
       file:
         path: "/data/sepal/etc/aws.properties"

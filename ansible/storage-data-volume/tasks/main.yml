@@ -1,0 +1,36 @@
+---
+# Mounts the /data volume that a storage host launched from Amazon Linux 2023 has (provision-sepal-storage.yml). A host
+# launched before it keeps /data on its root volume, which mounting would hide. Runs before anything is put in /data or
+# mounted under it, such as the EFS home dirs: a later /data mount would hide those too.
+- name: Look for the /data volume
+  stat:
+    path: /dev/sdc
+  register: data_volume
+
+- when: ansible_distribution_major_version == '2023' and data_volume.stat.exists
+  block:
+    - name: List the mounts
+      command: findmnt --raw --noheadings --output TARGET
+      register: mounts
+      changed_when: false
+
+    - name: Nothing is mounted under /data before the /data volume
+      assert:
+        that: >-
+          '/data' in mounts.stdout_lines
+          or mounts.stdout_lines | select('match', '/data/') | list | length == 0
+        fail_msg: >-
+          {{ mounts.stdout_lines | select('match', '/data/') | list | join(', ') }} mounted before /data:
+          mounting /data would hide them. Unmount them first.
+
+    - name: Create filesystem on /data volume
+      filesystem:
+        fstype: xfs
+        dev: /dev/sdc
+
+    - name: Mount /data volume
+      mount:
+        path: /data
+        src: /dev/sdc
+        fstype: xfs
+        state: mounted

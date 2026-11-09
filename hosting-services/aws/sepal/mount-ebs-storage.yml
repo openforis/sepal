@@ -1,5 +1,3 @@
-# Only a host launched from an Amazon Linux 2023 AMI has the /data volume (provision-sepal-storage.yml). A host launched
-# before it keeps /data on its root volume, which mounting would hide.
 - name: Mount Sepal-Storage EBS volumes
   hosts: all
   user: ec2-user
@@ -8,22 +6,5 @@
   gather_subset:
     - '!all'
 
-  tasks:
-    - name: Look for the /data volume
-      stat:
-        path: /dev/sdc
-      register: data_volume
-
-    - when: ansible_distribution_major_version == '2023' and data_volume.stat.exists
-      block:
-        - name: Create filesystem on /data volume
-          filesystem:
-            fstype: xfs
-            dev: /dev/sdc
-
-        - name: Mount /data volume
-          mount:
-            path: /data
-            src: /dev/sdc
-            fstype: xfs
-            state: mounted
+  roles:
+    - storage-data-volume

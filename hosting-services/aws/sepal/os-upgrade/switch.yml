@@ -360,10 +360,15 @@
 - name: Restore the Redis data, new storage host
   hosts: new-storage
   become: true
-  gather_facts: false
+  gather_facts: true
+  gather_subset: ['!all']
   vars_files: [vars.yml]
 
   tasks:
+    # Already mounted by provision; a /data volume mounted after the restore would hide it
+    - import_role:
+        name: storage-data-volume
+
     - name: Remove what the new host has
       file:
         path: "/data/{{ storage_state }}"
