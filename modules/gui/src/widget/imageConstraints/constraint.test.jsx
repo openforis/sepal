@@ -10,8 +10,6 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
-// Cuts an import cycle the form barrel would otherwise enter from the wrong side (see recipeInput.test.jsx).
-vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
 // The class legend, which reads its recipe, is not rendered: the classes chosen are the saved ones.
 vi.mock('~/widget/legend/legend', () => ({Legend: () => null}))
 const deactivate = vi.hoisted(() => ({calls: 0}))

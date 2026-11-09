@@ -6,8 +6,6 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 // declaration, common read and generic submission. Only the task API is replaced.
 
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-// Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
-vi.mock('~/user', () => ({}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
 vi.mock('~/app/home/body/process/recipe/retrieve/recipeOutputPath', () => ({getTaskInfo: () => ({})}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))

@@ -17,7 +17,6 @@ vi.mock('~/apiRegistry', async () => {
     return {default: {recipe: {save$: () => NEVER, load$: () => NEVER}}}
 })
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // The panel is open, and closes as it does when applied or cancelled.
 vi.mock('~/widget/activation/activatable', async () => {
     const {useState} = await import('react')

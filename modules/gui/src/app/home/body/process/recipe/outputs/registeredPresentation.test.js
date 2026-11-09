@@ -7,8 +7,6 @@ import {buildRecipeDependencyGraph} from '#sepal/recipe/source/dependencyGraph'
 // exist and which styles apply.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
-// Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
-vi.mock('~/user', () => ({}))
 
 const {addRecipeType} = await import('../../recipeTypeRegistry')
 const {default: opticalMosaic} = await import('../opticalMosaic/opticalMosaic')

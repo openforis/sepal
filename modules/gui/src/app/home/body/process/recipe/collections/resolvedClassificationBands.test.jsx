@@ -39,7 +39,6 @@ vi.mock('~/apiRegistry', () => ({default: {
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 vi.mock('~/user', () => ({}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('../ccdc/ccdcGraph', () => ({CCDCGraph: () => null}))
 vi.mock('~/widget/form', async importOriginal => {

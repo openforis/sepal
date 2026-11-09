@@ -17,7 +17,6 @@ vi.mock('~/apiRegistry', async () => {
     return {default: {recipe: {save$: () => NEVER, load$: () => NEVER}}}
 })
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // The list is open; the panel editing one input is not.
 vi.mock('~/widget/activation/activatable', () => ({
     withActivatable: ({id}) => Component => props => id === 'inputImagery'

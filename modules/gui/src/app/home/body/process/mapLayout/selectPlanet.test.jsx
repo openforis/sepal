@@ -25,8 +25,6 @@ vi.mock('~/widget/panel/panel', () => {
     Panel.Buttons = Buttons
     return {Panel}
 })
-// Cuts an import cycle the form barrel would otherwise enter from the wrong side (see recipeInput.test.jsx).
-vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
 
 const {Recipe} = await import('~/app/home/body/process/recipeContext')
 const {initStore} = await import('~/store')

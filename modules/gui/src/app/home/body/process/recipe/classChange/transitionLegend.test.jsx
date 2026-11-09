@@ -33,7 +33,6 @@ vi.mock('~/apiRegistry', async () => {
     }}
 })
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : `${key}`}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 // The panels a test opens are open until applied, cancelled or closed; no other is.
 const panels = vi.hoisted(() => ({open: new Set()}))

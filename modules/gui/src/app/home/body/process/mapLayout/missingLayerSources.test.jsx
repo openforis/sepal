@@ -32,7 +32,6 @@ vi.mock('~/apiRegistry', async () => {
     }}
 })
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 const notified = vi.hoisted(() => [])
 vi.mock('~/widget/notifications', () => ({Notifications: {error: notification => notified.push(notification)}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.

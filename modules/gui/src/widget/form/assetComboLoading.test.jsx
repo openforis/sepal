@@ -25,7 +25,6 @@ vi.mock('~/apiRegistry', async () => {
     }}
 })
 vi.mock('~/translate', () => ({msg: key => `${key}`}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => msg && !disabled && typeof msg !== 'function'

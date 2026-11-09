@@ -12,7 +12,6 @@ import {PortalContainer, PortalContext} from '~/widget/portal'
 
 const harness = vi.hoisted(() => ({deactivate: vi.fn()}))
 vi.mock('~/translate', () => ({msg: key => key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/apiRegistry', () => ({default: {}}))
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: () => ({sourceRequirements: []})}))
 vi.mock('~/app/home/body/process/sourceRuntime/sourceRuntimeContext', () => ({

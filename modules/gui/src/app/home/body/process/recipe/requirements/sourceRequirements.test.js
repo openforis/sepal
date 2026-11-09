@@ -10,7 +10,7 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: () 
 
 const {CHECKED, readSourceRequirements, SUPPORTED, UNAVAILABLE, UNCHECKED} = await import('./sourceRequirements')
 const {declaredSelections, OBSERVED} = await import('../sources/sourceEvidence')
-const {earthEngineGeneration} = await import('../../sourceRuntime/sourceEvidenceBasis')
+const {earthEngineGeneration} = await import('../../sourceRuntime/credentialId')
 
 describe('a requirement of a selected source', () => {
     it('is not answered by an observation of another source the recipe selects', () => {

@@ -22,10 +22,6 @@ vi.mock('~/apiRegistry', () => ({default: {gee: {bands$}, recipe: {load$, save$:
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: loadError}}))
 vi.mock('~/translate', () => ({msg: key => key}))
-// Cuts an import cycle the barrel would otherwise enter from the wrong side: the asset combo reaches
-// `~/user`, which reaches a panel that reads `Form.Field` while the barrel is still evaluating. Nothing
-// here renders one.
-vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
 // Eligibility as the production registrations state it: neither CCDC nor the table recipe is offered as an image.
 // What the segment declaration then says about CCDC is the real one.
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({

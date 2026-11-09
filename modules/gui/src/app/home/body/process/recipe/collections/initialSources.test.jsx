@@ -47,7 +47,6 @@ vi.mock('~/translate', () => ({msg: (key, values) => {
 }}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
 // The roots' maps and their layers: the toolbars and panels are what is looked at. The AOI and Change Alerts' Reference
 // panels, which need a map or a reference read, are set-up steps that commit what their panels would.

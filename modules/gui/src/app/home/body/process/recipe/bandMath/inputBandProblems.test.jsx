@@ -33,7 +33,6 @@ vi.mock('~/apiRegistry', () => ({default: {
     recipe: {save$: () => new Observable(), load$: () => new Observable(), loadAll$: () => of(LISTING)}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 // The Input imagery panel is open; no other panel is, and no button is pressed.
 vi.mock('~/widget/activation/activatable', () => ({

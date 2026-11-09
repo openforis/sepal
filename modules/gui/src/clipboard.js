@@ -1,5 +1,5 @@
 import {msg} from '~/translate'
-import {Notifications} from '~/widget/notifications'
+import {notify} from '~/widget/notificationPublisher'
 
 // Success is acknowledged where the user clicked, so it is reported back rather than published. Failure stays
 // global: a refused write leaves nothing on screen to notice, and the user's next move is pasting elsewhere.
@@ -8,7 +8,7 @@ export const copyToClipboard = (value, {failureMessage} = {}) =>
     navigator.clipboard.writeText(value)
         .then(() => true)
         .catch(() => {
-            Notifications.error({
+            notify.error({
                 message: failureMessage || msg('clipboard.copy.failure'),
                 timeout: 3
             })

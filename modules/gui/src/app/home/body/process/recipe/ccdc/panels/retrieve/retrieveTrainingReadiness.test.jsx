@@ -54,7 +54,6 @@ vi.mock('~/apiRegistry', () => ({default: {
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 vi.mock('~/user', () => ({isGoogleAccount: () => true}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
 // A toolbar button is pressed by its icon; it says whether what it opens is open.

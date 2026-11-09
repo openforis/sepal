@@ -41,7 +41,6 @@ vi.mock('~/translate', () => ({msg: (key, values) => {
 }}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => !disabled && [msg].flat().map(tooltipText).some(line => typeof line === 'string')
         ? <span data-tooltip={JSON.stringify([msg].flat().map(tooltipText).filter(line => typeof line === 'string'))}>{children}</span>

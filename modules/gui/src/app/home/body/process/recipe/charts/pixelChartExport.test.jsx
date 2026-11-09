@@ -22,7 +22,6 @@ const gee = vi.hoisted(() => ({
 }))
 vi.mock('~/apiRegistry', () => ({default: {gee}}))
 vi.mock('~/translate', () => ({msg: key => key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // What the browser is given to save.
 const downloads = vi.hoisted(() => [])
 vi.mock('~/widget/download', () => ({

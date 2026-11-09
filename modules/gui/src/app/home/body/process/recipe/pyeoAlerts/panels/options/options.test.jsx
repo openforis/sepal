@@ -37,7 +37,6 @@ vi.mock('~/translate', () => ({msg: (key, values) => {
     return values ? `${text} ${JSON.stringify(values)}` : text
 }}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({

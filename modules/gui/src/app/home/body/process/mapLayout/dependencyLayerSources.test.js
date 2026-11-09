@@ -5,7 +5,6 @@ import {describe, expect, it, vi} from 'vitest'
 // Sampling Design, whose proportions image is shown but never depended on.
 
 vi.mock('~/translate', () => ({msg: key => key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: masking} = await import('../recipe/masking/masking')

@@ -19,8 +19,6 @@ const {aoiBounds$, bands$, load$} = vi.hoisted(() => ({aoiBounds$: vi.fn(), band
 vi.mock('~/apiRegistry', () => ({default: {gee: {aoiBounds$, bands$}, recipe: {load$}}}))
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('./previewMap', () => ({PreviewMap: () => null}))
-// Cuts an import cycle the form barrel would otherwise enter from the wrong side (see recipeInput.test.jsx).
-vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
 
 const {SourceSection} = await import('./sourceSection')
 const {addRecipeType, isImageSource} = await import('~/app/home/body/process/recipeTypeRegistry')

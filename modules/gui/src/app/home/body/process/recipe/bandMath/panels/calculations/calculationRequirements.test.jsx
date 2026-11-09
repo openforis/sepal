@@ -21,7 +21,6 @@ vi.mock('~/apiRegistry', async () => {
     return {default: {recipe: {save$: () => NEVER, load$: () => NEVER}}}
 })
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 // The panel is open for the calculation it was activated with, if any, and closes as it does when applied or cancelled.
 const activation = vi.hoisted(() => ({imageId: null}))

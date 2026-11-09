@@ -6,6 +6,7 @@ import {selectFrom} from '~/stateUtils'
 import {isDraft} from '../draftAgreement'
 import {declaredSelections, sourceKeyOf} from '../recipe/sources/sourceEvidence'
 import {assetEvidenceOfState, DEFAULT_ASSET_POLICY} from './assetEvidence'
+import {earthEngineGeneration} from './credentialId'
 
 // When evidence about a source is still about the source as the session holds it now.
 //
@@ -31,19 +32,6 @@ export const evidenceSession = state => ({
 })
 
 const NO_REFRESHES = Object.freeze({})
-
-// The credential container is replaced when Google credentials change, so its identity is an invalidation epoch. It is
-// numbered by identity, so nothing compares, retains or publishes what it contains.
-export const earthEngineGeneration = state => {
-    const credentials = selectFrom(state, ['user', 'currentUser', 'googleTokens'])
-    if (!credentials || typeof credentials !== 'object') {
-        return 0
-    }
-    if (!GENERATIONS.has(credentials)) {
-        GENERATIONS.set(credentials, ++generations)
-    }
-    return GENERATIONS.get(credentials)
-}
 
 // Before anything has been resolved, all that is known is the source the recipe names.
 export const startingBasis = ({reference, recipe, session}) => ({
@@ -119,9 +107,6 @@ export const recipeRefreshes = ({sourceRefreshes = {}}, recipeId) => sourceRefre
 
 export const publishedRevision = ({catalogue}, id) =>
     catalogue.find(summary => summary.id === id)?.revision
-
-const GENERATIONS = new WeakMap()
-let generations = 0
 
 const operationState = ({reference, recipe, session}) => ({
     key: sourceKeyOf(reference),

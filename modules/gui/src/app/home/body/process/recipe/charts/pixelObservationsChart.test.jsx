@@ -32,7 +32,6 @@ vi.mock('~/apiRegistry', () => ({default: {gee: {loadCCDCSegments$, loadTimeSeri
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 vi.mock('~/user', () => ({}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/sources', () => ({
     getAvailableBands: setting => availableBands(setting),
     flatBandOptions,

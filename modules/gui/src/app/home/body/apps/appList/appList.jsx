@@ -4,7 +4,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {actionBuilder} from '~/action-builder'
-import {userDetailsHint} from '~/app/home/user/userDetails'
+import {userDetailsHint} from '~/app/home/user/userDetailsHint'
 import {loadApps$} from '~/apps'
 import {compose} from '~/compose'
 import {connect} from '~/connect'

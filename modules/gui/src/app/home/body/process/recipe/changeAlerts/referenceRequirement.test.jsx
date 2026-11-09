@@ -167,7 +167,6 @@ vi.mock('~/widget/activation/activator', () => ({
 const registry = vi.hoisted(() => ({}))
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: type => registry[type]}))
 vi.mock('../ccdc/ccdcRecipe', () => ({getAllVisualizations: () => []}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => msg && !disabled && typeof msg !== 'function'

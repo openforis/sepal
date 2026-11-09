@@ -40,7 +40,6 @@ vi.mock('~/translate', () => ({msg: (key, values) => {
 vi.mock('~/user', () => ({isServiceAccount: () => false}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => msg && !disabled && typeof msg !== 'function'

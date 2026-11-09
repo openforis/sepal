@@ -29,8 +29,6 @@ vi.mock('~/apiRegistry', async () => {
 })
 vi.mock('~/translate', () => ({msg: (key, values) => [[key].flat().join('.'), ...!values || !Object.keys(values).length ? [] : [JSON.stringify(values)]].join(' ')}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}, warning: () => {}}}))
-// Loading the user module here closes an import cycle through its forms; the editor reads nothing from it.
-vi.mock('~/user', () => ({}))
 // Panels and option lists render where they are declared, so each editor's controls are found inside its own area.
 vi.mock('~/widget/portal', () => ({Portal: ({children}) => children, PortalContainer: () => null}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.

@@ -7,8 +7,6 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 // ones; the terminal the panel's acquisition would retain is built from the catalogue the declaration describes.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
-// Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
-vi.mock('~/user', () => ({}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/app/home/body/process/recipe/retrieve/recipeOutputPath', () => ({getTaskInfo: () => ({})}))

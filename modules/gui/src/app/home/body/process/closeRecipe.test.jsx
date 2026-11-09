@@ -18,8 +18,6 @@ vi.mock('~/apiRegistry', () => ({default: {
     project: {loadAll$: () => of([])}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-// Loading the recipe modules closes an import cycle through the user module's forms; nothing here reads it.
-vi.mock('~/user', () => ({}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
 vi.mock('./processMenu', () => ({ProcessMenu: () => null}))

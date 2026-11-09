@@ -22,7 +22,6 @@ const {loadCCDCSegments$, loadTimeSeriesObservations$} = vi.hoisted(() => ({
 }))
 vi.mock('~/apiRegistry', () => ({default: {gee: {loadCCDCSegments$, loadTimeSeriesObservations$}}}))
 vi.mock('~/translate', () => ({msg: key => key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/sources', () => ({
     getAvailableBands: () => ['ndvi'],
     groupedBandOptions: () => [[{value: 'ndvi', label: 'ndvi'}]]

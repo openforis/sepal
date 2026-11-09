@@ -48,7 +48,6 @@ vi.mock('~/apiRegistry', () => ({default: {
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 vi.mock('~/user', () => ({isGoogleAccount: () => false}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
 vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))

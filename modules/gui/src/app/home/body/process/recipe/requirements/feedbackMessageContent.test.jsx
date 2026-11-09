@@ -36,7 +36,6 @@ const fake = vi.hoisted(() => ({load: vi.fn(), error: vi.fn(), applied: vi.fn(),
 vi.mock('~/apiRegistry', () => ({default: {recipe: {load$: (...args) => fake.load(...args), save$: () => NEVER}}}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: (...args) => fake.error(...args), info: () => {}}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/scrollable', async () => {
     const {NEVER} = await import('rxjs')
     const scrollable = {clientHeight: 0, mouseAway$: NEVER, centerElement: () => {}, scrollElement: () => {}}

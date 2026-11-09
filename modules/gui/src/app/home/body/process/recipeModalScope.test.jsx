@@ -34,7 +34,6 @@ import {RecipeHome} from './recipeHome'
 // have no scope prop/provider. The landing list is replaced by its real Project dialog, to isolate ownership
 // from listing and CRUD work; APIs and scrolling do not participate in that decision.
 vi.mock('~/translate', () => ({msg: key => key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
 vi.mock('~/apiRegistry', () => ({default: {recipe: {load$: () => NEVER, loadAll$: () => NEVER, save$: () => NEVER}}}))
 vi.mock('~/ceo', () => ({ceoLogin$: () => NEVER}))

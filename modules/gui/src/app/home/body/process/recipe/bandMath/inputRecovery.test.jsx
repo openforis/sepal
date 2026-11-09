@@ -27,7 +27,6 @@ vi.mock('~/apiRegistry', () => ({default: {
     recipe: {save$: () => NEVER, load$: () => of(sourceRecipe()), loadAll$: () => of([])}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 const preview = vi.hoisted(() => ({shown: null}))
 vi.mock('~/app/home/map/layer/earthEngineImageLayer', () => ({EarthEngineImageLayer: class {

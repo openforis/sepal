@@ -17,8 +17,6 @@ const {aoiGeoId$} = vi.hoisted(() => ({aoiGeoId$: vi.fn()}))
 vi.mock('~/apiRegistry', () => ({default: {gee: {aoiGeoId$}}}))
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('./previewMap', () => ({PreviewMap: () => null}))
-// Cuts an import cycle the form barrel would otherwise enter from the wrong side (see recipeInput.test.jsx).
-vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
 
 const {geoIdFields, GeoIdSection} = await import('./geoIdSection')
 

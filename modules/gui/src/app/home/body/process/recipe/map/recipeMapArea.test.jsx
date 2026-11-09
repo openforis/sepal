@@ -32,7 +32,6 @@ vi.mock('~/apiRegistry', async () => {
 })
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // Constructing a preview layer is what requests a preview: the map mounts it and Earth Engine is asked for its tiles.
 const previews = vi.hoisted(() => ({constructed: []}))
 vi.mock('~/app/home/map/layer/earthEngineImageLayer', () => ({

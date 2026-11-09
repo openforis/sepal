@@ -28,7 +28,6 @@ vi.mock('~/apiRegistry', () => ({default: {
 }}))
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/app/home/map/layer/earthEngineImageLayer', () => ({
     EarthEngineImageLayer: class {
         constructor({watchedProps}) {

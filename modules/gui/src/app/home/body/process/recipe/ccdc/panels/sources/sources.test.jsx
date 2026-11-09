@@ -31,8 +31,6 @@ vi.mock('~/app/home/body/process/recipeFormPanel', () => ({
 // Every read is recorded, so a read nobody asked for is visible.
 vi.mock('~/apiRegistry', () => ({default: {recipe: {load$: recipeId => recipeRead(recipeId)}}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-// Cuts an import cycle the form barrel would otherwise enter from the wrong side. Nothing here renders one.
-vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
 // Panel chrome, not the controls under test. Every form control stays real.
 vi.mock('~/widget/form', async importOriginal => {
     const {Form} = await importOriginal()

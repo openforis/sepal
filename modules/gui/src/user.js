@@ -2,7 +2,7 @@ import {catchError, map, of, switchMap, tap, throwError} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
-import {userDetailsHint} from '~/app/home/user/userDetails'
+import {userDetailsHint} from '~/app/home/user/userDetailsHint'
 import {publishCurrentUserEvent, publishEvent} from '~/eventPublisher'
 import {forgetPreviousUsername, notePreviousUsername} from '~/loginSession'
 import {select} from '~/store'

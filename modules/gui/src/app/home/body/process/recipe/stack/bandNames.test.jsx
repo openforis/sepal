@@ -28,7 +28,6 @@ vi.mock('~/apiRegistry', () => ({default: {
     recipe: {save$: () => new Observable(), load$: () => new Observable(), loadAll$: () => of(LISTING)}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 // The Input imagery list is open, and Band names once a test opens it; no button is pressed.
 const panels = vi.hoisted(() => ({open: new Set()}))

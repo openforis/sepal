@@ -33,7 +33,6 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', async importOriginal => ({
     getRecipeType: id => ({id, imageSource: true})
 }))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // The panel editing one input is open for the input it was activated with.
 const activation = vi.hoisted(() => ({imageId: null}))
 vi.mock('~/widget/activation/activatable', async () => {

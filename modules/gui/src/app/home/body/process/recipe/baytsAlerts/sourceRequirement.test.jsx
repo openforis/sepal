@@ -56,7 +56,6 @@ vi.mock('~/apiRegistry', async () => {
 })
 vi.mock('~/translate', () => ({msg: (key, values) => [[key].flat().join('.'), ...values ? [JSON.stringify(values)] : []].join(' ')}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // The REF panel opens with the editor, and closes as it does when cancelled or applied.
 vi.mock('~/widget/activation/activatable', async () => {
     const {useState} = await import('react')

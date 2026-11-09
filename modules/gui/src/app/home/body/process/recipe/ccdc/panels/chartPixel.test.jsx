@@ -19,7 +19,6 @@ const {loadCCDCSegments$, loadTimeSeriesObservations$} = vi.hoisted(() => ({
 }))
 vi.mock('~/apiRegistry', () => ({default: {gee: {loadCCDCSegments$, loadTimeSeriesObservations$}}}))
 vi.mock('~/translate', () => ({msg: key => key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // The graph renderer is the output boundary; the chart, form, selection widget and Redux are real.
 const graph = vi.hoisted(() => ({chart: null}))
 vi.mock('../ccdcGraph', () => ({

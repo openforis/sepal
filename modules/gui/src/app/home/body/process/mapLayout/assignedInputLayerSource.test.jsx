@@ -22,7 +22,6 @@ import layerStyles from './imageLayerSources.module.css'
 // listed recipe and reporting its bands; panel activation by an always-active panel.
 
 vi.mock('~/translate', () => ({msg: key => Array.isArray(key) ? key.join('.') : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/activation/activatable', () => ({
     withActivatable: () => Component => props => (
         <Component {...props} activatable={{active: true, activate: () => {}, deactivate: () => {}}}/>

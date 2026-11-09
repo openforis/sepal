@@ -21,7 +21,6 @@ const {loadCCDCSegments$, loadTimeSeriesObservations$} = vi.hoisted(() => ({
 }))
 vi.mock('~/apiRegistry', () => ({default: {gee: {loadCCDCSegments$, loadTimeSeriesObservations$}}}))
 vi.mock('~/translate', () => ({msg: key => key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // What each chart was built with, and whether its panel was hidden (`disabled`, display: none) when it was.
 const drawn = vi.hoisted(() => [])
 vi.mock('dygraphs', () => ({

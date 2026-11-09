@@ -13,7 +13,6 @@ vi.mock('~/apiRegistry', async () => {
     return {default: {recipe: {save$: () => NEVER, load$: () => NEVER}}}
 })
 vi.mock('~/translate', () => ({msg: key => key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: bandMath} = await import('./bandMath')

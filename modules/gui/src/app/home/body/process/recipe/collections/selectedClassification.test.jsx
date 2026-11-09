@@ -44,7 +44,6 @@ vi.mock('../../sourceRuntime/recipeClosureLoader', async () => {
 vi.mock('~/translate', () => ({msg: (key, args) => [[key].flat().join('.'), ...Object.values(args || {})].join(' ')}))
 vi.mock('~/user', () => ({isGoogleAccount: () => true}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: notification => fake.notified.push(notification)}}))
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, children}) => msg ? <><span data-message>{[msg].flat().join(' ')}</span>{children}</> : children

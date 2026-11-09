@@ -23,7 +23,6 @@ vi.mock('~/apiRegistry', () => ({default: {
     recipe: {save$: () => NEVER, load$: () => NEVER, loadAll$: () => of(LISTING)}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')

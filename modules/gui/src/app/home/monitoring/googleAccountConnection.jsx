@@ -2,7 +2,7 @@ import React from 'react'
 import {filter, switchMap} from 'rxjs'
 
 import {event$} from '~/api/ws'
-import {userDetailsHint} from '~/app/home/user/userDetails'
+import {userDetailsHint} from '~/app/home/user/userDetailsHint'
 import {compose} from '~/compose'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'

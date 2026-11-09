@@ -5,7 +5,8 @@ import {actionBuilder} from '~/action-builder'
 import {cacheAcceptance, initializeRecipe, REPLACE} from '../recipeCache'
 import {RecipeCacheClaimant} from '../recipeCacheClaims'
 import {ASSET_EVIDENCE_PATH, assetEvidenceOfState} from './assetEvidence'
-import {earthEngineGeneration, evidenceSession} from './sourceEvidenceBasis'
+import {earthEngineGeneration} from './credentialId'
+import {evidenceSession} from './sourceEvidenceBasis'
 
 // The only Redux adapter in the source runtime.
 //

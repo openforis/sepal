@@ -283,6 +283,11 @@ The [shared recipe GUI reorganization](#shared-recipe-gui-organization) is imple
 are confirmed by code and imports, not by file count alone. Keep each move bounded and preserve behavior and existing
 lifecycle, acquisition, caching and validation owners.
 
+The GUI import graph is acyclic, and test mocks used solely to cut those cycles have been removed. Import-time side
+effects still need review when changing import order. Shared support now lives in leaf modules: the user-details hint
+(`app/home/user/userDetailsHint.js`), notification publication (`widget/notificationPublisher.js`, behind the
+`Notifications` API) and the Earth Engine credential generation (`credentialId.js` in `process/sourceRuntime/`).
+
 - **Asset and workspace selectors in `widget/`.** The application monitors `app/home/home.jsx` mounts, with their
   rules, tests and style, now live in `app/home/monitoring/`; `AppSessionMonitor` stays with Apps. Remaining: group
   the asset and workspace selectors with `Assets`/`withAssets`; `widget/recipeInput.jsx` depends on recipe access,
@@ -302,10 +307,10 @@ lifecycle, acquisition, caching and validation owners.
   their theme/language behavior and both entry points.
 
 Acceptance for each move: a concrete old-to-new path map; companion tests/styles kept together; static and dynamic
-imports, test mocks and documentation links updated; lint, a production GUI build and the full GUI suite passing
-with at most two test workers. Keep moves separate from behavior/API redesign and introduce no compatibility
-re-exports, barrels or aliases solely for relocation. Shared recipe `type/`, `source/` and `output/` already have clear
-responsibilities and are not candidates merely because they contain many files.
+imports, test mocks and documentation links updated; the import graph still acyclic; lint, a production GUI build and
+the full GUI suite passing with at most two test workers. Keep moves separate from behavior/API redesign and introduce
+no compatibility re-exports, barrels or aliases solely for relocation. Shared recipe `type/`, `source/` and `output/`
+already have clear responsibilities and are not candidates merely because they contain many files.
 
 ## Deferred recipe architecture
 

@@ -24,7 +24,6 @@ vi.mock('~/apiRegistry', () => ({default: {
     recipe: {save$: () => NEVER, load$: () => NEVER, loadAll$: () => of(LISTING)}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({

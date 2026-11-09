@@ -1,8 +1,6 @@
 import {describe, expect, it, vi} from 'vitest'
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
-// Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
-vi.mock('~/user', () => ({}))
 
 const {getAllVisualizations} = await import('./ccdcRecipe')
 const {toHarmonicVisualization} = await import('./harmonicVisualizations')

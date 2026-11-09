@@ -91,7 +91,6 @@ vi.mock('~/apiRegistry', async () => {
 })
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // The source panel opens with the editor, and closes as it does when cancelled or applied.
 vi.mock('~/widget/activation/activatable', async () => {
     const {useState} = await import('react')

@@ -20,7 +20,6 @@ import {PortalContainer, PortalContext} from '~/widget/portal'
 // not the recipe listing holds its source. No source is read by this navigation.
 vi.mock('~/apiRegistry', () => ({default: {recipe: {save$: () => NEVER, load$: () => NEVER, loadAll$: () => NEVER}}}))
 vi.mock('~/translate', () => ({msg: key => key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: id => ({id, imageSource: true, sourceRequirements: []})}))
 
 const {InputImagery: SharedInputs} = await import('./inputImagery/inputImagery')

@@ -7,8 +7,6 @@ import {describe, expect, it, vi} from 'vitest'
 // waited for, under a key naming the operation, and an answer the runtime holds for another question never stands in.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
-// Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
-vi.mock('~/user', () => ({}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/apiRegistry', () => ({default: {}}))
