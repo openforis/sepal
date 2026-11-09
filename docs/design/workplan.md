@@ -102,9 +102,6 @@ Preserve established output order and producer-specific internal selection seman
 - **Change Alerts dates and impossible choices.** Derive reference/calibration coverage from actual execution
   requirements and sufficient evidence; metadata extents alone do not establish per-pixel coverage. Preserve
   explicit choices. Enabling/disabling type/dataset choices must distinguish unknown evidence from incompatibility.
-- **CCDC breakpoint selection during empty dataset editing.** Reproduced: Landsat → none → Sentinel-2 drops the
-  chosen breakpoint bands from the draft. Retain selections while options are unsettled and reconcile once options
-  exist; no datasets must still block Apply. Planned with [collection bands](#temporal-sources-dependencies).
 - **Empty-input geometry requests.** Reproduce remove-all/add-again across shared image-input workflows. Withhold
   requests for incomplete inputs, ignore superseded answers and require a controlled diagnosis for missing imagery.
 - **BAYTS export processing metadata.** Record Historical settings from the recipe actually executed, including
@@ -162,10 +159,13 @@ Remapping's proposed [default class](#default-or-fallback-class) is specified be
   initially, report errors after interaction and clear promptly on repair. Review autofocus, picker interaction,
   programmatic resets, duplicated input editors and field/group accessibility. Broken saved configurations still
   explain themselves immediately, and invalid submission stays blocked regardless of visible error timing.
-- **Enter while renaming a recipe tab.** Reported: with a recipe panel open, Enter is captured by the panel while
+- **Enter/Escape while renaming a recipe tab.** Reported: with a recipe panel open, Enter is captured by the panel while
   the selected tab's title is being edited. Reproduce through the real tab-title editor and shared keybinding/modal
   scopes. Enter in the title editor should finish the rename without applying, advancing or closing the panel;
-  preserve normal Enter submission from panel fields. Cover both clean and edited panels.
+  Escape should cancel the rename and restore its previous title without closing/cancelling the panel or losing its
+  draft. The title editor already declares both handlers; verify focus ownership and shortcut precedence rather
+  than assuming Escape is fixed. Preserve normal Enter submission and Escape behaviour from panel fields. Cover
+  clean and edited panels, ordinary and modal panels, and panel shortcuts after title editing ends.
 - **Feedback attribution.** Decide whether all routes of a diamond should be marked. Current readiness reports
   established paths without fabricating alternate routes.
 - **Draft/close interaction.** Reported: an open recipe modal prevents closing its SEPAL tab and shows an information
@@ -175,10 +175,44 @@ Remapping's proposed [default class](#default-or-fallback-class) is specified be
   Warning about unapplied drafts on browser close remains a separate decision. A "Use reference settings" copy-again
   button is not planned; creation seeding and automatic ownership cover its useful purpose.
 
+### Sampled Classification training data
+
+Code-confirmed: reopening a TRN `SAMPLE_CLASSIFICATION` entry loads its source and starts sampling again.
+`trainingDataSet.jsx` saves mapped training points but discards this type's raw sampled rows, which the mapping
+wizard needs. Preserve the sampled rows and mapping so opening, inspecting or remapping an entry needs no new
+sampling request. These are saved snapshots; source changes do not by themselves invalidate their samples.
+
+- **Source-change advisory.** One declarative finding marks the data-set item and TRN amber when evidence
+  establishes a meaningful source change since sampling or acknowledgement. It does not block classification or
+  Retrieve; independent training requirements remain authoritative. Pending, unavailable or unsupported evidence
+  must not be reported as a proven change; explain that changes could not be checked where appropriate.
+- **Explicit actions.** Offer Resample and Keep existing samples. Resampling or changing sampling settings produces
+  a draft result; Apply accepts it and Cancel preserves the saved snapshot. Keeping samples acknowledges the current
+  source evidence without rewriting the original sampling provenance. A subsequent meaningful change warns again.
+- **Shared ownership.** Reuse source-runtime acquisition, cancellation and semantic evidence comparison, with
+  recipe-declared dependencies and feedback. Cover transitive source inputs/assets, resolved sampling AOI, band,
+  scale and count; title-only revisions do not trigger resampling or a warning. Preserve snapshot semantics,
+  including sampling the recipe's own output: provenance references are not live execution dependencies.
+- **Compatibility.** Keep existing saved points usable when raw rows or sampling evidence are absent. Missing
+  evidence is unknown, not proof of change; any sampling needed to reconstruct legacy rows must be explicit.
+
+Acceptance: reopen/reload without sampling or edits; remap stored rows locally; meaningful versus title-only and
+transitive source changes; pending/failed checks; both advisory locations; acknowledgement followed by another
+change; explicit resampling and settings edits with Apply/Cancel; rejection of late answers; legacy entries.
+
 ### Unfinished setup feedback
 
 Extend the [shared section feedback](recipes/source-resolution.md#section-feedback) only for concrete remaining gaps:
 
+- **Generic training-data setup guidance.** Remove the repeated panel instruction for `NO_TRAINING_DATA` in
+  Classification and Regression, including "Collect points on the map or add a training data set." Keep the amber
+  TRN and collection-button marks, their explanatory tooltips and the Collect/Add controls; use ordinary empty-list
+  presentation. Preserve specific diagnostics, such as insufficient represented classes or samples and missing
+  training features, through normal feedback at the relevant field or item. This is presentation only: retain the
+  authoritative requirements, readiness holds and wizard timing. Use finding codes or declarative presentation
+  metadata rather than message-text matching or another training-data presence check. Acceptance covers both
+  recipes: generic guidance is not repeated in the panel, amber clears when setup is complete, and actionable
+  diagnostics remain visible where repaired.
 - **Further adoption.** Establish a reachable incomplete configuration before adopting amber for Masking, Class
   Change, required reference selectors or other wizard-protected sections. A required field alone is insufficient:
   demonstrate removal, recovery or another path that can leave saved setup unfinished. An already-selected source
@@ -300,8 +334,8 @@ Use the part of the mechanism each responsibility needs:
 
 | Recipes | Concrete reuse and existing owner | Migration boundary |
 | --- | --- | --- |
-| CCDC, Time Series, Phenology | The selected Classification is read once per recipe for its UI (`selectedClassification.js`). Band choices are still derived per panel; CCDC's TMask is judged against the breakpoint bands in shared readiness. `collectionClassifierRequirements.js` and CCDC's `segmentDescription.js` already establish reusable owners. | [Remaining slice](#temporal-sources-dependencies): collection-band compatibility with retained selections. No persisted fit evidence. |
-| LandTrendr | `landTrendr/panels/sources/sources.jsx` calls `ensureValidIndex` on opening and dataset changes; dataset choices also read Dates. | Declare date/dataset/index compatibility. Settle the explicit replacement/defaulting policy before changing it; opening or temporarily empty options must preserve deliberate choices. |
+| CCDC, Time Series, Phenology | The selected Classification is read once per recipe for its UI (`selectedClassification.js`). Chosen bands of the images, classified outputs and CCDC's TMask are judged in shared readiness, and Sources keep chosen bands shown. `collectionClassifierRequirements.js`, `collectionBandRequirements.js` and CCDC's `segmentDescription.js` establish reusable owners. | [Remaining items](#temporal-sources-dependencies): unmatched Planet Daily's imagery-dependent bands and the Time Series chart's corrections. No persisted fit evidence. |
+| LandTrendr | Sources' data-set, date and index dependencies are judged in shared readiness, and Sources keep chosen values shown and say which inputs an index lacks ([LandTrendr](../recipes/landtrendr.md#sources)). Data sets follow the shared [data-set availability](recipes/data-sources.md#data-set-availability). | [Named-product periods](#sources-data-set-availability), the annual mosaic's included; chart gating stays with [server preview readiness](#server-preview-readiness). |
 | Optical Mosaic | `sceneAreas.jsx`, `sceneSelection.jsx`, `autoSelectScenes.jsx` and `sceneDeselection.jsx` separately coordinate AOI/source/date-dependent reads and selected scenes. | Shared question identity and request lifecycle can replace local coordination. Scene discovery results are temporary; manual selections remain user-owned. Preserve explicit auto-selection and define retention/reconciliation before changing scene deletion behaviour. |
 | Classification, Regression | Shared input-band and training-data requirements already judge live dependencies. `panels/trainingData/sample*Section.jsx` and table-import sections own similar asynchronous import requests and mapping stages. | Reuse acquisition lifecycle and declared stage prerequisites where duplicated. Sampled/imported rows are persisted snapshots, and source IDs there record provenance; do not turn them into live execution dependencies or invalidate them automatically. Keep training adequacy and value/encoding policy separate. |
 | Unsupervised Classification | Shared derived-input requirements already validate its band sets; sampling and clustering run during execution. Cluster-dependent preset legends are computed synchronously by `visualizations.js`. | No persisted calculation sidecar is justified by these paths. Conditional sampling/clusterer rules can use shared requirements when their validation is migrated; retain the domain parameter rules and cheap preset derivation. |
@@ -327,9 +361,9 @@ Use the part of the mechanism each responsibility needs:
   Retrieve panel already coordinate relevant consumers. Extend those owners where a migration exposes a gap;
   do not add a second chart/request coordinator or duplicate server-preview readiness work.
 
-**Adoption order and acceptance.** Within derivation migrations, [temporal section
-dependencies](#temporal-sources-dependencies) are the next focused candidate. Other rows are an inventory, not a commitment to migrate working code. Product-owned input projections
-can be added independently where the conservative fallback causes unnecessary recalculation.
+**Adoption order and acceptance.** The rows are an inventory, not a commitment to migrate working code.
+Product-owned input projections can be added independently where the conservative fallback causes unnecessary
+recalculation.
 
 Each migration must name the domain projection, the old coordination it deletes and the user choices it preserves.
 Verify irrelevant edits, prerequisites, valid draft repair and Apply/Cancel; asynchronous migrations additionally
@@ -339,45 +373,16 @@ unverified for these follow-ups.
 
 #### Temporal Sources dependencies
 
-For CCDC, Time Series and Phenology. Slice 3 remains proposed below; slice 2, CCDC's TMask bands, is
-[current behaviour](../recipes/time-series.md#ccdcs-tmask-bands). "Confirmed" means
-reproduced by temporary mounted probes over the real panels, form, store and source runtime, with recipe reads
-substituted; the rest is code inspection. Paths are relative to `modules/gui/src/app/home/body/process/recipe/`.
+For CCDC, Time Series and Phenology. The selected Classification's UI read, CCDC's TMask bands and the bands of the images
+CCDC and Phenology choose are current behaviour
+([Time Series](../recipes/time-series.md#bands-of-the-images-ccdc-and-phenology-choose)). Remaining, from code
+inspection; paths are relative to `modules/gui/src/app/home/body/process/recipe/`:
 
-**Current behaviour.**
-
-- **Classification metadata.** One UI read per recipe: [what is offered of the selected
-  Classification](../recipes/time-series.md#what-is-offered-of-the-selected-classification).
-- **Band choices.** `groupedBandOptions` (`~/sources.js`) derives choices from data sets, corrections and the
-  Classification in CCDC Sources, Retrieve and chart, Phenology Sources, and Time Series' chart and Retrieve.
-  CCDC Sources reads corrections from `model.opticalPreprocess`, which nothing writes; the others read
-  `model.options`. Confirmed: under SR, CCDC Sources
-  offers `pan`, `cirrus` and `thermal2`, which the SR collection and CCDC's declared measures (`ccdcMeasures`) lack.
-  With corrections from `model.options`, the offered optical and radar bands equal the declared measures (Landsat 8,
-  Sentinel-2 and both, under TOA, SR and SR with BRDF; Sentinel-1). Planet declares `kndvi`, which is not offered
-  ([Planet Mosaic](#planet-mosaic)).
-- **Selection retention.** `~/widget/form/buttons.jsx` drops chosen values its options no longer offer, on every
-  render after mounting. `withChosenClassifiedOutputs` keeps chosen classified outputs offered; by design it does not
-  keep bands of the images. Confirmed: CCDC Landsat 8 → none → Sentinel-2, and OPTICAL → RADAR → OPTICAL, drop the
-  chosen breakpoint bands from the draft, whose Apply is then refused as empty. A Phenology saved with `thermal2` under
-  SR opens unedited, nothing shown as chosen or said; its next render (More) turns it into a generic required error.
-  A Classification read completing also re-renders (code inspection). The family-change default can pick a data set
-  the dates exclude, which the form then drops.
-- **Bands of the images are judged nowhere.** The shared declarations check classifier inputs and classified outputs
-  only. CCDC Retrieve names an uncarried breakpoint band (`ccdc/retrieveSelection.js`). Preview, segment charts,
-  Phenology and the server guards pass it to Earth Engine, where it is expected to fail (not verified live).
-
-**What each choice reads.** Local derivations, needing no acquisition, evidence or hashing:
-
-- collection bands, from `sources.dataSets`, `options.corrections` (optical) and `options.histogramMatching` (Planet).
-
-Acquired:
-
-- the selected Classification's record (`model.legend`, `model.classifier`), for classified outputs and their labels;
-- whether the imagery of a Planet Daily collection without histogram matching has eight bands (`nativeBands$`, Earth
-  Engine). Basemaps and matched Daily carry the four matched bands, which configuration settles (`planetBandNames`).
-
-Trainability and classifier inputs keep their existing acquired requirements. Dates only disable data-set choices.
+- **Unmatched Planet Daily.** Its eight-band names, and any index needing them, are not refused, because the rule reads
+  no imagery. Refusing them needs the contributing imagery's bands (`nativeBands$`) acquired for the rule; a pending or
+  failed read establishes nothing.
+- **Time Series chart corrections.** `timeSeries/panels/chartPixel.jsx` reads corrections from
+  `model.opticalPreprocess`, which nothing writes, so under SR the chart offers bands the collection lacks.
 
 **Further label opportunities, not scheduled.** Other places could adopt the
 [retained-output naming](../recipes/time-series.md#what-is-offered-of-the-selected-classification) where they are shown
@@ -389,57 +394,38 @@ to be the same case:
   by its value.
 - `~/sources.js` formats classified-output labels beside Classification's `bandPresentation`.
 
-**Proposal.** One remaining slice. It adds or rewrites no saved fields, and changes no processing, fitting parameters,
-encodings, training prerequisites or execution inputs.
+#### Sources data-set availability
 
-3. **Collection bands and retention.** For CCDC's breakpoint bands and Phenology's band, after the decisions below.
-   - **Rule.** Export the collection-measure rule now private to `type/ccdc.js`; it follows `collection.js`'s branches.
-     Declare one configuration requirement over it: a chosen band of the images that the configured collection does
-     not carry. It covers CCDC (IMAGE_OUTPUT, PIXEL_SEGMENTS, COUNT) and Phenology (IMAGE_OUTPUT). Classified outputs
-     are left to their own rule.
-   - **Planet.** Only availability that depends on unread imagery is deferred: the eight-band names, and indexes
-     needing them, of Daily without histogram matching. Whatever configuration settles is enforced. Basemaps and
-     matched Daily carry the four matched bands, so `green1` is refused there; a band no Daily imagery could carry is
-     refused everywhere.
-   - **Editor.** Route it as a Sources field requirement that judges drafts (`sourcesFieldRequirement`).
-   - **Choices.** Offer them from configuration, with corrections from `model.options`. Keep every chosen band shown as
-     chosen (`withChosenClassifiedOutputs`, generalised), so `buttons.jsx` has nothing to drop; its own behaviour
-     stays unchanged.
-   - **PRC.** A PRC Apply that leaves a chosen band uncarried is allowed, and marks SRC with the band and both remedies.
-   - **Removed:** CCDC Sources' `opticalPreprocess` read and the implicit pruning. Closes the
-     [empty-dataset item](#validation-and-execution-coverage).
-   - **Ordering.** The corrections fix lands with retention. Alone, it would let the form drop a saved TOA-only band
-     silently. Data-set defaulting is unchanged.
+Date-filtered Sources share one data-set availability policy, LandTrendr's included, and new recipes resolve their
+initial data sets by it ([current behaviour](recipes/data-sources.md#data-set-availability),
+[initial data sets](recipes/data-sources.md#initial-data-sets)). Remaining:
 
-**Compatibility.** Saved breakpoint and Phenology
-bands stay as saved, refused ones included, until the user changes them. A recipe an older client saves is judged by
-the new rules when it is next read. The refusals slice 3 adds replace Earth Engine failures, for configurations
-expected not to run, with located findings.
-
-**Decisions, settled in review.**
-
-- **Family or data-set change.** Chosen bands the new collection does not carry are kept, flagged at the field and
-  refusing that Apply: they are fitting choices, not derived from the data set. Nothing changes while no data set is
-  chosen.
-- **Where the slice 3 rule lives.** In shared readiness: one definition for drafts, applied recipes, preview,
-  Retrieve and the server.
-- **Advance notice.** None; the marked button and held operations say it.
-
-Unmatched Daily's eight-band names stay deferred until the contributing imagery's bands are acquired for this rule.
-
-**Acceptance.** Through real panels, form, store and runtime with substituted reads; rules tested directly.
-
-- **Slice 3:**
-  - for CCDC's several bands and Phenology's one: TOA → SR with `thermal2`, OPTICAL → RADAR, an empty intermediate,
-    and Sentinel-2;
-  - chosen bands retained, shown and explained;
-  - unaffected by irrelevant edits such as dates, cloud threshold or a Classification change;
-  - classified outputs still judged by their own rule;
-  - Planet basemaps, and Daily with matching enabled (`green1` refused) and disabled (`green1` deferred, a band no
-    Daily imagery carries refused);
-  - untouched opening and metadata completion unchanged;
-  - offered bands agreeing with `ccdcMeasures` for each family;
-  - execution inputs unchanged.
+- **Named-product periods, a separate bounded follow-up.** Products reading a period of their own are not judged for it:
+  LandTrendr's annual mosaic, its requested year, and Change Alerts' calibration and monitoring mosaics
+  (`COLLECTION_MOSAIC`), each its own period. A Landsat 8-only LandTrendr annual mosaic for 2010 cannot hold imagery
+  even where its fitted years include usable ones. A configuration requirement reads the model, not a product's
+  parameters, and a delegated product reads the delegate's description without its readiness
+  (`lib/js/shared/src/recipe/output/resolveImageOutput.js`), so Optical Mosaic's requirement does not cover them.
+  Judging each product's own period needs its parameters where its readiness is read.
+- **Classifier-input messages, a separate bounded slice.** The finding is located at the classification when no single
+  data set supplies the classifier's features at the current reflectance (`collectionClassifierRequirement`,
+  `lib/js/shared/src/recipe/type/pyeoAlerts.js`). Its messages ("No collection this recipe can use provides…", and
+  PyEO's "No supported monitoring data provides…") overlook a PRC repair: Landsat 8 under SR with a classifier reading
+  `pan` is located there, although TOA supplies it. The smallest correction scopes the wording to the processing
+  applied, and offers PRC only from a finding fact naming it (alternatives judged at the other reflectance). The
+  data-set alternatives also ignore the period: Landsat 4-5 for 1990-1995 with a classifier reading `redEdge1` is told
+  to choose data sets that provide it, though only Sentinel-2 does and Sources refuse it for those years. They can be
+  judged by the shared policy (`excludedDataSets`, `lib/js/shared/src/recipe/dataSetAvailability.js`).
+- **Chart gating.** LandTrendr's pixel chart is not held for these findings and declares no pixel operation; it stays
+  with [server preview readiness](#server-preview-readiness).
+- **Open drafts.** A form panel's draft is judged again when the panel renders. An applied change made elsewhere while
+  it is open is seen only then; panels open one at a time, so no current path reaches this.
+- **Choices unavailable anew, not scheduled.** A data set the years exclude is disabled without saying why; only one kept
+  chosen gives its catalogue years. A tooltip on the disabled choice would explain it, if hover on disabled buttons is
+  reliable.
+- **Abandoned set-up drafts.** Wizard Back leaves an invalid Sources draft uncommitted, as for every panel; Sources
+  opened again are proposed again over the dates then chosen. Keeping such a draft would need draft persistence, not
+  defaulting.
 
 #### Class Change transition styles
 
@@ -561,20 +547,45 @@ choose an explicit unknown-range fallback rather than treating an encoding multi
 
 ### Map inspection
 
-Deferred exploration; scope and interaction remain undecided. General inspection reads raster values/feature
-attributes across layers, grouped by layer. Specialized actions require the selected layer/product's capability:
-a Masking output preserving CCDC could offer its segment chart, as could a CCDC layer added to an Optical map.
-The owning recipe type must not determine every layer action. Resolve interpretation through the capability
-provider while reading the selected outer layer's pixels, retaining its mask and other transformations. A Stack
-may preserve several instances; CCDC-derived names alone do not establish a usable one. Original observations
-alongside fitted segments need evidence a segments asset may not supply.
+Deferred proposal: one Inspect action across recipe maps with inspectable layers, showing raster values or feature
+attributes grouped by layer. An eyedropper is the proposed icon; charts are optional views of the inspected location,
+not a requirement for every recipe. Decide final placement and whether existing charts open alongside values.
 
-Decide action placement and layer/instance selection; all versus visible layers and feature-hit matching; which
-named product/parameters are queried; scalar/array/unit/encoded-value presentation and distinct masked/no-match/
-unavailable/failed states; and cancellation, refresh and reuse when layer, capability or location changes.
-Use existing [product](recipes/output-products.md), [provider](recipes/source-resolution.md#execution-identity-and-capability-providers),
-[runtime](recipes/gui-source-runtime.md), [freshness](recipes/source-freshness.md) and [style](recipes/visualizations.md) owners. These scenarios
-do not commit to a toolbar or tool-registration framework; physical-value presentation remains deferred separately.
+- **Values and layers.** Show selected display bands first; categorical bands show both numeric value and class
+  label, retaining unknown values without inventing a class. Offer other bands on expansion. Proposed default:
+  inspect layers displayed in the clicked pane, with explicit inclusion of sources not placed in the layout.
+  Query additional bands/sources on demand rather than starting every possible calculation. Read actual data
+  before palette/stretch rendering, not values reconstructed from tile colours. Distinguish masked pixels,
+  no matching feature, unsupported inspection, unavailable evidence and failed requests. Tables identify features
+  and their attributes; define hit tolerance and multiple-match behaviour separately from raster sampling.
+- **One spatial question.** Capture the clicked pane's map projection, resolution and pixel-grid alignment with
+  the location. Values and any chart opened for that inspection use that same grid; neither silently chooses its
+  own scale. Show the sampling scale beside the coordinates. Zooming alone leaves the result unchanged; another
+  inspection captures a new grid. Verify alignment against actual EE tiles, including zoom, latitude and display
+  pixel density; specifying a CRS and nominal scale alone does not establish the same pixel. Preserve categorical
+  codes with appropriate resampling. Arrays and fitted-model records need product-specific sampling semantics.
+- **Charts by capability.** Reuse existing charts first. A Masking output preserving CCDC could offer its segment
+  chart, as could a CCDC layer added to an Optical map; the owning recipe type must not determine every layer
+  action. Resolve interpretation through the capability provider while reading the selected outer layer's pixels,
+  retaining its mask and transformations. A Stack may preserve several instances; names alone do not establish
+  a usable one. Sampling stored segments on the map grid does not refit them: do not average unrelated model
+  coefficients. Original observations alongside fitted segments need evidence an asset may not supply. Generic
+  optical/radar observation charts are later work: declare their source and temporal scope rather than inferring
+  a unique series from any upstream imagery dependency.
+- **Shared ownership and compatibility.** Recipes declare supported products, interpretation and restrictions;
+  reuse existing [product](recipes/output-products.md),
+  [provider](recipes/source-resolution.md#execution-identity-and-capability-providers),
+  [runtime](recipes/gui-source-runtime.md), [freshness](recipes/source-freshness.md) and
+  [style](recipes/visualizations.md) owners for acquisition, cancellation and reuse. Current observation/CCDC chart
+  requests specify 10 m and LandTrendr 30 m; adopting map scale changes results with zoom, not only cost. Compare
+  representative results and timings before changing existing charts; no speedup is established. A product unable
+  to honour the common spatial question needs an explicit restriction, not a silently different chart scale.
+
+First slice: raster inspection and existing chart integration. Acceptance covers selected/all-band queries,
+categorical values/labels, layer inclusion, masked/failed states, common value/chart grids and stable results after
+zoom, outer-layer transformations, and superseded requests on location/source changes. Feature inspection and new
+generic charts can follow separately. Scalar/array and unit/encoded-value presentation still need decisions;
+physical-value presentation remains deferred separately. No new tool-registration framework is selected.
 
 ### Recipe packages and supporting work
 

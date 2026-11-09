@@ -5344,7 +5344,8 @@
           "tooltip": "Select image source and index",
           "form": {
             "dataSets": {
-              "label": "Data sets"
+              "label": "Data sets",
+              "required": "Select at least one data set"
             },
             "cloudPercentageThreshold": {
               "label": "Max cloud cover %",
@@ -5353,7 +5354,11 @@
             },
             "index": {
               "label": "Index",
-              "tooltip": "The spectral index to fit segments to. Vegetation/disturbance indexes (e.g. NBR, NDVI) are typical choices."
+              "tooltip": "The spectral index to fit segments to. Vegetation/disturbance indexes (e.g. NBR, NDVI) are typical choices.",
+              "required": "Select an index",
+              "missingInputs": "{index} requires the {bands} {count, plural, one {band} other {bands}}, which {dataSets} {dataSetCount, plural, one {does} other {do}} not provide. Choose another index or data sets that provide {count, plural, one {it} other {them}}.",
+              "removeDataSets": "{index} requires the {bands} {count, plural, one {band} other {bands}}, which {dataSets} {dataSetCount, plural, one {does} other {do}} not provide. Remove {removable}, or choose another index.",
+              "unsupported": "The selected data sets don't provide {index}. Choose another index."
             }
           }
         },
@@ -5998,6 +6003,17 @@
         "classification": "No collection this recipe can use provides the bands this classification reads: {missing}. Choose another classification, or none.",
         "dataSets": "The selected data sets don't provide the bands this classification reads: {missing}. Choose data sets that do, or another classification."
       },
+      "dataSets": {
+        "noPeriodOverlap": "None of the selected data sets covers any year from {startYear} to {endYear}. Select one that does, or change the dates.",
+        "years": {
+          "from": "Imagery from {fromYear}.",
+          "range": "Imagery from {fromYear} to {toYear}."
+        }
+      },
+      "collectionBands": {
+        "band": "The selected data sets, as PRC processes them, don't provide {bands}. Choose another band, or change the data sets or PRC.",
+        "breakpointBands": "The selected data sets, as PRC processes them, don't provide {count, plural, one {breakpoint band {bands}} other {breakpoint bands {bands}}}. Choose other breakpoint bands, or change the data sets or PRC."
+      },
       "classifiedOutputs": {
         "band": "The selected classification does not provide {unsupported}. Choose another band, or another classification.",
         "breakpointBands": "The selected classification does not provide {unsupported}. Choose other breakpoint bands, or another classification."
@@ -6034,35 +6050,43 @@
     "dataSets": {
       "LANDSAT_7": {
         "label": "L7",
-        "tooltip": "Landsat 7"
+        "tooltip": "Landsat 7",
+        "name": "Landsat 7"
       },
       "LANDSAT_7_T2": {
         "label": "L7 T2",
-        "tooltip": "Landsat 7 Tier 2"
+        "tooltip": "Landsat 7 Tier 2",
+        "name": "Landsat 7 Tier 2"
       },
       "LANDSAT_8": {
         "label": "L8",
-        "tooltip": "Landsat 8"
+        "tooltip": "Landsat 8",
+        "name": "Landsat 8"
       },
       "LANDSAT_8_T2": {
         "label": "L8 T2",
-        "tooltip": "Landsat 8 Tier 2"
+        "tooltip": "Landsat 8 Tier 2",
+        "name": "Landsat 8 Tier 2"
       },
       "LANDSAT_9": {
         "label": "L9",
-        "tooltip": "Landsat 9"
+        "tooltip": "Landsat 9",
+        "name": "Landsat 9"
       },
       "LANDSAT_9_T2": {
         "label": "L9 T2",
-        "tooltip": "Landsat 9 Tier 2"
+        "tooltip": "Landsat 9 Tier 2",
+        "name": "Landsat 9 Tier 2"
       },
       "LANDSAT_TM": {
         "label": "L4-5",
-        "tooltip": "Landsat 4-5"
+        "tooltip": "Landsat 4-5",
+        "name": "Landsat 4-5"
       },
       "LANDSAT_TM_T2": {
         "label": "L4-5 T2",
-        "tooltip": "Landsat 4-5 Tier 2"
+        "tooltip": "Landsat 4-5 Tier 2",
+        "name": "Landsat 4-5 Tier 2"
       },
       "SENTINEL_1": {
         "label": "S1",
@@ -6070,7 +6094,8 @@
       },
       "SENTINEL_2": {
         "label": "S2",
-        "tooltip": "Sentinel 2 A+B"
+        "tooltip": "Sentinel 2 A+B",
+        "name": "Sentinel-2"
       }
     },
     "optical": {

@@ -3,14 +3,12 @@ import {expect, it, vi} from 'vitest'
 vi.mock('~/translate', () => ({msg: key => key}))
 
 import {availableMeasures, MONITORING_TYPES, observedMeasures} from '#sepal/recipe/changeAlerts/monitoringMeasures'
-import {getAvailableBands} from '~/sources'
-
-import {dataSetOptions} from './monitoringData'
+import {dataSetOptions, getAvailableBands} from '~/sources'
 
 // Keep the server's native monitoring scope aligned with the existing GUI catalogue, including SR/TOA.
 it.each(MONITORING_TYPES)('preserves the monitoring choices of %s', type => {
     const available = []
-    dataSetOptions(type).forEach(({value}) => {
+    dataSetOptions({type}).forEach(({value}) => {
         ;[[], ['SR']].forEach(corrections => {
             const dataSets = {[type === 'OPTICAL' ? value.startsWith('SENTINEL') ? 'SENTINEL_2' : 'LANDSAT' : type === 'RADAR' ? 'SENTINEL_1' : 'PLANET']: [value]}
             const previous = getAvailableBands({dataSets: [value], corrections})

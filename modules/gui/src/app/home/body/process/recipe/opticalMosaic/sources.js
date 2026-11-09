@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import moment from 'moment'
 
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
@@ -9,7 +8,7 @@ export const sources = ['LANDSAT', 'SENTINEL_2']
 export const isOpticalDataSet = dataSetId => !!dataSetById[dataSetId]
 
 export const getDataSetBands = recipe => {
-    const dataSets = selectFrom(recipe, 'model.sources.dataSets')
+    const dataSets = selectFrom(recipe, 'model.sources.dataSets') || {}
     const corrections = selectFrom(recipe, 'model.compositeOptions.corrections')
     const dataSetIds = Object.values(dataSets).flat()
     const correction = corrections && corrections.includes('SR') ? 'SR' : 'TOA'
@@ -48,21 +47,14 @@ export const getDataSet = dataSetId => {
     return {scale, name, shortName}
 }
 
-export const getDataSetOptions = ({startDate, endDate}) =>
+// Which of them can be chosen for a recipe's dates is the shared policy's (dataSetOptions, ~/sources.js).
+export const getDataSetOptions = () =>
     Object.keys(dataSetById)
         .map(dataSetId => ({
             value: dataSetId,
             label: msg(['sources.dataSets', dataSetId, 'label']),
-            tooltip: msg(['sources.dataSets', dataSetId, 'tooltip']),
-            neverSelected: !isDataSetInDateRange(dataSetId, startDate, endDate)
+            tooltip: msg(['sources.dataSets', dataSetId, 'tooltip'])
         }))
-
-export const isDataSetInDateRange = (dataSetId, fromDate, toDate) => {
-    const dataSet = dataSetById[dataSetId]
-    const startOk = !dataSet.toYear || moment(fromDate).year() <= dataSet.toYear
-    const endOk = moment(toDate).subtract(1, 'days').year() >= dataSet.fromYear
-    return startOk && endOk
-}
 
 export const minScale = recipe => {
     const dataSets = selectFrom(recipe, 'model.sources.dataSets') || {}
@@ -96,7 +88,6 @@ const imageSourceById = {
 
 const dataSetById = {
     LANDSAT_9: {
-        fromYear: 2021,
         quality: 1,
         scale: 30,
         name: 'Landsat 9',
@@ -117,7 +108,6 @@ const dataSetById = {
         }
     },
     LANDSAT_8: {
-        fromYear: 2013,
         quality: 1,
         scale: 30,
         name: 'Landsat 8',
@@ -138,7 +128,6 @@ const dataSetById = {
         }
     },
     LANDSAT_7: {
-        fromYear: 1999,
         quality: 2,
         scale: 30,
         name: 'Landsat 7',
@@ -159,8 +148,6 @@ const dataSetById = {
         }
     },
     LANDSAT_TM: {
-        fromYear: 1982,
-        toYear: 2012,
         quality: 2,
         scale: 30,
         name: 'Landsat 4-5',
@@ -181,7 +168,6 @@ const dataSetById = {
         }
     },
     LANDSAT_8_T2: {
-        fromYear: 2013,
         quality: 3,
         scale: 30,
         name: 'Landsat 8, tier 2',
@@ -202,7 +188,6 @@ const dataSetById = {
         }
     },
     LANDSAT_9_T2: {
-        fromYear: 2021,
         quality: 3,
         scale: 30,
         name: 'Landsat 9, tier 2',
@@ -223,7 +208,6 @@ const dataSetById = {
         }
     },
     LANDSAT_7_T2: {
-        fromYear: 1999,
         quality: 3,
         scale: 30,
         name: 'Landsat 7, tier 2',
@@ -244,8 +228,6 @@ const dataSetById = {
         }
     },
     LANDSAT_TM_T2: {
-        fromYear: 1984,
-        toYear: 2012,
         quality: 3,
         scale: 30,
         name: 'Landsat 4-5, tier 2',
@@ -266,7 +248,6 @@ const dataSetById = {
         }
     },
     SENTINEL_2: {
-        fromYear: 2015,
         quality: 1,
         scale: 10,
         name: 'Sentinel 2',

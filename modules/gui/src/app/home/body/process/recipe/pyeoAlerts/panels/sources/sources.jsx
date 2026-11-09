@@ -3,13 +3,13 @@ import moment from 'moment'
 import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
+import {dataSetPeriod} from '#sepal/recipe/type/pyeoAlerts'
 import api from '~/apiRegistry'
-import {getDataSetOptions as opticalDataSetOptions} from '~/app/home/body/process/recipe/opticalMosaic/sources'
 import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
-import {toSources} from '~/sources'
+import {dataSetOptions, initialDataSets, toSources} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
@@ -21,6 +21,7 @@ import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 import {RecipeInput} from '~/widget/recipeInput'
 
+import {withUpdates} from '../../../formSubmission'
 import {preferredGateIndex, readableGateIndexes} from '../../gateIndexes'
 import {NOT_DERIVABLE, readInputImagery$, SELECTED_SCENES} from '../../inputImagery'
 import toDateString from '../../toDateString'
@@ -137,13 +138,13 @@ export const Sources = compose(
         }
 
         renderDataSets() {
-            const {dates, form, inputs: {dataSets}} = this.props
+            const {form, inputs: {dataSets}} = this.props
             return (
                 <Form.Buttons
                     label={msg('process.pyeoAlerts.panel.sources.form.dataSets.label')}
                     tooltip={msg('process.pyeoAlerts.panel.sources.form.dataSets.tooltip')}
                     input={dataSets}
-                    options={opticalDataSetOptions({...dates})}
+                    options={dataSetOptions({type: 'OPTICAL', period: this.period(this.acquisition()), chosen: dataSets.value})}
                     errorMessage={form.getErrorMessage(dataSets)}
                     multiple
                     disabled={!this.hasClasses()}
@@ -241,6 +242,12 @@ export const Sources = compose(
         acquisition() {
             const {inputs: {acquisition}} = this.props
             return acquisition.value || {}
+        }
+
+        // The years monitored as Apply would save them: the dates applied, with those the classification's reading proposes.
+        period(acquisition) {
+            const {dates} = this.props
+            return dataSetPeriod(withUpdates({model: {dates}}, proposedUpdates(acquisition)).model)
         }
 
         // Opening a saved recipe reads metadata without re-deriving its configuration.
@@ -350,19 +357,22 @@ export const Sources = compose(
                 : []
         }
 
+        // Only what the imagery states is proposed: a setting it does not state keeps what the panel has. Its data sets are
+        // proposed as far as the years the proposal monitors let them contribute (initialDataSets); data sets the user
+        // chose are kept, and judged by those years.
         propose(id, {options, sources, start, end}, baseline) {
             const {inputs} = this.props
-            // Only what the imagery states is proposed: a setting it does not state keeps what the panel has.
+            const acquisition = {...derived(id, {
+                ...(options && {options}),
+                dates: start !== undefined && end !== undefined ? derivedDates(start, end) : {derived: false}
+            }), baseline}
             if (!this.dataSetsTouched && sources?.dataSets) {
-                inputs.dataSets.set(_.uniq(Object.values(sources.dataSets).flat()))
+                inputs.dataSets.set(initialDataSets(_.uniq(Object.values(sources.dataSets).flat()), this.period(acquisition)))
             }
             if (sources?.cloudPercentageThreshold !== undefined) {
                 inputs.cloudPercentageThreshold.set(sources.cloudPercentageThreshold)
             }
-            this.setAcquisition({...derived(id, {
-                ...(options && {options}),
-                dates: start !== undefined && end !== undefined ? derivedDates(start, end) : {derived: false}
-            }), baseline})
+            this.setAcquisition(acquisition)
         }
 
         refuse(id, error) {

@@ -99,7 +99,7 @@ const recipeOf = (type, sources) => ({
     title: 'Recipe',
     model: {
         aoi: {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]},
-        dates: {startDate: '2020-01-01', endDate: '2021-01-01', fromYear: 2020, toYear: 2020},
+        dates: {startDate: '2022-01-01', endDate: '2023-01-01', fromYear: 2022, toYear: 2022},
         sources: {dataSets: {LANDSAT: ['LANDSAT_9']}, band: 'ndvi', breakpointBands: ['ndvi'], ...sources},
         options: {corrections: ['SR']}
     }

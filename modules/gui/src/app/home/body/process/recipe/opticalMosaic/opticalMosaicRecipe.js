@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import moment from 'moment'
 
+import {dataSetPeriod} from '#sepal/recipe/type/opticalMosaic'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {pyramidingPolicies} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
 import {selectFrom} from '~/stateUtils'
@@ -12,6 +13,9 @@ export const SceneSelectionType = Object.freeze({
     SELECT: 'SELECT'
 })
 
+// The data sets a new recipe's Sources start with, as far as the years it reads let them contribute (initialSources.js).
+export const initialSources = {dataSets: ['LANDSAT_9', 'LANDSAT_8'], period: dataSetPeriod}
+
 export const defaultModel = {
     dates: {
         type: 'YEARLY_TIME_SCAN',
@@ -22,8 +26,7 @@ export const defaultModel = {
         yearsAfter: 0
     },
     sources: {
-        cloudPercentageThreshold: 75,
-        dataSets: {LANDSAT: ['LANDSAT_9', 'LANDSAT_8']}
+        cloudPercentageThreshold: 75
     },
     sceneSelectionOptions: {
         type: SceneSelectionType.ALL,

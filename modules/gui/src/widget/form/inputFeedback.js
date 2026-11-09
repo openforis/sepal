@@ -38,9 +38,9 @@ export const withFeedbackButtons = (labelButtons, {buttons = []}) => {
 
 const NO_FEEDBACK = Object.freeze({})
 
-// One error as it is, several as the lines of one.
+// One error as it is, several as the lines of one; an input told what its own error already says is told it once.
 const errors = messages => {
-    const lines = messages.flat().filter(Boolean)
+    const lines = _.uniq(messages.flat().filter(Boolean))
     return lines.length > 1 ? lines : lines[0] || ''
 }
 

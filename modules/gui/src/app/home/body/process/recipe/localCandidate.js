@@ -3,13 +3,14 @@ import _ from 'lodash'
 import {select} from '~/store'
 
 import {committedRecipe} from './derivedResult'
+import {submittedRecipe} from './formSubmission'
 import {itemStatusesOf, localStatusOf} from './selectedSourceStatus'
 import {readLocalRequirements, UNSUPPORTED} from './sourceRequirements'
 
 // What requirements over a recipe's own configuration (`localFacts`, sourceRequirements.js) say of a form panel's values
-// before they are applied, for the requirements naming the panel as their editor (`editor.panel`). The panel's values
-// become the recipe's model at its path, over the recipe as the session holds it now, with what committing them derives
-// (commitRecipe) - the candidate - which is read as the recipe is: every local requirement of its type, each
+// before they are applied, for the requirements naming the panel as their editor (`editor.panel`). The recipe as the
+// session holds it now, as submitting the values would leave it (`submission`, formSubmission.js), with what committing
+// them derives (commitRecipe) - the candidate - is read as the recipe is: every local requirement of its type, each
 // prerequisite resolved over the candidate's reads, nothing acquired. Nothing it finds is published as the recipe's, whose own requirements judge what was applied.
 //
 // A requirement's editor - {panel, input, blocksApply} - names the form input its findings are told to: a finding about
@@ -20,25 +21,24 @@ import {readLocalRequirements, UNSUPPORTED} from './sourceRequirements'
 // section holds nothing back: that section says what it needs.
 export class LocalCandidate {
     #recipeId
-    #path
     #declarations
-    #valuesToModel
-    #model = UNEDITED
+    #submission
+    #edit = UNEDITED
     #read = null
 
-    // `declarations` the local requirements naming the panel as their editor, `path` where its values are the model.
-    constructor({recipeId, path, declarations, valuesToModel}) {
+    // `declarations` the local requirements naming the panel as their editor, `submission(values)` what submitting the
+    // values commits: {path, model, updates}.
+    constructor({recipeId, declarations, submission}) {
         this.#recipeId = recipeId
-        this.#path = path
         this.#declarations = declarations
-        this.#valuesToModel = valuesToModel
+        this.#submission = submission
     }
 
     // Follows the values being edited.
     update(values) {
-        const model = this.#valuesToModel(values)
-        if (!_.isEqual(model, this.#model)) {
-            this.#model = model
+        const edit = this.#submission(values)
+        if (!_.isEqual(edit, this.#edit)) {
+            this.#edit = edit
         }
     }
 
@@ -63,14 +63,14 @@ export class LocalCandidate {
     // Read once for each recipe and edit: the panel's feedback and its Apply ask the same.
     #reads() {
         const recipe = select(['process.loadedRecipes', this.#recipeId])
-        if (!recipe || this.#model === UNEDITED) {
+        if (!recipe || this.#edit === UNEDITED) {
             return NO_READS
         }
-        if (this.#read?.recipe !== recipe || this.#read.model !== this.#model) {
-            const candidate = committedRecipe(recipe, {...recipe, model: {...recipe.model, [this.#path]: this.#model}})
+        if (this.#read?.recipe !== recipe || this.#read.edit !== this.#edit) {
+            const candidate = committedRecipe(recipe, submittedRecipe(recipe, this.#edit))
             this.#read = {
                 recipe,
-                model: this.#model,
+                edit: this.#edit,
                 reads: readLocalRequirements(candidate).filter(read => this.#declarations.includes(read.declaration))
             }
         }

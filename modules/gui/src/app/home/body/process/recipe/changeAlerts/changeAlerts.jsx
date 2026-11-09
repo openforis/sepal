@@ -9,14 +9,15 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
+import {dataSetPeriodRequirement} from '../dataSetPeriodRequirement'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {SourceEvidenceSync} from '../sourceEvidenceSync'
 import {bandPresentation, mapProducts} from './bands'
-import {defaultModel, RecipeActions} from './changeAlertsRecipe'
+import {defaultModel, initialSources, RecipeActions} from './changeAlertsRecipe'
 import {observedBands} from './monitoringData'
 import {ChangeAlertsToolbar} from './panels/changeAlertsToolbar'
 import {changeAlertsObservation} from './referenceObservation'
-import {referenceRequirements} from './referenceRequirement'
+import {referenceRequirements, SOURCES} from './referenceRequirement'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -73,7 +74,8 @@ export default () => ({
     mapProducts,
     bandPresentation,
     getPreSetVisualizations,
-    sourceRequirements: referenceRequirements,
+    sourceRequirements: [...referenceRequirements, dataSetPeriodRequirement(SOURCES)],
+    initialSources,
     observedBands,
     // What a layer, Retrieve or chart observes to check the reference it requires, wherever it is shown.
     sourceObservation: changeAlertsObservation

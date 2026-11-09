@@ -104,7 +104,7 @@ class _CompositeOptions extends React.Component {
 
     renderAdvanced() {
         const {forCollection, sources, inputs: {corrections}} = this.props
-        const sentinel2 = Object.keys(sources.dataSets).includes('SENTINEL_2')
+        const sentinel2 = Object.keys(sources.dataSets || {}).includes('SENTINEL_2')
         const brdf = corrections.value.includes('BRDF')
         return (
             <Layout type='vertical'>
@@ -526,9 +526,9 @@ class _CompositeOptions extends React.Component {
 
     cloudMaskingOptions() {
         const {sources, inputs: {corrections}} = this.props
-        const pino26Disabled = corrections.value.includes('SR') || !_.isEqual(Object.keys(sources.dataSets), ['SENTINEL_2'])
-        const sentinel2Disabled = !Object.keys(sources.dataSets).includes('SENTINEL_2')
-        const landsatDisabled = !Object.keys(sources.dataSets).includes('LANDSAT')
+        const pino26Disabled = corrections.value.includes('SR') || !_.isEqual(Object.keys(sources.dataSets || {}), ['SENTINEL_2'])
+        const sentinel2Disabled = !Object.keys(sources.dataSets || {}).includes('SENTINEL_2')
+        const landsatDisabled = !Object.keys(sources.dataSets || {}).includes('LANDSAT')
         return [
             {value: 'sepalCloudScore', label: msg('process.mosaic.panel.composite.form.cloudMasking.sepalCloudScore.label')},
             sentinel2Disabled ? null : {value: 'sentinel2CloudScorePlus', label: msg('process.mosaic.panel.composite.form.cloudMasking.sentinel2CloudScorePlus.label')},

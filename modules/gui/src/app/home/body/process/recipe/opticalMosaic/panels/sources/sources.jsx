@@ -2,11 +2,11 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {dateRange, RecipeActions} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
-import {getDataSetOptions} from '~/app/home/body/process/recipe/opticalMosaic/sources'
+import {dataSetPeriod} from '#sepal/recipe/type/opticalMosaic'
+import {RecipeActions} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
-import {toSources} from '~/sources'
+import {dataSetOptions, toSources} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
@@ -58,14 +58,14 @@ class _Sources extends React.Component {
     }
 
     renderDataSets() {
-        const {dates, inputs: {dataSets}} = this.props
-        const [startDate, endDate] = dateRange(dates)
+        const {dates, form, inputs: {dataSets}} = this.props
         return (
             <Form.Buttons
                 label={msg('process.changeAlerts.panel.sources.form.dataSets.label')}
                 input={dataSets}
-                options={getDataSetOptions({startDate, endDate})}
+                options={dataSetOptions({type: 'OPTICAL', period: dataSetPeriod({dates}), chosen: dataSets.value})}
                 multiple
+                errorMessage={form.getErrorMessage(dataSets)}
             />
         )
     }
@@ -97,7 +97,7 @@ const valuesToModel = ({dataSets, cloudPercentageThreshold}) => {
 }
 
 const modelToValues = ({dataSets, cloudPercentageThreshold}) => {
-    const dataSetIds = _.uniq(Object.values(dataSets).flat())
+    const dataSetIds = _.uniq(Object.values(dataSets || {}).flat())
     return ({
         dataSets: dataSetIds,
         cloudPercentageThreshold

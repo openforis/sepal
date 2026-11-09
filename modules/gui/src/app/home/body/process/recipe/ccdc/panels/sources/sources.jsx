@@ -1,13 +1,13 @@
 import _ from 'lodash'
 import React from 'react'
 
-import {getDataSetOptions as opticalDataSetOptions, isOpticalDataSet} from '~/app/home/body/process/recipe/opticalMosaic/sources'
-import {getDataSetOptions as planetDataSetOptions} from '~/app/home/body/process/recipe/planetMosaic/sources'
-import {getDataSetOptions as radarDataSetOptions, isRadarDataSet} from '~/app/home/body/process/recipe/radarMosaic/sources'
+import {dataSetPeriod} from '#sepal/recipe/type/ccdc'
+import {isOpticalDataSet} from '~/app/home/body/process/recipe/opticalMosaic/sources'
+import {isRadarDataSet} from '~/app/home/body/process/recipe/radarMosaic/sources'
 import {draftSelection, withSelectedClassification} from '~/app/home/body/process/recipe/selectedClassification'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
-import {groupedBandOptions, toDataSetIds, toSources, withChosenClassifiedOutputs} from '~/sources'
+import {dataSetOptions, defaultDataSet, groupedBandOptions, toDataSetIds, toSources, withChosenBands} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
@@ -38,7 +38,7 @@ const fields = {
 
 const mapRecipeToProps = recipe => ({
     dates: selectFrom(recipe, 'model.dates'),
-    corrections: selectFrom(recipe, 'model.opticalPreprocess.corrections')
+    corrections: selectFrom(recipe, 'model.options.corrections')
 })
 
 class _Sources extends React.Component {
@@ -177,9 +177,10 @@ class _Sources extends React.Component {
         )
     }
 
+    // Every band chosen stays shown, so the form has none to drop (form/buttons.jsx) and a refused one is explained beside it.
     renderBreakpointBands() {
         const {form, selectedClassification: {labelOf}, inputs: {breakpointBands}} = this.props
-        const options = withChosenClassifiedOutputs(this.breakpointBandOptions(), breakpointBands.value, labelOf)
+        const options = withChosenBands(this.breakpointBandOptions(), breakpointBands.value, labelOf)
             .filter(group => group.length)
             .map(group => ({options: group}))
         return (
@@ -214,13 +215,13 @@ class _Sources extends React.Component {
     }
 
     dataSetOptions() {
-        const {dates, inputs: {dataSetType}} = this.props
-        switch (dataSetType.value) {
-            case 'OPTICAL': return opticalDataSetOptions({...dates})
-            case 'RADAR': return radarDataSetOptions({...dates})
-            case 'PLANET': return planetDataSetOptions({...dates})
-            default: return []
-        }
+        const {inputs: {dataSetType, dataSets}} = this.props
+        return dataSetOptions({type: dataSetType.value, period: this.period(), chosen: dataSets.value})
+    }
+
+    period() {
+        const {dates} = this.props
+        return dataSetPeriod({dates})
     }
 
     breakpointBandOptions() {
@@ -252,11 +253,8 @@ class _Sources extends React.Component {
             const options = this.dataSetOptions()
             const validDataSets = _.intersection(options.map(({value}) => value), dataSets.value)
             if (!validDataSets.length) {
-                const defaultDataSets =
-                    dataSetType === 'OPTICAL'
-                        ? [options[0].value]
-                        : options[0].value
-                dataSets.set(defaultDataSets)
+                const first = defaultDataSet(dataSetType, this.period())
+                dataSets.set(dataSetType === 'OPTICAL' ? [first].filter(Boolean) : first ?? null)
             }
             if (dataSetType !== 'PLANET') {
                 asset.set(null)
@@ -283,7 +281,7 @@ const valuesToModel = ({dataSetType, asset, dataSets, cloudPercentageThreshold, 
 }
 
 const modelToValues = ({dataSetType, assets, dataSets, cloudPercentageThreshold, classification, breakpointBands}) => {
-    const dataSetIds = _.uniq(Object.values(dataSets).flat())
+    const dataSetIds = _.uniq(Object.values(dataSets || {}).flat())
     const defaultedDataSetType = dataSetType
         ? dataSetType
         : dataSetIds.find(dataSetId => isOpticalDataSet(dataSetId))

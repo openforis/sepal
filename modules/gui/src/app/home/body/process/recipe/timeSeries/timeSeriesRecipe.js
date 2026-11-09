@@ -1,5 +1,6 @@
 import moment from 'moment'
 
+import {dataSetPeriod} from '#sepal/recipe/type/timeSeries'
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
@@ -12,16 +13,15 @@ import {msg} from '~/translate'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 
+// The data sets a new recipe's Sources start with, as far as the years it reads let them contribute (initialSources.js).
+export const initialSources = {dataSets: ['LANDSAT_9', 'LANDSAT_8', 'LANDSAT_7', 'LANDSAT_TM'], period: dataSetPeriod}
+
 export const defaultModel = {
     dates: {
         startDate: '2000-01-01',
         endDate: moment().format(DATE_FORMAT)
     },
-    sources: {
-        dataSets: {
-            LANDSAT: ['LANDSAT_9', 'LANDSAT_8', 'LANDSAT_7', 'LANDSAT_TM']
-        }
-    },
+    sources: {},
     options: {
         ...defaultOpticalModel.compositeOptions,
         ...defaultRadarModel.options,

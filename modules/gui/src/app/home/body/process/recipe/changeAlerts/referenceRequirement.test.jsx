@@ -222,7 +222,8 @@ const {Sources} = await import('./panels/sources/sources')
 const {PanelWizard} = await import('~/widget/panelWizard')
 const {createCompositeOptions} = await import('../opticalMosaic/panels/compositeOptions/compositeOptions')
 const {presentProcessingInputs, preserveProcessingCopies, settingsOf} = await import('./processingSettings')
-const {defaultModel} = await import('./changeAlertsRecipe')
+const {defaultModel, initialSources} = await import('./changeAlertsRecipe')
+const {initialSectionModel} = await import('../initialSources')
 const {Options: RadarOptions} = await import('../mosaic/panels/radarMosaicOptions/options')
 const OpticalOptions = createCompositeOptions({id: 'options'})
 const ProcessingOptions = compose(({settings, radar}) => radar
@@ -247,7 +248,7 @@ addRecipeImageLayer('CHANGE_ALERTS', ({layer, source, recipe}) => {
     )
 })
 
-registry.CHANGE_ALERTS = {sourceRequirements: referenceRequirements, sourceObservation: changeAlertsObservation, mapProducts, observedBands}
+registry.CHANGE_ALERTS = {sourceRequirements: referenceRequirements, sourceObservation: changeAlertsObservation, mapProducts, observedBands, initialSources}
 registry.CCDC = {id: 'CCDC', describeSegments$}
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -1791,7 +1792,10 @@ describe('reference-owned PRC values and consumer drafts', () => {
     })
 })
 
+// What the reference seeds of a new recipe, whose Sources hold no data sets until committed: the data sets it records are
+// for Sources to propose as they first open (initialSources.js), not seeded.
 describe('consumer ownership at the first Reference Apply', () => {
+    const NEW_SOURCES = {cloudPercentageThreshold: 75}
     const defaults = {
         dataSetType: 'RADAR', dataSets: {SENTINEL_1: ['SENTINEL_1']}, cloudPercentageThreshold: 22,
         classification: 'private', breakpointBands: ['VV']
@@ -1803,8 +1807,8 @@ describe('consumer ownership at the first Reference Apply', () => {
         })
     })
 
-    it.each(['Apply', 'Enter', 'Next'])('seeds once, atomically, through %s', async submission => {
-        await editor({selection: {}, initialized: false, panels: submission === 'Next' ? ['reference', 'sources'] : ['reference'], wizard: submission === 'Next'})
+    it.each(['Apply', 'Enter', 'Next'])('seeds once, atomically, through %s, leaving its data sets to Sources', async submission => {
+        await editor({selection: {}, initialized: false, sources: NEW_SOURCES, panels: submission === 'Next' ? ['reference', 'sources'] : ['reference'], wizard: submission === 'Next'})
         const original = alertsRecipe().model
         await selectAsset(RADAR_ASSET)
         expect(alertsRecipe().model).toBe(original)
@@ -1825,34 +1829,34 @@ describe('consumer ownership at the first Reference Apply', () => {
         expect(published.length).toBeGreaterThan(0)
         published.forEach(model => {
             expect(model.reference.id).toBe(RADAR_ASSET)
-            expect(model.sources).toMatchObject({dataSets: defaults.dataSets, cloudPercentageThreshold: 22})
+            expect(model.sources).toEqual({cloudPercentageThreshold: 22})
             expect(model.options.orbits).toEqual(['DESCENDING'])
-            expect(model.sources).not.toHaveProperty('classification')
-            expect(model.sources).not.toHaveProperty('breakpointBands')
             expect(model.options).not.toHaveProperty('spatialSpeckleFilter')
             expect(model.options).not.toHaveProperty('harmonics')
             expect(model.options.corrections).toEqual(original.options.corrections)
         })
+        // What Sources then propose as they first open: the data sets the reference records, over the recipe's dates.
+        expect(initialSectionModel(alertsRecipe(), 'sources', alertsRecipe().model.sources))
+            .toMatchObject({dataSetType: 'RADAR', dataSets: {SENTINEL_1: ['SENTINEL_1']}})
     })
 
     it('seeds consumer defaults at first Apply without copying Classification', async () => {
-        await editor({selection: {}, initialized: false, panels: ['reference']})
+        await editor({selection: {}, initialized: false, sources: NEW_SOURCES, panels: ['reference']})
         await editRecord('ccdc-optical', {sources: {dataSets: {LANDSAT: ['LANDSAT_9']}, classification: 'private-classification', cloudPercentageThreshold: 26}})
         await selectRecipe('Optical CCDC')
         await apply()
-        expect(alertsRecipe().model.sources).toMatchObject({dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_9']}, cloudPercentageThreshold: 26})
-        expect(alertsRecipe().model.sources).not.toHaveProperty('classification')
+        expect(alertsRecipe().model.sources).toEqual({cloudPercentageThreshold: 26})
     })
 
     it('seeds only the latest draft selection when an older answer arrives late', async () => {
-        await editor({selection: {}, initialized: false, panels: ['reference']})
+        await editor({selection: {}, initialized: false, sources: NEW_SOURCES, panels: ['reference']})
         fake.heldMetadata = []
         await selectAsset(RADAR_ASSET)
         await selectRecipe('Optical CCDC')
         await answerHeldReads()
         await apply()
         expect(alertsRecipe().model.reference).toEqual(ref('ccdc-optical'))
-        expect(alertsRecipe().model.sources.dataSets).toEqual({LANDSAT: ['LANDSAT_9']})
+        expect(alertsRecipe().model.sources).toEqual(NEW_SOURCES)
         expect(alertsRecipe().model.options).not.toHaveProperty('orbits')
     })
 
@@ -2245,7 +2249,7 @@ const RECORDS = [
             sources: {dataSets: {LANDSAT: ['LANDSAT_9']}},
             options: {corrections: []},
             ccdcOptions: {dateFormat: 1},
-            dates: {startDate: '2017-01-01', endDate: '2021-01-01'}
+            dates: {startDate: '2021-01-01', endDate: '2025-01-01'}
         }
     },
     {

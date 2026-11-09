@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import moment from 'moment'
 
-import {ccdcMeasures} from '#sepal/recipe/type/ccdc'
+import {ccdcMeasures, dataSetPeriod} from '#sepal/recipe/type/ccdc'
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
@@ -50,6 +50,9 @@ export const breakDetectionOptions = {
     }
 }
 
+// The data sets a new recipe's Sources start with, as far as the years it reads let them contribute (initialSources.js).
+export const initialSources = {dataSets: ['LANDSAT_9', 'LANDSAT_8', 'LANDSAT_7', 'LANDSAT_TM'], period: dataSetPeriod}
+
 export const defaultModel = {
     dates: {
         startDate: '2000-01-01',
@@ -57,9 +60,6 @@ export const defaultModel = {
     },
     sources: {
         cloudPercentageThreshold: 75,
-        dataSets: {
-            LANDSAT: ['LANDSAT_9', 'LANDSAT_8', 'LANDSAT_7', 'LANDSAT_TM']
-        },
         breakpointBands: ['ndfi']
     },
     options: {
@@ -92,7 +92,7 @@ export const RecipeActions = id => {
 export const getAllVisualizations = recipe => {
     return !_.isEmpty(selectFrom(recipe, ['model.sources.dataSets.SENTINEL_1']))
         ? allRadarMosaicVisualizations()
-        : Object.keys(selectFrom(recipe, ['model.sources.dataSets'])).find(source => ['LANDSAT', 'SENTINEL_2'].includes(source))
+        : Object.keys(selectFrom(recipe, ['model.sources.dataSets']) || {}).find(source => ['LANDSAT', 'SENTINEL_2'].includes(source))
             ? allOpticalMosaicVisualizations(recipe)
             : allPlanetMosaicVisualizations(recipe)
 }
@@ -145,7 +145,7 @@ const allPlanetMosaicVisualizations = recipe => {
         model: {
             sources: {
                 ...sources,
-                source: Object.values(sources).flat()[0]
+                source: Object.values(sources || {}).flat()[0]
             },
             options: {
                 histogramMatching,

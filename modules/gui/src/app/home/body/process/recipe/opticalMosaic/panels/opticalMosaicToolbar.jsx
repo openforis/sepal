@@ -19,6 +19,7 @@ import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {setInitialized} from '../../../recipe'
 import {RetrieveButton} from '../../retrieveButton'
+import {SectionButton} from '../../sectionButton'
 import styles from './opticalMosaicToolbar.module.css'
 
 const mapRecipeToProps = recipe => {
@@ -89,7 +90,7 @@ class _MosaicToolbar extends React.Component {
                         tooltip={msg('process.mosaic.panel.dates.tooltip')}
                         disabled={!initialized}
                         panel/>
-                    <Toolbar.ActivationButton
+                    <SectionButton
                         id='sources'
                         label={msg('process.mosaic.panel.sources.button')}
                         tooltip={msg('process.mosaic.panel.sources.tooltip')}

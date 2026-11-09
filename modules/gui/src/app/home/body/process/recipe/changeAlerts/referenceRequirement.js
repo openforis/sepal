@@ -37,7 +37,7 @@ const REFERENCE = {
     input: ({section}, refusal) => refusal?.code === 'REFERENCE_DATE_FORMAT_REQUIRED' ? 'dateFormat'
         : section === 'RECIPE_REF' ? 'recipe' : 'asset'
 }
-const SOURCES = {
+export const SOURCES = {
     id: 'sources',
     label: 'process.changeAlerts.panel.sources.button',
     input: (_values, refusal) => SOURCES_INPUTS[refusal?.code] || null

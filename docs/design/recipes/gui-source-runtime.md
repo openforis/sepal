@@ -101,13 +101,18 @@ current selection, record and credential/asset basis, counts. Claims and cancell
 reentrant dispatch. A late claim is released if its observation ended, and evicted records are never resurrected
 by an evidence write. Releasing the last watcher cancels work and releases record/asset claims.
 
-A candidate represents the recipe with the panel's values applied. If the applied observation's basis holds for
-it, reuse that evidence; otherwise observe privately. The candidate neither publishes evidence nor changes the
+A candidate represents the recipe with the panel's values applied. Output and local candidates judge the recipe as
+the panel's submission leaves it - its model at its path and the rest of the recipe its values imply
+(`additionalUpdates`) - by the construction its commit applies (`recipe/formSubmission.js`); the source candidate
+overlays the panel's model alone, as the alerts' seeded updates derive from its facts. If the applied observation's
+basis holds for it, reuse that evidence; otherwise observe privately. The candidate neither publishes evidence nor changes the
 applied recipe/drawing. Source replacement, Cancel and panel closure release superseded work. Refresh targets the
 candidate's assets/selection. After Apply the applied observation follows its ordinary lifecycle.
 
 `SourceCandidate.facts()` returns current authorized facts for the draft. Creation seeding uses that accessor
-inside the same guarded form action as Reference Apply; it never uses an arbitrary old cached answer. Change
+inside the same guarded form action as Reference Apply; it never uses an arbitrary old cached answer. Change Alerts
+seeds the data sets a reference prefers - recorded, or chosen from its fitted measures - for Sources to propose rather
+than as configuration ([initial data sets](data-sources.md#initial-data-sets)). Change
 Alerts and BAYTS observations do not write configuration. Their shared field-state/preservation helpers do not
 merge incoming settings over saved consumer values or open drafts.
 

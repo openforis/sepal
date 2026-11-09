@@ -4,6 +4,7 @@ import {MULTIPLE_CLASSIFICATION_INPUTS, NO_CHANGE_CLASSES, UNAVAILABLE_GATE_INDE
 import {msg} from '~/translate'
 
 import {classificationReferenceFeedback} from '../collectionClassifierRequirements'
+import {dataSetPeriodRequirement} from '../dataSetPeriodRequirement'
 import {fieldRequirement, listed, sourcesFieldRequirement} from '../fieldRequirement'
 import {CHECKING, UNAVAILABLE} from '../sourceRequirements'
 
@@ -77,6 +78,7 @@ export const sourcesRequirements = [
         ...sourcesField('changeToClasses', NO_CHANGE_CLASSES, required('changeToClasses'), {blocksApply: false, quietWhileEdited: true}),
         wizardStepMark: false
     },
+    dataSetPeriodRequirement(SOURCES),
     ...GATE_PREREQUISITES,
     GATE_INDEX_REQUIREMENT,
     classificationReferenceFeedback(SOURCES)

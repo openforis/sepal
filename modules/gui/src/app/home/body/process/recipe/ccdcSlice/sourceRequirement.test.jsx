@@ -604,7 +604,7 @@ const RECORDS = [
             sources: {dataSets: {LANDSAT: ['LANDSAT_9']}, classification: 'classification-1'},
             options: {corrections: []},
             ccdcOptions: {dateFormat: 1},
-            dates: {startDate: '2017-01-01', endDate: '2021-01-01'}
+            dates: {startDate: '2021-01-01', endDate: '2025-01-01'}
         }
     },
     {
@@ -622,7 +622,7 @@ const RECORDS = [
             sources: {dataSets: {LANDSAT: ['LANDSAT_9']}},
             options: {corrections: []},
             ccdcOptions: {dateFormat: 1},
-            dates: {startDate: '2017-01-01', endDate: '2021-01-01'}
+            dates: {startDate: '2021-01-01', endDate: '2025-01-01'}
         }
     }
 ].map(record => ({...record, revision: 1}))

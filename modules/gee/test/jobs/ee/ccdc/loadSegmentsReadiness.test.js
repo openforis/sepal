@@ -334,6 +334,27 @@ describe('the segments of a CCDC charted itself with TMask', () => {
     })
 })
 
+// A breakpoint band must be one the configured collection carries (collectionBands.js). A CCDC charted itself breaking on
+// one its collection does not carry is refused before anything is segmented; one it carries reaches Earth Engine as chosen.
+describe('the segments of a CCDC charted itself over a collection not carrying a breakpoint band', () => {
+    inOperation('are refused, segmenting and reading nothing at the pixel', async () => {
+        state.catalogue[CLASSIFICATION] = trainable()
+
+        await assert.rejects(chart(ccdcOf({breakpointBands: ['ndvi', 'thermal2']})), /ccdc-1 cannot run: UNSUPPORTED_COLLECTION_BANDS$/)
+
+        assertNothingCharted()
+        assert.deepEqual(state.segmented, [])
+    })
+
+    inOperation('are segmented with the bands chosen once the collection carries them', async () => {
+        state.catalogue[CLASSIFICATION] = trainable()
+
+        await chart(ccdcOf({breakpointBands: ['ndvi', 'thermal2'], corrections: []}))
+
+        assert.deepEqual(state.segmented.map(({breakpointBands}) => breakpointBands), [['ndvi', 'thermal2']])
+    })
+})
+
 describe('the segments of an asset', () => {
     inOperation('are read from it as before, reading no recipe', async () => {
         const segments = await chart({type: 'ASSET', id: SEGMENTS_ASSET})
@@ -355,14 +376,14 @@ const MASKED_REFERENCE = {type: 'RECIPE_REF', id: MASKING}
 // Every band of the segments read at the pixel, empty where a pixel has none.
 const SEGMENTS = {source: 'segments', masks: []}
 
-const ccdcOf = ({aoi = {type: 'ASSET', id: 'users/x/bounds'}, breakpointBands = ['ndvi'], tmaskBands} = {}) => ({
+const ccdcOf = ({aoi = {type: 'ASSET', id: 'users/x/bounds'}, breakpointBands = ['ndvi'], tmaskBands, corrections = ['SR']} = {}) => ({
     id: 'ccdc-1',
     type: 'CCDC',
     model: {
         aoi,
         sources: {dataSets: {LANDSAT: ['LANDSAT_8']}, breakpointBands, classification: CLASSIFICATION},
         dates: {startDate: '2015-01-01', endDate: '2021-01-01'},
-        options: {corrections: ['SR']},
+        options: {corrections},
         ccdcOptions: {dateFormat: 1, ...(tmaskBands && {tmaskBands})}
     }
 })

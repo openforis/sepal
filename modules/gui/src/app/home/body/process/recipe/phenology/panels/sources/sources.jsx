@@ -1,13 +1,13 @@
 import _ from 'lodash'
 import React from 'react'
 
-import {getDataSetOptions as opticalDataSetOptions, isOpticalDataSet} from '~/app/home/body/process/recipe/opticalMosaic/sources'
-import {getDataSetOptions as planetDataSetOptions} from '~/app/home/body/process/recipe/planetMosaic/sources'
-import {getDataSetOptions as radarDataSetOptions, isRadarDataSet} from '~/app/home/body/process/recipe/radarMosaic/sources'
+import {dataSetPeriod} from '#sepal/recipe/type/phenology'
+import {isOpticalDataSet} from '~/app/home/body/process/recipe/opticalMosaic/sources'
+import {isRadarDataSet} from '~/app/home/body/process/recipe/radarMosaic/sources'
 import {draftSelection, withSelectedClassification} from '~/app/home/body/process/recipe/selectedClassification'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
-import {groupedBandOptions, toSources, withChosenClassifiedOutputs} from '~/sources'
+import {dataSetOptions, defaultDataSet, groupedBandOptions, toSources, withChosenBands} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
@@ -145,19 +145,10 @@ class _Sources extends React.Component {
         )
     }
 
+    // The band chosen stays shown, so the form has none to drop (form/buttons.jsx) and a refused one is explained beside it.
     renderBand() {
-        const {corrections, form, selectedClassification: {classificationLegend, classifierType, classifier, labelOf}, inputs: {dataSets, band}} = this.props
-        var dataSetArray = dataSets.value && _.isArray(dataSets.value)
-            ? dataSets.value
-            : [dataSets.value]
-        var classification = {classificationLegend, classifierType, classifier, include: ['regression', 'probabilities']}
-        const collectionGrouped = groupedBandOptions({
-            dataSets: dataSetArray,
-            corrections,
-            classification
-        })
-        
-        const options = withChosenClassifiedOutputs(collectionGrouped, band.value, labelOf)
+        const {form, selectedClassification: {labelOf}, inputs: {band}} = this.props
+        const options = withChosenBands(this.bandOptions(), band.value, labelOf)
             .filter(group => group.length)
             .map(group => ({options: group}))
         return (
@@ -170,6 +161,17 @@ class _Sources extends React.Component {
                 errorMessage={form.getErrorMessage(band)}
             />
         )
+    }
+
+    bandOptions() {
+        const {corrections, selectedClassification: {classificationLegend, classifierType, classifier}, inputs: {dataSets}} = this.props
+        return dataSets.value && dataSets.value.length
+            ? groupedBandOptions({
+                dataSets: [dataSets.value].flat(),
+                corrections,
+                classification: {classificationLegend, classifierType, classifier, include: ['regression', 'probabilities']}
+            })
+            : []
     }
 
     renderAssetId() {
@@ -205,11 +207,8 @@ class _Sources extends React.Component {
             const options = this.dataSetOptions()
             const validDataSets = _.intersection(options.map(({value}) => value), dataSets.value)
             if (!validDataSets.length) {
-                const defaultDataSets =
-                    dataSetType === 'OPTICAL'
-                        ? [options[0].value]
-                        : options[0].value
-                dataSets.set(defaultDataSets)
+                const first = defaultDataSet(dataSetType, this.period())
+                dataSets.set(dataSetType === 'OPTICAL' ? [first].filter(Boolean) : first ?? null)
             }
             if (dataSetType !== 'PLANET') {
                 asset.set(null)
@@ -218,13 +217,13 @@ class _Sources extends React.Component {
     }
 
     dataSetOptions() {
-        const {dates, inputs: {dataSetType}} = this.props
-        switch (dataSetType.value) {
-            case 'OPTICAL': return opticalDataSetOptions({...dates})
-            case 'RADAR': return radarDataSetOptions({...dates})
-            case 'PLANET': return planetDataSetOptions({...dates})
-            default: return []
-        }
+        const {inputs: {dataSetType, dataSets}} = this.props
+        return dataSetOptions({type: dataSetType.value, period: this.period(), chosen: dataSets.value})
+    }
+
+    period() {
+        const {dates} = this.props
+        return dataSetPeriod({dates})
     }
 }
 
@@ -240,7 +239,7 @@ const valuesToModel = ({dataSetType, asset, dataSets, cloudPercentageThreshold, 
 }
 
 const modelToValues = ({dataSetType, assets, dataSets, cloudPercentageThreshold, classification, band}) => {
-    const dataSetIds = _.uniq(Object.values(dataSets).flat())
+    const dataSetIds = _.uniq(Object.values(dataSets || {}).flat())
     const defaultedDataSetType = dataSetType
         ? dataSetType
         : dataSetIds.find(dataSetId => isOpticalDataSet(dataSetId))

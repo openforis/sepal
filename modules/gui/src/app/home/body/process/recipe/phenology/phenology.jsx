@@ -9,11 +9,13 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
+import {collectionBandRequirements} from '../collectionBandRequirements'
 import {classificationReferenceFeedback, classifiedOutputRequirements, collectionClassifierRequirements} from '../collectionClassifierRequirements'
+import {dataSetPeriodRequirement} from '../dataSetPeriodRequirement'
 import {withSelectedClassification} from '../selectedClassification'
 import {bandPresentation} from './bands'
 import {PhenologyToolbar} from './panels/phenologyToolbar'
-import {defaultModel} from './phenologyRecipe'
+import {defaultModel, initialSources} from './phenologyRecipe'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -64,10 +66,13 @@ export default () => ({
         recipe: Phenology
     },
     sourceRequirements: [
+        dataSetPeriodRequirement(SOURCES),
         ...collectionClassifierRequirements(SOURCES),
+        collectionBandRequirements(SOURCES, 'band'),
         classifiedOutputRequirements(SOURCES, 'band'),
         classificationReferenceFeedback(SOURCES)
     ],
+    initialSources,
     imageSource: true,
     getDateRange,
     bandPresentation,

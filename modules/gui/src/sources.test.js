@@ -1,8 +1,10 @@
 import {describe, expect, it, vi} from 'vitest'
 
+import {collectionMeasures} from '#sepal/recipe/collectionBands'
+
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 
-const {getAvailableBands, groupedBandOptions, withChosenClassifiedOutputs} = await import('./sources')
+const {getAvailableBands, groupedBandOptions, toSources, withChosenBands} = await import('./sources')
 
 // What a Sentinel-1 collection offers a temporal consumer - CCDC's base bands, the time-series and change-alerts
 // charts - one value per image: not what a Radar Mosaic composites it into.
@@ -77,19 +79,55 @@ describe('the classified outputs offered of a collection', () => {
     })
 })
 
-// A choice a panel shows as made though nothing offers it: a classified output, which can be explained and taken back,
-// and never a band of the images themselves that is no longer offered. It is named as the caller names it.
+// What a temporal consumer offers of a configured collection's images is what that collection carries, as the shared
+// rule judging a chosen band settles it (collectionBands.js). Planet's choices are the established ones, all carried.
+describe('the bands of the images offered of a configured collection', () => {
+    const offered = (dataSets, corrections) => groupedBandOptions({dataSets, corrections}).flat().map(({value}) => value)
+    const carried = (dataSets, corrections) => collectionMeasures({sources: {dataSets: toSources(dataSets)}, options: {corrections}})
+
+    it.each([
+        [['LANDSAT_8'], []],
+        [['LANDSAT_8'], ['SR']],
+        [['LANDSAT_8'], ['SR', 'BRDF']],
+        [['SENTINEL_2'], []],
+        [['SENTINEL_2'], ['SR']],
+        [['SENTINEL_2'], ['SR', 'BRDF']],
+        [['LANDSAT_8', 'SENTINEL_2'], []],
+        [['LANDSAT_8', 'SENTINEL_2'], ['SR']],
+        [['LANDSAT_8', 'SENTINEL_2'], ['SR', 'BRDF']],
+        [['SENTINEL_1'], undefined]
+    ])('are, over %j with corrections %j, those it carries', (dataSets, corrections) => {
+        expect(offered(dataSets, corrections).sort()).toEqual(carried(dataSets, corrections).sort())
+    })
+
+    it.each(['NICFI', 'BASEMAPS', 'DAILY'])('are, over Planet %s, among those it carries', source => {
+        expect(carried([source])).toEqual(expect.arrayContaining(offered([source])))
+    })
+})
+
+// A choice a panel shows as made though nothing offers it - a band the collection no longer carries, or a classified
+// output the Classification does not provide or is not yet known to - so it can be explained and taken back. It is
+// named as the caller names it.
 describe('the choices shown beside what is offered', () => {
     const OFFERED = [[{value: 'blue', label: 'blue'}], [{value: 'probability_1', label: 'Forest'}]]
     const labelOf = band => `named ${band}`
 
-    it('add a group for each classified output chosen that nothing offers, named as the caller names it', () => {
-        expect(withChosenClassifiedOutputs(OFFERED, ['blue', 'regression', 'probability_1'], labelOf))
-            .toEqual([...OFFERED, [{value: 'regression', label: 'named regression'}]])
+    it('add a group of each choice nothing offers, in the order chosen, named as the caller names it', () => {
+        expect(withChosenBands(OFFERED, ['blue', 'regression', 'probability_1', 'swir1'], labelOf))
+            .toEqual([...OFFERED, [{value: 'regression', label: 'named regression'}, {value: 'swir1', label: 'named swir1'}]])
     })
 
-    it('add nothing for a band of the images themselves that is no longer offered, or for no choice', () => {
-        expect(withChosenClassifiedOutputs(OFFERED, ['swir1'], labelOf)).toBe(OFFERED)
-        expect(withChosenClassifiedOutputs(OFFERED, null, labelOf)).toBe(OFFERED)
+    it('add a single choice nothing offers', () => {
+        expect(withChosenBands(OFFERED, 'thermal2', labelOf)).toEqual([...OFFERED, [{value: 'thermal2', label: 'named thermal2'}]])
+    })
+
+    it('show a choice while nothing is offered', () => {
+        expect(withChosenBands([], ['ndvi'], labelOf)).toEqual([[{value: 'ndvi', label: 'named ndvi'}]])
+    })
+
+    it('add nothing where everything chosen is offered, or nothing is chosen', () => {
+        expect(withChosenBands(OFFERED, ['blue'], labelOf)).toBe(OFFERED)
+        expect(withChosenBands(OFFERED, null, labelOf)).toBe(OFFERED)
+        expect(withChosenBands(OFFERED, [], labelOf)).toBe(OFFERED)
     })
 })

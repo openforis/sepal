@@ -56,6 +56,14 @@ describe('an input told about beyond its own constraints', () => {
         expect(said('error')).toEqual(['Required', 'Not in the reference'])
     })
 
+    it('says once what it is told that its own error already says', () => {
+        show({told: {error: 'Required'}})
+
+        act(() => input.setInvalid('Required'))
+
+        expect(said('error')).toEqual(['Required'])
+    })
+
     it('explains a check it waits for in its label\'s tooltip, after the tooltip it was given', () => {
         show({told: {busy: 'Checking'}, tooltip: 'What a measure is'})
 
