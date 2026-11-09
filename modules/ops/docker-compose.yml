@@ -16,7 +16,7 @@ services:
       DOCKER_REGISTRY_HOST: "${DOCKER_REGISTRY_HOST}"
       DOCKER_REGISTRY_USERNAME: "${DOCKER_REGISTRY_USERNAME}"
       DOCKER_REGISTRY_PASSWORD: "${DOCKER_REGISTRY_PASSWORD}"
-    restart: always
+    restart: unless-stopped
     ulimits:
       core: 0
     healthcheck:
@@ -35,7 +35,7 @@ services:
     container_name: docker-registry
     volumes:
       - registry:/var/lib/registry
-    restart: always
+    restart: unless-stopped
     ulimits:
       core: 0
     healthcheck:
@@ -65,7 +65,7 @@ services:
     volumes:
       - caddy_data:/data
       - caddy_config:/config
-    restart: always
+    restart: unless-stopped
     environment:
       OPS_DOMAIN: "${OPS_DOMAIN}"
       JENKINS_PORT: "${JENKINS_PORT}"

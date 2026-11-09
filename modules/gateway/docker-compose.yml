@@ -20,7 +20,7 @@ services:
       retries: 3
     networks:
       - sepal
-    restart: always
+    restart: unless-stopped
 
   gateway:
     extends:
@@ -68,7 +68,7 @@ services:
       interval: 20s
       timeout: 5s
       retries: 3
-    restart: always
+    restart: unless-stopped
 
 networks:
   sepal:

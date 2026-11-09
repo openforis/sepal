@@ -94,7 +94,7 @@ a race. There is no other way to move a deadline.
 The `worker` container restarts routinely — a deploy, an OOM kill, and in dev a nodemon reload
 on every file save. Four mechanisms carry instance management across it:
 
-- **The boot fails loudly.** A rejected `main()` exits non-zero so `restart: always` retries it.
+- **The boot fails loudly.** A rejected `main()` exits non-zero so the Docker restart policy retries it.
   Left to log and hang, the process stayed alive on the MySQL pool's handles with no HTTP server,
   and Compose does not act on a failing healthcheck.
 - **`provider.restore(instances)`** (`workerInstance/index.js`, before `backfillClaims`) hands the
