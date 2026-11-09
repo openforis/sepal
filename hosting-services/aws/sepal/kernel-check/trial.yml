@@ -1,0 +1,134 @@
+# Tries AWS_AMI on a throwaway instance in the main host's subnet and security groups, with a volume made from a
+# snapshot of the main host's /data. Whatever the outcome, the instance, the volume and the snapshot are removed.
+# The instance is tagged at launch: the worker terminates untagged instances.
+- name: Kernel check, trial instance
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    region: "{{ lookup('env', 'AWS_REGION') }}"
+    deploy_environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
+    check_tags:
+      Name: "Sepal {{ deploy_environment }} kernel check"
+      Type: SepalKernelCheck
+      Environment: "{{ deploy_environment }}"
+
+  tasks:
+    - name: Refuse production, whose /data it would snapshot
+      assert:
+        that: deploy_environment != 'PROD'
+        fail_msg: Run the trial on test
+
+    - name: Find the main host
+      amazon.aws.ec2_instance_info:
+        region: "{{ region }}"
+        filters:
+          tag:Type: Sepal
+          tag:Environment: "{{ deploy_environment }}"
+          instance-state-name: [running, stopped]
+      register: main_host
+
+    - name: Find its /data volume
+      set_fact:
+        data_volume_id: >-
+          {{ (main_host.instances[0].block_device_mappings
+              | selectattr('device_name', 'equalto', '/dev/sdf') | first).ebs.volume_id }}
+
+    - block:
+        - name: Snapshot /data
+          amazon.aws.ec2_snapshot:
+            region: "{{ region }}"
+            volume_id: "{{ data_volume_id }}"
+            description: "{{ check_tags.Name }}"
+            snapshot_tags: "{{ check_tags }}"
+            wait: true
+            wait_timeout: 7200
+          register: snapshot
+
+        - name: Launch the trial instance
+          amazon.aws.ec2_instance:
+            region: "{{ region }}"
+            name: "{{ check_tags.Name }}"
+            image_id: "{{ lookup('env', 'AWS_AMI') }}"
+            instance_type: t3a.medium
+            key_name: "{{ region }}"
+            vpc_subnet_id: "{{ lookup('env', 'AWS_SUBNET_ID') }}"
+            security_groups: [Sepal, Sepal-Swarm, Sepal-Swarm-Manager, Sepal-Developers]
+            network:
+              assign_public_ip: true
+            tags: "{{ check_tags }}"
+            state: running
+            wait: true
+          register: trial
+
+        - name: Attach a volume made from the snapshot
+          amazon.aws.ec2_vol:
+            region: "{{ region }}"
+            snapshot: "{{ snapshot.snapshot_id }}"
+            zone: "{{ trial.instances[0].placement.availability_zone }}"
+            volume_type: gp3
+            instance: "{{ trial.instances[0].instance_id }}"
+            device_name: /dev/sdj
+            delete_on_termination: true
+            tags: "{{ check_tags }}"
+          register: data_copy
+
+        - name: Add the trial instance
+          add_host:
+            name: kernel-check
+            ansible_host: "{{ trial.instances[0].public_ip_address }}"
+            ansible_user: ec2-user
+
+        - name: Wait for SSH
+          wait_for_connection:
+            timeout: 600
+          delegate_to: kernel-check
+
+        - name: Copy the task firewall
+          copy:
+            src: "{{ playbook_dir }}/../docker/sepal-task-firewall.sh"
+            dest: /usr/local/sbin/sepal-task-firewall.sh
+            mode: '0755'
+          become: true
+          delegate_to: kernel-check
+
+        - name: Run the checks
+          script: "trial-instance.sh {{ lookup('env', 'AWS_FSX_ID') | quote }} {{ lookup('env', 'AWS_EFS_ID') | quote }}"
+          become: true
+          delegate_to: kernel-check
+          register: checks
+          ignore_errors: true
+
+      always:
+        - name: Terminate the trial instance (and its /data copy)
+          amazon.aws.ec2_instance:
+            region: "{{ region }}"
+            instance_ids: ["{{ trial.instances[0].instance_id }}"]
+            state: terminated
+            wait: true
+          when: trial.instances | default([]) | length > 0
+
+        - name: Delete the /data copy, if termination left it
+          amazon.aws.ec2_vol:
+            region: "{{ region }}"
+            id: "{{ data_copy.volume_id }}"
+            state: absent
+          when: data_copy.volume_id is defined
+          ignore_errors: true
+
+        - name: Delete the snapshot
+          amazon.aws.ec2_snapshot:
+            region: "{{ region }}"
+            snapshot_id: "{{ snapshot.snapshot_id }}"
+            state: absent
+          when: snapshot.snapshot_id is defined
+
+    - name: Results
+      debug:
+        msg: "{{ checks.stdout_lines }}"
+
+    - name: All checks pass
+      assert:
+        that: checks.rc == 0
+        fail_msg: "{{ checks.rc }} check(s) failed, see the results above"
