@@ -1,8 +1,12 @@
 import moment from 'moment'
 
+import {dataSetPeriod} from '#sepal/recipe/type/landTrendr'
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {defaultModel as defaultOpticalModel} from '~/app/home/body/process/recipe/opticalMosaic/opticalMosaicRecipe'
+
+// The data sets a new recipe's Sources start with, as far as the years it reads let them contribute (initialSources.js).
+export const initialSources = {dataSets: ['LANDSAT_9', 'LANDSAT_8', 'LANDSAT_7', 'LANDSAT_TM'], period: dataSetPeriod}
 
 export const defaultModel = {
     dates: {
@@ -11,9 +15,6 @@ export const defaultModel = {
     },
     sources: {
         cloudPercentageThreshold: 75,
-        dataSets: {
-            LANDSAT: ['LANDSAT_9', 'LANDSAT_8', 'LANDSAT_7', 'LANDSAT_TM']
-        },
         index: 'nbr'
     },
     options: {

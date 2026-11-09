@@ -144,7 +144,9 @@ import {evidenceSession, outdatedBasis} from './sourceEvidenceBasis'
 // read, and marks nothing, no selection being known wrong. Refused by a recipe further up the closure, it names that
 // recipe (`refusedBy`), whose own sections say why; reference feedback can separately mark the input that selects it.
 // Refused for what another declaration locates at an item, it is not
-// read where those items hold every operation it would hold. What an observed input establishes is known once the work
+// read where those items hold every operation it would hold. A declaration with `outputState: false` is read only for the
+// refusals it states: what else holds the output is said, and held, by the type's other declarations or by the output read
+// itself, not in its section. What an observed input establishes is known once the work
 // observing it settles, which waits for every observation it requested: until its siblings answer or fail, its finding
 // is not shown, and the operations wait. The reads of a recipe are reused while its output read
 // says the same, so every consumer shares them.
@@ -549,7 +551,7 @@ const readOutputDeclaration = ({recipe, output, recipeNames, declaration}) => {
         })
     if (!byItem.size) {
         // Reference feedback is presentation alone. It neither waits for evidence nor holds an operation.
-        if (upstreamReferences.length) {
+        if (upstreamReferences.length || declaration.outputState === false) {
             return []
         }
         const state = outputStateRead(declaration, output)

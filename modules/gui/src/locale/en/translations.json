@@ -5345,7 +5345,6 @@
           "form": {
             "dataSets": {
               "label": "Data sets",
-              "noPeriodOverlap": "None of the selected data sets covers any year from {startYear} to {endYear}. Select one that does, or change the dates.",
               "required": "Select at least one data set"
             },
             "cloudPercentageThreshold": {
@@ -6003,6 +6002,13 @@
       "classifierInputs": {
         "classification": "No collection this recipe can use provides the bands this classification reads: {missing}. Choose another classification, or none.",
         "dataSets": "The selected data sets don't provide the bands this classification reads: {missing}. Choose data sets that do, or another classification."
+      },
+      "dataSets": {
+        "noPeriodOverlap": "None of the selected data sets covers any year from {startYear} to {endYear}. Select one that does, or change the dates.",
+        "years": {
+          "from": "Imagery from {fromYear}.",
+          "range": "Imagery from {fromYear} to {toYear}."
+        }
       },
       "collectionBands": {
         "band": "The selected data sets, as PRC processes them, don't provide {bands}. Choose another band, or change the data sets or PRC.",

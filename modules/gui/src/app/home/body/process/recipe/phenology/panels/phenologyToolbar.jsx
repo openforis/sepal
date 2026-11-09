@@ -29,7 +29,7 @@ const mapRecipeToProps = recipe => ({
 class _PhenologyToolbar extends React.Component {
     render() {
         const {recipeId, initialized, sources} = this.props
-        const dataSets = Object.keys(sources.dataSets)
+        const dataSets = Object.keys(sources.dataSets || {})
         return (
             <PanelWizard
                 panels={['aoi', 'dates', 'sources']}

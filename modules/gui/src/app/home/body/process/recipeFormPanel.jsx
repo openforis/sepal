@@ -7,6 +7,7 @@ import {initValues} from '~/app/home/body/process/recipe'
 import {CalculatedResult} from '~/app/home/body/process/recipe/calculatedResult'
 import {commitRecipe, DerivedResult} from '~/app/home/body/process/recipe/derivedResult'
 import {feedbackContent, joinFeedbackContent} from '~/app/home/body/process/recipe/feedbackMessageContent'
+import {initialSectionModel} from '~/app/home/body/process/recipe/initialSources'
 import {LocalCandidate} from '~/app/home/body/process/recipe/localCandidate'
 import {OutputCandidate} from '~/app/home/body/process/recipe/outputCandidate'
 import {SourceCandidate} from '~/app/home/body/process/recipe/sourceCandidate'
@@ -65,7 +66,7 @@ export const recipeFormPanel = (
     const valuesSpec = {
         getModel: props => props.model,
         getValues: props => props.values,
-        modelToValues,
+        modelToValues: (model, props) => modelToValues(initialSectionModel(select(['process.loadedRecipes', props.recipeId]), path(props), model), props),
         onInitialized: ({values, props}) => {
             const {recipeStatePath: statePath} = props
             const evaluatedPath = path(props)
@@ -108,11 +109,11 @@ export const recipeFormPanel = (
     // A panel requirements over the recipe's own configuration (`localFacts`) name as their editor (`editor.panel`) judges
     // its values by them, over the recipe as they would leave it (localCandidate.js): what they find is told to
     // `editor.input`, and holds Apply back as the editor says. Requirements naming no editor judge what was applied alone.
-    const localCandidateOf = props => {
+    const localCandidateOf = (props, submission) => {
         const declarations = (getRecipeType(select(['process.loadedRecipes', props.recipeId, 'type']))?.sourceRequirements || [])
             .filter(({localFacts, editor}) => localFacts && editor?.panel === id)
         return declarations.length
-            ? new LocalCandidate({recipeId: props.recipeId, path: path(props), declarations, valuesToModel})
+            ? new LocalCandidate({recipeId: props.recipeId, declarations, submission})
             : null
     }
 
@@ -125,10 +126,10 @@ export const recipeFormPanel = (
             .map(declaration => new DerivedResult({recipeId: props.recipeId, declaration, valuesToModel, setValues}))
     }
 
-    const outputCandidateOf = (declaration, props, onChange) => {
+    const outputCandidateOf = (declaration, props, submission, onChange) => {
         const {recipeId, sourceRuntime} = props
         return declaration && sourceRuntime
-            ? new OutputCandidate({sourceRuntime, recipeId, declaration, valuesToModel, onChange})
+            ? new OutputCandidate({sourceRuntime, recipeId, declaration, submission, onChange})
             : null
     }
 
@@ -152,13 +153,15 @@ export const recipeFormPanel = (
                     super(props)
                     const {values, recipeStatePath: statePath, form} = props
                     this.prevValues = values
+                    this.additionalUpdates = NO_UPDATES
+                    const submission = values => this.submission(values)
                     this.sourceSection = sourceSectionOf(props)
                     this.sourceCandidate = sourceCandidateOf(this.sourceSection, props, () => this.mounted && this.setState(
                         ({sourceCandidateChanges = 0}) => ({sourceCandidateChanges: sourceCandidateChanges + 1})
                     ))
                     this.outputEditors = outputEditorsOf(props).map(declaration => ({
                         declaration,
-                        candidate: outputCandidateOf(declaration, props, () => this.mounted && this.setState(
+                        candidate: outputCandidateOf(declaration, props, submission, () => this.mounted && this.setState(
                             ({outputCandidateChanges = 0}) => ({outputCandidateChanges: outputCandidateChanges + 1})
                         ))
                     }))
@@ -166,7 +169,7 @@ export const recipeFormPanel = (
                     this.calculatedResults = calculatedResultsOf(props, () => this.mounted && this.setState(
                         ({calculationChanges = 0}) => ({calculationChanges: calculationChanges + 1})
                     ))
-                    this.localCandidate = localCandidateOf(props)
+                    this.localCandidate = localCandidateOf(props, submission)
                     this.derivedResults = derivedResultsOf(props, values =>
                         Object.entries(values).forEach(([name, value]) => this.props.inputs[name]?.set(value)))
 
@@ -188,8 +191,10 @@ export const recipeFormPanel = (
                             derivedResults: this.derivedResults,
                             statePath,
                             // List panels deliberately have no serializer: their entries are already applied.
-                            valuesToModel: valuesToModel && this.props.modelToApply
-                                ? values => this.props.modelToApply(valuesToModel(values), this.props.model) : valuesToModel,
+                            submission: valuesToModel ? values => this.submission(values) : null,
+                            adoptAdditionalUpdates: additionalUpdates => {
+                                this.additionalUpdates = additionalUpdates || NO_UPDATES
+                            },
                             deactivate,
                             prevValues: this.prevValues
                         }}>
@@ -220,6 +225,20 @@ export const recipeFormPanel = (
                 componentDidMount() {
                     this.mounted = true
                     this.updateCandidates()
+                }
+
+                // What submitting the values commits (setModelAndValues): the panel's model at its path - as the panel
+                // applies it over what the recipe holds there (`modelToApply`) - and the rest of the recipe they imply
+                // (RecipeFormPanel's additionalUpdates). Its candidates judge the recipe as this leaves it. A draft giving
+                // no model yet implies nothing else.
+                submission(values) {
+                    const {model, modelToApply} = this.props
+                    const panelModel = valuesToModel(values)
+                    return {
+                        path: path(this.props),
+                        model: modelToApply ? modelToApply(panelModel, model) : panelModel,
+                        updates: panelModel ? this.additionalUpdates(values) : []
+                    }
                 }
 
                 componentDidUpdate() {
@@ -281,17 +300,15 @@ export const recipeFormPanel = (
 
 export const RecipeFormPanel = ({className, placement, isActionForm, additionalUpdates, accepts, onApply, onCancel, onClose, children}) =>
     <Context.Consumer>
-        {({id, evaluatedPath, form, sourceCandidate, outputEditors, calculatedResults, localCandidate, derivedResults, statePath, valuesToModel, deactivate, prevValues}) => {
+        {({id, evaluatedPath, form, sourceCandidate, outputEditors, calculatedResults, localCandidate, derivedResults, statePath, submission, adoptAdditionalUpdates, deactivate, prevValues}) => {
+            adoptAdditionalUpdates(additionalUpdates)
             const wrappedOnApply = values => {
                 if (isActionForm) {
                     setValues({evaluatedPath, statePath, values})
                     onApply && onApply(values)
-                } else if (valuesToModel) {
-                    const model = valuesToModel(values)
-                    setModelAndValues({
-                        evaluatedPath, statePath, model, values,
-                        updates: additionalUpdates ? additionalUpdates(values) : []
-                    })
+                } else if (submission) {
+                    const {model, updates} = submission(values)
+                    setModelAndValues({evaluatedPath, statePath, model, values, updates})
                     onApply && onApply(values, model, prevValues)
                 }
             }
@@ -340,7 +357,7 @@ RecipeFormPanel.propTypes = {
     // open (widget/form/panel.jsx).
     accepts: PropTypes.func,
     // The rest of the recipe this panel's values imply, as [{path, value, merge}] over recipe-relative
-    // paths, published in the same action as the panel's own model.
+    // paths, published in the same action as the panel's own model, and judged with it before Apply (formSubmission.js).
     additionalUpdates: PropTypes.func,
     className: PropTypes.string,
     isActionForm: PropTypes.any,
@@ -349,6 +366,8 @@ RecipeFormPanel.propTypes = {
     onCancel: PropTypes.func,
     onClose: PropTypes.func
 }
+
+const NO_UPDATES = () => []
 
 // One action, so no subscriber observes this panel's new model beside settings it was applied to replace, or before what
 // the recipe's type derives from it (commitRecipe).

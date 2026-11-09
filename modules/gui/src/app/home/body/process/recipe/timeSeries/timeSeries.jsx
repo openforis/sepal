@@ -9,11 +9,12 @@ import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
 import {classificationReferenceFeedback, collectionClassifierRequirements} from '../collectionClassifierRequirements'
+import {dataSetPeriodRequirement} from '../dataSetPeriodRequirement'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {withSelectedClassification} from '../selectedClassification'
 import {bandPresentation} from './bands'
 import {TimeSeriesToolbar} from './panels/timeSeriesToolbar'
-import {defaultModel} from './timeSeriesRecipe'
+import {defaultModel, initialSources} from './timeSeriesRecipe'
 import {getPreSetVisualizations} from './visualizations'
 
 const mapRecipeToProps = recipe => ({
@@ -60,9 +61,11 @@ export default () => ({
         recipe: TimeSeries
     },
     sourceRequirements: [
+        dataSetPeriodRequirement(SOURCES),
         ...collectionClassifierRequirements(SOURCES),
         classificationReferenceFeedback(SOURCES)
     ],
+    initialSources,
     imageSource: false,
     // Keeps a time series out of other recipes' source pickers. It says nothing of its image: that is declared, and
     // its map shows it.

@@ -1,13 +1,13 @@
 import _ from 'lodash'
 import React from 'react'
 
-import {getDataSetOptions as opticalDataSetOptions, isOpticalDataSet} from '~/app/home/body/process/recipe/opticalMosaic/sources'
-import {getDataSetOptions as planetDataSetOptions} from '~/app/home/body/process/recipe/planetMosaic/sources'
-import {getDataSetOptions as radarDataSetOptions, isRadarDataSet} from '~/app/home/body/process/recipe/radarMosaic/sources'
+import {dataSetPeriod} from '#sepal/recipe/type/phenology'
+import {isOpticalDataSet} from '~/app/home/body/process/recipe/opticalMosaic/sources'
+import {isRadarDataSet} from '~/app/home/body/process/recipe/radarMosaic/sources'
 import {draftSelection, withSelectedClassification} from '~/app/home/body/process/recipe/selectedClassification'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
-import {groupedBandOptions, toSources, withChosenBands} from '~/sources'
+import {dataSetOptions, defaultDataSet, groupedBandOptions, toSources, withChosenBands} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
@@ -207,11 +207,8 @@ class _Sources extends React.Component {
             const options = this.dataSetOptions()
             const validDataSets = _.intersection(options.map(({value}) => value), dataSets.value)
             if (!validDataSets.length) {
-                const defaultDataSets =
-                    dataSetType === 'OPTICAL'
-                        ? [options[0].value]
-                        : options[0].value
-                dataSets.set(defaultDataSets)
+                const first = defaultDataSet(dataSetType, this.period())
+                dataSets.set(dataSetType === 'OPTICAL' ? [first].filter(Boolean) : first ?? null)
             }
             if (dataSetType !== 'PLANET') {
                 asset.set(null)
@@ -220,13 +217,13 @@ class _Sources extends React.Component {
     }
 
     dataSetOptions() {
-        const {dates, inputs: {dataSetType}} = this.props
-        switch (dataSetType.value) {
-            case 'OPTICAL': return opticalDataSetOptions({...dates})
-            case 'RADAR': return radarDataSetOptions({...dates})
-            case 'PLANET': return planetDataSetOptions({...dates})
-            default: return []
-        }
+        const {inputs: {dataSetType, dataSets}} = this.props
+        return dataSetOptions({type: dataSetType.value, period: this.period(), chosen: dataSets.value})
+    }
+
+    period() {
+        const {dates} = this.props
+        return dataSetPeriod({dates})
     }
 }
 
@@ -242,7 +239,7 @@ const valuesToModel = ({dataSetType, asset, dataSets, cloudPercentageThreshold, 
 }
 
 const modelToValues = ({dataSetType, assets, dataSets, cloudPercentageThreshold, classification, band}) => {
-    const dataSetIds = _.uniq(Object.values(dataSets).flat())
+    const dataSetIds = _.uniq(Object.values(dataSets || {}).flat())
     const defaultedDataSetType = dataSetType
         ? dataSetType
         : dataSetIds.find(dataSetId => isOpticalDataSet(dataSetId))

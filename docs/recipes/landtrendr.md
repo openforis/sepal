@@ -24,9 +24,9 @@ Four configuration requirements, declared in `type/landTrendr.js`, refuse the ch
 
 - **`MISSING_DATA_SETS`**, at `sources.dataSets`: no data set is chosen, whether saved as an empty object, as empty
   lists, as null or not at all.
-- **`NO_PERIOD_OVERLAP`**, at `sources.dataSets`: no chosen data set's catalogue years
-  (`lib/js/shared/src/recipe/optical/dataSetYears.js`) overlap `startYear` to `endYear`. Overlap says imagery is
-  possible, not that scenes exist or enough do. Landsat TM, in Tier 1 and Tier 2, covers 1982 to 2012.
+- **`NO_PERIOD_OVERLAP`**, at `sources.dataSets`: no chosen data set's catalogue years overlap `startYear` to `endYear`,
+  as the shared [data-set availability](../design/recipes/data-sources.md#data-set-availability) judges them. Landsat
+  TM, in Tier 1 and Tier 2, covers 1982 to 2012.
 - **`MISSING_INDEX`**, at `sources.index`: no index is chosen, a blank one included.
 - **`UNSUPPORTED_COLLECTION_BANDS`**, at `sources.index` (`collectionBandRequirement`): the collection the data sets and
   PRC configure cannot compute a chosen index; a blank one is missing, not judged. This is judged over every chosen
@@ -58,12 +58,12 @@ The Sources panel binds the same rules (`landTrendr/sourcesRequirements.js`):
   index table's order and named in capitals, never a native or tasseled-cap band. The chosen index stays shown as
   chosen and is never replaced; while no data set is chosen, it stays chosen. A native band saved programmatically as
   the index is shown the same way, and runs where the data sets carry it, as execution reads it by name.
-- **Data-set choices.** Dates stop a data set being chosen for years it cannot cover; one already chosen stays shown,
-  and can still be removed. Nothing yet marks a chosen data set as outside the years.
+- **Data-set choices.** As for every date-filtered Sources
+  ([data-set availability](../design/recipes/data-sources.md#data-set-availability)): one the years exclude cannot be
+  chosen anew, and one chosen stays chosen until removed, its tooltip giving the years it holds imagery for.
 - **Opening.** An untouched opening, and the panel rendering again, change neither the draft nor the model. Data sets
   saved null or not at all open as none chosen, and a blank index as none chosen, until the user chooses.
 
-CCDC, Time Series and Phenology still drop chosen data sets their dates exclude.
 
 ## Verification
 

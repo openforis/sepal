@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import React from 'react'
 
 import {effectiveSettings, seedMonitoring} from '#sepal/recipe/changeAlerts/processing'
@@ -9,7 +10,9 @@ import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {Panel} from '~/widget/panel/panel'
 
+import {referenceDataSets} from '../../changeAlertsRecipe'
 import {presentProcessingInputs} from '../../processingSettings'
+import {fittedMeasures} from '../../referenceEvidence'
 import {AssetSection} from './assetSection'
 import {RecipeSection} from './recipeSection'
 import styles from './reference.module.css'
@@ -38,9 +41,9 @@ class _Reference extends React.Component {
                 additionalUpdates={() => {
                     const {recipeId, sourceCandidate} = this.props
                     const recipe = select(['process.loadedRecipes', recipeId])
+                    const facts = sourceCandidate?.facts()
                     return !recipe.ui?.initialized && !recipe.model.reference?.id
-                        ? Object.entries(seedMonitoring(sourceCandidate?.facts()?.processing))
-                            .map(([group, value]) => ({path: `model.${group}`, value, merge: true}))
+                        ? seededUpdates(seedMonitoring(facts?.processing), fittedMeasures(facts?.segments))
                         : []
                 }}>
                 <Panel.Header
@@ -69,6 +72,19 @@ class _Reference extends React.Component {
             </SourceKind>
         )
     }
+}
+
+// What the reference seeds of the recipe it is first applied to: its monitoring defaults, and the data sets it prefers,
+// for Sources to propose as they first open, over the dates then chosen (`seededDataSets`, referenceDataSets) - recorded,
+// or else chosen from the measures its segments were fitted for (`measures`). Their collection type follows them.
+const seededUpdates = ({sources = {}, ...groups}, measures) => {
+    const {dataSets, dataSetType, ...monitoring} = sources
+    const preferred = referenceDataSets({dataSets, dataSetType}, measures)
+    return [
+        ...Object.entries({...groups, ...(!_.isEmpty(monitoring) && {sources: monitoring})})
+            .map(([group, value]) => ({path: `model.${group}`, value, merge: true})),
+        ...(preferred ? [{path: 'ui.seededDataSets', value: preferred}] : [])
+    ]
 }
 
 const modelToValues = ({id, type, dateFormat}) => {

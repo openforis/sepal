@@ -1,7 +1,5 @@
 import _ from 'lodash'
-import moment from 'moment'
 
-import {overlapsYears} from '#sepal/recipe/optical/dataSetYears'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
@@ -10,7 +8,7 @@ export const sources = ['LANDSAT', 'SENTINEL_2']
 export const isOpticalDataSet = dataSetId => !!dataSetById[dataSetId]
 
 export const getDataSetBands = recipe => {
-    const dataSets = selectFrom(recipe, 'model.sources.dataSets')
+    const dataSets = selectFrom(recipe, 'model.sources.dataSets') || {}
     const corrections = selectFrom(recipe, 'model.compositeOptions.corrections')
     const dataSetIds = Object.values(dataSets).flat()
     const correction = corrections && corrections.includes('SR') ? 'SR' : 'TOA'
@@ -49,18 +47,14 @@ export const getDataSet = dataSetId => {
     return {scale, name, shortName}
 }
 
-export const getDataSetOptions = ({startDate, endDate}) =>
+// Which of them can be chosen for a recipe's dates is the shared policy's (dataSetOptions, ~/sources.js).
+export const getDataSetOptions = () =>
     Object.keys(dataSetById)
         .map(dataSetId => ({
             value: dataSetId,
             label: msg(['sources.dataSets', dataSetId, 'label']),
-            tooltip: msg(['sources.dataSets', dataSetId, 'tooltip']),
-            neverSelected: !isDataSetInDateRange(dataSetId, startDate, endDate)
+            tooltip: msg(['sources.dataSets', dataSetId, 'tooltip'])
         }))
-
-// Whether the catalogue says a data set may hold imagery from `fromDate` until `toDate`, which is excluded.
-export const isDataSetInDateRange = (dataSetId, fromDate, toDate) =>
-    overlapsYears(dataSetId, moment(fromDate).year(), moment(toDate).subtract(1, 'days').year())
 
 export const minScale = recipe => {
     const dataSets = selectFrom(recipe, 'model.sources.dataSets') || {}

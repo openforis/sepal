@@ -41,7 +41,7 @@ class _ChangeAlertsToolbar extends React.Component {
 
     render() {
         const {recipeId, initialized, describedSource, sources, sourceProblems, processing} = this.props
-        const dataSets = Object.keys(sources.dataSets)
+        const dataSets = Object.keys(sources.dataSets || {})
         const presentation = {presentInputs: presentProcessingInputs(processing), modelToApply: preserveProcessingCopies(processing)}
         return (
             <PanelWizard

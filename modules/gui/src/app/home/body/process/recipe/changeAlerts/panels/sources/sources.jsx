@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import React from 'react'
 
-import {PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
+import {dataSetPeriod, PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
 import {RecipeActions} from '~/app/home/body/process/recipe/changeAlerts/changeAlertsRecipe'
 import {isOpticalDataSet} from '~/app/home/body/process/recipe/opticalMosaic/sources'
 import {isRadarDataSet} from '~/app/home/body/process/recipe/radarMosaic/sources'
@@ -9,7 +9,7 @@ import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
-import {groupedBandOptions, toSources} from '~/sources'
+import {dataSetOptions, defaultDataSet, groupedBandOptions, toSources} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {select} from '~/store'
 import {msg} from '~/translate'
@@ -19,9 +19,9 @@ import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
 import {baseBandsOf} from '../../../segmentEvidence'
-import {dataSetOptions, MONITORING_TYPES} from '../../monitoringData'
+import {MONITORING_TYPES} from '../../monitoringData'
 import {settingsOf} from '../../processingSettings'
-import {segmentBandsOf} from '../../referenceEvidence'
+import {fittedMeasures, segmentBandsOf} from '../../referenceEvidence'
 import styles from './sources.module.css'
 
 const fields = {
@@ -47,7 +47,7 @@ const mapStateToProps = () => {
 }
 
 const mapRecipeToProps = recipe => ({
-    dates: selectFrom(recipe, 'model.dates'),
+    date: selectFrom(recipe, 'model.date'),
     bands: segmentBandsOf(recipe),
     baseBands: baseBandsOf(recipe, PRIMARY_IMAGE),
     corrections: settingsOf(recipe).model?.options.corrections || []
@@ -144,12 +144,7 @@ class _Sources extends React.Component {
             corrections
         })
         
-        const rmseBands = bands
-            .filter(band => band.endsWith('_rmse'))
-            .map(band => band.slice(0, -5))
-        const ccdcBands = baseBands
-            .map(({name}) => name)
-            .filter(band => rmseBands.includes(band))
+        const ccdcBands = fittedMeasures({bands, baseBands})
         const offered = collectionGrouped
             .map(group => group
                 .filter(({value}) => ccdcBands.includes(value))
@@ -205,11 +200,8 @@ class _Sources extends React.Component {
             const options = this.dataSetOptions()
             const validDataSets = _.intersection(options.map(({value}) => value), dataSets.value)
             if (!validDataSets.length) {
-                const defaultDataSets =
-                    dataSetType === 'OPTICAL'
-                        ? [options[0].value]
-                        : options[0].value
-                dataSets.set(defaultDataSets)
+                const first = defaultDataSet(dataSetType, this.period())
+                dataSets.set(dataSetType === 'OPTICAL' ? [first].filter(Boolean) : first ?? null)
             }
             if (dataSetType !== 'PLANET') {
                 asset.set(null)
@@ -218,8 +210,13 @@ class _Sources extends React.Component {
     }
 
     dataSetOptions() {
-        const {dates, inputs: {dataSetType}} = this.props
-        return dataSetOptions(dataSetType.value, {...dates})
+        const {inputs: {dataSetType, dataSets}} = this.props
+        return dataSetOptions({type: dataSetType.value, period: this.period(), chosen: dataSets.value})
+    }
+
+    period() {
+        const {date} = this.props
+        return dataSetPeriod({date})
     }
 
 }
@@ -235,7 +232,7 @@ const valuesToModel = ({dataSetType, asset, dataSets, cloudPercentageThreshold, 
 }
 
 const modelToValues = ({dataSetType, assets, dataSets, cloudPercentageThreshold, band}) => {
-    const dataSetIds = _.uniq(Object.values(dataSets).flat())
+    const dataSetIds = _.uniq(Object.values(dataSets || {}).flat())
     const defaultedDataSetType = dataSetType
         ? dataSetType
         : dataSetIds.find(dataSetId => isOpticalDataSet(dataSetId))

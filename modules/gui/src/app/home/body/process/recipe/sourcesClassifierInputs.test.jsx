@@ -95,11 +95,7 @@ for (const {recipeType, Sources, classificationLabel, extraSources, radarBand} o
 
             await press('process.ccdc.panel.sources.form.dataSetTypes.OPTICAL')
             expect(classificationMessages()).toEqual([])
-            expect(dataSetFieldMessages()).toContain('fieldValidation.notEmpty')
-
-            await press(LANDSAT_8)
             expect(dataSetFieldMessages()).not.toContain('fieldValidation.notEmpty')
-            expect(classificationMessages()).toEqual([])
         })
 
         it('keep what was applied on Cancel', async () => {
@@ -150,7 +146,6 @@ for (const {recipeType, Sources, classificationLabel, extraSources, radarBand} o
 }
 
 const ID = 'recipe-1'
-const LANDSAT_8 = 'sources.dataSets,LANDSAT_8,label'
 const OPTICAL_BANDS = 'classification-optical-bands'
 const RADAR_STATISTICS = 'classification-radar-statistics'
 const RADAR_POLARISATIONS = 'classification-radar-polarisations'

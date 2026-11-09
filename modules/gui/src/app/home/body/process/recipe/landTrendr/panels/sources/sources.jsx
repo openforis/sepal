@@ -2,10 +2,10 @@ import _ from 'lodash'
 import React from 'react'
 
 import {collectionIndexes} from '#sepal/recipe/collectionBands'
-import {getDataSetOptions as opticalDataSetOptions} from '~/app/home/body/process/recipe/opticalMosaic/sources'
+import {dataSetPeriod} from '#sepal/recipe/type/landTrendr'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
-import {toSources, withChosenBands} from '~/sources'
+import {dataSetOptions, toSources, withChosenBands} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
@@ -49,15 +49,10 @@ class _Sources extends React.Component {
         )
     }
 
-    // The dates stop a data set being chosen for years it cannot cover, but one chosen stays shown as chosen, and removable:
-    // what is wrong with it, if anything, is said here.
+    // What is wrong with the data sets chosen, if anything, is said here.
     renderDataSets() {
         const {form, dates, inputs: {dataSets}} = this.props
-        const chosen = chosenDataSets(dataSets.value)
-        const options = opticalDataSetOptions({
-            startDate: `${dates.startYear}-01-01`,
-            endDate: `${dates.endYear + 1}-01-01`
-        }).map(option => chosen.includes(option.value) ? {...option, neverSelected: false} : option)
+        const options = dataSetOptions({type: 'OPTICAL', period: dataSetPeriod({dates}), chosen: dataSets.value})
         return (
             <Form.Buttons
                 label={msg('process.landTrendr.panel.sources.form.dataSets.label')}

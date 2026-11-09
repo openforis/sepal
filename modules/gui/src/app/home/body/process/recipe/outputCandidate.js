@@ -4,37 +4,41 @@ import {select} from '~/store'
 
 import {assetEvidenceOfState} from '../sourceRuntime/assetEvidence'
 import {recordStalenessOfState} from '../sourceRuntime/recordCurrency'
+import {withUpdates} from './formSubmission'
 import {buildMapDependencyGraph} from './mapDependencyGraph'
 import {OutputWatch} from './outputWatch'
 import {IMAGE_OUTPUT, readRecipeOutput} from './recipeOutput'
 import {readOutputRequirements, recipeNamesOf} from './sourceRequirements'
 
 // What a requirement its output read judges (sourceRequirements.js) says of a panel's values before they are applied:
-// the recipe its declaration's editor builds from the one item the panel edits (`editor.candidate`), read as its output
-// is read, by a question of its own (outputRegistry.js). The candidate's reads are watched, cancelled and kept apart from
+// the recipe its declaration's editor builds from the one item the panel edits (`editor.candidate`), over the recipe as
+// the rest of their submission leaves it (`submission`, formSubmission.js), read as its output is read, by a question of
+// its own (outputRegistry.js). The candidate's reads are watched, cancelled and kept apart from
 // the recipe's, sharing only what the runtime observes of the same sources; what they find is never published as the
 // recipe's, whose own output is read as it was applied. Pending or failed, the candidate refuses nothing.
 export class OutputCandidate {
     #recipeId
     #declaration
-    #valuesToModel
+    #submission
     #sourceRuntime
     #watch
     #candidate = null
     #read = null
 
-    constructor({sourceRuntime, recipeId, declaration, valuesToModel, onChange}) {
+    // `submission(values)` what submitting the values commits, {model, updates}; a caller judging values alone gives
+    // `valuesToModel` instead.
+    constructor({sourceRuntime, recipeId, declaration, valuesToModel, submission = values => ({model: valuesToModel(values), updates: []}), onChange}) {
         this.#recipeId = recipeId
         this.#declaration = declaration
-        this.#valuesToModel = valuesToModel
+        this.#submission = submission
         this.#sourceRuntime = sourceRuntime
         this.#watch = new OutputWatch({sourceRuntime, onChange})
     }
 
     update(values) {
         const recipe = select(['process.loadedRecipes', this.#recipeId])
-        const model = recipe && this.#valuesToModel(values)
-        const candidate = model ? this.#declaration.editor.candidate(recipe, model) : null
+        const {model, updates} = recipe ? this.#submission(values) : {}
+        const candidate = model ? this.#declaration.editor.candidate(withUpdates(recipe, updates), model) : null
         if (!_.isEqual(candidate, this.#candidate)) {
             this.#candidate = candidate
             this.#watch.update(candidate && {recipeId: this.#recipeId, product: {name: IMAGE_OUTPUT}, candidate, explain: this.#declaration.editor.explain})

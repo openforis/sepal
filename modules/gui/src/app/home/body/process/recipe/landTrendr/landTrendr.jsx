@@ -10,7 +10,7 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
 import {bandPresentation, mapProducts} from './bands'
-import {defaultModel} from './landTrendrRecipe'
+import {defaultModel, initialSources} from './landTrendrRecipe'
 import {LandTrendrToolbar} from './panels/landTrendrToolbar'
 import {sourcesRequirements} from './sourcesRequirements'
 import {getPreSetVisualizations} from './visualizations'
@@ -62,6 +62,7 @@ export default () => ({
         recipe: LandTrendr
     },
     sourceRequirements: sourcesRequirements(SOURCES),
+    initialSources,
     imageSource: true,
     getDateRange,
     mapProducts,

@@ -13,10 +13,18 @@ start. The form offers days, weeks and months, and keeps a duration as the digit
 `sources` - `dataSetType` (`OPTICAL`, `RADAR` or `PLANET`), `dataSets`, `assets` and `band` - and `options` are the
 collection monitored against. Monitoring choices belong to Change Alerts. The first Reference Apply during genuinely
 new creation seeds editable defaults once; later producer edits, replacement, Refresh and reopen never overwrite them.
+The data sets the reference prefers are not seeded as configuration: Sources propose them as they first open, as far as
+the calibration and monitoring years let them contribute ([initial data sets](../design/recipes/data-sources.md#initial-data-sets)).
+Where its metadata records none, they follow the monitoring type it records, or else the measures its segments were
+fitted for: a radar-only reference proposes Sentinel-1.
 Required processing matches are derived read-only from the current producer or recorded asset metadata; genuinely
 unrecorded asset settings remain explicit consumer fallbacks. Displaying those values does not rewrite saved copies
 or editable drafts ([source evidence](../design/recipes/gui-source-runtime.md)). `changeAlertsOptions` configure the
 algorithm. No separate "Use reference settings" copy-again action is planned.
+
+Its data sets are judged against the period its observations read, from the calibration start until the monitoring end,
+as the shared [data-set availability](../design/recipes/data-sources.md#data-set-availability) describes. Where none may contribute, its image and its chart's
+observations are held, and SRC says why; the reference's segments are not held for it.
 
 Change Alerts monitors a band its imagery observes itself, and uses no Classification.
 - **Not proposed from the producer.** The producer's `classification` and `breakpointBands` are not proposed; ones an

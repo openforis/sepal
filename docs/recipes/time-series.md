@@ -10,6 +10,10 @@ Retrieve downloads one to SEPAL, and its map shows how many observations each pi
 its data sets and an optional Classification (`sources.classification`). `options` configure how each image is
 processed. The AOI, when taken from a recipe or an asset, and the Classification are its dependencies.
 
+Its data sets, like CCDC's and Phenology's, are judged against the years its dates read, as the shared
+[data-set availability](../design/recipes/data-sources.md#data-set-availability) describes: one none of whose years overlap cannot be chosen anew, one chosen stays chosen,
+and where none may contribute its image and pixel observations are held.
+
 A selected Classification must be one the collection's images can feed. Its classifier reads the features its input's
 band sets include, and readiness requires each image to carry them where `lib/js/ee/src/timeSeries/collection.js`
 classifies it (`collectionClassifierRequirement` in `lib/js/shared/src/recipe/source/collectionSources.js`, the rule in

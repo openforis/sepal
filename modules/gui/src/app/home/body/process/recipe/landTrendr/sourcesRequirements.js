@@ -1,7 +1,8 @@
 import {UNSUPPORTED_COLLECTION_BANDS} from '#sepal/recipe/collectionBands'
-import {MISSING_DATA_SETS, MISSING_INDEX, NO_PERIOD_OVERLAP} from '#sepal/recipe/type/landTrendr'
+import {MISSING_DATA_SETS, MISSING_INDEX} from '#sepal/recipe/type/landTrendr'
 import {msg} from '~/translate'
 
+import {dataSetPeriodRequirement} from '../dataSetPeriodRequirement'
 import {listed, sourcesFieldRequirement} from '../fieldRequirement'
 
 // What LandTrendr's change map needs of its Sources, as its shared definition finds it (type/landTrendr.js): data sets,
@@ -12,9 +13,7 @@ import {listed, sourcesFieldRequirement} from '../fieldRequirement'
 // Apply leaving the Sources unsound is not refused: Sources are marked until they are repaired.
 export const sourcesRequirements = sources => [
     sourcesField(sources, 'dataSets', MISSING_DATA_SETS, required('dataSets')),
-    sourcesField(sources, 'dataSets', NO_PERIOD_OVERLAP, ({startYear, endYear}) =>
-        msg('process.landTrendr.panel.sources.form.dataSets.noPeriodOverlap', {startYear, endYear})
-    ),
+    dataSetPeriodRequirement(sources),
     sourcesField(sources, 'index', MISSING_INDEX, required('index')),
     sourcesField(sources, 'index', UNSUPPORTED_COLLECTION_BANDS, uncarriedIndex)
 ]

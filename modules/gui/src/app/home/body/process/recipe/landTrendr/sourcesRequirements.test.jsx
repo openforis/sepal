@@ -376,7 +376,7 @@ const thermalLacking = ({removable} = {}) => {
         ? `process.landTrendr.panel.sources.form.index.removeDataSets ${JSON.stringify({...facts, removable: facts.dataSets})}`
         : `process.landTrendr.panel.sources.form.index.missingInputs ${JSON.stringify(facts)}`
 }
-const noOverlap = (startYear, endYear) => `process.landTrendr.panel.sources.form.dataSets.noPeriodOverlap ${JSON.stringify({startYear, endYear})}`
+const noOverlap = (startYear, endYear) => `process.source.dataSets.noPeriodOverlap ${JSON.stringify({startYear, endYear})}`
 
 const label = index => index.toUpperCase()
 const dataSetLabel = dataSet => `sources.dataSets.${dataSet}.label`

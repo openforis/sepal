@@ -7,10 +7,11 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
 import {Aoi} from '../aoi'
+import {dataSetPeriodRequirement} from '../dataSetPeriodRequirement'
 import {initializeLayers} from '../recipeImageLayerSource'
 import {AutoSelectScenes} from './autoSelectScenes'
 import {bandPresentation} from './bands'
-import {dateRange, defaultModel, RecipeActions} from './opticalMosaicRecipe'
+import {dateRange, defaultModel, initialSources, RecipeActions} from './opticalMosaicRecipe'
 import {MosaicToolbar} from './panels/opticalMosaicToolbar'
 import {SceneAreas} from './sceneAreas'
 import {SceneDeselection} from './sceneDeselection'
@@ -56,6 +57,8 @@ const OpticalMosaic = compose(
     recipe({defaultModel, mapRecipeToProps})
 )
 
+const SOURCES = {id: 'sources', label: 'process.mosaic.panel.sources.button'}
+
 export default () => ({
     id: 'MOSAIC',
     labels: {
@@ -67,6 +70,8 @@ export default () => ({
     components: {
         recipe: OpticalMosaic
     },
+    sourceRequirements: [dataSetPeriodRequirement(SOURCES)],
+    initialSources,
     imageSource: true,
     getDateRange: recipe => dateRange(recipe.model.dates),
     bandPresentation,

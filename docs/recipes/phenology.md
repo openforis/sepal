@@ -8,6 +8,9 @@ metrics, and a composite for each month.
 The collection is the shared collection submodel (`sources`, `options`) over `dates.fromYear` to `dates.toYear`, and
 `sources.band` names the band analysed. The area of interest clips the result.
 
+Its data sets are judged against those years, as the shared [data-set availability](../design/recipes/data-sources.md#data-set-availability) describes; where none may
+contribute, its image is held and SRC says why.
+
 A selected Classification (under More in Sources) must be one the collection's images can feed, by the rule Time
 Series follows ([Time Series](time-series.md#inputs); `collectionClassifierRequirement`,
 `lib/js/shared/src/recipe/source/collectionSources.js`): what its classifier reads must be carried by each optical,

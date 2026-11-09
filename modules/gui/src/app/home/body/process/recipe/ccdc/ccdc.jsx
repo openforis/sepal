@@ -10,9 +10,10 @@ import {msg} from '~/translate'
 
 import {collectionBandRequirements} from '../collectionBandRequirements'
 import {classificationReferenceFeedback, classifiedOutputRequirements, collectionClassifierRequirements} from '../collectionClassifierRequirements'
+import {dataSetPeriodRequirement} from '../dataSetPeriodRequirement'
 import {withSelectedClassification} from '../selectedClassification'
 import {bandPresentation, mapProducts} from './bands'
-import {dateRange, defaultModel} from './ccdcRecipe'
+import {dateRange, defaultModel, initialSources} from './ccdcRecipe'
 import {CcdcToolbar} from './panels/ccdcToolbar'
 import {describeSegments$, segmentBandLabels} from './segmentDescription'
 import {tmaskRequirement} from './tmaskRequirement'
@@ -64,12 +65,14 @@ export default () => ({
         recipe: CCDC
     },
     sourceRequirements: [
+        dataSetPeriodRequirement(SOURCES),
         ...collectionClassifierRequirements(SOURCES),
         collectionBandRequirements(SOURCES, 'breakpointBands'),
         classifiedOutputRequirements(SOURCES, 'breakpointBands'),
         classificationReferenceFeedback(SOURCES),
         tmaskRequirement(OPTIONS)
     ],
+    initialSources,
     imageSource: false,
     geometrySource: true,
     describeSegments$,

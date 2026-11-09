@@ -21,7 +21,9 @@ compositions; the latter is not supported by the classification selector.
 | Detection options | Repeatability and detection thresholds, and optional index-drop threshold. |
 
 The baseline pixels come from the selected Classification, not from rebuilding imagery using PyEO's baseline
-dates. Monitoring images are constructed from PyEO's own datasets, processing options and monitoring dates.
+dates. Monitoring images are constructed from PyEO's own datasets, processing options and monitoring dates. Its
+datasets are judged against the monitoring years alone, as the shared [data-set availability](../design/recipes/data-sources.md#data-set-availability)
+describes; where none may contribute, its image is held and SRC says why.
 The result is a change-report image containing counts, change dates, repeatability and decision bands. PyEO declares
 its 18 scalar report bands in the order the algorithm assembles them, with or without the index-drop gate, all
 exported with `sample` pyramiding and no encoding (`PYEO_ALERTS_BANDS`, see the
@@ -79,7 +81,10 @@ keeps what the panel has. Missing or malformed defaults do not erase available b
 that the image is unusable.
 
 Selecting a classification proposes defaults; opening a saved recipe reads presentation metadata without
-re-deriving its configuration. Dataset choices already saved or edited by the user are retained. The legend and
+re-deriving its configuration. Dataset choices already saved or edited by the user are retained. Proposed datasets,
+the choices offered and their validation follow the years the proposed dates monitor, not those applied before
+([initial data sets](../design/recipes/data-sources.md#initial-data-sets)): proposed datasets those years exclude give
+way to the first optical dataset they do not, and retained ones none of which may contribute then are refused. The legend and
 input-band information live in runtime UI state, while proposed options and dates stay in the form until Apply.
 
 One acquisition record associates the current classification with its readiness and proposal. Submission checks
