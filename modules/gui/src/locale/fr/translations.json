@@ -5344,7 +5344,8 @@
           "tooltip": "",
           "form": {
             "dataSets": {
-              "label": ""
+              "label": "",
+              "required": ""
             },
             "cloudPercentageThreshold": {
               "label": "Couverture nuageuse max %",
@@ -5353,7 +5354,11 @@
             },
             "index": {
               "label": "",
-              "tooltip": ""
+              "tooltip": "",
+              "required": "",
+              "missingInputs": "",
+              "removeDataSets": "",
+              "unsupported": ""
             }
           }
         },
@@ -5998,6 +6003,17 @@
         "classification": "",
         "dataSets": ""
       },
+      "dataSets": {
+        "noPeriodOverlap": "",
+        "years": {
+          "from": "",
+          "range": ""
+        }
+      },
+      "collectionBands": {
+        "band": "",
+        "breakpointBands": ""
+      },
       "classifiedOutputs": {
         "band": "",
         "breakpointBands": ""
@@ -6034,35 +6050,43 @@
     "dataSets": {
       "LANDSAT_7": {
         "label": "L7",
-        "tooltip": "Landsat 7"
+        "tooltip": "Landsat 7",
+        "name": "Landsat 7"
       },
       "LANDSAT_7_T2": {
         "label": "L7 T2",
-        "tooltip": "Landsat 7 Tier 2"
+        "tooltip": "Landsat 7 Tier 2",
+        "name": "Landsat 7 Tier 2"
       },
       "LANDSAT_8": {
         "label": "L8",
-        "tooltip": "Landsat 8"
+        "tooltip": "Landsat 8",
+        "name": "Landsat 8"
       },
       "LANDSAT_8_T2": {
         "label": "L8 T2",
-        "tooltip": "Landsat 8 Tier 2"
+        "tooltip": "Landsat 8 Tier 2",
+        "name": "Landsat 8 Tier 2"
       },
       "LANDSAT_9": {
         "label": "L9",
-        "tooltip": "Landsat 9"
+        "tooltip": "Landsat 9",
+        "name": "Landsat 9"
       },
       "LANDSAT_9_T2": {
         "label": "L9 T2",
-        "tooltip": "Landsat 9 Tier 2"
+        "tooltip": "Landsat 9 Tier 2",
+        "name": "Landsat 9 Tier 2"
       },
       "LANDSAT_TM": {
         "label": "L4-5",
-        "tooltip": "Landsat 4-5"
+        "tooltip": "Landsat 4-5",
+        "name": "Landsat 4-5"
       },
       "LANDSAT_TM_T2": {
         "label": "L4-5 T2",
-        "tooltip": "Landsat 4-5 Tier 2"
+        "tooltip": "Landsat 4-5 Tier 2",
+        "name": "Landsat 4-5 Tier 2"
       },
       "SENTINEL_1": {
         "label": "S1",
@@ -6070,7 +6094,8 @@
       },
       "SENTINEL_2": {
         "label": "S2",
-        "tooltip": "Sentinel 2 A+B"
+        "tooltip": "Sentinel 2 A+B",
+        "name": ""
       }
     },
     "optical": {
