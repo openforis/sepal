@@ -1,3 +1,4 @@
 services:
   user-storage-backup:
-    restart: never
+    # dev-env runs no backups
+    scale: 0
