@@ -63,6 +63,10 @@ ansible-playbook configure-efs.yml \
     -i "$inventory" \
     --private-key="${PRIVATE_KEY}" \
     --extra-vars "env_file=$CONFIG_HOME/env"
+ansible-playbook mount-ebs-storage.yml \
+    -i "$(../inventory.sh SepalStorage)" \
+    --private-key="${PRIVATE_KEY}"
+
 
 
 WORKER_AMI_VERSION=$(python3 worker-ami/worker_ami.py lookup "$WORKER_AMI_HASH")
