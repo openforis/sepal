@@ -7,8 +7,8 @@ import {
     RETRIEVABLE,
     retrieveDecision,
     submitRetrieve
-} from '~/app/home/body/process/recipe/retrieveOutput'
-import {withRetrieveOutput} from '~/app/home/body/process/recipe/withRetrieveOutput'
+} from '~/app/home/body/process/recipe/retrieve/retrieveOutput'
+import {withRetrieveOutput} from '~/app/home/body/process/recipe/retrieve/withRetrieveOutput'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {updateProject} from '~/app/home/body/process/recipeList/projects'
 import {asFunctionalComponent} from '~/classComponent'

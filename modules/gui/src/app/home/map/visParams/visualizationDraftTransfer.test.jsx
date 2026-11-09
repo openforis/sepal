@@ -53,7 +53,7 @@ vi.mock('~/app/home/map/mapContext', () => ({
 }))
 
 const {Recipe} = await import('~/app/home/body/process/recipeContext')
-const {productArgs} = await import('~/app/home/body/process/recipe/layerProduct')
+const {productArgs} = await import('~/app/home/body/process/recipe/outputs/layerProduct')
 const {VisParamsPanel} = await import('./visParamsPanel')
 const {actionBuilder} = await import('~/action-builder')
 const {initStore, select} = await import('~/store')

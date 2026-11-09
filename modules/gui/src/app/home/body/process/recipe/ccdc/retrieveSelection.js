@@ -2,7 +2,7 @@ import _ from 'lodash'
 
 import {ccdcOutputBands, fittedMeasures, measuresFor, SEGMENT_BANDS} from '#sepal/recipe/type/ccdc'
 
-import {inOrderOf} from '../retrieveOutput'
+import {inOrderOf} from '../retrieve/retrieveOutput'
 
 // CCDC is asked for measures, not bands. What may be chosen is the measures its described output holds; what a
 // choice exports is every band those measures and the configured breakpoint bands produce - the rule CCDC itself

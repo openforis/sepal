@@ -13,8 +13,8 @@ vi.mock('~/translate', () => ({msg: (key, values) => values?.message || key}))
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: () => ({sourceRequirements: requirements})}))
 
 const {samplingDesignRequirements: requirements, SAMPLES, samplesGate, samplesGateMessage, STRATUM_PROBABILITIES} = await import('./freshnessRequirements')
-const {requestGate} = await import('../sourceRequirements')
-const {sectionProblemsOfState} = await import('../selectedSourceStatus')
+const {requestGate} = await import('../requirements/sourceRequirements')
+const {sectionProblemsOfState} = await import('../requirements/selectedSourceStatus')
 
 const FRAME = 'SAMPLING_STRATUM_FRAME'
 const PROBABILITY = 'SAMPLING_PROBABILITY_SOURCE'

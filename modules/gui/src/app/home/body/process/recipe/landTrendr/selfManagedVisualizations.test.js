@@ -1,4 +1,4 @@
-import {SELF_MANAGED_VISUALIZATIONS} from '~/app/home/body/process/recipe/recipeImageLayer'
+import {SELF_MANAGED_VISUALIZATIONS} from '~/app/home/body/process/recipe/map/recipeImageLayer'
 
 // landTrendrImageLayer reconciles visParams itself, because the available bands
 // differ between the changes and mosaics modes. If the generic reconciliation in

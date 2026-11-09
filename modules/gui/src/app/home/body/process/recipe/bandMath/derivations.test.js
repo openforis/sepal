@@ -17,8 +17,8 @@ vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: bandMath} = await import('./bandMath')
-const {commitRecipe} = await import('../derivedResult')
-const {readSourceRequirements, readKey} = await import('../sourceRequirements')
+const {commitRecipe} = await import('../editing/derivedResult')
+const {readSourceRequirements, readKey} = await import('../requirements/sourceRequirements')
 const {hasUniqueOutputNames, outputNameOf} = await import('./panels/outputBands/outputImages')
 
 addRecipeType(bandMath())

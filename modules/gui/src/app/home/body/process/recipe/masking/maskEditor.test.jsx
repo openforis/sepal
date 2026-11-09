@@ -43,7 +43,7 @@ const {default: masking} = await import('./masking')
 const {MaskingToolbar} = await import('./panels/maskingToolbar')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
-const {requestGate} = await import('../sourceRequirements')
+const {requestGate} = await import('../requirements/sourceRequirements')
 
 addRecipeType(masking())
 

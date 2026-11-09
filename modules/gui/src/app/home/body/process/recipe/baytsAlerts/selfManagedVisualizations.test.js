@@ -1,6 +1,6 @@
 import {expect, it} from 'vitest'
 
-import {SELF_MANAGED_VISUALIZATIONS} from '~/app/home/body/process/recipe/recipeImageLayer'
+import {SELF_MANAGED_VISUALIZATIONS} from '~/app/home/body/process/recipe/map/recipeImageLayer'
 
 // TEMPORARY MIGRATION GUARD. This list disappears once a generic preview-binding controller owns parameterized
 // product selection and reconciliation; until then, membership is the only thing keeping two writers apart.

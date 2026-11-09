@@ -3,10 +3,10 @@ import {MISSING_ROLE} from '#sepal/recipe/output/diagnostic'
 import {MULTIPLE_CLASSIFICATION_INPUTS, NO_CHANGE_CLASSES, UNAVAILABLE_GATE_INDEX} from '#sepal/recipe/type/pyeoAlerts'
 import {msg} from '~/translate'
 
-import {classificationReferenceFeedback} from '../collectionClassifierRequirements'
-import {dataSetPeriodRequirement} from '../dataSetPeriodRequirement'
-import {fieldRequirement, listed, sourcesFieldRequirement} from '../fieldRequirement'
-import {CHECKING, UNAVAILABLE} from '../sourceRequirements'
+import {classificationReferenceFeedback} from '../collections/collectionClassifierRequirements'
+import {dataSetPeriodRequirement} from '../collections/dataSetPeriodRequirement'
+import {fieldRequirement, listed, sourcesFieldRequirement} from '../requirements/fieldRequirement'
+import {CHECKING, UNAVAILABLE} from '../requirements/sourceRequirements'
 
 // What PyEO Alerts needs of its Sources and of its index gate, as its shared definition finds it
 // (lib/js/shared/src/recipe/type/pyeoAlerts.js): a classification selected, classes to detect change from and to,

@@ -20,7 +20,7 @@ import {Message} from '~/widget/message'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 
-import {withItemProblems} from '../../../selectedSource'
+import {withItemProblems} from '../../../requirements/selectedSource'
 import {TRAINING_DATA, TRAINING_DATA_LIST} from '../../trainingDataRequirements'
 import styles from './trainingData.module.css'
 import {TrainingDataSet} from './trainingDataSet'

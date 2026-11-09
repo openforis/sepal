@@ -18,8 +18,8 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
 
 const {Combo} = await import('~/widget/combo')
 const {LandTrendrImageLayer} = await import('./landTrendrImageLayer')
-const {buildMapDependencyGraph} = await import('../mapDependencyGraph')
-const {canPreview, layerProduct, productArgs, readRecipeOutput} = await import('../recipeOutput')
+const {buildMapDependencyGraph} = await import('../outputs/mapDependencyGraph')
+const {canPreview, layerProduct, productArgs, readRecipeOutput} = await import('../outputs/recipeOutput')
 
 describe('the year an annual mosaic layer selects', () => {
     it('follows the end year down past it, in the picker and the preview', () => {

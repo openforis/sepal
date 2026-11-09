@@ -42,7 +42,7 @@ vi.mock('~/app/home/map/layer/earthEngineImageLayer', () => ({
 
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: remapping} = await import('./remapping')
-const {RecipeImageLayer} = await import('../recipeImageLayer')
+const {RecipeImageLayer} = await import('../map/recipeImageLayer')
 const {addRecipeImageLayer} = await import('../../recipeImageLayerRegistry')
 const {removeInputImage} = await import('../../inputImages')
 const {TabContext} = await import('~/widget/tabs/tabContext')

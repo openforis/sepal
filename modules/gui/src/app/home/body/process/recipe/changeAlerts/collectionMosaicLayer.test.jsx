@@ -63,7 +63,7 @@ vi.mock('~/apiRegistry', async () => {
 })
 
 // The layer's selector is the last connected while its module loads: a module's body runs after its imports'.
-const {RecipeImageLayer} = await import('../recipeImageLayer')
+const {RecipeImageLayer} = await import('../map/recipeImageLayer')
 const layerSelector = fake.selectors.at(-1)
 const {addRecipeType} = await import('../../recipeTypeRegistry')
 const {default: changeAlertsType} = await import('./changeAlerts')

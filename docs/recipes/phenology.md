@@ -31,7 +31,7 @@ configuration provides (`classifiedOutputRequirement`, `lib/js/shared/src/recipe
 offers no regression, and an SVM of one class offers no class probabilities. Otherwise `UNSUPPORTED_CLASSIFIED_OUTPUT`
 refuses it at the band; SRC says why beside it, and a refused draft cannot be applied. A band refused by either rule
 stays shown as chosen, and opening the panel leaves it unedited, until another band is chosen
-(`classifiedOutputSources.test.jsx` and `collectionBands.test.jsx` in `modules/gui/src/app/home/body/process/recipe/`).
+(`classifiedOutputSources.test.jsx` and `collectionBands.test.jsx` in `modules/gui/src/app/home/body/process/recipe/collections/`).
 The outputs offered are read from the selected Classification as
 [Time Series](time-series.md#what-is-offered-of-the-selected-classification) reads it, and a band it no longer
 provides is named, in its choice and its refusal, as that section describes.
@@ -74,7 +74,7 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
 
 ## Verification
 
-- `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js`: output declaration,
+- `modules/gui/src/app/home/body/process/recipe/outputs/modelDerivedOutput.test.js`: output declaration,
   presentation and export policy through registration.
 - [Regression precision verifier](../../modules/gee/verify/phenologyRegressionPrecision.mjs): controlled seasonal
   regression values/range, masks, integer timing, the complete native control and mixed file promotion. Read-only;

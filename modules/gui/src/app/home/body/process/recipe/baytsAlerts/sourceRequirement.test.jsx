@@ -101,17 +101,17 @@ vi.mock('~/app/home/map/layer/earthEngineImageLayer', () => ({
     }
 }))
 
-const {SourceEvidenceSync} = await import('../sourceEvidenceSync')
+const {SourceEvidenceSync} = await import('../sources/sourceEvidenceSync')
 const {baytsAlertsObservation} = await import('./referenceObservation')
 const {baytsAlertsRequirements} = await import('./sourceRequirement')
 const {mapProducts} = await import('./bands')
 const {Reference} = await import('./panels/reference/reference')
 const {Preprocess} = await import('./panels/preprocess/preprocess')
 const {Options: HistoricalOptions} = await import('../baytsHistorical/panels/options/options')
-const {RetrieveButton} = await import('../retrieveButton')
-const {withRetrieveOutput} = await import('../withRetrieveOutput')
-const {retrieveDecision} = await import('../retrieveOutput')
-const {RecipeImageLayer} = await import('../recipeImageLayer')
+const {RetrieveButton} = await import('../retrieve/retrieveButton')
+const {withRetrieveOutput} = await import('../retrieve/withRetrieveOutput')
+const {retrieveDecision} = await import('../retrieve/retrieveOutput')
+const {RecipeImageLayer} = await import('../map/recipeImageLayer')
 const {addRecipeImageLayer} = await import('../../recipeImageLayerRegistry')
 const {recipeAccess} = await import('../../recipeAccess')
 const {Toolbar} = await import('~/widget/toolbar/toolbar')
@@ -120,12 +120,12 @@ const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
 const {actionBuilder} = await import('~/action-builder')
 const {Subject} = await import('rxjs')
-const {IMAGE_OUTPUT} = await import('../recipeOutput')
+const {IMAGE_OUTPUT} = await import('../outputs/recipeOutput')
 const {RADAR_OBSERVATION} = await import('#sepal/recipe/type/baytsAlerts')
 const {
     CHECKING_SOURCE, selectedSourceStatusOfState, sourceProblemsOfState, UNAVAILABLE_SOURCE, UNSUITABLE_SOURCE
-} = await import('../selectedSourceStatus')
-const {requestGate} = await import('../sourceRequirements')
+} = await import('../requirements/selectedSourceStatus')
+const {requestGate} = await import('../requirements/sourceRequirements')
 
 // BAYTS Alerts' own layer form is replaced by nothing: what a layer requests is what is observed.
 addRecipeImageLayer('BAYTS_ALERTS', () => null)

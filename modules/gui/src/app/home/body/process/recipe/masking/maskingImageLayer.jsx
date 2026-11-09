@@ -6,7 +6,7 @@ import {MapAreaLayout} from '~/app/home/map/mapAreaLayout'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 
-import {renderableVisualizations} from '../visualizationMatching'
+import {renderableVisualizations} from '../outputs/visualizationMatching'
 import {getPreSetVisualizations} from './visualizations'
 
 class _MaskingImageLayer extends React.Component {

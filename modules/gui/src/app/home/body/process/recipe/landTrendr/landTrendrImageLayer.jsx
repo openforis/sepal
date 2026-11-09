@@ -14,7 +14,7 @@ import {Combo} from '~/widget/combo'
 import {Layout} from '~/widget/layout'
 
 import {withRecipe} from '../../recipeContext'
-import {layerSelection, layerVisualizations, presetVisualizations} from '../visualizations'
+import {layerSelection, layerVisualizations, presetVisualizations} from '../outputs/visualizations'
 import {layerConfigChanges, mapProducts, selectedYear} from './bands'
 import {visualizationOptions} from './visualizations'
 

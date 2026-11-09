@@ -37,7 +37,7 @@ vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: () => ({})}))
 
-const {SourceEvidenceSync} = await import('../sourceEvidenceSync')
+const {SourceEvidenceSync} = await import('../sources/sourceEvidenceSync')
 const {baytsAlertsObservation} = await import('./referenceObservation')
 const {settingsOf} = await import('./processingSettings')
 

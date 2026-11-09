@@ -9,11 +9,11 @@ import {CHANGE_ALERTS_PROCESSING} from '#sepal/recipe/requirement/changeAlertsPr
 import {COLLECTION_MOSAIC, PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
 import {msg} from '~/translate'
 
-import {IMAGE_OUTPUT} from '../recipeOutput'
-import {referenceFeedback} from '../referenceFeedback'
-import {SEGMENTS} from '../segmentCapability'
-import {CHARTABLE_SEGMENTS, MONITORED_MEASURE, SLICEABLE_SEGMENTS} from '../segmentRequirements'
-import {PIXEL_SEGMENTS} from '../sourceRequirements'
+import {IMAGE_OUTPUT} from '../outputs/recipeOutput'
+import {referenceFeedback} from '../requirements/referenceFeedback'
+import {PIXEL_SEGMENTS} from '../requirements/sourceRequirements'
+import {SEGMENTS} from '../sources/segmentCapability'
+import {CHARTABLE_SEGMENTS, MONITORED_MEASURE, SLICEABLE_SEGMENTS} from '../sources/segmentRequirements'
 import {availableMeasures, monitorableMeasures, observedMeasures} from './monitoringData'
 import {settingsOf} from './processingSettings'
 

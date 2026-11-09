@@ -5,12 +5,12 @@ import {PRIMARY_IMAGE} from '#sepal/recipe/type/ccdcSlice'
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {toT} from '~/app/home/body/process/recipe/ccdc/t'
-import {pyramidingPolicies} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
+import {pyramidingPolicies} from '~/app/home/body/process/recipe/retrieve/recipeTaskSubmitter'
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {selectFrom} from '~/stateUtils'
 
-import {segmentDatesOf} from '../segmentEvidence'
-import {visualizationsWithAvailableBands} from '../visualizationMatching'
+import {visualizationsWithAvailableBands} from '../outputs/visualizationMatching'
+import {segmentDatesOf} from '../sources/segmentEvidence'
 import {chartSourceReference, dateFormatOf, materializedTemplates, outputBandsOf} from './sliceEvidence'
 
 export const defaultModel = {

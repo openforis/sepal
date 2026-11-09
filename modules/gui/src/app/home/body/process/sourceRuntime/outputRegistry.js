@@ -1,7 +1,6 @@
 import _ from 'lodash'
 import {Observable} from 'rxjs'
 
-import {TerminalOperation} from '../recipe/terminalOperation'
 import {SESSION} from './recordCurrency'
 import {
     SOURCE_BASIS_CHANGED,
@@ -10,6 +9,7 @@ import {
     SOURCE_RUNTIME_UNAVAILABLE,
     sourceRuntimeError
 } from './sourceRuntimeError'
+import {TerminalOperation} from './terminalOperation'
 
 // Who is watching which output questions, and the description loading their answers need, shared across them.
 //

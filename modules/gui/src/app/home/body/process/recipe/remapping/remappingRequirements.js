@@ -5,7 +5,7 @@ import {LEGEND_ENTRIES_PATH} from '#sepal/recipe/type/remapping'
 import {INPUT_BANDS, inputImageryRequirements} from '~/app/home/body/process/panels/inputImagery/inputImageryRequirements'
 import {msg} from '~/translate'
 
-import {IMAGE_OUTPUT} from '../recipeOutput'
+import {IMAGE_OUTPUT} from '../outputs/recipeOutput'
 
 // What Remapping's mapping needs of its own configuration as applied, as its shared definition finds it
 // (lib/js/shared/src/recipe/type/remapping.js): each constraint reads an input still there, and a band that input

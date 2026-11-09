@@ -4,7 +4,7 @@ import React from 'react'
 import {Subject, take, takeUntil} from 'rxjs'
 
 import api from '~/apiRegistry'
-import {findVisualization, renderableVisualizations, withKnownIdentities} from '~/app/home/body/process/recipe/visualizationMatching'
+import {findVisualization, renderableVisualizations, withKnownIdentities} from '~/app/home/body/process/recipe/outputs/visualizationMatching'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {assetEvidenceOfState, DEFINITIVE, TRANSIENT} from '~/app/home/body/process/sourceRuntime/assetEvidence'
 import {withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'

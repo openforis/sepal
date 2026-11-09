@@ -9,8 +9,8 @@ import {createValuesFeatureLayerSource} from '~/app/home/map/valuesFeatureLayerS
 
 import {addImageLayerSource} from './imageLayerSourceRegistry'
 import {assetDisplayLabel} from './mapLayout/assetLabel'
-import {RecipeImageLayer} from './recipe/recipeImageLayer'
-import {RecipeImageLayerSource} from './recipe/recipeImageLayerSource'
+import {RecipeImageLayer} from './recipe/map/recipeImageLayer'
+import {RecipeImageLayerSource} from './recipe/map/recipeImageLayerSource'
 
 const ASSET_RECIPE_FEATURE_LAYER_SOURCES = {
     continuous: () => [createPaletteFeatureLayerSource()],

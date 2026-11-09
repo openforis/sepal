@@ -5,7 +5,7 @@ import {assetProcessing} from '#sepal/recipe/changeAlerts/processing'
 vi.mock('~/translate', () => ({msg: id => id}))
 
 const {visualizationOptions} = await import('./visualizations')
-const {sourceKeyOf} = await import('../sourceEvidence')
+const {sourceKeyOf} = await import('../sources/sourceEvidence')
 
 // A monitoring mosaic is built with the reference's processing (processingSettings.js), so its options follow the
 // reference's observed metadata and are not offered before that is read.

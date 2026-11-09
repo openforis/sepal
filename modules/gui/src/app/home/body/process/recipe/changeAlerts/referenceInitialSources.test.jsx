@@ -48,8 +48,8 @@ vi.mock('~/widget/tooltip', () => ({
         : children
 }))
 vi.mock('~/app/home/map/map', async importOriginal => ({...await importOriginal(), Map: ({children}) => children}))
-vi.mock('~/app/home/body/process/recipe/aoi', async importOriginal => ({...await importOriginal(), Aoi: () => null}))
-vi.mock('~/app/home/body/process/recipe/recipeImageLayerSource', async importOriginal => ({...await importOriginal(), initializeLayers: () => {}}))
+vi.mock('~/app/home/body/process/recipe/map/aoi', async importOriginal => ({...await importOriginal(), Aoi: () => null}))
+vi.mock('~/app/home/body/process/recipe/map/recipeImageLayerSource', async importOriginal => ({...await importOriginal(), initializeLayers: () => {}}))
 vi.mock('~/app/home/body/process/recipe/ccdc/ccdcRecipe', () => ({getAllVisualizations: () => []}))
 
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')

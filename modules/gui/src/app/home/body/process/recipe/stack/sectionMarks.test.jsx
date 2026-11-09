@@ -59,7 +59,7 @@ vi.mock('~/widget/tooltip', () => ({
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: stack} = await import('./stack')
 const {StackToolbar} = await import('./panels/stackToolbar')
-const {commitRecipe} = await import('~/app/home/body/process/recipe/derivedResult')
+const {commitRecipe} = await import('~/app/home/body/process/recipe/editing/derivedResult')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
 

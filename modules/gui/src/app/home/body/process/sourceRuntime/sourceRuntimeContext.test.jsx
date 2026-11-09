@@ -59,8 +59,8 @@ vi.mock('~/store', () => ({
     }
 }))
 
-const {buildMapDependencyGraph} = await import('../recipe/mapDependencyGraph')
-const {readRecipeOutput} = await import('../recipe/recipeOutput')
+const {buildMapDependencyGraph} = await import('../recipe/outputs/mapDependencyGraph')
+const {readRecipeOutput} = await import('../recipe/outputs/recipeOutput')
 const {createReduxSourceEnvironment} = await import('./reduxSourceEnvironment')
 const {createSourceRuntime} = await import('./sourceRuntime')
 const {SourceRuntimeProvider, useSourceRuntime, withSourceRuntime} = await import('./sourceRuntimeContext')

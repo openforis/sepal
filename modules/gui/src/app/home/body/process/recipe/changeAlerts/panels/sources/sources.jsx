@@ -18,7 +18,7 @@ import {inputFeedback} from '~/widget/form/inputFeedback'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
-import {baseBandsOf} from '../../../segmentEvidence'
+import {baseBandsOf} from '../../../sources/segmentEvidence'
 import {MONITORING_TYPES} from '../../monitoringData'
 import {settingsOf} from '../../processingSettings'
 import {fittedMeasures, segmentBandsOf} from '../../referenceEvidence'

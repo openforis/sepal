@@ -54,7 +54,7 @@ const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry
 const {default: pyeoAlerts} = await import('./pyeoAlerts')
 const {default: classification} = await import('../classification/classification')
 const {Sources} = await import('./panels/sources/sources')
-const {sourceProblemsOfState} = await import('../selectedSourceStatus')
+const {sourceProblemsOfState} = await import('../requirements/selectedSourceStatus')
 
 addRecipeType(pyeoAlerts())
 addRecipeType(classification())

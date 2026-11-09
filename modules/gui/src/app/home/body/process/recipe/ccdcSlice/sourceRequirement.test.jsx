@@ -132,22 +132,22 @@ vi.mock('../ccdc/ccdcGraph', () => ({
     }
 }))
 
-const {SourceEvidenceSync} = await import('../sourceEvidenceSync')
+const {SourceEvidenceSync} = await import('../sources/sourceEvidenceSync')
 const {sliceObservation} = await import('./sliceObservation')
 const {sliceRequirements} = await import('./sourceRequirement')
 const {describeSegments$, segmentBandLabels} = await import('../ccdc/segmentDescription')
 const {Source} = await import('./panels/source/source')
 const {CHART_OPERATIONS, ChartPixel} = await import('./panels/chartPixel')
-const {ChartPixelButton} = await import('../chartPixelButton')
-const {RetrieveButton} = await import('../retrieveButton')
+const {ChartPixelButton} = await import('../charts/chartPixelButton')
+const {RetrieveButton} = await import('../retrieve/retrieveButton')
 const {MapContext} = await import('~/app/home/map/mapContext')
 const {Toolbar} = await import('~/widget/toolbar/toolbar')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
 const {actionBuilder} = await import('~/action-builder')
-const {IMAGE_OUTPUT} = await import('../recipeOutput')
-const {CHECKING_SOURCE, selectedSourceStatusOfState, UNSUITABLE_SOURCE} = await import('../selectedSourceStatus')
-const {requestGate} = await import('../sourceRequirements')
+const {IMAGE_OUTPUT} = await import('../outputs/recipeOutput')
+const {CHECKING_SOURCE, selectedSourceStatusOfState, UNSUITABLE_SOURCE} = await import('../requirements/selectedSourceStatus')
+const {requestGate} = await import('../requirements/sourceRequirements')
 
 registry.CCDC_SLICE = {sourceRequirements: sliceRequirements, sourceObservation: sliceObservation}
 registry.CCDC = {id: 'CCDC', describeSegments$, segmentBandLabels}

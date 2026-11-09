@@ -45,7 +45,7 @@ const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry
 const {default: remapping} = await import('../remapping/remapping')
 const {getPreSetVisualizations} = await import('../remapping/visualizations')
 const {default: bandMath} = await import('./bandMath')
-const {RecipeImageLayer} = await import('../recipeImageLayer')
+const {RecipeImageLayer} = await import('../map/recipeImageLayer')
 const {addRecipeImageLayer} = await import('../../recipeImageLayerRegistry')
 const {TabContext} = await import('~/widget/tabs/tabContext')
 

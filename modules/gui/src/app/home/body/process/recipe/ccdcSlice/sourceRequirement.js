@@ -1,8 +1,8 @@
 import {PRIMARY_IMAGE} from '#sepal/recipe/type/ccdcSlice'
 
-import {IMAGE_OUTPUT} from '../recipeOutput'
-import {CHARTABLE_SEGMENTS, SLICE_SOURCE_SEGMENTS} from '../segmentRequirements'
-import {PIXEL_SEGMENTS} from '../sourceRequirements'
+import {IMAGE_OUTPUT} from '../outputs/recipeOutput'
+import {PIXEL_SEGMENTS} from '../requirements/sourceRequirements'
+import {CHARTABLE_SEGMENTS, SLICE_SOURCE_SEGMENTS} from '../sources/segmentRequirements'
 
 // What CCDC Slice needs of the segments it slices, selected in SRC, by what reads them. The slice and its Retrieve read
 // every band of the source's segments (lib/js/ee/src/timeSeries/ccdcSlice.js), so a source they cannot slice is refused

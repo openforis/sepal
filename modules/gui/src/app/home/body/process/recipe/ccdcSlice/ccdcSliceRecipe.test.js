@@ -34,8 +34,8 @@ const {sliceOutputBands} = await import('#sepal/recipe/type/ccdcSlice')
 const {buildRecipeDependencyGraph} = await import('#sepal/recipe/source/dependencyGraph')
 const {materializedTemplates, sliceRequest} = await import('./sliceEvidence')
 const {retrieveTask} = await import('./ccdcSliceRecipe')
-const {readRecipeOutput} = await import('../recipeOutput')
-const {submitRetrieve} = await import('../retrieveOutput')
+const {readRecipeOutput} = await import('../outputs/recipeOutput')
+const {submitRetrieve} = await import('../retrieve/retrieveOutput')
 
 registry.CCDC_SLICE = {
     getDateRange: recipe => {

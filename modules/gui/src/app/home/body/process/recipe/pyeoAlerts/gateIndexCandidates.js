@@ -1,6 +1,6 @@
 import {GATE_INDEXES} from '#sepal/recipe/type/pyeoAlerts'
 
-import {OutputCandidate} from '../outputCandidate'
+import {OutputCandidate} from '../editing/outputCandidate'
 import {GATE_INDEX_REQUIREMENT} from './sourcesRequirements'
 
 // The indexes the gate offers that it can read, as the shared rule judges the gate (sourcesRequirements.js): the recipe

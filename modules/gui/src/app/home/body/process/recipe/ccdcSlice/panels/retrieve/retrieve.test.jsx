@@ -40,7 +40,7 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: () 
 
 const {sliceOutputBands} = await import('#sepal/recipe/type/ccdcSlice')
 const {buildRecipeDependencyGraph} = await import('#sepal/recipe/source/dependencyGraph')
-const {readRecipeOutput} = await import('../../../recipeOutput')
+const {readRecipeOutput} = await import('../../../outputs/recipeOutput')
 const {Retrieve} = await import('./retrieve')
 
 describe('a selection the slice produces', () => {

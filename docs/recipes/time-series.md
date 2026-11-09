@@ -53,7 +53,7 @@ band options follow the Classification record the session holds.
 
 What Sources, the chart, Retrieve and CCDC's OPT offer of the selected Classification - its outputs and their labels -
 reads its record as the session holds it, otherwise as the record the consumer's own runtime read resolved
-(`selectedClassificationOfState`, `modules/gui/src/app/home/body/process/recipe/selectedClassification.js`). The
+(`selectedClassificationOfState`, `modules/gui/src/app/home/body/process/recipe/collections/selectedClassification.js`). The
 selection is the one the type declares (`CLASSIFICATION_SOURCE`). CCDC and Phenology are read the same way.
 
 - **One UI read.** Each recipe has one reader for the selected Classification, shared by its consumers. The root holds
@@ -325,15 +325,15 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
 - `modules/gee/test/jobs/task/export/timeSeries.test.js`, `jobs/ee/timeSeries/loadObservations.test.js` and
   `test/ee/timeSeries/classifiedOutputs.test.js`: planning/chunk/observation guards, native versus classified
   construction, unsupported output and repair across collection families.
-- `modules/gui/src/app/home/body/process/recipe/timeSeries/` and `recipe/selectedClassificationChart.test.jsx`:
+- `modules/gui/src/app/home/body/process/recipe/timeSeries/` and `recipe/collections/selectedClassificationChart.test.jsx`:
   indicator requests, feedback, submission races, chart/Retrieve withdrawal, pending states and recovery.
-- `modules/gui/src/app/home/body/process/recipe/selectedClassification.test.jsx`: the shared UI read through real roots,
+- `modules/gui/src/app/home/body/process/recipe/collections/selectedClassification.test.jsx`: the shared UI read through real roots,
   panels and runtime (CCDC and Time Series) - one request for the root and Sources, independent runtime reads, release,
   supersession, teardown, pending and failed reads, recovery, and labels in Sources, OPT and Retrieve.
-- `modules/gui/src/app/home/body/process/recipe/classifiedOutputSources.test.jsx`: CCDC's and Phenology's retained
+- `modules/gui/src/app/home/body/process/recipe/collections/classifiedOutputSources.test.jsx`: CCDC's and Phenology's retained
   classified outputs named in their choice and refusal - the label of the Classification selected before, the class
   fallback, the current label winning - with Apply refused, and while the Classification is read and after repair.
-  `mosaic/panels/retrieve/retrieveDestinationCompatibility.test.jsx`: Retrieve's kept selection named only as its
+  `retrieve/retrieveDestinationCompatibility.test.jsx`: Retrieve's kept selection named only as its
   owner says.
 - `lib/js/shared/test/recipe/output/type/ccdc.test.js`, `modules/gee/test/jobs/ee/ccdc/loadSegmentsReadiness.test.js`
   and `modules/gui/src/app/home/body/process/recipe/ccdc/tmaskRequirement.test.jsx`: the TMask rule per operation,
@@ -342,11 +342,11 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
   refused drafts and each repair.
 - `lib/js/shared/test/recipe/collectionBands.test.js`, `modules/gee/test/jobs/ee/ccdc/loadSegmentsReadiness.test.js`,
   `modules/gee/test/jobs/task/export/imageAssetExport.test.js`, `modules/gui/src/sources.test.js` and
-  `modules/gui/src/app/home/body/process/recipe/collectionBands.test.jsx`: the collection-band rule per operation and
+  `modules/gui/src/app/home/body/process/recipe/collections/collectionBands.test.jsx`: the collection-band rule per operation and
   family, Planet's boundary, empty data sets, the server refusal, offered bands agreeing with the catalogue, and,
   through CCDC's and Phenology's roots, toolbars, Sources and PRC, retained choices, refused drafts and submissions,
   the allowed PRC Apply, held operations and each repair.
-- `modules/gui/src/app/home/body/process/recipe/pixelChartExport.test.jsx`: each pixel chart's Export CSV through its
+- `modules/gui/src/app/home/body/process/recipe/charts/pixelChartExport.test.jsx`: each pixel chart's Export CSV through its
   panel - when it is enabled, a new band or pixel, zoom, empty results and an unchanged recipe.
   `ccdc/ccdcChart.test.js`, `landTrendr/panels/landTrendrChart.test.js` and `pixelChartCsv.test.js`: the prepared
   model's methods, RMSE and drawn bounds, segment edges, timezones and leap days, annual rows, and CSV order, blanks,

@@ -60,7 +60,7 @@ const {default: classification} = await import('./classification')
 const {default: regression} = await import('../regression/regression')
 const {TrainingDataSet: ClassificationTrainingDataSet} = await import('./panels/trainingData/trainingDataSet')
 const {TrainingDataSet: RegressionTrainingDataSet} = await import('../regression/panels/trainingData/trainingDataSet')
-const {sourceProblemsOfState} = await import('../selectedSourceStatus')
+const {sourceProblemsOfState} = await import('../requirements/selectedSourceStatus')
 
 addRecipeType(classification())
 addRecipeType(regression())

@@ -25,8 +25,8 @@ vi.mock('~/apiRegistry', async () => {
     }}}
 })
 vi.mock('~/app/home/map/map', () => ({Map: ({children}) => children}))
-vi.mock('../aoi', () => ({Aoi: () => null}))
-vi.mock('../recipeImageLayerSource', () => ({initializeLayers: () => {}}))
+vi.mock('../map/aoi', () => ({Aoi: () => null}))
+vi.mock('../map/recipeImageLayerSource', () => ({initializeLayers: () => {}}))
 vi.mock('./panels/ccdcSliceToolbar', () => ({CcdcSliceToolbar: () => null}))
 vi.mock('~/translate', () => ({msg: key => key}))
 

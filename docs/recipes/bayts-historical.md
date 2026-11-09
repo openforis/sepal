@@ -78,7 +78,7 @@ the new monitoring observations are tested against the corrected ones.
 - `lib/js/shared/test/recipe/output/type/baytsHistorical.test.js`: declaration, orbit refusals and inherited facts.
 - `modules/gee/test/jobs/ee/bayts/`: catalogue, requested output and per-pass construction; server export tests
   cover metadata/refusal in `jobs/task/export/imageAssetExport.test.js`.
-- `modules/gui/src/app/home/body/process/recipe/baytsHistorical/` and `recipe/modelDerivedOutput.test.js`:
+- `modules/gui/src/app/home/body/process/recipe/baytsHistorical/` and `recipe/outputs/modelDerivedOutput.test.js`:
   common reads, Retrieve, wrappers and broken dependencies.
 - [Historical live probe](../../modules/gee/verify/README.md): per-pass statistics, missing-pass masks and
   refusals, filtering variants and downstream alert equivalence with valid comparison pixels.

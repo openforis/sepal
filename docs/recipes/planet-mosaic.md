@@ -50,7 +50,7 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
 
 - `lib/js/shared/test/recipe/output/type/planetMosaic.test.js`: each branch and wrapper inheritance.
 - `modules/gee/test/jobs/ee/planet/mosaicBands.test.js`: catalogue; server export tests cover recorded encoding.
-- `modules/gui/src/app/home/body/process/recipe/planetMosaic/`, `recipe/modelDerivedOutput.test.js`,
+- `modules/gui/src/app/home/body/process/recipe/planetMosaic/`, `recipe/outputs/modelDerivedOutput.test.js`,
   `recipe/ccdc/planetTemplates.test.js` and `modules/gui/src/sources.test.js`: presentation, Retrieve,
   temporal choices and CCDC presets.
 - [Planet live probe](../../modules/gee/verify/README.md): synthetic branch schemas, mixed-member refusal and

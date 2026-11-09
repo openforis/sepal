@@ -149,12 +149,12 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
   period, the field that keeps one from being computed, and each source type's projection.
 - `modules/gee/test/jobs/ee/timeSeries/changeAlertsCollectionMosaic.test.js` - each view executed as described, over the
   selected reference's geometry, a Masking wrapper's and a segments asset's included.
-- `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js` - each view described, presented and styled,
+- `modules/gui/src/app/home/body/process/recipe/outputs/modelDerivedOutput.test.js` - each view described, presented and styled,
   and refused without a period or a Planet collection.
 - `modules/gui/src/app/home/body/process/recipe/changeAlerts/changeAlertsImageLayer.test.js` - the layer form over a
   broken period or Planet source, and over a period that cannot be computed - before year 0, a duration that is no
   number, a unit it cannot count - switching modes without failing, and recovering in either mode once corrected.
-- `modules/gui/src/app/home/body/process/recipe/recipeImageLayer.test.js` - preview arguments, a view change and a
+- `modules/gui/src/app/home/body/process/recipe/map/recipeImageLayer.test.js` - preview arguments, a view change and a
   restyle acquiring nothing, and a record change acquiring again.
 
 Focused GUI/server tests also cover retained native selections, draft Enter/direct submission, Cancel,

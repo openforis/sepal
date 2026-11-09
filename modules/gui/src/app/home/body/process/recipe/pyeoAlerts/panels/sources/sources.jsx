@@ -21,7 +21,7 @@ import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 import {RecipeInput} from '~/widget/recipeInput'
 
-import {withUpdates} from '../../../formSubmission'
+import {withUpdates} from '../../../editing/formSubmission'
 import {preferredGateIndex, readableGateIndexes} from '../../gateIndexes'
 import {NOT_DERIVABLE, readInputImagery$, SELECTED_SCENES} from '../../inputImagery'
 import toDateString from '../../toDateString'

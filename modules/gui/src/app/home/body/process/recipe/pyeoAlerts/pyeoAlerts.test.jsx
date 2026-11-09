@@ -21,7 +21,7 @@ vi.mock('~/apiRegistry', () => ({default: {gee: {recipeBounds$: (...args) => rec
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/app/home/map/map', () => ({Map: ({children}) => <div>{children}</div>}))
 vi.mock('./panels/pyeoAlertsToolbar', () => ({PyeoAlertsToolbar: () => null}))
-vi.mock('~/app/home/body/process/recipe/recipeImageLayerSource', () => ({initializeLayers: () => {}}))
+vi.mock('~/app/home/body/process/recipe/map/recipeImageLayerSource', () => ({initializeLayers: () => {}}))
 vi.mock('~/app/home/map/mapContext', () => ({
     withMap: () => Component => props => <Component {...props} map={{
         linked$: {getValue: () => ({linked: false})},

@@ -1,5 +1,5 @@
 import {MISSING_LEGEND} from '#sepal/recipe/type/classChange'
-import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
+import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/outputs/recipeOutput'
 import {msg} from '~/translate'
 
 // What Class Change needs of each image's legend, as its shared definition finds it (lib/js/shared/src/recipe/type/

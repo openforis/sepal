@@ -57,14 +57,14 @@ vi.mock('~/widget/activation/activator', () => ({
 }))
 // The root's map and its layers: the toolbar is what is looked at.
 vi.mock('~/app/home/map/map', async importOriginal => ({...await importOriginal(), Map: ({children}) => children}))
-vi.mock('../aoi', async importOriginal => ({...await importOriginal(), Aoi: () => null}))
-vi.mock('../recipeImageLayerSource', async importOriginal => ({...await importOriginal(), initializeLayers: () => {}}))
+vi.mock('../map/aoi', async importOriginal => ({...await importOriginal(), Aoi: () => null}))
+vi.mock('../map/recipeImageLayerSource', async importOriginal => ({...await importOriginal(), initializeLayers: () => {}}))
 
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: ccdc} = await import('./ccdc')
 const {breakDetectionOptions} = await import('./ccdcRecipe')
-const {mapProductGate, pixelOperationsAvailability, retrieveAvailability} = await import('../operationAvailability')
-const {requestGate} = await import('../sourceRequirements')
+const {mapProductGate, pixelOperationsAvailability, retrieveAvailability} = await import('../requirements/operationAvailability')
+const {requestGate} = await import('../requirements/sourceRequirements')
 
 addRecipeType(ccdc())
 const Root = ccdc().components.recipe

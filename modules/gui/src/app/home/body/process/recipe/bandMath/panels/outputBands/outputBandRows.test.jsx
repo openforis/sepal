@@ -39,8 +39,8 @@ vi.mock('~/widget/tooltip', () => ({
 }))
 
 const {OutputBands} = await import('./outputBands')
-const {sourceProblemsOfState} = await import('../../../selectedSourceStatus')
-const {configurationGate} = await import('../../../sourceRequirements')
+const {sourceProblemsOfState} = await import('../../../requirements/selectedSourceStatus')
+const {configurationGate} = await import('../../../requirements/sourceRequirements')
 const {findChanges} = await import('../../sync/findChanges')
 const {updateOutputBands} = await import('../../sync/updateOutputBands')
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')

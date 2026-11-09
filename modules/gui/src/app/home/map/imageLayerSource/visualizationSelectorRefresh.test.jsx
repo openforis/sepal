@@ -53,7 +53,7 @@ const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry
 const {addRecipeImageLayer} = await import('~/app/home/body/process/recipeImageLayerRegistry')
 const {default: bandMath} = await import('~/app/home/body/process/recipe/bandMath/bandMath')
 const {BandMathImageLayer} = await import('~/app/home/body/process/recipe/bandMath/bandMathImageLayer')
-const {RecipeImageLayer} = await import('~/app/home/body/process/recipe/recipeImageLayer')
+const {RecipeImageLayer} = await import('~/app/home/body/process/recipe/map/recipeImageLayer')
 const {TabContext} = await import('~/widget/tabs/tabContext')
 const {MapAreaContext} = await import('../mapAreaContext')
 

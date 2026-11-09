@@ -58,7 +58,7 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
 - `modules/gee/test/jobs/ee/radar/mosaicBands.test.js`: configuration-dependent catalogue.
 - `modules/gee/test/jobs/ee/radar/mosaicDates.test.js`: dates passed to collection construction, execution defaults,
   independent bound precedence, time scans and reused BAYTS/Change Alerts products.
-- `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js`: declaration, presentation,
+- `modules/gui/src/app/home/body/process/recipe/outputs/modelDerivedOutput.test.js`: declaration, presentation,
   Retrieve and delegated BAYTS/Change Alerts views.
 - [Radar live probe](../../modules/gee/verify/README.md): both schemas/defaults, selection order, harmonic
   subsets, missing-date refusal and native-grid value/mask equivalence with/without harmonic construction.

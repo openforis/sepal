@@ -19,7 +19,7 @@ import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 
 import {TRAINING_DATA, TRAINING_DATA_LIST} from '../../../classification/trainingDataRequirements'
-import {withItemProblems} from '../../../selectedSource'
+import {withItemProblems} from '../../../requirements/selectedSource'
 import styles from './trainingData.module.css'
 import {TrainingDataSet} from './trainingDataSet'
 

@@ -2,8 +2,8 @@ import {BAYTS_ALERTS_PROCESSING} from '#sepal/recipe/requirement/baytsAlertsProc
 import {PRIMARY_IMAGE, RADAR_OBSERVATION} from '#sepal/recipe/type/baytsAlerts'
 import {msg} from '~/translate'
 
-import {IMAGE_OUTPUT} from '../recipeOutput'
-import {readSourceRequirements, SUPPORTED} from '../sourceRequirements'
+import {IMAGE_OUTPUT} from '../outputs/recipeOutput'
+import {readSourceRequirements, SUPPORTED} from '../requirements/sourceRequirements'
 import {HISTORICAL_STATS, MONITORABLE_STATISTICS, MONITORED_PASSES} from './historicalStatistics'
 
 // What BAYTS Alerts needs of the historical statistics it monitors against, selected in REF, by what reads them. The

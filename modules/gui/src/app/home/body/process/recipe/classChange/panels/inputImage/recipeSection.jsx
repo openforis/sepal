@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {recipeVisualizationsNaming} from '~/app/home/body/process/recipe/visualizations'
+import {recipeVisualizationsNaming} from '~/app/home/body/process/recipe/outputs/visualizations'
 import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
 import {msg} from '~/translate'
 import {RecipeInput} from '~/widget/recipeInput'

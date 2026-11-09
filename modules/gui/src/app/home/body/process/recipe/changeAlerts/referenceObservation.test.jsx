@@ -43,9 +43,9 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
     }
 })
 
-const {SourceEvidenceSync} = await import('../sourceEvidenceSync')
+const {SourceEvidenceSync} = await import('../sources/sourceEvidenceSync')
 const {changeAlertsObservation} = await import('./referenceObservation')
-const {baseBandsOf} = await import('../segmentEvidence')
+const {baseBandsOf} = await import('../sources/segmentEvidence')
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 

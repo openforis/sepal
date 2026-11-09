@@ -2,7 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {mayProvideSegments} from '#sepal/recipe/capability/ccdcSegments'
-import {sourceVisualizations} from '~/app/home/body/process/recipe/visualizations'
+import {sourceVisualizations} from '~/app/home/body/process/recipe/outputs/visualizations'
 import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
 import {msg} from '~/translate'
 import {RecipeInput} from '~/widget/recipeInput'

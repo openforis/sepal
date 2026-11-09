@@ -57,7 +57,7 @@ vi.mock('~/widget/recipeInput', () => ({RecipeInput: ({onBandsLoaded}) => {
     React.useEffect(() => onBandsLoaded({bandNames: ['class'], recipe: {}}), [])
     return null
 }}))
-vi.mock('~/app/home/body/process/recipe/visualizations', () => ({
+vi.mock('~/app/home/body/process/recipe/outputs/visualizations', () => ({
     recipeVisualizationsNaming: () => [{type: 'categorical', bands: ['class'], values: [1], labels: ['Legend'], palette: ['#ff0000']}]
 }))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
@@ -93,7 +93,7 @@ vi.mock('./proportions/proportionControls', () => ({
 }))
 
 const {samplingDesignRequirements, samplesGate} = await import('../freshnessRequirements')
-const {sectionProblemsOfState} = await import('../../selectedSourceStatus')
+const {sectionProblemsOfState} = await import('../../requirements/selectedSourceStatus')
 const {samplingDesignCalculations} = await import('../calculations')
 const {Stratification} = await import('./stratification/stratification')
 const {Proportions} = await import('./proportions/proportions')

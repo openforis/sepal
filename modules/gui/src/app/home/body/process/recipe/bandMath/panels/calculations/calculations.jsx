@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {recipeActionBuilder, recipePath} from '~/app/home/body/process/recipe'
-import {commitRecipe} from '~/app/home/body/process/recipe/derivedResult'
+import {commitRecipe} from '~/app/home/body/process/recipe/editing/derivedResult'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -17,7 +17,7 @@ import {ListItem} from '~/widget/listItem'
 import {NoData} from '~/widget/noData'
 import {Panel} from '~/widget/panel/panel'
 
-import {withItemProblems} from '../../../selectedSource'
+import {withItemProblems} from '../../../requirements/selectedSource'
 import {Calculation} from './calculation'
 import styles from './calculations.module.css'
 

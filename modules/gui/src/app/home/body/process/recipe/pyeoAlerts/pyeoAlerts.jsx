@@ -1,14 +1,14 @@
 import moment from 'moment'
 import React from 'react'
 
-import {initializeLayers} from '~/app/home/body/process/recipe/recipeImageLayerSource'
+import {initializeLayers} from '~/app/home/body/process/recipe/map/recipeImageLayerSource'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
-import {Aoi} from '../aoi'
+import {Aoi} from '../map/aoi'
 import {bandPresentation} from './bands'
 import {PyeoAlertsToolbar} from './panels/pyeoAlertsToolbar'
 import {defaultModel} from './pyeoAlertsRecipe'

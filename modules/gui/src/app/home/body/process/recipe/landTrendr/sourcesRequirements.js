@@ -2,8 +2,8 @@ import {UNSUPPORTED_COLLECTION_BANDS} from '#sepal/recipe/collectionBands'
 import {MISSING_DATA_SETS, MISSING_INDEX} from '#sepal/recipe/type/landTrendr'
 import {msg} from '~/translate'
 
-import {dataSetPeriodRequirement} from '../dataSetPeriodRequirement'
-import {listed, sourcesFieldRequirement} from '../fieldRequirement'
+import {dataSetPeriodRequirement} from '../collections/dataSetPeriodRequirement'
+import {listed, sourcesFieldRequirement} from '../requirements/fieldRequirement'
 
 // What LandTrendr's change map needs of its Sources, as its shared definition finds it (type/landTrendr.js): data sets,
 // one of which may hold imagery in its years, and an index the collection they configure can carry. Its output read

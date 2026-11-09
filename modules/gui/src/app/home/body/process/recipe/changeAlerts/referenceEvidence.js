@@ -1,6 +1,6 @@
 import {PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
 
-import {segmentDescription} from '../segmentEvidence'
+import {segmentDescription} from '../sources/segmentEvidence'
 
 // What Change Alerts presents of the segments it monitors against, read from the reference it selects
 // (segmentEvidence.js).

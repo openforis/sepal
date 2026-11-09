@@ -55,8 +55,8 @@ vi.mock('~/widget/tooltip', () => ({
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: bandMath} = await import('./bandMath')
 const {BandMathToolbar} = await import('./panels/bandMathToolbar')
-const {commitRecipe} = await import('~/app/home/body/process/recipe/derivedResult')
-const {configurationGate, requestGate} = await import('../sourceRequirements')
+const {commitRecipe} = await import('~/app/home/body/process/recipe/editing/derivedResult')
+const {configurationGate, requestGate} = await import('../requirements/sourceRequirements')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
 

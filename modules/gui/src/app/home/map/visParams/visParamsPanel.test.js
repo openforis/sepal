@@ -34,7 +34,7 @@ vi.mock('~/apiRegistry', async () => {
 })
 
 const {VisParamsPanel} = await import('./visParamsPanel')
-const {productArgs} = await import('~/app/home/body/process/recipe/recipeOutput')
+const {productArgs} = await import('~/app/home/body/process/recipe/outputs/recipeOutput')
 const {layerConfigChanges} = await import('~/app/home/body/process/recipe/landTrendr/bands')
 
 beforeEach(() => {

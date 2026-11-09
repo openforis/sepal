@@ -45,7 +45,7 @@ const LISTING = [{id: OPTICAL, name: 'optical'}, {id: MASK, name: 'mask'}, {id: 
 
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: masking} = await import('../recipe/masking/masking')
-const {initializeLayers} = await import('../recipe/recipeImageLayerSource')
+const {initializeLayers} = await import('../recipe/map/recipeImageLayerSource')
 const {registerImageLayerSources} = await import('../imageLayerSources')
 const {MapLayout, MapLayoutButton} = await import('./mapLayout')
 

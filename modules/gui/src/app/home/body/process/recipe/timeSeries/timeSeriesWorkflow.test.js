@@ -8,7 +8,7 @@ vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') :
 // Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
 vi.mock('~/user', () => ({}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
-vi.mock('~/app/home/body/process/recipe/recipeOutputPath', () => ({getTaskInfo: () => ({})}))
+vi.mock('~/app/home/body/process/recipe/retrieve/recipeOutputPath', () => ({getTaskInfo: () => ({})}))
 
 const submitted = vi.hoisted(() => [])
 vi.mock('~/apiRegistry', () => ({

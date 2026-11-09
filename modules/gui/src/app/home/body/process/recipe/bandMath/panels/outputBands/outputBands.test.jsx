@@ -4,7 +4,7 @@ vi.mock('~/app/home/body/process/recipeFormPanel', () => ({
     RecipeFormPanel: ({children}) => children,
     recipeFormPanel: () => Component => Component
 }))
-vi.mock('../../../selectedSource', () => ({withItemProblems: () => Component => Component}))
+vi.mock('../../../requirements/selectedSource', () => ({withItemProblems: () => Component => Component}))
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/widget/form', () => {
     class Property {

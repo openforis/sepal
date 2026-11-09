@@ -9,7 +9,7 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {setInitialized} from '../../../recipe'
-import {RetrieveButton} from '../../retrieveButton'
+import {RetrieveButton} from '../../retrieve/retrieveButton'
 import styles from './baytsHistoricalToolbar.module.css'
 import {Dates} from './dates/dates'
 import {Options} from './options/options'

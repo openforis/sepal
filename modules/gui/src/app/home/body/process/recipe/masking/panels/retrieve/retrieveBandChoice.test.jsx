@@ -99,14 +99,14 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
 })
 
 const {ccdcMeasures, ccdcOutputBands} = await import('#sepal/recipe/type/ccdc')
-const {SourceEvidenceSync} = await import('~/app/home/body/process/recipe/sourceEvidenceSync')
+const {SourceEvidenceSync} = await import('~/app/home/body/process/recipe/sources/sourceEvidenceSync')
 const {maskingObservation} = await import('../../maskingSourceEvidence')
 const {Retrieve} = await import('./retrieve')
 const {Retrieve: ClassificationRetrieve} = await import('../../../classification/panels/retrieve/retrieve')
 const {Retrieve: CcdcRetrieve} = await import('../../../ccdc/panels/retrieve/retrieve')
 const {Retrieve: PhenologyRetrieve} = await import('../../../phenology/panels/retrieve/retrieve')
 const {default: ccdc} = await import('../../../ccdc/ccdc')
-const {retrieveAvailability} = await import('../../../operationAvailability')
+const {retrieveAvailability} = await import('../../../requirements/operationAvailability')
 registered.CCDC = ccdc()
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true

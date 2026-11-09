@@ -4,7 +4,7 @@ import {CALCULATION_REFERENCES, calculationItem} from '#sepal/recipe/bandMath/ca
 import {SUPPORTED} from '#sepal/recipe/requirement/verdict'
 import {inputSourceKey} from '#sepal/recipe/source/inputImagery'
 import {recipeActionBuilder, recipePath} from '~/app/home/body/process/recipe'
-import {commitRecipe} from '~/app/home/body/process/recipe/derivedResult'
+import {commitRecipe} from '~/app/home/body/process/recipe/editing/derivedResult'
 import {selectFrom} from '~/stateUtils'
 import {select} from '~/store'
 

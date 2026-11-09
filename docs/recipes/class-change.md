@@ -100,7 +100,7 @@ clients regenerate the whole legend whenever either image changes, discarding cu
 
 - `lib/js/shared/test/recipe/output/type/changeSelectedBands.test.js` and `output/readiness.test.js`:
   missing bands/legends and downstream holds; `source/recipeClosureLoader.test.js` covers failed reads.
-- `modules/gui/src/app/home/body/process/recipe/changeImageRequirements.test.jsx`: source replacement,
+- `modules/gui/src/app/home/body/process/recipe/requirements/changeImageRequirements.test.jsx`: source replacement,
   saved missing choices, unavailable evidence, isolated draft repair, marks and preview/Retrieve recovery.
 - `modules/gee/test/jobs/ee/image/classChangeNumbering.test.js` and `modelDerivedOutputBands.test.js`:
   execution/declaration numbering and both output branches.

@@ -25,9 +25,9 @@ vi.mock('~/apiRegistry', () => ({default: {
 
 vi.mock('~/translate', () => ({msg: key => key}))
 
-const {buildMapDependencyGraph} = await import('../recipe/mapDependencyGraph')
-const {readRecipeOutput} = await import('../recipe/recipeOutput')
-const {readRetrieveOutput, retrieveDecision} = await import('../recipe/retrieveOutput')
+const {buildMapDependencyGraph} = await import('../recipe/outputs/mapDependencyGraph')
+const {readRecipeOutput} = await import('../recipe/outputs/recipeOutput')
+const {readRetrieveOutput, retrieveDecision} = await import('../recipe/retrieve/retrieveOutput')
 const {assetEvidenceOfState} = await import('./assetEvidence')
 const {createReduxSourceEnvironment} = await import('./reduxSourceEnvironment')
 const {recordStalenessOfState} = await import('./recordCurrency')

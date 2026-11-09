@@ -2,10 +2,10 @@ import {Observable} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 
-import {earthEngineGeneration, evidenceSession} from '../recipe/sourceEvidenceBasis'
 import {cacheAcceptance, initializeRecipe, REPLACE} from '../recipeCache'
 import {RecipeCacheClaimant} from '../recipeCacheClaims'
 import {ASSET_EVIDENCE_PATH, assetEvidenceOfState} from './assetEvidence'
+import {earthEngineGeneration, evidenceSession} from './sourceEvidenceBasis'
 
 // The only Redux adapter in the source runtime.
 //

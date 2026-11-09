@@ -52,7 +52,7 @@ const {default: phenology} = await import('./phenology')
 const {default: classification} = await import('../classification/classification')
 const {default: opticalMosaic} = await import('../opticalMosaic/opticalMosaic')
 const {Sources} = await import('./panels/sources/sources')
-const {retrieveAvailability} = await import('../operationAvailability')
+const {retrieveAvailability} = await import('../requirements/operationAvailability')
 
 addRecipeType(phenology())
 addRecipeType(classification())

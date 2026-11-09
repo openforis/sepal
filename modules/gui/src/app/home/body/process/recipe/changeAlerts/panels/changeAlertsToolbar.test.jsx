@@ -34,13 +34,13 @@ vi.mock('~/widget/toolbar/toolbar', () => ({
 }))
 // The sections held back by their source, as the source requirements read them (selectedSourceStatus.js).
 const sections = vi.hoisted(() => ({problems: {}}))
-vi.mock('../../selectedSource', () => ({
+vi.mock('../../requirements/selectedSource', () => ({
     withSourceProblems: () => Component => props => <Component {...props} sourceProblems={sections.problems}/>
 }))
-vi.mock('~/app/home/body/process/recipe/chartPixelButton', () => ({
+vi.mock('~/app/home/body/process/recipe/charts/chartPixelButton', () => ({
     ChartPixelButton: ({disabled}) => <button aria-label='chart-pixel' disabled={disabled}/>
 }))
-vi.mock('../../retrieveButton', () => ({
+vi.mock('../../retrieve/retrieveButton', () => ({
     RetrieveButton: ({disabled}) => <button aria-label='retrieve' disabled={disabled}/>
 }))
 

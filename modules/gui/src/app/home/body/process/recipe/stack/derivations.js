@@ -2,7 +2,7 @@ import _ from 'lodash'
 
 import {committedBandNames, savedBandNames} from '#sepal/recipe/type/stack'
 
-import {renamedVisualizationBands} from '../visualizationRenames'
+import {renamedVisualizationBands} from '../outputs/visualizationRenames'
 
 // What Stack keeps derived in the applied recipe (derivedResult.js): the names of its output bands, given by every
 // commit, whichever editor commits it, by the rule the declaration owns (committedBandNames), and its own

@@ -277,6 +277,37 @@ saved class identities and locally edited styles; exports and downstream recipes
 preview-only filter. Verify map tiles, cursor values, legends, histograms, Copy/Paste and re-enabling classes agree
 with the chosen policy, including unknown categories and genuinely masked pixels.
 
+## GUI code organization
+
+The [shared recipe GUI reorganization](#shared-recipe-gui-organization) is implemented. These follow-up candidates
+are confirmed by code and imports, not by file count alone. Keep each move bounded and preserve behavior and existing
+lifecycle, acquisition, caching and validation owners.
+
+- **Application monitors in `widget/`, recommended first.** Budget, session/expiry, task, message, login and connection
+  monitors are application services mounted by `app/home/home.jsx`, mixed with generic controls. Some also read
+  application policy and user-session presentation. Give them an application-owned location, moving associated
+  rules, tests and styles together and updating callers of their refresh functions. Separately group the asset and
+  workspace selectors; `widget/recipeInput.jsx` depends on recipe access, context and registration, so coordinate
+  its destination with the current recipe-folder proposal. Keep generic controls in the widget library.
+- **Recipe-session support in the parent `process/` directory.** `draftAgreement.js`, `recipeCache.js`,
+  `recipeCacheClaims.js`, `recipeListing.js`, `saveCoordinator.js` and `recipeAccess.jsx` form a connected lifecycle
+  group beside process menus, creation screens and layer registries. Assess a cohesive session/cache/save location
+  and what remains at the process entry points. Coordinate with the current proposal rather than planning overlapping
+  moves; keep `process/sourceRuntime` as the acquisition owner.
+- **Feature-layer code in `app/home/map/`.** The root mixes map lifetime/context and controls with feature rendering,
+  styling and legend editing. Start with the feature-layer editor and its style, filter, category and asset-style
+  helpers, then establish which renderers belong with them. Preserve the existing `visParams/` and
+  `imageLayerSource/` boundaries rather than reshuffling the whole map tree.
+- **Application preferences under `app/landing/`.** `themeSelector.jsx` and `languageSelector.jsx` are used by both
+  Landing and the authenticated user menu. Give these controls an application-wide preferences location, preserving
+  their theme/language behavior and both entry points.
+
+Acceptance for each move: a concrete old-to-new path map; companion tests/styles kept together; static and dynamic
+imports, test mocks and documentation links updated; lint, a production GUI build and the full GUI suite passing
+with at most two test workers. Keep moves separate from behavior/API redesign and introduce no compatibility
+re-exports, barrels or aliases solely for relocation. Shared recipe `type/`, `source/` and `output/` already have clear
+responsibilities and are not candidates merely because they contain many files.
+
 ## Deferred recipe architecture
 
 These remain unscheduled target designs. Correctness and usability slices above do not require adopting them.
@@ -300,8 +331,8 @@ operations return evidence of what they read (`modules/gee/src/jobs/dependencyEv
 it (`lib/js/shared/src/recipe/calculation`); the source runtime owns calculation work and current evidence
 (`sourceRuntime/calculationEvidence.js`); and local requirements read runtime-acquired evidence with its acquisition
 state (`sourceRequirements.js`). Sampling Design is its first consumer. Form panels judge drafts, as committing them
-would leave the recipe, by local requirements naming them as `editor` (`recipe/localCandidate.js`) and keep synchronous results derived in their drafts
-(`recipe/derivedResult.js`): Sampling Design's manual proportions and allocation, and Band Math's Output bands, use them.
+would leave the recipe, by local requirements naming them as `editor` (`recipe/editing/localCandidate.js`) and keep synchronous results derived in their drafts
+(`recipe/editing/derivedResult.js`): Sampling Design's manual proportions and allocation, and Band Math's Output bands, use them.
 Commits keep applied results derived in the same action (`commitRecipe`, same file):
 [Band Math's calculation bands](../recipes/band-math.md), [Stack's band names](../recipes/stack.md#band-names) and
 [Class Change's transition legend](../recipes/class-change.md#transition-legend).
@@ -334,7 +365,7 @@ Use the part of the mechanism each responsibility needs:
 
 | Recipes | Concrete reuse and existing owner | Migration boundary |
 | --- | --- | --- |
-| CCDC, Time Series, Phenology | The selected Classification is read once per recipe for its UI (`selectedClassification.js`). Chosen bands of the images, classified outputs and CCDC's TMask are judged in shared readiness, and Sources keep chosen bands shown. `collectionClassifierRequirements.js`, `collectionBandRequirements.js` and CCDC's `segmentDescription.js` establish reusable owners. | [Remaining items](#temporal-sources-dependencies): unmatched Planet Daily's imagery-dependent bands and the Time Series chart's corrections. No persisted fit evidence. |
+| CCDC, Time Series, Phenology | The selected Classification is read once per recipe for its UI (`collections/selectedClassification.js`). Chosen bands of the images, classified outputs and CCDC's TMask are judged in shared readiness, and Sources keep chosen bands shown. `collections/collectionClassifierRequirements.js`, `collections/collectionBandRequirements.js` and CCDC's `segmentDescription.js` establish reusable owners. | [Remaining items](#temporal-sources-dependencies): unmatched Planet Daily's imagery-dependent bands and the Time Series chart's corrections. No persisted fit evidence. |
 | LandTrendr | Sources' data-set, date and index dependencies are judged in shared readiness, and Sources keep chosen values shown and say which inputs an index lacks ([LandTrendr](../recipes/landtrendr.md#sources)). Data sets follow the shared [data-set availability](recipes/data-sources.md#data-set-availability). | [Named-product periods](#sources-data-set-availability), the annual mosaic's included; chart gating stays with [server preview readiness](#server-preview-readiness). |
 | Optical Mosaic | `sceneAreas.jsx`, `sceneSelection.jsx`, `autoSelectScenes.jsx` and `sceneDeselection.jsx` separately coordinate AOI/source/date-dependent reads and selected scenes. | Shared question identity and request lifecycle can replace local coordination. Scene discovery results are temporary; manual selections remain user-owned. Preserve explicit auto-selection and define retention/reconciliation before changing scene deletion behaviour. |
 | Classification, Regression | Shared input-band and training-data requirements already judge live dependencies. `panels/trainingData/sample*Section.jsx` and table-import sections own similar asynchronous import requests and mapping stages. | Reuse acquisition lifecycle and declared stage prerequisites where duplicated. Sampled/imported rows are persisted snapshots, and source IDs there record provenance; do not turn them into live execution dependencies or invalidate them automatically. Keep training adequacy and value/encoding policy separate. |
@@ -357,7 +388,7 @@ Use the part of the mechanism each responsibility needs:
   explicit stretching and legend-value requests. Request identity includes the image/product, band and spatial
   question. Sharing/currency must preserve edited ranges and legends; a fresh result does not authorize replacing
   them. Retain the existing Paste cancellation safeguards.
-- **Charts and Retrieve:** `pixelChartUpdate.js`, operation watches, selected-Classification reads and the shared
+- **Charts and Retrieve:** `charts/pixelChartUpdate.js`, operation watches, selected-Classification reads and the shared
   Retrieve panel already coordinate relevant consumers. Extend those owners where a migration exposes a gap;
   do not add a second chart/request coordinator or duplicate server-preview readiness work.
 
@@ -586,6 +617,19 @@ categorical values/labels, layer inclusion, masked/failed states, common value/c
 zoom, outer-layer transformations, and superseded requests on location/source changes. Feature inspection and new
 generic charts can follow separately. Scalar/array and unit/encoded-value presentation still need decisions;
 physical-value presentation remains deferred separately. No new tool-registration framework is selected.
+
+### Shared recipe GUI organization
+
+Shared recipe GUI modules are grouped by responsibility ([code layout](recipes/gui-source-runtime.md#code-layout)).
+Remaining, each a separate bounded move or decision:
+
+- **`mosaic/` shared panels.** The AOI and radar-options panels several types use sit in a folder that is no recipe
+  type. Give them a shared location with their tests, styles and `mosaicRecipe.js`.
+- **Shared code reading type folders.** `collections/` reads `classification/bands.js`, and
+  `sources/segmentCapability.js` reads `ccdc/segmentsAsset.js`. Assess whether those owners should move, not just
+  the files.
+- **Collection definitions.** The mosaic types' data-set catalogues, bands and processing panels, and `~/sources.js`,
+  follow [source planning](#source-planning-and-temporal-collection-composition).
 
 ### Recipe packages and supporting work
 

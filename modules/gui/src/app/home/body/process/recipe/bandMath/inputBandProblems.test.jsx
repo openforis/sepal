@@ -59,9 +59,9 @@ const {default: bandMath} = await import('./bandMath')
 const {BandMathToolbar} = await import('./panels/bandMathToolbar')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
-const {buildMapDependencyGraph} = await import('../mapDependencyGraph')
-const {readRecipeOutput} = await import('../recipeOutput')
-const {readRetrieveOutput} = await import('../retrieveOutput')
+const {buildMapDependencyGraph} = await import('../outputs/mapDependencyGraph')
+const {readRecipeOutput} = await import('../outputs/recipeOutput')
+const {readRetrieveOutput} = await import('../retrieve/retrieveOutput')
 
 addRecipeType(bandMath())
 

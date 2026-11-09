@@ -2,9 +2,9 @@ import {map} from 'rxjs'
 
 import {PRIMARY_IMAGE} from '#sepal/recipe/type/ccdcSlice'
 
-import {describeSegmentSource$} from '../segmentCapability'
-import {selectedSourceOf} from '../sourceEvidence'
-import {withKnownIdentities} from '../visualizationMatching'
+import {withKnownIdentities} from '../outputs/visualizationMatching'
+import {describeSegmentSource$} from '../sources/segmentCapability'
+import {selectedSourceOf} from '../sources/sourceEvidence'
 import {knownTemplates} from './sliceEvidence'
 
 // What CCDC Slice observes about the source it slices: the description of the segments that source

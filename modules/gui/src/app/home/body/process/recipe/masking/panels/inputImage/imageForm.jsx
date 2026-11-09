@@ -2,7 +2,7 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React, {Component} from 'react'
 
-import {withKnownIdentities} from '~/app/home/body/process/recipe/visualizationMatching'
+import {withKnownIdentities} from '~/app/home/body/process/recipe/outputs/visualizationMatching'
 import {Layout} from '~/widget/layout'
 
 import styles from './inputImage.module.css'

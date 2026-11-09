@@ -17,7 +17,7 @@ vi.mock('~/user', () => ({isGoogleAccount}))
 vi.mock('~/store', () => ({select}))
 vi.mock('~/translate', () => ({msg: (key, args) => args ? `${key}:${JSON.stringify(args)}` : key}))
 vi.mock('~/app/home/body/process/recipe', () => ({recipeActionBuilder: () => ({})}))
-vi.mock('~/app/home/body/process/recipe/recipeOutputPath', () => ({getTaskInfo: () => ({})}))
+vi.mock('~/app/home/body/process/recipe/retrieve/recipeOutputPath', () => ({getTaskInfo: () => ({})}))
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: () => ({sourceRequirements: requirements})}))
 
 const {submitRetrieveRecipeTask} = await import('./samplingDesignRecipe')

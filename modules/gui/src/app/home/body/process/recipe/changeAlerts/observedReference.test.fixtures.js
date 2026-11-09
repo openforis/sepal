@@ -4,9 +4,9 @@ import {assetProcessing} from '#sepal/recipe/changeAlerts/processing'
 import {buildRecipeDependencyGraph} from '#sepal/recipe/source/dependencyGraph'
 import {dependencyValidity} from '#sepal/recipe/source/dependencyValidity'
 
+import {createRecipeImageOutputObserver} from '../../sourceRuntime/imageOutputObserver'
 import {typedSegmentsAssetDescription} from '../ccdc/segmentsAsset'
-import {createRecipeImageOutputObserver} from '../imageOutputObserver'
-import {sourceKeyOf} from '../sourceEvidence'
+import {sourceKeyOf} from '../sources/sourceEvidence'
 
 // A Change Alerts reference to a segments asset as the source runtime establishes it, for tests that read a recipe
 // without running the runtime: what its observation publishes, and what its DESCRIBE answers. Each is derived by the

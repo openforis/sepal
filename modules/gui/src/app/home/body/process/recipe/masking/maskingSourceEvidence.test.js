@@ -12,7 +12,7 @@ vi.mock('../../recipeTypeRegistry', async () => {
 })
 
 const {getPreSetVisualizations} = await import('./visualizations')
-const {recipeVisualizations} = await import('../visualizations')
+const {recipeVisualizations} = await import('../outputs/visualizations')
 
 // What a consumer offers, given the bands Masking's description holds.
 const offered = (recipe, bands) =>

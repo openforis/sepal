@@ -168,7 +168,7 @@ closure check, which reads recipes, not assets.
   nothing here claims its pixels match, or validates browser-supplied policies.
 - **Drawings.** A drawing stays until there is a reason to change its content: a change to a record it computes, to
   how it is visualized, or to an asset it reads - a token differing from one read before, not the first token
-  learned (`recipe/pixelGeneration.js`) - or an explicit refresh. Nothing redraws for elapsed time, for a check or
+  learned (`recipe/outputs/pixelGeneration.js`) - or an explicit refresh. Nothing redraws for elapsed time, for a check or
   observation that found nothing changed, for replaced credentials - which change how later requests authenticate,
   not the pixels shown - or for a check, metadata read or description that failed for now: the drawing is kept while
   its answer is read again or cannot be had, as long as nothing it was drawn from changed. A drawing kept authorizes
@@ -236,8 +236,8 @@ session the revisions and tokens its answers report, holds what it acquires to t
 agreement, asset authority and credentials as every other runtime answer (`sourceRuntime/evidenceStanding.js`), and
 refuses a calculation answer superseded in flight. Shared requirements judge its published evidence's age as they read
 it, and form panels calculate what an edit requires while open, and judge what they are about to apply, through one
-binding a type declares (`recipe/calculatedResult.js`). Toolbars mark unfinished and stale sections through the shared
-requirement presentation, a section waiting on another left neutral (`recipe/selectedSourceStatus.js`). Product projections are each type's `dependencyProjection`, the whole persisted model where a type
+binding a type declares (`recipe/editing/calculatedResult.js`). Toolbars mark unfinished and stale sections through the shared
+requirement presentation, a section waiting on another left neutral (`recipe/requirements/selectedSourceStatus.js`). Product projections are each type's `dependencyProjection`, the whole persisted model where a type
 declares none. The remaining result-evidence, resource-retention and integration sections are target design. Do not
 add a temporary browser content-hash bridge or use `update_time` as an intermediate freshness tier.
 
@@ -298,10 +298,10 @@ presents and enforces:
   recipe as the panel's values would leave it, with what committing them derives (`committedRecipe`), prerequisites
   resolved there, tells the input what the named ones find - an item's status by item, anything else as an error
   unless it is set-up not yet done - and holds Apply as the editor's policy says, rechecking against the recipe as it
-  stands at submission (`recipe/localCandidate.js`). Band Math's Output bands says each output image's problems on its
+  stands at submission (`recipe/editing/localCandidate.js`). Band Math's Output bands says each output image's problems on its
   row and holds nothing back; Sampling Design's manual proportions refuse answers for other strata.
 - **Synchronous derived results.** A type declares `derivedResults` - {panel, current(model), derive(model)} - for
-  results its panels derive from the model alone (`recipe/derivedResult.js`). Whenever the edit, or the recipe under
+  results its panels derive from the model alone (`recipe/editing/derivedResult.js`). Whenever the edit, or the recipe under
   it, leaves the draft not current, the binding derives it again into the draft; a submission it is not derived for is
   refused and derived anew. Nothing is acquired, polled or enters the calculation cache. A result a person must approve
   records, as it is derived, the canonical inputs it read, and `current` compares that record with what the model reads
@@ -311,7 +311,7 @@ presents and enforces:
 
 **Applied derivations.** A cheap result that must stay current with its editors closed is derived when the applied
 recipe changes, not in a draft and not by a mounted watcher. A `derivedResults` declaration with `applied` in place of
-`panel` is evaluated by the shared commit (`commitRecipe`, `recipe/derivedResult.js`). Commits are a form panel's Apply
+`panel` is evaluated by the shared commit (`commitRecipe`, `recipe/editing/derivedResult.js`). Commits are a form panel's Apply
 (`setModelAndValues`, after its `additionalUpdates`), and the list operations that commit outside a panel: removing an
 input (`inputImages.js`) or a calculation.
 The commit reads the recipe as its own action leaves it, evaluates the declaration over that recipe and the one before

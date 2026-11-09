@@ -1,6 +1,6 @@
 import {selectFrom} from '~/stateUtils'
 
-import {earthEngineGeneration} from '../recipe/sourceEvidenceBasis'
+import {earthEngineGeneration} from './sourceEvidenceBasis'
 
 // What this session knows of the Earth Engine assets its consumers read: each asset's change token, how recently it was
 // read, and whether the latest read failed. Held in the session (`process.assetEvidence`) for the credentials it was

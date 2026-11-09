@@ -2,7 +2,7 @@ import {effectiveSettings, NOT_RECORDED, PROCESSING_FIELDS} from '#sepal/recipe/
 import {PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
 import {msg} from '~/translate'
 
-import {presentedInput, preservedCopies, processingOfEvidence} from '../referenceProcessing'
+import {presentedInput, preservedCopies, processingOfEvidence} from '../sources/referenceProcessing'
 
 // Presentation reads the observation the runtime maintains for this selection. Submission uses SourceCandidate's
 // current owner/basis check as well; none of these reads write effective settings into the saved consumer.

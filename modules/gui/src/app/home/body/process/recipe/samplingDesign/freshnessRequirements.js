@@ -21,7 +21,7 @@ import {
     SOURCE_UNCHECKED,
     UNAVAILABLE,
     UNCHECKED
-} from '../sourceRequirements'
+} from '../requirements/sourceRequirements'
 import {isManualAllocation, unansweredStrata} from './sampling/allocationOutcome'
 import {unansweredProportions} from './sampling/designModel'
 import {isSectionStale} from './sampling/validateRetrieve'

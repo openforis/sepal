@@ -1,8 +1,8 @@
 import React from 'react'
 
-import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
 import {groupedBandPresentation} from '~/app/home/body/process/recipe/planetMosaic/bands'
 import {retrieveTask} from '~/app/home/body/process/recipe/planetMosaic/planetMosaicRecipe'
+import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/retrieve/retrievePanel'
 
 export class Retrieve extends React.Component {
     render() {

@@ -60,7 +60,8 @@ src/
       apps/             # App launcher UI: instance picker modal, per-tab sessionId, appSessionMonitor
       browse/           # File/asset browsers
       process/          # Recipe processing (main feature area)
-        recipe/         # Recipe types: mosaic, classification, timeSeries, ccdc, etc.
+        recipe/         # Recipe types (mosaic, classification, timeSeries, ccdc, etc.) and shared groups:
+                        # outputs, sources, requirements, collections, editing, map, charts, retrieve
       terminal/         # Web terminal (xterm.js)
       users/            # User management (admin)
   widget/               # Reusable UI components (buttons, forms, panels, tabs, notifications)

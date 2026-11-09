@@ -1,11 +1,11 @@
 import {PRIMARY_IMAGE, SEGMENT_BANDS, sliceOutputBands} from '#sepal/recipe/type/ccdcSlice'
 import {selectFrom} from '~/stateUtils'
 
-import {inOrderOf} from '../retrieveOutput'
-import {dateFormatOf as describedDateFormat, segmentDescription} from '../segmentEvidence'
-import {OBSERVED, selectedSourceOf, sourceKeyOf} from '../sourceEvidence'
-import {visualizationsWithAvailableBands} from '../visualizationMatching'
-import {OUTPUT_LAYER_ID} from '../visualizations'
+import {visualizationsWithAvailableBands} from '../outputs/visualizationMatching'
+import {OUTPUT_LAYER_ID} from '../outputs/visualizations'
+import {inOrderOf} from '../retrieve/retrieveOutput'
+import {dateFormatOf as describedDateFormat, segmentDescription} from '../sources/segmentEvidence'
+import {OBSERVED, selectedSourceOf, sourceKeyOf} from '../sources/sourceEvidence'
 
 // What a CCDC Slice recipe derives from the segments it slices, read from the source it selects
 // (segmentEvidence.js) together with its date mode and options - which decide both which bands the operation

@@ -6,6 +6,26 @@ instance. Components request source questions without owning catalogues, travers
 [source resolution](source-resolution.md) owns shared requirements and authorization;
 [behavior contracts](behavior-contracts.md) owns the user interaction.
 
+## Code layout
+
+Shared recipe GUI code lives in `modules/gui/src/app/home/body/process/recipe/`, beside one folder per recipe type,
+grouped by responsibility. Each group imports only the groups listed before it:
+
+| Folder | Responsibility |
+| --- | --- |
+| `outputs/` | The common output read, its dependency graph and watches, preview pixel generation and visualizations. |
+| `sources/` | Evidence about selected sources, and the CCDC segment capability. |
+| `requirements/` | Reading declared requirements, gating operations, and presenting findings at toolbars and fields. |
+| `collections/` | What image-collection Sources share: the data-set period, collection bands, the selected Classification and initial data sets. |
+| `editing/` | Candidates, submissions and derived or calculated results behind `process/recipeFormPanel.jsx`. |
+| `map/` | The recipe's image layer, its layer source and the AOI bounds. |
+| `charts/` | Pixel chart actions, headers, updates and CSV export. |
+| `retrieve/` | What may be retrieved, task submission and the common Retrieve panel. |
+
+Acquisition stays in `process/sourceRuntime/`, including the evidence basis and the image-output observer, and shared
+GUI/server policies in `lib/js/shared`. Code one type owns stays in its folder, even where other types reuse it;
+`mosaic/` holds the AOI and radar-options panels several types share.
+
 ## Public boundary
 
 `SourceRuntimeContext` exposes one stable service object, not records or observer state. The Redux adapter uses the
@@ -103,7 +123,7 @@ by an evidence write. Releasing the last watcher cancels work and releases recor
 
 A candidate represents the recipe with the panel's values applied. Output and local candidates judge the recipe as
 the panel's submission leaves it - its model at its path and the rest of the recipe its values imply
-(`additionalUpdates`) - by the construction its commit applies (`recipe/formSubmission.js`); the source candidate
+(`additionalUpdates`) - by the construction its commit applies (`recipe/editing/formSubmission.js`); the source candidate
 overlays the panel's model alone, as the alerts' seeded updates derive from its facts. If the applied observation's
 basis holds for it, reuse that evidence; otherwise observe privately. The candidate neither publishes evidence nor changes the
 applied recipe/drawing. Source replacement, Cancel and panel closure release superseded work. Refresh targets the

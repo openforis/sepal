@@ -64,7 +64,7 @@ const {default: ccdc} = await import('../ccdc')
 const {default: classification} = await import('../../classification/classification')
 const {default: opticalMosaic} = await import('../../opticalMosaic/opticalMosaic')
 const {RecipeActions} = await import('../ccdcRecipe')
-const {ChartPixelButton} = await import('../../chartPixelButton')
+const {ChartPixelButton} = await import('../../charts/chartPixelButton')
 const {CHART_OPERATIONS, ChartPixel} = await import('./chartPixel')
 
 addRecipeType(ccdc())

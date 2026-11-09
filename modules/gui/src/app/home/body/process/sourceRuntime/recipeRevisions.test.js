@@ -41,9 +41,9 @@ vi.mock('~/store', () => ({
     }
 }))
 
-const {buildMapDependencyGraph} = await import('../recipe/mapDependencyGraph')
-const {readRecipeOutput} = await import('../recipe/recipeOutput')
-const {readRetrieveOutput, retrieveDecision} = await import('../recipe/retrieveOutput')
+const {buildMapDependencyGraph} = await import('../recipe/outputs/mapDependencyGraph')
+const {readRecipeOutput} = await import('../recipe/outputs/recipeOutput')
+const {readRetrieveOutput, retrieveDecision} = await import('../recipe/retrieve/retrieveOutput')
 const {createReduxSourceEnvironment} = await import('./reduxSourceEnvironment')
 const {recordStalenessOfState} = await import('./recordCurrency')
 const {createSourceRuntime} = await import('./sourceRuntime')

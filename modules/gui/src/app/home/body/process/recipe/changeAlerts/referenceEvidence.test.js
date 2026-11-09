@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {UNAVAILABLE} from '../sourceEvidence'
+import {UNAVAILABLE} from '../sources/sourceEvidence'
 import {hasSegmentDescription} from './referenceEvidence'
 
 // What Change Alerts presents about the segments it monitors against (segmentEvidence.test.js reads the description).

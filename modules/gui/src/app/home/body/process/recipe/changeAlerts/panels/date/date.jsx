@@ -11,7 +11,7 @@ import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
 
-import {segmentDatesOf} from '../../../segmentEvidence'
+import {segmentDatesOf} from '../../../sources/segmentEvidence'
 import styles from './date.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'

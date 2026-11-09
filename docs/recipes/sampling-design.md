@@ -320,7 +320,7 @@ ran included - withdraw it to be read again. A recipe it read open as a draft st
 mutation still settling - holds it back without reading storage. It is read again before Retrieve's five-minute
 authority lapses, and whoever reads what is published judges its age as it reads, at submission too.
 
-The panels calculate through one shared binding (`recipe/calculatedResult.js`) the type declares
+The panels calculate through one shared binding (`recipe/editing/calculatedResult.js`) the type declares
 (`calculatedResults`, `calculations.js`): each result names its panel, the dependencies it reads, how its question is
 built from the edited model, whether the model holds a result, its Online/Batch mode, the operation it is held to and
 how an answer must fit the applied design - probabilities only over the frame the areas were calculated from; the
@@ -393,7 +393,7 @@ in any order, every one answered (`freshnessRequirements.js`): rows for strata t
 red, unanswered ones amber. The Proportions panel reconciles them in its draft as it opens, or as Manual is chosen
 (`reconcileManualProportions`, `designModel.js`): an answer follows its stratum, a vanished stratum leaves, and a new
 one arrives unanswered. The requirement names the panel its editor, so the draft is judged by it too
-(`recipe/localCandidate.js`): Apply, Enter and Next refuse answers for other strata than the design's as it stands,
+(`recipe/editing/localCandidate.js`): Apply, Enter and Next refuse answers for other strata than the design's as it stands,
 while unanswered rows are their own fields' to require. Manual is read as the form's toggle or as the boolean an
 earlier version saved. A `requiresUpdate` an earlier version's planner wrote keeps manual answers marked until they are
 applied: the panel drops it from its draft as it opens, Apply saves the answers without it, and Cancel leaves it.
@@ -401,7 +401,7 @@ applied: the panel drops it from its draft as it opens, Apply saves the answers 
 The sample allocation - its counts, the total they add up to and the uncertainty shown with them - is derived locally
 from the strata, the proportions and the allocation settings (`allocationOutcome.js`), and is approved by applying it.
 The Allocation panel derives it in its draft through a shared binding the type declares (`derivedResults`,
-`derivations.js`, `recipe/derivedResult.js`) whenever the design's inputs, as the edit would leave them, are not those
+`derivations.js`, `recipe/editing/derivedResult.js`) whenever the design's inputs, as the edit would leave them, are not those
 it was reviewed for: as the panel opens, as it is edited, and as what it reads changes under it. Settings a recipe
 saved before they existed, and a strategy it cannot run, are resolved to a new recipe's defaults as the draft is built
 (`defaultModel.js`), before anything is derived from it. Each derivation captures beside the outcome the inputs it

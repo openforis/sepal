@@ -11,7 +11,7 @@ vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') :
 vi.mock('~/user', () => ({}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/app/home/body/process/recipe/recipeOutputPath', () => ({getTaskInfo: () => ({})}))
+vi.mock('~/app/home/body/process/recipe/retrieve/recipeOutputPath', () => ({getTaskInfo: () => ({})}))
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({
     getRecipeType: () => ({getDateRange: () => [], getPreSetVisualizations: () => []})
 }))
@@ -30,8 +30,8 @@ vi.mock('~/apiRegistry', () => ({
 
 const {ccdcMeasures, ccdcOutputBands, ccdcPhysicalBands} = await import('#sepal/recipe/type/ccdc')
 const {buildRecipeDependencyGraph} = await import('#sepal/recipe/source/dependencyGraph')
-const {readRecipeOutput} = await import('../recipeOutput')
-const {retrieveDecision, submitRetrieve} = await import('../retrieveOutput')
+const {readRecipeOutput} = await import('../outputs/recipeOutput')
+const {retrieveDecision, submitRetrieve} = await import('../retrieve/retrieveOutput')
 const {getAllVisualizations, submitRetrieveTask} = await import('./ccdcRecipe')
 const {ccdcMeasureSelection} = await import('./retrieveSelection')
 

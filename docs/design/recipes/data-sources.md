@@ -82,7 +82,7 @@ wizard step. A Dates Apply is not refused: it marks Sources until Sources or Dat
 A new recipe's Sources start from the data sets its type prefers, declared on its GUI registration beside its default
 model (`initialSources`: Optical Mosaic Landsat 9 and 8, Phenology Landsat 8, CCDC, Time Series and LandTrendr Landsat 9
 to 4-5, Change Alerts those and Sentinel-2). As the set-up wizard first opens Sources, the shared initialization
-(`initialSectionModel`, `modules/gui/src/app/home/body/process/recipe/initialSources.js`, from `recipeFormPanel`'s
+(`initialSectionModel`, `modules/gui/src/app/home/body/process/recipe/collections/initialSources.js`, from `recipeFormPanel`'s
 initial values) resolves them against the years the type's `dataSetPeriod` reads over the dates committed by then:
 those that may contribute, else the first of their collection type that may (`initialDataSets`, the family-change
 default), else none, for the user to choose. The draft starts from that proposal: opening commits nothing, an edit or a
@@ -102,6 +102,6 @@ candidates judge the recipe its submission would save, its `additionalUpdates` i
 
 The rule, each type's period and its held operations are tested in `lib/js/shared/test/recipe/dataSetAvailability.test.js`;
 the seven Sources panels, through their real forms and store, in
-`modules/gui/src/app/home/body/process/recipe/dataSetAvailability.test.jsx`; initial data sets through the real wizard,
+`modules/gui/src/app/home/body/process/recipe/collections/dataSetAvailability.test.jsx`; initial data sets through the real wizard,
 default models and each type's own root and toolbar in `initialSources.test.jsx`; and PyEO's proposals in
 `pyeoAlerts/panels/sources/sourcesProposal.test.jsx`.

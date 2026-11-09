@@ -5,8 +5,8 @@ import {BAYTS_HISTORICAL_STATS} from '#sepal/recipe/capability/baytsHistoricalSt
 import {PRIMARY_IMAGE} from '#sepal/recipe/type/baytsAlerts'
 import api from '~/apiRegistry'
 
-import {selectedSourceOf} from '../sourceEvidence'
-import {resolveProvider} from '../sourceProvider'
+import {selectedSourceOf} from '../sources/sourceEvidence'
+import {resolveProvider} from '../sources/sourceProvider'
 import {historicalStatsOf, statsAssetOf} from './historicalStatistics'
 
 // What BAYTS Alerts observes about the reference it monitors, read by the shared evidence lifecycle: the radar
