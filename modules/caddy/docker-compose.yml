@@ -17,8 +17,10 @@ services:
       - "${SEPAL_IP}:${SEPAL_HTTPS_PORT:-443}:443"
       - "${SEPAL_IP}:${SEPAL_HTTPS_PORT:-443}:443/udp"
     volumes:
-      - "${SEPAL_DATA_DIR}/caddy/data:/data"
-      - "${SEPAL_DATA_DIR}/caddy/config:/config"
+      # Docker volumes rather than SEPAL_DATA_DIR, so Caddy can serve the maintenance page on a host whose
+      # data volume is not attached yet
+      - "caddy-data:/data"
+      - "caddy-config:/config"
     environment:
       SEPAL_HOST: "${SEPAL_HOST}"
       LETSENCRYPT_EMAIL: "${LETSENCRYPT_EMAIL}"
@@ -41,6 +43,12 @@ services:
       timeout: 5s
       retries: 3
     restart: always
+
+volumes:
+  caddy-data:
+    name: caddy-data
+  caddy-config:
+    name: caddy-config
 
 networks:
   sepal:
