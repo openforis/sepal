@@ -9,7 +9,8 @@ EFS_ID=$2
 DATA_COPY=/dev/sdj
 REQUIRED_OPTIONS='XFS_FS OVERLAY_FS NF_TABLES NFT_COMPAT NETFILTER_XTABLES BRIDGE_NETFILTER VXLAN IP_VS NFS_V4'
 MODULES='xfs overlay br_netfilter vxlan ip_vs nf_tables nft_compat nfsv4'
-PACKAGES='lustre-client amazon-efs-utils iptables-nft docker'
+PACKAGES=(lustre-client amazon-efs-utils iptables-nft docker monit multitail htop rsyslog python3-docker
+    '@Development Tools')
 PROBE_IMAGE=alpine:3.20
 FAILURES=0
 
@@ -23,7 +24,7 @@ main() {
     check 'cgroup v2' test "$(stat -fc %T /sys/fs/cgroup)" = cgroup2fs
     check 'Copy of /data mounts' mount_data_copy
 
-    check 'Packages install' dnf install -y -q $PACKAGES
+    check 'Packages install' install_packages
     check 'iptables uses nf_tables' sh -c 'iptables -V | grep nf_tables'
     check 'FSx for Lustre mounts' mount_and_list lustre "$FSX_ID" /mnt/fsx noatime,flock
     check 'EFS mounts' mount_and_list efs "$EFS_ID:/" /mnt/efs defaults
@@ -116,6 +117,10 @@ task_firewall() {
 metadata_blocked() {
     docker pull -q $PROBE_IMAGE >/dev/null || return 1
     ! docker run --rm --network kernel-check-task $PROBE_IMAGE wget -qT5 -O- http://169.254.169.254/
+}
+
+install_packages() {
+    dnf install -y -q spal-release && dnf install -y -q "${PACKAGES[@]}"
 }
 
 live_patching() {

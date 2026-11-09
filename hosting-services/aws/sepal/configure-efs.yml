@@ -46,6 +46,12 @@
 
     - name: Install Lustre
       command: amazon-linux-extras install lustre2.10 -y
+      when: ansible_distribution_major_version == '2'
+
+    - name: Install Lustre
+      dnf:
+        name: lustre-client
+      when: ansible_distribution_major_version != '2'
 
     - name: Create /fsx mount dir
       file:

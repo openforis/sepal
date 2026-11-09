@@ -40,7 +40,8 @@
   pre_tasks:
     - set_fact:
         sepal_ip: "{{ ec2_private_ip_address }}"
-        sepal_ssh_ip: "{{ hostvars[inventory_hostname].ansible_eth0.ipv4_secondaries[0].address }}"
+        # eth0 on Amazon Linux 2, ens5 on Amazon Linux 2023
+        sepal_ssh_ip: "{{ hostvars[inventory_hostname]['ansible_' ~ ansible_default_ipv4.interface].ipv4_secondaries[0].address }}"
         syslog_address: "udp://{{ ec2_private_ip_address }}"
 
     # syslog address
@@ -78,14 +79,19 @@
         - {name: vm.max_map_count, value: 1048576}
         - {name: vm.overcommit_memory, value: 1}
 
-    # One transaction: each yum task reloads the repository metadata
+    # Amazon Linux 2 has EPEL for monit and multitail, Amazon Linux 2023 has SPAL
+    - name: Install spal-release
+      dnf:
+        name: spal-release
+      when: ansible_distribution_major_version != '2'
+
+    # One transaction: each yum task reloads the repository metadata. Amazon Linux 2023 packages the Docker SDK,
+    # which Amazon Linux 2 installs with pip.
     - name: Install packages
       yum:
-        name:
-          - monit
-          - multitail
-          - htop
-          - "@Development Tools"
+        name: "{{ packages + (['python3-docker'] if ansible_distribution_major_version != '2' else []) }}"
+      vars:
+        packages: [monit, multitail, htop, rsyslog, '@Development Tools']
 
     # A subset deploy leaves monit disabled too, so a reboot doesn't start it alerting on the modules left out
     - name: Stop monit
@@ -148,9 +154,16 @@
         state: restarted
       when: sshd_config.changed
 
-    # # rsyslog
+    # rsyslog
     - name: Copy rsyslog.conf
       template: src="rsyslog.conf" dest=/etc/rsyslog.conf
+      register: rsyslog_conf
+
+    - name: Start rsyslog
+      service:
+        name: rsyslog
+        state: "{{ 'restarted' if rsyslog_conf.changed else 'started' }}"
+        enabled: yes
 
     # profile.d
     - name: Copy profile.d
@@ -183,6 +196,7 @@
     - name: Enable the Docker extras topic
       command: "amazon-linux-extras enable docker"
       changed_when: false
+      when: ansible_distribution_major_version == '2'
 
     # Only a DOCKER_VERSION change upgrades Docker (see deploy.sh)
     - name: Install docker
@@ -234,6 +248,7 @@
           - requests
           - docker
         executable: pip3
+      when: ansible_distribution_major_version == '2'
 
     - name: Init a new swarm with default parameters
       docker_swarm:

@@ -24,14 +24,22 @@
         - "LANG=en_US.utf-8"
         - "LC_ALL=en_US.utf-8"
 
+    # monit comes from EPEL on Amazon Linux 2 and from SPAL on Amazon Linux 2023
     - name: Install epel
       command: "amazon-linux-extras install epel -y"
       args:
         creates: /etc/yum.repos.d/epel.repo
+      when: ansible_distribution_major_version == '2'
 
-    - name: Install monit
+    - name: Install spal-release
+      dnf:
+        name: spal-release
+      when: ansible_distribution_major_version != '2'
+
+    # One transaction: each yum task reloads the repository metadata. Amazon Linux 2023 packages the Docker SDK.
+    - name: Install packages
       yum:
-        name: 'monit'
+        name: "{{ ['monit', 'rsyslog'] + (['python3-docker'] if ansible_distribution_major_version != '2' else []) }}"
 
     - name: Stop monit
       systemd:
@@ -88,6 +96,7 @@
       service:
         name: rsyslog
         state: "{{ 'restarted' if rsyslog_conf.changed else 'started' }}"
+        enabled: yes
 
     # docker
     - name: Create filesystem on Docker volume
@@ -115,6 +124,7 @@
     - name: Enable the Docker extras topic
       command: "amazon-linux-extras enable docker"
       changed_when: false
+      when: ansible_distribution_major_version == '2'
 
     # Only a DOCKER_VERSION change upgrades Docker (see deploy.sh)
     - name: Install docker
@@ -147,6 +157,7 @@
           - urllib3==1.26.18
           - requests
         executable: pip3
+      when: ansible_distribution_major_version == '2'
 
     - docker_network:
         name: sepal

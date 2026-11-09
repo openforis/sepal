@@ -36,12 +36,12 @@
         name: 'spal-release'
       when: ansible_distribution_major_version != '2'
 
-    # One transaction: each yum task reloads the repository metadata
+    # One transaction: each yum task reloads the repository metadata. Amazon Linux 2023 packages the Docker SDK.
     - name: Install packages
       yum:
-        name:
-          - monit
-          - amazon-efs-utils
+        name: "{{ packages + (['python3-docker'] if ansible_distribution_major_version != '2' else []) }}"
+      vars:
+        packages: [monit, amazon-efs-utils, rsyslog]
 
     - name: Stop monit
       systemd:
@@ -98,6 +98,7 @@
       service:
         name: rsyslog
         state: "{{ 'restarted' if rsyslog_conf.changed else 'started' }}"
+        enabled: yes
 
     # docker
     - name: Create filesystem on Docker volume

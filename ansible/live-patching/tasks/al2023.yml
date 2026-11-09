@@ -1,0 +1,21 @@
+---
+# https://docs.aws.amazon.com/linux/al2023/ug/live-patching.html
+- name: Install kpatch-dnf
+  dnf:
+    name: kpatch-dnf
+
+# Installs the live patches of each kernel the host runs, as they are released
+- name: Enable automatic kernel live patches
+  command: dnf kernel-livepatch -y auto
+  changed_when: false
+
+- name: Install kpatch-runtime
+  dnf:
+    name: kpatch-runtime
+    state: latest
+
+- name: Enable kpatch.service
+  ansible.builtin.systemd:
+    name: kpatch.service
+    state: started
+    enabled: yes
