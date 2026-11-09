@@ -1,0 +1,381 @@
+# OS upgrade, step 2 (the window): the old hosts go into maintenance and stop, the public addresses move to the new
+# main host, which obtains its certificate, /data is snapshotted and moved, and the storage host's Redis data follows.
+# switch.sh then points the shared security groups and the apps record at the new hosts, deploys and lifts maintenance.
+# It is not resumable: after a failure, continue by hand from the failed task.
+
+- name: Find the old and new hosts
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files: [vars.yml]
+
+  tasks:
+    - name: Find the hosts
+      amazon.aws.ec2_instance_info:
+        region: "{{ region }}"
+        filters:
+          tag:Environment: "{{ deploy_environment }}"
+          tag:Type: "{{ host_types.keys() | list + host_types.keys() | map('regex_replace', '$', old_suffix) | list }}"
+          instance-state-name: running
+      register: found
+
+    - name: Index them by role
+      set_fact:
+        upgrade_hosts: "{{ upgrade_hosts | default({}) | combine({host_role: item}) }}"
+      vars:
+        host_type: "{{ item.tags.Type | regex_replace(old_suffix ~ '$', '') }}"
+        host_role: "{{ ('old-' if item.tags.Type.endswith(old_suffix) else 'new-') ~ host_types[host_type].role }}"
+      loop: "{{ found.instances }}"
+      loop_control:
+        label: "{{ item.instance_id }} {{ item.tags.Type }}"
+
+    - name: One old and one new main, storage and apps host, the new ones on AWS_AMI
+      assert:
+        that:
+          - found.instances | length == 6
+          - upgrade_hosts.keys() | sort == ['new-apps', 'new-main', 'new-storage', 'old-apps', 'old-main', 'old-storage']
+          - >-
+            ['new-main', 'new-storage', 'new-apps'] | map('extract', upgrade_hosts)
+            | rejectattr('image_id', 'equalto', target_ami) | list | length == 0
+
+    - name: Read the main hosts' addresses and /data volumes
+      set_fact:
+        old_main_ip: "{{ upgrade_hosts['old-main'].public_ip_address }}"
+        new_main_ip: "{{ upgrade_hosts['new-main'].public_ip_address }}"
+        old_main_private_ip: "{{ upgrade_hosts['old-main'].private_ip_address }}"
+        new_main_private_ip: "{{ upgrade_hosts['new-main'].private_ip_address }}"
+        new_main_secondary_ip: >-
+          {{ upgrade_hosts['new-main'].network_interfaces[0].private_ip_addresses
+             | rejectattr('primary') | map(attribute='private_ip_address') | first }}
+        old_main_eni: "{{ upgrade_hosts['old-main'].network_interfaces[0].network_interface_id }}"
+        new_main_eni: "{{ upgrade_hosts['new-main'].network_interfaces[0].network_interface_id }}"
+        old_data_volume: >-
+          {{ (upgrade_hosts['old-main'].block_device_mappings
+              | selectattr('device_name', 'equalto', '/dev/sdf') | first).ebs.volume_id }}
+        new_empty_data_volume: >-
+          {{ (upgrade_hosts['new-main'].block_device_mappings
+              | selectattr('device_name', 'equalto', '/dev/sdf') | first).ebs.volume_id }}
+
+    - name: Find the old main host's Elastic IPs
+      amazon.aws.ec2_eip_info:
+        region: "{{ region }}"
+        filters:
+          network-interface-id: "{{ old_main_eni }}"
+      register: old_eips
+
+    - name: Read the host record
+      amazon.aws.route53:
+        state: get
+        zone: "{{ lookup('env', 'AWS_ROUTE_53_ZONE') }}"
+        record: "{{ lookup('env', 'SEPAL_HOST') }}"
+        type: A
+      register: host_record
+
+    - name: The host record points at the old main host
+      assert:
+        that: host_record.set.value | default('') == old_main_ip
+        fail_msg: >-
+          {{ lookup('env', 'SEPAL_HOST') }} is {{ host_record.set | default('no A record') }}, not {{ old_main_ip }}:
+          move it by hand
+
+    - name: Decide whether DNS moves; an Elastic IP on the old main host moves with it instead
+      set_fact:
+        dns_moves: "{{ old_main_ip not in old_eips.addresses | map(attribute='public_ip') | list }}"
+
+    - name: Add the hosts
+      add_host:
+        name: "{{ item.key }}"
+        ansible_host: "{{ item.value.public_ip_address }}"
+        ansible_user: ec2-user
+      loop: "{{ upgrade_hosts | dict2items }}"
+      loop_control:
+        label: "{{ item.key }} {{ item.value.instance_id }}"
+
+- name: Check that the new main host serves the maintenance page
+  hosts: new-main
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Check the maintenance flag
+      command: docker exec caddy test -f /config/maintenance.on
+      changed_when: false
+
+    # The deploy starts it, once every module runs
+    - name: Keep monit stopped
+      systemd:
+        name: monit
+        state: stopped
+
+- name: Maintenance on and stop, old main host
+  hosts: old-main
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Maintenance page on
+      command: docker exec caddy touch /config/maintenance.on
+
+    # Before any container stops, or it alerts on each one
+    - name: Stop and disable monit
+      systemd:
+        name: monit
+        state: stopped
+        enabled: false
+
+    # The 120 s grace lets each task cancel its Earth Engine exports through gee, gateway and task-manager.
+    # task-manager on the new host marks the interrupted tasks FAILED when it starts.
+    - name: Stop the task containers first
+      shell: docker ps -q --filter label=org.openforis.sepal.task-manager=true | xargs -r -P 0 -n 1 docker stop -t 120
+
+    - name: Stop every container but Caddy
+      shell: "docker ps --format '{% raw %}{{.Names}}{% endraw %}' | grep -vx caddy | xargs -r docker stop"
+
+- name: Stop the old storage and apps hosts
+  hosts: old-storage:old-apps
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Stop and disable monit
+      systemd:
+        name: monit
+        state: stopped
+        enabled: false
+
+    # Redis writes its data to disk as it stops
+    - name: Stop every container
+      shell: docker ps -q | xargs -r docker stop
+
+    - name: Keep Docker from starting the containers again if the host boots
+      systemd:
+        name: docker
+        enabled: false
+
+- name: Copy the Redis data, old storage host
+  hosts: old-storage
+  become: true
+  gather_facts: false
+  vars_files: [vars.yml]
+
+  tasks:
+    - name: Archive it
+      command: tar -C /data --numeric-owner -czf /tmp/os-upgrade-state.tgz {{ storage_state }}
+
+    - name: Fetch it to the deploy machine
+      fetch:
+        src: /tmp/os-upgrade-state.tgz
+        dest: "{{ state_dir }}/storage.tgz"
+        flat: true
+
+- name: Move the public addresses to the new main host
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files: [vars.yml]
+
+  tasks:
+    - name: Move each Elastic IP to the same address on the new main host
+      amazon.aws.ec2_eip:
+        region: "{{ region }}"
+        public_ip: "{{ item.public_ip }}"
+        device_id: "{{ new_main_eni }}"
+        private_ip_address: >-
+          {{ new_main_private_ip if item.private_ip_address == old_main_private_ip else new_main_secondary_ip }}
+        in_vpc: true
+        allow_reassociation: true
+      loop: "{{ old_eips.addresses }}"
+      loop_control:
+        label: "{{ item.public_ip }}"
+
+    - name: Point the host record at the new main host
+      amazon.aws.route53:
+        state: present
+        zone: "{{ lookup('env', 'AWS_ROUTE_53_ZONE') }}"
+        record: "{{ lookup('env', 'SEPAL_HOST') }}"
+        type: A
+        ttl: 60
+        value: "{{ new_main_ip }}"
+        overwrite: true
+        wait: true
+      when: dns_moves
+
+    # Route 53 is in sync once the change returns; resolvers may still hold the old answer for its TTL
+    - name: Wait out the old record's TTL
+      pause:
+        seconds: "{{ host_record.set.ttl | int + 30 }}"
+      when: dns_moves
+
+- name: Stop the old Caddy, so certificate validation reaches only the new one
+  hosts: old-main
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Stop Caddy
+      command: docker stop caddy
+
+    # Booted again without /data, the old main host must not start a worker on an empty database, which would release
+    # every running sandbox. unless-stopped already keeps stopped containers down; this also covers a container
+    # created with another policy. A rollback starts Docker by hand.
+    - name: Keep Docker from starting the containers again if the host boots
+      systemd:
+        name: docker
+        enabled: false
+
+- name: Restart the new Caddy, so it requests its certificate now
+  hosts: new-main
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Restart Caddy
+      command: docker restart caddy
+
+- name: Snapshot /data and stop the old hosts
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files: [vars.yml]
+
+  tasks:
+    - name: Wait for the maintenance page with a valid certificate
+      uri:
+        url: "https://{{ lookup('env', 'SEPAL_HOST') }}/"
+        status_code: 503
+        validate_certs: true
+      register: maintenance_page
+      retries: 30
+      delay: 10
+      until: maintenance_page.status == 503
+
+    # No wait: the completed day-before snapshot is the restore point
+    - name: Snapshot /data in the background
+      amazon.aws.ec2_snapshot:
+        region: "{{ region }}"
+        volume_id: "{{ old_data_volume }}"
+        description: "SEPAL {{ deploy_environment }} /data before OS upgrade"
+        snapshot_tags:
+          Name: "Sepal {{ deploy_environment }} Data - before OS upgrade"
+        wait: false
+      register: snapshot
+
+    - name: Report the snapshot
+      debug:
+        msg: "Snapshot {{ snapshot.snapshot_id }} completes in the background"
+
+- name: Unmount /data, old main host
+  hosts: old-main
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Unmount /data and the network filesystems under it
+      command: umount -R /data
+
+- name: Stop the old hosts and detach /data
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files: [vars.yml]
+
+  tasks:
+    - name: Stop the old hosts
+      amazon.aws.ec2_instance:
+        region: "{{ region }}"
+        instance_ids: "{{ ['old-main', 'old-storage', 'old-apps'] | map('extract', upgrade_hosts) | map(attribute='instance_id') | list }}"
+        state: stopped
+        wait: true
+
+    - name: Detach /data from the old main host
+      amazon.aws.ec2_vol:
+        region: "{{ region }}"
+        id: "{{ old_data_volume }}"
+        instance: None
+
+- name: Unmount the empty /data, new main host
+  hosts: new-main
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Unmount /data and the network filesystems under it
+      command: umount -R /data
+
+- name: Swap the /data volumes
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files: [vars.yml]
+
+  tasks:
+    - name: Detach the empty /data
+      amazon.aws.ec2_vol:
+        region: "{{ region }}"
+        id: "{{ new_empty_data_volume }}"
+        instance: None
+
+    - name: Attach /data to the new main host
+      amazon.aws.ec2_vol:
+        region: "{{ region }}"
+        id: "{{ old_data_volume }}"
+        instance: "{{ upgrade_hosts['new-main'].instance_id }}"
+        device_name: /dev/sdf
+        delete_on_termination: false
+
+    - name: Name the volumes
+      amazon.aws.ec2_tag:
+        region: "{{ region }}"
+        resource: "{{ item.volume }}"
+        tags:
+          Name: "{{ item.name }}"
+      loop:
+        - {volume: "{{ old_data_volume }}", name: "Sepal {{ deploy_environment }} Data"}
+        - {volume: "{{ new_empty_data_volume }}", name: "Sepal {{ deploy_environment }} Data (empty, delete)"}
+
+# deploy remounts the network filesystems under /data
+- name: Mount /data, new main host
+  hosts: new-main
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Wait for the device
+      wait_for:
+        path: /dev/sdf
+        timeout: 120
+
+    - name: Mount /data
+      command: mount /data
+
+    - name: Check it is the production volume
+      stat:
+        path: /data/mysql
+      register: mysql_dir
+
+    - name: It holds MySQL's data
+      assert:
+        that: mysql_dir.stat.isdir | default(false)
+
+- name: Restore the Redis data, new storage host
+  hosts: new-storage
+  become: true
+  gather_facts: false
+  vars_files: [vars.yml]
+
+  tasks:
+    - name: Remove what the new host has
+      file:
+        path: "/data/{{ storage_state }}"
+        state: absent
+
+    - name: Create /data
+      file:
+        path: /data
+        state: directory
+
+    - name: Unpack the old host's Redis data
+      unarchive:
+        src: "{{ state_dir }}/storage.tgz"
+        dest: /data
+        extra_opts: [--numeric-owner]

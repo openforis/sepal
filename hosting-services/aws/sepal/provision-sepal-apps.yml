@@ -22,6 +22,7 @@
         name: "Sepal-Apps"
         description: The Sepal-Apps Security Group
         region: "{{ lookup('env', 'AWS_REGION') }}"
+        purge_rules: "{{ not (keep_shared_rules | default(false) | bool) }}"
         rules:
           - proto: tcp
             from_port: 80
@@ -101,6 +102,7 @@
         SEPAL_APPS_PUBLIC_IP: "{{ ec2_sepal_apps.instances[0].public_ip_address }}"
 
     - name: Add DNS entry for Sepal-Apps instance
+      when: not (keep_shared_rules | default(false) | bool)
       amazon.aws.route53:
         state: present
         zone: "{{ lookup('env', 'AWS_ROUTE_53_ZONE') }}"

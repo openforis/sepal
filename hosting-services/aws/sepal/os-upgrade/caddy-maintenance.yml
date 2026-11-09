@@ -1,0 +1,15 @@
+# Turns the maintenance page on or off on the main host of the inventory: -e maintenance=on|off
+- name: Maintenance page {{ maintenance }}
+  hosts: all
+  user: ec2-user
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Set the maintenance flag
+      command: docker exec caddy touch /config/maintenance.on
+      when: maintenance == 'on'
+
+    - name: Clear the maintenance flag
+      command: docker exec caddy rm -f /config/maintenance.on
+      when: maintenance == 'off'

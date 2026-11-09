@@ -1,0 +1,77 @@
+# Renames the current hosts' tags, so provision launches new hosts beside them: Type and Name of the main, storage and
+# apps instances, and the Name of the main host's network interface (provision finds it by name) and volumes.
+# Environment stays and no tag is removed: the worker terminates untagged instances. Hosts already on AWS_AMI are
+# left alone, so a rerun changes nothing.
+- name: Rename the current hosts
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files: [vars.yml]
+
+  vars:
+    volume_names:
+      /dev/xvda: Root
+      /dev/sdf: Data
+      /dev/sdg: Docker
+      /dev/sdh: Log
+
+  tasks:
+    - name: Describe AWS_AMI
+      amazon.aws.ec2_ami_info:
+        region: "{{ region }}"
+        image_ids: ["{{ target_ami }}"]
+      register: ami
+
+    - name: AWS_AMI is the Amazon Linux 2023 image to move to
+      assert:
+        that: ami.images | length == 1 and ami.images[0].name is match('al2023-ami-')
+        fail_msg: "AWS_AMI {{ target_ami }} is {{ ami.images[0].name | default('not found') }}"
+
+    - name: Find the current hosts
+      amazon.aws.ec2_instance_info:
+        region: "{{ region }}"
+        filters:
+          tag:Environment: "{{ deploy_environment }}"
+          tag:Type: "{{ host_types.keys() | list }}"
+          instance-state-name: [pending, running, stopping, stopped]
+      register: current
+
+    - name: Select those not on AWS_AMI
+      set_fact:
+        old_hosts: "{{ current.instances | rejectattr('image_id', 'equalto', target_ami) | list }}"
+        old_main: >-
+          {{ current.instances | rejectattr('image_id', 'equalto', target_ami)
+             | selectattr('tags.Type', 'equalto', 'Sepal') | list }}
+
+    - name: Rename the instances
+      amazon.aws.ec2_tag:
+        region: "{{ region }}"
+        resource: "{{ item.instance_id }}"
+        tags:
+          Type: "{{ item.tags.Type }}{{ old_suffix }}"
+          Name: "{{ host_types[item.tags.Type].name }} - {{ deploy_environment }} ({{ old_suffix[1:] }})"
+      loop: "{{ old_hosts }}"
+      loop_control:
+        label: "{{ item.instance_id }} {{ item.tags.Type }}"
+
+    - name: Rename the main host's network interface
+      amazon.aws.ec2_tag:
+        region: "{{ region }}"
+        resource: "{{ item.network_interfaces[0].network_interface_id }}"
+        tags:
+          Name: "Sepal {{ deploy_environment }} ({{ old_suffix[1:] }})"
+      loop: "{{ old_main }}"
+      loop_control:
+        label: "{{ item.instance_id }}"
+
+    - name: Rename the main host's volumes
+      amazon.aws.ec2_tag:
+        region: "{{ region }}"
+        resource: "{{ item.ebs.volume_id }}"
+        tags:
+          Name: "Sepal {{ deploy_environment }} {{ volume_names[item.device_name] }} ({{ old_suffix[1:] }})"
+      loop: >-
+        {{ old_main | map(attribute='block_device_mappings') | flatten
+           | selectattr('device_name', 'in', volume_names) | list }}
+      loop_control:
+        label: "{{ item.device_name }} {{ item.ebs.volume_id }}"

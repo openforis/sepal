@@ -1,0 +1,13 @@
+region: "{{ lookup('env', 'AWS_REGION') }}"
+deploy_environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
+target_ami: "{{ lookup('env', 'AWS_AMI') }}"
+# The old hosts keep their tags with this suffix on Type, so no filter of provision or deploy matches them
+old_suffix: -AL2
+host_types:
+  Sepal: {name: Sepal, role: main}
+  SepalStorage: {name: Sepal-Storage, role: storage}
+  SepalApps: {name: Sepal-Apps, role: apps}
+# The storage host's Redis data (inactivity schedule, storage sizes), copied through the deploy machine. The apps host
+# moves nothing: app-launcher clones and builds its apps afresh, and copied clones would skip the build.
+storage_state: user-storage-redis
+state_dir: "{{ config_home }}/os-upgrade-state"

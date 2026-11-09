@@ -9,6 +9,7 @@
         name: Sandbox
         description: The Sandbox Security Group
         region: "{{ lookup('env', 'AWS_REGION') }}"
+        purge_rules: "{{ not (keep_shared_rules | default(false) | bool) }}"
         rules:
           - proto: tcp
             from_port: 22

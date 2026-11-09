@@ -1,0 +1,26 @@
+# Stops the upgrade unless provision and deploy now find exactly the new hosts: one main, storage and apps host, all
+# running AWS_AMI. Guards every step that acts on "the" hosts, such as deploying or the maintenance page.
+- name: Check that the hosts are the new ones
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files: [vars.yml]
+
+  tasks:
+    - name: Find the hosts provision and deploy target
+      amazon.aws.ec2_instance_info:
+        region: "{{ region }}"
+        filters:
+          tag:Environment: "{{ deploy_environment }}"
+          tag:Type: "{{ host_types.keys() | list }}"
+          instance-state-name: running
+      register: found
+
+    - name: One of each, all on AWS_AMI
+      assert:
+        that:
+          - found.instances | map(attribute='tags.Type') | sort == host_types.keys() | sort
+          - found.instances | rejectattr('image_id', 'equalto', target_ami) | list | length == 0
+        fail_msg: >-
+          Found {{ found.instances | map(attribute='tags.Type') | list }} on
+          {{ found.instances | map(attribute='image_id') | list }}; expected one of each on {{ target_ami }}

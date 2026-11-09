@@ -87,11 +87,12 @@
           - htop
           - "@Development Tools"
 
+    # A subset deploy leaves monit disabled too, so a reboot doesn't start it alerting on the modules left out
     - name: Stop monit
       systemd:
         name: monit
         state: stopped
-        enabled: yes
+        enabled: "{{ start_monit | default(true) | bool }}"
         masked: no
 
     - name: Configure monit/1
@@ -363,3 +364,4 @@
         state: started
         enabled: yes
         masked: no
+      when: start_monit | default(true) | bool
