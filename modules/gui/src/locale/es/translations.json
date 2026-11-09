@@ -5344,7 +5344,8 @@
           "tooltip": "",
           "form": {
             "dataSets": {
-              "label": ""
+              "label": "",
+              "required": ""
             },
             "cloudPercentageThreshold": {
               "label": "",
@@ -5353,7 +5354,11 @@
             },
             "index": {
               "label": "",
-              "tooltip": ""
+              "tooltip": "",
+              "required": "",
+              "missingInputs": "",
+              "removeDataSets": "",
+              "unsupported": ""
             }
           }
         },
@@ -5998,6 +6003,17 @@
         "classification": "",
         "dataSets": ""
       },
+      "dataSets": {
+        "noPeriodOverlap": "",
+        "years": {
+          "from": "",
+          "range": ""
+        }
+      },
+      "collectionBands": {
+        "band": "",
+        "breakpointBands": ""
+      },
       "classifiedOutputs": {
         "band": "",
         "breakpointBands": ""
@@ -6034,35 +6050,43 @@
     "dataSets": {
       "LANDSAT_7": {
         "label": "",
-        "tooltip": ""
+        "tooltip": "",
+        "name": ""
       },
       "LANDSAT_7_T2": {
         "label": "",
-        "tooltip": ""
+        "tooltip": "",
+        "name": ""
       },
       "LANDSAT_8": {
         "label": "",
-        "tooltip": ""
+        "tooltip": "",
+        "name": ""
       },
       "LANDSAT_8_T2": {
         "label": "",
-        "tooltip": ""
+        "tooltip": "",
+        "name": ""
       },
       "LANDSAT_9": {
         "label": "",
-        "tooltip": ""
+        "tooltip": "",
+        "name": ""
       },
       "LANDSAT_9_T2": {
         "label": "",
-        "tooltip": ""
+        "tooltip": "",
+        "name": ""
       },
       "LANDSAT_TM": {
         "label": "",
-        "tooltip": ""
+        "tooltip": "",
+        "name": ""
       },
       "LANDSAT_TM_T2": {
         "label": "",
-        "tooltip": ""
+        "tooltip": "",
+        "name": ""
       },
       "SENTINEL_1": {
         "label": "",
@@ -6070,7 +6094,8 @@
       },
       "SENTINEL_2": {
         "label": "",
-        "tooltip": ""
+        "tooltip": "",
+        "name": ""
       }
     },
     "optical": {
