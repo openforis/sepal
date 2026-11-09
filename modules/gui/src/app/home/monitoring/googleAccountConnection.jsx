@@ -7,8 +7,7 @@ import {compose} from '~/compose'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {loadUser$} from '~/user'
-
-import {Notifications} from './notifications'
+import {Notifications} from '~/widget/notifications'
 
 class _GoogleAccountConnection extends React.Component {
     render() {

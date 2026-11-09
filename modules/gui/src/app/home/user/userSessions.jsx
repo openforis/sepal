@@ -1,6 +1,7 @@
 import React from 'react'
 import {catchError, forkJoin, interval, map, of} from 'rxjs'
 
+import {refreshSessions} from '~/app/home/monitoring/sessionMonitor'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {launchFailureMessage} from '~/instanceLaunchFailure'
@@ -12,7 +13,6 @@ import {withActivatable} from '~/widget/activation/activatable'
 import {ModalConfirmationButton} from '~/widget/modalConfirmationButton'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
-import {refreshSessions} from '~/widget/sessionMonitor'
 import {SessionName} from '~/widget/sessionName'
 
 import {InstancePicker} from '../body/apps/instancePicker'

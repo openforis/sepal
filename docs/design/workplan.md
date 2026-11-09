@@ -283,12 +283,11 @@ The [shared recipe GUI reorganization](#shared-recipe-gui-organization) is imple
 are confirmed by code and imports, not by file count alone. Keep each move bounded and preserve behavior and existing
 lifecycle, acquisition, caching and validation owners.
 
-- **Application monitors in `widget/`, recommended first.** Budget, session/expiry, task, message, login and connection
-  monitors are application services mounted by `app/home/home.jsx`, mixed with generic controls. Some also read
-  application policy and user-session presentation. Give them an application-owned location, moving associated
-  rules, tests and styles together and updating callers of their refresh functions. Separately group the asset and
-  workspace selectors; `widget/recipeInput.jsx` depends on recipe access, context and registration, so coordinate
-  its destination with the current recipe-folder proposal. Keep generic controls in the widget library.
+- **Asset and workspace selectors in `widget/`.** The application monitors `app/home/home.jsx` mounts, with their
+  rules, tests and style, now live in `app/home/monitoring/`; `AppSessionMonitor` stays with Apps. Remaining: group
+  the asset and workspace selectors with `Assets`/`withAssets`; `widget/recipeInput.jsx` depends on recipe access,
+  context and registration, so coordinate its destination with the shared recipe folders. Keep generic controls in
+  the widget library.
 - **Recipe-session support in the parent `process/` directory.** `draftAgreement.js`, `recipeCache.js`,
   `recipeCacheClaims.js`, `recipeListing.js`, `saveCoordinator.js` and `recipeAccess.jsx` form a connected lifecycle
   group beside process menus, creation screens and layer registries. Assess a cohesive session/cache/save location

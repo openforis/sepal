@@ -6,8 +6,7 @@ import {notePreviousUsername, takePreviousUsername} from '~/loginSession'
 import {useSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {currentUser} from '~/user'
-
-import {Notifications} from './notifications'
+import {Notifications} from '~/widget/notifications'
 
 // The gateway tells the tabs of a replaced or destroyed login session (a password reset in another
 // tab, a logout, an admin lock) and closes their socket. A full reload lands the tab wherever the

@@ -8,7 +8,7 @@ import {getClientId} from './ws'
 export default {
     loadAll$: () => get$('/api/apps/list'),
 
-    // The session report is pushed by the worker/session websocket (see ~/widget/sessionMonitor),
+    // The session report is pushed by the worker/session websocket (see ~/app/home/monitoring/sessionMonitor),
     // and runApp$ waits on that.
     // clientId (the gateway-assigned ws client id) is stored by the worker as the app
     // association's owner: its clientDown releases the association, and another client

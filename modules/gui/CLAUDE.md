@@ -56,6 +56,7 @@ sepal eslint gui                           # Run GUI ESLint
 ```
 src/
   app/                  # App shell and route pages
+    home/monitoring/    # Application monitors Home mounts: budget, sessions, tasks, messages, login, connection
     home/body/
       apps/             # App launcher UI: instance picker modal, per-tab sessionId, appSessionMonitor
       browse/           # File/asset browsers

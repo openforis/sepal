@@ -1,12 +1,12 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {refreshBudget} from '~/app/home/monitoring/budgetMonitor'
+import {refreshSessions} from '~/app/home/monitoring/sessionMonitor'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {withActivators} from '~/widget/activation/activator'
-import {refreshBudget} from '~/widget/budgetMonitor'
 import {ButtonSelect} from '~/widget/buttonSelect'
-import {refreshSessions} from '~/widget/sessionMonitor'
 
 class _UsageMenuButton extends React.Component {
     render() {
