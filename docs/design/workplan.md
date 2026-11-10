@@ -444,7 +444,8 @@ to be the same case:
 
 Date-filtered Sources share one data-set availability policy, LandTrendr's included, and new recipes resolve their
 initial data sets by it ([current behaviour](recipes/data-sources.md#data-set-availability),
-[initial data sets](recipes/data-sources.md#initial-data-sets)). Remaining:
+[initial data sets](recipes/data-sources.md#initial-data-sets)). Classifier-input findings name only repairs it allows,
+for the complete feature set ([Time Series](../recipes/time-series.md#inputs)). Remaining:
 
 - **Named-product periods, a separate bounded follow-up.** Products reading a period of their own are not judged for it:
   LandTrendr's annual mosaic, its requested year, and Change Alerts' calibration and monitoring mosaics
@@ -453,15 +454,6 @@ initial data sets by it ([current behaviour](recipes/data-sources.md#data-set-av
   parameters, and a delegated product reads the delegate's description without its readiness
   (`lib/js/shared/src/recipe/output/resolveImageOutput.js`), so Optical Mosaic's requirement does not cover them.
   Judging each product's own period needs its parameters where its readiness is read.
-- **Classifier-input messages, a separate bounded slice.** The finding is located at the classification when no single
-  data set supplies the classifier's features at the current reflectance (`collectionClassifierRequirement`,
-  `lib/js/shared/src/recipe/type/pyeoAlerts.js`). Its messages ("No collection this recipe can use provides…", and
-  PyEO's "No supported monitoring data provides…") overlook a PRC repair: Landsat 8 under SR with a classifier reading
-  `pan` is located there, although TOA supplies it. The smallest correction scopes the wording to the processing
-  applied, and offers PRC only from a finding fact naming it (alternatives judged at the other reflectance). The
-  data-set alternatives also ignore the period: Landsat 4-5 for 1990-1995 with a classifier reading `redEdge1` is told
-  to choose data sets that provide it, though only Sentinel-2 does and Sources refuse it for those years. They can be
-  judged by the shared policy (`excludedDataSets`, `lib/js/shared/src/recipe/dataSetAvailability.js`).
 - **Chart gating.** LandTrendr's pixel chart is not held for these findings and declares no pixel operation; it stays
   with [server preview readiness](#server-preview-readiness).
 - **Open drafts.** A form panel's draft is judged again when the panel renders. An applied change made elsewhere while

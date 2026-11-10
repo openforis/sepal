@@ -48,11 +48,15 @@ latitude, terrain and water imagery by the classifier itself. Readiness requires
 (`UNSUPPLIED_CLASSIFIER_INPUTS`, the features in `missing`). What a scene carries is `sceneBands`
 (`lib/js/shared/src/recipe/optical/opticalBands.js`), as the time series builds each scene: the bands the selected data
 sets share at the reflectance the corrections choose, tasseled cap where they hold its inputs, and every index they
-can compute - not a mosaic's catalogue. The finding is at `['model', 'sources', 'dataSets']` where another supported
-optical data set alone could carry them, otherwise at `['model', 'sources', 'classification']`: a Classification
-trained on radar statistics (`VV_mean`, ...) over Landsat monitoring is refused at the classification, whatever the
-gate. Monitoring that is not optical, or not chosen yet, is not judged. The features come from the Classification
-record the closure holds (`recordsOf`); one not held yet refuses nothing.
+can compute - not a mosaic's catalogue. The finding names the first repair supplying every feature among the optical
+data sets Sources can choose for the monitoring years (`dataSetPeriod`, as a classification's proposal would save
+them): data sets that do as the scenes are processed now (`alternatives`, which replace the selection), at
+`['model', 'sources', 'dataSets']`; otherwise, at `['model', 'sources', 'classification']`, turning SR off or on in
+PRC (`reflectance`, alone or with such data sets), data sets that would but the monitoring years exclude
+(`unavailable`, with the years), or none. Sources say it beside the field it is at. A Classification trained on radar
+statistics (`VV_mean`, ...) over Landsat monitoring is refused at the classification, whatever the gate. Monitoring
+that is not optical, or not chosen yet, is not judged. The features come from the Classification record the closure
+holds (`recordsOf`); one not held yet refuses nothing.
 
 An enabled index-drop gate also needs its index (`UNAVAILABLE_GATE_INDEX` at `['model', 'pyeoAlertsOptions',
 'indexGate', 'index']`): of the scenes (`source: 'MONITORING'`), and of the Classification's input (`source:

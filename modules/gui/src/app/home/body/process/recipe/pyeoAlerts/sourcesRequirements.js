@@ -3,9 +3,9 @@ import {MISSING_ROLE} from '#sepal/recipe/output/diagnostic'
 import {MULTIPLE_CLASSIFICATION_INPUTS, NO_CHANGE_CLASSES, UNAVAILABLE_GATE_INDEX} from '#sepal/recipe/type/pyeoAlerts'
 import {msg} from '~/translate'
 
-import {classificationReferenceFeedback} from '../collections/collectionClassifierRequirements'
+import {classificationReferenceFeedback, classifierInputsMessage} from '../collections/collectionClassifierRequirements'
 import {dataSetPeriodRequirement} from '../collections/dataSetPeriodRequirement'
-import {fieldRequirement, listed, sourcesFieldRequirement} from '../requirements/fieldRequirement'
+import {fieldRequirement, sourcesFieldRequirement} from '../requirements/fieldRequirement'
 import {CHECKING, UNAVAILABLE} from '../requirements/sourceRequirements'
 
 // What PyEO Alerts needs of its Sources and of its index gate, as its shared definition finds it
@@ -35,8 +35,9 @@ const required = field => () => msg(`process.pyeoAlerts.panel.sources.form.${fie
 
 const multipleInputs = ({count}) => msg('process.pyeoAlerts.panel.sources.form.classification.multipleInputs', {count})
 
-const unsupplied = field => ({missing}) =>
-    msg(`process.pyeoAlerts.panel.sources.form.${field}.unsuppliedInputs`, {missing: listed(missing, AND_MORE)})
+// Said beside either field by the repair the finding names: the data sets where data sets that can be chosen would feed
+// the classifier, otherwise the classification.
+const unsupplied = finding => classifierInputsMessage(CLASSIFIER_INPUT_MESSAGES, finding)
 
 // Where no other index can be read either, only turning the gate off repairs it.
 const unavailableIndex = ({index, source, alternatives}) =>
@@ -62,8 +63,8 @@ export const GATE_INDEX_REQUIREMENT = fieldRequirement({
 
 const GATE_PREREQUISITES = [
     sourcesField('classification', MULTIPLE_CLASSIFICATION_INPUTS, multipleInputs),
-    sourcesField('classification', UNSUPPLIED_CLASSIFIER_INPUTS, unsupplied('classification')),
-    sourcesField('dataSets', UNSUPPLIED_CLASSIFIER_INPUTS, unsupplied('dataSets'))
+    sourcesField('classification', UNSUPPLIED_CLASSIFIER_INPUTS, unsupplied),
+    sourcesField('dataSets', UNSUPPLIED_CLASSIFIER_INPUTS, unsupplied)
 ]
 
 export const sourcesRequirements = [
@@ -97,3 +98,12 @@ export const gateDependencyOf = reads => {
 }
 
 const AND_MORE = 'process.pyeoAlerts.panel.sources.form.andMore'
+
+const CLASSIFIER_INPUT_MESSAGES = {
+    andMore: AND_MORE,
+    alternatives: 'process.pyeoAlerts.panel.sources.form.dataSets.unsuppliedInputs',
+    reflectance: 'process.pyeoAlerts.panel.sources.form.classification.unsuppliedInputsReflectance',
+    reflectanceAlternatives: 'process.pyeoAlerts.panel.sources.form.classification.unsuppliedInputsReflectanceDataSets',
+    unavailable: 'process.pyeoAlerts.panel.sources.form.classification.unsuppliedInputsUnavailable',
+    unsupplied: 'process.pyeoAlerts.panel.sources.form.classification.unsuppliedInputs'
+}

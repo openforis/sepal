@@ -1665,7 +1665,7 @@
               "label": "Optical datasets",
               "tooltip": "One or more Sentinel-2 / Landsat collections. Bands are harmonised across the selection.",
               "required": "Pick at least one optical dataset",
-              "unsuppliedInputs": "The selected datasets don't provide the bands this classification reads: {missing}. Choose datasets that do."
+              "unsuppliedInputs": "The selected datasets don't provide the bands this classification reads: {missing}. Choose only datasets from {alternatives}, or another classification."
             },
             "cloudPercentageThreshold": {
               "label": "Maximum scene cloud cover",
@@ -1677,7 +1677,16 @@
               "tooltip": "Only Classification recipes appear here. Class IDs and labels are pulled from the selected recipe.",
               "placeholder": "Select a Classification recipe",
               "required": "Pick a Classification recipe",
-              "unsuppliedInputs": "No supported monitoring data provides the bands this classification reads: {missing}. Choose another classification.",
+              "unsuppliedInputs": "The selected datasets don't provide the bands this classification reads: {missing}. No datasets you can currently choose provide all these bands with the current processing. Choose another classification.",
+              "unsuppliedInputsReflectance": {
+                "SR": "Without SR, the selected datasets don't provide the bands this classification reads: {missing}. Turn on SR in PRC, or choose another classification.",
+                "TOA": "With SR, the selected datasets don't provide the bands this classification reads: {missing}. Turn off SR in PRC, or choose another classification."
+              },
+              "unsuppliedInputsReflectanceDataSets": {
+                "SR": "The selected datasets don't provide the bands this classification reads: {missing}. Turn on SR in PRC and choose only datasets from {alternatives}, or choose another classification.",
+                "TOA": "The selected datasets don't provide the bands this classification reads: {missing}. Turn off SR in PRC and choose only datasets from {alternatives}, or choose another classification."
+              },
+              "unsuppliedInputsUnavailable": "The selected datasets don't provide the bands this classification reads: {missing}. Those that do ({unavailable}) have no imagery in the monitoring years, {years}. Choose another classification.",
               "multipleInputs": "This classification uses {count} input images; PyEO Alerts needs exactly one. Remove the others from the classification, or choose another classification."
             },
             "changeFromClasses": {
@@ -6000,8 +6009,17 @@
         "passAbsentNoAlternative": "The reference has no usable statistics for the {absent} orbit {count, plural, one {pass} other {passes}} monitored."
       },
       "classifierInputs": {
-        "classification": "No collection this recipe can use provides the bands this classification reads: {missing}. Choose another classification, or none.",
-        "dataSets": "The selected data sets don't provide the bands this classification reads: {missing}. Choose data sets that do, or another classification."
+        "classification": "The selected data sets don't provide the bands this classification reads: {missing}. No data sets you can currently choose provide all these bands with the current processing. Choose another classification, or none.",
+        "dataSets": "The selected data sets don't provide the bands this classification reads: {missing}. Choose only data sets from {alternatives}, or another classification, or none.",
+        "reflectance": {
+          "SR": "Without SR, the selected data sets don't provide the bands this classification reads: {missing}. Turn on SR in PRC, or choose another classification, or none.",
+          "TOA": "With SR, the selected data sets don't provide the bands this classification reads: {missing}. Turn off SR in PRC, or choose another classification, or none."
+        },
+        "reflectanceDataSets": {
+          "SR": "The selected data sets don't provide the bands this classification reads: {missing}. Turn on SR in PRC and choose only data sets from {alternatives}, or choose another classification, or none.",
+          "TOA": "The selected data sets don't provide the bands this classification reads: {missing}. Turn off SR in PRC and choose only data sets from {alternatives}, or choose another classification, or none."
+        },
+        "unavailable": "The selected data sets don't provide the bands this classification reads: {missing}. Those that do ({unavailable}) have no imagery for {years}. Choose another classification, or none."
       },
       "dataSets": {
         "noPeriodOverlap": "None of the selected data sets covers any year from {startYear} to {endYear}. Select one that does, or change the dates.",

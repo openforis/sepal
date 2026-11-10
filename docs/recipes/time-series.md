@@ -22,10 +22,15 @@ classifies it (`collectionClassifierRequirement` in `lib/js/shared/src/recipe/so
 `targetDayCloseness` and `unixTimeDays` its collection adds to every image (`PLANET_DATE_BANDS`) - and any index the
 classifier computes from them. The RGB `brightness` a Planet collection also adds is an internal working band, not the
 tasseled cap's `brightness` a classifier reads, so it never supplies one.
-Latitude, terrain and water imagery the classifier generates itself. `UNSUPPLIED_CLASSIFIER_INPUTS` refuses it at the
-data sets where an optical data set alone or the radar collection would carry the features, otherwise at the
-classification; the output description stays. SRC is marked and its editor says why beside that field - the
-classification shows outside More while it cannot be used - and a draft refused for it cannot be applied. Selecting
+Latitude, terrain and water imagery the classifier generates itself. `UNSUPPLIED_CLASSIFIER_INPUTS` refuses it, naming
+the features in `missing` and the first repair supplying all of them among the data sets Sources can choose for the
+dates ([data-set availability](../design/recipes/data-sources.md#data-set-availability)): optical or radar data sets
+that do as the collection is processed now (`alternatives`), which replace the selection, at the data sets; otherwise,
+at the classification, turning SR off or on in PRC (`reflectance`, alone or with such optical data sets), data sets that
+would but the dates exclude (`unavailable`, with the years), or none. A change supplying only some of the features is
+no repair, and other dates are not suggested. The output description stays. SRC is marked and its editor says that
+repair beside the classification - which shows outside More while it cannot be used - and a draft refused for it
+cannot be applied. Selecting
 no classification requires nothing; a Classification record not held, or one with several inputs, is judged for
 nothing, and a Planet Daily band only eight-band imagery carries is not refused. Map previews, the Retrieve
 button, the download task Retrieve submits and the pixel chart's observation request follow the finding. The chart

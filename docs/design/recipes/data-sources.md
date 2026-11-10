@@ -77,6 +77,12 @@ stays as it was. A collection type chosen anew starts with its first data set th
 where none chosen may contribute, and a Sources draft leaving none able to cannot be applied, by Apply, Enter or a
 wizard step. A Dates Apply is not refused: it marks Sources until Sources or Dates repair them.
 
+The same years judge which data sets a classifier-input finding (`UNSUPPLIED_CLASSIFIER_INPUTS`, CCDC, Time Series,
+Phenology and PyEO Alerts) names as a repair (`unsuppliedClassifierFeatures`, `classifierInputs.js`): only data sets
+that can be chosen anew, one those years exclude being named as unavailable, with the years
+([Time Series](../../recipes/time-series.md#inputs)). A dates change can move such a finding between the data sets and
+the classification.
+
 #### Initial data sets
 
 A new recipe's Sources start from the data sets its type prefers, declared on its GUI registration beside its default

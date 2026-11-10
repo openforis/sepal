@@ -40,9 +40,11 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: typ
 
 const {Sources: TimeSeriesSources} = await import('../timeSeries/panels/sources/sources')
 const {Sources: CcdcSources} = await import('../ccdc/panels/sources/sources')
+const {Sources: PhenologySources} = await import('../phenology/panels/sources/sources')
 const {collectionClassifierRequirements} = await import('./collectionClassifierRequirements')
 registry.TIME_SERIES = {id: 'TIME_SERIES', sourceRequirements: collectionClassifierRequirements({id: 'sources', label: 'process.timeSeries.panel.sources.button'})}
 registry.CCDC = {id: 'CCDC', sourceRequirements: collectionClassifierRequirements({id: 'sources', label: 'process.ccdc.panel.sources.button'})}
+registry.PHENOLOGY = {id: 'PHENOLOGY', sourceRequirements: collectionClassifierRequirements({id: 'sources', label: 'process.phenology.panel.sources.button'})}
 registry.CLASSIFICATION = {id: 'CLASSIFICATION'}
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -145,10 +147,93 @@ for (const {recipeType, Sources, classificationLabel, extraSources, radarBand} o
     })
 }
 
+// What the message beside the Classification says is the repair the shared rule names (classifierInputsMessage): a
+// correction to turn off in PRC, data sets that replace the selection, a data set the dates exclude, or nothing that can
+// be chosen as processed now - judged for the years the recipe's dates cover.
+for (const {recipeType, Sources, classificationLabel, extraSources, radarSources, prefix} of [
+    {recipeType: 'TIME_SERIES', Sources: TimeSeriesSources, classificationLabel: 'process.timeSeries.panel.sources.form.classification.label', extraSources: {}, radarSources: {}, prefix: 'ccdc'},
+    {recipeType: 'CCDC', Sources: CcdcSources, classificationLabel: 'process.ccdc.panel.sources.form.classification.label', extraSources: {breakpointBands: ['ndvi']}, radarSources: {breakpointBands: ['VV']}, prefix: 'ccdc'},
+    {recipeType: 'PHENOLOGY', Sources: PhenologySources, classificationLabel: 'process.phenology.panel.sources.form.classification.label', extraSources: {band: 'ndvi'}, radarSources: {band: 'VV'}, prefix: 'phenology'}
+]) {
+    const open = (sources = {}, model) => mount({recipeType, Sources, sources: {...extraSources, ...sources}, model})
+    const classificationMessages = () => messagesOf(classificationLabel)
+    const select = id => selectIn(classificationLabel, id)
+
+    describe(`${recipeType} Sources, telling what repairs a Classification its images cannot feed`, () => {
+        it('say turning SR off in PRC repairs it, and accept it once that correction is applied', async () => {
+            await open()
+            await press('button.more')
+            await select(PAN)
+            expect(classificationMessages()).toEqual(['process.source.classifierInputs.reflectance.TOA pan'])
+            expect(button('button.apply').disabled).toBe(true)
+            await close()
+
+            await open({}, {options: {corrections: []}})
+            await press('button.more')
+            await select(PAN)
+
+            expect(classificationMessages()).toEqual([])
+            await press('button.apply')
+            expect(savedSources().classification).toBe(PAN)
+        })
+
+        it('suggest no correction that would supply only some of what it reads', async () => {
+            await open()
+            await press('button.more')
+
+            await select(PAN_RED_EDGE)
+
+            expect(classificationMessages()).toEqual(['process.source.classifierInputs.classification pan, redEdge1'])
+        })
+
+        it('tell to choose only the data sets that feed it, which a selection holding another is repaired by', async () => {
+            await open({dataSets: {LANDSAT: ['LANDSAT_8'], SENTINEL_2: ['SENTINEL_2']}, classification: RED_EDGE})
+            expect(classificationMessages()).toEqual(['process.source.classifierInputs.dataSets redEdge1 sources.dataSets,SENTINEL_2,label'])
+
+            await press('sources.dataSets,LANDSAT_8,label')
+
+            expect(classificationMessages()).toEqual([])
+            await press('button.apply')
+            expect(savedSources().dataSets).toEqual({SENTINEL_2: ['SENTINEL_2']})
+        })
+
+        it('explain the data set that feeds it as having no imagery for the dates, which cannot be chosen, until another Classification is', async () => {
+            await open({dataSets: {LANDSAT: ['LANDSAT_TM']}, classification: RED_EDGE}, {dates: datesOf(1990, 1995)})
+            expect(classificationMessages()).toEqual(['process.source.classifierInputs.unavailable redEdge1 sources.dataSets,SENTINEL_2,label 1990-1995'])
+            expect(button('sources.dataSets,SENTINEL_2,label').disabled).toBe(true)
+
+            await select(OPTICAL_BANDS)
+
+            expect(classificationMessages()).toEqual([])
+            await press('button.apply')
+            expect(savedSources().classification).toBe(OPTICAL_BANDS)
+        })
+
+        it('say no data set that can be chosen feeds it as processed now, for a radar collection keeping SR', async () => {
+            await open({dataSetType: 'RADAR', dataSets: {SENTINEL_1: ['SENTINEL_1']}, classification: PAN, ...radarSources})
+
+            expect(classificationMessages()).toEqual(['process.source.classifierInputs.classification red, nir, pan'])
+            expect(button(`process.${prefix}.panel.sources.form.dataSetTypes.RADAR`)).toBeDefined()
+        })
+    })
+}
+
+// Whole years, as each type's dates state them.
+const datesOf = (fromYear, toYear) => ({startDate: `${fromYear}-01-01`, endDate: `${toYear + 1}-01-01`, fromYear, toYear})
+
+async function close() {
+    await act(async () => root.unmount())
+    container.remove()
+    root = null
+}
+
 const ID = 'recipe-1'
 const OPTICAL_BANDS = 'classification-optical-bands'
 const RADAR_STATISTICS = 'classification-radar-statistics'
 const RADAR_POLARISATIONS = 'classification-radar-polarisations'
+const PAN = 'classification-pan'
+const PAN_RED_EDGE = 'classification-pan-red-edge'
+const RED_EDGE = 'classification-red-edge'
 
 const classificationOver = (id, included) => ({
     id,
@@ -163,10 +248,13 @@ const classificationOver = (id, included) => ({
 const CLASSIFICATIONS = [
     classificationOver(OPTICAL_BANDS, ['red', 'nir']),
     classificationOver(RADAR_STATISTICS, ['VV_mean', 'VH_med']),
-    classificationOver(RADAR_POLARISATIONS, ['VV', 'VH'])
+    classificationOver(RADAR_POLARISATIONS, ['VV', 'VH']),
+    classificationOver(PAN, ['red', 'nir', 'pan']),
+    classificationOver(PAN_RED_EDGE, ['red', 'pan', 'redEdge1']),
+    classificationOver(RED_EDGE, ['red', 'nir', 'redEdge1'])
 ]
 
-async function mount({recipeType, Sources, sources}) {
+async function mount({recipeType, Sources, sources, model}) {
     loadRecipe$.mockImplementation(id => of(CLASSIFICATIONS.find(record => record.id === id)))
     const initialState = {
         dimensions: {width: 1024, height: 768},
@@ -180,7 +268,8 @@ async function mount({recipeType, Sources, sources}) {
                         dates: {startDate: '2020-01-01', endDate: '2021-01-01'},
                         sources: {dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_8']}, assets: [], ...sources},
                         options: {corrections: ['SR']},
-                        opticalPreprocess: {corrections: ['SR']}
+                        opticalPreprocess: {corrections: ['SR']},
+                        ...model
                     },
                     ui: {initialized: true}
                 },
