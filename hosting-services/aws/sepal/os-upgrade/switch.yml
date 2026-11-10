@@ -82,11 +82,13 @@
       set_fact:
         dns_moves: "{{ old_main_ip not in old_eips.addresses | map(attribute='public_ip') | list }}"
 
+    # One SSH control socket per host and address: once the Elastic IPs move, an address can lead to another host
     - name: Add the hosts
       add_host:
         name: "{{ item.key }}"
         ansible_host: "{{ item.value.public_ip_address }}"
         ansible_user: ec2-user
+        ansible_control_path: "/tmp/ansible-ssh-{{ item.key }}-{{ item.value.public_ip_address }}"
       loop: "{{ upgrade_hosts | dict2items }}"
       loop_control:
         label: "{{ item.key }} {{ item.value.instance_id }}"
@@ -205,6 +207,29 @@
       pause:
         seconds: "{{ host_record.set.ttl | int + 30 }}"
       when: dns_moves
+
+    # Moving an Elastic IP off a primary private IP gives the old main host a new public IP, and takes the new main
+    # host's own
+    - name: Read the main hosts' public addresses now
+      amazon.aws.ec2_instance_info:
+        region: "{{ region }}"
+        instance_ids: "{{ ['old-main', 'new-main'] | map('extract', upgrade_hosts) | map(attribute='instance_id') | list }}"
+      register: main_hosts
+      retries: 12
+      delay: 5
+      until: main_hosts.instances | selectattr('public_ip_address', 'undefined') | list | length == 0
+
+    - name: Reach the main hosts at those addresses
+      add_host:
+        name: "{{ role }}"
+        ansible_host: "{{ item.public_ip_address }}"
+        ansible_user: ec2-user
+        ansible_control_path: "/tmp/ansible-ssh-{{ role }}-{{ item.public_ip_address }}"
+      vars:
+        role: "{{ 'old-main' if item.instance_id == upgrade_hosts['old-main'].instance_id else 'new-main' }}"
+      loop: "{{ main_hosts.instances }}"
+      loop_control:
+        label: "{{ role }} {{ item.public_ip_address }}"
 
 - name: Stop the old Caddy, so certificate validation reaches only the new one
   hosts: old-main
