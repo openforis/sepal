@@ -1,7 +1,7 @@
 import React from 'react'
 
 import api from '~/apiRegistry'
-import {parseFeatureLayerAssetStyle, parseFeatureLayerCategoricalProperties} from '~/app/home/map/featureLayerAssetStyleParser'
+import {parseFeatureLayerAssetStyle, parseFeatureLayerCategoricalProperties} from '~/app/home/map/eeTableAsset/featureLayerAssetStyleParser'
 import {compose} from '~/compose'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'

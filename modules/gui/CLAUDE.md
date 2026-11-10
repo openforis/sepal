@@ -56,6 +56,8 @@ sepal eslint gui                           # Run GUI ESLint
 ```
 src/
   app/                  # App shell and route pages
+    home/map/           # Maps (Google Maps): lifetime and contexts, map-area controls, overlays, legend editing
+      eeTableAsset/     # Earth Engine table-asset overlay: options panel, style, filter, categories, renderer
     home/monitoring/    # Application monitors Home mounts: budget, sessions, tasks, messages, login, connection
     home/body/
       apps/             # App launcher UI: instance picker modal, per-tab sessionId, appSessionMonitor
@@ -68,7 +70,6 @@ src/
       terminal/         # Web terminal (xterm.js)
       users/            # User management (admin)
   widget/               # Reusable UI components (buttons, forms, panels, tabs, notifications)
-  map/                  # Map components (Google Maps integration)
 ```
 
 ## Non-Obvious Conventions

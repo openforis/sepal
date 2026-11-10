@@ -300,10 +300,14 @@ effects still need review when changing import order. Shared support now lives i
   imports only `apiRegistry`, `hash` and `uuid`. The process entry points keep the orchestration (`recipe.jsx`, which
   creates the one session cache and save coordinator and re-exports `saveStatePath`), `recipeAccess.jsx` and
   `recipeContext.jsx`, the registries, screens, menus and shared form panel.
-- **Feature-layer code in `app/home/map/`.** The root mixes map lifetime/context and controls with feature rendering,
-  styling and legend editing. Start with the feature-layer editor and its style, filter, category and asset-style
-  helpers, then establish which renderers belong with them. Preserve the existing `visParams/` and
-  `imageLayerSource/` boundaries rather than reshuffling the whole map tree.
+- **Feature-layer code in `app/home/map/`.** The Earth Engine table-asset overlay lives in `map/eeTableAsset/`: its
+  options panel, the style, filter, category and asset-style helpers, and `eeTableAssetLayer.jsx`, the one renderer that
+  reads that style and filter. The overlay stack stays in the root: `featureLayers.jsx` renders every overlay type and
+  `featureLayerOrder.js` orders them, while `eeTableLayer.jsx` also draws the AOI, which keeps its own style and panel.
+  Legend helpers are not grouped by name: `legendBuilder.jsx` and `legendValue.js` serve recipe legends, `visParams/`
+  and `widget/legend/`; `legendImport.jsx` serves those legends and the table-asset panel; `legendLayer.jsx` is a
+  presentation overlay beside palette and values. Preserve the `visParams/`, `imageLayerSource/`, `tileProvider/` and
+  `tileManager/` boundaries rather than reshuffling the map tree.
 - **Application preferences under `app/landing/`.** `themeSelector.jsx` and `languageSelector.jsx` are used by both
   Landing and the authenticated user menu. Give these controls an application-wide preferences location, preserving
   their theme/language behavior and both entry points.

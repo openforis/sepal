@@ -4,6 +4,7 @@ import React from 'react'
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
+import {PalettePreSets, pickColors} from '~/app/home/map/visParams/palettePreSets'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {withSubscriptions} from '~/subscription'
@@ -33,7 +34,6 @@ import {buildCategoriesByProperty, categoricalLabelsByValue, valueLabelsFromEntr
 import {isFeatureLayerFilterValid, newFeatureLayerConstraint, resolveFeatureLayerFilter} from './featureLayerFilter'
 import styles from './featureLayerOptionsPanel.module.css'
 import {COLOR_MODES, isBlankValue, isFeatureLayerStyleValid, normalizeValue, resolveFeatureLayerStyle, styleAfterColumnsLoaded} from './featureLayerStyle'
-import {PalettePreSets, pickColors} from './visParams/palettePreSets'
 
 // Seed palette for generated value colors; users can re-apply any preset via LegendBuilder.
 const VALUE_COLOR_PALETTE = ['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33', '#a65628', '#f781bf']

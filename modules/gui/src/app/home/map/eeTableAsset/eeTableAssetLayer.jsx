@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 
-import {EETableLayer} from './eeTableLayer'
+import {EETableLayer} from '~/app/home/map/eeTableLayer'
+
 import {resolveFeatureLayerStyle} from './featureLayerStyle'
 
 // Renders a generic Earth Engine FeatureCollection/table asset as a feature overlay. Tiles are rendered

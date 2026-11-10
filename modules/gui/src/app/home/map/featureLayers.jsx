@@ -5,7 +5,7 @@ import {SceneAreasLayer} from '~/app/home/body/process/recipe/opticalMosaic/scen
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {withLayers} from '~/app/home/body/process/withLayers'
 import {AoiLayer} from '~/app/home/map/aoiLayer'
-import {EETableAssetLayer} from '~/app/home/map/eeTableAssetLayer'
+import {EETableAssetLayer} from '~/app/home/map/eeTableAsset/eeTableAssetLayer'
 import {LabelsLayer} from '~/app/home/map/labelsLayer'
 import {compose} from '~/compose'
 
