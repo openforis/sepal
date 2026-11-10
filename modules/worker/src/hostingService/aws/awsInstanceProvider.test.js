@@ -333,6 +333,26 @@ describe('launch params (RunInstancesCommand)', () => {
         ])
     })
 
+    test('tags the AMI volumes with the environment and a name at launch', async () => {
+        ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-test123'}]})
+        ec2Mock.on(RunInstancesCommand).resolves(makeRunInstancesResponse())
+        ec2Mock.on(CreateTagsCommand).resolves({})
+        ec2Mock.on(DescribeInstancesCommand).resolves(emptyDescribeResponse())
+
+        const provider = createAwsInstanceProvider(CONFIG)
+        await provider.start()
+
+        await provider.launchReserved('T3aSmall', RESERVATION)
+        provider.stop()
+
+        const [runCall] = ec2Mock.commandCalls(RunInstancesCommand)
+        assert.deepEqual(runCall.args[0].input.TagSpecifications, [{ResourceType: 'volume', Tags: [
+            {Key: 'Environment', Value: 'test-env'},
+            {Key: 'Type', Value: 'Worker'},
+            {Key: 'Name', Value: 'test-env: Worker'},
+        ]}])
+    })
+
     test('idle instances boot without user data unless prewarming is enabled', async () => {
         ec2Mock.on(DescribeImagesCommand).resolves({Images: [{ImageId: 'ami-test123'}]})
         ec2Mock.on(RunInstancesCommand).resolves(makeRunInstancesResponse())
@@ -761,6 +781,7 @@ describe('scratch volume', () => {
             TagSpecifications: [{ResourceType: 'volume', Tags: [
                 {Key: 'Type', Value: 'WorkerScratch'},
                 {Key: 'Environment', Value: 'test-env'},
+                {Key: 'Name', Value: 'test-env: Worker scratch'},
             ]}],
         })
         const [attach] = ec2Mock.commandCalls(AttachVolumeCommand)

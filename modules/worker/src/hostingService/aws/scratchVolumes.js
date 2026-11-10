@@ -57,7 +57,10 @@ export class ScratchVolumes {
             AvailabilityZone: this.#availabilityZone,
             Size: SIZE_GIB,
             VolumeType: VOLUME_TYPE,
-            TagSpecifications: [{ResourceType: 'volume', Tags: this.#tags()}],
+            TagSpecifications: [{
+                ResourceType: 'volume',
+                Tags: [...this.#tags(), {Key: 'Name', Value: `${this.#environment}: Worker scratch`}],
+            }],
         }))
         await waitUntilVolumeAvailable({client: this.#client, ...WAITER}, {VolumeIds: [volumeId]})
         await this.#client.send(new AttachVolumeCommand({InstanceId: instance.id, VolumeId: volumeId, Device: DEVICE_NAME}))
