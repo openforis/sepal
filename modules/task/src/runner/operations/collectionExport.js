@@ -25,7 +25,7 @@ export const collectionExport = async (kind, params, {sepal, report, signal, sle
             tileProgress()
         }
     })
-    await shareIfPublic({params, assetId, sepal, report, signal})
+    await shareIfPublic({sharing: params.image?.sharing, assetId, sepal, report, signal})
 }
 
 const prepareProgress = assetId => ({

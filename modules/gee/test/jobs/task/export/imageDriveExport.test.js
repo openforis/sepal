@@ -86,6 +86,7 @@ mock.module('#sepal/ee/ee', {
 
 const {inEEContext} = await import('#sepal/ee/eeContext')
 const {startImageDriveExport$} = await import('#gee/jobs/task/export/imageDriveExport')
+const {startImageToDriveExport$} = await import('#gee/jobs/task/export/toDrive')
 
 const ALICE = {username: 'alice', googleTokens: {accessToken: 'a', accessTokenExpiryDate: Date.now() + 3600000}}
 const context = auth => ({requestId: 'r-1', username: 'alice', origin: 'task', auth, projectId: 'p', workloadTag: 't', endpoint: 'https://ee'})
@@ -256,6 +257,14 @@ test('a folder named after a recipe title is made safe, the same for the Drive f
         [{username: 'alice', path: 'SEPAL/exports/Mosaic 2020_21 _x__2026-10-06'}]
     )
     assert.partialDeepStrictEqual(state.started[0], {folder: 'Mosaic 2020_21 _x__2026-10-06'})
+})
+
+test('an export with its own file name prefix names its files with it, not with its task description', async () => {
+    const options = {image: {}, folder: 'exports-1', description: 'ndvi', fileNamePrefix: 'NDVI 2024 (v2)', region: {bounds: () => 'bounds'}}
+
+    await lastValueFrom(inEEContext(context({type: 'user'}), startImageToDriveExport$(options, {sepalUser: ALICE})))
+
+    assert.partialDeepStrictEqual(state.started[0], {folder: 'exports-1', description: 'ndvi', fileNamePrefix: 'NDVI 2024 (v2)'})
 })
 
 test('starts nothing for a user without a Google account', async () => {

@@ -1,0 +1,247 @@
+import assert from 'node:assert/strict'
+import {mkdir, mkdtemp, readFile, rm, stat, symlink, writeFile} from 'node:fs/promises'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
+import {afterEach, beforeEach, mock, test} from 'node:test'
+
+import {of} from 'rxjs'
+
+const gdalCalls = []
+mock.module('#sepal/gdal', {
+    exports: {
+        getBandNames$: () => of(['nd']),
+        createVrt$: options => { gdalCalls.push({createVrt: options}); return of(null) },
+        setBandNames$: (path, names) => { gdalCalls.push({setBandNames: [path, names]}); return of(null) }
+    }
+})
+
+const {operations} = await import('../operations.js')
+
+const EXPRESSION = {result: '0', values: {'0': {constantValue: 1}}}
+const originalHome = process.env.HOME
+let home
+
+beforeEach(async () => {
+    home = await mkdtemp(join(tmpdir(), 'ee-object-export-'))
+    process.env.HOME = home
+    gdalCalls.length = 0
+})
+
+afterEach(async () => {
+    process.env.HOME = originalHome
+    await rm(home, {recursive: true, force: true})
+})
+
+test('starts an object asset export, follows it and shares it when requested, reporting the sharing', async () => {
+    const {sepal, calls} = client()
+    const reports = []
+    const request = params('GEE', {assetId: 'projects/p/assets/out', sharing: 'PUBLIC'})
+
+    await operations['ee.export'](request, context(sepal, {report: progress => reports.push(progress)}))
+
+    assert.deepEqual(calls.map(({path}) => path), ['task/export/ee', 'task/operation/status', 'task/asset/share'])
+    assert.deepEqual(calls[0].body, request)
+    assert.deepEqual(calls[2].body, {assetId: 'projects/p/assets/out'})
+    assert.equal(reports.at(-1).messageKey, 'tasks.ee.export.asset.sharing')
+})
+
+test('does not share a private asset export', async () => {
+    const {sepal, calls} = client()
+
+    await operations['ee.export'](params('GEE', {assetId: 'projects/p/assets/out', sharing: 'PRIVATE'}), context(sepal))
+
+    assert.deepEqual(calls.map(({path}) => path), ['task/export/ee', 'task/operation/status'])
+})
+
+test('follows a table export to Drive', async () => {
+    const {sepal, calls} = client()
+    await operations['ee.export'](params('DRIVE', {kind: 'TABLE'}), context(sepal))
+    assert.deepEqual(calls.map(({path}) => path), ['task/export/ee', 'task/operation/status'])
+})
+
+test('an export that starts no Earth Engine operation fails instead of reporting success', async () => {
+    const {sepal, calls} = client()
+    sepal.startExport = async () => ({eeTaskId: null})
+    await assert.rejects(operations['ee.export'](params('DRIVE'), context(sepal)), /No Earth Engine export/)
+    assert.deepEqual(calls, [])
+})
+
+test('downloads a workspace export into its relative path and cleans temporary storage', async () => {
+    const {sepal, calls} = client()
+    let acquiredSlot = false
+    await operations['ee.export'](params('SEPAL', {workspacePath: 'module_results/demo'}), context(sepal, {
+        localProcessing: {run: work => { acquiredSlot = true; return work() }}
+    }))
+
+    assert.equal(await readFile(join(home, 'module_results/demo/ndvi.tif'), 'utf8'), 'data')
+    assert.equal(acquiredSlot, true)
+    assert.deepEqual(calls.map(({path}) => path), [
+        'task/export/ee', 'task/operation/status', 'task/download/files', 'task/download/cleanup'
+    ])
+})
+
+test('mosaics the tiles of a workspace image into a VRT with their band names', async () => {
+    const tiles = ['ndvi-0000000000-0000000000.tif', 'ndvi-0000000000-0000032768.tif']
+    const dir = join(home, 'downloads/ndvi')
+    const {sepal} = client({files: [...tiles].reverse()})
+
+    await operations['ee.export'](params('SEPAL'), context(sepal))
+
+    assert.deepEqual(gdalCalls, [
+        {createVrt: {inputPaths: tiles.map(tile => join(dir, tile)), outputPath: join(dir, 'ndvi.vrt')}},
+        {setBandNames: [join(dir, 'ndvi.vrt'), ['nd']]}
+    ])
+})
+
+test('mosaics tiles named after the file name prefix as it was written', async () => {
+    const tiles = ['NDVI 2024-0000000000-0000000000.tif', 'NDVI 2024-0000000000-0000032768.tif']
+    const dir = join(home, 'downloads/ndvi')
+    const {sepal} = client({files: tiles})
+
+    await operations['ee.export'](params('SEPAL', {filenamePrefix: 'NDVI 2024'}), context(sepal))
+
+    assert.deepEqual(gdalCalls[0], {createVrt: {inputPaths: tiles.map(tile => join(dir, tile)), outputPath: join(dir, 'NDVI 2024.vrt')}})
+})
+
+test('leaves a workspace image that arrives as one file as it is', async () => {
+    const {sepal} = client()
+    await operations['ee.export'](params('SEPAL'), context(sepal))
+    assert.deepEqual(gdalCalls, [])
+})
+
+test('uses a safe default workspace directory from the description', async () => {
+    const {sepal} = client()
+    await operations['ee.export']({...params('SEPAL'), description: '../my export'}, context(sepal))
+    assert.equal(await readFile(join(home, 'downloads/_my_export/ndvi.tif'), 'utf8'), 'data')
+})
+
+test('reads a workspace path starting with ~ as relative to the home folder', async () => {
+    const {sepal} = client()
+    await operations['ee.export'](params('SEPAL', {workspacePath: '~/module_results/demo'}), context(sepal))
+    assert.equal(await readFile(join(home, 'module_results/demo/ndvi.tif'), 'utf8'), 'data')
+})
+
+test('cancels the Earth Engine operation without downloading or sharing', async () => {
+    const {sepal, calls} = client({states: ['RUNNING']})
+    const controller = new AbortController()
+    await operations['ee.export'](params('SEPAL'), context(sepal, {
+        signal: controller.signal, sleep: async () => controller.abort()
+    }))
+    assert.deepEqual(calls.map(({path}) => path), [
+        'task/export/ee', 'task/operation/status', 'task/operation/cancel', 'task/download/cleanup'
+    ])
+})
+
+test('cleans temporary storage when Earth Engine fails', async () => {
+    const {sepal, calls} = client({states: ['FAILED']})
+    await assert.rejects(operations['ee.export'](params('SEPAL'), context(sepal)), /Earth Engine export FAILED/)
+    assert.equal(calls.at(-1).path, 'task/download/cleanup')
+})
+
+for (const existing of ['earlier.tif', '.hidden']) {
+    test(`refuses a workspace folder that already holds ${existing}, before starting an export`, async () => {
+        const dir = join(home, 'module_results/demo')
+        await mkdir(dir, {recursive: true})
+        await writeFile(join(dir, existing), 'an earlier export')
+        const {sepal, calls} = client()
+
+        await assert.rejects(
+            operations['ee.export'](params('SEPAL', {workspacePath: 'module_results/demo'}), context(sepal)),
+            {userMessage: {
+                key: 'tasks.status.workspaceNotEmpty',
+                message: 'The folder ~/module_results/demo is not empty. Export to an empty or new folder, or remove its contents.',
+                args: {path: 'module_results/demo'}
+            }}
+        )
+
+        assert.deepEqual(calls, [])
+        assert.equal(await readFile(join(dir, existing), 'utf8'), 'an earlier export')
+    })
+}
+
+test('exports into an empty workspace folder that already exists', async () => {
+    await mkdir(join(home, 'module_results/demo'), {recursive: true})
+    const {sepal} = client()
+
+    await operations['ee.export'](params('SEPAL', {workspacePath: 'module_results/demo'}), context(sepal))
+
+    assert.equal(await readFile(join(home, 'module_results/demo/ndvi.tif'), 'utf8'), 'data')
+})
+
+for (const workspacePath of ['../outside', '/tmp/outside', 'out/../../outside']) {
+    test(`rejects workspace path ${workspacePath} before starting an export`, async () => {
+        const {sepal, calls} = client()
+        await assert.rejects(operations['ee.export'](params('SEPAL', {workspacePath}), context(sepal)), /workspacePath/)
+        assert.deepEqual(calls, [])
+    })
+}
+
+test('rejects a symlink outside the home before creating directories or starting an export', async () => {
+    const outside = await mkdtemp(join(tmpdir(), 'ee-object-outside-'))
+    try {
+        await symlink(outside, join(home, 'linked'))
+        const {sepal, calls} = client()
+        await assert.rejects(
+            operations['ee.export'](params('SEPAL', {workspacePath: 'linked/output'}), context(sepal)),
+            {userMessage: {
+                key: 'tasks.status.workspaceOutsideHome',
+                message: 'The folder ~/linked/output leads outside your home folder. Export to a folder inside it.',
+                args: {path: 'linked/output'}
+            }}
+        )
+        assert.deepEqual(calls, [])
+        await assert.rejects(stat(join(outside, 'output')), {code: 'ENOENT'})
+    } finally {
+        await rm(outside, {recursive: true, force: true})
+    }
+})
+
+for (const invalid of [
+    {kind: 'OTHER'}, {destination: 'OTHER'}, {expression: 'serialized-string'}, {expression: null},
+    {destination: 'GEE', assetId: null}, {destination: 'GEE', assetId: 'a', assetType: 'ImageCollection'}
+]) {
+    test(`rejects invalid object export ${JSON.stringify(invalid)}`, async () => {
+        const {sepal, calls} = client()
+        await assert.rejects(operations['ee.export'](params('SEPAL', invalid), context(sepal)), /export|assetId|ImageCollection/)
+        assert.deepEqual(calls, [])
+    })
+}
+
+const params = (destination, extra = {}) => ({
+    description: 'ndvi',
+    export: {kind: 'IMAGE', destination, expression: EXPRESSION, ...extra}
+})
+
+const client = ({states = ['COMPLETED'], startError, files = ['ndvi.tif']} = {}) => {
+    const calls = []
+    const destination = {type: 'drive', folderId: 'folder-1'}
+    return {
+        calls,
+        sepal: {
+            startExport: async (path, body) => {
+                calls.push({path, body})
+                if (startError) {
+                    throw startError
+                }
+                return {eeTaskId: 'T1', assetId: 'projects/p/assets/out', destination}
+            },
+            gee: async (path, body) => {
+                calls.push({path, body})
+                if (path === 'task/operation/status') {
+                    return {state: states.shift()}
+                }
+                if (path === 'task/download/files') {
+                    return {files: files.map(name => ({name, url: `https://storage.invalid/${name}`, size: 4})), expiresAt: Date.now() + 3600000}
+                }
+                return {}
+            }
+        }
+    }
+}
+
+const context = (sepal, extra = {}) => ({
+    sepal, report: () => {}, signal: new AbortController().signal, sleep: async () => {},
+    localProcessing: {run: work => work()},
+    fetchFn: async () => new Response('data'),
+    ...extra
+})

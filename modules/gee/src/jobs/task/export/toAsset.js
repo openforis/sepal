@@ -349,7 +349,7 @@ const representationError = (assetId, reason, cause) =>
 
 // The defaults of every asset export, a single image or a collection tile.
 const imageToAsset$ = ({
-    image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs = 'EPSG:4326', crsTransform,
+    image, description, assetId, strategy, pyramidingPolicy, dimensions, region, scale, crs, crsTransform,
     maxPixels = 1e13, shardSize = 256, properties
 }) =>
     formatRegion$(region).pipe(

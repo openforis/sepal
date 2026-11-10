@@ -21,6 +21,7 @@ import {Content, SectionLayout, TopBar} from '~/widget/sectionLayout'
 import {Shape} from '~/widget/shape'
 
 import {TaskDetails} from './taskDetails'
+import {exportOrigin, originName, originText, taskTitle} from './taskOrigin'
 import styles from './tasks.module.css'
 import {taskStatusDescription} from './taskStatusDescription'
 
@@ -138,7 +139,7 @@ class _Tasks extends React.Component {
                 onClick={() => this.showInfo(task)}>
                 <CrudItem
                     title={this.getTaskTitle(task)}
-                    description={this.getRecipePath(task)}
+                    description={this.getTaskDescription(task)}
                     highlight={this.getHighlightMatcher()}
                     icon={icon}
                     iconSize='xl'
@@ -226,12 +227,14 @@ class _Tasks extends React.Component {
             const projectId = task.taskInfo?.projectId
             const project = projects?.find(({id}) => id === projectId)
             const projectName = project?.name ?? NO_PROJECT_SYMBOL
+            const origin = exportOrigin(task.taskInfo)
             const searchable = [
                 task.name,
                 task.description,
                 recipeType && msg(`tasks.details.recipeTypeNames.${recipeType}`),
+                taskTitle(task.taskInfo),
                 destination && msg(`tasks.details.destination.${destination}`),
-                projectName
+                origin ? originText(origin) : projectName
             ].filter(Boolean).join(' ')
             return matchers.every(matcher => matcher.test(simplifyString(searchable)))
         })
@@ -347,12 +350,14 @@ class _Tasks extends React.Component {
     }
 
     getTaskTitle(task) {
-        const recipeType = task.taskInfo?.recipeType
-        const destination = task.taskInfo?.destination
-        if (recipeType && destination) {
-            return `${msg(`tasks.details.recipeTypeNames.${recipeType}`)} \u2192 ${msg(`tasks.details.destination.${destination}`)}`
-        }
-        return task.name
+        return taskTitle(task.taskInfo) ?? task.name
+    }
+
+    getTaskDescription(task) {
+        const origin = exportOrigin(task.taskInfo)
+        return origin
+            ? [task.description || task.name, originName(origin)].filter(Boolean).join(' · ')
+            : this.getRecipePath(task)
     }
 
     getRecipePath(task) {
