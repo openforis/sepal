@@ -36,12 +36,12 @@
         name: 'spal-release'
       when: ansible_distribution_major_version != '2'
 
-    # One transaction: each yum task reloads the repository metadata
+    # One transaction: each yum task reloads the repository metadata. Amazon Linux 2023 packages the Docker SDK.
     - name: Install packages
       yum:
-        name:
-          - monit
-          - amazon-efs-utils
+        name: "{{ packages + (['python3-docker'] if ansible_distribution_major_version != '2' else []) }}"
+      vars:
+        packages: [monit, amazon-efs-utils, rsyslog]
 
     - name: Stop monit
       systemd:
@@ -64,7 +64,7 @@
         dest: "/etc/monit.d/config"
         owner: "root"
         group: "root"
-        mode: "0644"
+        mode: "0600"
 
     - name: Configure monit/3
       copy:
@@ -80,9 +80,13 @@
         dest: "/usr/local/bin/pushover-notify"
         owner: "root"
         group: "root"
-        mode: "0755"
+        mode: "0700"
       vars:
         monit_instance: "SEPAL-storage"
+
+    # Before anything goes in /data or is mounted under it
+    - import_role:
+        name: storage-data-volume
 
     - name: Remove unused aws.properties
       file:
@@ -98,6 +102,7 @@
       service:
         name: rsyslog
         state: "{{ 'restarted' if rsyslog_conf.changed else 'started' }}"
+        enabled: yes
 
     # docker
     - name: Create filesystem on Docker volume
@@ -207,11 +212,13 @@
         mode: +x
         status_code: [200, 304]
 
-    - file: path="/etc/sepal/env.d" state=directory
+    # The env file holds the deployment's credentials: root only
+    - file: path="/etc/sepal/env.d" state=directory mode=0700
     - name: Copy env file to env-config
       copy:
         src: "{{ env_file }}"
         dest: "/etc/sepal/env.d/env-config"
+        mode: "0600"
 
     - name: Creating env-current file
       copy:
@@ -224,6 +231,7 @@
       ansible.builtin.assemble:
         src: /etc/sepal/env.d
         dest: /etc/sepal/env
+        mode: "0600"
 
     - name: Copy logger docker compose file
       copy:

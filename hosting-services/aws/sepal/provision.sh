@@ -29,6 +29,10 @@ export AWS_POLL_DELAY_SECONDS=60
 
 inventory=$(../inventory.sh Sepal)
 
+# KEEP_SHARED_RULES=true provisions beside hosts still serving users: the Sandbox and Sepal-Apps security groups only
+# gain rules and the apps record stays, so the current hosts keep their access until the switch
+SHARED_RULES="keep_shared_rules=${KEEP_SHARED_RULES:-false}"
+
 ansible-playbook provision-common.yml \
     -i "$inventory" \
     --private-key="${PRIVATE_KEY}" \
@@ -47,18 +51,22 @@ ansible-playbook provision-sepal-storage.yml \
 ansible-playbook provision-sepal-apps.yml \
     -i "$inventory" \
     --private-key="${PRIVATE_KEY}" \
-    --extra-vars "env_file=$CONFIG_HOME/env local_ip_address=$LOCAL_IP_ADDRESS"
+    --extra-vars "env_file=$CONFIG_HOME/env local_ip_address=$LOCAL_IP_ADDRESS $SHARED_RULES"
 
 ansible-playbook provision-security-groups.yml \
     -i "$inventory" \
     --private-key="${PRIVATE_KEY}" \
-    --extra-vars "env_file=$CONFIG_HOME/env local_ip_address=$LOCAL_IP_ADDRESS"
+    --extra-vars "env_file=$CONFIG_HOME/env local_ip_address=$LOCAL_IP_ADDRESS $SHARED_RULES"
 
 ansible-playbook mount-ebs.yml \
     -i "$inventory" \
     --private-key="${PRIVATE_KEY}" \
     --extra-vars "env_file=$CONFIG_HOME/env"
     
+ansible-playbook mount-ebs-storage.yml \
+    -i "$(../inventory.sh SepalStorage)" \
+    --private-key="${PRIVATE_KEY}"
+
 ansible-playbook configure-efs.yml \
     -i "$inventory" \
     --private-key="${PRIVATE_KEY}" \

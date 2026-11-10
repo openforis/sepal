@@ -1,4 +1,3 @@
-import {sepalAppsHost} from '../src/config.js'
 import modules from './modules.json' with {type: 'json'}
 
 // Each path also matches everything below it, and the first registered match wins.
@@ -115,7 +114,7 @@ const endpoints = [
     },
     {
         path: '/api/app-launcher',
-        target: `http://${sepalAppsHost || modules.appLauncher}`,
+        target: `http://${modules.appLauncher}`,
         ws: true,
         authenticate: true
     },

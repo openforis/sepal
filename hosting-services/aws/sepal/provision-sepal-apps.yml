@@ -5,29 +5,13 @@
 
   tasks:
 
-    - name: Get Sepal instance information
-      ec2_instance_info:
-        region: "{{ lookup('env', 'AWS_REGION') }}"
-        filters:
-          tag:Type: "Sepal"
-          tag:Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
-          instance-state-name: running
-      register: ec2_sepal
-
-    - set_fact:
-        SEPAL_PUBLIC_IP: "{{ ec2_sepal.instances[0].public_ip_address }}"
-
     - name: Create Sepal-Apps security group
       ec2_group:
         name: "Sepal-Apps"
         description: The Sepal-Apps Security Group
         region: "{{ lookup('env', 'AWS_REGION') }}"
+        purge_rules: "{{ not (keep_shared_rules | default(false) | bool) }}"
         rules:
-          - proto: tcp
-            from_port: 80
-            to_port: 80
-            cidr_ip: "{{ SEPAL_PUBLIC_IP }}/32"
-            rule_desc: 'Sepal'
           - proto: tcp
             from_port: 22
             to_port: 22
@@ -54,6 +38,8 @@
         availability_zone: "{{ lookup('env', 'AWS_AVAILABILITY_ZONE') }}"
         state: running
         wait: true
+        # Applied to running hosts too; turn it off before terminating one
+        termination_protection: true
         exact_count: 1
         filters:
           tag:Type: "SepalApps"
@@ -86,6 +72,7 @@
         eni_id: "{{ ec2_sepal_apps.instances[0].network_interfaces[0].network_interface_id }}"
         security_groups: 
           - "Sepal-Apps"
+          - "Sepal-Swarm"
           - "Sepal-Developers"
 
     - name: Get Sepal-Apps instance information
@@ -101,6 +88,7 @@
         SEPAL_APPS_PUBLIC_IP: "{{ ec2_sepal_apps.instances[0].public_ip_address }}"
 
     - name: Add DNS entry for Sepal-Apps instance
+      when: not (keep_shared_rules | default(false) | bool)
       amazon.aws.route53:
         state: present
         zone: "{{ lookup('env', 'AWS_ROUTE_53_ZONE') }}"

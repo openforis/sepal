@@ -21,7 +21,7 @@ services:
       retries: 3
     networks:
       - sepal
-    restart: always
+    restart: unless-stopped
 
   storage:
     extends:
@@ -73,7 +73,7 @@ services:
       retries: 3
     networks:
       - sepal
-    restart: always
+    restart: unless-stopped
     ulimits:
       core: 0
     platform: linux/amd64 # Required for macOS builds

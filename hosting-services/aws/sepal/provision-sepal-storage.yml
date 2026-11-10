@@ -3,6 +3,25 @@
   connection: local
   gather_facts: false
 
+  vars:
+    root_and_docker_volumes:
+      - device_name: /dev/xvda
+        ebs:
+          delete_on_termination: false
+          volume_type: gp3
+          volume_size: 32
+      - device_name: /dev/sdb
+        ebs:
+          delete_on_termination: false
+          volume_type: gp3
+          volume_size: 32
+    data_volumes:
+      - device_name: /dev/sdc # /data
+        ebs:
+          delete_on_termination: false
+          volume_type: gp3
+          volume_size: 1
+
   tasks:
 
     - name: Create Sepal-Storage security group
@@ -28,15 +47,24 @@
             cidr_ip: 0.0.0.0/0
       register: sepal_storage_group
 
+    # Production still launches Amazon Linux 2, which keeps /data on the root volume
+    - name: Describe AWS_AMI
+      amazon.aws.ec2_ami_info:
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        image_ids: ["{{ lookup('env', 'AWS_AMI') }}"]
+      register: ami
+
     - name: Create Sepal-Storage instance
       ec2_instance:
         key_name: "{{ lookup('env', 'AWS_REGION') }}"
-        instance_type: m5a.large
+        instance_type: m6a.large
         image_id: "{{ lookup('env', 'AWS_AMI') }}"
         region: "{{ lookup('env', 'AWS_REGION') }}"
         availability_zone: "{{ lookup('env', 'AWS_AVAILABILITY_ZONE') }}"
         state: started
         wait: true
+        # Applied to running hosts too; turn it off before terminating one
+        termination_protection: true
         filters:
           tag:Name: "Sepal-Storage - {{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
           tag:Type: "SepalStorage"
@@ -45,19 +73,13 @@
         exact_count: 1
         purge_tags: false
         tags:
+          Name: "Sepal-Storage - {{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
           Type: "SepalStorage"
           Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
-        volumes:
-          - device_name: /dev/xvda
-            ebs:
-              delete_on_termination: false
-              volume_type: gp3
-              volume_size: 32
-          - device_name: /dev/sdb
-            ebs:
-              delete_on_termination: false
-              volume_type: gp3
-              volume_size: 32
+        # Applied only when the instance is launched: a running host keeps the volumes it has
+        volumes: >-
+          {{ root_and_docker_volumes
+             + (data_volumes if ami.images | selectattr('name', 'match', 'al2023-ami-') | list else []) }}
       register: started_ec2_sepal_storage
 
     - name: Get Sepal-Storage instance information
@@ -68,6 +90,16 @@
           tag:Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
           instance-state-name: running
       register: ec2_sepal_storage
+
+    - name: Tag Sepal-Storage /data volume
+      amazon.aws.ec2_tag:
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        resource: "{{ item.ebs.volume_id }}"
+        tags:
+          Name: "Sepal-Storage {{ lookup('env', 'DEPLOY_ENVIRONMENT') }} Data"
+      loop: "{{ ec2_sepal_storage.instances[0].block_device_mappings | selectattr('device_name', 'equalto', '/dev/sdc') | list }}"
+      loop_control:
+        label: "{{ item.ebs.volume_id }}"
 
     - name: Assign Sepal-Storage security groups
       amazon.aws.ec2_eni:

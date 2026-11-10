@@ -40,8 +40,13 @@
   pre_tasks:
     - set_fact:
         sepal_ip: "{{ ec2_private_ip_address }}"
-        sepal_ssh_ip: "{{ hostvars[inventory_hostname].ansible_eth0.ipv4_secondaries[0].address }}"
+        # The interface's other address: eth0 lists it second on Amazon Linux 2, ens5 first on Amazon Linux 2023
+        sepal_ssh_ip: >-
+          {{ ([main_interface.ipv4] + main_interface.ipv4_secondaries | default([])) | map(attribute='address')
+             | reject('equalto', ansible_default_ipv4.address) | first }}
         syslog_address: "udp://{{ ec2_private_ip_address }}"
+      vars:
+        main_interface: "{{ hostvars[inventory_hostname]['ansible_' ~ ansible_default_ipv4.interface] }}"
 
     # syslog address
     - name: Write syslog_address to /tmp/syslog-address
@@ -78,20 +83,26 @@
         - {name: vm.max_map_count, value: 1048576}
         - {name: vm.overcommit_memory, value: 1}
 
-    # One transaction: each yum task reloads the repository metadata
+    # Amazon Linux 2 has EPEL for monit and multitail, Amazon Linux 2023 has SPAL
+    - name: Install spal-release
+      dnf:
+        name: spal-release
+      when: ansible_distribution_major_version != '2'
+
+    # One transaction: each yum task reloads the repository metadata. Amazon Linux 2023 packages the Docker SDK,
+    # which Amazon Linux 2 installs with pip.
     - name: Install packages
       yum:
-        name:
-          - monit
-          - multitail
-          - htop
-          - "@Development Tools"
+        name: "{{ packages + (['python3-docker'] if ansible_distribution_major_version != '2' else []) }}"
+      vars:
+        packages: [monit, multitail, htop, rsyslog, '@Development Tools']
 
+    # A subset deploy leaves monit disabled too, so a reboot doesn't start it alerting on the modules left out
     - name: Stop monit
       systemd:
         name: monit
         state: stopped
-        enabled: yes
+        enabled: "{{ start_monit | default(true) | bool }}"
         masked: no
 
     - name: Configure monit/1
@@ -108,7 +119,7 @@
         dest: "/etc/monit.d/config"
         owner: "root"
         group: "root"
-        mode: "0644"
+        mode: "0600"
 
     - name: Configure monit/3
       copy:
@@ -124,7 +135,7 @@
         dest: "/usr/local/bin/pushover-notify"
         owner: "root"
         group: "root"
-        mode: "0755"
+        mode: "0700"
       vars:
         monit_instance: "SEPAL"
 
@@ -147,9 +158,16 @@
         state: restarted
       when: sshd_config.changed
 
-    # # rsyslog
+    # rsyslog
     - name: Copy rsyslog.conf
       template: src="rsyslog.conf" dest=/etc/rsyslog.conf
+      register: rsyslog_conf
+
+    - name: Start rsyslog
+      service:
+        name: rsyslog
+        state: "{{ 'restarted' if rsyslog_conf.changed else 'started' }}"
+        enabled: yes
 
     # profile.d
     - name: Copy profile.d
@@ -161,9 +179,6 @@
         mode: "0644"
 
     # docker
-    - file: path="/data/docker/storage/devicemapper/metadata" state=directory
-    - file: path="/data/docker/storage/tmp" state=directory
-
     - name: Create docker-registry certificate dir
       file:
         path: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"
@@ -182,6 +197,7 @@
     - name: Enable the Docker extras topic
       command: "amazon-linux-extras enable docker"
       changed_when: false
+      when: ansible_distribution_major_version == '2'
 
     # Only a DOCKER_VERSION change upgrades Docker (see deploy.sh)
     - name: Install docker
@@ -233,14 +249,12 @@
           - requests
           - docker
         executable: pip3
+      when: ansible_distribution_major_version == '2'
 
     - name: Init a new swarm with default parameters
       docker_swarm:
         advertise_addr: "{{ sepal_ip }}"
       register: swarm_init
-
-    - debug:
-        msg: "swarm worker join token: {{ swarm_init.swarm_facts.JoinTokens.Worker }}"
 
     - name: Wait for swarm leader
       command: docker node ls
@@ -293,11 +307,13 @@
         mode: +x
         status_code: [200, 304]
 
-    - file: path="/etc/sepal/env.d" state=directory
+    # The env file holds the deployment's credentials: root only
+    - file: path="/etc/sepal/env.d" state=directory mode=0700
     - name: Copy env file to env-config
       copy:
         src: "{{ env_file }}"
         dest: "/etc/sepal/env.d/env-config"
+        mode: "0600"
 
     - name: Creating env-current file
       copy:
@@ -313,6 +329,7 @@
       ansible.builtin.assemble:
         src: /etc/sepal/env.d
         dest: /etc/sepal/env
+        mode: "0600"
 
     - name: Copy logger docker compose file
       copy:
@@ -363,3 +380,4 @@
         state: started
         enabled: yes
         masked: no
+      when: start_monit | default(true) | bool

@@ -26,11 +26,6 @@ try {
                 .makeOptionMandatory()
         )
         .addOption(
-            new Option('--sepal-apps-host <value>')
-                .env('SEPAL_APPS_HOST')
-                .makeOptionMandatory()
-        )
-        .addOption(
             new Option('--amqp-host <value>')
                 .env('RABBITMQ_HOST')
                 .makeOptionMandatory()
@@ -58,7 +53,6 @@ try {
 
 const {
     sepalHost,
-    sepalAppsHost,
     amqpHost,
     redisHost,
     port,
@@ -75,5 +69,4 @@ export {
     port,
     redisUri,
     sandboxDefaultInstanceType,
-    sepalAppsHost,
     sepalHost}

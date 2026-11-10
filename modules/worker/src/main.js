@@ -260,7 +260,7 @@ process.once('SIGTERM', stop)
 process.once('SIGINT', stop)
 
 // A rejected main() leaves the process alive on the MySQL pool's open handles with no HTTP
-// server listening: restart:always never fires, and Compose does not act on a failing
+// server listening: the restart policy never fires, and Compose does not act on a failing
 // healthcheck either, so the module stays dead until an operator notices. Exiting hands the
 // retry to Docker, which is the only thing that can re-attempt a boot that lost AWS, MySQL or
 // RabbitMQ. In dev, nodemon deliberately does NOT restart on a crash — a broken source file

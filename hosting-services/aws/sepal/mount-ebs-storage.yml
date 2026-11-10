@@ -1,0 +1,10 @@
+- name: Mount Sepal-Storage EBS volumes
+  hosts: all
+  user: ec2-user
+  become: yes
+  gather_facts: true
+  gather_subset:
+    - '!all'
+
+  roles:
+    - storage-data-volume

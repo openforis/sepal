@@ -85,6 +85,14 @@ const launchTags = (environment, workerAmiVersion) => [
     mkTag('Starting', 'true'),
 ]
 
+// RunInstances applies these at launch; the instance's own tags follow in a separate CreateTags,
+// which names only the instance
+const volumeTags = environment => [
+    mkTag('Environment', environment),
+    mkTag('Type', 'Worker'),
+    mkTag('Name', `${environment}: Worker`),
+]
+
 const idleTags = environment => [
     mkTag('State', 'idle'),
     mkTag('Username', ''),
@@ -295,6 +303,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = INSTANCE_TYPES} = {}
             MaxCount: count,
             Placement: {AvailabilityZone: availabilityZone},
             ...volumeInitialization(volumeInitializationRate),
+            TagSpecifications: [{ResourceType: 'volume', Tags: volumeTags(environment)}],
             ...(userData ? {UserData: userData} : {}),
             ...(shutdownBehavior ? {InstanceInitiatedShutdownBehavior: shutdownBehavior} : {}),
         }))

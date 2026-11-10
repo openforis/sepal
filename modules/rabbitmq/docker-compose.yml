@@ -26,7 +26,7 @@ services:
       interval: 20s
       timeout: 5s
       retries: 3
-    restart: always
+    restart: unless-stopped
 
 networks:
   sepal:

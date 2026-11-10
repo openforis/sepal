@@ -24,14 +24,22 @@
         - "LANG=en_US.utf-8"
         - "LC_ALL=en_US.utf-8"
 
+    # monit comes from EPEL on Amazon Linux 2 and from SPAL on Amazon Linux 2023
     - name: Install epel
       command: "amazon-linux-extras install epel -y"
       args:
         creates: /etc/yum.repos.d/epel.repo
+      when: ansible_distribution_major_version == '2'
 
-    - name: Install monit
+    - name: Install spal-release
+      dnf:
+        name: spal-release
+      when: ansible_distribution_major_version != '2'
+
+    # One transaction: each yum task reloads the repository metadata. Amazon Linux 2023 packages the Docker SDK.
+    - name: Install packages
       yum:
-        name: 'monit'
+        name: "{{ ['monit', 'rsyslog'] + (['python3-docker'] if ansible_distribution_major_version != '2' else []) }}"
 
     - name: Stop monit
       systemd:
@@ -54,7 +62,7 @@
         dest: "/etc/monit.d/config"
         owner: "root"
         group: "root"
-        mode: "0644"
+        mode: "0600"
 
     - name: Configure monit/3
       copy:
@@ -70,7 +78,7 @@
         dest: "/usr/local/bin/pushover-notify"
         owner: "root"
         group: "root"
-        mode: "0755"
+        mode: "0700"
       vars:
         monit_instance: "SEPAL-apps"
 
@@ -88,6 +96,7 @@
       service:
         name: rsyslog
         state: "{{ 'restarted' if rsyslog_conf.changed else 'started' }}"
+        enabled: yes
 
     # docker
     - name: Create filesystem on Docker volume
@@ -115,6 +124,7 @@
     - name: Enable the Docker extras topic
       command: "amazon-linux-extras enable docker"
       changed_when: false
+      when: ansible_distribution_major_version == '2'
 
     # Only a DOCKER_VERSION change upgrades Docker (see deploy.sh)
     - name: Install docker
@@ -147,19 +157,48 @@
           - urllib3==1.26.18
           - requests
         executable: pip3
+      when: ansible_distribution_major_version == '2'
 
-    - docker_network:
+    # Hosts deployed before joining the swarm have a local sepal bridge, which would shadow the swarm network. Its
+    # containers go with it: run-module recreates the modules, and app-launcher its apps on sepal-apps.
+    - name: Get the sepal network
+      community.docker.docker_network_info:
         name: sepal
-        ipam_config:
-          - subnet: 172.20.0.0/16
-            iprange: 172.20.0.0/24
+      register: sepal_network
 
-    - name: Wait for overlay ready
-      command: docker network inspect sepal --format '{{ "{{" }} .Containers {{ "}}" }}'
-      register: network
-      retries: 15
-      delay: 2
-      until: network.stdout != "null"            
+    - name: Remove the local sepal network and its containers
+      when: sepal_network.exists and sepal_network.network.Scope == 'local'
+      block:
+        - name: Remove containers on the local sepal network
+          command: "docker rm -f {{ sepal_network.network.Containers.keys() | join(' ') }}"
+          when: sepal_network.network.Containers
+
+        - name: Remove the local sepal network
+          docker_network:
+            name: sepal
+            state: absent
+
+    - ec2_instance_info:
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        filters:
+          tag:Type: "Sepal"
+          tag:Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
+          instance-state-name: running
+      delegate_to: localhost
+      register: ec2_sepal
+
+    - name: Join the swarm as a worker
+      docker_swarm:
+        state: join
+        join_token: "{{ swarm_token }}"
+        remote_addrs: ["{{ ec2_sepal.instances[0].private_ip_address }}:2377"]
+
+    # A fixed subnet: Docker picks free ones from the networks it knows, which may not yet include the swarm's sepal
+    - name: Create the sepal-apps network
+      docker_network:
+        name: sepal-apps
+        ipam_config:
+          - subnet: 172.30.0.0/16
 
     - file:
         path: "/usr/local/lib/docker/cli-plugins"
@@ -177,11 +216,13 @@
         mode: +x
         status_code: [200, 304]
 
-    - file: path="/etc/sepal/env.d" state=directory
+    # The env file holds the deployment's credentials: root only
+    - file: path="/etc/sepal/env.d" state=directory mode=0700
     - name: Copy env file to env-config
       copy:
         src: "{{ env_file }}"
         dest: "/etc/sepal/env.d/env-config"
+        mode: "0600"
 
     - name: Creating env-current file
       copy:
@@ -194,6 +235,7 @@
       ansible.builtin.assemble:
         src: /etc/sepal/env.d
         dest: /etc/sepal/env
+        mode: "0600"
 
     - name: Copy logger docker compose file
       copy:
@@ -212,5 +254,4 @@
     - { role: live-patching }
     - { role: btop }
     - { role: docker-login }
-    - { role: run-module, module: logger }
     - { role: run-module, module: app-launcher }

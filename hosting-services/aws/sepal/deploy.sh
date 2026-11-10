@@ -3,6 +3,8 @@ set -e
 
 export VERSION=$1
 export CONFIG_HOME=$2
+# Optional: deploy only these main host modules, leave monit stopped and skip the apps and storage hosts
+ONLY_MODULES=("${@:3}")
 export PRIVATE_KEY=$CONFIG_HOME/certificates/aws.pem
 cd "$( dirname "${BASH_SOURCE[0]}" )"
 
@@ -29,10 +31,21 @@ export DOCKER_VERSION=
 export DOCKER_COMPOSE_VERSION=5.5.1
 export DOCKER_BUILDX_VERSION=0.37.1
 
+SUBSET_VARS=()
+if [ ${#ONLY_MODULES[@]} -gt 0 ]; then
+    MODULES_JSON=$(printf '{"module":"%s"},' "${ONLY_MODULES[@]}")
+    SUBSET_VARS=(--extra-vars "{\"modules\":[${MODULES_JSON%,}],\"images\":[],\"start_monit\":false}")
+fi
+
 ansible-playbook deploy.yml \
     -i "$(../inventory.sh Sepal)" \
     --private-key="$PRIVATE_KEY" \
-    --extra-vars "env_file=$CONFIG_HOME/env config_home=$CONFIG_HOME version=$VERSION worker_ami_version=$WORKER_AMI_VERSION"
+    --extra-vars "env_file=$CONFIG_HOME/env config_home=$CONFIG_HOME version=$VERSION worker_ami_version=$WORKER_AMI_VERSION" \
+    "${SUBSET_VARS[@]}"
+
+if [ ${#ONLY_MODULES[@]} -gt 0 ]; then
+    exit 0
+fi
 
 # use values defined by deploy,yml
 SWARM_TOKEN="$(cat /tmp/swarm-token)"

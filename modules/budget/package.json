@@ -12,7 +12,7 @@
         "test": "TZ=UTC node --test \"**/*.test.js\""
     },
     "dependencies": {
-        "commander": "^15.0.0",
+        "commander": "^15.1.0",
         "log4js": "^6.9.1",
         "mysql2": "^3.24.6",
         "rxjs": "^7.8.2",

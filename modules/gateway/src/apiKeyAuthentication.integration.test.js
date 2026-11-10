@@ -44,8 +44,7 @@ mock.module('../config/modules.json', {
 // one is missing, which under a test runner they all are.
 mock.module('./config.js', {
     exports: {
-        sepalHost: 'sepal.test',
-        sepalAppsHost: 'apps.test'
+        sepalHost: 'sepal.test'
     }
 })
 
