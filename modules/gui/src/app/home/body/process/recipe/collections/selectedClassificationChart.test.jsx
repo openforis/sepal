@@ -19,8 +19,10 @@ import {PortalContainer, PortalContext} from '~/widget/portal'
 // chart charted is kept through that. While what training needs is still being read, or cannot be, an open chart reads
 // nothing and stays open, nothing found. A CCDC reads its segments and observations together, and lets go of both. What
 // the chart watches is what its requests are judged by (loadObservations.test.js, loadSegmentsReadiness.test.js,
-// modules/gee). The registrations, store, source runtime, readiness, charts and their action are real; Earth Engine,
-// storage, the map, the graph renderer and the toolbar's and band picker's widgets are replaced.
+// modules/gee). Of the images, the chart offers the bands its collection carries as the processing applied
+// (`options`) makes it; no other section of the model says what that is. The registrations, store, source runtime,
+// readiness, band catalogue, charts, their form and their action are real; Earth Engine, storage, the map, the graph
+// renderer and the toolbar's and band picker's widgets are replaced.
 
 const {loadTimeSeriesObservations$, loadCCDCSegments$, inputBands$, saveRecipe$} = vi.hoisted(() => ({
     loadTimeSeriesObservations$: vi.fn(),
@@ -214,6 +216,65 @@ describe.each(CHARTS)('what an open $type chart watches', chart => {
     })
 })
 
+describe.each(CHARTS)('the bands an open $type chart over Landsat 8 scenes offers', chart => {
+    it.each([
+        ['with no opticalPreprocess section', undefined],
+        ['whatever an opticalPreprocess section says', {corrections: []}]
+    ])('exclude those only top-of-atmosphere scenes carry under SR, %s', async (_section, opticalPreprocess) => {
+        await open(chart, {corrections: ['SR'], opticalPreprocess})
+
+        await chartAt(PIXEL)
+
+        expect(offered().filter(band => TOA_ONLY.includes(band))).toEqual([])
+    })
+
+    it.each([
+        ['with no opticalPreprocess section', undefined],
+        ['whatever an opticalPreprocess section says', {corrections: ['SR']}]
+    ])('include those only top-of-atmosphere scenes carry without SR, %s', async (_section, opticalPreprocess) => {
+        await open(chart, {corrections: [], opticalPreprocess})
+
+        await chartAt(PIXEL)
+
+        expect(offered()).toEqual(expect.arrayContaining(TOA_ONLY))
+    })
+
+    it('lose only those once SR is applied, the Classification\'s outputs still offered', async () => {
+        await open(chart, {corrections: []})
+        await chartAt(PIXEL)
+        const withoutSr = offered()
+
+        await applyCorrections(['SR'])
+
+        expect(offered()).toEqual(withoutSr.filter(band => !TOA_ONLY.includes(band)))
+        expect(offered()).toEqual(expect.arrayContaining(['regression', CLASSIFIED]))
+    })
+
+    it('replace one charted once SR is applied, reading the band charts fall back to and letting go of the earlier read', async () => {
+        await open(chart, {corrections: [], chartedBand: 'pan'})
+        const pending = new Subject()
+        let cancelled = false
+        loadTimeSeriesObservations$.mockReturnValueOnce(pending.pipe(finalize(() => cancelled = true)))
+        await chartAt(PIXEL)
+
+        await applyCorrections(['SR'])
+
+        expect(cancelled).toBe(true)
+        expect(charting()).toBe(FALLBACK)
+        expect(requested()).toEqual([['pan'], [FALLBACK]])
+    })
+
+    it('keep one charted that SR scenes carry too once SR is applied, reading it again', async () => {
+        await open(chart, {corrections: [], chartedBand: 'swir1'})
+        await chartAt(PIXEL)
+
+        await applyCorrections(['SR'])
+
+        expect(charting()).toBe('swir1')
+        expect(requested()).toEqual([['swir1'], ['swir1']])
+    })
+})
+
 describe('an open CCDC chart over the Classification its Sources select', () => {
     const [, ccdcChartCase] = CHARTS
 
@@ -246,6 +307,9 @@ const MOSAIC = 'mosaic-1'
 const PIXEL = {lat: 1, lng: 2}
 const OTHER_PIXEL = {lat: 3, lng: 4}
 const CLASSIFIED = 'probability_1'
+const TOA_ONLY = ['pan', 'cirrus', 'thermal2']
+// The band a chart falls back to (resolveChartBand): the first its band catalogue lists for Landsat scenes, an index.
+const FALLBACK = 'ndvi'
 const LEGEND = {entries: [{id: 'a', value: 1, label: 'A', color: '#000000'}, {id: 'b', value: 2, label: 'B', color: '#ffffff'}]}
 const COLLECTED = {dataSetId: 'collected', type: 'COLLECTED', name: 'Collected', referenceData: [{x: 1, y: 1, class: 1}, {x: 2, y: 2, class: 2}]}
 const MOSAIC_INPUT = {imageId: 'i-1', type: 'RECIPE_REF', id: MOSAIC, bandSetSpecs: [{id: 'b', type: 'IMAGE_BANDS', class: 'IMAGE_BANDS', included: ['red', 'nir']}]}
@@ -257,9 +321,11 @@ const LISTING = [
     {id: MOSAIC, name: 'Mosaic', type: 'MOSAIC', revision: 1}
 ]
 
-// A Time Series or CCDC over Landsat 8 scenes, its Sources selecting the Random Forest; a CCDC fitting the breakpoint
-// bands given.
-const chartedRecipe = ({type, aoi = {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]}, breakpointBands = ['ndvi']}) => ({
+// A Time Series or CCDC over Landsat 8 scenes processed with the corrections given, its Sources selecting the Random
+// Forest; a CCDC fitting the breakpoint bands given.
+const chartedRecipe = ({
+    type, aoi = {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]}, breakpointBands = ['ndvi'], corrections = ['SR'], opticalPreprocess
+}) => ({
     id: SERIES,
     type,
     title: 'Series',
@@ -271,8 +337,9 @@ const chartedRecipe = ({type, aoi = {type: 'POLYGON', path: [[0, 0], [0, 1], [1,
             dataSetType: 'OPTICAL', classification: CLASSIFICATION, dataSets: {LANDSAT: ['LANDSAT_8']}, assets: [], cloudPercentageThreshold: 75,
             ...(type === 'CCDC' ? {breakpointBands} : {})
         },
-        options: {corrections: ['SR']},
-        ...(type === 'CCDC' ? {opticalPreprocess: {corrections: ['SR']}, ccdcOptions: {dateFormat: 1}} : {})
+        options: {corrections},
+        ...(opticalPreprocess ? {opticalPreprocess} : {}),
+        ...(type === 'CCDC' ? {ccdcOptions: {dateFormat: 1}} : {})
     },
     ui: {initialized: true}
 })
@@ -312,6 +379,10 @@ const chartButton = () => container.querySelector('button[aria-label=chart]')
 
 const requested = () => loadTimeSeriesObservations$.mock.calls.map(([{bands}]) => bands)
 
+const offered = () => [...container.querySelectorAll('select[aria-label=band] option')].map(({value}) => value)
+
+const charting = () => container.querySelector('select[aria-label=band]').value
+
 const segmentsRequested = () => loadCCDCSegments$.mock.calls.map(([{bands}]) => bands)
 
 // The questions the runtime is asked to read, while they are asked.
@@ -350,6 +421,14 @@ const holdTrainingData = async dataSets => {
     await settled()
 }
 
+// The corrections applied to the charted recipe's scenes, as its processing panel applies them.
+const applyCorrections = async corrections => {
+    await act(async () => actionBuilder('APPLY_PROCESSING')
+        .set(['process.loadedRecipes', SERIES, 'model.options.corrections'], corrections)
+        .dispatch())
+    await settled()
+}
+
 // The Classification's input imagery as the session holds it.
 const holdInput = async input => {
     await act(async () => actionBuilder('EDIT_INPUT')
@@ -375,9 +454,14 @@ const mapOf = () => {
 
 // `classificationOpen`: the Classification is open in a tab of its own, where it is edited and saved (saveRecipe$).
 async function open({type, chart: {CHART_OPERATIONS, ChartPixel}, RecipeActions}, {
-    input = MOSAIC_INPUT, trainingData = [COLLECTED], chartedBand = 'ndvi', classificationOpen = false, aoi, breakpointBands
+    input = MOSAIC_INPUT, trainingData = [COLLECTED], chartedBand = 'ndvi', classificationOpen = false, aoi, breakpointBands,
+    corrections, opticalPreprocess
 } = {}) {
-    const records = [chartedRecipe({type, aoi, breakpointBands}), classificationRecipe({input, trainingData}), mosaicRecipe()]
+    const records = [
+        chartedRecipe({type, aoi, breakpointBands, corrections, opticalPreprocess}),
+        classificationRecipe({input, trainingData}),
+        mosaicRecipe()
+    ]
     stored.records = Object.fromEntries(records.map(record => [record.id, record]))
     const initialState = {
         dimensions: {width: 1024, height: 768},

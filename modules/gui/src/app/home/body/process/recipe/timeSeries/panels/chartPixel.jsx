@@ -43,7 +43,7 @@ const mapRecipeToProps = recipe => ({
     startDate: moment(selectFrom(recipe, 'model.dates.startDate'), 'YYYY-MM-DD').toDate(),
     endDate: moment(selectFrom(recipe, 'model.dates.endDate'), 'YYYY-MM-DD').toDate(),
     dateFormat: selectFrom(recipe, 'model.ccdcOptions.dateFormat'),
-    corrections: selectFrom(recipe, 'model.opticalPreprocess.corrections'),
+    corrections: selectFrom(recipe, 'model.options.corrections'),
     dataSets: selectFrom(recipe, 'model.sources.dataSets'),
     recipe
 })

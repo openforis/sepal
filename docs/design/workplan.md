@@ -380,7 +380,7 @@ Use the part of the mechanism each responsibility needs:
 
 | Recipes | Concrete reuse and existing owner | Migration boundary |
 | --- | --- | --- |
-| CCDC, Time Series, Phenology | The selected Classification is read once per recipe for its UI (`collections/selectedClassification.js`). Chosen bands of the images, classified outputs and CCDC's TMask are judged in shared readiness, and Sources keep chosen bands shown. `collections/collectionClassifierRequirements.js`, `collections/collectionBandRequirements.js` and CCDC's `segmentDescription.js` establish reusable owners. | [Remaining items](#temporal-sources-dependencies): unmatched Planet Daily's imagery-dependent bands and the Time Series chart's corrections. No persisted fit evidence. |
+| CCDC, Time Series, Phenology | The selected Classification is read once per recipe for its UI (`collections/selectedClassification.js`). Chosen bands of the images, classified outputs and CCDC's TMask are judged in shared readiness, and Sources keep chosen bands shown. `collections/collectionClassifierRequirements.js`, `collections/collectionBandRequirements.js` and CCDC's `segmentDescription.js` establish reusable owners. | [Remaining items](#temporal-sources-dependencies): unmatched Planet Daily's imagery-dependent bands. No persisted fit evidence. |
 | LandTrendr | Sources' data-set, date and index dependencies are judged in shared readiness, and Sources keep chosen values shown and say which inputs an index lacks ([LandTrendr](../recipes/landtrendr.md#sources)). Data sets follow the shared [data-set availability](recipes/data-sources.md#data-set-availability). | [Named-product periods](#sources-data-set-availability), the annual mosaic's included; chart gating stays with [server preview readiness](#server-preview-readiness). |
 | Optical Mosaic | `sceneAreas.jsx`, `sceneSelection.jsx`, `autoSelectScenes.jsx` and `sceneDeselection.jsx` separately coordinate AOI/source/date-dependent reads and selected scenes. | Shared question identity and request lifecycle can replace local coordination. Scene discovery results are temporary; manual selections remain user-owned. Preserve explicit auto-selection and define retention/reconciliation before changing scene deletion behaviour. |
 | Classification, Regression | Shared input-band and training-data requirements already judge live dependencies. `panels/trainingData/sample*Section.jsx` and table-import sections own similar asynchronous import requests and mapping stages. | Reuse acquisition lifecycle and declared stage prerequisites where duplicated. Sampled/imported rows are persisted snapshots, and source IDs there record provenance; do not turn them into live execution dependencies or invalidate them automatically. Keep training adequacy and value/encoding policy separate. |
@@ -421,14 +421,13 @@ unverified for these follow-ups.
 
 For CCDC, Time Series and Phenology. The selected Classification's UI read, CCDC's TMask bands and the bands of the images
 CCDC and Phenology choose are current behaviour
-([Time Series](../recipes/time-series.md#bands-of-the-images-ccdc-and-phenology-choose)). Remaining, from code
-inspection; paths are relative to `modules/gui/src/app/home/body/process/recipe/`:
+([Time Series](../recipes/time-series.md#bands-of-the-images-ccdc-and-phenology-choose)), as are the Time Series
+chart's bands of the images under the corrections applied ([Time Series](../recipes/time-series.md#inputs)).
+Remaining, from code inspection:
 
 - **Unmatched Planet Daily.** Its eight-band names, and any index needing them, are not refused, because the rule reads
   no imagery. Refusing them needs the contributing imagery's bands (`nativeBands$`) acquired for the rule; a pending or
   failed read establishes nothing.
-- **Time Series chart corrections.** `timeSeries/panels/chartPixel.jsx` reads corrections from
-  `model.opticalPreprocess`, which nothing writes, so under SR the chart offers bands the collection lacks.
 
 **Further label opportunities, not scheduled.** Other places could adopt the
 [retained-output naming](../recipes/time-series.md#what-is-offered-of-the-selected-classification) where they are shown

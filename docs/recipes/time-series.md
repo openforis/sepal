@@ -54,6 +54,11 @@ An open chart reads again whenever what it is computed from changes, such as the
 settings. It waits while an edit to the Classification is not yet saved, since storage's copy is what is executed. Its
 band options follow the Classification record the session holds.
 
+Of the images, the chart offers the bands its collection carries under the corrections applied (`options.corrections`),
+as CCDC's does: under SR, Landsat 8's `pan`, `cirrus` and `thermal2` are not offered. Once applied processing no longer
+carries the band charted, the chart cancels that read and charts its fallback, as for any band no longer offered
+(`pixelChartUpdate`); a band still carried stays charted and is read again.
+
 ### What is offered of the selected Classification
 
 What Sources, the chart, Retrieve and CCDC's OPT offer of the selected Classification - its outputs and their labels -
@@ -331,7 +336,8 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
   `test/ee/timeSeries/classifiedOutputs.test.js`: planning/chunk/observation guards, native versus classified
   construction, unsupported output and repair across collection families.
 - `modules/gui/src/app/home/body/process/recipe/timeSeries/` and `recipe/collections/selectedClassificationChart.test.jsx`:
-  indicator requests, feedback, submission races, chart/Retrieve withdrawal, pending states and recovery.
+  indicator requests, feedback, submission races, chart/Retrieve withdrawal, pending states and recovery, and the
+  chart's bands of the images under the corrections applied.
 - `modules/gui/src/app/home/body/process/recipe/collections/selectedClassification.test.jsx`: the shared UI read through real roots,
   panels and runtime (CCDC and Time Series) - one request for the root and Sources, independent runtime reads, release,
   supersession, teardown, pending and failed reads, recovery, and labels in Sources, OPT and Retrieve.
