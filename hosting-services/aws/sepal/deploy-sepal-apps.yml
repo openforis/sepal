@@ -62,7 +62,7 @@
         dest: "/etc/monit.d/config"
         owner: "root"
         group: "root"
-        mode: "0644"
+        mode: "0600"
 
     - name: Configure monit/3
       copy:
@@ -78,7 +78,7 @@
         dest: "/usr/local/bin/pushover-notify"
         owner: "root"
         group: "root"
-        mode: "0755"
+        mode: "0700"
       vars:
         monit_instance: "SEPAL-apps"
 
@@ -216,11 +216,13 @@
         mode: +x
         status_code: [200, 304]
 
-    - file: path="/etc/sepal/env.d" state=directory
+    # The env file holds the deployment's credentials: root only
+    - file: path="/etc/sepal/env.d" state=directory mode=0700
     - name: Copy env file to env-config
       copy:
         src: "{{ env_file }}"
         dest: "/etc/sepal/env.d/env-config"
+        mode: "0600"
 
     - name: Creating env-current file
       copy:
@@ -233,6 +235,7 @@
       ansible.builtin.assemble:
         src: /etc/sepal/env.d
         dest: /etc/sepal/env
+        mode: "0600"
 
     - name: Copy logger docker compose file
       copy:
