@@ -1,0 +1,38 @@
+# Starts a snapshot of the main host's /data, the restore point for the OS upgrade. Take it the day before: switch.yml
+# takes another in the window without waiting for it.
+- name: Snapshot /data
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files: [vars.yml]
+
+  tasks:
+    - name: Find the main host
+      amazon.aws.ec2_instance_info:
+        region: "{{ region }}"
+        filters:
+          tag:Type: Sepal
+          tag:Environment: "{{ deploy_environment }}"
+          instance-state-name: running
+      register: main_host
+
+    - name: One main host is running
+      assert:
+        that: main_host.instances | length == 1
+        fail_msg: "Expected one running main host, found {{ main_host.instances | length }}"
+
+    - name: Snapshot /data in the background
+      amazon.aws.ec2_snapshot:
+        region: "{{ region }}"
+        volume_id: >-
+          {{ (main_host.instances[0].block_device_mappings
+              | selectattr('device_name', 'equalto', '/dev/sdf') | first).ebs.volume_id }}
+        description: "SEPAL {{ deploy_environment }} /data, day before OS upgrade"
+        snapshot_tags:
+          Name: "Sepal {{ deploy_environment }} Data - day before OS upgrade"
+        wait: false
+      register: snapshot
+
+    - name: Report the snapshot
+      debug:
+        msg: "Snapshot {{ snapshot.snapshot_id }} of {{ snapshot.volume_id }} completes in the background"
