@@ -14,7 +14,7 @@ grouped by responsibility. Each group imports only the groups listed before it:
 | Folder | Responsibility |
 | --- | --- |
 | `outputs/` | The common output read, its dependency graph and watches, preview pixel generation and visualizations. |
-| `sources/` | Evidence about selected sources, and the CCDC segment capability. |
+| `sources/` | The recipe selector (`RecipeInput`), evidence about selected sources, and the CCDC segment capability. |
 | `requirements/` | Reading declared requirements, gating operations, and presenting findings at toolbars and fields. |
 | `collections/` | What image-collection Sources share: the data-set period, collection bands, the selected Classification and initial data sets. |
 | `editing/` | Candidates, submissions and derived or calculated results behind `process/recipeFormPanel.jsx`. |

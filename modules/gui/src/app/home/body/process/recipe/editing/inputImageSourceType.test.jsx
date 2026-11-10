@@ -24,7 +24,7 @@ vi.mock('~/widget/form/assetCombo', () => ({
     FormAssetCombo: ({labelButtons}) => <div data-picker='asset'>{labelButtons}</div>
 }))
 vi.mock('~/widget/legend/legend', () => ({Legend: () => null}))
-vi.mock('~/widget/recipeInput', () => ({
+vi.mock('~/app/home/body/process/recipe/sources/recipeInput', () => ({
     RecipeInput: ({labelButtons}) => <div data-picker='recipe'>{labelButtons}</div>
 }))
 

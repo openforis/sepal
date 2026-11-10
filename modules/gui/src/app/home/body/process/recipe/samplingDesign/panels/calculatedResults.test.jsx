@@ -53,7 +53,7 @@ vi.mock('~/widget/panelWizard', () => ({
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
 // The source recipe's bands load as the panel opens, with a legend of its own for them.
-vi.mock('~/widget/recipeInput', () => ({RecipeInput: ({onBandsLoaded}) => {
+vi.mock('~/app/home/body/process/recipe/sources/recipeInput', () => ({RecipeInput: ({onBandsLoaded}) => {
     React.useEffect(() => onBandsLoaded({bandNames: ['class'], recipe: {}}), [])
     return null
 }}))

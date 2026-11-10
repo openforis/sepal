@@ -15,7 +15,7 @@ vi.mock('~/widget/activation/activatable', () => ({
 }))
 vi.mock('~/apiRegistry', () => ({default: {recipe: {load$: id => of({id, type: 'MOSAIC', model: {}})}}}))
 const picker = vi.hoisted(() => ({stubbed: false}))
-vi.mock('~/widget/recipeInput', async importOriginal => {
+vi.mock('~/app/home/body/process/recipe/sources/recipeInput', async importOriginal => {
     const {RecipeInput} = await importOriginal()
     const {useEffect} = await import('react')
     const ListedRecipes = ({input, onRecipeLoaded}) => {

@@ -25,7 +25,7 @@ import layerStyles from './imageLayerSources.module.css'
 
 vi.mock('~/apiRegistry', () => ({default: {recipe: {load$: () => NEVER, loadAll$: () => NEVER, save$: () => NEVER}}}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/widget/recipeInput', () => ({RecipeInput: () => null}))
+vi.mock('~/app/home/body/process/recipe/sources/recipeInput', () => ({RecipeInput: () => null}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, children}) => typeof msg === 'string'

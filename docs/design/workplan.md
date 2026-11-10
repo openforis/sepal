@@ -288,12 +288,13 @@ effects still need review when changing import order. Shared support now lives i
 (`app/home/user/userDetailsHint.js`), notification publication (`widget/notificationPublisher.js`, behind the
 `Notifications` API) and the Earth Engine credential generation (`credentialId.js` in `process/sourceRuntime/`).
 
-- **`widget/recipeInput.jsx`.** The application monitors now live in `app/home/monitoring/`, and the asset and
-  workspace selectors with their feature: the asset listing (`Assets`, `withAssets`) and asset selection in
-  `browse/assets/`, workspace browsing in `browse/files/`, and Retrieve's destination fields in `recipe/retrieve/`.
-  `Form.AssetCombo` and `Form.AssetInput` stay in `widget/form/`, the adapter being the widget library's one import
-  of the asset feature. Remaining: `recipeInput.jsx` depends on recipe access, context and registration; decide its
-  destination with the shared recipe folders. Keep generic controls in the widget library.
+- **Application code out of `widget/`.** The application monitors live in `app/home/monitoring/`; the asset listing
+  and selection in `browse/assets/`, workspace browsing in `browse/files/`, Retrieve's destination fields in
+  `recipe/retrieve/` and the recipe selector (`RecipeInput`, Map Layers and the training samplers included) in
+  `recipe/sources/`. `Form.AssetCombo` and `Form.AssetInput` stay in `widget/form/`, the adapter being the widget
+  library's one import of the asset feature, and the input reading the map's asset parser. Beyond them, only the
+  legend widgets import `app/`: the recipe context, and the map's context and legend builder. Keep generic controls in
+  the widget library.
 - **Recipe-session support in the parent `process/` directory.** `draftAgreement.js`, `recipeCache.js`,
   `recipeCacheClaims.js`, `recipeListing.js`, `saveCoordinator.js` and `recipeAccess.jsx` form a connected lifecycle
   group beside process menus, creation screens and layer registries. Assess a cohesive session/cache/save location

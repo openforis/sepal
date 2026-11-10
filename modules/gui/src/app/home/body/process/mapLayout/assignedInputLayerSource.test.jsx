@@ -27,7 +27,7 @@ vi.mock('~/widget/activation/activatable', () => ({
         <Component {...props} activatable={{active: true, activate: () => {}, deactivate: () => {}}}/>
     )
 }))
-vi.mock('~/widget/recipeInput', async () => {
+vi.mock('~/app/home/body/process/recipe/sources/recipeInput', async () => {
     const {useEffect} = await import('react')
     return {
         RecipeInput: ({input, onBandsLoaded}) => {

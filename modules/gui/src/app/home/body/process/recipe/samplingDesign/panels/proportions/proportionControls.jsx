@@ -1,5 +1,6 @@
 import _ from 'lodash'
 
+import {RecipeInput} from '~/app/home/body/process/recipe/sources/recipeInput'
 import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
@@ -8,7 +9,6 @@ import {Form} from '~/widget/form'
 import {FormCombo} from '~/widget/form/combo'
 import {Layout} from '~/widget/layout'
 import {NoData} from '~/widget/noData'
-import {RecipeInput} from '~/widget/recipeInput'
 import {Widget} from '~/widget/widget'
 
 import {categoricalLegendEntries} from '../../sampling/categoricalLegend'

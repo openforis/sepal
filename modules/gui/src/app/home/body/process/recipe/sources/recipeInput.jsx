@@ -14,9 +14,8 @@ import {select} from '~/store'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {Buttons} from '~/widget/buttons'
+import {Form} from '~/widget/form'
 import {Notifications} from '~/widget/notifications'
-
-import {Form} from './form'
 
 const mapStateToProps = () => {
     return {

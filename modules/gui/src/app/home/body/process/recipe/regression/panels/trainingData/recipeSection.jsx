@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {RecipeInput} from '~/widget/recipeInput'
+import {RecipeInput} from '~/app/home/body/process/recipe/sources/recipeInput'
 
 export class RecipeSection extends React.Component {
     render() {

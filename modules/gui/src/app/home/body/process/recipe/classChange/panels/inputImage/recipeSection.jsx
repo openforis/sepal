@@ -2,9 +2,9 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {recipeVisualizationsNaming} from '~/app/home/body/process/recipe/outputs/visualizations'
+import {RecipeInput} from '~/app/home/body/process/recipe/sources/recipeInput'
 import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
 import {msg} from '~/translate'
-import {RecipeInput} from '~/widget/recipeInput'
 
 export class RecipeSection extends React.Component {
     render() {

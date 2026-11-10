@@ -4,6 +4,7 @@ import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
 import api from '~/apiRegistry'
+import {RecipeInput} from '~/app/home/body/process/recipe/sources/recipeInput'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {isGeometrySource} from '~/app/home/body/process/recipeTypeRegistry'
 import {SourceKind} from '~/app/home/body/process/sourceTypeButtons'
@@ -12,7 +13,6 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
-import {RecipeInput} from '~/widget/recipeInput'
 
 import {PreviewMap} from './previewMap'
 
