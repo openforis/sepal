@@ -57,7 +57,7 @@
     - name: Create Sepal-Storage instance
       ec2_instance:
         key_name: "{{ lookup('env', 'AWS_REGION') }}"
-        instance_type: m5a.large
+        instance_type: m6a.large
         image_id: "{{ lookup('env', 'AWS_AMI') }}"
         region: "{{ lookup('env', 'AWS_REGION') }}"
         availability_zone: "{{ lookup('env', 'AWS_AVAILABILITY_ZONE') }}"
