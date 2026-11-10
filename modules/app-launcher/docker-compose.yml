@@ -12,8 +12,6 @@ services:
           hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/app-launcher:${SEPAL_VERSION:-latest}"
     container_name: app-launcher
-    ports:
-      - 80:80
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - "${SEPAL_DATA_DIR}/app-launcher:/var/lib/sepal/app-launcher"
@@ -39,10 +37,13 @@ services:
       retries: 3
     networks:
       - sepal
+      - sepal-apps
     restart: unless-stopped
     ulimits:
       core: 0
 
 networks:
   sepal:
+    external: true
+  sepal-apps:
     external: true

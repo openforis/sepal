@@ -1,0 +1,6 @@
+# Added to every app's compose files. Apps name their network sepal; on the apps host that is the swarm network, which
+# would reach every SEPAL service. They get the local sepal-apps bridge instead, shared only with app-launcher.
+networks:
+  sepal:
+    name: sepal-apps
+    external: true

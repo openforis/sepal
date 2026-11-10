@@ -12,6 +12,7 @@ import executeCommand from './terminal.js'
 const log = getLogger('appsService')
 
 const getAppPath = appName => `/var/lib/sepal/app-launcher/apps/${appName}`
+const APPS_NETWORK_FILE = new URL('../config/apps-network.yml', import.meta.url).pathname
 
 const docker = new Docker()
 
@@ -36,6 +37,7 @@ const composeFiles = async (appPath, includeOverride = true) => {
     ) {
         files.push(path.join(appPath, 'docker-compose.override.yml'))
     }
+    files.push(APPS_NETWORK_FILE)
     return files.flatMap(f => ['--file', f])
 }
 

@@ -34,3 +34,4 @@ npm run testWatch     # Node test runner watch mode
 ## Non-Obvious Conventions
 
 - **GEE credentials**: `src/gee.js` creates Earth Engine credentials file if configured
+- **App network**: apps run on the local `sepal-apps` bridge, shared only with app-launcher. Their compose files name the network `sepal`; `config/apps-network.yml`, added to every compose command, maps that name to `sepal-apps`, so apps never join the swarm network.

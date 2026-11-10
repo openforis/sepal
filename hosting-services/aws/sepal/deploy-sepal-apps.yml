@@ -159,18 +159,46 @@
         executable: pip3
       when: ansible_distribution_major_version == '2'
 
-    - docker_network:
+    # Hosts deployed before joining the swarm have a local sepal bridge, which would shadow the swarm network. Its
+    # containers go with it: run-module recreates the modules, and app-launcher its apps on sepal-apps.
+    - name: Get the sepal network
+      community.docker.docker_network_info:
         name: sepal
-        ipam_config:
-          - subnet: 172.20.0.0/16
-            iprange: 172.20.0.0/24
+      register: sepal_network
 
-    - name: Wait for overlay ready
-      command: docker network inspect sepal --format '{{ "{{" }} .Containers {{ "}}" }}'
-      register: network
-      retries: 15
-      delay: 2
-      until: network.stdout != "null"            
+    - name: Remove the local sepal network and its containers
+      when: sepal_network.exists and sepal_network.network.Scope == 'local'
+      block:
+        - name: Remove containers on the local sepal network
+          command: "docker rm -f {{ sepal_network.network.Containers.keys() | join(' ') }}"
+          when: sepal_network.network.Containers
+
+        - name: Remove the local sepal network
+          docker_network:
+            name: sepal
+            state: absent
+
+    - ec2_instance_info:
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        filters:
+          tag:Type: "Sepal"
+          tag:Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
+          instance-state-name: running
+      delegate_to: localhost
+      register: ec2_sepal
+
+    - name: Join the swarm as a worker
+      docker_swarm:
+        state: join
+        join_token: "{{ swarm_token }}"
+        remote_addrs: ["{{ ec2_sepal.instances[0].private_ip_address }}:2377"]
+
+    # A fixed subnet: Docker picks free ones from the networks it knows, which may not yet include the swarm's sepal
+    - name: Create the sepal-apps network
+      docker_network:
+        name: sepal-apps
+        ipam_config:
+          - subnet: 172.30.0.0/16
 
     - file:
         path: "/usr/local/lib/docker/cli-plugins"
