@@ -2,9 +2,6 @@ import _ from 'lodash'
 import {NEVER} from 'rxjs'
 
 import api from '~/apiRegistry'
-import {browserWakeups$} from '~/browserWakeups'
-import {getLogger} from '~/log'
-
 import {
     DEFAULT_AUTHORITY_MAX_AGE_MS,
     expiredListing,
@@ -13,7 +10,9 @@ import {
     mergedListing,
     refreshedListing,
     refreshingListing
-} from '../recipeListing'
+} from '~/app/home/body/process/recipeSession/recipeListing'
+import {browserWakeups$} from '~/browserWakeups'
+import {getLogger} from '~/log'
 
 // Keeps the recipe listing - this session's evidence of recipe revisions (recipeListing.js) - recent while any output
 // is watched. One request at a time; a trigger while one is in flight joins it.

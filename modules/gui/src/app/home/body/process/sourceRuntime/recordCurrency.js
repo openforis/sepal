@@ -1,6 +1,5 @@
+import {AGREED, draftAgreement, isDraft, SAVE_PENDING} from '~/app/home/body/process/recipeSession/draftAgreement'
 import {selectFrom} from '~/stateUtils'
-
-import {AGREED, draftAgreement, isDraft, SAVE_PENDING} from '../draftAgreement'
 
 // What this session knows of each recipe record's persisted state, from the parts of the session that say so: the
 // records it holds, the recipe listing and how current it is (recipeListing.js), the open recipes, and what their

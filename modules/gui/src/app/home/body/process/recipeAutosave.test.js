@@ -28,8 +28,8 @@ vi.mock('~/widget/notifications', () => ({Notifications: {error: vi.fn()}}))
 const {actionBuilder} = await import('~/action-builder')
 const {initStore} = await import('~/store')
 const {forgetRecipeSaveState, hasUnsavedWork, openRecipeRevision, recipePath, sessionRecipeCache} = await import('./recipe')
-const {draftAgreement} = await import('./draftAgreement')
-const {RecipeCacheClaimant} = await import('./recipeCacheClaims')
+const {draftAgreement} = await import('./recipeSession/draftAgreement')
+const {RecipeCacheClaimant} = await import('./recipeSession/recipeCacheClaims')
 
 let store
 let loaded

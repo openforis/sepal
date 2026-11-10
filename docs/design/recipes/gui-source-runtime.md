@@ -23,8 +23,9 @@ grouped by responsibility. Each group imports only the groups listed before it:
 | `retrieve/` | What may be retrieved, task submission and the common Retrieve panel. |
 
 Acquisition stays in `process/sourceRuntime/`, including the evidence basis and the image-output observer, and shared
-GUI/server policies in `lib/js/shared`. Code one type owns stays in its folder, even where other types reuse it;
-`mosaic/` holds the AOI and radar-options panels several types share.
+GUI/server policies in `lib/js/shared`. What the session holds of storage - drafts, cache acceptance and claims, listing
+authority and save coordination - is in `process/recipeSession/`. Code one type owns stays in its folder, even where
+other types reuse it; `mosaic/` holds the AOI and radar-options panels several types share.
 
 ## Public boundary
 

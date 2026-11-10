@@ -295,11 +295,11 @@ effects still need review when changing import order. Shared support now lives i
   library's one import of the asset feature, and the input reading the map's asset parser. Beyond them, only the
   legend widgets import `app/`: the recipe context, and the map's context and legend builder. Keep generic controls in
   the widget library.
-- **Recipe-session support in the parent `process/` directory.** `draftAgreement.js`, `recipeCache.js`,
-  `recipeCacheClaims.js`, `recipeListing.js`, `saveCoordinator.js` and `recipeAccess.jsx` form a connected lifecycle
-  group beside process menus, creation screens and layer registries. Assess a cohesive session/cache/save location
-  and what remains at the process entry points. Coordinate with the current proposal rather than planning overlapping
-  moves; keep `process/sourceRuntime` as the acquisition owner.
+- **Recipe-session support out of the `process/` root.** What the session holds of storage - drafts, cache
+  acceptance and claims, listing authority and save coordination - lives in `process/recipeSession/`, a folder that
+  imports only `apiRegistry`, `hash` and `uuid`. The process entry points keep the orchestration (`recipe.jsx`, which
+  creates the one session cache and save coordinator and re-exports `saveStatePath`), `recipeAccess.jsx` and
+  `recipeContext.jsx`, the registries, screens, menus and shared form panel.
 - **Feature-layer code in `app/home/map/`.** The root mixes map lifetime/context and controls with feature rendering,
   styling and legend editing. Start with the feature-layer editor and its style, filter, category and asset-style
   helpers, then establish which renderers belong with them. Preserve the existing `visParams/` and

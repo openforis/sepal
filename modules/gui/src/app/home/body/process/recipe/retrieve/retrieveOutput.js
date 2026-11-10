@@ -2,12 +2,12 @@ import _ from 'lodash'
 
 import {physicalDestinationCompatibility} from '#sepal/recipe/output/physicalDestinationCompatibility'
 import {VALID} from '#sepal/recipe/source/dependencyValidity'
+import {CURRENT, EXPIRED, listingAuthority, WAITING} from '~/app/home/body/process/recipeSession/recipeListing'
 import {getLogger} from '~/log'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
 
-import {CURRENT, EXPIRED, listingAuthority, WAITING} from '../../recipeListing'
 import {
     assetAuthority,
     assetEvidenceOfState,

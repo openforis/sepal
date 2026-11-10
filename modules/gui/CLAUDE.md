@@ -63,6 +63,8 @@ src/
       process/          # Recipe processing (main feature area)
         recipe/         # Recipe types (mosaic, classification, timeSeries, ccdc, etc.) and shared groups:
                         # outputs, sources, requirements, collections, editing, map, charts, retrieve
+        recipeSession/  # Drafts, recipe cache acceptance and claims, listing authority, save coordination
+        sourceRuntime/  # Acquisition: source evidence, outputs, watches
       terminal/         # Web terminal (xterm.js)
       users/            # User management (admin)
   widget/               # Reusable UI components (buttons, forms, panels, tabs, notifications)

@@ -1,9 +1,9 @@
 import _ from 'lodash'
 
 import {ASSET} from '#sepal/recipe/source/reference'
+import {isDraft} from '~/app/home/body/process/recipeSession/draftAgreement'
 import {selectFrom} from '~/stateUtils'
 
-import {isDraft} from '../draftAgreement'
 import {declaredSelections, sourceKeyOf} from '../recipe/sources/sourceEvidence'
 import {assetEvidenceOfState, DEFAULT_ASSET_POLICY} from './assetEvidence'
 import {earthEngineGeneration} from './credentialId'

@@ -64,7 +64,7 @@ const {readRecipeOutput} = await import('../recipe/outputs/recipeOutput')
 const {createReduxSourceEnvironment} = await import('./reduxSourceEnvironment')
 const {createSourceRuntime} = await import('./sourceRuntime')
 const {SourceRuntimeProvider, useSourceRuntime, withSourceRuntime} = await import('./sourceRuntimeContext')
-const {listingRequest, mergedListing, touchedListing} = await import('../recipeListing')
+const {listingRequest, mergedListing, touchedListing} = await import('~/app/home/body/process/recipeSession/recipeListing')
 
 const ccdc = (id = 'ccdc-1') => ({id, type: 'CCDC', model: {}})
 

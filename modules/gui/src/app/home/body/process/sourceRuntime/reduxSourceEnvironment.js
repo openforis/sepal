@@ -1,9 +1,9 @@
 import {Observable} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
+import {cacheAcceptance, initializeRecipe, REPLACE} from '~/app/home/body/process/recipeSession/recipeCache'
+import {RecipeCacheClaimant} from '~/app/home/body/process/recipeSession/recipeCacheClaims'
 
-import {cacheAcceptance, initializeRecipe, REPLACE} from '../recipeCache'
-import {RecipeCacheClaimant} from '../recipeCacheClaims'
 import {ASSET_EVIDENCE_PATH, assetEvidenceOfState} from './assetEvidence'
 import {earthEngineGeneration} from './credentialId'
 import {evidenceSession} from './sourceEvidenceBasis'

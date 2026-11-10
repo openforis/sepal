@@ -70,7 +70,7 @@ const {default: changeAlertsType} = await import('./changeAlerts')
 const {default: ccdcType} = await import('../ccdc/ccdc')
 const {SourceRuntimeProvider, withSourceRuntime} = await import('../../sourceRuntime/sourceRuntimeContext')
 const {initStore} = await import('~/store')
-const {RecipeCacheClaimant} = await import('../../recipeCacheClaims')
+const {RecipeCacheClaimant} = await import('~/app/home/body/process/recipeSession/recipeCacheClaims')
 const {sessionRecipeCache} = await import('../../recipe')
 
 addRecipeType(changeAlertsType())

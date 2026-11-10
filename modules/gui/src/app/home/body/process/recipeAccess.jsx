@@ -5,7 +5,7 @@ import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
 
 import {sessionRecipeCache} from './recipe'
-import {RecipeCacheClaimant} from './recipeCacheClaims'
+import {RecipeCacheClaimant} from './recipeSession/recipeCacheClaims'
 
 // A component's claim on the session's recipe cache, held while it is mounted (recipeCacheClaims.js).
 

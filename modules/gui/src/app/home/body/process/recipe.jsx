@@ -18,9 +18,9 @@ import {downloadObjectZip$} from '~/widget/download'
 import {Notifications} from '~/widget/notifications'
 import {addTab, closeTab} from '~/widget/tabs/tabActions'
 
-import {isDraft} from './draftAgreement'
-import {initializeRecipe, saveStatePath} from './recipeCache'
-import {releaseSettled} from './recipeCacheClaims'
+import {isDraft} from './recipeSession/draftAgreement'
+import {initializeRecipe, saveStatePath} from './recipeSession/recipeCache'
+import {releaseSettled} from './recipeSession/recipeCacheClaims'
 import {
     failedListing,
     LISTING_STATE_PATH,
@@ -29,10 +29,10 @@ import {
     refreshedListing,
     refreshingListing,
     touchedListing
-} from './recipeListing'
-import {createSaveCoordinator, SAVED} from './saveCoordinator'
+} from './recipeSession/recipeListing'
+import {createSaveCoordinator, SAVED} from './recipeSession/saveCoordinator'
 
-export {saveStatePath} from './recipeCache'
+export {saveStatePath} from './recipeSession/recipeCache'
 
 // Transient view state and the server-owned revision are both not recipe content, so neither leaves the
 // browser as part of one.

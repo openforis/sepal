@@ -28,7 +28,7 @@ vi.mock('../recipeTypeRegistry', () => ({
 const styled = (recipe, own) => ({...recipe, layers: {userDefinedVisualizations: {'this-recipe': own}}})
 
 const {EvidenceRegistry} = await import('./evidenceRegistry')
-const {RecipeCacheClaimant} = await import('../recipeCacheClaims')
+const {RecipeCacheClaimant} = await import('~/app/home/body/process/recipeSession/recipeCacheClaims')
 const {maskingObservation} = await import('../recipe/masking/maskingSourceEvidence')
 
 const observation = {
