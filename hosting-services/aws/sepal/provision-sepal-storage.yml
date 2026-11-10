@@ -63,6 +63,8 @@
         availability_zone: "{{ lookup('env', 'AWS_AVAILABILITY_ZONE') }}"
         state: started
         wait: true
+        # Applied to running hosts too; turn it off before terminating one
+        termination_protection: true
         filters:
           tag:Name: "Sepal-Storage - {{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
           tag:Type: "SepalStorage"
