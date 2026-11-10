@@ -1,5 +1,6 @@
-# Tries AWS_AMI on a throwaway instance in the main host's subnet and security groups, with a volume made from a
-# snapshot of the main host's /data. Whatever the outcome, the instance, the volume and the snapshot are removed.
+# Tries AWS_AMI on a throwaway instance in the main host's subnet and security groups, with a volume made from the
+# latest completed snapshot of the main host's /data. Whatever the outcome, the instance and the volume are removed; the
+# snapshot is kept.
 # The instance is tagged at launch: the worker terminates untagged instances.
 - name: Kernel check, trial instance
   hosts: localhost
@@ -15,7 +16,7 @@
       Environment: "{{ deploy_environment }}"
 
   tasks:
-    - name: Refuse production, whose /data it would snapshot
+    - name: Refuse production
       assert:
         that: deploy_environment != 'PROD'
         fail_msg: Run the trial on test
@@ -35,17 +36,27 @@
           {{ (main_host.instances[0].block_device_mappings
               | selectattr('device_name', 'equalto', '/dev/sdf') | first).ebs.volume_id }}
 
-    - block:
-        - name: Snapshot /data
-          amazon.aws.ec2_snapshot:
-            region: "{{ region }}"
-            volume_id: "{{ data_volume_id }}"
-            description: "{{ check_tags.Name }}"
-            snapshot_tags: "{{ check_tags }}"
-            wait: true
-            wait_timeout: 7200
-          register: snapshot
+    - name: Find the /data snapshots
+      amazon.aws.ec2_snapshot_info:
+        region: "{{ region }}"
+        filters:
+          volume-id: "{{ data_volume_id }}"
+          status: completed
+      register: snapshots
 
+    - name: A completed /data snapshot exists
+      assert:
+        that: snapshots.snapshots | length > 0
+        fail_msg: "No completed snapshot of {{ data_volume_id }}: take one first"
+
+    - name: Use the latest
+      set_fact:
+        snapshot: "{{ snapshots.snapshots | sort(attribute='start_time') | last }}"
+
+    - debug:
+        msg: "Using {{ snapshot.snapshot_id }}, taken {{ snapshot.start_time }}"
+
+    - block:
         - name: Launch the trial instance
           amazon.aws.ec2_instance:
             region: "{{ region }}"
@@ -79,6 +90,8 @@
             name: kernel-check
             ansible_host: "{{ trial.instances[0].public_ip_address }}"
             ansible_user: ec2-user
+            # The play's local connection would otherwise run the delegated tasks in the deploy container
+            ansible_connection: ssh
 
         - name: Wait for SSH
           wait_for_connection:
@@ -116,13 +129,6 @@
             state: absent
           when: data_copy.volume_id is defined
           ignore_errors: true
-
-        - name: Delete the snapshot
-          amazon.aws.ec2_snapshot:
-            region: "{{ region }}"
-            snapshot_id: "{{ snapshot.snapshot_id }}"
-            state: absent
-          when: snapshot.snapshot_id is defined
 
     - name: Results
       debug:
