@@ -69,6 +69,7 @@ src/
         sourceRuntime/  # Acquisition: source evidence, outputs, watches
       terminal/         # Web terminal (xterm.js)
       users/            # User management (admin)
+    preferences/        # Theme and language selectors shared by Landing and the user menu
   widget/               # Reusable UI components (buttons, forms, panels, tabs, notifications)
 ```
 

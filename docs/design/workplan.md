@@ -308,9 +308,12 @@ effects still need review when changing import order. Shared support now lives i
   and `widget/legend/`; `legendImport.jsx` serves those legends and the table-asset panel; `legendLayer.jsx` is a
   presentation overlay beside palette and values. Preserve the `visParams/`, `imageLayerSource/`, `tileProvider/` and
   `tileManager/` boundaries rather than reshuffling the map tree.
-- **Application preferences under `app/landing/`.** `themeSelector.jsx` and `languageSelector.jsx` are used by both
-  Landing and the authenticated user menu. Give these controls an application-wide preferences location, preserving
-  their theme/language behavior and both entry points.
+- **Application preferences in `app/preferences/`.** `themeSelector.jsx` and `languageSelector.jsx` serve both Landing
+  and the authenticated user menu: Landing shows the theme selector and its intro the language selector, and the user
+  menu offers both as the popups of its preference entries. The folder sits beside `landing/` and `home/`, which both
+  import it while it imports neither. The selectors hold no state of their own: `theme.js` and `themeHooks.jsx` keep
+  the theme preference, its persistence and system-theme following, `translate.jsx` keeps the language and its
+  persistence, and the language selector keeps its page reload.
 
 Acceptance for each move: a concrete old-to-new path map; companion tests/styles kept together; static and dynamic
 imports, test mocks and documentation links updated. Each mechanical batch passes its focused tests, lint and a

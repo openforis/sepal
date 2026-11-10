@@ -1,7 +1,7 @@
 import {useState} from 'react'
 import {useLocation} from 'react-router'
 
-import {ThemeSelector} from '~/app/landing/themeSelector'
+import {ThemeSelector} from '~/app/preferences/themeSelector'
 import {useSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {currentUser, loadUser$} from '~/user'
