@@ -18,6 +18,9 @@ export ANSIBLE_HOST_KEY_CHECKING=False
 export ANSIBLE_CONFIG=../ansible.cfg
 PRIVATE_KEY=$CONFIG_HOME/certificates/aws.pem
 
+# Fails on a build without images, as provision would, before any tag is renamed
+CONFIG_HOME=$CONFIG_HOME python3 worker-ami/worker_ami.py hash "$VERSION" >/dev/null
+
 ansible-playbook os-upgrade/rename-old-hosts.yml -i localhost, --extra-vars "config_home=$CONFIG_HOME"
 
 KEEP_SHARED_RULES=true ./provision.sh "$VERSION" "$CONFIG_HOME"
