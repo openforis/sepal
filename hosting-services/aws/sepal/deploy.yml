@@ -40,9 +40,13 @@
   pre_tasks:
     - set_fact:
         sepal_ip: "{{ ec2_private_ip_address }}"
-        # eth0 on Amazon Linux 2, ens5 on Amazon Linux 2023
-        sepal_ssh_ip: "{{ hostvars[inventory_hostname]['ansible_' ~ ansible_default_ipv4.interface].ipv4_secondaries[0].address }}"
+        # The interface's other address: eth0 lists it second on Amazon Linux 2, ens5 first on Amazon Linux 2023
+        sepal_ssh_ip: >-
+          {{ ([main_interface.ipv4] + main_interface.ipv4_secondaries | default([])) | map(attribute='address')
+             | reject('equalto', ansible_default_ipv4.address) | first }}
         syslog_address: "udp://{{ ec2_private_ip_address }}"
+      vars:
+        main_interface: "{{ hostvars[inventory_hostname]['ansible_' ~ ansible_default_ipv4.interface] }}"
 
     # syslog address
     - name: Write syslog_address to /tmp/syslog-address
