@@ -1,10 +1,10 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {AssetCombo} from '~/app/home/body/browse/assets/assetCombo'
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
-import {AssetCombo} from '~/widget/assetCombo'
 
 import {withFormContext} from './context'
 import {inputFeedback, withBusyExplanation, withFeedbackButtons} from './inputFeedback'

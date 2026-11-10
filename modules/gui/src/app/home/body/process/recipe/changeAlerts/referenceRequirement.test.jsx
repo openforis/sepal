@@ -201,7 +201,7 @@ const {CHECKED, CHECKING, readSourceRequirements} = await import('../requirement
 const {
     CHECKING_SOURCE, selectedSourceStatusOfState, sourceProblemsOfState, UNAVAILABLE_SOURCE, UNSUITABLE_SOURCE
 } = await import('../requirements/selectedSourceStatus')
-const {assetsMutated} = await import('~/widget/assetMutations')
+const {assetsMutated} = await import('~/app/home/body/browse/assets/assetMutations')
 const {describeSegments$} = await import('../ccdc/segmentDescription')
 const {referenceRequirements} = await import('./referenceRequirement')
 const {mapProducts} = await import('./bands')

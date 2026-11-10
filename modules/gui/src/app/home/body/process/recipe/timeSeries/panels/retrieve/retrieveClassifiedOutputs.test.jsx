@@ -58,7 +58,7 @@ vi.mock('~/widget/activation/activatable', () => ({
     )
 }))
 // The workspace destination checks the user's files: it names a folder and reports that its check has settled.
-vi.mock('~/widget/workspaceDestination', () => ({
+vi.mock('~/app/home/body/process/recipe/retrieve/workspaceDestination', () => ({
     WorkspaceDestination: ({workspacePathInput, onValidityCheckChange}) => {
         useEffect(() => {
             workspacePathInput.set('downloads/series')

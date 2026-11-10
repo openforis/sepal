@@ -3,6 +3,7 @@ import React from 'react'
 import {catchError, debounceTime, forkJoin, map, of, Subject, switchMap} from 'rxjs'
 
 import api from '~/apiRegistry'
+import {WorkspaceDestinationBrowser} from '~/app/home/body/browse/files/workspaceDestinationBrowser'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -11,11 +12,9 @@ import {toSafeString} from '~/string'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {currentUser} from '~/user'
+import {withActivators} from '~/widget/activation/activator'
+import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
-
-import {withActivators} from './activation/activator'
-import {Button} from './button'
-import {WorkspaceDestinationBrowser} from './workspaceDestinationBrowser'
 
 const DEBOUNCE_TIME_MS = 750
 

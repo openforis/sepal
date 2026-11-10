@@ -63,7 +63,7 @@ vi.mock('~/widget/activation/activatable', () => ({
         <Component {...props} activatable={{active: true, activate: () => {}, deactivate: () => {}}}/>
     )
 }))
-vi.mock('~/widget/workspaceDestination', () => ({
+vi.mock('~/app/home/body/process/recipe/retrieve/workspaceDestination', () => ({
     WorkspaceDestination: ({workspacePathInput, onValidityCheckChange}) => {
         useEffect(() => {
             workspacePathInput.set('downloads/series')

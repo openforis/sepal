@@ -33,7 +33,7 @@ const {createReduxSourceEnvironment} = await import('./reduxSourceEnvironment')
 const {recordStalenessOfState} = await import('./recordCurrency')
 const {createSourceRuntime} = await import('./sourceRuntime')
 const {initStore} = await import('~/store')
-const {assetsMutated} = await import('~/widget/assetMutations')
+const {assetsMutated} = await import('~/app/home/body/browse/assets/assetMutations')
 
 beforeEach(() => {
     fake.bands = []

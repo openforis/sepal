@@ -59,7 +59,7 @@ src/
     home/monitoring/    # Application monitors Home mounts: budget, sessions, tasks, messages, login, connection
     home/body/
       apps/             # App launcher UI: instance picker modal, per-tab sessionId, appSessionMonitor
-      browse/           # File/asset browsers
+      browse/           # Asset listing (Assets), asset and workspace browsers and pickers
       process/          # Recipe processing (main feature area)
         recipe/         # Recipe types (mosaic, classification, timeSeries, ccdc, etc.) and shared groups:
                         # outputs, sources, requirements, collections, editing, map, charts, retrieve

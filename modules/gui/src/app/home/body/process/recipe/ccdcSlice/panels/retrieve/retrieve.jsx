@@ -1,5 +1,6 @@
 import React from 'react'
 
+import {AssetDestination} from '~/app/home/body/process/recipe/retrieve/assetDestination'
 import {
     isUnresolved,
     reconciledChoices,
@@ -9,6 +10,7 @@ import {
     submitRetrieve
 } from '~/app/home/body/process/recipe/retrieve/retrieveOutput'
 import {withRetrieveOutput} from '~/app/home/body/process/recipe/retrieve/withRetrieveOutput'
+import {WorkspaceDestination} from '~/app/home/body/process/recipe/retrieve/workspaceDestination'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {updateProject} from '~/app/home/body/process/recipeList/projects'
 import {asFunctionalComponent} from '~/classComponent'
@@ -18,7 +20,6 @@ import {dirname} from '~/path'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {isGoogleAccount} from '~/user'
-import {AssetDestination} from '~/widget/assetDestination'
 import {Button} from '~/widget/button'
 import {Buttons} from '~/widget/buttons'
 import {Form} from '~/widget/form'
@@ -29,7 +30,6 @@ import {NoData} from '~/widget/noData'
 import {NumberButtons} from '~/widget/numberButtons'
 import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
-import {WorkspaceDestination} from '~/widget/workspaceDestination'
 
 import {retrieveTask} from '../../ccdcSliceRecipe'
 import {retrievableBands, sliceRequest} from '../../sliceEvidence'

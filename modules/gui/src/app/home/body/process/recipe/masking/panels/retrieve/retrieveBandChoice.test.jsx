@@ -69,7 +69,7 @@ vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 // The one destination widget that checks Earth Engine: it names the asset, picks a strategy and reports that
 // its check has settled. Array bands can only go to Earth Engine, so a CCDC export needs it.
-vi.mock('~/widget/assetDestination', () => ({
+vi.mock('~/app/home/body/process/recipe/retrieve/assetDestination', () => ({
     AssetDestination: ({assetInput, strategyInput, onValidityCheckChange}) => {
         useEffect(() => {
             assetInput.set('users/x/segments')

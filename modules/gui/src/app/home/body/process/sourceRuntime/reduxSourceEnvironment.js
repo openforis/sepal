@@ -77,7 +77,7 @@ const credentialToken = container => {
 //   saves         what each open recipe's saves have made persistent (saveCoordinator.js)
 //   assetEvidence what is known of each asset read, for the credentials in effect (assetEvidence.js)
 //   assetCatalogue  each asset the user's asset catalogue lists, by id: its updateTime there
-//   assetMutation   the latest assets this session created, deleted or renamed: {ids, at} (widget/assets.jsx)
+//   assetMutation   the latest assets this session created, deleted or renamed: {ids, at} (browse/assets/assets.jsx)
 //   sourceRefreshes how often each recipe and asset was explicitly refreshed: {recipes: {id: n}, assets: {id: n}}
 const sessionOf = state => ({
     catalogue: at(state, CATALOGUE_PATH) || EMPTY_CATALOGUE,

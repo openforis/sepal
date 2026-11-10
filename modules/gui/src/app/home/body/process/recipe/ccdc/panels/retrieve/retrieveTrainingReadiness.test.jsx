@@ -63,7 +63,7 @@ vi.mock('~/widget/toolbar/toolbarButton', () => ({
 }))
 // The asset destination checks the user's assets: it reports that its check has settled, and is handed its input to
 // name another.
-vi.mock('~/widget/assetDestination', () => ({
+vi.mock('~/app/home/body/process/recipe/retrieve/assetDestination', () => ({
     AssetDestination: ({assetInput, onValidityCheckChange}) => {
         fake.assetId = assetInput
         useEffect(() => onValidityCheckChange(false), [])

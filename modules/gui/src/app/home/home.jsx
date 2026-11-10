@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {Assets} from '~/app/home/body/browse/assets/assets'
 import {BudgetMonitor} from '~/app/home/monitoring/budgetMonitor'
 import {GoogleAccountConnection} from '~/app/home/monitoring/googleAccountConnection'
 import {LoginSessionMonitor} from '~/app/home/monitoring/loginSessionMonitor'
@@ -14,7 +15,6 @@ import {WebSocketConnection} from '~/app/home/monitoring/webSocketConnection'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {ActivationContext} from '~/widget/activation/activationContext'
-import {Assets} from '~/widget/assets'
 import {PortalContainer} from '~/widget/portal'
 import {PrivacyPolicy} from '~/widget/privacyPolicy'
 

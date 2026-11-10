@@ -2,10 +2,10 @@ import _ from 'lodash'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {withAssets} from '~/app/home/body/browse/assets/assets'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {isServiceAccount} from '~/user'
-import {withAssets} from '~/widget/assets'
 import {Button} from '~/widget/button'
 
 class _AssetReloadButton extends React.Component {

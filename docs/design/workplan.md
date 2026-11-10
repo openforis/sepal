@@ -288,11 +288,12 @@ effects still need review when changing import order. Shared support now lives i
 (`app/home/user/userDetailsHint.js`), notification publication (`widget/notificationPublisher.js`, behind the
 `Notifications` API) and the Earth Engine credential generation (`credentialId.js` in `process/sourceRuntime/`).
 
-- **Asset and workspace selectors in `widget/`.** The application monitors `app/home/home.jsx` mounts, with their
-  rules, tests and style, now live in `app/home/monitoring/`; `AppSessionMonitor` stays with Apps. Remaining: group
-  the asset and workspace selectors with `Assets`/`withAssets`; `widget/recipeInput.jsx` depends on recipe access,
-  context and registration, so coordinate its destination with the shared recipe folders. Keep generic controls in
-  the widget library.
+- **`widget/recipeInput.jsx`.** The application monitors now live in `app/home/monitoring/`, and the asset and
+  workspace selectors with their feature: the asset listing (`Assets`, `withAssets`) and asset selection in
+  `browse/assets/`, workspace browsing in `browse/files/`, and Retrieve's destination fields in `recipe/retrieve/`.
+  `Form.AssetCombo` and `Form.AssetInput` stay in `widget/form/`, the adapter being the widget library's one import
+  of the asset feature. Remaining: `recipeInput.jsx` depends on recipe access, context and registration; decide its
+  destination with the shared recipe folders. Keep generic controls in the widget library.
 - **Recipe-session support in the parent `process/` directory.** `draftAgreement.js`, `recipeCache.js`,
   `recipeCacheClaims.js`, `recipeListing.js`, `saveCoordinator.js` and `recipeAccess.jsx` form a connected lifecycle
   group beside process menus, creation screens and layer registries. Assess a cohesive session/cache/save location
@@ -307,10 +308,12 @@ effects still need review when changing import order. Shared support now lives i
   their theme/language behavior and both entry points.
 
 Acceptance for each move: a concrete old-to-new path map; companion tests/styles kept together; static and dynamic
-imports, test mocks and documentation links updated; the import graph still acyclic; lint, a production GUI build and
-the full GUI suite passing with at most two test workers. Keep moves separate from behavior/API redesign and introduce
-no compatibility re-exports, barrels or aliases solely for relocation. Shared recipe `type/`, `source/` and `output/`
-already have clear responsibilities and are not candidates merely because they contain many files.
+imports, test mocks and documentation links updated. Each mechanical batch passes its focused tests, lint and a
+production GUI build, with every import resolving, the graph acyclic, and module code and import targets unchanged from
+HEAD apart from paths and import order. The full GUI suite runs at the organization checkpoint before merge, or earlier
+where uncertainty warrants it. Tests use at most two workers. Keep moves separate from behavior/API redesign and
+introduce no compatibility re-exports, barrels or aliases solely for relocation. Shared recipe `type/`, `source/` and
+`output/` already have clear responsibilities and are not candidates merely because they contain many files.
 
 ## Deferred recipe architecture
 

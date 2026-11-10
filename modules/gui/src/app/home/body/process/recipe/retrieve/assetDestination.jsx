@@ -2,6 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {isValidEarthEngineAssetId, sanitizeEarthEngineAssetId} from '#sepal/earthEngineExportNames'
+import {AssetDestinationBrowser} from '~/app/home/body/browse/assets/assetDestinationBrowser'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -10,13 +11,12 @@ import {toSafeString} from '~/string'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {currentUser} from '~/user'
+import {withActivators} from '~/widget/activation/activator'
+import {Button} from '~/widget/button'
 import {CopyButton} from '~/widget/copyButton'
 import {Form} from '~/widget/form'
 
-import {withActivators} from './activation/activator'
 import {findNonContainerAncestor} from './assetDestinationAncestor'
-import {AssetDestinationBrowser} from './assetDestinationBrowser'
-import {Button} from './button'
 
 const mapStateToProps = state => ({
     projects: selectFrom(state, 'process.projects'),

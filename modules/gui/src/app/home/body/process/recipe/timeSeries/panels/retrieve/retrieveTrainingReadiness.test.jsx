@@ -63,7 +63,7 @@ vi.mock('~/widget/toolbar/toolbarButton', () => ({
 }))
 // The workspace destination checks the user's files: it names a folder, reports that its check has settled, and is
 // handed its input to name another.
-vi.mock('~/widget/workspaceDestination', () => ({
+vi.mock('~/app/home/body/process/recipe/retrieve/workspaceDestination', () => ({
     WorkspaceDestination: ({workspacePathInput, onValidityCheckChange}) => {
         fake.workspacePath = workspacePathInput
         useEffect(() => {

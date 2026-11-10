@@ -1,14 +1,14 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import {AssetDestination} from '~/app/home/body/process/recipe/retrieve/assetDestination'
+import {WorkspaceDestination} from '~/app/home/body/process/recipe/retrieve/workspaceDestination'
 import {compose} from '~/compose'
 import {msg} from '~/translate'
 import {isGoogleAccount} from '~/user'
-import {AssetDestination} from '~/widget/assetDestination'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
-import {WorkspaceDestination} from '~/widget/workspaceDestination'
 
 import {RecipeFormPanel, recipeFormPanel} from '../../../../recipeFormPanel'
 import {RecipeActions} from '../../samplingDesignRecipe'

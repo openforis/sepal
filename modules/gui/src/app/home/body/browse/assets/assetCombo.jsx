@@ -5,6 +5,7 @@ import React from 'react'
 import {debounceTime, first, map, Subject, switchMap, takeUntil} from 'rxjs'
 
 import api from '~/apiRegistry'
+import {withAssets} from '~/app/home/body/browse/assets/assets'
 import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
 import {asFunctionalComponent} from '~/classComponent'
 import {compose} from '~/compose'
@@ -13,14 +14,13 @@ import {escapeRegExp, splitString} from '~/string'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
 import {uuid} from '~/uuid'
-import {withAssets} from '~/widget/assets'
 import {Button} from '~/widget/button'
+import {Combo} from '~/widget/combo'
 import {CopyButton} from '~/widget/copyButton'
 import {CrudItem} from '~/widget/crudItem'
 import {Notifications} from '~/widget/notifications'
 
 import {AssetReloadButton} from './assetReloadButton'
-import {Combo} from './combo'
 
 // check for allowed characters and minimum path depth (2)
 const ASSET_PATTERN = new RegExp('^[a-zA-Z0-9-_]+(/[a-zA-Z0-9-_]+){1,}$')

@@ -39,12 +39,12 @@ vi.mock('~/classComponent', () => ({asFunctionalComponent: () => Component => Co
 vi.mock('~/connect', () => ({connect: () => Component => Component}))
 vi.mock('~/translate', () => ({msg: key => Array.isArray(key) ? key.join('.') : key}))
 vi.mock('~/user', () => ({isGoogleAccount: () => capture.googleAccount}))
-vi.mock('~/widget/assetDestination', () => ({AssetDestination: () => null}))
+vi.mock('~/app/home/body/process/recipe/retrieve/assetDestination', () => ({AssetDestination: () => null}))
 vi.mock('~/widget/button', () => ({Button: () => null}))
 vi.mock('~/widget/layout', () => ({Layout: ({children}) => children}))
 vi.mock('~/widget/numberButtons', () => ({NumberButtons: () => null}))
 vi.mock('~/widget/panel/panel', () => ({Panel: {Header: () => null, Content: ({children}) => children}}))
-vi.mock('~/widget/workspaceDestination', () => ({WorkspaceDestination: () => null}))
+vi.mock('~/app/home/body/process/recipe/retrieve/workspaceDestination', () => ({WorkspaceDestination: () => null}))
 vi.mock('~/widget/form', async importOriginal => {
     const {Form} = await importOriginal()
     return {

@@ -141,7 +141,7 @@ closure check, which reads recipes, not assets.
   after. A new
   catalogue `updateTime`, or an asset gone from the asset catalogue, reads that asset at once.
 - **Known mutations.** An asset this session created, deleted or renamed, with the folder or collection holding it
-  (`assets.mutation`, written by the asset browser; `widget/assetMutations.js`), is stale at once: it authorizes
+  (`assets.mutation`, written by the asset browser; `browse/assets/assetMutations.js`), is stale at once: it authorizes
   nothing until a read answers differently. It is read at once and again 3, 10 and 30 seconds later while nothing
   different has been answered, since Earth Engine takes seconds to report a change, and then what was read stands. No
   token is ever made up. Releasing the last claim on an asset ends its follow-up reads; claiming it again while its
