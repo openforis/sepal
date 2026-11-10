@@ -8,7 +8,7 @@
         "testWatch": "node --test --watch \"**/*.test.js\""
     },
     "dependencies": {
-        "commander": "^15.0.0",
+        "commander": "^15.1.0",
         "log4js": "^6.9.1",
         "rxjs": "^7.8.2",
         "sepal": "../../lib/js/shared",

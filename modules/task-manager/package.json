@@ -7,7 +7,7 @@
         "test": "TZ=UTC node --test \"**/*.test.js\""
     },
     "dependencies": {
-        "commander": "^15.0.0",
+        "commander": "^15.1.0",
         "date-fns": "^4.4.0",
         "dockerode": "^5.0.1",
         "log4js": "^6.9.1",

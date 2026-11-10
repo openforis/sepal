@@ -10,8 +10,8 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "bullmq": "^6.7.1",
-        "commander": "^15.0.0",
+        "bullmq": "^6.7.3",
+        "commander": "^15.1.0",
         "compare-versions": "^6.1.1",
         "http-proxy": "^1.18.1",
         "ioredis": "^6.0.0",
