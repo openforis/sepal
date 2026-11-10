@@ -179,9 +179,6 @@
         mode: "0644"
 
     # docker
-    - file: path="/data/docker/storage/devicemapper/metadata" state=directory
-    - file: path="/data/docker/storage/tmp" state=directory
-
     - name: Create docker-registry certificate dir
       file:
         path: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}"
