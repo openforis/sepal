@@ -71,6 +71,7 @@
         exact_count: 1
         purge_tags: false
         tags:
+          Name: "Sepal-Storage - {{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
           Type: "SepalStorage"
           Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
         # Applied only when the instance is launched: a running host keeps the volumes it has
