@@ -221,3 +221,17 @@ test('format.duration(${JSON.stringify(ms)}) === "${result}"')
         // At most two units: day + hours, dropping the trailing 30 minutes.
         {ms: DAY + 2 * HOUR + 30 * MINUTE, result: '1 day 2 hours'},
     )
+
+test('format.yearRange(${startYear}, ${endYear}) === "${result}"')
+    .assert(({startYear, endYear, result}) => expect(format.yearRange(startYear, endYear)).toEqual(result))
+    .where(
+        {startYear: 2012, endYear: 2012, result: '2012'},
+        {startYear: 2012, endYear: 2015, result: '2012–2015'},
+    )
+
+test('format.dateRange(${firstDate}, ${lastDate}) === "${result}"')
+    .assert(({firstDate, lastDate, result}) => expect(format.dateRange(firstDate, lastDate)).toEqual(result))
+    .where(
+        {firstDate: '2012-09-01', lastDate: '2012-09-01', result: '01 Sep 2012'},
+        {firstDate: '2012-09-01', lastDate: '2013-01-31', result: '01 Sep 2012 – 31 Jan 2013'},
+    )

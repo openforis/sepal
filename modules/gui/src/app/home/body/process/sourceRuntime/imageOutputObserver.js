@@ -15,11 +15,12 @@ import api from '~/apiRegistry'
 // dispatched action. This observes only on an explicit command.
 
 // An asset is addressed by id, while a recipe is sent whole, because /bands evaluates the recipe rather than
-// looking one up. Without data types /bands answers from what the recipe says it can be asked for, and with
+// looking one up. An asset is answered with the properties it records its processing in, as readiness observes it
+// ({bands, properties}). Without data types /bands answers from what the recipe says it can be asked for, and with
 // them from the image it builds when asked for nothing - the two questions `observes` distinguishes. A
 // producer that answers the first supplies its own physical facts, so only names come back.
 export const observeImageBands$ = ({reference, recipe, observes}) => reference.type === ASSET
-    ? api.gee.bands$({asset: reference.id, includeDataTypes: true})
+    ? api.gee.bands$({asset: reference.id, includeDataTypes: true, includeProperties: true})
     : observes === AVAILABLE_BANDS
         ? api.gee.bands$({recipe}).pipe(map(bandNames => bandNames.map(name => ({name}))))
         : api.gee.bands$({recipe, includeDataTypes: true})

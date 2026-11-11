@@ -116,7 +116,8 @@ describe('a new Change Alerts recipe set up from an optical segments asset', () 
         await press('button.next')
 
         expect(chosen(`${SOURCES}.dataSetType.label`)).toEqual([`${SOURCES}.dataSetTypes.OPTICAL`])
-        expect(chosen(`${SOURCES}.dataSets.label`)).toEqual(['LANDSAT_9', 'LANDSAT_8', 'LANDSAT_7', 'SENTINEL_2'].map(dataSetLabel))
+        // Monitoring months up to today: Landsat 7's collections end in January 2024.
+        expect(chosen(`${SOURCES}.dataSets.label`)).toEqual(['LANDSAT_9', 'LANDSAT_8', 'SENTINEL_2'].map(dataSetLabel))
     })
 
     it('whose metadata records the data sets it was fitted from starts Sources with those', async () => {

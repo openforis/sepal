@@ -95,7 +95,8 @@ class _ChangeAlertsToolbar extends React.Component {
                     <Toolbar.ActivationButton
                         id='date'
                         label={msg('process.changeAlerts.panel.date.button')}
-                        tooltip={msg('process.changeAlerts.panel.date.tooltip')}
+                        tooltip={sourceProblems.date || msg('process.changeAlerts.panel.date.tooltip')}
+                        error={!!sourceProblems.date}
                         disabled={!initialized}
                         panel/>
                     <Toolbar.ActivationButton

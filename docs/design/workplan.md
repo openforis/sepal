@@ -381,7 +381,7 @@ Use the part of the mechanism each responsibility needs:
 | Recipes | Concrete reuse and existing owner | Migration boundary |
 | --- | --- | --- |
 | CCDC, Time Series, Phenology | The selected Classification is read once per recipe for its UI (`collections/selectedClassification.js`). Chosen bands of the images, classified outputs and CCDC's TMask are judged in shared readiness, and Sources keep chosen bands shown. `collections/collectionClassifierRequirements.js`, `collections/collectionBandRequirements.js` and CCDC's `segmentDescription.js` establish reusable owners. | [Remaining items](#temporal-sources-dependencies): unmatched Planet Daily's imagery-dependent bands. No persisted fit evidence. |
-| LandTrendr | Sources' data-set, date and index dependencies are judged in shared readiness, and Sources keep chosen values shown and say which inputs an index lacks ([LandTrendr](../recipes/landtrendr.md#sources)). Data sets follow the shared [data-set availability](recipes/data-sources.md#data-set-availability). | [Named-product periods](#sources-data-set-availability), the annual mosaic's included; chart gating stays with [server preview readiness](#server-preview-readiness). |
+| LandTrendr | Sources' data-set, date and index dependencies are judged in shared readiness, and Sources keep chosen values shown and say which inputs an index lacks ([LandTrendr](../recipes/landtrendr.md#sources)). Data sets follow the shared [data-set availability](recipes/data-sources.md#data-set-availability). | The annual mosaic is held for the change map's Sources and Dates ([LandTrendr](../recipes/landtrendr.md#sources)); chart gating stays with [server preview readiness](#server-preview-readiness). |
 | Optical Mosaic | `sceneAreas.jsx`, `sceneSelection.jsx`, `autoSelectScenes.jsx` and `sceneDeselection.jsx` separately coordinate AOI/source/date-dependent reads and selected scenes. | Shared question identity and request lifecycle can replace local coordination. Scene discovery results are temporary; manual selections remain user-owned. Preserve explicit auto-selection and define retention/reconciliation before changing scene deletion behaviour. |
 | Classification, Regression | Shared input-band and training-data requirements already judge live dependencies. `panels/trainingData/sample*Section.jsx` and table-import sections own similar asynchronous import requests and mapping stages. | Reuse acquisition lifecycle and declared stage prerequisites where duplicated. Sampled/imported rows are persisted snapshots, and source IDs there record provenance; do not turn them into live execution dependencies or invalidate them automatically. Keep training adequacy and value/encoding policy separate. |
 | Unsupervised Classification | Shared derived-input requirements already validate its band sets; sampling and clustering run during execution. Cluster-dependent preset legends are computed synchronously by `visualizations.js`. | No persisted calculation sidecar is justified by these paths. Conditional sampling/clusterer rules can use shared requirements when their validation is migrated; retain the domain parameter rules and cheap preset derivation. |
@@ -443,23 +443,35 @@ to be the same case:
 
 Date-filtered Sources share one data-set availability policy, LandTrendr's included, and new recipes resolve their
 initial data sets by it ([current behaviour](recipes/data-sources.md#data-set-availability),
-[initial data sets](recipes/data-sources.md#initial-data-sets)). Classifier-input findings name only repairs it allows,
-for the complete feature set ([Time Series](../recipes/time-series.md#inputs)). Remaining:
+[initial data sets](recipes/data-sources.md#initial-data-sets)). Auxiliary mosaic layers are held with the result they
+accompany, and Change Alerts needs each of its windows covered
+([Change Alerts](../recipes/change-alerts.md#collection-mosaic), [LandTrendr](../recipes/landtrendr.md#sources)).
+Classifier-input findings name only repairs it allows, for the complete feature set
+([Time Series](../recipes/time-series.md#inputs)). Availability is judged by the days of the collections execution reads
+under the recipe's correction, as the Earth Engine catalogue states them, so a period within a data set's first or last
+year is judged by when its imagery begins or ends. Change Alerts' is judged by its readiness under the correction its
+reference's description establishes, so whatever is built on the changes is held with them. Remaining:
 
-- **Named-product periods, a separate bounded follow-up.** Products reading a period of their own are not judged for it:
-  LandTrendr's annual mosaic, its requested year, and Change Alerts' calibration and monitoring mosaics
-  (`COLLECTION_MOSAIC`), each its own period. A Landsat 8-only LandTrendr annual mosaic for 2010 cannot hold imagery
-  even where its fitted years include usable ones. A configuration requirement reads the model, not a product's
-  parameters, and a delegated product reads the delegate's description without its readiness
-  (`lib/js/shared/src/recipe/output/resolveImageOutput.js`), so Optical Mosaic's requirement does not cover them.
-  Judging each product's own period needs its parameters where its readiness is read.
-- **Chart gating.** LandTrendr's pixel chart is not held for these findings and declares no pixel operation; it stays
-  with [server preview readiness](#server-preview-readiness).
+- **Layers shown elsewhere, not scheduled.** In another recipe's map, a layer withdrawn by its product's own readiness -
+  LandTrendr's annual mosaic, a Change Alerts collection mosaic, CCDC's count - is not explained on its selector, as one
+  withdrawn for its source is (`heldSource`, `recipeImageLayer.jsx`). Within its own recipe, the section holding it
+  says why.
 - **Open drafts.** A form panel's draft is judged again when the panel renders. An applied change made elsewhere while
   it is open is seen only then; panels open one at a time, so no current path reaches this.
-- **Choices unavailable anew, not scheduled.** A data set the years exclude is disabled without saying why; only one kept
-  chosen gives its catalogue years. A tooltip on the disabled choice would explain it, if hover on disabled buttons is
-  reliable.
+- **Choices unavailable anew, not scheduled.** A data set the period excludes is disabled without saying why; only one
+  kept chosen says when it holds imagery. A tooltip on the disabled choice would explain it, if hover on disabled
+  buttons is reliable.
+- **Catalogue dates.** `optical/collectionDates.js` and `radar/collectionDates.js` record the catalogue as read on
+  2026-11-11, and nothing follows it. Two entries rest on what it states rather than on a check of the collections:
+  Landsat 5 Tier 2 top of atmosphere ends in February 2001, ten years before its surface reflectance, and
+  `COPERNICUS/S1_GRD_FLOAT`, which the catalogue does not list, is given `COPERNICUS/S1_GRD`'s first day.
+- **Landsat 8 Tier 2 top of atmosphere.** `dataSetSpecs` reads `LANDSAT/LC08/C02/T1_TOA` for it, so it is judged by Tier
+  1's days. Whether execution should read `LANDSAT/LC08/C02/T2_TOA`, which begins in October 2021, is a separate
+  question.
+- **Unreadable reference processing through a wrapper.** Where the reference's processing cannot be read, Change
+  Alerts' coverage finds nothing: Change Alerts' own Sources say it through `CHANGE_ALERTS_PROCESSING`, and execution
+  refuses it, but readiness does not, so a Masking of such alerts passes readiness and is refused only when its image is
+  built. Judging that requirement in readiness too would settle it before anything is built.
 - **Abandoned set-up drafts.** Wizard Back leaves an invalid Sources draft uncommitted, as for every panel; Sources
   opened again are proposed again over the dates then chosen. Keeping such a draft would need draft persistence, not
   defaulting.
@@ -672,12 +684,15 @@ in the [recipe contract](../recipes/bayts-alerts.md#radar-observation).
 
 - Unknown visualization modes fall through to calibration; a non-`latest` mosaic type becomes median.
   A layer saving `mosaicType: undefined` instead names no product. Establish one boundary policy.
-- Saved `sources.dataSetType` selects map mosaics, while `sources.dataSets` selects alert collections;
-  mismatched models can therefore compare different families. Include in collection/monitoring assessment.
+- Saved `sources.dataSetType` selects map mosaics, while `sources.dataSets` selects alert collections and is what
+  the windows' availability judges; mismatched models can therefore compare different families. Include in
+  collection/monitoring assessment.
 - A new empty `reference: {}` can pass preview preflight although execution raises `MALFORMED_SEGMENT_SOURCE`.
   Include in the separately deferred server-preview readiness work.
 - Chart highlights still call `monitoringDates` for malformed applied periods. Execution permits overflowing
   calendar days, fractional durations and years that product validation refuses; settle compatibility explicitly.
+  Readiness refuses only a duration that does not last; a period that cannot be stated at all holds the mosaics, by
+  their description, but not the changes.
 
 ### Phenology
 

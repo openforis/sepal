@@ -222,8 +222,8 @@ class _Sources extends React.Component {
     }
 
     period() {
-        const {dates} = this.props
-        return dataSetPeriod({dates})
+        const {dates, corrections} = this.props
+        return dataSetPeriod({dates, options: {corrections}})
     }
 }
 

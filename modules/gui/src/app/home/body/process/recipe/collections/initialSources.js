@@ -6,10 +6,10 @@ import {dataSetTypeOf, initialDataSets, toSources} from '~/sources'
 //
 // A type proposing data sets declares them (`initialSources`):
 //
-//   {dataSets, period(model)}
+//   {dataSets, period(model, recipe)}
 //
-// `dataSets` the data sets it prefers, or a function of the recipe giving them, and `period` the years its execution
-// reads (the dataSetPeriod of its shared type). They are proposed as far as those years let them contribute
+// `dataSets` the data sets it prefers, or a function of the recipe giving them, and `period(model, recipe)` the days its
+// execution reads (the dataSetPeriod of its shared type). They are proposed as far as those days let them contribute
 // (initialDataSets, ~/sources.js), over the dates the recipe holds as Sources open, with their collection type. Opening
 // commits nothing: Apply or a wizard step leaving Sources commits the draft, and once the recipe holds data sets none are
 // proposed again, whatever its dates become. A recipe already set up - loaded, imported or copied - opens as it is held,
@@ -30,6 +30,6 @@ const proposedSources = (recipe, sources) => {
     return {
         ...sources,
         dataSetType: dataSetTypeOf(preferred),
-        dataSets: toSources(initialDataSets(preferred, period(recipe.model)))
+        dataSets: toSources(initialDataSets(preferred, period(recipe.model, recipe)))
     }
 }

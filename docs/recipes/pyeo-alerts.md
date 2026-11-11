@@ -52,8 +52,8 @@ can compute - not a mosaic's catalogue. The finding names the first repair suppl
 data sets Sources can choose for the monitoring years (`dataSetPeriod`, as a classification's proposal would save
 them): data sets that do as the scenes are processed now (`alternatives`, which replace the selection), at
 `['model', 'sources', 'dataSets']`; otherwise, at `['model', 'sources', 'classification']`, turning SR off or on in
-PRC (`reflectance`, alone or with such data sets), data sets that would but the monitoring years exclude
-(`unavailable`, with the years), or none. Sources say it beside the field it is at. A Classification trained on radar
+PRC (`reflectance`, alone or with such data sets, judged under the correction it turns to), data sets that would but
+the monitoring period excludes (`unavailable`, with the period), or none. Sources say it beside the field it is at. A Classification trained on radar
 statistics (`VV_mean`, ...) over Landsat monitoring is refused at the classification, whatever the gate. Monitoring
 that is not optical, or not chosen yet, is not judged. The features come from the Classification record the closure
 holds (`recordsOf`); one not held yet refuses nothing.

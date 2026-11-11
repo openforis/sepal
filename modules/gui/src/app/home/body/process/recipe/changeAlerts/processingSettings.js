@@ -1,4 +1,5 @@
 import {effectiveSettings, NOT_RECORDED, PROCESSING_FIELDS} from '#sepal/recipe/changeAlerts/processing'
+import {reflectanceOf} from '#sepal/recipe/classifierInputs'
 import {PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
 import {msg} from '~/translate'
 
@@ -9,6 +10,13 @@ import {presentedInput, preservedCopies, processingOfEvidence} from '../sources/
 export const processingOf = recipe => processingOfEvidence(recipe, PRIMARY_IMAGE)
 
 export const settingsOf = recipe => effectiveSettings(recipe.model, processingOf(recipe))
+
+// The correction the imagery is read with, SR or TOA, once the reference's processing makes it effective; null until then,
+// never the one this recipe's options saved (dataSetPeriod, type/changeAlerts.js).
+export const effectiveReflectanceOf = recipe => {
+    const effective = settingsOf(recipe).model
+    return effective ? reflectanceOf(effective.options) : null
+}
 
 // The controls see current reference values, but the form retains its own draft and serialization. Read-only
 // inputs swallow widget normalisation too (some choice widgets remove unavailable choices on update).

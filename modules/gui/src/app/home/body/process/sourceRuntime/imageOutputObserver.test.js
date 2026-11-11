@@ -1,5 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {processingEvidence, processingOfProducer} from '#sepal/recipe/changeAlerts/processing'
+
 import {createRecipeImageOutputObserver} from './imageOutputObserver'
 
 // The GUI binding, exercised directly. Only the Earth Engine boundary is replaced: the shared graph builder,
@@ -78,6 +80,9 @@ const fail = (key, error) => state.subscribers.get(key)?.error(error)
 
 const ccdc = (id = 'ccdc-1') => ({id, type: 'CCDC', model: {}})
 
+// What a CCDC's description establishes of the processing its segments are fitted under, as preserving recipes pass it on.
+const CCDC_EVIDENCE = [processingEvidence(processingOfProducer({}))]
+
 const masking = (id, {primary, mask}) => ({
     id,
     type: 'MASKING',
@@ -135,7 +140,7 @@ describe('observing a CCDC recipe directly', () => {
             description: {
                 executionReference: {type: 'RECIPE_REF', id: 'ccdc-1'},
                 output: {kind: 'IMAGE', bands: DECLARED_CCDC_BANDS},
-                evidence: []
+                evidence: CCDC_EVIDENCE
             },
             readiness: RUNNABLE
         }))
@@ -158,7 +163,7 @@ describe('observing MASKING over CCDC with an asset mask', () => {
         const {observer} = observerOver()
         observer.observe({recipe: root, loadedRecipes})
 
-        expect(state.calls).toEqual([{recipe: loadedRecipes['ccdc-1']}, {asset: 'users/x/mask', includeDataTypes: true}])
+        expect(state.calls).toEqual([{recipe: loadedRecipes['ccdc-1']}, {asset: 'users/x/mask', includeDataTypes: true, includeProperties: true}])
         expect(state.subscribed).toEqual(['RECIPE_REF:ccdc-1', 'ASSET:users/x/mask'])
     })
 
@@ -174,7 +179,7 @@ describe('observing MASKING over CCDC with an asset mask', () => {
             description: {
                 executionReference: {type: 'RECIPE_REF', id: 'masked-1'},
                 output: {kind: 'IMAGE', bands: DECLARED_CCDC_BANDS},
-                evidence: []
+                evidence: CCDC_EVIDENCE
             },
             readiness: RUNNABLE
         }))
@@ -196,8 +201,8 @@ describe('observing MASKING over an asset', () => {
         observer.observe({recipe: root, loadedRecipes})
 
         expect(state.calls).toEqual([
-            {asset: 'users/x/primary', includeDataTypes: true},
-            {asset: 'users/x/mask', includeDataTypes: true}
+            {asset: 'users/x/primary', includeDataTypes: true, includeProperties: true},
+            {asset: 'users/x/mask', includeDataTypes: true, includeProperties: true}
         ])
         expect('recipe' in state.calls[0]).toBe(false)
     })
@@ -280,8 +285,8 @@ describe('observing MASKING over an asset', () => {
         observer.observe({recipe: root, loadedRecipes: catalogue([root])})
 
         expect(state.calls).toEqual([
-            {asset: 'users/x/primary', includeDataTypes: true},
-            {asset: 'users/x/mask', includeDataTypes: true}
+            {asset: 'users/x/primary', includeDataTypes: true, includeProperties: true},
+            {asset: 'users/x/mask', includeDataTypes: true, includeProperties: true}
         ])
     })
 })
@@ -374,7 +379,7 @@ describe('inputs are evidence, not storage', () => {
             description: {
                 executionReference: {type: 'RECIPE_REF', id: 'masked-1'},
                 output: {kind: 'IMAGE', bands: DECLARED_CCDC_BANDS},
-                evidence: []
+                evidence: CCDC_EVIDENCE
             },
             readiness: RUNNABLE
         }))

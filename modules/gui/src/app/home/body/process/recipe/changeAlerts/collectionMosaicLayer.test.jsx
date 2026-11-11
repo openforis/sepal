@@ -38,8 +38,8 @@ vi.mock('~/app/home/map/layer/earthEngineImageLayer', () => ({
 }))
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-// Storage answers each read when the test says so; Earth Engine is recorded and never answers, for nothing here may
-// need it.
+// Storage answers each read when the test says so. Earth Engine is recorded and answers only the bands of the CCDC the
+// changes are built over: no mosaic needs anything of it.
 vi.mock('~/apiRegistry', async () => {
     const {Observable, of, throwError} = await import('rxjs')
     return {default: {
@@ -56,7 +56,9 @@ vi.mock('~/apiRegistry', async () => {
         gee: new Proxy({}, {
             get: (_target, name) => args => {
                 fake.geeReads.push([name, args])
-                return throwError(() => new Error(`Earth Engine is not asked here: ${name}`))
+                return name === 'bands$'
+                    ? of(['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb', 'ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude'])
+                    : throwError(() => new Error(`Earth Engine is not asked here: ${name}`))
             }
         })
     }}
@@ -68,6 +70,7 @@ const layerSelector = fake.selectors.at(-1)
 const {addRecipeType} = await import('../../recipeTypeRegistry')
 const {default: changeAlertsType} = await import('./changeAlerts')
 const {default: ccdcType} = await import('../ccdc/ccdc')
+const {default: maskingType} = await import('../masking/masking')
 const {SourceRuntimeProvider, withSourceRuntime} = await import('../../sourceRuntime/sourceRuntimeContext')
 const {initStore} = await import('~/store')
 const {RecipeCacheClaimant} = await import('~/app/home/body/process/recipeSession/recipeCacheClaims')
@@ -75,6 +78,7 @@ const {sessionRecipeCache} = await import('../../recipe')
 
 addRecipeType(changeAlertsType())
 addRecipeType(ccdcType())
+addRecipeType(maskingType())
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -204,6 +208,153 @@ describe('a Change Alerts collection mosaic whose CCDC the session does not hold
     })
 })
 
+// Every mode a Change Alerts layer shows - its changes, and the latest or median mosaic of calibration or of monitoring -
+// is held by the Sources and Dates its changes are computed over, which need imagery possible in both windows: calibration
+// 2010-2012 and monitoring 2013-2020 here, Landsat 4-5 covering only the one and Landsat 8 only the other.
+describe('a Change Alerts layer over data sets that may not cover both its windows', () => {
+    const RGB = {id: 'rgb', type: 'rgb', bands: ['red', 'green', 'blue'], min: [0, 0, 0], max: [2000, 2000, 2000]}
+    const CONFIDENCE = {id: 'confidence', type: 'continuous', bands: ['confidence'], min: [0], max: [100], palette: ['#000000', '#ffffff']}
+    const MODES = [
+        ['the changes', {visualizationType: 'changes', mosaicType: 'latest', visParams: CONFIDENCE}],
+        ...['calibration', 'monitoring'].flatMap(period => ['latest', 'median'].map(mosaicType =>
+            [`the ${mosaicType} ${period} mosaic`, {visualizationType: period, mosaicType, visParams: RGB}]))
+    ]
+    const WINDOWS = {
+        monitoringEnd: '2021-01-01', monitoringDuration: 96, monitoringDurationUnit: 'months',
+        calibrationDuration: 36, calibrationDurationUnit: 'months'
+    }
+    const over = (dataSets, date = WINDOWS) => ({date, sources: {band: 'ndvi', dataSetType: 'OPTICAL', dataSets: {LANDSAT: dataSets}}})
+
+    it.each(MODES)('draws %s over Landsat 4-5 and 8 together', async (_mode, layerConfig) => {
+        const shown = await show({layerConfig, model: over(['LANDSAT_8', 'LANDSAT_TM'])})
+
+        await shown.answer(CCDC)
+
+        expect(shown.layer()).not.toBe(null)
+    })
+
+    it.each(MODES)('withdraws %s while Landsat 8 alone leaves calibration uncovered, drawing it once Sources add Landsat 4-5', async (_mode, layerConfig) => {
+        const shown = await show({layerConfig, model: over(['LANDSAT_8'])})
+        await shown.answer(CCDC)
+        expect(shown.layer()).toBe(null)
+
+        shown.edit(model => ({...model, sources: {...model.sources, dataSets: {LANDSAT: ['LANDSAT_8', 'LANDSAT_TM']}}}))
+        await settled()
+
+        expect(shown.layer()).not.toBe(null)
+    })
+
+    it.each(MODES)('withdraws %s while Landsat 4-5 alone leaves monitoring uncovered, drawing it once Dates move both into its years', async (_mode, layerConfig) => {
+        const shown = await show({layerConfig, model: over(['LANDSAT_TM'])})
+        await shown.answer(CCDC)
+        expect(shown.layer()).toBe(null)
+
+        shown.edit(model => ({...model, date: {...model.date, monitoringEnd: '2013-01-01', monitoringDuration: 36}}))
+        await settled()
+
+        expect(shown.layer()).not.toBe(null)
+    })
+
+    it.each(MODES)('withdraws %s while Dates place both windows before Landsat 8, drawing it once they move into its years', async (_mode, layerConfig) => {
+        const shown = await show({layerConfig, model: over(['LANDSAT_8'], {...WINDOWS, monitoringEnd: '2012-01-01', monitoringDuration: 12, calibrationDuration: 12})})
+        await shown.answer(CCDC)
+        expect(shown.layer()).toBe(null)
+
+        shown.edit(model => ({...model, date: {...WINDOWS, monitoringEnd: '2024-01-01', monitoringDuration: 36}}))
+        await settled()
+
+        expect(shown.layer()).not.toBe(null)
+    })
+
+    // Calibration December 2011 to February 2012, monitoring March and April 2012: Landsat 4-5's surface reflectance covers
+    // both, its top of atmosphere neither. The CCDC's correction is the one its imagery is read with, whatever the alerts
+    // saved.
+    const EARLY_2012 = {...WINDOWS, monitoringEnd: '2012-05-01', monitoringDuration: 2, calibrationDuration: 3}
+    const reading = corrections => ({...CCDC, model: {...CCDC.model, options: {corrections}}})
+
+    it.each(MODES)('draws %s over Landsat 4-5 saved top of atmosphere where its CCDC reads SR', async (_mode, layerConfig) => {
+        const shown = await show({layerConfig, model: {...over(['LANDSAT_TM'], EARLY_2012), options: {corrections: []}}})
+
+        await shown.answer(reading(['SR']))
+
+        expect(shown.layer()).not.toBe(null)
+    })
+
+    it.each(MODES)('withdraws %s, requesting no preview, over Landsat 4-5 saved with SR where its CCDC reads top of atmosphere', async (_mode, layerConfig) => {
+        const shown = await show({layerConfig, model: {...over(['LANDSAT_TM'], EARLY_2012), options: {corrections: ['SR']}}})
+
+        await shown.answer(reading([]))
+
+        expect(shown.layer()).toBe(null)
+        expect(fake.constructed).toEqual([])
+    })
+
+    // Calibration September to November 2012, monitoring December 2012 and January 2013: after Landsat 4-5's last
+    // acquisition, in 2012 as its years are, before any preview is requested.
+    it.each(MODES)('withdraws %s, requesting no preview, while Landsat 4-5 alone ended before both windows, drawing it once Sources choose Landsat 7', async (_mode, layerConfig) => {
+        const gap = {...WINDOWS, monitoringEnd: '2013-02-01', monitoringDuration: 2, calibrationDuration: 3}
+        const shown = await show({layerConfig, model: over(['LANDSAT_TM'], gap)})
+        await shown.answer(CCDC)
+        expect(shown.layer()).toBe(null)
+        expect(fake.constructed).toEqual([])
+
+        shown.edit(model => ({...model, sources: {...model.sources, dataSets: {LANDSAT: ['LANDSAT_7']}}}))
+        await settled()
+
+        expect(shown.layer()).not.toBe(null)
+    })
+})
+
+// A layer showing a recipe whose image is the changes - a Masking of them, masked by the CCDC - is held by what holds
+// the changes, found by the layer's own read, though the alerts are not open: the session holds their record, and the
+// CCDC's, but no editor of theirs watches their evidence.
+describe('a layer showing a Masking of Change Alerts that are not open', () => {
+    const CONFIDENCE = {id: 'confidence', type: 'continuous', bands: ['confidence'], min: [0], max: [100], palette: ['#000000', '#ffffff']}
+    const masking = {
+        id: MASKING_ID, type: 'MASKING', revision: 1, ui: {initialized: true}, layers: {userDefinedVisualizations: {'this-recipe': [CONFIDENCE]}},
+        model: {imageToMask: {type: 'RECIPE_REF', id: ALERTS_ID}, imageMask: {type: 'RECIPE_REF', id: CCDC.id}}
+    }
+    // Calibration September to November 2012, monitoring December 2012 and January 2013: before Landsat 8's first
+    // acquisition, under either correction.
+    const BEFORE_LANDSAT_8 = {
+        monitoringEnd: '2013-02-01', monitoringDuration: 2, monitoringDurationUnit: 'months',
+        calibrationDuration: 3, calibrationDurationUnit: 'months'
+    }
+
+    it('is withdrawn, requesting no preview, once the alerts\' Dates leave Landsat 8 nothing to cover, and drawn again once they cover it', async () => {
+        const shown = await show({layerConfig: {visParams: CONFIDENCE}, shown: masking, others: [changeAlerts(), CCDC]})
+        expect(shown.layer()).not.toBe(null)
+        const drawn = fake.constructed.length
+
+        shown.edit(model => ({...model, date: BEFORE_LANDSAT_8}), ALERTS_ID)
+        await settled()
+        expect(shown.layer()).toBe(null)
+        expect(fake.constructed).toHaveLength(drawn)
+
+        shown.edit(model => ({...model, date: changeAlerts().model.date}), ALERTS_ID)
+        await settled()
+        expect(shown.layer()).not.toBe(null)
+    })
+
+    // Calibration December 2011 to February 2012, monitoring March and April 2012: Landsat 4-5's surface reflectance
+    // covers both, its top of atmosphere neither. The CCDC's correction is what the changes are read with.
+    it.each([
+        ['draws', 'saved top of atmosphere where the CCDC reads SR', [], ['SR'], true],
+        ['withdraws', 'saved with SR where the CCDC reads top of atmosphere', ['SR'], [], false]
+    ])('%s it over Landsat 4-5 %s', async (_drawing, _case, saved, read, drawn) => {
+        const alerts = changeAlerts({
+            date: {monitoringEnd: '2012-05-01', monitoringDuration: 2, monitoringDurationUnit: 'months', calibrationDuration: 3, calibrationDurationUnit: 'months'},
+            sources: {band: 'ndvi', dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_TM']}},
+            options: {corrections: saved}
+        })
+        const ccdc = {...CCDC, model: {...CCDC.model, options: {corrections: read}}}
+
+        const shown = await show({layerConfig: {visParams: CONFIDENCE}, shown: masking, others: [alerts, ccdc]})
+
+        expect(shown.layer() !== null).toBe(drawn)
+    })
+})
+
 const ALERTS_ID = 'change-alerts-1'
 
 const CCDC = {
@@ -220,13 +371,16 @@ const CCDC = {
 
 const OTHER_CCDC = {...CCDC, id: 'ccdc-2'}
 
+const MASKING_ID = 'masking-1'
+
 const LISTING = [
     {id: ALERTS_ID, name: 'Alerts', type: 'CHANGE_ALERTS', revision: 1},
+    {id: MASKING_ID, name: 'Masking', type: 'MASKING', revision: 1},
     {id: CCDC.id, name: 'CCDC', type: 'CCDC', revision: 1},
     {id: OTHER_CCDC.id, name: 'Other CCDC', type: 'CCDC', revision: 1}
 ]
 
-const changeAlerts = () => ({
+const changeAlerts = (model = {}) => ({
     id: ALERTS_ID,
     type: 'CHANGE_ALERTS',
     revision: 1,
@@ -240,7 +394,8 @@ const changeAlerts = () => ({
         },
         sources: {band: 'ndvi', dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_8']}},
         options: {corrections: ['SR']},
-        changeAlertsOptions: {}
+        changeAlertsOptions: {},
+        ...model
     }
 })
 
@@ -256,13 +411,14 @@ const RuntimeProbe = withSourceRuntime()(({sourceRuntime, onRuntime}) => {
 // them, recomputed as the store or its config changes, as React Redux would. The source component a map renders beside
 // the layer claims the recipe it shows while mounted (recipeImageLayerSource.jsx, through recipeAccess.jsx): that claim
 // alone keeps a recipe that is not open in the session. Unmounting releases the layer, then the claim.
-const show = async ({layerConfig, inAnotherRecipe = false}) => {
-    const recipe = changeAlerts()
+// `shown` replaces the alerts as the recipe the layer shows, `others` the records the session holds besides it, none open.
+const show = async ({layerConfig, inAnotherRecipe = false, model, shown, others = []}) => {
+    const recipe = shown || changeAlerts(model)
     const store = createStore((state = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: {[recipe.id]: recipe},
+            loadedRecipes: {[recipe.id]: recipe, ...Object.fromEntries(others.map(other => [other.id, other]))},
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
@@ -339,14 +495,14 @@ const show = async ({layerConfig, inAnotherRecipe = false}) => {
             instance.componentDidUpdate(previous)
             await settled()
         },
-        // An edit of the recipe's model, as the store applies one.
-        edit: change => {
+        // An edit of the recipe's model - or another's the session holds - as the store applies one.
+        edit: (change, id = recipe.id) => {
             store.dispatch({
                 type: 'EDIT_MODEL',
-                reduce: state => _.set(_.cloneDeep(state), ['process', 'loadedRecipes', recipe.id, 'model'],
-                    change(state.process.loadedRecipes[recipe.id].model))
+                reduce: state => _.set(_.cloneDeep(state), ['process', 'loadedRecipes', id, 'model'],
+                    change(state.process.loadedRecipes[id].model))
             })
-            return store.getState().process.loadedRecipes[recipe.id]
+            return store.getState().process.loadedRecipes[id]
         }
     }
 }

@@ -19,10 +19,11 @@ import {settingsOf} from './processingSettings'
 
 // What Change Alerts needs of the reference it monitors against, selected in REF, by what reads it. The alerts and
 // their Retrieve slice its segments (lib/js/ee/src/timeSeries/changeAlertsAlgorithm.js) for the measure chosen in
-// Sources, and observe it in the monitoring data chosen there; the monitoring and calibration mosaics are built around
-// the geometry of its segment source, so they need only the provider chain that resolves it; the segment chart plots
-// more of each segment than the alerts read. The chart's needs gate the chart and are reported in REF, but do not
-// refuse a reference the alerts can use.
+// Sources, and observe it in the monitoring data chosen there. The monitoring and calibration mosaics are built around
+// the geometry of its segment source, so they need the provider chain that resolves it; they show the imagery the
+// alerts monitor, so they are held for the measure Sources monitor as the alerts are, but not for the layout the alerts
+// slice. The segment chart plots more of each segment than the alerts read. The chart's needs gate the chart and are
+// reported in REF, but do not refuse a reference the alerts can use.
 //
 // A reference with no measure any monitoring data Sources offers observes is refused in REF; one whose measures only
 // other monitoring settings observe is accepted, and Sources is what then needs changing.
@@ -74,7 +75,7 @@ export const referenceRequirements = [
             available: availableMeasures(recipe.model.sources?.dataSetType),
             observed: settingsOf(recipe).model ? observedMeasures(settingsOf(recipe).model) : null
         }),
-        operations: [IMAGE_OUTPUT, PIXEL_SEGMENTS, PIXEL_OBSERVATIONS]
+        operations: [IMAGE_OUTPUT, COLLECTION_MOSAIC, PIXEL_SEGMENTS, PIXEL_OBSERVATIONS]
     },
     {
         role: PRIMARY_IMAGE,

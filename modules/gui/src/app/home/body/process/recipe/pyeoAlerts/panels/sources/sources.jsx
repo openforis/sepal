@@ -244,10 +244,11 @@ export const Sources = compose(
             return acquisition.value || {}
         }
 
-        // The years monitored as Apply would save them: the dates applied, with those the classification's reading proposes.
+        // The days monitored, and the correction they are read with, as Apply would save them: the dates and options applied,
+        // with those the classification's reading proposes.
         period(acquisition) {
-            const {dates} = this.props
-            return dataSetPeriod(withUpdates({model: {dates}}, proposedUpdates(acquisition)).model)
+            const {dates, processing} = this.props
+            return dataSetPeriod(withUpdates({model: {dates, options: processing}}, proposedUpdates(acquisition)).model)
         }
 
         // Opening a saved recipe reads metadata without re-deriving its configuration.

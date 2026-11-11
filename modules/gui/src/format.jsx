@@ -69,6 +69,14 @@ const fullDate = date =>
 const date = date =>
     moment(date).format('DD MMM YYYY')
 
+const yearRange = (startYear, endYear) =>
+    startYear === endYear ? `${startYear}` : `${startYear}–${endYear}`
+
+const dateRange = (firstDate, lastDate) => {
+    const [first, last] = [date(firstDate), date(lastDate)]
+    return first === last ? first : `${first} – ${last}`
+}
+
 const fileSize = (size, {scale, precisionDigits, unit = 'B'} = {}) =>
     number({value: size, scale, precisionDigits, unit})
 
@@ -242,6 +250,8 @@ export default {
     fullDate,
     fractionalYearsToDate,
     date,
+    yearRange,
+    dateRange,
     fileSize,
     number,
     significantDigits,

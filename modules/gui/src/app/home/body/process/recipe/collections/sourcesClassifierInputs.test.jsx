@@ -199,7 +199,7 @@ for (const {recipeType, Sources, classificationLabel, extraSources, radarSources
 
         it('explain the data set that feeds it as having no imagery for the dates, which cannot be chosen, until another Classification is', async () => {
             await open({dataSets: {LANDSAT: ['LANDSAT_TM']}, classification: RED_EDGE}, {dates: datesOf(1990, 1995)})
-            expect(classificationMessages()).toEqual(['process.source.classifierInputs.unavailable redEdge1 sources.dataSets,SENTINEL_2,label 1990-1995'])
+            expect(classificationMessages()).toEqual(['process.source.classifierInputs.unavailable redEdge1 sources.dataSets,SENTINEL_2,label 1990–1995'])
             expect(button('sources.dataSets,SENTINEL_2,label').disabled).toBe(true)
 
             await select(OPTICAL_BANDS)
@@ -207,6 +207,19 @@ for (const {recipeType, Sources, classificationLabel, extraSources, radarSources
             expect(classificationMessages()).toEqual([])
             await press('button.apply')
             expect(savedSources().classification).toBe(OPTICAL_BANDS)
+        })
+
+        // Sentinel-2's surface reflectance begins on 28 March 2017, its top of atmosphere on 27 June 2015.
+        it('name Sentinel-2 for 2016 only with SR turned off, as its data sets offer it then and not before', async () => {
+            await open({dataSets: {LANDSAT: ['LANDSAT_8']}, classification: RED_EDGE}, {dates: datesOf(2016, 2016)})
+            expect(classificationMessages()).toEqual(['process.source.classifierInputs.reflectanceDataSets.TOA redEdge1 sources.dataSets,SENTINEL_2,label'])
+            expect(button('sources.dataSets,SENTINEL_2,label').disabled).toBe(true)
+            await close()
+
+            await open({dataSets: {LANDSAT: ['LANDSAT_8']}, classification: RED_EDGE}, {dates: datesOf(2016, 2016), options: {corrections: []}})
+
+            expect(classificationMessages()).toEqual(['process.source.classifierInputs.dataSets redEdge1 sources.dataSets,SENTINEL_2,label'])
+            expect(button('sources.dataSets,SENTINEL_2,label').disabled).toBe(false)
         })
 
         it('say no data set that can be chosen feeds it as processed now, for a radar collection keeping SR', async () => {

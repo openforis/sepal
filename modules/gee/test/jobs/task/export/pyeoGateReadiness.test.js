@@ -19,7 +19,7 @@ mock.module('#sepal/ee/recipe', {
 })
 mock.module('#sepal/ee/bandEvidence', {
     exports: {
-        assetBandEvidence$: () => of(['red', 'nir', 'swir1', 'swir2'].map(name => ({name, arrayDimensions: 0}))),
+        assetObservation$: () => of(['red', 'nir', 'swir1', 'swir2'].map(name => ({name, arrayDimensions: 0}))),
         imageBandEvidence$: recipe => throwError(() => new Error(`Image described: ${recipe.id}`))
     }
 })

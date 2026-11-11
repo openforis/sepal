@@ -34,7 +34,8 @@ const fields = {
 }
 
 const mapRecipeToProps = recipe => ({
-    dates: selectFrom(recipe, 'model.dates')
+    dates: selectFrom(recipe, 'model.dates'),
+    corrections: selectFrom(recipe, 'model.options.corrections')
 })
 
 class _Sources extends React.Component {
@@ -189,8 +190,8 @@ class _Sources extends React.Component {
     }
 
     period() {
-        const {dates} = this.props
-        return dataSetPeriod({dates})
+        const {dates, corrections} = this.props
+        return dataSetPeriod({dates, options: {corrections}})
     }
 
     setAdvanced(enabled) {

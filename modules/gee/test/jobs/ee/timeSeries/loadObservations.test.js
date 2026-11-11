@@ -504,7 +504,7 @@ mock.module('#sepal/ee/recipe', {
 })
 mock.module('#sepal/ee/bandEvidence', {
     exports: {
-        assetBandEvidence$: id => {
+        assetObservation$: id => {
             state.observed.push(id)
             const bands = state.assetBands[id]
             return bands

@@ -6,6 +6,7 @@ import {msg} from '~/translate'
 import {classifiedOutputFallbackLabel} from '../classification/bands'
 import {listed, sourcesFieldRequirement} from '../requirements/fieldRequirement'
 import {referenceFeedback} from '../requirements/referenceFeedback'
+import {periodLabel} from './dataSetPeriodRequirement'
 import {classificationNaming, classifiedOutputLabel} from './selectedClassification'
 
 // What CCDC, Time Series and Phenology need of the Classification their Sources may select, as their shared definitions
@@ -34,7 +35,7 @@ export const collectionClassifierRequirements = sources => ['classification', 'd
 // (`reflectanceAlternatives`), each keyed by that correction; data sets that would, but the years read exclude
 // (`unavailable`); or none (`unsupplied`) - and `andMore`, how a long list of missing features ends. The messages only
 // say what the finding names, the data sets by their Sources labels.
-export const classifierInputsMessage = (messages, {missing, alternatives, reflectance, unavailable, startYear, endYear} = {}) => {
+export const classifierInputsMessage = (messages, {missing, alternatives, reflectance, unavailable, startDate, endDate, startYear, endYear} = {}) => {
     const values = {missing: listed(missing, messages.andMore)}
     if (alternatives) {
         return msg(messages.alternatives, {...values, alternatives: dataSetLabels(alternatives)})
@@ -46,7 +47,7 @@ export const classifierInputsMessage = (messages, {missing, alternatives, reflec
         return msg(`${messages.reflectanceAlternatives}.${reflectance.to}`, {...values, alternatives: dataSetLabels(reflectance.alternatives)})
     }
     if (unavailable) {
-        return msg(messages.unavailable, {...values, unavailable: dataSetLabels(unavailable), years: yearsOf(startYear, endYear)})
+        return msg(messages.unavailable, {...values, unavailable: dataSetLabels(unavailable), period: periodLabel({startDate, endDate, startYear, endYear})})
     }
     return msg(messages.unsupplied, values)
 }
@@ -101,5 +102,3 @@ const COLLECTION_CLASSIFIER_INPUT_MESSAGES = {
 
 // Every one named, for a repair replaces the selection with data sets of these alone.
 const dataSetLabels = dataSets => dataSets.map(dataSet => msg(['sources.dataSets', dataSet, 'label'])).join(', ')
-
-const yearsOf = (startYear, endYear) => startYear === endYear ? `${startYear}` : `${startYear}-${endYear}`

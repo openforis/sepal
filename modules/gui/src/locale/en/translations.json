@@ -1686,7 +1686,7 @@
                 "SR": "The selected datasets don't provide the bands this classification reads: {missing}. Turn on SR in PRC and choose only datasets from {alternatives}, or choose another classification.",
                 "TOA": "The selected datasets don't provide the bands this classification reads: {missing}. Turn off SR in PRC and choose only datasets from {alternatives}, or choose another classification."
               },
-              "unsuppliedInputsUnavailable": "The selected datasets don't provide the bands this classification reads: {missing}. Those that do ({unavailable}) have no imagery in the monitoring years, {years}. Choose another classification.",
+              "unsuppliedInputsUnavailable": "The selected datasets don't provide the bands this classification reads: {missing}. Those that do ({unavailable}) have no imagery in the monitoring period, {period}. Choose another classification.",
               "multipleInputs": "This classification uses {count} input images; PyEO Alerts needs exactly one. Remove the others from the classification, or choose another classification."
             },
             "changeFromClasses": {
@@ -1818,7 +1818,8 @@
             "calibration": {
               "duration": {
                 "label": "Calibration duration",
-                "placeholder": "Duration..."
+                "placeholder": "Duration...",
+                "positive": "The calibration period must last at least one day, week or month."
               }
             },
             "durationUnit": {
@@ -1830,7 +1831,8 @@
             "monitoring": {
               "duration": {
                 "label": "Monitoring duration",
-                "placeholder": "Duration..."
+                "placeholder": "Duration...",
+                "positive": "The monitoring period must last at least one day, week or month."
               }
             },
             "monitoringEnd": {
@@ -2065,6 +2067,10 @@
               },
               "radar": {
                 "label": "Radar"
+              },
+              "window": {
+                "calibration": "the calibration period ({period})",
+                "monitoring": "the monitoring period ({period})"
               }
             },
             "dataSetType": {
@@ -6019,13 +6025,14 @@
           "SR": "The selected data sets don't provide the bands this classification reads: {missing}. Turn on SR in PRC and choose only data sets from {alternatives}, or choose another classification, or none.",
           "TOA": "The selected data sets don't provide the bands this classification reads: {missing}. Turn off SR in PRC and choose only data sets from {alternatives}, or choose another classification, or none."
         },
-        "unavailable": "The selected data sets don't provide the bands this classification reads: {missing}. Those that do ({unavailable}) have no imagery for {years}. Choose another classification, or none."
+        "unavailable": "The selected data sets don't provide the bands this classification reads: {missing}. Those that do ({unavailable}) have no imagery for {period}. Choose another classification, or none."
       },
       "dataSets": {
-        "noPeriodOverlap": "None of the selected data sets covers any year from {startYear} to {endYear}. Select one that does, or change the dates.",
-        "years": {
-          "from": "Imagery from {fromYear}.",
-          "range": "Imagery from {fromYear} to {toYear}."
+        "noPeriodOverlap": "None of the selected data sets covers any part of {period}. Select one that does, or change the dates.",
+        "noWindowOverlap": "None of the selected data sets covers any part of {windows}. Select one that does, or change the dates.",
+        "imagery": {
+          "from": "Imagery from {from}.",
+          "range": "Imagery for {period}."
         }
       },
       "collectionBands": {

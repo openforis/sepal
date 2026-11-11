@@ -22,12 +22,14 @@ const fields = {
         .date(DATE_FORMAT),
     monitoringDuration: new Form.Field()
         .notBlank()
-        .int(),
+        .int()
+        .min(1, 'process.changeAlerts.panel.date.form.monitoring.duration.positive'),
     monitoringDurationUnit: new Form.Field()
         .notBlank(),
     calibrationDuration: new Form.Field()
         .notBlank()
-        .int(),
+        .int()
+        .min(1, 'process.changeAlerts.panel.date.form.calibration.duration.positive'),
     calibrationDurationUnit: new Form.Field()
         .notBlank()
 }

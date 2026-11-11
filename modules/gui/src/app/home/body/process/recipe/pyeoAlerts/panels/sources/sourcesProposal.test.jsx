@@ -7,6 +7,7 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
+import format from '~/format'
 import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
@@ -155,7 +156,7 @@ describe('a classification whose imagery states no dates', () => {
     })
 })
 
-const noOverlap = (startYear, endYear) => `process.source.dataSets.noPeriodOverlap ${JSON.stringify({startYear, endYear})}`
+const noOverlap = (startYear, endYear) => `process.source.dataSets.noPeriodOverlap ${JSON.stringify({period: format.yearRange(startYear, endYear)})}`
 
 const model = () => store.getState().process.loadedRecipes[ID].model
 

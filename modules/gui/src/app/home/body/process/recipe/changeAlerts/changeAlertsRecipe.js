@@ -10,14 +10,15 @@ import {defaultModel as defaultPlanetModel} from '~/app/home/body/process/recipe
 import {defaultModel as defaultRadarModel} from '~/app/home/body/process/recipe/radarMosaic/radarMosaicRecipe'
 import {defaultDataSet} from '~/sources'
 
-import {settingsOf} from './processingSettings'
+import {effectiveReflectanceOf, settingsOf} from './processingSettings'
 
-// The data sets a new recipe's Sources start with, as far as its calibration and monitoring years let them contribute
-// (initialSources.js): those its reference preferred as it was first applied (`seededDataSets`, reference.jsx), or
+// The data sets a new recipe's Sources start with, as far as its calibration and monitoring days let them contribute
+// (initialSources.js), under the correction its reference's processing makes effective - while that is read, as far as
+// either correction does: those its reference preferred as it was first applied (`seededDataSets`, reference.jsx), or
 // otherwise optical ones.
 export const initialSources = {
     dataSets: recipe => recipe.ui?.seededDataSets || OPTICAL_DATA_SETS,
-    period: dataSetPeriod
+    period: (model, recipe) => dataSetPeriod(model, effectiveReflectanceOf(recipe))
 }
 
 // What a reference first applied prefers Sources to start with, from what its accepted facts say: the data sets its

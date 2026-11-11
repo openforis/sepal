@@ -75,7 +75,7 @@ const masking = ({primary}) => ({
 })
 
 // Running a Masking builds its mask, so its mask asset is observed beside what describes it.
-const MASK_CALL = {asset: 'users/x/mask', includeDataTypes: true}
+const MASK_CALL = {asset: 'users/x/mask', includeDataTypes: true, includeProperties: true}
 
 const initialState = () => ({
     process: {loadedRecipes: {}},

@@ -9,7 +9,10 @@ is compared on.
 `reference` is the CCDC segments: a CCDC recipe, a recipe that preserves its segments such as a Masking over one, or a
 segments asset. `date` states the period: `monitoringEnd` (YYYY-MM-DD), a `monitoringDuration` in
 `monitoringDurationUnit` before it, and a `calibrationDuration` in `calibrationDurationUnit` before the monitoring
-start. The form offers days, weeks and months, and keeps a duration as the digits its number input holds.
+start. The form offers days, weeks and months, and keeps a duration as the digits its number input holds. Each
+duration must be at least one: a window that does not last has no day to compare, so Dates refuses it, and a period
+saved so (`NON_POSITIVE_DURATION`, at that duration) holds the changes and every collection mosaic, marking Dates. The
+chart's observations are read over whatever days the period holds.
 `sources` - `dataSetType` (`OPTICAL`, `RADAR` or `PLANET`), `dataSets`, `assets` and `band` - and `options` are the
 collection monitored against. Monitoring choices belong to Change Alerts. The first Reference Apply during genuinely
 new creation seeds editable defaults once; later producer edits, replacement, Refresh and reopen never overwrite them.
@@ -22,9 +25,23 @@ unrecorded asset settings remain explicit consumer fallbacks. Displaying those v
 or editable drafts ([source evidence](../design/recipes/gui-source-runtime.md)). `changeAlertsOptions` configure the
 algorithm. No separate "Use reference settings" copy-again action is planned.
 
-Its data sets are judged against the period its observations read, from the calibration start until the monitoring end,
-as the shared [data-set availability](../design/recipes/data-sources.md#data-set-availability) describes. Where none may contribute, its image and its chart's
-observations are held, and SRC says why; the reference's segments are not held for it.
+Its data sets are judged as the shared [data-set availability](../design/recipes/data-sources.md#data-set-availability)
+describes, for each window its changes compare (`dataSetWindows`): calibration, from its start until the monitoring
+start, and monitoring, until the monitoring end, both excluded. One of the chosen data sets must be able to cover some
+day of each, any one of them: Landsat 4-5 for a calibration before May 2012 and Landsat 8 for a monitoring after March
+2013 together suffice, and part of a window suffices. Between those days neither does, whatever their years: a
+calibration from September to November 2012 and a monitoring of December and January need Landsat 7. Where a window is
+left uncovered, the changes - their layer, Retrieve and export - and every collection mosaic are held, before any
+preview is requested, and SRC names each such window, by its days unless it is whole calendar years. Its chart's
+observations are read over the whole period at once and are held only where no chosen data set may cover any of it; the
+reference's segments are not held for either. Sources offer anew whatever may cover some window. All of this is judged
+under the correction the reference's processing makes effective, which the imagery is read with, never the one the
+recipe's options saved: Landsat 4-5 saved top of atmosphere over segments recording SR covers early 2012, and saved with
+SR over segments recording top of atmosphere does not. Its readiness judges it, reading that processing from the
+reference's description - what a computing CCDC is configured with, or what a segments asset records - so a recipe
+built on the changes, such as a Masking of them, is held by it too, naming Change Alerts, and so is its export. Where
+the correction decides, nothing is decided while the reference is read: what needs it waits, and Sources and a new
+recipe's proposal leave out only what neither correction allows ([data-set availability](../design/recipes/data-sources.md#data-set-availability)).
 
 Change Alerts monitors a band its imagery observes itself, and uses no Classification.
 - **Not proposed from the producer.** The producer's `classification` and `breakpointBands` are not proposed; ones an
@@ -124,6 +141,12 @@ duration reaching a date YYYY-MM-DD cannot state. `sources.dataSetType` must be 
 `BASEMAPS` or `DAILY`, at `model.sources.dataSets.PLANET`. Refusals of the period and the sources are reported
 together. The changes are described whatever these state.
 
+Every mosaic is held to what holds the changes of Change Alerts' own configuration and Sources, though it covers one
+window and monitors no band: a window that does not last, data sets leaving a window uncovered, a monitored band a
+Classification computes (`CLASSIFIED_MONITORED_BAND`), and a measure monitored that the reference's segments lack or
+the data do not observe, said in SRC. The layout the alerts slice does not hold it: a mosaic slices no segments, and
+needs only the provider chain whose geometry it is clipped to.
+
 The layer presents each mosaic's bands - cursor precision and ranges - as its own recipe type does. Its styles are
 built from the same projection, and a mosaic its read does not describe offers none, so a saved recipe with a broken
 period or source leaves the layer form usable, previews nothing, and offers the mosaic again once corrected. On the
@@ -144,7 +167,23 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
 - `modules/gee/verify/changeAlertsOutputBands.mjs` - the changes' schema.
 - `lib/js/shared/test/recipe/output/type/changeAlerts.test.js` - the product's description, identity and parameters;
   the recipe each view is delegated as, at both boundaries, in weeks, days and years below 100; following Change
-  Alerts' saved model over a CCDC configured otherwise; the refusals; the changes unaffected.
+  Alerts' saved model over a CCDC configured otherwise; the refusals; the changes unaffected; the monitored band and
+  windows that do not last holding the mosaics.
+- `lib/js/shared/test/recipe/dataSetAvailability.test.js` - the windows judged by readiness for the changes and the
+  mosaics, by days and under the correction the reference's description establishes, between Landsat 4-5's last
+  acquisition and Landsat 8's first included; waiting for the reference only where its correction decides; a Masking
+  of the changes held with Change Alerts in the path; and the whole period for the chart's observations.
+- `modules/gui/src/app/home/body/process/recipe/changeAlerts/collectionMosaicLayer.test.jsx` - every layer mode
+  withdrawn while a window is uncovered under the CCDC's correction, whatever the alerts saved, and drawn again once
+  Sources or Dates repair it; a layer of a Masking of alerts that are not open, withdrawn and drawn again alike.
+- `modules/gee/test/jobs/task/export/imageAssetExport.test.js` - the export of the changes, and of a Masking of them,
+  refused before anything is built where a window is uncovered under the correction the segments record, and exported
+  where it is covered.
+- `modules/gui/src/app/home/body/process/recipe/changeAlerts/referenceRequirement.test.jsx` - the data sets judged
+  under the correction the reference records, not the one saved: Sources marked and their draft refused, the changes,
+  mosaics and chart held or released, choices offered and proposals made by it, and nothing decided while it is read.
+- `modules/gui/src/app/home/body/process/recipe/changeAlerts/referenceRequirement.test.jsx` - the mosaics held for a
+  measure the segments lack, not for their layout; Dates refusing a window that does not last, and marking one saved.
 - `lib/js/shared/src/recipe/changeAlerts/monitoringDates.test.js` and `mosaicRecipe.test.js` - the dates of the
   period, the field that keeps one from being computed, and each source type's projection.
 - `modules/gee/test/jobs/ee/timeSeries/changeAlertsCollectionMosaic.test.js` - each view executed as described, over the

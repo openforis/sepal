@@ -12,6 +12,7 @@ import {Recipe, recipe as recipeRoot} from '~/app/home/body/process/recipeContex
 import {initializeRecipe} from '~/app/home/body/process/recipeSession/recipeCache'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {compose} from '~/compose'
+import format from '~/format'
 import {selectFrom} from '~/stateUtils'
 import {initStore} from '~/store'
 import {withActivatable} from '~/widget/activation/activatable'
@@ -120,8 +121,9 @@ const TYPES = [
         datesPath: 'date', datesFor: (from, to) => ({
             monitoringEnd: `${to}-07-01`, monitoringDuration: 6, monitoringDurationUnit: 'months', calibrationDuration: to - from, calibrationDurationUnit: 'years'
         }),
-        // Its Date panel starts monitoring months up to today, which Landsat 4-5 never covered.
-        preferred: [L9, L8, L7, TM, S2], firstStep: 'reference', created: [L9, L8, L7, S2]
+        // Its Date panel starts monitoring months up to today, which Landsat 4-5 never covered, nor Landsat 7, whose
+        // collections end in January 2024.
+        preferred: [L9, L8, L7, TM, S2], firstStep: 'reference', created: [L9, L8, S2]
     }
 ]
 TYPES.forEach(({registration}) => addRecipeType(registration.default()))
@@ -280,6 +282,23 @@ describe('falling back from preferred data sets that may not contribute', () => 
     })
 })
 
+// Days, not years: after Landsat 4-5's last acquisition under SR, 5 May 2012, and before Landsat 8's first, 18 March 2013,
+// neither is proposed, whatever their years.
+describe('proposing data sets for a period between Landsat 4-5\'s imagery and Landsat 8\'s', () => {
+    it.each([
+        ['CCDC', {startDate: '2012-06-01', endDate: '2013-03-18'}],
+        ['CHANGE_ALERTS', {monitoringEnd: '2013-02-01', monitoringDuration: 2, monitoringDurationUnit: 'months', calibrationDuration: 3, calibrationDurationUnit: 'months'}]
+    ])('a new %s starts with Landsat 7 alone', async (type, dates) => {
+        const t = typeOf(type)
+        await create(t)
+
+        await setUpToSources(dates)
+
+        expect(chosenOf(t)).toEqual([L7])
+        expect(errorsOf(t)).toEqual([])
+    })
+})
+
 describe.each(TYPES)('a $type already set up', t => {
     const OLD_PRESET = [L9, L8, L7, TM]
 
@@ -329,7 +348,7 @@ describe('a new Change Alerts recipe whose reference records the data sets it wa
         const t = typeOf('CHANGE_ALERTS')
         await create(t, seeded([L8, TM, S2]))
 
-        await setUpToSources(t.datesFor(2011, 2016))
+        await setUpToSources(t.datesFor(2011, 2018))
 
         expect(chosenOf(t)).toEqual([L8, TM, S2])
     })
@@ -346,7 +365,7 @@ describe('a new Change Alerts recipe whose reference records the data sets it wa
 
 const typeOf = type => TYPES.find(t => t.type === type)
 
-const noOverlap = (startYear, endYear) => `process.source.dataSets.noPeriodOverlap ${JSON.stringify({startYear, endYear})}`
+const noOverlap = (startYear, endYear) => `process.source.dataSets.noPeriodOverlap ${JSON.stringify({period: format.yearRange(startYear, endYear)})}`
 
 const savedRecipe = (t, dataSets, dates) => {
     const {sources, ...model} = _.cloneDeep(t.defaults.defaultModel)

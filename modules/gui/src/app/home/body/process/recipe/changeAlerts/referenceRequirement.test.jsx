@@ -21,7 +21,7 @@ const fake = vi.hoisted(() => ({
     assets: {}, failing: new Set(), heldMetadata: null, failingPicker: new Set(), heldPickerMetadata: null, versions: {},
     heldVersions: null, missingVersions: new Set(), calls: [], segmentRequests: [], stored: {}, heldLoads: null,
     failingLoads: new Set(), segmentBands: [], observationBands: [], graphs: [], heldObservations: null,
-    cancelledObservations: [], heldSegments: null, cancelledSegments: []
+    cancelledObservations: [], heldSegments: null, cancelledSegments: [], heldAssetBands: null
 }))
 vi.mock('~/apiRegistry', async () => {
     const {Observable, of, throwError} = await import('rxjs')
@@ -51,10 +51,20 @@ vi.mock('~/apiRegistry', async () => {
                 return read$(asset, {held: fake.heldMetadata, failing: fake.failing})
             },
             datasets$: () => of({community: {datasets: [], matchingResults: 0}, gee: {datasets: [], matchingResults: 0}}),
-            bands$: ({asset, recipe, includeDataTypes}) => {
+            // Readiness observes an asset with the properties it records ({bands, properties}).
+            bands$: ({asset, recipe, includeDataTypes, includeProperties}) => {
                 fake.calls.push(['bands', asset || recipe?.id])
                 const metadata = fake.assets[asset || recipe?.model?.assetDetails?.assetId]
-                return metadata ? of(metadata.bands.map(({id, data_type}) => ({name: id, arrayDimensions: data_type?.dimensions || 0})))
+                const bands = metadata?.bands.map(({id, data_type}) => ({name: id, arrayDimensions: data_type?.dimensions || 0}))
+                if (metadata && includeProperties && fake.heldAssetBands) {
+                    return new Observable(subscriber => {
+                        fake.heldAssetBands.push(() => {
+                            subscriber.next({bands, properties: metadata.properties || {}})
+                            subscriber.complete()
+                        })
+                    })
+                }
+                return metadata ? of(includeProperties ? {bands, properties: metadata.properties || {}} : bands)
                     : recipe ? of(includeDataTypes ? [{name: 'ndvi', arrayDimensions: 0}] : ['ndvi'])
                         : throwError(() => new Error(`Asset ${asset} unavailable`))
             },
@@ -203,11 +213,11 @@ const {
 } = await import('../requirements/selectedSourceStatus')
 const {assetsMutated} = await import('~/app/home/body/browse/assets/assetMutations')
 const {describeSegments$} = await import('../ccdc/segmentDescription')
-const {referenceRequirements} = await import('./referenceRequirement')
 const {mapProducts} = await import('./bands')
 const {recipeAccess} = await import('../../recipeAccess')
 const {CHART_OPERATIONS, ChartPixel} = await import('./panels/chartPixel')
 const {requestGate} = await import('../requirements/sourceRequirements')
+const {mapProductGate} = await import('../requirements/operationAvailability')
 const {actionBuilder} = await import('~/action-builder')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
 const {RecipeImageLayer} = await import('../map/recipeImageLayer')
@@ -218,6 +228,7 @@ const {VisualizationSelector} = await import('~/app/home/map/imageLayerSource/vi
 const {MapAreaContext} = await import('~/app/home/map/mapAreaContext')
 const {Reference} = await import('./panels/reference/reference')
 const {Sources} = await import('./panels/sources/sources')
+const {Date: DatePanel} = await import('./panels/date/date')
 const {PanelWizard} = await import('~/widget/panelWizard')
 const {createCompositeOptions} = await import('../opticalMosaic/panels/compositeOptions/compositeOptions')
 const {presentProcessingInputs, preserveProcessingCopies, settingsOf} = await import('./processingSettings')
@@ -247,7 +258,9 @@ addRecipeImageLayer('CHANGE_ALERTS', ({layer, source, recipe}) => {
     )
 })
 
-registry.CHANGE_ALERTS = {sourceRequirements: referenceRequirements, sourceObservation: changeAlertsObservation, mapProducts, observedBands, initialSources}
+// Its source requirements as the type registers them: its reference's, its data sets' and its dates'.
+const {default: changeAlertsRegistration} = await import('./changeAlerts')
+registry.CHANGE_ALERTS = {sourceRequirements: changeAlertsRegistration().sourceRequirements, sourceObservation: changeAlertsObservation, mapProducts, observedBands, initialSources}
 registry.CCDC = {id: 'CCDC', describeSegments$}
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -284,6 +297,7 @@ beforeEach(() => {
     fake.cancelledObservations = []
     fake.heldSegments = null
     fake.cancelledSegments = []
+    fake.heldAssetBands = null
     selecting.listener = null
     selecting.charted = []
 })
@@ -380,13 +394,26 @@ describe('Earth Engine requests that read the reference\'s segments', () => {
 })
 
 // The monitoring and calibration mosaics are built around the geometry of the reference's segment source: execution
-// resolves its provider chain, but reads nothing the requirement judges of the segments.
+// resolves its provider chain, but slices none of the segments. They show the imagery the alerts monitor, so what Sources
+// monitor holds them as it holds the alerts: a measure the segments lack.
 describe('Earth Engine requests for the mosaics a period is compared on', () => {
     it('are made over segments without the layout the alerts need', async () => {
-        fake.assets[SEGMENTS_ASSET] = segmentsAsset([['ndvi_rmse', 1]])
+        fake.assets[SEGMENTS_ASSET] = segmentsAsset(measureBands('ndvi'))
         await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
 
         expect(gate('IMAGE_OUTPUT')).toMatchObject({code: 'SOURCE_UNSUITABLE', withdraw: true})
+        expect(gate('COLLECTION_MOSAIC')).toBe(null)
+    })
+
+    it('are refused while Sources monitor a measure the segments lack, said in Sources, and made once they monitor one', async () => {
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, sources: {dataSetType: 'OPTICAL', dataSets: {LANDSAT: ['LANDSAT_9']}, band: 'nbr'}})
+        expect(sourceProblems().sources).toContain('process.source.segments.measureAbsent')
+        expect(gate('COLLECTION_MOSAIC')).toMatchObject({code: 'SOURCE_UNSUITABLE', withdraw: true, section: SOURCES_SECTION})
+
+        await act(async () => store.dispatch(set(['process', 'loadedRecipes', ALERTS, 'model', 'sources', 'band'], 'ndvi')))
+        await settled()
+
+        expect(sourceProblems()).toEqual({})
         expect(gate('COLLECTION_MOSAIC')).toBe(null)
     })
 
@@ -437,7 +464,7 @@ describe('Earth Engine requests for alerts shown outside their editor', () => {
     })
 })
 
-// The monitoring and calibration mosaics resolve the reference through its provider chain alone.
+// The monitoring and calibration mosaics resolve the reference through its provider chain, and need the measure monitored.
 // What the map's area menu says of alerts withheld over their reference: the alerts, the section their reference is
 // selected in, and the diagnosis that section gives.
 describe('alerts shown on another map while their reference holds them', () => {
@@ -482,9 +509,10 @@ describe('alerts shown on another map while their reference holds them', () => {
         expect(field(LAYER_SELECTOR)).toBe(selector)
     })
 
-    // The mosaics resolve the reference through its provider chain alone, which an asset selected directly satisfies.
+    // The mosaics resolve the reference through its provider chain, which an asset selected directly satisfies, and need
+    // the measure monitored, which it supplies, not the layout the alerts slice.
     it('say nothing for a product of theirs the requirement does not hold, which is drawn', async () => {
-        fake.assets[SEGMENTS_ASSET] = segmentsAsset([['ndvi_rmse', 1]])
+        fake.assets[SEGMENTS_ASSET] = segmentsAsset(measureBands('ndvi'))
         const MOSAIC = {visualizationType: 'monitoring', mosaicType: 'latest', visParams: {type: 'rgb', bands: ['red', 'green', 'blue']}}
 
         await onAnotherMap({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, layers: [MOSAIC]})
@@ -892,6 +920,149 @@ describe('a reference replaced by one that fits other measures', () => {
         expect(sourceProblems()).toEqual({})
         expect(referenceStatus()).toBe(null)
         expect(gate('IMAGE_OUTPUT')).toBe(null)
+    })
+})
+
+// Each window the alerts compare runs back by its duration from where the next begins: one that does not last leaves it
+// no day to observe. Dates refuses it; a period saved so is said on Dates, which holds the alerts and their mosaics.
+describe('the durations of the windows the alerts compare', () => {
+    it.each([['monitoring', 0], ['calibration', 1]])('refuse a %s window that does not last in Dates, until it does', async (_window, index) => {
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, panels: ['date']})
+        const duration = durationInputs()[index]
+
+        await act(async () => type(duration, '0'))
+        expect(applyEnabled()).toBe(false)
+
+        await act(async () => type(duration, '3'))
+        expect(applyEnabled()).toBe(true)
+    })
+
+    it.each(['monitoring', 'calibration'])('mark Dates for a saved %s window that does not last, holding the alerts and their mosaics', async window => {
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
+
+        await act(async () => store.dispatch(set(['process', 'loadedRecipes', ALERTS, 'model', 'date', `${window}Duration`], 0)))
+        await settled()
+
+        expect(sourceProblems()).toEqual({date: expect.stringContaining(`process.changeAlerts.panel.date.form.${window}.duration.positive`)})
+        expect(gate('IMAGE_OUTPUT')).toMatchObject({withdraw: true, section: DATE_SECTION})
+        expect(mosaicGate()).toMatchObject({withdraw: true, section: DATE_SECTION})
+    })
+})
+
+// The data sets Sources choose are judged under the correction the reference's processing records, which the imagery is
+// read with, not the one the alerts saved. Calibration December 2011 to February 2012 and monitoring March and April 2012
+// below: Landsat 4-5's surface reflectance covers both, its top of atmosphere, ending on 8 November 2011, neither.
+describe('Sources\' data sets, judged under the correction the reference records', () => {
+    const EARLY_2012 = {
+        monitoringEnd: '2012-05-01', monitoringDuration: 2, monitoringDurationUnit: 'months',
+        calibrationDuration: 3, calibrationDurationUnit: 'months'
+    }
+    const over = (dataSets, band = 'ndvi') => ({dataSetType: 'OPTICAL', dataSets: {LANDSAT: dataSets}, band})
+    const windowLabel = (window, period) => `process.changeAlerts.panel.sources.form.dataSets.window.${window} ${JSON.stringify({period})}`
+    const UNCOVERED = `process.source.dataSets.noWindowOverlap ${JSON.stringify({
+        windows: [windowLabel('calibration', '01 Dec 2011 – 29 Feb 2012'), windowLabel('monitoring', '01 Mar 2012 – 30 Apr 2012')].join(', ')
+    })}`
+    const recording = surfaceReflectance => {
+        fake.assets[SEGMENTS_ASSET] = segmentsAsset(VALID_BANDS, {dateFormat: 1, surfaceReflectance})
+    }
+    const alertsOver = ({saved, panels, dataSets = ['LANDSAT_TM'], initialized, layer}) => editor({
+        selection: {type: 'ASSET', id: SEGMENTS_ASSET}, options: {corrections: saved}, sources: over(dataSets), date: EARLY_2012, panels, initialized, layer
+    })
+    // A layer showing the monitoring mosaic, whose readiness it reads.
+    const MOSAIC_LAYER = {visualizationType: 'monitoring', mosaicType: 'latest', visParams: {type: 'rgb', bands: ['red', 'green', 'blue']}}
+
+    it('hold nothing over Landsat 4-5 saved top of atmosphere where the reference records SR, drawing their mosaic', async () => {
+        recording(true)
+        await alertsOver({saved: [], layer: MOSAIC_LAYER})
+
+        expect(sourceProblems()).toEqual({})
+        expect(gate('IMAGE_OUTPUT')).toBe(null)
+        expect(mosaicGate()).toBe(null)
+        expect(previews.constructed).toHaveLength(1)
+    })
+
+    it('hold the alerts and their mosaics over Landsat 4-5 saved with SR where the reference records top of atmosphere, saying so in Sources', async () => {
+        recording(false)
+        await alertsOver({saved: ['SR'], layer: MOSAIC_LAYER})
+
+        expect(sourceProblems()).toEqual({sources: UNCOVERED})
+        expect(gate('IMAGE_OUTPUT')).toMatchObject({withdraw: true, section: SOURCES_SECTION})
+        expect(mosaicGate()).toMatchObject({withdraw: true, section: SOURCES_SECTION})
+        expect(previews.constructed).toEqual([])
+    })
+
+    it('decide nothing while readiness reads the reference\'s segments, holding the alerts until it has', async () => {
+        recording(false)
+        fake.heldAssetBands = []
+        await alertsOver({saved: ['SR']})
+        expect(gate('IMAGE_OUTPUT')).toMatchObject({wait: true})
+        expect(sourceProblems().sources).toBeUndefined()
+
+        const held = fake.heldAssetBands
+        fake.heldAssetBands = null
+        await act(async () => held.forEach(answer => answer()))
+        await settled()
+
+        expect(gate('IMAGE_OUTPUT')).toMatchObject({withdraw: true, section: SOURCES_SECTION})
+        expect(sourceProblems()).toEqual({sources: UNCOVERED})
+    })
+
+    it('refuse a draft removing Landsat 7, which alone covers both windows as the reference reads them, saying so beside the data sets', async () => {
+        recording(false)
+        await alertsOver({saved: ['SR'], dataSets: ['LANDSAT_TM', 'LANDSAT_7'], panels: ['sources']})
+        expect(errorsOf(DATA_SETS)).toEqual([])
+
+        await chooseButton('sources.dataSets.LANDSAT_7.label')
+        expect(errorsOf(DATA_SETS)).toEqual([UNCOVERED])
+        expect(applyEnabled()).toBe(false)
+
+        await chooseButton('sources.dataSets.LANDSAT_7.label')
+        expect(errorsOf(DATA_SETS)).toEqual([])
+    })
+
+    it('say so beside the data sets kept, and apply Landsat 7 in their place, which releases what they held', async () => {
+        recording(false)
+        await alertsOver({saved: ['SR'], panels: ['sources']})
+        expect(errorsOf(DATA_SETS)).toEqual([UNCOVERED])
+
+        await chooseButton('sources.dataSets.LANDSAT_7.label')
+        await chooseButton('sources.dataSets.LANDSAT_TM.label')
+        expect(errorsOf(DATA_SETS)).toEqual([])
+        await apply()
+
+        expect(alertsRecipe().model.sources.dataSets).toEqual({LANDSAT: ['LANDSAT_7']})
+        expect(sourceProblems()).toEqual({})
+        expect(gate('IMAGE_OUTPUT')).toBe(null)
+    })
+
+    it.each([
+        ['SR', true, [], false],
+        ['top of atmosphere', false, ['SR'], true]
+    ])('offer Landsat 4-5 anew as the reference\'s %s allows, whatever the alerts saved', async (_correction, recorded, saved, disabled) => {
+        recording(recorded)
+        await alertsOver({saved, dataSets: ['LANDSAT_7'], panels: ['sources']})
+
+        expect(panelButton('sources.dataSets.LANDSAT_TM.label').disabled).toBe(disabled)
+    })
+
+    it.each([
+        ['records SR', true, {LANDSAT: ['LANDSAT_7', 'LANDSAT_TM']}],
+        ['records top of atmosphere', false, {LANDSAT: ['LANDSAT_7']}]
+    ])('propose for a new recipe the data sets that may contribute under the correction the reference %s', async (_case, recorded, proposed) => {
+        recording(recorded)
+        await alertsOver({saved: recorded ? [] : ['SR'], initialized: false})
+        const {dataSets: _dataSets, ...sources} = alertsRecipe().model.sources
+
+        expect(initialSectionModel(alertsRecipe(), 'sources', sources).dataSets).toEqual(proposed)
+    })
+
+    it('propose, while the reference\'s processing is read, what either correction allows', async () => {
+        recording(false)
+        fake.heldMetadata = []
+        await alertsOver({saved: ['SR'], initialized: false})
+        const {dataSets: _dataSets, ...sources} = alertsRecipe().model.sources
+
+        expect(initialSectionModel(alertsRecipe(), 'sources', sources).dataSets).toEqual({LANDSAT: ['LANDSAT_7', 'LANDSAT_TM']})
     })
 })
 
@@ -2336,11 +2507,12 @@ function alertsModel(selection) {
     }
 }
 
-const editor = async ({selection, owner = true, chart = false, chartBand = 'ndvi', layer = false, actions = false, panels = [], unloaded, initialized = true, wizard = false, options, records, sources}) => {
+const editor = async ({selection, owner = true, chart = false, chartBand = 'ndvi', layer = false, actions = false, panels = [], unloaded, initialized = true, wizard = false, options, records, sources, date}) => {
     const initialState = sessionState({selection, tabs: [{id: ALERTS}], unloaded, records})
     initialState.process.loadedRecipes[ALERTS].ui.initialized = initialized
     if (options) initialState.process.loadedRecipes[ALERTS].model.options = options
     if (sources) initialState.process.loadedRecipes[ALERTS].model.sources = sources
+    if (date) initialState.process.loadedRecipes[ALERTS].model.date = date
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     store.subscribe(() => firstListener())
     initStore(store)
@@ -2453,8 +2625,8 @@ const startTouchPress = action => act(() => actionButton(action).dispatchEvent(
 // Whether coordinates to chart can be entered: a long press on the chart offers a search for them.
 const offersCoordinates = () => Boolean(document.querySelector('input[type="search"]'))
 
-// The editor's own REF and Sources panels, opened as their buttons open them.
-const SECTION_PANELS = {reference: Reference, sources: Sources, options: ProcessingOptions}
+// The editor's own panels, opened as their buttons open them.
+const SECTION_PANELS = {reference: Reference, date: DatePanel, sources: Sources, options: ProcessingOptions}
 
 const SectionPanel = ({id}) => {
     const Panel = SECTION_PANELS[id]
@@ -2465,6 +2637,7 @@ const ASSET_INPUT = 'process.changeAlerts.panel.reference.form.asset.label'
 const RECIPE_INPUT = 'widget.recipeInput.label'
 const RADAR_TYPE = 'process.changeAlerts.panel.sources.form.dataSetTypes.RADAR'
 const SOURCES_SECTION = 'process.changeAlerts.panel.sources.button'
+const DATE_SECTION = 'process.changeAlerts.panel.date.button'
 const DATA_SET_TYPE = 'process.changeAlerts.panel.sources.form.dataSetType.label'
 const DATA_SETS = 'process.changeAlerts.panel.sources.form.dataSets.label'
 const BAND = 'process.changeAlerts.panel.sources.form.band.label'
@@ -2741,6 +2914,15 @@ const alertsRecipe = () => selectFrom(store.getState(), ['process.loadedRecipes'
 // Whether a new request for an operation over the alerts may start, read from the store as it stands.
 const gate = operation =>
     requestGate({state: store.getState(), recipe: alertsRecipe(), operation, evidenceOwnerOf: id => runtime.evidenceOwnerOf(id), now: Date.now(), heldFor: key => runtime.heldFor(key)})
+
+// What a monitoring mosaic's layer is held to by the alerts' own configuration, as its selector reads it.
+const mosaicGate = () => mapProductGate({
+    state: store.getState(), recipe: alertsRecipe(), heldFor: key => runtime.heldFor(key),
+    product: {name: 'COLLECTION_MOSAIC', parameters: {period: 'monitoring', mosaicType: 'latest'}}
+})
+
+// The durations Dates edits, monitoring's then calibration's.
+const durationInputs = () => [...container.querySelectorAll('input[type="number"]')]
 
 const sourceProblems = () =>
     sourceProblemsOfState(store.getState(), ALERTS, id => runtime.evidenceOwnerOf(id), Date.now(), key => runtime.heldFor(key))

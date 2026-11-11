@@ -106,7 +106,7 @@ for (const [_case, monitoringEnd, messages] of [
         classification: ['process.pyeoAlerts.panel.sources.form.classification.unsuppliedInputsUnavailable redEdge1 sources.dataSets,SENTINEL_2,label 2014'],
         dataSets: []
     }],
-    ['offers Sentinel-2 for monitoring that reaches into 2015, beside the data sets', '2015-06-01', {
+    ['offers Sentinel-2 for monitoring that reaches its first SR day, 28 March 2017, beside the data sets', '2017-03-29', {
         classification: [],
         dataSets: ['process.pyeoAlerts.panel.sources.form.dataSets.unsuppliedInputs redEdge1 sources.dataSets,SENTINEL_2,label']
     }]

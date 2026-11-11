@@ -84,7 +84,7 @@ describe('an initialized recipe', () => {
 })
 
 describe('a section held back by its source', () => {
-    it.each(['reference', 'sources'])('marks %s, saying why, and no other section', section => {
+    it.each(['reference', 'date', 'sources'])('marks %s, saying why, and no other section', section => {
         sections.problems = {[section]: 'What is wrong'}
 
         render(alerts({sourceKey: SOURCE_KEY, status: 'OBSERVED'}))
