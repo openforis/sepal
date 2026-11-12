@@ -9,6 +9,33 @@
     dump: 0
     passno: 0
 
+- name: Install restricted homes mount setup
+  copy:
+    src: sepal-restricted-home.sh
+    dest: /usr/local/bin/sepal-restricted-home
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Install restricted homes mount service
+  copy:
+    src: sepal-restricted-home.service
+    dest: /etc/systemd/system/sepal-restricted-home.service
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Prepare restricted homes mount
+  systemd:
+    name: sepal-restricted-home
+    daemon_reload: yes
+    enabled: yes
+    state: started
+
+- name: Apply and verify restricted homes mount
+  command: /usr/local/bin/sepal-restricted-home
+  changed_when: false
+
 - name: Mount EFS Worker Instance Logs
   mount:
     name: "/var/log/sepal/worker"

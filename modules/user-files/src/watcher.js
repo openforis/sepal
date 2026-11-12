@@ -193,8 +193,8 @@ const createWatcher = async ({send, stop$}) => {
             }
             return info
         } catch (error) {
-            if (error.code === 'ENOENT') {
-                log.debug(() => `Ignored non-existing path: ${entryPath}`)
+            if (['ENOENT', 'ELOOP'].includes(error.code)) {
+                log.debug(() => `Ignored unavailable path: ${entryPath}`)
             } else {
                 log.warn(() => [`Ignoring unresolvable path: ${entryPath}`, error])
             }

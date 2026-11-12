@@ -4,6 +4,7 @@ services:
       file: ../docker-compose.logger.override.yml
       service: logger
     volumes:  # To allow dynamic reloading in dev
+      - "${SEPAL_DATA_DIR}/sepal/home:/sepalUsers"
       # lib/shared
       - ${SEPAL_PROJECT_DIR}/lib/js/shared/src:/usr/local/src/sepal/lib/js/shared/src
       - ${SEPAL_PROJECT_DIR}/lib/js/shared/package.json:/usr/local/src/sepal/lib/js/shared/package.json

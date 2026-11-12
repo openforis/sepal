@@ -15,7 +15,7 @@ npm run testWatch     # Node test runner watch mode
 `src/main.js` - Koa HTTP server with WebSocket support via `#sepal/httpServer` `wsStream()`.
 
 ### REST API
-- `GET /files` - Download file
+- `GET /download` - Download file
 - `GET /listFiles` - List directory contents
 - `POST /setFile` - Upload file (multipart via `koa-body`, max 100MB)
 - `POST /createFolder` - Create new folder
@@ -29,8 +29,9 @@ npm run testWatch     # Node test runner watch mode
 
 ### File System
 - `src/filesystem.js` - Core file operations with `resolvePath()` security check against path traversal
-- `src/watcher.js` - Directory watching using Node.js `fs.watch()`
+- `src/watcher.js` - Directory polling using RxJS; blocked link lookups are quietly omitted
 - User uid/gid looked up via `stat` on `/sepalUsers/{username}`
+- Deployed homes use the host's separate `nosymfollow` bind view, prepared and verified before Docker starts. DEV keeps normal mounts.
 
 ## Non-Obvious Conventions
 

@@ -10,6 +10,12 @@ values, which can differ from each other and from `id`; existing files depend on
 New users get `uid = gid = id`. The LDAP migration advanced `AUTO_INCREMENT` beyond existing uid/gid values
 before this allocation rule was used. The local OS group `sepal` (gid 9999) is separate from per-user groups.
 
+## Home mount
+
+Deployed `/sepal/home` uses the host's separate `nosymfollow` bind view, prepared and verified before
+Docker starts. DEV retains the normal mount. Managed directory paths must be real directories;
+credential deletion refuses symlinks instead of reporting success.
+
 ## Login throttling
 
 `/authenticate` (gateway) and `/auth/password` (ssh-gateway) share one in-memory `LoginThrottle`. Per 15 minutes
