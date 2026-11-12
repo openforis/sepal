@@ -6,7 +6,7 @@ import {of} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {initStore} from '~/store'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 
 // Opening a PyEO Alerts recipe asks Earth Engine for the bounds of its area of interest, to frame the map.
 // A recipe that has no area of interest yet has no bounds to ask for, and asking anyway is a failed request
@@ -77,6 +77,8 @@ beforeEach(() => {
     recipeBounds$.mockReset().mockReturnValue(of({}))
 })
 
+afterEach(disposeInstalledSessions)
+
 afterEach(async () => {
     await act(async () => root?.unmount())
     root = null
@@ -118,7 +120,7 @@ const open = aoi => {
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

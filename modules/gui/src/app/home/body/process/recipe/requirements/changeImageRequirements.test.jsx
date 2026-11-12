@@ -5,9 +5,9 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 
 // What Class Change and Index Change say of an image whose selection their output read refuses (changeImageRequirements.js):
@@ -101,6 +101,8 @@ beforeEach(() => {
     fake.versionsHeld = false
     panels.open.clear()
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -612,7 +614,7 @@ async function open(Toolbar, recipe, openPanels = []) {
         dimensions: {width: 1024, height: 768}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     const container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

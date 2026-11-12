@@ -10,11 +10,11 @@ import {actionBuilder} from '~/action-builder'
 import {duplicateRecipe, setInitialized} from '~/app/home/body/process/recipe'
 import {Recipe, recipe as recipeRoot} from '~/app/home/body/process/recipeContext'
 import {initializeRecipe} from '~/app/home/body/process/recipeSession/recipeCache'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {compose} from '~/compose'
 import format from '~/format'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 import {withActivatable} from '~/widget/activation/activatable'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import {withActivators} from '~/widget/activation/activator'
@@ -134,6 +134,8 @@ const AOI = {type: 'POLYGON', path: [[0, 0], [0, 1], [1, 1]]}
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let root, container, store, rendered, Root
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -475,7 +477,7 @@ async function open(t, recipe) {
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

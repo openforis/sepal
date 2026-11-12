@@ -68,7 +68,8 @@ deferred execution race.
   runtime retains no cache entry: a response replaces only a copy that is present, not a draft and older when it
   arrives, and otherwise stays private (`recipeCache.js`, the rule `recipeAccess` uses too). A draft - open, or closed
   with its saves unsettled - is never replaced by any read of storage, and source evidence does not ask for one.
-- **Save evidence.** The save coordinator publishes what each recipe's saves have made persistent
+- **Save evidence.** The save coordinator of the store's session ([recipe session](gui-source-runtime.md#recipe-session))
+  publishes what each recipe's saves have made persistent
   (`process.saveStates`): SAVED, SAVING, FAILED, CONFLICT or UNRESOLVED, with the model persisted at the acknowledged
   revision. That model is always the draft's own model object: the one a coherent load writes into the session (on
   its own path, so the store gives it a change identifier), the one a save sent, whether acknowledged or recovered by

@@ -7,8 +7,8 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
@@ -71,6 +71,8 @@ const VISIBLE_INPUT = {imageId: 'i-1', type: 'ASSET', id: VISIBLE_ASSET, bandSet
 const ASSET_BANDS = {[RADAR_ASSET]: ['VV', 'VH'], [VISIBLE_ASSET]: ['red', 'green', 'blue']}
 
 let root, container, store, runtime
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -273,7 +275,7 @@ async function open({gate, inputs}) {
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

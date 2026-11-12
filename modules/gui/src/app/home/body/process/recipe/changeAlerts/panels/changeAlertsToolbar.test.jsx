@@ -5,7 +5,7 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {initStore} from '~/store'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 
 // What the toolbar offers over a source it has a description of, and over one it does not. A read that
 // failed leaves nothing to chart or export, however much configuration the recipe carries.
@@ -52,6 +52,8 @@ const ALERTS = 'alerts-1'
 const SOURCE_KEY = 'RECIPE_REF:masking-1'
 
 let root, container
+
+afterEach(disposeInstalledSessions)
 
 afterEach(() => {
     sections.problems = {}
@@ -115,7 +117,7 @@ const render = recipe => {
         process: {loadedRecipes: {[recipe.id]: recipe}, tabs: [{id: recipe.id}], recipes: []}
     }
     const store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

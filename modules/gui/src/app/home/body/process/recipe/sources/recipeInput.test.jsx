@@ -7,7 +7,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
 import {NO_PROJECT_SYMBOL} from '~/app/home/body/process/recipeList/recipeListConstants'
-import {initStore} from '~/store'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {EventShield} from '~/widget/eventShield'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
@@ -47,6 +47,8 @@ beforeEach(() => {
     bands$.mockReset().mockImplementation(() => of(['red', 'nir']))
     load$.mockReset().mockImplementation(recipeId => of(recipeOf(recipeId)))
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -608,7 +610,7 @@ const show = ({
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

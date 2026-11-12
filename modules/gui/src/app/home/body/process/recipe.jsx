@@ -1,26 +1,21 @@
 import _ from 'lodash'
 import React from 'react'
-import {catchError, defer, firstValueFrom, map, of, switchMap, throwError} from 'rxjs'
+import {catchError, defer, map, of, throwError} from 'rxjs'
 
 import {actionBuilder, scopedActionBuilder} from '~/action-builder'
 import api from '~/apiRegistry'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {publishEvent} from '~/eventPublisher'
-import {gzip$} from '~/gzip'
-import {getHash} from '~/hash'
 import {serialize} from '~/serialize'
 import {selectFrom} from '~/stateUtils'
-import {select, subscribe} from '~/store'
-import {msg} from '~/translate'
+import {select} from '~/store'
 import {uuid} from '~/uuid'
 import {downloadObjectZip$} from '~/widget/download'
-import {Notifications} from '~/widget/notifications'
 import {addTab, closeTab} from '~/widget/tabs/tabActions'
 
 import {isDraft} from './recipeSession/draftAgreement'
-import {initializeRecipe, saveStatePath} from './recipeSession/recipeCache'
-import {releaseSettled} from './recipeSession/recipeCacheClaims'
+import {saveStatePath} from './recipeSession/recipeCache'
 import {
     failedListing,
     LISTING_STATE_PATH,
@@ -30,7 +25,8 @@ import {
     refreshingListing,
     touchedListing
 } from './recipeSession/recipeListing'
-import {createSaveCoordinator, SAVED} from './recipeSession/saveCoordinator'
+import {currentRecipeSession} from './recipeSession/recipeSession'
+import {SAVED} from './recipeSession/saveCoordinator'
 
 export {saveStatePath} from './recipeSession/recipeCache'
 
@@ -99,7 +95,7 @@ export const saveRecipe = tab => {
             .set(recipePath(recipe.id, 'title'), recipe.title)
             .dispatch()
         updateRecipeList(recipe)
-        save$.next(recipe)
+        currentRecipeSession().save(recipe)
     } else {
         // A recipe still in its setup wizard is not saved yet, but its exports are already named after its title.
         actionBuilder('SET_RECIPE_TITLE', recipe.id)
@@ -108,22 +104,12 @@ export const saveRecipe = tab => {
     }
 }
 
-// Seed saving and freshness from the same authoritative load, whose model is what is persisted at its revision. The
-// model is written on its own path, so the store gives it a change identifier (~/hash) that the published save evidence
-// names it by: the draft then agrees with what was loaded without comparing content (draftAgreement.js).
-export const openRecipeRevision = loaded => {
-    const {model, ...recipe} = initializeRecipe(loaded)
-    actionBuilder('CACHE_RECIPE', {recipeId: recipe.id})
-        .set(recipePath(recipe.id), recipe)
-        .set(recipePath(recipe.id, 'model'), model)
-        .dispatch()
-    saveCoordinator.open(recipe.id, recipe.revision, select(recipePath(recipe.id, 'model')))
-    setCatalogueRevision(recipe.id, recipe.revision)
-    return select(recipePath(recipe.id))
-}
+// The installed store's session (recipeSession.js) opens a recipe at the revision it was loaded at, and forgets one.
+export const openRecipeRevision = loaded =>
+    currentRecipeSession().openRecipeRevision(loaded)
 
 export const forgetRecipeSaveState = recipeId =>
-    saveCoordinator.forget(recipeId)
+    currentRecipeSession().forget(recipeId)
 
 // Leaving the page loses a recipe never saved, and any edit storage has not acknowledged: one still saving, or one
 // whose save was refused, conflicted or went unresolved - whether or not its recipe is still open.
@@ -281,110 +267,6 @@ export const addRecipe = recipe => {
 export const isRecipeOpen = recipeId =>
     select('process.tabs').findIndex(recipe => recipe.id === recipeId) > -1
 
-// The session's recipe cache, as its claimants use it (recipeCacheClaims.js).
-export const sessionRecipeCache = {
-    held: recipeId => select(recipePath(recipeId)),
-    open: recipeId => isRecipeOpen(recipeId),
-    saveState: recipeId => select(saveStatePath(recipeId)),
-    write: recipe => actionBuilder('CACHE_RECIPE', recipe)
-        .set(['process.loadedRecipes', recipe.id], recipe)
-        .dispatch(),
-    remove: recipeId => actionBuilder('REMOVE_CACHE_RECIPE', recipeId)
-        .del(['process.loadedRecipes', recipeId])
-        .dispatch()
-}
-
-const save$ = {
-    next: recipe => {
-        if (recipe.ui.unsaved) {
-            publishEvent('insert_recipe', {recipe_type: recipe.type})
-        }
-        saveCoordinator.save(_.omit(recipe, NON_CONTENT))
-    }
-}
-
-const saveCoordinator = createSaveCoordinator({
-    save: request => postRecipe(request),
-    loadRecipe: recipeId => firstValueFrom(api.recipe.load$(recipeId)),
-    onState: (recipeId, saveState) => publishSaveState(recipeId, saveState),
-    onOutcome: ({recipeId, status, revision, model, error}) => {
-        if (status === 'SAVED') {
-            adoptRevision(recipeId, revision, model)
-            releaseSettled(recipeId, sessionRecipeCache)
-        } else if (status === 'CONFLICT') {
-            Notifications.error({timeout: 0, message: msg('process.saveRecipe.conflict'), error})
-        } else if (status === 'FAILED' || status === 'UNRESOLVED') {
-            Notifications.error({timeout: 0, message: msg('process.saveRecipe.error'), error})
-        }
-    }
-})
-
-const postRecipe = ({recipe, expectedRevision}) => firstValueFrom(
-    gzip$(recipe).pipe(
-        switchMap(gzippedContents =>
-            api.recipe.save$({
-                id: recipe.id,
-                projectId: recipe.projectId,
-                type: recipe.type,
-                name: recipe.title || recipe.placeholder,
-                gzippedContents,
-                expectedRevision
-            })
-        )
-    )
-)
-
-const publishSaveState = (recipeId, saveState) => {
-    const action = actionBuilder('SET_SAVE_STATE', {recipeId})
-    ;(saveState ? action.set(saveStatePath(recipeId), publishedSaveState(saveState)) : action.del(saveStatePath(recipeId))).dispatch()
-}
-
-// The store copies whatever it is given, and copying the acknowledged model costs more than the save it reports. Its
-// change identifier proves the same thing; only a model the store never identified is published, to be compared by
-// content (draftAgreement.js).
-const publishedSaveState = ({model, ...saveState}) => {
-    const modelHash = getHash(model)
-    return modelHash ? {...saveState, modelHash} : {...saveState, model}
-}
-
-// A closed recipe's save state lasts as long as the session holds the recipe. Its cache entry is released only once
-// nothing claims it and its saves have settled (recipeCacheClaims.js); its revision stays listed, and reopening starts
-// from the load that opens it.
-const forgetReleasedSaveStates = loadedRecipes => {
-    const saves = select('process.saveStates') || {}
-    Object.keys(saves)
-        .filter(id => !loadedRecipes[id] && saves[id]?.status === SAVED)
-        .forEach(id => forgetRecipeSaveState(id))
-}
-
-// Catalogue revisions are freshness evidence; save preconditions come from the coordinator's draft base. They only
-// advance: a revision this session was told of is never replaced by an older one learned earlier.
-const setCatalogueRevision = (recipeId, revision) => {
-    const listed = select(['process.recipes', {id: recipeId}, 'revision'])
-    if (Number.isInteger(listed) && listed >= revision) {
-        return
-    }
-    actionBuilder('SET_RECIPE_REVISION', {recipeId})
-        .set(['process.recipes', {id: recipeId}, 'revision'], revision)
-        .dispatch()
-}
-
-// An acknowledged revision is what the server now holds. The open draft carries it only while the draft is the
-// content acknowledged: a newer edit may already be queued, and its revision is not this one. Autosave compares only
-// model, layers and retile, so writing it to the draft cannot provoke another save.
-const adoptRevision = (recipeId, revision, model) => {
-    setCatalogueRevision(recipeId, revision)
-    if (select(recipePath(recipeId, 'model')) === model) {
-        actionBuilder('SET_DRAFT_REVISION', {recipeId})
-            .set(recipePath(recipeId, 'revision'), revision)
-            .dispatch()
-    }
-}
-
-// The records the autosave last compared. Saving publishes state synchronously and re-enters the listener, so they are
-// replaced before anything is saved or acknowledged, and a nested notification finds nothing changed.
-let comparedRecipes = null
-
 // A copy is a recipe the server has never seen, so it must not inherit the source's revision.
 const recipeCopy = sourceRecipe => ({
     ..._.omit(sourceRecipe, ['revision']),
@@ -393,45 +275,6 @@ const recipeCopy = sourceRecipe => ({
     title: null,
     ui: {...sourceRecipe.ui, unsaved: true, initialized: true}
 })
-
-const persistentProps = recipe =>
-    _.pick(recipe, ['model', 'layers', 'retile'])
-
-const isToBeSaved = (prevRecipe, recipe) =>
-    persistentProps(prevRecipe)
-        && !_.isEqual(persistentProps(prevRecipe), persistentProps(recipe))
-        && select(['process.tabs', {id: recipe.id}])
-
-// Whenever already saved recipes change, save them again. Only a record that is not the one compared before can need
-// saving: a listing or tab change alone changes no record, so it is judged with a record's next change, against the
-// listing and tabs as they are then.
-subscribe('process.loadedRecipes', loadedRecipes => {
-    if (!loadedRecipes || loadedRecipes === comparedRecipes) {
-        return
-    }
-    const previousRecipes = comparedRecipes || {}
-    comparedRecipes = loadedRecipes
-    const changed = Object.keys(loadedRecipes).filter(id => loadedRecipes[id] !== previousRecipes[id])
-    if (changed.length) {
-        autosave(changed.map(id => loadedRecipes[id]), previousRecipes)
-    }
-    forgetReleasedSaveStates(loadedRecipes)
-})
-
-const autosave = (recipes, previousRecipes) => {
-    const listed = new Set((select('process.recipes') || []).map(({id}) => id))
-    const savedLoaded = recipes.filter(({id}) => listed.has(id))
-    savedLoaded
-        .filter(recipe => isToBeSaved(previousRecipes[recipe.id] || {}, recipe))
-        .forEach(recipe => save$.next(recipe))
-    // A new model object holding what the previous one held changes nothing persisted.
-    savedLoaded.forEach(recipe => {
-        const previous = previousRecipes[recipe.id]?.model
-        if (previous && previous !== recipe.model && _.isEqual(previous, recipe.model)) {
-            saveCoordinator.equivalent(recipe.id, previous, recipe.model)
-        }
-    })
-}
 
 export const recipe = RecipeState =>
     WrappedComponent => {

@@ -6,8 +6,8 @@ import {NEVER, of} from 'rxjs'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import widgetStyles from '~/widget/widget.module.css'
 
@@ -79,6 +79,8 @@ const EDITORS = [
 
 let root, container
 
+afterEach(disposeInstalledSessions)
+
 afterEach(async () => {
     await act(async () => root?.unmount())
     root = null
@@ -147,7 +149,7 @@ async function open(editor) {
         dimensions: {width: 1024, height: 768}
     }
     const store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

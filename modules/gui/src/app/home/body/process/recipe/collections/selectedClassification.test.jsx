@@ -7,8 +7,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
@@ -103,6 +103,8 @@ beforeEach(() => {
     fake.notified = []
     fake.bandReads = 0
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -249,6 +251,21 @@ describe('a selected Classification not read yet, or not readable', () => {
         await holdInSession(classificationOf(FORESTS, FOREST_LEGEND))
 
         expect(chosenBreakpointBands()).toEqual([probability('Forest')])
+    })
+
+    // Each store's consumers read through their own session: another store's, reading the same Classification for the same
+    // recipe meanwhile, lands nothing in theirs.
+    it('is read into the session of the store its consumers show, whatever another store reads of it meanwhile', async () => {
+        fake.holding = true
+        await open({breakpointBands: ['probability_1'], panels: <CcdcSources/>})
+        const [first, firstRoot] = [store, root]
+        await open({breakpointBands: ['probability_1'], panels: <CcdcSources/>})
+
+        await answer(FORESTS)
+
+        expect(sessionHolds(FORESTS)).toBe(true)
+        expect(Boolean(first.getState().process.loadedRecipes[FORESTS])).toBe(true)
+        await act(async () => firstRoot.unmount())
     })
 
     it('keeps Time Series Retrieve waiting on the regression selected while it is read, offering it once it is', async () => {
@@ -597,7 +614,7 @@ const open = async ({type = 'CCDC', breakpointBands = ['ndvi'], ccdcOptions = MO
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     const container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

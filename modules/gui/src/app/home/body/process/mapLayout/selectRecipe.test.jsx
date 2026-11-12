@@ -45,7 +45,7 @@ vi.mock('~/widget/panel/panel', () => {
 })
 
 const {Recipe} = await import('~/app/home/body/process/recipeContext')
-const {initStore} = await import('~/store')
+const {disposeInstalledSessions, installStore} = await import('~/app/home/body/process/recipeSession/recipeSession.test.fixtures')
 const {SelectRecipe} = await import('./selectRecipe')
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -53,6 +53,8 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 const OWNER = 'owner'
 
 let root, container, store
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -161,7 +163,7 @@ const mount = (layers, referenced = []) => {
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

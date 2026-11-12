@@ -7,7 +7,7 @@ import {NEVER} from 'rxjs'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {initStore} from '~/store'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import buttonSelectStyles from '~/widget/buttonSelect.module.css'
 import crudItemStyles from '~/widget/crudItem.module.css'
@@ -54,6 +54,8 @@ registerImageLayerSources()
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let root, store
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -222,7 +224,7 @@ const open = async model => {
             process: {loadedRecipes: {[model.id]: model}, recipes: LISTING, projects: [], tabs: []}
         }, action) => action.reduce ? action.reduce(state) : state
     )
-    initStore(store)
+    installStore(store)
     initializeLayers({recipeId: model.id, savedLayers: model.layers})
     const container = document.createElement('div')
     document.body.appendChild(container)

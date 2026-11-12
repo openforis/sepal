@@ -5,8 +5,8 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 
 // A calculation edited in its panel, its Apply committing what Band Math derives from it (derivations.js) - the output
 // bands following it - over a real store.
@@ -44,6 +44,8 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 const ID = 'band-math-1'
 
 let root, container, store
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -236,7 +238,7 @@ const editCalculation = async (calculation, outputBands, later) => {
     activation.imageId = calculation.imageId
     const initialState = sessionState(calculation, outputBands, later)
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

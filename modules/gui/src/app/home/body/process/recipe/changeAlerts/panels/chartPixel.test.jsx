@@ -8,7 +8,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {assetProcessing, processingOfProducer} from '#sepal/recipe/changeAlerts/processing'
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {initStore} from '~/store'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
 import {SourceRuntimeProvider} from '../../../sourceRuntime/sourceRuntimeContext'
@@ -26,16 +26,18 @@ const {loadCCDCSegments$, loadTimeSeriesObservations$} = vi.hoisted(() => ({
 // its catalogue; another recipe with the bands it builds. Tokens never change unless a case says so.
 vi.mock('~/apiRegistry', async () => {
     const {of} = await import('rxjs')
-    const SEGMENT_BANDS = ['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb', 'ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude']
+    const {bandsAnswer} = await import('../../../sourceRuntime/bandsAnswer.test.fixtures')
+    const segments = bandsAnswer({
+        bands: ['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb', 'ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude']
+            .map(name => ({name, arrayDimensions: name.endsWith('_coefs') ? 2 : 1})),
+        properties: {dateFormat: 1}
+    })
+    const built = bandsAnswer({bands: ['red']})
     return {default: {
         gee: {
             loadCCDCSegments$,
             loadTimeSeriesObservations$,
-            bands$: ({asset, recipe, includeDataTypes}) => asset
-                ? of({bands: SEGMENT_BANDS.map(name => ({name, arrayDimensions: name.endsWith('_coefs') ? 2 : 1})), properties: {dateFormat: 1}})
-                : recipe.type === 'CCDC' && !includeDataTypes
-                    ? of(SEGMENT_BANDS)
-                    : of([{name: 'red', arrayDimensions: 0}]),
+            bands$: request => of(request.asset || request.recipe.type === 'CCDC' ? segments(request) : built(request)),
             assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
         },
         recipe: {loadAll$: () => of([])}
@@ -67,6 +69,8 @@ beforeEach(() => {
     loadCCDCSegments$.mockReset().mockReturnValue(of(CURRENT))
     loadTimeSeriesObservations$.mockReset().mockReturnValue(of({features: []}))
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -250,7 +254,7 @@ const openChart = async recipe => {
         }
     }
     const store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

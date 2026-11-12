@@ -2,7 +2,7 @@ import {Observable} from 'rxjs'
 
 import {actionBuilder} from '~/action-builder'
 import {cacheAcceptance, initializeRecipe, REPLACE} from '~/app/home/body/process/recipeSession/recipeCache'
-import {RecipeCacheClaimant} from '~/app/home/body/process/recipeSession/recipeCacheClaims'
+import {recipeSessionOf} from '~/app/home/body/process/recipeSession/recipeSession'
 
 import {ASSET_EVIDENCE_PATH, assetEvidenceOfState} from './assetEvidence'
 import {earthEngineGeneration} from './credentialId'
@@ -200,9 +200,9 @@ export const createReduxSourceEnvironment = ({store}) => {
         },
         // The session as the evidence lifecycle reads it (sourceEvidenceBasis.js), or null once the scope has ended.
         evidenceSession: () => closed ? null : evidenceSession(store.getState()),
-        // A claimant on the session's recipe cache, sharing its reference counts with the components that hold entries
-        // (recipeCacheClaims.js). Once the scope has ended it writes and removes nothing.
-        recipeCacheClaimant: () => new RecipeCacheClaimant({
+        // A claimant on the store's session's recipe cache, sharing its claims with the components that hold entries
+        // (recipeCacheClaims.js, recipeSession.js). Once the scope has ended it writes and removes nothing.
+        recipeCacheClaimant: () => recipeSessionOf(store).claimant({
             held: recipeId => at(store.getState(), [...CATALOGUE_PATH, recipeId]),
             open: recipeId => (at(store.getState(), TABS_PATH) || []).some(({id}) => id === recipeId),
             saveState: recipeId => at(store.getState(), [...SAVES_PATH, recipeId]),

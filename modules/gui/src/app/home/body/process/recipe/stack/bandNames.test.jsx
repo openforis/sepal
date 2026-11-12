@@ -7,9 +7,9 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 
 // How a Stack's band names follow its inputs and the names the user gives, through the real toolbar, input list and
 // Band names panel over a real store: every commit names the bands it leaves in its own action, and opening the
@@ -66,6 +66,8 @@ beforeEach(() => {
     earthEngine.requests = []
     panels.open.clear()
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -354,7 +356,7 @@ async function open(recipe) {
         }
         return next
     })
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

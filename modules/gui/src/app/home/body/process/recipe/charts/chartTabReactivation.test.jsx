@@ -7,7 +7,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {initStore} from '~/store'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {TabContent} from '~/widget/tabs/tabContent'
 
 // A pixel chart's panel is not displayed while its recipe's tab is not selected (panel.jsx), and Dygraph sizes a chart by
@@ -47,6 +47,8 @@ beforeEach(() => {
     loadCCDCSegments$.mockReset()
     loadTimeSeriesObservations$.mockReset()
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(() => {
     act(() => root?.unmount())
@@ -167,7 +169,7 @@ const open = (Chart, recipe) => {
         process: {loadedRecipes: {[ID]: recipe}, tabs: [{id: ID}], recipes: []}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     currentChart = Chart
     container = document.createElement('div')
     document.body.appendChild(container)

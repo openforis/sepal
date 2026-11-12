@@ -6,10 +6,10 @@ import {asapScheduler, NEVER, observeOn, of, Subject} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {deserialize, serialize} from '~/serialize'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import errorIndicatorStyles from '~/widget/errorIndicator.module.css'
 import listItemStyles from '~/widget/listItem.module.css'
@@ -98,6 +98,8 @@ beforeEach(() => {
     sourceRecipes = {}
     bandResponses = {}
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -870,7 +872,7 @@ async function open(recipe, toolbar, sources = []) {
         dimensions: {width: 1024, height: 768}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

@@ -7,8 +7,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import * as sources from '~/sources'
-import {initStore} from '~/store'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
 import {ChartPixel} from './chartPixel'
@@ -37,6 +37,8 @@ beforeEach(() => {
     loadCCDCSegments$.mockReset().mockReturnValue(of(CURRENT))
     loadTimeSeriesObservations$.mockReset().mockReturnValue(of({features: []}))
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(() => {
     act(() => root?.unmount())
@@ -114,7 +116,7 @@ const openChart = (recipe, selectedBand) => {
         }
     }
     const store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

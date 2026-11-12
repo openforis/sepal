@@ -7,9 +7,10 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider, useSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {MapContext} from '~/app/home/map/mapContext'
-import {initStore, select} from '~/store'
+import {select} from '~/store'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
 // The Classification a Time Series' or CCDC's Sources select is part of its analysis (type/timeSeries.js, ccdc.js): its
@@ -30,7 +31,8 @@ const {loadTimeSeriesObservations$, loadCCDCSegments$, inputBands$, saveRecipe$}
     inputBands$: vi.fn(),
     saveRecipe$: vi.fn()
 }))
-const stored = vi.hoisted(() => ({records: {}}))
+// Storage as the recipe module answers (recipeStorage.test.fixtures.js), holding the case's records.
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         loadTimeSeriesObservations$,
@@ -40,7 +42,7 @@ vi.mock('~/apiRegistry', () => ({default: {
             : of(['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb', 'ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude'].filter(() => recipe?.type === 'CCDC')),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
     },
-    recipe: {load$: id => of(stored.records[id]), loadAll$: () => of(LISTING), save$: request => saveRecipe$(request)}
+    recipe: {load$: id => io.storage.load$(id), loadAll$: () => of(LISTING), save$: request => saveRecipe$(request)}
 }}))
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 vi.mock('~/user', () => ({}))
@@ -74,7 +76,8 @@ const {default: opticalMosaic} = await import('../opticalMosaic/opticalMosaic')
 const {RecipeActions: TimeSeriesActions} = await import('../timeSeries/timeSeriesRecipe')
 const {RecipeActions: CcdcActions} = await import('../ccdc/ccdcRecipe')
 const {ChartPixelButton} = await import('../charts/chartPixelButton')
-const {forgetRecipeSaveState} = await import('~/app/home/body/process/recipe')
+const {recipeSessionOf} = await import('~/app/home/body/process/recipeSession/recipeSession')
+const {recipeStorage} = await import('~/app/home/body/process/recipeSession/recipeStorage.test.fixtures')
 const timeSeriesChart = await import('../timeSeries/panels/chartPixel')
 const ccdcChart = await import('../ccdc/panels/chartPixel')
 
@@ -90,22 +93,22 @@ const CHARTS = [
     {type: 'CCDC', chart: ccdcChart, RecipeActions: CcdcActions, operations: ['PIXEL_OBSERVATIONS', 'PIXEL_SEGMENTS']}
 ]
 
-let root, container, map
+let root, container, map, store
 
 beforeEach(() => {
     loadTimeSeriesObservations$.mockReset().mockReturnValue(of({features: []}))
     loadCCDCSegments$.mockReset().mockReturnValue(of({tStart: [], tEnd: [], tBreak: [], changeProb: [], numObs: []}))
     inputBands$.mockReset().mockReturnValue(of(['red', 'nir'].map(name => ({name, arrayDimensions: 0}))))
-    saveRecipe$.mockReset().mockReturnValue(of({revision: 2}))
+    saveRecipe$.mockReset().mockImplementation(request => io.storage.save$(request))
     watched.length = 0
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
     root = null
     container?.remove()
-    // The session's saves outlive a test: a recipe one saved is not the next one's.
-    ;[SERIES, CLASSIFICATION].forEach(forgetRecipeSaveState)
 })
 
 describe.each(CHARTS)('an open $type chart over the Classification its Sources select', chart => {
@@ -462,21 +465,26 @@ async function open({type, chart: {CHART_OPERATIONS, ChartPixel}, RecipeActions}
         classificationRecipe({input, trainingData}),
         mosaicRecipe()
     ]
-    stored.records = Object.fromEntries(records.map(record => [record.id, record]))
+    io.storage = recipeStorage({records})
+    const opened = [SERIES, ...(classificationOpen ? [CLASSIFICATION] : [])]
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: Object.fromEntries(records.map(record => [record.id, record])),
+            loadedRecipes: Object.fromEntries(records.filter(({id}) => !opened.includes(id)).map(record => [record.id, record])),
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
-            saveStates: classificationOpen ? {[CLASSIFICATION]: {status: 'SAVED', revision: 1, model: records[1].model}} : {},
+            saveStates: {},
             projects: [],
-            tabs: [{id: SERIES}, ...(classificationOpen ? [{id: CLASSIFICATION}] : [])]
+            tabs: []
         }
     }
-    const store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
+    installStore(store)
+    // As the application installs its store, with its session, which opens a recipe at the revision it was loaded at
+    // before its tab is (openRecipeById$, recipe.jsx).
+    records.filter(({id}) => opened.includes(id)).forEach(record => recipeSessionOf(store).openRecipeRevision(record))
+    store.dispatch(actionBuilder('OPEN_RECIPES').set('process.tabs', opened.map(id => ({id}))).build())
     map = mapOf()
     const recipeActions = RecipeActions(SERIES)
     container = document.createElement('div')
@@ -500,13 +508,7 @@ async function open({type, chart: {CHART_OPERATIONS, ChartPixel}, RecipeActions}
         </Provider>
     ))
     await settled()
-    await vi.waitFor(() => expect(saving()).toEqual([]))
 }
-
-// The recipes open in a tab whose saves are unacknowledged: on mounting, the session saves what it holds of them.
-const saving = () => Object.entries(select('process.saveStates') || {})
-    .filter(([_id, {status}]) => status === 'SAVING')
-    .map(([id]) => id)
 
 async function settled() {
     for (let i = 0; i < 8; i++) {

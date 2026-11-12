@@ -7,10 +7,11 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {AssetDestinationBrowser} from '~/app/home/body/browse/assets/assetDestinationBrowser'
 import {RecipeInput} from '~/app/home/body/process/recipe/sources/recipeInput'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {LabelsLayerOptionsPanel} from '~/app/home/map/labelsLayerOptionsPanel'
 import {compose} from '~/compose'
 import {Enabled} from '~/enabled'
-import {initStore, select} from '~/store'
+import {select} from '~/store'
 import {collectActivatables} from '~/widget/activation/activation'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import {activateIn} from '~/widget/activation/activator'
@@ -218,6 +219,8 @@ const A = 'recipe-a'
 const B = 'recipe-b'
 let root, container, setKinds, setSectionEnabled
 
+afterEach(disposeInstalledSessions)
+
 afterEach(async () => {
     await act(async () => root?.unmount())
     root = null
@@ -236,7 +239,7 @@ async function mount(kinds) {
             loadedRecipes: {[A]: record(A, 'A saved'), [B]: record(B, 'B saved')}, recipes: [], projects: []
         }
     }, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

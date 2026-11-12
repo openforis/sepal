@@ -7,7 +7,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {initStore, select} from '~/store'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {select} from '~/store'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
 // An open Time Series or CCDC chart reads its pixel's observations only while what the recipe's type declares they
@@ -80,6 +81,8 @@ beforeEach(() => {
     loadCCDCSegments$.mockReset().mockReturnValue(of({tStart: [], tEnd: [], tBreak: [], changeProb: [], numObs: []}))
     loadTimeSeriesObservations$.mockReset().mockReturnValue(of({features: []}))
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(() => {
     act(() => root?.unmount())
@@ -420,7 +423,7 @@ const openChart = (ChartPixel, recipe, classification, {classificationOpen = fal
         }
     }
     const store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

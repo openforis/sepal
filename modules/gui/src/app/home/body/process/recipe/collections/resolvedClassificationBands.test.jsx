@@ -7,8 +7,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
 // The bands a Time Series or CCDC chart offers of the Classification its Sources select, where the session does not
@@ -73,6 +73,8 @@ beforeEach(() => {
     fake.loads = []
     fake.observations = []
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -186,7 +188,7 @@ const openChart = async (type, ChartPixel) => {
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     const container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

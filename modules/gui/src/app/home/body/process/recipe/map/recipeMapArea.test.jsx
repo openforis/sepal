@@ -7,9 +7,9 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 
 // A recipe's own map area, as the map renders it (map.jsx): the layer source assigned to the area, the recipe's layer
 // form, the shared layout and its menu. Whatever its image cannot render yet, the area keeps its menu and the overlays it
@@ -74,6 +74,8 @@ beforeEach(() => {
     previews.constructed = []
     mapped.image = null
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -214,7 +216,7 @@ async function open(recipe, style = STYLE) {
         dimensions: {width: 1024, height: 768}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     initializeLayers({recipeId: ID})
     actionBuilder('SELECT_VISUALIZATION')
         .set(['process.loadedRecipes', ID, 'layers.areas.center.imageLayer.layerConfig'], {visParams: style})

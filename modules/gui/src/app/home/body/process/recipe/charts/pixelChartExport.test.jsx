@@ -9,7 +9,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {assetProcessing} from '#sepal/recipe/changeAlerts/processing'
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {initStore} from '~/store'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
 import {SourceRuntimeProvider} from '../../sourceRuntime/sourceRuntimeContext'
@@ -27,13 +27,15 @@ const gee = vi.hoisted(() => ({
 // are in, at an unchanging token.
 vi.mock('~/apiRegistry', async () => {
     const {of} = await import('rxjs')
+    const {bandsAnswer} = await import('../../sourceRuntime/bandsAnswer.test.fixtures')
+    const segments = bandsAnswer({
+        bands: [['tStart', 1], ['tEnd', 1], ['ndvi_coefs', 2], ['ndvi_rmse', 1]].map(([name, arrayDimensions]) => ({name, arrayDimensions})),
+        properties: {dateFormat: 1}
+    })
     return {default: {
         gee: {
             ...gee,
-            bands$: () => of({
-                bands: [['tStart', 1], ['tEnd', 1], ['ndvi_coefs', 2], ['ndvi_rmse', 1]].map(([name, arrayDimensions]) => ({name, arrayDimensions})),
-                properties: {dateFormat: 1}
-            }),
+            bands$: request => of(segments(request)),
             assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
         },
         recipe: {loadAll$: () => of([])}
@@ -97,6 +99,8 @@ beforeEach(() => {
     charts.length = 0
     Object.values(gee).forEach(load$ => load$.mockReset())
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(() => {
     act(() => root?.unmount())
@@ -442,7 +446,7 @@ const open = (ChartPixel, recipe) => {
         process: {loadedRecipes: {[recipe.id]: {...recipe, ui: {...recipe.ui, chartPixel: null}}}, tabs: [{id: recipe.id}], recipes: []}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

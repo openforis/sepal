@@ -6,8 +6,9 @@ import {isObservable, of, ReplaySubject, throwError} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {bandsAnswer} from '~/app/home/body/process/sourceRuntime/bandsAnswer.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
@@ -1055,11 +1056,11 @@ const CHANGE_ALERTS = {
 // representation its dates are in; any other read is unanswered.
 const REFERENCE_BANDS_READ = {asset: 'users/x/segments', includeDataTypes: true, includeProperties: true}
 
-const referenceSegmentBands = ({asset}) => asset === REFERENCE_BANDS_READ.asset
-    ? {
+const referenceSegmentBands = request => request.asset === REFERENCE_BANDS_READ.asset
+    ? bandsAnswer({
         bands: [{name: 'tStart', arrayDimensions: 1}, {name: 'tEnd', arrayDimensions: 1}, {name: 'ndvi_coefs', arrayDimensions: 2}, {name: 'ndvi_rmse', arrayDimensions: 1}],
         properties: {dateFormat: 1}
-    }
+    })(request)
     : null
 
 const maskingOver = source => ({
@@ -1101,7 +1102,7 @@ const mountPanel = ({recipes = [MASKING, MOSAIC], id = MASKING.id, Panel = Retri
             }
         }, action) => action.reduce ? action.reduce(state) : state
     )
-    initStore(store)
+    installStore(store)
     const container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
@@ -1204,6 +1205,8 @@ const answering = () => {
 // Only the panel's own minimum-duration timer is suspended; faking more than the two calls it makes would put
 // React's scheduling under test control too.
 beforeEach(() => vi.useFakeTimers({toFake: ['setTimeout', 'clearTimeout']}))
+
+afterEach(disposeInstalledSessions)
 
 afterEach(() => {
     act(() => root?.unmount())

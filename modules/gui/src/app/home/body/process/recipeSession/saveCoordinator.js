@@ -34,11 +34,16 @@ const SYSTEM_CLOCK = {
 // comparison finding a new model object with nothing to save. A FAILED save was refused, so its content is not
 // persisted; the coordinator goes on with whatever was queued after it. Being unconfirmed only reports how long
 // the wait has been: nothing is cancelled, retried or given up because of it, and a later acknowledgement ends it.
+//
+// Closed, it ends every recipe's state as forgetting one does, without publishing: nothing queued is sent, no timer
+// fires, and what answers a save already sent - which storage may have accepted - is not adopted. Nothing it is asked
+// afterwards does anything.
 export const createSaveCoordinator = ({
     save, loadRecipe, onOutcome = () => {}, onState = () => {},
     unconfirmedAfterMs = DEFAULT_UNCONFIRMED_AFTER_MS, clock = SYSTEM_CLOCK
 }) => {
     const states = new Map()
+    let closed = false
 
     const submit = recipe => {
         const state = stateOf(recipe.id)
@@ -218,7 +223,15 @@ export const createSaveCoordinator = ({
         refused: false, deadline: null
     })
 
-    return {save: submit, open, forget, equivalent}
+    const close = () => {
+        closed = true
+        states.forEach(release)
+        states.clear()
+    }
+
+    const unlessClosed = operation => (...args) => closed ? undefined : operation(...args)
+
+    return {save: unlessClosed(submit), open: unlessClosed(open), forget: unlessClosed(forget), equivalent: unlessClosed(equivalent), close}
 }
 
 const isRevision = value => Number.isSafeInteger(value) && value > 0

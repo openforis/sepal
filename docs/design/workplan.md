@@ -305,10 +305,13 @@ effects still need review when changing import order. Shared support now lives i
   legend widgets import `app/`: the recipe context, and the map's context and legend builder. Keep generic controls in
   the widget library.
 - **Recipe-session support out of the `process/` root.** What the session holds of storage - drafts, cache
-  acceptance and claims, listing authority and save coordination - lives in `process/recipeSession/`, a folder that
-  imports only `apiRegistry`, `hash` and `uuid`. The process entry points keep the orchestration (`recipe.jsx`, which
-  creates the one session cache and save coordinator and re-exports `saveStatePath`), `recipeAccess.jsx` and
-  `recipeContext.jsx`, the registries, screens, menus and shared form panel.
+  acceptance and claims, listing authority and save coordination - lives in `process/recipeSession/`, which gives each
+  store its one session (`recipeSession.js`, [lifetime](recipes/gui-source-runtime.md#recipe-session)). The folder
+  imports what saving needs - `apiRegistry`, `hash`, `gzip`, the store and action builder, event publication,
+  translations and notifications - and nothing of `process/`. The process entry points keep the orchestration
+  (`recipe.jsx`, which hands opening, saving and forgetting to the installed store's session and re-exports
+  `saveStatePath`), `recipeAccess.jsx` and `recipeContext.jsx`, the registries, screens, menus and shared form
+  panel.
 - **Feature-layer code in `app/home/map/`.** The Earth Engine table-asset overlay lives in `map/eeTableAsset/`: its
   options panel, the style, filter, category and asset-style helpers, and `eeTableAssetLayer.jsx`, the one renderer that
   reads that style and filter. The overlay stack stays in the root: `featureLayers.jsx` renders every overlay type and
@@ -575,6 +578,14 @@ and explicit refresh for external changes and missed events.
   committed revisions, ignore duplicate/out-of-order events and retain reload/reconnect recovery. Inventory
   listing, save and dependency consumers before adding event types; patch transport is a separate choice.
 - Choose batch-by-ID versus closure transport based on consumers without duplicating graph/authorization logic.
+- **Recipe-session ownership, remaining.** Each store's session owns autosave, save coordination and cache claims
+  ([lifetime](recipes/gui-source-runtime.md#recipe-session)). Still acting on whichever store is installed when they
+  complete: `recipe.jsx`'s navigation and listing requests (`openRecipeById$`, `removeRecipes$`, `loadRecipes$`,
+  `moveRecipes$`), harmless while one store serves the page. Test harnesses install stores with their sessions and
+  dispose them as each test ends; those standing in for storage that acknowledges saves enforce expected revisions
+  (`recipeStorage.test.fixtures.js`). Others still stand in for saves unfaithfully, though none outlives its test: 33
+  files keep saves unanswered (`NEVER`), 20 answer them with nothing (`of()`), which the coordinator recovers from as
+  from a lost acknowledgement, and 28 have no save at all, so each save fails and is recovered by reading the record.
 - Stronger trusted provenance, post-execution asset drift policy and product-specific AOI projections remain target
   architecture, not promises of current exports.
 

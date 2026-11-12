@@ -7,9 +7,10 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe, withRecipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider, useSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {compose} from '~/compose'
-import {initStore, select} from '~/store'
+import {select} from '~/store'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import {EventShield} from '~/widget/eventShield'
 import {PanelWizard} from '~/widget/panelWizard'
@@ -34,7 +35,7 @@ vi.mock('~/apiRegistry', () => ({default: {
         bands$: ({recipe, asset}) => recipe ? of(CCDC_BANDS) : inputBands$(asset)
     },
     recipe: {
-        load$: id => of(fake.stored[id]),
+        load$: id => fake.storage.load$(id),
         loadAll$: () => of(fake.creation ? Object.values(fake.stored).map(({id, type, revision, projectId}) => ({id, type, revision, projectId, name: id})) : LISTING),
         save$: request => saveRecipe$(request)
     },
@@ -71,6 +72,8 @@ vi.mock('~/app/home/body/process/recipe/retrieve/assetDestination', () => ({
     }
 }))
 
+const {recipeSessionOf} = await import('~/app/home/body/process/recipeSession/recipeSession')
+const {recipeStorage} = await import('~/app/home/body/process/recipeSession/recipeStorage.test.fixtures')
 const {addRecipeType} = await import('../../../../recipeTypeRegistry')
 const {default: ccdc} = await import('../../ccdc')
 const {default: changeAlerts} = await import('../../../changeAlerts/changeAlerts')
@@ -84,7 +87,6 @@ const {withSourceProblems} = await import('../../../requirements/selectedSource'
 const {Retrieve} = await import('./retrieve')
 const {Sources: CcdcSources} = await import('../sources/sources')
 const {Dates: CcdcDates} = await import('../dates/dates')
-const {forgetRecipeSaveState} = await import('~/app/home/body/process/recipe')
 
 addRecipeType(ccdc())
 addRecipeType(changeAlerts())
@@ -99,7 +101,7 @@ let firstListener = () => {}
 beforeEach(() => {
     vi.useFakeTimers({toFake: ['setTimeout', 'clearTimeout']})
     inputBands$.mockReset().mockReturnValue(of(INPUT_BANDS))
-    saveRecipe$.mockReset().mockReturnValue(of({revision: 2}))
+    saveRecipe$.mockReset().mockImplementation(request => fake.storage.save$(request))
     fake.submitted = []
     fake.projects = []
     fake.assetId = null
@@ -109,12 +111,12 @@ beforeEach(() => {
     watched.length = 0
 })
 
+afterEach(disposeInstalledSessions)
+
 afterEach(async () => {
     await act(async () => root?.unmount())
     root = null
     document.body.innerHTML = ''
-    // The session's saves outlive a test: what one acknowledged is not the next one's storage.
-    ;[CCDC, CLASSIFICATION, MOSAIC].forEach(forgetRecipeSaveState)
     vi.useRealTimers()
 })
 
@@ -712,11 +714,6 @@ const settled = async () => {
     }
 }
 
-// The recipes open in a tab whose saves are unacknowledged: on mounting, the session saves what it holds of them.
-const saving = () => Object.entries(select('process.saveStates') || {})
-    .filter(([_id, {status}]) => status === 'SAVING')
-    .map(([id]) => id)
-
 // `classificationOpen`: the Classification is open in a tab of its own, where it is edited and saved (saveRecipe$).
 // Retrieve is offered beside the toolbar's marks within its set-up wizard, done, as the toolbar offers it, and is closed.
 const open = async ({selected, breakpointBands = [NATIVE], input = MOSAIC_INPUT, trainingData = [COLLECTED], classificationOpen = false, alerts = false, creation = null, multiple = false, sourcesWizard = false}) => {
@@ -745,13 +742,18 @@ const open = async ({selected, breakpointBands = [NATIVE], input = MOSAIC_INPUT,
     }
     const RetrievePanel = alerts ? AlertsRetrieve : Retrieve
     fake.stored = Object.fromEntries(records.map(record => [record.id, record]))
+    // Storage holds every recipe but one still being set up, which a session holds alone until it is saved.
+    const settingUp = ({ui}) => ui?.initialized === false
+    fake.storage = recipeStorage({records: records.filter(record => !settingUp(record))})
+    const opened = [CCDC, ...(classificationOpen ? [CLASSIFICATION] : [])]
+    const loaded = record => opened.includes(record.id) && !settingUp(record)
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: Object.fromEntries(records.map(record => [record.id, record])),
-            tabs: [{id: CCDC}, ...(classificationOpen ? [{id: CLASSIFICATION}] : [])],
-            saveStates: classificationOpen ? {[CLASSIFICATION]: {status: 'SAVED', revision: 1, model: records[1].model}} : {},
+            loadedRecipes: Object.fromEntries(records.filter(record => !loaded(record)).map(record => [record.id, record])),
+            tabs: [],
+            saveStates: {},
             recipes: records.map(({id, type, revision, projectId}) => ({id, type, revision, projectId, name: id})),
             recipeListing: {checkedAt: Date.now()},
             projects: [{id: PROJECT, name: 'Project', defaultAssetFolder: 'projects/p/assets/earlier'}]
@@ -759,7 +761,14 @@ const open = async ({selected, breakpointBands = [NATIVE], input = MOSAIC_INPUT,
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     store.subscribe(() => firstListener())
-    initStore(store)
+    installStore(store)
+    // The session opens a recipe in a tab at the revision it was loaded at, before its tab is (openRecipeById$, recipe.jsx);
+    // the view state it was then left in is the case's.
+    records.filter(loaded).forEach(record => {
+        recipeSessionOf(store).openRecipeRevision(record)
+        store.dispatch(actionBuilder('RESTORE_VIEW').set(['process.loadedRecipes', record.id, 'ui'], record.ui).build())
+    })
+    store.dispatch(actionBuilder('OPEN_RECIPES').set('process.tabs', opened.map(id => ({id}))).build())
     const container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
@@ -787,7 +796,6 @@ const open = async ({selected, breakpointBands = [NATIVE], input = MOSAIC_INPUT,
         </Provider>
     ))
     await settled()
-    await vi.waitFor(() => expect(saving()).toEqual([]))
 }
 
 // The panel opens on a loading view held for a minimum, which a scenario about the form waits out.

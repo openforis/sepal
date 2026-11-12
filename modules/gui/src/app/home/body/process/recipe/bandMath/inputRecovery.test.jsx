@@ -6,9 +6,9 @@ import {asapScheduler, NEVER, observeOn, of, Subject} from 'rxjs'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {deserialize, serialize} from '~/serialize'
-import {initStore} from '~/store'
 import lookStyles from '~/style/look.module.css'
 import {ActivationContext} from '~/widget/activation/activationContext'
 
@@ -68,6 +68,8 @@ const SOURCE = 'users/x/source'
 const OTHER = 'users/x/other'
 const IMG = 'process.panels.inputImagery.button'
 let root, container, store
+afterEach(disposeInstalledSessions)
+
 afterEach(async () => close())
 
 describe.each(['ASSET', 'RECIPE_REF'])('restoring a %s input', type => {
@@ -362,7 +364,7 @@ async function open(saved) {
         dimensions: {width: 1024, height: 768}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

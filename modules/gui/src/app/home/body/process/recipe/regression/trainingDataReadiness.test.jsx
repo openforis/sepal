@@ -5,7 +5,7 @@ import {legacy_createStore as createStore} from 'redux'
 import {Subject} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {initStore} from '~/store'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 
 // A Regression predicting above-ground biomass from a Landsat composite, and a Remapping of its predictions, through
@@ -127,6 +127,8 @@ beforeEach(() => {
     fake.rows = []
     map.shown = undefined
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -317,7 +319,7 @@ async function open(dataSets) {
         dimensions: {width: 1024, height: 768}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

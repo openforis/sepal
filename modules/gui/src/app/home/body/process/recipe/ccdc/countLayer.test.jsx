@@ -7,9 +7,9 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe, withRecipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {compose} from '~/compose'
-import {initStore} from '~/store'
 import {tooltipText} from '~/widget/tooltip.test.fixtures'
 
 // The count a CCDC's map shows by default is a named map product (type/ccdc.js), described from configuration, and held
@@ -82,6 +82,8 @@ beforeEach(() => {
     fake.loads = {}
     notifyError.mockReset()
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -342,7 +344,7 @@ async function open({breakpointBands, classification, input = MOSAIC_INPUT, trai
         dimensions: {width: 1024, height: 768}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

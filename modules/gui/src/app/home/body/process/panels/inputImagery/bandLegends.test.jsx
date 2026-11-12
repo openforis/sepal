@@ -6,8 +6,8 @@ import {NEVER, of} from 'rxjs'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import {ActivationContext} from '~/widget/activation/activationContext'
 
 // Two categorical bands of a Remapping input, their legends shown at once in the input editor Stack and Remapping share,
@@ -47,6 +47,8 @@ const LISTING = [{id: ID, name: 'Remapping', type: 'REMAPPING', revision: 1}]
 const ASSET = 'users/x/a'
 
 let root, container, store
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -127,7 +129,7 @@ async function open() {
         dimensions: {width: 1024, height: 768}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

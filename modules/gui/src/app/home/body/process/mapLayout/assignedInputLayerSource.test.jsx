@@ -7,8 +7,8 @@ import {Subject} from 'rxjs'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import crudItemStyles from '~/widget/crudItem.module.css'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
@@ -65,6 +65,8 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let root, store
 
+afterEach(disposeInstalledSessions)
+
 afterEach(async () => {
     await act(async () => root?.unmount())
     root = null
@@ -117,7 +119,7 @@ const open = async model => {
             process: {loadedRecipes: {[model.id]: model}, recipes: LISTING, projects: [], tabs: []}
         }, action) => action.reduce ? action.reduce(state) : state
     )
-    initStore(store)
+    installStore(store)
     initializeLayers({recipeId: model.id, savedLayers: model.layers})
     const container = document.createElement('div')
     document.body.appendChild(container)

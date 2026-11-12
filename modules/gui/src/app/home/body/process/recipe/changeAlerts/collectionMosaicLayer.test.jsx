@@ -12,7 +12,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 // Earth Engine and the drawn preview are substituted. As in recipeImageLayer.test.js nothing renders the layer: the
 // map's request for it is maybeCreateLayer, and its lifecycle is called as React would call it.
 
-const fake = vi.hoisted(() => ({loads: [], geeReads: [], constructed: [], selectors: [], listing: [], assets: {}}))
+const fake = vi.hoisted(() => ({storage: null, geeReads: [], constructed: [], selectors: [], listing: [], assets: {}}))
 
 vi.mock('~/compose', () => ({
     compose: Component => Component,
@@ -38,34 +38,32 @@ vi.mock('~/app/home/map/layer/earthEngineImageLayer', () => ({
 }))
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-// Storage answers each read when the test says so. Earth Engine is recorded and answers only what the CCDC the changes
+// Storage answers each read when the test says so, and each save as the recipe module does
+// (recipeStorage.test.fixtures.js). Earth Engine is recorded and answers only what the CCDC the changes
 // are built over can be asked for - or a segments asset's bands, with the properties it records, and its token - nothing
 // of a mosaic itself.
 vi.mock('~/apiRegistry', async () => {
-    const {Observable, of, throwError} = await import('rxjs')
+    const {of, throwError} = await import('rxjs')
+    const {bandsAnswer} = await import('../../sourceRuntime/bandsAnswer.test.fixtures')
+    const catalogue = bandsAnswer({bands: ['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb', 'ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude']})
     return {default: {
         recipe: {
-            load$: id => new Observable(subscriber => {
-                const load = {id, subscriber, torndown: false}
-                fake.loads.push(load)
-                return () => load.torndown = true
-            }),
+            load$: id => fake.storage.load$(id),
             loadAll$: () => of(fake.listing),
-            // A save is acknowledged with the next revision, as storage acknowledges it.
-            save$: ({expectedRevision}) => of({revision: (expectedRevision ?? 0) + 1})
+            save$: request => fake.storage.save$(request)
         },
         gee: new Proxy({}, {
             get: (_target, name) => args => {
                 fake.geeReads.push([name, args])
                 const asset = fake.assets[args.asset]
                 if (name === 'bands$' && asset) {
-                    return of({bands: asset.bands, properties: {...asset.properties}})
+                    return of(bandsAnswer(asset)(args))
                 }
                 if (name === 'assetVersions$') {
                     return of({assets: args.ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
                 }
                 return name === 'bands$'
-                    ? of(['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb', 'ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude'])
+                    ? of(catalogue(args))
                     : throwError(() => new Error(`Earth Engine is not asked here: ${name}`))
             }
         })
@@ -80,9 +78,9 @@ const {default: changeAlertsType} = await import('./changeAlerts')
 const {default: ccdcType} = await import('../ccdc/ccdc')
 const {default: maskingType} = await import('../masking/masking')
 const {SourceRuntimeProvider, withSourceRuntime} = await import('../../sourceRuntime/sourceRuntimeContext')
-const {initStore} = await import('~/store')
-const {RecipeCacheClaimant} = await import('~/app/home/body/process/recipeSession/recipeCacheClaims')
-const {sessionRecipeCache} = await import('../../recipe')
+const {disposeInstalledSessions, installStore} = await import('~/app/home/body/process/recipeSession/recipeSession.test.fixtures')
+const {recipeSessionOf} = await import('../../recipeSession/recipeSession')
+const {recipeStorage} = await import('../../recipeSession/recipeStorage.test.fixtures')
 
 addRecipeType(changeAlertsType())
 addRecipeType(ccdcType())
@@ -91,7 +89,7 @@ addRecipeType(maskingType())
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 beforeEach(() => {
-    fake.loads = []
+    fake.storage = recipeStorage({answerReads: false})
     fake.geeReads = []
     fake.constructed = []
     fake.listing = LISTING
@@ -101,12 +99,17 @@ beforeEach(() => {
 let root
 let unmountLayer
 
+afterEach(disposeInstalledSessions)
+
 afterEach(async () => {
     await act(async () => unmountLayer?.())
     unmountLayer = null
     await act(async () => root?.unmount())
     root = null
 })
+
+// Run before the teardown above cancels them.
+afterEach(context => fake.storage.reportPendingReads(context))
 
 describe('a Change Alerts collection mosaic whose CCDC the session does not hold', () => {
     const RGB = {id: 'rgb', type: 'rgb', bands: ['red', 'green', 'blue'], min: [0, 0, 0], max: [2000, 2000, 2000]}
@@ -158,12 +161,12 @@ describe('a Change Alerts collection mosaic whose CCDC the session does not hold
 
     it('keeps reading the CCDC when another period is shown before it is known', async () => {
         const shown = await show({layerConfig: view('monitoring', 'latest')})
-        const reading = [...fake.loads]
+        const reading = fake.storage.reads()
 
         await shown.setLayerConfig(view('calibration', 'median'))
 
-        expect(fake.loads).toEqual(reading)
-        expect(reading.some(({torndown}) => torndown)).toBe(false)
+        expect(fake.storage.reads()).toEqual(reading)
+        expect(fake.storage.pendingReads()).toEqual(reading)
     })
 
     it('rebuilds the preview on a restyle without reading anything again', async () => {
@@ -366,13 +369,11 @@ describe('a layer showing a Masking of Change Alerts that are not open', () => {
 
     // The changes are computed under the processing their segments record (changeAlerts/processing.js), which must be
     // readable: an asset recording it so that it cannot be read holds them, and the Masking of them, until it is repaired.
-    // Alerts and a Masking of their own: those the cases above edit are saved meanwhile, at revisions these do not have.
     it('is withdrawn, requesting no preview, while the alerts\' segments record processing that cannot be read, and drawn once they are repaired', async () => {
         fake.assets[SEGMENTS_ASSET] = segmentsAsset({dateFormat: 1, surfaceReflectance: 'yes'})
-        const alerts = {...changeAlerts({reference: {type: 'ASSET', id: SEGMENTS_ASSET}}), id: ASSET_ALERTS_ID}
-        const maskingOfAlerts = {...masking, id: ASSET_MASKING_ID, model: {...masking.model, imageToMask: {type: 'RECIPE_REF', id: alerts.id}}}
+        const alerts = changeAlerts({reference: {type: 'ASSET', id: SEGMENTS_ASSET}})
 
-        const shown = await show({layerConfig: {visParams: CONFIDENCE}, shown: maskingOfAlerts, others: [alerts, CCDC]})
+        const shown = await show({layerConfig: {visParams: CONFIDENCE}, shown: masking, others: [alerts, CCDC]})
         expect(shown.layer()).toBe(null)
         expect(fake.constructed).toEqual([])
 
@@ -409,14 +410,9 @@ const OTHER_CCDC = {...CCDC, id: 'ccdc-2'}
 
 const MASKING_ID = 'masking-1'
 
-const ASSET_ALERTS_ID = 'change-alerts-2'
-const ASSET_MASKING_ID = 'masking-2'
-
 const LISTING = [
     {id: ALERTS_ID, name: 'Alerts', type: 'CHANGE_ALERTS', revision: 1},
     {id: MASKING_ID, name: 'Masking', type: 'MASKING', revision: 1},
-    {id: ASSET_ALERTS_ID, name: 'Alerts over an asset', type: 'CHANGE_ALERTS', revision: 1},
-    {id: ASSET_MASKING_ID, name: 'Masking of alerts over an asset', type: 'MASKING', revision: 1},
     {id: CCDC.id, name: 'CCDC', type: 'CCDC', revision: 1},
     {id: OTHER_CCDC.id, name: 'Other CCDC', type: 'CCDC', revision: 1}
 ]
@@ -441,7 +437,7 @@ const changeAlerts = (model = {}) => ({
 })
 
 // Which records storage was asked for: the CCDC alone, however many of the runtime's parts read it.
-const readIds = () => _.uniq(fake.loads.map(({id}) => id))
+const readIds = () => _.uniq(fake.storage.reads())
 
 const RuntimeProbe = withSourceRuntime()(({sourceRuntime, onRuntime}) => {
     onRuntime(sourceRuntime)
@@ -451,23 +447,34 @@ const RuntimeProbe = withSourceRuntime()(({sourceRuntime, onRuntime}) => {
 // The layer over a real store and the source runtime its provider builds, given the props its selector computes from
 // them, recomputed as the store or its config changes, as React Redux would. The source component a map renders beside
 // the layer claims the recipe it shows while mounted (recipeImageLayerSource.jsx, through recipeAccess.jsx): that claim
-// alone keeps a recipe that is not open in the session. Unmounting releases the layer, then the claim.
-// `shown` replaces the alerts as the recipe the layer shows, `others` the records the session holds besides it, none open.
+// alone keeps a recipe that is not open in the session. Unmounting releases the layer, then the claim; the store's
+// session is disposed as the test ends. `shown` replaces the alerts as the recipe the layer shows, `others` the records
+// the session holds besides it, none open. Storage holds them all; a read nothing has answered is named beside a test
+// that failed.
 const show = async ({layerConfig, inAnotherRecipe = false, model, shown, others = []}) => {
     const recipe = shown || changeAlerts(model)
+    ;[recipe, ...others].forEach(record => fake.storage.store(record))
+    const held = inAnotherRecipe ? [recipe, ...others] : others
     const store = createStore((state = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: {[recipe.id]: recipe, ...Object.fromEntries(others.map(other => [other.id, other]))},
+            loadedRecipes: Object.fromEntries(held.map(record => [record.id, record])),
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
             projects: [],
-            tabs: [{id: inAnotherRecipe ? 'host-1' : recipe.id}]
+            tabs: inAnotherRecipe ? [{id: 'host-1'}] : []
         }
     }, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
+    // As the application installs its store, with its session, which opens the recipe shown at the revision it was loaded
+    // at before its tab is (openRecipeById$, recipe.jsx).
+    const session = recipeSessionOf(store)
+    if (!inAnotherRecipe) {
+        session.openRecipeRevision(recipe)
+        store.dispatch({type: 'OPEN_RECIPE', reduce: state => _.set(_.cloneDeep(state), ['process', 'tabs'], [{id: recipe.id}])})
+    }
     let sourceRuntime
     root = createRoot(document.createElement('div'))
     await act(async () => root.render(
@@ -492,7 +499,7 @@ const show = async ({layerConfig, inAnotherRecipe = false, model, shown, others 
         dragging$: null,
         cursor$: null
     })
-    const sourceClaim = new RecipeCacheClaimant(sessionRecipeCache)
+    const sourceClaim = session.claimant()
     sourceClaim.use(recipe.id)
     const propsFor = config => ({...ownProps(config), ...layerSelector(store.getState(), ownProps(config))})
     const instance = new RecipeImageLayer(propsFor(layerConfig))
@@ -511,10 +518,8 @@ const show = async ({layerConfig, inAnotherRecipe = false, model, shown, others 
     }
     await settled()
     // Every read of the record still waiting is answered alike.
-    const settle = async (id, deliver) => {
-        const waiting = fake.loads.filter(load => load.id === id && !load.settled)
-        waiting.forEach(load => load.settled = true)
-        await act(async () => waiting.forEach(({subscriber}) => deliver(subscriber)))
+    const settle = async answer => {
+        await act(async () => answer())
         await settled()
     }
     let answeredReads = 0
@@ -522,19 +527,16 @@ const show = async ({layerConfig, inAnotherRecipe = false, model, shown, others 
         layer: () => instance.maybeCreateLayer(),
         recipe: () => store.getState().process.loadedRecipes[recipe.id],
         answer: async record => {
-            await settle(record.id, subscriber => {
-                subscriber.next(record)
-                subscriber.complete()
-            })
-            answeredReads = fake.loads.length
+            await settle(() => fake.storage.answer(record.id, record))
+            answeredReads = fake.storage.reads().length
         },
-        newReads: () => fake.loads.slice(answeredReads).map(({id}) => id),
+        newReads: () => fake.storage.reads().slice(answeredReads),
         // An asset read again, and everything reading it, as a Refresh asks.
         refreshAsset: async id => {
             await act(async () => sourceRuntime.refreshAsset(id))
             await settled()
         },
-        fail: id => settle(id, subscriber => subscriber.error(Object.assign(new Error(`No such recipe: ${id}`), {statusCode: 404}))),
+        fail: id => settle(() => fake.storage.fail(id)),
         setLayerConfig: async config => {
             const previous = instance.props
             instance.props = propsFor(config)

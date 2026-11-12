@@ -6,9 +6,9 @@ import {of, Subject} from 'rxjs'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
@@ -26,19 +26,20 @@ import {segmentsAssetMetadata} from './observedReference.test.fixtures'
 // runtime are real; Earth Engine answers with fixed asset metadata, and the map is not drawn.
 
 const fake = vi.hoisted(() => ({assets: {}}))
-vi.mock('~/apiRegistry', () => ({default: {
-    gee: {
-        assetMetadata$: ({asset}) => of(fake.assets[asset]),
-        assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
-        // Readiness observes an asset with the properties it records ({bands, properties}).
-        bands$: ({asset, includeProperties}) => {
-            const bands = (fake.assets[asset]?.bandNames || []).map(name => ({name, arrayDimensions: 0}))
-            return of(includeProperties ? {bands, properties: fake.assets[asset]?.properties || {}} : bands)
+vi.mock('~/apiRegistry', async () => {
+    const {bandsAnswer} = await import('../../sourceRuntime/bandsAnswer.test.fixtures')
+    return {default: {
+        gee: {
+            assetMetadata$: ({asset}) => of(fake.assets[asset]),
+            assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
+            bands$: request => of(bandsAnswer({
+                bands: fake.assets[request.asset]?.bandNames || [], properties: fake.assets[request.asset]?.properties
+            })(request)),
+            datasets$: () => of({community: {datasets: [], matchingResults: 0}, gee: {datasets: [], matchingResults: 0}})
         },
-        datasets$: () => of({community: {datasets: [], matchingResults: 0}, gee: {datasets: [], matchingResults: 0}})
-    },
-    recipe: {load$: () => of(null), loadAll$: () => of([]), save$: () => of()}
-}}))
+        recipe: {load$: () => of(null), loadAll$: () => of([]), save$: () => of()}
+    }}
+})
 vi.mock('~/translate', () => ({msg: (key, values) => {
     const text = [key].flat().join('.')
     return values && Object.keys(values).length ? `${text} ${JSON.stringify(values)}` : text
@@ -69,6 +70,8 @@ const S1 = 'SENTINEL_1'
 const SOURCES = 'process.changeAlerts.panel.sources.form'
 
 let root, container, store
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -231,7 +234,7 @@ async function create(model) {
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

@@ -1,36 +1,63 @@
 import {map, of} from 'rxjs'
 
 import api from '~/apiRegistry'
-import {uuid} from '~/uuid'
 
 import {isDraft} from './draftAgreement'
 import {cacheAcceptance, DRAFT, initializeRecipe, KEEP} from './recipeCache'
 
-// Who retains each entry of the session's recipe cache (`process.loadedRecipes`), and the reads that add one.
+// Who retains each entry of a session's recipe cache (`process.loadedRecipes`), and the reads that add one.
 //
 // An entry is kept while any claimant uses it and removed when the last one releases it - unless it is a draft, open
 // or closed with its saves unsettled (draftAgreement.js), which is no copy of storage: the session's is the only one.
 // Components claim through recipeAccess; the source runtime's evidence watches claim the same way, so neither can take
-// an entry away from the other. A response is judged when it arrives, against what the session holds then (recipeCache.js), and a claimant
-// released before its response arrived writes nothing: it would add an entry nobody releases.
+// an entry away from the other. A response is judged when it arrives, against what the session holds then
+// (recipeCache.js), and a claimant released before its response arrived writes nothing: it would add an entry nobody
+// releases.
 //
-// `cache` is the session the claimant reads and writes: {held(id), open(id), saveState(id), write(record), remove(id)}.
+// Claims are counted by the session's own registry (`RecipeCacheClaims`, one per session, recipeSession.js): its
+// claimants share them whatever cache adapter each reads and writes through, and another session's claim on the same
+// recipe is another session's. `cache` is the adapter a claimant reads and writes the session through: {held(id),
+// open(id), saveState(id), write(record), remove(id)}.
 
-const claimantsByRecipeId = new Map()
+export class RecipeCacheClaims {
+    #claimantsByRecipeId = new Map()
 
-// An entry every claimant released while it was a draft is removed once its saves settle, unless it is claimed again.
-export const releaseSettled = (recipeId, cache) => {
-    if (!claimantsByRecipeId.has(recipeId) && cache.held(recipeId)) {
-        evict(recipeId, cache)
+    use(recipeId, claimant) {
+        this.#claimantsByRecipeId.set(recipeId, new Set([...this.#claimantsByRecipeId.get(recipeId) || [], claimant]))
+    }
+
+    // The recipes the claimant was the last to use.
+    release(claimant) {
+        return [...this.#claimantsByRecipeId].flatMap(([recipeId, claimants]) => {
+            if (!claimants.has(claimant)) {
+                return []
+            }
+            const remaining = new Set([...claimants].filter(other => other !== claimant))
+            if (remaining.size) {
+                this.#claimantsByRecipeId.set(recipeId, remaining)
+                return []
+            }
+            this.#claimantsByRecipeId.delete(recipeId)
+            return [recipeId]
+        })
+    }
+
+    // An entry every claimant released while it was a draft is removed once its saves settle, unless it is claimed
+    // again.
+    releaseSettled(recipeId, cache) {
+        if (!this.#claimantsByRecipeId.has(recipeId) && cache.held(recipeId)) {
+            evict(recipeId, cache)
+        }
     }
 }
 
 export class RecipeCacheClaimant {
-    #id = uuid()
+    #claims
     #cache
     #released = false
 
-    constructor(cache) {
+    constructor({claims, cache}) {
+        this.#claims = claims
         this.#cache = cache
     }
 
@@ -38,7 +65,7 @@ export class RecipeCacheClaimant {
         if (this.#released) {
             return
         }
-        claimantsByRecipeId.set(recipeId, new Set([...claimantsByRecipeId.get(recipeId) || [], this.#id]))
+        this.#claims.use(recipeId, this)
     }
 
     // What the session holds, or what storage holds where the session holds nothing.
@@ -59,22 +86,7 @@ export class RecipeCacheClaimant {
             return
         }
         this.#released = true
-        ;[...claimantsByRecipeId].forEach(([recipeId, claimants]) => {
-            if (!claimants.has(this.#id)) {
-                return
-            }
-            const remaining = new Set([...claimants].filter(id => id !== this.#id))
-            if (remaining.size) {
-                claimantsByRecipeId.set(recipeId, remaining)
-            } else {
-                claimantsByRecipeId.delete(recipeId)
-                this.#evict(recipeId)
-            }
-        })
-    }
-
-    #evict(recipeId) {
-        evict(recipeId, this.#cache)
+        this.#claims.release(this).forEach(recipeId => evict(recipeId, this.#cache))
     }
 
     #read$(recipeId) {

@@ -6,8 +6,8 @@ import {Observable, of, Subject} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer} from '~/widget/portal'
 
@@ -78,6 +78,8 @@ beforeEach(() => {
     earthEngine.observations = []
     combo.props = null
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -241,7 +243,7 @@ async function openLayer({chosen}) {
         dimensions: {width: 1024, height: 768}
     }
     const store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     hostRecipe = initialState.process.loadedRecipes[HOST]
     chosenAgain = []
     mapArea = {area: 'main', updateLayerConfig: config => chosenAgain.push(config)}

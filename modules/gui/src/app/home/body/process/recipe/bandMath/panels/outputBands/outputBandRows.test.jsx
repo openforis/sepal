@@ -5,8 +5,8 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 
 // The output bands of an image as its panel lists them, over a real store. A saved recipe can output one band of an
 // input twice: a copy under a legacy id and one under the band's own, apart, each with a name of its own.
@@ -55,6 +55,8 @@ const ID = 'band-math-1'
 const ADD_ALL = 'process.bandMath.panel.outputBands.addBands.all.label'
 
 let root, container, store
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -462,7 +464,7 @@ const sessionState = (outputBands, {others = [], input = INPUT, otherInputs = []
 const openOutputBands = async (outputBands = OUTPUT_BANDS, configuration) => {
     const initialState = sessionState(outputBands, configuration)
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     await mount()
 }
 

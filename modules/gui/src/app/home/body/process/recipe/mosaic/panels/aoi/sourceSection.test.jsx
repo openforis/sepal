@@ -6,7 +6,7 @@ import {of} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {initStore} from '~/store'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {EventShield} from '~/widget/eventShield'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
@@ -37,6 +37,8 @@ beforeEach(() => {
     bands$.mockReset().mockImplementation(() => of(['red']))
     load$.mockReset().mockImplementation(recipeId => of({id: recipeId, type: 'MOSAIC', model: {}}))
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -114,7 +116,7 @@ const show = ({recipeId, recipes = []}) => {
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

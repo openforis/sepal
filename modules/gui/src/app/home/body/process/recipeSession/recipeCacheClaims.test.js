@@ -1,29 +1,27 @@
 import {of, Subject} from 'rxjs'
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-// The session's recipe cache, as its claimants use it: whether a response read from storage may be written, and how
+// A session's recipe cache, as its claimants use it: whether a response read from storage may be written, and how
 // long an entry stays. The decision about a response is made when it arrives, against what the session holds then.
-// The session is a plain map here; storage is `load$`.
+// The session is a plain map here, with claims of its own; storage is `load$`.
 
 const load$ = vi.fn()
 vi.mock('~/apiRegistry', () => ({default: {recipe: {load$: (...args) => load$(...args)}}}))
 
-const {RecipeCacheClaimant} = await import('./recipeCacheClaims')
+const {RecipeCacheClaimant, RecipeCacheClaims} = await import('./recipeCacheClaims')
 
 const PERSISTED = {id: 'source-1', type: 'CCDC', model: {presets: ['persisted']}, revision: 4}
 const DRAFT = {id: 'source-1', type: 'CCDC', model: {presets: ['edited']}, revision: 3}
 
 let session
-const claimants = []
+let claims
 
 beforeEach(() => {
     load$.mockReset()
     load$.mockReturnValue(of(PERSISTED))
     session = cacheOf()
+    claims = new RecipeCacheClaims()
 })
-
-// Claims are counted across the whole session, so a test's claimants let go before the next test claims.
-afterEach(() => claimants.splice(0).forEach(claimant => claimant.release()))
 
 describe('a refreshing read of a recipe nobody is editing', () => {
     it('reads past the cache, even when it holds that recipe', () => {
@@ -209,11 +207,7 @@ describe('a response arriving after its claimant released', () => {
     })
 })
 
-const claimant = () => {
-    const created = new RecipeCacheClaimant(session)
-    claimants.push(created)
-    return created
-}
+const claimant = () => new RecipeCacheClaimant({claims, cache: session})
 
 const read = request$ => {
     let result

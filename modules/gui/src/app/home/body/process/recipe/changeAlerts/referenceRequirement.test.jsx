@@ -6,10 +6,10 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 import lookStyles from '~/style/look.module.css'
 import {tooltipText} from '~/widget/tooltip.test.fixtures'
 import widgetStyles from '~/widget/widget.module.css'
@@ -142,6 +142,20 @@ vi.mock('~/apiRegistry', async () => {
 })
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : Array.isArray(key) ? key.join('.') : key}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
+// Compression runs as it does, unless a case holds it to end a test while a save is still being compressed.
+const compression = vi.hoisted(() => ({held: null}))
+vi.mock('~/gzip', async importOriginal => {
+    const {gzip$} = await importOriginal()
+    const {Observable} = await import('rxjs')
+    return {gzip$: content => compression.held
+        ? new Observable(subscriber => {
+            compression.held.push(() => {
+                subscriber.next(content)
+                subscriber.complete()
+            })
+        })
+        : gzip$(content)}
+})
 // The editor's panels open with it, and close as they do when cancelled or applied; how they get opened is not what
 // this exercises.
 const panelActivations = vi.hoisted(() => ({}))
@@ -300,13 +314,10 @@ beforeEach(() => {
     fake.heldAssetBands = null
     selecting.listener = null
     selecting.charted = []
+    compression.held = null
 })
 
-afterEach(async () => {
-    await act(async () => root?.unmount())
-    root = null
-    container?.remove()
-})
+afterEach(() => endTest())
 
 describe('a reference that supplies the segments Change Alerts reads', () => {
     it.each([
@@ -2428,7 +2439,36 @@ describe('a Retrieve whose recipe nothing else watches', () => {
     })
 })
 
+describe('a test ending while its editor is saving', () => {
+    it('leaves nothing of that save to reach the next test\'s storage', async () => {
+        compression.held = []
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
+        await act(async () => store.dispatch(set(['process', 'loadedRecipes', ALERTS, 'model', 'sources', 'band'], 'nbr')))
+        const compressing = compression.held.splice(0)
+        expect(compressing).not.toEqual([])
+
+        await endTest()
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
+        fake.calls = []
+        await act(async () => {
+            compressing.forEach(complete => complete())
+            await new Promise(resolve => setTimeout(resolve, 0))
+        })
+
+        expect(fake.calls.filter(([name]) => name === 'loadRecipe')).toEqual([])
+    })
+})
+
 const SEGMENT_BANDS = [['tStart', 1], ['tEnd', 1], ['tBreak', 1], ['numObs', 1], ['changeProb', 1]]
+
+// What ends each test: its UI unmounted, and the session of its store disposed - a save it was still compressing or
+// sending reaches nothing after.
+const endTest = async () => {
+    await act(async () => root?.unmount())
+    root = null
+    container?.remove()
+    disposeInstalledSessions()
+}
 
 // A measure as segments carry it: its coefficients, RMSE and magnitude.
 const measureBands = name => [[`${name}_coefs`, 2], [`${name}_rmse`, 1], [`${name}_magnitude`, 1]]
@@ -2564,7 +2604,7 @@ const editor = async ({selection, owner = true, chart = false, chartBand = 'ndvi
     if (date) initialState.process.loadedRecipes[ALERTS].model.date = date
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     store.subscribe(() => firstListener())
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
@@ -2806,7 +2846,7 @@ let shown
 const onAnotherMap = async ({selection, layers = [CHANGES], editor = false, unloaded, saving}) => {
     const initialState = sessionState({selection, tabs: [{id: HOST}], unloaded, saving})
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

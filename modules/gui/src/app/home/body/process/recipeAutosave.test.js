@@ -27,28 +27,26 @@ vi.mock('~/widget/notifications', () => ({Notifications: {error: vi.fn()}}))
 
 const {actionBuilder} = await import('~/action-builder')
 const {initStore} = await import('~/store')
-const {forgetRecipeSaveState, hasUnsavedWork, openRecipeRevision, recipePath, sessionRecipeCache} = await import('./recipe')
+const {hasUnsavedWork, openRecipeRevision, recipePath} = await import('./recipe')
 const {draftAgreement} = await import('./recipeSession/draftAgreement')
-const {RecipeCacheClaimant} = await import('./recipeSession/recipeCacheClaims')
+const {recipeSessionOf, startRecipeSession} = await import('./recipeSession/recipeSession')
+
+const LOADED = {id: 'recipe-1', type: 'BAND_MATH', revision: 1, model: {bands: ['VV', 'VH', 'ratio']}}
 
 let store
 let loaded
-let id = 0
-const claimants = []
+const stores = []
 
 beforeEach(() => {
     server.requests.length = 0
-    loaded = {id: `autosave-${++id}`, type: 'BAND_MATH', revision: 1, model: {bands: ['VV', 'VH', 'ratio']}}
+    server.stored = null
+    loaded = LOADED
     store = storeListing(loaded)
     openRecipeRevision(loaded)
     actionBuilder('OPEN').set('process.tabs', [{id: loaded.id}]).dispatch()
 })
 
-afterEach(() => {
-    claimants.splice(0).forEach(claimant => claimant.release())
-    actionBuilder('CLOSE').set('process.tabs', []).dispatch()
-    forgetRecipeSaveState(loaded.id)
-})
+afterEach(() => stores.splice(0).forEach(installed => recipeSessionOf(installed).dispose()))
 
 describe('an edit', () => {
     it('is saved once and settles, though publishing its save state re-enters the autosave', async () => {
@@ -63,6 +61,17 @@ describe('an edit', () => {
         expect(server.requests).toHaveLength(1)
         expect(draft().revision).toBe(2)
         expect(agreement({knownRevision: 2})).toBe('AGREED')
+    })
+
+    it('leaves the draft\'s revision as it was while it moved on before its save was acknowledged', async () => {
+        edit(['VV', 'VH'])
+        edit(['VV'])
+
+        acknowledge(0, 2)
+        await vi.waitFor(() => expect(server.requests).toHaveLength(2))
+
+        expect(draft().revision).toBe(1)
+        expect(saveState().revision).toBe(2)
     })
 
     it('queued behind another stays unacknowledged until its own save is acknowledged', async () => {
@@ -280,6 +289,20 @@ describe('a recipe closed while it is saving', () => {
     })
 })
 
+describe('an edit to a recipe closed once its save was acknowledged', () => {
+    it('is not saved, nor taken for what was persisted', async () => {
+        edit(['VV', 'VH'])
+        acknowledge(0, 2)
+        await vi.waitFor(() => expect(saveState().status).toBe('SAVED'))
+        close()
+
+        edit(['VV'])
+
+        expect(server.requests).toHaveLength(1)
+        expect(agreement({knownRevision: 2})).not.toBe('AGREED')
+    })
+})
+
 describe('leaving the page', () => {
     it('is held back while an edit is saving, until storage acknowledges it', async () => {
         edit(['VV', 'VH'])
@@ -329,6 +352,37 @@ describe('the published save state', () => {
     })
 })
 
+// Each store has a session of its own: what one saves, compares or is acknowledged for never reaches another, though
+// both hold the same recipe and the other is the store now installed.
+describe('a store installed after another', () => {
+    it('is left as it is by an acknowledgement of a save started in the other, which settles there', async () => {
+        edit(['VV', 'VH'])
+        const [saving] = server.requests
+        const first = store
+        const other = storeHolding({[loaded.id]: {...loaded, model: {bands: ['HH']}, ui: {initialized: true}}})
+        const before = other.getState()
+
+        saving.response.next({revision: 2})
+        saving.response.complete()
+        await vi.waitFor(() => expect(first.getState().process.saveStates[loaded.id].status).toBe('SAVED'))
+
+        expect(first.getState().process.recipes.find(({id}) => id === loaded.id).revision).toBe(2)
+        expect(other.getState()).toBe(before)
+    })
+
+    it('saves nothing of its own record for a notification that changes it not, whatever the other compared or saved', async () => {
+        edit(['VV', 'VH'])
+        acknowledge(0, 2)
+        await vi.waitFor(() => expect(saveState().status).toBe('SAVED'))
+        server.requests.length = 0
+        storeHolding({[loaded.id]: {...loaded, model: {bands: ['HH']}, ui: {initialized: true}}})
+
+        actionBuilder('SET_STREAM_STATUS').set(['stream', 'component', 'load'], 'ACTIVE').dispatch()
+
+        expect(server.requests).toEqual([])
+    })
+})
+
 const storeListing = recipe => {
     let published = 0
     const created = createStore((state, action) => {
@@ -339,19 +393,20 @@ const storeListing = recipe => {
         return action.reduce ? action.reduce(state) : state
     }, {process: {loadedRecipes: {}, recipes: [{id: recipe.id, revision: recipe.revision}], tabs: []}})
     initStore(created)
+    startRecipeSession(created)
+    stores.push(created)
     return created
 }
 
-// A store already holding these records, listed and open, whose first notification the autosave has compared and
-// saved as new.
+// A store installed already holding these records, listed and open, with its session, which starts from them.
 const storeHolding = recipes => {
     const ids = Object.keys(recipes)
     const created = createStore((state, action) => action.reduce ? action.reduce(state) : state, {
         process: {loadedRecipes: recipes, recipes: ids.map(id => ({id, revision: 1})), tabs: ids.map(id => ({id})), saveStates: {}}
     })
     initStore(created)
-    actionBuilder('FIRST_NOTIFICATION').set(['stream', 'first'], true).dispatch()
-    server.requests.length = 0
+    startRecipeSession(created)
+    stores.push(created)
     return created
 }
 
@@ -372,9 +427,8 @@ const saveState = () => store.getState().process.saveStates?.[loaded.id]
 const listed = () => store.getState().process.recipes.find(({id}) => id === loaded.id)
 
 const claim = () => {
-    const claimant = new RecipeCacheClaimant(sessionRecipeCache)
+    const claimant = recipeSessionOf(store).claimant()
     claimant.use(loaded.id)
-    claimants.push(claimant)
     return claimant
 }
 

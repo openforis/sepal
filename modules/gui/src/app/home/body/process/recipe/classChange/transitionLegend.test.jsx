@@ -5,9 +5,9 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 
 // How a Class Change's transition legend follows its images, through the real toolbar, image and Legend panels over a
 // real store: the commit applying an image derives the legend in its own action, keeping what the user customised of
@@ -71,6 +71,8 @@ beforeEach(() => {
     fake.requests = []
     panels.open.clear()
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -230,7 +232,7 @@ async function open(recipe, openPanels = []) {
         }
         return next
     })
-    initStore(store)
+    installStore(store)
     const container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

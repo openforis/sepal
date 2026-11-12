@@ -5,8 +5,8 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 
 // An input removed from the input imagery a recipe lists, as each of its panels removes it, over a real store. A saved
 // recipe can hold two inputs of one source - an asset or a recipe - each its own entry.
@@ -38,6 +38,8 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 const ID = 'recipe-1'
 
 let root, container, store
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -119,7 +121,7 @@ const openInputImagery = async (InputImagery, images, layers = {}) => {
         dimensions: {width: 1024, height: 768}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

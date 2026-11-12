@@ -5,7 +5,7 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
-import {initStore} from '~/store'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 
 // What a recipe's toolbar marks while its wizard sets it up: a section the wizard has not reached is not marked yet, one
@@ -121,6 +121,8 @@ addRecipeType(remapping())
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let root, container, store
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -577,7 +579,7 @@ async function open(recipe, RecipeToolbar) {
         dimensions: {width: 1024, height: 768}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

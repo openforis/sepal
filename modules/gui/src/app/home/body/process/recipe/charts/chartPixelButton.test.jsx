@@ -6,8 +6,8 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {MapContext} from '~/app/home/map/mapContext'
-import {initStore} from '~/store'
 
 // The chart action of a recipe whose chart runs operations at its pixel (`operations`): offered only while what the recipe's type
 // declares they require is met, and a pixel being chosen when that stops is no longer chosen. A recipe charting
@@ -40,6 +40,8 @@ addRecipeType(timeSeries())
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let root, container
+
+afterEach(disposeInstalledSessions)
 
 afterEach(() => {
     act(() => root?.unmount())
@@ -185,7 +187,7 @@ const render = (type, classification, {operations = OPERATIONS[type], breakpoint
         }
     }
     const store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

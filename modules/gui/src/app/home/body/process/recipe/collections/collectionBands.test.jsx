@@ -8,9 +8,9 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {collectionMeasures} from '#sepal/recipe/collectionBands'
 import {IMAGE_OUTPUT, PIXEL_OBSERVATIONS, PIXEL_SEGMENTS} from '#sepal/recipe/output/readiness'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
@@ -79,6 +79,8 @@ let root, container, store, runtime
 beforeEach(() => {
     fake.open = new Set()
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -544,7 +546,7 @@ async function open(t, {panels, ...configuration}) {
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

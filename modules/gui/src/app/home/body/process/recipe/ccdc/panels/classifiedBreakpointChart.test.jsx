@@ -7,9 +7,10 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {MapContext} from '~/app/home/map/mapContext'
-import {initStore, select} from '~/store'
+import {select} from '~/store'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
 // The Classification a CCDC's Sources select is part of its analysis, whatever its breakpoint bands (type/ccdc.js): once
@@ -78,6 +79,8 @@ beforeEach(() => {
     loadCCDCSegments$.mockReset().mockReturnValue(of({tStart: [], tEnd: [], tBreak: [], changeProb: [], numObs: []}))
     loadTimeSeriesObservations$.mockReset().mockReturnValue(of({features: []}))
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -243,7 +246,7 @@ async function open({breakpointBands}) {
         }
     }
     const store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     map = mapOf()
     const recipeActions = RecipeActions(CCDC)
     container = document.createElement('div')

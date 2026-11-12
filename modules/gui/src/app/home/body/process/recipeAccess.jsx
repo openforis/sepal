@@ -4,10 +4,9 @@ import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
 
-import {sessionRecipeCache} from './recipe'
-import {RecipeCacheClaimant} from './recipeSession/recipeCacheClaims'
+import {currentRecipeSession} from './recipeSession/recipeSession'
 
-// A component's claim on the session's recipe cache, held while it is mounted (recipeCacheClaims.js).
+// A component's claim on its session's recipe cache, held while it is mounted (recipeCacheClaims.js).
 
 const mapStateToProps = state => ({
     loadedRecipes: selectFrom(state, 'process.loadedRecipes') || {}
@@ -16,7 +15,7 @@ const mapStateToProps = state => ({
 export const recipeAccess = () =>
     WrappedComponent => compose(
         class RecipeAccessHOC extends React.Component {
-            claimant = new RecipeCacheClaimant(sessionRecipeCache)
+            claimant = currentRecipeSession().claimant()
 
             render() {
                 const {loadedRecipes} = this.props

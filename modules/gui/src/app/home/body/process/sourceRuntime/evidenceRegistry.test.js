@@ -28,7 +28,7 @@ vi.mock('../recipeTypeRegistry', () => ({
 const styled = (recipe, own) => ({...recipe, layers: {userDefinedVisualizations: {'this-recipe': own}}})
 
 const {EvidenceRegistry} = await import('./evidenceRegistry')
-const {RecipeCacheClaimant} = await import('~/app/home/body/process/recipeSession/recipeCacheClaims')
+const {RecipeCacheClaimant, RecipeCacheClaims} = await import('~/app/home/body/process/recipeSession/recipeCacheClaims')
 const {maskingObservation} = await import('../recipe/masking/maskingSourceEvidence')
 
 const observation = {
@@ -82,7 +82,7 @@ const sync = props => {
         }),
         sessionChanges$: changes$,
         claimRecords: () => current.sessionCache
-            ? new RecipeCacheClaimant(sessionCache)
+            ? new RecipeCacheClaimant({claims, cache: sessionCache})
             : {use: () => {}, load$: id => current.loadRecipe$(id), reload$: id => current.reloadRecipe$(id), release: () => {}},
         claimAssets: ids => current.claimAssets?.(ids) || (() => {}),
         write: ({writes}) => {
@@ -100,7 +100,9 @@ const sync = props => {
         current = {...current, ...next}
         changes$.next()
     }
-    // With `sessionCache`, the watch claims `loadedRecipes` as the session's recipe cache, as components do.
+    // With `sessionCache`, the watch claims `loadedRecipes` as the session's recipe cache, as components do, sharing the
+    // session's claims.
+    const claims = new RecipeCacheClaims()
     const sessionCache = {
         held: id => current.loadedRecipes[id],
         open: id => current.openRecipeIds.includes(id),
@@ -118,7 +120,7 @@ const sync = props => {
         rerender,
         evidence: () => published(dispatched),
         cached: () => current.loadedRecipes,
-        cacheClaimant: () => new RecipeCacheClaimant(sessionCache)
+        cacheClaimant: () => new RecipeCacheClaimant({claims, cache: sessionCache})
     }
 }
 

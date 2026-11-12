@@ -7,8 +7,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 
 // A Remapping recipe drawn on another recipe's map, its editor closed: whether its constraints read inputs and bands its
 // configuration still has decides whether its image is requested, over a real store and source runtime. Earth Engine is
@@ -66,6 +66,8 @@ beforeEach(() => {
     previews.shown = undefined
     ASSET_BANDS['users/x/dem'] = ['elevation']
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -165,7 +167,7 @@ async function onAnotherMap(constraint, downstream = false) {
         dimensions: {width: 1024, height: 768}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     root = createRoot(document.createElement('div'))
     await act(async () => root.render(
         <Provider store={store}>

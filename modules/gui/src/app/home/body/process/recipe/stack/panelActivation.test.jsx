@@ -6,8 +6,8 @@ import {NEVER, of} from 'rxjs'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 
 // Which of the Stack editor's panels its toolbar opens, and when one gives way to another: the real toolbar, panels
 // and activation over a real store. A panel holding unapplied edits keeps the others closed until it is applied or
@@ -40,6 +40,8 @@ const LISTING = [{id: ID, name: 'Stack', type: 'STACK', revision: 1}]
 const ASSET = 'users/x/a'
 
 let root, container
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -145,7 +147,7 @@ async function open() {
         dimensions: {width: 1024, height: 768}
     }
     const store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

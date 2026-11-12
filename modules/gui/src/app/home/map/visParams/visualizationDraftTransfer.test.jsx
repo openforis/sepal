@@ -54,7 +54,8 @@ const {Recipe} = await import('~/app/home/body/process/recipeContext')
 const {productArgs} = await import('~/app/home/body/process/recipe/outputs/layerProduct')
 const {VisParamsPanel} = await import('./visParamsPanel')
 const {actionBuilder} = await import('~/action-builder')
-const {initStore, select} = await import('~/store')
+const {select} = await import('~/store')
+const {disposeInstalledSessions, installStore} = await import('~/app/home/body/process/recipeSession/recipeSession.test.fixtures')
 const {EventShield} = await import('~/widget/eventShield')
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -480,12 +481,14 @@ beforeEach(async () => {
         dimensions: {width: 1024, height: 768}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
     await act(async () => root.render(<Provider store={store}><EventShield><Editors/></EventShield></Provider>))
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root.unmount())

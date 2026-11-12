@@ -6,11 +6,11 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe, withRecipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {compose} from '~/compose'
 import translations from '~/locale/en/translations.json'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 import {tooltipText} from '~/widget/tooltip.test.fixtures'
 
 // Whether BAYTS Alerts' reference suits what reads it, composed as its editor composes it - the evidence lifecycle, the
@@ -154,6 +154,8 @@ beforeEach(() => {
     fake.stored = Object.fromEntries(RECORDS.map(record => [record.id, record]))
     previews.constructed = []
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -853,7 +855,7 @@ const onAnotherMap = async ({selection, layers}) => {
 const mount = async ({selection, options, initialized, tabs, shown}) => {
     const initialState = sessionState({selection, options, initialized, tabs})
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

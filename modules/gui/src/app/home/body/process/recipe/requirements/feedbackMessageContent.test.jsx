@@ -6,9 +6,10 @@ import {NEVER, of, Subject, throwError} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {addRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import {compose} from '~/compose'
-import {initStore, select} from '~/store'
+import {select} from '~/store'
 import {setLanguage, TranslationProvider} from '~/translate'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import {Confirm} from '~/widget/confirm'
@@ -72,6 +73,8 @@ beforeEach(async () => {
     fake.applied.mockReset()
     fake.cancelled.mockReset()
 })
+afterEach(disposeInstalledSessions)
+
 afterEach(async () => {
     await act(async () => root?.unmount())
     root = null
@@ -290,7 +293,7 @@ async function mount(status, presenters = false) {
         loadedRecipes: records, tabs: Object.values(records).map(({id, title}) => ({id, title})), selectedTabId: 'a',
         recipes: Object.values(records).map(({id, title}) => ({id, name: title})), projects: []
     }}, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

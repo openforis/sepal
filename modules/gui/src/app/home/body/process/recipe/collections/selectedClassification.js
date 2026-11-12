@@ -4,12 +4,11 @@ import {Subject} from 'rxjs'
 
 import {isClassifiedOutput} from '#sepal/recipe/classifiedOutputs'
 import {CLASSIFICATION_SOURCE} from '#sepal/recipe/source/collectionSources'
-import {sessionRecipeCache} from '~/app/home/body/process/recipe'
-import {RecipeCacheClaimant} from '~/app/home/body/process/recipeSession/recipeCacheClaims'
+import {currentRecipeSession} from '~/app/home/body/process/recipeSession/recipeSession'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {selectFrom} from '~/stateUtils'
-import {select} from '~/store'
+import {currentStore, select} from '~/store'
 import {msg} from '~/translate'
 import {Notifications} from '~/widget/notifications'
 
@@ -50,7 +49,7 @@ export const classificationNaming = recipe => ({recipeId: recipe?.id || null, cl
 // one applied while another is edited, or selected before - which a class removed since does not undo; otherwise by
 // what it is (classifiedOutputFallbackLabel). Its choices and what is said of them name it alike.
 export const classifiedOutputLabel = ({recipeId, classificationId} = {}, band) =>
-    readers.get(recipeId)?.labelOf(classificationId, band) || classifiedOutputFallbackLabel(band)
+    currentReaders()?.get(recipeId)?.labelOf(classificationId, band) || classifiedOutputFallbackLabel(band)
 
 // What a band a recipe's Sources may choose is called: a band of the images by its name, as Sources offer it, and a
 // classified output as classifiedOutputLabel names it.
@@ -149,7 +148,7 @@ class SelectedClassificationClaim {
     constructor({recipeId, loadError, onChange}) {
         this.#recipeId = recipeId
         this.#loadError = loadError
-        this.#reader = readerOf(recipeId)
+        this.#reader = readerOf(currentRecipeSession(), recipeId)
         this.#reader.claims++
         this.#subscription = this.#reader.changes$.subscribe(onChange)
     }
@@ -177,7 +176,7 @@ class SelectedClassificationClaim {
         this.#subscription.unsubscribe()
         this.hold(null)
         if (--this.#reader.claims === 0) {
-            readers.delete(this.#recipeId)
+            this.#reader.readers.delete(this.#recipeId)
         }
     }
 }
@@ -202,11 +201,18 @@ const legendLabels = legend => _.mapValues(bandPresentation({model: {legend}}), 
 // removed since does not undo.
 class Reader {
     claims = 0
+    #session
     #reads = new Map()
     #labelsOf = new Map()
     #shown = new Map()
     #changes = new Subject()
     changes$ = this.#changes.asObservable()
+
+    // The session the reads land in, and the readers of its recipes this one is among.
+    constructor(session, readers) {
+        this.#session = session
+        this.readers = readers
+    }
 
     remember(id, labels) {
         this.#labelsOf.set(id, labels)
@@ -215,14 +221,14 @@ class Reader {
 
     // As the record the session holds names it now, so whatever says it follows a rename at once; otherwise as remembered.
     labelOf(id, band) {
-        const legend = id && selectFrom(sessionRecipeCache.held(id), 'model.legend')
+        const legend = id && selectFrom(this.#session.cache.held(id), 'model.legend')
         return (legend && legendLabels(legend)[band]) || this.#labelsOf.get(id)?.[band] || this.#shown.get(band)
     }
 
     hold(id, holder, loadError) {
         const read = this.#reads.get(id)
         if (!read) {
-            const started = {claimant: new RecipeCacheClaimant(sessionRecipeCache), holders: new Set([holder]), loadError}
+            const started = {claimant: this.#session.claimant(), holders: new Set([holder]), loadError}
             this.#reads.set(id, started)
             this.#load(id, started)
         } else if (!read.holders.has(holder)) {
@@ -263,11 +269,19 @@ class Reader {
     }
 }
 
-const readers = new Map()
+// By session, then by recipe: another session's consumers of the same recipe read through a reader of their own.
+const READERS = new WeakMap()
 
-const readerOf = recipeId => {
+const readerOf = (session, recipeId) => {
+    if (!READERS.has(session)) {
+        READERS.set(session, new Map())
+    }
+    const readers = READERS.get(session)
     if (!readers.has(recipeId)) {
-        readers.set(recipeId, new Reader())
+        readers.set(recipeId, new Reader(session, readers))
     }
     return readers.get(recipeId)
 }
+
+const currentReaders = () =>
+    currentStore() ? READERS.get(currentRecipeSession()) : null

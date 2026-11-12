@@ -27,6 +27,35 @@ GUI/server policies in `lib/js/shared`. What the session holds of storage - draf
 authority and save coordination - is in `process/recipeSession/`. Code one type owns stays in its folder, even where
 other types reuse it; `mosaic/` holds the AOI and radar-options panels several types share.
 
+## Recipe session
+
+Each store has one recipe session (`recipeSession/recipeSession.js`): the autosave and the records it compares edits
+against, the save coordinator with its revisions and timers, and the claims on the recipe cache with the adapter its
+claimants read and write through. `index.jsx` starts it where it installs the store (`startRecipeSession(store)`), and
+it lives as long as the store - a page load. Asking for a store's session (`recipeSessionOf(store)`) never starts one:
+for a store that started none it fails, so no session starts unawares or compares edits from later than its store's
+installation. The UI reaches it through the installed store (`currentRecipeSession()`), the source runtime through the
+store it is given; a claimant through the runtime's own adapter shares the session's claims, and another store's
+session claims apart. Panels, recipe tabs and the Process screen come and go without ending it.
+
+Everything a session does later is applied to its own store, never to whichever store is installed then: a published
+save state, an acknowledged revision, an entry its last claimant releases, a read landing in the cache. A session
+compares edits against what its store held when it started, so records a store is created holding are no edits, and
+saves on top of the revisions it opened or was acknowledged. A recipe is opened at its revision before its tab is
+(`openRecipeById$`), so the load is not taken for an edit.
+
+`dispose()` ends a session: its store subscription is dropped, nothing it queued is sent, a save still being
+compressed never starts, no wait is timed and its claimants write and remove nothing. A write already sent is not
+withdrawn - storage may have accepted it - but nothing it is answered with is applied. The application never disposes
+its session. Tests install a store as the application does (`installStore`, `recipeSession.test.fixtures.js`) and
+dispose its session as each test ends, whether or not they stand in for storage: an edit starts a save either way, and
+a session left running would carry it into the next test.
+
+A store serves one account. Logging out, a refused request (401) and a login session ended elsewhere reload the page
+(`user.js`, `http-client.js`, `loginSessionMonitor.jsx`), starting another store and session. Logging in from Landing,
+and through a password-set link, which starts the application logged off (`startLoggedOff$`), begin from a store
+holding no recipes. Reloading the current user's details or Google account (`loadUser$`) keeps the account.
+
 ## Public boundary
 
 `SourceRuntimeContext` exposes one stable service object, not records or observer state. The Redux adapter uses the

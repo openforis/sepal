@@ -11,8 +11,8 @@ import {stratumFrameQuestion} from '#sepal/recipe/samplingDesign/stratumFrame'
 import {probabilitySourceQuestion, stratumProbabilitiesQuestion} from '#sepal/recipe/samplingDesign/stratumProbabilities'
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider, useSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
@@ -114,6 +114,8 @@ beforeEach(() => {
     harness.inputs = {}
     harness.wizard = {next: vi.fn()}
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -802,7 +804,7 @@ const open = async (Panel, {sources, model}, current) => {
         dimensions: {width: 1024, height: 768}, assets: {user: [], other: []}
     }
     store = createStore((state = initial, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     harness.panel = Panel
     container = document.createElement('div')
     document.body.appendChild(container)

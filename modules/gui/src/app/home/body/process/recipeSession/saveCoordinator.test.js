@@ -186,6 +186,52 @@ describe('superseded generations', () => {
     })
 })
 
+// A closed coordinator is done with every recipe: what it queued stays unsent, what answers a save already sent is not
+// adopted, no wait is reported, and nothing asked of it afterwards does anything.
+describe('a closed coordinator', () => {
+    it('sends nothing it queued, and adopts nothing a save already sent is answered with', async () => {
+        const {saves, outcomes, published, coordinator} = setup()
+        coordinator.open('a', 4)
+        coordinator.save(recipe('a', 'A'))
+        coordinator.save(recipe('a', 'B'))
+        const before = published.length
+
+        coordinator.close()
+        await ack(saves[0], 5)
+
+        expect(contents(saves)).toEqual(['A'])
+        expect(outcomes).toEqual([])
+        expect(published).toHaveLength(before)
+    })
+
+    it('reports no wait, and recovers nothing a failure would have it read', async () => {
+        const {saves, loads, published, clock, coordinator} = setup()
+        coordinator.open('a', 4)
+        coordinator.save(recipe('a', 'A'))
+        const before = published.length
+
+        coordinator.close()
+        clock.advance(60000)
+        await fail(saves[0], 503)
+
+        expect(published).toHaveLength(before)
+        expect(loads).toEqual([])
+    })
+
+    it('does nothing it is asked afterwards', async () => {
+        const {saves, published, coordinator} = setup()
+        coordinator.close()
+
+        coordinator.open('a', 4)
+        coordinator.save(recipe('a', 'A'))
+        coordinator.forget('a')
+        await flush()
+
+        expect(saves).toEqual([])
+        expect(published).toEqual([])
+    })
+})
+
 describe('genuine conflict', () => {
     const conflicted = async () => {
         const context = setup()

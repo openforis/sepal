@@ -6,7 +6,7 @@ import {NEVER} from 'rxjs'
 import {afterEach, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {initStore} from '~/store'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import crudItemStyles from '~/widget/crudItem.module.css'
 import {EventShield} from '~/widget/eventShield'
@@ -37,6 +37,8 @@ const NextStep = compose(
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 let root, container, store
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -159,7 +161,7 @@ const open = async (type, Inputs, {images = [ASSET_INPUT], listed = [], loaded =
         tabs: []
     }}
     store = createStore((state = initial, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
