@@ -5,16 +5,18 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {selectFrom} from '~/stateUtils'
 
 // A calculation edited in its panel, its Apply committing what Band Math derives from it (derivations.js) - the output
 // bands following it - over a real store.
 
-// Storage never answers: what is saved is not the concern here.
+// Storage saves as the recipe module does (recipeStorage.test.fixtures.js); nothing here reads it.
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', async () => {
     const {NEVER} = await import('rxjs')
-    return {default: {recipe: {save$: () => NEVER, load$: () => NEVER}}}
+    return {default: {recipe: {save$: request => io.storage.save$(request), load$: () => NEVER}}}
 })
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
 // The panel is open for the calculation it was activated with, and closes as it does when applied.
@@ -237,8 +239,11 @@ const sessionState = (calculation, outputBands = [{...MAXIMUM_BAND, defaultOutpu
 const editCalculation = async (calculation, outputBands, later) => {
     activation.imageId = calculation.imageId
     const initialState = sessionState(calculation, outputBands, later)
-    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
+    opening.openIn(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

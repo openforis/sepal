@@ -5,7 +5,8 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {selectFrom} from '~/stateUtils'
 import lookStyles from '~/style/look.module.css'
 import listItemStyles from '~/widget/listItem.module.css'
@@ -18,6 +19,7 @@ import listItemStyles from '~/widget/listItem.module.css'
 // (recipe/classification/inputBandSets.test.jsx).
 
 const fake = vi.hoisted(() => ({requests: []}))
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', async () => {
     const {NEVER, of, Subject} = await import('rxjs')
     const request = id => {
@@ -27,7 +29,7 @@ vi.mock('~/apiRegistry', async () => {
     }
     return {default: {
         recipe: {
-            save$: () => NEVER,
+            save$: request => io.storage.save$(request),
             load$: id => of({id, type: 'MOSAIC', revision: 1, model: {}}),
             loadAll$: () => NEVER
         },
@@ -333,8 +335,11 @@ const editInput = async (saved = SAVED) => {
         assets: {user: [SAVED_ASSET.id, OTHER_ASSET].map(id => ({id, type: 'Image', updateTime: 'T1'})), other: []},
         dimensions: {width: 1024, height: 768}
     }
-    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
+    opening.openIn(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

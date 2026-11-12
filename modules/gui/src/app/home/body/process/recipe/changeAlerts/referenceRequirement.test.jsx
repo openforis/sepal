@@ -6,7 +6,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, openStoredRecipe} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -19,7 +20,7 @@ import widgetStyles from '~/widget/widget.module.css'
 
 const fake = vi.hoisted(() => ({
     assets: {}, failing: new Set(), heldMetadata: null, failingPicker: new Set(), heldPickerMetadata: null, versions: {},
-    heldVersions: null, missingVersions: new Set(), calls: [], segmentRequests: [], stored: {}, heldLoads: null,
+    heldVersions: null, missingVersions: new Set(), calls: [], segmentRequests: [], storage: null, heldLoads: null,
     failingLoads: new Set(), segmentBands: [], observationBands: [], graphs: [], heldObservations: null,
     cancelledObservations: [], heldSegments: null, cancelledSegments: [], heldAssetBands: null
 }))
@@ -122,20 +123,20 @@ vi.mock('~/apiRegistry', async () => {
             }
         },
         recipe: {
+            // Storage answers as the recipe module does, a read of a record it holds once let go while reads are held,
+            // unless reading the record fails.
             load$: id => {
                 fake.calls.push(['loadRecipe', id])
-                if (fake.failingLoads.has(id) || !fake.stored[id]) {
-                    return throwError(() => new Error(`Recipe ${id} not found`))
+                if (fake.failingLoads.has(id)) {
+                    return throwError(() => new Error(`Recipe ${id} could not be read`))
                 }
-                return fake.heldLoads
+                return fake.heldLoads && fake.storage.stored(id)
                     ? new Observable(subscriber => {
-                        fake.heldLoads.push(() => {
-                            subscriber.next(fake.stored[id])
-                            subscriber.complete()
-                        })
+                        fake.heldLoads.push(() => fake.storage.load$(id).subscribe(subscriber))
                     })
-                    : of(fake.stored[id])
+                    : fake.storage.load$(id)
             },
+            save$: request => fake.storage.save$(request),
             loadAll$: () => of(LISTING)
         }
     }}
@@ -286,7 +287,7 @@ const RED_EDGE_ASSET = 'users/x/red-edge-segments'
 const CIRRUS_ASSET = 'users/x/cirrus-segments'
 const UNMONITORABLE_ASSET = 'users/x/canopy-height-segments'
 
-let root, container, store, retrieve, runtime
+let root, container, store, retrieve, runtime, openedAlerts
 
 beforeEach(() => {
     fake.assets = {[SEGMENTS_ASSET]: segmentsAsset(VALID_BANDS)}
@@ -301,7 +302,7 @@ beforeEach(() => {
     fake.heldVersions = null
     fake.missingVersions = new Set()
     fake.calls = []
-    fake.stored = {}
+    fake.storage = recipeStorage()
     fake.heldLoads = null
     fake.failingLoads = new Set()
     fake.segmentBands = []
@@ -334,7 +335,7 @@ describe('a reference that supplies the segments Change Alerts reads', () => {
         await editor({selection: ref('asset-mosaic-1')})
 
         expect(decision()).toBe('RETRIEVABLE')
-        expect(fake.calls.filter(([name, id]) => name === 'loadRecipe' && id !== ALERTS)).toEqual([])
+        expect(fake.calls.filter(([name]) => name === 'loadRecipe')).toEqual([])
         expect(metadataReads()).toBe(1)
     })
 })
@@ -816,7 +817,7 @@ describe('a reference edited in REF', () => {
         const committedReads = metadataReads(SEGMENTS_ASSET)
 
         fake.failingLoads.clear()
-        fake.stored = storedRecords(['masking-ccdc', 'ccdc-1'])
+        storeRecords(['masking-ccdc', 'ccdc-1'])
         await refresh(RECIPE_INPUT)
 
         expect(errorsOf(RECIPE_INPUT)).toEqual([])
@@ -860,7 +861,7 @@ describe('the kind of a reference chosen in REF', () => {
     })
 
     it('keeps the asset it was saved with, and the date representation saved over the asset\'s, once switched back to', async () => {
-        fake.stored = storedRecords(['ccdc-radar', 'ccdc-optical'])
+        storeRecords(['ccdc-radar', 'ccdc-optical'])
         await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 2}, panels: ['reference'], unloaded: ['ccdc-radar', 'ccdc-optical']})
         await selectRecipe('Optical CCDC')
 
@@ -871,7 +872,7 @@ describe('the kind of a reference chosen in REF', () => {
     })
 
     it('applies only the kind shown', async () => {
-        fake.stored = storedRecords(['ccdc-radar', 'ccdc-optical'])
+        storeRecords(['ccdc-radar', 'ccdc-optical'])
         await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 2}, panels: ['reference'], unloaded: ['ccdc-radar', 'ccdc-optical']})
         await selectRecipe('Optical CCDC')
         await chooseReferenceType('asset')
@@ -1693,7 +1694,7 @@ describe('the segment chart over a reference recipe built as its own image', () 
 
     it('lets go of its request while what the reference builds is read, and requests once it can run', async () => {
         fake.heldSegments = []
-        fake.stored = {'mosaic-2': {id: 'mosaic-2', name: 'Sentinel 2022', type: 'MOSAIC', model: {}, revision: 1}}
+        fake.storage.store({id: 'mosaic-2', name: 'Sentinel 2022', type: 'MOSAIC', model: {}, revision: 1})
         await editor({selection: ref('masking-ccdc'), chart: true})
         fake.heldLoads = []
 
@@ -1764,7 +1765,7 @@ describe('the segment chart over a reference recipe built as its own image', () 
     // The action is read rather than pressed: the panel open shields what lies outside it.
     it('is held to the reference applied, not to one selected in REF and cancelled', async () => {
         // Settings observation no longer retains the wrapper's mask. Execution may reload it after a candidate releases it.
-        fake.stored = storedRecords(['mosaic-1'])
+        storeRecords(['mosaic-1'])
         await editor({selection: ref('masking-ccdc'), actions: true, panels: ['reference']})
         await editRecord('masking-mosaic', {imageMask: null})
 
@@ -1795,7 +1796,7 @@ describe('a mosaic of the period, shown with the editor closed', () => {
     })
 
     it('is held while the records of a chain the session does not hold are read, and refused once they show it leads to no segments', async () => {
-        fake.stored = storedRecords(['masking-mosaic', 'mosaic-1'])
+        storeRecords(['masking-mosaic', 'mosaic-1'])
         fake.heldLoads = []
         await onAnotherMap({selection: ref('masking-mosaic'), unloaded: ['masking-mosaic', 'mosaic-1'], layers: [MOSAIC]})
         expect(gate('COLLECTION_MOSAIC')).toMatchObject({code: 'SOURCE_PENDING', wait: true})
@@ -1840,7 +1841,7 @@ describe('the reference watched by several consumers', () => {
     })
 
     it('is let go with the last: its read is cancelled, and the records it loaded are released', async () => {
-        fake.stored = storedRecords(['asset-mosaic-1'])
+        storeRecords(['asset-mosaic-1'])
         await onAnotherMap({selection: ref('asset-mosaic-1'), unloaded: ['asset-mosaic-1']})
         expect(loaded()).toContain('asset-mosaic-1')
         const evidence = alertsRecipe().ui.sourceEvidence
@@ -1869,10 +1870,10 @@ describe('reference-owned PRC values and consumer drafts', () => {
         expect([...correctionField().querySelectorAll('button')].every(button => button.disabled)).toBe(true)
         // The producer has SR off, despite the consumer's saved SR copy.
         expect(buttonNamed(correctionField(), 'process.mosaic.panel.composite.form.corrections.surfaceReflectance.label').classList.contains(lookStyles.highlight)).toBe(false)
-        expect(alertsRecipe().model.options).toBe(options)
+        expect(alertsRecipe().model.options).toBe(openedAlerts.model.options)
         await chooseButton('process.mosaic.panel.composite.form.cloudMasking.aggressive.label')
         await editRecord('ccdc-optical', {options: {corrections: ['BRDF'], brdfMultiplier: 3}})
-        expect(alertsRecipe().model.options).toBe(options)
+        expect(alertsRecipe().model.options).toBe(openedAlerts.model.options)
         expect(buttonNamed(correctionField(), 'process.mosaic.panel.composite.form.corrections.brdf.label').classList.contains(lookStyles.highlight)).toBe(true)
         expect(buttonNamed(correctionField(), 'process.mosaic.panel.composite.form.corrections.surfaceReflectance.label').classList.contains(lookStyles.highlight)).toBe(false)
         expect(applyEnabled()).toBe(true)
@@ -1892,7 +1893,7 @@ describe('reference-owned PRC values and consumer drafts', () => {
         expect(sr.disabled).toBe(false)
         await act(async () => sr.click())
         await cancel()
-        expect(alertsRecipe().model.options).toBe(options)
+        expect(alertsRecipe().model.options).toBe(openedAlerts.model.options)
     })
 
     it('keeps SR recorded and BRDF editable when an asset records only SR', async () => {
@@ -1979,7 +1980,7 @@ describe('reference-owned PRC values and consumer drafts', () => {
         await act(async () => type(threshold.querySelector('input'), '6'))
         expect(threshold.querySelector('input').value).toBe('6')
         expect(buttonNamed(threshold.closest('form'), 'button.apply').disabled).toBe(false)
-        expect(alertsRecipe().model.options).toBe(original)
+        expect(alertsRecipe().model.options).toBe(openedAlerts.model.options)
         await act(async () => buttonNamed(threshold.closest('form'), action === 'Apply' ? 'button.apply' : 'button.cancel').click())
         expect(field(label)).toBe(null)
         const processingForm = field('process.radarMosaic.panel.options.form.spatialSpeckleFilter.label').closest('form')
@@ -1989,7 +1990,7 @@ describe('reference-owned PRC values and consumer drafts', () => {
             expect(alertsRecipe().model.options).toMatchObject({kernelSize: 17, strongScatterers: 'FILTER', strongScattererValues: [6, 3]})
         } else {
             await act(async () => buttonNamed(processingForm, 'button.close').click())
-            expect(alertsRecipe().model.options).toBe(original)
+            expect(alertsRecipe().model.options).toBe(openedAlerts.model.options)
         }
     })
 
@@ -2185,7 +2186,7 @@ describe('evidence published for alerts the session no longer holds', () => {
 describe('a dependency the user closed while its save is still settling', () => {
     it('is read as the draft it is, neither replaced nor let go by the watch', async () => {
         const draft = {...RECORDS.find(({id}) => id === 'masking-ccdc'), name: 'Edited, not yet saved'}
-        fake.stored = storedRecords(['masking-ccdc'])
+        storeRecords(['masking-ccdc'])
         await onAnotherMap({selection: ref('masking-ccdc'), saving: {'masking-ccdc': draft}})
 
         await show({layers: []})
@@ -2257,7 +2258,7 @@ describe('the alerts drawn on the map', () => {
 // observing it.
 describe('a saved recipe whose reference no longer suits its monitoring, repaired in REF', () => {
     it('settles once a suitable reference is applied, and REF opens again without waiting', async () => {
-        fake.stored = storedRecords(['ccdc-radar', 'ccdc-optical'])
+        storeRecords(['ccdc-radar', 'ccdc-optical'])
         await editor({selection: ref('ccdc-radar'), panels: ['reference'], unloaded: ['ccdc-radar', 'ccdc-optical']})
         expect(Object.keys(sourceProblems())).toEqual(['sources'])
         await selectRecipe('Optical CCDC')
@@ -2449,13 +2450,13 @@ describe('a test ending while its editor is saving', () => {
 
         await endTest()
         await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}})
-        fake.calls = []
+        const sent = fake.storage.saves.length
         await act(async () => {
             compressing.forEach(complete => complete())
             await new Promise(resolve => setTimeout(resolve, 0))
         })
 
-        expect(fake.calls.filter(([name]) => name === 'loadRecipe')).toEqual([])
+        expect(fake.storage.saves.slice(sent)).toEqual([])
     })
 })
 
@@ -2598,13 +2599,24 @@ function alertsModel(selection) {
 
 const editor = async ({selection, owner = true, chart = false, chartBand = 'ndvi', layer = false, actions = false, panels = [], unloaded, initialized = true, wizard = false, options, records, sources, date}) => {
     const initialState = sessionState({selection, tabs: [{id: ALERTS}], unloaded, records})
-    initialState.process.loadedRecipes[ALERTS].ui.initialized = initialized
-    if (options) initialState.process.loadedRecipes[ALERTS].model.options = options
-    if (sources) initialState.process.loadedRecipes[ALERTS].model.sources = sources
-    if (date) initialState.process.loadedRecipes[ALERTS].model.date = date
+    const alerts = initialState.process.loadedRecipes[ALERTS]
+    alerts.ui.initialized = initialized
+    if (options) alerts.model.options = options
+    if (sources) alerts.model.sources = sources
+    if (date) alerts.model.date = date
+    // Alerts already saved are stored, and opened as navigation opens them; alerts being created are held by the session
+    // alone.
+    if (initialized) {
+        fake.storage.store(alerts)
+        delete initialState.process.loadedRecipes[ALERTS]
+        initialState.process.tabs = []
+    }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     store.subscribe(() => firstListener())
     installStore(store)
+    if (initialized) {
+        openedAlerts = openStoredRecipe(store, fake.storage, ALERTS)
+    }
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
@@ -2901,7 +2913,7 @@ const CHANGES_AGAIN = {...CHANGES, visParams: {...CHANGES.visParams, min: [0]}}
 
 const EXPORTED_SOURCES = {dataSets: {LANDSAT: ['NDVI', 'NBR']}}
 
-const storedRecords = ids => Object.fromEntries(RECORDS.filter(({id}) => ids.includes(id)).map(record => [record.id, record]))
+const storeRecords = ids => RECORDS.filter(({id}) => ids.includes(id)).forEach(record => fake.storage.store(record))
 
 const loaded = () => Object.keys(store.getState().process.loadedRecipes)
 
@@ -2935,7 +2947,7 @@ const saveEdit = async (id, changes) => {
 
 const saved = async id => {
     const record = {...recordOf(id), revision: 2}
-    fake.stored[id] = record
+    fake.storage.store(record)
     await act(async () => actionBuilder('SAVED')
         .set(['process.loadedRecipes', id], record)
         .set(['process.saveStates', id], {status: 'SAVED', revision: 2, model: record.model})

@@ -8,7 +8,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {IMAGE_OUTPUT, PIXEL_OBSERVATIONS} from '#sepal/recipe/output/readiness'
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, openStoredRecipe} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import format from '~/format'
 import {selectFrom} from '~/stateUtils'
@@ -21,9 +22,9 @@ import {tooltipText} from '~/widget/tooltip.test.fixtures'
 // removed, its tooltip giving the years it holds imagery for, warning of nothing while another chosen may contribute.
 // Removed, it is offered again only by Dates its years cover. Where none chosen may, Sources say so beside the data sets and on their section, a draft leaving none
 // is refused, and the image is held, until Sources or Dates repair it. The Sources panels, their forms, the store, the type registry and the source runtime are real;
-// recipe reads answer from stored records, and Earth Engine is never asked.
+// storage answers as the recipe module does, and Earth Engine is never asked.
 
-const fake = vi.hoisted(() => ({english: false, stored: {}}))
+const fake = vi.hoisted(() => ({english: false, storage: null}))
 // Change Alerts' reference is a segments asset, read for its bands and the processing it records.
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
@@ -37,9 +38,9 @@ vi.mock('~/apiRegistry', () => ({default: {
         assetMetadata$: ({asset} = {}) => of(asset === SEGMENTS_ASSET ? SEGMENTS : {type: 'Image', bands: []})
     },
     recipe: {
-        load$: id => of(fake.stored[id] ?? null),
+        load$: id => fake.storage.load$(id),
         loadAll$: () => of([]),
-        save$: () => of()
+        save$: request => fake.storage.save$(request)
     }
 }}))
 // A message is its key and values; in English, the real one says it from the catalogue.
@@ -680,21 +681,22 @@ const RuntimeProbe = withSourceRuntime()(({sourceRuntime}) => {
 
 async function open(t, dataSets, dates, overrides = {}, groups = toGroups(dataSets)) {
     const recipe = {id: ID, type: t.type, title: t.type, revision: 1, model: {aoi: AOI, ...t.model(groups, dates), ...overrides}, ui: {initialized: true}}
-    fake.stored = {[ID]: recipe, [CLASSIFICATION]: classificationRecord, [MOSAIC]: mosaicRecord}
+    const records = [recipe, classificationRecord, mosaicRecord]
+    fake.storage = recipeStorage({records})
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: {[ID]: recipe},
-            recipes: Object.values(fake.stored).map(({id, type}) => ({id, name: id, type, revision: 1})),
+            loadedRecipes: {},
+            recipes: records.map(({id, type}) => ({id, name: id, type, revision: 1})),
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
-            tabs: [{id: ID}]
+            projects: []
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
+    openStoredRecipe(store, fake.storage, ID)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

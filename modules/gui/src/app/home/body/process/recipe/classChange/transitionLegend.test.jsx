@@ -5,7 +5,8 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
 
@@ -15,6 +16,7 @@ import {selectFrom} from '~/stateUtils'
 // answers each source when a test says so.
 
 const fake = vi.hoisted(() => ({requests: []}))
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', async () => {
     const {NEVER, of, Subject} = await import('rxjs')
     const request = key => {
@@ -23,7 +25,7 @@ vi.mock('~/apiRegistry', async () => {
         return answer$
     }
     return {default: {
-        recipe: {save$: () => NEVER, load$: () => NEVER, loadAll$: () => of(LISTING)},
+        recipe: {save$: request => io.storage.save$(request), load$: () => NEVER, loadAll$: () => of(LISTING)},
         gee: {
             assetMetadata$: ({asset}) => request(`metadata:${asset}`),
             assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
@@ -225,7 +227,9 @@ async function open(recipe, openPanels = []) {
         dimensions: {width: 1024, height: 768}
     }
     modelWrites = []
-    store = createStore((state = initialState, action) => {
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => {
         const next = action.reduce ? action.reduce(state) : state
         if (selectFrom(next, ['process.loadedRecipes', ID, 'model']) !== selectFrom(state, ['process.loadedRecipes', ID, 'model'])) {
             modelWrites.push(action.type)
@@ -233,6 +237,9 @@ async function open(recipe, openPanels = []) {
         return next
     })
     installStore(store)
+    opening.openIn(store)
+    // Opening the recipe as navigation does is not one of the editor's writes.
+    modelWrites = []
     const container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

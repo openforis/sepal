@@ -7,7 +7,8 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, openStoredRecipe} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
@@ -18,16 +19,16 @@ import {tooltipText} from '~/widget/tooltip.test.fixtures'
 // panel names it beside the classification field, whose own sections say why, SRC is marked, and Retrieve and the pixel
 // chart's observations are held naming SRC - one problem, said where it is repaired - while holding the panel's
 // Apply. Repairing it, or selecting none, releases them; a supplied decision tree needs no training. The panel, store,
-// source runtime and recipe types are real; the recipe reads answer from stored records, Earth Engine an asset's bands
+// source runtime and recipe types are real; storage answers as the recipe module does, Earth Engine an asset's bands
 // at once - a radar asset's VV and VH.
 
-const stored = vi.hoisted(() => ({records: {}}))
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         bands$: ({asset}) => of((asset === 'users/x/radar' ? ['VV', 'VH'] : ['red', 'nir']).map(name => ({name, arrayDimensions: 0}))),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
     },
-    recipe: {load$: id => of(stored.records[id]), loadAll$: () => of(LISTING), save$: () => of()}
+    recipe: {load$: id => io.storage.load$(id), loadAll$: () => of(LISTING), save$: request => io.storage.save$(request)}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => {
     const text = [key].flat().join('.')
@@ -274,21 +275,21 @@ const RuntimeProbe = withSourceRuntime()(({sourceRuntime}) => {
 
 async function open({points, classifier = {type: 'RANDOM_FOREST'}, inputs}) {
     const records = [seriesRecipe(), classificationRecipe({classifier, points, inputs}), reusingRecipe(), mosaicRecipe()]
-    stored.records = Object.fromEntries(records.map(record => [record.id, record]))
+    io.storage = recipeStorage({records})
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: Object.fromEntries(records.map(record => [record.id, record])),
+            loadedRecipes: Object.fromEntries(records.filter(({id}) => id !== SERIES).map(record => [record.id, record])),
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
-            tabs: [{id: SERIES}]
+            projects: []
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
+    openStoredRecipe(store, io.storage, SERIES)
     await render()
 }
 

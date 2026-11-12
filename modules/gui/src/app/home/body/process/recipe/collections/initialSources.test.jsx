@@ -10,7 +10,8 @@ import {actionBuilder} from '~/action-builder'
 import {duplicateRecipe, setInitialized} from '~/app/home/body/process/recipe'
 import {Recipe, recipe as recipeRoot} from '~/app/home/body/process/recipeContext'
 import {initializeRecipe} from '~/app/home/body/process/recipeSession/recipeCache'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, openStoredRecipe} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {compose} from '~/compose'
 import format from '~/format'
@@ -33,14 +34,14 @@ import {tooltipText} from '~/widget/tooltip.test.fixtures'
 // and Dates panel, which render before Sources hold any data set; elsewhere the steps before Sources stand in for AOI and
 // Dates, committing the dates their panel would.
 
-const fake = vi.hoisted(() => ({dates: null}))
+const fake = vi.hoisted(() => ({dates: null, storage: null}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         bands$: () => of([]),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
         assetMetadata$: () => of({type: 'Image', bands: []})
     },
-    recipe: {load$: () => of(null), loadAll$: () => of([]), save$: () => of()}
+    recipe: {load$: id => fake.storage.load$(id), loadAll$: () => of([]), save$: request => fake.storage.save$(request)}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => {
     const text = [key].flat().join('.')
@@ -461,8 +462,11 @@ async function create(t, {ui = {}} = {}) {
     await open(t, {id: ID, type: t.type, placeholder: t.type, ui: {unsaved: true, ...ui}})
 }
 
+// A recipe already saved is stored, and opened as navigation opens it; one just created is held only by the session.
 async function open(t, recipe) {
-    const loadedRecipes = recipe ? {[recipe.id]: recipe} : {}
+    const created = recipe?.ui?.unsaved ? recipe : null
+    fake.storage = recipeStorage({records: recipe && !created ? [recipe] : []})
+    const loadedRecipes = created ? {[created.id]: created} : {}
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
@@ -472,12 +476,15 @@ async function open(t, recipe) {
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
             projects: [],
-            tabs: recipe ? [{id: recipe.id, type: recipe.type}] : [],
-            selectedTabId: recipe?.id
+            tabs: created ? [{id: created.id, type: created.type}] : [],
+            selectedTabId: created?.id
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
+    if (recipe && !created) {
+        openStoredRecipe(store, fake.storage, recipe.id, {ui: recipe.ui})
+    }
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

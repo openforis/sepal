@@ -8,7 +8,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {isClassifiedOutput} from '#sepal/recipe/classifiedOutputs'
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, openStoredRecipe} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
@@ -19,7 +20,7 @@ import {PortalContainer, PortalContext} from '~/widget/portal'
 // root, panels, forms and submission are real; storage, Earth Engine, task submission, the root's map and toolbar, the
 // graph renderer, the workspace destination's check and the chart's band picker widget are replaced.
 
-const fake = vi.hoisted(() => ({stored: {}, listing: [], requests: [], submitted: []}))
+const fake = vi.hoisted(() => ({storage: null, listing: [], requests: [], submitted: []}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         loadTimeSeriesObservations$: ({bands}) => {
@@ -34,9 +35,9 @@ vi.mock('~/apiRegistry', () => ({default: {
         bands$: () => of(['red', 'nir'].map(name => ({name, arrayDimensions: 0})))
     },
     recipe: {
-        load$: id => of(fake.stored[id]),
+        load$: id => fake.storage.load$(id),
         loadAll$: () => of(fake.listing),
-        save$: () => of()
+        save$: request => fake.storage.save$(request)
     },
     tasks: {
         submit$: task => {
@@ -103,7 +104,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 let root, store
 
 beforeEach(() => {
-    fake.stored = {[CLASSIFICATION]: RANDOM_FOREST_CLASSIFICATION}
+    fake.storage = recipeStorage({records: [RANDOM_FOREST_CLASSIFICATION]})
     fake.listing = LISTING
     fake.requests = []
     fake.submitted = []
@@ -321,12 +322,13 @@ let Root
 
 const mount = async (type, panels, retrieveBands = ['regression']) => {
     Root = ROOTS[type]
+    const recipe = recipeOf(type, retrieveBands)
+    fake.storage.store(recipe)
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: {[ID]: recipeOf(type, retrieveBands), [CLASSIFICATION]: RANDOM_FOREST_CLASSIFICATION},
-            tabs: [{id: ID}],
+            loadedRecipes: {[CLASSIFICATION]: RANDOM_FOREST_CLASSIFICATION},
             saveStates: {},
             recipes: fake.listing,
             recipeListing: {checkedAt: Date.now()},
@@ -335,6 +337,7 @@ const mount = async (type, panels, retrieveBands = ['regression']) => {
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
+    openStoredRecipe(store, fake.storage, ID, {ui: recipe.ui})
     const container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

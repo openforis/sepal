@@ -7,7 +7,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, openStoredRecipe} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider, useSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {MapContext} from '~/app/home/map/mapContext'
 import {select} from '~/store'
@@ -76,7 +76,6 @@ const {default: opticalMosaic} = await import('../opticalMosaic/opticalMosaic')
 const {RecipeActions: TimeSeriesActions} = await import('../timeSeries/timeSeriesRecipe')
 const {RecipeActions: CcdcActions} = await import('../ccdc/ccdcRecipe')
 const {ChartPixelButton} = await import('../charts/chartPixelButton')
-const {recipeSessionOf} = await import('~/app/home/body/process/recipeSession/recipeSession')
 const {recipeStorage} = await import('~/app/home/body/process/recipeSession/recipeStorage.test.fixtures')
 const timeSeriesChart = await import('../timeSeries/panels/chartPixel')
 const ccdcChart = await import('../ccdc/panels/chartPixel')
@@ -481,9 +480,8 @@ async function open({type, chart: {CHART_OPERATIONS, ChartPixel}, RecipeActions}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
-    // As the application installs its store, with its session, which opens a recipe at the revision it was loaded at
-    // before its tab is (openRecipeById$, recipe.jsx).
-    records.filter(({id}) => opened.includes(id)).forEach(record => recipeSessionOf(store).openRecipeRevision(record))
+    // Opened as navigation opens them, in the view state the case leaves them in; the tabs are the case's.
+    records.filter(({id}) => opened.includes(id)).forEach(record => openStoredRecipe(store, io.storage, record.id, {ui: record.ui}))
     store.dispatch(actionBuilder('OPEN_RECIPES').set('process.tabs', opened.map(id => ({id}))).build())
     map = mapOf()
     const recipeActions = RecipeActions(SERIES)

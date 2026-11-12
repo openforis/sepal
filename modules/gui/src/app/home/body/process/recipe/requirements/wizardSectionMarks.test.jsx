@@ -5,7 +5,8 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 
 // What a recipe's toolbar marks while its wizard sets it up: a section the wizard has not reached is not marked yet, one
@@ -15,9 +16,10 @@ import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 // buttons and requirement reads over a real store; each panel is a stand-in that opens and closes as its section does,
 // offering the wizard's steps.
 
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', async () => {
     const {NEVER} = await import('rxjs')
-    return {default: {recipe: {save$: () => NEVER, load$: () => NEVER, loadAll$: () => NEVER}, gee: {}}}
+    return {default: {recipe: {save$: request => io.storage.save$(request), load$: () => NEVER, loadAll$: () => NEVER}, gee: {}}}
 })
 vi.mock('~/translate', () => ({msg: (key, values) => {
     const name = Array.isArray(key) ? key.join('.') : key
@@ -578,8 +580,11 @@ async function open(recipe, RecipeToolbar) {
         },
         dimensions: {width: 1024, height: 768}
     }
-    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
+    opening.openIn(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

@@ -6,7 +6,8 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe, withRecipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, openStoredRecipe} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {compose} from '~/compose'
 import translations from '~/locale/en/translations.json'
@@ -18,7 +19,7 @@ import {tooltipText} from '~/widget/tooltip.test.fixtures'
 // storage are faked.
 
 const fake = vi.hoisted(() => ({
-    assets: {}, failing: new Set(), heldMetadata: null, cancelledMetadata: [], versions: {}, calls: [], stored: {}
+    assets: {}, failing: new Set(), heldMetadata: null, cancelledMetadata: [], versions: {}, calls: [], storage: null
 }))
 vi.mock('~/apiRegistry', async () => {
     const {Observable, of, throwError} = await import('rxjs')
@@ -47,9 +48,10 @@ vi.mock('~/apiRegistry', async () => {
             datasets$: () => of({community: {datasets: [], matchingResults: 0}, gee: {datasets: [], matchingResults: 0}}),
             assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: fake.versions[id] ?? 'v1'}))})
         },
-        // Storage holds the recipes the session does.
+        // Storage holds the recipes the session does, and saves them as the recipe module does.
         recipe: {
-            load$: id => fake.stored[id] ? of(fake.stored[id]) : throwError(() => new Error(`Recipe ${id} not found`)),
+            load$: id => fake.storage.load$(id),
+            save$: request => fake.storage.save$(request),
             loadAll$: () => of(LISTING)
         }
     }}
@@ -151,7 +153,7 @@ beforeEach(() => {
     fake.cancelledMetadata = []
     fake.versions = {}
     fake.calls = []
-    fake.stored = Object.fromEntries(RECORDS.map(record => [record.id, record]))
+    fake.storage = recipeStorage({records: RECORDS})
     previews.constructed = []
 })
 
@@ -792,20 +794,22 @@ const ALERT_LAYER = {
 }
 const FIRST_OBSERVATION_LAYER = {visualizationType: 'first', visParams: {type: 'continuous', bands: ['VV']}}
 
-const sessionState = ({selection, options = HISTORICAL_OPTIONS, tabs, initialized = true}) => ({
+const alertsRecord = ({selection, options = HISTORICAL_OPTIONS, initialized = true}) => ({
+    id: ALERTS, type: 'BAYTS_ALERTS', revision: 1,
+    model: {
+        reference: selection,
+        date: {monitoringEnd: '2024-01-01', monitoringDuration: 2, monitoringDurationUnit: 'months'},
+        options,
+        baytsAlertsOptions: {}
+    },
+    ui: {initialized}
+})
+
+const sessionState = ({alerts, tabs}) => ({
     user: {currentUser: {googleTokens: {accessToken: 'token'}}},
     process: {
         loadedRecipes: {
-            [ALERTS]: {
-                id: ALERTS, type: 'BAYTS_ALERTS', revision: 1,
-                model: {
-                    reference: selection,
-                    date: {monitoringEnd: '2024-01-01', monitoringDuration: 2, monitoringDurationUnit: 'months'},
-                    options,
-                    baytsAlertsOptions: {}
-                },
-                ui: {initialized}
-            },
+            ...alerts ? {[ALERTS]: alerts} : {},
             [HOST]: {id: HOST, type: 'MOSAIC', revision: 1, model: {}, ui: {initialized: true}},
             ...Object.fromEntries(RECORDS.map(record => [record.id, record]))
         },
@@ -852,10 +856,20 @@ const onAnotherMap = async ({selection, layers}) => {
     await mount({selection, tabs: [{id: HOST}], shown: {owner: false, panel: false, actions: false, layers}})
 }
 
-const mount = async ({selection, options, initialized, tabs, shown}) => {
-    const initialState = sessionState({selection, options, initialized, tabs})
+// Alerts already saved are stored, and their editor opens them as navigation does; alerts being created are held by the
+// session alone.
+const mount = async ({selection, options, initialized = true, tabs, shown}) => {
+    const alerts = alertsRecord({selection, options, initialized})
+    if (initialized) {
+        fake.storage.store(alerts)
+    }
+    const opening = initialized && tabs.some(({id}) => id === ALERTS)
+    const initialState = sessionState({alerts: opening ? null : alerts, tabs: tabs.filter(({id}) => !opening || id !== ALERTS)})
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
+    if (opening) {
+        openStoredRecipe(store, fake.storage, ALERTS)
+    }
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
@@ -864,6 +878,7 @@ const mount = async ({selection, options, initialized, tabs, shown}) => {
 }
 
 const showEditor = async () => {
+    // Its tab alone: opened as navigation opens it, from storage, the evidence held for the alerts would be read again.
     await act(async () => actionBuilder('OPEN_TAB').set('process.tabs', [{id: HOST}, {id: ALERTS}]).dispatch())
     mounted = {...mounted, owner: true}
     await render()

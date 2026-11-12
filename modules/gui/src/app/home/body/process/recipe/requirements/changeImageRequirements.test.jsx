@@ -5,7 +5,8 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
@@ -17,8 +18,9 @@ import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 // panels over a real store and source runtime; Earth Engine and recipe storage answer when a test says so.
 
 const fake = vi.hoisted(() => ({requests: [], records: {}, missingAssets: new Set(), versionsHeld: false}))
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', async () => {
-    const {map, NEVER, of, Subject, throwError} = await import('rxjs')
+    const {map, of, Subject, throwError} = await import('rxjs')
     const request = key => {
         const answer$ = new Subject()
         fake.requests.push({key, answer$})
@@ -26,7 +28,7 @@ vi.mock('~/apiRegistry', async () => {
     }
     return {default: {
         recipe: {
-            save$: () => NEVER,
+            save$: request => io.storage.save$(request),
             // A record a test does not hold is answered when the test says so.
             load$: id => !(id in fake.records) ? request(`load:${id}`)
                 : fake.records[id] instanceof Error ? throwError(() => fake.records[id]) : of(fake.records[id]),
@@ -613,8 +615,11 @@ async function open(Toolbar, recipe, openPanels = []) {
         assets: {user: [NEW, ANOTHER].map(id => ({id, type: 'Image', updateTime: 'T1'})), other: []},
         dimensions: {width: 1024, height: 768}
     }
-    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
+    opening.openIn(store)
     const container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

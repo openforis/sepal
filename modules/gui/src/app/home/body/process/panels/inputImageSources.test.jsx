@@ -5,7 +5,8 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {selectFrom} from '~/stateUtils'
 import lookStyles from '~/style/look.module.css'
 
@@ -15,10 +16,11 @@ import lookStyles from '~/style/look.module.css'
 // an asset.
 
 const fake = vi.hoisted(() => ({metadata: null}))
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', async () => {
     const {from, NEVER, of} = await import('rxjs')
     return {default: {
-        recipe: {save$: () => NEVER, load$: () => NEVER, loadAll$: () => NEVER},
+        recipe: {save$: request => io.storage.save$(request), load$: () => NEVER, loadAll$: () => NEVER},
         gee: {
             // Answered later, as Earth Engine answers.
             assetMetadata$: () => from(Promise.resolve(fake.metadata)),
@@ -211,8 +213,11 @@ const editInput = async (InputImage, {images, imageId}) => {
         assets: {user: [ASSET_X, ASSET_Y].map(id => ({id, type: 'Image', updateTime: 'T1'})), other: []},
         dimensions: {width: 1024, height: 768}
     }
-    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
+    opening.openIn(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

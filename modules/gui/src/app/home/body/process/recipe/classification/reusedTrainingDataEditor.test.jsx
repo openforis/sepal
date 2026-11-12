@@ -7,7 +7,8 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, openStoredRecipe} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import {EventShield} from '~/widget/eventShield'
@@ -22,11 +23,11 @@ import {tooltipText} from '~/widget/tooltip.test.fixtures'
 // be chosen, which is judged afresh, Cancel keeps what was applied, and opened and left as it is, it offers Close, not
 // Apply. What is said of another data set's recipe stays on that data set, and holds nothing there. The same checks run
 // over a data set mapped from table rows while its class mapping maps them again, and leave that editor working. The
-// panels, store, source runtime and recipe types are real; storage answers from stored records, Earth Engine an asset's
-// bands at once.
+// panels, store, source runtime and recipe types are real; storage answers as the recipe module does, Earth Engine an
+// asset's bands at once.
 
 // `answers`: what storage answers for a recipe, where not at once.
-const stored = vi.hoisted(() => ({records: {}, answers: {}}))
+const stored = vi.hoisted(() => ({records: {}, storage: null, answers: {}}))
 // What Earth Engine answers an asset holding, where not red and nir.
 const evidence = vi.hoisted(() => ({'users/x/red': ['red'], 'users/x/red-again': ['red']}))
 const editing = vi.hoisted(() => ({dataSetId: null}))
@@ -35,7 +36,7 @@ vi.mock('~/apiRegistry', () => ({default: {
         bands$: ({asset}) => of((evidence[asset] || ['red', 'nir']).map(name => ({name, arrayDimensions: 0}))),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
     },
-    recipe: {load$: id => stored.answers[id] || of(stored.records[id]), loadAll$: () => of(listing()), save$: () => of()}
+    recipe: {load$: id => stored.answers[id] || stored.storage.load$(id), loadAll$: () => of(listing()), save$: request => stored.storage.save$(request)}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${[key].flat().join('.')} ${JSON.stringify(values)}` : [key].flat().join('.')}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
@@ -192,7 +193,7 @@ describe.each([
         await open(type, TrainingDataSet, {editing: HEALTHY_ID, savedName: 'Field plots', held: [CONSUMER, PROVIDER, MIDDLE, SPARE]})
 
         await choose(SPARE_NAME)
-        await act(async () => answer.next(stored.records[OTHER]))
+        await act(async () => answer.next(stored.storage.stored(OTHER)))
         await settled()
         await press(button('button.apply'))
 
@@ -407,22 +408,22 @@ const RuntimeProbe = withSourceRuntime()(({sourceRuntime}) => {
 async function open(type, TrainingDataSet, {reused = PROVIDER, editing: dataSetId = REUSED_ID, providerImages, savedName, held, dataSets} = {}) {
     const records = recipesOf(type, {reused, providerImages, savedName, dataSets})
     stored.records = Object.fromEntries(records.map(record => [record.id, record]))
+    stored.storage = recipeStorage({records})
     editing.dataSetId = dataSetId
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: Object.fromEntries(records.filter(({id}) => !held || held.includes(id)).map(record => [record.id, record])),
+            loadedRecipes: Object.fromEntries(records.filter(({id}) => id !== CONSUMER && (!held || held.includes(id))).map(record => [record.id, record])),
             recipes: listing(),
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
-            tabs: [{id: CONSUMER}],
-            selectedTabId: CONSUMER
+            projects: []
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
+    openStoredRecipe(store, stored.storage, CONSUMER, {ui: stored.records[CONSUMER].ui})
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

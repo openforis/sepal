@@ -582,10 +582,15 @@ and explicit refresh for external changes and missed events.
   ([lifetime](recipes/gui-source-runtime.md#recipe-session)). Still acting on whichever store is installed when they
   complete: `recipe.jsx`'s navigation and listing requests (`openRecipeById$`, `removeRecipes$`, `loadRecipes$`,
   `moveRecipes$`), harmless while one store serves the page. Test harnesses install stores with their sessions and
-  dispose them as each test ends; those standing in for storage that acknowledges saves enforce expected revisions
-  (`recipeStorage.test.fixtures.js`). Others still stand in for saves unfaithfully, though none outlives its test: 33
-  files keep saves unanswered (`NEVER`), 20 answer them with nothing (`of()`), which the coordinator recovers from as
-  from a lost acknowledgement, and 28 have no save at all, so each save fails and is recovered by reading the record.
+  dispose them as each test ends. Where a test's edits save, storage answers as the recipe module does
+  (`recipeStorage.test.fixtures.js`) and a saved recipe is opened as navigation opens it; the tests of pending, refused
+  and conflicting saves keep their own control. Apart from that: `bandMath/derivations.test.js` ends before any save
+  is compressed and keeps saves unanswered; `sources/recipeInput.test.jsx` writes drafts the session never opened,
+  whose saves stay unanswered; 19 files keep a save fake that is never answered or answers nothing, though none of
+  their tests saves. Some harnesses list a recipe still being set up, which autosave then creates; the application
+  lists a recipe once it is saved. A test ending through the session fixtures fails for any save the storage fake
+  refused or could not process (`checkSaves`); only saves that reached storage are judged, so one still being
+  compressed as the test ends goes unjudged, and saves answered by a harness's own fake are not checked.
 - Stronger trusted provenance, post-execution asset drift policy and product-specific AOI projections remain target
   architecture, not promises of current exports.
 

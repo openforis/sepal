@@ -49,7 +49,10 @@ compressed never starts, no wait is timed and its claimants write and remove not
 withdrawn - storage may have accepted it - but nothing it is answered with is applied. The application never disposes
 its session. Tests install a store as the application does (`installStore`, `recipeSession.test.fixtures.js`) and
 dispose its session as each test ends, whether or not they stand in for storage: an edit starts a save either way, and
-a session left running would carry it into the next test.
+a session left running would carry it into the next test. Where edits save, tests stand in for storage as the recipe
+module answers (`recipeStorage.test.fixtures.js`) and open a saved recipe as navigation does (`openStoredRecipe`,
+`storedOpenRecipes`): a recipe given a tab without being opened saves as a new one, which storage refuses as a
+conflict. Once its sessions are disposed, a test fails for any save the storage fake refused or could not process.
 
 A store serves one account. Logging out, a refused request (401) and a login session ended elsewhere reload the page
 (`user.js`, `http-client.js`, `loginSessionMonitor.jsx`), starting another store and session. Logging in from Landing,

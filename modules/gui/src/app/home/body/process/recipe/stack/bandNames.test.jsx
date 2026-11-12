@@ -7,7 +7,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
 
@@ -18,6 +19,7 @@ import {selectFrom} from '~/stateUtils'
 // follow its bands' names. Earth Engine answers each asset's bands when a test says so.
 
 const earthEngine = vi.hoisted(() => ({requests: []}))
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         bands$: request => new Observable(subscriber => {
@@ -25,7 +27,7 @@ vi.mock('~/apiRegistry', () => ({default: {
         }),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
     },
-    recipe: {save$: () => new Observable(), load$: () => new Observable(), loadAll$: () => of(LISTING)}
+    recipe: {save$: request => io.storage.save$(request), load$: () => new Observable(), loadAll$: () => of(LISTING)}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
@@ -349,7 +351,9 @@ async function open(recipe) {
         dimensions: {width: 1024, height: 768}
     }
     modelWrites = []
-    store = createStore((state = initialState, action) => {
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => {
         const next = action.reduce ? action.reduce(state) : state
         if (selectFrom(next, ['process.loadedRecipes', ID, 'model']) !== selectFrom(state, ['process.loadedRecipes', ID, 'model'])) {
             modelWrites.push(action.type)
@@ -357,6 +361,9 @@ async function open(recipe) {
         return next
     })
     installStore(store)
+    opening.openIn(store)
+    // Opening the recipe as navigation does is not one of the editor's writes.
+    modelWrites = []
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

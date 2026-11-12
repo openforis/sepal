@@ -7,7 +7,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, openStoredRecipe} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import format from '~/format'
 import {selectFrom} from '~/stateUtils'
@@ -21,13 +22,13 @@ import {tooltipText} from '~/widget/tooltip.test.fixtures'
 // beside it; the Sources button is marked, and the image and Retrieve held, until it is repaired. The root, its toolbar
 // and Sources panel, the store and the source runtime are real; Earth Engine is never asked for anything.
 
-const fake = vi.hoisted(() => ({stored: {}, open: new Set(), english: false}))
+const fake = vi.hoisted(() => ({storage: null, open: new Set(), english: false}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         bands$: () => of([]),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
     },
-    recipe: {load$: id => of(fake.stored[id]), loadAll$: () => of(LISTING), save$: () => of()}
+    recipe: {load$: id => fake.storage.load$(id), loadAll$: () => of(LISTING), save$: request => fake.storage.save$(request)}
 }}))
 // A message is its key and values, a message given no values reading as one given none, as the real one does; in English,
 // the real one says it from the catalogue.
@@ -511,21 +512,21 @@ const recipeTree = () => (
 
 async function open(sources, dates = {startYear: 2000, endYear: 2025}, panels = ['sources']) {
     const recipe = landTrendrRecipe(sources, dates)
-    fake.stored = {[ID]: recipe}
+    fake.storage = recipeStorage({records: [recipe]})
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: {[ID]: recipe},
+            loadedRecipes: {},
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
-            tabs: [{id: ID}]
+            projects: []
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
+    openStoredRecipe(store, fake.storage, ID, {ui: recipe.ui})
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

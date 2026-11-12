@@ -2,13 +2,14 @@ import {act} from 'react'
 import {createRoot} from 'react-dom/client'
 import {Provider} from 'react-redux'
 import {legacy_createStore as createStore} from 'redux'
-import {NEVER, Observable, of} from 'rxjs'
+import {Observable, of} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {collectionMeasures} from '#sepal/recipe/collectionBands'
 import {IMAGE_OUTPUT, PIXEL_OBSERVATIONS, PIXEL_SEGMENTS} from '#sepal/recipe/output/readiness'
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, openStoredRecipe} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
 import {EventShield} from '~/widget/eventShield'
@@ -19,10 +20,10 @@ import {tooltipText} from '~/widget/tooltip.test.fixtures'
 // A band of the images CCDC's Sources break on, or Phenology's analyse, must be one the configured collection carries
 // (collectionBands.js). Chosen, it stays chosen, shown and explained beside the field until the user changes it; a Sources
 // draft keeping it cannot be committed, while a PRC Apply leaving it uncarried is allowed, marking SRC and holding what
-// builds from it. The roots, toolbars, Sources and PRC panels, the store and the source runtime are real; recipe reads
-// answer from stored records, Earth Engine with CCDC's segment bands, and no chart request completes.
+// builds from it. The roots, toolbars, Sources and PRC panels, the store and the source runtime are real; storage
+// answers as the recipe module does, Earth Engine with CCDC's segment bands, and no chart request completes.
 
-const fake = vi.hoisted(() => ({stored: {}, listing: [], open: new Set()}))
+const fake = vi.hoisted(() => ({storage: null, listing: [], open: new Set()}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         bands$: () => of(['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb', 'ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude']),
@@ -30,7 +31,7 @@ vi.mock('~/apiRegistry', () => ({default: {
         loadCCDCSegments$: () => new Observable(),
         loadTimeSeriesObservations$: () => new Observable()
     },
-    recipe: {load$: id => fake.stored[id] ? of(fake.stored[id]) : NEVER, loadAll$: () => of(fake.listing), save$: () => of()}
+    recipe: {load$: id => fake.storage.load$(id), loadAll$: () => of(fake.listing), save$: request => fake.storage.save$(request)}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => {
     const text = [key].flat().join('.')
@@ -74,7 +75,7 @@ addRecipeType(phenology())
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
-let root, container, store, runtime
+let root, container, store, opened, runtime
 
 beforeEach(() => {
     fake.open = new Set()
@@ -142,7 +143,7 @@ describe.each(TYPES)('a $type saved choosing a band its collection does not carr
         expect(buttonTooltip(t.src)).toContain(unsupported(t, ['thermal2']))
         t.heldGates().forEach(gate => expect(gate).toMatchObject({withdraw: true, section: t.src}))
         t.freeGates().forEach(gate => expect(gate).toBe(null))
-        expect(applied().model).toBe(fake.stored[idOf(t)].model)
+        expect(applied().model).toBe(opened.model)
     })
 
     it('stays chosen, the model unchanged, as Sources render again over More and a session read completing', async () => {
@@ -336,7 +337,7 @@ describe.each(TYPES)('a $type over Planet imagery', t => {
         expect(inError(t.src)).toBe(true)
         t.heldGates().forEach(gate => expect(gate).toMatchObject({withdraw: true, section: t.src}))
         t.freeGates().forEach(gate => expect(gate).toBe(null))
-        expect(applied().model).toBe(fake.stored[idOf(t)].model)
+        expect(applied().model).toBe(opened.model)
     })
 
     it('saved choosing brightness, is repaired by choosing a band Planet carries, which clears SRC and what was held', async () => {
@@ -530,23 +531,23 @@ const RuntimeProbe = withSourceRuntime()(({sourceRuntime}) => {
 
 async function open(t, {panels, ...configuration}) {
     const recipe = recipeOf(t, configuration)
-    fake.stored = {[recipe.id]: recipe, [CLASSIFICATION]: classificationRecord}
+    fake.storage = recipeStorage({records: [recipe, classificationRecord]})
     fake.open = new Set(panels)
     fake.listing = [recipe, classificationRecord].map(({id, type}) => ({id, name: id, type, revision: 1}))
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: {[recipe.id]: recipe},
+            loadedRecipes: {},
             recipes: fake.listing,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
-            tabs: [{id: recipe.id}]
+            projects: []
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
+    opened = openStoredRecipe(store, fake.storage, recipe.id, {ui: recipe.ui})
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

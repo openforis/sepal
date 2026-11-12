@@ -78,7 +78,7 @@ const {default: changeAlertsType} = await import('./changeAlerts')
 const {default: ccdcType} = await import('../ccdc/ccdc')
 const {default: maskingType} = await import('../masking/masking')
 const {SourceRuntimeProvider, withSourceRuntime} = await import('../../sourceRuntime/sourceRuntimeContext')
-const {disposeInstalledSessions, installStore} = await import('~/app/home/body/process/recipeSession/recipeSession.test.fixtures')
+const {disposeInstalledSessions, installStore, openStoredRecipe} = await import('~/app/home/body/process/recipeSession/recipeSession.test.fixtures')
 const {recipeSessionOf} = await import('../../recipeSession/recipeSession')
 const {recipeStorage} = await import('../../recipeSession/recipeStorage.test.fixtures')
 
@@ -468,12 +468,9 @@ const show = async ({layerConfig, inAnotherRecipe = false, model, shown, others 
         }
     }, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
-    // As the application installs its store, with its session, which opens the recipe shown at the revision it was loaded
-    // at before its tab is (openRecipeById$, recipe.jsx).
-    const session = recipeSessionOf(store)
+    // The recipe shown in its own editor is opened as navigation opens it.
     if (!inAnotherRecipe) {
-        session.openRecipeRevision(recipe)
-        store.dispatch({type: 'OPEN_RECIPE', reduce: state => _.set(_.cloneDeep(state), ['process', 'tabs'], [{id: recipe.id}])})
+        openStoredRecipe(store, fake.storage, recipe.id)
     }
     let sourceRuntime
     root = createRoot(document.createElement('div'))
@@ -499,7 +496,7 @@ const show = async ({layerConfig, inAnotherRecipe = false, model, shown, others 
         dragging$: null,
         cursor$: null
     })
-    const sourceClaim = session.claimant()
+    const sourceClaim = recipeSessionOf(store).claimant()
     sourceClaim.use(recipe.id)
     const propsFor = config => ({...ownProps(config), ...layerSelector(store.getState(), ownProps(config))})
     const instance = new RecipeImageLayer(propsFor(layerConfig))

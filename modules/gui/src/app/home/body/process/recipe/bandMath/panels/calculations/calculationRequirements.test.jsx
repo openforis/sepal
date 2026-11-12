@@ -7,7 +7,8 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {selectFrom} from '~/stateUtils'
 import lookStyles from '~/style/look.module.css'
 import errorIndicatorStyles from '~/widget/errorIndicator.module.css'
@@ -16,9 +17,10 @@ import listItemStyles from '~/widget/listItem.module.css'
 // Calculations as their list and panel show them, judged by what Band Math needs of its configuration as applied, with
 // the sync that keeps the rest of the recipe following them, as the Band Math editor composes them, over a real store.
 
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', async () => {
     const {NEVER} = await import('rxjs')
-    return {default: {recipe: {save$: () => NEVER, load$: () => NEVER}}}
+    return {default: {recipe: {save$: request => io.storage.save$(request), load$: () => NEVER}}}
 })
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
@@ -390,8 +392,11 @@ const sessionState = ({images, calculations}) => ({
 async function open(imageId, {images = [INPUT], calculations = []}, panel = <Calculation/>) {
     activation.imageId = imageId
     const initialState = sessionState({images, calculations})
-    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
+    opening.openIn(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

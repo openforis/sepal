@@ -6,7 +6,8 @@ import {NEVER, of} from 'rxjs'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
 import {ActivationContext} from '~/widget/activation/activationContext'
@@ -17,6 +18,7 @@ import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 // so for whatever draft chooses no mask, of either kind - opening it edits nothing. A draft choosing one says nothing,
 // changing what is applied only once applied. Earth Engine answers for the two assets alone.
 
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         assetMetadata$: ({asset}) => BANDS[asset]
@@ -26,7 +28,7 @@ vi.mock('~/apiRegistry', () => ({default: {
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
         datasets$: () => of({community: {datasets: [], matchingResults: 0}, gee: {datasets: [], matchingResults: 0}})
     },
-    recipe: {save$: () => NEVER, load$: () => NEVER, loadAll$: () => of([])}
+    recipe: {save$: request => io.storage.save$(request), load$: () => NEVER, loadAll$: () => of([])}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
@@ -292,8 +294,11 @@ async function open(recipe) {
         assets: {user: [PRIMARY_ASSET, MASK_ASSET].map(id => ({id, type: 'Image', updateTime: 'T1'})), other: []},
         dimensions: {width: 1024, height: 768}
     }
-    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
+    opening.openIn(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

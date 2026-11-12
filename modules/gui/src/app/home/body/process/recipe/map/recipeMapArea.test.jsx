@@ -7,7 +7,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
 
@@ -17,6 +18,7 @@ import {selectFrom} from '~/stateUtils'
 // it with the selection the area kept. Store, source runtime, activation, layout and menu are real; Earth Engine and the
 // Google map are faked.
 
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', async () => {
     const {NEVER, of} = await import('rxjs')
     return {default: {
@@ -27,7 +29,7 @@ vi.mock('~/apiRegistry', async () => {
             // The geometry its AOI overlay draws is not the concern here: it never answers.
             recipeGeometry$: () => NEVER
         },
-        recipe: {save$: () => NEVER, load$: () => NEVER, loadAll$: () => of(LISTING)}
+        recipe: {save$: request => io.storage.save$(request), load$: () => NEVER, loadAll$: () => of(LISTING)}
     }}
 })
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
@@ -215,8 +217,11 @@ async function open(recipe, style = STYLE) {
         assets: {user: [], other: []},
         dimensions: {width: 1024, height: 768}
     }
-    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
+    opening.openIn(store)
     initializeLayers({recipeId: ID})
     actionBuilder('SELECT_VISUALIZATION')
         .set(['process.loadedRecipes', ID, 'layers.areas.center.imageLayer.layerConfig'], {visParams: style})

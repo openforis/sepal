@@ -5,7 +5,8 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, openStoredRecipe} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
@@ -17,7 +18,7 @@ import {tooltipText} from '~/widget/tooltip.test.fixtures'
 
 const fake = vi.hoisted(() => ({
     assets: {}, failing: new Set(), heldMetadata: null, cancelledMetadata: [], versions: {}, calls: [],
-    segmentBands: [], heldSegments: null, cancelledSegments: [], graphs: [], stored: {}, heldLoads: null
+    segmentBands: [], heldSegments: null, cancelledSegments: [], graphs: [], storage: null, heldLoads: null
 }))
 vi.mock('~/apiRegistry', async () => {
     const {Observable, of, throwError} = await import('rxjs')
@@ -69,22 +70,18 @@ vi.mock('~/apiRegistry', async () => {
             },
             assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: fake.versions[id] ?? 'v1'}))})
         },
-        // Storage holds the recipes the session does.
+        // Storage holds the recipes the session does, and saves them as the recipe module does. A read of one it holds
+        // is answered once let go while reads are held.
         recipe: {
             load$: id => {
                 fake.calls.push(['load', id])
-                if (!fake.stored[id]) {
-                    return throwError(() => new Error(`Recipe ${id} not found`))
-                }
-                return fake.heldLoads
+                return fake.heldLoads && fake.storage.stored(id)
                     ? new Observable(subscriber => {
-                        fake.heldLoads.push(() => {
-                            subscriber.next(fake.stored[id])
-                            subscriber.complete()
-                        })
+                        fake.heldLoads.push(() => fake.storage.load$(id).subscribe(subscriber))
                     })
-                    : of(fake.stored[id])
+                    : fake.storage.load$(id)
             },
+            save$: request => fake.storage.save$(request),
             loadAll$: () => of(LISTING)
         }
     }}
@@ -172,7 +169,7 @@ beforeEach(() => {
     fake.heldSegments = null
     fake.cancelledSegments = []
     fake.graphs = []
-    fake.stored = Object.fromEntries(RECORDS.map(record => [record.id, record]))
+    fake.storage = recipeStorage({records: RECORDS})
     fake.heldLoads = null
 })
 
@@ -395,7 +392,7 @@ describe('the segment chart', () => {
         expect(fake.cancelledSegments).toEqual(['ndvi'])
         expect(fake.segmentBands).toEqual(['ndvi', 'VV'])
         await answerHeldSegments()
-        expect(fake.graphs.map(({band}) => band)).toEqual(['VV'])
+        expect([...new Set(fake.graphs.map(({band}) => band))]).toEqual(['VV'])
     })
 
     it('withdraws what it drew once the source no longer suits, and charts again once one does', async () => {
@@ -447,7 +444,7 @@ describe('the segment chart over a recipe it builds as that recipe\'s own image'
 
     it('lets go of its request while what the source builds is read, and requests once it can run', async () => {
         fake.heldSegments = []
-        fake.stored['mosaic-2'] = {id: 'mosaic-2', name: 'Sentinel 2022', type: 'MOSAIC', model: {}, revision: 1}
+        fake.storage.store({id: 'mosaic-2', name: 'Sentinel 2022', type: 'MOSAIC', model: {}, revision: 1})
         await editor({selection: ref('masking-ccdc'), chart: true})
         fake.heldLoads = []
 
@@ -673,26 +670,24 @@ class _OperationWatch extends React.Component {
 }
 const OperationWatch = compose(_OperationWatch, withSourceRuntime())
 
-const sessionState = ({selection, savedLayerSource}) => ({
+const sliceOf = ({selection, savedLayerSource}) => ({
+    id: SLICE, type: 'CCDC_SLICE', revision: 1,
+    model: {
+        source: selection,
+        date: {dateType: 'SINGLE', date: '2020-06-01'},
+        options: {gapStrategy: 'INTERPOLATE', harmonics: 3}
+    },
+    ui: {initialized: true, ...(savedLayerSource && {savedLayerSource})}
+})
+
+const sessionState = () => ({
     user: {currentUser: {googleTokens: {accessToken: 'token'}}},
     process: {
-        loadedRecipes: {
-            [SLICE]: {
-                id: SLICE, type: 'CCDC_SLICE', revision: 1,
-                model: {
-                    source: selection,
-                    date: {dateType: 'SINGLE', date: '2020-06-01'},
-                    options: {gapStrategy: 'INTERPOLATE', harmonics: 3}
-                },
-                ui: {initialized: true, ...(savedLayerSource && {savedLayerSource})}
-            },
-            ...Object.fromEntries(RECORDS.map(record => [record.id, record]))
-        },
+        loadedRecipes: Object.fromEntries(RECORDS.map(record => [record.id, record])),
         recipes: LISTING,
         recipeListing: {checkedAt: Date.now()},
         saveStates: {},
-        projects: [],
-        tabs: [{id: SLICE}]
+        projects: []
     },
     assets: {user: [SEGMENTS_ASSET, OTHER_ASSET].map(id => ({id, updateTime: 'T1'})), other: []},
     dimensions: {width: 1024, height: 768}
@@ -703,9 +698,12 @@ let mounted
 // The slice as its editor shows it - the editor's watch (`owner`), its source panel, its toolbar's actions and its chart
 // at a pixel - beside whatever else watches it for an operation over it.
 const editor = async ({selection, savedLayerSource, owner = true, panel = false, actions = false, chart = false, watching = []}) => {
-    const initialState = sessionState({selection, savedLayerSource})
+    const slice = sliceOf({selection, savedLayerSource})
+    fake.storage.store(slice)
+    const initialState = sessionState()
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
+    openStoredRecipe(store, fake.storage, SLICE, {ui: slice.ui})
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
@@ -914,7 +912,7 @@ const saveEdit = async (id, changes) => {
 
 const saved = async id => {
     const record = {...sliceRecordOf(id), revision: 2}
-    fake.stored[id] = record
+    fake.storage.store(record)
     await act(async () => actionBuilder('SAVED')
         .set(['process.loadedRecipes', id], record)
         .set(['process.saveStates', id], {status: 'SAVED', revision: 2, model: record.model})

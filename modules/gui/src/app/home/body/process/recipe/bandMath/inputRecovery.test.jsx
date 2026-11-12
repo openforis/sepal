@@ -2,18 +2,19 @@ import {act} from 'react'
 import {createRoot} from 'react-dom/client'
 import {Provider} from 'react-redux'
 import {legacy_createStore as createStore} from 'redux'
-import {asapScheduler, NEVER, observeOn, of, Subject} from 'rxjs'
+import {asapScheduler, observeOn, of, Subject} from 'rxjs'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, savedDraft, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {deserialize, serialize} from '~/serialize'
 import lookStyles from '~/style/look.module.css'
 import {ActivationContext} from '~/widget/activation/activationContext'
 
 // Real input add/remove/apply, and what their commits derive, over saved-model-shaped references. Source observations
 // are synthetic; readiness, section feedback and the downstream gates are the real shared reads.
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         bands$: ({asset, recipe, includeDataTypes}) => of((asset || recipe?.id === SOURCE ? ['red', 'nir'] : ['expr', 'mean'])
@@ -24,7 +25,7 @@ vi.mock('~/apiRegistry', () => ({default: {
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
         datasets$: () => of({community: {datasets: [], matchingResults: 0}, gee: {datasets: [], matchingResults: 0}})
     },
-    recipe: {save$: () => NEVER, load$: () => of(sourceRecipe()), loadAll$: () => of([])}
+    recipe: {save$: request => io.storage.save$(request), load$: id => io.storage.load$(id), loadAll$: () => of([])}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
@@ -197,7 +198,7 @@ it('refreshes retained identity on an applied source change', async () => {
 it.each(['input', 'calculation'])('does not steal a name occupied by another %s or reconnect around it', async owner => {
     await open(fixture())
     await removeInput()
-    const saved = savedRecipe()
+    const saved = await savedRecipe()
     if (owner === 'input') saved.model.inputImagery.images[0].name = 'i1'
     else saved.model.calculations.calculations[1].name = 'i1'
     const occupied = saved.model.inputImagery.images[0]
@@ -329,7 +330,7 @@ const recipe = () => store.getState().process.loadedRecipes[ID]
 const model = () => recipe().model
 const images = () => model().inputImagery.images
 const calculations = () => model().calculations.calculations
-const savedRecipe = () => deserialize(serialize(recipe()))
+const savedRecipe = () => savedDraft(store, io.storage, ID)
 const shared = (target = recipe()) => readImageOutput({
     graph: buildMapDependencyGraph({recipe: target, loadedRecipes: store.getState().process.loadedRecipes}),
     declarationFor: ({type}) => recipeType(type)?.imageOutput,
@@ -363,8 +364,11 @@ async function open(saved) {
         assets: {user: [SOURCE, OTHER, 'users/x/remaining'].map(id => ({id, type: 'Image', updateTime: 'T1'})), other: []},
         dimensions: {width: 1024, height: 768}
     }
-    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
+    opening.openIn(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
@@ -387,7 +391,7 @@ async function close() {
     container?.remove()
 }
 async function reopenSaved() {
-    const saved = savedRecipe()
+    const saved = await savedRecipe()
     await close()
     await open(saved)
 }

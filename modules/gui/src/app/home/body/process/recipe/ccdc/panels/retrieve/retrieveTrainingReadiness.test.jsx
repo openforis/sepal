@@ -7,7 +7,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe, withRecipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, openStoredRecipe} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider, useSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {compose} from '~/compose'
 import {select} from '~/store'
@@ -72,7 +72,6 @@ vi.mock('~/app/home/body/process/recipe/retrieve/assetDestination', () => ({
     }
 }))
 
-const {recipeSessionOf} = await import('~/app/home/body/process/recipeSession/recipeSession')
 const {recipeStorage} = await import('~/app/home/body/process/recipeSession/recipeStorage.test.fixtures')
 const {addRecipeType} = await import('../../../../recipeTypeRegistry')
 const {default: ccdc} = await import('../../ccdc')
@@ -762,12 +761,8 @@ const open = async ({selected, breakpointBands = [NATIVE], input = MOSAIC_INPUT,
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     store.subscribe(() => firstListener())
     installStore(store)
-    // The session opens a recipe in a tab at the revision it was loaded at, before its tab is (openRecipeById$, recipe.jsx);
-    // the view state it was then left in is the case's.
-    records.filter(loaded).forEach(record => {
-        recipeSessionOf(store).openRecipeRevision(record)
-        store.dispatch(actionBuilder('RESTORE_VIEW').set(['process.loadedRecipes', record.id, 'ui'], record.ui).build())
-    })
+    // Opened as navigation opens them, in the view state the case leaves them in; the tabs are the case's.
+    records.filter(loaded).forEach(record => openStoredRecipe(store, fake.storage, record.id, {ui: record.ui}))
     store.dispatch(actionBuilder('OPEN_RECIPES').set('process.tabs', opened.map(id => ({id}))).build())
     const container = document.createElement('div')
     document.body.appendChild(container)

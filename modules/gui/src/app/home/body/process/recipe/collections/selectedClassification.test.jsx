@@ -7,7 +7,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, openStoredRecipe} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
@@ -19,7 +20,7 @@ import {PortalContainer, PortalContext} from '~/widget/portal'
 // reads - the root's and Sources' (`ui`) apart from the runtime's (`runtime`) - Earth Engine, task submission, the roots'
 // map and toolbars and the workspace destination's check are the substitutes.
 
-const fake = vi.hoisted(() => ({stored: {}, listing: [], requests: [], holding: false, notified: [], bandReads: 0}))
+const fake = vi.hoisted(() => ({storage: null, listing: [], requests: [], holding: false, notified: [], bandReads: 0}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         loadTimeSeriesObservations$: () => of({features: []}),
@@ -33,7 +34,7 @@ vi.mock('~/apiRegistry', () => ({default: {
     recipe: {
         load$: id => read$('ui', id),
         loadAll$: () => of(fake.listing),
-        save$: () => of()
+        save$: request => fake.storage.save$(request)
     },
     tasks: {submit$: task => of(task)}
 }}))
@@ -92,11 +93,11 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 let root, store, mounted
 
 beforeEach(() => {
-    fake.stored = {
-        [FORESTS]: classificationOf(FORESTS, FOREST_LEGEND),
-        [WATERS]: classificationOf(WATERS, WATER_LEGEND),
-        [WATER_ONLY]: classificationOf(WATER_ONLY, {entries: [{value: 1, label: 'Water'}]}, {type: 'SVM', svmType: 'ONE_CLASS', oneClass: 1})
-    }
+    fake.storage = recipeStorage({records: [
+        classificationOf(FORESTS, FOREST_LEGEND),
+        classificationOf(WATERS, WATER_LEGEND),
+        classificationOf(WATER_ONLY, {entries: [{value: 1, label: 'Water'}]}, {type: 'SVM', svmType: 'ONE_CLASS', oneClass: 1})
+    ]})
     fake.listing = LISTING
     fake.requests = []
     fake.holding = false
@@ -364,7 +365,7 @@ describe('what is offered of the Classification a CCDC\'s Sources select', () =>
     })
 
     it('names a retained output alike in its choice and refusal as the Classification still applied is renamed', async () => {
-        fake.stored[WATERS] = classificationOf(WATERS, {entries: [{value: 3, label: 'Water'}, {value: 4, label: 'Land'}]})
+        fake.storage.store(classificationOf(WATERS, {entries: [{value: 3, label: 'Water'}, {value: 4, label: 'Land'}]}))
         await open({breakpointBands: ['probability_1'], panels: <CcdcSources/>})
         await selectClassification(WATERS)
         expect(chosenBreakpointBands()).toEqual([probability('Forest')])
@@ -477,15 +478,14 @@ const recipeOf = ({type, breakpointBands, ccdcOptions}) => ({
     }
 })
 
-// A read of storage, answered at once unless reads are being held. Each is recorded as it is made, with whether it was
-// let go before it was answered.
+// A read of storage, answered as storage answers it - at once unless reads are being held. Each is recorded as it is
+// made, with whether it was let go before it was answered.
 function read$(kind, id) {
     return new Observable(subscriber => {
         const request = {kind, id, cancelled: false, settled: false}
         request.answer = () => {
             request.settled = true
-            subscriber.next(fake.stored[id])
-            subscriber.complete()
+            fake.storage.load$(id).subscribe(subscriber)
         }
         request.fail = () => {
             request.settled = true
@@ -601,12 +601,13 @@ const ROOTS = {CCDC: ccdc().components.recipe, TIME_SERIES: timeSeries().compone
 
 const open = async ({type = 'CCDC', breakpointBands = ['ndvi'], ccdcOptions = MODERATE, panels}) => {
     mounted = {Root: ROOTS[type]}
+    const recipe = recipeOf({type, breakpointBands, ccdcOptions})
+    fake.storage.store(recipe)
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: {[ID]: recipeOf({type, breakpointBands, ccdcOptions})},
-            tabs: [{id: ID}],
+            loadedRecipes: {},
             saveStates: {},
             recipes: fake.listing.map(entry => entry.id === ID ? {...entry, type} : entry),
             recipeListing: {checkedAt: Date.now()},
@@ -615,6 +616,7 @@ const open = async ({type = 'CCDC', breakpointBands = ['ndvi'], ccdcOptions = MO
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
+    openStoredRecipe(store, fake.storage, ID, {ui: recipe.ui})
     const container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

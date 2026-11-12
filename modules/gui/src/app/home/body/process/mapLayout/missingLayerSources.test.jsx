@@ -6,7 +6,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {selectFrom} from '~/stateUtils'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import errorIndicatorStyles from '~/widget/errorIndicator.module.css'
@@ -19,11 +20,12 @@ import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 // naming the recipe, without a notification, until it is removed or names a recipe that loads. The server answers at
 // once.
 
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', async () => {
     const {NEVER, of, throwError} = await import('rxjs')
     return {default: {
         recipe: {
-            save$: () => NEVER,
+            save$: request => io.storage.save$(request),
             loadAll$: () => NEVER,
             load$: id => id === DELETED
                 ? throwError(() => ({name: 'AjaxError', status: 404}))
@@ -142,8 +144,11 @@ async function open() {
             tabs: [{id: ID}]
         }
     }
-    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
     installStore(store)
+    opening.openIn(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
