@@ -138,16 +138,18 @@
 
     - name: Copy /etc/docker/daemon.json
       template: src=docker/apps-daemon.json dest=/etc/docker/daemon.json
-        
+      register: daemon_json
+
     - name: Add ec2-user to docker group
       user:
         name: ec2-user
         groups: docker
 
+    # The daemon reads daemon.json only as it starts
     - name: Enable docker
       systemd:
         name: docker
-        state: started
+        state: "{{ 'restarted' if daemon_json.changed else 'started' }}"
         enabled: yes
         masked: no
 

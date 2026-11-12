@@ -42,6 +42,8 @@ apps_host() {
     check 'App traffic jumps to the apps chain' sh -c "iptables -S DOCKER-USER | grep -- '-j SEPAL-APPS'"
     check 'App container resolves DNS' docker run --rm --network sepal-apps $PROBE_IMAGE nslookup aws.amazon.com
     check 'App container cannot reach instance metadata' metadata_blocked sepal-apps
+    check 'Image build cannot reach instance metadata' build_metadata_blocked
+    check 'Image build cannot use the host network' build_host_network_refused
 }
 
 storage_host() {
@@ -59,6 +61,15 @@ docker_storage_and_cgroups() {
 metadata_blocked() {
     docker pull -q $PROBE_IMAGE >/dev/null || return 1
     ! docker run --rm --network "$1" $PROBE_IMAGE wget -qT5 -O- http://169.254.169.254/
+}
+
+build_metadata_blocked() {
+    printf 'FROM %s\nRUN ! wget -qT5 -O- http://169.254.169.254/\n' $PROBE_IMAGE | docker build -q --no-cache - >/dev/null
+}
+
+build_host_network_refused() {
+    ! printf 'FROM %s\nRUN --network=host true\n' $PROBE_IMAGE \
+        | docker buildx build --allow network.host --no-cache - >/dev/null 2>&1
 }
 
 check() {

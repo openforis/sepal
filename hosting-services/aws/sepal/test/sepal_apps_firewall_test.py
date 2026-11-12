@@ -10,9 +10,12 @@ from sepal_task_firewall_test import FAKE_IPTABLES, FAKE_IPTABLES_RESTORE, FAKE_
 
 SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docker', 'sepal-apps-firewall.sh')
 APPS_RANGE = '172.30.128.0/17'
+BUILD_BRIDGE = 'docker0'
 APP_LAUNCHER = '172.30.0.2'
 BLOCKED = ['169.254.0.0/16', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '100.64.0.0/10', '127.0.0.0/8']
 NAMESERVER = '172.31.0.2'
+JUMPS = [['-s', APPS_RANGE, '-j', 'SEPAL-APPS'], ['-i', BUILD_BRIDGE, '-j', 'SEPAL-APPS']]
+HOST_DROPS = [['-s', APPS_RANGE, '-j', 'DROP'], ['-i', BUILD_BRIDGE, '-j', 'DROP']]
 
 
 class SepalAppsFirewallTest(unittest.TestCase):
@@ -35,11 +38,11 @@ class SepalAppsFirewallTest(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def test_app_traffic_jumps_to_the_apps_chain_and_is_dropped_from_the_host(self):
+    def test_app_and_build_traffic_jumps_to_the_apps_chain_and_is_dropped_from_the_host(self):
         chains = self.run_script()
 
-        self.assertEqual([['-s', APPS_RANGE, '-j', 'SEPAL-APPS']], chains['DOCKER-USER'])
-        self.assertEqual([['-s', APPS_RANGE, '-j', 'DROP']], chains['INPUT'])
+        self.assertCountEqual(JUMPS, chains['DOCKER-USER'])
+        self.assertCountEqual(HOST_DROPS, chains['INPUT'])
 
     def test_the_apps_chain_returns_replies_and_dns_before_dropping_private_ranges(self):
         chains = self.run_script()
@@ -85,10 +88,10 @@ class SepalAppsFirewallTest(unittest.TestCase):
         self.run_script()
 
         snapshots = self.history()
-        self.assertTrue(any(['-s', APPS_RANGE, '-j', 'SEPAL-APPS'] in chains.get('DOCKER-USER', [])
+        self.assertTrue(any(set(map(tuple, JUMPS)) <= set(map(tuple, chains.get('DOCKER-USER', [])))
                             for chains in snapshots))
         for chains in snapshots:
-            if ['-s', APPS_RANGE, '-j', 'SEPAL-APPS'] in chains.get('DOCKER-USER', []):
+            if any(jump in chains.get('DOCKER-USER', []) for jump in JUMPS):
                 for destination in BLOCKED:
                     self.assertIn(['-d', destination, '-j', 'DROP'], chains['SEPAL-APPS'])
 
@@ -105,8 +108,8 @@ class SepalAppsFirewallTest(unittest.TestCase):
 
         self.assertNotEqual(0, result.returncode)
         chains = self.state_chains()
-        self.assertEqual([['-s', APPS_RANGE, '-j', 'SEPAL-APPS']], chains['DOCKER-USER'])
-        self.assertEqual([['-s', APPS_RANGE, '-j', 'DROP']], chains['INPUT'])
+        self.assertCountEqual(JUMPS, chains['DOCKER-USER'])
+        self.assertCountEqual(HOST_DROPS, chains['INPUT'])
         for destination in BLOCKED:
             self.assertIn(['-d', destination, '-j', 'DROP'], chains['SEPAL-APPS'])
 
