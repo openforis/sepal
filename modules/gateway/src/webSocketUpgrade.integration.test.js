@@ -15,7 +15,7 @@ const upstream = await startUpstream()
 
 mock.module('../config/modules.json', {
     exports: {
-        default: {gee: upstream.address, terminal: upstream.address}
+        default: {gee: upstream.address, terminal: upstream.address, userFiles: upstream.address}
     }
 })
 
@@ -51,6 +51,21 @@ describe('a websocket upgrade', () => {
         assert.equal((await upgrade('/api/gee/projects', ALICE)).status, 404)
     })
 
+    test('refuses direct user-files upgrades without reaching the internal protocol', async () => {
+        const upgrades = upstream.upgrades
+        for (const path of ['/api/user-files', '/api/user-files/', '/api/user-files/ws?user=bob']) {
+            const {status} = await upgrade(path, ALICE, {
+                'sepal-user': JSON.stringify({username: 'bob', admin: true})
+            })
+            assert.equal(status, 404, path)
+        }
+        assert.equal(upstream.upgrades, upgrades)
+    })
+
+    test('still accepts the global browser websocket', async () => {
+        assert.equal((await upgrade('/api/ws', ALICE)).status, 101)
+    })
+
     test('is refused on a module\'s metrics', async () => {
         assert.equal((await upgrade('/api/terminal/metrics', ALICE)).status, 403)
     })
@@ -66,16 +81,21 @@ const startGateway = async () => {
     const passThrough = (_req, _res, next) => next()
     const proxies = Proxy({}, passThrough, passThrough).proxyEndpoints(express())
     const server = createServer()
+    const wss = new WebSocketServer({noServer: true})
     server.on('upgrade', webSocketUpgradeHandler({
         sessionParser: fakeSessionParser,
         userStore: {getUser$: username => of({alice: ALICE}[username])},
-        wss: null,
+        wss,
         sandboxProxy: {matches: () => false},
         proxies
     }))
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
     gatewayUrl = `ws://127.0.0.1:${server.address().port}`
-    return {close: () => new Promise(resolve => server.close(resolve))}
+    return {close: () => new Promise(resolve => {
+        wss.clients.forEach(client => client.terminate())
+        wss.close()
+        server.close(resolve)
+    })}
 }
 
 // Stands in for the cookie session: the test names the logged-in user directly.
@@ -105,8 +125,9 @@ const upgrade = (path, user, headers = {}) =>
 async function startUpstream() {
     const wss = new WebSocketServer({noServer: true})
     const server = createServer()
-    const upstream = {lastUpgradeHeaders: null}
+    const upstream = {lastUpgradeHeaders: null, upgrades: 0}
     server.on('upgrade', (req, socket, head) => {
+        upstream.upgrades++
         upstream.lastUpgradeHeaders = req.headers
         wss.handleUpgrade(req, socket, head, () => {})
     })
