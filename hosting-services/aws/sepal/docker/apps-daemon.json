@@ -1,5 +1,6 @@
 {
   "storage-driver": "overlay2",
+  "builder": {"entitlements": {"network-host": false}},
   "log-driver": "syslog",
   "log-opts": {
       "cache-disabled": "true",

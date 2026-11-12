@@ -1,0 +1,170 @@
+#!/usr/bin/env bash
+set -e
+
+# Publishes a build to the public repository: fast-forwards its master to the commit the build was
+# made from and pushes the build's tag. Run it only once the build is in production. The public
+# repository rejects every push except those made with the publish deploy key.
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+PROJECT_DIR=`dirname $DIR`
+PRIVATE_URL=git@github.com:openforis/sepal-private.git
+PUBLIC_URL=git@github.com:openforis/sepal.git
+PUBLISH_KEY=${SEPAL_PUBLISH_KEY:-$HOME/.ssh/sepal-publish}
+
+function usage() {
+    local ERROR=$1
+    if [ -n "$ERROR" ]; then
+        echo ""
+        echo "Error: $ERROR"
+    fi
+    echo ""
+    echo "Usage:"
+    echo ""
+    echo "  $(basename $0) [options] <build>    Publish a build that is in production to $PUBLIC_URL"
+    echo ""
+    echo "Options:"
+    echo ""
+    echo "  -c, --check      only check that the build is merged into the private master, without publishing."
+    echo "  -y, --yes        don't ask for confirmation."
+    echo "  -n, --dry-run    show what would be published, without publishing."
+    echo "  -h, --help       print this usage."
+    echo ""
+    echo "The publish key is read from \$SEPAL_PUBLISH_KEY (default ~/.ssh/sepal-publish)."
+    echo ""
+    if [ -n "$ERROR" ]; then
+        exit 1
+    fi
+    exit 0
+}
+
+function fail() {
+    echo ""
+    echo "Error: $1"
+    exit 1
+}
+
+function check() {
+    fetch_build
+    if ! is_merged; then
+        echo ""
+        echo "Warning: build $BUILD_NUMBER ($(short $COMMIT)) isn't merged into master."
+        exit 1
+    fi
+    echo "Build $BUILD_NUMBER ($(short $COMMIT)) is merged into master"
+}
+
+function publish() {
+    if [ ! -f "$PUBLISH_KEY" ]; then
+        fail "Publish key doesn't exist: $PUBLISH_KEY"
+    fi
+    fetch_build
+
+    echo "Fetching master from $PUBLIC_URL..."
+    git_project fetch --quiet --no-tags $PUBLIC_URL refs/heads/master
+    local PUBLIC_MASTER=$(git_project rev-parse --verify FETCH_HEAD)
+
+    if git_project merge-base --is-ancestor $COMMIT $PUBLIC_MASTER; then
+        echo "Nothing to publish: build $BUILD_NUMBER ($(short $COMMIT)) is already in the public master."
+        exit 0
+    fi
+    if ! is_merged; then
+        fail "build $BUILD_NUMBER ($(short $COMMIT)) isn't merged into the private master ($(short $PRIVATE_MASTER)). Merge the branch it was built from into master, push it to $PRIVATE_URL, then publish again."
+    fi
+    if ! git_project merge-base --is-ancestor $PUBLIC_MASTER $COMMIT; then
+        fail "build $BUILD_NUMBER ($(short $COMMIT)) doesn't contain the public master ($(short $PUBLIC_MASTER)). It predates commits that are already public, so publishing it would rewrite public history: build and deploy the current master instead."
+    fi
+
+    echo ""
+    echo "Publishing build $BUILD_NUMBER: $(git_project rev-list --count $PUBLIC_MASTER..$COMMIT) commits, $(short $PUBLIC_MASTER)..$(short $COMMIT)"
+    git_project log --oneline --no-decorate $PUBLIC_MASTER..$COMMIT | head -20
+    echo ""
+    confirm
+
+    GIT_SSH_COMMAND="ssh -F /dev/null -i $PUBLISH_KEY -o IdentitiesOnly=yes" \
+        git_project push --atomic $DRY_RUN $PUBLIC_URL "$COMMIT:refs/heads/master" "refs/tags/$TAG:refs/tags/$TAG"
+    if [ -n "$DRY_RUN" ]; then
+        echo "Dry run: build $BUILD_NUMBER not published"
+    else
+        echo "Published build $BUILD_NUMBER"
+    fi
+}
+
+# Sets TAG, COMMIT (the commit the build was made from) and PRIVATE_MASTER
+function fetch_build() {
+    TAG=build-$BUILD_NUMBER
+
+    echo "Fetching $TAG from $PRIVATE_URL..."
+    if ! git_project fetch --quiet --no-tags $PRIVATE_URL "refs/tags/$TAG:refs/tags/$TAG"; then
+        fail "Cannot fetch tag $TAG from $PRIVATE_URL: either the build doesn't exist, or it predates build tagging"
+    fi
+    COMMIT=$(git_project rev-parse --verify "refs/tags/$TAG^{commit}")
+
+    echo "Fetching master from $PRIVATE_URL..."
+    git_project fetch --quiet --no-tags $PRIVATE_URL refs/heads/master
+    PRIVATE_MASTER=$(git_project rev-parse --verify FETCH_HEAD)
+}
+
+function is_merged() {
+    git_project merge-base --is-ancestor $COMMIT $PRIVATE_MASTER
+}
+
+function confirm() {
+    if [ -n "$YES" ] || [ -n "$DRY_RUN" ]; then
+        return
+    fi
+    read -r -p "Publish to $PUBLIC_URL? [y/N] " ANSWER
+    if [[ ! "$ANSWER" =~ ^[yY]$ ]]; then
+        echo "Not published"
+        exit 1
+    fi
+}
+
+function git_project() {
+    git -C $PROJECT_DIR "$@"
+}
+
+function short() {
+    git_project rev-parse --short $1
+}
+
+
+while [[ $# -gt 0 ]]
+do
+case $1 in
+    -c|--check)
+    CHECK=true
+    shift
+    ;;
+    -y|--yes)
+    YES=true
+    shift
+    ;;
+    -n|--dry-run)
+    DRY_RUN=--dry-run
+    shift
+    ;;
+    -h|--help)
+    usage
+    ;;
+    -*)
+    usage "Unknown option: $1"
+    ;;
+    *)
+    if [ -n "$BUILD_NUMBER" ]; then
+        usage "Only one build can be published: $BUILD_NUMBER $1"
+    fi
+    BUILD_NUMBER=$1
+    shift
+    ;;
+esac
+done
+
+if [ -z "$BUILD_NUMBER" ]; then
+    usage "Build number not specified"
+fi
+
+if [ -n "$CHECK" ]; then
+    check
+else
+    publish
+fi

@@ -17,7 +17,7 @@ main() {
     case "$TYPE" in
         Sepal) main_host ;;
         SepalStorage) storage_host ;;
-        SepalApps) ;;
+        SepalApps) apps_host ;;
         *) echo "FAIL  Unknown host type $TYPE"; FAILURES=$((FAILURES + 1)) ;;
     esac
 
@@ -34,7 +34,16 @@ main_host() {
     check 'Task traffic jumps to the task chain' sh -c "iptables -S DOCKER-USER | grep -- '-j SEPAL-TASK'"
     check 'Bridged traffic is filtered' sh -c 'sysctl -n net.bridge.bridge-nf-call-iptables | grep -x 1'
     check 'Task container resolves DNS' docker run --rm --network sepal-task $PROBE_IMAGE nslookup aws.amazon.com
-    check 'Task container cannot reach instance metadata' metadata_blocked
+    check 'Task container cannot reach instance metadata' metadata_blocked sepal-task
+}
+
+apps_host() {
+    check 'Apps firewall active' systemctl is-active sepal-apps-firewall
+    check 'App traffic jumps to the apps chain' sh -c "iptables -S DOCKER-USER | grep -- '-j SEPAL-APPS'"
+    check 'App container resolves DNS' docker run --rm --network sepal-apps $PROBE_IMAGE nslookup aws.amazon.com
+    check 'App container cannot reach instance metadata' metadata_blocked sepal-apps
+    check 'Image build cannot reach instance metadata' build_metadata_blocked
+    check 'Image build cannot use the host network' build_host_network_refused
 }
 
 storage_host() {
@@ -51,7 +60,16 @@ docker_storage_and_cgroups() {
 
 metadata_blocked() {
     docker pull -q $PROBE_IMAGE >/dev/null || return 1
-    ! docker run --rm --network sepal-task $PROBE_IMAGE wget -qT5 -O- http://169.254.169.254/
+    ! docker run --rm --network "$1" $PROBE_IMAGE wget -qT5 -O- http://169.254.169.254/
+}
+
+build_metadata_blocked() {
+    printf 'FROM %s\nRUN ! wget -qT5 -O- http://169.254.169.254/\n' $PROBE_IMAGE | docker build -q --no-cache - >/dev/null
+}
+
+build_host_network_refused() {
+    ! printf 'FROM %s\nRUN --network=host true\n' $PROBE_IMAGE \
+        | docker buildx build --allow network.host --no-cache - >/dev/null 2>&1
 }
 
 check() {
