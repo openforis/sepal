@@ -1201,8 +1201,9 @@ describe('exporting a Change Alerts', () => {
     // A Classification of another user's, named by the asset's exported recipe_sources: this one cannot read it.
     const INACCESSIBLE = 'colleagues-classification'
 
+    // The segments asset records the representation its dates are in, as CCDC exports it.
     beforeEach(() => {
-        state.assets[SEGMENTS_ASSET] = {bands: [{name: 'tStart', arrayDimensions: 1}], properties: {}}
+        state.assets[SEGMENTS_ASSET] = {bands: [{name: 'tStart', arrayDimensions: 1}], properties: {dateFormat: 1}}
     })
 
     it('exports over a shared segments asset, though the Classification its Sources copied cannot be read', async () => {
@@ -1317,6 +1318,35 @@ describe('exporting a Change Alerts', () => {
 
             assert.deepEqual(state.exported, [])
             assert.deepEqual(state.built, [])
+        })
+
+        // The changes are computed under the processing their segments record (changeAlerts/processing.js), which must
+        // be readable, with their dates in a representation the segments record or the reference states.
+        it('is refused, as the changes it masks are, where their segments record processing that cannot be read, and exported once it can be', async () => {
+            state.assets[SEGMENTS_ASSET] = {...state.assets[SEGMENTS_ASSET], properties: {dateFormat: 1, surfaceReflectance: 'yes'}}
+            const changes = alerts()
+
+            await assert.rejects(submit({recipe: changes, bands: ['confidence']}), /alerts-1 cannot run: UNREADABLE_REFERENCE_PROCESSING$/)
+            await assert.rejects(submit({recipe: maskingOf(changes), bands: ['confidence']}), /masking-1 cannot run: UNREADABLE_REFERENCE_PROCESSING$/)
+            assert.deepEqual(state.exported, [])
+            assert.deepEqual(state.built, [])
+
+            state.assets[SEGMENTS_ASSET] = {...state.assets[SEGMENTS_ASSET], properties: {dateFormat: 1, surfaceReflectance: true}}
+            await submit({recipe: maskingOf(changes), bands: ['confidence']})
+            assert.equal(state.exported.length, 1)
+        })
+
+        it('is refused, as the changes it masks are, where neither their segments nor their reference state a date representation', async () => {
+            state.assets[SEGMENTS_ASSET] = {...state.assets[SEGMENTS_ASSET], properties: {surfaceReflectance: true}}
+            const changes = alerts()
+
+            await assert.rejects(submit({recipe: changes, bands: ['confidence']}), /alerts-1 cannot run: REFERENCE_DATE_FORMAT_REQUIRED$/)
+            await assert.rejects(submit({recipe: maskingOf(changes), bands: ['confidence']}), /masking-1 cannot run: REFERENCE_DATE_FORMAT_REQUIRED$/)
+            assert.deepEqual(state.exported, [])
+            assert.deepEqual(state.built, [])
+
+            await submit({recipe: maskingOf(alerts({reference: {type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 1}})), bands: ['confidence']})
+            assert.equal(state.exported.length, 1)
         })
 
         it('is exported where Landsat 7 covers the changes it masks', async () => {

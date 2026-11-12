@@ -67,6 +67,14 @@ the setting to change why - the type of data, the data sets or the band monitore
 is repaired. The full findings stay in the requirement read; the field shows its summary
 ([source resolution](../design/recipes/source-resolution.md#change-alerts-ref)).
 
+The reference's processing must be readable, and a segments asset's dates in a representation it records or REF states.
+Change Alerts' readiness judges that from the reference's description, waiting while it is read, for the alerts, every
+period mosaic and both chart operations: so a recipe built on the alerts, such as a Masking of them, is held by it too,
+naming Change Alerts, and an export of either refuses before anything is built. REF says it once - beside the date
+representation where that is what is missing - and a selection is judged before Apply over the alerts it would leave:
+an asset whose metadata cannot be read is held back, and an unrelated Sources finding holds nothing back there. Metadata
+that records nothing leaves the settings saved to stand in.
+
 ### Monitoring choices and chart availability
 
 SRC, Retrieve and the analysis chart use the existing shared `MONITORED_MEASURE` rule against current reference facts
@@ -175,15 +183,23 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
   of the changes held with Change Alerts in the path; and the whole period for the chart's observations.
 - `modules/gui/src/app/home/body/process/recipe/changeAlerts/collectionMosaicLayer.test.jsx` - every layer mode
   withdrawn while a window is uncovered under the CCDC's correction, whatever the alerts saved, and drawn again once
-  Sources or Dates repair it; a layer of a Masking of alerts that are not open, withdrawn and drawn again alike.
+  Sources or Dates repair it; a layer of a Masking of alerts that are not open, withdrawn and drawn again alike, and
+  withdrawn while their segments record processing that cannot be read, until the asset is read again repaired.
 - `modules/gee/test/jobs/task/export/imageAssetExport.test.js` - the export of the changes, and of a Masking of them,
-  refused before anything is built where a window is uncovered under the correction the segments record, and exported
-  where it is covered.
+  refused before anything is built where a window is uncovered under the correction the segments record, or where the
+  segments record processing that cannot be read or no date representation, and exported where they are repaired.
+- `lib/js/shared/test/recipe/output/type/changeAlerts.test.js` - the reference's processing judged by readiness for
+  every operation, at the reference with the rule's code and fields, through a Masking with Change Alerts in the path;
+  waiting while the segments are read; readable processing and an asset recording nothing accepted, whatever
+  correction was saved; a computing CCDC judged by its own processing.
 - `modules/gui/src/app/home/body/process/recipe/changeAlerts/referenceRequirement.test.jsx` - the data sets judged
   under the correction the reference records, not the one saved: Sources marked and their draft refused, the changes,
   mosaics and chart held or released, choices offered and proposals made by it, and nothing decided while it is read.
 - `modules/gui/src/app/home/body/process/recipe/changeAlerts/referenceRequirement.test.jsx` - the mosaics held for a
-  measure the segments lack, not for their layout; Dates refusing a window that does not last, and marking one saved.
+  measure the segments lack, not for their layout; Dates refusing a window that does not last, and marking one saved;
+  unreadable metadata said once at REF, holding the alerts, mosaics, chart and Retrieve until repaired; a selection
+  recording unreadable processing, or no date representation, held back until repaired, and one applied whatever
+  Sources leave uncovered.
 - `lib/js/shared/src/recipe/changeAlerts/monitoringDates.test.js` and `mosaicRecipe.test.js` - the dates of the
   period, the field that keeps one from being computed, and each source type's projection.
 - `modules/gee/test/jobs/ee/timeSeries/changeAlertsCollectionMosaic.test.js` - each view executed as described, over the

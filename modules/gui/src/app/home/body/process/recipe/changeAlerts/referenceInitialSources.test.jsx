@@ -30,7 +30,11 @@ vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         assetMetadata$: ({asset}) => of(fake.assets[asset]),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
-        bands$: ({asset}) => of((fake.assets[asset]?.bandNames || []).map(name => ({name, arrayDimensions: 0}))),
+        // Readiness observes an asset with the properties it records ({bands, properties}).
+        bands$: ({asset, includeProperties}) => {
+            const bands = (fake.assets[asset]?.bandNames || []).map(name => ({name, arrayDimensions: 0}))
+            return of(includeProperties ? {bands, properties: fake.assets[asset]?.properties || {}} : bands)
+        },
         datasets$: () => of({community: {datasets: [], matchingResults: 0}, gee: {datasets: [], matchingResults: 0}})
     },
     recipe: {load$: () => of(null), loadAll$: () => of([]), save$: () => of()}

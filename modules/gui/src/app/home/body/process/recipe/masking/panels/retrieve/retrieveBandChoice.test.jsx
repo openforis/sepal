@@ -1051,11 +1051,15 @@ const CHANGE_ALERTS = {
     }
 }
 
-// The reference segments asset as Earth Engine describes it; any other read is unanswered.
+// The reference segments asset as Earth Engine describes it - its bands, beside the properties recording the
+// representation its dates are in; any other read is unanswered.
 const REFERENCE_BANDS_READ = {asset: 'users/x/segments', includeDataTypes: true, includeProperties: true}
 
 const referenceSegmentBands = ({asset}) => asset === REFERENCE_BANDS_READ.asset
-    ? [{name: 'tStart', arrayDimensions: 1}, {name: 'tEnd', arrayDimensions: 1}, {name: 'ndvi_coefs', arrayDimensions: 2}, {name: 'ndvi_rmse', arrayDimensions: 1}]
+    ? {
+        bands: [{name: 'tStart', arrayDimensions: 1}, {name: 'tEnd', arrayDimensions: 1}, {name: 'ndvi_coefs', arrayDimensions: 2}, {name: 'ndvi_rmse', arrayDimensions: 1}],
+        properties: {dateFormat: 1}
+    }
     : null
 
 const maskingOver = source => ({

@@ -81,6 +81,15 @@ Preserve established output order and producer-specific internal selection seman
 
 ### Validation and execution coverage
 
+New or changed execution prerequisites must enter shared readiness in the same implementation slice, with explicit
+operation scopes. GUI feedback, draft validation and server execution checks must consume that declaration, and
+recipes consuming the affected output must inherit its refusal. Existing acquisition owners supply any required
+facts; adapters must not implement a separate compatibility rule.
+
+Acceptance covers the direct recipe and a consuming recipe, refusal before construction, and recovery after repair.
+Where evidence is acquired, also verify pending, failed and unreadable evidence. Keep operation-specific exceptions
+explicit and tested. The operation-coverage audit below remains separate work for existing gaps.
+
 - **Removed or inaccessible assets.** Audit the reported EE "asset not found" errors against
   [current asset freshness](recipes/source-freshness.md#asset-freshness-and-drawing-currency). Active consumers already claim
   assets, poll metadata, invalidate known mutations and recheck recognized asset/schema failures. Reproduce deletion
@@ -450,7 +459,8 @@ Classifier-input findings name only repairs it allows, for the complete feature 
 ([Time Series](../recipes/time-series.md#inputs)). Availability is judged by the days of the collections execution reads
 under the recipe's correction, as the Earth Engine catalogue states them, so a period within a data set's first or last
 year is judged by when its imagery begins or ends. Change Alerts' is judged by its readiness under the correction its
-reference's description establishes, so whatever is built on the changes is held with them. Remaining:
+reference's description establishes, so whatever is built on the changes is held with them; so is processing that
+description shows cannot be used. Remaining:
 
 - **Layers shown elsewhere, not scheduled.** In another recipe's map, a layer withdrawn by its product's own readiness -
   LandTrendr's annual mosaic, a Change Alerts collection mosaic, CCDC's count - is not explained on its selector, as one
@@ -468,10 +478,11 @@ reference's description establishes, so whatever is built on the changes is held
 - **Landsat 8 Tier 2 top of atmosphere.** `dataSetSpecs` reads `LANDSAT/LC08/C02/T1_TOA` for it, so it is judged by Tier
   1's days. Whether execution should read `LANDSAT/LC08/C02/T2_TOA`, which begins in October 2021, is a separate
   question.
-- **Unreadable reference processing through a wrapper.** Where the reference's processing cannot be read, Change
-  Alerts' coverage finds nothing: Change Alerts' own Sources say it through `CHANGE_ALERTS_PROCESSING`, and execution
-  refuses it, but readiness does not, so a Masking of such alerts passes readiness and is refused only when its image is
-  built. Judging that requirement in readiness too would settle it before anything is built.
+- **Change Alerts processing read twice per chart request.** Readiness judges the reference's processing from its
+  description ([Change Alerts REF](recipes/source-resolution.md#change-alerts-ref)), while the observations job reads
+  it again itself (`segmentSourceFacts$`, `lib/js/ee/src/timeSeries/segmentSource.js`) and evaluates the same rule
+  first. A CCDC's catalogue, or a segments asset, is so read twice per request. One acquisition per request would
+  serve both; the image and mosaic construction paths read it once more when built.
 - **Abandoned set-up drafts.** Wizard Back leaves an invalid Sources draft uncommitted, as for every panel; Sources
   opened again are proposed again over the dates then chosen. Keeping such a draft would need draft persistence, not
   defaulting.
@@ -650,6 +661,14 @@ Remaining, each a separate bounded move or decision:
   follow [source planning](#source-planning-and-temporal-collection-composition).
 
 ### Recipe packages and supporting work
+
+**Shared-library cohesion.** Group recipe-specific shared definitions, prerequisites and helpers by their recipe or
+recipe-family owner. Change Alerts currently spans `recipe/type/changeAlerts.js`,
+`recipe/requirement/changeAlertsProcessing.js` and `recipe/changeAlerts/`; its definition and processing requirement
+belong with its other domain code. Keep the registry, readiness/resolution engine and generic requirement protocol
+with their common owners. Inventory callers, tests and cross-recipe reuse before selecting a bounded move; preserve
+the import graph and behaviour. Do this after the active functional change is committed, as organization within the
+existing shared library, independently of the packaging work below.
 
 Recipe packaging remains unscheduled: one package would own shared rules, GUI and EE behavior/tests, with separate
 runtime entry points. Establish discovery, cross-package dependencies, compatibility and build/deployment ownership

@@ -94,8 +94,9 @@ configuration requirement is judged:
   `effectiveSettings` does.
 - **What waits.** Where SR and TOA find the same, that is the verdict, and nothing more is read. Otherwise the
   requirement asks for the reference's description, which is what acquires it: until it is held, readiness is
-  NEEDS_EVIDENCE, never READY, and nothing is found. Processing that cannot be read finds nothing here;
-  `CHANGE_ALERTS_PROCESSING` refuses it.
+  NEEDS_EVIDENCE, never READY, and nothing is found. Processing that cannot be read finds nothing here; Change
+  Alerts' processing requirement refuses it, in the same readiness
+  ([Change Alerts REF](source-resolution.md#change-alerts-ref)).
 - **Who is held.** The finding keeps its code and location (`NO_PERIOD_OVERLAP` at `sources.dataSets`, with the
   windows or period). Any recipe whose image is these changes reaches it as its readiness walks what it builds - a
   Masking of them, say - with Change Alerts in the finding's `recipePath`. So the GUI's gates for the changes, their

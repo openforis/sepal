@@ -11,16 +11,36 @@ import {Recipe} from '~/app/home/body/process/recipeContext'
 import {initStore} from '~/store'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
+import {SourceRuntimeProvider} from '../../../sourceRuntime/sourceRuntimeContext'
 import {ChartPixel} from './chartPixel'
 
 // Samples are interpreted with the description they were taken under. A description arriving for the same
-// source is a new one, so what was sampled under the old one is no longer what the chart may draw.
+// source is a new one, so what was sampled under the old one is no longer what the chart may draw. The chart is held to
+// what its operations need, which the source runtime reads: the reference described, as Earth Engine answers for it.
 
 const {loadCCDCSegments$, loadTimeSeriesObservations$} = vi.hoisted(() => ({
     loadCCDCSegments$: vi.fn(),
     loadTimeSeriesObservations$: vi.fn()
 }))
-vi.mock('~/apiRegistry', () => ({default: {gee: {loadCCDCSegments$, loadTimeSeriesObservations$}}}))
+// A segments asset is answered with its bands and the properties it records; a CCDC with what it can be asked for, from
+// its catalogue; another recipe with the bands it builds. Tokens never change unless a case says so.
+vi.mock('~/apiRegistry', async () => {
+    const {of} = await import('rxjs')
+    const SEGMENT_BANDS = ['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb', 'ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude']
+    return {default: {
+        gee: {
+            loadCCDCSegments$,
+            loadTimeSeriesObservations$,
+            bands$: ({asset, recipe, includeDataTypes}) => asset
+                ? of({bands: SEGMENT_BANDS.map(name => ({name, arrayDimensions: name.endsWith('_coefs') ? 2 : 1})), properties: {dateFormat: 1}})
+                : recipe.type === 'CCDC' && !includeDataTypes
+                    ? of(SEGMENT_BANDS)
+                    : of([{name: 'red', arrayDimensions: 0}]),
+            assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
+        },
+        recipe: {loadAll$: () => of([])}
+    }}
+})
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/sources', () => ({
     getAvailableBands: () => ['ndvi'],
@@ -48,35 +68,35 @@ beforeEach(() => {
     loadTimeSeriesObservations$.mockReset().mockReturnValue(of({features: []}))
 })
 
-afterEach(() => {
-    act(() => root?.unmount())
+afterEach(async () => {
+    await act(async () => root?.unmount())
     root = null
     container?.remove()
     vi.restoreAllMocks()
 })
 
 describe('a description accepted for the source being charted', () => {
-    it('discards the samples taken under the previous one and asks again', () => {
-        openChart(described({dateFormat: 1}))
+    it('discards the samples taken under the previous one and asks again', async () => {
+        await openChart(described({dateFormat: 1}))
         expect(chart().dateFormat).toBe(1)
         expect(chart().segments).toBe(CURRENT)
 
         const resampled = noSegments()
         loadCCDCSegments$.mockReturnValue(of(resampled))
-        observe({dateFormat: 2})
+        await observe({dateFormat: 2})
 
         expect(loadCCDCSegments$).toHaveBeenCalledTimes(2)
         expect(chart().dateFormat).toBe(2)
         expect(chart().segments).toBe(resampled)
     })
 
-    it('cancels a request the previous description was still waiting on', () => {
+    it('cancels a request the previous description was still waiting on', async () => {
         const pending = new Subject()
         let cancelled = false
         loadCCDCSegments$.mockReturnValueOnce(pending.pipe(finalize(() => cancelled = true)))
-        openChart(described({dateFormat: 1}))
+        await openChart(described({dateFormat: 1}))
 
-        observe({dateFormat: 2})
+        await observe({dateFormat: 2})
 
         expect(cancelled).toBe(true)
         act(() => {
@@ -89,22 +109,22 @@ describe('a description accepted for the source being charted', () => {
 })
 
 describe('the samples charted', () => {
-    it('are kept when the same description is published again', () => {
-        openChart(described({dateFormat: 1}))
+    it('are kept when the same description is published again', async () => {
+        await openChart(described({dateFormat: 1}))
 
-        observe({dateFormat: 1})
+        await observe({dateFormat: 1})
 
         expect(loadCCDCSegments$).toHaveBeenCalledTimes(1)
     })
 
-    it('are taken again once the asset charted reports a new token, though nothing described changed', () => {
-        openChart(overAsset({dateFormat: 1}))
-        tokens({[SEGMENTS_ASSET]: {version: 'v1'}})
+    it('are taken again once the asset charted reports a new token, though nothing described changed', async () => {
+        await openChart(overAsset({dateFormat: 1}))
+        await tokens({[SEGMENTS_ASSET]: {version: 'v1'}})
         expect(loadCCDCSegments$).toHaveBeenCalledTimes(1)
 
         const resampled = noSegments()
         loadCCDCSegments$.mockReturnValue(of(resampled))
-        tokens({[SEGMENTS_ASSET]: {version: 'v2', changedAt: 1}})
+        await tokens({[SEGMENTS_ASSET]: {version: 'v2', changedAt: 1}})
 
         expect(loadCCDCSegments$).toHaveBeenCalledTimes(2)
         expect(chart().segments).toBe(resampled)
@@ -114,10 +134,10 @@ describe('the samples charted', () => {
 // The server derives, and judges, the collection the alerts monitor from the recipe as applied (observedCollection):
 // the request names the recipe, its Classification copy and all, rather than settings standing for no recipe.
 describe('the observations charted', () => {
-    it('are asked for of the alerts recipe as applied', () => {
+    it('are asked for of the alerts recipe as applied', async () => {
         const recipe = withCopiedClassification(described({dateFormat: 1}))
 
-        openChart(recipe)
+        await openChart(recipe)
 
         expect(loadTimeSeriesObservations$).toHaveBeenCalledTimes(1)
         expect(loadTimeSeriesObservations$).toHaveBeenCalledWith({
@@ -127,12 +147,13 @@ describe('the observations charted', () => {
         })
     })
 
-    it('are asked for again of the recipe once what it monitors is applied changed', () => {
-        openChart(described({dateFormat: 1}))
+    it('are asked for again of the recipe once what it monitors is applied changed', async () => {
+        await openChart(described({dateFormat: 1}))
 
-        act(() => actionBuilder('APPLY_SOURCES')
+        await act(async () => actionBuilder('APPLY_SOURCES')
             .set(['process.loadedRecipes', ALERTS, 'model.sources.dataSets'], {LANDSAT: ['LANDSAT_9']})
             .dispatch())
+        await settled()
 
         expect(loadTimeSeriesObservations$).toHaveBeenCalledTimes(2)
         expect(loadTimeSeriesObservations$.mock.lastCall[0].recipe.model.sources.dataSets).toEqual({LANDSAT: ['LANDSAT_9']})
@@ -142,12 +163,15 @@ describe('the observations charted', () => {
 const SEGMENTS_ASSET = 'users/x/segments'
 
 // What the source runtime knows of each asset, for the credentials in effect: none are linked here.
-const tokens = versions => act(() => actionBuilder('UPDATE_ASSET_EVIDENCE')
-    .set('process.assetEvidence', {
-        generation: 0,
-        assets: Object.fromEntries(Object.entries(versions).map(([id, {version, changedAt = null}]) => [id, {version, checkedAt: 0, changedAt}]))
-    })
-    .dispatch())
+const tokens = async versions => {
+    await act(async () => actionBuilder('UPDATE_ASSET_EVIDENCE')
+        .set('process.assetEvidence', {
+            generation: 0,
+            assets: Object.fromEntries(Object.entries(versions).map(([id, {version, changedAt = null}]) => [id, {version, checkedAt: 0, changedAt}]))
+        })
+        .dispatch())
+    await settled()
+}
 
 const overAsset = evidence => {
     const recipe = described({...evidence, source: `ASSET:${SEGMENTS_ASSET}`})
@@ -164,9 +188,18 @@ function noSegments() {
 
 const CURRENT = noSegments()
 
-const observe = evidence => act(() => actionBuilder('OBSERVED')
-    .set(['process.loadedRecipes', ALERTS, 'ui.sourceEvidence'], sourceEvidence(evidence))
-    .dispatch())
+const observe = async evidence => {
+    await act(async () => actionBuilder('OBSERVED')
+        .set(['process.loadedRecipes', ALERTS, 'ui.sourceEvidence'], sourceEvidence(evidence))
+        .dispatch())
+    await settled()
+}
+
+const settled = async () => {
+    for (let i = 0; i < 8; i++) {
+        await act(async () => {})
+    }
+}
 
 const sourceEvidence = ({dateFormat, source = SOURCE}) => ({
     sourceKey: source,
@@ -204,7 +237,7 @@ const REFERENCED = [
     {id: 'ccdc-1', type: 'CCDC', model: {sources: {dataSets: {LANDSAT: ['LANDSAT_8']}}, options: {corrections: []}, dates: {startDate: '2020-01-01', endDate: '2021-01-01'}}}
 ]
 
-const openChart = recipe => {
+const openChart = async recipe => {
     const initialState = {
         dimensions: {width: 1024, height: 768},
         process: {
@@ -221,17 +254,20 @@ const openChart = recipe => {
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
-    act(() => root.render(
+    await act(async () => root.render(
         <Provider store={store}>
-            <PortalContainer id='chart-panel'/>
-            <PortalContext id='chart-panel'>
-                <Recipe id={recipe.id}>
-                    <ChartPixel values={{selectedBand: 'ndvi'}}/>
-                </Recipe>
-            </PortalContext>
+            <SourceRuntimeProvider>
+                <PortalContainer id='chart-panel'/>
+                <PortalContext id='chart-panel'>
+                    <Recipe id={recipe.id}>
+                        <ChartPixel values={{selectedBand: 'ndvi'}}/>
+                    </Recipe>
+                </PortalContext>
+            </SourceRuntimeProvider>
         </Provider>
     ))
-    act(() => actionBuilder('CHART_PIXEL')
+    await act(async () => actionBuilder('CHART_PIXEL')
         .set(['process.loadedRecipes', recipe.id, 'ui.chartPixel'], recipe.ui.chartPixel)
         .dispatch())
+    await settled()
 }

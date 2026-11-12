@@ -12,7 +12,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 // Earth Engine and the drawn preview are substituted. As in recipeImageLayer.test.js nothing renders the layer: the
 // map's request for it is maybeCreateLayer, and its lifecycle is called as React would call it.
 
-const fake = vi.hoisted(() => ({loads: [], geeReads: [], constructed: [], selectors: [], listing: []}))
+const fake = vi.hoisted(() => ({loads: [], geeReads: [], constructed: [], selectors: [], listing: [], assets: {}}))
 
 vi.mock('~/compose', () => ({
     compose: Component => Component,
@@ -38,8 +38,9 @@ vi.mock('~/app/home/map/layer/earthEngineImageLayer', () => ({
 }))
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-// Storage answers each read when the test says so. Earth Engine is recorded and answers only the bands of the CCDC the
-// changes are built over: no mosaic needs anything of it.
+// Storage answers each read when the test says so. Earth Engine is recorded and answers only what the CCDC the changes
+// are built over can be asked for - or a segments asset's bands, with the properties it records, and its token - nothing
+// of a mosaic itself.
 vi.mock('~/apiRegistry', async () => {
     const {Observable, of, throwError} = await import('rxjs')
     return {default: {
@@ -56,6 +57,13 @@ vi.mock('~/apiRegistry', async () => {
         gee: new Proxy({}, {
             get: (_target, name) => args => {
                 fake.geeReads.push([name, args])
+                const asset = fake.assets[args.asset]
+                if (name === 'bands$' && asset) {
+                    return of({bands: asset.bands, properties: {...asset.properties}})
+                }
+                if (name === 'assetVersions$') {
+                    return of({assets: args.ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
+                }
                 return name === 'bands$'
                     ? of(['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb', 'ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude'])
                     : throwError(() => new Error(`Earth Engine is not asked here: ${name}`))
@@ -87,6 +95,7 @@ beforeEach(() => {
     fake.geeReads = []
     fake.constructed = []
     fake.listing = LISTING
+    fake.assets = {}
 })
 
 let root
@@ -117,7 +126,8 @@ describe('a Change Alerts collection mosaic whose CCDC the session does not hold
             mosaicType: 'latest',
             visParams: RGB
         })
-        expect(fake.geeReads).toEqual([])
+        // What the CCDC can be asked for, describing the processing the mosaic is read under: no image is evaluated.
+        expect(fake.geeReads).toEqual([['bands$', {recipe: expect.objectContaining({id: CCDC.id})}]])
     })
 
     it('requests the same preview shown in another recipe\'s map, the recipe it shows not open', async () => {
@@ -353,6 +363,32 @@ describe('a layer showing a Masking of Change Alerts that are not open', () => {
 
         expect(shown.layer() !== null).toBe(drawn)
     })
+
+    // The changes are computed under the processing their segments record (changeAlerts/processing.js), which must be
+    // readable: an asset recording it so that it cannot be read holds them, and the Masking of them, until it is repaired.
+    // Alerts and a Masking of their own: those the cases above edit are saved meanwhile, at revisions these do not have.
+    it('is withdrawn, requesting no preview, while the alerts\' segments record processing that cannot be read, and drawn once they are repaired', async () => {
+        fake.assets[SEGMENTS_ASSET] = segmentsAsset({dateFormat: 1, surfaceReflectance: 'yes'})
+        const alerts = {...changeAlerts({reference: {type: 'ASSET', id: SEGMENTS_ASSET}}), id: ASSET_ALERTS_ID}
+        const maskingOfAlerts = {...masking, id: ASSET_MASKING_ID, model: {...masking.model, imageToMask: {type: 'RECIPE_REF', id: alerts.id}}}
+
+        const shown = await show({layerConfig: {visParams: CONFIDENCE}, shown: maskingOfAlerts, others: [alerts, CCDC]})
+        expect(shown.layer()).toBe(null)
+        expect(fake.constructed).toEqual([])
+
+        fake.assets[SEGMENTS_ASSET] = segmentsAsset({dateFormat: 1, surfaceReflectance: true})
+        await shown.refreshAsset(SEGMENTS_ASSET)
+        expect(shown.layer()).not.toBe(null)
+    })
+})
+
+const SEGMENTS_ASSET = 'users/x/segments'
+
+// A segments asset as Earth Engine answers for it: its bands, and the properties it records its processing in.
+const segmentsAsset = properties => ({
+    bands: [['tStart', 1], ['tEnd', 1], ['tBreak', 1], ['numObs', 1], ['changeProb', 1], ['ndvi_coefs', 2], ['ndvi_rmse', 1], ['ndvi_magnitude', 1]]
+        .map(([name, arrayDimensions]) => ({name, arrayDimensions})),
+    properties
 })
 
 const ALERTS_ID = 'change-alerts-1'
@@ -373,9 +409,14 @@ const OTHER_CCDC = {...CCDC, id: 'ccdc-2'}
 
 const MASKING_ID = 'masking-1'
 
+const ASSET_ALERTS_ID = 'change-alerts-2'
+const ASSET_MASKING_ID = 'masking-2'
+
 const LISTING = [
     {id: ALERTS_ID, name: 'Alerts', type: 'CHANGE_ALERTS', revision: 1},
     {id: MASKING_ID, name: 'Masking', type: 'MASKING', revision: 1},
+    {id: ASSET_ALERTS_ID, name: 'Alerts over an asset', type: 'CHANGE_ALERTS', revision: 1},
+    {id: ASSET_MASKING_ID, name: 'Masking of alerts over an asset', type: 'MASKING', revision: 1},
     {id: CCDC.id, name: 'CCDC', type: 'CCDC', revision: 1},
     {id: OTHER_CCDC.id, name: 'Other CCDC', type: 'CCDC', revision: 1}
 ]
@@ -488,6 +529,11 @@ const show = async ({layerConfig, inAnotherRecipe = false, model, shown, others 
             answeredReads = fake.loads.length
         },
         newReads: () => fake.loads.slice(answeredReads).map(({id}) => id),
+        // An asset read again, and everything reading it, as a Refresh asks.
+        refreshAsset: async id => {
+            await act(async () => sourceRuntime.refreshAsset(id))
+            await settled()
+        },
         fail: id => settle(id, subscriber => subscriber.error(Object.assign(new Error(`No such recipe: ${id}`), {statusCode: 404}))),
         setLayerConfig: async config => {
             const previous = instance.props

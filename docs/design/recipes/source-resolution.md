@@ -259,7 +259,20 @@ reference that does not fit the current consumer choices is repairable in Source
 | Any monitorable measure | REF | Alerts/Retrieve and reference selection. |
 | Configured monitored measure observable by selected imagery | Sources | Alerts/Retrieve and both chart streams. |
 | Chartable segments | REF | Segment chart; optional for selecting an otherwise usable reference. |
-| Effective processing/date-format evidence | REF | Alerts, period mosaics and both chart streams. |
+| Effective processing/date-format evidence | REF | Alerts, period mosaics, both chart streams and whatever is built on the alerts. |
+
+The processing requirement (`CHANGE_ALERTS_PROCESSING`) is part of Change Alerts' readiness, a configuration
+requirement of its type for the alerts, every period mosaic and both chart operations (`type/changeAlerts.js`). It is
+judged over the processing the reference's description establishes (`evidencedProcessing`): what a computing CCDC is
+configured with, or what a segments asset records, observed beside its bands, through whatever preserves it. Readiness
+waits while that description is read. Processing that cannot be read is refused as `UNREADABLE_REFERENCE_PROCESSING`
+naming the fields, and an asset whose date representation neither it records nor the reference states as
+`REFERENCE_DATE_FORMAT_REQUIRED`, both at `model.reference`; an asset recording nothing else leaves the saved settings
+to stand in. A recipe whose image is the alerts, such as a Masking of them, is held by the finding with Change Alerts
+in its `recipePath`, and every export refuses before anything is built. REF explains the finding through one binding
+(`referenceRequirement.js`), beside the date representation where that is what is missing; a selection is judged
+before Apply over the alerts it would leave, and only this finding, not one of Sources, holds it back. Execution
+evaluates the same rule over the processing it reads itself.
 
 The live recipe reference's `IMAGE_OUTPUT` readiness is a common analysis prerequisite, including dependencies
 such as its Classification. An exported asset is independent of its producer's private records. A missing saved

@@ -12,8 +12,11 @@ import {sourceKeyOf} from '../sources/sourceEvidence'
 // without running the runtime: what its observation publishes, and what its DESCRIBE answers. Each is derived by the
 // production code that derives it, from one metadata answer; nothing here states a verdict.
 
+// What a segments asset records of its processing, unless a case says otherwise.
+const RECORDED_PROPERTIES = {dateFormat: 1, surfaceReflectance: 1}
+
 // A segments asset's metadata as Earth Engine answers for it, fitted for `band`.
-export const segmentsAssetMetadata = ({band, properties = {dateFormat: 1, surfaceReflectance: 1}}) => {
+export const segmentsAssetMetadata = ({band, properties = RECORDED_PROPERTIES}) => {
     const bands = [['tStart', 1], ['tEnd', 1], [`${band}_coefs`, 2], [`${band}_rmse`, 1]]
     return {
         type: 'Image',
@@ -34,9 +37,10 @@ export const observedSegmentsAsset = (reference, metadata) => ({
 
 // What the source runtime's DESCRIBE answers once Earth Engine has described what the read observes: the real observer
 // over the closure the session holds, Earth Engine describing each segments asset as the records' evidence already
-// describes it, and that closure's validity. A read observing anything else is answered nothing, as it is before Earth
+// describes it - its bands, beside the properties it records (`properties`, those segmentsAssetMetadata records by
+// default) - and that closure's validity. A read observing anything else is answered nothing, as it is before Earth
 // Engine answers.
-export const describedByRuntime = records => {
+export const describedByRuntime = (records, properties = RECORDED_PROPERTIES) => {
     const assetBands = Object.fromEntries(records.flatMap(record => {
         const typed = record.ui?.sourceEvidence?.segments?.typedBands
         return typed ? [[typed.assetId, typed.bands]] : []
@@ -50,7 +54,7 @@ export const describedByRuntime = records => {
         observeBands$: ({reference}) => {
             const bands = reference.type === 'ASSET' && assetBands[reference.id]
             answered = answered && Boolean(bands)
-            return bands ? of(bands) : NEVER
+            return bands ? of({bands, properties}) : NEVER
         }
     })
     let latest = null

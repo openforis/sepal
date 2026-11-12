@@ -641,7 +641,7 @@ describe('a reference edited in REF', () => {
         expect(alertsRecipe().ui.sourceEvidence.processing.fields.dateFormat.value).toBe(0)
     })
 
-    it('leaves the date representation unset, held back, where neither the asset chosen nor the panel has one', async () => {
+    it('leaves the date representation unset, held back and said beside it, where neither the asset chosen nor the panel has one, until one is chosen', async () => {
         fake.assets[RADAR_ASSET] = segmentsAsset(VALID_BANDS, {})
         await editor({selection: ref('masking-ccdc'), panels: ['reference']})
 
@@ -649,7 +649,46 @@ describe('a reference edited in REF', () => {
         await selectAsset(RADAR_ASSET)
 
         expect(applyEnabled()).toBe(false)
+        expect(errorsOf(DATE_FORMAT)).toEqual([expect.stringContaining('process.changeAlerts.processing.dateFormatRequired')])
+        expect(errorsOf(ASSET_INPUT)).toEqual([])
         expect(committedReference()).toEqual(ref('masking-ccdc'))
+
+        await chooseDateFormat('fractionalYears')
+        expect(errorsOf(DATE_FORMAT)).toEqual([])
+        await apply()
+        expect(committedReference()).toEqual({type: 'ASSET', id: RADAR_ASSET, dateFormat: 1})
+    })
+
+    // What the asset chosen records of its processing is judged as the alerts' readiness judges it, over the alerts the
+    // draft leaves: said once, beside the asset, and held back until one it can read is chosen.
+    it('is refused before Apply where the asset chosen records processing that cannot be read, said once on its input', async () => {
+        const READABLE = 'users/x/other-segments'
+        fake.assets[RADAR_ASSET] = segmentsAsset(VALID_BANDS, {dateFormat: 1, processing: '{broken'})
+        fake.assets[READABLE] = segmentsAsset(VALID_BANDS)
+        await editor({selection: ASSET, panels: ['reference']})
+
+        await selectAsset(RADAR_ASSET)
+        expect(errorsOf(ASSET_INPUT)).toEqual([expect.stringContaining('process.changeAlerts.processing.unreadable')])
+        expect(applyEnabled()).toBe(false)
+
+        await selectAsset(READABLE)
+        expect(errorsOf(ASSET_INPUT)).toEqual([])
+        await apply()
+        expect(committedReference()).toMatchObject({type: 'ASSET', id: READABLE})
+    })
+
+    // What Sources choose is theirs to say: a reference that can be used is applied whatever they leave uncovered.
+    it('is applied while Sources leave the period uncovered, which REF does not say', async () => {
+        const BEFORE_LANDSAT_9 = {monitoringEnd: '2020-01-01', monitoringDuration: 1, monitoringDurationUnit: 'months', calibrationDuration: 2, calibrationDurationUnit: 'months'}
+        await editor({selection: ASSET, panels: ['reference'], date: BEFORE_LANDSAT_9})
+        expect(Object.keys(sourceProblems())).toEqual(['sources'])
+
+        await selectAsset(RADAR_ASSET)
+        expect(errorsOf(ASSET_INPUT)).toEqual([])
+        await apply()
+
+        expect(committedReference()).toMatchObject({type: 'ASSET', id: RADAR_ASSET})
+        expect(Object.keys(sourceProblems())).toEqual(['sources'])
     })
 
     it('counts only the reference last chosen, whatever answers late', async () => {
@@ -968,8 +1007,6 @@ describe('Sources\' data sets, judged under the correction the reference records
     const alertsOver = ({saved, panels, dataSets = ['LANDSAT_TM'], initialized, layer}) => editor({
         selection: {type: 'ASSET', id: SEGMENTS_ASSET}, options: {corrections: saved}, sources: over(dataSets), date: EARLY_2012, panels, initialized, layer
     })
-    // A layer showing the monitoring mosaic, whose readiness it reads.
-    const MOSAIC_LAYER = {visualizationType: 'monitoring', mosaicType: 'latest', visParams: {type: 'rgb', bands: ['red', 'green', 'blue']}}
 
     it('hold nothing over Landsat 4-5 saved top of atmosphere where the reference records SR, drawing their mosaic', async () => {
         recording(true)
@@ -1945,20 +1982,32 @@ describe('reference-owned PRC values and consumer drafts', () => {
         }
     })
 
-    it('marks unreadable metadata at REF and holds operations until refreshed metadata is repaired', async () => {
+    // The alerts' readiness judges the processing their reference records (type/changeAlerts.js): what it finds is said
+    // once, at REF, and holds the alerts and the mosaics beside them, as their layers read them.
+    it('marks unreadable metadata at REF once and holds operations until refreshed metadata is repaired', async () => {
         fake.assets[SEGMENTS_ASSET] = segmentsAsset(VALID_BANDS, {dateFormat: 1, processing: '{broken'})
-        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, panels: ['reference']})
-        expect(errorsOf(ASSET_INPUT)).toContainEqual(expect.stringContaining('process.changeAlerts.processing.unreadable'))
-        expect(gate('IMAGE_OUTPUT')).toMatchObject({code: 'SOURCE_UNSUITABLE'})
-        expect(gate('COLLECTION_MOSAIC')).toMatchObject({code: 'SOURCE_UNSUITABLE'})
-        expect(gate('PIXEL_OBSERVATIONS')).toMatchObject({code: 'SOURCE_UNSUITABLE'})
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, panels: ['reference'], layer: MOSAIC_LAYER})
+        expect(errorsOf(ASSET_INPUT)).toEqual([expect.stringContaining('process.changeAlerts.processing.unreadable')])
+        expect(sourceProblems()).toEqual({reference: expect.stringContaining('process.changeAlerts.processing.unreadable')})
+        expect(gate('IMAGE_OUTPUT')).toMatchObject({withdraw: true, code: 'CONFIGURATION_UNMET', section: REFERENCE_SECTION})
+        expect(mosaicGate()).toMatchObject({withdraw: true, section: REFERENCE_SECTION})
         const model = alertsRecipe().model
         fake.assets[SEGMENTS_ASSET] = segmentsAsset(VALID_BANDS, {dateFormat: 1, processing: '{"options":{}}'})
         await act(async () => runtime.refreshOutput({recipeId: ALERTS, product: {name: 'IMAGE_OUTPUT'}}))
         await settled()
         expect(gate('IMAGE_OUTPUT')).toBe(null)
+        expect(mosaicGate()).toBe(null)
         expect(errorsOf(ASSET_INPUT)).toEqual([])
+        expect(sourceProblems()).toEqual({})
         expect(alertsRecipe().model).toBe(model)
+    })
+
+    it('holds the chart and Retrieve over unreadable metadata', async () => {
+        fake.assets[SEGMENTS_ASSET] = segmentsAsset(VALID_BANDS, {dateFormat: 1, processing: '{broken'})
+        await editor({selection: {type: 'ASSET', id: SEGMENTS_ASSET}, actions: true})
+
+        expect(await opens('chart')).toBe(false)
+        expect(await opens('retrieve')).toBe(false)
     })
 })
 
@@ -2637,6 +2686,10 @@ const ASSET_INPUT = 'process.changeAlerts.panel.reference.form.asset.label'
 const RECIPE_INPUT = 'widget.recipeInput.label'
 const RADAR_TYPE = 'process.changeAlerts.panel.sources.form.dataSetTypes.RADAR'
 const SOURCES_SECTION = 'process.changeAlerts.panel.sources.button'
+const REFERENCE_SECTION = 'process.changeAlerts.panel.reference.button'
+const DATE_FORMAT = 'process.ccdc.panel.dates.form.dateFormat.label'
+// A layer showing the monitoring mosaic, whose readiness it reads.
+const MOSAIC_LAYER = {visualizationType: 'monitoring', mosaicType: 'latest', visParams: {type: 'rgb', bands: ['red', 'green', 'blue']}}
 const DATE_SECTION = 'process.changeAlerts.panel.date.button'
 const DATA_SET_TYPE = 'process.changeAlerts.panel.sources.form.dataSetType.label'
 const DATA_SETS = 'process.changeAlerts.panel.sources.form.dataSets.label'

@@ -12,15 +12,33 @@ import {Recipe} from '~/app/home/body/process/recipeContext'
 import {initStore} from '~/store'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
-// Each pixel chart's Export CSV, through its panel's button, over a real store, recipe, panel, chart and Graph widget.
-// Earth Engine, the canvas renderer (Dygraph), the band picker and the browser's download are substitutes.
+import {SourceRuntimeProvider} from '../../sourceRuntime/sourceRuntimeContext'
+
+// Each pixel chart's Export CSV, through its panel's button, over a real store, recipe, panel, chart and Graph widget,
+// and the source runtime that reads what the chart's operations need. Earth Engine, storage, the canvas renderer
+// (Dygraph), the band picker and the browser's download are substitutes.
 
 const gee = vi.hoisted(() => ({
     loadTimeSeriesObservations$: vi.fn(),
     loadCCDCSegments$: vi.fn(),
     loadLandTrendrSegments$: vi.fn()
 }))
-vi.mock('~/apiRegistry', () => ({default: {gee}}))
+// The segments asset as readiness observes it: its bands, beside the properties recording the representation its dates
+// are in, at an unchanging token.
+vi.mock('~/apiRegistry', async () => {
+    const {of} = await import('rxjs')
+    return {default: {
+        gee: {
+            ...gee,
+            bands$: () => of({
+                bands: [['tStart', 1], ['tEnd', 1], ['ndvi_coefs', 2], ['ndvi_rmse', 1]].map(([name, arrayDimensions]) => ({name, arrayDimensions})),
+                properties: {dateFormat: 1}
+            }),
+            assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
+        },
+        recipe: {loadAll$: () => of([])}
+    }}
+})
 vi.mock('~/translate', () => ({msg: key => key}))
 // What the browser is given to save.
 const downloads = vi.hoisted(() => [])
@@ -430,12 +448,14 @@ const open = (ChartPixel, recipe) => {
     root = createRoot(container)
     act(() => root.render(
         <Provider store={store}>
-            <PortalContainer id='chart-panel'/>
-            <PortalContext id='chart-panel'>
-                <Recipe id={recipe.id}>
-                    <ChartPixel values={{selectedBand: 'ndvi'}}/>
-                </Recipe>
-            </PortalContext>
+            <SourceRuntimeProvider>
+                <PortalContainer id='chart-panel'/>
+                <PortalContext id='chart-panel'>
+                    <Recipe id={recipe.id}>
+                        <ChartPixel values={{selectedBand: 'ndvi'}}/>
+                    </Recipe>
+                </PortalContext>
+            </SourceRuntimeProvider>
         </Provider>
     ))
     chartAt(recipe.id, PIXEL)
