@@ -34,4 +34,4 @@ npm run testWatch     # Node test runner watch mode
 ## Non-Obvious Conventions
 
 - **GEE credentials**: `src/gee.js` creates Earth Engine credentials file if configured
-- **App network**: apps run on the local `sepal-apps` bridge, shared only with app-launcher. Their compose files name the network `sepal`; `config/apps-network.yml`, added to every compose command, maps that name to `sepal-apps`, so apps never join the swarm network.
+- **App network**: apps run on the local `sepal-apps` bridge, shared only with app-launcher. Their compose files name the network `sepal`; `config/apps-network.yml`, added to every compose command, maps that name to `sepal-apps`, so apps never join the swarm network. On AWS, `sepal-apps-firewall.sh` keeps the apps' address range (172.30.128.0/17) from private addresses, instance metadata and the host; app-launcher is pinned at 172.30.0.2, outside that range, so it can reach the apps but they cannot open connections to it.

@@ -193,12 +193,53 @@
         join_token: "{{ swarm_token }}"
         remote_addrs: ["{{ ec2_sepal.instances[0].private_ip_address }}:2377"]
 
-    # A fixed subnet: Docker picks free ones from the networks it knows, which may not yet include the swarm's sepal
+    # Hosts deployed before the apps firewall have sepal-apps without the apps' range. Its containers go with it:
+    # run-module recreates app-launcher, and app-launcher starts its apps again.
+    - name: Get the sepal-apps network
+      community.docker.docker_network_info:
+        name: sepal-apps
+      register: sepal_apps_network
+
+    - name: Remove a sepal-apps network without the apps' range, and its containers
+      when: >-
+        sepal_apps_network.exists
+        and (sepal_apps_network.network.IPAM.Config | map(attribute='IPRange', default='') | list) != ['172.30.128.0/17']
+      block:
+        - name: Remove containers on the sepal-apps network
+          command: "docker rm -f {{ sepal_apps_network.network.Containers.keys() | join(' ') }}"
+          when: sepal_apps_network.network.Containers
+
+        - name: Remove the sepal-apps network
+          docker_network:
+            name: sepal-apps
+            state: absent
+
+    # A fixed subnet: Docker picks free ones from the networks it knows, which may not yet include the swarm's sepal.
+    # The apps get addresses from the upper half, which the apps firewall filters; app-launcher is pinned below it.
     - name: Create the sepal-apps network
       docker_network:
         name: sepal-apps
         ipam_config:
           - subnet: 172.30.0.0/16
+            iprange: 172.30.128.0/17
+
+    - name: Copy sepal-apps firewall script
+      copy:
+        src: docker/sepal-apps-firewall.sh
+        dest: /usr/local/sbin/sepal-apps-firewall.sh
+        mode: '0755'
+
+    - name: Copy sepal-apps firewall unit
+      copy:
+        src: docker/sepal-apps-firewall.service
+        dest: /etc/systemd/system/sepal-apps-firewall.service
+
+    - name: Enable sepal-apps firewall
+      systemd:
+        name: sepal-apps-firewall
+        state: restarted
+        enabled: yes
+        daemon_reload: yes
 
     - file:
         path: "/usr/local/lib/docker/cli-plugins"

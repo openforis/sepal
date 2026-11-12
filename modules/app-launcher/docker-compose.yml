@@ -36,8 +36,9 @@ services:
       timeout: 5s
       retries: 3
     networks:
-      - sepal
-      - sepal-apps
+      sepal:
+      sepal-apps:
+        ipv4_address: 172.30.0.2 # outside the apps' range: the apps firewall lets it reach the apps, not them it
     restart: unless-stopped
     ulimits:
       core: 0

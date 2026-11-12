@@ -1,0 +1,12 @@
+[Unit]
+Description=Isolate SEPAL apps (network sepal-apps)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/sepal-apps-firewall.sh
+
+[Install]
+WantedBy=multi-user.target
