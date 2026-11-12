@@ -182,6 +182,35 @@ function verify_images() {
 )
 }
 
+function is_production() {
+    [ "$(set -a; source $CONFIG_DIR/env; echo $DEPLOY_ENVIRONMENT)" == "PROD" ]
+}
+
+# A build from a branch that isn't merged into master may lack fixes production already runs,
+# and bin/publish refuses to publish it after the deployment
+function confirm_build_merged() {
+    if $PROJECT_DIR/bin/publish --check $BUILD_NUMBER; then
+        return
+    fi
+    read -r -p "Deploy it to production anyway? [y/N] " ANSWER
+    if [[ ! "$ANSWER" =~ ^[yY]$ ]]; then
+        echo "Deployment cancelled"
+        exit 1
+    fi
+}
+
+function publish_build() {
+    echo ""
+    if ! $PROJECT_DIR/bin/publish --yes $BUILD_NUMBER; then
+        echo ""
+        echo "================================================================"
+        echo "Build $BUILD_NUMBER is deployed to production, but publishing it failed."
+        echo "Fix the problem above, then run: bin/publish $BUILD_NUMBER"
+        echo "================================================================"
+        exit 1
+    fi
+}
+
 function build_docker_image() {
     echo "Building Docker image..."
     docker build --build-arg BUILD_NUMBER=$BUILD_NUMBER --build-arg GIT_COMMIT=$GIT_COMMIT -t $IMAGE_NAME $PROJECT_DIR/deploy 1>/dev/null
@@ -288,9 +317,27 @@ if [ ! -f "$ABSOLUTE_SCRIPT_PATH" ]; then
     usage "Deployment script doesn't exist: $ABSOLUTE_SCRIPT_PATH"
 fi
 
-if [[ ("$OPERATION" == "deploy") || ("$OPERATION" == "rollout") ]]; then
+# Keyed on the script, so running an operation's script with --script is checked the same way
+STEP=
+if [[ "$SCRIPT_PATH" =~ ^[^/]+/sepal/(provision|deploy|rollout)\.sh$ ]]; then
+    STEP=${BASH_REMATCH[1]}
+fi
+PRODUCTION=
+if [ -n "$STEP" ] && is_production; then
+    PRODUCTION=true
+fi
+
+if [ -n "$PRODUCTION" ]; then
+    confirm_build_merged
+fi
+
+if [[ "$STEP" == "deploy" || "$STEP" == "rollout" ]]; then
     verify_images
 fi
 
 build_docker_image
 run_docker_image
+
+if [[ -n "$PRODUCTION" && ("$STEP" == "deploy" || "$STEP" == "rollout") ]]; then
+    publish_build
+fi
