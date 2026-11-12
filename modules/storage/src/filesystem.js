@@ -31,7 +31,8 @@ const command = async callback =>
 const diskUsage = async path => {
     log.debug(`Calculating size of path ${path}`)
     const result = await command(
-        () => spawn('sudo', ['diskus', '-v', path])
+        // diskus defaults to 3 threads per core; the scan is disk-bound, so more threads only add load.
+        () => spawn('sudo', ['diskus', '-j', '2', '-v', path])
     )
     return Number(result)
 }
