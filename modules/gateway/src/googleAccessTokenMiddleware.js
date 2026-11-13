@@ -16,18 +16,18 @@ const GoogleAccessTokenMiddleware = userStore => {
         try {
             const user = getRequestUser(req)
 
-            const updateUser$ = updatedUser => {
-                setRequestUser(req, updatedUser)
-                return userStore.setUser$(updatedUser)
-            }
-
             const refreshGoogleTokens$ = () => {
                 log.debug(`${usernameTag(user.username)} ${urlTag(req.originalUrl)} Google tokens refreshing...`)
                 return updateGoogleAccessToken$(user).pipe(
-                    switchMap(updatedUser => updateUser$(updatedUser)),
+                    switchMap(({username, googleTokens}) => userStore.updateGoogleTokens$({username, googleTokens})),
                     tap(updatedUser =>
                         log.info(`${usernameTag(updatedUser.username)} ${urlTag(req.originalUrl)} Google tokens refreshed`)
-                    )
+                    ),
+                    catchError(error => {
+                        log.warn(`${usernameTag(user.username)} Failed to refresh Google tokens`, error)
+                        return userStore.getUser$(user.username)
+                    }),
+                    tap(currentUser => setRequestUser(req, currentUser))
                 )
             }
     
@@ -44,14 +44,7 @@ const GoogleAccessTokenMiddleware = userStore => {
                 return of(true)
             }
 
-            await firstValueFrom(
-                refreshGoogleTokensIfNeeded$().pipe(
-                    catchError(error => {
-                        log.warn(`${usernameTag(user.username)} Failed to refresh Google tokens`, error)
-                        return of(true)
-                    })
-                )
-            )
+            await firstValueFrom(refreshGoogleTokensIfNeeded$())
 
             next()
         } catch(error) {

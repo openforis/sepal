@@ -15,6 +15,12 @@ const log = getLogger('userStore')
 const SEPAL_USER_HEADER = 'sepal-user'
 const USER_PREFIX = 'user'
 
+const UPDATE_IF_UNCHANGED = `
+    if redis.call('GET', KEYS[1]) ~= ARGV[1] then return 0 end
+    redis.call('SET', KEYS[1], ARGV[2])
+    return 1
+`
+
 const UserStore = (redis, event$) => {
     if (!redis) {
         throw new Error('Cannot initialize UserStore due to missing argument: redis')
@@ -43,7 +49,15 @@ const UserStore = (redis, event$) => {
                         catchError(error =>
                             throwError(() => new Error(`${userTag(username)} not in store, could not be loaded from backend`, {cause: error}))
                         ),
-                        switchMap(user => setUser$(user))
+                        switchMap(async loadedUser => {
+                            const user = storedUser(loadedUser)
+                            const created = await redis.set(userKey(username), JSON.stringify(user), {NX: true})
+                            if (created) {
+                                handleUpdate(null, user)
+                                return user
+                            }
+                            return firstValueFrom(getUser$(username))
+                        })
                     )
             )
         )
@@ -58,6 +72,27 @@ const UserStore = (redis, event$) => {
             map(({user}) => user),
             tap(user => log.debug(`${userTag(user?.username)} saved`)),
         )
+
+    // A token refresh must preserve role changes made while it was in flight.
+    const updateGoogleTokens$ = ({username, googleTokens}) => defer(async () => {
+        const key = userKey(username)
+        while (true) {
+            const serializedUser = await redis.get(key)
+            if (!serializedUser) {
+                return firstValueFrom(getUser$(username))
+            }
+            const prevUser = JSON.parse(serializedUser)
+            const user = {...prevUser, googleTokens}
+            const updated = await redis.eval(UPDATE_IF_UNCHANGED, {
+                keys: [key],
+                arguments: [serializedUser, JSON.stringify(user)]
+            })
+            if (updated) {
+                handleUpdate(prevUser, user)
+                return user
+            }
+        }
+    })
 
     const handleUpdate = (prevUser, user) => {
         if (!_.isEqual(prevUser, user)) {
@@ -169,7 +204,7 @@ const UserStore = (redis, event$) => {
     }
 
     return {
-        getUser$, normalizeCase, setUser$, updateUser$, userMiddleware
+        getUser$, normalizeCase, setUser$, updateGoogleTokens$, updateUser$, userMiddleware
     }
 }
 
