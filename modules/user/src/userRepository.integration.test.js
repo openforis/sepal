@@ -505,6 +505,12 @@ describe('UserRepository', () => {
             const before = await repository.findByUsername(USERNAME)
 
             await assert.rejects(repository.updatePassword(NOT_A_STRING, '{SCRYPT}hash'), REFUSED)
+            await assert.rejects(repository.resetPasswordIfTokenIsValid({
+                username: NOT_A_STRING, token: 'a-token', passwordHash: '{SCRYPT}hash'
+            }), REFUSED)
+            await assert.rejects(repository.resetPasswordIfTokenIsValid({
+                username: USERNAME, token: NOT_A_STRING, passwordHash: '{SCRYPT}hash'
+            }), REFUSED)
             await assert.rejects(repository.upgradePasswordHashIfUnchanged({
                 username: NOT_A_STRING, verifiedHash: 'old-hash', upgradedHash: '{SCRYPT}hash'
             }), REFUSED)

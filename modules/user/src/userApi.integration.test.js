@@ -34,20 +34,25 @@ describe('UserApi', () => {
     let testDb
     let repository
     let api
+    let provisioned
 
     before(async () => {
         configureNoLogging()
-        testDb = await createTestDb({name: 'user_api', migrations: MIGRATIONS_PATH})
+        testDb = await createTestDb({name: 'user_api', migrations: MIGRATIONS_PATH, connections: 2})
     })
 
     beforeEach(async () => {
         await testDb.reset()
         repository = new UserRepository(testDb.db)
+        provisioned = []
         api = new UserApi({
             repository,
             googleService: {refreshGoogleTokens: async () => null, saveTokens: async () => null},
             googleOAuth: {redirectUrl: () => '', requestTokens: async () => null, revokeTokens: async () => undefined},
-            ensureProvisioned: async user => user
+            ensureProvisioned: async user => {
+                provisioned.push(user.username)
+                return user
+            }
         })
     })
 
@@ -182,6 +187,96 @@ describe('UserApi', () => {
             assert.equal(stored.passwordHash, replacementHash)
         })
     }
+
+    for (const [name, change] of [
+        ['cannot undo a lock applied after its token check', () => repository.updateStatus(USERNAME, 'LOCKED')],
+        ['cannot consume a token replaced after its token check', () => repository.updateToken(USERNAME, 'new-token')],
+        ['cannot undo a password change after its token check', async () =>
+            repository.updatePassword(USERNAME, await hashPassword('another-new-password'))],
+        ['cannot use a token that expires after its token check', () => testDb.query(
+            'UPDATE sepal_user SET token_generation_time = NOW() - INTERVAL 25 HOUR WHERE username = ?', [USERNAME]
+        )]
+    ]) {
+        test(`a password reset ${name}`, async t => {
+            await givenActiveUser()
+            await repository.updateToken(USERNAME, 'reset-token')
+            const findByToken = repository.findByToken.bind(repository)
+            let changed
+            t.mock.method(repository, 'findByToken', async token => {
+                const snapshot = await findByToken(token)
+                await change()
+                changed = await repository.findByUsername(USERNAME)
+                return snapshot
+            }, {times: 1})
+            const ctx = aContext({request: {body: {token: 'reset-token', password: 'a-new-password'}}})
+
+            await api.resetPassword(ctx)
+
+            assert.equal(ctx.status, 400)
+            assert.deepEqual(await repository.findByUsername(USERNAME), changed)
+            assert.deepEqual(provisioned, [])
+        })
+    }
+
+    test('only one concurrent password reset can consume a token', {timeout: 5000}, async t => {
+        await givenActiveUser()
+        await repository.updateToken(USERNAME, 'reset-token')
+        const findByToken = repository.findByToken.bind(repository)
+        const bothRead = Promise.withResolvers()
+        t.after(() => bothRead.resolve())
+        let reads = 0
+        t.mock.method(repository, 'findByToken', async token => {
+            const snapshot = await findByToken(token)
+            if (++reads === 2) bothRead.resolve()
+            await bothRead.promise
+            return snapshot
+        })
+        const requests = ['first-new-password', 'second-new-password'].map(password =>
+            aContext({request: {body: {token: 'reset-token', password}}})
+        )
+
+        await Promise.all(requests.map(ctx => api.resetPassword(ctx)))
+
+        const winners = requests.filter(ctx => ctx.body.username === USERNAME)
+        assert.equal(winners.length, 1)
+        assert.equal(requests.filter(ctx => ctx.status === 400).length, 1)
+        const stored = await repository.findByUsername(USERNAME)
+        assert.equal(await verifyPassword(winners[0].request.body.password, stored.passwordHash), true)
+        assert.equal(stored.token, null)
+        assert.deepEqual(provisioned, [USERNAME])
+    })
+
+    for (const status of ['PENDING', 'ACTIVE']) {
+        test(`a valid reset sets the password and activates a ${status} user`, async () => {
+            await givenActiveUser()
+            await repository.updateStatus(USERNAME, status)
+            await repository.updateSshPublicKey(USERNAME, 'ssh-ed25519 existing-key')
+            await repository.updateToken(USERNAME, 'reset-token')
+            const ctx = aContext({request: {body: {token: 'reset-token', password: 'a-new-password'}}})
+
+            await api.resetPassword(ctx)
+
+            const stored = await repository.findByUsername(USERNAME)
+            assert.equal(stored.status, 'ACTIVE')
+            assert.equal(stored.token, null)
+            assert.equal(await verifyPassword('a-new-password', stored.passwordHash), true)
+            assert.equal(ctx.body.username, USERNAME)
+            assert.deepEqual(provisioned, status === 'PENDING' ? [USERNAME] : [])
+        })
+    }
+
+    test('a reset token must match exactly, including trailing spaces', async () => {
+        await givenActiveUser()
+        await repository.updateToken(USERNAME, 'reset-token')
+        const before = await repository.findByUsername(USERNAME)
+        const ctx = aContext({request: {body: {token: 'reset-token ', password: 'a-new-password'}}})
+
+        await api.resetPassword(ctx)
+
+        assert.equal(ctx.status, 400)
+        assert.deepEqual(await repository.findByUsername(USERNAME), before)
+        assert.deepEqual(provisioned, [])
+    })
 
     // An active user with a POSIX identity in the NSS range — the shape the legacy import left behind,
     // which no operation here can write.

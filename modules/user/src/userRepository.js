@@ -1,5 +1,6 @@
 import {storedUsername} from '#sepal/username'
 
+import {TOKEN_MAX_AGE_MS} from './tokens.js'
 import {rowToUser, toISOString} from './user.js'
 import {isText} from './validation.js'
 
@@ -151,6 +152,20 @@ export class UserRepository {
                 `UPDATE sepal_user SET password_hash = ?, token = NULL, ${BUMP} WHERE username = ?`,
                 [passwordHash, username]
             )
+        })
+    }
+
+    async resetPasswordIfTokenIsValid({username, token, passwordHash}) {
+        requireSelector(username)
+        requireSelector(token)
+        return this.#db.withConnection(async connection => {
+            const [result] = await connection.query(
+                `UPDATE sepal_user SET password_hash = ?, token = NULL, status = 'ACTIVE', ${BUMP}
+                 WHERE username = ? AND BINARY token = ? AND status IN ('PENDING', 'ACTIVE')
+                   AND token_generation_time >= NOW(3) - INTERVAL ? SECOND`,
+                [passwordHash, username, token, TOKEN_MAX_AGE_MS / 1000]
+            )
+            return result.affectedRows > 0
         })
     }
 

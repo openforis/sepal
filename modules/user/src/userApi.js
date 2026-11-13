@@ -284,8 +284,16 @@ export class UserApi {
             return
         }
         const wasPending = user.status === 'PENDING'
-        await this.#repository.updatePassword(user.username, await hashPassword(password))
-        await this.#repository.updateStatus(user.username, 'ACTIVE')
+        const reset = await this.#repository.resetPasswordIfTokenIsValid({
+            username: user.username,
+            token,
+            passwordHash: await hashPassword(password)
+        })
+        if (!reset) {
+            ctx.status = 400
+            ctx.body = {message: 'Invalid token'}
+            return
+        }
         // Leaving PENDING (covers unlock: LOCKED -> PENDING -> reset link) must guarantee complete
         // provisioning; a keyless user is healed too. Routine resets of provisioned users skip it —
         // provision recursively chowns the data home, too expensive for a request that needs neither.
