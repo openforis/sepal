@@ -35,7 +35,7 @@ docker run --rm --privileged --entrypoint sh \
 ### REST API
 - `GET /download` - Download file
 - `GET /listFiles` - List directory contents
-- `POST /setFile` - Upload file (multipart via `koa-body`, max 100MB)
+- `POST /setFile` - Upload one file (multipart field `file` via `koa-body`, max 100MB); see [Uploads](#uploads)
 - `POST /createFolder` - Create new folder
 
 ### WebSocket
@@ -60,6 +60,7 @@ One gateway connection carries every user's commands, so a command affects only 
 - `src/filesystem.js` - REST handlers
 - `src/homePath.js` - Resolves and describes paths in a user's home, following links only within it; shared with the watcher
 - `src/homeWrite.js` - Write policy: refuses links, anything not owned by the user, and missing parents unless recursive
+- `src/upload.js` - Multipart parsing for `setFile`; owns and removes the parser's temporary files
 - `src/watcher.js` - Directory polling using RxJS
 - User uid/gid looked up via `stat` on `/sepalUsers/{username}`
 - Deployed homes use the host's separate `nosymfollow` bind view, prepared and verified before Docker starts. DEV keeps normal mounts.
@@ -104,6 +105,23 @@ links on it lead within the user's home.
   after the same containment check.
 - Writes (`setFile`, `createFolder`) never pass through links. Their unexpected failures answer a generic error; the
   details stay in the log.
+
+### Uploads
+`src/upload.js` parses the `/setFile` body and owns every temporary file the parser writes, in the process's temporary
+directory. However the request ends, each file's writer is closed and the file removed, whatever field it came in.
+That includes success, refusals, failed writes, bodies the parser rejects part-way, and clients that go away.
+
+- A file is removed only once its writer has closed, so one still opening is not created after its removal.
+- Having rejected a part, the parser still reads on through the parts it already holds. Files it opens for them
+  before the request's files are discarded are closed and removed with the rest; parts it reaches afterwards are read
+  into nothing, without a file.
+- A request carries one file, in the field `file`. A request with any other file part is refused (400).
+- Only paths the parser generated are removed, never ones taken from the query or the client's file name. A file that
+  cannot be removed is logged, and the request is answered as it would have been.
+- The body is parsed before authentication and validation, so a refused request still takes up to 100MB of temporary
+  storage until it ends. A client that stalls keeps it until the server times the request out.
+- Parser rejections, such as an oversized file or a malformed body, are answered 500.
+- `overwrite=true` truncates the existing file before writing, so a failed write can leave it incomplete.
 
 ### Releasing link browsing
 The GUI must ship these together with link browsing; they belong to the GUI, not this module:

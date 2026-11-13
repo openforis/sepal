@@ -1,5 +1,5 @@
 import {constants} from 'node:fs'
-import {open, readdir, stat, unlink} from 'node:fs/promises'
+import {open, readdir, stat} from 'node:fs/promises'
 import Path from 'node:path'
 
 import {getLogger} from '#sepal/log'
@@ -49,13 +49,17 @@ export const listFiles = authenticated(async (homeDir, ctx, username) => {
     }
 })
 
+// Writes the one file of an upload; upload.js removes its temporary files.
 export const setFile = authenticated(async (homeDir, ctx, username) => {
     const {path, overwrite} = ctx.query
-    const upload = ctx.request.files?.file
+    const files = ctx.request.files || {}
     if (!path) {
         return respond(ctx, 400, {error: 'No path specified'})
     }
-    if (!upload?.filepath) {
+    if (Object.values(files).flat().length > 1) {
+        return respond(ctx, 400, {error: 'Only a single file is supported'})
+    }
+    if (!files.file?.filepath) {
         return respond(ctx, 400, {error: 'No file content provided'})
     }
     try {
@@ -64,8 +68,7 @@ export const setFile = authenticated(async (homeDir, ctx, username) => {
             log.warn(() => `Cannot overwrite existing file: ${target}`)
             return respond(ctx, 409, {error: 'Cannot overwrite existing files'})
         }
-        await writeFile(upload.filepath, target, owner)
-        await discardUpload(upload.filepath)
+        await writeFile(files.file.filepath, target, owner)
         respond(ctx, 200, {
             message: existed ? 'File overwritten successfully' : 'File created successfully',
             path,
@@ -178,9 +181,6 @@ const directoriesFirst = (a, b) =>
     (a.type === 'directory') === (b.type === 'directory')
         ? a.name.localeCompare(b.name)
         : (a.type === 'directory' ? -1 : 1)
-
-const discardUpload = path =>
-    unlink(path).catch(() => log.warn(() => `Error cleaning up temporary file: ${path}`))
 
 const respond = (ctx, status, body) => {
     ctx.response.status = status
