@@ -84,6 +84,7 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
 - Redis store via `connect-redis`
 - Session secret persisted in Redis (survives restarts)
 - `src/session.js`: Logout destroys session, invalidate-other-sessions destroys all but current. Every destroyed session (also on `user.UserLocked`) is announced on `event$` as `loginSessionInvalidated {username, sessionId}` (the `workerSession*` events are the sandbox ones); browser websockets are bound to the session that upgraded them, so the tabs of that session get the event and are then closed — the GUI reloads on it
+- `src/webSocketUpgrade.js`: Direct terminal and sandbox sockets also follow that login session's invalidation, including during asynchronous setup. Closing a proxy socket closes its upstream connection too. Global browser sockets keep their existing notification-before-close behavior.
 
 ### Authentication
 - `src/authMiddleware.js`: HTTP Basic credentials, when present, are authenticated via POST to `http://user/authenticate` and win over the session's `sepal-user` (a login from a browser logged in as someone else must switch account); otherwise the injected `sepal-user` passes. A GUI login on a session held by another user replaces the session (`ensureSessionFor` in `session.js`)

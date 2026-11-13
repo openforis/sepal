@@ -1,8 +1,9 @@
 import url from 'node:url'
 
 import micromatch from 'micromatch'
-import {firstValueFrom} from 'rxjs'
+import {filter, firstValueFrom} from 'rxjs'
 
+import {LOGIN_SESSION_INVALIDATED} from '#sepal/event/definitions'
 import {getLogger} from '#sepal/log'
 
 import {webSocketPath} from '../config/endpoints.js'
@@ -14,7 +15,7 @@ const log = getLogger('gateway')
 
 // Upgrade requests bypass Express, so none of its middleware guards them: the headers the gateway owns
 // are stripped and the user injected here, and only endpoints marked ws are proxied.
-export const webSocketUpgradeHandler = ({sessionParser, userStore, wss, sandboxProxy, proxies}) => {
+export const webSocketUpgradeHandler = ({sessionParser, userStore, wss, sandboxProxy, proxies, event$}) => {
     const webSocketProxies = proxies.filter(({ws}) => ws)
 
     const handleGlobalWebSocket = (requestPath, req, socket, head, username, sessionId) => {
@@ -50,17 +51,25 @@ export const webSocketUpgradeHandler = ({sessionParser, userStore, wss, sandboxP
 
     // HACK: User has to be injected here as the session is not available in proxyRes and proxyResWsz
     return (req, socket, head) => {
+        // express-session sets sessionID before its asynchronous store lookup, so subscribe before parsing.
+        const invalidation = event$.pipe(
+            filter(({type, data}) => type === LOGIN_SESSION_INVALIDATED && data.sessionId === req.sessionID)
+        ).subscribe(() => socket.destroy())
+        socket.once('close', () => invalidation.unsubscribe())
         sessionParser(req, {}, () => { // Make sure we have access to session for the websocket
+            if (socket.destroyed) return
             const username = getSessionUsername(req)
             removeRequestUser(req)
             removeRequestSession(req)
             if (username) {
                 const requestPath = url.parse(req.url).pathname
                 if (requestPath === webSocketPath) {
+                    invalidation.unsubscribe()
                     handleGlobalWebSocket(requestPath, req, socket, head, username, req.sessionID)
                 } else {
                     firstValueFrom(userStore.getUser$(username))
                         .then(user => {
+                            if (socket.destroyed) return
                             if (user?.status === 'ACTIVE') {
                                 log.trace(`${usernameTag(username)} ${urlTag(requestPath)} Setting sepal-user header`)
                                 setRequestUser(req, user)
@@ -84,6 +93,7 @@ export const webSocketUpgradeHandler = ({sessionParser, userStore, wss, sandboxP
 }
 
 const refuse = (socket, status) => {
+    if (socket.destroyed) return
     socket.write(`HTTP/1.1 ${status}\r\n\r\n`)
     socket.destroy()
 }

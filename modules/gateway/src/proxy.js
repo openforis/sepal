@@ -54,6 +54,12 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
                 timeout,
                 logger: log,
                 on: {
+                    proxyReqWs: (proxyReq, _req, socket) => {
+                        proxyReq.once('socket', upstreamSocket => {
+                            if (socket.destroyed) upstreamSocket.destroy()
+                            else socket.once('close', () => upstreamSocket.destroy())
+                        })
+                    },
                     proxyReq: (proxyReq, req, res) => {
                         // Make sure the client doesn't inject the user header, and pretend to be another user.
                         const user = getRequestUser(req)

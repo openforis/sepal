@@ -111,6 +111,13 @@ const createSandboxProxy = ({
         timeout
     })
 
+    proxy.on('proxyReqWs', (proxyReq, _req, socket) => {
+        proxyReq.once('socket', upstreamSocket => {
+            if (socket.destroyed) upstreamSocket.destroy()
+            else socket.once('close', () => upstreamSocket.destroy())
+        })
+    })
+
     proxy.on('proxyRes', (proxyRes, req) => {
         const {endpoint} = req._sandbox || {}
         if (endpoint && !KEEPS_PREFIX[endpoint]) {
@@ -241,6 +248,7 @@ const createSandboxProxy = ({
         try {
             resolution = await resolve(username, url, req)
         } catch (error) {
+            if (socket.destroyed) return
             // A THROW from resolveTarget must not escape as an unhandled rejection: close the socket
             // (there is no ServerResponse on the ws path) — mirror the null/rejected handling below.
             log.error(`Sandbox ws upgrade resolve failed [${url}]:`, error)
@@ -248,6 +256,7 @@ const createSandboxProxy = ({
             socket.destroy()
             return
         }
+        if (socket.destroyed) return
         if (resolution.status) {
             log.warn(() => `Rejecting sandbox ws upgrade (${resolution.status}): ${resolution.reason} [${url}]`)
             const statusText = resolution.status === 404 ? 'Not Found' : 'Bad Request'
@@ -259,11 +268,13 @@ const createSandboxProxy = ({
         try {
             await ensureStarted(username, resolution)
         } catch (error) {
+            if (socket.destroyed) return
             log.error(`Failed to start sandbox ${resolution.endpoint} for ${username}`, error)
             socket.write('HTTP/1.1 502 Bad Gateway\r\n\r\n')
             socket.destroy()
             return
         }
+        if (socket.destroyed) return
         log.debug(() => `${username} → sandbox ws ${resolution.endpoint} ws://${resolution.target.host}:${resolution.target.port}${req.url}`)
         // httpxy signature: ws(req, socket, opts, head).
         await proxy.ws(req, socket, {target: targetOrigin(resolution.target)}, head)

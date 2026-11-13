@@ -391,6 +391,39 @@ describe('sandbox WebSocket proxy', () => {
         if (upstream) await upstream.close()
     })
 
+    for (const stage of ['resolve', 'start']) {
+        test(`does not connect after the socket closes during ${stage}`, async () => {
+            const entered = Promise.withResolvers()
+            const resume = Promise.withResolvers()
+            resolveTarget.mock.mockImplementation(async () => {
+                if (stage === 'resolve') {
+                    entered.resolve()
+                    await resume.promise
+                }
+                return {host: 'sandbox-host', port: 8787, sessionId: 'worker-session'}
+            })
+            ensureServerStarted.mock.mockImplementation(async () => {
+                if (stage === 'start') {
+                    entered.resolve()
+                    await resume.promise
+                }
+            })
+            const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, forgetServerStarted, sepalHost: 'sepal.test'})
+            const wsSpy = mock.method(sandboxProxy._proxy, 'ws', async () => undefined)
+            const socket = {destroyed: false, write: mock.fn()}
+            const pending = sandboxProxy.upgrade({url: '/api/sandbox/rstudio/ws', headers: {}}, socket, Buffer.alloc(0), 'alice')
+            await entered.promise
+
+            socket.destroyed = true
+            resume.resolve()
+            await pending
+
+            assert.equal(wsSpy.mock.callCount(), 0)
+            assert.equal(socket.write.mock.callCount(), 0)
+            if (stage === 'resolve') assert.equal(ensureServerStarted.mock.callCount(), 0)
+        })
+    }
+
     test('dynamic-target ws upgrade tunnels bidirectionally, upstream sees the stripped path', async () => {
         // Fail loud: only /ws is allowed upstream — a wrong strip (e.g. /rstudio/ws) is refused and the
         // echo never round-trips, failing the test instead of silently passing.
