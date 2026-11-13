@@ -1,4 +1,4 @@
-import {readdir, realpath, stat} from 'node:fs/promises'
+import {readdir} from 'node:fs/promises'
 import Path from 'node:path'
 
 import _ from 'lodash'
@@ -9,7 +9,7 @@ import {minDuration$} from '#sepal/rxjs'
 
 import {homeDir, pollIntervalMilliseconds} from './config.js'
 import {filesDeleted$} from './events.js'
-import {removeUserPath, resolvePath} from './filesystem.js'
+import {describeEntry, removeUserPath, resolvePath, UNRESOLVABLE} from './homePath.js'
 import {clientTag, subscriptionTag} from './tag.js'
 
 const log = getLogger('watcher')
@@ -17,8 +17,8 @@ const log = getLogger('watcher')
 const REMOVE_COMFORT_DELAY_MS = 1000
 const STATS_INTERVAL_MS = 60000
 
-const userHomeDir = async username =>
-    await realpath(Path.join(homeDir, username))
+const userHomeDir = username =>
+    resolvePath(homeDir, username)
 
 const createWatcher = async ({send, stop$}) => {
     const monitor$ = new Subject()
@@ -42,7 +42,7 @@ const createWatcher = async ({send, stop$}) => {
             filter(current =>
                 current.clientId === clientId
                 && current.subscriptionId === subscriptionId
-                && (path === current.path || path.startsWith(toDir(current.path)))
+                && (current.all || path === current.path || path.startsWith(toDir(current.path)))
             )
         )
 
@@ -82,6 +82,11 @@ const createWatcher = async ({send, stop$}) => {
                         exhaustMap(() => scanDir$({username, clientId, subscriptionId, path})),
                         distinctUntilChanged(_.isEqual),
                         takeUntil(subscriptionUnmonitor$(clientId, subscriptionId, path)),
+                        // Every path shares the subjects driving it: one failing unexpectedly stops being monitored alone.
+                        catchError(error => {
+                            log.error(`${subscriptionTag({username, clientId, subscriptionId})} stopped monitoring path after an unexpected error: ${path}`, error)
+                            return EMPTY
+                        }),
                         finalize(() => log.debug(`${subscriptionTag({username, clientId, subscriptionId})} unmonitored path: ${path}`))
                     )
                 ),
@@ -135,74 +140,68 @@ const createWatcher = async ({send, stop$}) => {
 
     const scanDir$ = ({username, clientId, subscriptionId, path}) =>
         from(userHomeDir(username)).pipe(
-            map(home => resolvePath(home, path)),
+            switchMap(home => from(resolvePath(home, path)).pipe(
+                map(absolutePath => ({home, absolutePath}))
+            )),
             catchError(error => {
-                if (error.code === 'ENOENT') {
-                    log.warn(() => `${subscriptionTag({username, clientId, subscriptionId})} cannot scan non-existing path: ${path}`)
+                // Dropped as a vanished directory is, when a link on it no longer leads into the home too: a client
+                // monitors it again once it recovers.
+                if (UNRESOLVABLE.includes(error.code)) {
+                    log.warn(() => `${subscriptionTag({username, clientId, subscriptionId})} cannot scan unresolvable path: ${path} (${error.code})`)
                     unmonitor({username, clientId, subscriptionId, path})
                 } else {
                     log.error(`${subscriptionTag({username, clientId, subscriptionId})} error while resolving path: ${path}`, error)
                 }
                 return EMPTY
             }),
-            switchMap(({absolutePath, isExternalPath}) => {
-                if (isExternalPath) {
-                    log.warn(`${subscriptionTag({username, clientId, subscriptionId})} refused scanning path: ${path}`)
-                    return EMPTY
-                } else {
-                    log.debug(`${subscriptionTag({username, clientId, subscriptionId})} scanning path: ${path}`)
-                    stats$.next(clientId)
-                    return scanValidDir$({username, clientId, subscriptionId, path, absolutePath})
-                }
+            switchMap(({home, absolutePath}) => {
+                log.debug(`${subscriptionTag({username, clientId, subscriptionId})} scanning path: ${path}`)
+                stats$.next(clientId)
+                return scanValidDir$({username, clientId, subscriptionId, path, home, absolutePath})
             })
         )
 
-    const scanValidDir$ = ({username, clientId, subscriptionId, path, absolutePath}) =>
-        from(readdir(absolutePath, {withFileTypes: true})).pipe(
-            switchMap(entries => of(...entries)),
-            mergeMap(entry => from(scanEntry(absolutePath, entry))),
+    const scanValidDir$ = ({username, clientId, subscriptionId, path, home, absolutePath}) =>
+        from(readdir(absolutePath)).pipe(
+            switchMap(names => of(...names)),
+            mergeMap(name => from(scanEntry(home, absolutePath, name))),
             filter(fileInfo => !!fileInfo),
             reduce((acc, {name, ...fileInfo}) => ({...acc, [name]: fileInfo}), {}),
             map(items => ({username, clientId, subscriptionId, data: {path, items}})),
             catchError(error => {
                 log.warn(error)
-                unmonitor({username, clientId, subscriptionId, path})
-                return of({path, error: error.code})
+                // Unmonitored only once sent: unmonitoring ends the subscription the error is sent through.
+                return of({username, clientId, subscriptionId, data: {path, error: error.code}}).pipe(
+                    finalize(() => unmonitor({username, clientId, subscriptionId, path}))
+                )
             })
         )
 
-    // Only symlinks can lead outside the scanned directory, so only they need resolving.
-    const scanEntry = async (dir, entry) => {
-        const entryPath = Path.join(dir, entry.name)
+    const scanEntry = async (home, dir, name) => {
+        const entryPath = Path.join(dir, name)
         try {
-            if (entry.isSymbolicLink() && isExternal(dir, await realpath(entryPath))) {
-                log.debug(() => `Ignoring non-subdir path: ${entryPath}`)
-                return
-            }
-            const node = await stat(entryPath)
+            const {stats, link} = await describeEntry(home, entryPath)
             const info = {
-                name: entry.name,
-                mtime: node.mtimeMs
+                name,
+                mtime: stats.mtimeMs,
+                ...link
             }
-            if (node.isDirectory()) {
+            if (stats.isDirectory()) {
                 info.dir = true
             }
-            if (node.isFile()) {
+            if (stats.isFile()) {
                 info.file = true
-                info.size = node.size
+                info.size = stats.size
             }
             return info
         } catch (error) {
-            if (['ENOENT', 'ELOOP'].includes(error.code)) {
-                log.debug(() => `Ignored unavailable path: ${entryPath}`)
+            if (error.code === 'ENOENT') {
+                log.debug(() => `Ignored vanished path: ${entryPath}`)
             } else {
                 log.warn(() => [`Ignoring unresolvable path: ${entryPath}`, error])
             }
         }
     }
-
-    const isExternal = (dir, path) =>
-        Path.relative(dir, path).startsWith('..')
 
     const removePath = async ({username, clientId, subscriptionId, path}) => {
         if (_.isArray(path)) {
@@ -228,19 +227,19 @@ const createWatcher = async ({send, stop$}) => {
     const toDir = path =>
         path.substr(-1) === '/' ? path : Path.join(path, '/')
 
+    // A reset first stops every path the subscription monitors, however each is written.
     const monitor = ({username, clientId, subscriptionId, path, reset}) => {
-        if (_.isArray(path)) {
-            if (reset) {
-                unmonitor({username, clientId, subscriptionId})
-            }
-            path.forEach(path => monitor({username, clientId, subscriptionId, path}))
-        } else {
+        if (reset) {
+            log.debug(() => `${subscriptionTag({username, clientId, subscriptionId})} unmonitor all paths`)
+            unmonitor$.next({username, clientId, subscriptionId, all: true})
+        }
+        _.castArray(path).forEach(path => {
             log.debug(() => `${subscriptionTag({username, clientId, subscriptionId})} monitor path: ${path}`)
             monitor$.next({username, clientId, subscriptionId, path})
-        }
+        })
     }
 
-    const unmonitor = ({username, clientId, subscriptionId, path = '/'}) => {
+    const unmonitor = ({username, clientId, subscriptionId, path}) => {
         if (_.isArray(path)) {
             path.forEach(path => unmonitor({username, clientId, subscriptionId, path}))
         } else {

@@ -14,9 +14,9 @@ can start. Deployment reruns the idempotent script directly before recreating mo
 the service, which could stop Docker through the dependency. Only `user` and `user-files` use the
 restricted view. Development Compose overrides keep the normal source.
 
-The GUI cannot follow symlinked workspace paths through user-files. `downloads`, `.config` and
-`.config/earthengine` must be real directories for privileged account/credential management; existing
-links are not removed or migrated. Credential storage migration is separate work. Task containers keep
+user-files resolves links itself and follows them only within each user's home (see
+`modules/user-files/CLAUDE.md`). `downloads`, `.config` and `.config/earthengine` must be real directories
+for privileged account/credential management; existing links are not removed or migrated. Credential storage migration is separate work. Task containers keep
 normal symlink access through the original home mount.
 
 Check host setup without changing mounts:
