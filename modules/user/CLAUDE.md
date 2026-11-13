@@ -32,3 +32,11 @@ the module restarts.
 legacy `sepal_user` schema only when its table exists and the target is empty. The source is unchanged.
 Schema and import histories use `schema_version` and `legacy_import_version` respectively.
 See [database migrations](../../docs/database-migrations.md) for startup, repair and import retirement.
+
+## User-list subscriptions
+
+The WebSocket protocol retains the latest administrator flag and revision per user for the gateway
+connection. Local `userChanged$` publications and newer subscription snapshots update that authority;
+a demotion removes all of the user's subscriptions before another profile is forwarded. Older or
+unversioned snapshots cannot override a known newer role. Tab closure preserves this knowledge;
+connection teardown clears it. Promotion permits a fresh subscription without resurrecting removed ones.
