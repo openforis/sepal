@@ -325,27 +325,8 @@ describe('download', () => {
     })
 })
 
+// Creating folders, which happens as the home's owner, is covered in folderCreation.test.js.
 describe('createFolder', () => {
-    test('creates folders inside the home', async () => {
-        const alice = await aHome('alice')
-        const ctx = aRequest('alice', {path: 'a/b', recursive: 'true'})
-
-        await createFolder(homes, ctx)
-
-        assert.equal(ctx.response.status, 201)
-        assert.equal(existsSync(join(alice, 'a', 'b')), true)
-    })
-
-    test('creates a folder in an existing one', async () => {
-        const alice = await aHome('alice')
-        const ctx = aRequest('alice', {path: 'project/new'})
-
-        await createFolder(homes, ctx)
-
-        assert.equal(ctx.response.status, 201)
-        assert.equal(existsSync(join(alice, 'project', 'new')), true)
-    })
-
     test('refuses to create missing parent folders unless asked to', async () => {
         const alice = await aHome('alice')
         const ctx = aRequest('alice', {path: 'a/b'})

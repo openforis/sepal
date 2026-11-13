@@ -61,6 +61,7 @@ One gateway connection carries every user's commands, so a command affects only 
 - `src/filesystem.js` - REST handlers
 - `src/homePath.js` - Resolves and describes paths in a user's home, following links only within it; shared with the watcher
 - `src/homeWrite.js` - Write policy: refuses links, anything not owned by the user, and missing parents unless recursive
+- `src/createFoldersAsUser.js` - Program that `homeWrite.js` runs as the home's owner to create folders; see [Creating folders](#creating-folders)
 - `src/upload.js` - Multipart parsing for `setFile`; owns and removes the parser's temporary files
 - `src/watcher.js` - Directory polling using RxJS
 - User uid/gid looked up via `stat` on `/sepalUsers/{username}`
@@ -156,6 +157,33 @@ Assumptions and limits:
   meanwhile can redirect their upload within their home or make it fail, not move it out. A rename replaces whatever is
   at the target by then, without opening or following it.
 
+### Creating folders
+`createFolder` validates the path as root (containment, links, ownership, missing parents), then creates the folders
+in a short-lived process running as the home's owner: `createFoldersAsUser.js`, started by `createFolders`
+(`src/homeWrite.js`). Nothing created is ever changed with more authority than the user's, so a folder the user swaps
+in after creation keeps its owner and mode.
+- **Identity.** The uid and gid are those of `/sepalUsers/<user>`, the home the request's user selects. The
+  process starts with `spawn`'s `uid`/`gid` options and fixed arguments, with no shell, environment or descriptors
+  beyond its output. It is killed after 60 seconds. A request ends only once the process has ended and its output is
+  closed, a failed start included.
+- **Never root.** A home root owns is refused (500) before any process starts. The process itself also refuses to
+  run as root.
+- **Checks before changing anything.** The process checks its real and effective uid and gid, and that its only
+  group is the home's gid. If not, nothing is created (500). A failed start or identity change is an error, never a
+  run as root. A non-root service, as in DEV tests, cannot drop its own groups; the process then has those too.
+- **Creation.** Each folder is made with `mkdir`. One this process creates is opened (`O_DIRECTORY|O_NOFOLLOW`),
+  checked to be the user's, and given the home's gid and mode 0755 through its handle. A setgid parent's group and
+  bit are not inherited, as before. A folder found in place, including one that appeared after validation, is
+  accepted only if it is the user's directory and not a link.
+- **Refusals.** Permission errors and refused folders answer 403 `Forbidden path`; other failures answer 500. Folders
+  created before a failure stay, as before.
+
+Compatibility: the operating system's permissions now apply where root bypassed them.
+- A parent the user may not write is refused (403), where root created the folder anyway.
+- Every directory on the way, `/sepalUsers` included, must be searchable by the user.
+- A folder of the user's that appears during creation is accepted, where it used to answer 500.
+- Each request starts one Node process.
+
 ### Releasing link browsing
 The GUI must ship these together with link browsing; they belong to the GUI, not this module:
 - Replace an entry's metadata on refresh, dropping the optional properties the update omits, rather than merging the
@@ -166,6 +194,7 @@ Showing scan errors (`data: {path, error}`) is optional.
 
 ## Non-Obvious Conventions
 
-- **File permissions preserved**: Uses `chown`/`chmod` based on looked-up user info
+- **Files and folders belong to the home's owner**: uploads get their owner and mode through the staged file's handle;
+  folders are created by a process running as the owner
 - **Polling interval configurable**: `--poll-interval-milliseconds` CLI arg for file watcher
 - **No database** - filesystem-based; RabbitMQ only to publish `files.FilesDeleted` (`{username}`) after a WebSocket `remove` deletes a path, so storage rescans the user's quota
