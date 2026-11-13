@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import {EventEmitter} from 'node:events'
+import {existsSync} from 'node:fs'
 import {chmod, mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
@@ -23,6 +24,38 @@ before(async () => {
 after(() => rm(homeDir, {recursive: true, force: true}))
 
 describe('start', () => {
+    test('cleans up a failed socket while another terminal keeps working', {timeout: 5000}, async t => {
+        const failedSocket = aWebsocket()
+        const healthySocket = aWebsocket()
+        const failedRequest = aStartRequest({sessionId: 'failed-socket'})
+        const healthyRequest = aStartRequest({sessionId: 'healthy-socket', username: 'bob'})
+        t.after(() => {
+            if (!failedSocket.closed) failedSocket.emit('close')
+            healthySocket.emit('close')
+        })
+        Terminal.start(failedSocket, failedRequest)
+        Terminal.start(healthySocket, healthyRequest)
+        const {tempKeyFile} = Session.find(failedRequest)
+        await writeFile(tempKeyFile, 'temporary test key')
+        const output = new Promise(resolve => {
+            let received = ''
+            healthySocket.send = data => {
+                received += data
+                if (received.includes('still working')) resolve()
+            }
+        })
+
+        failedSocket.emit('error', new Error('Invalid WebSocket frame'))
+        healthySocket.emit('message', 'still working\n')
+
+        assert.equal(failedSocket.closed, true)
+        assert.equal(Session.find(failedRequest), undefined)
+        assert.equal(existsSync(tempKeyFile), false)
+        assert.equal(healthySocket.closed, false)
+        assert.equal(Session.find(healthyRequest)?.username, 'bob')
+        await output
+    })
+
     test('rejects unsafe session IDs before creating a terminal', () => {
         for (const sessionId of [
             'session -oProxyCommand=unused', '../outside', 'a/b', 'a\\b', 'a b', 'a\tb',
@@ -137,6 +170,10 @@ const aWebsocket = () => {
     websocket.send = () => {}
     websocket.close = () => {
         websocket.closed = true
+    }
+    websocket.terminate = () => {
+        websocket.closed = true
+        websocket.emit('close')
     }
     return websocket
 }
