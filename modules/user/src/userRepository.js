@@ -279,7 +279,9 @@ export class UserRepository {
 
     async #assignDerivedPosixIds(connection, id) {
         await connection.query(
-            'UPDATE sepal_user SET uid = id, gid = id WHERE id = ? AND (uid IS NULL OR gid IS NULL)', [id]
+            `UPDATE sepal_user
+             SET uid = COALESCE(uid, id), gid = COALESCE(gid, id)
+             WHERE id = ? AND (uid IS NULL OR gid IS NULL)`, [id]
         )
     }
 }

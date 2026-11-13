@@ -81,6 +81,26 @@ describe('UserRepository', () => {
             assert.equal(stored.gid, imported.id)
         })
 
+        test('preserves an existing uid when only the gid is missing', async () => {
+            const imported = await givenImportedUser({id: 10001, username: USERNAME, uid: 20000, gid: null})
+
+            await repository.assignDerivedPosixIds(imported.id)
+
+            const stored = await repository.findByUsername(USERNAME)
+            assert.equal(stored.uid, 20000)
+            assert.equal(stored.gid, imported.id)
+        })
+
+        test('preserves an existing gid when only the uid is missing', async () => {
+            const imported = await givenImportedUser({id: 10001, username: USERNAME, uid: null, gid: 20000})
+
+            await repository.assignDerivedPosixIds(imported.id)
+
+            const stored = await repository.findByUsername(USERNAME)
+            assert.equal(stored.uid, imported.id)
+            assert.equal(stored.gid, 20000)
+        })
+
         // The uid and gid migrated from LDAP own the files on disk; overwriting either would orphan them.
         test('leaves a posix identity that is already set', async () => {
             const imported = await givenImportedUser({username: USERNAME, uid: 10001, gid: 10002})

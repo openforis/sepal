@@ -9,6 +9,7 @@ MySQL database (`sepal_user` table). The Java user service and LDAP are no longe
 values, which can differ from each other and from `id`; existing files depend on those values.
 New users get `uid = gid = id`. The LDAP migration advanced `AUTO_INCREMENT` beyond existing uid/gid values
 before this allocation rule was used. The local OS group `sepal` (gid 9999) is separate from per-user groups.
+Identity repair fills each missing field from `id` independently and preserves every populated UID/GID.
 
 ## Home mount
 
