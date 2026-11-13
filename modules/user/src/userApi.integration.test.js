@@ -97,6 +97,62 @@ describe('UserApi', () => {
         assert.deepEqual(login, {})
     })
 
+    test('a profile save cannot undo demotion while it is in flight', async t => {
+        await givenActiveUser({admin: true})
+        const currentUser = await repository.findByUsername(USERNAME)
+        const updateUserDetails = repository.updateUserDetails.bind(repository)
+        t.mock.method(repository, 'updateUserDetails', async details => {
+            await updateUserDetails({...details, name: currentUser.name, admin: false})
+            return updateUserDetails(details)
+        }, {times: 1})
+        const ctx = aContext({
+            state: {currentUser},
+            request: {body: {name: 'Renamed', email: EMAIL, admin: true}}
+        })
+
+        await api.updateCurrentDetails(ctx)
+
+        const stored = await repository.findByUsername(USERNAME)
+        assert.equal(stored.name, 'Renamed')
+        assert.equal(stored.admin, false)
+        assert.equal(ctx.body.admin, false)
+        assert.deepEqual(ctx.body.roles, [])
+    })
+
+    for (const admin of [false, true]) {
+        test(`a profile save preserves admin=${admin} regardless of the submitted flag`, async () => {
+            await givenActiveUser({admin})
+            const currentUser = await repository.findByUsername(USERNAME)
+            const ctx = aContext({
+                state: {currentUser},
+                request: {body: {name: 'Renamed', email: EMAIL, admin: !admin}}
+            })
+
+            await api.updateCurrentDetails(ctx)
+
+            const stored = await repository.findByUsername(USERNAME)
+            assert.equal(stored.name, 'Renamed')
+            assert.equal(stored.admin, admin)
+            assert.equal(ctx.body.admin, admin)
+        })
+    }
+
+    test('administrator edits can still grant and revoke administrator access', async () => {
+        await givenActiveUser()
+        for (const admin of [true, false]) {
+            const ctx = aContext({
+                state: {currentUser: {username: 'another-admin', roles: ['application_admin']}},
+                request: {body: {username: USERNAME, name: 'Bob', email: EMAIL, admin}}
+            })
+
+            await api.updateDetails(ctx)
+
+            const stored = await repository.findByUsername(USERNAME)
+            assert.equal(stored.admin, admin)
+            assert.equal(ctx.body.admin, admin)
+        }
+    })
+
     for (const login of ['authenticate', 'authPassword']) {
         test(`${login} upgrades a legacy password when it has not changed`, async () => {
             await givenActiveUser({passwordHash: `{PLAIN}${PASSWORD}`})
@@ -129,9 +185,9 @@ describe('UserApi', () => {
 
     // An active user with a POSIX identity in the NSS range — the shape the legacy import left behind,
     // which no operation here can write.
-    const givenActiveUser = async ({passwordHash} = {}) => {
+    const givenActiveUser = async ({passwordHash, admin = false} = {}) => {
         await testDb.query('INSERT INTO sepal_user SET ?', [{
-            username: USERNAME, name: 'Bob', email: EMAIL, admin: 0, system_user: 0, status: 'ACTIVE',
+            username: USERNAME, name: 'Bob', email: EMAIL, admin, system_user: 0, status: 'ACTIVE',
             uid: 10001, gid: 10001, password_hash: passwordHash ?? await hashPassword(PASSWORD)
         }])
     }

@@ -180,10 +180,10 @@ export class UserRepository {
                 `UPDATE sepal_user
                  SET token = IF(email <=> ?, token, NULL),
                      name = ?, email = ?, organization = ?, intended_use = ?,
-                     email_notifications_enabled = ?, manual_map_rendering_enabled = ?, admin = ?, ${BUMP}
+                     email_notifications_enabled = ?, manual_map_rendering_enabled = ?, admin = COALESCE(?, admin), ${BUMP}
                  WHERE username = ? AND (? IS NULL OR revision = ?)`,
                 [email, name, email, organization, intendedUse,
-                    emailNotificationsEnabled, manualMapRenderingEnabled, admin, username,
+                    emailNotificationsEnabled, manualMapRenderingEnabled, admin ?? null, username,
                     revision ?? null, revision ?? null]
             ).catch(rethrowDuplicate)
             return result.affectedRows > 0
