@@ -154,6 +154,18 @@ export class UserRepository {
         })
     }
 
+    async upgradePasswordHashIfUnchanged({username, verifiedHash, upgradedHash}) {
+        requireSelector(username)
+        return this.#db.withConnection(async connection => {
+            const [result] = await connection.query(
+                `UPDATE sepal_user SET password_hash = ?, token = NULL, ${BUMP}
+                 WHERE username = ? AND BINARY password_hash = ?`,
+                [upgradedHash, username, verifiedHash]
+            )
+            return result.affectedRows > 0
+        })
+    }
+
     // With a `revision`, the write only happens if the row still has it — the check and the write
     // are one statement, so two callers holding the same revision cannot both get through. Returns
     // whether a row was written.

@@ -478,8 +478,14 @@ export class UserApi {
     async #maybeRehashPassword(user, password) {
         if (needsRehash(user.passwordHash)) {
             try {
-                await this.#repository.updatePassword(user.username, await hashPassword(password))
-                log.info(`Upgraded password hash for '${user.username}'`)
+                const upgraded = await this.#repository.upgradePasswordHashIfUnchanged({
+                    username: user.username,
+                    verifiedHash: user.passwordHash,
+                    upgradedHash: await hashPassword(password)
+                })
+                if (upgraded) {
+                    log.info(`Upgraded password hash for '${user.username}'`)
+                }
             } catch (error) {
                 log.warn(`Password hash upgrade failed for '${user.username}': ${error.message}`)
             }

@@ -23,7 +23,7 @@ mock.module('./config.js', {
     }
 })
 
-const {hashPassword} = await import('./crypto.js')
+const {hashPassword, needsRehash, verifyPassword} = await import('./crypto.js')
 const {UserApi} = await import('./userApi.js')
 const {UserRepository} = await import('./userRepository.js')
 
@@ -97,12 +97,42 @@ describe('UserApi', () => {
         assert.deepEqual(login, {})
     })
 
+    for (const login of ['authenticate', 'authPassword']) {
+        test(`${login} upgrades a legacy password when it has not changed`, async () => {
+            await givenActiveUser({passwordHash: `{PLAIN}${PASSWORD}`})
+            const ctx = aContext({request: {body: {username: USERNAME, password: PASSWORD}}})
+
+            await api[login](ctx)
+
+            const stored = await repository.findByUsername(USERNAME)
+            assert.equal(await verifyPassword(PASSWORD, stored.passwordHash), true)
+            assert.equal(needsRehash(stored.passwordHash), false)
+        })
+
+        test(`${login} does not restore a password changed after its login read`, async t => {
+            await givenActiveUser({passwordHash: `{PLAIN}${PASSWORD}`})
+            const replacementHash = await hashPassword('a-new-password')
+            const findByUsername = repository.findByUsername.bind(repository)
+            t.mock.method(repository, 'findByUsername', async username => {
+                const snapshot = await findByUsername(username)
+                await repository.updatePassword(username, replacementHash)
+                return snapshot
+            }, {times: 1})
+            const ctx = aContext({request: {body: {username: USERNAME, password: PASSWORD}}})
+
+            await api[login](ctx)
+
+            const stored = await repository.findByUsername(USERNAME)
+            assert.equal(stored.passwordHash, replacementHash)
+        })
+    }
+
     // An active user with a POSIX identity in the NSS range — the shape the legacy import left behind,
     // which no operation here can write.
-    const givenActiveUser = async () => {
+    const givenActiveUser = async ({passwordHash} = {}) => {
         await testDb.query('INSERT INTO sepal_user SET ?', [{
             username: USERNAME, name: 'Bob', email: EMAIL, admin: 0, system_user: 0, status: 'ACTIVE',
-            uid: 10001, gid: 10001, password_hash: await hashPassword(PASSWORD)
+            uid: 10001, gid: 10001, password_hash: passwordHash ?? await hashPassword(PASSWORD)
         }])
     }
 
