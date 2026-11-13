@@ -1,13 +1,18 @@
-import {createReadStream, createWriteStream} from 'node:fs'
-import {chmod, chown, lstat, mkdir, realpath, stat} from 'node:fs/promises'
+import {randomUUID} from 'node:crypto'
+import {createReadStream} from 'node:fs'
+import {chmod, chown, link, lstat, mkdir, open, realpath, rename, stat, unlink} from 'node:fs/promises'
 import Path from 'node:path'
-import {pipeline} from 'node:stream/promises'
+
+import {getLogger} from '#sepal/log'
 
 import {isWithin} from './homePath.js'
 
+const log = getLogger('homeWrite')
+
 // Where a write to a path in a user's home goes. Refused when a part of the path, or what is there already, is a link
-// or not the user's, and when a parent folder is missing, unless the write creates a folder with its parents
-// (recursive). Answers whether the target exists already, and when not, the first folder of the path to create.
+// or not the user's, when a file would replace anything but a regular file, and when a parent folder is missing, unless
+// the write creates a folder with its parents (recursive). Answers whether the target exists already, and when not, the
+// first folder of the path to create.
 export const resolveWritePath = async (homeDir, username, path, {directory = false, recursive = false} = {}) => {
     checkRequest(username, path)
     const userHomeDir = Path.join(homeDir, username)
@@ -32,9 +37,13 @@ export const createFolders = async (firstMissing, target, owner) => {
     }
 }
 
-export const writeFile = async (source, target, owner) => {
-    await pipeline(createReadStream(source), createWriteStream(target, {flags: 'w'}))
-    await giveTo(target, owner, 0o644)
+// Publishes a copy of the source at the target only once complete: written, owned by the user, readable by all and
+// synced. Until then the target is as it was, whatever fails. Overwriting renames the copy over what is there, so that
+// readers see one version or the other, whole. Otherwise a link publishes the copy only while nothing is there,
+// refusing whatever got there first, however late.
+export const publishFile = async (source, target, owner, {overwrite}) => {
+    const staged = await stage(source, Path.dirname(target), owner)
+    await publish(staged, target, overwrite)
 }
 
 const checkRequest = (username, path) => {
@@ -95,6 +104,48 @@ const ensureFolder = async (folder, owner) => {
     }
 }
 
+// A complete copy of the source in the directory, under a name of its own that no other operation uses: in the
+// target's directory, a rename or link never crosses filesystems. Removed again if the copy fails.
+const stage = async (source, directory, owner) => {
+    const staged = Path.join(directory, `.upload-${randomUUID()}`)
+    const handle = await open(staged, 'wx', 0o600)
+    try {
+        await copy(source, handle, owner)
+    } catch (error) {
+        await removeStaged(staged)
+        throw error
+    }
+    return staged
+}
+
+// Ownership and permissions go through the handle, never through a path that might since lead elsewhere.
+const copy = async (source, handle, {uid, gid}) => {
+    try {
+        await handle.writeFile(createReadStream(source))
+        await handle.chown(uid, gid)
+        await handle.chmod(0o644)
+        await handle.sync()
+    } finally {
+        await handle.close()
+    }
+}
+
+const publish = async (staged, target, overwrite) => {
+    try {
+        await (overwrite ? rename(staged, target) : link(staged, target))
+    } catch (error) {
+        await removeStaged(staged)
+        throw error.code === 'EEXIST' && !overwrite ? conflict() : error
+    }
+    if (!overwrite) {
+        await removeStaged(staged)
+    }
+}
+
+// Never fails: a staged name left behind is logged, and whether the copy was published decides the answer.
+const removeStaged = staged =>
+    unlink(staged).catch(error => log.warn(`Cannot remove staged upload: ${staged} (${error.code})`))
+
 const checkFolder = (folder, stats, owner) => {
     checkNotLink(folder, stats)
     if (!stats.isDirectory()) {
@@ -108,6 +159,10 @@ const checkTarget = (target, stats, owner, directory) => {
     checkOwned(target, stats, owner)
     if (stats.isDirectory() !== directory) {
         throw badRequest(directory ? 'Path exists but is not a directory' : 'Target exists and is a directory')
+    }
+    // A rename would replace a socket, FIFO or device without ever opening it, which writing to it would have tried.
+    if (!directory && !stats.isFile()) {
+        throw badRequest('Target exists and is not a regular file')
     }
 }
 
@@ -150,3 +205,6 @@ const forbidden = detail =>
 
 const badRequest = reason =>
     refusal(400, reason)
+
+const conflict = () =>
+    refusal(409, 'Cannot overwrite existing files')

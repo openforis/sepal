@@ -5,7 +5,7 @@ import Path from 'node:path'
 import {getLogger} from '#sepal/log'
 
 import {describeEntry, resolvePath} from './homePath.js'
-import {createFolders, resolveWritePath, writeFile} from './homeWrite.js'
+import {createFolders, publishFile, resolveWritePath} from './homeWrite.js'
 
 const log = getLogger('filesystem')
 
@@ -49,7 +49,7 @@ export const listFiles = authenticated(async (homeDir, ctx, username) => {
     }
 })
 
-// Writes the one file of an upload; upload.js removes its temporary files.
+// Publishes the one file of an upload; upload.js removes its temporary files.
 export const setFile = authenticated(async (homeDir, ctx, username) => {
     const {path, overwrite} = ctx.query
     const files = ctx.request.files || {}
@@ -68,7 +68,8 @@ export const setFile = authenticated(async (homeDir, ctx, username) => {
             log.warn(() => `Cannot overwrite existing file: ${target}`)
             return respond(ctx, 409, {error: 'Cannot overwrite existing files'})
         }
-        await writeFile(files.file.filepath, target, owner)
+        await publishFile(files.file.filepath, target, owner, {overwrite: overwrite === 'true'})
+        // Whether a file was there when the request was checked: another may have created or replaced one since.
         respond(ctx, 200, {
             message: existed ? 'File overwritten successfully' : 'File created successfully',
             path,

@@ -35,7 +35,8 @@ docker run --rm --privileged --entrypoint sh \
 ### REST API
 - `GET /download` - Download file
 - `GET /listFiles` - List directory contents
-- `POST /setFile` - Upload one file (multipart field `file` via `koa-body`, max 100MB); see [Uploads](#uploads)
+- `POST /setFile` - Upload one file (multipart field `file` via `koa-body`, max 100MB); see [Uploads](#uploads) and
+  [Publishing uploads](#publishing-uploads)
 - `POST /createFolder` - Create new folder
 
 ### WebSocket
@@ -121,7 +122,39 @@ That includes success, refusals, failed writes, bodies the parser rejects part-w
 - The body is parsed before authentication and validation, so a refused request still takes up to 100MB of temporary
   storage until it ends. A client that stalls keeps it until the server times the request out.
 - Parser rejections, such as an oversized file or a malformed body, are answered 500.
-- `overwrite=true` truncates the existing file before writing, so a failed write can leave it incomplete.
+
+### Publishing uploads
+`publishFile` (`src/homeWrite.js`) never writes into the target. It copies the upload into a staged file next to the
+target, `.upload-<uuid>`, created exclusively. Through that file's open handle it sets the home owner's uid/gid and mode
+0644, fsyncs and closes it. Only then is the copy published:
+- `overwrite=true` renames it over the target, so readers see the previous file or the new one, whole. Of concurrent
+  overwrites, the last rename wins.
+- Otherwise it is hard-linked at the target, which fails while anything is there, however late it arrived. That
+  answers 409; of concurrent creators, one wins. The staged name is then removed.
+- Any failure before publication removes the staged file and leaves the target as it was (500). A staged name that
+  cannot be removed after publication is logged, and the upload is still answered as published.
+- A target that is not a regular file (socket, FIFO, device) is refused (400), since a rename would replace it without
+  opening it. Links, directories and entries not the user's stay refused.
+- `overwritten` says whether a file was there when the request was checked; another request may since have created or
+  replaced one.
+
+Compatibility: an overwrite gives the target a new inode.
+- Hard links to the old file keep the old content.
+- Processes that already have the old file open keep reading the old content. On EFS this assumes the server keeps a
+  replaced file readable while it is open.
+- Ownership and mode are reset as before, but the old file's extended attributes and ACLs are not carried over.
+- A staged file is briefly visible in listings. One left by a crash stays until removed.
+
+Assumptions and limits:
+- **Atomicity.** Rename and link are atomic within one directory of one filesystem: locally, and on NFSv4.1, which EFS
+  serves, with hard links. NFSv4.1 sessions keep a retried link from reporting a false conflict. Staging next to the
+  target keeps both on the target's filesystem and mount, wherever the parser's temporary directory is.
+- **Durability.** The staged file is fsynced before publication, so a published name never refers to unwritten
+  content. The directory is not, so after a crash the target may still hold the previous version; both are complete.
+- **Path boundary.** Each operation resolves its path again through the `nosymfollow` view, so a link swapped in on the
+  way fails. The parent folder's ownership is not checked again at publication. A user rearranging their own folders
+  meanwhile can redirect their upload within their home or make it fail, not move it out. A rename replaces whatever is
+  at the target by then, without opening or following it.
 
 ### Releasing link browsing
 The GUI must ship these together with link browsing; they belong to the GUI, not this module:
