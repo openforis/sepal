@@ -54,6 +54,21 @@ describe('monitoring a path', () => {
         })
     })
 
+    test('reports entries named like properties objects inherit as ordinary entries', async () => {
+        for (const name of ['__proto__', 'constructor', 'hasOwnProperty']) {
+            await aFile('gina', `project/${name}`, 'a')
+        }
+        const watcher = await createWatcher({send: sent, stop$})
+        const scanned = firstSent()
+
+        watcher.monitor({username: 'gina', clientId: 'client', subscriptionId: 'subscription', path: '/project'})
+
+        const {data: {items}} = await scanned
+        assert.equal(Object.getPrototypeOf(items), Object.prototype)
+        assert.deepEqual(Object.keys(items).sort(), ['__proto__', 'constructor', 'hasOwnProperty'])
+        assert.deepEqual(Object.values(described(items)), Array(3).fill({file: true, size: 1}))
+    })
+
     test('reports a link as what it leads to within the home, and an unusable one by its problem', async () => {
         await aFile('erin', 'project/data.csv', 'a,b')
         await aFile('erin', 'other/notes.txt')

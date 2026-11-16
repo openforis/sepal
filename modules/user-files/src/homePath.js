@@ -1,8 +1,14 @@
 import {lstat, readlink, realpath, rm} from 'node:fs/promises'
 import Path from 'node:path'
 
+import {Observable} from 'rxjs'
+
 // Error codes of a path that does not lead to anything within the home.
 export const UNRESOLVABLE = ['ENOENT', 'ENOTDIR', 'ELOOP', 'EOUTSIDEHOME']
+
+// How many entries one listing describes at a time, at most. Each listing has its own allowance, so that a large
+// directory leaves the file system threads to others' listings too; listings at the same time add up.
+export const ENTRY_CONCURRENCY = 16
 
 // As many links as Linux follows resolving a path.
 const MAX_LINKS = 40
@@ -31,6 +37,35 @@ export const describeEntry = async (home, path) => {
         ? describeLink(home, path, stats)
         : {stats, link: {}}
 }
+
+// The entries of a directory as `describe` makes them from their names, leaving out those it makes nothing of, as one
+// array. ENTRY_CONCURRENCY lanes each take the next name left once their last is described, so a description starts
+// only as another ends, and none starts once the listing is unsubscribed; one already started ends unseen. Lanes
+// rather than a mergeMap with a limit, which buffers every name and shifts that buffer for each one started: quadratic
+// in the size of the directory.
+export const describeEntries$ = (names, describe) =>
+    new Observable(subscriber => {
+        const remaining = names.values()
+        const described = []
+        const lane = async () => {
+            for (const name of remaining) {
+                if (subscriber.closed) {
+                    return
+                }
+                const entry = await describe(name)
+                if (entry) {
+                    described.push(entry)
+                }
+            }
+        }
+        Promise.all(Array.from({length: ENTRY_CONCURRENCY}, lane)).then(
+            () => {
+                subscriber.next(described)
+                subscriber.complete()
+            },
+            error => subscriber.error(error)
+        )
+    })
 
 // Only the parent is resolved, so a link is removed itself instead of what it leads to.
 export const removeUserPath = async (userHomeDir, path) => {

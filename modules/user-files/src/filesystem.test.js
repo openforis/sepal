@@ -23,6 +23,48 @@ beforeEach(async () => {
 afterEach(() => rm(homes, {recursive: true, force: true}))
 
 describe('listFiles', () => {
+    test('lists directories first, then files, each by name, leaving out hidden entries and other extensions unless asked', async () => {
+        const alice = await aHome('alice')
+        for (const path of ['project/b.csv', 'project/a.txt', 'project/.hidden.csv']) {
+            await aFile(alice, path)
+        }
+        for (const path of ['project/zeta', 'project/Alpha']) {
+            await mkdir(join(alice, path))
+        }
+
+        const names = await Promise.all([
+            {path: 'project'},
+            {path: 'project', extensions: '.csv'},
+            {path: 'project', extensions: '.csv', includeHidden: 'true'}
+        ].map(async query => {
+            const ctx = aRequest('alice', query)
+            await listFiles(homes, ctx)
+            return ctx.body.files.map(({name}) => name)
+        }))
+
+        assert.deepEqual(names, [
+            ['Alpha', 'zeta', 'a.txt', 'b.csv'],
+            ['Alpha', 'zeta', 'b.csv'],
+            ['Alpha', 'zeta', '.hidden.csv', 'b.csv']
+        ])
+    })
+
+    test('lists entries named like properties objects inherit as ordinary entries', async () => {
+        const alice = await aHome('alice')
+        for (const name of ['__proto__', 'constructor', 'hasOwnProperty']) {
+            await aFile(alice, `project/${name}`, 'a')
+        }
+        const ctx = aRequest('alice', {path: 'project'})
+
+        await listFiles(homes, ctx)
+
+        assert.deepEqual(_.sortBy(ctx.body.files.map(({name, path, type, size}) => ({name, path, type, size})), 'name'), [
+            {name: '__proto__', path: 'project/__proto__', type: 'file', size: 1},
+            {name: 'constructor', path: 'project/constructor', type: 'file', size: 1},
+            {name: 'hasOwnProperty', path: 'project/hasOwnProperty', type: 'file', size: 1}
+        ])
+    })
+
     test('describes files and directories as they are, without link properties', async () => {
         const alice = await aHome('alice')
         await aFile(alice, 'project/data.csv', 'a,b')

@@ -2,9 +2,11 @@ import {constants} from 'node:fs'
 import {open, readdir, stat} from 'node:fs/promises'
 import Path from 'node:path'
 
+import {lastValueFrom} from 'rxjs'
+
 import {getLogger} from '#sepal/log'
 
-import {describeEntry, resolvePath} from './homePath.js'
+import {describeEntries$, describeEntry, resolvePath} from './homePath.js'
 import {createFolders, publishFile, resolveWritePath} from './homeWrite.js'
 
 const log = getLogger('filesystem')
@@ -151,13 +153,10 @@ const findDirectory = async (homeDir, username, path) => {
 }
 
 const listDirectory = async ({home, absolutePath, path}, {includeHidden, extensions}) => {
-    const names = await readdir(absolutePath)
-    const entries = await Promise.all(names
-        .filter(name => includeHidden || !name.startsWith('.'))
-        .map(name => listEntry(home, absolutePath, path, name))
-    )
+    const names = (await readdir(absolutePath)).filter(name => includeHidden || !name.startsWith('.'))
+    const entries = await lastValueFrom(describeEntries$(names, name => listEntry(home, absolutePath, path, name)))
     return entries
-        .filter(entry => entry && (!extensions || entry.type === 'directory' || extensions.has(Path.extname(entry.name))))
+        .filter(entry => !extensions || entry.type === 'directory' || extensions.has(Path.extname(entry.name)))
         .sort(directoriesFirst)
 }
 

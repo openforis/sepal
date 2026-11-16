@@ -2,14 +2,14 @@ import {readdir} from 'node:fs/promises'
 import Path from 'node:path'
 
 import _ from 'lodash'
-import {catchError, distinctUntilChanged, EMPTY, exhaustMap, filter, finalize, first, from, groupBy, map, mergeMap, mergeWith, of, reduce, repeat, scan, Subject, switchMap, takeUntil, throttleTime, timer} from 'rxjs'
+import {catchError, distinctUntilChanged, EMPTY, exhaustMap, filter, finalize, first, from, groupBy, map, mergeMap, mergeWith, of, repeat, scan, Subject, switchMap, takeUntil, throttleTime, timer} from 'rxjs'
 
 import {getLogger} from '#sepal/log'
 import {minDuration$} from '#sepal/rxjs'
 
 import {homeDir, pollIntervalMilliseconds} from './config.js'
 import {filesDeleted$} from './events.js'
-import {describeEntry, removeUserPath, resolvePath, UNRESOLVABLE} from './homePath.js'
+import {describeEntries$, describeEntry, removeUserPath, resolvePath, UNRESOLVABLE} from './homePath.js'
 import {clientTag, subscriptionTag} from './tag.js'
 
 const log = getLogger('watcher')
@@ -163,11 +163,8 @@ const createWatcher = async ({send, stop$}) => {
 
     const scanValidDir$ = ({username, clientId, subscriptionId, path, home, absolutePath}) =>
         from(readdir(absolutePath)).pipe(
-            switchMap(names => of(...names)),
-            mergeMap(name => from(scanEntry(home, absolutePath, name))),
-            filter(fileInfo => !!fileInfo),
-            reduce((acc, {name, ...fileInfo}) => ({...acc, [name]: fileInfo}), {}),
-            map(items => ({username, clientId, subscriptionId, data: {path, items}})),
+            switchMap(names => describeEntries$(names, name => scanEntry(home, absolutePath, name))),
+            map(entries => ({username, clientId, subscriptionId, data: {path, items: itemsOf(entries)}})),
             catchError(error => {
                 log.warn(error)
                 // Unmonitored only once sent: unmonitoring ends the subscription the error is sent through.
@@ -223,6 +220,10 @@ const createWatcher = async ({send, stop$}) => {
             }
         }
     }
+
+    // By name, defined as own properties: an entry named like one objects inherit, such as `__proto__`, stays an entry.
+    const itemsOf = entries =>
+        Object.fromEntries(entries.map(({name, ...info}) => [name, info]))
 
     const toDir = path =>
         path.substr(-1) === '/' ? path : Path.join(path, '/')

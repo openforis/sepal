@@ -108,6 +108,22 @@ links on it lead within the user's home.
 - Writes (`setFile`, `createFolder`) never pass through links. Their unexpected failures answer a generic error; the
   details stay in the log.
 
+### Listings
+REST listings (`listFiles`) and watcher scans describe a directory's entries through `describeEntries$`
+(`src/homePath.js`).
+- **Limit.** Each listing has at most `ENTRY_CONCURRENCY` (16) entry descriptions active at once. Each lane takes
+  its next name after its previous description finishes. The limit is per listing, not service-wide: concurrent
+  listings have separate allowances.
+- **Linear work.** Names are taken from the `readdir` array, never spread into arguments, and results collect in a
+  per-listing array. Watcher `items` are built with `Object.fromEntries`, so names like `__proto__` or `constructor`
+  stay ordinary entries.
+- **Cancellation.** Unmonitoring, or anything else ending a scan, stops lanes taking names. A description already
+  started finishes unseen, and nothing is sent late. A REST listing runs to the end even if its client leaves.
+- **Memory.** A listing still holds every name and every described entry until it is answered; there is no
+  pagination.
+- **Unchanged:** response shapes, hidden-file and extension filtering, REST sort order (directories first, then by
+  name), skipping vanished or unreadable entries, and watcher `items` in completion order.
+
 ### Uploads
 `src/upload.js` parses the `/setFile` body and owns every temporary file the parser writes, in the process's temporary
 directory. However the request ends, each file's writer is closed and the file removed, whatever field it came in.
