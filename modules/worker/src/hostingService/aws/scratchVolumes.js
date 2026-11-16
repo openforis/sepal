@@ -51,6 +51,7 @@ export class ScratchVolumes {
             return null
         }
         if (await this.#attachedVolumeId(instance.id)) {
+            await this.#enableDeleteOnTermination(instance.id)
             return DEVICE_NAME
         }
         const {VolumeId: volumeId} = await this.#client.send(new CreateVolumeCommand({
@@ -65,10 +66,7 @@ export class ScratchVolumes {
         await waitUntilVolumeAvailable({client: this.#client, ...WAITER}, {VolumeIds: [volumeId]})
         await this.#client.send(new AttachVolumeCommand({InstanceId: instance.id, VolumeId: volumeId, Device: DEVICE_NAME}))
         await waitUntilVolumeInUse({client: this.#client, ...WAITER}, {VolumeIds: [volumeId]})
-        await this.#client.send(new ModifyInstanceAttributeCommand({
-            InstanceId: instance.id,
-            BlockDeviceMappings: [{DeviceName: DEVICE_NAME, Ebs: {DeleteOnTermination: true}}],
-        }))
+        await this.#enableDeleteOnTermination(instance.id)
         log.info(`Attached scratch volume ${volumeId} to ${instanceTag(instance)}`)
         return DEVICE_NAME
     }
@@ -115,6 +113,13 @@ export class ScratchVolumes {
     #needsVolume(instanceType) {
         const type = this.#instanceTypeById.get(instanceType)
         return !type || type.ssdGB === 0 || type.name.startsWith('x1.')
+    }
+
+    async #enableDeleteOnTermination(instanceId) {
+        await this.#client.send(new ModifyInstanceAttributeCommand({
+            InstanceId: instanceId,
+            BlockDeviceMappings: [{DeviceName: DEVICE_NAME, Ebs: {DeleteOnTermination: true}}],
+        }))
     }
 
     async #attachedVolumeId(instanceId) {

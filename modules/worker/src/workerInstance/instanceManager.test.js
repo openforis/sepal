@@ -15,7 +15,10 @@ const session = ({id, instanceId, host = 'host-1', creationTime = new Date('2024
 })
 
 const makeManager = provisioner =>
-    createInstanceManager({provider: {attachScratchVolume: async () => null}, provisioner, instanceTypes: []})
+    createInstanceManager({
+        claims: {sessionIdForInstance: async () => 's-1'},
+        provider: {attachScratchVolume: async () => null}, provisioner, instanceTypes: []
+    })
 
 describe('removeOrphanedContainers', () => {
     const instance = id => ({id, type: 'T3aSmall', host: id, reservation: null})
@@ -116,14 +119,14 @@ describe('reprovisionInstance', () => {
         assert.equal(provisioned.reservation.sessionId, 's-1')
     })
 
-    // Releasing hands the instance back to the pool, so its provisioning entry must go with it:
-    // the next session allocated the same instance would otherwise have its provision dropped as
-    // a duplicate of a provision nobody is waiting for any more, and the reconcile sweep would
-    // skip it too, until the session times out unprovisioned.
-    test('a released instance is provisioned again for the session that gets it next', async () => {
-        const started = []
+    test('release retires an instance whose provisioning is still running', async () => {
+        const started = Promise.withResolvers()
+        const pending = Promise.withResolvers()
         const provisioner = {
-            provisionInstance: mock.fn(() => new Promise(resolve => started.push(resolve))),
+            provisionInstance: mock.fn(() => {
+                started.resolve()
+                return pending.promise
+            }),
             undeploy: mock.fn(async () => {}),
         }
         const instance = {
@@ -132,7 +135,7 @@ describe('reprovisionInstance', () => {
             host: '10.0.0.1',
             reservation: {username: 'alice', workerType: 'sandbox', sessionId: 's-1'},
         }
-        const claims = {release: mock.fn(async () => true)}
+        const claims = {sessionIdForInstance: async () => 's-1', release: mock.fn(async () => true)}
         const provider = {
             getInstance: mock.fn(async () => instance),
             release: mock.fn(async () => {}),
@@ -144,34 +147,28 @@ describe('reprovisionInstance', () => {
 
         const first = manager.reprovisionInstance(pendingSession)
         assert.equal(manager.isProvisioning('i-1'), true)
+        await started.promise
 
         await manager.releaseInstance('i-1', 's-1')
-        assert.equal(manager.isProvisioning('i-1'), false)
+        assert.equal(manager.isProvisioning('i-1'), true)
+        assert.deepEqual(callsOf(provider.terminate), [['i-1']])
+        assert.equal(provider.release.mock.callCount(), 0)
+        assert.equal(provisioner.undeploy.mock.callCount(), 0)
+        assert.equal(claims.release.mock.callCount(), 0)
 
-        const successor = {...pendingSession, id: 's-2', username: 'bob'}
-        const second = manager.reprovisionInstance(successor)
-        await new Promise(resolve => setImmediate(resolve))
-        assert.equal(provisioner.provisionInstance.mock.callCount(), 2)
-        assert.equal(
-            provisioner.provisionInstance.mock.calls[1].arguments[0].reservation.sessionId,
-            's-2'
-        )
-
-        // The abandoned provision settling must not take the successor's entry with it.
-        started[0]()
+        pending.resolve()
         assert.equal(await first, true)
         assert.equal(manager.isProvisioning('i-1'), true)
-
-        started[1]()
-        assert.equal(await second, true)
     })
 
     // The sweep re-entering an in-flight provision would delete the containers it is creating.
     test('is dropped while the same instance is already being provisioned', async () => {
         let release
+        const started = Promise.withResolvers()
         const provisioner = {
             provisionInstance: mock.fn(() => new Promise(resolve => {
                 release = resolve
+                started.resolve()
             })),
         }
         const manager = makeManager(provisioner)
@@ -179,6 +176,7 @@ describe('reprovisionInstance', () => {
         const running = manager.reprovisionInstance(pendingSession)
         assert.equal(manager.isProvisioning('i-1'), true)
         assert.equal(await manager.reprovisionInstance(pendingSession), false)
+        await started.promise
         assert.equal(provisioner.provisionInstance.mock.callCount(), 1)
 
         release()

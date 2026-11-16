@@ -571,6 +571,18 @@ const createAwsInstanceProvider = (config, {instanceTypes = INSTANCE_TYPES} = {}
         return toWorkerInstance(awsInstances[0], codec)
     }
 
+    const isInstanceMissing = async instanceId => {
+        try {
+            await getInstance(instanceId)
+            return false
+        } catch (error) {
+            if (error.name === 'InvalidInstanceID.NotFound') {
+                return true
+            }
+            throw error
+        }
+    }
+
     const onInstanceLaunched = listener => {
         launchListeners.push(listener)
     }
@@ -616,6 +628,7 @@ const createAwsInstanceProvider = (config, {instanceTypes = INSTANCE_TYPES} = {}
         pooledInstances,
         reservedInstances,
         getInstance,
+        isInstanceMissing,
         restore,
         awaitHost,
         sweep,

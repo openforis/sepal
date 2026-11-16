@@ -5,8 +5,10 @@ import {isDeepStrictEqual} from 'node:util'
 import {assertMatches} from '#sepal/testSupport/assert'
 import {callsOf} from '#sepal/testSupport/mock'
 
+import {containerName} from '../containerName.js'
 import {instanceName} from '../instanceName.js'
 import {createDockerInstanceProvisioner} from './dockerInstanceProvisioner.js'
+import {createInstanceManager} from './instanceManager.js'
 import {createApiKeyRetryWrapper, NULL_API_KEY_IMPL} from './sandboxSessionApiKey.js'
 
 // Provisioning refuses without a key, so this stands in for the session lookup wherever the key
@@ -481,6 +483,40 @@ describe('provisionInstance deletes .worker containers only', () => {
 
 describe('undeploy', () => {
 
+    for (const stage of ['listing', 'container deletion', 'volume deletion']) {
+        test(`superseded release authority stops Docker cleanup during ${stage}`, {timeout: 5000}, async () => {
+            const paused = Promise.withResolvers()
+            const resume = Promise.withResolvers()
+            const authority = {current: true}
+            const requests = []
+            globalThis.fetch = mock.fn(async (url, options) => {
+                requests.push(url)
+                const {pathname} = new URL(url)
+                const listing = pathname.endsWith('/containers/json')
+                const selected = stage === 'listing' && listing
+                    || stage === 'container deletion' && pathname.endsWith('/containers/c-1')
+                    || stage === 'volume deletion' && pathname.includes('/volumes/') && options.method === 'DELETE'
+                if (selected) {
+                    paused.resolve()
+                    await resume.promise
+                }
+                return {ok: true, status: 200, text: async () => listing ? JSON.stringify([
+                    {Id: 'c-1', Names: ['/sandbox.old-1']},
+                    {Id: 'c-2', Names: ['/sandbox.old-2']},
+                ]) : ''}
+            })
+            const provisioner = createDockerInstanceProvisioner({config: CONFIG, instanceTypes: INSTANCE_TYPES})
+            const cleanup = provisioner.undeploy(makeInstance(), {isCurrent: () => authority.current})
+            await paused.promise
+            authority.current = false
+            const sent = requests.length
+            resume.resolve()
+
+            await assert.rejects(cleanup, {name: 'ProvisioningCanceled'})
+            assert.equal(requests.length, sent)
+        })
+    }
+
     test('calls GET containers/json then DELETE for .worker containers', async () => {
         const deletedIds = []
         let listCalled = false
@@ -775,6 +811,151 @@ describe('user public key', () => {
 
         assert.deepEqual(methods.filter(method => method !== 'GET'), [])
     })
+})
+
+describe('release during provisioning', () => {
+    const instance = makeInstance()
+    const workerName = containerName({image: 'sandbox', username: 'alice', sessionId: 'sess-1', instanceId: instance.id})
+    const formatName = `sandbox.format-tmp.${instance.id}`
+    const prepareName = `sandbox.prepare-tmp.${instance.id}`
+    const stages = [
+        {name: 'API key lookup'},
+        {name: 'public key lookup'},
+        {name: 'Docker availability', path: '/containers/json'},
+        {name: 'cleanup listing', path: '/containers/json', occurrence: 2},
+        {name: 'container deletion', path: '/containers/old-worker', method: 'DELETE'},
+        {name: 'tmp volume deletion', path: `/volumes/sepal-tmp.${instance.id}`, method: 'DELETE'},
+        {name: 'format helper creation', path: '/containers/create', containerName: formatName},
+        {name: 'format helper start', path: `/containers/${formatName}/start`},
+        {name: 'scratch formatting', path: `/containers/${formatName}/wait`},
+        {name: 'format helper logs', path: `/containers/${formatName}/logs`, failedHelper: formatName},
+        {name: 'format helper cleanup', path: `/containers/${formatName}`, method: 'DELETE'},
+        {name: 'tmp volume creation', path: '/volumes/create'},
+        {name: 'prepare helper creation', path: '/containers/create', containerName: prepareName},
+        {name: 'prepare helper start', path: `/containers/${prepareName}/start`},
+        {name: 'prepare helper wait', path: `/containers/${prepareName}/wait`},
+        {name: 'prepare helper logs', path: `/containers/${prepareName}/logs`, failedHelper: prepareName},
+        {name: 'prepare helper cleanup', path: `/containers/${prepareName}`, method: 'DELETE'},
+        {name: 'worker creation', path: '/containers/create', containerName: workerName},
+        {name: 'worker start', path: `/containers/${workerName}/start`},
+        {name: 'readiness exec creation', path: `/containers/${workerName}/exec`},
+        {name: 'readiness exec start', path: '/exec/exec-1/start'},
+        {name: 'response body consumption', path: '/containers/create', containerName: workerName, pauseBody: true},
+    ]
+
+    for (const stage of stages) {
+        test(`retires the host and sends no later Docker requests after ${stage.name}`, {timeout: 5000}, async () => {
+            const paused = Promise.withResolvers()
+            const resume = Promise.withResolvers()
+            let retired = false
+            let matches = 0
+            const requestsAfterRetirement = []
+            setupFetchMock()
+            const fetch = globalThis.fetch
+            globalThis.fetch = mock.fn(async (url, options) => {
+                if (retired) requestsAfterRetirement.push(url)
+                const {pathname, searchParams} = new URL(url)
+                let response
+                if (pathname.endsWith('/containers/json')) {
+                    response = {ok: true, status: 200, text: async () => JSON.stringify([
+                        {Id: 'old-worker', Names: ['/sandbox.old-worker']},
+                    ])}
+                } else if (stage.failedHelper && pathname.endsWith(`/containers/${stage.failedHelper}/wait`)) {
+                    response = dockerWaitExit(1)
+                } else {
+                    response = await fetch(url, options)
+                }
+                const selected = stage.path && pathname.endsWith(stage.path)
+                    && (!stage.method || options.method === stage.method)
+                    && (!stage.containerName || searchParams.get('name') === stage.containerName)
+                if (selected && ++matches === (stage.occurrence ?? 1)) {
+                    if (stage.pauseBody) {
+                        const readBody = response.text
+                        return {...response, text: async () => {
+                            paused.resolve()
+                            await resume.promise
+                            return readBody()
+                        }}
+                    }
+                    paused.resolve()
+                    await resume.promise
+                }
+                return response
+            })
+            const pauseLookup = async name => {
+                if (stage.name === name) {
+                    paused.resolve()
+                    await resume.promise
+                }
+            }
+            const provisioner = createDockerInstanceProvisioner({
+                config: CONFIG, instanceTypes: INSTANCE_TYPES,
+                sandboxSessionApiKey: {apiKeyForSession: async () => {
+                    await pauseLookup('API key lookup')
+                    return 'session-key'
+                }},
+                userPublicKeys: {publicKey: async username => {
+                    await pauseLookup('public key lookup')
+                    return userPublicKey(username)
+                }},
+            })
+            const provider = {
+                getInstance: async () => instance,
+                attachScratchVolume: async () => '/dev/xvdg',
+                terminate: mock.fn(async () => { retired = true }),
+                release: mock.fn(async () => {}),
+            }
+            const claims = {
+                sessionIdForInstance: async () => instance.reservation.sessionId,
+                release: mock.fn(async () => true),
+            }
+            const manager = createInstanceManager({claims, provider, provisioner, instanceTypes: INSTANCE_TYPES})
+            const session = {
+                id: instance.reservation.sessionId, username: 'alice', workerType: 'sandbox',
+                instanceType: instance.type, instance: {id: instance.id, host: instance.host}
+            }
+
+            const running = manager.reprovisionInstance(session)
+            await paused.promise
+            await manager.releaseInstance(instance.id, session.id)
+            resume.resolve()
+            await running
+
+            assert.deepEqual(callsOf(provider.terminate), [[instance.id]])
+            assert.equal(provider.release.mock.callCount(), 0)
+            assert.deepEqual(requestsAfterRetirement, [])
+            assert.equal(claims.release.mock.callCount(), 0)
+        })
+    }
+
+    test('canceling one attempt leaves teardown, probes and a fresh attempt usable', async () => {
+        setupFetchMock()
+        const provisioner = createDockerInstanceProvisioner({
+            config: CONFIG, instanceTypes: INSTANCE_TYPES,
+            sandboxSessionApiKey: SESSION_API_KEY, userPublicKeys: USER_PUBLIC_KEYS,
+        })
+        await assert.rejects(provisioner.provisionInstance(instance, {isCurrent: () => false}), {name: 'ProvisioningCanceled'})
+        assert.equal(globalThis.fetch.mock.callCount(), 0)
+
+        await provisioner.undeploy(instance)
+        assert.equal(await provisioner.instanceStatus(instance), 'MISSING')
+        await provisioner.provisionInstance(instance)
+    })
+
+    for (const invalid of [
+        {type: 'unknown'},
+        {reservation: {...instance.reservation, workerType: 'unknown'}},
+    ]) {
+        test(`rejects an unknown ${invalid.type ? 'instance' : 'worker'} type before deleting resources`, async () => {
+            setupFetchMock()
+            const provisioner = createDockerInstanceProvisioner({
+                config: CONFIG, instanceTypes: INSTANCE_TYPES,
+                sandboxSessionApiKey: SESSION_API_KEY, userPublicKeys: USER_PUBLIC_KEYS,
+            })
+            await assert.rejects(provisioner.provisionInstance({...instance, ...invalid}), /Unknown instance type|No worker type/)
+            assert.ok(callsOf(globalThis.fetch).every(([, options]) => options.method === 'GET'))
+        })
+    }
 })
 
 describe('createApiKeyRetryWrapper', () => {

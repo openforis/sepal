@@ -58,4 +58,15 @@ export class ClaimRepository {
             }))
         })
     }
+
+    // null means unclaimed; an empty string is a legacy session key.
+    sessionIdForInstance(instanceId) {
+        return this.#db.withConnection(async connection => {
+            const [rows] = await connection.query(
+                'SELECT session_id FROM instance_claim WHERE instance_id = ?',
+                [instanceId]
+            )
+            return rows[0]?.session_id ?? null
+        })
+    }
 }

@@ -92,7 +92,7 @@ a race. There is no other way to move a deadline.
 ## Surviving a worker restart
 
 The `worker` container restarts routinely — a deploy, an OOM kill, and in dev a nodemon reload
-on every file save. Four mechanisms carry instance management across it:
+on every file save. Instance management recovers through these mechanisms:
 
 - **The boot fails loudly.** A rejected `main()` exits non-zero so the Docker restart policy retries it.
   Left to log and hang, the process stayed alive on the MySQL pool's handles with no HTTP server,
@@ -104,24 +104,75 @@ on every file save. Four mechanisms carry instance management across it:
   provisioning nobody is driving any more. Provisioning is deduplicated by instance id in an
   in-process registry (`workerInstance/provisioningRegistry.js`), because `provisionInstance`
   opens by deleting the instance's containers — re-entering it destroys the work in flight.
-  `releaseInstance` forgets the entry before it undeploys, so an instance back in the pool cannot drop the next
-  session's provisioning as a duplicate, and the forgotten provision stops at its next check
-  instead of rebuilding, or closing, the next session's sandbox. The api key is looked up by
-  session, before any container is deleted, so a provision mid-attempt also leaves it alone. Re-provisioning re-reads the instance's PENDING session
-  first: the probe verdict it acts on is a batch snapshot, and the invariant above holds here too.
-- **`releaseInstance` undeploys before dropping the claim.** The invariant is *claim row absent ⇒
-  container definitely gone*: die mid-release and the claim survives, so `ReclaimStaleClaims`
-  runs the whole release again. `backfillClaims` is permanent reconciliation, not an upgrade shim.
+  Release replaces the registry entry before ownership reads, invalidating the old attempt and
+  gating new starts. Each provisioning attempt gets its own instance-bound Docker client, which
+  checks that identity before and after every request, including helper cleanup. Cancellation
+  bypasses Docker-availability retries. Teardown, probes and orphan cleanup use independent
+  clients. Provisioning resolves credentials and validates its definition before deleting anything.
+  The outer command checks the durable claim owner before scratch attachment; a matching claim
+  also covers EC2 reservation tags that are not yet visible. Its retry policy, single attempt
+  and ownership check are separate functions; cancellation is rechecked after helper awaits.
+- **Canceled startup instances are retired.** An outstanding Docker request can still run on the
+  host, so an instance canceled during provisioning is terminated instead of pooled. The claim is
+  retained through accepted or failed termination until `ReclaimStaleClaims` observes it outside
+  live inventory after its existing grace. The in-process gate blocks new starts meanwhile.
+  After restart, closing a PENDING session explicitly requests retirement, and recovery also
+  retires abandoned claims and orphan reservations because their Docker history is unknown.
+  Reconciliation also retries pending release gates without their owner's claim, so a failed
+  ownership read cannot leave a gate stranded. Each retry checks the gate's identity and then
+  uses fresh ownership reads in the normal release command.
+  For AWS, claimless gates can finish after repeated unfiltered by-ID NotFound observations over
+  the grace period. Tokens preserve their original creation time across retries. Successful reads
+  or lookup failures reset absence evidence; a fresh NotFound alone does not clear the gate.
+  Local retirement removes the old instance ID and starts scoped background cleanup; the orphan
+  sweep handles a daemon that was temporarily unavailable.
+- **Completed instances retain normal reuse.** Undeploy, scratch deletion and the transition to idle
+  precede claim removal. Cleanup/idle and claim deletion have separate error scopes. After the idle
+  transition succeeds, claim deletion has no error path that can terminate the instance:
+  a claim DELETE can commit and admit another session even if its response is lost. A failed DELETE
+  clears the normal release gate; any surviving claim remains available to reconciliation.
+  Contradictory reservation tags never discard a matching durable claim or its cancellation gate.
+  A stale release of an idle unclaimed host finishes without acquiring a new claim or retiring it.
+  Resuming retirement on an idle host requires the same durable claim, including legacy empty keys.
+  `backfillClaims` is permanent reconciliation, not an upgrade shim.
 - **A release belongs to one session.** It drops only that session's claim, leaves alone an
-  instance that is idle or reserved for another session, and joins a release of the same pair
+  instance reserved for another session, and joins a release of the same pair
   already in flight, so a late or duplicate release (Stop racing `ReclaimStaleClaims`) cannot tear
-  down the instance the pool has handed on. Scheduled jobs run at a fixed delay after their previous
+  down the instance the pool has handed on. Reconciliation preserves claims/gates while their matching
+  release is in flight, even if inventory queries straddle an idle transition. Owned Docker cleanup
+  uses the release predicate; later cleanup/idle calls and termination recovery recheck token identity.
+  Gone-claim deletion occupies the same keyed release slot through DELETE settlement and gate
+  completion. A later same-session release joins it instead of replacing its token. This coordination
+  is local to the single worker process and its shared manager.
+  Scheduled jobs run at a fixed delay after their previous
   run completes, so runs of one job never overlap.
 - **No startup grace.** `ReconcilePendingSessions` and `CloseTimedOutSessions` run as one job, in
   that order, so a restart lands a missed activation before the timed-out sweep can see the PENDING
   row. `ExpireSessions` needs no head start: a deadline that passed during an outage earns a
   notification and the full grace, never a close. The former 2-minute grace, measured from process
   start, was what let a crash loop starve every closing sweep.
+
+## Outstanding test-server acceptance for provisioning cancellation
+
+At the 2026-11-16 handoff, the lifecycle fix and scratch deletion-flag retry repair had independent
+approval and 1,025 passing automated tests. Live AWS acceptance remained outstanding. After a normal
+test release, record the deployed build, action times, session/instance/volume IDs and logs for:
+
+- Normal t1 start/stop: matching claim, DeleteOnTermination true, scratch deletion and a fresh `/tmp`
+  in the next session.
+- Actual host reuse before/after worker restart: fresh scratch and recovery of configured warm capacity.
+- PENDING cancellation followed by immediate allocation while another user stays active: the canceled
+  host terminates without reuse, and the other session remains healthy.
+- ACTIVE restart survival and PENDING restart-then-cancel retirement, including eventual cleanup.
+- Release of an ACTIVE session with a claim older than eleven minutes racing immediate allocation.
+- Three to five startup cancellations: eventual claim/volume cleanup without loss of healthy capacity.
+
+Exact accepted-Docker/failed-termination races, interruption between EBS attachment and setting
+DeleteOnTermination, and both release/reconciliation orderings with real MySQL connection loss also
+remain untested. These require controlled fault timing; ordinary UI runs do not establish coverage.
+Record skipped/deferred cases explicitly. The filtered-inventory assumption remains a separate policy
+concern, and a stalled local daemon needs its own dev-env check. Live checks follow the test release;
+they are not prerequisites for committing the fix.
 
 ## Session /tmp
 A worker container's `/tmp`, `/var/tmp` and `~/tmp` are one Docker volume per instance, `sepal-tmp.{instanceId}`,
@@ -142,7 +193,9 @@ On AWS the volume lives on local disk, never on EFS:
   tmp volume on the device (`local` driver, `type=xfs`) before preparing it as above. Docker mounts it with the first container and unmounts it with the last, so
   `releaseInstance` undeploys, then has the provider detach and delete it, before dropping the claim.
   Volumes are tagged `Type=WorkerScratch` from creation and marked delete-on-termination once
-  attached; `sweep` deletes detached ones older than ten minutes. The worker's AWS credentials need
+  attached, including on retries that find an existing attachment. A failed flag update rejects
+  provisioning so the normal retry can repair it. `sweep` deletes detached ones older than ten minutes.
+  The worker's AWS credentials need
   `ec2:CreateVolume`, `AttachVolume`, `DetachVolume`, `DeleteVolume` and `DescribeVolumes`.
 
 ## Stopped-instance pool (AWS)

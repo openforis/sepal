@@ -380,7 +380,7 @@ describe('closeSession', () => {
         await mgr.closeSession({sessionId: 's-1'})
 
         assert.partialDeepStrictEqual(callsOf(repo.update), [[{state: State.CLOSED}]])
-        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-1', 's-1']])
+        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-1', 's-1', {retire: false}]])
         assert.equal(events.emitWorkerSessionClosed.mock.callCount(), 1)
     })
 
@@ -402,7 +402,7 @@ describe('closeSessionOnInstance', () => {
         await mgr.closeSessionOnInstance('i-1')
         assert.deepEqual(callsOf(repo.sessionOnInstance), [['i-1', [State.PENDING, State.ACTIVE]]])
         assert.ok(repo.update.mock.callCount() > 0)
-        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-1', 's-1']])
+        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-1', 's-1', {retire: true}]])
         assert.equal(events.emitWorkerSessionClosed.mock.callCount(), 1)
     })
 
@@ -416,13 +416,16 @@ describe('closeSessionOnInstance', () => {
 
 describe('closeUserSessions', () => {
     test('closes each PENDING/ACTIVE session (update + release + event per session)', async () => {
-        const a = session({id: 's-a', instance: {id: 'i-a', host: 'h'}})
-        const b = session({id: 's-b', instance: {id: 'i-b', host: 'h'}})
+        const a = session({id: 's-a', state: State.PENDING, instance: {id: 'i-a', host: 'h'}})
+        const b = session({id: 's-b', state: State.ACTIVE, instance: {id: 'i-b', host: 'h'}})
         const repo = makeRepo({userSessions: () => [a, b]})
         const {mgr, instanceManager, events} = build({repo})
         await mgr.closeUserSessions('alice')
         assert.deepEqual(callsOf(repo.userSessions), [['alice', [State.PENDING, State.ACTIVE]]])
-        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-a', 's-a'], ['i-b', 's-b']])
+        assert.deepEqual(callsOf(instanceManager.releaseInstance), [
+            ['i-a', 's-a', {retire: true}],
+            ['i-b', 's-b', {retire: false}]
+        ])
         assert.equal(events.emitWorkerSessionClosed.mock.callCount(), 2)
     })
 

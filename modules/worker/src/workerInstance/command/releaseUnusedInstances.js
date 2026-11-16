@@ -1,5 +1,4 @@
-// Non-transactional: each release is independent, so one failure does NOT abort the others.
-// Releases reserved instances that are not in usedInstanceIds, not claimed, and older than minAge.
+// Retires reserved instances that are not in usedInstanceIds, not claimed, and older than minAge.
 // timeUnit is a Java-style TimeUnit name ('MINUTES', 'SECONDS', …) or a raw ms multiplier.
 
 import {getLogger} from '#sepal/log'
@@ -20,7 +19,13 @@ const TIME_UNIT_MS = {
     DAYS: 86_400_000,
 }
 
-const releaseUnusedInstances = async (usedInstanceIds, minAge, timeUnit, {claims, provider, provisioner, provisioning, releasing}) => {
+const releaseUnusedInstances = async (usedInstanceIds, minAge, timeUnit, {
+    claims,
+    provider,
+    provisioner,
+    provisioning,
+    releasing,
+}) => {
     log.debug(`Releasing unused instances: [${[...usedInstanceIds].map(instanceTag).join(', ')}] in use, minAge: ${minAge} ${timeUnit}`)
 
     const usedSet = new Set(usedInstanceIds)
@@ -32,12 +37,9 @@ const releaseUnusedInstances = async (usedInstanceIds, minAge, timeUnit, {claims
     const now = Date.now()
     const reservedInstances = await provider.reservedInstances()
 
-    // A claim means an allocation is in flight. RequestSession inserts the session row only after
-    // RequestInstance returns, so a freshly claimed pool instance is already older than minAge with
-    // no session behind it — without this guard the sweep takes it away mid-request.
+    // Allocation claims precede session rows; age alone cannot distinguish an orphan.
     const claimedIds = new Set((await claims.all()).map(({instanceId}) => instanceId))
 
-    // Not in use, not claimed, AND STRICTLY older than minAge — an instance exactly at minAge is NOT released.
     const toRelease = reservedInstances.filter(instance => {
         if (usedSet.has(instance.id)) return false
         if (claimedIds.has(instance.id)) return false
@@ -52,7 +54,15 @@ const releaseUnusedInstances = async (usedInstanceIds, minAge, timeUnit, {claims
     // Release each independently — one failure must not abort the others.
     for (const instance of toRelease) {
         try {
-            await releaseInstance(instance.id, instance.reservation?.sessionId, {claims, provider, provisioner, provisioning, releasing})
+            // An orphan reservation has no proof that its old Docker operations have finished.
+            await releaseInstance(instance.id, instance.reservation?.sessionId, {
+                claims,
+                provider,
+                provisioner,
+                provisioning,
+                releasing,
+                retire: true,
+            })
         } catch (err) {
             // releaseInstance already emits FailedToReleaseInstance; swallow here to continue
             log.error(`Failed to release ${instanceTag(instance)} (continuing): ${err.message}`)

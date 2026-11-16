@@ -31,6 +31,9 @@
 //   reservedInstances()                       → Promise<WorkerInstance[]>
 //   getInstance(instanceId)                   → Promise<WorkerInstance | null>
 //     NOTE: the AWS provider never resolves null — it throws when it can't find exactly one match.
+//   isInstanceMissing(instanceId)             → Promise<boolean> (optional, AWS)
+//     Observes by-ID NotFound; recovery must apply grace and repeated-absence checks.
+//     Other errors reject. A single NotFound is not confirmation of termination.
 //   restore(instances)                        → Promise<void> | void
 //     Adopt these instances as already existing. Called once at start(), before backfillClaims,
 //     with the instances rebuilt from the open sessions. The LOCAL provider needs this to survive

@@ -1,6 +1,6 @@
 // CloseSession runs as TWO SEPARATE TRANSACTIONS (do NOT merge):
 //   step 1: repo.update(session.close())   → state=CLOSED, api_key=NULL
-//   step 2: instanceManager.releaseInstance(session.instance.id, session.id)
+//   step 2: release the instance; PENDING sessions require retirement, including after restart
 //   then:   emit WorkerSessionClosed {username, sessionId}
 // The row-close must commit before the instance release runs.
 //
@@ -37,7 +37,7 @@ const closeSession = async ({sessionId, username}, {repo, instanceManager, emitW
         return null
     }
     // step 2 — release the instance (separate transaction)
-    await instanceManager.releaseInstance(session.instance.id, session.id)
+    await instanceManager.releaseInstance(session.instance.id, session.id, {retire: isPending(session)})
     // publish AFTER both steps
     emitWorkerSessionClosed({username: session.username, sessionId: session.id})
     log.info(`Closed ${sessionTag(session)}`)

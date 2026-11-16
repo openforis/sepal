@@ -1,11 +1,5 @@
-// Retries up to 10 times with exponential backoff: delay = 2^attempt * 1000 ms
-// (attempt 0 → 1s, 1 → 2s, 2 → 4s … 9 → 512s; ~17 min total). Success emits
-// InstanceProvisioned; after 10 failures it emits FailedToProvisionInstance and rethrows the
-// last error.
-//
-// isCurrent() — does the session this provision was started for still hold the instance? Once it
-// does not, the instance may already be another session's: stop without touching it again and
-// without emitting either event, since both act on whichever session is on the instance now.
+// Retry provisioning failures with exponential backoff. Cancellation emits neither event:
+// an instance may already belong to another session by the time an old operation returns.
 
 import {getLogger} from '#sepal/log'
 
@@ -14,43 +8,80 @@ import {emitFailedToProvisionInstance, emitInstanceProvisioned} from '../events.
 
 const log = getLogger('worker/provisionInstance')
 
-const MAX_RETRIES = 10
+const MAX_ATTEMPTS = 10
 const DEFAULT_DELAY_FN = ms => new Promise(resolve => setTimeout(resolve, ms))
 
-// _delayFn is injectable so tests don't sleep through the real 17 minutes.
-
-const provisionInstance = async (instance, {provider, provisioner, isCurrent = () => true, _delayFn = DEFAULT_DELAY_FN}) => {
+const provisionInstance = async (instance, {
+    claims,
+    provider,
+    provisioner,
+    isCurrent = () => true,
+    _delayFn = DEFAULT_DELAY_FN,
+}) => {
     log.debug(`Provisioning ${instanceTag(instance)}...`)
+    return provisionWithRetries({instance, attempt: 1}, {claims, provider, provisioner, isCurrent, delay: _delayFn})
+}
 
-    let lastError
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-        if (!isCurrent()) {
-            return abandon(instance)
-        }
-        try {
-            const tmpDevice = await provider.attachScratchVolume(instance)
-            await provisioner.provisionInstance(instance, {tmpDevice})
-            if (!isCurrent()) {
-                return abandon(instance)
-            }
-            emitInstanceProvisioned(instance)
-            log.info(`Provisioned ${instanceTag(instance)} on attempt ${attempt + 1}`)
-            return
-        } catch (err) {
-            lastError = err
-            const delay = Math.pow(2, attempt) * 1000
-            log.warn(`Provision attempt ${attempt + 1}/${MAX_RETRIES} failed for ${instanceTag(instance)}: ${err.message}. Retrying in ${delay}ms`)
-            if (attempt < MAX_RETRIES - 1) {
-                await _delayFn(delay)
-            }
-        }
-    }
-
+const provisionWithRetries = async ({instance, attempt}, dependencies) => {
+    const {isCurrent, delay} = dependencies
     if (!isCurrent()) {
         return abandon(instance)
     }
-    emitFailedToProvisionInstance(instance, lastError)
-    throw lastError
+    try {
+        const provisioned = await provisionOnce(instance, dependencies)
+        if (!provisioned || !isCurrent()) {
+            return abandon(instance)
+        }
+        emitInstanceProvisioned(instance)
+        log.info(`Provisioned ${instanceTag(instance)} on attempt ${attempt}`)
+    } catch (error) {
+        if (!isCurrent()) {
+            return abandon(instance)
+        }
+        if (attempt === MAX_ATTEMPTS) {
+            emitFailedToProvisionInstance(instance, error)
+            throw error
+        }
+        const retryDelay = 2 ** (attempt - 1) * 1000
+        log.warn(`Provision attempt ${attempt}/${MAX_ATTEMPTS} failed for ${instanceTag(instance)}: ${error.message}. Retrying in ${retryDelay}ms`)
+        await delay(retryDelay)
+        return provisionWithRetries({instance, attempt: attempt + 1}, dependencies)
+    }
+}
+
+const provisionOnce = async (instance, dependencies) => {
+    const {provider, provisioner, isCurrent} = dependencies
+    const ownsInstance = await sessionStillOwnsInstance(instance, dependencies)
+    if (!ownsInstance || !isCurrent()) {
+        return false
+    }
+    const tmpDevice = await provider.attachScratchVolume(instance)
+    if (!isCurrent()) {
+        return false
+    }
+    await provisioner.provisionInstance(instance, {tmpDevice, isCurrent})
+    return isCurrent()
+}
+
+const sessionStillOwnsInstance = async (instance, {claims, provider, isCurrent}) => {
+    const sessionId = instance.reservation?.sessionId ?? ''
+    const claimedSessionId = await claims.sessionIdForInstance(instance.id)
+    if (!isCurrent()) {
+        return false
+    }
+    // A matching durable claim covers EC2 reservation tags that are not yet visible.
+    if (claimedSessionId !== null) {
+        return claimedSessionId === sessionId
+    }
+    const current = await provider.getInstance(instance.id)
+    const reservation = current?.reservation
+    if (!isCurrent() || !reservation) {
+        return false
+    }
+    if (reservation.username !== instance.reservation?.username) {
+        return false
+    }
+    return !reservation.sessionId || reservation.sessionId === sessionId
 }
 
 const abandon = instance =>
