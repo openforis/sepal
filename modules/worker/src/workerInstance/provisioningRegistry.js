@@ -10,14 +10,22 @@ const createProvisioningRegistry = () => {
     // Duplicate starts are dropped; fn receives a predicate invalidated by release.
     const run = async (instanceId, sessionId, fn) => {
         sessionId = sessionId ?? ''
-        if (entries.has(instanceId)) {
+        const previous = entries.get(instanceId)
+        if (previous && (!Object.hasOwn(previous, 'retire') || previous.sessionId === sessionId)) {
             return false
         }
-        const entry = {sessionId}
+        const entry = {sessionId, scratch: Promise.resolve(null)}
         entries.set(instanceId, entry)
         const isCurrent = () => entries.get(instanceId) === entry
+        const prepareScratch = attach => {
+            const pending = (async () => attach())()
+            entry.scratch = Promise.all([entry.scratch, pending]).then(([, device]) => device)
+            // Keep failed attachment history for recovery, even if provisioning retries successfully.
+            entry.scratch.catch(() => {})
+            return pending
+        }
         try {
-            await fn(isCurrent)
+            await fn(isCurrent, {prepareScratch})
         } finally {
             // A late completion must not clear its replacement's gate.
             if (isCurrent()) {
@@ -33,15 +41,11 @@ const createProvisioningRegistry = () => {
         if (previous && previous.sessionId !== sessionId) {
             return null
         }
-        // A previous entry means unfinished provisioning or release; retries retire conservatively.
         const releaseToken = {
-            instanceId,
             sessionId,
             retire: retire || !!previous,
-            createdAt: previous?.createdAt ?? Date.now(),
-            missingSince: previous?.missingSince ?? null,
+            scratch: previous?.scratch,
             isCurrent: () => entries.get(instanceId) === releaseToken,
-            finish: () => finishRelease(instanceId, releaseToken),
         }
         entries.set(instanceId, releaseToken)
         return releaseToken
@@ -53,10 +57,7 @@ const createProvisioningRegistry = () => {
         }
     }
 
-    const pendingReleases = () => [...entries.values()]
-        .filter(entry => Object.hasOwn(entry, 'retire'))
-
-    return {isProvisioning, run, beginRelease, finishRelease, pendingReleases}
+    return {isProvisioning, run, beginRelease, finishRelease}
 }
 
 export {createProvisioningRegistry}

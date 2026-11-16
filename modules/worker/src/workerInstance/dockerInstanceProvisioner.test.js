@@ -358,7 +358,7 @@ describe('provisionInstance on a scratch device', () => {
     test('formats the device, then puts the tmp volume on it before creating the container', async () => {
         const requests = recordingFetch()
 
-        await makeProvisioner().provisionInstance(makeInstance(), {tmpDevice: '/dev/xvdg'})
+        await makeProvisioner().provisionInstance(makeInstance(), {attachScratchVolume: async () => '/dev/xvdg'})
 
         const format = requests.find(r => r.pathname.endsWith('/containers/create') && r.name === formatName)
         assertMatches(format.body, {
@@ -394,7 +394,7 @@ describe('provisionInstance on a scratch device', () => {
         const requests = recordingFetch({formatExitCode: 1})
 
         await assert.rejects(
-            makeProvisioner().provisionInstance(makeInstance(), {tmpDevice: '/dev/xvdg'}),
+            makeProvisioner().provisionInstance(makeInstance(), {attachScratchVolume: async () => '/dev/xvdg'}),
             /format-tmp failed .* \(exit 1\): mkfs.xfs: no such device/
         )
 
@@ -425,7 +425,7 @@ describe('provisionInstance on a scratch device', () => {
             async () => {
                 const requests = recordingFetch()
 
-                await makeProvisioner().provisionInstance(makeInstance(), {tmpDevice})
+                await makeProvisioner().provisionInstance(makeInstance(), {attachScratchVolume: async () => tmpDevice})
 
                 const createdAt = name => requests.findIndex(r => r.pathname.endsWith('/containers/create') && r.name?.startsWith(name))
                 const prepare = requests[createdAt('sandbox.prepare-tmp.inst-abc123')]
@@ -901,7 +901,8 @@ describe('release during provisioning', () => {
             })
             const provider = {
                 getInstance: async () => instance,
-                attachScratchVolume: async () => '/dev/xvdg',
+                attachScratchVolume: mock.fn(async () => '/dev/xvdg'),
+                deleteScratchVolume: async () => {},
                 terminate: mock.fn(async () => { retired = true }),
                 release: mock.fn(async () => {}),
             }
@@ -925,6 +926,8 @@ describe('release during provisioning', () => {
             assert.equal(provider.release.mock.callCount(), 0)
             assert.deepEqual(requestsAfterRetirement, [])
             assert.equal(claims.release.mock.callCount(), 0)
+            assert.equal(provider.attachScratchVolume.mock.callCount(),
+                ['API key lookup', 'public key lookup'].includes(stage.name) ? 0 : 1)
         })
     }
 

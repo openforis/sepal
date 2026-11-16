@@ -104,34 +104,45 @@ on every file save. Instance management recovers through these mechanisms:
   provisioning nobody is driving any more. Provisioning is deduplicated by instance id in an
   in-process registry (`workerInstance/provisioningRegistry.js`), because `provisionInstance`
   opens by deleting the instance's containers — re-entering it destroys the work in flight.
-  Release replaces the registry entry before ownership reads, invalidating the old attempt and
-  gating new starts. Each provisioning attempt gets its own instance-bound Docker client, which
+  Release replaces the registry entry before ownership reads, permanently invalidating the old attempt.
+  Its entry lasts only while that release attempt is running. A different session can replace a release
+  entry; the durable-claim check still decides whether provisioning may proceed. Each provisioning
+  attempt gets its own instance-bound Docker client, which
   checks that identity before and after every request, including helper cleanup. Cancellation
   bypasses Docker-availability retries. Teardown, probes and orphan cleanup use independent
-  clients. Provisioning resolves credentials and validates its definition before deleting anything.
-  The outer command checks the durable claim owner before scratch attachment; a matching claim
+  clients. Provisioning resolves credentials and validates its definition before scratch attachment
+  or Docker changes. The outer command checks the durable claim owner first; a matching claim
   also covers EC2 reservation tags that are not yet visible. Its retry policy, single attempt
   and ownership check are separate functions; cancellation is rechecked after helper awaits.
-- **Canceled startup instances are retired.** An outstanding Docker request can still run on the
-  host, so an instance canceled during provisioning is terminated instead of pooled. The claim is
-  retained through accepted or failed termination until `ReclaimStaleClaims` observes it outside
-  live inventory after its existing grace. The in-process gate blocks new starts meanwhile.
-  After restart, closing a PENDING session explicitly requests retirement, and recovery also
-  retires abandoned claims and orphan reservations because their Docker history is unknown.
-  Reconciliation also retries pending release gates without their owner's claim, so a failed
-  ownership read cannot leave a gate stranded. Each retry checks the gate's identity and then
-  uses fresh ownership reads in the normal release command.
-  For AWS, claimless gates can finish after repeated unfiltered by-ID NotFound observations over
-  the grace period. Tokens preserve their original creation time across retries. Successful reads
-  or lookup failures reset absence evidence; a fresh NotFound alone does not clear the gate.
-  Local retirement removes the old instance ID and starts scoped background cleanup; the orphan
-  sweep handles a daemon that was temporarily unavailable.
+- **Manual startup cancellation preserves known-warmed AWS hosts through stop and recovery.**
+  Close the session, revoke its key and publish the billing cutoff before instance release. The
+  cancellation request returns after EC2 accepts a normal stop; OS shutdown and storage cleanup
+  continue under the same coordinated release promise. No forced stop or skipped OS shutdown.
+  `ImageDiskWarm=true` records allocation from a ready stopped pool, using that pool's existing
+  image-disk warm-up contract. It is independent of lifecycle state and survives reservations.
+  Cold/unknown hosts, local instances and automated startup closures retain conservative retirement.
+- **Recovery stays exclusively claimed.** `instance_claim.recovery_started_at` records intent before
+  tagging `State=recovering` and submitting stop. The marker is a nullable addition in migration 002;
+  the original session remains the claim owner. Recovery-tagged hosts survive the stray sweep and
+  count toward future pool capacity, but never appear in ready allocation. Confirm `stopped` and
+  await all tracked scratch preparation before detaching/deleting scratch and tagging pooled. A known
+  attachment missing from cleanup is uncertainty. Failed storage history, shutdown failure or a
+  ten-minute storage barrier deadline retires the host with its claim retained. A canceled Docker
+  callback stays invalidated; old containers are removed before the next sandbox starts.
+  Reclaim handles durable recovery before ordinary filtered absence or claim-age grace. After a
+  restart, missing in-memory scratch history conservatively retires instead of guessing. Once
+  termination is accepted, clear recovery intent and let existing gone-claim cleanup remove the row.
+  A recovery older than the existing grace, absent from all inventory and returning an unfiltered
+  by-ID NotFound can use coordinated gone-claim deletion. This remains an absence policy, not proof
+  of termination. The orphan sweep also discovers claimless recovering hosts if they reappear.
+  Ordinary release entries finish with their attempt; durable claims drive failed-retirement retries.
+  Local retirement starts independent cleanup scoped to the retired ID, with orphan sweeping as backstop.
 - **Completed instances retain normal reuse.** Undeploy, scratch deletion and the transition to idle
   precede claim removal. Cleanup/idle and claim deletion have separate error scopes. After the idle
   transition succeeds, claim deletion has no error path that can terminate the instance:
   a claim DELETE can commit and admit another session even if its response is lost. A failed DELETE
   clears the normal release gate; any surviving claim remains available to reconciliation.
-  Contradictory reservation tags never discard a matching durable claim or its cancellation gate.
+  Contradictory reservation tags never discard a matching durable claim.
   A stale release of an idle unclaimed host finishes without acquiring a new claim or retiring it.
   Resuming retirement on an idle host requires the same durable claim, including legacy empty keys.
   `backfillClaims` is permanent reconciliation, not an upgrade shim.
@@ -161,11 +172,16 @@ test release, record the deployed build, action times, session/instance/volume I
 - Normal t1 start/stop: matching claim, DeleteOnTermination true, scratch deletion and a fresh `/tmp`
   in the next session.
 - Actual host reuse before/after worker restart: fresh scratch and recovery of configured warm capacity.
-- PENDING cancellation followed by immediate allocation while another user stays active: the canceled
-  host terminates without reuse, and the other session remains healthy.
+- Manual PENDING cancellation of a warmed pooled allocation, both during Docker boot and after a
+  mutation: user billing ends promptly; stop is accepted; claim/recovery intent remains until stopped
+  and scratch cleanup completes; the host returns pooled and a later session gets fresh scratch.
+- Pending scratch attachment: the stopped host remains unavailable until its successful completion;
+  failure, uncertainty or the deadline retires it. Cold/local and automatic startup closure still retire.
 - ACTIVE restart survival and PENDING restart-then-cancel retirement, including eventual cleanup.
 - Release of an ACTIVE session with a claim older than eleven minutes racing immediate allocation.
-- Three to five startup cancellations: eventual claim/volume cleanup without loss of healthy capacity.
+- Three to five startup cancellations: eventual claim/volume cleanup and warmed-host recovery,
+  preserving healthy capacity. Pool target 10 remains bounded; recovered ready/warmed hosts take
+  priority over unnecessary warming replacements, and every eviction participates in claim arbitration.
 
 Exact accepted-Docker/failed-termination races, interruption between EBS attachment and setting
 DeleteOnTermination, and both release/reconciliation orderings with real MySQL connection loss also
@@ -209,7 +225,7 @@ members; only `stopped` ones are candidates.
   pooled instance moves to the next, so simultaneous requests share the pool instead of
   cold-launching past it. A failed pooled start (capacity, incompatible type) leaves it in the pool
   and cold-launches. It is
-  tagged only once started: nothing but the pool may leave a worker stopped.
+  tagged only once started; stopped recovery hosts remain unavailable until pooled safely.
   The request emits `InstancePendingProvisioning` itself, as for an idle instance; a pooled start is
   never tagged `Starting=true`, since the started-instance poll would provision it a second time.
 - `SizeIdlePool` recycles: surplus idle instances fill the pool (oldest first) instead of being
@@ -218,8 +234,12 @@ members; only `stopped` ones are candidates.
   request is reserving; that instance's pool slot goes to the next surplus instance. Warm-up launches (`T3aSmall`, user data = `prewarmVolume.sh` + `poweroff`) fill the
   rest, at most two warming at a time: with `VOLUME_INITIALIZATION_RATE` set, every launch draws on
   EC2's regional volume initialization quota, which session launches share. User data runs on the first boot only, so a pooled instance does not power off when started.
+- Positive pool targets also trim excess ordinary members on the next sizing cycle, preferring ready,
+  known-warm disks. Setting the target to 0 disables pool management and leaves existing members alone.
+  Recovering hosts count toward future capacity, so trimming can remove a ready member before a
+  recovery finishes; a later recovery failure can require another warm-up.
 - `sweep` terminates pooled instances of another version, pooled instances still running an hour
-  after their start (failed warm-up or stop), and stopped instances outside the pool — every other
+  after their start (failed warm-up or stop), and stopped instances outside the pool/recovery — every other
   query sees only pending/running instances, so those would otherwise bill for their disk forever.
 - Recycled instances only carry the blocks their sessions read; warm-ups are fully read.
 

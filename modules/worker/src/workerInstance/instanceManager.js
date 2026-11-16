@@ -35,9 +35,9 @@ const createInstanceManager = ({
         return {id: instance.id, host: instance.host}
     }
 
-    const _releaseInstance = async (instanceId, sessionId, {retire = false} = {}) => {
+    const _releaseInstance = async (instanceId, sessionId, {retire = false, recoverStartup = false} = {}) => {
         log.debug(`Releasing ${instanceTag(instanceId)}...`)
-        return releaseInstance(instanceId, sessionId, {...releaseDeps, retire})
+        return releaseInstance(instanceId, sessionId, {...releaseDeps, retire, recoverStartup})
     }
 
     const _releaseUnusedInstances = async (sessions, minAge, timeUnit) => {
@@ -93,12 +93,13 @@ const createInstanceManager = ({
 
     // Fresh allocation and restart recovery share the same provisioning gate.
     const _reprovisionInstance = session =>
-        provisioning.run(session.instance.id, session.id, isCurrent =>
+        provisioning.run(session.instance.id, session.id, (isCurrent, progress) =>
             provisionInstance(instanceFromSession(session), {
                 claims,
                 provider,
                 provisioner,
                 isCurrent,
+                ...progress,
             }))
 
     return {

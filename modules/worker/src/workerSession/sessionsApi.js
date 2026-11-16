@@ -538,7 +538,7 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
     // ── close session ──────────────────────────────────────────────────────────
     const closeSession = resolve => async ctx => {
         const {username} = resolve(ctx)
-        await sessionManager.closeSession({sessionId: ctx.params.sessionId, username})
+        await sessionManager.closeSession({sessionId: ctx.params.sessionId, username, recoverStartup: true})
         ctx.status = 204
         ctx.body = {status: 'OK'}
     }
@@ -546,7 +546,7 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
     // ── close all sessions of a user (admin) ────────────────────────────────────
     const closeUserSessions = async ctx => {
         const {username} = pathUser(ctx)
-        await sessionManager.closeUserSessions(username)
+        await sessionManager.closeUserSessions(username, {recoverStartup: true})
         ctx.status = 204
         ctx.body = {status: 'OK'}
     }

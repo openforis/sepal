@@ -51,6 +51,35 @@ test('the entry clears when the provision fails, so the next sweep may retry', a
     assert.equal(await registry.run('i-1', 's-2', async () => {}), true)
 })
 
+test('a different session replaces a release entry without reviving canceled callbacks', async () => {
+    const registry = createProvisioningRegistry()
+    const oldAttempt = deferred()
+    const newAttempt = deferred()
+    let oldIsCurrent
+    const oldRunning = registry.run('i-1', 's-alice', isCurrent => {
+        oldIsCurrent = isCurrent
+        return oldAttempt.promise
+    })
+    const release = registry.beginRelease('i-1', 's-alice')
+    const provision = mock.fn(() => newAttempt.promise)
+
+    const newRunning = registry.run('i-1', 's-bob', provision)
+
+    try {
+        assert.equal(provision.mock.callCount(), 1)
+        assert.equal(oldIsCurrent(), false)
+        assert.equal(release.isCurrent(), false)
+        registry.finishRelease('i-1', release)
+        oldAttempt.resolve()
+        await oldRunning
+        assert.equal(registry.isProvisioning('i-1'), true)
+    } finally {
+        oldAttempt.resolve()
+        newAttempt.resolve()
+        await Promise.all([oldRunning, newRunning])
+    }
+})
+
 test('different instances provision concurrently', async () => {
     const registry = createProvisioningRegistry()
     const a = deferred()
@@ -68,7 +97,29 @@ test('different instances provision concurrently', async () => {
     assert.equal(await runningB, true)
 })
 
-test('release cancels an active provision and gates new starts until retirement succeeds', async () => {
+test('a successful scratch retry cannot erase an earlier uncertain attachment', async () => {
+    const registry = createProvisioningRegistry()
+    const pending = deferred()
+    const ready = deferred()
+    const running = registry.run('i-1', 's-1', async (_isCurrent, {prepareScratch}) => {
+        await assert.rejects(prepareScratch(() => { throw new Error('attachment response lost') }))
+        await prepareScratch(() => '/dev/xvdg')
+        ready.resolve()
+        await pending.promise
+    })
+    await ready.promise
+    const release = registry.beginRelease('i-1', 's-1', {retire: true})
+    assert.equal(release.retire, true)
+    await assert.rejects(release.scratch, /attachment response lost/)
+    assert.equal(await registry.run('i-1', 's-1', async () => {}), false)
+    assert.equal(release.isCurrent(), true)
+
+    pending.resolve()
+    await running
+    registry.finishRelease('i-1', release)
+})
+
+test('release cancels an active provision and drops starts from the same session', async () => {
     const registry = createProvisioningRegistry()
     const abandoned = deferred()
     const successor = deferred()
@@ -76,7 +127,7 @@ test('release cancels an active provision and gates new starts until retirement 
     const first = registry.run('i-1', 's-1', () => abandoned.promise)
     const release = registry.beginRelease('i-1', 's-1')
     assert.equal(release.retire, true)
-    assert.equal(await registry.run('i-1', 's-2', async () => {}), false)
+    assert.equal(await registry.run('i-1', 's-1', async () => {}), false)
     registry.finishRelease('i-1', release)
 
     const second = registry.run('i-1', 's-2', () => successor.promise)
@@ -118,7 +169,7 @@ test('release gates an idle registry entry without requiring retirement', async 
 
     const release = registry.beginRelease('i-1', 's-1')
     assert.equal(release.retire, false)
-    assert.equal(await registry.run('i-1', 's-2', async () => {}), false)
+    assert.equal(await registry.run('i-1', 's-1', async () => {}), false)
     registry.finishRelease('i-1', release)
     assert.equal(registry.isProvisioning('i-1'), false)
 })
@@ -149,32 +200,6 @@ test('a release cannot cancel another session\'s active provision', async () => 
 
     assert.equal(registry.beginRelease('i-1', 's-alice'), null)
     assert.equal(isCurrent(), true)
-    pending.resolve()
-    await running
-})
-
-test('pending release snapshots exclude provisions and become stale when their entry is replaced or cleared', async () => {
-    const registry = createProvisioningRegistry()
-    const pending = deferred()
-    const running = registry.run('i-provision', 's-provision', () => pending.promise)
-    registry.beginRelease('i-retire', 's-retire', {retire: true})
-    const normalToken = registry.beginRelease('i-normal', 's-normal')
-    const snapshot = registry.pendingReleases()
-
-    assert.deepEqual(snapshot.map(({instanceId, sessionId}) => ({instanceId, sessionId})), [
-        {instanceId: 'i-retire', sessionId: 's-retire'},
-        {instanceId: 'i-normal', sessionId: 's-normal'},
-    ])
-    assert.equal(snapshot[0].isCurrent(), true)
-    assert.equal(snapshot[1].isCurrent(), true)
-
-    registry.beginRelease('i-retire', 's-retire', {retire: true})
-    registry.finishRelease('i-normal', normalToken)
-    assert.equal(snapshot[0].isCurrent(), false)
-    assert.equal(snapshot[1].isCurrent(), false)
-    snapshot[0].finish()
-    assert.equal(registry.isProvisioning('i-retire'), true)
-
     pending.resolve()
     await running
 })

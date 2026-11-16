@@ -82,6 +82,38 @@ describe('ClaimRepository', () => {
         })
     })
 
+    describe('startup recovery', () => {
+        test('persists recovery intent only for the current owner and keeps the original age', async () => {
+            await repository.claim(INSTANCE_ID, SESSION_ID)
+
+            assert.equal(await repository.startRecovery(INSTANCE_ID, ANOTHER_SESSION_ID), false)
+            assert.equal(await repository.startRecovery(INSTANCE_ID, SESSION_ID), true)
+            const [started] = await repository.all()
+            assert.ok(started.recoveryStartedAt instanceof Date)
+            assert.equal(started.sessionId, SESSION_ID)
+            assert.equal(await repository.startRecovery(INSTANCE_ID, SESSION_ID), true)
+            const [retried] = await repository.all()
+            assert.deepEqual(retried.recoveryStartedAt, started.recoveryStartedAt)
+            assert.deepEqual(retried.claimedAt, started.claimedAt)
+        })
+
+        test('ending recovery leaves the claim held and cannot change a later owner', async () => {
+            await repository.claim(INSTANCE_ID, SESSION_ID)
+            await repository.startRecovery(INSTANCE_ID, SESSION_ID)
+
+            await repository.finishRecovery(INSTANCE_ID, SESSION_ID)
+
+            assert.equal((await repository.all())[0].recoveryStartedAt, null)
+            assert.equal(await repository.claim(INSTANCE_ID, ANOTHER_SESSION_ID), false)
+            await repository.release(INSTANCE_ID, SESSION_ID)
+            await repository.claim(INSTANCE_ID, ANOTHER_SESSION_ID)
+            await repository.startRecovery(INSTANCE_ID, ANOTHER_SESSION_ID)
+            await repository.finishRecovery(INSTANCE_ID, SESSION_ID)
+            assert.ok((await repository.all())[0].recoveryStartedAt instanceof Date)
+            assert.equal(await repository.sessionIdForInstance(INSTANCE_ID), ANOTHER_SESSION_ID)
+        })
+    })
+
     describe('release', () => {
         test('frees the instance for a later claim', async () => {
             await repository.claim(INSTANCE_ID, SESSION_ID)

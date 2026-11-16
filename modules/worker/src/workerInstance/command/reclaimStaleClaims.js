@@ -10,24 +10,19 @@ import {releaseGoneClaim, releaseInstance} from './releaseInstance.js'
 const log = getLogger('worker/reclaimStaleClaims')
 
 const reclaimStaleClaims = async (openSessionIds, graceMs, deps) => {
-    const {claims, provider, provisioning} = deps
-    const [idle, reserved] = await Promise.all([
+    const {claims, provider} = deps
+    const [idle, reserved, recovering] = await Promise.all([
         provider.idleInstances(),
         provider.reservedInstances(),
+        provider.recoveringInstances(),
     ])
-    const liveIds = new Set([...idle, ...reserved].map(({id}) => id))
+    const liveIds = new Set([...idle, ...reserved, ...recovering].map(({id}) => id))
     const openIds = new Set(openSessionIds)
     const now = Date.now()
     const claimSnapshot = await claims.all()
     const releaseDeps = {...deps, retire: true}
     const reclaimed = await reclaimClaims({claimSnapshot, liveIds, openIds, now, graceMs, releaseDeps})
 
-    await retryPendingReleases({
-        pendingReleases: provisioning?.pendingReleases() ?? [],
-        claimSnapshot,
-        releaseDeps,
-        graceMs,
-    })
     if (reclaimed > 0) {
         log.info(`Reclaimed ${reclaimed} stale claim(s)`)
     }
@@ -45,17 +40,19 @@ const reclaimClaims = async ({claimSnapshot, ...deps}) => {
 }
 
 const reclaimClaim = async (claim, {liveIds, openIds, now, graceMs, releaseDeps}) => {
+    const {releasing} = releaseDeps
+    // Filtered inventory can miss an idle transition while its release still owns the claim.
+    if (releasing?.has(`${claim.instanceId}/${claim.sessionId ?? ''}`)) return false
+    if (claim.recoveryStartedAt) {
+        if (openIds.has(claim.sessionId)) return false
+        return retryRecovery(claim, {liveIds, now, graceMs, releaseDeps})
+    }
     const gone = !liveIds.has(claim.instanceId)
     const abandoned = !openIds.has(claim.sessionId)
     if (!gone && !abandoned) {
         return false
     }
     if (now - claim.claimedAt.getTime() <= graceMs) {
-        return false
-    }
-    const {releasing} = releaseDeps
-    // Filtered inventory can miss an idle transition while its release still owns the claim.
-    if (releasing?.has(`${claim.instanceId}/${claim.sessionId ?? ''}`)) {
         return false
     }
     // Each claim is independent: one failure must not abort the others.
@@ -73,51 +70,29 @@ const reclaimClaim = async (claim, {liveIds, openIds, now, graceMs, releaseDeps}
     }
 }
 
-// Failed ownership reads can leave a retirement gate without its own claim to drive recovery.
-const retryPendingReleases = async ({pendingReleases, claimSnapshot, releaseDeps, graceMs}) => {
-    const claimedSessions = new Map(claimSnapshot.map(({instanceId, sessionId}) => [instanceId, sessionId]))
-    for (const pending of pendingReleases) {
-        const releaseInFlight = releaseDeps.releasing?.has(`${pending.instanceId}/${pending.sessionId ?? ''}`)
-        if (!pending.isCurrent() || releaseInFlight) {
-            continue
-        }
-        if (claimedSessions.get(pending.instanceId) === pending.sessionId) {
-            pending.missingSince = null
-            continue
-        }
-        try {
-            await retryPendingRelease(pending, {releaseDeps, graceMs})
-        } catch (err) {
-            if (pending.isCurrent()) {
-                pending.missingSince = null
+const retryRecovery = async (claim, {liveIds, now, graceMs, releaseDeps}) => {
+    try {
+        const matureAbsence = !liveIds.has(claim.instanceId)
+            && now - claim.recoveryStartedAt.getTime() > graceMs
+        if (matureAbsence) {
+            const missing = await releaseDeps.provider.getInstance(claim.instanceId).then(
+                () => false,
+                error => {
+                    if (error.name === 'InvalidInstanceID.NotFound') return true
+                    throw error
+                }
+            )
+            if (missing) {
+                // Existing absence policy, with a by-ID check; negative evidence never admits a pool return.
+                await releaseGoneClaim(claim.instanceId, claim.sessionId, releaseDeps)
+                return true
             }
-            log.error(`Failed to retry pending release of ${instanceTag(pending.instanceId)} (continuing): ${err.message}`)
         }
-    }
-}
-
-const retryPendingRelease = async (pending, {releaseDeps, graceMs}) => {
-    const {provider} = releaseDeps
-    if (provider.isInstanceMissing) {
-        const missing = await provider.isInstanceMissing(pending.instanceId)
-        if (!pending.isCurrent()) {
-            return
-        }
-        if (missing) {
-            const now = Date.now()
-            pending.missingSince ??= now
-            // One NotFound can be transient, even for an old gate after a termination request.
-            const oldEnough = now - pending.createdAt > graceMs
-            const persistentlyMissing = now - pending.missingSince > graceMs
-            if (oldEnough && persistentlyMissing) {
-                pending.finish()
-            }
-            return
-        }
-        pending.missingSince = null
-    }
-    if (pending.isCurrent()) {
-        await releaseInstance(pending.instanceId, pending.sessionId, releaseDeps)
+        await releaseInstance(claim.instanceId, claim.sessionId, {...releaseDeps, recovering: true})
+        return true
+    } catch (error) {
+        log.error(`Failed to recover ${instanceTag(claim.instanceId)} (continuing): ${error.message}`)
+        return false
     }
 }
 

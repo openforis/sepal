@@ -10,6 +10,7 @@ import {
     StartInstancesCommand,
     StopInstancesCommand,
     TerminateInstancesCommand,
+    waitUntilInstanceStopped,
 } from '@aws-sdk/client-ec2'
 
 import {getLogger} from '#sepal/log'
@@ -189,6 +190,7 @@ const toWorkerInstance = (awsInstance, codec) => {
         running,
         launchTime: awsInstance.LaunchTime ? new Date(awsInstance.LaunchTime) : new Date(),
         reservation,
+        imageDiskWarm: tagValue(awsInstance, 'ImageDiskWarm') === 'true',
     })
 }
 
@@ -385,10 +387,10 @@ const createAwsInstanceProvider = (config, {instanceTypes = INSTANCE_TYPES} = {}
         await scratchVolumes.deleteOrphans()
     }
 
-    // Only the pool keeps workers stopped. Terminates, best-effort like the other cleanups:
+    // The pool and recovery keep workers stopped. Terminates, best-effort like the other cleanups:
     //   - pooled instances of another version, whatever their state;
     //   - pooled instances still running long after their start;
-    //   - stopped instances outside the pool — a start EC2 accepted and then failed, or an
+    //   - stopped instances outside the pool/recovery — a start EC2 accepted and then failed, or an
     //     AWS-initiated stop. Every other query sees only pending/running instances, so a stopped
     //     reserved or idle instance would otherwise pay for its disk forever.
     const terminatePoolStrays = async () => {
@@ -400,7 +402,8 @@ const createAwsInstanceProvider = (config, {instanceTypes = INSTANCE_TYPES} = {}
             ? isStale(i)
                 || (i.State?.Name === 'running' && now - new Date(i.LaunchTime).getTime() > MAX_POOLED_RUNNING_MS)
             : i.State?.Name === 'stopped'
-        await Promise.all(collectInstances(response).filter(isStray).map(i =>
+        const candidates = collectInstances(response).filter(i => tagValue(i, 'State') !== 'recovering')
+        await Promise.all(candidates.filter(isStray).map(i =>
             terminate(i.InstanceId).catch(err =>
                 log.warn(`Failed to terminate pool stray ${instanceTag(i.InstanceId)}: ${err.message}`)
             )
@@ -511,6 +514,21 @@ const createAwsInstanceProvider = (config, {instanceTypes = INSTANCE_TYPES} = {}
         log.info(`Stopped ${instanceTag(instanceId)} into the pool`)
     }
 
+    const beginRecovery = async instanceId => {
+        // The recovery command owns termination and claim cleanup after a tagging failure.
+        await retry(4, () => client.send(new CreateTagsCommand({
+            Resources: [instanceId],
+            Tags: [mkTag('State', 'recovering'), mkTag('Starting', '')],
+        })))
+        await retry(2, () => client.send(new StopInstancesCommand({InstanceIds: [instanceId]})))
+        log.info(`Requested stop for recovery of ${instanceTag(instanceId)}`)
+    }
+
+    const awaitStopped = instanceId => waitUntilInstanceStopped(
+        {client, minDelay: 1, maxDelay: 5, maxWaitTime: 180},
+        {InstanceIds: [instanceId]}
+    )
+
     // instanceType is a catalog ID. Tagged only once started: a failed start leaves the instance
     // untouched in the pool, and a failed tagging terminates it (tagInstance). Never Starting=true:
     // the caller provisions it, and the started-instance poll would provision it again once the
@@ -522,9 +540,10 @@ const createAwsInstanceProvider = (config, {instanceTypes = INSTANCE_TYPES} = {}
             InstanceType: {Value: codec.toAwsName(instanceType)},
         }))
         await client.send(new StartInstancesCommand({InstanceIds: [instance.id]}))
-        await tagInstance(instance.id, reserveTags(environment, reservation))
+        // A ready pool member has completed the existing disk-warm-up contract.
+        await tagInstance(instance.id, reserveTags(environment, reservation), [mkTag('ImageDiskWarm', true)])
         log.info(`Started pooled ${instanceTag(instance)} as ${instanceType}`)
-        return {...instance, type: instanceType, host: null, running: false, reservation}
+        return {...instance, type: instanceType, host: null, running: false, reservation, imageDiskWarm: true}
     }
 
     const reserveInstance = async instance => {
@@ -547,11 +566,11 @@ const createAwsInstanceProvider = (config, {instanceTypes = INSTANCE_TYPES} = {}
         return findInstancesByFilters(true, filterTaggedWith('State', 'idle'))
     }
 
-    // instanceType-agnostic. ready → only stopped instances, the ones a request can start.
+    // Recovering hosts count toward future capacity; ready selects only stopped pool members.
     const pooledInstances = async ({ready = false} = {}) =>
         findInstancesByRequest(true, {
             Filters: [
-                filterTaggedWith('State', 'pooled'),
+                filterTaggedWith('State', ready ? 'pooled' : ['pooled', 'recovering']),
                 ...filterWorker(environment),
                 ready ? mkFilter('instance-state-name', 'stopped') : filterPooledStates(),
             ],
@@ -559,6 +578,10 @@ const createAwsInstanceProvider = (config, {instanceTypes = INSTANCE_TYPES} = {}
 
     const reservedInstances = async () =>
         findInstancesByFilters(false, filterTaggedWith('State', 'reserved'))
+
+    const recoveringInstances = async () => findInstancesByRequest(false, {
+        Filters: [...filterWorker(environment), filterTaggedWith('State', 'recovering'), filterPooledStates()],
+    })
 
     const getInstance = async instanceId => {
         const response = await client.send(new DescribeInstancesCommand({
@@ -569,18 +592,6 @@ const createAwsInstanceProvider = (config, {instanceTypes = INSTANCE_TYPES} = {}
             throw new Error(`Expected exactly one instance with id ${instanceId}, got ${awsInstances.length}`)
         }
         return toWorkerInstance(awsInstances[0], codec)
-    }
-
-    const isInstanceMissing = async instanceId => {
-        try {
-            await getInstance(instanceId)
-            return false
-        } catch (error) {
-            if (error.name === 'InvalidInstanceID.NotFound') {
-                return true
-            }
-            throw error
-        }
     }
 
     const onInstanceLaunched = listener => {
@@ -619,16 +630,18 @@ const createAwsInstanceProvider = (config, {instanceTypes = INSTANCE_TYPES} = {}
         launchPooled,
         pool,
         startPooled,
+        beginRecovery,
+        awaitStopped,
         terminate,
         attachScratchVolume: instance => scratchVolumes.attach(instance),
-        deleteScratchVolume: instanceId => scratchVolumes.remove(instanceId),
+        deleteScratchVolume: (instanceId, options) => scratchVolumes.remove(instanceId, options),
         reserve: reserveInstance,
         release: releaseInstance,
         idleInstances,
         pooledInstances,
         reservedInstances,
+        recoveringInstances,
         getInstance,
-        isInstanceMissing,
         restore,
         awaitHost,
         sweep,

@@ -72,9 +72,12 @@ export class ScratchVolumes {
     }
 
     // The volume must no longer be mounted: the caller has removed the containers using it.
-    async remove(instanceId) {
+    async remove(instanceId, {requireAttached = false} = {}) {
         const volumeId = await this.#attachedVolumeId(instanceId)
         if (!volumeId) {
+            if (requireAttached) {
+                throw new Error(`Expected scratch attachment missing on ${instanceTag(instanceId)}`)
+            }
             return
         }
         await this.#client.send(new DetachVolumeCommand({InstanceId: instanceId, VolumeId: volumeId}))

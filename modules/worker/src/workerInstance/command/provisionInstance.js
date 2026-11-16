@@ -16,10 +16,11 @@ const provisionInstance = async (instance, {
     provider,
     provisioner,
     isCurrent = () => true,
+    prepareScratch = attach => attach(),
     _delayFn = DEFAULT_DELAY_FN,
 }) => {
     log.debug(`Provisioning ${instanceTag(instance)}...`)
-    return provisionWithRetries({instance, attempt: 1}, {claims, provider, provisioner, isCurrent, delay: _delayFn})
+    return provisionWithRetries({instance, attempt: 1}, {claims, provider, provisioner, isCurrent, prepareScratch, delay: _delayFn})
 }
 
 const provisionWithRetries = async ({instance, attempt}, dependencies) => {
@@ -50,16 +51,13 @@ const provisionWithRetries = async ({instance, attempt}, dependencies) => {
 }
 
 const provisionOnce = async (instance, dependencies) => {
-    const {provider, provisioner, isCurrent} = dependencies
+    const {provider, provisioner, isCurrent, prepareScratch} = dependencies
     const ownsInstance = await sessionStillOwnsInstance(instance, dependencies)
     if (!ownsInstance || !isCurrent()) {
         return false
     }
-    const tmpDevice = await provider.attachScratchVolume(instance)
-    if (!isCurrent()) {
-        return false
-    }
-    await provisioner.provisionInstance(instance, {tmpDevice, isCurrent})
+    const attachScratchVolume = () => isCurrent() ? prepareScratch(() => provider.attachScratchVolume(instance)) : null
+    await provisioner.provisionInstance(instance, {attachScratchVolume, isCurrent})
     return isCurrent()
 }
 

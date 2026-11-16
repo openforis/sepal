@@ -409,24 +409,30 @@ describe('provisionInstance', () => {
 
     test('provisions on the scratch volume the provider attached', async () => {
         const provider = {...noScratchVolume, attachScratchVolume: mock.fn(async () => '/dev/xvdg')}
-        const provisioner = {provisionInstance: mock.fn(async () => undefined)}
+        let device
+        const provisioner = {provisionInstance: mock.fn(async (_instance, {attachScratchVolume}) => {
+            device = await attachScratchVolume()
+        })}
         const inst = makeReservedInstance()
 
         await provisionInstance(inst, {claims, provider, provisioner, _delayFn: noDelay})
 
         assert.deepEqual(callsOf(provider.attachScratchVolume), [[inst]])
-        assert.partialDeepStrictEqual(callsOf(provisioner.provisionInstance), [[inst, {tmpDevice: '/dev/xvdg'}]])
+        assert.equal(device, '/dev/xvdg')
     })
 
     test('retries a failed scratch volume attachment', async () => {
         const provider = {...noScratchVolume, attachScratchVolume: mock.fn(async () => '/dev/xvdg', async () => {
             throw new Error('IncorrectState')
         }, {times: 1})}
-        const provisioner = {provisionInstance: mock.fn(async () => undefined)}
+        const provisioner = {provisionInstance: mock.fn(async (_instance, {attachScratchVolume}) => {
+            await attachScratchVolume()
+        })}
 
         await provisionInstance(makeReservedInstance(), {claims, provider, provisioner, _delayFn: noDelay})
 
-        assert.equal(provisioner.provisionInstance.mock.callCount(), 1)
+        assert.equal(provider.attachScratchVolume.mock.callCount(), 2)
+        assert.equal(provisioner.provisionInstance.mock.callCount(), 2)
     })
 
     test('success on first try: emits InstanceProvisioned', async () => {
@@ -610,7 +616,7 @@ describe('provisionInstance', () => {
         assert.equal(provisioner.provisionInstance.mock.callCount(), 1)
     })
 
-    test('cancellation during scratch attachment stops before Docker provisioning', async () => {
+    test('cancellation during the scratch callback prevents activation after it finishes', async () => {
         const attached = Promise.withResolvers()
         const started = Promise.withResolvers()
         let current = true
@@ -621,7 +627,12 @@ describe('provisionInstance', () => {
                 return attached.promise
             }
         }
-        const provisioner = {provisionInstance: mock.fn(async () => {})}
+        const provisioner = {provisionInstance: mock.fn(async (_instance, {attachScratchVolume}) => {
+            await attachScratchVolume()
+        })}
+        const provisioned = []
+        const onProvisioned = instance => provisioned.push(instance)
+        events.instanceEvents.on('InstanceProvisioned', onProvisioned)
         const running = provisionInstance(makeReservedInstance(), {
             claims, provider, provisioner, isCurrent: () => current, _delayFn: noDelay
         })
@@ -629,8 +640,10 @@ describe('provisionInstance', () => {
         current = false
         attached.resolve('/dev/xvdg')
         await running
+        events.instanceEvents.off('InstanceProvisioned', onProvisioned)
 
-        assert.equal(provisioner.provisionInstance.mock.callCount(), 0)
+        assert.equal(provisioner.provisionInstance.mock.callCount(), 1)
+        assert.deepEqual(provisioned, [])
     })
 
     for (const phase of ['claim lookup', 'Docker completion']) {
@@ -641,8 +654,9 @@ describe('provisionInstance', () => {
                 queueMicrotask(() => { current = false })
             }})
             const provider = {...noScratchVolume, attachScratchVolume: mock.fn(async () => null)}
-            const provisioner = {provisionInstance: mock.fn(() =>
-                phase === 'Docker completion' ? resolveThenCancel(undefined) : Promise.resolve())}
+            const provisioner = {provisionInstance: mock.fn((_instance, {attachScratchVolume}) =>
+                Promise.resolve(attachScratchVolume()).then(() =>
+                    phase === 'Docker completion' ? resolveThenCancel(undefined) : undefined))}
             const provisioned = []
             const onProvisioned = instance => provisioned.push(instance)
             events.instanceEvents.on('InstanceProvisioned', onProvisioned)
@@ -720,6 +734,53 @@ describe('releaseInstance', () => {
     }
 
     const BOB_REQUEST = {workerType: 'SANDBOX', instanceType: 'T3aSmall', username: 'bob', sessionId: 's-bob'}
+
+    test('reclaim retries an empty orphan claim after its session tag becomes visible', async () => {
+        const {instance, deps} = makeLocalDeps()
+        const {provider, claims} = deps
+        await claims.release(instance.id, SESSION_ID)
+        provider.reserve({...instance, launchTime: new Date(0), reservation: {...instance.reservation, sessionId: null}})
+        const terminate = provider.terminate
+        provider.terminate = mock.fn(async () => { throw new Error('Termination unavailable') })
+        const manager = createInstanceManager({...deps, instanceTypes: []})
+
+        await manager.releaseUnusedInstances([], 0, 'MILLISECONDS')
+        assert.equal(await claims.sessionIdForInstance(instance.id), '')
+
+        provider.reserve(instance)
+        provider.terminate = mock.fn(terminate)
+        await manager.reclaimStaleClaims([], 0)
+
+        assert.equal(provider.getInstance(instance.id), null)
+        assert.deepEqual(callsOf(provider.terminate), [[instance.id]])
+        assert.equal(await claims.sessionIdForInstance(instance.id), '')
+    })
+
+    test('accepted retirement stops reporting busy while retaining its durable claim', async () => {
+        const {instance, deps} = makeLocalDeps()
+        const manager = createInstanceManager({...deps, instanceTypes: []})
+
+        await manager.releaseInstance(instance.id, SESSION_ID, {retire: true})
+
+        assert.equal(manager.isProvisioning(instance.id), false)
+        assert.equal(deps.provider.getInstance(instance.id), null)
+        assert.equal(await deps.claims.sessionIdForInstance(instance.id), SESSION_ID)
+    })
+
+    for (const failedRead of ['provider', 'claim']) {
+        test(`a claimless retirement with a failed ${failedRead} read leaves no busy entry`, async () => {
+            const {instance, deps} = makeLocalDeps()
+            const manager = createInstanceManager({...deps, instanceTypes: []})
+            await manager.releaseInstance(instance.id, SESSION_ID)
+            const owner = failedRead === 'provider' ? deps.provider : deps.claims
+            const method = failedRead === 'provider' ? 'getInstance' : 'sessionIdForInstance'
+            owner[method] = async () => { throw new Error('Ownership read unavailable') }
+
+            await manager.releaseInstance(instance.id, SESSION_ID, {retire: true})
+
+            assert.equal(manager.isProvisioning(instance.id), false)
+        })
+    }
 
     test('gone-claim deletion owns the release slot before a queued orphan release can read stale ownership', async () => {
         const startedAt = Date.now()
@@ -1141,11 +1202,16 @@ describe('releaseInstance', () => {
         assert.equal(deps.claims.release.mock.callCount(), 0)
     })
 
-    test('failed retirement retains its claim and remains retirement after the old attempt settles', async () => {
+    test('failed retirement retains its claim so reclaim retries retirement after the old attempt settles', async () => {
         const provisioning = createProvisioningRegistry()
         const pending = Promise.withResolvers()
         const running = provisioning.run('i-001', SESSION_ID, () => pending.promise)
         const deps = {...makeDeps(), provisioning}
+        deps.claims.sessionIdForInstance = async () => SESSION_ID
+        deps.claims.all = async () => [{instanceId: 'i-001', sessionId: SESSION_ID, claimedAt: new Date(0)}]
+        deps.provider.idleInstances = async () => []
+        deps.provider.reservedInstances = async () => [reservedForSession()]
+        deps.provider.recoveringInstances = async () => []
         let terminationFails = true
         deps.provider.terminate = mock.fn(async () => {
             if (terminationFails) throw new Error('EC2 unavailable')
@@ -1153,24 +1219,23 @@ describe('releaseInstance', () => {
 
         await releaseInstance('i-001', SESSION_ID, deps)
         assert.equal(deps.claims.release.mock.callCount(), 0)
-        assert.equal(provisioning.isProvisioning('i-001'), true)
-        assert.equal(await provisioning.run('i-001', 's-next', async () => {}), false)
+        assert.equal(provisioning.isProvisioning('i-001'), false)
         pending.resolve()
         await running
 
         terminationFails = false
-        await releaseInstance('i-001', SESSION_ID, deps)
-        await releaseInstance('i-001', SESSION_ID, deps)
+        await reconcileGoneClaims([], 0, deps)
 
         assert.equal(deps.provisioner.undeploy.mock.callCount(), 0)
         assert.equal(deps.provider.release.mock.callCount(), 0)
         assert.equal(deps.claims.release.mock.callCount(), 0)
-        assert.equal(provisioning.isProvisioning('i-001'), true)
+        assert.equal(provisioning.isProvisioning('i-001'), false)
+        assert.equal(deps.provider.terminate.mock.callCount(), 3)
 
         await reconcileGoneClaims([], 0, {
             ...deps,
             claims: {...deps.claims, all: async () => [{instanceId: 'i-001', sessionId: SESSION_ID, claimedAt: new Date(0)}]},
-            provider: {idleInstances: async () => [], reservedInstances: async () => []}
+            provider: {idleInstances: async () => [], reservedInstances: async () => [], recoveringInstances: async () => []}
         })
         assert.deepEqual(callsOf(deps.claims.release), [['i-001', SESSION_ID]])
         assert.equal(provisioning.isProvisioning('i-001'), false)
@@ -1185,15 +1250,19 @@ describe('releaseInstance', () => {
         assert.equal(deps.provider.release.mock.callCount(), 0)
         assert.equal(deps.provisioner.undeploy.mock.callCount(), 0)
         assert.equal(deps.claims.release.mock.callCount(), 0)
-        assert.equal(deps.provisioning.isProvisioning('i-001'), true)
+        assert.equal(deps.provisioning.isProvisioning('i-001'), false)
     })
 
-    test('a failed idle transition remains protected and is retired on retry', async () => {
+    test('a failed idle transition retains its claim and is retired by reclaim', async () => {
         const provisioning = createProvisioningRegistry()
         const deps = {...makeDeps(), provisioning}
         deps.claims.sessionIdForInstance = async () => SESSION_ID
+        deps.claims.all = async () => [{instanceId: 'i-001', sessionId: SESSION_ID, claimedAt: new Date(0)}]
         const instance = reservedForSession()
         deps.provider.getInstance = async () => instance
+        deps.provider.idleInstances = async () => [instance]
+        deps.provider.reservedInstances = async () => []
+        deps.provider.recoveringInstances = async () => []
         deps.provider.release = mock.fn(async () => {
             instance.reservation = null
             throw new Error('idle tags applied but response lost')
@@ -1205,14 +1274,15 @@ describe('releaseInstance', () => {
 
         await releaseInstance('i-001', SESSION_ID, deps)
         assert.equal(deps.claims.release.mock.callCount(), 0)
-        assert.equal(provisioning.isProvisioning('i-001'), true)
+        assert.equal(provisioning.isProvisioning('i-001'), false)
         terminationFails = false
-        await releaseInstance('i-001', SESSION_ID, deps)
+        await reconcileGoneClaims([], 0, deps)
 
         assert.equal(deps.provider.release.mock.callCount(), 1)
         assert.equal(deps.provisioner.undeploy.mock.callCount(), 1)
         assert.equal(deps.claims.release.mock.callCount(), 0)
-        assert.equal(provisioning.isProvisioning('i-001'), true)
+        assert.equal(provisioning.isProvisioning('i-001'), false)
+        assert.equal(deps.provider.terminate.mock.callCount(), 2)
     })
 
     test('a committed claim DELETE with a lost response cannot terminate the next session', async () => {
@@ -1257,7 +1327,7 @@ describe('releaseInstance', () => {
         assert.equal(provisioning.isProvisioning(instance.id), false)
     })
 
-    test('contradictory reservation tags retain the matching claim and canceled-provision gate', async () => {
+    test('contradictory reservation tags retain the matching claim for retirement through reclaim', async () => {
         const {instance, deps} = makeLocalDeps()
         const {claims, provider, provisioning} = deps
         const pending = Promise.withResolvers()
@@ -1271,7 +1341,7 @@ describe('releaseInstance', () => {
         await releaseInstance(instance.id, SESSION_ID, deps)
 
         assert.equal(await claims.sessionIdForInstance(instance.id), SESSION_ID)
-        assert.equal(provisioning.isProvisioning(instance.id), true)
+        assert.equal(provisioning.isProvisioning(instance.id), false)
         assert.equal(provider.terminate.mock.callCount(), 0)
         provider.idleInstances = async () => [{...instance, reservation: null}]
         const next = await requestInstance(BOB_REQUEST, {claims, provider})
@@ -1281,13 +1351,13 @@ describe('releaseInstance', () => {
         pending.resolve()
         await running
         provider.getInstance = getInstance
-        await releaseInstance(instance.id, SESSION_ID, deps)
+        await reconcileGoneClaims(['s-bob'], 0, deps)
         assert.equal(provider.getInstance(instance.id), null)
         assert.equal(provider.getInstance(next.id)?.reservation.sessionId, 's-bob')
     })
 
     for (const failedRead of ['provider', 'claim']) {
-        test(`a claimless retirement gate survives a failed ${failedRead} read and reconciliation unblocks the next owner`, async () => {
+        test(`a claimless retirement with a failed ${failedRead} read does not delay the next owner`, async () => {
             const {instance, deps} = makeLocalDeps()
             const {claims, provider, provisioning} = deps
             await releaseInstance(instance.id, SESSION_ID, deps)
@@ -1299,14 +1369,10 @@ describe('releaseInstance', () => {
             await releaseInstance(instance.id, SESSION_ID, {...deps, retire: true})
             owner[method] = read
 
-            assert.equal(provisioning.isProvisioning(instance.id), true)
+            assert.equal(provisioning.isProvisioning(instance.id), false)
             assert.equal(await claims.sessionIdForInstance(instance.id), null)
             const next = await requestInstance(BOB_REQUEST, {claims, provider})
             assert.equal(next.id, instance.id)
-            assert.equal(await provisioning.run(next.id, 's-bob', async () => {}), false)
-
-            await reconcileGoneClaims(['s-bob'], 0, deps)
-
             assert.equal(provider.getInstance(next.id)?.reservation.sessionId, 's-bob')
             assert.equal(await claims.sessionIdForInstance(next.id), 's-bob')
             assert.equal(provider.terminate.mock.callCount(), 0)
@@ -1340,34 +1406,8 @@ describe('releaseInstance', () => {
         })
     }
 
-    test('pending-release recovery skips a stale gate cleared by an earlier retry', async () => {
-        const {instance, deps} = makeLocalDeps()
-        const {claims, provider, provisioning} = deps
-        await claims.release(instance.id, SESSION_ID)
-        const second = provider.launchReserved('T3aSmall', {username: 'second', workerType: 'SANDBOX', sessionId: 's-second'})
-        provisioning.beginRelease(instance.id, SESSION_ID, {retire: true})
-        const secondToken = provisioning.beginRelease(second.id, 's-second', {retire: true})
-        const pendingSnapshot = provisioning.pendingReleases()
-        provisioning.pendingReleases = () => pendingSnapshot
-        const terminate = provider.terminate
-        provider.terminate = mock.fn(instanceId => {
-            if (instanceId === instance.id) {
-                provisioning.finishRelease(second.id, secondToken)
-            }
-            return terminate(instanceId)
-        })
-
-        await reconcileGoneClaims([], 0, deps)
-
-        assert.equal(provider.getInstance(instance.id), null)
-        assert.equal(provider.getInstance(second.id), second)
-        assert.equal(await claims.sessionIdForInstance(second.id), null)
-        assert.equal(provisioning.isProvisioning(second.id), false)
-        assert.deepEqual(callsOf(provider.terminate), [[instance.id]])
-    })
-
     for (const failedRead of ['provider', 'claim']) {
-        test(`explicit retirement survives a failed ${failedRead} ownership read without an active provision`, async () => {
+        test(`explicit retirement preserves its claim after a failed ${failedRead} ownership read without blocking starts`, async () => {
             const deps = {...makeDeps(), provisioning: createProvisioningRegistry(), retire: true}
             const failure = async () => { throw new Error('ownership unknown') }
             if (failedRead === 'provider') deps.provider.getInstance = failure
@@ -1375,7 +1415,7 @@ describe('releaseInstance', () => {
 
             await releaseInstance('i-001', SESSION_ID, deps)
 
-            assert.equal(deps.provisioning.isProvisioning('i-001'), true)
+            assert.equal(deps.provisioning.isProvisioning('i-001'), false)
             assert.equal(deps.claims.release.mock.callCount(), 0)
             assert.equal(deps.provider.terminate.mock.callCount(), 0)
         })
@@ -1398,7 +1438,7 @@ describe('releaseInstance', () => {
             assert.equal(isCurrent(), false)
             assert.equal(deps.claims.release.mock.callCount(), 0)
             assert.equal(deps.provider.terminate.mock.callCount(), 0)
-            assert.equal(provisioning.isProvisioning('i-001'), true)
+            assert.equal(provisioning.isProvisioning('i-001'), false)
             pending.resolve()
             await running
         })
@@ -1529,7 +1569,7 @@ describe('releaseInstance', () => {
         await started.promise
 
         assert.equal(deps.claims.release.mock.callCount(), 0)
-        assert.equal(await provisioning.run('i-001', 's-next', async () => {}), false)
+        assert.equal(await provisioning.run('i-001', SESSION_ID, async () => {}), false)
         idle.resolve()
         await running
         assert.equal(await provisioning.run('i-001', 's-next', async () => {}), true)
@@ -1616,6 +1656,7 @@ describe('sizeIdlePool', () => {
     const makeClaims = (claimed = []) => ({
         claim: mock.fn(async instanceId => !claimed.includes(instanceId)),
         release: mock.fn(async () => true),
+        all: async () => claimed.map(instanceId => ({instanceId, sessionId: 'allocating'})),
     })
 
     // A request claims an idle instance before tagging it reserved; stopping or terminating it in
@@ -1817,6 +1858,7 @@ describe('reclaimStaleClaims', () => {
     const makeProvider = (idle = [], reserved = []) => ({
         idleInstances: mock.fn(async () => idle),
         reservedInstances: mock.fn(async () => reserved),
+        recoveringInstances: async () => [],
     })
 
     test('deletes a claim whose instance the hosting service no longer reports', async () => {
@@ -1854,7 +1896,7 @@ describe('reclaimStaleClaims', () => {
         assert.equal(provisioner.undeploy.mock.callCount(), 0)
         assert.equal(provider.release.mock.callCount(), 0)
         assert.deepEqual(callsOf(provider.terminate), [['i-1'], ['i-1']])
-        assert.equal(provisioning.isProvisioning('i-1'), true)
+        assert.equal(provisioning.isProvisioning('i-1'), false)
     })
 
     // Tag reads are eventually consistent: between claiming an idle candidate and its State tag
@@ -1897,6 +1939,7 @@ describe('reclaimStaleClaims', () => {
         const provider = {
             ...makeProvider(),
             reservedInstances: mock.fn(async () => instance.reservation ? [instance] : []),
+            recoveringInstances: async () => [],
             getInstance: mock.fn(async () => instance),
             release: mock.fn(async () => {
                 instance.reservation = null
@@ -1965,6 +2008,7 @@ describe('releaseUnusedInstances', () => {
         },
         provider: {
             reservedInstances: mock.fn(async () => reservedInstances),
+            recoveringInstances: async () => [],
             getInstance: mock.fn(id => Promise.resolve(reservedInstances.find(i => i.id === id) ?? null)),
             release: mock.fn(async () => undefined),
             terminate: mock.fn(async () => undefined),
@@ -2058,6 +2102,7 @@ describe('releaseUnusedInstances', () => {
         }
         const provider = {
             reservedInstances: mock.fn(async () => [old]),
+            recoveringInstances: async () => [],
             getInstance: mock.fn(async () => old),
             release: mock.fn(),
             terminate: mock.fn(),
@@ -2080,6 +2125,7 @@ describe('releaseUnusedInstances', () => {
         }
         const provider = {
             reservedInstances: mock.fn(async () => [old]),
+            recoveringInstances: async () => [],
             getInstance: mock.fn(async () => old),
             release: mock.fn(async () => undefined),
             terminate: mock.fn(),
@@ -2169,6 +2215,7 @@ describe('instanceManager', () => {
             release: mock.fn(async () => undefined),
             terminate: mock.fn(async () => undefined),
             reservedInstances: mock.fn(async () => []),
+            recoveringInstances: async () => [],
             awaitHost: mock.fn(async instance => instance),
         },
         provisioner: {

@@ -10,6 +10,7 @@
 // what the pool already holds; the rest is terminated. Whatever deficit the surplus does not fill
 // is warm-up launched, at most MAX_CONCURRENT_WARM_UPS at a time. stoppedPoolSize 0 leaves the
 // stopped pool untouched and unqueried.
+// Recovered hosts can return after replacement launches; trim excess while preserving ready warm disks.
 //
 // A surplus instance is pooled or terminated only under a claim, the same election a request runs
 // before reserving an idle instance: whichever claims first has it, so the cycle never stops or
@@ -42,7 +43,7 @@ const sizeIdlePool = async (targetIdleCountByInstanceType, stoppedPoolSize, {pro
 
     const surplus = await sizeRunningIdle(targetMap, {provider})
     const {deficit, warming} = stoppedPoolSize > 0
-        ? await stoppedPoolState(stoppedPoolSize, {provider})
+        ? await stoppedPoolState(stoppedPoolSize, {provider, claims})
         : {deficit: 0, warming: 0}
 
     // Oldest first: they have read the most of their disk, which is what a pooled start is for.
@@ -67,12 +68,30 @@ const sizeIdlePool = async (targetIdleCountByInstanceType, stoppedPoolSize, {pro
 
 // A pooled instance that has not stopped yet is still warming up. That includes a surplus instance
 // the previous cycle stopped into the pool, which only holds the next warm-up back by a cycle.
-const stoppedPoolState = async (stoppedPoolSize, {provider}) => {
-    const all = await provider.pooledInstances()
-    const ready = await provider.pooledInstances({ready: true})
+const stoppedPoolState = async (stoppedPoolSize, {provider, claims}) => {
+    const pooled = await provider.pooledInstances()
+    const readyIds = new Set((await provider.pooledInstances({ready: true})).map(({id}) => id))
+    const allocatedIds = new Set((await claims.all())
+        .filter(({recoveryStartedAt}) => !recoveryStartedAt)
+        .map(({instanceId}) => instanceId))
+    // Pooled tags may lag allocation claims; recovery claims still occupy future pool capacity.
+    const all = pooled.filter(instance => instance.reservation || !allocatedIds.has(instance.id))
+    const candidates = all.filter(instance => !instance.reservation).sort((a, b) =>
+        Number(readyIds.has(a.id)) - Number(readyIds.has(b.id))
+        || Number(!!a.imageDiskWarm) - Number(!!b.imageDiskWarm)
+        || launchedAt(b) - launchedAt(a)
+    )
+    const removed = new Set()
+    // A lost election may be an allocation leaving the pool; do not evict its warmed replacement.
+    for (const instance of candidates.slice(0, Math.max(0, all.length - stoppedPoolSize))) {
+        const done = await attempt(`terminate surplus pooled ${instanceTag(instance)}`, () =>
+            underClaim(instance, () => provider.terminate(instance.id), {claims}))
+        if (done) removed.add(instance.id)
+    }
+    const retained = all.filter(({id}) => !removed.has(id))
     return {
-        deficit: Math.max(0, stoppedPoolSize - all.length),
-        warming: all.length - ready.length,
+        deficit: Math.max(0, stoppedPoolSize - retained.length),
+        warming: retained.filter(({id}) => !readyIds.has(id)).length,
     }
 }
 

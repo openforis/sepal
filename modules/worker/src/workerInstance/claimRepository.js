@@ -46,15 +46,35 @@ export class ClaimRepository {
         })
     }
 
+    async startRecovery(instanceId, sessionId) {
+        const changed = await this.#db.withConnection(async connection => {
+            const [result] = await connection.query(
+                `UPDATE instance_claim SET recovery_started_at = COALESCE(recovery_started_at, CURRENT_TIMESTAMP)
+                 WHERE instance_id = ? AND session_id = ?`,
+                [instanceId, sessionId]
+            )
+            return result.affectedRows > 0
+        })
+        return changed || await this.sessionIdForInstance(instanceId) === sessionId
+    }
+
+    finishRecovery(instanceId, sessionId) {
+        return this.#db.withConnection(connection => connection.query(
+            'UPDATE instance_claim SET recovery_started_at = NULL WHERE instance_id = ? AND session_id = ?',
+            [instanceId, sessionId]
+        ))
+    }
+
     all() {
         return this.#db.withConnection(async connection => {
             const [rows] = await connection.query(
-                'SELECT instance_id, session_id, claimed_at FROM instance_claim'
+                'SELECT instance_id, session_id, claimed_at, recovery_started_at FROM instance_claim'
             )
             return rows.map(row => ({
                 instanceId: row.instance_id,
                 sessionId: row.session_id,
                 claimedAt: new Date(row.claimed_at),
+                recoveryStartedAt: row.recovery_started_at ? new Date(row.recovery_started_at) : null,
             }))
         })
     }

@@ -35,12 +35,15 @@ const releaseUnusedInstances = async (usedInstanceIds, minAge, timeUnit, {
         : minAge * (TIME_UNIT_MS[timeUnit] ?? 1_000)
 
     const now = Date.now()
-    const reservedInstances = await provider.reservedInstances()
+    const [reservedInstances, recoveringInstances] = await Promise.all([
+        provider.reservedInstances(), provider.recoveringInstances(),
+    ])
+    const recoveringIds = new Set(recoveringInstances.map(({id}) => id))
 
     // Allocation claims precede session rows; age alone cannot distinguish an orphan.
     const claimedIds = new Set((await claims.all()).map(({instanceId}) => instanceId))
 
-    const toRelease = reservedInstances.filter(instance => {
+    const toRelease = [...reservedInstances, ...recoveringInstances].filter(instance => {
         if (usedSet.has(instance.id)) return false
         if (claimedIds.has(instance.id)) return false
         const ageMs = now - new Date(instance.launchTime).getTime()
@@ -62,6 +65,7 @@ const releaseUnusedInstances = async (usedInstanceIds, minAge, timeUnit, {
                 provisioning,
                 releasing,
                 retire: true,
+                recovering: recoveringIds.has(instance.id),
             })
         } catch (err) {
             // releaseInstance already emits FailedToReleaseInstance; swallow here to continue

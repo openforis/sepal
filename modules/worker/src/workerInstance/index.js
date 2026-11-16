@@ -86,12 +86,13 @@ const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceT
     // ── Wire: in-proc InstancePendingProvisioning → provisionInstance ─────────
     instanceEvents.on('InstancePendingProvisioning', instance => {
         log.debug(`Starting provisioning for ${instanceTag(instance)}`)
-        provisioning.run(instance.id, instance.reservation?.sessionId, isCurrent =>
+        provisioning.run(instance.id, instance.reservation?.sessionId, (isCurrent, progress) =>
             provisionInstance(instance, {
                 claims,
                 provider,
                 provisioner,
                 isCurrent,
+                ...progress,
             }))
             .then(ran => ran || log.debug(`Already provisioning ${instanceTag(instance)} - ignored`))
             .catch(err => {
@@ -121,7 +122,7 @@ const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceT
         }
 
         // Run even with no idle pool configured: every idle instance then has target 0 and is
-        // terminated. Completed sessions return hosts to idle; canceled startups retire directly.
+        // terminated. Completed sessions return idle; warmed manual cancellations recover to stopped.
         const targets = [...targetIdleCountByInstanceType.keys()].join(', ') || 'none (all idle instances are surplus)'
         log.debug(`Scheduling SizeIdlePool every ${SIZE_IDLE_POOL_INTERVAL_MS}ms for types: ${targets}`)
         // The provider sweep collects old-version and untagged instances outside the allocation

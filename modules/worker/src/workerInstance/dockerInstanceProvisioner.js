@@ -39,13 +39,14 @@ const createDockerInstanceProvisioner = ({
         ? {...instance, daemonHost: defaultDaemonHost}
         : instance
 
-    const provisionInstance = async (rawInstance, {tmpDevice = null, isCurrent = () => true} = {}) => {
+    const provisionInstance = async (rawInstance, {attachScratchVolume = () => null, isCurrent = () => true} = {}) => {
         const instance = normalizeInstance(rawInstance)
         const docker = createInstanceDocker({instance, isCurrent})
         log.debug(`Provisioning ${instanceTag(instance)} (workerType=${instance.reservation?.workerType})...`)
 
-        await docker.waitUntilAvailable()
         const {instanceType, images} = await loadWorkerDefinition(instance)
+        const tmpDevice = await attachScratchVolume()
+        await docker.waitUntilAvailable()
         await docker.removeSandbox()
         await docker.prepareTmp({image: images[0], tmpDevice})
 

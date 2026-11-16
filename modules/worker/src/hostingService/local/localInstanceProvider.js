@@ -142,6 +142,7 @@ const createLocalInstanceProvider = _instanceType => {
 
     // No stopped pool: instances on the shared dev daemon cost nothing while idle.
     const pooledInstances = async () => []
+    const recoveringInstances = async () => []
     // No scratch volumes: a session's /tmp is a plain volume on the dev machine's disk.
     const attachScratchVolume = async () => null
     const deleteScratchVolume = async () => { /* no-op */ }
@@ -155,6 +156,8 @@ const createLocalInstanceProvider = _instanceType => {
         launchPooled: unsupported('launchPooled'),
         pool: unsupported('pool'),
         startPooled: unsupported('startPooled'),
+        beginRecovery: unsupported('beginRecovery'),
+        awaitStopped: unsupported('awaitStopped'),
         terminate,
         attachScratchVolume,
         deleteScratchVolume,
@@ -163,6 +166,7 @@ const createLocalInstanceProvider = _instanceType => {
         idleInstances,
         pooledInstances,
         reservedInstances,
+        recoveringInstances,
         getInstance,
         restore,
         awaitHost,

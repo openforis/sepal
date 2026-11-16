@@ -28,6 +28,7 @@ describe('removeOrphanedContainers', () => {
         const provider = {
             idleInstances: async () => [instance('i-idle')],
             reservedInstances: async () => [instance('i-reserved')],
+            recoveringInstances: async () => [],
         }
         const manager = createInstanceManager({provider, provisioner, instanceTypes: []})
 
@@ -44,6 +45,7 @@ describe('removeOrphanedContainers', () => {
         const provider = {
             idleInstances: async () => [],
             reservedInstances: async () => [],
+            recoveringInstances: async () => [],
         }
         const manager = createInstanceManager({provider, provisioner, instanceTypes: []})
 
@@ -72,6 +74,7 @@ describe('sessionsWithoutInstance', () => {
             launchTime: new Date('2024-01-01T00:00:00Z'),
             reservation: {username: 'admin', workerType: 'SANDBOX', sessionId: 's-1'},
             daemonHost: null,
+            imageDiskWarm: false,
         }]])
     })
 
@@ -150,7 +153,7 @@ describe('reprovisionInstance', () => {
         await started.promise
 
         await manager.releaseInstance('i-1', 's-1')
-        assert.equal(manager.isProvisioning('i-1'), true)
+        assert.equal(manager.isProvisioning('i-1'), false)
         assert.deepEqual(callsOf(provider.terminate), [['i-1']])
         assert.equal(provider.release.mock.callCount(), 0)
         assert.equal(provisioner.undeploy.mock.callCount(), 0)
@@ -158,7 +161,7 @@ describe('reprovisionInstance', () => {
 
         pending.resolve()
         assert.equal(await first, true)
-        assert.equal(manager.isProvisioning('i-1'), true)
+        assert.equal(manager.isProvisioning('i-1'), false)
     })
 
     // The sweep re-entering an in-flight provision would delete the containers it is creating.

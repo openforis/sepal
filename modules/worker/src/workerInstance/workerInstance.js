@@ -9,12 +9,13 @@
 //   running     — boolean — true once the instance is available
 //   launchTime  — Date the instance was launched
 //   reservation — { username, workerType } or null (null = idle)
+//   imageDiskWarm — whether the image disk came from a ready stopped pool
 
 // daemonHost — where the Docker Engine API lives, when it is NOT the instance itself.
 // Only the local (dev) hosting service sets it: all local instances share the dev
 // machine's daemon (host.docker.internal) while `host` becomes a per-instance network
 // alias on the `sepal` network. On AWS it stays null and `host` serves both purposes.
-const createWorkerInstance = ({id, type, host, running = true, launchTime = new Date(), reservation = null, daemonHost = null}) => ({
+const createWorkerInstance = ({id, type, host, running = true, launchTime = new Date(), reservation = null, daemonHost = null, imageDiskWarm = false}) => ({
     id,
     type,
     host,
@@ -22,6 +23,7 @@ const createWorkerInstance = ({id, type, host, running = true, launchTime = new 
     launchTime,
     reservation,
     daemonHost,
+    imageDiskWarm,
 })
 
 const isReserved = instance => instance.reservation != null

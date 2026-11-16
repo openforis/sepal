@@ -449,11 +449,11 @@ test('sessionUsageOther → scoped to the path user', async () => {
 // ── close ────────────────────────────────────────────────────────────────────
 
 test('closeSessionSelf → 204 with {status: OK}, self user', async () => {
-    const c = ctx({params: {sessionId: 's1'}})
+    const c = ctx({params: {sessionId: 's1'}, request: {body: {recoverStartup: false}}})
     await api.closeSessionSelf(c)
     assert.deepEqual(
         callsOf(sessionManager.closeSession),
-        [[{sessionId: 's1', username: 'alice'}]]
+        [[{sessionId: 's1', username: 'alice', recoverStartup: true}]]
     )
     assert.equal(c.status, 204)
     assert.deepEqual(c.body, {status: 'OK'})
@@ -464,7 +464,7 @@ test('closeSessionOther → path username, 204', async () => {
     await api.closeSessionOther(c)
     assert.deepEqual(
         callsOf(sessionManager.closeSession),
-        [[{sessionId: 's1', username: 'bob'}]]
+        [[{sessionId: 's1', username: 'bob', recoverStartup: true}]]
     )
     assert.equal(c.status, 204)
 })
@@ -472,7 +472,7 @@ test('closeSessionOther → path username, 204', async () => {
 test('closeUserSessions → path username, 204', async () => {
     const c = ctx({params: {username: 'Bob'}})
     await api.closeUserSessions(c)
-    assert.deepEqual(callsOf(sessionManager.closeUserSessions), [['bob']])
+    assert.deepEqual(callsOf(sessionManager.closeUserSessions), [['bob', {recoverStartup: true}]])
     assert.equal(c.status, 204)
 })
 
