@@ -13,8 +13,10 @@ Identity repair fills each missing field from `id` independently and preserves e
 
 ## Home mount
 
-Deployed `/sepal/home` uses the host's separate `nosymfollow` bind view, prepared and verified before
-Docker starts. DEV retains the normal mount. Managed directory paths must be real directories;
+Deployed `/sepal/home` uses the host's separate `nosymfollow` bind view. Startup verifies its effective
+mount options in `/proc/self/mountinfo` before database initialization or provisioning, and exits if
+protection is absent or cannot be verified. Only explicit `DEPLOY_ENVIRONMENT=DEV` skips that check and
+retains the normal mount. Managed directory paths must be real directories;
 credential deletion refuses symlinks instead of reporting success.
 
 ## Login throttling

@@ -69,7 +69,9 @@ One gateway connection carries every user's commands, so a command affects only 
 - `src/upload.js` - Multipart parsing for `setFile`; owns and removes the parser's temporary files
 - `src/watcher.js` - Directory polling using RxJS
 - User uid/gid looked up via `stat` on `/sepalUsers/{username}`
-- Deployed homes use the host's separate `nosymfollow` bind view, prepared and verified before Docker starts. DEV keeps normal mounts.
+- Deployed homes use the host's separate `nosymfollow` bind view. Startup checks the effective mount options in
+  `/proc/self/mountinfo` before connecting to the broker or serving requests, and exits if protection is absent or
+  cannot be verified. Only explicit `DEPLOY_ENVIRONMENT=DEV` skips this check and keeps normal mounts.
 
 ### Links
 Clients browse a logical tree: a path stays the one the client named (`shortcut/subfolder/file`), wherever the
