@@ -455,6 +455,17 @@ describe('createFolder', () => {
 })
 
 describe('setFile', () => {
+    test('writes within a directory whose name begins with two dots', async () => {
+        const alice = await aHome('alice')
+        await mkdir(join(alice, '..cache'))
+        const ctx = aRequest('alice', {path: '..cache/data.csv'}, {file: {filepath: await anUpload('a,b')}})
+
+        await setFile(homes, ctx)
+
+        assert.equal(ctx.response.status, 200)
+        assert.equal(await readFile(join(alice, '..cache', 'data.csv'), 'utf8'), 'a,b')
+    })
+
     test('writes a new file', async () => {
         const alice = await aHome('alice')
         const ctx = aRequest('alice', {path: 'project/data.csv'}, {file: {filepath: await anUpload('a,b')}})

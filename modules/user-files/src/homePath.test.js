@@ -5,13 +5,55 @@ import {tmpdir} from 'node:os'
 import {dirname, join} from 'node:path'
 import {after, describe, test} from 'node:test'
 
-import {removeUserPath} from './homePath.js'
+import {removeUserPath, resolvePath} from './homePath.js'
 
 // Assertions never follow links, so that these hold as well over a view that refuses to follow them (nosymfollow).
 
 const root = mkdtempSync(join(tmpdir(), 'user-files-'))
 
 after(() => rm(root, {recursive: true, force: true}))
+
+describe('resolvePath', () => {
+    test('resolves a chain padded with dot names without exhausting the call stack', async () => {
+        const alice = await aHome(await someHomes(), 'alice')
+        for (let i = 1; i <= 20; i++) {
+            await aLink(alice, `l${i}`, `${i === 20 ? 'project' : `l${i + 1}`}${'/.'.repeat(400)}`)
+        }
+
+        const resolved = await resolvePath(alice, 'l1')
+
+        assert.equal(resolved, join(alice, 'project'))
+    })
+
+    test('allows forty links and refuses the forty-first with ELOOP', async () => {
+        const alice = await aHome(await someHomes(), 'alice')
+        for (let i = 1; i <= 41; i++) {
+            await aLink(alice, `l${i}`, i === 41 ? 'project' : `l${i + 1}`)
+        }
+
+        assert.equal(await resolvePath(alice, 'l2'), join(alice, 'project'))
+        await assert.rejects(resolvePath(alice, 'l1'), {code: 'ELOOP'})
+    })
+
+    test('refuses excessive expanded names with ENAMETOOLONG', async () => {
+        const alice = await aHome(await someHomes(), 'alice')
+        await mkdir(join(alice, 'a'))
+        for (let i = 1; i <= 30; i++) {
+            await aLink(alice, `l${i}`, `${'a/../'.repeat(150)}${i === 30 ? 'project' : `l${i + 1}`}`)
+        }
+
+        await assert.rejects(resolvePath(alice, 'l1'), {code: 'ENAMETOOLONG'})
+    })
+
+    test('counts padding in absolute target prefixes against the name budget', async () => {
+        const alice = await aHome(await someHomes(), 'alice')
+        for (let i = 1; i <= 30; i++) {
+            await aLink(alice, `l${i}`, `${'/.'.repeat(300)}${alice}/${i === 30 ? 'project' : `l${i + 1}`}`)
+        }
+
+        await assert.rejects(resolvePath(alice, 'l1'), {code: 'ENAMETOOLONG'})
+    })
+})
 
 describe('removeUserPath', () => {
     test('removes a folder inside the home', async () => {

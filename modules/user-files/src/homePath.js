@@ -4,7 +4,7 @@ import Path from 'node:path'
 import {Observable} from 'rxjs'
 
 // Error codes of a path that does not lead to anything within the home.
-export const UNRESOLVABLE = ['ENOENT', 'ENOTDIR', 'ELOOP', 'EOUTSIDEHOME']
+export const UNRESOLVABLE = ['ENOENT', 'ENOTDIR', 'ELOOP', 'EOUTSIDEHOME', 'ENAMETOOLONG']
 
 // How many entries one listing describes at a time, at most. Each listing has its own allowance, so that a large
 // directory leaves the file system threads to others' listings too; listings at the same time add up.
@@ -12,6 +12,8 @@ export const ENTRY_CONCURRENCY = 16
 
 // As many links as Linux follows resolving a path.
 const MAX_LINKS = 40
+// Bound filesystem work across expanded targets, including repeated visits through `..`.
+const MAX_PATH_NAMES = 8192
 
 // Where sandboxes and tasks show the user's home (modules/worker/src/workerInstance/workerTypes.js,
 // modules/task-manager/src/containerSpec.js), and the names in it where a sandbox mounts other storage instead.
@@ -90,44 +92,55 @@ const requestedNames = path =>
 const describeLink = async (home, path, linkStats) => {
     const symlinkTarget = await readlink(path)
     try {
-        const {start, names} = targetStart(home, Path.dirname(path), symlinkTarget)
-        const resolved = await walk(home, start, names, {links: 1, linked: names.length})
+        const {start, names, nameCount} = targetStart(home, Path.dirname(path), symlinkTarget)
+        const resolved = await walk(home, start, names, {links: 1, linked: names.length, nameCount})
         return {stats: await lstat(resolved), link: {symlinkTarget}}
     } catch (error) {
         return {stats: linkStats, link: {symlinkTarget, symlinkProblem: LINK_PROBLEMS[error.code] || 'inaccessible-target'}}
     }
 }
 
-// Follows names from a directory within the home, which is the only place each next name is looked up. Counts the
-// links followed, and how many of the names ahead come from link targets: those are written in a sandbox, so they
-// never step from the home into what a sandbox mounts there, whatever the home itself holds under that name.
-const walk = async (home, directory, [name, ...rest], {links, linked}) => {
-    if (links > MAX_LINKS) {
-        throw failure('ELOOP', 'Too many links')
+// Follow names within the home. Target names keep their origin so they cannot enter sandbox-only mounts.
+const walk = async (home, directory, names, {links, linked, nameCount = names.length}) => {
+    if (nameCount > MAX_PATH_NAMES) {
+        throw failure('ENAMETOOLONG', 'Too many names while resolving path')
     }
-    const next = {links, linked: Math.max(linked - 1, 0)}
-    if (name === undefined) {
-        return directory
+    const pending = names.map(name => ({name, linked: !!linked})).reverse()
+    while (pending.length) {
+        const {name, linked} = pending.pop()
+        if (name === '' || name === '.') {
+            continue
+        }
+        if (name === '..') {
+            directory = parentWithin(home, directory)
+            continue
+        }
+        if (linked && directory === home && SANDBOX_MOUNTS.includes(name)) {
+            throw outsideHome()
+        }
+        const path = Path.join(directory, name)
+        const stats = await lstat(path)
+        if (stats.isSymbolicLink()) {
+            const target = targetStart(home, directory, await readlink(path))
+            if (++links > MAX_LINKS) {
+                throw failure('ELOOP', 'Too many links')
+            }
+            nameCount += target.nameCount
+            if (nameCount > MAX_PATH_NAMES) {
+                throw failure('ENAMETOOLONG', 'Too many names while resolving path')
+            }
+            for (let index = target.names.length - 1; index >= 0; index--) {
+                pending.push({name: target.names[index], linked: true})
+            }
+            directory = target.start
+        } else {
+            if (pending.length && !stats.isDirectory()) {
+                throw failure('ENOTDIR', 'Not a directory')
+            }
+            directory = path
+        }
     }
-    if (name === '' || name === '.') {
-        return walk(home, directory, rest, next)
-    }
-    if (name === '..') {
-        return walk(home, parentWithin(home, directory), rest, next)
-    }
-    if (linked && directory === home && SANDBOX_MOUNTS.includes(name)) {
-        throw outsideHome()
-    }
-    const path = Path.join(directory, name)
-    const stats = await lstat(path)
-    if (stats.isSymbolicLink()) {
-        const target = targetStart(home, directory, await readlink(path))
-        return walk(home, target.start, [...target.names, ...rest], {links: links + 1, linked: target.names.length + next.linked})
-    }
-    if (rest.length && !stats.isDirectory()) {
-        throw failure('ENOTDIR', 'Not a directory')
-    }
-    return walk(home, path, rest, next)
+    return directory
 }
 
 // Where a link's target starts, and the names it takes from there: a relative target from the link's directory, an
@@ -136,27 +149,31 @@ const walk = async (home, directory, [name, ...rest], {links, linked}) => {
 const targetStart = (home, directory, target) => {
     const names = target.split(Path.sep)
     if (!Path.isAbsolute(target)) {
-        return {start: directory, names}
+        return {start: directory, names, nameCount: names.length}
     }
     const homeNames = pastHome(home.split(Path.sep).filter(Boolean), names) ?? pastHome(SANDBOX_HOME_NAMES, names)
     if (!homeNames) {
         throw outsideHome()
     }
-    return {start: home, names: homeNames}
+    return {start: home, names: homeNames, nameCount: names.length}
 }
 
 // The names of an absolute target past the home it names, left as they are for the walk; none when it names anywhere
 // else. Up to the home, empty and `.` names are skipped as the kernel skips them, and any other name must be the
 // home's next: a `..` there would step above the home.
-const pastHome = ([homeName, ...homeRest], names) => {
-    if (homeName === undefined) {
-        return names
+const pastHome = (homeNames, names) => {
+    let homeIndex = 0
+    let index = 0
+    while (homeIndex < homeNames.length) {
+        const name = names[index++]
+        if (name === '' || name === '.') {
+            continue
+        }
+        if (name !== homeNames[homeIndex++]) {
+            return null
+        }
     }
-    const [name, ...rest] = names
-    if (name === '' || name === '.') {
-        return pastHome([homeName, ...homeRest], rest)
-    }
-    return name === homeName ? pastHome(homeRest, rest) : null
+    return names.slice(index)
 }
 
 const parentWithin = (home, directory) => {

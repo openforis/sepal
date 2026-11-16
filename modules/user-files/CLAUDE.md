@@ -77,7 +77,10 @@ links on it lead within the user's home.
 
 - Every operation and the watcher resolve paths with `resolvePath` (`src/homePath.js`). It takes a client's path
   lexically, then follows links one name at a time from inside the home, as the kernel would. Relative targets start
-  from the link's directory, a `..` after a link starts from where it led, and at most 40 links are followed.
+  from the link's directory, a `..` after a link starts from where it led, and at most 40 links are followed (`ELOOP`).
+  Resolution walks iteratively and permits at most 8,192 names in total across the requested path and expanded
+  targets, including empty, `.` and `..` names. Exceeding that work budget fails with `ENAMETOOLONG`; an unusable link
+  retains the existing `inaccessible-target` problem code.
 - Nothing outside the user's home is ever looked up. A `..` leading above the home is refused before anything there is
   touched, even if the rest of the path would lead back. So nothing outside a user's home changes what that user is
   told.
