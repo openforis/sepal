@@ -1,4 +1,4 @@
-pysepal==4.1.0
+pysepal==4.2.0
 
 ########  Google Earthengine  ########
 numpy<2
