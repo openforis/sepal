@@ -11,6 +11,7 @@ import {
     DetachVolumeCommand,
     EC2Client,
     ModifyInstanceAttributeCommand,
+    StartInstancesCommand,
     StopInstancesCommand,
     TerminateInstancesCommand,
 } from '@aws-sdk/client-ec2'
@@ -20,6 +21,33 @@ import {createAwsInstanceProvider} from '../hostingService/aws/awsInstanceProvid
 import {createDockerInstanceProvisioner} from './dockerInstanceProvisioner.js'
 import {instanceEvents} from './events.js'
 import {createWorkerInstanceComponent} from './index.js'
+
+test('a pooled start waits for running before scratch attachment and still recovers after manual cancellation', async context => {
+    context.mock.timers.enable({apis: ['setTimeout', 'Date']})
+    const scenario = aScenario(context, {pooled: true})
+
+    const requesting = scenario.manager.requestInstance(SESSION)
+    await new Promise(resolve => setImmediate(resolve))
+    context.mock.timers.tick(1000)
+    const instance = await requesting
+    await new Promise(resolve => setImmediate(resolve))
+    assert.equal(scenario.ec2.commandCalls(StartInstancesCommand).length, 1)
+    assert.equal(scenario.ec2.commandCalls(CreateVolumeCommand).length, 1)
+    assert.equal(scenario.ec2.commandCalls(AttachVolumeCommand).length, 0)
+
+    scenario.run()
+    context.mock.timers.tick(1000)
+    await scenario.dockerRead.promise
+    await scenario.manager.releaseInstance(instance.id, SESSION.id, MANUAL_CANCEL)
+    await scenario.released.promise
+
+    assert.deepEqual(scenario.actions, ['stop', 'detach', 'delete', 'pool', 'unclaim'])
+    assert.equal(scenario.ec2.commandCalls(CreateVolumeCommand).length, 1)
+    assert.equal(scenario.ec2.commandCalls(AttachVolumeCommand).length, 1)
+    assert.equal(scenario.ec2.commandCalls(TerminateInstancesCommand).length, 0)
+    assert.equal(scenario.attached(), false)
+    assert.equal(scenario.owner(), null)
+})
 
 test('stopped cancellation deletes attached scratch before returning the warmed host to the pool', async context => {
     const scenario = aScenario(context)
@@ -54,7 +82,7 @@ const SESSION = {id: 's-alice', username: 'alice', workerType: 'sandbox', instan
 const INSTANCE_ID = 'i-0123456789abcdef0'
 const MANUAL_CANCEL = {retire: true, recoverStartup: true}
 
-const aScenario = context => {
+const aScenario = (context, {pooled = false} = {}) => {
     const ec2 = mockClient(EC2Client)
     const dockerRead = Promise.withResolvers()
     const resumeRead = Promise.withResolvers()
@@ -64,14 +92,18 @@ const aScenario = context => {
     let attached = false
     let hidden = false
     let owner = null
-    let state = 'running'
-    const tags = {Type: 'Worker', Environment: 'test', Version: 'test', State: 'idle', ImageDiskWarm: 'true'}
-    ec2.on(DescribeInstancesCommand).callsFake(() => ({Reservations: [{Instances: [{
-        InstanceId: INSTANCE_ID, InstanceType: 't3a.small', State: {Name: state},
-        PublicIpAddress: '127.0.0.1', LaunchTime: new Date(0),
-        Tags: Object.entries(tags).map(([Key, Value]) => ({Key, Value})),
-        BlockDeviceMappings: attached && !hidden ? [{DeviceName: '/dev/xvdg', Ebs: {VolumeId: 'vol-scratch'}}] : [],
-    }]}]}))
+    let state = pooled ? 'stopped' : 'running'
+    const tags = {Type: 'Worker', Environment: 'test', Version: 'test', State: pooled ? 'pooled' : 'idle', ImageDiskWarm: 'true'}
+    ec2.on(DescribeInstancesCommand).callsFake(({Filters = []}) => {
+        const matches = Filters.every(({Name, Values}) => Values.includes(
+            Name.startsWith('tag:') ? tags[Name.slice(4)] : Name === 'instance-type' ? 't3a.small' : state))
+        return {Reservations: [{Instances: matches ? [{
+            InstanceId: INSTANCE_ID, InstanceType: 't3a.small', State: {Name: state},
+            PublicIpAddress: state === 'stopped' ? undefined : '127.0.0.1', LaunchTime: new Date(0),
+            Tags: Object.entries(tags).map(([Key, Value]) => ({Key, Value})),
+            BlockDeviceMappings: attached && !hidden ? [{DeviceName: '/dev/xvdg', Ebs: {VolumeId: 'vol-scratch'}}] : [],
+        }] : []}]}
+    })
     ec2.on(CreateTagsCommand).callsFake(({Tags}) => {
         for (const {Key, Value} of Tags) tags[Key] = Value
         if (Tags.some(tag => tag.Key === 'State' && tag.Value === 'pooled')) actions.push('pool')
@@ -79,8 +111,13 @@ const aScenario = context => {
     })
     ec2.on(CreateVolumeCommand).resolves({VolumeId: 'vol-scratch'})
     ec2.on(DescribeVolumesCommand).callsFake(() => ({Volumes: [{VolumeId: 'vol-scratch', State: attached ? 'in-use' : 'available'}]}))
-    ec2.on(AttachVolumeCommand).callsFake(() => { attached = true; return {} })
+    ec2.on(AttachVolumeCommand).callsFake(() => {
+        if (state !== 'running') throw new Error('IncorrectInstanceState: instance is not running')
+        attached = true
+        return {}
+    })
     ec2.on(ModifyInstanceAttributeCommand).resolves({})
+    ec2.on(StartInstancesCommand).callsFake(() => { state = 'pending'; return {} })
     ec2.on(DetachVolumeCommand).callsFake(() => { actions.push('detach'); attached = false; return {} })
     ec2.on(DeleteVolumeCommand).callsFake(() => { actions.push('delete'); return {} })
     ec2.on(StopInstancesCommand).callsFake(() => {
@@ -124,11 +161,14 @@ const aScenario = context => {
     })
     const {instanceManager: manager} = createWorkerInstanceComponent({claims, provider, provisioner, instanceTypes: []})
     context.after(async () => {
+        if (manager.isProvisioning(INSTANCE_ID) && owner !== null) {
+            await manager.releaseInstance(INSTANCE_ID, owner, MANUAL_CANCEL)
+        }
         resumeRead.resolve()
         await new Promise(resolve => setImmediate(resolve))
         globalThis.fetch = originalFetch
         ec2.restore()
         instanceEvents.removeAllListeners()
     })
-    return {manager, ec2, actions, dockerRead, released, retired, owner: () => owner, attached: () => attached, hideMapping: () => { hidden = true }}
+    return {manager, ec2, actions, dockerRead, released, retired, owner: () => owner, attached: () => attached, hideMapping: () => { hidden = true }, run: () => { state = 'running' }}
 }

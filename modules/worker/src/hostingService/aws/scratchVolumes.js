@@ -14,6 +14,7 @@ import {
     DescribeVolumesCommand,
     DetachVolumeCommand,
     ModifyInstanceAttributeCommand,
+    waitUntilInstanceRunning,
     waitUntilVolumeAvailable,
     waitUntilVolumeInUse,
 } from '@aws-sdk/client-ec2'
@@ -64,6 +65,7 @@ export class ScratchVolumes {
             }],
         }))
         await waitUntilVolumeAvailable({client: this.#client, ...WAITER}, {VolumeIds: [volumeId]})
+        await waitUntilInstanceRunning({client: this.#client, ...WAITER}, {InstanceIds: [instance.id]})
         await this.#client.send(new AttachVolumeCommand({InstanceId: instance.id, VolumeId: volumeId, Device: DEVICE_NAME}))
         await waitUntilVolumeInUse({client: this.#client, ...WAITER}, {VolumeIds: [volumeId]})
         await this.#enableDeleteOnTermination(instance.id)

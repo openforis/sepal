@@ -797,6 +797,70 @@ describe('scratch volume', () => {
         assert.ok(indexOf(AttachVolumeCommand) < indexOf(ModifyInstanceAttributeCommand))
     })
 
+    test('waits for volume availability and a running instance, then attaches only once across a retry', async context => {
+        context.mock.timers.enable({apis: ['setTimeout', 'Date']})
+        const volumeAvailable = Promise.withResolvers()
+        let state = 'pending'
+        let attached = false
+        ec2Mock.on(DescribeInstancesCommand).callsFake(() => describeResponse([makeAwsInstance({
+            State: {Name: state},
+            ...(attached ? withScratchVolume('vol-new') : {}),
+        })]))
+        ec2Mock.on(CreateVolumeCommand).resolves({VolumeId: 'vol-new'})
+        ec2Mock.on(DescribeVolumesCommand).callsFake(() => attached
+            ? {Volumes: [{VolumeId: 'vol-new', State: 'in-use'}]}
+            : volumeAvailable.promise)
+        ec2Mock.on(AttachVolumeCommand).callsFake(() => {
+            assert.equal(state, 'running')
+            attached = true
+            return {}
+        })
+        ec2Mock.on(ModifyInstanceAttributeCommand).resolves({})
+        const provider = createAwsInstanceProvider(CONFIG)
+
+        const attaching = provider.attachScratchVolume(instance)
+        attaching.catch(() => {})
+        await new Promise(resolve => setImmediate(resolve))
+        assert.equal(ec2Mock.commandCalls(DescribeInstancesCommand).length, 1)
+        assert.equal(ec2Mock.commandCalls(AttachVolumeCommand).length, 0)
+        volumeAvailable.resolve({Volumes: [{VolumeId: 'vol-new', State: 'available'}]})
+        await new Promise(resolve => setImmediate(resolve))
+        assert.equal(ec2Mock.commandCalls(AttachVolumeCommand).length, 0)
+
+        state = 'running'
+        context.mock.timers.tick(1000)
+        assert.equal(await attaching, '/dev/xvdg')
+        assert.equal(await provider.attachScratchVolume(instance), '/dev/xvdg')
+        assert.equal(ec2Mock.commandCalls(CreateVolumeCommand).length, 1)
+        assert.equal(ec2Mock.commandCalls(AttachVolumeCommand).length, 1)
+    })
+
+    for (const finalState of ['stopping', 'stopped', 'terminated']) {
+        test(`does not attach when the pending instance becomes ${finalState}`, async context => {
+            context.mock.timers.enable({apis: ['setTimeout', 'Date']})
+            let state = 'pending'
+            let attached = false
+            ec2Mock.on(DescribeInstancesCommand).callsFake(() => describeResponse([makeAwsInstance({State: {Name: state}})]))
+            ec2Mock.on(CreateVolumeCommand).resolves({VolumeId: 'vol-new'})
+            ec2Mock.on(DescribeVolumesCommand).callsFake(() => ({Volumes: [{
+                VolumeId: 'vol-new', State: attached ? 'in-use' : 'available',
+            }]}))
+            ec2Mock.on(AttachVolumeCommand).callsFake(() => { attached = true; return {} })
+            ec2Mock.on(ModifyInstanceAttributeCommand).resolves({})
+
+            const attaching = createAwsInstanceProvider(CONFIG).attachScratchVolume(instance)
+            const rejected = assert.rejects(attaching)
+            await new Promise(resolve => setImmediate(resolve))
+            state = finalState
+            context.mock.timers.tick(finalState === 'stopped' ? 300_001 : 1000)
+            await rejected
+
+            assert.equal(ec2Mock.commandCalls(CreateVolumeCommand).length, 1)
+            assert.equal(ec2Mock.commandCalls(AttachVolumeCommand).length, 0)
+            assert.equal(ec2Mock.commandCalls(ModifyInstanceAttributeCommand).length, 0)
+        })
+    }
+
     test('resolves no device for an instance type with local SSD', async () => {
         const device = await createAwsInstanceProvider(CONFIG).attachScratchVolume({...instance, type: 'M6idXlarge'})
 

@@ -203,8 +203,11 @@ On AWS the volume lives on local disk, never on EFS:
   boot (RAID 0 when there are several) and mounts them over `/var/lib/docker/volumes` before Docker
   starts, so the plain volume lands on them.
 - **Other types** get a blank 100 GiB gp3 EBS volume per session (`hostingService/aws/scratchVolumes.js`).
-  `provisionInstance` has the provider attach it as `/dev/xvdg` (idempotent across retries), and the
-  provisioner formats it as XFS with the host's `mkfs.xfs`, from a throwaway privileged container
+  The provider waits for the volume to be available and EC2 to be running before attaching it as
+  `/dev/xvdg` (idempotent across retries). An address alone does not establish attachment readiness.
+  A failed running-state wait rejects provisioning without submitting attachment; cancellation uses
+  the existing conservative recovery path. The provisioner formats it as XFS with the host's
+  `mkfs.xfs`, from a throwaway privileged container
   of the worker image chrooted into the host (`{image}.format-tmp.{instanceId}`), then creates the
   tmp volume on the device (`local` driver, `type=xfs`) before preparing it as above. Docker mounts it with the first container and unmounts it with the last, so
   `releaseInstance` undeploys, then has the provider detach and delete it, before dropping the claim.
