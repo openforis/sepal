@@ -80,10 +80,53 @@ test('a ready host already claimed by a request does not displace its warming re
     assert.deepEqual(scenario.warmUps, [])
 })
 
-test('a pooled host whose recovery claim is being deleted still counts toward future capacity', async () => {
+test('a pooled host whose recovery claim is being deleted does not displace ready capacity', async () => {
+    const ready = poolMember('ready', {imageDiskWarm: true, launchTime: new Date(1000)})
+    const recovered = poolMember('recovered', {imageDiskWarm: true})
+    const scenario = poolScenario([ready, recovered], [{
+        instanceId: recovered.id, sessionId: 'old-session', recoveryStartedAt: new Date(0),
+    }])
+
+    await sizeIdlePool({}, 1, scenario)
+
+    assert.deepEqual(await scenario.provider.pooledInstances(), [ready, recovered])
+    assert.deepEqual(scenario.terminated, [])
+    assert.deepEqual(scenario.warmUps, [])
+
+    await scenario.claims.release(recovered.id, 'old-session')
+    await sizeIdlePool({}, 1, scenario)
+
+    assert.deepEqual(await scenario.provider.pooledInstances(), [recovered])
+    assert.deepEqual(scenario.terminated, [ready.id])
+})
+
+test('successful recovery preserves ready hosts until there is true ordinary-pool excess', async () => {
+    const first = poolMember('first', {imageDiskWarm: true, launchTime: new Date(1000)})
+    const second = poolMember('second', {imageDiskWarm: true, launchTime: new Date(2000)})
+    const recovering = poolMember('recovering', {imageDiskWarm: true, reservation: {sessionId: 'old'}})
+    const scenario = poolScenario([first, second, recovering], [{
+        instanceId: recovering.id, sessionId: 'old', recoveryStartedAt: new Date(0),
+    }])
+
+    await sizeIdlePool({}, 2, scenario)
+
+    assert.deepEqual(await scenario.provider.pooledInstances({ready: true}), [first, second])
+    assert.deepEqual(scenario.terminated, [])
+    assert.deepEqual(scenario.warmUps, [])
+
+    recovering.reservation = null
+    await scenario.claims.release(recovering.id, 'old')
+    await sizeIdlePool({}, 2, scenario)
+
+    assert.deepEqual(await scenario.provider.pooledInstances({ready: true}), [first, recovering])
+    assert.deepEqual(scenario.terminated, [second.id])
+    assert.deepEqual(scenario.warmUps, [])
+})
+
+test('a pooled host with an outstanding recovery claim prevents a duplicate warm-up', async () => {
     const recovered = poolMember('recovered', {imageDiskWarm: true})
     const scenario = poolScenario([recovered], [{
-        instanceId: recovered.id, sessionId: 'old-session', recoveryStartedAt: new Date(0),
+        instanceId: recovered.id, sessionId: 'old', recoveryStartedAt: new Date(0),
     }])
 
     await sizeIdlePool({}, 1, scenario)
@@ -91,6 +134,73 @@ test('a pooled host whose recovery claim is being deleted still counts toward fu
     assert.deepEqual(await scenario.provider.pooledInstances(), [recovered])
     assert.deepEqual(scenario.terminated, [])
     assert.deepEqual(scenario.warmUps, [])
+})
+
+test('failed recovery preserves the existing ready hosts', async () => {
+    const ready = poolMember('ready', {imageDiskWarm: true})
+    const recovering = poolMember('recovering', {reservation: {sessionId: 'old'}})
+    const scenario = poolScenario([ready, recovering], [{
+        instanceId: recovering.id, sessionId: 'old', recoveryStartedAt: new Date(0),
+    }])
+
+    await sizeIdlePool({}, 1, scenario)
+
+    assert.deepEqual(await scenario.provider.pooledInstances({ready: true}), [ready])
+    assert.deepEqual(scenario.terminated, [])
+    scenario.members.delete(recovering.id)
+
+    await sizeIdlePool({}, 1, scenario)
+
+    assert.deepEqual(await scenario.provider.pooledInstances(), [ready])
+    assert.deepEqual(scenario.terminated, [])
+    assert.deepEqual(scenario.warmUps, [])
+})
+
+test('refill resumes when failed recovery leaves future capacity below target', async () => {
+    const ready = poolMember('ready', {imageDiskWarm: true})
+    const recovering = poolMember('recovering', {reservation: {sessionId: 'old'}})
+    const scenario = poolScenario([ready, recovering], [{
+        instanceId: recovering.id, sessionId: 'old', recoveryStartedAt: new Date(0),
+    }])
+
+    await sizeIdlePool({}, 2, scenario)
+
+    assert.deepEqual(scenario.warmUps, [])
+    scenario.members.delete(recovering.id)
+
+    await sizeIdlePool({}, 2, scenario)
+
+    assert.deepEqual(await scenario.provider.pooledInstances({ready: true}), [ready])
+    assert.deepEqual(scenario.terminated, [])
+    assert.deepEqual(scenario.warmUps, [1])
+})
+
+test('a recovering warm idle-origin host does not evict any member of a full ready pool', async () => {
+    const ready = Array.from({length: 10}, (_, i) => poolMember(`ready-${i}`, {imageDiskWarm: true}))
+    const recovering = poolMember('idle-origin', {
+        imageDiskWarm: true, running: true, reservation: {sessionId: 'canceled'},
+    })
+    const scenario = poolScenario([...ready, recovering], [{
+        instanceId: recovering.id, sessionId: 'canceled', recoveryStartedAt: new Date(0),
+    }])
+
+    await sizeIdlePool({}, ready.length, scenario)
+
+    assert.deepEqual(await scenario.provider.pooledInstances({ready: true}), ready)
+    assert.deepEqual(scenario.terminated, [])
+    assert.deepEqual(scenario.warmUps, [])
+})
+
+test('an allocated ready host is neither counted as future capacity nor evicted', async () => {
+    const requested = poolMember('requested', {imageDiskWarm: true})
+    const scenario = poolScenario([requested], [{instanceId: requested.id, sessionId: 'new-session'}])
+
+    await sizeIdlePool({}, 1, scenario)
+
+    assert.deepEqual(await scenario.provider.pooledInstances(), [requested])
+    assert.equal(await scenario.claims.sessionIdForInstance(requested.id), 'new-session')
+    assert.deepEqual(scenario.terminated, [])
+    assert.deepEqual(scenario.warmUps, [1])
 })
 
 test('an ordinary stopped pool at its target needs no eviction or warm-up', async () => {

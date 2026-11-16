@@ -71,19 +71,19 @@ const sizeIdlePool = async (targetIdleCountByInstanceType, stoppedPoolSize, {pro
 const stoppedPoolState = async (stoppedPoolSize, {provider, claims}) => {
     const pooled = await provider.pooledInstances()
     const readyIds = new Set((await provider.pooledInstances({ready: true})).map(({id}) => id))
-    const allocatedIds = new Set((await claims.all())
-        .filter(({recoveryStartedAt}) => !recoveryStartedAt)
-        .map(({instanceId}) => instanceId))
+    const claimsByInstance = new Map((await claims.all()).map(claim => [claim.instanceId, claim]))
     // Pooled tags may lag allocation claims; recovery claims still occupy future pool capacity.
-    const all = pooled.filter(instance => instance.reservation || !allocatedIds.has(instance.id))
-    const candidates = all.filter(instance => !instance.reservation).sort((a, b) =>
+    const all = pooled.filter(instance => instance.reservation
+        || !claimsByInstance.has(instance.id)
+        || claimsByInstance.get(instance.id).recoveryStartedAt)
+    const candidates = all.filter(instance => !instance.reservation && !claimsByInstance.has(instance.id)).sort((a, b) =>
         Number(readyIds.has(a.id)) - Number(readyIds.has(b.id))
         || Number(!!a.imageDiskWarm) - Number(!!b.imageDiskWarm)
         || launchedAt(b) - launchedAt(a)
     )
     const removed = new Set()
     // A lost election may be an allocation leaving the pool; do not evict its warmed replacement.
-    for (const instance of candidates.slice(0, Math.max(0, all.length - stoppedPoolSize))) {
+    for (const instance of candidates.slice(0, Math.max(0, candidates.length - stoppedPoolSize))) {
         const done = await attempt(`terminate surplus pooled ${instanceTag(instance)}`, () =>
             underClaim(instance, () => provider.terminate(instance.id), {claims}))
         if (done) removed.add(instance.id)

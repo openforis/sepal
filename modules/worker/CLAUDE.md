@@ -236,8 +236,9 @@ members; only `stopped` ones are candidates.
   EC2's regional volume initialization quota, which session launches share. User data runs on the first boot only, so a pooled instance does not power off when started.
 - Positive pool targets also trim excess ordinary members on the next sizing cycle, preferring ready,
   known-warm disks. Setting the target to 0 disables pool management and leaves existing members alone.
-  Recovering hosts count toward future capacity, so trimming can remove a ready member before a
-  recovery finishes; a later recovery failure can require another warm-up.
+  Recovering reservations and recovery-intent claims count toward refill capacity, but not trim
+  surplus. Ready hosts remain while recovery is unfinished; ordinary excess is trimmed after pool
+  return. Allocation claims stay excluded, and each eviction still requires winning its claim.
 - `sweep` terminates pooled instances of another version, pooled instances still running an hour
   after their start (failed warm-up or stop), and stopped instances outside the pool/recovery — every other
   query sees only pending/running instances, so those would otherwise bill for their disk forever.
