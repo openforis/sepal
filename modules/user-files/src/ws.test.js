@@ -119,6 +119,60 @@ describe('commands on a shared gateway connection', () => {
         await gateway.received(listing('fay', 'project', {subscription: 'browser', containing: 'after-reset.txt'}))
     })
 
+    for (const event of ['subscriptionDown', 'clientDown']) {
+        test(`can reuse identities after repeated ${event} events without disturbing other monitors`, async t => {
+            await aFolder('iris', 'project')
+            await aFolder('jo', 'project')
+            const gateway = await connect(t)
+            gateway.send(command('iris', {monitor: 'project'}, 'destination'))
+            gateway.send(command('jo', {monitor: 'project'}))
+            await gateway.received(listing('iris', 'project', {subscription: 'destination'}))
+            await gateway.received(listing('jo', 'project'))
+
+            for (const cycle of [0, 1, 2]) {
+                const file = `${event}-${cycle}.txt`
+                await aFile('iris', `project/${file}`)
+                gateway.send(command('iris', {monitor: 'project'}, 'browser'))
+                await gateway.received(listing('iris', 'project', {subscription: 'browser', containing: file}))
+
+                gateway.send({...command('iris', undefined, 'browser'), event})
+                const sinceClose = gateway.messages().length
+                const later = `${event}-closed-${cycle}.txt`
+                await aFile('iris', `project/${later}`)
+                await aFile('jo', `project/${later}`)
+                await gateway.received(listing('jo', 'project', {containing: later}))
+                if (event === 'subscriptionDown') {
+                    await gateway.received(listing('iris', 'project', {subscription: 'destination', containing: later}))
+                }
+                await polls(3)
+                const closedMessages = gateway.messages().slice(sinceClose).filter(message =>
+                    event === 'clientDown'
+                        ? message.clientId === 'iris-client'
+                        : fromSubscription('iris', 'browser')(message)
+                )
+                assert.deepEqual(closedMessages, [])
+            }
+        })
+    }
+
+    test('closing a connection stops its monitors while another connection keeps watching', async t => {
+        await aFolder('kel', 'project')
+        const closing = await connect(t)
+        const remaining = await connect(t)
+        for (const gateway of [closing, remaining]) {
+            gateway.send(command('kel', {monitor: 'project'}))
+            await gateway.received(listing('kel', 'project'))
+        }
+
+        closing.close()
+        const sinceClose = closing.messages().length
+        await aFile('kel', 'project/after-close.txt')
+
+        await remaining.received(listing('kel', 'project', {containing: 'after-close.txt'}))
+        await polls(3)
+        assert.deepEqual(closing.messages().slice(sinceClose), [])
+    })
+
     test('keep serving commands after one fails unexpectedly', async t => {
         await aFolder('gil', 'project')
         const gateway = await connect(t)
@@ -162,6 +216,7 @@ const connect = async t => {
     t.after(() => subscription.unsubscribe())
     const gateway = {
         send: message => incoming$.next(message),
+        close: () => subscription.unsubscribe(),
         // The first message sent so far, or within the wait, that matches.
         received: matches => firstValueFrom(received$.pipe(filter(matches), timeout(WAIT_MS))),
         messages: () => [...messages]

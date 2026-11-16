@@ -56,6 +56,10 @@ One gateway connection carries every user's commands, so a command affects only 
 - A message that fails unexpectedly is logged, without the user object, and goes no further. Heartbeats and later
   commands continue.
 - A monitored path that fails unexpectedly stops being monitored on its own; every other path keeps its monitoring.
+- `subscriptionDown` releases that subscription's grouping key and stops its polls; `clientDown` does the same for
+  every subscription of that client. The same identities can monitor again. Other clients and subscriptions keep
+  running. Closing the gateway connection cancels all its scans and polls, including queued entry descriptions;
+  filesystem calls already started may finish, but send nothing late.
 
 ### File System
 - `src/filesystem.js` - REST handlers

@@ -145,24 +145,32 @@ describe('listing a directory', () => {
 })
 
 describe('monitoring a large directory', () => {
-    test('stops looking at entries once unmonitored, and sends nothing late', async t => {
-        const larger = await aMadeUpDirectory('ann', 'larger', {count: 2 * ENTRY_CONCURRENCY, held: true})
-        const smaller = await aMadeUpDirectory('ann', 'smaller', {count: 3, held: true})
-        const watcher = await aWatcher(t)
-        for (const path of ['larger', 'smaller']) {
-            watcher.monitor('ann', path)
-        }
-        await until(() => heldIn(larger).length > 0 && heldIn(smaller).length === 3)
-        await settled()
+    for (const end of ['unmonitor', 'unsubscribe', 'offline', 'stop']) {
+        test(`stops looking at entries on ${end}, and sends nothing late`, async t => {
+            const larger = await aMadeUpDirectory('ann', 'larger', {count: 2 * ENTRY_CONCURRENCY, held: true})
+            const smaller = await aMadeUpDirectory('ann', 'smaller', {count: 3, held: true})
+            const watcher = await aWatcher(t)
+            for (const path of ['larger', 'smaller']) {
+                watcher.monitor('ann', path)
+            }
+            await until(() => heldIn(larger).length > 0 && heldIn(smaller).length === 3)
+            await settled()
 
-        for (const path of ['larger', 'smaller']) {
-            watcher.unmonitor('ann', path)
-        }
-        await releasingAll()
+            if (end === 'offline') {
+                watcher.offline('ann')
+            } else if (end === 'stop') {
+                watcher.stop()
+            } else {
+                for (const path of ['larger', 'smaller']) {
+                    watcher[end]('ann', path)
+                }
+            }
+            await releasingAll()
 
-        assert.equal(looked.filter(path => dirname(path) === larger).length, ENTRY_CONCURRENCY)
-        assert.deepEqual(watcher.sent(), [])
-    })
+            assert.equal(looked.filter(path => dirname(path) === larger).length, ENTRY_CONCURRENCY)
+            assert.deepEqual(watcher.sent(), [])
+        })
+    }
 })
 
 const aMadeUpDirectory = async (username, path, {count, name = index => `entry-${index}.csv`, names, held = false, failing}) => {
@@ -260,6 +268,9 @@ const aWatcher = async t => {
     return {
         monitor: (username, path) => watcher.monitor(subscription(username, path)),
         unmonitor: (username, path) => watcher.unmonitor(subscription(username, path)),
+        unsubscribe: (username, path) => watcher.unsubscribe(subscription(username, path)),
+        offline: username => watcher.offline({username, clientId: `${username}-client`}),
+        stop: () => stop$.next(),
         listed: async (username, path, waitMs) => {
             watcher.monitor(subscription(username, path))
             return (await firstValueFrom(sent$.pipe(filter(({data}) => data.path === path), timeout(waitMs)))).data

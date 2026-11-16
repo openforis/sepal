@@ -20,7 +20,7 @@ const STATS_INTERVAL_MS = 60000
 const userHomeDir = username =>
     resolvePath(homeDir, username)
 
-const createWatcher = async ({send, stop$}) => {
+export const createWatcher = async ({send, stop$}) => {
     const monitor$ = new Subject()
     const unmonitor$ = new Subject()
     const remove$ = new Subject()
@@ -71,10 +71,15 @@ const createWatcher = async ({send, stop$}) => {
         return ({username, clientId})
     }
  
+    // Durations release grouping keys; takeUntil also cancels scans already running inside each group.
     const monitorSubscription = monitor$.pipe(
-        groupBy(({username, clientId}) => buildClientKey(username, clientId)),
+        groupBy(({username, clientId}) => buildClientKey(username, clientId), {
+            duration: clientGroup$ => clientOffline$(parseClientKey(clientGroup$.key))
+        }),
         mergeMap(clientGroup$ => clientGroup$.pipe(
-            groupBy(({subscriptionId}) => subscriptionId),
+            groupBy(({subscriptionId}) => subscriptionId, {
+                duration: subscriptionGroup$ => subscriptionUnsubscribe$(parseClientKey(clientGroup$.key), subscriptionGroup$.key)
+            }),
             mergeMap(subscriptionGroup$ => subscriptionGroup$.pipe(
                 mergeMap(({username, clientId, subscriptionId, path}) =>
                     timer(0, pollIntervalMilliseconds).pipe(
@@ -270,5 +275,3 @@ const createWatcher = async ({send, stop$}) => {
 
     return {monitor, unmonitor, remove, unsubscribe, offline}
 }
-
-export {createWatcher}
