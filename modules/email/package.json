@@ -11,7 +11,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "bullmq": "^6.7.5",
+        "bullmq": "^6.7.6",
         "commander": "^15.1.0",
         "handlebars": "^4.7.10",
         "ioredis": "^6.0.0",
@@ -19,7 +19,7 @@
         "log4js": "^6.9.1",
         "marked": "^18.2.0",
         "moment": "^2.31.0",
-        "nodemailer": "^10.5.0",
+        "nodemailer": "^10.6.0",
         "rxjs": "^7.8.2",
         "sepal": "../../lib/js/shared",
         "short-unique-id": "^5.3.2"
