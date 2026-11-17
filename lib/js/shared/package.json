@@ -10,7 +10,7 @@
         "testWatch": "node --experimental-test-module-mocks --test --watch \"**/*.test.js\""
     },
     "dependencies": {
-        "@google/earthengine": "^1.7.52",
+        "@google/earthengine": "^1.7.53",
         "@koa/router": "^15.7.1",
         "@lezer/javascript": "1.5.6",
         "amqplib": "^2.4.0",
