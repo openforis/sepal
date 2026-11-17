@@ -137,13 +137,6 @@ const expiredPage = () => page(`
 way. Open SEPAL to check — your files are untouched either way.</p>`)
 
 const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Date(), expiryPolicy = {}, expiryTokens = null, sshHost = null}) => {
-    // hoursSince — ceil of the whole minutes since `date`, over 60. The minutes are FLOORED first,
-    // so a 1h0m45s session is 60 min → 1h, not 2h.
-    const hoursSince = date => {
-        const minutes = Math.floor((clock().getTime() - new Date(date).getTime()) / 1000 / 60)
-        return Math.ceil(minutes / 60)
-    }
-
     // usageAsMap — latest sampler reading, or null when absent/stale. Stale (sampler broken,
     // instance unreachable) must not render as live data in the GUI.
     const MAX_USAGE_AGE_MS = 5 * 60_000
@@ -199,7 +192,7 @@ const createSessionsApi = ({sessionManager, sandboxServers, clock = () => new Da
             timeoutHours: Math.max(0, hoursBetween(new Date(), session.timeoutTime)),
             instanceType: instanceTypeAsMap(instanceType, username, forCurrentUser),
             creationTime: new Date(session.creationTime).toISOString(),
-            costSinceCreation: round2(instanceType.hourlyCost * hoursSince(session.creationTime)),
+            costSinceCreation: round2(instanceType.hourlyCost * hoursBetween(session.creationTime, clock())),
             apps: session.apps ?? [],
             terminals: session.terminals ?? 0,
             verdict: session.verdict ?? 'unknown',

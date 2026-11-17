@@ -256,6 +256,9 @@ this is often an older build than the one deployed, and can move back when a cha
 Instances of any other version are therefore stale, newer ones included, and are recycled.
 
 ## Budget enforcement
+Budget spending uses fractional elapsed hours from session creation to closure, including startup.
+The session report's `costSinceCreation` uses the same elapsed time, rounded to cents for display.
+
 `POST /sessions/instance-type/:type` asks the budget module for a LIVE verdict first
 (`POST /budget/check/:username`, `src/workerSession/budgetClient.js`) and throws the matching typed
 error from `budgetErrors.js` when the user is over budget. `BUDGET_URL` configures the base URL.
