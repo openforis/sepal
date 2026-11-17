@@ -6,9 +6,12 @@ import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 import {failingDb} from '#sepal/testSupport/db/faultyConnection'
 import {createTestDb} from '#sepal/testSupport/db/testDb'
+import {callsOf} from '#sepal/testSupport/mock'
 
 import {createLocalInstanceProvider} from '../hostingService/local/localInstanceProvider.js'
 import {ClaimRepository} from './claimRepository.js'
+import {instanceEvents} from './events.js'
+import {createWorkerInstanceComponent} from './index.js'
 import {createInstanceManager} from './instanceManager.js'
 import {createProvisioningRegistry} from './provisioningRegistry.js'
 
@@ -111,6 +114,51 @@ describe('ClaimRepository', () => {
             await repository.finishRecovery(INSTANCE_ID, SESSION_ID)
             assert.ok((await repository.all())[0].recoveryStartedAt instanceof Date)
             assert.equal(await repository.sessionIdForInstance(INSTANCE_ID), ANOTHER_SESSION_ID)
+        })
+
+        test('a fresh worker retires durable recovery without releasing its claim before the instance is gone', async context => {
+            await repository.claim(INSTANCE_ID, SESSION_ID)
+            await repository.startRecovery(INSTANCE_ID, SESSION_ID)
+            await repository.claim(ANOTHER_INSTANCE_ID, ANOTHER_SESSION_ID)
+            await testDb.query(
+                'UPDATE instance_claim SET claimed_at = DATE_SUB(NOW(), INTERVAL 11 MINUTE) WHERE instance_id = ?',
+                [ANOTHER_INSTANCE_ID]
+            )
+            const recoveredClaims = new ClaimRepository(testDb.db)
+            const scenario = aRecoveringProvider({
+                recovery: {id: INSTANCE_ID, running: false, imageDiskWarm: true, reservation: {sessionId: SESSION_ID}},
+                active: {id: ANOTHER_INSTANCE_ID, reservation: {sessionId: ANOTHER_SESSION_ID}},
+            })
+            const worker = createWorkerInstanceComponent({
+                claims: recoveredClaims, provider: scenario.provider, provisioner: {}, instanceTypes: [],
+            })
+            context.after(async () => {
+                await worker.stop()
+                instanceEvents.removeAllListeners()
+            })
+
+            await worker.start()
+            await worker.instanceManager.reclaimStaleClaims([{id: ANOTHER_SESSION_ID}], 10 * 60_000)
+
+            assert.deepEqual(callsOf(scenario.provider.terminate), [[INSTANCE_ID]])
+            assert.equal(scenario.provider.deleteScratchVolume.mock.callCount(), 0)
+            assert.equal(scenario.provider.pool.mock.callCount(), 0)
+            assert.equal(await recoveredClaims.sessionIdForInstance(INSTANCE_ID), SESSION_ID)
+            assert.equal(await recoveredClaims.claim(INSTANCE_ID, 'next-session'), false)
+            const recovery = (await recoveredClaims.all()).find(claim => claim.instanceId === INSTANCE_ID)
+            assert.equal(recovery.recoveryStartedAt, null)
+            assert.equal(await recoveredClaims.sessionIdForInstance(ANOTHER_INSTANCE_ID), ANOTHER_SESSION_ID)
+
+            scenario.confirmTerminated()
+            await testDb.query(
+                'UPDATE instance_claim SET claimed_at = DATE_SUB(NOW(), INTERVAL 11 MINUTE) WHERE instance_id = ?',
+                [INSTANCE_ID]
+            )
+            await worker.instanceManager.reclaimStaleClaims([{id: ANOTHER_SESSION_ID}], 10 * 60_000)
+
+            assert.equal(await recoveredClaims.sessionIdForInstance(INSTANCE_ID), null)
+            assert.equal(await recoveredClaims.sessionIdForInstance(ANOTHER_INSTANCE_ID), ANOTHER_SESSION_ID)
+            assert.equal(scenario.provider.terminate.mock.callCount(), 1)
         })
     })
 
@@ -243,3 +291,28 @@ describe('ClaimRepository', () => {
 
     const MIGRATIONS_PATH = join(dirName(import.meta.url), '../../migrations')
 })
+
+const aRecoveringProvider = ({recovery, active}) => {
+    let terminated = false
+    return {
+        confirmTerminated: () => { terminated = true },
+        provider: {
+            start: async () => {},
+            stop: async () => {},
+            onInstanceLaunched: () => {},
+            idleInstances: async () => [],
+            reservedInstances: async () => [active],
+            recoveringInstances: async () => terminated ? [] : [recovery],
+            getInstance: async id => {
+                if (id === active.id) return active
+                return id === recovery.id && !terminated ? recovery : null
+            },
+            beginRecovery: async () => {},
+            awaitStopped: async () => {},
+            deleteScratchVolume: mock.fn(async () => {}),
+            pool: mock.fn(async () => {}),
+            terminate: mock.fn(async () => {}),
+            sweep: async () => {},
+        },
+    }
+}

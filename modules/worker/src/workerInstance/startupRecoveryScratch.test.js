@@ -78,6 +78,33 @@ test('a missing expected scratch mapping retires the host without releasing its 
     assert.deepEqual(scenario.actions, ['stop'])
 })
 
+test('failed stop retries retire the warmed host without pooling it or releasing its claim', async context => {
+    context.mock.timers.enable({apis: ['setTimeout']})
+    const scenario = aScenario(context)
+    const instance = await scenario.manager.requestInstance(SESSION)
+    await scenario.dockerRead.promise
+    scenario.ec2.on(StopInstancesCommand).rejects(new Error('stop unavailable'))
+
+    const releasing = scenario.manager.releaseInstance(instance.id, SESSION.id, MANUAL_CANCEL)
+    for (const delay of [1000, 2000]) {
+        await new Promise(resolve => setImmediate(resolve))
+        context.mock.timers.tick(delay)
+    }
+    await releasing
+
+    assert.equal(scenario.ec2.commandCalls(StopInstancesCommand).length, 3)
+    assert.deepEqual(scenario.ec2.commandCalls(TerminateInstancesCommand).map(call => call.args[0].input), [
+        {InstanceIds: [instance.id]},
+    ])
+    assert.equal(scenario.ec2.commandCalls(DetachVolumeCommand).length, 0)
+    assert.equal(scenario.ec2.commandCalls(DeleteVolumeCommand).length, 0)
+    assert.equal(scenario.actions.includes('pool'), false)
+    assert.equal(scenario.owner(), SESSION.id)
+    assert.equal(scenario.recoveryStartedAt(), null)
+    assert.equal(scenario.attached(), true)
+    assert.equal(scenario.manager.isProvisioning(instance.id), false)
+})
+
 const SESSION = {id: 's-alice', username: 'alice', workerType: 'sandbox', instanceType: 'T3aSmall'}
 const INSTANCE_ID = 'i-0123456789abcdef0'
 const MANUAL_CANCEL = {retire: true, recoverStartup: true}
@@ -92,6 +119,7 @@ const aScenario = (context, {pooled = false} = {}) => {
     let attached = false
     let hidden = false
     let owner = null
+    let recoveryStartedAt = null
     let state = pooled ? 'stopped' : 'running'
     const tags = {Type: 'Worker', Environment: 'test', Version: 'test', State: pooled ? 'pooled' : 'idle', ImageDiskWarm: 'true'}
     ec2.on(DescribeInstancesCommand).callsFake(({Filters = []}) => {
@@ -137,8 +165,14 @@ const aScenario = (context, {pooled = false} = {}) => {
             return true
         },
         sessionIdForInstance: async () => owner,
-        startRecovery: async (_id, sessionId) => owner === sessionId,
-        finishRecovery: async () => {},
+        startRecovery: async (_id, sessionId) => {
+            if (owner !== sessionId) return false
+            recoveryStartedAt ??= new Date()
+            return true
+        },
+        finishRecovery: async (_id, sessionId) => {
+            if (owner === sessionId) recoveryStartedAt = null
+        },
         release: async (_id, sessionId) => {
             if (owner !== sessionId) return false
             actions.push('unclaim')
@@ -170,5 +204,12 @@ const aScenario = (context, {pooled = false} = {}) => {
         ec2.restore()
         instanceEvents.removeAllListeners()
     })
-    return {manager, ec2, actions, dockerRead, released, retired, owner: () => owner, attached: () => attached, hideMapping: () => { hidden = true }, run: () => { state = 'running' }}
+    return {
+        manager, ec2, actions, dockerRead, released, retired,
+        owner: () => owner,
+        recoveryStartedAt: () => recoveryStartedAt,
+        attached: () => attached,
+        hideMapping: () => { hidden = true },
+        run: () => { state = 'running' },
+    }
 }
