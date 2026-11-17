@@ -30,13 +30,15 @@ class _Tag extends React.Component {
     renderIcon() {
         const {icon} = this.props
         return icon ? (
-            <Icon name={icon}/>
+            <Icon name={icon} className={styles.icon}/>
         ) : null
     }
 
     renderContents() {
         const {label, children} = this.props
-        return children ? children : label
+        return children
+            ? children
+            : label ? <span className={styles.label}>{label}</span> : null
     }
 }
 
