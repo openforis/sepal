@@ -7,7 +7,25 @@ echo "*** Installing Open Foris Geospatial Toolkit ***"
 echo "************************************************"
 
 # TODO: Add dans-gdal-scripts - this package currently won't install due to broken dependencies
-apt-get update && apt-get install -y \
+apt-get update
+
+# The PPA can return 503 while Launchpad's original file is still available.
+for package in geotiff-bin python3-saga; do
+    if ! apt-get --download-only install -y "$package"; then
+        read -r archive_file archive_sha256 < <(
+            apt-cache show --no-all-versions "$package" |
+                awk '/^Filename: / {file = $2} /^SHA256: / {print file, $2; exit}'
+        )
+        [[ -n "$archive_file" && "$archive_sha256" =~ ^[[:xdigit:]]{64}$ ]]
+        archive_file=${archive_file##*/}
+        /usr/lib/apt/apt-helper download-file \
+            "https://launchpad.net/~ubuntugis/+archive/ubuntu/ubuntugis-unstable/+files/${archive_file}" \
+            "/var/cache/apt/archives/${archive_file}" \
+            "SHA256:${archive_sha256}"
+    fi
+done
+
+apt-get install -y \
 	 gcc \
 	 g++ \
 	 geotiff-bin \
