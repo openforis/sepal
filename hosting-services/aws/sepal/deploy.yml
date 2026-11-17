@@ -129,6 +129,14 @@
         group: "root"
         mode: "0755"
 
+    - name: Remove the retired sepal_user MySQL check
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/monit.d/mysql
+        - /usr/local/bin/mysqlcheck-sepal_user
+
     - name: Configure monit/4
       template:
         src: "monit/pushover-notify.template"
