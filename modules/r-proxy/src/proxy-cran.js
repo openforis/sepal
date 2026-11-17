@@ -38,7 +38,6 @@ const forwardResponse = async (proxyRes, req, res) => {
 }
 
 const proxyRequest = createProxy({
-    secure: false,
     changeOrigin: true,
     ignorePath: true,
     selfHandleResponse: true,
