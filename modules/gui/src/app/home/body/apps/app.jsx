@@ -51,6 +51,7 @@ class _App extends React.Component {
     constructor(props) {
         super(props)
         this.runApp = this.runApp.bind(this)
+        this.showRunningApp = this.showRunningApp.bind(this)
         this.onSession = this.onSession.bind(this)
         this.onPickerConfirm = this.onPickerConfirm.bind(this)
         this.onPickerCancel = this.onPickerCancel.bind(this)
@@ -72,7 +73,7 @@ class _App extends React.Component {
         const {app, selection} = this.state
         return app
             ? <AppInstance app={app} selection={selection} onSession={this.onSession}/>
-            : <AppList onSelect={this.runApp}/>
+            : <AppList onSelect={this.runApp} onShowRunning={this.showRunningApp}/>
     }
 
     // The picker is a modal overlay: the content (app list or running app) stays visible
@@ -129,13 +130,13 @@ class _App extends React.Component {
     }
 
     runApp(app) {
-        const {id, runningApps} = this.props
+        const {runningApps} = this.props
         if (!this.needsInstance(app)) {
             // Docker apps are unrestricted — isolated per-copy containers, any number of
             // copies. Only a `single` app's open tab is focused rather than duplicated.
             const runningApp = _.find(runningApps, runningApp => runningApp.path === app.path)
             if (app.single && runningApp) {
-                closeTab(id, 'apps', runningApp.id)
+                this.showRunningApp(runningApp)
                 return
             }
             this.openApp(app, null)
@@ -145,6 +146,11 @@ class _App extends React.Component {
         // plain open, a focus of an already-open tab, or a confirmed takeover/move
         // (onPickerConfirm).
         this.setState({picker: app})
+    }
+
+    showRunningApp(runningApp) {
+        const {id} = this.props
+        closeTab(id, 'apps', runningApp.id)
     }
 
     openApp(app, selection) {

@@ -146,6 +146,26 @@ describe('a running app', () => {
         expect(rowText(list, dockerApp)).not.toContain('Running')
         expect(rowText(list, dockerApp)).toContain('Instant')
     })
+
+    it('takes the user to its tab when Running is clicked, without starting another copy', () => {
+        const runningTab = {id: 'notebook-tab', path: dockerApp.path}
+        const onSelect = vi.fn()
+        const onShowRunning = vi.fn()
+        const list = render({apps: [dockerApp], tabs: [runningTab], onSelect, onShowRunning})
+        act(() => chip(list, dockerApp, 'Running').click())
+        expect(onShowRunning).toHaveBeenCalledWith(runningTab)
+        expect(onSelect).not.toHaveBeenCalled()
+    })
+})
+
+describe('a tag other than Running', () => {
+    it('is no button of its own, but still explains itself', () => {
+        const dockerApp = app({id: 'notebook', endpoint: 'docker'})
+        const list = render({apps: [dockerApp]})
+        expect(rowText(list, dockerApp)).toContain('Instant')
+        expect(chip(list, dockerApp, 'Instant')).toBeUndefined()
+        expect(tooltips).toContain('This app doesn\'t require a dedicated instance to run')
+    })
 })
 
 describe('app information', () => {
@@ -171,7 +191,7 @@ afterEach(() => {
     vi.useRealTimers()
 })
 
-const render = ({apps, tabs = [], onSelect = vi.fn()}) => {
+const render = ({apps, tabs = [], onSelect = vi.fn(), onShowRunning = vi.fn()}) => {
     const container = document.createElement('div')
     document.body.appendChild(container)
     const root = createRoot(container)
@@ -186,7 +206,8 @@ const render = ({apps, tabs = [], onSelect = vi.fn()}) => {
                     tagFilter='IGNORE'
                     user={{}}
                     stream={() => ({active: false})}
-                    onSelect={onSelect}/>
+                    onSelect={onSelect}
+                    onShowRunning={onShowRunning}/>
             </EventShield>
         </TranslationProvider>
     ))
@@ -202,6 +223,9 @@ const app = fields => ({label: fields.id, path: `/apps/${fields.id}`, endpoint: 
 const row = (list, {id}) => list.querySelector(`[data-app="${id}"]`)
 
 const rowText = (list, listedApp) => row(list, listedApp).textContent
+
+const chip = (list, listedApp, label) =>
+    [...row(list, listedApp).querySelectorAll('button')].find(button => button.textContent === label)
 
 const listedIds = list => [...list.querySelectorAll('[data-app]')].map(element => element.dataset.app)
 

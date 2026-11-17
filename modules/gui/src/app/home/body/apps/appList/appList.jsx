@@ -248,14 +248,18 @@ class _AppList extends React.Component {
     }
 
     renderRunningChip(app) {
+        const {onShowRunning} = this.props
         return app.running
             ? (
-                <Tag
+                <Button
                     key={'runningChip'}
+                    shape='pill'
                     size='small'
                     look='add'
                     icon='play'
                     label={msg('apps.running.label')}
+                    additionalClassName={styles.running}
+                    onClick={() => onShowRunning(app.running)}
                 />
             )
             : null
@@ -462,5 +466,6 @@ export const AppList = compose(
 )
 
 AppList.propTypes = {
-    onSelect: PropTypes.func.isRequired
+    onSelect: PropTypes.func.isRequired,
+    onShowRunning: PropTypes.func.isRequired
 }
