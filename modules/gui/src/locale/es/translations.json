@@ -43,18 +43,15 @@
         "ignore.label": "Todo"
       }
     },
-    "googleAccountRequired": "SEPAL debe estar conectado a su cuenta de Google para utilizar esta aplicación",
     "info": "Mostrar información sobre esta aplicación",
     "initializing": "Iniciando sesión...",
     "loading": {
       "error": "No se han podido cargar las aplicaciones. Intenta recargar la página.",
       "progress": "Cargando..."
     },
-    "notRunning": "La aplicación no funciona",
     "run": {
       "error": "No se pudo ejecutar {label}"
     },
-    "running": "La aplicación está funcionando",
     "noInstanceRequired": "",
     "noInstanceRequiredTooltip": "",
     "admin": {

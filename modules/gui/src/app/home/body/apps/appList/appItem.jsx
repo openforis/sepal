@@ -6,7 +6,7 @@ import {CrudItem} from '~/widget/crudItem'
 
 import styles from './appItem.module.css'
 
-export const AppItem = ({app, className, highlight, highlightClassName}) => {
+export const AppItem = ({app, className, highlight, highlightClassName, unavailable}) => {
     const [src, setSrc] = useState(logoUrl(app))
 
     const onError = () =>
@@ -27,6 +27,7 @@ export const AppItem = ({app, className, highlight, highlightClassName}) => {
             title={app.label}
             description={app.tagline || '...'}
             image={logo}
+            dimmed={unavailable}
             highlight={highlight}
             highlightClassName={highlightClassName}
         />
@@ -37,5 +38,6 @@ AppItem.propTypes = {
     app: PropTypes.object,
     className: PropTypes.string,
     highlight: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
-    highlightClassName: PropTypes.string
+    highlightClassName: PropTypes.string,
+    unavailable: PropTypes.bool
 }

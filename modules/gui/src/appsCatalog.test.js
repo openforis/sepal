@@ -166,6 +166,52 @@ describe('normalizeAppsCatalog', () => {
     })
 })
 
+describe('normalizeAppsCatalog retirement', () => {
+    it('gives bundle children the parent retirement date and reason', () => {
+        const input = {apps: [{
+            id: 'p', path: '/api/p', endpoint: 'docker', retiredOn: '2026-11-01', retirementReason: 'Replaced',
+            apps: [{id: 'a', route: 'a', label: 'A'}]
+        }]}
+        const child = normalizeAppsCatalog(input, 'en').apps[1]
+        expect(child.retiredOn).toBe('2026-11-01')
+        expect(child.retirementReason).toBe('Replaced')
+    })
+
+    it('keeps a bundle child retirement with its own reason, not the parent one', () => {
+        const input = {apps: [{
+            id: 'p', path: '/api/p', endpoint: 'docker', retiredOn: '2026-11-01', retirementReason: 'Bundle retired',
+            apps: [{id: 'a', route: 'a', label: 'A', retiredOn: '2026-10-01'}]
+        }]}
+        const child = normalizeAppsCatalog(input, 'en').apps[1]
+        expect(child.retiredOn).toBe('2026-10-01')
+        expect(child.retirementReason).toBeUndefined()
+    })
+
+    it('translates the retirement reason, the inherited one included', () => {
+        const translations = {es: {retirementReason: 'Reemplazada'}}
+        const input = {apps: [
+            {id: 'x', label: 'X', retiredOn: '2026-11-01', retirementReason: 'Replaced', translations},
+            {
+                id: 'p', path: '/api/p', endpoint: 'docker', retiredOn: '2026-11-01', retirementReason: 'Replaced', translations,
+                apps: [{id: 'a', route: 'a', label: 'A'}]
+            }
+        ]}
+        const [single, , child] = normalizeAppsCatalog(input, 'es').apps
+        expect(single.retirementReason).toBe('Reemplazada')
+        expect(child.retirementReason).toBe('Reemplazada')
+    })
+
+    it('gives bundle children the parent release date unless they set their own', () => {
+        const input = {apps: [{
+            id: 'p', path: '/api/p', endpoint: 'docker', releasedOn: '2025-03-12',
+            apps: [{id: 'a', route: 'a', label: 'A'}, {id: 'b', route: 'b', label: 'B', releasedOn: '2026-01-05'}]
+        }]}
+        const [, a, b] = normalizeAppsCatalog(input, 'en').apps
+        expect(a.releasedOn).toBe('2025-03-12')
+        expect(b.releasedOn).toBe('2026-01-05')
+    })
+})
+
 describe('logoUrl', () => {
     it('prefers an HTTPS logo over logoRef', () => {
         expect(logoUrl({logo: 'https://example.org/logos/foo.png', logoRef: 'sepal.png'})).toBe('https://example.org/logos/foo.png')
