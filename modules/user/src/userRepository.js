@@ -48,7 +48,7 @@ export class UserRepository {
             return null
         }
         return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query('SELECT * FROM sepal_user WHERE token = ?', [token])
+            const [rows] = await connection.query('SELECT * FROM sepal_user WHERE token = BINARY ?', [token])
             return rowToUser(rows[0])
         })
     }

@@ -148,6 +148,16 @@ describe('UserRepository', () => {
 
             assert.equal(stored.username, USERNAME)
         })
+
+        for (const [name, token] of [['different case', 'THE-TOKEN'], ['trailing space', 'the-token ']]) {
+            test(`does not find a token with ${name}`, async () => {
+                await repository.insertUser(aUser({token: 'the-token'}))
+
+                const stored = await repository.findByToken(token)
+
+                assert.equal(stored, null)
+            })
+        }
     })
 
     describe('updateToken', () => {

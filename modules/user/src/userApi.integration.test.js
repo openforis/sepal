@@ -265,18 +265,27 @@ describe('UserApi', () => {
         })
     }
 
-    test('a reset token must match exactly, including trailing spaces', async () => {
-        await givenActiveUser()
-        await repository.updateToken(USERNAME, 'reset-token')
-        const before = await repository.findByUsername(USERNAME)
-        const ctx = aContext({request: {body: {token: 'reset-token ', password: 'a-new-password'}}})
+    for (const [name, token] of [['different case', 'RESET-TOKEN'], ['trailing space', 'reset-token ']]) {
+        test(`a token with ${name} is rejected by validation and password reset`, async () => {
+            await givenActiveUser()
+            await repository.updateToken(USERNAME, 'reset-token')
+            const before = await repository.findByUsername(USERNAME)
+            const validation = aContext({request: {body: {token}}})
+            const reset = aContext({request: {body: {token, password: 'a-new-password'}}})
 
-        await api.resetPassword(ctx)
+            await api.validateToken(validation)
 
-        assert.equal(ctx.status, 400)
-        assert.deepEqual(await repository.findByUsername(USERNAME), before)
-        assert.deepEqual(provisioned, [])
-    })
+            assert.deepEqual(validation.body, {
+                status: 'failure', token: null, reason: 'invalid', message: 'Token is invalid'
+            })
+
+            await api.resetPassword(reset)
+
+            assert.equal(reset.status, 400)
+            assert.deepEqual(await repository.findByUsername(USERNAME), before)
+            assert.deepEqual(provisioned, [])
+        })
+    }
 
     // An active user with a POSIX identity in the NSS range — the shape the legacy import left behind,
     // which no operation here can write.

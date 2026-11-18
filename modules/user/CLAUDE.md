@@ -28,6 +28,11 @@ disabled, so logins are unlimited by default. Never per username alone, which wo
 throttled login is answered 429 before its password is verified, even when the password is right. Counts reset when
 the module restarts.
 
+## Reset links
+
+Token lookup and password reset both require a byte-exact token, including case and trailing spaces,
+regardless of the database collation. Validation must not accept a token that the reset would reject.
+
 ## Database migrations
 
 `migrations/001.do.schema.sql` creates the complete current table. The separate
