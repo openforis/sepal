@@ -1,4 +1,6 @@
 # SEPAL workplan
+Calibration behaviour in time-series isn't consistent with optical mosaic.
+
 
 The single backlog for SEPAL recipes, tasks, applications and infrastructure. Reports need reproduction;
 proposals need bounded scope and acceptance criteria; research questions do not select an implementation.
