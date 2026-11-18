@@ -21,6 +21,11 @@ Session (Redis-backed) -> User injection -> Auth -> Google token refresh -> Prox
 - `config/endpoints.js`: Defines all 25+ HTTP proxy routes and 2 WebSocket routes with auth requirements, timeouts, and caching
 - `config/modules.json`: Maps module names to Docker hostnames (e.g., `"gee": "gee"`, `"taskManager": "task-manager"`)
 - `src/proxy.js`: Creates `http-proxy-middleware` instances per endpoint. Sets `sepal-user` header with user JSON for downstream services.
+- Both WebSocket proxy paths log resets after an observed clean client close at DEBUG. Socket destruction alone
+  does not establish cancellation: upstream response failures can destroy it before reporting the error. Live upstream
+  resets, refused connections and response-stream failures stay at ERROR. The static proxy retains HPM's default safety/event/request logging plugins,
+  with error logging owned by SEPAL's callback. Sandbox WebSocket resolution/start failures are logged even after
+  the client closes; nothing is written to a closed socket.
 
 ### WebSocket Architecture (6 files)
 Three-layer WebSocket system:
