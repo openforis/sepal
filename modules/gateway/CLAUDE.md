@@ -111,7 +111,7 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
   `sepal-user` and `sepal-session`, refuses metrics paths, and proxies only endpoints marked `ws: true` in
   `config/endpoints.js` (plus `/api/ws` and the sandbox proxy); anything else is answered 404.
 - `src/googleAccessToken.js`: Background token refresh monitor. Refreshes 10 min before expiry with exponential backoff retry.
-- Both token-refresh paths use `userStore.updateGoogleTokens$`: merge only Google tokens into the current cached user, retry if a concurrent write changed that record, and forward the resulting current identity. Refresh failures reload current identity instead of forwarding the pre-refresh snapshot.
+- Both token-refresh paths use `userStore.updateGoogleTokens$`: merge only Google tokens into the current cached user, retry if a concurrent write changed that record, and forward the resulting current identity. Refresh failures reload current identity instead of forwarding the pre-refresh snapshot. If a foreground refresh succeeds but its cache write fails, forward the fresh tokens with reloaded current identity; an unavailable identity still prevents forwarding.
 - Initial user-cache loads use `SET NX`; a delayed backend response must use an already-populated cache entry rather than overwrite newer roles.
 
 ### RabbitMQ

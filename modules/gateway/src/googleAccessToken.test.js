@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict'
-import {beforeEach, describe, mock, test} from 'node:test'
+import {before, beforeEach, describe, mock, test} from 'node:test'
 
 import {filter, firstValueFrom, of, Subject} from 'rxjs'
 
 import {GOOGLE_ACCESS_TOKEN_ADDED, GOOGLE_ACCESS_TOKEN_REMOVED, GOOGLE_ACCESS_TOKEN_UPDATED, USER_DOWN, USER_UP} from '#sepal/event/definitions'
+import {configureNoLogging} from '#sepal/log'
 
 let refreshResponse$
 let refreshStarted
@@ -40,6 +41,8 @@ const admin = () => ({
     name: 'Alice', revision: 1, googleTokens: oldTokens
 })
 const demoted = () => ({...admin(), admin: false, roles: [], name: 'Updated Alice', revision: 2})
+
+before(() => configureNoLogging())
 
 beforeEach(() => {
     refreshResponse$ = new Subject()
@@ -160,27 +163,71 @@ test('a delayed initial cache fill cannot overwrite a demotion', async () => {
     assert.deepEqual(events, [])
 })
 
-for (const failure of ['refresh', 'cache write']) {
-    test(`a failed ${failure} forwards current roles instead of the pre-refresh snapshot`, async () => {
+test('a failed refresh forwards current roles instead of the pre-refresh snapshot', async () => {
+    const {store} = fixture()
+    const req = {headers: {'sepal-user': JSON.stringify(admin())}, originalUrl: '/api/gee/job'}
+    const next = mock.fn()
+    const {googleAccessTokenMiddleware} = GoogleAccessTokenMiddleware(store)
+
+    const pending = googleAccessTokenMiddleware(req, response(), next)
+    await refreshStarted.promise
+    await firstValueFrom(store.setUser$(demoted()))
+    refreshResponse$.error(new Error('Google unavailable'))
+    await pending
+
+    assert.equal(next.mock.callCount(), 1)
+    assertCurrentIdentity(JSON.parse(req.headers['sepal-user']), oldTokens)
+    assert.deepEqual(await firstValueFrom(store.getUser$('alice')), demoted())
+})
+
+for (const revoked of [false, true]) {
+    test(`a failed cache write forwards ${revoked ? 'revoked' : 'refreshed'} tokens with current roles`, async () => {
         const {store, redis} = fixture()
         const req = {headers: {'sepal-user': JSON.stringify(admin())}, originalUrl: '/api/gee/job'}
+        const res = response()
         const next = mock.fn()
         const {googleAccessTokenMiddleware} = GoogleAccessTokenMiddleware(store)
 
-        const pending = googleAccessTokenMiddleware(req, response(), next)
+        const pending = googleAccessTokenMiddleware(req, res, next)
         await refreshStarted.promise
         await firstValueFrom(store.setUser$(demoted()))
-        if (failure === 'refresh') {
-            refreshResponse$.error(new Error('Google unavailable'))
-        } else {
-            redis.eval = async () => { throw new Error('Redis write failed') }
-            completeRefresh(false)
-        }
+        redis.eval = async () => { throw new Error('Redis write failed') }
+        const googleTokens = completeRefresh(revoked)
         await pending
 
         assert.equal(next.mock.callCount(), 1)
-        assertCurrentIdentity(JSON.parse(req.headers['sepal-user']), oldTokens)
+        assert.equal(res.status.mock.callCount(), 0)
+        assertCurrentIdentity(JSON.parse(req.headers['sepal-user']), googleTokens)
         assert.deepEqual(await firstValueFrom(store.getUser$('alice')), demoted())
+    })
+}
+
+for (const temporary of [false, true]) {
+    test(`a failed cache write with ${temporary ? 'temporarily' : 'persistently'} unavailable current identity does not forward`, async () => {
+        const {store, redis} = fixture()
+        const req = {headers: {'sepal-user': JSON.stringify(admin())}, originalUrl: '/api/gee/job'}
+        const res = response()
+        const next = mock.fn()
+        const {googleAccessTokenMiddleware} = GoogleAccessTokenMiddleware(store)
+
+        const pending = googleAccessTokenMiddleware(req, res, next)
+        await refreshStarted.promise
+        const get = redis.get
+        redis.eval = async () => {
+            redis.get = async () => {
+                if (temporary) {
+                    redis.get = get
+                }
+                throw new Error('Redis unavailable')
+            }
+            throw new Error('Redis write failed')
+        }
+        completeRefresh(false)
+        await pending
+
+        assert.equal(next.mock.callCount(), 0)
+        assert.deepEqual(res.status.mock.calls[0].arguments, [500])
+        assert.equal(res.end.mock.callCount(), 1)
     })
 }
 

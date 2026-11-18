@@ -1,4 +1,4 @@
-import {catchError, firstValueFrom, of, switchMap, tap} from 'rxjs'
+import {catchError, firstValueFrom, map, of, switchMap, tap} from 'rxjs'
 
 import {getLogger} from '#sepal/log'
 
@@ -19,13 +19,26 @@ const GoogleAccessTokenMiddleware = userStore => {
             const refreshGoogleTokens$ = () => {
                 log.debug(`${usernameTag(user.username)} ${urlTag(req.originalUrl)} Google tokens refreshing...`)
                 return updateGoogleAccessToken$(user).pipe(
-                    switchMap(({username, googleTokens}) => userStore.updateGoogleTokens$({username, googleTokens})),
-                    tap(updatedUser =>
-                        log.info(`${usernameTag(updatedUser.username)} ${urlTag(req.originalUrl)} Google tokens refreshed`)
-                    ),
                     catchError(error => {
                         log.warn(`${usernameTag(user.username)} Failed to refresh Google tokens`, error)
-                        return userStore.getUser$(user.username)
+                        return of(null)
+                    }),
+                    switchMap(refreshedUser => {
+                        if (!refreshedUser) {
+                            return userStore.getUser$(user.username)
+                        }
+                        const {username, googleTokens} = refreshedUser
+                        return userStore.updateGoogleTokens$({username, googleTokens}).pipe(
+                            catchError(error => {
+                                log.warn(`${usernameTag(username)} Failed to cache refreshed Google tokens`, error)
+                                return userStore.getUser$(username).pipe(
+                                    map(currentUser => ({...currentUser, googleTokens}))
+                                )
+                            }),
+                            tap(updatedUser => {
+                                log.info(`${usernameTag(updatedUser.username)} ${urlTag(req.originalUrl)} Google tokens refreshed`)
+                            })
+                        )
                     }),
                     tap(currentUser => setRequestUser(req, currentUser))
                 )
