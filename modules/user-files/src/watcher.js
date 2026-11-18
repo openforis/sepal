@@ -2,7 +2,7 @@ import {readdir} from 'node:fs/promises'
 import Path from 'node:path'
 
 import _ from 'lodash'
-import {catchError, distinctUntilChanged, EMPTY, exhaustMap, filter, finalize, first, from, groupBy, map, mergeMap, mergeWith, of, repeat, scan, Subject, switchMap, takeUntil, throttleTime, timer} from 'rxjs'
+import {catchError, defer, distinctUntilChanged, EMPTY, filter, finalize, first, from, groupBy, map, mergeMap, mergeWith, of, repeat, scan, Subject, switchMap, takeUntil, tap, throttleTime, timer} from 'rxjs'
 
 import {getLogger} from '#sepal/log'
 import {minDuration$} from '#sepal/rxjs'
@@ -16,11 +16,12 @@ const log = getLogger('watcher')
 
 const REMOVE_COMFORT_DELAY_MS = 1000
 const STATS_INTERVAL_MS = 60000
+const SCAN_REST_MULTIPLIER = 4
 
 const userHomeDir = username =>
     resolvePath(homeDir, username)
 
-export const createWatcher = async ({send, stop$}) => {
+export const createWatcher = async ({send, stop$, now = () => performance.now()}) => {
     const monitor$ = new Subject()
     const unmonitor$ = new Subject()
     const remove$ = new Subject()
@@ -70,6 +71,22 @@ export const createWatcher = async ({send, stop$}) => {
         const [username, clientId] = key.split(':')
         return ({username, clientId})
     }
+
+    const pollDir$ = info => {
+        let delay = pollIntervalMilliseconds
+        return defer(() => {
+            const started = now()
+            return scanDir$(info).pipe(
+                tap({complete: () => {
+                    delay = Math.max(pollIntervalMilliseconds, SCAN_REST_MULTIPLIER * (now() - started))
+                }})
+            )
+        }).pipe(
+            repeat({delay: () => timer(delay).pipe(
+                mergeWith(subscriptionTrigger$(info.clientId, info.subscriptionId))
+            )})
+        )
+    }
  
     // Durations release grouping keys; takeUntil also cancels scans already running inside each group.
     const monitorSubscription = monitor$.pipe(
@@ -82,9 +99,7 @@ export const createWatcher = async ({send, stop$}) => {
             }),
             mergeMap(subscriptionGroup$ => subscriptionGroup$.pipe(
                 mergeMap(({username, clientId, subscriptionId, path}) =>
-                    timer(0, pollIntervalMilliseconds).pipe(
-                        mergeWith(subscriptionTrigger$(clientId, subscriptionId)),
-                        exhaustMap(() => scanDir$({username, clientId, subscriptionId, path})),
+                    pollDir$({username, clientId, subscriptionId, path}).pipe(
                         distinctUntilChanged(_.isEqual),
                         takeUntil(subscriptionUnmonitor$(clientId, subscriptionId, path)),
                         // Every path shares the subjects driving it: one failing unexpectedly stops being monitored alone.

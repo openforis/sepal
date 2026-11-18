@@ -130,6 +130,11 @@ REST listings (`listFiles`) and watcher scans describe a directory's entries thr
   started finishes unseen, and nothing is sent late. A REST listing runs to the end even if its client leaves.
 - **Memory.** A listing still holds every name and every described entry until it is answered; there is no
   pagination.
+- **Polling.** Each monitored path scans immediately, then waits for the greater of the configured poll interval
+  or four times its last scan duration. Duration includes comparison and synchronous delivery, even when the listing
+  is unchanged. This gives periodic scans at most about 20% duty per path; concurrent paths add up. A deletion-triggered
+  refresh bypasses that wait when no scan is running, and starts a new wait after it finishes. Unmonitor, reset,
+  subscription/client closure and connection shutdown cancel both scans and pending waits.
 - **Unchanged:** response shapes, hidden-file and extension filtering, REST sort order (directories first, then by
   name), skipping vanished or unreadable entries, and watcher `items` in completion order.
 
