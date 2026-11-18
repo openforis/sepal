@@ -36,33 +36,17 @@
   command: /usr/local/bin/sepal-restricted-home
   changed_when: false
 
-- name: Mount EFS Worker Instance Logs
-  mount:
-    name: "/var/log/sepal/worker"
-    fstype: "efs"
-    state: "mounted"
-    src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/worker-instance-log"
-    opts: "defaults,_netdev"
-    dump: 0
-    passno: 0
-
-# Per-user task and sandbox logs live on EFS, like the worker logs before them. EFS only mounts a directory that
-# exists, so it is created through the worker log mount first.
-- name: Create EFS user log directory
-  file:
-    path: "/var/log/sepal/worker/user-log"
-    state: directory
-    mode: '0755'
-
-- name: Mount EFS user logs
+# Logs stay on the local /var/log volume. These unmount the former EFS log mounts from existing hosts; the running
+# logger keeps its own copy of the mounts until the deploy recreates it.
+- name: Unmount EFS user logs
   mount:
     name: "/var/log/sepal/user"
-    fstype: "efs"
-    state: "mounted"
-    src: "{{ lookup('env', 'AWS_EFS_ID') }}:/data/sepal/worker-instance-log/user-log"
-    opts: "defaults,_netdev"
-    dump: 0
-    passno: 0
+    state: "absent"
+
+- name: Unmount EFS worker instance logs
+  mount:
+    name: "/var/log/sepal/worker"
+    state: "absent"
 
 - name: Mount /data/sepal/jupyter
   mount:

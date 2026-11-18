@@ -7,7 +7,7 @@
         "@codemirror/commands": "^6.11.1",
         "@codemirror/lang-javascript": "^6.2.5",
         "@codemirror/language": "^6.13.1",
-        "@codemirror/lint": "^6.9.7",
+        "@codemirror/lint": "^6.9.8",
         "@codemirror/state": "^6.7.6",
         "@codemirror/view": "^6.43.15",
         "@fontsource/source-sans-pro": "^5.3.0",
@@ -58,7 +58,7 @@
         "remark-gfm": "^4.0.1",
         "rxjs": "7.8.2",
         "sepal": "../../lib/js/shared",
-        "terra-draw": "^1.39.0",
+        "terra-draw": "^1.40.0",
         "terra-draw-google-maps-adapter": "^1.7.0"
     },
     "scripts": {
@@ -70,7 +70,7 @@
     "devDependencies": {
         "@eslint/js": "^10",
         "@redux-devtools/extension": "^4.0.1",
-        "@stylistic/eslint-plugin": "^5",
+        "@stylistic/eslint-plugin": "^6",
         "@vitejs/plugin-react": "^6.3.0",
         "eslint": "^10",
         "eslint-plugin-react": "^7.37.5",

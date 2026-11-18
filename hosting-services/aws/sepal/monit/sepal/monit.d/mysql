@@ -1,2 +1,0 @@
-check program mysql-sepal_user with path /usr/local/bin/mysqlcheck-sepal_user
-    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
