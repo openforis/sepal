@@ -43,18 +43,15 @@
         "ignore.label": ""
       }
     },
-    "googleAccountRequired": "",
     "info": "",
     "initializing": "",
     "loading": {
       "error": "",
       "progress": ""
     },
-    "notRunning": "",
     "run": {
       "error": ""
     },
-    "running": "",
     "noInstanceRequired": "",
     "noInstanceRequiredTooltip": "",
     "admin": {

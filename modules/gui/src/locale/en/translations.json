@@ -43,7 +43,9 @@
         "ignore.label": "All"
       }
     },
-    "googleAccountRequired": "Some apps are unavailable. To enable them, connect your SEPAL account to your Google account.",
+    "googleAccount": {
+      "label": "Google account"
+    },
     "info": "Show information about this app",
     "landingTab": "Apps",
     "launch": {
@@ -55,11 +57,21 @@
       "error": "Failed to load apps. Please reload page to try again.",
       "progress": "Loading..."
     },
-    "notRunning": "App is not running",
+    "releasedOn": "Released {date}",
+    "retired": {
+      "label": "Retired",
+      "notice": "This app was retired on {date} and can no longer be started. It will be removed from the list on {removalDate}."
+    },
+    "unavailable": {
+      "disabled": "This app is currently unavailable.",
+      "googleAccountRequired": "This app needs a Google account. To use it, connect your SEPAL account to your Google account."
+    },
     "run": {
       "error": "Failed to run {label}"
     },
-    "running": "App is running",
+    "running": {
+      "label": "Running"
+    },
     "noInstanceRequired": "Instant",
     "noInstanceRequiredTooltip": "This app doesn't require a dedicated instance to run",
     "gpuRequiredTooltip": "This app recommends an instance with at least {count, plural, one {# GPU} other {# GPUs}}",

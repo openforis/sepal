@@ -5,6 +5,7 @@ import React from 'react'
 
 import {actionBuilder} from '~/action-builder'
 import {userDetailsHint} from '~/app/home/user/userDetails'
+import {isAppListed, unavailableReason} from '~/appAvailability'
 import {loadApps$} from '~/apps'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -17,7 +18,6 @@ import {Button} from '~/widget/button'
 import {Buttons} from '~/widget/buttons'
 import {CrudItem} from '~/widget/crudItem'
 import {FastList} from '~/widget/fastList'
-import {Icon} from '~/widget/icon'
 import {Layout} from '~/widget/layout'
 import {ListItem} from '~/widget/listItem'
 import {Notifications} from '~/widget/notifications'
@@ -29,7 +29,7 @@ import {Tag} from '~/widget/tag'
 
 import {appRequirements} from '../instanceSuitability'
 import {AppAdmin} from './appAdmin'
-import {AppDetails} from './appDetails'
+import {AppDetails, retirementNotice} from './appDetails'
 import {AppItem} from './appItem'
 import styles from './appList.module.css'
 
@@ -42,9 +42,7 @@ const mapStateToProps = () => ({
     filterValue: select('apps.filterValue'),
     filterValues: select('apps.filterValues') || [],
     tagFilter: select('apps.tagFilter') || IGNORE,
-    googleAccountFilter: select('apps.googleAccountFilter'),
     user: currentUser()
-    
 })
 
 const getHighlightMatcher = memoizeOne(
@@ -65,7 +63,6 @@ class _AppList extends React.Component {
         this.closeAppAdmin = this.closeAppAdmin.bind(this)
         this.setFilter = this.setFilter.bind(this)
         this.setTagFilter = this.setTagFilter.bind(this)
-        this.toggleGoogleAccountFilter = this.toggleGoogleAccountFilter.bind(this)
         this.userDetailsHint = this.userDetailsHint.bind(this)
         this.renderApp = this.renderApp.bind(this)
         this.handleSelect = this.handleSelect.bind(this)
@@ -153,10 +150,7 @@ class _AppList extends React.Component {
             <Layout
                 type='vertical'
                 spacing='compact'>
-                <Layout type='horizontal' spacing='compact'>
-                    {this.renderSearch()}
-                    {this.renderGoogleAccountFilter()}
-                </Layout>
+                {this.renderSearch()}
                 <Layout type='horizontal' spacing='compact'>
                     {this.renderInfo(apps)}
                     {this.renderTagFilter(tags)}
@@ -174,23 +168,6 @@ class _AppList extends React.Component {
                 onSearchValue={this.setFilter}
             />
         )
-    }
-
-    renderGoogleAccountFilter() {
-        const {googleAccountFilter} = this.props
-        return isServiceAccount() ? (
-            <Button
-                look={googleAccountFilter ? 'cancel' : 'default'}
-                shape='pill'
-                icon='google'
-                iconType='brands'
-                label={googleAccountFilter ? 'Hide unavailable' : 'Show unavailable'}
-                tooltip={msg('apps.googleAccountRequired')}
-                tooltipPlacement='left'
-                tooltipOnVisible={this.userDetailsHint}
-                onClick={this.toggleGoogleAccountFilter}
-            />
-        ) : null
     }
 
     renderInfo(apps) {
@@ -228,59 +205,64 @@ class _AppList extends React.Component {
         )
     }
 
-    renderGoogleAccountRequiredButton(app) {
-        return this.isDisallowed(app)
-            ? (
-                <Button
-                    key={'renderGoogleAccountRequiredButton'}
-                    look='cancel'
-                    shape='circle'
-                    icon='google'
-                    iconType='brands'
-                    iconStyle='warning'
-                    tooltip={msg('apps.googleAccountRequired')}
-                    tooltipPlacement='left'
-                    tooltipOnVisible={this.userDetailsHint}
-                />
-            )
-            : null
+    renderChip(app) {
+        return this.renderUnavailableChip(app)
+            || this.renderRunningChip(app)
+            || this.renderGpuRequiredChip(app)
+            || this.renderNoInstanceRequiredChip(app)
+    }
+
+    renderUnavailableChip(app) {
+        switch (this.unavailableReason(app)) {
+            case 'retired':
+                return this.renderReasonChip(app, {icon: 'box-archive', label: msg('apps.retired.label')})
+            case 'googleAccountRequired':
+                return this.renderReasonChip(app, {
+                    icon: 'google',
+                    iconType: 'brands',
+                    label: msg('apps.googleAccount.label'),
+                    tooltipOnVisible: this.userDetailsHint
+                })
+            default:
+                return null
+        }
+    }
+
+    renderReasonChip(app, {icon, iconType, label, tooltipOnVisible}) {
+        return (
+            <Tag
+                key={'unavailableChip'}
+                size='small'
+                icon={icon}
+                iconType={iconType}
+                label={label}
+                tooltip={this.unavailableMessage(app)}
+                tooltipPlacement='left'
+                tooltipOnVisible={tooltipOnVisible}
+            />
+        )
     }
 
     userDetailsHint(visible) {
         return userDetailsHint(visible)
     }
 
-    renderAppRunningIcon() {
-        return (
-            <Icon
-                key={'statusIcon'}
-                name='circle'
-                size='xs'
-                variant='info'
-                tooltip={msg('apps.running')}
-                tooltipPlacement='left'
-            />
-        )
-    }
-
-    renderAppStoppedIcon() {
-        return (
-            <Icon
-                key={'statusIcon'}
-                name='circle'
-                type='regular'
-                size='xs'
-                variant='info'
-                tooltip={msg('apps.notRunning')}
-                tooltipPlacement='left'
-            />
-        )
-    }
-
-    renderStatusIcon(app) {
+    renderRunningChip(app) {
+        const {onShowRunning} = this.props
         return app.running
-            ? this.renderAppRunningIcon()
-            : this.renderAppStoppedIcon()
+            ? (
+                <Button
+                    key={'runningChip'}
+                    shape='pill'
+                    size='small'
+                    look='add'
+                    icon='play'
+                    label={msg('apps.running.label')}
+                    additionalClassName={styles.running}
+                    onClick={() => onShowRunning(app.running)}
+                />
+            )
+            : null
     }
 
     renderNoInstanceRequiredChip(app) {
@@ -315,63 +297,77 @@ class _AppList extends React.Component {
     }
 
     renderAppAdminButton(app) {
-        return this.isDockerApp(app) && this.isUserAdmin()
-            ? (
-                <Button
-                    key={'dockerAdminButton'}
-                    look='default'
-                    shape='circle'
-                    size='small'
-                    icon='cog'
-                    iconSize='xs'
-                    tooltip={msg('apps.admin.tooltip')}
-                    tooltipPlacement='left'
-                    onClick={e => {
-                        e.stopPropagation()
-                        this.showAdmin(app)
-                    }}
-                />
-            )
-            : null
+        if (!this.isUserAdmin()) {
+            return null
+        }
+        const configurable = this.isDockerApp(app)
+        // An invisible gear on apps without settings keeps every admin row's chips in line.
+        return (
+            <Button
+                key={'dockerAdminButton'}
+                look='default'
+                shape='circle'
+                size='small'
+                icon='cog'
+                iconSize='xs'
+                additionalClassName={configurable ? null : styles.placeholder}
+                disabled={!configurable}
+                tooltip={configurable ? msg('apps.admin.tooltip') : null}
+                tooltipPlacement='left'
+                onClick={configurable ? e => {
+                    e.stopPropagation()
+                    this.showAdmin(app)
+                } : null}
+            />
+        )
     }
 
     renderApp(app, hovered) {
         const {onSelect} = this.props
+        // An unclickable ListItem ignores the pointer; interactive keeps the info button and chip tooltips of an unavailable row working.
         return (
             <ListItem
                 hovered={hovered}
+                expansionInteractive={!this.isAvailable(app)}
                 onClick={this.isAvailable(app) ? () => onSelect(app) : null}>
                 <CrudItem
                     infoTooltip={msg('apps.info')}
                     tooltipPlacement='left'
                     inlineComponents={[
-                        this.renderGpuRequiredChip(app),
-                        this.renderNoInstanceRequiredChip(app),
-                        this.renderAppAdminButton(app),
-                        this.renderGoogleAccountRequiredButton(app),
-                        this.renderStatusIcon(app),
+                        this.renderChip(app),
+                        this.renderAppAdminButton(app)
                     ]}
                     infoDisabled={false}
                     onInfo={() => this.showInfo(app)}>
                     <AppItem
                         app={app}
                         highlight={this.getHighlightMatcher()}
+                        unavailable={!this.isAvailable(app)}
                     />
                 </CrudItem>
             </ListItem>
         )
     }
 
-    isDisabled(app) {
-        return app.disabled
+    unavailableReason(app) {
+        return unavailableReason(app, {serviceAccount: isServiceAccount()})
     }
 
-    isDisallowed(app) {
-        return app.googleAccountRequired && isServiceAccount()
+    unavailableMessage(app) {
+        switch (this.unavailableReason(app)) {
+            case 'retired':
+                return retirementNotice(app)
+            case 'disabled':
+                return msg('apps.unavailable.disabled')
+            case 'googleAccountRequired':
+                return msg('apps.unavailable.googleAccountRequired')
+            default:
+                return null
+        }
     }
 
     isAvailable(app) {
-        return !this.isDisabled(app) && !this.isDisallowed(app)
+        return !this.unavailableReason(app)
     }
 
     isDockerApp(app) {
@@ -394,8 +390,9 @@ class _AppList extends React.Component {
     getApps() {
         const {apps, filterValues} = this.props
         const searchMatchers = filterValues.map(filter => RegExp(filter, 'i'))
+        const now = new Date()
         return _.chain(apps)
-            .filter(({hidden}) => !hidden)
+            .filter(app => isAppListed(app, now))
             .filter(app => this.appMatchesFilters(app, searchMatchers))
             .map(app => ({...app, running: this.isRunning(app)}))
             .value()
@@ -407,7 +404,7 @@ class _AppList extends React.Component {
     }
 
     appMatchesFilters(app, searchMatchers) {
-        return this.appMatchesFilterValues(app, searchMatchers) && this.appMatchesTagFilter(app) && this.appMatchesGoogleAccountFilter(app)
+        return this.appMatchesFilterValues(app, searchMatchers) && this.appMatchesTagFilter(app)
     }
 
     appMatchesTagFilter(app) {
@@ -423,13 +420,6 @@ class _AppList extends React.Component {
                     matcher.test(simplifyString(app[property]))
                 )
             )
-            : true
-    }
-
-    appMatchesGoogleAccountFilter(app) {
-        const {googleAccountFilter} = this.props
-        return this.isDisallowed(app)
-            ? googleAccountFilter
             : true
     }
 
@@ -458,13 +448,6 @@ class _AppList extends React.Component {
             .dispatch()
     }
 
-    toggleGoogleAccountFilter() {
-        const {googleAccountFilter} = this.props
-        actionBuilder('UPDATE_GOOGLE_ACCOUNT_FILTER', !googleAccountFilter)
-            .set('apps.googleAccountFilter', !googleAccountFilter)
-            .dispatch()
-    }
-
     componentDidMount() {
         const {apps, stream} = this.props
         if (!apps) {
@@ -483,5 +466,6 @@ export const AppList = compose(
 )
 
 AppList.propTypes = {
-    onSelect: PropTypes.func.isRequired
+    onSelect: PropTypes.func.isRequired,
+    onShowRunning: PropTypes.func.isRequired
 }

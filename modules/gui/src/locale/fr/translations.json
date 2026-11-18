@@ -43,18 +43,15 @@
         "ignore.label": "Tout"
       }
     },
-    "googleAccountRequired": "Certaines applications ne sont pas disponibles. Pour les activer, connectez votre compte SEPAL à votre compte Google.",
     "info": "Afficher les informations de cette application",
     "initializing": "Démarrer une session...",
     "loading": {
       "error": "Échec de chargement. Recharger la page.",
       "progress": "Chargement..."
     },
-    "notRunning": "L'app ne fonctionne pas",
     "run": {
       "error": "Echec d'exécution {label}"
     },
-    "running": "L'app est lancée",
     "noInstanceRequired": "",
     "noInstanceRequiredTooltip": "",
     "admin": {

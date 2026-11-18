@@ -40,9 +40,9 @@ class _CrudItem extends React.Component {
     }
 
     renderDefaultContent() {
-        const {title} = this.props
+        const {title, dimmed} = this.props
         return (
-            <div className={styles.item}>
+            <div className={[styles.item, dimmed ? styles.dimmed : null].join(' ')}>
                 {this.renderIcon()}
                 {this.renderImage()}
                 {this.renderInfo()}
@@ -349,6 +349,8 @@ CrudItem.propTypes = {
     copyValue: PropTypes.string,
     description: PropTypes.any,
     descriptionClassName: PropTypes.string,
+    // Fades the title, description and image; the buttons keep their own state.
+    dimmed: PropTypes.any,
     duplicateDisabled: PropTypes.any,
     duplicateTooltip: PropTypes.any,
     editDisabled: PropTypes.any,

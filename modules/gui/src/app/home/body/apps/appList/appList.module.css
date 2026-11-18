@@ -27,3 +27,11 @@
     font-size: small;
     margin-right: 1rem;
 }
+
+.placeholder {
+    visibility: hidden;
+}
+
+.running {
+    text-transform: uppercase;
+}

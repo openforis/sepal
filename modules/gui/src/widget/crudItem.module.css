@@ -49,6 +49,14 @@
     overflow: hidden;
 }
 
+.dimmed>.info {
+    opacity: var(--look-disabled-opacity);
+}
+
+.dimmed>.image {
+    filter: grayscale(1) brightness(.4);
+}
+
 .inline {
     flex-shrink: 0;
 }

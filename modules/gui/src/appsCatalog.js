@@ -25,7 +25,7 @@ const mergeTags = (parentTags, childTags) => {
     return out
 }
 
-const LOCALIZED_FIELDS = ['tagline', 'description']
+const LOCALIZED_FIELDS = ['tagline', 'description', 'retirementReason']
 
 // `translations[lang]` overrides the English field-by-field; anything missing
 // falls through to the flat English value.
@@ -46,11 +46,17 @@ const localizeApp = (app, language) => {
 const logoOwner = (parent, child) =>
     child.logo !== undefined || child.logoRef !== undefined ? child : parent
 
+// The reason belongs to the retirement it explains, so a child retired on its own date never shows
+// the parent's reason.
+const retirementOwner = (parent, child) =>
+    child.retiredOn !== undefined ? child : parent
+
 const flattenChild = (parent, rawChild, language) => {
     const child = localizeApp(rawChild, language)
     const route = child.route !== undefined ? child.route : child.id
     const path = child.path || joinPath(parent.path, route)
     const logo = logoOwner(parent, child)
+    const retirement = retirementOwner(localizeApp(parent, language), child)
     // Spread the child first so any non-whitelisted fields (e.g. `single`,
     // `alt`, future additions) carry through, then override with derived and
     // inherited values.
@@ -66,6 +72,9 @@ const flattenChild = (parent, rawChild, language) => {
         googleAccountRequired: pick(child.googleAccountRequired, parent.googleAccountRequired, false),
         requirements: pick(child.requirements, parent.requirements),
         disabled: pick(child.disabled, parent.disabled),
+        releasedOn: pick(child.releasedOn, parent.releasedOn),
+        retiredOn: retirement.retiredOn,
+        retirementReason: retirement.retirementReason,
         logo: logo.logo,
         logoRef: pick(logo.logoRef, 'sepal.png'),
         author: pick(child.author, parent.author),

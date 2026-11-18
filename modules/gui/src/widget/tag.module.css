@@ -1,10 +1,22 @@
+/*
+ * Line boxes round font metrics to whole device pixels, so their height and baseline change with the
+ * screen scale. Flex boxes, a flex icon and a label trimmed to its capitals keep the tag centred on every screen.
+ */
 .contents {
     text-transform: none;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: .4rem;
 }
 
+.icon {
+    display: flex;
+}
+
 .upperCase {
     text-transform: uppercase;
+}
+
+.upperCase > .label {
+    text-box: trim-both cap alphabetic;
 }
