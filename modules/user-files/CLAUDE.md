@@ -198,15 +198,16 @@ in after creation keeps its owner and mode.
   run as root. A non-root service, as in DEV tests, cannot drop its own groups; the process then has those too.
 - **Creation.** Each folder is made with `mkdir`. One this process creates is opened (`O_DIRECTORY|O_NOFOLLOW`),
   checked to be the user's, and given the home's gid and mode 0755 through its handle. A setgid parent's group and
-  bit are not inherited, as before. A folder found in place, including one that appeared after validation, is
-  accepted only if it is the user's directory and not a link.
+  bit are not inherited, as before. A parent found in place, including one that appeared after validation, is
+  accepted only if it is the user's directory and not a link. An existing final directory answers 409, including
+  one another request created after validation; its ownership, permissions and contents stay unchanged.
 - **Refusals.** Permission errors and refused folders answer 403 `Forbidden path`; other failures answer 500. Folders
   created before a failure stay, as before.
 
 Compatibility: the operating system's permissions now apply where root bypassed them.
 - A parent the user may not write is refused (403), where root created the folder anyway.
 - Every directory on the way, `/sepalUsers` included, must be searchable by the user.
-- A folder of the user's that appears during creation is accepted, where it used to answer 500.
+- A parent folder of the user's that appears during creation is accepted; the final folder must be newly created.
 - Each request starts one Node process.
 
 ### Releasing link browsing

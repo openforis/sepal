@@ -1,8 +1,8 @@
 // Creates folders as a user, run by createFolders (homeWrite.js) in a process started with the user's uid and gid.
 // Arguments: the uid, gid and supplementary groups (comma-separated) it must have, then the folders, each in the one
-// before. Changes nothing unless it has exactly that identity, never root's. Exits 0 once each folder is the user's directory: one
-// already there is accepted only as such, and one created gets the user's group and mode 0755, whatever its parent
-// passes on. Otherwise prints the code of what stopped it and exits 1.
+// before. Changes nothing unless it has exactly that identity, never root's. Exits 0 once the final folder is created:
+// a parent already there is accepted only as the user's directory, and one created gets the user's group and mode
+// 0755, whatever its parent passes on. Otherwise prints the code of what stopped it and exits 1.
 import {constants} from 'node:fs'
 import {lstat, mkdir, open} from 'node:fs/promises'
 
@@ -31,6 +31,9 @@ const ensureFolder = async folder => {
         await finish(folder)
     } else {
         checkExisting(await lstat(folder))
+        if (folder === folders.at(-1)) {
+            throw failure('EEXIST')
+        }
     }
 }
 

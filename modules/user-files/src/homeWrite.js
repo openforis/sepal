@@ -45,6 +45,9 @@ export const createFolders = async (firstMissing, target, owner) => {
     const folders = [firstMissing, ...pathsBelow(firstMissing, target)]
     const {code, signal, stdout, stderr} = await runAsOwner(owner, [CREATE_FOLDERS_AS_USER, ...identity(owner), ...folders])
     if (code !== 0) {
+        if (stdout === 'EEXIST') {
+            throw refusal(409, 'Directory already exists', `Directory already exists: ${target}`)
+        }
         throw FOLDER_REFUSALS.includes(stdout)
             ? forbidden(`Cannot create folders as their owner (${stdout}): ${target}`)
             : new Error(`Creating folders as their owner failed (${stdout || signal || code}): ${target} ${stderr}`)

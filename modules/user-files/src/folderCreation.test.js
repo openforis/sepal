@@ -4,7 +4,7 @@ import {once} from 'node:events'
 import * as nodeFs from 'node:fs'
 import * as fs from 'node:fs/promises'
 import {tmpdir} from 'node:os'
-import {join} from 'node:path'
+import {dirname, join} from 'node:path'
 import {text} from 'node:stream/consumers'
 import {after, afterEach, beforeEach, describe, mock, test} from 'node:test'
 import {fileURLToPath} from 'node:url'
@@ -174,6 +174,51 @@ describe('creating folders', () => {
             assert.equal(await exists(join(project, name, 'new')), status === 201, name)
         }
         assert.equal(await exists(join(scratch, 'new')), false)
+    })
+
+    for (const recursive of [false, true]) {
+        test(`conflicts with a final folder created meanwhile, preserving it${recursive ? ' with recursive parents' : ''}`, async () => {
+            const home = await aHome()
+            const path = recursive ? 'project/a/new' : 'project/new'
+            const target = join(home, path)
+            faults.appear = {path: target, make: path => {
+                if (recursive) {
+                    anOwnFolder(dirname(path))
+                }
+                anOwnFolder(path)
+                nodeFs.chmodSync(path, 0o700)
+                nodeFs.writeFileSync(join(path, 'sentinel.txt'), 'sentinel')
+            }}
+            const ctx = aRequest({path, recursive: String(recursive)})
+
+            await createFolder(homes, ctx)
+
+            assert.equal(ctx.response.status, 409)
+            assert.deepEqual(ctx.body, {error: 'Directory already exists'})
+            assert.deepEqual(await ownership(target), {...USER, mode: 0o700})
+            assert.equal(await fs.readFile(join(target, 'sentinel.txt'), 'utf8'), 'sentinel')
+        })
+    }
+
+    test('refuses a final link, file or foreign folder appearing meanwhile', async () => {
+        const project = join(await aHome(), 'project')
+        const variants = {
+            link: path => nodeFs.symlinkSync(scratch, path),
+            file: path => nodeFs.writeFileSync(path, 'sentinel'),
+            ...(asRoot ? {foreign: path => nodeFs.mkdirSync(path)} : {})
+        }
+
+        for (const [name, make] of Object.entries(variants)) {
+            faults.appear = {path: join(project, name), make}
+            const ctx = aRequest({path: `project/${name}`})
+
+            await createFolder(homes, ctx)
+
+            assert.equal(ctx.response.status, 403, name)
+            assert.deepEqual(ctx.body, {error: 'Forbidden path'}, name)
+        }
+        assert.equal(nodeFs.readlinkSync(join(project, 'link')), scratch)
+        assert.equal(await fs.readFile(join(project, 'file'), 'utf8'), 'sentinel')
     })
 
     test('refuses to create folders in a home root owns, starting nothing', {skip: !asRoot && 'needs root'}, async () => {
