@@ -237,6 +237,27 @@ export class WorkerSessionRepository {
         })
     }
 
+    // closeTimedOutSession — the first transaction of the startup timeout's two-transaction close,
+    // re-asserting what timedOutSessions selected on. Zero rows changed means the session was
+    // activated, updated or closed since, and the caller must neither announce nor release it.
+    async closeTimedOutSession(sessionId) {
+        const now = this.#clock()
+        const closedRows = await this.#db.withConnection(async connection => {
+            const [result] = await connection.query(
+                `UPDATE worker_session
+                    SET state = 'CLOSED', update_time = ?, api_key = NULL
+                    WHERE id = ? AND state = ? AND update_time < ?`,
+                [now, sessionId, PENDING, Timeout.PENDING.lastValidUpdate(now)]
+            )
+            return result.affectedRows
+        })
+        if (closedRows === 0) {
+            return false
+        }
+        await this.#sessionAppRepository.deleteForSession(sessionId)
+        return true
+    }
+
     sessionOnInstance(instanceId, states) {
         return this.#db.withConnection(async connection => {
             const [rows] = await connection.query(

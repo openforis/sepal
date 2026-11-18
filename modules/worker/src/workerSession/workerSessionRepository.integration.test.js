@@ -16,7 +16,8 @@ import {WorkerSessionRepository} from './workerSessionRepository.js'
 //
 // App associations are arranged through the repository that owns them. Rows are written directly only for
 // what no operation can produce: a notification that was raised in the past, an interaction that happened
-// an hour ago, and a leftover row in the legacy task table.
+// an hour ago, a leftover row in the legacy task table, and an activation held uncommitted while a close
+// waits on it.
 
 describe('WorkerSessionRepository', () => {
     let testDb
@@ -636,6 +637,74 @@ describe('WorkerSessionRepository', () => {
         })
     })
 
+    // The startup timeout's close re-asserts what timedOutSessions selected on, so an activation, a refresh
+    // or another close landing in between wins over a decision made before it.
+    describe('closeTimedOutSession', () => {
+        test('closes a timed-out pending session, withdrawing its api key and app associations', async () => {
+            await repository.insert(aSession({apiKey: 'the-key', updateTime: minutesAgo(11)}))
+            await sessionAppRepository.associate({username: USERNAME, appPath: '/app-one', sessionId: SESSION_ID, label: 'One'})
+            const [timedOut] = await repository.timedOutSessions()
+
+            const closed = await repository.closeTimedOutSession(timedOut.id)
+
+            assert.equal(closed, true)
+            assert.partialDeepStrictEqual(await repository.getSession(SESSION_ID), {state: State.CLOSED, apiKey: null})
+            assert.equal((await sessionAppRepository.appsForSessions([SESSION_ID])).get(SESSION_ID), undefined)
+        })
+
+        // Checking the row and then closing it by id would close a session whose activation committed in between.
+        test('leaves a session activated after it was selected, even when the close waits on that activation', async () => {
+            await repository.insert(aSession({apiKey: 'the-key', updateTime: minutesAgo(11)}))
+            await sessionAppRepository.associate({username: USERNAME, appPath: '/app-one', sessionId: SESSION_ID, label: 'One'})
+            const [timedOut] = await repository.timedOutSessions()
+
+            const closed = await testDb.withAnotherConnection(async activation => {
+                await activation.beginTransaction()
+                await activation.query(
+                    `UPDATE worker_session SET state = 'ACTIVE', update_time = NOW(), active_time = NOW()
+                        WHERE id = ? AND state = 'PENDING'`,
+                    [timedOut.id]
+                )
+                const closing = repository.closeTimedOutSession(timedOut.id)
+                await untilRunning('UPDATE worker_session')
+                await activation.commit()
+                return closing
+            })
+
+            assert.equal(closed, false)
+            assert.partialDeepStrictEqual(await repository.getSession(SESSION_ID), {state: State.ACTIVE, apiKey: 'the-key'})
+            assert.equal((await sessionAppRepository.appsForSessions([SESSION_ID])).get(SESSION_ID).length, 1)
+        })
+
+        test('leaves a pending session updated after it was selected, with its api key and app associations', async () => {
+            await repository.insert(aSession({apiKey: 'the-key', updateTime: minutesAgo(11)}))
+            await sessionAppRepository.associate({username: USERNAME, appPath: '/app-one', sessionId: SESSION_ID, label: 'One'})
+            const [timedOut] = await repository.timedOutSessions()
+            await repository.update(timedOut)
+
+            const closed = await repository.closeTimedOutSession(timedOut.id)
+
+            assert.equal(closed, false)
+            assert.partialDeepStrictEqual(await repository.getSession(SESSION_ID), {state: State.PENDING, apiKey: 'the-key'})
+            assert.equal((await sessionAppRepository.appsForSessions([SESSION_ID])).get(SESSION_ID).length, 1)
+        })
+
+        test('never closes a session that is no longer pending, however long ago it was updated', async () => {
+            await repository.insert(activeSession({apiKey: 'the-key', updateTime: minutesAgo(24 * 60)}))
+            await repository.insert(aSession({
+                id: ANOTHER_SESSION_ID, state: State.CLOSED, instance: {id: 'i-2', host: HOST}, updateTime: minutesAgo(24 * 60)
+            }))
+
+            const closed = [
+                await repository.closeTimedOutSession(SESSION_ID),
+                await repository.closeTimedOutSession(ANOTHER_SESSION_ID),
+            ]
+
+            assert.deepEqual(closed, [false, false])
+            assert.partialDeepStrictEqual(await repository.getSession(SESSION_ID), {state: State.ACTIVE, apiKey: 'the-key'})
+        })
+    })
+
     describe('findSessionByApiKey', () => {
         test('names the session, its owner and its worker type for an open session', async () => {
             await repository.insert(activeSession({
@@ -865,6 +934,21 @@ describe('WorkerSessionRepository', () => {
     }
 
     const minutesAgo = minutes => new Date(now.getTime() - minutes * 60 * 1000)
+
+    // Waits on a connection of its own until another of the suite's connections is running the statement, for
+    // instance blocked on a row lock. The suite's account sees its own threads without the PROCESS privilege.
+    const untilRunning = statement => testDb.withAnotherConnection(async observer => {
+        for (let attempt = 0; attempt < 2000; attempt++) {
+            const [rows] = await observer.query(
+                'SELECT 1 FROM information_schema.PROCESSLIST WHERE INFO LIKE ? AND ID <> CONNECTION_ID()',
+                [`${statement}%`]
+            )
+            if (rows.length) {
+                return
+            }
+        }
+        throw new Error(`Never saw ${statement} running`)
+    })
 
     const activeSession = (over = {}) => aSession({state: State.ACTIVE, ...over})
 

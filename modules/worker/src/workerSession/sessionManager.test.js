@@ -508,21 +508,48 @@ describe('closeUserSessions', () => {
 })
 
 describe('closeTimedOutSessions', () => {
-    test('closes each timed-out session, isolated', async () => {
-        const a = session({id: 's-a', state: State.ACTIVE, instance: {id: 'i-a', host: 'h'}})
-        const b = session({id: 's-b', state: State.PENDING, instance: {id: 'i-b', host: 'h'}})
-        const byId = {'s-a': a, 's-b': b}
-        const repo = makeRepo({timedOutSessions: () => [a, b], getSession: id => byId[id]})
-        const {mgr, events} = build({repo})
+    test('closes a timed-out session, announcing closure before retiring its instance', async () => {
+        const order = []
+        const repo = makeRepo({
+            timedOutSessions: () => [session()],
+            closeTimedOutSession: id => { order.push(`close:${id}`); return true },
+        })
+        const instanceManager = makeInstanceManager({
+            releaseInstance: mock.fn(async (...args) => {order.push(['release', ...args])}),
+        })
+        const events = makeEvents()
+        events.emitWorkerSessionClosed = mock.fn(event => order.push(['closed', event]))
+        const {mgr} = build({repo, instanceManager, events})
+
         await mgr.closeTimedOutSessions()
-        assert.equal(events.emitWorkerSessionClosed.mock.callCount(), 2)
+
+        assert.deepEqual(order, [
+            'close:s-1',
+            ['closed', {username: 'alice', sessionId: 's-1'}],
+            ['release', 'i-1', 's-1', {retire: true}],
+        ])
+    })
+
+    // Activation, a refresh or another closer can land between selecting a session and closing it.
+    test('a session whose close is refused is neither announced nor released', async () => {
+        const refused = session({id: 's-a', instance: {id: 'i-a', host: 'h'}})
+        const timedOut = session({id: 's-b', instance: {id: 'i-b', host: 'h'}})
+        const repo = makeRepo({
+            timedOutSessions: () => [refused, timedOut],
+            closeTimedOutSession: id => id !== refused.id,
+        })
+        const {mgr, instanceManager, events} = build({repo})
+
+        await mgr.closeTimedOutSessions()
+
+        assert.deepEqual(callsOf(events.emitWorkerSessionClosed), [[{username: 'alice', sessionId: 's-b'}]])
+        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-b', 's-b', {retire: true}]])
     })
 
     test('one failure does not abort the rest', async () => {
-        const a = session({id: 's-a', state: State.ACTIVE, instance: {id: 'i-a', host: 'h'}})
-        const b = session({id: 's-b', state: State.ACTIVE, instance: {id: 'i-b', host: 'h'}})
-        const byId = {'s-a': a, 's-b': b}
-        const repo = makeRepo({timedOutSessions: () => [a, b], getSession: id => byId[id]})
+        const a = session({id: 's-a', instance: {id: 'i-a', host: 'h'}})
+        const b = session({id: 's-b', instance: {id: 'i-b', host: 'h'}})
+        const repo = makeRepo({timedOutSessions: () => [a, b]})
         const instanceManager = makeInstanceManager({
             releaseInstance: mock.fn(async id => {if (id === 'i-a') throw new Error('boom')}),
         })
@@ -1139,6 +1166,9 @@ const makeRepo = (canned = {}) => {
             record('timedOutSessions')
             return canned.timedOutSessions ? canned.timedOutSessions() : []
         }),
+        closeTimedOutSession: mock.fn(
+            async id => canned.closeTimedOutSession ? canned.closeTimedOutSession(id) : true
+        ),
         sessionOnInstance: mock.fn(async (instanceId, states) => {
             record('sessionOnInstance', instanceId, states)
             return canned.sessionOnInstance ? canned.sessionOnInstance(instanceId, states) : null
