@@ -106,6 +106,15 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
   `sepal-session` (`{sessionId, workerType}` — never the key, never a role). `sepal-session` is
   request-local: `userStore.userMiddleware` strips whatever the client sent, only successful key
   authentication sets it, and `src/proxy.js` forwards it on authenticated endpoints only.
+- Worker-session and task API keys identify their owner without administrator privileges. `setRequestUser`
+  removes `application_admin` and clears `admin`/`systemUser` when `req.authenticatedWithApiKey` is true,
+  including after foreground Google-token refresh. Authentication sets this request-local flag only after
+  successful key validation; the restriction does not depend on worker/task metadata. The cached account retains its full privileges;
+  browser sessions and username/password authentication retain theirs.
+- `getApiKeyContext`/`setApiKeyContext`/`removeApiKeyContext` read, set and strip that key-derived metadata.
+  `getBrowserSessionUsername`/`setBrowserSessionUsername` access the separate cookie-backed login session.
+  `API_KEY_CONTEXT_HEADER` retains the `sepal-session` wire name because external sandbox apps may read it;
+  browser login uses the separate `SEPAL-SESSIONID` cookie.
 - **Metrics are admin-only**: `src/metricsAccess.js` answers 403 to any `/api/<module>/metrics[.json]` request
   from a user without `application_admin` (Prometheus scrapes as `sepaladmin`). Every Koa module serves
   `/metrics` behind its catch-all proxy, so the guard matches the path pattern, case-insensitively, not a list.

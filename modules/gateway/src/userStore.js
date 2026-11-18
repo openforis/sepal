@@ -7,7 +7,7 @@ import {applyKeyNormalization} from '#sepal/redisKeyCase'
 import {isStoredUsername, storedUsername} from '#sepal/username'
 
 import {usernameTag, userTag} from './tag.js'
-import {getSessionUsername, removeRequestSession, removeRequestUser, setRequestUser} from './user.js'
+import {getBrowserSessionUsername, removeApiKeyContext, removeRequestUser, setRequestUser} from './user.js'
 import {loadUser$} from './userApi.js'
 
 const log = getLogger('userStore')
@@ -149,10 +149,10 @@ const UserStore = (redis, event$) => {
     // path; a session that outlives it must still not identify the user, or the userUpdated push
     // the lock triggers can be answered with a successful request.
     const userMiddleware = (req, res, next) => {
-        const username = getSessionUsername(req)
+        const username = getBrowserSessionUsername(req)
         removeRequestUser(req)
         // Only api-key authentication puts this back.
-        removeRequestSession(req)
+        removeApiKeyContext(req)
         if (username) {
             firstValueFrom(getUser$(username))
                 .then(user => {

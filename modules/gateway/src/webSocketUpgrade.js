@@ -9,7 +9,7 @@ import {getLogger} from '#sepal/log'
 import {webSocketPath} from '../config/endpoints.js'
 import {isMetricsPath} from './metricsAccess.js'
 import {urlTag, usernameTag} from './tag.js'
-import {getSessionUsername, removeRequestSession, removeRequestUser, setRequestUser} from './user.js'
+import {getBrowserSessionUsername, removeApiKeyContext, removeRequestUser, setRequestUser} from './user.js'
 
 const log = getLogger('gateway')
 
@@ -58,9 +58,9 @@ export const webSocketUpgradeHandler = ({sessionParser, userStore, wss, sandboxP
         socket.once('close', () => invalidation.unsubscribe())
         sessionParser(req, {}, () => { // Make sure we have access to session for the websocket
             if (socket.destroyed) return
-            const username = getSessionUsername(req)
+            const username = getBrowserSessionUsername(req)
             removeRequestUser(req)
-            removeRequestSession(req)
+            removeApiKeyContext(req)
             if (username) {
                 const requestPath = url.parse(req.url).pathname
                 if (requestPath === webSocketPath) {

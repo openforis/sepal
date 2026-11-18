@@ -197,6 +197,43 @@ test('a refresh during which the user is locked does not forward the request', a
     assert.equal(req.headers['sepal-user'], undefined)
 })
 
+for (const outcome of ['refreshed', 'revoked', 'refresh failed', 'cache write failed']) {
+    test(`an api-key request stays non-admin after a foreground refresh: ${outcome}`, async () => {
+        const owner = {...admin(), systemUser: true}
+        const {store, redis} = fixture(owner)
+        const req = {
+            authenticatedWithApiKey: true,
+            headers: {
+                'sepal-user': JSON.stringify({...owner, roles: [], admin: false, systemUser: false}),
+                'sepal-session': JSON.stringify({sessionId: 's-admin', workerType: 'sandbox'})
+            },
+            originalUrl: '/api/gee/job'
+        }
+        const next = mock.fn()
+        const {googleAccessTokenMiddleware} = GoogleAccessTokenMiddleware(store)
+
+        const pending = googleAccessTokenMiddleware(req, response(), next)
+        await refreshStarted.promise
+        if (outcome === 'cache write failed') {
+            redis.eval = async () => { throw new Error('Redis write failed') }
+        }
+        if (outcome === 'refresh failed') {
+            refreshResponse$.error(new Error('Google unavailable'))
+        }
+        const googleTokens = outcome === 'refresh failed'
+            ? oldTokens
+            : completeRefresh(outcome === 'revoked')
+        await pending
+
+        assert.equal(next.mock.callCount(), 1)
+        assertCurrentIdentity(JSON.parse(req.headers['sepal-user']), googleTokens)
+        assert.equal(JSON.parse(req.headers['sepal-user']).systemUser, false)
+        const cachedOwner = await firstValueFrom(store.getUser$(owner.username))
+        assert.partialDeepStrictEqual(cachedOwner, {roles: owner.roles, admin: true, systemUser: true})
+        assert.deepEqual(cachedOwner.googleTokens, ['refreshed', 'revoked'].includes(outcome) ? googleTokens : oldTokens)
+    })
+}
+
 for (const revoked of [false, true]) {
     test(`a failed cache write forwards ${revoked ? 'revoked' : 'refreshed'} tokens with current roles`, async () => {
         const {store, redis} = fixture()

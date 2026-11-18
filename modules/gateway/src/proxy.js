@@ -7,7 +7,7 @@ import {endpoints, internalPaths} from '../config/endpoints.js'
 import {sepalHost} from './config.js'
 import {closeUpstreamOnClientClose, isClientDisconnect} from './proxyError.js'
 import {urlTag, usernameTag} from './tag.js'
-import {getRequestSession, getRequestUser, SEPAL_SESSION_HEADER, SEPAL_USER_HEADER, SEPAL_USER_UPDATED_HEADER} from './user.js'
+import {API_KEY_CONTEXT_HEADER, getApiKeyContext, getRequestUser, SEPAL_USER_HEADER, SEPAL_USER_UPDATED_HEADER} from './user.js'
 
 const log = getLogger('proxy')
 
@@ -81,12 +81,12 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
                             log.isTrace() && log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} No sepal-user header set`)
                         }
                         // Set here rather than left to ride along on req.headers, so an
-                        // unauthenticated endpoint forwards no worker session.
-                        const workerSession = authenticate ? getRequestSession(req) : null
-                        if (workerSession) {
-                            proxyReq.setHeader(SEPAL_SESSION_HEADER, JSON.stringify(workerSession))
+                        // unauthenticated endpoint forwards no API-key context.
+                        const apiKeyContext = authenticate ? getApiKeyContext(req) : null
+                        if (apiKeyContext) {
+                            proxyReq.setHeader(API_KEY_CONTEXT_HEADER, JSON.stringify(apiKeyContext))
                         } else {
-                            proxyReq.removeHeader(SEPAL_SESSION_HEADER)
+                            proxyReq.removeHeader(API_KEY_CONTEXT_HEADER)
                         }
                         if (noCache) {
                             log.isTrace() && log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Disabling caching`)

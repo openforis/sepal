@@ -3,6 +3,7 @@ import {createServer} from 'node:http'
 import {after, before, beforeEach, describe, mock, test} from 'node:test'
 
 import express from 'express'
+import Session from 'express-session'
 import {firstValueFrom, Subject} from 'rxjs'
 
 import {MemoryRedis} from './testSupport/memoryRedis.js'
@@ -14,8 +15,8 @@ import {MemoryRedis} from './testSupport/memoryRedis.js'
 const ALICE = {id: 1, username: 'alice', roles: [], status: 'ACTIVE'}
 const BOB = {id: 2, username: 'bob', roles: [], status: 'ACTIVE'}
 const CAROL = {id: 3, username: 'carol', roles: [], status: 'LOCKED'}
-const DAVE = {id: 4, username: 'dave', roles: ['application_admin'], status: 'ACTIVE', revision: 1}
-const DEMOTED_DAVE = {...DAVE, roles: [], revision: 2}
+const DAVE = {id: 4, username: 'dave', roles: ['application_admin'], admin: true, systemUser: true, status: 'ACTIVE', revision: 1}
+const DEMOTED_DAVE = {...DAVE, roles: [], admin: false, systemUser: false, revision: 2}
 const LOCKED_DAVE = {...DEMOTED_DAVE, status: 'LOCKED', revision: 3}
 const DAVE_SESSION_KEY = 'dave-session-key'
 const DAVE_TASK_KEY = 'task_dave-key'
@@ -58,6 +59,7 @@ mock.module('./config.js', {
 
 const {AuthMiddleware} = await import('./authMiddleware.js')
 const {GoogleAccessTokenMiddleware} = await import('./googleAccessTokenMiddleware.js')
+const {restrictMetricsToAdmins} = await import('./metricsAccess.js')
 const {Proxy} = await import('./proxy.js')
 const {UserStore} = await import('./userStore.js')
 
@@ -67,7 +69,7 @@ describe('a request authenticated with a worker session api key', () => {
 
         assert.equal(status, 200)
         assert.partialDeepStrictEqual(body.user, {username: 'alice'})
-        assert.deepEqual(body.session, {sessionId: 's-executor', workerType: 'sandbox'})
+        assert.deepEqual(body.apiKeyContext, {sessionId: 's-executor', workerType: 'sandbox'})
     })
 
     test('passes on neither the key nor a role for it', async () => {
@@ -81,13 +83,13 @@ describe('a request authenticated with a worker session api key', () => {
         const {body} = await probe({apiKey: SANDBOX_KEY})
 
         assert.partialDeepStrictEqual(body.user, {username: 'bob'})
-        assert.deepEqual(body.session, {sessionId: 's-sandbox', workerType: 'sandbox'})
+        assert.deepEqual(body.apiKeyContext, {sessionId: 's-sandbox', workerType: 'sandbox'})
     })
 
     test('replaces a session the caller claimed with the one its key resolves to', async () => {
-        const {body} = await probe({apiKey: SANDBOX_KEY, claimedSession: FORGED})
+        const {body} = await probe({apiKey: SANDBOX_KEY, claimedApiKeyContext: FORGED})
 
-        assert.deepEqual(body.session, {sessionId: 's-sandbox', workerType: 'sandbox'})
+        assert.deepEqual(body.apiKeyContext, {sessionId: 's-sandbox', workerType: 'sandbox'})
     })
 
     test('is refused when the key is unknown or empty', async () => {
@@ -106,7 +108,7 @@ describe('a request authenticated with a task container\'s key', () => {
 
         assert.equal(status, 200)
         assert.partialDeepStrictEqual(body.user, {username: 'alice'})
-        assert.deepEqual(body.session, {workerType: 'task', taskId: 't-1'})
+        assert.deepEqual(body.apiKeyContext, {workerType: 'task', taskId: 't-1'})
     })
 
     test('is refused when task-manager does not know the key', async () => {
@@ -116,6 +118,60 @@ describe('a request authenticated with a task container\'s key', () => {
     test('is refused when the task\'s owner is locked', async () => {
         assert.equal((await probe({apiKey: LOCKED_TASK_KEY})).status, 401)
     })
+})
+
+describe('an administrator authenticated with an api key', () => {
+    beforeEach(() => {
+        gateway.redis.values.clear()
+        gateway.sessions.length = 0
+    })
+
+    for (const [name, apiKey] of Object.entries({worker: DAVE_SESSION_KEY, task: DAVE_TASK_KEY})) {
+        test(`a ${name} key forwards the owner without administrative privileges and keeps the cached account intact`, async () => {
+            const {status, body} = await probe({apiKey})
+
+            assert.equal(status, 200)
+            assert.partialDeepStrictEqual(body.user, {id: DAVE.id, username: DAVE.username, status: DAVE.status})
+            assert.deepEqual(body.user.roles, [])
+            assert.equal(body.user.admin, false)
+            assert.equal(body.user.systemUser, false)
+            assert.deepEqual(await firstValueFrom(gateway.userStore.getUser$(DAVE.username)), DAVE)
+            assert.ok(gateway.sessions.every(session => session.username === undefined))
+        })
+
+        test(`a ${name} key cannot read administrator-only metrics`, async () => {
+            const {status} = await request('/api/tasks/metrics', {apiKey})
+
+            assert.equal(status, 403)
+        })
+
+        test(`a ${name} key restricts an admin cookie for this request without changing the browser session`, async () => {
+            const {cookie} = await probe({username: DAVE.username, password: 'daves-password'})
+
+            const {status, body} = await probe({apiKey, cookie})
+            const browser = await probe({cookie})
+
+            assert.equal(status, 200)
+            assert.partialDeepStrictEqual(body.user, {roles: [], admin: false, systemUser: false})
+            assert.equal(browser.status, 200)
+            assert.partialDeepStrictEqual(browser.body.user, {roles: DAVE.roles, admin: true, systemUser: true})
+            assert.equal(browser.body.apiKeyContext, null)
+        })
+    }
+
+    for (const browser of [false, true]) {
+        test(`${browser ? 'browser' : 'non-browser'} password authentication retains administrator privileges despite a forged session header`, async () => {
+            const credentials = {username: DAVE.username, password: 'daves-password', browser, claimedApiKeyContext: FORGED}
+
+            const {status, body} = await probe(credentials)
+            const metrics = await request('/api/tasks/metrics', credentials)
+
+            assert.equal(status, 200)
+            assert.partialDeepStrictEqual(body.user, {roles: DAVE.roles, admin: true, systemUser: true})
+            assert.equal(body.apiKeyContext, null)
+            assert.equal(metrics.status, 200)
+        })
+    }
 })
 
 // The user module and the key owners answer from the database, and the user cache can learn of a newer change while
@@ -169,7 +225,7 @@ describe('a request to an unauthenticated endpoint', () => {
         const {status, body} = await probeUnauthenticated(FORGED)
 
         assert.equal(status, 200)
-        assert.equal(body.session, null)
+        assert.equal(body.apiKeyContext, null)
     })
 
     test('reaches the module with no user, whatever user the caller claimed', async () => {
@@ -189,12 +245,12 @@ describe('a request without credentials', () => {
 describe('a request authenticated the ordinary way', () => {
     test('carries no session, whatever the caller claimed', async () => {
         const {status, body} = await probe({
-            username: 'alice', password: 'alices-password', claimedSession: FORGED
+            username: 'alice', password: 'alices-password', claimedApiKeyContext: FORGED
         })
 
         assert.equal(status, 200)
         assert.partialDeepStrictEqual(body.user, {username: 'alice'})
-        assert.equal(body.session, null)
+        assert.equal(body.apiKeyContext, null)
     })
 })
 
@@ -207,13 +263,13 @@ const startGateway = async () => {
     const {authMiddleware} = AuthMiddleware(userStore, async () => {})
     const {googleAccessTokenMiddleware} = GoogleAccessTokenMiddleware(userStore)
     const app = express()
-    // No browser login: these requests arrive with credentials, not a cookie.
+    app.use(Session({secret: 'test-secret', resave: false, saveUninitialized: false}))
     app.use((req, _res, next) => {
-        req.session = {}
         sessions.push(req.session)
         next()
     })
     app.use(userStore.userMiddleware)
+    restrictMetricsToAdmins(app, authMiddleware)
     Proxy(userStore, authMiddleware, googleAccessTokenMiddleware).proxyEndpoints(app)
     const server = await listen(app)
     gatewayUrl = `http://127.0.0.1:${server.address().port}`
@@ -222,13 +278,13 @@ const startGateway = async () => {
 
 // /api/tasks is the authenticated endpoint the executor callbacks travel over; /api/sessions/expiry
 // is the one endpoint that is deliberately unauthenticated.
-const probe = ({apiKey, username = '', password, browser, claimedSession, claimedUser}) =>
-    request('/api/tasks/echo', {apiKey, username, password, browser, claimedSession, claimedUser})
+const probe = credentials =>
+    request('/api/tasks/echo', credentials)
 
-const probeUnauthenticated = (claimedSession, claimedUser) =>
-    request('/api/sessions/expiry/echo', {claimedSession, claimedUser})
+const probeUnauthenticated = (claimedApiKeyContext, claimedUser) =>
+    request('/api/sessions/expiry/echo', {claimedApiKeyContext, claimedUser})
 
-const request = async (path, {apiKey, username = '', password, browser = true, claimedSession, claimedUser}) => {
+const request = async (path, {apiKey, username = '', password, browser = true, claimedApiKeyContext, claimedUser, cookie}) => {
     const credentials = apiKey === undefined ? `${username}:${password}` : `:${apiKey}`
     const response = await fetch(`${gatewayUrl}${path}`, {
         headers: {
@@ -236,14 +292,16 @@ const request = async (path, {apiKey, username = '', password, browser = true, c
                 ? {}
                 : {'Authorization': `Basic ${Buffer.from(credentials).toString('base64')}`}),
             ...(browser ? {'No-auth-challenge': 'true'} : {}),
-            ...(claimedSession ? {'sepal-session': claimedSession} : {}),
-            ...(claimedUser ? {'sepal-user': claimedUser} : {})
+            ...(claimedApiKeyContext ? {'sepal-session': claimedApiKeyContext} : {}),
+            ...(claimedUser ? {'sepal-user': claimedUser} : {}),
+            ...(cookie ? {Cookie: cookie} : {})
         }
     })
     return {
         status: response.status,
         body: response.status === 200 ? await response.json() : null,
-        challenge: response.headers.get('www-authenticate')
+        challenge: response.headers.get('www-authenticate'),
+        cookie: response.headers.getSetCookie()[0]?.split(';')[0]
     }
 }
 
@@ -301,9 +359,10 @@ async function startUpstream() {
     // What the worker module sees once the proxy has forwarded the request.
     const echo = (req, res) => res.json({
         user: parse(req.headers['sepal-user']),
-        session: parse(req.headers['sepal-session'])
+        apiKeyContext: parse(req.headers['sepal-session'])
     })
     app.get('/tasks/echo', echo)
+    app.get('/tasks/metrics', echo)
     app.get('/sessions/expiry/echo', echo)
     const server = await listen(app)
     return {

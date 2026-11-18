@@ -1,6 +1,6 @@
 import {firstValueFrom} from 'rxjs'
 
-import {removeRequestUser, setRequestUser, setSessionUsername} from './user.js'
+import {removeRequestUser, setBrowserSessionUsername, setRequestUser} from './user.js'
 
 // Logs the browser in as the user the cache holds once the authenticated one is offered to it: a newer identity
 // there wins, and one that is no longer ACTIVE is not logged in. Until then the request carries no identity. A session
@@ -19,7 +19,7 @@ export const userSessionStarter = (userStore, ensureSessionFor) =>
         if (current.status !== 'ACTIVE') {
             return null
         }
-        setSessionUsername(req, current.username)
+        setBrowserSessionUsername(req, current.username)
         setRequestUser(req, current)
         return current
     }
