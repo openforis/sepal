@@ -7,11 +7,22 @@ export CONFIG_HOME=$2
 ONLY_MODULES=("${@:3}")
 export PRIVATE_KEY=$CONFIG_HOME/certificates/aws.pem
 cd "$( dirname "${BASH_SOURCE[0]}" )"
+export AWS_COMMON_ENV=$(realpath -m "${AWS_COMMON_ENV:-$CONFIG_HOME/../aws-common.env}")
 
-# Export all in env file
+# Export all in the environment's env file, and in the aws-common.env all environments share
 set -a
 source $CONFIG_HOME/env
+source $AWS_COMMON_ENV
 set +a
+
+export ANSIBLE_HOST_KEY_CHECKING=False
+export ANSIBLE_CONFIG=../ansible.cfg
+
+# Before anything changes, on every host. The inventory template takes the Type tags as a YAML list. YAML results
+# keep the package list readable.
+ANSIBLE_CALLBACK_RESULT_FORMAT=yaml ANSIBLE_CALLBACK_FORMAT_PRETTY=true ansible-playbook amazon-linux-release.yml \
+    -i "$(../inventory.sh '[Sepal, SepalApps, SepalStorage]')" \
+    --private-key="$PRIVATE_KEY"
 
 WORKER_AMI_HASH=$(python3 worker-ami/worker_ami.py hash "$VERSION")
 WORKER_AMI_VERSION=$(python3 worker-ami/worker_ami.py lookup "$WORKER_AMI_HASH")
@@ -25,8 +36,6 @@ CONFIG_HOME: $CONFIG_HOME, \
 VERSION: $VERSION, \
 WORKER_AMI_VERSION: $WORKER_AMI_VERSION]"
 
-export ANSIBLE_HOST_KEY_CHECKING=False
-export ANSIBLE_CONFIG=../ansible.cfg
 export DOCKER_VERSION=
 export DOCKER_COMPOSE_VERSION=5.5.1
 export DOCKER_BUILDX_VERSION=0.37.1

@@ -28,6 +28,8 @@ function usage() {
     echo "  -s, --script      project/hosting-services relative path to script to execute. Cannot be used with --operation or --platform."
     echo "  -l, --local       deploy using the local working tree instead of the sources the build was made from."
     echo "  -w, --wait        wait for a build that doesn't exist yet, checking every minute."
+    echo "  -i, --ignore-version  deploy hosts on an Amazon Linux release behind the one in aws-common.env as they are."
+    echo "  -u, --update-version  upgrade hosts on an Amazon Linux release behind the one in aws-common.env to it."
     echo "  -h, --help        print this usage."
     echo ""
     if [ ! -z "$ERROR" ]; then
@@ -232,6 +234,8 @@ function run_docker_image() {
     -v $PROJECT_DIR:/usr/local/lib/sepal \
     -v $CONFIG_DIR:/etc/sepal/conf.d \
     -e PROJECT_DIR=/usr/local/lib/sepal \
+    -e AMAZON_LINUX_RELEASE_ACTION=$RELEASE_ACTION \
+    "${AWS_COMMON_ENV_ARGS[@]}" \
     sepal-deploy \
     bash -c "/usr/local/lib/sepal/hosting-services/$SCRIPT_PATH $BUILD_NUMBER /etc/sepal/conf.d"
 }
@@ -276,6 +280,14 @@ case $key in
     WAIT=true
     shift # past argument
     ;;
+    -i|--ignore-version)
+    IGNORE_VERSION=true
+    shift # past argument
+    ;;
+    -u|--update-version)
+    UPDATE_VERSION=true
+    shift # past argument
+    ;;
     -h|--help)
     usage
     ;;
@@ -303,6 +315,15 @@ fi
 if [ -z "$SCRIPT_PATH" ]; then
     SCRIPT_PATH="$PLATFORM/sepal/$OPERATION.sh"
 fi
+if [[ -n "$IGNORE_VERSION" && -n "$UPDATE_VERSION" ]]; then
+    usage "--ignore-version and --update-version cannot be used together"
+fi
+RELEASE_ACTION=check
+if [ -n "$IGNORE_VERSION" ]; then
+    RELEASE_ACTION=ignore
+elif [ -n "$UPDATE_VERSION" ]; then
+    RELEASE_ACTION=update
+fi
 
 if [ -n "$GIT_COMMIT" ]; then
     : # already running from the build sources
@@ -325,6 +346,16 @@ fi
 PRODUCTION=
 if [ -n "$STEP" ] && is_production; then
     PRODUCTION=true
+fi
+
+# Settings all AWS deploy environments share, such as the Amazon Linux release they run. Mounted at its own path,
+# which the release check names when the file needs updating.
+AWS_COMMON_ENV=$(dirname $CONFIG_DIR)/aws-common.env
+AWS_COMMON_ENV_ARGS=()
+if [ -f "$AWS_COMMON_ENV" ]; then
+    AWS_COMMON_ENV_ARGS=(-v $AWS_COMMON_ENV:$AWS_COMMON_ENV:ro -e AWS_COMMON_ENV=$AWS_COMMON_ENV)
+elif [[ "$SCRIPT_PATH" == aws/* && ("$STEP" == "deploy" || "$STEP" == "rollout") ]]; then
+    usage "Missing $AWS_COMMON_ENV, the settings all AWS deploy environments share"
 fi
 
 if [ -n "$PRODUCTION" ]; then

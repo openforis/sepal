@@ -1,0 +1,136 @@
+# Runs before a deployment changes anything. A host on an Amazon Linux release behind AMAZON_LINUX_RELEASEVER, from
+# aws-common.env, fails the deployment, unless AMAZON_LINUX_RELEASE_ACTION is ignore (deploy it as it is) or update
+# (upgrade it first): bin/deploy --ignore-version and --update-version. A host that isn't behind only reports a newer
+# release.
+- name: Check the Amazon Linux release
+  hosts: all
+  user: ec2-user
+  become: yes
+  gather_facts: true
+  gather_subset:
+    - '!all'
+
+  vars:
+    target_release: "{{ lookup('env', 'AMAZON_LINUX_RELEASEVER') }}"
+    release_action: "{{ lookup('env', 'AMAZON_LINUX_RELEASE_ACTION') | default('check', true) }}"
+    release_file: "{{ lookup('env', 'AWS_COMMON_ENV') | default('aws-common.env', true) }}"
+    host_name: "{{ tags.Type | default(inventory_hostname) }}"
+    behind_report: >-
+      {{ host_name }} runs Amazon Linux {{ deployed_release }}, behind {{ target_release }} in {{ release_file }}
+      {{- (', and behind the newest release, ' ~ newest_release) if newer_than_target else ', the newest release' }}.
+
+  tasks:
+    - name: Verify the release settings
+      assert:
+        that:
+          - target_release | length > 0
+          - release_action in ['check', 'ignore', 'update']
+        fail_msg: >-
+          AMAZON_LINUX_RELEASEVER must be set in {{ release_file }}, and AMAZON_LINUX_RELEASE_ACTION must be check,
+          ignore or update (is {{ release_action }})
+        quiet: true
+      run_once: true
+
+    - name: Skip Amazon Linux 2
+      when: ansible_distribution_major_version == '2'
+      block:
+        - name: Report Amazon Linux 2
+          debug:
+            msg: "{{ host_name }} runs Amazon Linux 2, which has no releases to check"
+
+        - meta: end_host
+
+    # Provide dnf needs-restarting and check-release-update. The Amazon Linux AMIs come with them.
+    - name: Install the dnf plugins
+      dnf:
+        name: [dnf-plugins-core, dnf-plugin-release-notification]
+
+    - name: Read the deployed release
+      command: rpm -q --queryformat '%{VERSION}' system-release
+      register: deployed
+      changed_when: false
+      check_mode: false
+
+    # Prints the newest release after the host's own on stderr, or nothing when there is none
+    - name: Read the newest release
+      command: dnf check-release-update --latest-only --version-only
+      register: newest
+      changed_when: false
+      check_mode: false
+
+    - set_fact:
+        deployed_release: "{{ deployed.stdout }}"
+        newest_release: "{{ newest.stderr | regex_search('[0-9]+\\.[0-9]+\\.[0-9]+') | default(deployed.stdout, true) }}"
+
+    - set_fact:
+        behind: "{{ deployed_release is version(target_release, '<') }}"
+        newer_than_target: "{{ newest_release is version(target_release, '>') }}"
+
+    # Docker only upgrades on a DOCKER_VERSION change (see deploy.sh): restarting it restarts every container
+    - name: List the packages an upgrade to {{ target_release }} would update
+      dnf: &upgrade
+        name: '*'
+        state: latest
+        releasever: "{{ target_release }}"
+        exclude: [docker, containerd, runc]
+      check_mode: true
+      changed_when: false
+      register: pending_upgrade
+      when: behind and release_action == 'check'
+
+    - name: Report the packages an upgrade to {{ target_release }} would update
+      debug:
+        msg: |-
+          Upgrading {{ host_name }} to Amazon Linux {{ target_release }}{{ (' (newest ' ~ newest_release ~ ')') if newer_than_target else '' }} would update:
+          {{ pending_upgrade.results | package_changes }}
+      when: pending_upgrade.results | default([]) | length > 0
+
+    - name: Fail on a release behind {{ target_release }}
+      fail:
+        msg: Deploy with --update-version or --ignore-version
+      when: behind and release_action == 'check'
+
+    - name: Report a release behind {{ target_release }}
+      debug:
+        msg: >-
+          {{ behind_report }}
+          {{ ('Upgrading it to ' ~ target_release) if release_action == 'update' else 'Deploying it as it is' }}.
+      when: behind
+
+    - name: Report a newer release
+      debug:
+        msg: >-
+          {{ host_name }} runs Amazon Linux {{ deployed_release }}.
+          A newer release of "Amazon Linux" is available: {{ newest_release }}.
+          Update {{ release_file }} to upgrade {{ host_name }} to it.
+      when: not behind and deployed_release is version(newest_release, '<')
+
+    - name: Report the newest release
+      debug:
+        msg: "{{ host_name }} runs Amazon Linux {{ deployed_release }}, the newest release"
+      when: deployed_release == newest_release
+
+    - name: Upgrade to Amazon Linux {{ target_release }}
+      dnf: *upgrade
+      register: upgrade
+      when: behind and release_action == 'update'
+
+    - name: Check whether the upgrade needs a reboot
+      command: dnf needs-restarting -r
+      register: needs_reboot
+      changed_when: false
+      check_mode: false
+      failed_when: needs_reboot.rc not in [0, 1]
+      when: upgrade is changed
+
+    - name: Report a needed reboot
+      debug:
+        msg: "{{ host_name }} needs a reboot to run the upgraded kernel and system libraries"
+      when: upgrade is changed and needs_reboot.rc == 1
+
+    - name: Report a release newer than {{ target_release }}
+      debug:
+        msg: >-
+          A newer release of "Amazon Linux" is available: {{ newest_release }}.
+          Update {{ release_file }} to upgrade {{ host_name }} to it.
+      when: upgrade is changed and newer_than_target
