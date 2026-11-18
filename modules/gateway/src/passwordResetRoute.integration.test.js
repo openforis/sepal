@@ -26,13 +26,18 @@ const {passwordResetRoute} = await import('./passwordResetRoute.js')
 describe('a password reset', () => {
     let gateway
     let sessionsStarted
+    let startedAs
 
     before(async () => {
-        gateway = await startGateway(user => sessionsStarted.push(user))
+        gateway = await startGateway(user => {
+            sessionsStarted.push(user)
+            return startedAs(user)
+        })
     })
 
     beforeEach(() => {
         sessionsStarted = []
+        startedAs = user => user
         upstream.resetsReceived.length = 0
     })
 
@@ -47,6 +52,16 @@ describe('a password reset', () => {
         assert.equal(response.status, 200)
         assert.deepEqual(response.body, BOB)
         assert.deepEqual(sessionsStarted, [BOB])
+    })
+
+    test('answers with the identity the session started as, which the user cache can hold newer', async () => {
+        const newer = {...BOB, revision: 2}
+        startedAs = () => newer
+
+        const response = await gateway.reset({token: VALID_TOKEN, password: 'new-password', recaptchaToken: 'r'})
+
+        assert.equal(response.status, 200)
+        assert.deepEqual(response.body, newer)
     })
 
     test('passes the reset on to the user module as it was submitted', async () => {
@@ -78,7 +93,8 @@ const startGateway = async startSession => {
                 headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'},
                 body: new URLSearchParams(fields)
             })
-            return {status: response.status, body: await response.json()}
+            const text = await response.text()
+            return {status: response.status, body: text ? JSON.parse(text) : null}
         },
         close: () => new Promise(resolve => server.close(resolve))
     }

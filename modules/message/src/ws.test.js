@@ -26,8 +26,11 @@ const setup = ({userNotifications} = {}) => {
     return {sent, messageChanged$, stop$, handler}
 }
 
-const subscriptionUp = (handler, {username = 'alice', roles = [], clientId = 'c1', subscriptionId = 's1'} = {}) =>
-    handler({event: 'subscriptionUp', user: {username, roles}, clientId, subscriptionId})
+const subscriptionUp = (handler, {username = 'alice', roles = [], revision, clientId = 'c1', subscriptionId = 's1'} = {}) =>
+    handler({event: 'subscriptionUp', user: {username, roles, revision}, clientId, subscriptionId})
+
+const userUpdated = (handler, {username = 'alice', roles = [], revision}) =>
+    handler({event: 'userUpdated', user: {username, roles, revision}})
 
 describe('message ws protocol', () => {
     it('unicasts a notification snapshot on subscriptionUp', async () => {
@@ -168,14 +171,14 @@ describe('message ws protocol', () => {
                 return visibleNotifications(username, isAdmin)
             }
         })
-        subscriptionUp(handler, {roles: ['application_admin']})
-        subscriptionUp(handler, {roles: ['application_admin'], clientId: 'c2', subscriptionId: 's2'})
+        subscriptionUp(handler, {roles: ['application_admin'], revision: 1})
+        subscriptionUp(handler, {roles: ['application_admin'], revision: 1, clientId: 'c2', subscriptionId: 's2'})
         subscriptionUp(handler, {username: 'bob', roles: ['application_admin'], clientId: 'c3', subscriptionId: 's3'})
         await flush()
         sent.length = 0
         queried.length = 0
 
-        handler({event: 'userUpdated', user: {username: 'alice', roles: []}})
+        userUpdated(handler, {roles: [], revision: 2})
         await flush()
 
         assert.deepEqual(queried, [['alice', false]])
@@ -204,11 +207,11 @@ describe('message ws protocol', () => {
 
     it('promotion refreshes existing subscriptions with administrator visibility', async () => {
         const {sent, handler} = setup({userNotifications: async (username, isAdmin) => visibleNotifications(username, isAdmin)})
-        subscriptionUp(handler)
+        subscriptionUp(handler, {revision: 1})
         await flush()
         sent.length = 0
 
-        handler({event: 'userUpdated', user: {username: 'alice', roles: ['application_admin']}})
+        userUpdated(handler, {roles: ['application_admin'], revision: 2})
         await flush()
 
         assert.deepEqual(sent, [{username: 'alice', data: {notifications: visibleNotifications('alice', true)}}])
@@ -222,14 +225,14 @@ describe('message ws protocol', () => {
                 return visibleNotifications(username, isAdmin)
             }
         })
-        subscriptionUp(handler, {roles: ['application_admin']})
-        handler({event: 'userUpdated', user: {username: 'alice', roles: []}})
+        subscriptionUp(handler, {roles: ['application_admin'], revision: 1})
+        userUpdated(handler, {roles: [], revision: 2})
         await flush()
         queried.length = 0
         sent.length = 0
 
-        subscriptionUp(handler, {roles: ['application_admin']})
-        subscriptionUp(handler, {roles: ['application_admin'], clientId: 'c2', subscriptionId: 's2'})
+        subscriptionUp(handler, {roles: ['application_admin'], revision: 1})
+        subscriptionUp(handler, {roles: ['application_admin'], revision: 1, clientId: 'c2', subscriptionId: 's2'})
         await flush()
         messageChanged$.next({})
         await flush()
@@ -254,13 +257,90 @@ describe('message ws protocol', () => {
         assert.deepEqual(sent, [{clientId: 'c2', subscriptionId: 's2', data: {notifications: visibleNotifications('alice', false)}}])
     })
 
-    it('a promotion takes precedence over an older non-admin subscription snapshot', async () => {
+    it('a subscription snapshot without a revision cannot override a known promotion', async () => {
         const {sent, handler} = setup({userNotifications: async (username, isAdmin) => visibleNotifications(username, isAdmin)})
         handler({event: 'userUpdated', user: {username: 'alice', roles: ['application_admin']}})
         subscriptionUp(handler)
         await flush()
 
         assert.deepEqual(sent, [{clientId: 'c1', subscriptionId: 's1', data: {notifications: visibleNotifications('alice', true)}}])
+    })
+
+    it('an administrator update older than a demotion cannot restore drafts', async () => {
+        const queried = []
+        const {sent, handler, messageChanged$} = setup({
+            userNotifications: async (username, isAdmin) => {
+                queried.push([username, isAdmin])
+                return visibleNotifications(username, isAdmin)
+            }
+        })
+        subscriptionUp(handler, {roles: ['application_admin'], revision: 1})
+        userUpdated(handler, {roles: [], revision: 3})
+        await flush()
+        sent.length = 0
+        queried.length = 0
+
+        userUpdated(handler, {roles: ['application_admin'], revision: 2})
+        userUpdated(handler, {roles: ['application_admin']})
+        await flush()
+        messageChanged$.next({})
+        await flush()
+
+        assert.deepEqual(queried, [['alice', false]])
+        assert.deepEqual(sent, [{username: 'alice', data: {notifications: visibleNotifications('alice', false)}}])
+    })
+
+    it('a demotion without a revision revokes drafts, and an earlier administrator snapshot cannot restore them', async () => {
+        const queried = []
+        const {sent, handler, messageChanged$} = setup({
+            userNotifications: async (username, isAdmin) => {
+                queried.push([username, isAdmin])
+                return visibleNotifications(username, isAdmin)
+            }
+        })
+        subscriptionUp(handler, {roles: ['application_admin'], revision: 1})
+        await flush()
+        sent.length = 0
+
+        userUpdated(handler, {roles: []})
+        await flush()
+        assert.deepEqual(sent, [{username: 'alice', data: {notifications: visibleNotifications('alice', false)}}])
+        subscriptionUp(handler, {roles: ['application_admin'], revision: 1, clientId: 'c2', subscriptionId: 's2'})
+        userUpdated(handler, {roles: ['application_admin']})
+        await flush()
+        queried.length = 0
+        messageChanged$.next({})
+        await flush()
+
+        assert.deepEqual(queried, [['alice', false]])
+    })
+
+    it('a promotion newer than access revoked without a revision restores drafts', async () => {
+        const {sent, handler} = setup({userNotifications: async (username, isAdmin) => visibleNotifications(username, isAdmin)})
+        subscriptionUp(handler, {roles: ['application_admin'], revision: 1})
+        userUpdated(handler, {roles: []})
+        await flush()
+        sent.length = 0
+
+        userUpdated(handler, {roles: ['application_admin'], revision: 2})
+        await flush()
+
+        assert.deepEqual(sent, [{username: 'alice', data: {notifications: visibleNotifications('alice', true)}}])
+    })
+
+    it('a newer subscription snapshot promotes every tab of the user', async () => {
+        const {sent, handler} = setup({userNotifications: async (username, isAdmin) => visibleNotifications(username, isAdmin)})
+        subscriptionUp(handler, {revision: 1})
+        await flush()
+        sent.length = 0
+
+        subscriptionUp(handler, {roles: ['application_admin'], revision: 2, clientId: 'c2', subscriptionId: 's2'})
+        await flush()
+
+        assert.deepEqual(new Set(sent.map(JSON.stringify)), new Set([
+            {username: 'alice', data: {notifications: visibleNotifications('alice', true)}},
+            {clientId: 'c2', subscriptionId: 's2', data: {notifications: visibleNotifications('alice', true)}}
+        ].map(JSON.stringify)))
     })
 
     for (const trigger of ['subscriptionUp', 'refresh', 'change']) {
@@ -272,9 +352,9 @@ describe('message ws protocol', () => {
                     ? pending.promise
                     : Promise.resolve(visibleNotifications(username, isAdmin))
             })
-            subscriptionUp(handler, {roles: ['application_admin']})
+            subscriptionUp(handler, {roles: ['application_admin'], revision: 1})
             if (trigger !== 'subscriptionUp') {
-                subscriptionUp(handler, {roles: ['application_admin'], clientId: 'c2', subscriptionId: 's2'})
+                subscriptionUp(handler, {roles: ['application_admin'], revision: 1, clientId: 'c2', subscriptionId: 's2'})
                 await flush()
                 sent.length = 0
                 holdAdminResult = true
@@ -285,7 +365,7 @@ describe('message ws protocol', () => {
                 }
             }
 
-            handler({event: 'userUpdated', user: {username: 'alice', roles: []}})
+            userUpdated(handler, {roles: [], revision: 2})
             await flush()
             assert.deepEqual(sent, [{username: 'alice', data: {notifications: visibleNotifications('alice', false)}}])
             sent.length = 0
@@ -315,7 +395,7 @@ describe('message ws protocol', () => {
         assert.deepEqual(sent, [{username: 'alice', data: {notifications: notificationsFor('alice')}}])
     })
 
-    it('a tab already using demoted permissions cannot keep an old administrator update valid', async () => {
+    it('a demoting subscription snapshot from another tab invalidates a pending administrator update', async () => {
         const pending = Promise.withResolvers()
         let hold = false
         const {sent, handler, messageChanged$} = setup({
@@ -323,13 +403,12 @@ describe('message ws protocol', () => {
                 ? pending.promise
                 : Promise.resolve(visibleNotifications(username, isAdmin))
         })
-        subscriptionUp(handler, {roles: ['application_admin']})
-        subscriptionUp(handler, {clientId: 'c2', subscriptionId: 's2'})
+        subscriptionUp(handler, {roles: ['application_admin'], revision: 1})
         await flush()
         sent.length = 0
         hold = true
         messageChanged$.next({})
-        handler({event: 'userUpdated', user: {username: 'alice', roles: []}})
+        subscriptionUp(handler, {revision: 2, clientId: 'c2', subscriptionId: 's2'})
         await flush()
         sent.length = 0
 

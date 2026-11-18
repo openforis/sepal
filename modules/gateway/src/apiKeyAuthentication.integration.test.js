@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict'
 import {createServer} from 'node:http'
-import {after, before, describe, mock, test} from 'node:test'
+import {after, before, beforeEach, describe, mock, test} from 'node:test'
 
 import express from 'express'
-import {Subject} from 'rxjs'
+import {firstValueFrom, Subject} from 'rxjs'
+
+import {MemoryRedis} from './testSupport/memoryRedis.js'
 
 // What a module downstream of the gateway is told about who is calling: over real HTTP, through the
 // real user middleware, authentication middleware and proxy, to a stand-in for the worker module
@@ -12,6 +14,12 @@ import {Subject} from 'rxjs'
 const ALICE = {id: 1, username: 'alice', roles: [], status: 'ACTIVE'}
 const BOB = {id: 2, username: 'bob', roles: [], status: 'ACTIVE'}
 const CAROL = {id: 3, username: 'carol', roles: [], status: 'LOCKED'}
+const DAVE = {id: 4, username: 'dave', roles: ['application_admin'], status: 'ACTIVE', revision: 1}
+const DEMOTED_DAVE = {...DAVE, roles: [], revision: 2}
+const LOCKED_DAVE = {...DEMOTED_DAVE, status: 'LOCKED', revision: 3}
+const DAVE_SESSION_KEY = 'dave-session-key'
+const DAVE_TASK_KEY = 'task_dave-key'
+const DAVE_SESSION = {sessionId: 's-dave', username: 'dave', workerType: 'sandbox'}
 
 const EXECUTOR_KEY = 'executor-key'
 const SANDBOX_KEY = 'sandbox-key'
@@ -110,6 +118,52 @@ describe('a request authenticated with a task container\'s key', () => {
     })
 })
 
+// The user module and the key owners answer from the database, and the user cache can learn of a newer change while
+// that answer is on its way.
+describe('a request whose user changes while it is authenticated', () => {
+    const credentials = {
+        'ordinary credentials, not from a browser': {username: 'dave', password: 'daves-password', browser: false, lookup: 'authenticate'},
+        'a worker session api key': {apiKey: DAVE_SESSION_KEY, lookup: 'info'},
+        'a task api key': {apiKey: DAVE_TASK_KEY, lookup: 'info'}
+    }
+
+    beforeEach(() => {
+        gateway.redis.values.clear()
+        gateway.sessions.length = 0
+    })
+
+    for (const [name, {lookup, ...presented}] of Object.entries(credentials)) {
+        test(`with ${name} is forwarded as demoted when the demotion becomes known first`, async () => {
+            const held = upstream.hold(lookup)
+
+            const pending = probe(presented)
+            await held.reached
+            await firstValueFrom(gateway.userStore.setUser$(DEMOTED_DAVE))
+            held.release()
+            const {status, body} = await pending
+
+            assert.equal(status, 200)
+            assert.partialDeepStrictEqual(body.user, {username: 'dave', status: 'ACTIVE'})
+            assert.deepEqual(body.user.roles, [])
+            assert.ok(gateway.sessions.every(session => session.username === undefined))
+        })
+
+        test(`with ${name} is refused when a lock becomes known first`, async () => {
+            const held = upstream.hold(lookup)
+
+            const pending = probe(presented)
+            await held.reached
+            await firstValueFrom(gateway.userStore.setUser$(LOCKED_DAVE))
+            held.release()
+            const {status, challenge} = await pending
+
+            assert.equal(status, 401)
+            assert.equal(challenge, presented.browser === false ? 'Basic realm="Sepal"' : null)
+            assert.ok(gateway.sessions.every(session => session.username === undefined))
+        })
+    }
+})
+
 describe('a request to an unauthenticated endpoint', () => {
     test('reaches the module with no session, whatever the caller claimed', async () => {
         const {status, body} = await probeUnauthenticated(FORGED)
@@ -147,45 +201,49 @@ describe('a request authenticated the ordinary way', () => {
 let gatewayUrl
 
 const startGateway = async () => {
-    const userStore = UserStore(fakeRedis(), new Subject())
+    const redis = new MemoryRedis()
+    const sessions = []
+    const userStore = UserStore(redis, new Subject())
     const {authMiddleware} = AuthMiddleware(userStore, async () => {})
     const {googleAccessTokenMiddleware} = GoogleAccessTokenMiddleware(userStore)
     const app = express()
     // No browser login: these requests arrive with credentials, not a cookie.
     app.use((req, _res, next) => {
         req.session = {}
+        sessions.push(req.session)
         next()
     })
     app.use(userStore.userMiddleware)
     Proxy(userStore, authMiddleware, googleAccessTokenMiddleware).proxyEndpoints(app)
     const server = await listen(app)
     gatewayUrl = `http://127.0.0.1:${server.address().port}`
-    return {close: () => new Promise(resolve => server.close(resolve))}
+    return {redis, sessions, userStore, close: () => new Promise(resolve => server.close(resolve))}
 }
 
 // /api/tasks is the authenticated endpoint the executor callbacks travel over; /api/sessions/expiry
 // is the one endpoint that is deliberately unauthenticated.
-const probe = ({apiKey, username = '', password, claimedSession, claimedUser}) =>
-    request('/api/tasks/echo', {apiKey, username, password, claimedSession, claimedUser})
+const probe = ({apiKey, username = '', password, browser, claimedSession, claimedUser}) =>
+    request('/api/tasks/echo', {apiKey, username, password, browser, claimedSession, claimedUser})
 
 const probeUnauthenticated = (claimedSession, claimedUser) =>
     request('/api/sessions/expiry/echo', {claimedSession, claimedUser})
 
-const request = async (path, {apiKey, username = '', password, claimedSession, claimedUser}) => {
+const request = async (path, {apiKey, username = '', password, browser = true, claimedSession, claimedUser}) => {
     const credentials = apiKey === undefined ? `${username}:${password}` : `:${apiKey}`
     const response = await fetch(`${gatewayUrl}${path}`, {
         headers: {
             ...(password === undefined && apiKey === undefined
                 ? {}
                 : {'Authorization': `Basic ${Buffer.from(credentials).toString('base64')}`}),
-            'No-auth-challenge': 'true',
+            ...(browser ? {'No-auth-challenge': 'true'} : {}),
             ...(claimedSession ? {'sepal-session': claimedSession} : {}),
             ...(claimedUser ? {'sepal-user': claimedUser} : {})
         }
     })
     return {
         status: response.status,
-        body: response.status === 200 ? await response.json() : null
+        body: response.status === 200 ? await response.json() : null,
+        challenge: response.headers.get('www-authenticate')
     }
 }
 
@@ -193,14 +251,32 @@ async function startUpstream() {
     const sessionsByKey = {
         [EXECUTOR_KEY]: EXECUTOR_SESSION,
         [SANDBOX_KEY]: SANDBOX_SESSION,
-        [LOCKED_SESSION_KEY]: LOCKED_SESSION
+        [LOCKED_SESSION_KEY]: LOCKED_SESSION,
+        [DAVE_SESSION_KEY]: DAVE_SESSION
     }
     const tasksByKey = {
         [TASK_KEY]: {username: 'alice', taskId: 't-1'},
-        [LOCKED_TASK_KEY]: {username: 'carol', taskId: 't-2'}
+        [LOCKED_TASK_KEY]: {username: 'carol', taskId: 't-2'},
+        [DAVE_TASK_KEY]: {username: 'dave', taskId: 't-3'}
     }
-    const usersByName = {alice: ALICE, bob: BOB, carol: CAROL}
-    const passwords = {alice: 'alices-password'}
+    const usersByName = {alice: ALICE, bob: BOB, carol: CAROL, dave: DAVE}
+    const passwords = {alice: 'alices-password', dave: 'daves-password'}
+    // A held lookup answers once released.
+    const holds = {}
+    const hold = lookup => {
+        const reached = Promise.withResolvers()
+        const released = Promise.withResolvers()
+        holds[lookup] = {reached, released}
+        return {reached: reached.promise, release: () => released.resolve()}
+    }
+    const heldUntilReleased = async lookup => {
+        const held = holds[lookup]
+        if (held) {
+            delete holds[lookup]
+            held.reached.resolve()
+            await held.released.promise
+        }
+    }
 
     const app = express()
     app.use(express.urlencoded({extended: false}))
@@ -212,12 +288,14 @@ async function startUpstream() {
         const task = tasksByKey[req.body.apiKey]
         task ? res.json(task) : res.status(401).json({})
     })
-    app.post('/authenticate', (req, res) => {
+    app.post('/authenticate', async (req, res) => {
         const {username, password} = req.body
+        await heldUntilReleased('authenticate')
         passwords[username] === password ? res.json(usersByName[username]) : res.status(401).json({})
     })
-    app.get('/info', (req, res) => {
+    app.get('/info', async (req, res) => {
         const user = usersByName[req.query.username]
+        await heldUntilReleased('info')
         user ? res.json(user) : res.status(401).json({})
     })
     // What the worker module sees once the proxy has forwarded the request.
@@ -230,19 +308,8 @@ async function startUpstream() {
     const server = await listen(app)
     return {
         address: `127.0.0.1:${server.address().port}`,
+        hold,
         close: () => new Promise(resolve => server.close(resolve))
-    }
-}
-
-const fakeRedis = () => {
-    const values = new Map()
-    return {
-        get: async key => values.get(key) ?? null,
-        set: async (key, value) => {
-            const previous = values.get(key) ?? null
-            values.set(key, value)
-            return previous
-        }
     }
 }
 

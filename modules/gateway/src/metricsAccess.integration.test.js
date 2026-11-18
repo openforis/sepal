@@ -5,6 +5,8 @@ import {after, before, describe, mock, test} from 'node:test'
 import express from 'express'
 import {Subject} from 'rxjs'
 
+import {MemoryRedis} from './testSupport/memoryRedis.js'
+
 // Who may read the modules' Prometheus metrics through the gateway: over real HTTP, through the real
 // user middleware, authentication middleware and proxy, to a stand-in for the modules that serves
 // /metrics as exactly as Koa's metrics middleware does. The user module is stood in for as well.
@@ -79,7 +81,7 @@ describe('a module\'s other routes', () => {
 let gatewayUrl
 
 const startGateway = async () => {
-    const userStore = UserStore(fakeRedis(), new Subject())
+    const userStore = UserStore(new MemoryRedis(), new Subject())
     const {authMiddleware} = AuthMiddleware(userStore, async () => {})
     const {googleAccessTokenMiddleware} = GoogleAccessTokenMiddleware(userStore)
     const app = express()
@@ -126,18 +128,6 @@ async function startUpstream() {
     return {
         address: `127.0.0.1:${server.address().port}`,
         close: () => new Promise(resolve => server.close(resolve))
-    }
-}
-
-const fakeRedis = () => {
-    const values = new Map()
-    return {
-        get: async key => values.get(key) ?? null,
-        set: async (key, value) => {
-            const previous = values.get(key) ?? null
-            values.set(key, value)
-            return previous
-        }
     }
 }
 

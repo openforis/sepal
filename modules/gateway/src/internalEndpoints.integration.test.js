@@ -5,6 +5,8 @@ import {after, before, describe, mock, test} from 'node:test'
 import express from 'express'
 import {Subject} from 'rxjs'
 
+import {MemoryRedis} from './testSupport/memoryRedis.js'
+
 // The user module's internal endpoints, which skip authentication and rate limiting: over real HTTP,
 // through the real user middleware, authentication middleware and proxy, to a stand-in for the user
 // module that serves them, matching paths case-insensitively as its router does.
@@ -63,7 +65,7 @@ describe('the user module\'s other endpoints', () => {
 let gatewayUrl
 
 const startGateway = async () => {
-    const userStore = UserStore(fakeRedis(), new Subject())
+    const userStore = UserStore(new MemoryRedis(), new Subject())
     const {authMiddleware} = AuthMiddleware(userStore, async () => {})
     const {googleAccessTokenMiddleware} = GoogleAccessTokenMiddleware(userStore)
     const app = express()
@@ -107,18 +109,6 @@ async function startUpstream() {
     return {
         address: `127.0.0.1:${server.address().port}`,
         close: () => new Promise(resolve => server.close(resolve))
-    }
-}
-
-const fakeRedis = () => {
-    const values = new Map()
-    return {
-        get: async key => values.get(key) ?? null,
-        set: async (key, value) => {
-            const previous = values.get(key) ?? null
-            values.set(key, value)
-            return previous
-        }
     }
 }
 

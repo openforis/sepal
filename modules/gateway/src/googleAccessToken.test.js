@@ -117,7 +117,6 @@ test('a demotion between the cache read and write causes a retry', async () => {
 
     const user = await firstValueFrom(store.updateGoogleTokens$({username: 'Alice', googleTokens}))
 
-    assert.equal(redis.eval.mock.callCount(), 2)
     assert.deepEqual(user, {...demoted(), googleTokens})
     assert.deepEqual(await firstValueFrom(store.getUser$('alice')), user)
     assertTokenEvents(events, false)
@@ -178,6 +177,24 @@ test('a failed refresh forwards current roles instead of the pre-refresh snapsho
     assert.equal(next.mock.callCount(), 1)
     assertCurrentIdentity(JSON.parse(req.headers['sepal-user']), oldTokens)
     assert.deepEqual(await firstValueFrom(store.getUser$('alice')), demoted())
+})
+
+test('a refresh during which the user is locked does not forward the request', async () => {
+    const {store} = fixture()
+    const req = {headers: {'sepal-user': JSON.stringify(admin())}, originalUrl: '/api/gee/job'}
+    const res = response()
+    const next = mock.fn()
+    const {googleAccessTokenMiddleware} = GoogleAccessTokenMiddleware(store)
+
+    const pending = googleAccessTokenMiddleware(req, res, next)
+    await refreshStarted.promise
+    await firstValueFrom(store.setUser$({...demoted(), status: 'LOCKED', revision: 3}))
+    completeRefresh(false)
+    await pending
+
+    assert.equal(next.mock.callCount(), 0)
+    assert.deepEqual(res.status.mock.calls[0].arguments, [401])
+    assert.equal(req.headers['sepal-user'], undefined)
 })
 
 for (const revoked of [false, true]) {

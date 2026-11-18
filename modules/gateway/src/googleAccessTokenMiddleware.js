@@ -4,11 +4,12 @@ import {getLogger} from '#sepal/log'
 
 import {isRefreshRequired} from './googleAccessToken.js'
 import {urlTag, usernameTag} from './tag.js'
-import {getRequestUser, setRequestUser} from './user.js'
+import {getRequestUser, removeRequestUser, setRequestUser} from './user.js'
 import {updateGoogleAccessToken$} from './userApi.js'
 
 const log = getLogger('googleAccessTokenMiddleware')
 
+const UNAUTHORIZED = 401
 const INTERNAL_SERVER_ERROR = 500
 
 const GoogleAccessTokenMiddleware = userStore => {
@@ -40,8 +41,19 @@ const GoogleAccessTokenMiddleware = userStore => {
                             })
                         )
                     }),
-                    tap(currentUser => setRequestUser(req, currentUser))
+                    map(forwardable)
                 )
+            }
+
+            // The user can be locked while the refresh is in flight.
+            const forwardable = currentUser => {
+                if (currentUser.status !== 'ACTIVE') {
+                    log.info(`${usernameTag(currentUser.username)} ${urlTag(req.originalUrl)} User is ${currentUser.status}, not forwarding`)
+                    removeRequestUser(req)
+                    return false
+                }
+                setRequestUser(req, currentUser)
+                return true
             }
     
             const refreshGoogleTokensIfNeeded$ = () => {
@@ -57,9 +69,12 @@ const GoogleAccessTokenMiddleware = userStore => {
                 return of(true)
             }
 
-            await firstValueFrom(refreshGoogleTokensIfNeeded$())
-
-            next()
+            if (await firstValueFrom(refreshGoogleTokensIfNeeded$())) {
+                next()
+            } else {
+                res.status(UNAUTHORIZED)
+                res.end()
+            }
         } catch(error) {
             log.fatal('Unexpected GoogleAccessTokenMiddleware error', error)
             res.status(INTERNAL_SERVER_ERROR)

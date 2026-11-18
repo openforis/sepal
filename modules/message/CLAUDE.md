@@ -31,6 +31,9 @@ Owns the `message` MySQL schema (`message.message`, `message.notification`).
 - WebSocket `userUpdated` events replace subscriptions when administrator access changes and push
   a fresh list to that user's tabs. Pending results use the subscription records they started with;
   replacement or removal invalidates them before sending. Refresh commands require a subscription
-  owned by the requesting user and client. The latest role from `userUpdated` is retained for the
-  gateway connection, so stale subscription snapshots cannot restore revoked access after a tab
-  closes or re-subscribes.
+  owned by the requesting user and client. Role updates and subscription snapshots are ordered by
+  the user record's `revision`: the newest seen is retained for the gateway connection and applied
+  to every tab of the user, and an older or equal one changes nothing. A role update without a
+  revision can revoke but never grant, and keeps the known revision, so only a newer one grants again;
+  a snapshot without one only fills in a role not yet known. Neither a delayed update nor a stale
+  snapshot can restore revoked access, also after a tab closes or re-subscribes.

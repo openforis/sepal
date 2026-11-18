@@ -13,8 +13,8 @@ const log = getLogger('ws')
 const createMessageWsProtocol = ({userNotifications, messageChanged$}) =>
     ({send, stop$}) => {
         const subscriptionsById = new Map()
-        // Later subscriptions can carry an older gateway-cache snapshot than a role update.
-        const latestAdminRoleByUsername = new Map()
+        // Role updates and subscription snapshots can arrive older than one already seen (see nextRole).
+        const knownRoleByUsername = new Map()
 
         const subscribedUsers = () => {
             const usersByUsername = new Map()
@@ -46,10 +46,7 @@ const createMessageWsProtocol = ({userNotifications, messageChanged$}) =>
         const sendToUser = async ({username, isAdmin, subscriptions}) => {
             try {
                 const notifications = await userNotifications(username, isAdmin)
-                const hasCurrentRecipient = subscriptions.some(subscription =>
-                    subscription.isAdmin === isAdmin && isSubscriptionUnchanged(subscription)
-                )
-                if (hasCurrentRecipient) {
+                if (subscriptions.some(isSubscriptionUnchanged)) {
                     send({username, data: {notifications}})
                 }
             } catch (error) {
@@ -68,7 +65,7 @@ const createMessageWsProtocol = ({userNotifications, messageChanged$}) =>
 
         const onSubscriptionUp = ({user, clientId, subscriptionId}) => {
             const {username} = user
-            const isAdmin = latestAdminRoleByUsername.get(username) ?? userIsAdmin(user)
+            const {isAdmin} = observeRole(user)
             log.debug(() => `Subscription up: ${username} (${subscriptionId})`)
             const subscription = {username, isAdmin, clientId, subscriptionId}
             subscriptionsById.set(subscriptionId, subscription)
@@ -76,9 +73,21 @@ const createMessageWsProtocol = ({userNotifications, messageChanged$}) =>
         }
 
         const onUserUpdated = ({user}) => {
+            observeRole(user, {revokesWithoutRevision: true})
+        }
+
+        const observeRole = (user, {revokesWithoutRevision = false} = {}) => {
             const {username} = user
-            const isAdmin = userIsAdmin(user)
-            latestAdminRoleByUsername.set(username, isAdmin)
+            const known = knownRoleByUsername.get(username)
+            const role = nextRole(known, user, revokesWithoutRevision)
+            if (role !== known) {
+                knownRoleByUsername.set(username, role)
+                applyRole(username, role.isAdmin)
+            }
+            return role
+        }
+
+        const applyRole = (username, isAdmin) => {
             const changedSubscriptions = []
             for (const [subscriptionId, subscription] of subscriptionsById) {
                 if (subscription.username === username && subscription.isAdmin !== isAdmin) {
@@ -130,7 +139,7 @@ const createMessageWsProtocol = ({userNotifications, messageChanged$}) =>
 
         stop$.subscribe(() => {
             subscriptionsById.clear()
-            latestAdminRoleByUsername.clear()
+            knownRoleByUsername.clear()
         })
 
         messageChanged$
@@ -158,6 +167,20 @@ const createMessageWsProtocol = ({userNotifications, messageChanged$}) =>
             }
         }
     }
+
+// Newer by revision wins. Without a revision nothing can be ordered: such a role update can still revoke, since a
+// missed revocation would keep drafts visible indefinitely, but never grant, and the known revision stays, so only a
+// newer one grants again. A subscription snapshot without a revision only fills in a role not yet known.
+const nextRole = (known, user, revokesWithoutRevision) => {
+    const isAdmin = userIsAdmin(user)
+    if (!known) {
+        return {isAdmin, revision: user.revision ?? -1}
+    }
+    if (user.revision == null) {
+        return revokesWithoutRevision && known.isAdmin && !isAdmin ? {isAdmin, revision: known.revision} : known
+    }
+    return user.revision > known.revision ? {isAdmin, revision: user.revision} : known
+}
 
 const createMessageWs = ({userNotifications, messageChanged$}) =>
     moduleWs$(createMessageWsProtocol({userNotifications, messageChanged$}))
