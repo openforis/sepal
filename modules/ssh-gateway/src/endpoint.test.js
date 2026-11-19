@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import {afterEach, beforeEach, describe, it, mock} from 'node:test'
 
 import {of, throwError} from 'rxjs'
+import {TestScheduler} from 'rxjs/testing'
 
 import {callsOf} from '#sepal/testSupport/mock'
 
@@ -94,6 +95,34 @@ describe('sessionLabel$', () => {
 })
 
 describe('joinSession$', () => {
+    it('lets slow checks finish without overlap and keeps polling while STARTING', () => {
+        const scheduler = new TestScheduler((actual, expected) => assert.deepEqual(actual, expected))
+        scheduler.run(({cold, expectObservable, expectSubscriptions}) => {
+            const starting$ = cold('1500ms (s|)', {s: {statusCode: 200, body: session}})
+            const active = {...session, status: 'ACTIVE'}
+            const active$ = cold('1500ms (s|)', {s: {statusCode: 200, body: active}})
+            post$.mock.mockImplementation(() => active$)
+            post$.mock.mockImplementationOnce(() => starting$, 0)
+
+            expectObservable(joinSession$(session), '6s !').toBe('4500ms (s|)', {s: active})
+            expectSubscriptions(starting$.subscriptions).toBe('1s ^ 1499ms !')
+            expectSubscriptions(active$.subscriptions).toBe('3s ^ 1499ms !')
+        })
+        assert.equal(post$.mock.callCount(), 2)
+    })
+
+    it('cancels an in-flight check and stops polling when unsubscribed', () => {
+        const scheduler = new TestScheduler((actual, expected) => assert.deepEqual(actual, expected))
+        scheduler.run(({cold, expectObservable, expectSubscriptions}) => {
+            const response$ = cold('10s (s|)', {s: {statusCode: 200, body: session}})
+            post$.mock.mockImplementation(() => response$)
+
+            expectObservable(joinSession$(session), '2500ms !').toBe('')
+            expectSubscriptions(response$.subscriptions).toBe('1s ^ 1499ms !')
+        })
+        assert.equal(post$.mock.callCount(), 1)
+    })
+
     it('polls until the session leaves STARTING', () => {
         post$.mock.mockImplementationOnce(() => of({statusCode: 200, body: {...session, status: 'STARTING'}}), 0)
         post$.mock.mockImplementationOnce(() => of({statusCode: 200, body: {...session, status: 'ACTIVE'}}), 1)
