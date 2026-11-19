@@ -7,7 +7,7 @@ set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PROJECT_DIR=`dirname $DIR`
-PRIVATE_URL=git@github.com:openforis-sepal/sepal-private.git
+PRIVATE_URL=$(git -C "$PROJECT_DIR" remote get-url origin)
 PUBLIC_URL=git@github.com:openforis/sepal.git
 
 function usage() {
