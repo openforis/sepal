@@ -3,15 +3,40 @@ name: Test
 on:
   pull_request:
   push:
-    branches: [sepal-server, master]
+    branches: [master]
+  workflow_dispatch:
 
 concurrency:
   group: ${{github.workflow}}-${{github.ref}}
-  cancel-in-progress: true
+  # A push run tests only what changed since the previous push, so cancelling one would leave those
+  # changes untested. A pull request run always covers the whole pull request.
+  cancel-in-progress: ${{github.event_name == 'pull_request'}}
 
 jobs:
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    outputs:
+      tests: ${{steps.select.outputs.tests}}
+      lint: ${{steps.select.outputs.lint}}
+      python: ${{steps.select.outputs.python}}
+      deploy: ${{steps.select.outputs.deploy}}
+      shell: ${{steps.select.outputs.shell}}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - run: python3 -m unittest discover -s .github/scripts -p '*_test.py'
+      - id: select
+        run: python3 .github/scripts/select_jobs.py
+        env:
+          EVENT: ${{github.event_name}}
+          BEFORE: ${{github.event.before}}
+
   test:
     name: ${{matrix.module}}
+    needs: changes
+    if: needs.changes.outputs.tests != '[]'
     runs-on: ubuntu-latest
     # The *.integration.test.js suites reach a real MySQL, since the schema, collation and
     # transaction guarantees they cover cannot be shown against a fake. Modules without such
@@ -41,49 +66,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          # The library carries no lock of its own, so it is tested with the one most modules install it
-          # from. Its gdal wrapper shells out to the GDAL tools.
-          - module: lib/js/shared
-            lock: modules/worker/lib/shared/package-lock.json
-            packages: gdal-bin python3-gdal
-          - module: modules/gui
-          - module: modules/gee
-            libs: lib/js/shared lib/js/ee
-          - module: modules/task
-            libs: lib/js/shared
-          - module: modules/task-manager
-            libs: lib/js/shared
-          - module: modules/app-manager
-            libs: lib/js/shared
-          - module: modules/budget
-            libs: lib/js/shared
-          - module: modules/email
-            libs: lib/js/shared
-          - module: modules/gateway
-            libs: lib/js/shared
-          - module: modules/message
-            libs: lib/js/shared
-          - module: modules/r-proxy
-            libs: lib/js/shared
-          - module: modules/recipe
-            libs: lib/js/shared
-          - module: modules/scene-metadata
-            libs: lib/js/shared
-          - module: modules/ssh-gateway
-            libs: lib/js/shared
-          - module: modules/storage
-            libs: lib/js/shared
-          - module: modules/terminal
-            libs: lib/js/shared
-          - module: modules/user
-            libs: lib/js/shared
-          - module: modules/user-assets
-            libs: lib/js/shared
-          - module: modules/user-files
-            libs: lib/js/shared
-          - module: modules/worker
-            libs: lib/js/shared
+        # The entries live in .github/scripts/select_jobs.py, which keeps those the change affects.
+        include: ${{fromJSON(needs.changes.outputs.tests)}}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -121,13 +105,28 @@ jobs:
       # vitest single-shots rather than watching because Actions sets CI
       - run: npm test
         working-directory: ${{matrix.module}}
-      # only gui carries its own eslint
-      - run: npm run lint --if-present
-        if: '!cancelled()'
-        working-directory: ${{matrix.module}}
+
+  lint:
+    name: modules/gui lint
+    needs: changes
+    if: needs.changes.outputs.lint == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: npm
+          cache-dependency-path: modules/gui/package-lock.json
+      - run: npm ci
+        working-directory: modules/gui
+      - run: npm run lint
+        working-directory: modules/gui
 
   python:
     name: time-series stacker
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -136,6 +135,8 @@ jobs:
 
   deploy:
     name: deploy scripts
+    needs: changes
+    if: needs.changes.outputs.deploy == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -143,6 +144,8 @@ jobs:
 
   shell:
     name: shell
+    needs: changes
+    if: needs.changes.outputs.shell == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
