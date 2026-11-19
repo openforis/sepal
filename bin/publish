@@ -7,9 +7,8 @@ set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PROJECT_DIR=`dirname $DIR`
-PRIVATE_URL=git@github.com:openforis/sepal-private.git
+PRIVATE_URL=git@github.com:openforis-sepal/sepal-private.git
 PUBLIC_URL=git@github.com:openforis/sepal.git
-PUBLISH_KEY=${SEPAL_PUBLISH_KEY:-$HOME/.ssh/sepal-publish}
 
 function usage() {
     local ERROR=$1
@@ -24,12 +23,11 @@ function usage() {
     echo ""
     echo "Options:"
     echo ""
+    echo "  -k, --key        the publish deploy key. Required, unless only checking."
     echo "  -c, --check      only check that the build is merged into the private master, without publishing."
     echo "  -y, --yes        don't ask for confirmation."
     echo "  -n, --dry-run    show what would be published, without publishing."
     echo "  -h, --help       print this usage."
-    echo ""
-    echo "The publish key is read from \$SEPAL_PUBLISH_KEY (default ~/.ssh/sepal-publish)."
     echo ""
     if [ -n "$ERROR" ]; then
         exit 1
@@ -54,6 +52,9 @@ function check() {
 }
 
 function publish() {
+    if [ -z "$PUBLISH_KEY" ]; then
+        usage "Publish key not specified. Missing -k or --key option"
+    fi
     if [ ! -f "$PUBLISH_KEY" ]; then
         fail "Publish key doesn't exist: $PUBLISH_KEY"
     fi
@@ -80,7 +81,7 @@ function publish() {
     echo ""
     confirm
 
-    GIT_SSH_COMMAND="ssh -F /dev/null -i $PUBLISH_KEY -o IdentitiesOnly=yes" \
+    GIT_SSH_COMMAND="ssh -F /dev/null -i \"$PUBLISH_KEY\" -o IdentitiesOnly=yes" \
         git_project push --atomic $DRY_RUN $PUBLIC_URL "$COMMIT:refs/heads/master" "refs/tags/$TAG:refs/tags/$TAG"
     if [ -n "$DRY_RUN" ]; then
         echo "Dry run: build $BUILD_NUMBER not published"
@@ -131,6 +132,12 @@ function short() {
 while [[ $# -gt 0 ]]
 do
 case $1 in
+    -k|--key)
+    [ -n "$2" ] || usage "Missing key file after $1"
+    # Absolute, as git runs ssh from the project directory
+    PUBLISH_KEY=$(realpath -m "$2")
+    shift 2
+    ;;
     -c|--check)
     CHECK=true
     shift

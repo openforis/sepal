@@ -28,8 +28,8 @@ function usage() {
     echo "  -s, --script      project/hosting-services relative path to script to execute. Cannot be used with --operation or --platform."
     echo "  -l, --local       deploy using the local working tree instead of the sources the build was made from."
     echo "  -w, --wait        wait for a build that doesn't exist yet, checking every minute."
-    echo "  -i, --ignore-version  deploy hosts on an Amazon Linux release behind the one in aws-common.env as they are."
-    echo "  -u, --update-version  upgrade hosts on an Amazon Linux release behind the one in aws-common.env to it."
+    echo "  -i, --ignore-version  deploy hosts on an Amazon Linux release behind the one in aws-common/env as they are."
+    echo "  -u, --update-version  upgrade hosts on an Amazon Linux release behind the one in aws-common/env to it."
     echo "  -h, --help        print this usage."
     echo ""
     if [ ! -z "$ERROR" ]; then
@@ -203,11 +203,11 @@ function confirm_build_merged() {
 
 function publish_build() {
     echo ""
-    if ! $PROJECT_DIR/bin/publish --yes $BUILD_NUMBER; then
+    if ! $PROJECT_DIR/bin/publish --key $AWS_COMMON/sepal-publish --yes $BUILD_NUMBER; then
         echo ""
         echo "================================================================"
         echo "Build $BUILD_NUMBER is deployed to production, but publishing it failed."
-        echo "Fix the problem above, then run: bin/publish $BUILD_NUMBER"
+        echo "Fix the problem above, then run: bin/publish --key $AWS_COMMON/sepal-publish $BUILD_NUMBER"
         echo "================================================================"
         exit 1
     fi
@@ -235,7 +235,7 @@ function run_docker_image() {
     -v $CONFIG_DIR:/etc/sepal/conf.d \
     -e PROJECT_DIR=/usr/local/lib/sepal \
     -e AMAZON_LINUX_RELEASE_ACTION=$RELEASE_ACTION \
-    "${AWS_COMMON_ENV_ARGS[@]}" \
+    "${AWS_COMMON_ARGS[@]}" \
     sepal-deploy \
     bash -c "/usr/local/lib/sepal/hosting-services/$SCRIPT_PATH $BUILD_NUMBER /etc/sepal/conf.d"
 }
@@ -348,14 +348,14 @@ if [ -n "$STEP" ] && is_production; then
     PRODUCTION=true
 fi
 
-# Settings all AWS deploy environments share, such as the Amazon Linux release they run. Mounted at its own path,
-# which the release check names when the file needs updating.
-AWS_COMMON_ENV=$(dirname $CONFIG_DIR)/aws-common.env
-AWS_COMMON_ENV_ARGS=()
-if [ -f "$AWS_COMMON_ENV" ]; then
-    AWS_COMMON_ENV_ARGS=(-v $AWS_COMMON_ENV:$AWS_COMMON_ENV:ro -e AWS_COMMON_ENV=$AWS_COMMON_ENV)
+# Settings all AWS deploy environments share, such as the Amazon Linux release they run. Only its env is mounted,
+# at its own path, which the release check names when the file needs updating; the publish key stays on the host.
+AWS_COMMON=$(dirname $CONFIG_DIR)/aws-common
+AWS_COMMON_ARGS=()
+if [ -f "$AWS_COMMON/env" ]; then
+    AWS_COMMON_ARGS=(-v $AWS_COMMON/env:$AWS_COMMON/env:ro -e AWS_COMMON=$AWS_COMMON)
 elif [[ "$SCRIPT_PATH" == aws/* && ("$STEP" == "deploy" || "$STEP" == "rollout") ]]; then
-    usage "Missing $AWS_COMMON_ENV, the settings all AWS deploy environments share"
+    usage "Missing $AWS_COMMON/env, the settings all AWS deploy environments share"
 fi
 
 if [ -n "$PRODUCTION" ]; then

@@ -7,12 +7,12 @@ export CONFIG_HOME=$2
 ONLY_MODULES=("${@:3}")
 export PRIVATE_KEY=$CONFIG_HOME/certificates/aws.pem
 cd "$( dirname "${BASH_SOURCE[0]}" )"
-export AWS_COMMON_ENV=$(realpath -m "${AWS_COMMON_ENV:-$CONFIG_HOME/../aws-common.env}")
+export AWS_COMMON=$(realpath -m "${AWS_COMMON:-$CONFIG_HOME/../aws-common}")
 
-# Export all in the environment's env file, and in the aws-common.env all environments share
+# Export all in the environment's env file, and in the aws-common/env all environments share
 set -a
 source $CONFIG_HOME/env
-source $AWS_COMMON_ENV
+source $AWS_COMMON/env
 set +a
 
 export ANSIBLE_HOST_KEY_CHECKING=False
