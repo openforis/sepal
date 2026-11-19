@@ -2,7 +2,7 @@ import {effectiveSettings, NOT_RECORDED, REFERENCE_FIELDS, UNUSED_FIELDS} from '
 import {PRIMARY_IMAGE} from '#sepal/recipe/type/baytsAlerts'
 import {msg} from '~/translate'
 
-import {presentedInput, preservedCopies, processingOfEvidence} from '../referenceProcessing'
+import {presentedInput, preservedCopies, processingOfEvidence} from '../sources/referenceProcessing'
 
 // PRC's view of what BAYTS Alerts monitors with (#sepal/recipe/bayts/processing): the reference's geometric correction
 // and spatial speckle filtering, read-only where it is known, beside the alerts' own passes, masks and angles. Nothing

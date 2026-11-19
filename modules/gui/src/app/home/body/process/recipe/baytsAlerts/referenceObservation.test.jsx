@@ -6,9 +6,9 @@ import {of, Subject, throwError} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 
 // Where the processing BAYTS Alerts monitors with comes from, and that observing it configures nothing.
 //
@@ -37,7 +37,7 @@ vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: () => ({})}))
 
-const {SourceEvidenceSync} = await import('../sourceEvidenceSync')
+const {SourceEvidenceSync} = await import('../sources/sourceEvidenceSync')
 const {baytsAlertsObservation} = await import('./referenceObservation')
 const {settingsOf} = await import('./processingSettings')
 
@@ -57,6 +57,8 @@ beforeEach(() => {
     assetMetadata$.mockReset()
     loadRecipe$.mockReset().mockReturnValue(throwError(() => new Error('Recipe not found')))
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -257,7 +259,7 @@ const sync = ({selection, options = {}}) => {
         assets: {user: [{id: STATS_ASSET, updateTime: 'v0'}], other: []}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

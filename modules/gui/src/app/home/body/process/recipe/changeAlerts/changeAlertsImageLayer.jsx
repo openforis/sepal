@@ -12,8 +12,8 @@ import {Buttons} from '~/widget/buttons'
 import {Layout} from '~/widget/layout'
 
 import {withRecipe} from '../../recipeContext'
-import {READY} from '../recipeOutput'
-import {layerSelection, layerVisualizations, presetVisualizations} from '../visualizations'
+import {READY} from '../outputs/recipeOutput'
+import {layerSelection, layerVisualizations, presetVisualizations} from '../outputs/visualizations'
 import {mapProducts} from './bands'
 import {visualizationOptions} from './visualizations'
 

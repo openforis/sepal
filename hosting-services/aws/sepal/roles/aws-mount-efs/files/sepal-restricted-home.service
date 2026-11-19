@@ -1,0 +1,13 @@
+[Unit]
+Description=Restrict symlink traversal for SEPAL file management
+Requires=data-sepal-home.mount
+After=data-sepal-home.mount
+Before=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/sepal-restricted-home
+RemainAfterExit=yes
+
+[Install]
+RequiredBy=docker.service

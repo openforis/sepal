@@ -77,13 +77,13 @@ export class TaskRepository {
     }
 
     // Conditional on the state the caller saw, so a cancel and a container's own completion cannot overwrite
-    // each other: whichever is stored first wins.
-    transition(task, {from, to, statusDescription = StateDescription[to]}) {
+    // each other: whichever is stored first wins. With silentSince, so does a progress report made since then.
+    transition(task, {from, to, statusDescription = StateDescription[to], silentSince}) {
         return this.#change(task,
             `UPDATE task SET state = ?, status_description = ?, update_time = ?,
                 api_key_hash = IF(? IN (?), api_key_hash, NULL)
-                WHERE id = ? AND state IN (?)`,
-            [to, statusDescription, this.#clock(), to, RUNNING_STATES, task.id, from]
+                WHERE id = ? AND state IN (?)${silentSince ? ' AND progress_time < ?' : ''}`,
+            [to, statusDescription, this.#clock(), to, RUNNING_STATES, task.id, from, ...(silentSince ? [silentSince] : [])]
         )
     }
 

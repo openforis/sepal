@@ -46,10 +46,7 @@ const defaultOnRetry = username => (error, retryMessage, retryDelay, retryCount)
 }
 
 const toItems = tasks =>
-    tasks.reduce(
-        (items, task) => ({...items, [task.id]: taskAsListItem(task)}),
-        {}
-    )
+    Object.fromEntries(tasks.map(task => [task.id, taskAsListItem(task)]))
 
 const createTaskWs = ({tasks, debounceMilliseconds = DEBOUNCE_MS, retryConfig = {}}) => {
     const protocol = ({send, stop$}) => {

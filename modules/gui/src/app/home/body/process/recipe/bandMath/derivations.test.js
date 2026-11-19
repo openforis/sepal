@@ -1,9 +1,9 @@
 import {legacy_createStore as createStore} from 'redux'
-import {describe, expect, it, vi} from 'vitest'
+import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 
 // What a commit of Band Math's configuration derives with it (derivations.js), over a real store, judged by what its
 // configuration needs of itself.
@@ -13,12 +13,11 @@ vi.mock('~/apiRegistry', async () => {
     return {default: {recipe: {save$: () => NEVER, load$: () => NEVER}}}
 })
 vi.mock('~/translate', () => ({msg: key => key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: bandMath} = await import('./bandMath')
-const {commitRecipe} = await import('../derivedResult')
-const {readSourceRequirements, readKey} = await import('../sourceRequirements')
+const {commitRecipe} = await import('../editing/derivedResult')
+const {readSourceRequirements, readKey} = await import('../requirements/sourceRequirements')
 const {hasUniqueOutputNames, outputNameOf} = await import('./panels/outputBands/outputImages')
 
 addRecipeType(bandMath())
@@ -26,6 +25,8 @@ addRecipeType(bandMath())
 const ID = 'band-math-1'
 
 let store
+
+afterEach(disposeInstalledSessions)
 
 describe('an input band a chain of calculations reads', () => {
     it('unselected leaves every expression, derived band and output name as it was, and selected again meets them all', () => {
@@ -175,10 +176,11 @@ describe('an input band renamed throughout a chain whose outputs all take its na
 })
 
 describe('a commit', () => {
+    // Each model the store comes to hold: what else the session publishes - the edit's save state - is no model.
     it('is one write, holding everything it derives', () => {
         open(CHAIN_OUTPUT)
         const states = []
-        const unsubscribe = store.subscribe(() => states.push(model()))
+        const unsubscribe = store.subscribe(() => model() !== states.at(-1) && states.push(model()))
 
         setInputBands([RED, {...NIR, name: 'veg'}])
         unsubscribe()
@@ -343,7 +345,7 @@ function open({images, calculations, outputImages}, layers) {
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
 }
 
 // A change committed as a panel's Apply commits it.

@@ -19,10 +19,11 @@ const user = {
     systemUser: false,
     admin: true,
     creationTime: '2024-01-02T03:04:05.000Z',
-    updateTime: '2024-02-02T03:04:05.000Z'
+    updateTime: '2024-02-02T03:04:05.000Z',
+    revision: 7
 }
 
-test('userToEventMap matches the Java User.toMap shape (no googleUser/admin; 4-field googleTokens)', () => {
+test('userToEventMap carries the event payload shape (no googleUser/admin; 4-field googleTokens; the revision)', () => {
     assert.deepEqual(userToEventMap(user), {
         id: 10006,
         name: 'Look One',
@@ -38,7 +39,8 @@ test('userToEventMap matches the Java User.toMap shape (no googleUser/admin; 4-f
         roles: ['application_admin'],
         systemUser: false,
         creationTime: '2024-01-02T03:04:05.000Z',
-        updateTime: '2024-02-02T03:04:05.000Z'
+        updateTime: '2024-02-02T03:04:05.000Z',
+        revision: 7
     })
 })
 

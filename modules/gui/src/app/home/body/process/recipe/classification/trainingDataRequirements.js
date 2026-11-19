@@ -2,12 +2,12 @@ import _ from 'lodash'
 
 import {AMBIGUOUS_TRAINING_FEATURES, INSUFFICIENT_TRAINING_SAMPLES, MISSING_TRAINING_FEATURES, NO_TRAINING_DATA} from '#sepal/recipe/trainingData'
 import {TRAINING_DATA_SOURCE} from '#sepal/recipe/type/classification'
-import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
+import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/outputs/recipeOutput'
 import {msg} from '~/translate'
 
-import {describeFeedback, feedbackMessage, feedbackText, joinFeedback, recipeReference} from '../feedbackMessage'
-import {listed} from '../fieldRequirement'
-import {causesOf, referenceFeedback, unsuitabilityMessage} from '../referenceFeedback'
+import {describeFeedback, feedbackMessage, feedbackText, joinFeedback, recipeReference} from '../requirements/feedbackMessage'
+import {listed} from '../requirements/fieldRequirement'
+import {causesOf, referenceFeedback, unsuitabilityMessage} from '../requirements/referenceFeedback'
 
 // What Classification and Regression need of their training data, as their shared output declarations refuse it
 // (lib/js/shared/src/recipe/trainingData.js): a classifier that is trained has something to train on. The output read

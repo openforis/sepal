@@ -45,7 +45,10 @@ export class InMemoryRepository {
         return this.#update(task.id, [State.PENDING], {state: State.ACTIVE, apiKeyHash, progressTime: this.#clock.now()})
     }
 
-    async transition(task, {from, to, statusDescription = StateDescription[to]}) {
+    async transition(task, {from, to, statusDescription = StateDescription[to], silentSince}) {
+        if (silentSince && !(this.#tasks.get(task.id)?.progressTime < silentSince)) {
+            return false
+        }
         return this.#update(task.id, from, {state: to, statusDescription})
     }
 

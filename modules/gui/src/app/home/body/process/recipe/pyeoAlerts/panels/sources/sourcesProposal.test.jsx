@@ -6,8 +6,9 @@ import {of} from 'rxjs'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
+import format from '~/format'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 import {tooltipText} from '~/widget/tooltip.test.fixtures'
@@ -68,6 +69,8 @@ const L9 = 'LANDSAT_9'
 const APPLIED_DATES = {baselineStart: '2023-01-01', baselineEnd: '2024-01-01', monitoringStart: '2024-01-01', monitoringEnd: '2025-01-01', derived: true}
 
 let root, container, store, published
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -155,7 +158,7 @@ describe('a classification whose imagery states no dates', () => {
     })
 })
 
-const noOverlap = (startYear, endYear) => `process.source.dataSets.noPeriodOverlap ${JSON.stringify({startYear, endYear})}`
+const noOverlap = (startYear, endYear) => `process.source.dataSets.noPeriodOverlap ${JSON.stringify({period: format.yearRange(startYear, endYear)})}`
 
 const model = () => store.getState().process.loadedRecipes[ID].model
 
@@ -262,7 +265,7 @@ async function open({imagery: {start, end, dataSets}, dataSets: chosenDataSets =
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     published = []
     store.subscribe(() => store.getState().process.loadedRecipes[ID] && published.push(model()))
     container = document.createElement('div')

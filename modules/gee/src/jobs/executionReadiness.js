@@ -1,6 +1,6 @@
 import {catchError, defer, filter, map, switchMap, take, tap, throwError} from 'rxjs'
 
-import {assetBandEvidence$, imageBandEvidence$} from '#sepal/ee/bandEvidence'
+import {assetObservation$, imageBandEvidence$} from '#sepal/ee/bandEvidence'
 import ImageFactory from '#sepal/ee/imageFactory'
 import {loadRecipe$} from '#sepal/ee/recipe'
 import {READY, settledReadiness$} from '#sepal/recipe/output/observeImageOutput'
@@ -59,11 +59,11 @@ export const recipeClosure$ = recipe => defer(() => {
 })
 
 // This runtime builds the image itself rather than asking a service for its bands, and an asset is read with
-// its stored encoding. A producer asked what it can be asked for answers from its own catalogue, which costs
+// its stored encoding and the processing it records. A producer asked what it can be asked for answers from its own catalogue, which costs
 // no image and no evaluation; its physical facts come from the declaration that asked.
 export const imageOutputAcquisition = {
     observeBands$: ({reference, recipe, observes}) => reference.type === ASSET
-        ? assetBandEvidence$(reference.id)
+        ? assetObservation$(reference.id)
         : observes === AVAILABLE_BANDS
             ? ImageFactory(recipe).getBands$().pipe(map(bandNames => bandNames.map(name => ({name}))))
             : imageBandEvidence$(recipe),

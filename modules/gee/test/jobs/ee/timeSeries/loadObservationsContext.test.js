@@ -29,7 +29,7 @@ mock.module('#sepal/ee/timeSeries/collection', {exports: {getCollection$: args =
     return of(collection)
 }}})
 mock.module('#sepal/ee/bandEvidence', {exports: {
-    assetBandEvidence$: () => of(['VV_med', 'VH_med'].map(name => ({name, arrayDimensions: 0}))),
+    assetObservation$: () => of(['VV_med', 'VH_med'].map(name => ({name, arrayDimensions: 0}))),
     imageBandEvidence$: recipe => throwError(() => new Error(`Unexpected image construction: ${recipe.id}`))
 }})
 

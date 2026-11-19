@@ -2,9 +2,10 @@ import _ from 'lodash'
 import React from 'react'
 
 import {dataSetPeriod} from '#sepal/recipe/type/timeSeries'
+import {draftSelection, withSelectedClassification} from '~/app/home/body/process/recipe/collections/selectedClassification'
 import {isOpticalDataSet} from '~/app/home/body/process/recipe/opticalMosaic/sources'
 import {isRadarDataSet} from '~/app/home/body/process/recipe/radarMosaic/sources'
-import {draftSelection, withSelectedClassification} from '~/app/home/body/process/recipe/selectedClassification'
+import {RecipeInput} from '~/app/home/body/process/recipe/sources/recipeInput'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {dataSetOptions, defaultDataSet, toSources} from '~/sources'
@@ -14,7 +15,6 @@ import {Button} from '~/widget/button'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
-import {RecipeInput} from '~/widget/recipeInput'
 
 import styles from './sources.module.css'
 
@@ -34,7 +34,8 @@ const fields = {
 }
 
 const mapRecipeToProps = recipe => ({
-    dates: selectFrom(recipe, 'model.dates')
+    dates: selectFrom(recipe, 'model.dates'),
+    corrections: selectFrom(recipe, 'model.options.corrections')
 })
 
 class _Sources extends React.Component {
@@ -189,8 +190,8 @@ class _Sources extends React.Component {
     }
 
     period() {
-        const {dates} = this.props
-        return dataSetPeriod({dates})
+        const {dates, corrections} = this.props
+        return dataSetPeriod({dates, options: {corrections}})
     }
 
     setAdvanced(enabled) {

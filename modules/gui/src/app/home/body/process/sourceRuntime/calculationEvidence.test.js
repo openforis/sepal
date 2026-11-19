@@ -4,8 +4,8 @@ import {beforeEach, describe, expect, it} from 'vitest'
 
 import {stratumFrameQuestion} from '#sepal/recipe/samplingDesign/stratumFrame'
 import {probabilitySourceQuestion} from '#sepal/recipe/samplingDesign/stratumProbabilities'
+import {observedListing} from '~/app/home/body/process/recipeSession/recipeListing'
 
-import {observedListing} from '../recipeListing'
 import {CalculationEvidence, DEFAULT_DEPENDENCY_EVIDENCE_POLICY} from './calculationEvidence'
 import {SOURCE_BASIS_CHANGED} from './sourceRuntimeError'
 

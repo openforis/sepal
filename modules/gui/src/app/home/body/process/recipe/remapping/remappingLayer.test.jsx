@@ -7,8 +7,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 
 // A Remapping recipe drawn on another recipe's map, its editor closed: whether its constraints read inputs and bands its
 // configuration still has decides whether its image is requested, over a real store and source runtime. Earth Engine is
@@ -26,7 +26,6 @@ vi.mock('~/apiRegistry', async () => {
 })
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // Constructing a preview layer is what requests a preview: the map mounts it and Earth Engine is asked for its tiles.
 const previews = vi.hoisted(() => ({constructed: [], shown: undefined}))
 vi.mock('~/app/home/map/layer/earthEngineImageLayer', () => ({
@@ -42,7 +41,7 @@ vi.mock('~/app/home/map/layer/earthEngineImageLayer', () => ({
 
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: remapping} = await import('./remapping')
-const {RecipeImageLayer} = await import('../recipeImageLayer')
+const {RecipeImageLayer} = await import('../map/recipeImageLayer')
 const {addRecipeImageLayer} = await import('../../recipeImageLayerRegistry')
 const {removeInputImage} = await import('../../inputImages')
 const {TabContext} = await import('~/widget/tabs/tabContext')
@@ -67,6 +66,8 @@ beforeEach(() => {
     previews.shown = undefined
     ASSET_BANDS['users/x/dem'] = ['elevation']
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -166,7 +167,7 @@ async function onAnotherMap(constraint, downstream = false) {
         dimensions: {width: 1024, height: 768}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     root = createRoot(document.createElement('div'))
     await act(async () => root.render(
         <Provider store={store}>

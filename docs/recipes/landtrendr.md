@@ -20,13 +20,15 @@ recipe is never migrated on opening.
 Execution builds the series from the shared collection (`getCollection$`, with `bands: [index]`). It intersects the bands
 of every chosen data set, whatever the dates, then filters scenes to the years.
 
-Four configuration requirements, declared in `type/landTrendr.js`, refuse the change map (IMAGE_OUTPUT):
+Four configuration requirements, declared in `type/landTrendr.js`, refuse the change map (IMAGE_OUTPUT) and the annual
+mosaic (ANNUAL_MOSAIC):
 
 - **`MISSING_DATA_SETS`**, at `sources.dataSets`: no data set is chosen, whether saved as an empty object, as empty
   lists, as null or not at all.
-- **`NO_PERIOD_OVERLAP`**, at `sources.dataSets`: no chosen data set's catalogue years overlap `startYear` to `endYear`,
-  as the shared [data-set availability](../design/recipes/data-sources.md#data-set-availability) judges them. Landsat
-  TM, in Tier 1 and Tier 2, covers 1982 to 2012.
+- **`NO_PERIOD_OVERLAP`**, at `sources.dataSets`: no chosen data set may hold imagery on a day of the calendar years
+  `startYear` to `endYear`, under the correction its options select, as the shared
+  [data-set availability](../design/recipes/data-sources.md#data-set-availability) judges them. Landsat 4-5 covers part
+  of 2012 under SR, but not top of atmosphere, whose Tier 1 ends in November 2011.
 - **`MISSING_INDEX`**, at `sources.index`: no index is chosen, a blank one included.
 - **`UNSUPPORTED_COLLECTION_BANDS`**, at `sources.index` (`collectionBandRequirement`): the collection the data sets and
   PRC configure cannot compute a chosen index; a blank one is missing, not judged. This is judged over every chosen
@@ -39,9 +41,12 @@ Four configuration requirements, declared in `type/landTrendr.js`, refuse the ch
     a data set remains, one may cover the years, and the index is carried. Sentinel-2 alone, or beside only Landsat TM in
     a 2016 to 2020 series, is not repaired by removing it.
 
-Preview and Retrieve are held for these, and Retrieve's server export refuses them before building anything. The annual
-mosaic reads no index and is asked for a year of its own, so it is not held. The pixel chart is not gated, and neither
-preview nor the chart is checked on the server ([server preview readiness](../design/workplan.md#server-preview-readiness)).
+Preview and Retrieve are held for these, and Retrieve's server export refuses them before building anything. A layer
+showing an annual mosaic is withdrawn for them too, whatever year it shows, though the mosaic reads no index: it shows
+the imagery the series is fitted to. Its year is the year picker's: one outside the fitted years is clamped to the
+nearer end, and the layer is withheld until that is written (`landTrendrImageLayer.jsx`). No year needs imagery of its
+own. The pixel chart is not gated, and neither preview nor the chart is checked on the server
+([server preview readiness](../design/workplan.md#server-preview-readiness)).
 
 The Sources panel binds the same rules (`landTrendr/sourcesRequirements.js`):
 
@@ -60,7 +65,7 @@ The Sources panel binds the same rules (`landTrendr/sourcesRequirements.js`):
   the index is shown the same way, and runs where the data sets carry it, as execution reads it by name.
 - **Data-set choices.** As for every date-filtered Sources
   ([data-set availability](../design/recipes/data-sources.md#data-set-availability)): one the years exclude cannot be
-  chosen anew, and one chosen stays chosen until removed, its tooltip giving the years it holds imagery for.
+  chosen anew, and one chosen stays chosen until removed, its tooltip saying when it holds imagery.
 - **Opening.** An untouched opening, and the panel rendering again, change neither the draft nor the model. Data sets
   saved null or not at all open as none chosen, and a blank index as none chosen, until the user chooses.
 
@@ -68,10 +73,10 @@ The Sources panel binds the same rules (`landTrendr/sourcesRequirements.js`):
 ## Verification
 
 - `lib/js/shared/test/recipe/output/type/landTrendr.test.js` and `test/recipe/collectionBands.test.js`: each
-  requirement and its location, overlap at the catalogue years' edges, the index judged over a data set the dates
-  exclude, the annual mosaic not held, and the index projection. Also the missing inputs and when removal repairs them,
-  including an index declared for the test alone, a data-set group saved as a single identifier, and native bands,
-  with no inputs named.
+  requirement and its location, overlap at the catalogue's edges, the index judged over a data set the dates
+  exclude, the annual mosaic held alike, and the index projection. Also the missing inputs and when removal repairs
+  them, including an index declared for the test alone, a data-set group saved as a single identifier, and native
+  bands, with no inputs named.
 - `modules/gee/test/jobs/task/export/imageAssetExport.test.js`: the export refused for each requirement before
   anything is built, and exported once the Sources can be built.
 - `modules/gui/src/app/home/body/process/recipe/landTrendr/sourcesRequirements.test.jsx`, through the root, toolbar and
@@ -84,4 +89,4 @@ The Sources panel binds the same rules (`landTrendr/sourcesRequirements.js`):
   - the index choices for each data-set family;
   - native bands saved as the index;
   - the missing-input messages in English, with and without removal, and the native-band message;
-  - the held operations.
+  - the held operations, the annual mosaic as its layer reads it among them.

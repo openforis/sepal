@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import {catchError, defer, EMPTY, firstValueFrom, from, map, of, switchMap, tap, throwError} from 'rxjs'
+import {catchError, defer, EMPTY, firstValueFrom, from, of, switchMap, tap, throwError} from 'rxjs'
 
 import {GOOGLE_ACCESS_TOKEN_ADDED, GOOGLE_ACCESS_TOKEN_REMOVED, GOOGLE_ACCESS_TOKEN_UPDATED, USER_UPDATED} from '#sepal/event/definitions'
 import {getLogger} from '#sepal/log'
@@ -7,13 +7,19 @@ import {applyKeyNormalization} from '#sepal/redisKeyCase'
 import {isStoredUsername, storedUsername} from '#sepal/username'
 
 import {usernameTag, userTag} from './tag.js'
-import {getSessionUsername, removeRequestSession, removeRequestUser, setRequestUser} from './user.js'
+import {getBrowserSessionUsername, removeApiKeyContext, removeRequestUser, setRequestUser} from './user.js'
 import {loadUser$} from './userApi.js'
 
 const log = getLogger('userStore')
 
 const SEPAL_USER_HEADER = 'sepal-user'
 const USER_PREFIX = 'user'
+
+const UPDATE_IF_UNCHANGED = `
+    if redis.call('GET', KEYS[1]) ~= ARGV[1] then return 0 end
+    redis.call('SET', KEYS[1], ARGV[2])
+    return 1
+`
 
 const UserStore = (redis, event$) => {
     if (!redis) {
@@ -43,21 +49,68 @@ const UserStore = (redis, event$) => {
                         catchError(error =>
                             throwError(() => new Error(`${userTag(username)} not in store, could not be loaded from backend`, {cause: error}))
                         ),
-                        switchMap(user => setUser$(user))
+                        switchMap(async loadedUser => {
+                            const user = storedUser(loadedUser)
+                            const created = await redis.set(userKey(username), JSON.stringify(user), {NX: true})
+                            if (created) {
+                                handleUpdate(null, user)
+                                return user
+                            }
+                            return firstValueFrom(getUser$(username))
+                        })
                     )
             )
         )
 
-    const setUser$ = user =>
-        from(redis.set(userKey(user.username), JSON.stringify(storedUser(user)), {GET: true})).pipe(
-            map(prevUser => ({prevUser: JSON.parse(prevUser), user: storedUser(user)})),
-            catchError(cause =>
-                throwError(() => new Error(`${userTag(user?.username)} cannot be saved`, {cause}))
-            ),
-            tap(({prevUser, user}) => handleUpdate(prevUser, user)),
-            map(({user}) => user),
-            tap(user => log.debug(`${userTag(user?.username)} saved`)),
+    // Reloads and logins can finish in any order, so a snapshot replaces the cached user only if it is newer, by a
+    // write conditional on the very value that was compared. Answers the user the cache holds afterwards. A write is
+    // announced with no await after its Redis reply and the one client replies in order, so announcements follow the
+    // order writes landed; an answer can still reach its caller after a newer write was announced.
+    const setUser$ = user => defer(async () => {
+        const key = userKey(user.username)
+        const candidate = storedUser(user)
+        while (true) {
+            const serializedUser = await redis.get(key)
+            const cachedUser = parseUser(key, serializedUser)
+            if (cachedUser && !isNewer(candidate, cachedUser)) {
+                log.debug(`${userTag(candidate.username)} not saved, revision ${candidate.revision} is not newer than ${cachedUser.revision}`)
+                return cachedUser
+            }
+            const written = serializedUser
+                ? await redis.eval(UPDATE_IF_UNCHANGED, {keys: [key], arguments: [serializedUser, JSON.stringify(candidate)]})
+                : await redis.set(key, JSON.stringify(candidate), {NX: true})
+            if (written) {
+                handleUpdate(cachedUser, candidate)
+                log.debug(`${userTag(candidate.username)} saved`)
+                return candidate
+            }
+        }
+    }).pipe(
+        catchError(cause =>
+            throwError(() => new Error(`${userTag(user?.username)} cannot be saved`, {cause}))
         )
+    )
+
+    // A token refresh must preserve role changes made while it was in flight.
+    const updateGoogleTokens$ = ({username, googleTokens}) => defer(async () => {
+        const key = userKey(username)
+        while (true) {
+            const serializedUser = await redis.get(key)
+            if (!serializedUser) {
+                return firstValueFrom(getUser$(username))
+            }
+            const prevUser = JSON.parse(serializedUser)
+            const user = {...prevUser, googleTokens}
+            const updated = await redis.eval(UPDATE_IF_UNCHANGED, {
+                keys: [key],
+                arguments: [serializedUser, JSON.stringify(user)]
+            })
+            if (updated) {
+                handleUpdate(prevUser, user)
+                return user
+            }
+        }
+    })
 
     const handleUpdate = (prevUser, user) => {
         if (!_.isEqual(prevUser, user)) {
@@ -96,10 +149,10 @@ const UserStore = (redis, event$) => {
     // path; a session that outlives it must still not identify the user, or the userUpdated push
     // the lock triggers can be answered with a successful request.
     const userMiddleware = (req, res, next) => {
-        const username = getSessionUsername(req)
+        const username = getBrowserSessionUsername(req)
         removeRequestUser(req)
         // Only api-key authentication puts this back.
-        removeRequestSession(req)
+        removeApiKeyContext(req)
         if (username) {
             firstValueFrom(getUser$(username))
                 .then(user => {
@@ -169,9 +222,14 @@ const UserStore = (redis, event$) => {
     }
 
     return {
-        getUser$, normalizeCase, setUser$, updateUser$, userMiddleware
+        getUser$, normalizeCase, setUser$, updateGoogleTokens$, updateUser$, userMiddleware
     }
 }
+
+// Every user-module write to a user bumps its revision. An equal one is no newer: the cached copy may carry Google
+// tokens merged in since. A snapshot without a revision only fills an empty cache.
+const isNewer = (user, cachedUser) =>
+    (user.revision ?? -1) > (cachedUser.revision ?? -1)
 
 export {
     SEPAL_USER_HEADER,

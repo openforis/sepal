@@ -2,7 +2,7 @@ import React from 'react'
 
 import {inputImageNames, removeInputImage} from '~/app/home/body/process/inputImages'
 import {recipePath} from '~/app/home/body/process/recipe'
-import {withItemProblems} from '~/app/home/body/process/recipe/selectedSource'
+import {withItemProblems} from '~/app/home/body/process/recipe/requirements/selectedSource'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {connect} from '~/connect'

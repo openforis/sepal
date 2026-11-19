@@ -8,9 +8,9 @@ import {PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
 import api from '~/apiRegistry'
 
 import {typedSegmentsAssetDescription} from '../ccdc/segmentsAsset'
-import {describeProducer$, resolveSegmentProducer, segmentsAssetOf} from '../segmentCapability'
-import {selectedSourceOf} from '../sourceEvidence'
-import {withKnownIdentities} from '../visualizationMatching'
+import {withKnownIdentities} from '../outputs/visualizationMatching'
+import {describeProducer$, resolveSegmentProducer, segmentsAssetOf} from '../sources/segmentCapability'
+import {selectedSourceOf} from '../sources/sourceEvidence'
 import {segmentVisualizations} from './referenceEvidence'
 
 // Monitoring settings belong to Change Alerts; the segment description belongs to the producer.

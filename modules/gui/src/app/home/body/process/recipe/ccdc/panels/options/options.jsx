@@ -2,7 +2,7 @@ import _ from 'lodash'
 import React from 'react'
 
 import {breakDetectionOptions, RecipeActions} from '~/app/home/body/process/recipe/ccdc/ccdcRecipe'
-import {withSelectedClassification} from '~/app/home/body/process/recipe/selectedClassification'
+import {withSelectedClassification} from '~/app/home/body/process/recipe/collections/selectedClassification'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'

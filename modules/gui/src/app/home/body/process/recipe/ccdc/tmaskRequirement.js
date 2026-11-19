@@ -1,8 +1,8 @@
 import {NON_BREAKPOINT_TMASK_BANDS} from '#sepal/recipe/type/ccdc'
 import {msg} from '~/translate'
 
-import {fieldRequirement, listed} from '../fieldRequirement'
-import {chosenBandLabel, classificationNaming} from '../selectedClassification'
+import {chosenBandLabel, classificationNaming} from '../collections/selectedClassification'
+import {fieldRequirement, listed} from '../requirements/fieldRequirement'
 
 // What CCDC's TMask needs of its Sources, as its shared definition finds it (type/ccdc.js): that the bands it screens
 // with are breakpoint bands. Said at the TMask bands, OPT's, naming each band that is not one as Sources name it, and the

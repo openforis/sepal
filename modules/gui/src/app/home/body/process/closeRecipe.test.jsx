@@ -5,8 +5,8 @@ import {legacy_createStore as createStore} from 'redux'
 import {NEVER, of} from 'rxjs'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 
 // Closing an unsaved recipe while another recipe's set-up wizard is left open in a tab not shown, through the real
 // process tabs, close and save dialogs, activation and the wizard's recipe form panel. The dialog about the recipe being
@@ -18,8 +18,6 @@ vi.mock('~/apiRegistry', () => ({default: {
     project: {loadAll$: () => of([])}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-// Loading the recipe modules closes an import cycle through the user module's forms; nothing here reads it.
-vi.mock('~/user', () => ({}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
 vi.mock('./processMenu', () => ({ProcessMenu: () => null}))
@@ -43,6 +41,8 @@ const {EventShield} = await import('~/widget/eventShield')
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let root, container, store
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -133,7 +133,7 @@ async function open(process) {
         dimensions: {width: 1024, height: 768}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

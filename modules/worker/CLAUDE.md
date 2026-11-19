@@ -92,7 +92,7 @@ a race. There is no other way to move a deadline.
 ## Surviving a worker restart
 
 The `worker` container restarts routinely — a deploy, an OOM kill, and in dev a nodemon reload
-on every file save. Four mechanisms carry instance management across it:
+on every file save. Instance management recovers through these mechanisms:
 
 - **The boot fails loudly.** A rejected `main()` exits non-zero so the Docker restart policy retries it.
   Left to log and hang, the process stayed alive on the MySQL pool's handles with no HTTP server,
@@ -104,24 +104,91 @@ on every file save. Four mechanisms carry instance management across it:
   provisioning nobody is driving any more. Provisioning is deduplicated by instance id in an
   in-process registry (`workerInstance/provisioningRegistry.js`), because `provisionInstance`
   opens by deleting the instance's containers — re-entering it destroys the work in flight.
-  `releaseInstance` forgets the entry before it undeploys, so an instance back in the pool cannot drop the next
-  session's provisioning as a duplicate, and the forgotten provision stops at its next check
-  instead of rebuilding, or closing, the next session's sandbox. The api key is looked up by
-  session, before any container is deleted, so a provision mid-attempt also leaves it alone. Re-provisioning re-reads the instance's PENDING session
-  first: the probe verdict it acts on is a batch snapshot, and the invariant above holds here too.
-- **`releaseInstance` undeploys before dropping the claim.** The invariant is *claim row absent ⇒
-  container definitely gone*: die mid-release and the claim survives, so `ReclaimStaleClaims`
-  runs the whole release again. `backfillClaims` is permanent reconciliation, not an upgrade shim.
+  Release replaces the registry entry before ownership reads, permanently invalidating the old attempt.
+  Its entry lasts only while that release attempt is running. A different session can replace a release
+  entry; the durable-claim check still decides whether provisioning may proceed. Each provisioning
+  attempt gets its own instance-bound Docker client, which
+  checks that identity before and after every request, including helper cleanup. Cancellation
+  bypasses Docker-availability retries. Teardown, probes and orphan cleanup use independent
+  clients. Provisioning resolves credentials and validates its definition before scratch attachment
+  or Docker changes. The outer command checks the durable claim owner first; a matching claim
+  also covers EC2 reservation tags that are not yet visible. Its retry policy, single attempt
+  and ownership check are separate functions; cancellation is rechecked after helper awaits.
+- **Manual startup cancellation preserves known-warmed AWS hosts through stop and recovery.**
+  Close the session, revoke its key and publish the billing cutoff before instance release. The
+  cancellation request returns after EC2 accepts a normal stop; OS shutdown and storage cleanup
+  continue under the same coordinated release promise. No forced stop or skipped OS shutdown.
+  `ImageDiskWarm=true` records allocation from a ready stopped pool, using that pool's existing
+  image-disk warm-up contract. It is independent of lifecycle state and survives reservations.
+  Cold/unknown hosts, local instances and automated startup closures retain conservative retirement.
+- **Recovery stays exclusively claimed.** `instance_claim.recovery_started_at` records intent before
+  tagging `State=recovering` and submitting stop. The marker is a nullable addition in migration 002;
+  the original session remains the claim owner. Recovery-tagged hosts survive the stray sweep and
+  count toward future pool capacity, but never appear in ready allocation. Confirm `stopped` and
+  await all tracked scratch preparation before detaching/deleting scratch and tagging pooled. A known
+  attachment missing from cleanup is uncertainty. Failed storage history, shutdown failure or a
+  ten-minute storage barrier deadline retires the host with its claim retained. A canceled Docker
+  callback stays invalidated; old containers are removed before the next sandbox starts.
+  Reclaim handles durable recovery before ordinary filtered absence or claim-age grace. After a
+  restart, missing in-memory scratch history conservatively retires instead of guessing. Once
+  termination is accepted, clear recovery intent and let existing gone-claim cleanup remove the row.
+  A recovery older than the existing grace, absent from all inventory and returning an unfiltered
+  by-ID NotFound can use coordinated gone-claim deletion. This remains an absence policy, not proof
+  of termination. The orphan sweep also discovers claimless recovering hosts if they reappear.
+  Ordinary release entries finish with their attempt; durable claims drive failed-retirement retries.
+  Local retirement starts independent cleanup scoped to the retired ID, with orphan sweeping as backstop.
+- **Completed instances retain normal reuse.** Undeploy, scratch deletion and the transition to idle
+  precede claim removal. Cleanup/idle and claim deletion have separate error scopes. After the idle
+  transition succeeds, claim deletion has no error path that can terminate the instance:
+  a claim DELETE can commit and admit another session even if its response is lost. A failed DELETE
+  clears the normal release gate; any surviving claim remains available to reconciliation.
+  Contradictory reservation tags never discard a matching durable claim.
+  A stale release of an idle unclaimed host finishes without acquiring a new claim or retiring it.
+  Resuming retirement on an idle host requires the same durable claim, including legacy empty keys.
+  `backfillClaims` is permanent reconciliation, not an upgrade shim.
 - **A release belongs to one session.** It drops only that session's claim, leaves alone an
-  instance that is idle or reserved for another session, and joins a release of the same pair
+  instance reserved for another session, and joins a release of the same pair
   already in flight, so a late or duplicate release (Stop racing `ReclaimStaleClaims`) cannot tear
-  down the instance the pool has handed on. Scheduled jobs run at a fixed delay after their previous
+  down the instance the pool has handed on. Reconciliation preserves claims/gates while their matching
+  release is in flight, even if inventory queries straddle an idle transition. Owned Docker cleanup
+  uses the release predicate; later cleanup/idle calls and termination recovery recheck token identity.
+  Gone-claim deletion occupies the same keyed release slot through DELETE settlement and gate
+  completion. A later same-session release joins it instead of replacing its token. This coordination
+  is local to the single worker process and its shared manager.
+  Scheduled jobs run at a fixed delay after their previous
   run completes, so runs of one job never overlap.
 - **No startup grace.** `ReconcilePendingSessions` and `CloseTimedOutSessions` run as one job, in
   that order, so a restart lands a missed activation before the timed-out sweep can see the PENDING
   row. `ExpireSessions` needs no head start: a deadline that passed during an outage earns a
   notification and the full grace, never a close. The former 2-minute grace, measured from process
   start, was what let a crash loop starve every closing sweep.
+
+## Outstanding test-server acceptance for provisioning cancellation
+
+At the 2026-11-16 handoff, the lifecycle fix and scratch deletion-flag retry repair had independent
+approval and 1,025 passing automated tests. Live AWS acceptance remained outstanding. After a normal
+test release, record the deployed build, action times, session/instance/volume IDs and logs for:
+
+- Normal t1 start/stop: matching claim, DeleteOnTermination true, scratch deletion and a fresh `/tmp`
+  in the next session.
+- Actual host reuse before/after worker restart: fresh scratch and recovery of configured warm capacity.
+- Manual PENDING cancellation of a warmed pooled allocation, both during Docker boot and after a
+  mutation: user billing ends promptly; stop is accepted; claim/recovery intent remains until stopped
+  and scratch cleanup completes; the host returns pooled and a later session gets fresh scratch.
+- Pending scratch attachment: the stopped host remains unavailable until its successful completion;
+  failure, uncertainty or the deadline retires it. Cold/local and automatic startup closure still retire.
+- ACTIVE restart survival and PENDING restart-then-cancel retirement, including eventual cleanup.
+- Release of an ACTIVE session with a claim older than eleven minutes racing immediate allocation.
+- Three to five startup cancellations: eventual claim/volume cleanup and warmed-host recovery,
+  preserving healthy capacity. Pool target 10 remains bounded; recovered ready/warmed hosts take
+  priority over unnecessary warming replacements, and every eviction participates in claim arbitration.
+
+Exact accepted-Docker/failed-termination races, interruption between EBS attachment and setting
+DeleteOnTermination, and both release/reconciliation orderings with real MySQL connection loss also
+remain untested. These require controlled fault timing; ordinary UI runs do not establish coverage.
+Record skipped/deferred cases explicitly. The filtered-inventory assumption remains a separate policy
+concern, and a stalled local daemon needs its own dev-env check. Live checks follow the test release;
+they are not prerequisites for committing the fix.
 
 ## Session /tmp
 A worker container's `/tmp`, `/var/tmp` and `~/tmp` are one Docker volume per instance, `sepal-tmp.{instanceId}`,
@@ -136,13 +203,18 @@ On AWS the volume lives on local disk, never on EFS:
   boot (RAID 0 when there are several) and mounts them over `/var/lib/docker/volumes` before Docker
   starts, so the plain volume lands on them.
 - **Other types** get a blank 100 GiB gp3 EBS volume per session (`hostingService/aws/scratchVolumes.js`).
-  `provisionInstance` has the provider attach it as `/dev/xvdg` (idempotent across retries), and the
-  provisioner formats it as XFS with the host's `mkfs.xfs`, from a throwaway privileged container
+  The provider waits for the volume to be available and EC2 to be running before attaching it as
+  `/dev/xvdg` (idempotent across retries). An address alone does not establish attachment readiness.
+  A failed running-state wait rejects provisioning without submitting attachment; cancellation uses
+  the existing conservative recovery path. The provisioner formats it as XFS with the host's
+  `mkfs.xfs`, from a throwaway privileged container
   of the worker image chrooted into the host (`{image}.format-tmp.{instanceId}`), then creates the
   tmp volume on the device (`local` driver, `type=xfs`) before preparing it as above. Docker mounts it with the first container and unmounts it with the last, so
   `releaseInstance` undeploys, then has the provider detach and delete it, before dropping the claim.
   Volumes are tagged `Type=WorkerScratch` from creation and marked delete-on-termination once
-  attached; `sweep` deletes detached ones older than ten minutes. The worker's AWS credentials need
+  attached, including on retries that find an existing attachment. A failed flag update rejects
+  provisioning so the normal retry can repair it. `sweep` deletes detached ones older than ten minutes.
+  The worker's AWS credentials need
   `ec2:CreateVolume`, `AttachVolume`, `DetachVolume`, `DeleteVolume` and `DescribeVolumes`.
 
 ## Stopped-instance pool (AWS)
@@ -156,7 +228,7 @@ members; only `stopped` ones are candidates.
   pooled instance moves to the next, so simultaneous requests share the pool instead of
   cold-launching past it. A failed pooled start (capacity, incompatible type) leaves it in the pool
   and cold-launches. It is
-  tagged only once started: nothing but the pool may leave a worker stopped.
+  tagged only once started; stopped recovery hosts remain unavailable until pooled safely.
   The request emits `InstancePendingProvisioning` itself, as for an idle instance; a pooled start is
   never tagged `Starting=true`, since the started-instance poll would provision it a second time.
 - `SizeIdlePool` recycles: surplus idle instances fill the pool (oldest first) instead of being
@@ -165,8 +237,13 @@ members; only `stopped` ones are candidates.
   request is reserving; that instance's pool slot goes to the next surplus instance. Warm-up launches (`T3aSmall`, user data = `prewarmVolume.sh` + `poweroff`) fill the
   rest, at most two warming at a time: with `VOLUME_INITIALIZATION_RATE` set, every launch draws on
   EC2's regional volume initialization quota, which session launches share. User data runs on the first boot only, so a pooled instance does not power off when started.
+- Positive pool targets also trim excess ordinary members on the next sizing cycle, preferring ready,
+  known-warm disks. Setting the target to 0 disables pool management and leaves existing members alone.
+  Recovering reservations and recovery-intent claims count toward refill capacity, but not trim
+  surplus. Ready hosts remain while recovery is unfinished; ordinary excess is trimmed after pool
+  return. Allocation claims stay excluded, and each eviction still requires winning its claim.
 - `sweep` terminates pooled instances of another version, pooled instances still running an hour
-  after their start (failed warm-up or stop), and stopped instances outside the pool — every other
+  after their start (failed warm-up or stop), and stopped instances outside the pool/recovery — every other
   query sees only pending/running instances, so those would otherwise bill for their disk forever.
 - Recycled instances only carry the blocks their sessions read; warm-ups are fully read.
 
@@ -179,6 +256,9 @@ this is often an older build than the one deployed, and can move back when a cha
 Instances of any other version are therefore stale, newer ones included, and are recycled.
 
 ## Budget enforcement
+Budget spending uses fractional elapsed hours from session creation to closure, including startup.
+The session report's `costSinceCreation` uses the same elapsed time, rounded to cents for display.
+
 `POST /sessions/instance-type/:type` asks the budget module for a LIVE verdict first
 (`POST /budget/check/:username`, `src/workerSession/budgetClient.js`) and throws the matching typed
 error from `budgetErrors.js` when the user is over budget. `BUDGET_URL` configures the base URL.

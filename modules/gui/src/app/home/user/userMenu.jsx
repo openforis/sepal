@@ -1,8 +1,8 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {LanguageSelector} from '~/app/landing/languageSelector'
-import {ThemeSelector} from '~/app/landing/themeSelector'
+import {LanguageSelector} from '~/app/preferences/languageSelector'
+import {ThemeSelector} from '~/app/preferences/themeSelector'
 import {compose} from '~/compose'
 import {connect} from '~/connect'
 import {msg} from '~/translate'

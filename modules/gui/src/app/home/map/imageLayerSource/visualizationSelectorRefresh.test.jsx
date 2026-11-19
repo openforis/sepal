@@ -6,8 +6,8 @@ import {Observable, of, Subject} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer} from '~/widget/portal'
 
@@ -28,7 +28,6 @@ vi.mock('~/apiRegistry', () => ({default: {
 }}))
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/app/home/map/layer/earthEngineImageLayer', () => ({
     EarthEngineImageLayer: class {
         constructor({watchedProps}) {
@@ -53,7 +52,7 @@ const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry
 const {addRecipeImageLayer} = await import('~/app/home/body/process/recipeImageLayerRegistry')
 const {default: bandMath} = await import('~/app/home/body/process/recipe/bandMath/bandMath')
 const {BandMathImageLayer} = await import('~/app/home/body/process/recipe/bandMath/bandMathImageLayer')
-const {RecipeImageLayer} = await import('~/app/home/body/process/recipe/recipeImageLayer')
+const {RecipeImageLayer} = await import('~/app/home/body/process/recipe/map/recipeImageLayer')
 const {TabContext} = await import('~/widget/tabs/tabContext')
 const {MapAreaContext} = await import('../mapAreaContext')
 
@@ -79,6 +78,8 @@ beforeEach(() => {
     earthEngine.observations = []
     combo.props = null
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -242,7 +243,7 @@ async function openLayer({chosen}) {
         dimensions: {width: 1024, height: 768}
     }
     const store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     hostRecipe = initialState.process.loadedRecipes[HOST]
     chosenAgain = []
     mapArea = {area: 'main', updateLayerConfig: config => chosenAgain.push(config)}

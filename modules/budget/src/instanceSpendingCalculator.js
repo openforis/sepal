@@ -23,14 +23,13 @@ const calculate = (year, month, instanceUses, hourlyCostByInstanceType) => {
     }, 0)
 }
 
-// Hours are ceiled per use record, not on the month's summed hours.
 const hoursToCharge = (instanceUse, firstOfMonth, endOfMonth) => {
     const from = maxDate(instanceUse.from, firstOfMonth)
     const to = minDate(instanceUse.to, endOfMonth)
     if (from.getTime() > to.getTime()) {
         return 0
     }
-    return Math.ceil(hoursBetween(from, to))
+    return hoursBetween(from, to)
 }
 
 const maxDate = (a, b) => (a.getTime() >= b.getTime() ? a : b)

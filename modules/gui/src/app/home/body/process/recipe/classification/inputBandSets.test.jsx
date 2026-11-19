@@ -4,8 +4,9 @@ import {Provider} from 'react-redux'
 import {legacy_createStore as createStore} from 'redux'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 import errorIndicatorStyles from '~/widget/errorIndicator.module.css'
 import listItemStyles from '~/widget/listItem.module.css'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
@@ -16,10 +17,11 @@ import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 // whatever another still awaits; one input is repaired in its editor, judged alone, while another stays wrong.
 
 const fake = vi.hoisted(() => ({requests: []}))
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', async () => {
     const {NEVER, of, Subject} = await import('rxjs')
     return {default: {
-        recipe: {save$: () => NEVER, load$: () => NEVER, loadAll$: () => of([{id: 'classification-1', name: 'Land cover', type: 'CLASSIFICATION', revision: 1}])},
+        recipe: {save$: request => io.storage.save$(request), load$: () => NEVER, loadAll$: () => of([{id: 'classification-1', name: 'Land cover', type: 'CLASSIFICATION', revision: 1}])},
         gee: {
             // An asset's bands, answered when a test answers; its picker's metadata, at once.
             bands$: ({asset}) => {
@@ -40,7 +42,6 @@ vi.mock('~/translate', () => ({msg: (key, values) => {
 vi.mock('~/user', () => ({isServiceAccount: () => false}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => msg && !disabled && typeof msg !== 'function'
@@ -81,8 +82,8 @@ const {default: classification} = await import('./classification')
 const {Recipe} = await import('~/app/home/body/process/recipeContext')
 const {SourceRuntimeProvider, withSourceRuntime} = await import('~/app/home/body/process/sourceRuntime/sourceRuntimeContext')
 const {InputImagery} = await import('~/app/home/body/process/panels/inputImageryWithDerived/inputImagery')
-const {SectionButton} = await import('../sectionButton')
-const {retrieveAvailability} = await import('../operationAvailability')
+const {SectionButton} = await import('../requirements/sectionButton')
+const {retrieveAvailability} = await import('../requirements/operationAvailability')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
 const {Toolbar} = await import('~/widget/toolbar/toolbar')
@@ -96,6 +97,8 @@ let root, container, store, runtime
 beforeEach(() => {
     fake.requests = []
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -295,8 +298,11 @@ const open = async (images, recipes = [], {trainingData = TRAINED} = {}) => {
         assets: {user: [ASSET_A, ASSET_B].map(id => ({id, type: 'Image', updateTime: 'T1'})), other: []},
         dimensions: {width: 1024, height: 768}
     }
-    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
+    installStore(store)
+    opening.openIn(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

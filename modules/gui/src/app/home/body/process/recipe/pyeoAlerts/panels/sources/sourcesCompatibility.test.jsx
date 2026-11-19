@@ -6,8 +6,8 @@ import {of} from 'rxjs'
 import {afterEach, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 import {tooltipText} from '~/widget/tooltip.test.fixtures'
@@ -51,6 +51,8 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let root, container, store
 
+afterEach(disposeInstalledSessions)
+
 afterEach(async () => {
     await act(async () => root?.unmount())
     container?.remove()
@@ -78,10 +80,57 @@ it('applies a draft classification the monitoring data can feed', async () => {
     expect(store.getState().process.loadedRecipes[ID].model.sources.classification).toBe(OTHER_OPTICAL)
 })
 
+// What is said of a draft classification the monitoring data cannot feed names the repair the shared rule finds, judged
+// for the years monitored as Apply would save them.
+it('says beside a draft classification that turning SR off in PRC lets the monitoring data feed it, refusing Apply', async () => {
+    await open({dataSets: {LANDSAT: ['LANDSAT_8']}})
+
+    await select(PAN)
+    await chooseChangeClasses()
+
+    expect(classificationMessages()).toContainEqual('process.pyeoAlerts.panel.sources.form.classification.unsuppliedInputsReflectance.TOA pan')
+    expect(applyButton().disabled).toBe(true)
+})
+
+it('applies a draft classification whose input states top-of-atmosphere processing, with the processing it proposes', async () => {
+    await open({dataSets: {LANDSAT: ['LANDSAT_8']}})
+
+    await select(PAN_TOA)
+    await chooseChangeClasses()
+
+    expect(applyButton().disabled).toBe(false)
+    await act(async () => applyButton().click())
+    expect(store.getState().process.loadedRecipes[ID].model).toMatchObject({sources: {classification: PAN_TOA}, options: {corrections: []}})
+})
+
+for (const [_case, monitoringEnd, messages] of [
+    ['excludes Sentinel-2 for monitoring that ends as 2015 begins, saying so beside the classification', '2015-01-01', {
+        classification: ['process.pyeoAlerts.panel.sources.form.classification.unsuppliedInputsUnavailable redEdge1 sources.dataSets,SENTINEL_2,label 2014'],
+        dataSets: []
+    }],
+    ['offers Sentinel-2 for monitoring that reaches its first SR day, 28 March 2017, beside the data sets', '2017-03-29', {
+        classification: [],
+        dataSets: ['process.pyeoAlerts.panel.sources.form.dataSets.unsuppliedInputs redEdge1 sources.dataSets,SENTINEL_2,label']
+    }]
+]) {
+    it(`judges the data sets that could feed a draft classification by the monitoring years alone: ${_case}`, async () => {
+        await open({dataSets: {LANDSAT: ['LANDSAT_8']}, dates: {baselineStart: '2010-01-01', baselineEnd: '2014-01-01', monitoringStart: '2014-01-01', monitoringEnd}})
+
+        await select(RED_EDGE)
+        await chooseChangeClasses()
+
+        expect(unsuppliedMessages(classificationMessages())).toEqual(messages.classification)
+        expect(unsuppliedMessages(dataSetMessages())).toEqual(messages.dataSets)
+    })
+}
+
 const ID = 'pyeo-1'
 const OPTICAL = 'classification-optical'
 const OTHER_OPTICAL = 'classification-other-optical'
 const RADAR = 'classification-radar'
+const PAN = 'classification-pan'
+const PAN_TOA = 'classification-pan-toa'
+const RED_EDGE = 'classification-red-edge'
 
 // Over an asset holding the bands it selects. Only a trained one - a classifier and points to train it on - is a
 // Classification PyEO can run.
@@ -101,17 +150,23 @@ const classificationOver = (id, included, {trained = false} = {}) => ({
 const CLASSIFICATIONS = [
     classificationOver(OPTICAL, ['red', 'nir']),
     classificationOver(OTHER_OPTICAL, ['red', 'nir', 'swir1'], {trained: true}),
-    classificationOver(RADAR, ['VV_mean', 'VH_med'])
+    classificationOver(RADAR, ['VV_mean', 'VH_med']),
+    classificationOver(PAN, ['red', 'nir', 'pan'], {trained: true}),
+    classificationOver(PAN_TOA, ['red', 'nir', 'pan'], {trained: true}),
+    classificationOver(RED_EDGE, ['red', 'nir', 'redEdge1'], {trained: true})
 ]
+
+// What Earth Engine says of each input asset beyond its bands: an export of a top-of-atmosphere mosaic states it.
+const PROPERTIES = {[`users/x/${PAN_TOA}`]: {recipe_compositeOptions: JSON.stringify({corrections: []})}}
 
 // Earth Engine's description of each Classification's input asset: the bands its band set selects.
 const inputBandsOf = asset => CLASSIFICATIONS
     .find(({model}) => model.inputImagery.images[0].id === asset)
     ?.model.inputImagery.images[0].bandSetSpecs[0].included
 
-async function open() {
+async function open({dataSets = {LANDSAT: ['LANDSAT_9']}, dates = {monitoringStart: '2024-01-01', monitoringEnd: '2025-01-01'}} = {}) {
     loadRecipe$.mockImplementation(id => of(CLASSIFICATIONS.find(record => record.id === id)))
-    assetMetadata$.mockImplementation(() => of({bandNames: ['B1'], properties: {}}))
+    assetMetadata$.mockImplementation(({asset}) => of({bandNames: ['B1'], properties: PROPERTIES[asset] || {}}))
     bands$.mockImplementation(({asset}) => of((inputBandsOf(asset) || ['B1']).map(name => ({name, arrayDimensions: 0}))))
     const initialState = {
         dimensions: {width: 1024, height: 768},
@@ -122,9 +177,9 @@ async function open() {
                     id: ID,
                     type: 'PYEO_ALERTS',
                     model: {
-                        sources: {classification: OPTICAL, dataSets: {LANDSAT: ['LANDSAT_9']}, cloudPercentageThreshold: 75, changeFromClasses: [1], changeToClasses: [2]},
+                        sources: {classification: OPTICAL, dataSets, cloudPercentageThreshold: 75, changeFromClasses: [1], changeToClasses: [2]},
                         options: {corrections: ['SR']},
-                        dates: {monitoringStart: '2024-01-01', monitoringEnd: '2025-01-01'}
+                        dates
                     },
                     ui: {}
                 },
@@ -138,7 +193,7 @@ async function open() {
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
@@ -187,3 +242,9 @@ const applyButton = () => buttonsLabelled('button.apply')[0]
 const classificationMessages = () => [...document.querySelectorAll(
     '[data-label="process.pyeoAlerts.panel.sources.form.classification.label"] [data-message]'
 )].map(({textContent}) => textContent)
+
+const dataSetMessages = () => [...document.querySelectorAll(
+    '[data-label="process.pyeoAlerts.panel.sources.form.dataSets.label"] [data-message]'
+)].map(({textContent}) => textContent)
+
+const unsuppliedMessages = messages => messages.filter(message => message.includes('unsuppliedInputs'))

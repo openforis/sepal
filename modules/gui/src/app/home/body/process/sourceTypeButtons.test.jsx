@@ -17,8 +17,6 @@ import {SourceKind} from './sourceTypeButtons'
 // edit its caller is told of. The picker here shows which kind it is for, and the kind buttons it is given.
 
 vi.mock('~/translate', () => ({msg: key => key}))
-// Cuts an import cycle the form barrel would otherwise enter from the wrong side (see recipeInput.test.jsx).
-vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 

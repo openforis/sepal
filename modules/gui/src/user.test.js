@@ -62,7 +62,6 @@ vi.mock('~/action-builder', () => ({
     })
 }))
 
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/eventPublisher', () => ({publishCurrentUserEvent: () => {}, publishEvent: () => {}}))
 vi.mock('~/store', () => ({select: () => undefined}))
 vi.mock('~/translate', () => ({msg: key => key}))

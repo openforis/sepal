@@ -5,19 +5,20 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 
 // An input removed from the input imagery a recipe lists, as each of its panels removes it, over a real store. A saved
 // recipe can hold two inputs of one source - an asset or a recipe - each its own entry.
 
-// Storage never answers: what is saved is not the concern here.
+// Storage saves as the recipe module does (recipeStorage.test.fixtures.js); nothing here reads it.
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', async () => {
     const {NEVER} = await import('rxjs')
-    return {default: {recipe: {save$: () => NEVER, load$: () => NEVER}}}
+    return {default: {recipe: {save$: request => io.storage.save$(request), load$: () => NEVER}}}
 })
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // The list is open; the panel editing one input is not.
 vi.mock('~/widget/activation/activatable', () => ({
     withActivatable: ({id}) => Component => props => id === 'inputImagery'
@@ -39,6 +40,8 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 const ID = 'recipe-1'
 
 let root, container, store
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -119,8 +122,11 @@ const openInputImagery = async (InputImagery, images, layers = {}) => {
         },
         dimensions: {width: 1024, height: 768}
     }
-    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
+    installStore(store)
+    opening.openIn(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

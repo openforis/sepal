@@ -7,8 +7,9 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 import lookStyles from '~/style/look.module.css'
 import errorIndicatorStyles from '~/widget/errorIndicator.module.css'
 import listItemStyles from '~/widget/listItem.module.css'
@@ -16,12 +17,12 @@ import listItemStyles from '~/widget/listItem.module.css'
 // Calculations as their list and panel show them, judged by what Band Math needs of its configuration as applied, with
 // the sync that keeps the rest of the recipe following them, as the Band Math editor composes them, over a real store.
 
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', async () => {
     const {NEVER} = await import('rxjs')
-    return {default: {recipe: {save$: () => NEVER, load$: () => NEVER}}}
+    return {default: {recipe: {save$: request => io.storage.save$(request), load$: () => NEVER}}}
 })
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 // The panel is open for the calculation it was activated with, if any, and closes as it does when applied or cancelled.
 const activation = vi.hoisted(() => ({imageId: null}))
@@ -52,13 +53,13 @@ const {default: bandMath} = await import('../../bandMath')
 const {default: remapping} = await import('../../../remapping/remapping')
 const {readImageOutput} = await import('#sepal/recipe/output/readImageOutput')
 const {recipeType} = await import('#sepal/recipe/recipeTypeRegistry')
-const {buildMapDependencyGraph} = await import('../../../mapDependencyGraph')
-const {requestGate} = await import('../../../sourceRequirements')
-const {retrieveAvailability} = await import('../../../operationAvailability')
+const {buildMapDependencyGraph} = await import('../../../outputs/mapDependencyGraph')
+const {requestGate} = await import('../../../requirements/sourceRequirements')
+const {retrieveAvailability} = await import('../../../requirements/operationAvailability')
 const {Calculation} = await import('./calculation')
 const {Calculations} = await import('./calculations')
-const {commitRecipe} = await import('~/app/home/body/process/recipe/derivedResult')
-const {sourceProblemsOfState} = await import('../../../selectedSourceStatus')
+const {commitRecipe} = await import('~/app/home/body/process/recipe/editing/derivedResult')
+const {sourceProblemsOfState} = await import('../../../requirements/selectedSourceStatus')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
 
@@ -70,6 +71,8 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 const ID = 'band-math-1'
 
 let root, container, store
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -389,8 +392,11 @@ const sessionState = ({images, calculations}) => ({
 async function open(imageId, {images = [INPUT], calculations = []}, panel = <Calculation/>) {
     activation.imageId = imageId
     const initialState = sessionState({images, calculations})
-    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
+    installStore(store)
+    opening.openIn(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

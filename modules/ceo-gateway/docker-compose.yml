@@ -10,9 +10,6 @@ services:
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/ceo-gateway:${SEPAL_VERSION:-latest}"
     container_name: ceo-gateway
     init: true
-    volumes:
-      - "${SEPAL_DATA_DIR}:/data"
-      - "${SEPAL_BACKUP_DIR}:/ceo-gateway"
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       CEO_URL: "${CEO_URL}"

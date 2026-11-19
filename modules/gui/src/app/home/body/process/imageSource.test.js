@@ -5,8 +5,6 @@ import {describe, expect, it, vi} from 'vitest'
 // CCDC and Time Series declare images and are still not offered.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
-// Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
-vi.mock('~/user', () => ({}))
 
 const {addRecipeType, getRecipeType, isImageSource, listRecipeTypes} = await import('./recipeTypeRegistry')
 const {registerRecipeTypes} = await import('./recipeTypes')

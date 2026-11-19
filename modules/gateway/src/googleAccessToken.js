@@ -58,7 +58,7 @@ const initializeGoogleAccessTokenRefresher = ({userStore, event$}) => {
         userStore.getUser$(username).pipe(
             tap(() => log.debug(`${userTag(username)} Google access token refreshing now`)),
             switchMap(user => updateGoogleAccessToken$(user)),
-            switchMap(updatedUser => userStore.setUser$(updatedUser))
+            switchMap(({username, googleTokens}) => userStore.updateGoogleTokens$({username, googleTokens}))
         )
 
     monitor$.pipe(

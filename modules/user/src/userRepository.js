@@ -1,5 +1,6 @@
 import {storedUsername} from '#sepal/username'
 
+import {TOKEN_MAX_AGE_MS} from './tokens.js'
 import {rowToUser, toISOString} from './user.js'
 import {isText} from './validation.js'
 
@@ -47,7 +48,7 @@ export class UserRepository {
             return null
         }
         return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query('SELECT * FROM sepal_user WHERE token = ?', [token])
+            const [rows] = await connection.query('SELECT * FROM sepal_user WHERE token = BINARY ?', [token])
             return rowToUser(rows[0])
         })
     }
@@ -154,6 +155,32 @@ export class UserRepository {
         })
     }
 
+    async resetPasswordIfTokenIsValid({username, token, passwordHash}) {
+        requireSelector(username)
+        requireSelector(token)
+        return this.#db.withConnection(async connection => {
+            const [result] = await connection.query(
+                `UPDATE sepal_user SET password_hash = ?, token = NULL, status = 'ACTIVE', ${BUMP}
+                 WHERE username = ? AND BINARY token = ? AND status IN ('PENDING', 'ACTIVE')
+                   AND token_generation_time >= NOW(3) - INTERVAL ? SECOND`,
+                [passwordHash, username, token, TOKEN_MAX_AGE_MS / 1000]
+            )
+            return result.affectedRows > 0
+        })
+    }
+
+    async upgradePasswordHashIfUnchanged({username, verifiedHash, upgradedHash}) {
+        requireSelector(username)
+        return this.#db.withConnection(async connection => {
+            const [result] = await connection.query(
+                `UPDATE sepal_user SET password_hash = ?, token = NULL, ${BUMP}
+                 WHERE username = ? AND BINARY password_hash = ?`,
+                [upgradedHash, username, verifiedHash]
+            )
+            return result.affectedRows > 0
+        })
+    }
+
     // With a `revision`, the write only happens if the row still has it — the check and the write
     // are one statement, so two callers holding the same revision cannot both get through. Returns
     // whether a row was written.
@@ -168,10 +195,10 @@ export class UserRepository {
                 `UPDATE sepal_user
                  SET token = IF(email <=> ?, token, NULL),
                      name = ?, email = ?, organization = ?, intended_use = ?,
-                     email_notifications_enabled = ?, manual_map_rendering_enabled = ?, admin = ?, ${BUMP}
+                     email_notifications_enabled = ?, manual_map_rendering_enabled = ?, admin = COALESCE(?, admin), ${BUMP}
                  WHERE username = ? AND (? IS NULL OR revision = ?)`,
                 [email, name, email, organization, intendedUse,
-                    emailNotificationsEnabled, manualMapRenderingEnabled, admin, username,
+                    emailNotificationsEnabled, manualMapRenderingEnabled, admin ?? null, username,
                     revision ?? null, revision ?? null]
             ).catch(rethrowDuplicate)
             return result.affectedRows > 0
@@ -252,7 +279,9 @@ export class UserRepository {
 
     async #assignDerivedPosixIds(connection, id) {
         await connection.query(
-            'UPDATE sepal_user SET uid = id, gid = id WHERE id = ? AND (uid IS NULL OR gid IS NULL)', [id]
+            `UPDATE sepal_user
+             SET uid = COALESCE(uid, id), gid = COALESCE(gid, id)
+             WHERE id = ? AND (uid IS NULL OR gid IS NULL)`, [id]
         )
     }
 }

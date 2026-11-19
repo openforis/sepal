@@ -8,12 +8,13 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
-import {Aoi} from '../aoi'
-import {dataSetPeriodRequirement} from '../dataSetPeriodRequirement'
-import {initializeLayers} from '../recipeImageLayerSource'
-import {SourceEvidenceSync} from '../sourceEvidenceSync'
+import {dataSetPeriodRequirement, periodLabel} from '../collections/dataSetPeriodRequirement'
+import {Aoi} from '../map/aoi'
+import {initializeLayers} from '../map/recipeImageLayerSource'
+import {SourceEvidenceSync} from '../sources/sourceEvidenceSync'
 import {bandPresentation, mapProducts} from './bands'
 import {defaultModel, initialSources, RecipeActions} from './changeAlertsRecipe'
+import {dateRequirements} from './dateRequirements'
 import {observedBands} from './monitoringData'
 import {ChangeAlertsToolbar} from './panels/changeAlertsToolbar'
 import {changeAlertsObservation} from './referenceObservation'
@@ -74,9 +75,14 @@ export default () => ({
     mapProducts,
     bandPresentation,
     getPreSetVisualizations,
-    sourceRequirements: [...referenceRequirements, dataSetPeriodRequirement(SOURCES)],
+    sourceRequirements: [...referenceRequirements, dataSetPeriodRequirement(SOURCES, {windowLabel}), ...dateRequirements],
     initialSources,
     observedBands,
     // What a layer, Retrieve or chart observes to check the reference it requires, wherever it is shown.
     sourceObservation: changeAlertsObservation
 })
+
+// The window of its period that the chosen data sets leave uncovered (dataSetWindows, type/changeAlerts.js).
+const windowLabel = ({window, ...period}) => window === 'calibration'
+    ? msg('process.changeAlerts.panel.sources.form.dataSets.window.calibration', {period: periodLabel(period)})
+    : msg('process.changeAlerts.panel.sources.form.dataSets.window.monitoring', {period: periodLabel(period)})

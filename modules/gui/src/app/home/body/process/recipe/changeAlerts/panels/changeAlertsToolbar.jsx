@@ -2,7 +2,7 @@ import _ from 'lodash'
 import React from 'react'
 
 import {setInitialized} from '~/app/home/body/process/recipe'
-import {ChartPixelButton} from '~/app/home/body/process/recipe/chartPixelButton'
+import {ChartPixelButton} from '~/app/home/body/process/recipe/charts/chartPixelButton'
 import {Options as RadarOptions} from '~/app/home/body/process/recipe/mosaic/panels/radarMosaicOptions/options'
 import {createCompositeOptions} from '~/app/home/body/process/recipe/opticalMosaic/panels/compositeOptions/compositeOptions'
 import {Options as PlanetOptions} from '~/app/home/body/process/recipe/planetMosaic/panels/options/options'
@@ -13,8 +13,8 @@ import {msg} from '~/translate'
 import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
-import {RetrieveButton} from '../../retrieveButton'
-import {withSourceProblems} from '../../selectedSource'
+import {withSourceProblems} from '../../requirements/selectedSource'
+import {RetrieveButton} from '../../retrieve/retrieveButton'
 import {RecipeActions} from '../changeAlertsRecipe'
 import {presentProcessingInputs, preserveProcessingCopies, settingsOf} from '../processingSettings'
 import {hasSegmentDescription} from '../referenceEvidence'
@@ -95,7 +95,8 @@ class _ChangeAlertsToolbar extends React.Component {
                     <Toolbar.ActivationButton
                         id='date'
                         label={msg('process.changeAlerts.panel.date.button')}
-                        tooltip={msg('process.changeAlerts.panel.date.tooltip')}
+                        tooltip={sourceProblems.date || msg('process.changeAlerts.panel.date.tooltip')}
+                        error={!!sourceProblems.date}
                         disabled={!initialized}
                         panel/>
                     <Toolbar.ActivationButton

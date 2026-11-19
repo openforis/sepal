@@ -6,7 +6,7 @@ import {Observable, Subject} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {initStore} from '~/store'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 
@@ -17,8 +17,6 @@ const {aoiGeoId$} = vi.hoisted(() => ({aoiGeoId$: vi.fn()}))
 vi.mock('~/apiRegistry', () => ({default: {gee: {aoiGeoId$}}}))
 vi.mock('~/translate', () => ({msg: key => key}))
 vi.mock('./previewMap', () => ({PreviewMap: () => null}))
-// Cuts an import cycle the form barrel would otherwise enter from the wrong side (see recipeInput.test.jsx).
-vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
 
 const {geoIdFields, GeoIdSection} = await import('./geoIdSection')
 
@@ -46,6 +44,8 @@ beforeEach(() => {
         })
     })
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -184,7 +184,7 @@ const show = ({geoId, bufferMeters = ''}) => {
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

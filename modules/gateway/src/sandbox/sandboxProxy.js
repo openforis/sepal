@@ -4,6 +4,7 @@ import {createProxyServer} from 'httpxy'
 
 import {getLogger} from '#sepal/log'
 
+import {closeUpstreamOnClientClose, isClientDisconnect} from '../proxyError.js'
 import {rewriteLocation} from '../rewrite.js'
 import {getRequestUser} from '../user.js'
 
@@ -111,6 +112,10 @@ const createSandboxProxy = ({
         timeout
     })
 
+    proxy.on('proxyReqWs', (proxyRequest, _req, clientSocket) =>
+        closeUpstreamOnClientClose({proxyRequest, clientSocket})
+    )
+
     proxy.on('proxyRes', (proxyRes, req) => {
         const {endpoint} = req._sandbox || {}
         if (endpoint && !KEEPS_PREFIX[endpoint]) {
@@ -142,6 +147,10 @@ const createSandboxProxy = ({
     })
 
     proxy.on('error', (error, req, res) => {
+        if (isClientDisconnect({error, response: res})) {
+            log.debug(`Sandbox client disconnected for "${req && req.url}":`, error)
+            return
+        }
         log.error(`Sandbox proxy error for "${req && req.url}":`, error)
         // Nothing listening: the server is down for good (supervisord FATAL) or restarting. Either
         // way the next request must re-ensure it rather than trust the memoized start.
@@ -244,10 +253,12 @@ const createSandboxProxy = ({
             // A THROW from resolveTarget must not escape as an unhandled rejection: close the socket
             // (there is no ServerResponse on the ws path) — mirror the null/rejected handling below.
             log.error(`Sandbox ws upgrade resolve failed [${url}]:`, error)
+            if (socket.destroyed) return
             socket.write('HTTP/1.1 502 Bad Gateway\r\n\r\n')
             socket.destroy()
             return
         }
+        if (socket.destroyed) return
         if (resolution.status) {
             log.warn(() => `Rejecting sandbox ws upgrade (${resolution.status}): ${resolution.reason} [${url}]`)
             const statusText = resolution.status === 404 ? 'Not Found' : 'Bad Request'
@@ -260,10 +271,12 @@ const createSandboxProxy = ({
             await ensureStarted(username, resolution)
         } catch (error) {
             log.error(`Failed to start sandbox ${resolution.endpoint} for ${username}`, error)
+            if (socket.destroyed) return
             socket.write('HTTP/1.1 502 Bad Gateway\r\n\r\n')
             socket.destroy()
             return
         }
+        if (socket.destroyed) return
         log.debug(() => `${username} → sandbox ws ${resolution.endpoint} ws://${resolution.target.host}:${resolution.target.port}${req.url}`)
         // httpxy signature: ws(req, socket, opts, head).
         await proxy.ws(req, socket, {target: targetOrigin(resolution.target)}, head)

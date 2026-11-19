@@ -8,6 +8,7 @@ import {Subject} from 'rxjs'
 
 import {emitTaskChanged} from './events.js'
 import {createTask} from './task.js'
+import {taskAsListItem} from './tasksApi.js'
 import {createTaskWs} from './ws.js'
 
 describe('createTaskWs', () => {
@@ -87,6 +88,18 @@ describe('createTaskWs', () => {
         assert.deepEqual(Object.keys(data.items), ['t-1'])
         assert.equal(data.items['t-1'].status, 'PENDING')
         assert.equal(data.items['t-1'].id, 't-1')
+    })
+
+    it('lists every task as a list item keyed by its id, in listing order', async () => {
+        const laterTask = createTask({...aliceTask, id: 't-2'})
+        tasksByUser.alice = [aliceTask, laterTask]
+
+        subscriptionUp('alice', 's-1')
+        await untilListings(1)
+
+        const {items} = listings()[0].data
+        assert.deepEqual(Object.keys(items), ['t-1', 't-2'])
+        assert.deepEqual(items, {'t-1': taskAsListItem(aliceTask), 't-2': taskAsListItem(laterTask)})
     })
 
     it('pushes an updated listing when the user tasks change', async () => {

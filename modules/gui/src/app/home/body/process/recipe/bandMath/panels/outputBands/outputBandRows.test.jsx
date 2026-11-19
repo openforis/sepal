@@ -5,19 +5,20 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 
 // The output bands of an image as its panel lists them, over a real store. A saved recipe can output one band of an
 // input twice: a copy under a legacy id and one under the band's own, apart, each with a name of its own.
 
-// Storage never answers: what is saved is not the concern here.
+// Storage saves as the recipe module does (recipeStorage.test.fixtures.js); nothing here reads it.
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', async () => {
     const {NEVER} = await import('rxjs')
-    return {default: {recipe: {save$: () => NEVER, load$: () => NEVER}}}
+    return {default: {recipe: {save$: request => io.storage.save$(request), load$: () => NEVER}}}
 })
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // The panel is open, and closes as it does when applied or cancelled.
 vi.mock('~/widget/activation/activatable', async () => {
     const {useState} = await import('react')
@@ -39,8 +40,8 @@ vi.mock('~/widget/tooltip', () => ({
 }))
 
 const {OutputBands} = await import('./outputBands')
-const {sourceProblemsOfState} = await import('../../../selectedSourceStatus')
-const {configurationGate} = await import('../../../sourceRequirements')
+const {sourceProblemsOfState} = await import('../../../requirements/selectedSourceStatus')
+const {configurationGate} = await import('../../../requirements/sourceRequirements')
 const {findChanges} = await import('../../sync/findChanges')
 const {updateOutputBands} = await import('../../sync/updateOutputBands')
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
@@ -56,6 +57,8 @@ const ID = 'band-math-1'
 const ADD_ALL = 'process.bandMath.panel.outputBands.addBands.all.label'
 
 let root, container, store
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -462,8 +465,11 @@ const sessionState = (outputBands, {others = [], input = INPUT, otherInputs = []
 
 const openOutputBands = async (outputBands = OUTPUT_BANDS, configuration) => {
     const initialState = sessionState(outputBands, configuration)
-    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
+    installStore(store)
+    opening.openIn(store)
     await mount()
 }
 

@@ -4,7 +4,7 @@ import {CLASSIFICATION_SOURCE} from '#sepal/recipe/source/collectionSources'
 import {SEGMENT_BANDS} from '#sepal/recipe/type/ccdc'
 import {flatBandOptions, getAvailableBands} from '~/sources'
 
-import {selectedSourceOf} from '../sourceEvidence'
+import {selectedSourceOf} from '../sources/sourceEvidence'
 import {getAllVisualizations} from './ccdcRecipe'
 
 // What a CCDC recipe says about the segments image it produces. CCDC owns this description: which base

@@ -797,6 +797,70 @@ describe('scratch volume', () => {
         assert.ok(indexOf(AttachVolumeCommand) < indexOf(ModifyInstanceAttributeCommand))
     })
 
+    test('waits for volume availability and a running instance, then attaches only once across a retry', async context => {
+        context.mock.timers.enable({apis: ['setTimeout', 'Date']})
+        const volumeAvailable = Promise.withResolvers()
+        let state = 'pending'
+        let attached = false
+        ec2Mock.on(DescribeInstancesCommand).callsFake(() => describeResponse([makeAwsInstance({
+            State: {Name: state},
+            ...(attached ? withScratchVolume('vol-new') : {}),
+        })]))
+        ec2Mock.on(CreateVolumeCommand).resolves({VolumeId: 'vol-new'})
+        ec2Mock.on(DescribeVolumesCommand).callsFake(() => attached
+            ? {Volumes: [{VolumeId: 'vol-new', State: 'in-use'}]}
+            : volumeAvailable.promise)
+        ec2Mock.on(AttachVolumeCommand).callsFake(() => {
+            assert.equal(state, 'running')
+            attached = true
+            return {}
+        })
+        ec2Mock.on(ModifyInstanceAttributeCommand).resolves({})
+        const provider = createAwsInstanceProvider(CONFIG)
+
+        const attaching = provider.attachScratchVolume(instance)
+        attaching.catch(() => {})
+        await new Promise(resolve => setImmediate(resolve))
+        assert.equal(ec2Mock.commandCalls(DescribeInstancesCommand).length, 1)
+        assert.equal(ec2Mock.commandCalls(AttachVolumeCommand).length, 0)
+        volumeAvailable.resolve({Volumes: [{VolumeId: 'vol-new', State: 'available'}]})
+        await new Promise(resolve => setImmediate(resolve))
+        assert.equal(ec2Mock.commandCalls(AttachVolumeCommand).length, 0)
+
+        state = 'running'
+        context.mock.timers.tick(1000)
+        assert.equal(await attaching, '/dev/xvdg')
+        assert.equal(await provider.attachScratchVolume(instance), '/dev/xvdg')
+        assert.equal(ec2Mock.commandCalls(CreateVolumeCommand).length, 1)
+        assert.equal(ec2Mock.commandCalls(AttachVolumeCommand).length, 1)
+    })
+
+    for (const finalState of ['stopping', 'stopped', 'terminated']) {
+        test(`does not attach when the pending instance becomes ${finalState}`, async context => {
+            context.mock.timers.enable({apis: ['setTimeout', 'Date']})
+            let state = 'pending'
+            let attached = false
+            ec2Mock.on(DescribeInstancesCommand).callsFake(() => describeResponse([makeAwsInstance({State: {Name: state}})]))
+            ec2Mock.on(CreateVolumeCommand).resolves({VolumeId: 'vol-new'})
+            ec2Mock.on(DescribeVolumesCommand).callsFake(() => ({Volumes: [{
+                VolumeId: 'vol-new', State: attached ? 'in-use' : 'available',
+            }]}))
+            ec2Mock.on(AttachVolumeCommand).callsFake(() => { attached = true; return {} })
+            ec2Mock.on(ModifyInstanceAttributeCommand).resolves({})
+
+            const attaching = createAwsInstanceProvider(CONFIG).attachScratchVolume(instance)
+            const rejected = assert.rejects(attaching)
+            await new Promise(resolve => setImmediate(resolve))
+            state = finalState
+            context.mock.timers.tick(finalState === 'stopped' ? 300_001 : 1000)
+            await rejected
+
+            assert.equal(ec2Mock.commandCalls(CreateVolumeCommand).length, 1)
+            assert.equal(ec2Mock.commandCalls(AttachVolumeCommand).length, 0)
+            assert.equal(ec2Mock.commandCalls(ModifyInstanceAttributeCommand).length, 0)
+        })
+    }
+
     test('resolves no device for an instance type with local SSD', async () => {
         const device = await createAwsInstanceProvider(CONFIG).attachScratchVolume({...instance, type: 'M6idXlarge'})
 
@@ -805,13 +869,62 @@ describe('scratch volume', () => {
     })
 
     // A provisioning retry: the previous attempt attached the volume and failed later.
-    test('reuses a volume already attached', async () => {
+    test('reuses an attached volume and ensures deletion on termination', async () => {
         ec2Mock.on(DescribeInstancesCommand).resolves(describeResponse([makeAwsInstance(withScratchVolume('vol-1'))]))
+        ec2Mock.on(ModifyInstanceAttributeCommand).resolves({})
 
         const device = await createAwsInstanceProvider(CONFIG).attachScratchVolume(instance)
 
         assert.equal(device, '/dev/xvdg')
         assert.equal(ec2Mock.commandCalls(CreateVolumeCommand).length, 0)
+        assert.equal(ec2Mock.commandCalls(AttachVolumeCommand).length, 0)
+        assert.deepEqual(ec2Mock.commandCalls(ModifyInstanceAttributeCommand).map(call => call.args[0].input), [{
+            InstanceId: instance.id,
+            BlockDeviceMappings: [{DeviceName: '/dev/xvdg', Ebs: {DeleteOnTermination: true}}],
+        }])
+    })
+
+    test('retries a failed deletion flag update without creating or attaching another volume', async () => {
+        ec2Mock.on(DescribeInstancesCommand)
+            .resolvesOnce(describeResponse([makeAwsInstance()]))
+            .resolves(describeResponse([makeAwsInstance(withScratchVolume('vol-new'))]))
+        ec2Mock.on(CreateVolumeCommand).resolves({VolumeId: 'vol-new'})
+        ec2Mock.on(DescribeVolumesCommand)
+            .resolvesOnce({Volumes: [{VolumeId: 'vol-new', State: 'available'}]})
+            .resolves({Volumes: [{VolumeId: 'vol-new', State: 'in-use'}]})
+        ec2Mock.on(AttachVolumeCommand).resolves({})
+        const flagError = new Error('Deletion flag update failed')
+        ec2Mock.on(ModifyInstanceAttributeCommand).rejectsOnce(flagError).resolves({})
+        const provider = createAwsInstanceProvider(CONFIG)
+
+        await assert.rejects(provider.attachScratchVolume(instance), error => error === flagError)
+        assert.equal(await provider.attachScratchVolume(instance), '/dev/xvdg')
+
+        assert.equal(ec2Mock.commandCalls(CreateVolumeCommand).length, 1)
+        assert.equal(ec2Mock.commandCalls(AttachVolumeCommand).length, 1)
+        assert.deepEqual(ec2Mock.commandCalls(ModifyInstanceAttributeCommand).map(call => call.args[0].input), [
+            {
+                InstanceId: instance.id,
+                BlockDeviceMappings: [{DeviceName: '/dev/xvdg', Ebs: {DeleteOnTermination: true}}],
+            },
+            {
+                InstanceId: instance.id,
+                BlockDeviceMappings: [{DeviceName: '/dev/xvdg', Ebs: {DeleteOnTermination: true}}],
+            },
+        ])
+    })
+
+    test('does not report an attached volume ready when its deletion flag update fails', async () => {
+        ec2Mock.on(DescribeInstancesCommand).resolves(describeResponse([makeAwsInstance(withScratchVolume('vol-1'))]))
+        const flagError = new Error('Deletion flag update failed')
+        ec2Mock.on(ModifyInstanceAttributeCommand).rejects(flagError)
+
+        await assert.rejects(
+            createAwsInstanceProvider(CONFIG).attachScratchVolume(instance),
+            error => error === flagError
+        )
+        assert.equal(ec2Mock.commandCalls(CreateVolumeCommand).length, 0)
+        assert.equal(ec2Mock.commandCalls(AttachVolumeCommand).length, 0)
     })
 
     test('deleteScratchVolume detaches the volume, then deletes it', async () => {
@@ -892,7 +1005,7 @@ describe('stopped pool', () => {
         )
         const filters = ec2Mock.commandCalls(DescribeInstancesCommand)[0].args[0].input.Filters
         assert.ok(
-            filters.some(item => isDeepStrictEqual(item, {Name: 'tag:State', Values: ['pooled']}))
+            filters.some(item => isDeepStrictEqual(item, {Name: 'tag:State', Values: ['pooled', 'recovering']}))
         )
         assert.ok(filters.some(item => isDeepStrictEqual(
             item,

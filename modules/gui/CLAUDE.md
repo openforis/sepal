@@ -56,15 +56,21 @@ sepal eslint gui                           # Run GUI ESLint
 ```
 src/
   app/                  # App shell and route pages
+    home/map/           # Maps (Google Maps): lifetime and contexts, map-area controls, overlays, legend editing
+      eeTableAsset/     # Earth Engine table-asset overlay: options panel, style, filter, categories, renderer
+    home/monitoring/    # Application monitors Home mounts: budget, sessions, tasks, messages, login, connection
     home/body/
       apps/             # App launcher UI: instance picker modal, per-tab sessionId, appSessionMonitor
-      browse/           # File/asset browsers
+      browse/           # Asset listing (Assets), asset and workspace browsers and pickers
       process/          # Recipe processing (main feature area)
-        recipe/         # Recipe types: mosaic, classification, timeSeries, ccdc, etc.
+        recipe/         # Recipe types (mosaic, classification, timeSeries, ccdc, etc.) and shared groups:
+                        # outputs, sources, requirements, collections, editing, map, charts, retrieve
+        recipeSession/  # Drafts, recipe cache acceptance and claims, listing authority, save coordination
+        sourceRuntime/  # Acquisition: source evidence, outputs, watches
       terminal/         # Web terminal (xterm.js)
       users/            # User management (admin)
+    preferences/        # Theme and language selectors shared by Landing and the user menu
   widget/               # Reusable UI components (buttons, forms, panels, tabs, notifications)
-  map/                  # Map components (Google Maps integration)
 ```
 
 ## Non-Obvious Conventions

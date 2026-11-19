@@ -81,6 +81,26 @@ describe('UserRepository', () => {
             assert.equal(stored.gid, imported.id)
         })
 
+        test('preserves an existing uid when only the gid is missing', async () => {
+            const imported = await givenImportedUser({id: 10001, username: USERNAME, uid: 20000, gid: null})
+
+            await repository.assignDerivedPosixIds(imported.id)
+
+            const stored = await repository.findByUsername(USERNAME)
+            assert.equal(stored.uid, 20000)
+            assert.equal(stored.gid, imported.id)
+        })
+
+        test('preserves an existing gid when only the uid is missing', async () => {
+            const imported = await givenImportedUser({id: 10001, username: USERNAME, uid: null, gid: 20000})
+
+            await repository.assignDerivedPosixIds(imported.id)
+
+            const stored = await repository.findByUsername(USERNAME)
+            assert.equal(stored.uid, imported.id)
+            assert.equal(stored.gid, 20000)
+        })
+
         // The uid and gid migrated from LDAP own the files on disk; overwriting either would orphan them.
         test('leaves a posix identity that is already set', async () => {
             const imported = await givenImportedUser({username: USERNAME, uid: 10001, gid: 10002})
@@ -128,6 +148,16 @@ describe('UserRepository', () => {
 
             assert.equal(stored.username, USERNAME)
         })
+
+        for (const [name, token] of [['different case', 'THE-TOKEN'], ['trailing space', 'the-token ']]) {
+            test(`does not find a token with ${name}`, async () => {
+                await repository.insertUser(aUser({token: 'the-token'}))
+
+                const stored = await repository.findByToken(token)
+
+                assert.equal(stored, null)
+            })
+        }
     })
 
     describe('updateToken', () => {
@@ -386,6 +416,47 @@ describe('UserRepository', () => {
         })
     })
 
+    describe('upgradePasswordHashIfUnchanged', () => {
+        test('requires a byte-for-byte match before upgrading and invalidating the reset token', async () => {
+            const oldHash = '{PLAIN}Old-password'
+            await repository.insertUser(aUser())
+            await repository.updatePassword(USERNAME, oldHash)
+            await repository.updateToken(USERNAME, 'reset-token')
+            const before = await repository.findByUsername(USERNAME)
+
+            for (const expected of [oldHash.toLowerCase(), `${oldHash} `]) {
+                assert.equal(await repository.upgradePasswordHashIfUnchanged({
+                    username: USERNAME, verifiedHash: expected, upgradedHash: 'upgraded-hash'
+                }), false)
+            }
+            assert.deepEqual(await repository.findByUsername(USERNAME), before)
+            assert.equal(await repository.upgradePasswordHashIfUnchanged({
+                username: USERNAME, verifiedHash: oldHash, upgradedHash: 'upgraded-hash'
+            }), true)
+
+            const stored = await repository.findByUsername(USERNAME)
+            assert.equal(stored.passwordHash, 'upgraded-hash')
+            assert.equal(stored.token, null)
+            assert.equal(stored.revision, before.revision + 1)
+        })
+
+        test('leaves a newer password, reset token and revision untouched', async () => {
+            await repository.insertUser(aUser())
+            await repository.updatePassword(USERNAME, 'old-hash')
+            const verified = await repository.findByUsername(USERNAME)
+            await repository.updatePassword(USERNAME, 'new-hash')
+            await repository.updateToken(USERNAME, 'new-reset-token')
+            const before = await repository.findByUsername(USERNAME)
+
+            const updated = await repository.upgradePasswordHashIfUnchanged({
+                username: USERNAME, verifiedHash: verified.passwordHash, upgradedHash: 'upgraded-old-hash'
+            })
+
+            assert.equal(updated, false)
+            assert.deepEqual(await repository.findByUsername(USERNAME), before)
+        })
+    })
+
     describe('updateStatus', () => {
         test('changes the status of the named user', async () => {
             await repository.insertUser(aUser())
@@ -464,6 +535,15 @@ describe('UserRepository', () => {
             const before = await repository.findByUsername(USERNAME)
 
             await assert.rejects(repository.updatePassword(NOT_A_STRING, '{SCRYPT}hash'), REFUSED)
+            await assert.rejects(repository.resetPasswordIfTokenIsValid({
+                username: NOT_A_STRING, token: 'a-token', passwordHash: '{SCRYPT}hash'
+            }), REFUSED)
+            await assert.rejects(repository.resetPasswordIfTokenIsValid({
+                username: USERNAME, token: NOT_A_STRING, passwordHash: '{SCRYPT}hash'
+            }), REFUSED)
+            await assert.rejects(repository.upgradePasswordHashIfUnchanged({
+                username: NOT_A_STRING, verifiedHash: 'old-hash', upgradedHash: '{SCRYPT}hash'
+            }), REFUSED)
             await assert.rejects(repository.updateStatus(NOT_A_STRING, 'ACTIVE'), REFUSED)
             await assert.rejects(repository.updateToken(NOT_A_STRING, 'new-token'), REFUSED)
 

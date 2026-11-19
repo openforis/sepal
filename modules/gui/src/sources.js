@@ -1,4 +1,4 @@
-import {dataSetYears, excludedDataSets} from '#sepal/recipe/dataSetAvailability'
+import {dataSetDates, excludedDataSets} from '#sepal/recipe/dataSetAvailability'
 import {RADAR_MEASURES} from '#sepal/recipe/radar/collectionMeasures'
 import {supportProbability, supportRegression} from '#sepal/recipe/type/classification'
 import {getAvailableBands as getAvailableOpticalBands, getGroupedBandOptions as getGroupedOpticalBandOptions} from '~/app/home/body/process/recipe/opticalMosaic/bands'
@@ -11,13 +11,15 @@ import {
     isRadarDataSet,
     toSources as toRadarSources
 } from '~/app/home/body/process/recipe/radarMosaic/sources'
+import format from '~/format'
 
 import {msg} from './translate'
 
-// The data sets Sources offer of a collection type (OPTICAL, RADAR or PLANET), judged against the years the recipe's
-// execution reads (`period`, the dataSetPeriod its shared type declares). One that may hold no imagery then cannot be
-// chosen anew. One the draft has `chosen` stays chosen and can be removed, its tooltip giving the years it holds imagery
-// for: a date change takes no choice away. Once removed, it is offered again only by a period it may hold imagery in.
+// The data sets Sources offer of a collection type (OPTICAL, RADAR or PLANET), judged against the days the recipe's
+// execution reads, under the correction it reads them with (`period`, the dataSetPeriod its shared type declares). One
+// that may hold no imagery then cannot be chosen anew. One the draft has `chosen` stays chosen and can be removed, its
+// tooltip saying when it holds imagery (imageryLabel): a date change takes no choice away. Once removed, it is offered
+// again only by a period it may hold imagery in.
 // What a selection none of which may contribute needs is said beside the data sets (dataSetPeriodRequirement.js).
 // Without a period, none is judged.
 export const dataSetOptions = ({type, period, chosen}) => {
@@ -27,7 +29,7 @@ export const dataSetOptions = ({type, period, chosen}) => {
             return option
         }
         return kept.includes(option.value)
-            ? {...option, tooltip: [catalogueYears(option.value), option.tooltip]}
+            ? {...option, tooltip: [imageryLabel(option.value, period), option.tooltip]}
             : {...option, neverSelected: true}
     })
 }
@@ -162,11 +164,16 @@ const typeDataSetOptions = type => {
     }
 }
 
-const catalogueYears = dataSet => {
-    const {fromYear, toYear} = dataSetYears(dataSet)
-    return toYear === undefined
-        ? msg('process.source.dataSets.years.from', {fromYear})
-        : msg('process.source.dataSets.years.range', {fromYear, toYear})
+// When a data set `period` excludes holds imagery: by years where the period lies in years it holds none for, and by days
+// where the period reaches into the year its imagery begins or ends, which its years would not explain.
+const imageryLabel = (dataSet, period) => {
+    const {fromDate, toDate, fromYear, toYear} = dataSetDates(dataSet, period.reflectance)
+    const byYears = period.endYear < fromYear || (toDate !== undefined && period.startYear > toYear)
+    return toDate === undefined
+        ? msg('process.source.dataSets.imagery.from', {from: byYears ? `${fromYear}` : format.date(fromDate)})
+        : msg('process.source.dataSets.imagery.range', {
+            period: byYears ? format.yearRange(fromYear, toYear) : format.dateRange(fromDate, toDate)
+        })
 }
 
 const asList = dataSets => [dataSets ?? []].flat().filter(Boolean)

@@ -29,6 +29,8 @@ Uses `STree` (Sepal Tree) from `#sepal/tree/sTree` for hierarchical asset repres
 ### WebSocket Messages
 `src/ws.js` - Receives: `userUp`, `userDown`, `googleAccessTokenAdded/Updated/Removed`, `subscriptionUp/Down`, `reload`, `cancelReload`, `remove`. Streams asset updates back to clients.
 
+Mutation paths are non-empty arrays of non-empty strings; removal batches are validated before dispatch. Invalid paths and synchronous dispatch failures are logged per message so another user's commands and connection heartbeats continue.
+
 ### Redis Storage
 - `src/assetStore.js` - Stores entire asset trees as JSON, TTL-based expiration on token refresh
 - `src/userStore.js` - Stores user state (username, Google tokens, project IDs)

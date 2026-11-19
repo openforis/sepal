@@ -6,13 +6,12 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {initStore} from '~/store'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
 const harness = vi.hoisted(() => ({deactivate: vi.fn()}))
 vi.mock('~/translate', () => ({msg: key => key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/apiRegistry', () => ({default: {}}))
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({getRecipeType: () => ({sourceRequirements: []})}))
 vi.mock('~/app/home/body/process/sourceRuntime/sourceRuntimeContext', () => ({
@@ -32,6 +31,8 @@ const CompositeOptions = createCompositeOptions({id: 'compositeOptions'})
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 let root, container, store
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -120,7 +121,7 @@ const open = async model => {
         dimensions: {width: 1024, height: 768}
     }
     store = createStore((state = initial, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

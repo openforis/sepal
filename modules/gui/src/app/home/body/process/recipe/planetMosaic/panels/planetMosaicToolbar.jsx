@@ -9,7 +9,7 @@ import {msg} from '~/translate'
 import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
-import {RetrieveButton} from '../../retrieveButton'
+import {RetrieveButton} from '../../retrieve/retrieveButton'
 import {Dates} from './dates/dates'
 import {Options} from './options/options'
 import styles from './planetMosaicToolbar.module.css'

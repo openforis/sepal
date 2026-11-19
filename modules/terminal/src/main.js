@@ -12,7 +12,9 @@ configureServer(logConfig)
 const log = getLogger('main')
 
 const app = express()
-expressWs(app)
+expressWs(app).getWss().on('connection', websocket =>
+    websocket.on('error', error => log.warn('Terminal WebSocket error', error))
+)
 
 app.ws('/:sessionId', Terminal.start)
 app.post('/:sessionId/size', Terminal.resize)

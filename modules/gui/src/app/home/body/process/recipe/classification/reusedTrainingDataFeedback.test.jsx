@@ -7,8 +7,8 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 import {tooltipText} from '~/widget/tooltip.test.fixtures'
@@ -37,7 +37,6 @@ vi.mock('~/apiRegistry', () => ({default: {
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => msg && !disabled && typeof msg !== 'function'
@@ -59,8 +58,8 @@ const {default: classification} = await import('./classification')
 const {default: regression} = await import('../regression/regression')
 const {TrainingData: ClassificationTrainingData} = await import('./panels/trainingData/trainingData')
 const {TrainingData: RegressionTrainingData} = await import('../regression/panels/trainingData/trainingData')
-const {sectionProblemsOfState, sourceProblemsOfState} = await import('../selectedSourceStatus')
-const {retrieveAvailability} = await import('../operationAvailability')
+const {sectionProblemsOfState, sourceProblemsOfState} = await import('../requirements/selectedSourceStatus')
+const {retrieveAvailability} = await import('../requirements/operationAvailability')
 
 addRecipeType(classification())
 addRecipeType(regression())
@@ -68,6 +67,8 @@ addRecipeType(regression())
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let root, container, store, runtime
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -401,7 +402,7 @@ async function open(type, TrainingData, {images, consumerImages, points, reuse, 
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

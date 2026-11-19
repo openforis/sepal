@@ -2,7 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {isClassifiedOutput} from '#sepal/recipe/classifiedOutputs'
-import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
+import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/retrieve/retrievePanel'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {compose} from '~/compose'
@@ -12,8 +12,8 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
 import {draftDisagreementsOfState} from '../../../../sourceRuntime/recordCurrency'
-import {retrievedRecordOf} from '../../../retrieveOutput'
-import {chosenBandLabel, classificationNaming, selectedClassificationId, selectedClassificationOfState} from '../../../selectedClassification'
+import {chosenBandLabel, classificationNaming, selectedClassificationId, selectedClassificationOfState} from '../../../collections/selectedClassification'
+import {retrievedRecordOf} from '../../../retrieve/retrieveOutput'
 import {RecipeActions} from '../../timeSeriesRecipe'
 
 // A download is held, whatever indicators it names, to the recipe's image output - the analysis prerequisites of its

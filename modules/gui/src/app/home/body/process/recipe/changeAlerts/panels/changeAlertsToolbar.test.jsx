@@ -5,7 +5,7 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {initStore} from '~/store'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 
 // What the toolbar offers over a source it has a description of, and over one it does not. A read that
 // failed leaves nothing to chart or export, however much configuration the recipe carries.
@@ -34,13 +34,13 @@ vi.mock('~/widget/toolbar/toolbar', () => ({
 }))
 // The sections held back by their source, as the source requirements read them (selectedSourceStatus.js).
 const sections = vi.hoisted(() => ({problems: {}}))
-vi.mock('../../selectedSource', () => ({
+vi.mock('../../requirements/selectedSource', () => ({
     withSourceProblems: () => Component => props => <Component {...props} sourceProblems={sections.problems}/>
 }))
-vi.mock('~/app/home/body/process/recipe/chartPixelButton', () => ({
+vi.mock('~/app/home/body/process/recipe/charts/chartPixelButton', () => ({
     ChartPixelButton: ({disabled}) => <button aria-label='chart-pixel' disabled={disabled}/>
 }))
-vi.mock('../../retrieveButton', () => ({
+vi.mock('../../retrieve/retrieveButton', () => ({
     RetrieveButton: ({disabled}) => <button aria-label='retrieve' disabled={disabled}/>
 }))
 
@@ -52,6 +52,8 @@ const ALERTS = 'alerts-1'
 const SOURCE_KEY = 'RECIPE_REF:masking-1'
 
 let root, container
+
+afterEach(disposeInstalledSessions)
 
 afterEach(() => {
     sections.problems = {}
@@ -84,7 +86,7 @@ describe('an initialized recipe', () => {
 })
 
 describe('a section held back by its source', () => {
-    it.each(['reference', 'sources'])('marks %s, saying why, and no other section', section => {
+    it.each(['reference', 'date', 'sources'])('marks %s, saying why, and no other section', section => {
         sections.problems = {[section]: 'What is wrong'}
 
         render(alerts({sourceKey: SOURCE_KEY, status: 'OBSERVED'}))
@@ -115,7 +117,7 @@ const render = recipe => {
         process: {loadedRecipes: {[recipe.id]: recipe}, tabs: [{id: recipe.id}], recipes: []}
     }
     const store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

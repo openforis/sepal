@@ -7,6 +7,7 @@ import {callsOf} from '#sepal/testSupport/mock'
 import {instanceName} from '../instanceName.js'
 import {SANDBOX} from '../workerInstance/workerTypes.js'
 import {InstanceBudgetExceeded, StorageBudgetExceeded, StorageQuotaExceeded} from './budgetErrors.js'
+import {emitWorkerSessionClosed, workerSessionClosed$} from './events.js'
 import {createMissingInstanceTracker} from './missingInstanceTracker.js'
 import {createSessionManager} from './sessionManager.js'
 import {createWorkerSession, State} from './workerSession.js'
@@ -324,18 +325,56 @@ describe('activatePendingSessionOnInstance', () => {
 })
 
 describe('closeSession', () => {
-    test('two-step: update(CLOSED) THEN releaseInstance, then WorkerSessionClosed', async () => {
+    test('billing stops when the row closes while instance release is still pending', async context => {
+        const scenario = aPendingRelease(context)
+
+        const closing = scenario.mgr.closeSession({sessionId: 's-1', username: 'alice'})
+
+        await assertBillingCutoff(context, scenario, closing)
+    })
+
+    test('a release failure does not suppress the committed session closure', async () => {
+        const repo = makeRepo({getSession: () => session()})
+        const instanceManager = makeInstanceManager({releaseInstance: mock.fn(async () => {throw new Error('stop failed')})})
+        const {mgr, events} = build({repo, instanceManager})
+
+        await assert.rejects(mgr.closeSession({sessionId: 's-1'}), /stop failed/)
+
+        assert.deepEqual(callsOf(events.emitWorkerSessionClosed), [[{username: 'alice', sessionId: 's-1'}]])
+    })
+
+    test('manual pending closure requests warmed-host startup recovery', async () => {
+        const repo = makeRepo({getSession: () => session({state: State.PENDING})})
+        const {mgr, instanceManager} = build({repo})
+
+        await mgr.closeSession({sessionId: 's-1', username: 'alice', recoverStartup: true})
+
+        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-1', 's-1', {retire: true, recoverStartup: true}]])
+    })
+
+    test('system pending closure keeps retirement mandatory', async () => {
+        const repo = makeRepo({getSession: () => session({state: State.PENDING})})
+        const {mgr, instanceManager} = build({repo})
+
+        await mgr.closeSession({sessionId: 's-1'})
+
+        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-1', 's-1', {retire: true}]])
+    })
+
+    test('the row closes before publishing closure and releasing the instance', async () => {
         const order = []
         const repo = makeRepo({getSession: () => session({state: State.ACTIVE})})
         repo.update = mock.fn(async s => { order.push(`update:${s.state}`); return true })
         const instanceManager = makeInstanceManager({
             releaseInstance: mock.fn(async id => {order.push(`release:${id}`)}),
         })
-        const {mgr, events} = build({repo, instanceManager})
+        const events = makeEvents()
+        events.emitWorkerSessionClosed = mock.fn(() => order.push('closed'))
+        const {mgr} = build({repo, instanceManager, events})
 
         await mgr.closeSession({sessionId: 's-1'})
 
-        assert.deepEqual(order, ['update:CLOSED', 'release:i-1'])
+        assert.deepEqual(order, ['update:CLOSED', 'closed', 'release:i-1'])
         assert.deepEqual(
             callsOf(events.emitWorkerSessionClosed),
             [[{username: 'alice', sessionId: 's-1'}]]
@@ -380,7 +419,7 @@ describe('closeSession', () => {
         await mgr.closeSession({sessionId: 's-1'})
 
         assert.partialDeepStrictEqual(callsOf(repo.update), [[{state: State.CLOSED}]])
-        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-1', 's-1']])
+        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-1', 's-1', {retire: false}]])
         assert.equal(events.emitWorkerSessionClosed.mock.callCount(), 1)
     })
 
@@ -402,7 +441,7 @@ describe('closeSessionOnInstance', () => {
         await mgr.closeSessionOnInstance('i-1')
         assert.deepEqual(callsOf(repo.sessionOnInstance), [['i-1', [State.PENDING, State.ACTIVE]]])
         assert.ok(repo.update.mock.callCount() > 0)
-        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-1', 's-1']])
+        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-1', 's-1', {retire: true}]])
         assert.equal(events.emitWorkerSessionClosed.mock.callCount(), 1)
     })
 
@@ -415,14 +454,39 @@ describe('closeSessionOnInstance', () => {
 })
 
 describe('closeUserSessions', () => {
+    test('bulk closure stops billing before waiting for instance release', async context => {
+        const scenario = aPendingRelease(context)
+
+        const closing = scenario.mgr.closeUserSessions('alice')
+
+        await assertBillingCutoff(context, scenario, closing)
+    })
+
+    test('manual bulk closure requests startup recovery only for pending sessions', async () => {
+        const pending = session({id: 's-pending', state: State.PENDING, instance: {id: 'i-pending', host: 'h'}})
+        const active = session({id: 's-active', state: State.ACTIVE, instance: {id: 'i-active', host: 'h'}})
+        const repo = makeRepo({userSessions: () => [pending, active]})
+        const {mgr, instanceManager} = build({repo})
+
+        await mgr.closeUserSessions('alice', {recoverStartup: true})
+
+        assert.deepEqual(callsOf(instanceManager.releaseInstance), [
+            ['i-pending', 's-pending', {retire: true, recoverStartup: true}],
+            ['i-active', 's-active', {retire: false}],
+        ])
+    })
+
     test('closes each PENDING/ACTIVE session (update + release + event per session)', async () => {
-        const a = session({id: 's-a', instance: {id: 'i-a', host: 'h'}})
-        const b = session({id: 's-b', instance: {id: 'i-b', host: 'h'}})
+        const a = session({id: 's-a', state: State.PENDING, instance: {id: 'i-a', host: 'h'}})
+        const b = session({id: 's-b', state: State.ACTIVE, instance: {id: 'i-b', host: 'h'}})
         const repo = makeRepo({userSessions: () => [a, b]})
         const {mgr, instanceManager, events} = build({repo})
         await mgr.closeUserSessions('alice')
         assert.deepEqual(callsOf(repo.userSessions), [['alice', [State.PENDING, State.ACTIVE]]])
-        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-a', 's-a'], ['i-b', 's-b']])
+        assert.deepEqual(callsOf(instanceManager.releaseInstance), [
+            ['i-a', 's-a', {retire: true}],
+            ['i-b', 's-b', {retire: false}]
+        ])
         assert.equal(events.emitWorkerSessionClosed.mock.callCount(), 2)
     })
 
@@ -435,30 +499,57 @@ describe('closeUserSessions', () => {
         })
         const {mgr, events} = build({repo, instanceManager})
         await mgr.closeUserSessions('alice')
-        // second session still closed + emitted despite the first failing
+        // Both committed closures are published even when one instance release fails.
         assert.deepEqual(
             callsOf(events.emitWorkerSessionClosed),
-            [[{username: 'alice', sessionId: 's-b'}]]
+            [[{username: 'alice', sessionId: 's-a'}], [{username: 'alice', sessionId: 's-b'}]]
         )
     })
 })
 
 describe('closeTimedOutSessions', () => {
-    test('closes each timed-out session, isolated', async () => {
-        const a = session({id: 's-a', state: State.ACTIVE, instance: {id: 'i-a', host: 'h'}})
-        const b = session({id: 's-b', state: State.PENDING, instance: {id: 'i-b', host: 'h'}})
-        const byId = {'s-a': a, 's-b': b}
-        const repo = makeRepo({timedOutSessions: () => [a, b], getSession: id => byId[id]})
-        const {mgr, events} = build({repo})
+    test('closes a timed-out session, announcing closure before retiring its instance', async () => {
+        const order = []
+        const repo = makeRepo({
+            timedOutSessions: () => [session()],
+            closeTimedOutSession: id => { order.push(`close:${id}`); return true },
+        })
+        const instanceManager = makeInstanceManager({
+            releaseInstance: mock.fn(async (...args) => {order.push(['release', ...args])}),
+        })
+        const events = makeEvents()
+        events.emitWorkerSessionClosed = mock.fn(event => order.push(['closed', event]))
+        const {mgr} = build({repo, instanceManager, events})
+
         await mgr.closeTimedOutSessions()
-        assert.equal(events.emitWorkerSessionClosed.mock.callCount(), 2)
+
+        assert.deepEqual(order, [
+            'close:s-1',
+            ['closed', {username: 'alice', sessionId: 's-1'}],
+            ['release', 'i-1', 's-1', {retire: true}],
+        ])
+    })
+
+    // Activation, a refresh or another closer can land between selecting a session and closing it.
+    test('a session whose close is refused is neither announced nor released', async () => {
+        const refused = session({id: 's-a', instance: {id: 'i-a', host: 'h'}})
+        const timedOut = session({id: 's-b', instance: {id: 'i-b', host: 'h'}})
+        const repo = makeRepo({
+            timedOutSessions: () => [refused, timedOut],
+            closeTimedOutSession: id => id !== refused.id,
+        })
+        const {mgr, instanceManager, events} = build({repo})
+
+        await mgr.closeTimedOutSessions()
+
+        assert.deepEqual(callsOf(events.emitWorkerSessionClosed), [[{username: 'alice', sessionId: 's-b'}]])
+        assert.deepEqual(callsOf(instanceManager.releaseInstance), [['i-b', 's-b', {retire: true}]])
     })
 
     test('one failure does not abort the rest', async () => {
-        const a = session({id: 's-a', state: State.ACTIVE, instance: {id: 'i-a', host: 'h'}})
-        const b = session({id: 's-b', state: State.ACTIVE, instance: {id: 'i-b', host: 'h'}})
-        const byId = {'s-a': a, 's-b': b}
-        const repo = makeRepo({timedOutSessions: () => [a, b], getSession: id => byId[id]})
+        const a = session({id: 's-a', instance: {id: 'i-a', host: 'h'}})
+        const b = session({id: 's-b', instance: {id: 'i-b', host: 'h'}})
+        const repo = makeRepo({timedOutSessions: () => [a, b]})
         const instanceManager = makeInstanceManager({
             releaseInstance: mock.fn(async id => {if (id === 'i-a') throw new Error('boom')}),
         })
@@ -466,7 +557,7 @@ describe('closeTimedOutSessions', () => {
         await mgr.closeTimedOutSessions()
         assert.deepEqual(
             callsOf(events.emitWorkerSessionClosed),
-            [[{username: 'alice', sessionId: 's-b'}]]
+            [[{username: 'alice', sessionId: 's-a'}], [{username: 'alice', sessionId: 's-b'}]]
         )
     })
 })
@@ -586,6 +677,13 @@ describe('heartbeat', () => {
 })
 
 describe('extensions', () => {
+    test('the termination link stops billing before instance release finishes', async context => {
+        const scenario = aPendingRelease(context)
+
+        const closing = scenario.mgr.redeemTermination({sessionId: 's-1', notifiedTime: fixedClock()})
+
+        await assertBillingCutoff(context, scenario, closing)
+    })
 
     // The keepAlive slider REPLACES the deadline — the one write that is not a ratchet, because
     // the cursor shows the current keep-alive and dragging it means "make it this much".
@@ -723,6 +821,21 @@ describe('extensions', () => {
         )
     })
     const activeRepo = (canned = {}) => makeRepo({getSession: () => session({state: State.ACTIVE}), ...canned})
+})
+
+describe('expireSessions', () => {
+    test('expiry stops billing before instance release finishes', async context => {
+        const expired = session({
+            state: State.ACTIVE,
+            notificationState: 'NOTIFIED',
+            notifiedTime: new Date(fixedClock().getTime() - 61 * 60_000),
+        })
+        const scenario = aPendingRelease(context, expired)
+
+        const closing = scenario.mgr.expireSessions()
+
+        await assertBillingCutoff(context, scenario, closing)
+    })
 })
 
 describe('queries', () => {
@@ -1053,6 +1166,9 @@ const makeRepo = (canned = {}) => {
             record('timedOutSessions')
             return canned.timedOutSessions ? canned.timedOutSessions() : []
         }),
+        closeTimedOutSession: mock.fn(
+            async id => canned.closeTimedOutSession ? canned.closeTimedOutSession(id) : true
+        ),
         sessionOnInstance: mock.fn(async (instanceId, states) => {
             record('sessionOnInstance', instanceId, states)
             return canned.sessionOnInstance ? canned.sessionOnInstance(instanceId, states) : null
@@ -1168,6 +1284,36 @@ const makeBudgetClient = (overrides = {}) => ({
 })
 
 const fixedClock = () => new Date('2026-01-01T12:00:00Z')
+
+const aPendingRelease = (context, current = session()) => {
+    context.mock.timers.enable({apis: ['Date'], now: fixedClock().getTime()})
+    const published = []
+    const subscription = workerSessionClosed$.subscribe(event => published.push(event))
+    context.after(() => subscription.unsubscribe())
+    const releaseStarted = Promise.withResolvers()
+    const resume = Promise.withResolvers()
+    const repo = makeRepo({getSession: () => current, userSessions: () => [current], expiredSessions: () => [current]})
+    const instanceManager = makeInstanceManager({releaseInstance: mock.fn(() => {
+        releaseStarted.resolve()
+        return resume.promise
+    })})
+    const events = {...makeEvents(), emitWorkerSessionClosed}
+    const {mgr} = build({repo, instanceManager, events})
+    return {mgr, current, published, releaseStarted, resume}
+}
+
+const assertBillingCutoff = async (context, scenario, closing) => {
+    const expected = [{username: scenario.current.username, sessionId: scenario.current.id, closeTime: fixedClock().toISOString()}]
+    await scenario.releaseStarted.promise
+    try {
+        assert.deepEqual([...scenario.published], expected)
+        context.mock.timers.tick(10 * 60_000)
+    } finally {
+        scenario.resume.resolve()
+        await closing
+    }
+    assert.deepEqual(scenario.published, expected)
+}
 
 // makeAppRepo — a fake of ../sessionAppRepository.js. Defaults to no associations / no live apps,
 // so tests that don't care about app associations (most of them) are unaffected.
