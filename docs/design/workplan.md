@@ -1,6 +1,15 @@
 # SEPAL workplan
 Calibration behaviour in time-series isn't consistent with optical mosaic.
 
+Retry tasks, open recipe creating a task. Warn when recipe or its dependencies changed
+
+MySQL -> PostgreSQL
+
+AQS keys - separate for PROD and DEV, locked to specific regions.
+
+Redo the backup scripts
+
+
 
 The single backlog for SEPAL recipes, tasks, applications and infrastructure. Reports need reproduction;
 proposals need bounded scope and acceptance criteria; research questions do not select an implementation.
