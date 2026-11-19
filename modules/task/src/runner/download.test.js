@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict'
-import {mkdtemp, readdir, readFile, rm} from 'node:fs/promises'
+import {mkdir, mkdtemp, readdir, readFile, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
-import {join} from 'node:path'
+import {dirname, join} from 'node:path'
 import {afterEach, beforeEach, test} from 'node:test'
+import {setImmediate} from 'node:timers/promises'
 
 import {fileSize} from '#task/format'
 
@@ -111,7 +112,18 @@ test('a server error is retried, then fails the download', async () => {
 
     assert.equal(server.requests.length, 5)
     assert.equal(sleeps.length, 4)
-    assert.deepEqual(await filesIn(dir), {})
+    assert.deepEqual(await readdir(dir), [])
+})
+
+test('a retry after a failed attempt publishes only the complete file', async () => {
+    const answers = ['aa', 'aaa']
+    server = await FileServer.start((_request, response) => response.end(answers.shift()))
+
+    await download({sepal: listedAs('a.tif', {path: '/a.tif', size: 3})})
+
+    assert.equal(server.requests.length, 2)
+    assert.deepEqual(await readdir(dir), ['a.tif'])
+    assert.deepEqual(await filesIn(dir), {'a.tif': 'aaa'})
 })
 
 test('repeated refusals back off before listing again, then fail the download', async () => {
@@ -200,6 +212,87 @@ test('a cancelled download leaves no complete-looking file', async () => {
     assert.deepEqual(await readdir(dir), [])
 })
 
+// Tasks of one user share the home they download into, so two downloads can write the same file at once.
+test('a download still writing cannot alter the file another download of the same name has published', {timeout: 10_000}, async t => {
+    const first = inTwoParts('aaa', 'ccc')
+    server = await FileServer.start(routes({'/first/a.tif': first.handle, '/second/a.tif': (_request, response) => response.end('bbb')}))
+    const cancelFirst = new AbortController()
+    const firstDownload = download({
+        sepal: listedAs('a.tif', {path: '/first/a.tif', size: 7}),
+        signal: cancelFirst.signal,
+        sleep: async () => cancelFirst.abort()
+    })
+    await written(dir, 'aaa', t.signal)
+
+    await download({sepal: listedAs('a.tif', {path: '/second/a.tif', size: 3})})
+    first.firstPartRead()
+    await firstDownload
+
+    assert.deepEqual(await filesIn(dir), {'a.tif': 'bbb'})
+    assert.deepEqual(await readdir(dir), ['a.tif'])
+})
+
+test('cancelling a download leaves another download of the same name to complete undisturbed', {timeout: 10_000}, async t => {
+    const second = inTwoParts('bb', 'b')
+    server = await FileServer.start(routes({'/first/a.tif': holdingOpen, '/second/a.tif': second.handle}))
+    const cancelFirst = new AbortController()
+    const firstDownload = download({sepal: listedAs('a.tif', {path: '/first/a.tif', size: 1000}), signal: cancelFirst.signal})
+    await written(dir, 'partial', t.signal)
+    const secondDownload = download({sepal: listedAs('a.tif', {path: '/second/a.tif', size: 3})})
+    await written(dir, 'bb', t.signal)
+
+    cancelFirst.abort()
+    await firstDownload
+    second.firstPartRead()
+    await secondDownload
+
+    assert.deepEqual(server.requests.map(({path}) => path), ['/first/a.tif', '/second/a.tif'])
+    assert.deepEqual(await readdir(dir), ['a.tif'])
+    assert.deepEqual(await filesIn(dir), {'a.tif': 'bbb'})
+})
+
+test('cancelling a download keeps what another download published into the folder it was writing in', {timeout: 10_000}, async t => {
+    server = await FileServer.start(routes({'/first/a.tif': holdingOpen, '/second/b.tif': (_request, response) => response.end('bbb')}))
+    const cancelFirst = new AbortController()
+    const firstDownload = download({sepal: listedAs('a.tif', {path: '/first/a.tif', size: 1000}), signal: cancelFirst.signal})
+    const folder = dirname(await written(dir, 'partial', t.signal))
+    await download({sepal: listedAs('b.tif', {path: '/second/b.tif', size: 3}), into: folder})
+
+    cancelFirst.abort()
+    await firstDownload
+
+    assert.equal(await readFile(join(folder, 'b.tif'), 'utf8'), 'bbb')
+})
+
+test('a download replaces a file already at its destination', async () => {
+    await mkdir(dir, {recursive: true})
+    await writeFile(join(dir, 'a.tif'), 'old')
+    server = await FileServer.start(serving({'a.tif': 'aaa'}))
+
+    await download({sepal: listing(() => filesOf({'a.tif': 'aaa'}))})
+
+    assert.deepEqual(await filesIn(dir), {'a.tif': 'aaa'})
+})
+
+test('a file already beside the destination, such as an earlier download\'s .part, is left alone', async () => {
+    await mkdir(dir, {recursive: true})
+    await writeFile(join(dir, 'a.tif.part'), 'left behind')
+    server = await FileServer.start(serving({'a.tif': 'aaa'}))
+
+    await download({sepal: listing(() => filesOf({'a.tif': 'aaa'}))})
+
+    assert.deepEqual(await filesIn(dir), {'a.tif': 'aaa', 'a.tif.part': 'left behind'})
+})
+
+test('a file name as long as the file system allows is downloaded', async () => {
+    const name = `${'x'.repeat(251)}.tif`
+    server = await FileServer.start(serving({[name]: 'aaa'}))
+
+    await download({sepal: listing(() => filesOf({[name]: 'aaa'}))})
+
+    assert.deepEqual(await filesIn(dir), {[name]: 'aaa'})
+})
+
 test('a file name that leaves the directory is refused', async () => {
     const contents = {'a.tif': 'aaa', '../x.tif': 'xxx'}
     server = await FileServer.start(serving(contents))
@@ -220,12 +313,13 @@ test('an empty file name is refused', async () => {
 
 const download = ({
     sepal,
+    into = dir,
     report = () => {},
     signal = new AbortController().signal,
     sleep = async () => {},
     fetchFn,
     now = () => NOW
-}) => downloadFiles({destination, dir, sepal, report, signal, fetchFn, sleep, now})
+}) => downloadFiles({destination, dir: into, sepal, report, signal, fetchFn, sleep, now})
 
 const fakeClock = () => {
     let time = NOW
@@ -254,6 +348,27 @@ const listing = list => {
             requests.push({path, body})
             return list(requests.length)
         }
+    }
+}
+
+// A gee listing one file, served at path, as size bytes.
+const listedAs = (name, {path, size}) => listing(() => ({
+    files: [{name, size, url: server.url(path), headers: {Authorization: 'Bearer token'}}],
+    expiresAt: NOW + HOUR
+}))
+
+// Answers each request with the handler for its path.
+const routes = handlers => (request, response) => handlers[request.url](request, response)
+
+// The path of a file under directory holding content, once a download has written that much to disk. Polling stops
+// when the test's signal aborts, so a download that never writes there times its test out instead of hanging the run.
+const written = async (directory, content, signal) => {
+    for (;;) {
+        const found = Object.entries(await filesIn(directory)).find(([, fileContent]) => fileContent === content)
+        if (found) {
+            return join(directory, found[0])
+        }
+        await setImmediate(undefined, {signal})
     }
 }
 
