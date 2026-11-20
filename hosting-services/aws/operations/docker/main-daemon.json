@@ -1,3 +1,9 @@
 {
-  "storage-driver": "overlay2"
+  "storage-driver": "overlay2",
+  "builder": {
+    "gc": {
+      "enabled": true,
+      "defaultKeepStorage": "100GB"
+    }
+  }
 }

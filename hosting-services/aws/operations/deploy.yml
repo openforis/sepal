@@ -90,7 +90,11 @@
         status_code: [200, 304]
 
     - name: Copy /etc/docker/daemon.json
-      copy: src=docker/main-daemon.json dest=/etc/docker/daemon.json
+      copy:
+        src: docker/main-daemon.json
+        dest: /etc/docker/daemon.json
+        validate: dockerd --validate --config-file %s
+      register: docker_daemon_config
 
     - name: Add ec2-user to docker group
       user:
@@ -103,6 +107,12 @@
         state: started
         enabled: yes
         masked: no
+
+    - name: Restart docker to apply /etc/docker/daemon.json
+      systemd:
+        name: docker
+        state: restarted
+      when: docker_daemon_config.changed
 
     - docker_network:
         name: sepal
