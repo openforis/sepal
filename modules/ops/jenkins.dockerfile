@@ -11,6 +11,7 @@ RUN apk update && apk add --no-cache \
     coreutils \
     docker-cli \
     procps \
+    python3 \
     rsync \
     sudo
 
@@ -40,5 +41,7 @@ RUN chmod 600 /var/lib/jenkins/.ssh/config
 USER root
 ADD /script/start-jenkins.sh /usr/local/sbin/start-jenkins
 RUN chmod +x /usr/local/sbin/start-jenkins
+ADD /script/sepal-build.sh /usr/local/bin/sepal-build
+RUN chmod +x /usr/local/bin/sepal-build
 ENTRYPOINT ["/bin/sh", "-c"]
 CMD ["/usr/local/sbin/start-jenkins"]

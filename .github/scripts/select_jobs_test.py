@@ -82,6 +82,11 @@ class SelectJobsTest(unittest.TestCase):
 
         self.assertEqual(running(jobs), {'shell'})
 
+    def test_an_ops_change_runs_the_shell_tests(self):
+        jobs = select_jobs(['modules/ops/script/sepal-build.sh'], self.root, MODULES)
+
+        self.assertEqual(running(jobs), {'shell'})
+
     def test_a_python_library_change_runs_the_python_tests(self):
         jobs = select_jobs(['lib/python/shared/stack.py'], self.root, MODULES)
 

@@ -42,7 +42,7 @@
   <concurrentBuild>false</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>${WORKSPACE}/modules/ops/script/build-and-push-images.sh $BUILD_NUMBER-test</command>
+      <command>sepal-build $BUILD_NUMBER-test</command>
       <configuredLocalRules/>
     </hudson.tasks.Shell>
   </builders>
