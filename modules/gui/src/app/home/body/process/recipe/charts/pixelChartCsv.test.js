@@ -114,6 +114,19 @@ describe('a pixel chart CSV', () => {
         ])
     })
 
+    it('names the sensor of each observation where a chart reads several', () => {
+        const csv = pixelChartCsv({band: 'DI', latLng: PIXEL, records: [
+            {...observation(JAN_1, 2.5), sensor: 'Landsat'},
+            {...observation(JAN_2, 3.1), sensor: 'Sentinel-2'}
+        ]})
+
+        expect(parse(csv)).toEqual([
+            ['band', 'latitude', 'longitude', 'timestamp', 'sensor', 'value'],
+            ['DI', '12.5', '-3.25', '2020-01-01T00:00:00.000Z', 'Landsat', '2.5'],
+            ['DI', '12.5', '-3.25', '2020-01-02T00:00:00.000Z', 'Sentinel-2', '3.1']
+        ])
+    })
+
     it('keeps the full precision of values and coordinates', () => {
         const csv = pixelChartCsv({
             band: 'ndvi',
