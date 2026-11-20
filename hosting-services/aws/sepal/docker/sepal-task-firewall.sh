@@ -11,18 +11,11 @@ TASK_RANGE=172.29.128.0/17
 GATEWAY=172.29.0.2
 CHAIN=SEPAL-TASK
 BLOCKED="169.254.0.0/16 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 100.64.0.0/10 127.0.0.0/8"
-LEGACY_SUBNET=172.29.0.0/16
 
 ensure() {
     chain=$1
     shift
     iptables -C "$chain" "$@" 2>/dev/null || iptables -I "$chain" "$@"
-}
-
-remove() {
-    while iptables -C "$@" 2>/dev/null; do
-        iptables -D "$@"
-    done
 }
 
 nameservers() {
@@ -56,17 +49,6 @@ rules | iptables-restore --noflush
 
 ensure DOCKER-USER -s "$TASK_RANGE" -j "$CHAIN"
 ensure INPUT -s "$TASK_RANGE" -j DROP
-
-# Rules an earlier version of this script put directly in DOCKER-USER and INPUT, for the whole subnet.
-remove DOCKER-USER -s "$LEGACY_SUBNET" -d "$LEGACY_SUBNET" -j RETURN
-for ns in $(nameservers); do
-    remove DOCKER-USER -s "$LEGACY_SUBNET" -d "$ns" -p udp --dport 53 -j RETURN
-    remove DOCKER-USER -s "$LEGACY_SUBNET" -d "$ns" -p tcp --dport 53 -j RETURN
-done
-for destination in $BLOCKED; do
-    remove DOCKER-USER -s "$LEGACY_SUBNET" -d "$destination" -j DROP
-done
-remove INPUT -s "$LEGACY_SUBNET" -j DROP
 
 # Placed last so a failure here cannot skip the rules above. Without br_netfilter, traffic between
 # containers on the sepal-task bridge never reaches iptables.
