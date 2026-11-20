@@ -1,5 +1,5 @@
 # Runs before a deployment changes anything. A host on an Amazon Linux release behind AMAZON_LINUX_RELEASEVER, from
-# aws-common.env, fails the deployment, unless AMAZON_LINUX_RELEASE_ACTION is ignore (deploy it as it is) or update
+# aws-common/env, fails the deployment, unless AMAZON_LINUX_RELEASE_ACTION is ignore (deploy it as it is) or update
 # (upgrade it first): bin/deploy --ignore-version and --update-version. A host that isn't behind only reports a newer
 # release.
 - name: Check the Amazon Linux release
@@ -13,10 +13,10 @@
   vars:
     target_release: "{{ lookup('env', 'AMAZON_LINUX_RELEASEVER') }}"
     release_action: "{{ lookup('env', 'AMAZON_LINUX_RELEASE_ACTION') | default('check', true) }}"
-    release_file: "{{ lookup('env', 'AWS_COMMON_ENV') | default('aws-common.env', true) }}"
+    aws_common_env: "{{ lookup('env', 'AWS_COMMON') | default('aws-common', true) }}/env"
     host_name: "{{ tags.Type | default(inventory_hostname) }}"
     behind_report: >-
-      {{ host_name }} runs Amazon Linux {{ deployed_release }}, behind {{ target_release }} in {{ release_file }}
+      {{ host_name }} runs Amazon Linux {{ deployed_release }}, behind {{ target_release }} in {{ aws_common_env }}
       {{- (', and behind the newest release, ' ~ newest_release) if newer_than_target else ', the newest release' }}.
 
   tasks:
@@ -26,7 +26,7 @@
           - target_release | length > 0
           - release_action in ['check', 'ignore', 'update']
         fail_msg: >-
-          AMAZON_LINUX_RELEASEVER must be set in {{ release_file }}, and AMAZON_LINUX_RELEASE_ACTION must be check,
+          AMAZON_LINUX_RELEASEVER must be set in {{ aws_common_env }}, and AMAZON_LINUX_RELEASE_ACTION must be check,
           ignore or update (is {{ release_action }})
         quiet: true
       run_once: true
@@ -102,7 +102,7 @@
         msg: >-
           {{ host_name }} runs Amazon Linux {{ deployed_release }}.
           A newer release of "Amazon Linux" is available: {{ newest_release }}.
-          Update {{ release_file }} to upgrade {{ host_name }} to it.
+          Update {{ aws_common_env }} to upgrade {{ host_name }} to it.
       when: not behind and deployed_release is version(newest_release, '<')
 
     - name: Report the newest release
@@ -132,5 +132,5 @@
       debug:
         msg: >-
           A newer release of "Amazon Linux" is available: {{ newest_release }}.
-          Update {{ release_file }} to upgrade {{ host_name }} to it.
+          Update {{ aws_common_env }} to upgrade {{ host_name }} to it.
       when: upgrade is changed and newer_than_target
