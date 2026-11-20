@@ -10,6 +10,7 @@ services:
       - jenkins:/var/jenkins_home
     environment:
       CASC_JENKINS_CONFIG: /var/lib/jenkins/casc
+      PLUGINS_FORCE_UPGRADE: "true"
       JENKINS_DOMAIN: "${OPS_DOMAIN}"
       JENKINS_PORT: "${JENKINS_PORT}"
       JENKINS_PASSWORD: "${JENKINS_PASSWORD}"
