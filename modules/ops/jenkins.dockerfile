@@ -1,4 +1,4 @@
-FROM jenkins/jenkins:alpine-jdk21
+FROM jenkins/jenkins:alpine-jdk25
 USER root
 
 ARG DEBIAN_FRONTEND=noninteractive

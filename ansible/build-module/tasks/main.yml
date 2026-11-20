@@ -7,4 +7,4 @@
   shell: "docker compose \
       --env-file /etc/sepal/env \
       --file /var/lib/sepal/modules/{{ module }}/docker-compose.yml \
-      build"
+      build --pull"
