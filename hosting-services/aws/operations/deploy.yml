@@ -130,5 +130,6 @@
 
   roles:
     - { role: live-patching }
+    - { role: btop }
     - { role: build-module, module: ops }
     - { role: run-module, module: ops }
