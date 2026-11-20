@@ -77,17 +77,21 @@
         path: "/usr/local/lib/docker/cli-plugins"
         state: directory
 
-    - uri:
+    - name: Install Docker Compose
+      get_url:
         url: https://github.com/docker/compose/releases/download/{{ lookup('env', 'DOCKER_COMPOSE_VERSION') }}/docker-compose-linux-x86_64
         dest: /usr/local/lib/docker/cli-plugins/docker-compose
         mode: +x
-        status_code: [200, 304]
+        force: true
+        timeout: 30
 
-    - uri:
+    - name: Install Docker Buildx
+      get_url:
         url: https://github.com/docker/buildx/releases/download/{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}/buildx-{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}.linux-amd64
         dest: /usr/libexec/docker/cli-plugins/docker-buildx
         mode: +x
-        status_code: [200, 304]
+        force: true
+        timeout: 30
 
     - name: Copy /etc/docker/daemon.json
       copy:
