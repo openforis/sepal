@@ -2,7 +2,7 @@ import React from 'react'
 
 import {groupedBandPresentation} from '~/app/home/body/process/recipe/dias/bands'
 import {retrieveTask} from '~/app/home/body/process/recipe/dias/diasRecipe'
-import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
+import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/retrieve/retrievePanel'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
 

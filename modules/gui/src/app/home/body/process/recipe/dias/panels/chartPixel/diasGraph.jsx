@@ -4,6 +4,7 @@ import React from 'react'
 
 import format from '~/format'
 import {msg} from '~/translate'
+import {ColorElement} from '~/widget/colorElement'
 import {Graph, graphColor} from '~/widget/graph'
 import {isMobile} from '~/widget/userAgent'
 import {Widget} from '~/widget/widget'
@@ -60,7 +61,7 @@ export class DiasGraph extends React.Component {
                         highlightSeriesBackgroundAlpha={1}
                         highlightSeriesBackgroundColor={graphColor('highlightBackground')}
                         dateWindow={[startDate, endDate]}
-                        showRangeSelector={!isMobile()}
+                        showRangeSelector={!isMobile() && hasTimeRange(data)}
                         rangeSelectorPlotFillColor={graphColor('rangeSelectorPlot')}
                         rangeSelectorPlotFillGradientColor={graphColor('rangeSelectorPlot')}
                         rangeSelectorPlotStrokeColor={graphColor('rangeSelectorPlot')}
@@ -106,7 +107,7 @@ export class DiasGraph extends React.Component {
             <div className={styles.legend}>
                 {observed.map(sensor => (
                     <span key={sensor} className={styles.legendEntry}>
-                        <span className={styles.swatch} style={{backgroundColor: SENSOR_PALETTE[sensor]}}/>
+                        <ColorElement color={SENSOR_PALETTE[sensor]}/>
                         {SENSOR_LABELS[sensor]}
                     </span>
                 ))}
@@ -156,6 +157,9 @@ export class DiasGraph extends React.Component {
         }
     }
 }
+
+// The range selector needs observations on more than one day to select from.
+const hasTimeRange = data => data.length > 1 && data[0][0] < data.at(-1)[0]
 
 DiasGraph.propTypes = {
     endDate: PropTypes.object.isRequired,

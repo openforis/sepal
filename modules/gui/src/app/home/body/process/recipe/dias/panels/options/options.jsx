@@ -7,6 +7,8 @@ import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
+import {ForestMask, forestMaskFields} from './forestMask/forestMask'
+import {forestMaskToValues, toForestMask} from './forestMask/forestMaskModel'
 import styles from './options.module.css'
 
 const fields = {
@@ -16,8 +18,7 @@ const fields = {
     consecutiveObservations: new Form.Field()
         .notBlank()
         .int(),
-    cloudMasking: new Form.Field()
-        .notBlank()
+    ...forestMaskFields
 }
 
 class _Options extends React.Component {
@@ -33,7 +34,7 @@ class _Options extends React.Component {
                     <Layout>
                         {this.renderThreshold()}
                         {this.renderConsecutiveObservations()}
-                        {this.renderCloudMasking()}
+                        <ForestMask inputs={this.props.inputs}/>
                     </Layout>
                 </Panel.Content>
                 <Form.PanelButtons/>
@@ -71,28 +72,23 @@ class _Options extends React.Component {
             />
         )
     }
-
-    renderCloudMasking() {
-        const {inputs: {cloudMasking}} = this.props
-        return (
-            <Form.Buttons
-                label={msg('process.dias.panel.options.form.cloudMasking.label')}
-                tooltip={msg('process.dias.panel.options.form.cloudMasking.tooltip')}
-                input={cloudMasking}
-                options={[
-                    {value: 'OFF', label: msg('process.dias.panel.options.form.cloudMasking.OFF')},
-                    {value: 'LIGHT', label: msg('process.dias.panel.options.form.cloudMasking.LIGHT'), tooltip: msg('process.dias.panel.options.form.cloudMasking.LIGHT.tooltip')},
-                    {value: 'MODERATE', label: msg('process.dias.panel.options.form.cloudMasking.MODERATE')},
-                    {value: 'AGGRESSIVE', label: msg('process.dias.panel.options.form.cloudMasking.AGGRESSIVE')}
-                ]}
-            />
-        )
-    }
 }
+
+const modelToValues = ({threshold, consecutiveObservations, forestMask}) => ({
+    threshold,
+    consecutiveObservations,
+    ...forestMaskToValues(forestMask)
+})
+
+const valuesToModel = values => ({
+    threshold: values.threshold,
+    consecutiveObservations: values.consecutiveObservations,
+    forestMask: toForestMask(values)
+})
 
 export const Options = compose(
     _Options,
-    recipeFormPanel({id: 'diasOptions', fields})
+    recipeFormPanel({id: 'diasOptions', fields, modelToValues, valuesToModel})
 )
 
 Options.propTypes = {}

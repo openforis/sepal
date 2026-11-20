@@ -12,6 +12,7 @@
 
 .point {
     position: absolute;
+    pointer-events: none;
     z-index: 10;
     background-color: var(--graph-tooltip-background-color);
     border: var(--wireframe);
@@ -33,12 +34,6 @@
     display: flex;
     align-items: center;
     gap: .4rem;
-}
-
-.swatch {
-    width: .7rem;
-    height: .7rem;
-    border-radius: 50%;
 }
 
 .thresholdSwatch {

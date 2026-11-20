@@ -6,10 +6,10 @@ import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
-import {Aoi} from '../aoi'
-import {initializeLayers} from '../recipeImageLayerSource'
+import {Aoi} from '../map/aoi'
+import {initializeLayers} from '../map/recipeImageLayerSource'
 import {bandPresentation} from './bands'
-import {defaultModel, getDateRange} from './diasRecipe'
+import {defaultModel, getDateRange, initialSources} from './diasRecipe'
 import {DiasToolbar} from './panels/diasToolbar'
 import {getPreSetVisualizations} from './visualizations'
 
@@ -53,6 +53,7 @@ export default () => ({
         recipe: Dias
     },
     imageSource: true,
+    initialSources,
     getDateRange,
     bandPresentation,
     getPreSetVisualizations

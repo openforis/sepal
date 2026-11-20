@@ -7,17 +7,21 @@ import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {toUserErrorMessage} from '~/userError'
 import {Icon} from '~/widget/icon'
+import {Message} from '~/widget/message'
 import {NoData} from '~/widget/noData'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
 
 import {withRecipe} from '../../../../recipeContext'
-import {ChartPixelPanelHeader} from '../../../chartPixelPanelHeader'
+import {ChartPixelPanelHeader} from '../../../charts/chartPixelPanelHeader'
+import {exportableChart, PixelChartExport} from '../../../charts/pixelChartExport'
 import {loadObservations$, RecipeActions} from '../../diasRecipe'
 import styles from './chartPixel.module.css'
 import {DiasGraph} from './diasGraph'
+import {diasExportRecords} from './diasGraphData'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
+const BAND = 'DI'
 
 const mapRecipeToProps = recipe => ({
     recipeId: recipe.id,
@@ -53,7 +57,7 @@ class _ChartPixel extends React.Component {
             <Panel
                 className={styles.panel}
                 placement='center'>
-                <ChartPixelPanelHeader latLng={latLng} suffix='DI'/>
+                <ChartPixelPanelHeader latLng={latLng} suffix={msg('process.dias.chartPixel.di')}/>
 
                 <Panel.Content
                     scrollable={false}
@@ -64,6 +68,11 @@ class _ChartPixel extends React.Component {
                 </Panel.Content>
 
                 <Panel.Buttons>
+                    <PixelChartExport
+                        recipe={this.props.recipe}
+                        chart={this.exportChart()}
+                        records={diasExportRecords}
+                    />
                     <Panel.Buttons.Main>
                         <Panel.Buttons.Close
                             keybinding='Escape'
@@ -92,9 +101,11 @@ class _ChartPixel extends React.Component {
         return (
             <>
                 {alert?.forest_mask ? null : (
-                    <div className={styles.notForest}>
-                        {msg('process.dias.chartPixel.notForest')}
-                    </div>
+                    <Message
+                        className={styles.notForest}
+                        type='warning'
+                        text={msg('process.dias.chartPixel.notForest')}
+                    />
                 )}
                 <DiasGraph
                     observations={observations}
@@ -105,6 +116,18 @@ class _ChartPixel extends React.Component {
                 />
             </>
         )
+    }
+
+    // The observations read, for the pixel they were read for: none to export while loading or for another pixel.
+    exportChart() {
+        const {latLng} = this.props
+        const {result} = this.state
+        return result
+            ? exportableChart(
+                {band: BAND, latLng: result.latLng, empty: !result.observations.length, observations: result.observations},
+                {band: BAND, latLng}
+            )
+            : null
     }
 
     componentDidUpdate(prevProps) {
@@ -127,7 +150,7 @@ class _ChartPixel extends React.Component {
             loadObservations$({recipe, latLng}).pipe(
                 takeUntil(this.cancel$)
             ),
-            result => this.setState({result}),
+            result => this.setState({result: {...result, latLng}}),
             error => {
                 this.close()
                 Notifications.error({

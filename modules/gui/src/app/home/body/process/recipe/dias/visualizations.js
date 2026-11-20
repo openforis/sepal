@@ -3,16 +3,22 @@ import moment from 'moment'
 import {normalize} from '~/app/home/map/visParams/visParams'
 import {msg} from '~/translate'
 
+import {bandLabel} from './bands'
+
 const DATE_FORMAT = 'YYYY-MM-DD'
 
-// Same colors the paper uses to distinguish sensors in its alert maps (Figure 4):
-// Sentinel-1 teal, Landsat salmon, Sentinel-2 violet, Planet green.
-export const SENSOR_PALETTE = ['#000000', '#1CADE4', '#FF6F61', '#C77DFF', '#6AA84F']
-export const SENSOR_LABELS = ['None', 'Sentinel-1', 'Landsat', 'Sentinel-2', 'Planet']
+// By the id lib/js/ee/src/dias/diCollection.js gives each sensor (SOURCE_ID), in the colors the paper uses to distinguish
+// them in its alert maps (Figure 4): Sentinel-1 teal, Landsat salmon, Sentinel-2 violet, Planet green.
+export const SENSOR_PALETTE = {1: '#1CADE4', 2: '#FF6F61', 3: '#C77DFF', 4: '#6AA84F'}
+export const SENSOR_LABELS = {1: 'Sentinel-1', 2: 'Landsat', 3: 'Sentinel-2', 4: 'Planet'}
 
-const toYdoy = date => {
-    const m = moment(date, DATE_FORMAT)
-    return m.year() * 1000 + m.dayOfYear()
+const SENSORS = [1, 2, 3, 4]
+
+// The middle of the day, as lib/js/ee/src/dias/alertConfirmation.js dates the alert bands.
+const toFractionalYear = date => {
+    const day = moment(date, DATE_FORMAT)
+    const daysInYear = moment(day).endOf('year').dayOfYear()
+    return day.year() + (day.dayOfYear() - 0.5) / daysInYear
 }
 
 export const getPreSetVisualizations = recipe =>
@@ -21,7 +27,7 @@ export const getPreSetVisualizations = recipe =>
 export const visualizationOptions = recipe => {
     const visualizations = toVisualizations(recipe)
     const toOptions = bands => bands
-        .map(band => ({value: band, label: band, visParams: visualizations[band]}))
+        .map(band => ({value: band, label: bandLabel(band), visParams: visualizations[band]}))
     return [
         {
             label: msg('process.dias.layers.imageLayer.sensors'),
@@ -29,7 +35,7 @@ export const visualizationOptions = recipe => {
         },
         {
             label: msg('process.dias.layers.imageLayer.dates'),
-            options: toOptions(['first_ydoy', 'confirming_ydoy'])
+            options: toOptions(['first_date', 'confirming_date'])
         },
         {
             label: msg('process.dias.layers.imageLayer.forestMask'),
@@ -40,21 +46,21 @@ export const visualizationOptions = recipe => {
 
 const toVisualizations = recipe => {
     const {startDate, endDate} = recipe.model.dates
-    const min = toYdoy(startDate)
-    const max = toYdoy(endDate)
+    const min = toFractionalYear(startDate)
+    const max = toFractionalYear(endDate)
     const sensorVisParams = bands => normalize({
         type: 'categorical',
         bands,
-        min: 0,
-        max: 4,
-        values: [0, 1, 2, 3, 4],
-        labels: SENSOR_LABELS,
-        palette: SENSOR_PALETTE
+        min: SENSORS[0],
+        max: SENSORS[SENSORS.length - 1],
+        values: SENSORS,
+        labels: SENSORS.map(sensor => SENSOR_LABELS[sensor]),
+        palette: SENSORS.map(sensor => SENSOR_PALETTE[sensor])
     })
     const dateVisParams = bands => normalize({
         type: 'continuous',
         bands,
-        dataType: 'yearDayOfYear',
+        dataType: 'fractionalYears',
         min: [min],
         max: [max],
         palette: ['#000000', '#781C81', '#3F60AE', '#539EB6', '#6DB388', '#CAB843', '#E78532', '#D92120']
@@ -73,8 +79,8 @@ const toVisualizations = recipe => {
     return {
         first_sensor: sensorVisParams(['first_sensor']),
         confirming_sensor: sensorVisParams(['confirming_sensor']),
-        first_ydoy: dateVisParams(['first_ydoy']),
-        confirming_ydoy: dateVisParams(['confirming_ydoy']),
+        first_date: dateVisParams(['first_date']),
+        confirming_date: dateVisParams(['confirming_date']),
         forest_mask: forestMaskVisParams(['forest_mask'])
     }
 }

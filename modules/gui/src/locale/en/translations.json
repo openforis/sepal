@@ -2130,17 +2130,24 @@
     },
     "dias": {
       "create": "DIAS",
-      "description": "Generate multi-sensor deforestation alerts using the Disturbance Index (DI) Z-score method.",
+      "description": "Generate multi-sensor deforestation alerts using the Disturbance Index Z-score method.",
       "tabPlaceholder": "DIAS",
+      "bands": {
+        "first_sensor": "First detection sensor",
+        "first_date": "First detection date",
+        "confirming_sensor": "Confirming sensor",
+        "confirming_date": "Confirmation date",
+        "forest_mask": "Forest mask"
+      },
       "chartPixel": {
-        "start.tooltip": "Chart the Disturbance Index for pixel",
+        "start.tooltip": "Chart the Disturbance Index of a pixel",
         "cancel.tooltip": "Cancel Disturbance Index charting",
         "loadObservations.error": "Failed to load the Disturbance Index observations.",
         "noData": "No Disturbance Index observations for this pixel.",
-        "notForest": "This pixel is outside the forest mask, so DIAS raises no alerts here.",
+        "notForest": "This pixel is outside the forest mask: no alerts are raised here.",
         "date": "Date",
         "sensor": "Sensor",
-        "di": "DI",
+        "di": "Disturbance Index",
         "threshold": "Threshold"
       },
       "layers": {
@@ -2158,18 +2165,18 @@
         "dates": {
           "button": "DAT",
           "title": "Date range",
-          "tooltip": "Specify the date range to compute the Disturbance Index and look for alerts in",
+          "tooltip": "Dates of the imagery to search for alerts",
           "form": {
             "startDate": {
               "label": "Start date",
-              "tooltip": "The first date to include in the Disturbance Index stream",
+              "tooltip": "First day of imagery to read",
               "required": "Start date is required",
               "malformed": "Malformed start date",
               "beforeEnd": "Start date must be before end date"
             },
             "endDate": {
               "label": "End date",
-              "tooltip": "The last date to include in the Disturbance Index stream",
+              "tooltip": "Imagery is read up to, but not including, this day",
               "required": "End date is required",
               "malformed": "Malformed end date"
             }
@@ -2178,94 +2185,98 @@
         "sources": {
           "button": "SRC",
           "title": "Sensors",
-          "tooltip": "Select which sensors to combine into the Disturbance Index stream",
+          "tooltip": "Data sets to search for alerts",
           "form": {
-            "atLeastOneSensor": "At least one sensor must be enabled",
-            "landsat": {
-              "label": "Landsat",
-              "dataSets": {
-                "label": "Landsat missions",
-                "required": "At least one Landsat mission must be selected"
+            "dataSets": {
+              "label": "Data sets",
+              "required": "Select at least one data set",
+              "PLANET": {
+                "label": "Planet",
+                "tooltip": "Daily PlanetScope scenes from an ImageCollection asset"
               }
             },
-            "sentinel2": {
-              "label": "Sentinel-2"
-            },
-            "sentinel1": {
-              "label": "Sentinel-1",
-              "orbits": {
-                "label": "Orbits",
-                "required": "At least one orbit must be selected",
-                "ASCENDING": "Ascending",
-                "DESCENDING": "Descending"
-              }
-            },
-            "planet": {
-              "label": "Planet",
-              "asset": {
-                "label": "Daily PlanetScope asset",
-                "placeholder": "Select an ingested PlanetScope ImageCollection asset",
-                "required": "A PlanetScope asset must be specified"
-              }
+            "planetAsset": {
+              "label": "Daily PlanetScope collection",
+              "tooltip": "An ImageCollection of daily PlanetScope scenes, with bands B1–B4 and udm1, B1–B4 and Q1–Q8, or B1–B8 and Q1–Q8",
+              "placeholder": "Select an ImageCollection asset",
+              "required": "A PlanetScope collection must be specified",
+              "notDaily": "Not daily PlanetScope scenes. Expected bands: B1–B4 and udm1, B1–B4 and Q1–Q8, or B1–B8 and Q1–Q8"
             }
           }
         },
-        "forestMask": {
-          "button": "FOR",
-          "title": "Forest mask",
-          "tooltip": "Select the primary forest mask used to restrict where alerts can fire and to normalize the Disturbance Index",
-          "recipe": {
-            "label": "Saved SEPAL recipe",
-            "title": "Saved SEPAL recipe"
-          },
-          "asset": {
-            "label": "Earth Engine asset",
-            "title": "Earth Engine asset"
-          },
-          "hansen": {
-            "label": "Hansen Global Forest Change",
-            "title": "Hansen Global Forest Change"
-          },
+        "preprocess": {
+          "button": "PRC",
+          "title": "Pre-process",
+          "tooltip": "Sentinel-1 orbits and cloud masking",
           "form": {
-            "asset": {
-              "label": "Forest mask asset",
-              "placeholder": "Select a forest mask Image or ImageCollection asset",
-              "tooltip": "Unmasked pixels are treated as forest",
-              "required": "An asset must be specified"
+            "orbits": {
+              "label": "Sentinel-1 orbits",
+              "required": "At least one orbit must be selected",
+              "ASCENDING": "Ascending",
+              "DESCENDING": "Descending"
             },
-            "recipe": {
-              "required": "A recipe must be specified"
-            },
-            "threshold": {
-              "label": "Forest threshold",
-              "tooltip": "Minimum tree canopy cover in year 2000 (Hansen Global Forest Change) for a pixel to be treated as forest. A pixel that lost forest before the start of the analysis period is excluded regardless of this threshold.",
-              "value": "{value}%",
-              "required": "A forest threshold must be specified"
+            "cloudMasking": {
+              "label": "Cloud masking",
+              "tooltip": "How strictly clouds are removed from Landsat and Sentinel-2 images before the Disturbance Index is computed",
+              "OFF": "Off",
+              "LIGHT": "Light",
+              "LIGHT.tooltip": "Landsat QA and Sentinel-2 Cloud Score+ masks only. Fastest",
+              "MODERATE": "Moderate",
+              "MODERATE.tooltip": "Adds SEPAL's cloud score and masks snow",
+              "AGGRESSIVE": "Aggressive",
+              "AGGRESSIVE.tooltip": "As Moderate, with stricter thresholds"
             }
           }
         },
         "options": {
           "button": "OPT",
           "title": "Alert options",
-          "tooltip": "Configure the Disturbance Index threshold and confirmation window",
+          "tooltip": "Alert threshold, consecutive observations and forest mask",
           "form": {
             "threshold": {
-              "label": "DI threshold",
-              "tooltip": "Minimum Disturbance Index (standard deviations from the forest population) for an observation to count towards an alert",
+              "label": "Disturbance Index threshold",
+              "tooltip": "Minimum Disturbance Index for an observation to count towards an alert: how many standard deviations the pixel lies below the forest mean of its image",
               "value": "{value} SD"
             },
             "consecutiveObservations": {
               "label": "Consecutive observations",
-              "tooltip": "Number of consecutive DI observations at or above the threshold required to confirm an alert"
+              "tooltip": "Number of consecutive observations, from any sensor, at or above the threshold that confirm an alert"
             },
-            "cloudMasking": {
-              "label": "Cloud masking",
-              "tooltip": "How aggressively to mask clouds, shadows and snow in Landsat and Sentinel-2 imagery before computing DI. Radar (Sentinel-1) is unaffected by clouds; PlanetScope is masked separately.",
-              "OFF": "Off",
-              "LIGHT": "Light",
-              "LIGHT.tooltip": "Uses only pre-computed cloud masks (Landsat's QA band, Sentinel-2's Cloud Score+ band) - fastest option, recommended for on-the-fly preview to avoid timeouts.",
-              "MODERATE": "Moderate",
-              "AGGRESSIVE": "Aggressive"
+            "forestMask": {
+              "label": "Forest mask",
+              "tooltip": "Pixels where alerts can be raised. The Disturbance Index compares each pixel with the forest in its image",
+              "type": {
+                "NONE": {
+                  "label": "No mask",
+                  "tooltip": "Every pixel counts as forest"
+                },
+                "HANSEN": {
+                  "label": "Hansen",
+                  "tooltip": "Hansen Global Forest Change: tree cover in 2000, without loss recorded before the start year"
+                },
+                "SOURCE": {
+                  "label": "Custom",
+                  "tooltip": "An image from an asset or a recipe"
+                }
+              },
+              "source": {
+                "label": "Mask image",
+                "tooltip": "Pixels where the first band is not 0 count as forest"
+              },
+              "asset": {
+                "placeholder": "Select an Image or ImageCollection asset",
+                "required": "An asset must be specified"
+              },
+              "recipe": {
+                "placeholder": "Select a recipe...",
+                "required": "A recipe must be specified"
+              },
+              "threshold": {
+                "label": "Tree cover",
+                "tooltip": "Minimum tree cover in 2000 for a pixel to count as forest",
+                "value": "{value}%",
+                "required": "A forest threshold must be specified"
+              }
             }
           }
         },
@@ -6382,6 +6393,7 @@
         "BAYTS_HISTORICAL": "BAYTS Historical",
         "BAYTS_ALERTS": "BAYTS Alerts",
         "PYEO_ALERTS": "PyEO Alerts",
+        "DIAS": "DIAS",
         "CLASSIFICATION": "Classification",
         "UNSUPERVISED_CLASSIFICATION": "Unsupervised Classification",
         "REGRESSION": "Regression",

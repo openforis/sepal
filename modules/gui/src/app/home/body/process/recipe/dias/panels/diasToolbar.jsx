@@ -1,27 +1,30 @@
 import React from 'react'
 
 import {setInitialized} from '~/app/home/body/process/recipe'
-import {ChartPixelButton} from '~/app/home/body/process/recipe/chartPixelButton'
+import {ChartPixelButton} from '~/app/home/body/process/recipe/charts/chartPixelButton'
 import {Aoi} from '~/app/home/body/process/recipe/mosaic/panels/aoi/aoi'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {compose} from '~/compose'
+import {toDataSetIds} from '~/sources'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
-import {RetrieveButton} from '../../retrieveButton'
+import {RetrieveButton} from '../../retrieve/retrieveButton'
 import {RecipeActions} from '../diasRecipe'
 import {ChartPixel} from './chartPixel/chartPixel'
 import {Dates} from './dates/dates'
 import styles from './diasToolbar.module.css'
-import {ForestMask} from './forestMask/forestMask'
 import {Options} from './options/options'
+import {Preprocess} from './preprocess/preprocess'
+import {preprocessing} from './preprocess/preprocessing'
 import {Retrieve} from './retrieve/retrieve'
 import {Sources} from './sources/sources'
 
 const mapRecipeToProps = recipe => ({
-    initialized: selectFrom(recipe, 'ui.initialized')
+    initialized: selectFrom(recipe, 'ui.initialized'),
+    dataSetIds: toDataSetIds(selectFrom(recipe, 'model.sources.dataSets'))
 })
 
 class _DiasToolbar extends React.Component {
@@ -31,10 +34,11 @@ class _DiasToolbar extends React.Component {
     }
 
     render() {
-        const {recipeId, initialized} = this.props
+        const {recipeId, initialized, dataSetIds} = this.props
+        const preprocessed = Object.values(preprocessing(dataSetIds)).some(Boolean)
         return (
             <PanelWizard
-                panels={['aoi', 'dates', 'sources', 'forestMask']}
+                panels={['aoi', 'dates', 'sources']}
                 initialized={initialized}
                 onDone={() => setInitialized(recipeId)}>
 
@@ -44,7 +48,7 @@ class _DiasToolbar extends React.Component {
                 <Aoi/>
                 <Dates/>
                 <Sources/>
-                <ForestMask/>
+                <Preprocess/>
                 <Options/>
 
                 <Toolbar
@@ -80,10 +84,10 @@ class _DiasToolbar extends React.Component {
                         disabled={!initialized}
                         panel/>
                     <Toolbar.ActivationButton
-                        id='forestMask'
-                        label={msg('process.dias.panel.forestMask.button')}
-                        tooltip={msg('process.dias.panel.forestMask.tooltip')}
-                        disabled={!initialized}
+                        id='diasPreprocess'
+                        label={msg('process.dias.panel.preprocess.button')}
+                        tooltip={msg('process.dias.panel.preprocess.tooltip')}
+                        disabled={!initialized || !preprocessed}
                         panel/>
                     <Toolbar.ActivationButton
                         id='diasOptions'

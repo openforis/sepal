@@ -1,3 +1,7 @@
+import format from '~/format'
+
+import {SENSOR_LABELS} from '../../visualizations'
+
 // The sensors in the order lib/js/ee/src/dias/diCollection.js numbers them (SOURCE_ID), each charted as its own series.
 export const SENSORS = [1, 2, 3, 4]
 
@@ -17,6 +21,15 @@ export const diasGraphData = ({observations, threshold}) =>
 
 // The period from the first to the confirming observation of the pixel's alert, if it has one.
 export const alertPeriod = alert =>
-    alert?.first_ydoy && alert?.confirming_ydoy
-        ? {startDate: toDate(alert.first_ydoy), endDate: toDate(alert.confirming_ydoy)}
+    alert?.first_date && alert?.confirming_date
+        ? {startDate: format.fractionalYearsToDate(alert.first_date), endDate: format.fractionalYearsToDate(alert.confirming_date)}
         : null
+
+// What Export CSV writes (pixelChartCsv.js): one record per observation, on its day in UTC, named by its sensor.
+export const diasExportRecords = ({observations}) =>
+    observations.map(({di, source, ydoy}) => ({
+        series: 'observation',
+        timestamp: new Date(Date.UTC(Math.floor(ydoy / 1000), 0, ydoy % 1000)),
+        sensor: SENSOR_LABELS[source],
+        value: di
+    }))

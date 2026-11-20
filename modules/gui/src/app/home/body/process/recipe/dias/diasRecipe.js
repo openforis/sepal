@@ -1,9 +1,15 @@
 import moment from 'moment'
 
+import {dataSetPeriod} from '#sepal/recipe/type/dias'
 import api from '~/apiRegistry'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
+
+export const DEFAULT_FOREST_THRESHOLD = 30
+
+// The data sets a new recipe's Sources start with, as far as its dates let them contribute (initialSources.js).
+export const initialSources = {dataSets: ['LANDSAT_9', 'LANDSAT_8', 'LANDSAT_7', 'SENTINEL_2'], period: dataSetPeriod}
 
 export const defaultModel = {
     aoi: {},
@@ -11,17 +17,15 @@ export const defaultModel = {
         startDate: moment().subtract(3, 'months').format(DATE_FORMAT),
         endDate: moment().format(DATE_FORMAT)
     },
-    sources: {
-        landsat: {enabled: true, dataSets: ['LANDSAT_9', 'LANDSAT_8', 'LANDSAT_7']},
-        sentinel2: {enabled: true},
-        sentinel1: {enabled: false, orbits: ['ASCENDING', 'DESCENDING']},
-        planet: {enabled: false, asset: null}
+    sources: {},
+    diasPreprocess: {
+        orbits: ['ASCENDING', 'DESCENDING'],
+        cloudMasking: 'MODERATE'
     },
-    forestMask: {},
     diasOptions: {
         threshold: 3,
         consecutiveObservations: 3,
-        cloudMasking: 'MODERATE'
+        forestMask: {type: 'HANSEN', threshold: DEFAULT_FOREST_THRESHOLD}
     }
 }
 
