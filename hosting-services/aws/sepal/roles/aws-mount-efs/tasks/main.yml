@@ -36,18 +36,6 @@
   command: /usr/local/bin/sepal-restricted-home
   changed_when: false
 
-# Logs stay on the local /var/log volume. These unmount the former EFS log mounts from existing hosts; the running
-# logger keeps its own copy of the mounts until the deploy recreates it.
-- name: Unmount EFS user logs
-  mount:
-    name: "/var/log/sepal/user"
-    state: "absent"
-
-- name: Unmount EFS worker instance logs
-  mount:
-    name: "/var/log/sepal/worker"
-    state: "absent"
-
 - name: Mount /data/sepal/jupyter
   mount:
     name: "/data/sepal/jupyter"

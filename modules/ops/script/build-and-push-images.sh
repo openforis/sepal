@@ -30,7 +30,6 @@ function start {
   echo
   echo "******* Starting ${MODULE} *******"
   cd ${MODULE_DIR}
-#  docker compose --file ${MODULE_DIR}/docker-compose.yml down
   docker compose --file ${MODULE_DIR}/docker-compose.yml up -d
 }
 
@@ -44,7 +43,6 @@ function restart {
   docker compose --file ${MODULE_DIR}/docker-compose.yml up -d
 }
 
-# build logger
 start logger
 
 build sandbox-base
@@ -111,5 +109,5 @@ push terminal
 push caddy
 push scene-metadata
 
-docker logout localhost
+docker logout "${DOCKER_REGISTRY_HOST}"
 docker system prune --force

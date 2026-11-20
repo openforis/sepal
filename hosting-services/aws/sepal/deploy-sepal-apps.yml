@@ -82,11 +82,6 @@
       vars:
         monit_instance: "SEPAL-apps"
 
-    - name: Remove unused aws.properties
-      file:
-        path: "/data/sepal/etc/aws.properties"
-        state: absent
-
     # rsyslog
     - name: Copy rsyslog.conf
       template: src="rsyslog.conf" dest=/etc/rsyslog.conf
@@ -161,25 +156,6 @@
         executable: pip3
       when: ansible_distribution_major_version == '2'
 
-    # Hosts deployed before joining the swarm have a local sepal bridge, which would shadow the swarm network. Its
-    # containers go with it: run-module recreates the modules, and app-launcher its apps on sepal-apps.
-    - name: Get the sepal network
-      community.docker.docker_network_info:
-        name: sepal
-      register: sepal_network
-
-    - name: Remove the local sepal network and its containers
-      when: sepal_network.exists and sepal_network.network.Scope == 'local'
-      block:
-        - name: Remove containers on the local sepal network
-          command: "docker rm -f {{ sepal_network.network.Containers.keys() | join(' ') }}"
-          when: sepal_network.network.Containers
-
-        - name: Remove the local sepal network
-          docker_network:
-            name: sepal
-            state: absent
-
     - ec2_instance_info:
         region: "{{ lookup('env', 'AWS_REGION') }}"
         filters:
@@ -194,27 +170,6 @@
         state: join
         join_token: "{{ swarm_token }}"
         remote_addrs: ["{{ ec2_sepal.instances[0].private_ip_address }}:2377"]
-
-    # Hosts deployed before the apps firewall have sepal-apps without the apps' range. Its containers go with it:
-    # run-module recreates app-launcher, and app-launcher starts its apps again.
-    - name: Get the sepal-apps network
-      community.docker.docker_network_info:
-        name: sepal-apps
-      register: sepal_apps_network
-
-    - name: Remove a sepal-apps network without the apps' range, and its containers
-      when: >-
-        sepal_apps_network.exists
-        and (sepal_apps_network.network.IPAM.Config | map(attribute='IPRange', default='') | list) != ['172.30.128.0/17']
-      block:
-        - name: Remove containers on the sepal-apps network
-          command: "docker rm -f {{ sepal_apps_network.network.Containers.keys() | join(' ') }}"
-          when: sepal_apps_network.network.Containers
-
-        - name: Remove the sepal-apps network
-          docker_network:
-            name: sepal-apps
-            state: absent
 
     # A fixed subnet: Docker picks free ones from the networks it knows, which may not yet include the swarm's sepal.
     # The apps get addresses from the upper half, which the apps firewall filters; app-launcher is pinned below it.
