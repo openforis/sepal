@@ -12,11 +12,11 @@ export const exportToWorkspace = async ({start, downloadDir, sepal, report, sign
         if (signal.aborted) {
             return {downloaded: false}
         }
-        await localProcessing.run(
+        const downloadedPaths = await localProcessing.run(
             () => downloadFiles({destination, dir: downloadDir, sepal, report, signal, sleep, fetchFn}),
             signal
         )
-        return {downloaded: !signal.aborted}
+        return signal.aborted ? {downloaded: false} : {downloaded: true, downloadedPaths}
     } finally {
         await cleanup(destination, sepal)
     }

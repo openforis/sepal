@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {mkdtemp, rm, writeFile} from 'node:fs/promises'
+import {mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {afterEach, beforeEach, mock, test} from 'node:test'
@@ -19,7 +19,7 @@ mock.module('../workspaceExport.js', {
             for (const name of downloadedFiles) {
                 await writeFile(join(args.downloadDir, name), '')
             }
-            return {downloaded}
+            return {downloaded, downloadedPaths: downloadedFiles.map(name => join(args.downloadDir, name))}
         }
     }
 })
@@ -92,6 +92,20 @@ test('builds the VRT from exactly the downloaded GeoTIFFs, whatever the path and
         gdalCalls[0].createVrt,
         {inputPaths: [`${dir}/a b-1.tif`, `${dir}/a b-2.tif`], outputPath: `${dir}/a b.vrt`}
     )
+})
+
+test('leaves earlier TIFFs out of the VRT, including ones with the same filename prefix', async () => {
+    const dir = join(home, 'out')
+    await mkdir(dir)
+    await writeFile(join(dir, 'p-old.tif'), 'earlier export')
+    await writeFile(join(dir, 'unrelated.tif'), 'other data')
+    const params = {image: {recipe: {title: 'Mosaic'}, workspacePath: 'out', filenamePrefix: 'p', bands: {selection: ['red']}}}
+
+    await imageSepalExport(params, context(fakeSepal()))
+
+    assert.deepEqual(gdalCalls[0].createVrt.inputPaths, [join(dir, 'p-1.tif'), join(dir, 'p-2.tif')])
+    assert.equal(await readFile(join(dir, 'p-old.tif'), 'utf8'), 'earlier export')
+    assert.equal(await readFile(join(dir, 'unrelated.tif'), 'utf8'), 'other data')
 })
 
 test('an image export cancelled before its download runs no post-processing', async () => {

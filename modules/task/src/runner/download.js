@@ -35,6 +35,7 @@ export const downloadFiles = async ({destination, dir, sepal, report, signal, fe
     if (!signal.aborted) {
         progress.done()
         log.info(`Downloaded ${summary}`)
+        return [...targets.values()]
     }
 }
 

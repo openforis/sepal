@@ -34,8 +34,9 @@ test('downloads every file of the destination into the directory', async () => {
     server = await FileServer.start(serving(contents))
     const sepal = listing(() => filesOf(contents))
 
-    await download({sepal})
+    const downloadedPaths = await download({sepal})
 
+    assert.deepEqual(downloadedPaths, [join(dir, 'a.tif'), join(dir, 'b.tif')])
     assert.deepEqual(await filesIn(dir), contents)
     assert.deepEqual(
         server.requests.map(({authorization}) => authorization),
@@ -48,8 +49,9 @@ test('downloads a file in a subdirectory into that subdirectory', async () => {
     const contents = {'sub/x.tif': 'xx'}
     server = await FileServer.start(serving(contents))
 
-    await download({sepal: listing(() => filesOf(contents))})
+    const downloadedPaths = await download({sepal: listing(() => filesOf(contents))})
 
+    assert.deepEqual(downloadedPaths, [join(dir, 'sub/x.tif')])
     assert.deepEqual(await filesIn(dir), contents)
 })
 
