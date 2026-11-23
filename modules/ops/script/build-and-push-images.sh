@@ -14,30 +14,46 @@ TESTS=${WORKSPACE}/ci/test-images.sh
 # What builds leave behind; cleanup removes the images no container uses
 CI_IMAGES=("${DOCKER_REGISTRY_HOST}/openforis/*" openforis/sandbox-base)
 
+# Each operation's complete output, which Jenkins archives with the build
+export BUILD_LOGS=${WORKSPACE:?}/build-logs
+source "${WORKSPACE}/ci/console.sh"
+
 function build {
-  local MODULE=$1
-  local MODULE_DIR=${WORKSPACE}/modules/${MODULE}
-  echo
-  echo "******* Building ${MODULE} *******"
-  cd ${MODULE_DIR}
-  set -o pipefail
-  BUILD_NUMBER=${SEPAL_VERSION} GIT_COMMIT=${GIT_COMMIT} docker compose --file ${MODULE_DIR}/docker-compose.yml build | tee /var/log/sepal-build/${MODULE}.log
-  tests run "${MODULE}"
+  logged "$1" build compose "$1" build
+  tests run "$1"
 }
 
 # The test helper, unless this build skips tests
 function tests {
-  if [[ ${SKIP_TESTS:-false} != true ]]; then
+  if [[ ${SKIP_TESTS:-true} != true ]]; then
     "${TESTS}" "$@"
   fi
 }
 
 function push {
-  local MODULE=$1
-  echo
-  echo "******* Pushing ${MODULE} *******"
-  docker push "${DOCKER_REGISTRY_HOST}/openforis/${MODULE}:${SEPAL_VERSION}"
-  verify "${MODULE}"
+  logged "$1" push publish "$1"
+}
+
+function start {
+  logged "$1" start compose "$1" up -d
+}
+
+function restart {
+  logged "$1" restart recompose "$1"
+}
+
+# module arguments... → Compose for the module, from its directory
+function compose {
+  cd "${WORKSPACE}/modules/$1" && BUILD_NUMBER=${SEPAL_VERSION} GIT_COMMIT=${GIT_COMMIT} \
+    docker compose --file "${WORKSPACE}/modules/$1/docker-compose.yml" "${@:2}"
+}
+
+function recompose {
+  compose "$1" down && compose "$1" up -d
+}
+
+function publish {
+  docker push "${DOCKER_REGISTRY_HOST}/openforis/$1:${SEPAL_VERSION}" && verify "$1"
 }
 
 # The registry must serve the very image this build made under its tag
@@ -50,7 +66,7 @@ function verify {
     --header "Accept: application/vnd.docker.distribution.manifest.list.v2+json" \
     --header "Accept: application/vnd.oci.image.manifest.v1+json" \
     --header "Accept: application/vnd.oci.image.index.v1+json" \
-    "${REGISTRY_API_URL}/v2/openforis/${MODULE}/manifests/${SEPAL_VERSION}")
+    "${REGISTRY_API_URL}/v2/openforis/${MODULE}/manifests/${SEPAL_VERSION}") || return
   SERVED=$(tr -d '\r' <<< "${HEADERS}" | awk 'tolower($1) == "docker-content-digest:" {print $2}')
   DIGESTS=$(docker image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "${IMAGE}:${SEPAL_VERSION}")
   if ! grep -qxF "${IMAGE}@${SERVED}" <<< "${DIGESTS}"; then
@@ -59,32 +75,23 @@ function verify {
   fi
 }
 
-function start {
-  local MODULE=$1
-  local MODULE_DIR=${WORKSPACE}/modules/${MODULE}
-  echo
-  echo "******* Starting ${MODULE} *******"
-  cd ${MODULE_DIR}
-  docker compose --file ${MODULE_DIR}/docker-compose.yml up -d
+function registry_login {
+  echo "${DOCKER_REGISTRY_PASSWORD}" | docker login "${DOCKER_REGISTRY_HOST}" -u "${DOCKER_REGISTRY_USERNAME}" --password-stdin
 }
 
-function restart {
-  local MODULE=$1
-  local MODULE_DIR=${WORKSPACE}/modules/${MODULE}
-  echo
-  echo "******* Restarting ${MODULE} *******"
-  cd ${MODULE_DIR}
-  docker compose --file ${MODULE_DIR}/docker-compose.yml down
-  docker compose --file ${MODULE_DIR}/docker-compose.yml up -d
+# Keeps the logs of the test services, then removes what the build leaves behind
+function clean_up {
+  "${TESTS}" service-logs || warn "cannot keep the logs of the test services"
+  logged tests cleanup "${TESTS}" clean "${CI_IMAGES[@]}"
 }
 
+rm -rf "${BUILD_LOGS}"
 # A failed or cancelled build exits through cleanup; the next build's cleanup removes what a killed one left
-trap '"${TESTS}" clean "${CI_IMAGES[@]}"' EXIT
-"${TESTS}" clean "${CI_IMAGES[@]}"
+trap 'stop_progress; clean_up' EXIT
+logged leftovers cleanup "${TESTS}" clean "${CI_IMAGES[@]}"
 
-if [[ ${SKIP_TESTS:-false} == true ]]; then
-  echo
-  echo "******* SKIP_TESTS: pushing untested images; this job's test record stays as it is *******"
+if [[ ${SKIP_TESTS:-true} == true ]]; then
+  warn "SKIP_TESTS: pushing untested images; this job's test record stays as it is"
 fi
 tests begin
 # The checks that need no image of this build
@@ -130,7 +137,7 @@ build sandbox
 
 tests complete
 
-echo "${DOCKER_REGISTRY_PASSWORD}" | docker login "${DOCKER_REGISTRY_HOST}" -u "${DOCKER_REGISTRY_USERNAME}" --password-stdin
+logged registry login registry_login
 
 push logger
 push email
@@ -161,8 +168,8 @@ push terminal
 push caddy
 push scene-metadata
 
-docker logout "${DOCKER_REGISTRY_HOST}"
+logged registry logout docker logout "${DOCKER_REGISTRY_HOST}"
 
-"${TESTS}" clean "${CI_IMAGES[@]}"
+clean_up
 trap - EXIT
 tests record

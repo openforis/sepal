@@ -20,5 +20,9 @@ fi
 # Setup jobs
 sudo -u jenkins rsync -a /var/lib/jenkins/jobs/* /var/jenkins_home/jobs/
 
+# Setup console sections. Not with JCasC: the plugin applies what JCasC sets only after another restart.
+sudo -u jenkins rsync -a /var/lib/jenkins/org.jvnet.hudson.plugins.collapsingconsolesections.CollapsingSectionNote.xml \
+    /var/jenkins_home/
+
 # Execute the parent image Entrypoint
 exec sudo --preserve-env --set-home --user jenkins PATH=$PATH /sbin/tini -s -- /usr/local/bin/jenkins.sh

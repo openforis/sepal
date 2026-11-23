@@ -48,6 +48,9 @@ function production {  # module → its production image, built as Jenkins build
     echo "$DOCKER_REGISTRY_HOST/openforis/$1:$SEPAL_VERSION"
 }
 
+# shellcheck disable=SC2034  # read by the conditions check evaluates
+ESC=$'\e'
+
 function has { docker run --rm --entrypoint sh "$1" -c "$2"; }
 
 function env_of { docker image inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$1"; }
@@ -78,6 +81,16 @@ check "test files stay out of production" \
     '! has "$gee" "test -e test -o -e verify" && has "$TEST_PROJECT/gee" "test -d test -a -d verify"'
 check "the GUI's production image serves the build without its sources and tools" \
     'has "$gui" "test -d \$MODULE/dist -a ! -e \$MODULE/node_modules -a ! -e \$MODULE/src" && has "$TEST_PROJECT/gui" "test -e node_modules/vitest"'
+
+"$WORKSPACE/ci/test-images.sh" build lib-js-shared > "$WORK/out" 2>&1 || { tail -20 "$WORK/out"; exit 1; }
+# The backends' logger colours its output whatever NO_COLOR says
+backend_error=(docker run --rm --env NO_COLOR=1 "$TEST_PROJECT/lib-js-shared" node --input-type=module
+    --eval "import {getLogger} from '#sepal/log'; getLogger('backend').error('expected failure')")
+"${backend_error[@]}" > "$WORK/raw" 2>&1
+(source "$WORKSPACE/ci/console.sh"; BUILD_LOGS=$WORK/logs logged backend error "${backend_error[@]}") > "$WORK/out" 2>&1
+check "a backend's coloured log output is plain text in the operation's log" \
+    'grep -qF "$ESC" "$WORK/raw" && grep -q "expected failure" "$WORK/logs/backend.error.log" \
+        && ! grep -qF "$ESC" "$WORK/logs/backend.error.log"' "$(cat -v "$WORK/raw" "$WORK/logs/backend.error.log")"
 
 # The production image is the default build output: no module's last stage is its test stage
 for dockerfile in "$REPO"/modules/*/Dockerfile; do

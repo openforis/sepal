@@ -9,16 +9,19 @@
 #   complete           checks that this build has tested every suite exactly once
 #   record             makes the pending record this job's record
 #   build suite...     builds the test images of the suites
+#   service-logs       keeps the logs of the test services in BUILD_LOGS
 #   clean [pattern...] removes the containers, networks, volumes and test images of the Compose project, and the
 #                      images matching the reference patterns that no container uses
 #
 # Environment: WORKSPACE (the repository), TEST_PROJECT (the Compose project of the test resources), and for
-# begin, run, complete and record, TEST_RECORD (the file holding this job's record).
+# begin, run, complete and record, TEST_RECORD (the file holding this job's record). The console and BUILD_LOGS are
+# those of ci/console.sh.
 set -euo pipefail
 
 TESTS=$WORKSPACE/ci/tests.yml
 PENDING=${TEST_RECORD:-}.new
 export COMPOSE_PROJECT_NAME=$TEST_PROJECT
+source "$(dirname "${BASH_SOURCE[0]}")/console.sh"
 
 function main {
     case ${1:-} in
@@ -27,8 +30,10 @@ function main {
         complete) complete ;;
         record) record ;;
         build) shift; build "$@" ;;
+        service-logs) service_logs ;;
         clean) shift; clean "$@" ;;
-        *) echo "Usage: $0 begin | run name... | complete | record | build suite... | clean [image-pattern...]" >&2
+        *) echo "Usage: $0 begin | run name... | complete | record | build suite... | service-logs" \
+                "| clean [image-pattern...]" >&2
             exit 2 ;;
     esac
 }
@@ -39,8 +44,8 @@ function begin {
     : > "$PENDING"
     if [[ ! -e $TEST_RECORD ]]; then
         echo "No suite has passed in this job yet: every suite runs"
-    elif ! cat "$TEST_RECORD" > /dev/null; then
-        echo "Warning: cannot read $TEST_RECORD: every suite runs"
+    elif ! cat "$TEST_RECORD" > /dev/null 2>&1; then
+        warn "cannot read $TEST_RECORD: every suite runs"
     fi
 }
 
@@ -61,15 +66,14 @@ function complete {
     tested=$(cut -d' ' -f1 "$PENDING" | sort)
     missing=$(comm -23 <(sort <<< "$list") <(uniq <<< "$tested"))
     repeated=$(uniq -d <<< "$tested")
-    [[ -z $missing ]] || echo "Not tested in this build: $(xargs <<< "$missing")"
-    [[ -z $repeated ]] || echo "Tested more than once in this build: $(xargs <<< "$repeated")"
+    [[ -z $missing ]] || echo "${FAILED}Not tested in this build: $(xargs <<< "$missing")${PLAIN}"
+    [[ -z $repeated ]] || echo "${FAILED}Tested more than once in this build: $(xargs <<< "$repeated")${PLAIN}"
     [[ -z $missing$repeated ]] || return 1
-    echo
-    echo "******* Every suite has passed, or is unchanged since it passed *******"
+    echo "${PASSED}Every suite has passed, or is unchanged since it passed${PLAIN}"
 }
 
 function record {
-    mv -f "$PENDING" "$TEST_RECORD" || echo "Warning: cannot update $TEST_RECORD: the next build runs these suites again"
+    mv -f "$PENDING" "$TEST_RECORD" || warn "cannot update $TEST_RECORD: the next build runs these suites again"
 }
 
 function build {
@@ -91,6 +95,16 @@ EOF
     done
 }
 
+function service_logs {
+    local service log
+    for service in $(tests ps --all --services); do
+        log=$BUILD_LOGS/$service.service.log
+        mkdir -p "$BUILD_LOGS"
+        tests logs --no-color --no-log-prefix --timestamps "$service" > "$log" 2>&1 || warn "cannot keep the log of $service"
+        echo "$service: service log in $(link "$log")"
+    done
+}
+
 function clean {
     tests down --volumes --remove-orphans
     remove_unused "$TEST_PROJECT/*" "$@"
@@ -99,27 +113,26 @@ function clean {
 # Runs the suite unless the images its run uses are those of its last successful test; once it passes, or when it
 # is unchanged, it goes to the pending record
 function test_suite {
-    local suite=$1 previous=$2 images image line started
-    build "$suite"
+    local suite=$1 previous=$2 images line
+    logged "$suite" "test image" prepare "$suite"
     images=$(tests config --images "$suite" | sort)
-    # Its services' images must be here before their IDs are read. Not with compose pull: it pulls :latest tags anyway.
-    while read -r image; do
-        docker image inspect "$image" > /dev/null 2>&1 || docker pull --quiet "$image" > /dev/null
-    done <<< "$images"
     line="$suite $(fingerprint "$images")"
     if grep -qxF "$line" <<< "$previous"; then
-        echo "$suite: unchanged since it passed"
+        echo "$suite: tests unchanged"
     else
-        echo
-        echo "******* Testing ${suite} *******"
-        started=$SECONDS
-        if ! tests run --rm "$suite"; then
-            echo "$suite: FAILED in $((SECONDS - started)) s"
-            return 1
-        fi
-        echo "$suite: passed in $((SECONDS - started)) s"
+        # No terminal, and no colours from tools that colour without one, such as Vitest under CI
+        logged "$suite" tests tests run --rm --no-TTY --env NO_COLOR=1 "$suite"
     fi
     echo "$line" >> "$PENDING"
+}
+
+# Builds the suite's test image, and fetches the images of its services, whose IDs its fingerprint reads. Not with
+# compose pull: it pulls :latest tags anyway.
+function prepare {
+    local image
+    build "$1" && tests config --images "$1" | while read -r image; do
+        docker image inspect "$image" > /dev/null 2>&1 || docker pull --quiet "$image" || return
+    done
 }
 
 # The test configuration, with the IDs of the images

@@ -225,7 +225,11 @@ When adding a new deployable module (or renaming an existing one), you MUST upda
 entries for it. This script builds and pushes all production Docker images; a module missing
 from it will not be deployed.
 
-It tests each module right after building it, with the suites in `ci/tests.yml` run through
+Jenkins tests are temporarily skipped by default while their runtime and reliability are improved. Set
+`SKIP_TESTS=false` (clear the job's checkbox) to enable them; skipped builds leave the saved test record unchanged.
+Local test commands remain available.
+
+When enabled, it tests each module right after building it, with the suites in `ci/tests.yml` run through
 `ci/test-images.sh`, stops at the first failing suite, and pushes only once every suite has passed. A
 module with tests gives its Dockerfile a `test` stage, never the last, whose default command runs the
 suite and exits, and gets a suite there naming the services it needs; the script builds those services

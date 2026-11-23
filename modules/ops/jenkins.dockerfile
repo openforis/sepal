@@ -6,6 +6,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG DOCKER_COMPOSE_VERSION=v5.1.3
 ARG DOCKER_BUILDX_VERSION=v0.33.0
 
+# Where the build scripts of older branches, such as hotfix branches, keep their build output
 RUN mkdir /var/log/sepal-build && chown jenkins: /var/log/sepal-build
 RUN apk update && apk add --no-cache \
     coreutils \
@@ -28,6 +29,8 @@ RUN chmod +x /usr/libexec/docker/cli-plugins/docker-buildx
 USER jenkins
 
 RUN jenkins-plugin-cli --plugins \
+    ansicolor \
+    collapsing-console-sections \
     configuration-as-code \
     github \
     git \
