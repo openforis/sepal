@@ -37,7 +37,7 @@ not implementation history; recipe-specific issues are deferred unless explicitl
 
 ### Shared Libraries
 
-- `lib/js/shared` - Core Node.js library used by most Node modules. Provides HTTP server/client (`httpServer.js`, `httpClient.js`), message queue (`messageQueue.js` via amqplib), database (`db/` via mysql2), logging (`log.js` via log4js), metrics (`metrics.js` via prom-client), RxJS utilities, and service base class (`service.js`).
+- `lib/js/shared` - Core Node.js library used by most Node modules. Provides HTTP server/client (`httpServer.js`, `httpClient.js`), message queue (`messageQueue.js` via amqplib), database (`db/` via pg; `db/mysqlImport.js` reads the legacy MySQL data through `mysql_fdw` for the one-off import; `db/mysql.js` serves `scene-metadata` and the MySQL test support), logging (`log.js` via log4js), metrics (`metrics.js` via prom-client), RxJS utilities, and service base class (`service.js`).
 - `lib/js/ee` - Google Earth Engine JavaScript wrapper used by `gee`, including its task endpoints
 - `lib/python/shared` - Shared Python utilities
 
@@ -55,8 +55,7 @@ The Node.js libraries carry no lockfile of their own: each module locks the depe
 
 - **Caddy** - HTTPS entry point (ports 80/443) with automatic ACME certificate management; reverse-proxies to `gateway` (for `/api/*`, `/privacy-policy`) and `gui` (everything else)
 - **nginx** - HTTP reverse proxy within containers
-- **MySQL** - Primary database (Postgrator migrations per Node module; the legacy Java schemas used Flyway)
-- **Postgres** - Database of the `scene` module, and of every module once they move off MySQL (Postgrator migrations)
+- **Postgres** - Primary database (Postgrator migrations per Node module; `mysql_fdw` imports the legacy MySQL data on first start). MySQL remains as that import's source and as `scene-metadata`'s database until the cleanup build removes both
 - **AWS EC2** - Dynamic worker instances for user sandboxes with per-user budget tracking
 
 ## Development Environment
@@ -137,7 +136,7 @@ Test boundaries and collaborator choices: [Code design](docs/code-design.md#test
 - Keep each test readable as Given/When/Then with minimal mechanics. Keep the operation under test explicit in the test body; helpers may arrange incidental preconditions, but must not hide the When or scenario-defining setup.
 - Use builders for minimal valid defaults and common relationships. Override a field only when its value creates the scenario or is itself part of the expected contract. Reuse built values in actions and assertions, and capture generated values from operation results instead of repeating arbitrary literals.
 - Assert ordering required by the contract, not a transcript of implementation steps. Meaningful commands to injected adapters are valid observations; incidental internal calls are not.
-- Use `*.integration.test.js` only when exercising an adapter through its real protocol or infrastructure, such as HTTP or MySQL; tests over fakes remain `*.test.js`.
+- Use `*.integration.test.js` only when exercising an adapter through its real protocol or infrastructure, such as HTTP or Postgres; tests over fakes remain `*.test.js`.
 - Use coverage as a diagnostic signal for code or branches that did not execute as expected, never as a percentage target. Do not add fragile, redundant, or unreadable tests merely to increase coverage.
 - Run the affected test files and relevant boundary tests while working (`sepal npm-test gui -- --run <path>`), and lint only the files you changed.
 - Reserve the full GUI suite for the final readiness check before commit, after implementation and review corrections are complete and targeted checks pass. During iteration, use a targeted subset even for shared-component changes; broaden that subset when the affected behavior warrants it. Do not run the full suite after each correction round. Report which targeted tests ran and that the final full run is still pending.

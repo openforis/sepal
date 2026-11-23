@@ -1,111 +1,135 @@
-# Portable database migrations
+# Database migrations
 
-The schema migrations build the same database for production and integration tests. This guide covers
-startup, the unreleased dev/test reset, and removal of the one-off legacy imports.
+Every module that owns a database builds it with Postgrator over the `pg` driver, the same way in
+production and in integration tests. Postgres is the primary database. MySQL still runs as the source of
+a one-off import and as the database of `scene-metadata`, which `scene` replaced.
 
-The modules below run on MySQL through `lib/js/shared/src/db/mysql.js`. `scene` runs on Postgres through
-`db/postgres.js`, with the same `initDb` contract; its integration tests use `createTestDb` and the MySQL
-modules' use `createMysqlTestDb` (`testSupport/db/mysqlTestDb.js`).
+## Staged rollout
 
-## Schema and imports
+Three builds move SEPAL to Postgres, each deployed on its own:
 
-`migrations/` contains the schema stream, tracked in `schema_version`. Targets are unqualified: the
-connection selects the database, and `initDb` creates it before running migrations. Scripts do not
-create their database. Routine calls use `DATABASE()` where they need the selected database name.
+1. `postgres-prepare` adds Postgres, pgAdmin, postgres-backup and `scene`, which rebuilds the scene
+   catalogue from the USGS/Copernicus exports into Postgres. `scene-metadata` keeps serving the GUI from
+   MySQL meanwhile. The rebuild, with the STAC catch-up after it, takes about 17 hours.
+2. `postgres-finalize` moves the other modules to Postgres, each importing its MySQL database on first
+   start, and the GUI to `scene` (`/api/scene`; the gateway also routes `/api/scene-metadata` there for tabs
+   opened before the deploy). Deploy it once `scene`'s catalogue has caught up: per sensor, its count and
+   latest `acquisition_date` match `scene-metadata`'s. `scene-metadata` keeps running unused on MySQL, so a
+   rollback to the prepare build serves searches from a current catalogue.
+3. `postgres-cleanup` removes `scene-metadata` and MySQL; see [Retiring the import](#retiring-the-import).
 
-`migrations/legacy-import/` contains copies from legacy databases, tracked separately in
-`legacy_import_version`. Only the source references are qualified. Changes needed by the schema itself,
-including reference data and backfills, belong in the schema stream instead.
+## Schema
 
-| Module | Legacy import |
-|---|---|
-| `recipe` | `processing_recipe` |
-| `budget` | `sdms` |
-| `worker` | `sdms` sessions and tasks |
-| `task-manager` | worker tasks |
-| `user` | `sepal_user` |
-| `storage` | `user_storage` |
-| `message`, `scene-metadata`, `scene` | none |
-
-Before a fresh import, check the legacy source for full keys that collide after username normalization:
-`username` in User's `sepal_user` and Budget's `user_budget` and `user_spending`, and
-`(username, year, month)` in Budget's `user_monthly_storage`. Different months do not collide. Resolve
-account identity and the affected data explicitly before importing; otherwise the target rejects duplicate
-keys and the import fails. Nothing merges rows, skips them or repairs a checksum on its own, and the
-import SQL is not where to resolve these collisions.
-
-## Startup
-
-Modules without imports call `initDb` directly. The remaining `databaseMigrations.js` files run:
-
-```text
-initDb(dbName, migrations)                          -> schema_version
-migrateDb(dbName, migrations/legacy-import, options) -> legacy_import_version
-```
-
-The schema finishes before the import starts. `migrateDb` requires an existing database; it does not
-create one. The `schemaTable` option selects the history table, and `label` names the stream in logs.
-The import paths are one-off copies, not a general solution for interleaving schema and data migrations.
+`migrations/` holds the schema stream, tracked in `schema_version`. Targets are unqualified: the
+connection selects the database, and `initDb` (`lib/js/shared/src/db/postgres.js`) creates it before
+running the migrations. Scripts do not create their database.
 
 Postgrator validates checksums even when nothing is pending. No code rewrites historical checksums or
-automatically certifies an old database as matching the current schema.
+certifies an old database as matching the current schema. `migrateDb` holds an advisory lock per history
+table, so processes migrating the same stream take turns.
 
-## Existing dev/test databases
+## MySQL import
 
-These changes have not been released. The initial schema files therefore include the final username
-collations and Worker claim-table design directly; no forward migrations or historical-checksum
-compatibility are provided for intermediate development states.
+On first start each module copies its legacy MySQL database into its migrated Postgres database:
 
-Before running this code against an existing dev/test database:
+```text
+initDb(dbName, migrations)                                  -> schema_version
+importFromMysql({dbName, sourceDb, sqlPath, fingerprint})   -> mysql_import
+```
 
-1. Stop its writers and take a backup of both data and migration histories.
-2. Bring the actual schema into agreement with the current files, preserving application data. This
-   includes case-insensitive username columns, Worker's `instance_name` and `instance_claim`, and removal
-   of its old `instance` mirror. The hosting service owns instance inventory; MySQL holds only the claim.
-   `backfillClaims` (`modules/worker/src/workerInstance/index.js`) reconciles reserved instances carrying
-   a session ID with missing claim rows. This also repairs claim-insert failures; it remains part of normal
-   startup reconciliation.
-3. Verify the schema before aligning its history with the checksums of the exact files being deployed.
-   Preserve unrelated migration versions, names and timestamps. Changing a checksum alone does not
-   apply a schema change.
-4. Preserve completion records for imports that already ran, aligning their checksums where necessary.
-   If a combined migration performed the copy, record that completion in the separate import history;
-   do not repeat it. Production's fresh databases have no such records and run the imports normally.
+`importFromMysql` (`lib/js/shared/src/db/mysqlImport.js`) reads MySQL through `mysql_fdw`, runs the
+module's `migrations/mysql-import.sql` once in a single transaction, and records it in `mysql_import`. The
+SQL reads `mysql_source.<table>` and writes the Postgres tables; a failed import changes nothing. Later
+starts verify a per-table fingerprint, either a row count plus the maximum of a column or, for tables
+without such a column, a hash of every row (`CONTENTS`), and refuse to start with `StaleImportError` when
+MySQL changed since the import; see [Rollback and redeploy](#rollback-and-redeploy). When the source database
+is absent, holds no tables, or its tables lost every row they held at the import, the module refuses with
+`MissingSourceError` instead: importing again would discard the Postgres data, so restore MySQL, or unset
+`MYSQL_HOST` to stop checking. When MySQL is unreachable on a later start, the module logs a warning and
+starts unverified. An import is skipped when `MYSQL_HOST` is unset, and a source database that is absent or
+holds no tables on the first start is recorded as an empty import, with a warning.
 
-The repair is an environment operation, not application migration code. Inspect each environment's
-actual state rather than assuming it matches another development database.
+| Module | Imports from MySQL database |
+|---|---|
+| `recipe` | `recipe` |
+| `budget` | `budget` |
+| `worker` | `worker` |
+| `task-manager` | `task_manager` |
+| `user` | `user` |
+| `storage` | `storage` |
+| `message` | `message` |
 
-## After the imports
+Before the first import, check the MySQL source for keys that collide once usernames are case-insensitive
+(`citext`): `username` in User's `sepal_user` and Budget's `user_budget` and `user_spending`, and
+`(username, year, month)` in Budget's `user_monthly_storage`. Resolve account identity and the affected data
+explicitly before importing; otherwise the target rejects duplicate keys and the import fails. Nothing merges
+rows or skips them on its own, and the import SQL is not where to resolve these collisions.
 
-Once test and production have completed their imports, remove those modules' `databaseMigrations.js`
-coordinators, restore direct `initDb` calls, remove `migrations/legacy-import/`, and drop
-`legacy_import_version`. Keep the schema migrations, `schema_version`, checksum validation, and the
-schema and repository integration tests.
+## Cutover and rollback
+
+### Before the cutover
+
+- Resolve the case collisions described above.
+- Find recipes whose `contents` Postgres `jsonb` would reject: a `\u0000` escape, a lone escaped surrogate,
+  or a document over 256 MB. One rejected row fails the recipe import, and Recipe does not start. The query
+  lists candidates: it also matches escaped surrogate pairs such as `\ud83c\udf32`, which some writers
+  produce and `jsonb` accepts, and an escaped backslash followed by such text. A listed row is a problem only
+  if it holds `\u0000`, a high surrogate (`\ud800`–`\udbff`) not directly followed by a low one
+  (`\udc00`–`\udfff`), or a low one without a high one before it:
+
+  ```sql
+  SELECT id, username, name, LENGTH(contents) AS bytes
+  FROM recipe.recipe
+  WHERE contents LIKE '%\\\\u0000%'
+     OR contents REGEXP '\\\\u[dD][89a-fA-F][0-9a-fA-F]{2}'
+     OR LENGTH(contents) > 256 * 1024 * 1024;
+  ```
+
+- Check that the filesystem holding `${SEPAL_DATA_DIR}` has room for a Postgres copy of every module
+  database while MySQL stays: at least what `${SEPAL_DATA_DIR}/mysql` uses apart from `scene_metadata`.
+- Check that `scene` has caught up with `scene-metadata` (see [Staged rollout](#staged-rollout)).
+- Passwords need no check for `:` or `\`: postgres-backup escapes them in `.pgpass`, and the import passes
+  the MySQL password as an escaped literal.
+
+### Rollback and redeploy
+
+A rollback to the prepare build runs the imported modules on MySQL as it was at the cutover, and scene search
+on `scene-metadata`. Everything they wrote to Postgres since exists only there, and their Postgres databases
+stay, since the prepare build does not use them. Its writes to MySQL make the import stale: User, Worker and Budget write on their own and always end up stale,
+while the others may still verify. Redeploying Postgres then leaves the cluster mixed, some modules refusing
+to start with `StaleImportError` and others running on Postgres data the old build never saw.
+
+To redeploy after a rollback:
+
+1. Dump every module database: `docker exec postgres-backup /script/backup.sh` writes
+   `${SEPAL_BACKUP_DIR}/postgres/<db>.dump`, every database but `scene`.
+2. Drop all imported module databases together, never a subset, so that no module keeps Postgres data the
+   others have replaced: `budget`, `message`, `recipe`, `storage`, `task_manager`, `user` and `worker`,
+   with `DROP DATABASE … WITH (FORCE)` as `postgres` in the `postgres` container. Leave `scene`: it
+   imports nothing and kept updating through the rollback.
+3. Redeploy. Every module imports MySQL again.
+
+This loses every write made to Postgres between the cutover and the rollback; only the dumps from step 1
+keep it, for whatever is recovered by hand. A `MissingSourceError` is not a stale import: it means MySQL
+lost data, and dropping a database would lose it for good.
+
+## Retiring the import
+
+Once every environment has imported, the cleanup build removes MySQL: each module's `mysql-import.sql`,
+`migrations-mysql/`, the `importFromMysql` call in its `databaseMigrations.js`, the `mysql_import` table,
+`db/mysqlImport.js`, `db/mysql.js`, `testSupport/db/mysqlTestDb.js`, the `scene-metadata` module with the
+gateway's `/api/scene-metadata` route, and the `mysql` and `mysql-backup` modules. The schema migrations,
+`schema_version` and checksum validation stay. pgAdmin then moves from `127.0.0.1:8981` to
+`127.0.0.1:8980`: phpMyAdmin keeps 8980 until MySQL is gone, because the build before Postgres binds it
+there and does not know to stop pgAdmin when it is rolled back to.
 
 ## Integration tests
 
-`createTestDb` (`lib/js/shared/src/testSupport/db/testDb.js`) builds from the production schema stream and
-returns a restricted database adapter; see `lib/js/shared/CLAUDE.md`. Repository tests never run the
-legacy imports. Tests of the migration runner itself reserve their own databases and exercise it
-directly. Neither needs a handwritten copy of the application schema.
+`createTestDb` (`lib/js/shared/src/testSupport/db/testDb.js`) builds a database from the production schema
+stream and returns a restricted adapter; see `lib/js/shared/CLAUDE.md`. It needs a reachable Postgres with
+`POSTGRES_HOST`, `POSTGRES_USER`, `POSTGRES_PASSWORD` and `POSTGRES_ROOT_PASSWORD`.
 
-## Follow-up: Storage event lock
-
-Not part of this rollout and not implemented. `addEvent` in `modules/storage/src/historyRepository.js`
-serializes writes with `GET_LOCK`. Three things need correcting together, with integration tests against real
-MySQL covering both the concurrent and the failure paths:
-
-- The lock name is built from the username as given, while the row is stored and compared
-  case-insensitively. Case variants of one username must take the same lock; today `Bob` and `bob` take
-  different ones and can both pass the "same as the previous event" guard.
-- The result of `GET_LOCK(?, 5)` is never read. A timeout or an error must prevent the write rather than
-  fall through to an unserialized insert.
-- `RELEASE_LOCK` runs only on the success path. The lock is session-scoped, so a connection returned to
-  the pool while still holding it carries it to the next borrower; the lock must be released on failure
-  as well as on success. The shared `withConnection` returns its connection to the pool unconditionally,
-  so quarantining one would need a way for a callback to refuse that return.
-
-A fourth, independent defect belongs with that work. `timestamp` is a TIMESTAMP filled by `NOW()`, so events
-recorded in the same second tie, and both the duplicate guard in `addEvent` and the ordering in
-`getUserEvents` break those ties by nothing. Which event counts as the latest is therefore undecided exactly
-when two arrive together, which is when it matters.
+Repository tests never run the import. Each module's `src/mysqlImport.integration.test.js` runs it against
+the MySQL fixtures in `migrations-mysql/`, the legacy schema kept only as the import tests' source, and needs
+MySQL as well (`MYSQL_HOST`, `MYSQL_USER`, `MYSQL_PASSWORD`). Where `mysql_fdw` in the Postgres container
+reaches MySQL under another name than the tests do, `MYSQL_FDW_HOST` gives that name.
