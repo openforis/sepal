@@ -25,28 +25,28 @@ export class MessageRepository {
             const now = this.#clock()
             await connection.query(
                 `INSERT INTO ${MESSAGE} (id, username, subject, contents, type, priority, creation_time, update_time, removed)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, FALSE)
-                 ON DUPLICATE KEY UPDATE
-                    username = VALUES(username), subject = VALUES(subject), contents = VALUES(contents),
-                    type = VALUES(type), priority = VALUES(priority), update_time = VALUES(update_time)`,
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE)
+                 ON CONFLICT (id) DO UPDATE SET
+                    username = EXCLUDED.username, subject = EXCLUDED.subject, contents = EXCLUDED.contents,
+                    type = EXCLUDED.type, priority = EXCLUDED.priority, update_time = EXCLUDED.update_time`,
                 [id, storedUsername(username), subject, contents, type, priority ?? 0, now, now]
             )
             // Re-notify: drop every user's read state, so a saved message is UNREAD again for everyone.
             // The author's READ state is re-established by the API layer right after.
-            await connection.query(`DELETE FROM ${NOTIFICATION} WHERE message_id = ?`, [id])
+            await connection.query(`DELETE FROM ${NOTIFICATION} WHERE message_id = $1`, [id])
             return await loadMessage(connection, id)
         })
     }
 
     removeMessage(id) {
         return this.#db.withTransaction(async connection => {
-            await connection.query(`UPDATE ${MESSAGE} SET removed = TRUE WHERE id = ?`, [id])
+            await connection.query(`UPDATE ${MESSAGE} SET removed = TRUE WHERE id = $1`, [id])
         })
     }
 
     listMessages() {
         return this.#db.withTransaction(async connection => {
-            const [rows] = await connection.query(
+            const {rows} = await connection.query(
                 `SELECT * FROM ${MESSAGE} WHERE removed = FALSE ORDER BY update_time DESC`
             )
             return rows.map(rowToMessage)
@@ -60,14 +60,14 @@ export class MessageRepository {
     // a non-admin's list then depends on their own read state alone.
     listNotifications(username, isAdmin) {
         return this.#db.withTransaction(async connection => {
-            const [rows] = await connection.query(
-                `SELECT m.id AS messageId, m.username AS author, m.subject, m.contents, m.type, m.priority,
-                        m.creation_time, m.update_time, ? AS username,
+            const {rows} = await connection.query(
+                `SELECT m.id AS "messageId", m.username AS author, m.subject, m.contents, m.type, m.priority,
+                        m.creation_time, m.update_time, $1::text AS username,
                         CASE WHEN m.priority < 0 THEN 'READ' ELSE COALESCE(n.state, 'UNREAD') END AS state,
                         ${isAdmin ? ACKNOWLEDGED_COUNT : 'NULL'} AS acknowledged
                  FROM ${MESSAGE} m
-                 LEFT JOIN ${NOTIFICATION} n ON n.message_id = m.id AND n.username = ?
-                 WHERE m.removed = FALSE AND (m.priority >= 0 OR ?)
+                 LEFT JOIN ${NOTIFICATION} n ON n.message_id = m.id AND n.username = $2
+                 WHERE m.removed = FALSE AND (m.priority >= 0 OR $3)
                  ORDER BY m.update_time DESC`,
                 [username, username, !!isAdmin]
             )
@@ -79,8 +79,8 @@ export class MessageRepository {
         return this.#db.withTransaction(async connection => {
             await connection.query(
                 `INSERT INTO ${NOTIFICATION} (message_id, username, state)
-                 VALUES (?, ?, ?)
-                 ON DUPLICATE KEY UPDATE state = VALUES(state)`,
+                 VALUES ($1, $2, $3)
+                 ON CONFLICT (message_id, username) DO UPDATE SET state = EXCLUDED.state`,
                 [messageId, storedUsername(username), state]
             )
         })
@@ -88,6 +88,6 @@ export class MessageRepository {
 }
 
 const loadMessage = async (connection, id) => {
-    const [rows] = await connection.query(`SELECT * FROM ${MESSAGE} WHERE id = ?`, [id])
+    const {rows} = await connection.query(`SELECT * FROM ${MESSAGE} WHERE id = $1`, [id])
     return rowToMessage(rows[0])
 }

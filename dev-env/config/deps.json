@@ -129,7 +129,8 @@
         "build": {},
         "run": [
             "logger",
-            "mysql"
+            "mysql",
+            "postgres"
         ]
     },
     "prometheus": {
