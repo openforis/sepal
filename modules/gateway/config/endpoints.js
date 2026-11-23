@@ -93,8 +93,9 @@ const endpoints = [
         authenticate: true
     },
     {
+        // Browser tabs opened before the GUI moved to /api/scene
         path: '/api/scene-metadata',
-        target: `http://${modules.sceneMetadata}`,
+        target: `http://${modules.scene}`,
         authenticate: true
     },
     {
