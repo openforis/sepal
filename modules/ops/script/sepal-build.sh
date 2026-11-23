@@ -4,6 +4,8 @@
 set -eu
 
 if [ -f "$WORKSPACE/ci/build.py" ]; then
-    exec python3 "$WORKSPACE/ci/build.py" "$@"
+    set -- python3 "$WORKSPACE/ci/build.py" "$@"
+else
+    set -- "$WORKSPACE/modules/ops/script/build-and-push-images.sh" "$@"
 fi
-exec "$WORKSPACE/modules/ops/script/build-and-push-images.sh" "$@"
+exec python3 "$(dirname "$0")/registry_maintenance.py" build -- "$@"

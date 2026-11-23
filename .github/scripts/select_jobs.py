@@ -43,7 +43,7 @@ JOB_PATHS = {
     'lint': ['modules/gui'],
     'python': ['lib/python/shared'],
     'deploy': ['hosting-services'],
-    'shell': ['modules/app-manager', 'modules/ops'],
+    'shell': ['modules/app-manager', 'modules/ops', 'bin/deploy'],
 }
 
 RUN_ALL_PATHS = ['.github']

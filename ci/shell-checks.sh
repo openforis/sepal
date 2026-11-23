@@ -9,4 +9,5 @@ shellcheck -S error modules/app-manager/update-app.sh
 shellcheck -S warning modules/ops/script/sepal-build.sh modules/ops/script/build-and-push-images.sh \
     modules/ops/test/*.sh ci/*.sh ci/test/*.sh
 bash modules/ops/test/sepal-build.test.sh
+python3 -m unittest discover -s modules/ops/test -p '*_test.py'
 modules/app-manager/test/run-all.sh

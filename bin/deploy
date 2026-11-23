@@ -366,6 +366,24 @@ elif [ -n "$UPDATE_VERSION" ]; then
     RELEASE_ACTION=update
 fi
 
+# The outer checkout protects pulls even when the selected build has an older deployment script.
+if [[ ${SEPAL_REGISTRY_GUARDED:-} != 1 && "$SCRIPT_PATH" =~ ^aws/sepal/(provision|deploy|rollout|build-worker-ami)\.sh$ ]]; then
+    REGISTRY_STEP=${BASH_REMATCH[1]}
+    REGISTRY_ENV=$(deployed_tag_environment)
+    if [ -z "$REGISTRY_ENV" ]; then
+        REGISTRY_ENV=$(deploy_environment | tr '[:upper:]' '[:lower:]')
+    fi
+    REGISTRY_ARGS=()
+    if [[ ("$REGISTRY_STEP" == deploy || "$REGISTRY_STEP" == rollout) && ("$REGISTRY_ENV" == prod || "$REGISTRY_ENV" == test) ]]; then
+        REGISTRY_ARGS+=(--record)
+    fi
+    if [ -n "$WAIT" ]; then
+        REGISTRY_ARGS+=(--wait)
+    fi
+    exec python3 "$PROJECT_DIR/modules/ops/script/registry_maintenance.py" protect --repo "$PROJECT_DIR" \
+        --environment "$REGISTRY_ENV" --build "$BUILD_NUMBER" "${REGISTRY_ARGS[@]}" -- "$PROJECT_DIR/bin/deploy" "${ARGS[@]}"
+fi
+
 if [ -n "$GIT_COMMIT" ]; then
     : # already running from the build sources
 elif [ -z "$LOCAL" ]; then
@@ -412,7 +430,7 @@ run_docker_image
 
 if [[ "$STEP" == "deploy" || "$STEP" == "rollout" ]]; then
     TAG_ENVIRONMENT=$(deployed_tag_environment)
-    if [ -n "$TAG_ENVIRONMENT" ]; then
+    if [[ -n "$TAG_ENVIRONMENT" && ${SEPAL_REGISTRY_GUARDED:-} != 1 ]]; then
         tag_deployed_build $TAG_ENVIRONMENT
     fi
     if [ -n "$PRODUCTION" ]; then

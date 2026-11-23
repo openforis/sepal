@@ -8,6 +8,15 @@ bad() { echo "FAIL - $1"; echo "        $2"; fail=$((fail+1)); }
 
 setup() {
     WORKSPACE=$(mktemp -d); export WORKSPACE
+    JENKINS_HOME=$WORKSPACE/jenkins; export JENKINS_HOME
+    git init --quiet --bare "$WORKSPACE/origin.git"
+    git -C "$WORKSPACE" init --quiet
+    git -C "$WORKSPACE" remote add origin "$WORKSPACE/origin.git"
+    mkdir -p "$WORKSPACE/bin"
+    printf '%s\n' '#!/bin/sh' 'case "$1" in' \
+        'inspect) echo '\''{"State":{"Running":true}}'\'' ;;' 'ps) ;;' '*) exit 1 ;;' 'esac' > "$WORKSPACE/bin/docker"
+    chmod +x "$WORKSPACE/bin/docker"
+    PATH=$WORKSPACE/bin:$PATH; export PATH
     mkdir -p "$WORKSPACE/modules/ops/script"
     printf '#!/bin/sh\necho "old $*" > "$WORKSPACE/ran"\nexit "${STUB_EXIT:-0}"\n' \
         > "$WORKSPACE/modules/ops/script/build-and-push-images.sh"

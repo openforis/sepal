@@ -22,6 +22,7 @@ COPY hosting-services hosting-services
 CMD ["python3", "-m", "unittest", "discover", "-s", "hosting-services/aws/sepal/test", "-p", "*_test.py", "-v"]
 
 FROM base AS shell
+COPY bin/deploy bin/deploy
 COPY modules/app-manager modules/app-manager
 COPY modules/ops/script modules/ops/script
 COPY modules/ops/test modules/ops/test

@@ -46,5 +46,7 @@ ADD /script/start-jenkins.sh /usr/local/sbin/start-jenkins
 RUN chmod +x /usr/local/sbin/start-jenkins
 ADD /script/sepal-build.sh /usr/local/bin/sepal-build
 RUN chmod +x /usr/local/bin/sepal-build
+ADD /script/registry_cleanup.py /script/registry_maintenance.py /usr/local/bin/
+RUN chmod +x /usr/local/bin/registry_maintenance.py && ln -s /usr/local/bin/registry_maintenance.py /usr/local/bin/sepal-registry
 ENTRYPOINT ["/bin/sh", "-c"]
 CMD ["/usr/local/sbin/start-jenkins"]

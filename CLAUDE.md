@@ -238,6 +238,8 @@ for leaving it untested. A suite runs again only when its test image or a servic
 changes, so keep build numbers and commits out of test stages. Check changes to this machinery with
 `ci/test/test-images.test.sh` and `ci/test/module-test-images.test.sh`.
 
+Ops retention, deployment coordination and recovery: [Ops builds and registry cleanup](modules/ops/README.md).
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution and review policy.

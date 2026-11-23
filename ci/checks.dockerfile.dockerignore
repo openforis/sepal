@@ -1,5 +1,6 @@
 **
 !ci/
+!bin/deploy
 !lib/
 !hosting-services/
 !modules/app-manager/
