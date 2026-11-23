@@ -54,7 +54,7 @@
 }
 
 .dimmed>.image {
-    filter: grayscale(1) brightness(.4);
+    filter: var(--dimmed-image-filter);
 }
 
 .inline {
