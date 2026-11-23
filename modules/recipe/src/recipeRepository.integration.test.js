@@ -5,11 +5,11 @@ import {after, before, beforeEach, describe, test} from 'node:test'
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 import {failingDb} from '#sepal/testSupport/db/faultyConnection'
-import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
+import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 import {RecipeRepository} from './recipeRepository.js'
 
-// Mocked SQL cannot prove that the conditional update is atomic under concurrent MySQL writers.
+// Mocked SQL cannot prove that the conditional update is atomic under concurrent Postgres writers.
 
 describe('recipe repository', () => {
     let testDb
@@ -17,7 +17,7 @@ describe('recipe repository', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createMysqlTestDb({name: 'reciperepository', migrations: MIGRATIONS_PATH})
+        testDb = await createTestDb({name: 'reciperepository', migrations: MIGRATIONS_PATH})
         repository = new RecipeRepository(testDb.db)
     })
 
@@ -280,6 +280,16 @@ describe('recipe repository', () => {
 
             assert.deepEqual(summaries.map(({id}) => id), [owned.id])
         })
+
+        test('lists recipes ordered by name regardless of case', async () => {
+            for (const name of ['beta', 'Alpha', 'Ähnlich']) {
+                await repository.saveRecipe(aRecipe({id: name, name}))
+            }
+
+            const summaries = await repository.listRecipes(OWNER)
+
+            assert.deepEqual(summaries.map(({name}) => name), ['Ähnlich', 'Alpha', 'beta'])
+        })
     })
 
     describe('removeRecipes', () => {
@@ -455,7 +465,7 @@ describe('recipe repository', () => {
         let concurrentRepository
 
         before(async () => {
-            concurrent = await createMysqlTestDb({
+            concurrent = await createTestDb({
                 name: 'reciperepositoryconcurrent', migrations: MIGRATIONS_PATH, connections: COMPETING_WRITERS
             })
             concurrentRepository = new RecipeRepository(concurrent.db)
@@ -465,7 +475,7 @@ describe('recipe repository', () => {
 
         after(() => concurrent?.remove())
 
-        // Both saves are in flight together; MySQL decides how they interleave. The claim is only that
+        // Both saves are in flight together; Postgres decides how they interleave. The claim is only that
         // exactly one can win from a given base revision, whichever order it settles on.
         test('lets exactly one of two writers from the same base revision win', async () => {
             const recipe = aRecipe()
@@ -518,12 +528,12 @@ describe('recipe repository', () => {
     // Only for the stored-document invariant: a public read injects placement and revision, so it cannot
     // show whether a submitted one reached the column.
     const storedRow = async id => {
-        const [rows] = await testDb.query('SELECT revision, contents FROM recipe WHERE id = ?', [id])
-        return {revision: rows[0].revision, contents: JSON.parse(rows[0].contents)}
+        const {rows: [row]} = await testDb.query('SELECT revision, contents FROM recipe WHERE id = $1', [id])
+        return {revision: row.revision, contents: row.contents}
     }
 
     const storeLegacyDocument = (id, document) => testDb.query(
-        'UPDATE recipe SET contents = ? WHERE id = ?', [JSON.stringify(document), id]
+        'UPDATE recipe SET contents = $1 WHERE id = $2', [JSON.stringify(document), id]
     )
 
     // Names the statement the transaction must undo: the soft delete that follows the project delete.

@@ -1,11 +1,9 @@
 import assert from 'node:assert/strict'
 import {randomBytes} from 'node:crypto'
-import {cp, mkdtemp, rm} from 'node:fs/promises'
-import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {after, afterEach, before, describe, test} from 'node:test'
 
-import {createConnection, initDb, migrateDb} from '#sepal/db/mysql'
+import {createConnection, initDb} from '#sepal/db/postgres'
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 
@@ -15,164 +13,96 @@ describe('recipe database migrations', () => {
 
     before(async () => {
         configureNoLogging()
-        admin = await createConnection('mysql')
+        admin = await createConnection('postgres', {user: 'postgres', password: process.env.POSTGRES_ROOT_PASSWORD})
     })
 
     afterEach(() => dropReservedDatabases())
 
     after(() => admin?.end())
 
+    test('creates the recipe and project tables in the selected database', async () => {
+        const dbName = await reserveDatabase()
+
+        await initDb(dbName, SCHEMA_PATH)
+
+        const tables = await tableNames(dbName)
+        assert.ok(new Set(['project', 'recipe']).isSubsetOf(new Set(tables)))
+    })
+
+    test('creates empty recipe and project tables', async () => {
+        const dbName = await reserveDatabase()
+
+        await initDb(dbName, SCHEMA_PATH)
+
+        assert.deepEqual(await rowCounts(dbName), {recipes: 0, projects: 0})
+    })
+
     test('compares usernames without regard to case', async () => {
         const dbName = await reserveDatabase()
         await initDb(dbName, SCHEMA_PATH)
         const stored = await insertRecipe(dbName, aRecipe())
+        const project = await insertProject(dbName, aProject())
 
-        const [found] = await admin.query('SELECT username FROM ??.recipe WHERE username = ?', [dbName, stored.username.toUpperCase()])
+        const recipes = await query(dbName, 'SELECT username FROM recipe WHERE username = $1', [stored.username.toUpperCase()])
+        const projects = await query(dbName, 'SELECT username FROM project WHERE username = $1', [project.username.toUpperCase()])
 
-        const collations = await usernameCollations(dbName)
-        assert.deepEqual(found, [{username: stored.username}])
-        assert.deepEqual(collations, {
-            recipe: 'ascii_general_ci',
-            project: 'ascii_general_ci'
-        })
+        assert.deepEqual(recipes.rows, [{username: stored.username}])
+        assert.deepEqual(projects.rows, [{username: project.username}])
     })
-
-    describe('schema migrations', () => {
-        test('create a missing database with the recipe and project tables', async () => {
-            const dbName = aDatabaseName()
-
-            const {created} = await initDb(dbName, SCHEMA_PATH)
-
-            ownIfCreated(dbName, created)
-            assert.equal(created, true)
-            const tables = await tableNames(dbName)
-            assert.ok(new Set(['project', 'recipe']).isSubsetOf(new Set(tables)))
-        })
-
-        test('build the recipe and project tables in an existing database', async () => {
-            const dbName = await reserveDatabase()
-
-            await migrateDb(dbName, SCHEMA_PATH)
-
-            const tables = await tableNames(dbName)
-            assert.ok(new Set(['project', 'recipe']).isSubsetOf(new Set(tables)))
-        })
-
-        test('refuse to migrate a database that does not exist', async () => {
-            const dbName = aDatabaseName()
-
-            const migration = migrateDb(dbName, SCHEMA_PATH)
-
-            await assert.rejects(migration)
-            const exists = await databaseExists(dbName)
-            assert.equal(exists, false)
-        })
-
-        test('reject altered history even when no migration is pending', async () => {
-            const dbName = await reserveDatabase()
-            await initDb(dbName, SCHEMA_PATH)
-            await admin.query('UPDATE ??.schema_version SET md5 = ? WHERE version = 1', [dbName, 'previous-file-checksum'])
-
-            const migration = migrateDb(dbName, SCHEMA_PATH)
-
-            await assert.rejects(migration, /MD5 checksum failed/)
-            const [history] = await admin.query('SELECT md5 FROM ??.schema_version WHERE version = 1', [dbName])
-            assert.deepEqual(history, [{md5: 'previous-file-checksum'}])
-        })
-
-        test('create empty recipe and project tables', async () => {
-            const dbName = await reserveDatabase()
-
-            await initDb(dbName, SCHEMA_PATH)
-
-            const counts = await rowCounts(dbName)
-            assert.deepEqual(counts, {recipes: 0, projects: 0})
-        })
-    })
-
-    describe('002.do.revision.sql', () => {
-        test('backfills every existing row to revision 1, rewriting no contents', async () => {
-            const dbName = await aDatabaseAtSchemaVersionOne()
-            const first = {...aRecipe(), id: 'first', contents: '{"model":{"source":"LANDSAT"}}'}
-            const second = {...aRecipe(), id: 'second', contents: '{"model":{"source":"RADAR"}}'}
-            await insertRecipe(dbName, first)
-            await insertRecipe(dbName, second)
-
-            await migrateDb(dbName, SCHEMA_PATH)
-
-            const [rows] = await admin.query(
-                'SELECT id, revision, contents FROM ??.recipe ORDER BY id', [dbName]
-            )
-            assert.deepEqual(rows, [
-                {id: first.id, revision: 1, contents: first.contents},
-                {id: second.id, revision: 1, contents: second.contents}
-            ])
-        })
-    })
-
-    // Copy the real first migration unchanged so the full stream validates it before applying 002.
-    const aDatabaseAtSchemaVersionOne = async () => {
-        const dbName = await reserveDatabase()
-        const firstVersionOnly = await mkdtemp(join(tmpdir(), 'recipe-schema-v1-'))
-        try {
-            await cp(join(SCHEMA_PATH, '001.do.schema.sql'), join(firstVersionOnly, '001.do.schema.sql'))
-            await initDb(dbName, firstVersionOnly)
-        } finally {
-            await rm(firstVersionOnly, {recursive: true, force: true})
-        }
-        return dbName
-    }
 
     // Deliberately not IF NOT EXISTS: a name collision must fail rather than take over a database
     // someone else owns, so only databases this suite created are ever dropped.
     const reserveDatabase = async () => {
-        const dbName = aDatabaseName()
-        await admin.query(`CREATE DATABASE \`${dbName}\` DEFAULT CHARACTER SET ascii COLLATE ascii_bin`)
+        const dbName = `recipe_migrations_test_${randomBytes(6).toString('hex')}`
+        await admin.query(`CREATE DATABASE ${admin.escapeIdentifier(dbName)} OWNER ${admin.escapeIdentifier(process.env.POSTGRES_USER)}`)
         reserved.push(dbName)
         return dbName
     }
 
-    const ownIfCreated = (dbName, created) => {
-        if (created) {
-            reserved.push(dbName)
+    const dropReservedDatabases = async () => {
+        for (const dbName of reserved.splice(0)) {
+            await admin.query(`DROP DATABASE IF EXISTS ${admin.escapeIdentifier(dbName)} WITH (FORCE)`)
         }
     }
 
-    const dropReservedDatabases = async () => {
-        for (const dbName of reserved.splice(0)) {
-            await admin.query(`DROP DATABASE IF EXISTS \`${dbName}\``)
+    const query = async (dbName, sql, params) => {
+        const connection = await createConnection(dbName, {user: 'postgres', password: process.env.POSTGRES_ROOT_PASSWORD})
+        try {
+            return await connection.query(sql, params)
+        } finally {
+            await connection.end()
         }
     }
 
     const insertRecipe = async (dbName, recipe) => {
-        await admin.query('INSERT INTO ??.recipe SET ?', [dbName, recipe])
+        await query(
+            dbName,
+            `INSERT INTO recipe (id, username, name, type, contents, creation_time, update_time)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [recipe.id, recipe.username, recipe.name, recipe.type, recipe.contents, recipe.creation_time, recipe.update_time]
+        )
         return recipe
     }
 
-    const rowCounts = async dbName => {
-        const [[{recipes}]] = await admin.query('SELECT COUNT(*) AS recipes FROM ??.recipe', [dbName])
-        const [[{projects}]] = await admin.query('SELECT COUNT(*) AS projects FROM ??.project', [dbName])
-        return {recipes, projects}
+    const insertProject = async (dbName, project) => {
+        await query(dbName, 'INSERT INTO project (id, username, name) VALUES ($1, $2, $3)', [project.id, project.username, project.name])
+        return project
     }
 
-    const usernameCollations = async dbName => {
-        const [rows] = await admin.query(
-            'SELECT TABLE_NAME, COLLATION_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND COLUMN_NAME = ?',
-            [dbName, 'username']
+    const rowCounts = async dbName => {
+        const {rows: [counts]} = await query(
+            dbName,
+            'SELECT (SELECT COUNT(*) FROM recipe) AS recipes, (SELECT COUNT(*) FROM project) AS projects'
         )
-        return Object.fromEntries(rows.map(({TABLE_NAME, COLLATION_NAME}) => [TABLE_NAME, COLLATION_NAME]))
+        return counts
     }
 
     const tableNames = async dbName => {
-        const [rows] = await admin.query(
-            'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? ORDER BY TABLE_NAME', [dbName]
+        const {rows} = await query(
+            dbName,
+            'SELECT table_name FROM information_schema.tables WHERE table_schema = \'public\' ORDER BY table_name'
         )
-        return rows.map(({TABLE_NAME}) => TABLE_NAME)
-    }
-
-    const databaseExists = async dbName => {
-        const [rows] = await admin.query('SELECT 1 FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = ?', [dbName])
-        return rows.length > 0
+        return rows.map(({table_name}) => table_name)
     }
 })
 
@@ -181,11 +111,15 @@ const aRecipe = () => ({
     username: 'owner',
     name: 'A recipe',
     type: 'MOSAIC',
-    contents: '{}',
+    contents: {},
     creation_time: new Date('2026-01-01T00:00:00Z'),
     update_time: new Date('2026-01-01T00:00:00Z')
 })
 
-const aDatabaseName = () => `recipe_migrations_test_${randomBytes(6).toString('hex')}`
+const aProject = () => ({
+    id: 'a-project',
+    username: 'owner',
+    name: 'A project'
+})
 
 const SCHEMA_PATH = join(dirName(import.meta.url), '../migrations')

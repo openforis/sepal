@@ -11,3 +11,5 @@ services:
       - ${SEPAL_PROJECT_DIR}/modules/recipe/lib/shared/node_modules:/usr/local/src/sepal/lib/js/shared/node_modules
       # module
       - ${SEPAL_PROJECT_DIR}/modules/recipe:/usr/local/src/sepal/modules/recipe
+    environment:
+      POSTGRES_ROOT_PASSWORD: "${POSTGRES_ROOT_PASSWORD}"

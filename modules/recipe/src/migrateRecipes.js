@@ -7,9 +7,6 @@ const migrateRecipes = async ({repository, log}) => {
         const stored = await repository.findRecipesToMigrate(type, version)
         for (const {id, owner, typeVersion: fromVersion, content} of stored) {
             try {
-                if (!content) {
-                    throw new Error('Stored recipe cannot be read')
-                }
                 const migrated = migrate(content, fromVersion, MIGRATIONS_BY_TYPE[type])
                 await repository.saveMigratedRecipe({
                     id, owner,

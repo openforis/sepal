@@ -3,6 +3,8 @@ import {storedUsername} from '#sepal/username'
 const RECIPE = 'recipe'
 const PROJECT = 'project'
 const INITIAL_REVISION = 1
+// Names sort as people read them: letters first, with case and accents only breaking ties.
+const NAME_ORDER = '"und-x-icu"'
 
 export class RecipeRepository {
     #db
@@ -18,32 +20,31 @@ export class RecipeRepository {
         return await this.#db.withTransaction(async connection => {
             const now = new Date()
             if (expectedRevision == null) {
-                try {
-                    await connection.query(
-                        `INSERT INTO ${RECIPE}
-                            (id, project_id, name, type, type_version, username, contents, creation_time, update_time, revision)
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                        [id, projectId, name, type, typeVersion, storedUsername(owner),
-                            contentsColumn(content), now, now, INITIAL_REVISION]
-                    )
+                // An existing id is left alone rather than raising a duplicate key: a failed statement would
+                // abort the transaction before the rejection could be explained.
+                const {rowCount} = await connection.query(
+                    `INSERT INTO ${RECIPE}
+                        (id, project_id, name, type, type_version, username, contents, creation_time, update_time, revision)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                     ON CONFLICT (id) DO NOTHING`,
+                    [id, projectId, name, type, typeVersion, storedUsername(owner),
+                        contentsColumn(content), now, now, INITIAL_REVISION]
+                )
+                if (rowCount) {
                     return {outcome: 'saved', revision: INITIAL_REVISION}
-                } catch (error) {
-                    if (error.code !== 'ER_DUP_ENTRY') {
-                        throw error
-                    } else {
-                        return await explainRejection(connection, id, owner, type)
-                    }
+                } else {
+                    return await explainRejection(connection, id, owner, type)
                 }
             } else {
                 const nextRevision = expectedRevision + 1
-                const [result] = await connection.query(
+                const {rowCount} = await connection.query(
                     `UPDATE ${RECIPE}
-                     SET type_version = ?, name = ?, contents = ?, update_time = ?, revision = ?
-                     WHERE id = ? AND username = ? AND type = ? AND revision = ? AND removed = FALSE`,
+                     SET type_version = $1, name = $2, contents = $3, update_time = $4, revision = $5
+                     WHERE id = $6 AND username = $7 AND type = $8 AND revision = $9 AND removed = FALSE`,
                     [typeVersion, name, contentsColumn(content), now, nextRevision,
                         id, owner, type, expectedRevision]
                 )
-                if (result.affectedRows) {
+                if (rowCount) {
                     return {outcome: 'saved', revision: nextRevision}
                 } else {
                     return await explainRejection(connection, id, owner, type)
@@ -54,9 +55,9 @@ export class RecipeRepository {
 
     async findRecipe(id) {
         return await this.#db.withTransaction(async connection => {
-            const [rows] = await connection.query(
+            const {rows} = await connection.query(
                 `SELECT username, project_id, contents, revision
-                 FROM ${RECIPE} WHERE id = ? AND removed = FALSE`,
+                 FROM ${RECIPE} WHERE id = $1 AND removed = FALSE`,
                 [id]
             )
             return rows[0] ? {owner: rows[0].username, recipe: toRecipe(rows[0])} : null
@@ -66,9 +67,10 @@ export class RecipeRepository {
     // Summaries never select contents: a listing would otherwise load every stored document.
     async listRecipes(owner) {
         return await this.#db.withTransaction(async connection => {
-            const [rows] = await connection.query(
+            const {rows} = await connection.query(
                 `SELECT id, project_id, name, type, creation_time, update_time, revision
-                 FROM ${RECIPE} WHERE username = ? AND removed = FALSE ORDER BY name, update_time DESC`,
+                 FROM ${RECIPE} WHERE username = $1 AND removed = FALSE
+                 ORDER BY name COLLATE ${NAME_ORDER}, update_time DESC`,
                 [owner]
             )
             return rows.map(toSummary)
@@ -81,8 +83,8 @@ export class RecipeRepository {
             if (recipeIds.length) {
                 await connection.query(
                     `UPDATE ${RECIPE} SET removed = TRUE
-                     WHERE id IN (${placeholders(recipeIds)}) AND username = ?`,
-                    [...recipeIds, owner]
+                     WHERE id = ANY($1) AND username = $2`,
+                    [recipeIds, owner]
                 )
             }
         })
@@ -92,9 +94,9 @@ export class RecipeRepository {
         await this.#db.withTransaction(async connection => {
             if (recipeIds.length) {
                 await connection.query(
-                    `UPDATE ${RECIPE} SET project_id = ?
-                     WHERE id IN (${placeholders(recipeIds)}) AND username = ?`,
-                    [projectId, ...recipeIds, owner]
+                    `UPDATE ${RECIPE} SET project_id = $1
+                     WHERE id = ANY($2) AND username = $3`,
+                    [projectId, recipeIds, owner]
                 )
             }
         })
@@ -102,16 +104,16 @@ export class RecipeRepository {
 
     async findRecipesToMigrate(type, version) {
         return await this.#db.withTransaction(async connection => {
-            const [rows] = await connection.query(
+            const {rows} = await connection.query(
                 `SELECT id, username, type_version, contents
-                 FROM ${RECIPE} WHERE type = ? AND type_version < ? AND removed = FALSE ORDER BY creation_time`,
+                 FROM ${RECIPE} WHERE type = $1 AND type_version < $2 AND removed = FALSE ORDER BY creation_time`,
                 [type, version]
             )
             return rows.map(row => ({
                 id: row.id,
                 owner: row.username,
                 typeVersion: row.type_version,
-                content: parsedOrNull(row.contents)
+                content: row.contents
             }))
         })
     }
@@ -120,42 +122,41 @@ export class RecipeRepository {
     // row is a failure, not a migration silently reported as done.
     async saveMigratedRecipe({id, owner, typeVersion, content}) {
         await this.#db.withTransaction(async connection => {
-            const [result] = await connection.query(
-                `UPDATE ${RECIPE} SET type_version = ?, contents = ?, revision = revision + 1
-                 WHERE id = ? AND username = ?`,
+            const {rowCount} = await connection.query(
+                `UPDATE ${RECIPE} SET type_version = $1, contents = $2, revision = revision + 1
+                 WHERE id = $3 AND username = $4`,
                 [typeVersion, contentsColumn(content), id, owner]
             )
-            if (result.affectedRows !== 1) {
-                throw new Error(`Migrating recipe ${id} updated ${result.affectedRows} rows`)
+            if (rowCount !== 1) {
+                throw new Error(`Migrating recipe ${id} updated ${rowCount} rows`)
             }
         })
     }
 
     async listProjects(owner) {
         return await this.#db.withTransaction(async connection => {
-            const [rows] = await connection.query(
+            const {rows} = await connection.query(
                 `SELECT id, name, username, default_asset_folder, default_workspace_folder
-                 FROM ${PROJECT} WHERE username = ? ORDER BY name`,
+                 FROM ${PROJECT} WHERE username = $1 ORDER BY name COLLATE ${NAME_ORDER}`,
                 [owner]
             )
             return rows.map(toProject)
         })
     }
 
-    // One statement, so concurrent creates of the same id converge instead of colliding. Each column
-    // updates only when the stored row already belongs to the writer, and username is never assigned, so
-    // an id someone else owns can be neither taken over nor altered.
+    // One statement, so concurrent creates of the same id converge instead of colliding. The update applies
+    // only when the stored row already belongs to the writer, and username is never assigned, so an id
+    // someone else owns can be neither taken over nor altered.
     async saveProject({id, owner, name, defaultAssetFolder, defaultWorkspaceFolder}) {
         await this.#db.withTransaction(async connection => {
             await connection.query(
                 `INSERT INTO ${PROJECT} (id, name, username, default_asset_folder, default_workspace_folder)
-                 VALUES (?, ?, ?, ?, ?)
-                 ON DUPLICATE KEY UPDATE
-                     name = IF(username = VALUES(username), VALUES(name), name),
-                     default_asset_folder =
-                         IF(username = VALUES(username), VALUES(default_asset_folder), default_asset_folder),
-                     default_workspace_folder =
-                         IF(username = VALUES(username), VALUES(default_workspace_folder), default_workspace_folder)`,
+                 VALUES ($1, $2, $3, $4, $5)
+                 ON CONFLICT (id) DO UPDATE SET
+                     name = EXCLUDED.name,
+                     default_asset_folder = EXCLUDED.default_asset_folder,
+                     default_workspace_folder = EXCLUDED.default_workspace_folder
+                 WHERE ${PROJECT}.username = EXCLUDED.username`,
                 [id, name, storedUsername(owner), defaultAssetFolder, defaultWorkspaceFolder]
             )
         })
@@ -165,9 +166,9 @@ export class RecipeRepository {
     // it leaves recipes pointing at a project id that no longer resolves.
     async removeProject(id, owner) {
         await this.#db.withTransaction(async connection => {
-            await connection.query(`DELETE FROM ${PROJECT} WHERE id = ? AND username = ?`, [id, owner])
+            await connection.query(`DELETE FROM ${PROJECT} WHERE id = $1 AND username = $2`, [id, owner])
             await connection.query(
-                `UPDATE ${RECIPE} SET removed = TRUE WHERE project_id = ? AND username = ?`,
+                `UPDATE ${RECIPE} SET removed = TRUE WHERE project_id = $1 AND username = $2`,
                 [id, owner]
             )
         })
@@ -183,16 +184,15 @@ const contentsColumn = content => {
     const stored = {...content}
     delete stored.revision
     delete stored.projectId
-    return JSON.stringify(stored)
+    return stored
 }
 
 // Which precondition failed is only knowable from the row. A foreign recipe is reported absent, so
 // ownership is never disclosed across the port.
 const explainRejection = async (connection, id, owner, type) => {
-    const [rows] = await connection.query(
-        `SELECT type, revision, removed FROM ${RECIPE} WHERE id = ? AND username = ?`, [id, owner]
+    const {rows: [row]} = await connection.query(
+        `SELECT type, revision, removed FROM ${RECIPE} WHERE id = $1 AND username = $2`, [id, owner]
     )
-    const row = rows[0]
     if (!row || row.removed) {
         return {outcome: 'notFound'}
     } else if (row.type !== type) {
@@ -205,7 +205,7 @@ const explainRejection = async (connection, id, owner, type) => {
 // The columns are authoritative for placement and revision, so they override whatever a document
 // stored before they were stripped happens to carry.
 const toRecipe = row => ({
-    ...JSON.parse(row.contents),
+    ...row.contents,
     projectId: row.project_id,
     revision: row.revision
 })
@@ -219,18 +219,6 @@ const toSummary = row => ({
     updateTime: row.update_time,
     revision: row.revision
 })
-
-const placeholders = items => items.map(() => '?').join(', ')
-
-// Only the migration read tolerates a document it cannot parse: it reports the recipe with no content so
-// the runner can skip that one and migrate the rest. A query that fails still throws.
-const parsedOrNull = contents => {
-    try {
-        return JSON.parse(contents)
-    } catch (_error) {
-        return null
-    }
-}
 
 const toProject = row => ({
     id: row.id,
