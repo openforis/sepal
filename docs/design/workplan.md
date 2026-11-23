@@ -9,6 +9,7 @@ AQS keys - separate for PROD and DEV, locked to specific regions.
 
 Redo the backup scripts
 
+Don't do all AOI rendering using EE. For Countries/areas, serve PMTiles perhaps, polygons - client rendered? Only custom EE tables throw EE
 
 
 The single backlog for SEPAL recipes, tasks, applications and infrastructure. Reports need reproduction;
@@ -1051,6 +1052,71 @@ choose production only from measured results.
   product-driven map workflow. Assess catalogue, coverage, styling and selection behavior once the use is defined.
 - **Recipe to GEE script.** Assess which recipes can produce a runnable Earth Engine script, dependency expansion,
   private-asset access, credentials exclusion and equivalence with SEPAL processing. Unsupported steps must be explicit.
+
+## Sandbox build time
+
+Reduce sandbox build time with tests disabled, starting with cache invalidation and download reuse. Observed
+costs include roughly seven minutes installing GPU dependencies, eight minutes installing GMT/GMTSAR (mostly
+a slow UbuntuGIS download), and R source compilation. An early OFT installer change invalidated later layers
+even though the GPU installer was unchanged. GPU setup already installs prebuilt packages; standalone DGGRID
+compilation and R's `dggridR` are separate concerns, and the latter already benefits from the R binary proxy.
+
+- **Preserve expensive installation layers.** Assess moving stable GPU dependencies earlier in the sandbox's
+  own Dockerfile, with configuration and frequently changed inputs later. Establish actual dependencies before
+  reordering: Python installers share one environment, and R/native tools depend on compatible system libraries.
+- **Reuse downloads without enlarging the shipped image.** Assess BuildKit cache mounts for APT and `uv` so a
+  necessary layer rebuild can reuse downloaded packages. Keep caches outside image layers and measure their
+  contribution to the ops disk and cache budget. Investigate reliable download paths for slow UbuntuGIS packages.
+- **Reuse compiled tools.** Assess a pinned standalone DGGRID binary published as a checksummed release asset,
+  or an independent build stage that survives unrelated sandbox changes. Match OS, architecture, runtime
+  libraries and required GDAL/features. A full new package repository is not selected.
+- **Use the existing R binary cache.** Identify expensive misses such as `interp`, assess preparing those
+  binaries before sandbox installation, and avoid duplicate foreground/background compilation where practical.
+  Preserve R ABI checks; assess the standalone DGGRID tool separately from cached `dggridR` packages.
+- **Assess GPU dependency overlap.** Inventory system CUDA packages and the NVIDIA libraries installed with
+  Python frameworks. Establish compiler, R and native-application requirements before proposing removals.
+- **Make measurements usable.** Capture completed step timings and sufficient diagnostics despite BuildKit's
+  per-step log clipping, while keeping the Jenkins console concise. Separate download, unpack/install and
+  compilation costs before choosing further optimization.
+
+Acceptance: compare cold and warm builds on the same hardware, including an unchanged rebuild and a change to
+an unrelated installer. Show which expensive work is reused, report image/cache sizes and timings, and preserve
+package imports, native-tool features and representative GPU behavior. Start with bounded Dockerfile/cache
+changes; choose additional artifact hosting or dependency reductions only from measured remaining costs.
+
+## Test quality and execution time
+
+Review and improve tests across SEPAL, starting with the GUI. GUI runs take several minutes on two CPUs and
+emit React `act()` warnings; the wider concern about test quality needs an assessment of what regressions the
+tests actually detect. Follow the [testing rules](../../CLAUDE.md#testing) and
+[test boundaries](../code-design.md#test-boundaries).
+
+- **Measure and prioritize.** Identify slow files, repeated setup, import/transform cost, unnecessary DOM/store
+  construction and real-time waits. Establish comparable timings with at most two workers, then improve bounded
+  groups of tests; increasing parallelism or skipping tests does not resolve poor test design.
+- **Test the right seam.** Test rules and application operations directly through stable behavioral contracts.
+  Use component tests for rendering, interaction and lifecycle, real infrastructure for adapter guarantees, and
+  a small set of composed tests for wiring. Remove duplicated scenarios and assertions tied to private helpers,
+  incidental call order, component structure or a harness's own behavior. Preserve meaningful failure, security
+  and asynchronous regression coverage.
+- **Separate business logic from GUI mechanics.** Include focused production refactorings where business rules
+  and application state transitions can currently be tested only through large React/store setups. Give those
+  responsibilities stable operations that can be exercised without rendering; keep rendering, interaction and
+  framework bindings at the GUI boundary. Move behavioral tests with the extracted responsibility, remove
+  redundant UI scenarios, and retain representative wiring and lifecycle tests. Preserve user-visible behavior
+  and existing ownership; avoid test-only APIs or a new abstraction framework.
+- **Delete development scaffolding.** Implementation-coupled tests may help during implementation, but must be
+  deleted before final review. Replace any lasting regression protection they provided with behavioral tests at
+  the appropriate seam; do not keep temporary probes as permanent coverage.
+- **Make asynchronous tests deterministic.** Control clocks and external completions, wait for meaningful
+  outcomes, and clean up subscriptions, timers, React roots and shared state. Fix genuine `act()` warnings and
+  avoid sleeps or arbitrary flush loops; do not silence warnings to make a suite appear healthy.
+
+Acceptance for each slice: report comparable before/after timings and the tests removed, simplified or moved,
+with the behavior each retained test protects. Demonstrate selected meaningful regressions are still caught,
+and resolve warnings/flakiness in the changed tests. Prefer fewer, faster tests that survive behavior-preserving
+implementation changes; test counts and coverage percentages are not success criteria. Begin with a bounded GUI
+assessment and improvement slice, not a wholesale suite or framework rewrite. Jenkins log presentation is separate.
 
 ## Platform and development research
 
