@@ -1,16 +1,17 @@
 import assert from 'node:assert/strict'
 import {join} from 'node:path'
 import {after, before, beforeEach, describe, test} from 'node:test'
+import {setTimeout} from 'node:timers/promises'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
-import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
+import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 import {HistoryRepository} from './historyRepository.js'
 
-// Fixtures whose outcome turns on the order of several events are written directly: `timestamp` is
-// NOW() at one-second resolution and nothing breaks ties, so events recorded through addEvent could not
-// state what their order should be.
+// Fixtures whose outcome turns on the order of several events are written directly: `timestamp` is the
+// time of the write at one-second resolution, so events recorded through addEvent could not state what
+// their order should be.
 
 describe('HistoryRepository', () => {
     let testDb
@@ -18,7 +19,7 @@ describe('HistoryRepository', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createMysqlTestDb({name: 'storage_history', migrations: MIGRATIONS_PATH})
+        testDb = await createTestDb({name: 'storage_history', migrations: MIGRATIONS_PATH, connections: 2})
     })
 
     beforeEach(async () => {
@@ -70,6 +71,47 @@ describe('HistoryRepository', () => {
 
             const stored = await storedEvents('bob')
             assert.deepEqual(stored.map(({event}) => event), ['ACTIVE'])
+        })
+
+        // A single race is often won by luck, so several users race in turn.
+        test('serialises concurrent events for one user', async () => {
+            const users = Array.from({length: 30}, (_value, index) => `racer${index}`)
+
+            for (const username of users) {
+                await Promise.all([
+                    repository.addEvent({username, event: 'ACTIVE'}),
+                    repository.addEvent({username, event: 'ACTIVE'})
+                ])
+            }
+
+            const {rows} = await testDb.query('SELECT username, count(*) AS events FROM history GROUP BY username')
+            assert.equal(rows.length, users.length)
+            assert.ok(rows.every(({events}) => events === 1))
+        })
+
+        test('compares against the event with the highest id when several share the latest second', async () => {
+            await givenEvents([
+                {username: OWNER, event: 'ACTIVE', timestamp: at(1)},
+                {username: OWNER, event: 'NOTIFIED', timestamp: at(1)}
+            ])
+
+            await repository.addEvent({username: OWNER, event: 'NOTIFIED'})
+
+            const stored = await storedEvents(OWNER)
+            assert.deepEqual(stored.map(({event}) => event), ['ACTIVE', 'NOTIFIED'])
+        })
+
+        // The write is held back as it would be behind another writer's lock on the same user.
+        test('stamps an event when it is written, not when its transaction began', async () => {
+            const held = heldWrites(testDb.db, {when: sql => sql.includes('INSERT INTO history'), ms: WRITE_DELAY_MS})
+
+            await new HistoryRepository(held.db).addEvent({username: OWNER, event: 'ACTIVE'})
+
+            const [{timestamp}] = await repository.getUserEvents(OWNER)
+            assert.ok(
+                timestamp.getTime() >= held.writtenAt.getTime() - TIMESTAMP_ROUNDING_MS,
+                `stamped ${timestamp.toISOString()}, written at ${held.writtenAt.toISOString()}`
+            )
         })
     })
 
@@ -163,20 +205,47 @@ describe('HistoryRepository', () => {
 
     const givenEvents = async events => {
         for (const event of events) {
-            await testDb.query('INSERT INTO history SET ?', event)
+            await testDb.query(
+                'INSERT INTO history (username, event, timestamp) VALUES ($1, $2, $3)',
+                [event.username, event.event, event.timestamp]
+            )
         }
     }
 
     // Only for what a read cannot show: the read collapses repetitions, so whether a row exists at all
     // has to be asked of the table.
     const storedEvents = async username => {
-        const [rows] = await testDb.query(
-            'SELECT username, event FROM history WHERE username = ? ORDER BY id', [username]
+        const {rows} = await testDb.query(
+            'SELECT username, event FROM history WHERE username = $1 ORDER BY id', [username]
         )
         return rows
     }
 
     const at = minutes => new Date(Date.UTC(2026, 0, 1, 12, minutes))
+
+    // Delays the first statement `when` selects, and notes when it went to the database.
+    const heldWrites = (db, {when, ms}) => {
+        const held = {writtenAt: null}
+        const holding = connection => ({
+            query: async (sql, params) => {
+                if (!held.writtenAt && when(sql, params)) {
+                    await setTimeout(ms)
+                    held.writtenAt = new Date()
+                }
+                return connection.query(sql, params)
+            }
+        })
+        held.db = {
+            withTransaction: run => db.withTransaction(connection => run(holding(connection))),
+            withConnection: run => db.withConnection(connection => run(holding(connection)))
+        }
+        return held
+    }
+
+    // timestamptz(0) rounds to the nearest second; an event stamped at its transaction's start would fall
+    // the whole delay short.
+    const TIMESTAMP_ROUNDING_MS = 500
+    const WRITE_DELAY_MS = 2000
 
     const OWNER = 'bob'
     const ANOTHER_OWNER = 'alice'

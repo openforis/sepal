@@ -218,6 +218,7 @@
             "logger",
             "email",
             "mysql",
+            "postgres",
             "rabbitmq"
         ]
     },
