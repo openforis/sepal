@@ -1,4 +1,4 @@
-import {createConnection, createDb, createPool} from '#sepal/db/mysql'
+import {createConnection, createDb, createPool} from '#sepal/db/postgres'
 import {getLogger} from '#sepal/log'
 
 import {migrateUserDb} from './databaseMigrations.js'
@@ -18,20 +18,20 @@ export const initializeDb = async () => {
     return db
 }
 
-// Connect to the always-present system schema: MySQL may still be starting, and on a fresh
-// install the module's own schema does not exist yet.
+// Connect to the always-present system database: Postgres may still be starting, and on a fresh
+// install the module's own database does not exist yet.
 const waitForDatabase = async () => {
     const deadline = Date.now() + WAIT_TIMEOUT_MS
     for (;;) {
         try {
-            const connection = await createConnection('mysql')
+            const connection = await createConnection('postgres')
             connection.end()
             return
         } catch (error) {
             if (Date.now() >= deadline) {
-                throw new Error(`Timed out waiting for MySQL to be reachable: ${error.message}`, {cause: error})
+                throw new Error(`Timed out waiting for Postgres to be reachable: ${error.message}`, {cause: error})
             }
-            log.info('Waiting for MySQL to be reachable...', error.message)
+            log.info('Waiting for Postgres to be reachable...', error.message)
             await sleep(WAIT_INTERVAL_MS)
         }
     }

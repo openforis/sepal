@@ -4,7 +4,7 @@ import {after, before, beforeEach, describe, mock, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
-import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
+import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 // userApi -> email/googleOAuth/recaptcha -> config.js (commander). Mock config before importing the chain.
 mock.module('./config.js', {
@@ -37,7 +37,7 @@ describe('UserApi', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createMysqlTestDb({name: 'user_api', migrations: MIGRATIONS_PATH})
+        testDb = await createTestDb({name: 'user_api', migrations: MIGRATIONS_PATH})
     })
 
     beforeEach(async () => {
@@ -100,10 +100,11 @@ describe('UserApi', () => {
     // An active user with a POSIX identity in the NSS range — the shape the legacy import left behind,
     // which no operation here can write.
     const givenActiveUser = async () => {
-        await testDb.query('INSERT INTO sepal_user SET ?', [{
-            username: USERNAME, name: 'Bob', email: EMAIL, admin: 0, system_user: 0, status: 'ACTIVE',
-            uid: 10001, gid: 10001, password_hash: await hashPassword(PASSWORD)
-        }])
+        await testDb.query(
+            `INSERT INTO sepal_user (username, name, email, admin, "system_user", status, uid, gid, password_hash)
+             VALUES ($1, 'Bob', $2, false, false, 'ACTIVE', 10001, 10001, $3)`,
+            [USERNAME, EMAIL, await hashPassword(PASSWORD)]
+        )
     }
 
     const aContext = (over = {}) => ({

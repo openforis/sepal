@@ -1,3 +1,4 @@
+import {isUniqueViolation} from '#sepal/db/postgres'
 import {storedUsername} from '#sepal/username'
 
 import {rowToUser, toISOString} from './user.js'
@@ -5,9 +6,7 @@ import {isText} from './validation.js'
 
 // Every write that changes the record bumps `revision`, the version optimistic locking checks. The
 // login stamp is the one exception: it records activity, not a change to the record.
-const BUMP = 'revision = revision + 1, update_time = NOW()'
-
-const DUPLICATE_ENTRY = 'ER_DUP_ENTRY'
+const BUMP = 'revision = revision + 1, update_time = now()'
 
 // A write that would give a user the username or email of another. The unique indexes decide, so two
 // concurrent writers cannot both take one.
@@ -15,12 +14,11 @@ export class DuplicateUserError extends Error {}
 
 // insertUser is the only statement that writes `username`, so it is the only one that normalizes
 // (see #sepal/username). Every query below passes the caller's value through untouched: the column
-// is ascii_general_ci, so `WHERE username = ?` matches any case and still uses the unique index,
-// which a LOWER() wrapper would have suppressed.
+// is citext, so `WHERE username = $1` matches any case and still uses the unique index, which a
+// LOWER() wrapper would have suppressed.
 //
 // What every statement does check is that the username, token or email it selects on is a string, so
-// that no caller — HTTP or not — can reach SQL with a value MySQL would coerce the column to match
-// (see isText). A lookup answers as it does for a value it does not know; a write refuses outright,
+// that no caller — HTTP or not — can reach SQL with a value that is not (see isText). A lookup answers as it does for a value it does not know; a write refuses outright,
 // because reporting success for a selector that matched nothing is how a caller comes to believe a
 // credential was changed when it was not.
 export class UserRepository {
@@ -35,8 +33,8 @@ export class UserRepository {
             return null
         }
         return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query(
-                'SELECT * FROM sepal_user WHERE username = ?', [username]
+            const {rows} = await connection.query(
+                'SELECT * FROM sepal_user WHERE username = $1', [username]
             )
             return rowToUser(rows[0])
         })
@@ -47,7 +45,7 @@ export class UserRepository {
             return null
         }
         return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query('SELECT * FROM sepal_user WHERE token = ?', [token])
+            const {rows} = await connection.query('SELECT * FROM sepal_user WHERE token = $1', [token])
             return rowToUser(rows[0])
         })
     }
@@ -58,7 +56,7 @@ export class UserRepository {
     // created by this module) — not derived from id.
     listIdentities() {
         return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query(
+            const {rows} = await connection.query(
                 `SELECT id, username, name, uid, gid FROM sepal_user
                  WHERE status <> 'PENDING' AND uid IS NOT NULL AND uid >= 10000 ORDER BY uid`
             )
@@ -68,8 +66,8 @@ export class UserRepository {
 
     listUsers() {
         return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query(
-                'SELECT * FROM sepal_user WHERE system_user = 0 ORDER BY creation_time DESC'
+            const {rows} = await connection.query(
+                'SELECT * FROM sepal_user WHERE NOT "system_user" ORDER BY creation_time DESC'
             )
             return rows.map(rowToUser)
         })
@@ -80,8 +78,8 @@ export class UserRepository {
             return false
         }
         return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query(
-                'SELECT email_notifications_enabled AS enabled FROM sepal_user WHERE email = ?',
+            const {rows} = await connection.query(
+                'SELECT email_notifications_enabled AS enabled FROM sepal_user WHERE email = $1',
                 [email]
             )
             return rows.length ? !!rows[0].enabled : false
@@ -94,9 +92,9 @@ export class UserRepository {
             return {}
         }
         return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query(
+            const {rows} = await connection.query(
                 `SELECT last_login_time FROM sepal_user
-                 WHERE username = ? AND last_login_time IS NOT NULL`, [username]
+                 WHERE username = $1 AND last_login_time IS NOT NULL`, [username]
             )
             return rows.length ? {timestamp: toISOString(rows[0].last_login_time)} : {}
         })
@@ -104,8 +102,8 @@ export class UserRepository {
 
     mostRecentLoginByUser() {
         return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query(
-                'SELECT username, last_login_time FROM sepal_user WHERE last_login_time IS NOT NULL AND system_user = 0'
+            const {rows} = await connection.query(
+                'SELECT username, last_login_time FROM sepal_user WHERE last_login_time IS NOT NULL AND NOT "system_user"'
             )
             return Object.fromEntries(
                 rows.map(row => [row.username, toISOString(row.last_login_time)])
@@ -117,7 +115,7 @@ export class UserRepository {
         requireSelector(username)
         return this.#db.withConnection(async connection => {
             await connection.query(
-                'UPDATE sepal_user SET last_login_time = NOW() WHERE username = ?', [username]
+                'UPDATE sepal_user SET last_login_time = now() WHERE username = $1', [username]
             )
         })
     }
@@ -128,15 +126,15 @@ export class UserRepository {
         return this.#db.withConnection(async connection => {
             await connection.query(
                 `UPDATE sepal_user
-                 SET google_refresh_token = ?, google_access_token = ?, google_access_token_expiration = ?,
-                     google_project_id = ?, google_legacy_project = ?, ${BUMP}
-                 WHERE username = ?`,
+                 SET google_refresh_token = $1, google_access_token = $2, google_access_token_expiration = $3,
+                     google_project_id = $4, google_legacy_project = $5, ${BUMP}
+                 WHERE username = $6`,
                 [
                     tokens?.refreshToken ?? null,
                     tokens?.accessToken ?? null,
                     tokens ? new Date(tokens.accessTokenExpiryDate) : null,
                     tokens?.projectId ?? null,
-                    tokens?.legacyProject ? 1 : 0,
+                    !!tokens?.legacyProject,
                     username
                 ]
             )
@@ -148,7 +146,7 @@ export class UserRepository {
         requireSelector(username)
         return this.#db.withConnection(async connection => {
             await connection.query(
-                `UPDATE sepal_user SET password_hash = ?, token = NULL, ${BUMP} WHERE username = ?`,
+                `UPDATE sepal_user SET password_hash = $1, token = NULL, ${BUMP} WHERE username = $2`,
                 [passwordHash, username]
             )
         })
@@ -158,23 +156,23 @@ export class UserRepository {
     // are one statement, so two callers holding the same revision cannot both get through. Returns
     // whether a row was written.
     //
-    // A new address voids the reset link sent to the old one. MySQL assigns left to right, so the token
-    // is compared against the address before it is overwritten.
+    // A new address voids the reset link sent to the old one. Every SET expression reads the row as it was
+    // before the update, so the token is compared against the old address.
     async updateUserDetails({username, name, email, organization, intendedUse,
         emailNotificationsEnabled, manualMapRenderingEnabled, admin, revision}) {
         requireSelector(username)
         return this.#db.withConnection(async connection => {
-            const [result] = await connection.query(
+            const {rowCount} = await connection.query(
                 `UPDATE sepal_user
-                 SET token = IF(email <=> ?, token, NULL),
-                     name = ?, email = ?, organization = ?, intended_use = ?,
-                     email_notifications_enabled = ?, manual_map_rendering_enabled = ?, admin = ?, ${BUMP}
-                 WHERE username = ? AND (? IS NULL OR revision = ?)`,
-                [email, name, email, organization, intendedUse,
+                 SET token = CASE WHEN email IS NOT DISTINCT FROM $1::citext THEN token END,
+                     name = $2, email = $1::citext, organization = $3, intended_use = $4,
+                     email_notifications_enabled = $5, manual_map_rendering_enabled = $6, admin = $7, ${BUMP}
+                 WHERE username = $8 AND ($9::integer IS NULL OR revision = $9::integer)`,
+                [email, name, organization, intendedUse,
                     emailNotificationsEnabled, manualMapRenderingEnabled, admin, username,
-                    revision ?? null, revision ?? null]
+                    revision ?? null]
             ).catch(rethrowDuplicate)
-            return result.affectedRows > 0
+            return rowCount > 0
         })
     }
 
@@ -182,7 +180,7 @@ export class UserRepository {
         requireSelector(username)
         return this.#db.withConnection(async connection => {
             await connection.query(
-                `UPDATE sepal_user SET privacy_policy_accepted = TRUE, ${BUMP} WHERE username = ?`,
+                `UPDATE sepal_user SET privacy_policy_accepted = TRUE, ${BUMP} WHERE username = $1`,
                 [username]
             )
         })
@@ -192,7 +190,7 @@ export class UserRepository {
         requireSelector(username)
         return this.#db.withConnection(async connection => {
             await connection.query(
-                `UPDATE sepal_user SET status = ?, ${BUMP} WHERE username = ?`,
+                `UPDATE sepal_user SET status = $1, ${BUMP} WHERE username = $2`,
                 [status, username]
             )
         })
@@ -202,7 +200,7 @@ export class UserRepository {
         requireSelector(username)
         return this.#db.withConnection(async connection => {
             await connection.query(
-                `UPDATE sepal_user SET token = ?, token_generation_time = NOW(), ${BUMP} WHERE username = ?`,
+                `UPDATE sepal_user SET token = $1, token_generation_time = now(), ${BUMP} WHERE username = $2`,
                 [token, username]
             )
         })
@@ -213,25 +211,26 @@ export class UserRepository {
             return null
         }
         return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query('SELECT * FROM sepal_user WHERE email = ?', [email])
+            const {rows} = await connection.query('SELECT * FROM sepal_user WHERE email = $1', [email])
             return rowToUser(rows[0])
         })
     }
 
-    // uid = gid = id is collision-free against the identities migrated from LDAP: that migration
-    // bumped the table's AUTO_INCREMENT past every uid and gid it brought over.
+    // uid = gid = id is collision-free against the identities migrated from LDAP: the identity sequence
+    // starts past every id, uid and gid the import brought over.
     insertUser({username, name, email, organization, intendedUse, token}) {
         return this.#db.withConnection(async connection => {
-            const [result] = await connection.query(
+            const {rows: [{id}]} = await connection.query(
                 `INSERT INTO sepal_user
                  (username, name, email, organization, intended_use, email_notifications_enabled,
-                  manual_map_rendering_enabled, token, token_generation_time, admin, system_user, status,
+                  manual_map_rendering_enabled, token, token_generation_time, admin, "system_user", status,
                   creation_time, update_time)
-                 VALUES (?, ?, ?, ?, ?, 1, 0, ?, NOW(), 0, 0, 'PENDING', NOW(), NOW())`,
+                 VALUES ($1, $2, $3, $4, $5, true, false, $6, now(), false, false, 'PENDING', now(), now())
+                 RETURNING id`,
                 [storedUsername(username), name, email, organization, intendedUse ?? null, token]
             ).catch(rethrowDuplicate)
-            await this.#assignDerivedPosixIds(connection, result.insertId)
-            return result.insertId
+            await this.#assignDerivedPosixIds(connection, id)
+            return id
         })
     }
 
@@ -244,7 +243,7 @@ export class UserRepository {
         requireSelector(username)
         return this.#db.withConnection(async connection => {
             await connection.query(
-                `UPDATE sepal_user SET ssh_public_key = ?, ${BUMP} WHERE username = ?`,
+                `UPDATE sepal_user SET ssh_public_key = $1, ${BUMP} WHERE username = $2`,
                 [sshPublicKey, username]
             )
         })
@@ -252,7 +251,7 @@ export class UserRepository {
 
     async #assignDerivedPosixIds(connection, id) {
         await connection.query(
-            'UPDATE sepal_user SET uid = id, gid = id WHERE id = ? AND (uid IS NULL OR gid IS NULL)', [id]
+            'UPDATE sepal_user SET uid = id, gid = id WHERE id = $1 AND (uid IS NULL OR gid IS NULL)', [id]
         )
     }
 }
@@ -264,5 +263,5 @@ const requireSelector = selector => {
 }
 
 const rethrowDuplicate = error => {
-    throw error.code === DUPLICATE_ENTRY ? new DuplicateUserError(error.message) : error
+    throw isUniqueViolation(error) ? new DuplicateUserError(error.message) : error
 }

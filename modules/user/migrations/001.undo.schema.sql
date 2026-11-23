@@ -1,4 +1,2 @@
--- Undo migration for the user schema.
--- NOTE: Does NOT move data back to sepal_user; the original is never modified.
-
-DROP TABLE IF EXISTS `sepal_user`;
+DROP TABLE IF EXISTS ssh_key;
+DROP TABLE IF EXISTS sepal_user;

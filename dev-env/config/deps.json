@@ -258,6 +258,7 @@
         "run": [
             "logger",
             "mysql",
+            "postgres",
             "rabbitmq"
         ]
     },

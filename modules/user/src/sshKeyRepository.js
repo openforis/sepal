@@ -1,11 +1,10 @@
+import {isUniqueViolation} from '#sepal/db/postgres'
 import {storedUsername} from '#sepal/username'
 
 import {toISOString} from './user.js'
 import {isText} from './validation.js'
 
-const DUPLICATE_ENTRY = 'ER_DUP_ENTRY'
-
-// `username` is ascii_general_ci, as in sepal_user, so every lookup matches the stored spelling in any case.
+// `username` is citext, as in sepal_user, so every lookup matches the stored spelling in any case.
 export class SshKeyRepository {
     #db
 
@@ -18,7 +17,7 @@ export class SshKeyRepository {
             return []
         }
         return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query('SELECT * FROM ssh_key WHERE username = ? ORDER BY id', [username])
+            const {rows} = await connection.query('SELECT * FROM ssh_key WHERE username = $1 ORDER BY id', [username])
             return rows.map(rowToKey)
         })
     }
@@ -26,7 +25,7 @@ export class SshKeyRepository {
     async count(username) {
         requireUsername(username)
         return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query('SELECT COUNT(*) AS count FROM ssh_key WHERE username = ?', [username])
+            const {rows} = await connection.query('SELECT COUNT(*) AS count FROM ssh_key WHERE username = $1', [username])
             return rows[0].count
         })
     }
@@ -36,13 +35,14 @@ export class SshKeyRepository {
         requireUsername(username)
         return this.#db.withConnection(async connection => {
             try {
-                const [result] = await connection.query('INSERT INTO ssh_key SET ?', [{
-                    username: storedUsername(username), name, key_type: type, public_key: publicKey, fingerprint
-                }])
-                const [rows] = await connection.query('SELECT * FROM ssh_key WHERE id = ?', [result.insertId])
+                const {rows} = await connection.query(
+                    `INSERT INTO ssh_key (username, name, key_type, public_key, fingerprint)
+                     VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+                    [storedUsername(username), name, type, publicKey, fingerprint]
+                )
                 return rowToKey(rows[0])
             } catch (error) {
-                if (error.code === DUPLICATE_ENTRY) {
+                if (isUniqueViolation(error)) {
                     return null
                 }
                 throw error
@@ -53,8 +53,8 @@ export class SshKeyRepository {
     async remove(username, id) {
         requireUsername(username)
         return this.#db.withConnection(async connection => {
-            const [result] = await connection.query('DELETE FROM ssh_key WHERE username = ? AND id = ?', [username, id])
-            return result.affectedRows === 1
+            const {rowCount} = await connection.query('DELETE FROM ssh_key WHERE username = $1 AND id = $2', [username, id])
+            return rowCount === 1
         })
     }
 }
