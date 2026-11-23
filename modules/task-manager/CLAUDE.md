@@ -43,14 +43,8 @@ containers or task state from outside it.
   or a reboot (`live-restore` is incompatible with Swarm mode, and the main host is the Swarm manager): the
   task then ends FAILED "interrupted" and the user runs it again.
 
-## MySQL import
-
-`migrations/mysql-import.sql` copies the worker's task history from the MySQL `task_manager` database once, on
-first start, recorded in `mysql_import`. Rows are copied as they are (`params` becomes `jsonb`, `removed`
-a boolean). `migrations-mysql/` keeps the MySQL schema as the import test's source.
-
 ## Commands
-- `npm test` - Node test runner; `*.integration.test.js` needs reachable Postgres (`POSTGRES_*`) and, for the import test, MySQL (`MYSQL_*`)
+- `npm test` - Node test runner; `*.integration.test.js` needs reachable Postgres (`POSTGRES_*`)
 - `sepal build task-manager` / `sepal start task-manager` / `sepal logs task-manager -r`
 
 ## Routes (served without the `/api/tasks` gateway prefix)

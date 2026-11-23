@@ -22,7 +22,6 @@
     },
     "type": "module",
     "devDependencies": {
-        "aws-sdk-client-mock": "^4.1.0",
-        "mysql2": "^3.24.6"
+        "aws-sdk-client-mock": "^4.1.0"
     }
 }

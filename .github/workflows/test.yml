@@ -13,20 +13,14 @@ jobs:
   test:
     name: ${{matrix.module}}
     runs-on: ubuntu-latest
-    # The *.integration.test.js suites reach a real database, since the schema, collation and
-    # transaction guarantees they cover cannot be shown against a fake: Postgres for the modules on
-    # it, MySQL 5.7 as the source the mysqlImport suites read through mysql_fdw. Modules without
-    # such a suite ignore both.
+    # The *.integration.test.js suites reach a real Postgres, since the schema, collation and
+    # transaction guarantees they cover cannot be shown against a fake. Modules without such a
+    # suite ignore it.
     env:
       POSTGRES_HOST: 127.0.0.1
       POSTGRES_USER: sepal
       POSTGRES_PASSWORD: sepal
       POSTGRES_ROOT_PASSWORD: sepal-root
-      MYSQL_HOST: 127.0.0.1
-      MYSQL_USER: root
-      MYSQL_PASSWORD: sepal
-      # How mysql_fdw inside the postgres container reaches MySQL; the tests reach both on 127.0.0.1
-      MYSQL_FDW_HOST: mysql
     strategy:
       fail-fast: false
       matrix:
@@ -98,29 +92,19 @@ jobs:
           done
       - run: npm ci
         working-directory: ${{matrix.module}}
-      # Postgres is the SEPAL image, which carries mysql_fdw. It shares a network with MySQL so the
-      # import tests can reach MySQL from inside it, by container name.
-      - name: Start Postgres and MySQL
+      # Postgres is the SEPAL image, initialised as in production
+      - name: Start Postgres
         run: |
-          docker network create sepal
           docker build -t sepal-postgres -f modules/postgres/Dockerfile .
-          docker run -d --name postgres --network sepal -p 127.0.0.1:5432:5432 \
+          docker run -d --name postgres -p 127.0.0.1:5432:5432 \
             -e POSTGRES_PASSWORD="$POSTGRES_ROOT_PASSWORD" -e SEPAL_PASSWORD="$POSTGRES_PASSWORD" \
             -e POSTGRES_INITDB_ARGS="--locale-provider=builtin --builtin-locale=C.UTF-8" \
             sepal-postgres
-          # SEPAL's own MySQL runs with explicit_defaults_for_timestamp on. Without it the stock image
-          # gives every TIMESTAMP column after the first a zero default, which NO_ZERO_DATE rejects,
-          # and the schemas the integration suites create fail to build.
-          docker run -d --name mysql --network sepal -p 127.0.0.1:3306:3306 \
-            -e MYSQL_ROOT_PASSWORD="$MYSQL_PASSWORD" \
-            mysql:5.7 --explicit_defaults_for_timestamp=ON
           for i in $(seq 60); do
-            docker exec postgres pg_isready -h 127.0.0.1 -U postgres \
-              && docker exec mysql mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_PASSWORD" && exit 0
+            docker exec postgres pg_isready -h 127.0.0.1 -U postgres && exit 0
             sleep 2
           done
           docker logs postgres
-          docker logs mysql
           exit 1
       # vitest single-shots rather than watching because Actions sets CI
       - run: npm test

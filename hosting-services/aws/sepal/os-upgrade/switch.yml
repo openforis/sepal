@@ -375,12 +375,12 @@
 
     - name: Check it is the production volume
       stat:
-        path: /data/mysql
-      register: mysql_dir
+        path: /data/postgres
+      register: postgres_dir
 
-    - name: It holds MySQL's data
+    - name: It holds Postgres's data
       assert:
-        that: mysql_dir.stat.isdir | default(false)
+        that: postgres_dir.stat.isdir | default(false)
 
 - name: Restore the Redis data, new storage host
   hosts: new-storage

@@ -34,15 +34,6 @@ check program gui with path /usr/local/bin/dockercheck-gui
 check program logger with path /usr/local/bin/dockercheck-logger
     if status != 0 then exec "/usr/local/bin/pushover-notify 0"
 
-check program mysql with path /usr/local/bin/dockercheck-mysql
-    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
-
-check program mysql-admin with path /usr/local/bin/dockercheck-mysql-admin
-    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
-
-check program mysql-backup with path /usr/local/bin/dockercheck-mysql-backup
-    if status != 0 then exec "/usr/local/bin/pushover-notify 0"
-
 check program postgres with path /usr/local/bin/dockercheck-postgres
     if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 

@@ -5,7 +5,7 @@ instance + storage spending and enforces monthly budgets; owns the `budget` Post
 
 ## Database migrations
 
-`migrations/` holds the Postgres schema stream and `mysql-import.sql`, the one-time copy from the MySQL `budget` database; `migrations-mysql/` keeps the MySQL schema as the import test's source. Startup and import cleanup are described in [docs/database-migrations.md](../../docs/database-migrations.md).
+`migrations/` holds the Postgres schema stream; see [docs/database-migrations.md](../../docs/database-migrations.md).
 
 ## Commands
 - `npm test` — Node test runner (TZ=UTC)

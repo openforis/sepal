@@ -56,8 +56,6 @@ build email
 build caddy
 build rabbitmq
 build backup
-build mysql-backup
-build mysql
 build postgres-backup
 build postgres
 build gateway
@@ -101,8 +99,6 @@ push budget
 push worker
 push gui
 push ceo-gateway
-push mysql
-push mysql-backup
 push postgres
 push pgadmin
 push postgres-backup

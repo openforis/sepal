@@ -13,8 +13,6 @@
       - {module: backup}
       - {module: rabbitmq}
       - {module: email}
-      - {module: mysql}
-      - {module: mysql-backup}
       - {module: postgres}
       - {module: postgres-backup}
       - {module: gee}
@@ -138,6 +136,18 @@
       loop:
         - /etc/monit.d/mysql
         - /usr/local/bin/mysqlcheck-sepal_user
+
+    - name: Remove the checks of the retired MySQL and scene-metadata containers
+      file:
+        path: "/usr/local/bin/{{ item }}"
+        state: absent
+      loop:
+        - dockercheck-mysql
+        - dockercheck-mysql-admin
+        - dockercheck-mysql-backup
+        - dockercheck-scene-metadata
+        - dockercheck-scene-metadata-redis
+        - redismemcheck-scene-metadata-redis
 
     - name: Configure monit/4
       template:
@@ -372,6 +382,12 @@
         | xargs -P 0 -I MODULE docker pull --quiet
         {{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/openforis/MODULE:{{ version }}
       changed_when: false
+
+    # Their data stays under /data as an archive: /data/mysql holds the last MySQL state
+    - name: Remove the retired MySQL and scene-metadata containers
+      command: docker rm --force mysql mysql-admin mysql-backup scene-metadata scene-metadata-redis
+      changed_when: false
+      failed_when: false
 
     - name: Run modules
       include_role:

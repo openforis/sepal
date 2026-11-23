@@ -60,8 +60,8 @@ Assumes one rebuild at a time; no distributed lock or resumable chunks.
 
 Post-publication Redis failure retains the new live catalogue. Without an initialized marker, restart does
 a fresh rebuild, never a blind repeat of the swap. Postgres/Redis are not one transaction. Failed temporary
-files may remain and be overwritten on retry. An empty CSV field loads as NULL and fails its chunk, where
-the MySQL build's `LOAD DATA … IGNORE` stored `''`/0. Sequential chunk loading bounds pending work.
+files may remain and be overwritten on retry. An empty CSV field loads as NULL and fails its chunk.
+Sequential chunk loading bounds pending work.
 
 `CSV_DIR` is bind-mounted from the host; `start.sh` runs as root only to take ownership of it, then drops to
 `node`. `scene` is derived data and is not backed up.

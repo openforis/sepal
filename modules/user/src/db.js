@@ -1,7 +1,8 @@
-import {createConnection, createDb, createPool} from '#sepal/db/postgres'
-import {getLogger} from '#sepal/log'
+import {join} from 'node:path'
 
-import {migrateUserDb} from './databaseMigrations.js'
+import {createConnection, createDb, createPool, initDb} from '#sepal/db/postgres'
+import {getLogger} from '#sepal/log'
+import {dirName} from '#sepal/path'
 
 const log = getLogger('database')
 
@@ -12,7 +13,7 @@ const WAIT_TIMEOUT_MS = 5 * 60 * 1000
 
 export const initializeDb = async () => {
     await waitForDatabase()
-    await migrateUserDb(DATABASE_NAME)
+    await initDb(DATABASE_NAME, join(dirName(import.meta.url), '../migrations'), {label: 'schema migrations'})
     const db = createDb(await createPool(DATABASE_NAME))
     log.info('Database initialized')
     return db
