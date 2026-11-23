@@ -3,7 +3,7 @@ import {randomBytes} from 'node:crypto'
 import {join} from 'node:path'
 import {after, afterEach, before, describe, test} from 'node:test'
 
-import {createConnection, initDb} from '#sepal/db/mysql'
+import {createConnection, initDb, isUniqueViolation} from '#sepal/db/postgres'
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 
@@ -13,7 +13,7 @@ describe('worker database migrations', () => {
 
     before(async () => {
         configureNoLogging()
-        admin = await createConnection('mysql')
+        admin = await createConnection('postgres', SUPERUSER)
     })
 
     afterEach(() => dropReservedDatabases())
@@ -25,17 +25,19 @@ describe('worker database migrations', () => {
         await initDb(dbName, SCHEMA_PATH)
         const stored = await insertSession(dbName, aWorkerSession())
 
-        const [found] = await admin.query('SELECT username FROM ??.worker_session WHERE username = ?', [dbName, stored.username.toUpperCase()])
+        const found = await query(dbName, 'SELECT username FROM worker_session WHERE username = $1', [stored.username.toUpperCase()])
 
-        const collations = await usernameCollations(dbName)
-        assert.deepEqual(found, [{username: stored.username}])
-        assert.deepEqual(collations, {
-            worker_session: 'ascii_general_ci',
-            task: 'ascii_general_ci',
-            session_app: 'ascii_general_ci',
-            instance_usage_sample: 'ascii_general_ci',
-            instance_usage_hourly: 'ascii_general_ci'
-        })
+        assert.deepEqual(found.rows, [{username: stored.username}])
+    })
+
+    test('rejects a second app association of the same path for a differently cased username', async () => {
+        const dbName = await reserveDatabase()
+        await initDb(dbName, SCHEMA_PATH)
+        const association = await insertSessionApp(dbName, aSessionApp())
+
+        const duplicate = insertSessionApp(dbName, aSessionApp({username: association.username.toUpperCase()}))
+
+        await assert.rejects(duplicate, isUniqueViolation)
     })
 
     describe('schema migrations', () => {
@@ -46,10 +48,9 @@ describe('worker database migrations', () => {
 
             const tables = await tableNames(dbName)
             assert.ok(new Set([
-                'instance_claim', 'instance_usage_hourly', 'instance_usage_sample',
-                'session_app', 'task', 'worker_session'
+                'instance_claim', 'instance_usage_hourly', 'instance_usage_sample', 'session_app', 'worker_session'
             ]).isSubsetOf(new Set(tables)))
-            assert.ok(!tables.includes('instance'))
+            assert.ok(!tables.includes('task'))
         })
 
         test('create them empty, importing nothing', async () => {
@@ -57,56 +58,76 @@ describe('worker database migrations', () => {
 
             await initDb(dbName, SCHEMA_PATH)
 
-            const sessions = await sessionIds(dbName)
-            assert.deepEqual(sessions, [])
+            const sessions = await query(dbName, 'SELECT id FROM worker_session')
+            assert.deepEqual(sessions.rows, [])
         })
     })
 
     // Deliberately not IF NOT EXISTS: a name collision must fail rather than take over a database
     // someone else owns, so only databases this suite created are ever dropped.
     const reserveDatabase = async () => {
-        const dbName = `workermigrations_${randomBytes(6).toString('hex')}`
-        await admin.query(`CREATE DATABASE \`${dbName}\` DEFAULT CHARACTER SET ascii COLLATE ascii_bin`)
+        const dbName = `worker_migrations_test_${randomBytes(6).toString('hex')}`
+        await admin.query(`CREATE DATABASE ${admin.escapeIdentifier(dbName)} OWNER ${admin.escapeIdentifier(process.env.POSTGRES_USER)}`)
         reserved.push(dbName)
         return dbName
     }
 
     const dropReservedDatabases = async () => {
         for (const dbName of reserved.splice(0)) {
-            await admin.query(`DROP DATABASE IF EXISTS \`${dbName}\``)
+            await admin.query(`DROP DATABASE IF EXISTS ${admin.escapeIdentifier(dbName)} WITH (FORCE)`)
+        }
+    }
+
+    const query = async (dbName, sql, params) => {
+        const connection = await createConnection(dbName, SUPERUSER)
+        try {
+            return await connection.query(sql, params)
+        } finally {
+            await connection.end()
         }
     }
 
     const insertSession = async (dbName, session) => {
-        await admin.query('INSERT INTO ??.worker_session SET ?', [dbName, session])
+        await query(
+            dbName,
+            `INSERT INTO worker_session (id, state, username, worker_type, instance_type, instance_id, host,
+                                         creation_time, update_time)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+            [session.id, session.state, session.username, session.worker_type, session.instance_type,
+                session.instance_id, session.host, session.creation_time, session.update_time]
+        )
         return session
     }
 
-    const sessionIds = async dbName => {
-        const [rows] = await admin.query('SELECT id FROM ??.worker_session ORDER BY id', [dbName])
-        return rows.map(({id}) => id)
-    }
-
-    const usernameCollations = async dbName => {
-        const [rows] = await admin.query(
-            'SELECT TABLE_NAME, COLLATION_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND COLUMN_NAME = ?',
-            [dbName, 'username']
+    const insertSessionApp = async (dbName, association) => {
+        await query(
+            dbName,
+            `INSERT INTO session_app (username, app_path, session_id, creation_time)
+             VALUES ($1, $2, $3, $4)`,
+            [association.username, association.app_path, association.session_id, association.creation_time]
         )
-        return Object.fromEntries(rows.map(({TABLE_NAME, COLLATION_NAME}) => [TABLE_NAME, COLLATION_NAME]))
+        return association
     }
 
     const tableNames = async dbName => {
-        const [rows] = await admin.query(
-            'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? ORDER BY TABLE_NAME', [dbName]
+        const {rows} = await query(
+            dbName,
+            'SELECT table_name FROM information_schema.tables WHERE table_schema = \'public\' ORDER BY table_name'
         )
-        return rows.map(({TABLE_NAME}) => TABLE_NAME)
+        return rows.map(({table_name}) => table_name)
     }
 })
 
 const aWorkerSession = () => ({
     id: 'a-session', state: 'ACTIVE', username: 'bob', worker_type: 'SANDBOX', instance_type: 'm5.large',
-    instance_id: 'i-1', instance_name: 'amber-lake', host: 'host', creation_time: new Date('2026-01-01T00:00:00Z'),
+    instance_id: 'i-1', host: 'host', creation_time: new Date('2026-01-01T00:00:00Z'),
     update_time: new Date('2026-01-01T00:00:00Z')
 })
 
+const aSessionApp = overrides => ({
+    username: 'bob', app_path: '/app', session_id: 'a-session', creation_time: new Date('2026-01-01T00:00:00Z'),
+    ...overrides
+})
+
+const SUPERUSER = {user: 'postgres', password: process.env.POSTGRES_ROOT_PASSWORD}
 const SCHEMA_PATH = join(dirName(import.meta.url), '../migrations')

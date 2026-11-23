@@ -5,12 +5,12 @@ import {after, before, beforeEach, describe, test} from 'node:test'
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 import {failingDb} from '#sepal/testSupport/db/faultyConnection'
-import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
+import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 import {ClaimRepository} from './claimRepository.js'
 
 // The claim is the allocation arbiter, so it is exercised against the real primary key: whether two
-// simultaneous claims produce one winner is a property of MySQL, not of this code. The suite therefore
+// simultaneous claims produce one winner is a property of the database, not of this code. The suite therefore
 // takes two connections — the one case the single-connection default cannot express.
 
 describe('ClaimRepository', () => {
@@ -19,7 +19,7 @@ describe('ClaimRepository', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createMysqlTestDb({name: 'worker_claim', migrations: MIGRATIONS_PATH, connections: 2})
+        testDb = await createTestDb({name: 'worker_claim', migrations: MIGRATIONS_PATH, connections: 2})
     })
 
     beforeEach(async () => {

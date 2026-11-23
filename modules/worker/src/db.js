@@ -1,4 +1,4 @@
-import {createDb, createPool} from '#sepal/db/mysql'
+import {createDb, createPool} from '#sepal/db/postgres'
 import {getLogger} from '#sepal/log'
 
 import {migrateWorkerDb} from './databaseMigrations.js'

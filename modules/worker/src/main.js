@@ -259,10 +259,10 @@ const stop = async () => {
 process.once('SIGTERM', stop)
 process.once('SIGINT', stop)
 
-// A rejected main() leaves the process alive on the MySQL pool's open handles with no HTTP
+// A rejected main() leaves the process alive on the database pool's open handles with no HTTP
 // server listening: the restart policy never fires, and Compose does not act on a failing
 // healthcheck either, so the module stays dead until an operator notices. Exiting hands the
-// retry to Docker, which is the only thing that can re-attempt a boot that lost AWS, MySQL or
+// retry to Docker, which is the only thing that can re-attempt a boot that lost AWS, Postgres or
 // RabbitMQ. In dev, nodemon deliberately does NOT restart on a crash — a broken source file
 // should wait for the fix rather than spin the container.
 main().catch(error => {

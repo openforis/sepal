@@ -1,11 +1,11 @@
-// The only thing MySQL knows about a worker instance: that it is spoken for.
+// The only thing the database knows about a worker instance: that it is spoken for.
 //
 // The hosting service is the sole authority on what instances exist, what type they are and
 // whether they are running. NEVER write a value derived from a hosting-service response into this
 // table: an empty reservation read off an untagged RunInstances answer once landed here as
 // worker_type = '', which no statement matched, making every idle pool instance unusable for life.
 
-const DUPLICATE_ENTRY = 'ER_DUP_ENTRY'
+import {isUniqueViolation} from '#sepal/db/postgres'
 
 export class ClaimRepository {
     #db
@@ -14,18 +14,19 @@ export class ClaimRepository {
         this.#db = db
     }
 
-    // The PRIMARY KEY on instance_id makes this atomic with no affectedRows/changedRows
-    // interpretation: the INSERT either lands or it collides.
+    // The PRIMARY KEY on instance_id makes this atomic with no row-count interpretation: the
+    // INSERT either lands or it collides. It runs outside a transaction, so the collision aborts
+    // nothing else.
     claim(instanceId, sessionId) {
         return this.#db.withConnection(async connection => {
             try {
                 await connection.query(
-                    'INSERT INTO instance_claim(instance_id, session_id) VALUES(?, ?)',
+                    'INSERT INTO instance_claim(instance_id, session_id) VALUES($1, $2)',
                     [instanceId, sessionId]
                 )
                 return true
             } catch (err) {
-                if (err.code === DUPLICATE_ENTRY) {
+                if (isUniqueViolation(err)) {
                     return false
                 }
                 throw err
@@ -34,21 +35,20 @@ export class ClaimRepository {
     }
 
     // Only the claim the caller holds: a release that runs late must not drop the claim of the
-    // session the instance went to next. affectedRows is unambiguous on a DELETE —
-    // CLIENT_FOUND_ROWS only inflates UPDATE counts.
+    // session the instance went to next.
     release(instanceId, sessionId) {
         return this.#db.withConnection(async connection => {
-            const [result] = await connection.query(
-                'DELETE FROM instance_claim WHERE instance_id = ? AND session_id = ?',
+            const {rowCount} = await connection.query(
+                'DELETE FROM instance_claim WHERE instance_id = $1 AND session_id = $2',
                 [instanceId, sessionId]
             )
-            return result.affectedRows > 0
+            return rowCount > 0
         })
     }
 
     all() {
         return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query(
+            const {rows} = await connection.query(
                 'SELECT instance_id, session_id, claimed_at FROM instance_claim'
             )
             return rows.map(row => ({

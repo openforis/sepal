@@ -4,7 +4,7 @@ import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
-import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
+import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 import {UsageRepository} from './usageRepository.js'
 
@@ -17,7 +17,7 @@ describe('UsageRepository', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createMysqlTestDb({name: 'worker_usage', migrations: MIGRATIONS_PATH})
+        testDb = await createTestDb({name: 'worker_usage', migrations: MIGRATIONS_PATH})
     })
 
     beforeEach(async () => {
@@ -84,6 +84,17 @@ describe('UsageRepository', () => {
             const history = await repository.sessionHistory(SESSION_ID, {fromTime: at('09:00'), bucketSeconds: 60})
 
             assert.deepEqual(history.map(({sampleTime}) => sampleTime), [at('09:05')])
+        })
+
+        test('reports percentage averages to six decimals and network averages to four', async () => {
+            await repository.insertSample(aSample({sampleTime: at('09:00'), cpuPct: 10, netRxBytesPerS: 1, netTxBytesPerS: 0}))
+            await repository.insertSample(aSample({sampleTime: at('09:01'), cpuPct: 20, netRxBytesPerS: 2, netTxBytesPerS: 0}))
+            await repository.insertSample(aSample({sampleTime: at('09:02'), cpuPct: 25.01, netRxBytesPerS: 2, netTxBytesPerS: 0}))
+
+            const [bucket] = await repository.sessionHistory(SESSION_ID, {fromTime: at('09:00'), bucketSeconds: 180})
+
+            assert.equal(bucket.cpuPct, 18.336667)
+            assert.equal(bucket.netBytesPerS, 1.6667)
         })
 
         test('sums the network counters, and reports no GPU where none was measured', async () => {
@@ -252,7 +263,7 @@ describe('UsageRepository', () => {
         await testDb.query(
             `INSERT INTO instance_usage_hourly(session_id, username, instance_type, hour, sample_count,
                 cpu_avg, cpu_max, ram_avg, ram_max, gpu_avg, gpu_max, gpu_ram_max, net_avg_bytes_per_s)
-                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
             [row.sessionId, row.username, row.instanceType, row.hour, row.sampleCount,
                 row.cpuAvg, row.cpuMax, row.ramAvg, row.ramMax, row.gpuAvg, row.gpuMax,
                 row.gpuRamMax, row.netAvg]
@@ -262,7 +273,7 @@ describe('UsageRepository', () => {
     // The rollup writes columns no read returns whole — the counts and maxima the admin report is built
     // from — so they are read back directly.
     const storedHourlyRows = async () => {
-        const [rows] = await testDb.query('SELECT * FROM instance_usage_hourly ORDER BY hour')
+        const {rows} = await testDb.query('SELECT * FROM instance_usage_hourly ORDER BY hour')
         return rows
     }
 
