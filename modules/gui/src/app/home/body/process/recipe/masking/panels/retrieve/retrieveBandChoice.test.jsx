@@ -6,8 +6,9 @@ import {isObservable, of, ReplaySubject, throwError} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {bandsAnswer} from '~/app/home/body/process/sourceRuntime/bandsAnswer.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
@@ -69,7 +70,7 @@ vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 // The one destination widget that checks Earth Engine: it names the asset, picks a strategy and reports that
 // its check has settled. Array bands can only go to Earth Engine, so a CCDC export needs it.
-vi.mock('~/widget/assetDestination', () => ({
+vi.mock('~/app/home/body/process/recipe/retrieve/assetDestination', () => ({
     AssetDestination: ({assetInput, strategyInput, onValidityCheckChange}) => {
         useEffect(() => {
             assetInput.set('users/x/segments')
@@ -99,14 +100,14 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
 })
 
 const {ccdcMeasures, ccdcOutputBands} = await import('#sepal/recipe/type/ccdc')
-const {SourceEvidenceSync} = await import('~/app/home/body/process/recipe/sourceEvidenceSync')
+const {SourceEvidenceSync} = await import('~/app/home/body/process/recipe/sources/sourceEvidenceSync')
 const {maskingObservation} = await import('../../maskingSourceEvidence')
 const {Retrieve} = await import('./retrieve')
 const {Retrieve: ClassificationRetrieve} = await import('../../../classification/panels/retrieve/retrieve')
 const {Retrieve: CcdcRetrieve} = await import('../../../ccdc/panels/retrieve/retrieve')
 const {Retrieve: PhenologyRetrieve} = await import('../../../phenology/panels/retrieve/retrieve')
 const {default: ccdc} = await import('../../../ccdc/ccdc')
-const {retrieveAvailability} = await import('../../../operationAvailability')
+const {retrieveAvailability} = await import('../../../requirements/operationAvailability')
 registered.CCDC = ccdc()
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -1051,11 +1052,15 @@ const CHANGE_ALERTS = {
     }
 }
 
-// The reference segments asset as Earth Engine describes it; any other read is unanswered.
-const REFERENCE_BANDS_READ = {asset: 'users/x/segments', includeDataTypes: true}
+// The reference segments asset as Earth Engine describes it - its bands, beside the properties recording the
+// representation its dates are in; any other read is unanswered.
+const REFERENCE_BANDS_READ = {asset: 'users/x/segments', includeDataTypes: true, includeProperties: true}
 
-const referenceSegmentBands = ({asset}) => asset === REFERENCE_BANDS_READ.asset
-    ? [{name: 'tStart', arrayDimensions: 1}, {name: 'tEnd', arrayDimensions: 1}, {name: 'ndvi_coefs', arrayDimensions: 2}, {name: 'ndvi_rmse', arrayDimensions: 1}]
+const referenceSegmentBands = request => request.asset === REFERENCE_BANDS_READ.asset
+    ? bandsAnswer({
+        bands: [{name: 'tStart', arrayDimensions: 1}, {name: 'tEnd', arrayDimensions: 1}, {name: 'ndvi_coefs', arrayDimensions: 2}, {name: 'ndvi_rmse', arrayDimensions: 1}],
+        properties: {dateFormat: 1}
+    })(request)
     : null
 
 const maskingOver = source => ({
@@ -1097,7 +1102,7 @@ const mountPanel = ({recipes = [MASKING, MOSAIC], id = MASKING.id, Panel = Retri
             }
         }, action) => action.reduce ? action.reduce(state) : state
     )
-    initStore(store)
+    installStore(store)
     const container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
@@ -1200,6 +1205,8 @@ const answering = () => {
 // Only the panel's own minimum-duration timer is suspended; faking more than the two calls it makes would put
 // React's scheduling under test control too.
 beforeEach(() => vi.useFakeTimers({toFake: ['setTimeout', 'clearTimeout']}))
+
+afterEach(disposeInstalledSessions)
 
 afterEach(() => {
     act(() => root?.unmount())

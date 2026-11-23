@@ -5,21 +5,22 @@ import {legacy_createStore as createStore} from 'redux'
 import {NEVER} from 'rxjs'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
+import {AssetDestinationBrowser} from '~/app/home/body/browse/assets/assetDestinationBrowser'
+import {RecipeInput} from '~/app/home/body/process/recipe/sources/recipeInput'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {LabelsLayerOptionsPanel} from '~/app/home/map/labelsLayerOptionsPanel'
 import {compose} from '~/compose'
 import {Enabled} from '~/enabled'
-import {initStore, select} from '~/store'
+import {select} from '~/store'
 import {collectActivatables} from '~/widget/activation/activation'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import {activateIn} from '~/widget/activation/activator'
-import {AssetDestinationBrowser} from '~/widget/assetDestinationBrowser'
 import {Confirm} from '~/widget/confirm'
 import {EventShield} from '~/widget/eventShield'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Panel} from '~/widget/panel/panel'
 import {PortalContainer} from '~/widget/portal'
-import {RecipeInput} from '~/widget/recipeInput'
 import {selectTab} from '~/widget/tabs/tabActions'
 import {Tabs} from '~/widget/tabs/tabs'
 
@@ -34,7 +35,6 @@ import {RecipeHome} from './recipeHome'
 // have no scope prop/provider. The landing list is replaced by its real Project dialog, to isolate ownership
 // from listing and CRUD work; APIs and scrolling do not participate in that decision.
 vi.mock('~/translate', () => ({msg: key => key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
 vi.mock('~/apiRegistry', () => ({default: {recipe: {load$: () => NEVER, loadAll$: () => NEVER, save$: () => NEVER}}}))
 vi.mock('~/ceo', () => ({ceoLogin$: () => NEVER}))
@@ -219,6 +219,8 @@ const A = 'recipe-a'
 const B = 'recipe-b'
 let root, container, setKinds, setSectionEnabled
 
+afterEach(disposeInstalledSessions)
+
 afterEach(async () => {
     await act(async () => root?.unmount())
     root = null
@@ -237,7 +239,7 @@ async function mount(kinds) {
             loadedRecipes: {[A]: record(A, 'A saved'), [B]: record(B, 'B saved')}, recipes: [], projects: []
         }
     }, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

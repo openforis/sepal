@@ -47,7 +47,7 @@ the full user map:
 {id, name, username, email, organization, intendedUse,
  googleTokens: {accessToken, accessTokenExpiryDate, refreshToken, projectId} | null,
  emailNotificationsEnabled, manualMapRenderingEnabled, privacyPolicyAccepted,
- status, roles, systemUser, creationTime, updateTime}
+ status, roles, systemUser, creationTime, updateTime, revision}
 ```
 
 ### `user.UserUpdated`

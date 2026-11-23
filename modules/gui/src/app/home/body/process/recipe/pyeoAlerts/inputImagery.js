@@ -11,7 +11,7 @@ import {getRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import {selectFrom} from '~/stateUtils'
 
 import {createLoadRecipesById$} from '../../sourceRuntime/recipeClosureLoader'
-import {resolveProvider, UNSUPPORTED} from '../sourceProvider'
+import {resolveProvider, UNSUPPORTED} from '../sources/sourceProvider'
 
 // What PyEO Alerts can learn about the imagery a classification was trained on.
 //

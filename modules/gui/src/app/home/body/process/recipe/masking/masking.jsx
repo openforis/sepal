@@ -1,15 +1,15 @@
 import React from 'react'
 
 import {MASK_IMAGE, PRIMARY_IMAGE} from '#sepal/recipe/type/masking'
-import {initializeLayers} from '~/app/home/body/process/recipe/recipeImageLayerSource'
-import {SourceEvidenceSync} from '~/app/home/body/process/recipe/sourceEvidenceSync'
+import {initializeLayers} from '~/app/home/body/process/recipe/map/recipeImageLayerSource'
+import {SourceEvidenceSync} from '~/app/home/body/process/recipe/sources/sourceEvidenceSync'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'
 import {msg} from '~/translate'
 
-import {Aoi} from '../aoi'
+import {Aoi} from '../map/aoi'
 import {defaultModel} from './maskingRecipe'
 import {maskingObservation} from './maskingSourceEvidence'
 import {maskRequirements} from './maskRequirements'

@@ -15,7 +15,7 @@ vi.mock('~/widget/activation/activatable', () => ({
 }))
 vi.mock('~/apiRegistry', () => ({default: {recipe: {load$: id => of({id, type: 'MOSAIC', model: {}})}}}))
 const picker = vi.hoisted(() => ({stubbed: false}))
-vi.mock('~/widget/recipeInput', async importOriginal => {
+vi.mock('~/app/home/body/process/recipe/sources/recipeInput', async importOriginal => {
     const {RecipeInput} = await importOriginal()
     const {useEffect} = await import('react')
     const ListedRecipes = ({input, onRecipeLoaded}) => {
@@ -43,11 +43,9 @@ vi.mock('~/widget/panel/panel', () => {
     Panel.Buttons = Buttons
     return {Panel}
 })
-// Cuts an import cycle the form barrel would otherwise enter from the wrong side (see recipeInput.test.jsx).
-vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
 
 const {Recipe} = await import('~/app/home/body/process/recipeContext')
-const {initStore} = await import('~/store')
+const {disposeInstalledSessions, installStore} = await import('~/app/home/body/process/recipeSession/recipeSession.test.fixtures')
 const {SelectRecipe} = await import('./selectRecipe')
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -55,6 +53,8 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 const OWNER = 'owner'
 
 let root, container, store
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -163,7 +163,7 @@ const mount = (layers, referenced = []) => {
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

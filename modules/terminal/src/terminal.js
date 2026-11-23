@@ -21,6 +21,10 @@ const removeKeyFile = keyFile => {
 }
 
 const start = (websocket, req) => {
+    websocket.on('error', error => {
+        log.warn('Terminal WebSocket error', error)
+        websocket.terminate()
+    })
     try {
         const session = Session.get(req)
         const terminal = session.terminal

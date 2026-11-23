@@ -6,9 +6,9 @@ import {of, Subject} from 'rxjs'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
@@ -26,30 +26,34 @@ import {segmentsAssetMetadata} from './observedReference.test.fixtures'
 // runtime are real; Earth Engine answers with fixed asset metadata, and the map is not drawn.
 
 const fake = vi.hoisted(() => ({assets: {}}))
-vi.mock('~/apiRegistry', () => ({default: {
-    gee: {
-        assetMetadata$: ({asset}) => of(fake.assets[asset]),
-        assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
-        bands$: ({asset}) => of((fake.assets[asset]?.bandNames || []).map(name => ({name, arrayDimensions: 0}))),
-        datasets$: () => of({community: {datasets: [], matchingResults: 0}, gee: {datasets: [], matchingResults: 0}})
-    },
-    recipe: {load$: () => of(null), loadAll$: () => of([]), save$: () => of()}
-}}))
+vi.mock('~/apiRegistry', async () => {
+    const {bandsAnswer} = await import('../../sourceRuntime/bandsAnswer.test.fixtures')
+    return {default: {
+        gee: {
+            assetMetadata$: ({asset}) => of(fake.assets[asset]),
+            assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
+            bands$: request => of(bandsAnswer({
+                bands: fake.assets[request.asset]?.bandNames || [], properties: fake.assets[request.asset]?.properties
+            })(request)),
+            datasets$: () => of({community: {datasets: [], matchingResults: 0}, gee: {datasets: [], matchingResults: 0}})
+        },
+        recipe: {load$: () => of(null), loadAll$: () => of([]), save$: () => of()}
+    }}
+})
 vi.mock('~/translate', () => ({msg: (key, values) => {
     const text = [key].flat().join('.')
     return values && Object.keys(values).length ? `${text} ${JSON.stringify(values)}` : text
 }}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => !disabled && [msg].flat().map(tooltipText).some(line => typeof line === 'string')
         ? <span data-tooltip={JSON.stringify([msg].flat().map(tooltipText).filter(line => typeof line === 'string'))}>{children}</span>
         : children
 }))
 vi.mock('~/app/home/map/map', async importOriginal => ({...await importOriginal(), Map: ({children}) => children}))
-vi.mock('~/app/home/body/process/recipe/aoi', async importOriginal => ({...await importOriginal(), Aoi: () => null}))
-vi.mock('~/app/home/body/process/recipe/recipeImageLayerSource', async importOriginal => ({...await importOriginal(), initializeLayers: () => {}}))
+vi.mock('~/app/home/body/process/recipe/map/aoi', async importOriginal => ({...await importOriginal(), Aoi: () => null}))
+vi.mock('~/app/home/body/process/recipe/map/recipeImageLayerSource', async importOriginal => ({...await importOriginal(), initializeLayers: () => {}}))
 vi.mock('~/app/home/body/process/recipe/ccdc/ccdcRecipe', () => ({getAllVisualizations: () => []}))
 
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
@@ -66,6 +70,8 @@ const S1 = 'SENTINEL_1'
 const SOURCES = 'process.changeAlerts.panel.sources.form'
 
 let root, container, store
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -117,7 +123,8 @@ describe('a new Change Alerts recipe set up from an optical segments asset', () 
         await press('button.next')
 
         expect(chosen(`${SOURCES}.dataSetType.label`)).toEqual([`${SOURCES}.dataSetTypes.OPTICAL`])
-        expect(chosen(`${SOURCES}.dataSets.label`)).toEqual(['LANDSAT_9', 'LANDSAT_8', 'LANDSAT_7', 'SENTINEL_2'].map(dataSetLabel))
+        // Monitoring months up to today: Landsat 7's collections end in January 2024.
+        expect(chosen(`${SOURCES}.dataSets.label`)).toEqual(['LANDSAT_9', 'LANDSAT_8', 'SENTINEL_2'].map(dataSetLabel))
     })
 
     it('whose metadata records the data sets it was fitted from starts Sources with those', async () => {
@@ -227,7 +234,7 @@ async function create(model) {
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

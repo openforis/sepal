@@ -7,8 +7,9 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore, openStoredRecipe} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
@@ -19,24 +20,23 @@ import {PortalContainer, PortalContext} from '~/widget/portal'
 // provides none the gate offers, no gate - and marks OPT, not Sources. A gate turned off requires nothing. A
 // Classification of more than one input image cannot run in PyEO at all, gate or no gate: Sources say so beside it,
 // once, whether it was saved so or changed so since, until one input is left. The panel,
-// store, source runtime and recipe types are real; the recipe reads answer from stored records, Earth Engine an asset's
+// store, source runtime and recipe types are real; storage answers as the recipe module does, Earth Engine an asset's
 // bands at once.
 
-const stored = vi.hoisted(() => ({records: {}}))
+const stored = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         bands$: ({asset}) => of((ASSET_BANDS[asset] || ['red', 'nir']).map(name => ({name, arrayDimensions: 0}))),
         assetMetadata$: () => of({bandNames: ['red', 'nir'], properties: {}}),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
     },
-    recipe: {load$: id => of(stored.records[id]), loadAll$: () => of(LISTING), save$: () => of()}
+    recipe: {load$: id => stored.storage.load$(id), loadAll$: () => of(LISTING), save$: request => stored.storage.save$(request)}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => {
     const text = [key].flat().join('.')
     return values ? `${text} ${JSON.stringify(values)}` : text
 }}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => !disabled && [msg].flat().some(line => typeof line === 'string')
@@ -54,7 +54,7 @@ const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry
 const {default: pyeoAlerts} = await import('./pyeoAlerts')
 const {default: classification} = await import('../classification/classification')
 const {Sources} = await import('./panels/sources/sources')
-const {sourceProblemsOfState} = await import('../selectedSourceStatus')
+const {sourceProblemsOfState} = await import('../requirements/selectedSourceStatus')
 
 addRecipeType(pyeoAlerts())
 addRecipeType(classification())
@@ -72,6 +72,8 @@ const VISIBLE_INPUT = {imageId: 'i-1', type: 'ASSET', id: VISIBLE_ASSET, bandSet
 const ASSET_BANDS = {[RADAR_ASSET]: ['VV', 'VH'], [VISIBLE_ASSET]: ['red', 'green', 'blue']}
 
 let root, container, store, runtime
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -260,21 +262,21 @@ const RuntimeProbe = withSourceRuntime()(({sourceRuntime}) => {
 
 async function open({gate, inputs}) {
     const records = [pyeoRecipe(gate), classificationRecipe(inputs), classificationRecipe([OPTICAL_INPUT, VISIBLE_INPUT], TWO_INPUTS)]
-    stored.records = Object.fromEntries(records.map(record => [record.id, record]))
+    stored.storage = recipeStorage({records})
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: Object.fromEntries(records.map(record => [record.id, record])),
+            loadedRecipes: Object.fromEntries(records.filter(({id}) => id !== PYEO).map(record => [record.id, record])),
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
-            tabs: [{id: PYEO}]
+            projects: []
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
+    openStoredRecipe(store, stored.storage, PYEO, {ui: records[0].ui})
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

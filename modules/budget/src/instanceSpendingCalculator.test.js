@@ -8,22 +8,50 @@ const COST = {t1: 2, t2: 10}
 const d = iso => new Date(iso)
 
 describe('instanceSpendingCalculator.calculate — July 2026 (year 2026, month 7)', () => {
-    test('single use fully in-month → ceil(hours) × cost', () => {
+    test('single use fully in-month → elapsed hours × cost', () => {
         const uses = [instanceUse({instanceType: 't1', from: d('2026-07-10T00:00:00Z'), to: d('2026-07-10T02:00:00Z')})]
         assert.equal(calculate(2026, 7, uses, COST), 4)
     })
 
-    test('fractional-hour use → CEIL (2h1m → 3)', () => {
+    test('charges the extra minute proportionally after two hours', () => {
         const uses = [instanceUse({instanceType: 't1', from: d('2026-07-10T00:00:00Z'), to: d('2026-07-10T02:01:00Z')})]
-        assert.equal(calculate(2026, 7, uses, COST), 6)
+        assert.equal(calculate(2026, 7, uses, COST), 121 / 30)
     })
 
-    test('per-record ceil: two 1.5h uses = ceil(1.5)+ceil(1.5)=4h (NOT ceil(3)=3)', () => {
+    test('two ninety-minute sessions cost three hours in total', () => {
         const uses = [
             instanceUse({instanceType: 't1', from: d('2026-07-10T00:00:00Z'), to: d('2026-07-10T01:30:00Z')}),
             instanceUse({instanceType: 't1', from: d('2026-07-11T00:00:00Z'), to: d('2026-07-11T01:30:00Z')}),
         ]
-        assert.equal(calculate(2026, 7, uses, COST), 8)
+        assert.equal(calculate(2026, 7, uses, COST), 6)
+    })
+
+    test('a one-minute session costs one sixtieth of the hourly rate', () => {
+        const uses = [instanceUse({instanceType: 't1', from: d('2026-07-10T00:00:00Z'), to: d('2026-07-10T00:01:00Z')})]
+
+        assert.equal(calculate(2026, 7, uses, {t1: 3}), 0.05)
+    })
+
+    test('adds sub-minute costs without rounding each session to cents', () => {
+        const uses = [
+            instanceUse({instanceType: 't1', from: d('2026-07-10T00:00:00Z'), to: d('2026-07-10T00:00:30Z')}),
+            instanceUse({instanceType: 't1', from: d('2026-07-11T00:00:00Z'), to: d('2026-07-11T00:00:30Z')}),
+        ]
+
+        assert.equal(calculate(2026, 7, uses, {t1: 3}), 0.05)
+    })
+
+    test('splits a short session at the month boundary without rounding either part', () => {
+        const uses = [instanceUse({instanceType: 't1', from: d('2026-06-30T23:59:30Z'), to: d('2026-07-01T00:00:30Z')})]
+
+        assert.equal(calculate(2026, 6, uses, {t1: 3}), 0.025)
+        assert.equal(calculate(2026, 7, uses, {t1: 3}), 0.025)
+    })
+
+    test('a zero-duration session costs nothing', () => {
+        const instant = d('2026-07-10T00:00:00Z')
+
+        assert.equal(calculate(2026, 7, [instanceUse({instanceType: 't1', from: instant, to: instant})], COST), 0)
     })
 
     test('use spanning the month boundary → clamped to [firstOfMonth, endOfMonth]', () => {

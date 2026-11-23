@@ -6,8 +6,10 @@ import {NEVER, of} from 'rxjs'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore, select} from '~/store'
+import {select} from '~/store'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import widgetStyles from '~/widget/widget.module.css'
 
@@ -15,6 +17,7 @@ import widgetStyles from '~/widget/widget.module.css'
 // real toolbar, panels, wizard and activation over a real store. Its Input imagery list is shared with Stack. Earth
 // Engine never answers; nothing here needs it to.
 
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         bands$: () => NEVER,
@@ -22,10 +25,9 @@ vi.mock('~/apiRegistry', () => ({default: {
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
         datasets$: () => of({community: {datasets: [], matchingResults: 0}, gee: {datasets: [], matchingResults: 0}})
     },
-    recipe: {save$: () => NEVER, load$: () => NEVER, loadAll$: () => of(LISTING)}
+    recipe: {save$: request => io.storage.save$(request), load$: () => NEVER, loadAll$: () => of(LISTING)}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
@@ -45,6 +47,8 @@ const LISTING = [{id: ID, name: 'Remapping', type: 'REMAPPING', revision: 1}]
 const ASSET = 'users/x/a'
 
 let root, container, tree
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -256,8 +260,11 @@ async function open({initialized = true} = {}) {
         assets: {user: [], other: []},
         dimensions: {width: 1024, height: 768}
     }
-    const store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    const store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
+    installStore(store)
+    opening.openIn(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

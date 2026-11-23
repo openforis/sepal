@@ -7,7 +7,7 @@ import {FormCombo} from '~/widget/form/combo'
 import {Layout} from '~/widget/layout'
 import {Legend} from '~/widget/legend/legend'
 
-import {bandOptionsOf, showLoadError} from '../../../changeImageSelection'
+import {bandOptionsOf, showLoadError} from '../../../editing/changeImageSelection'
 import styles from './inputImage.module.css'
 
 // The image's source, its class band and the legend of its classes. A read of the source the image was saved with

@@ -1,4 +1,4 @@
-FROM node:26-alpine
+FROM node:26-alpine AS production
 
 EXPOSE 80
 
@@ -33,3 +33,8 @@ ADD --chmod=0755 modules/${MODULE_NAME}/start.sh /usr/local/bin
 # run
 USER root
 CMD start.sh
+
+FROM production AS test
+CMD ["npm", "test"]
+
+FROM production

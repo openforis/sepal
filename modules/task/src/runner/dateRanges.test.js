@@ -23,11 +23,28 @@ test('an end date exactly three months after the start date is one range', () =>
     ])
 })
 
-test('range starts are offsets from the start date, so month ends do not drift', () => {
+test('month-end ranges keep both boundaries anchored to the original start date', () => {
     assert.deepEqual(
-        chunkDateRanges({startDate: '2020-01-31', endDate: '2020-12-31'}).map(({startDate}) => startDate),
+        chunkDateRanges({startDate: '2020-01-31', endDate: '2020-12-31'}),
         [
-            '2020-01-31', '2020-04-30', '2020-07-31', '2020-10-31'
+            {startDate: '2020-01-31', endDate: '2020-04-30'},
+            {startDate: '2020-04-30', endDate: '2020-07-31'},
+            {startDate: '2020-07-31', endDate: '2020-10-31'},
+            {startDate: '2020-10-31', endDate: '2020-12-31'}
         ]
     )
 })
+
+for (const dates of [
+    {startDate: '2020-01-31', endDate: '2020-07-31'},
+    {startDate: '2019-11-30', endDate: '2020-08-31'},
+    {startDate: '2020-11-30', endDate: '2021-08-31'}
+]) {
+    test(`ranges cover ${dates.startDate} to ${dates.endDate} without gaps or overlaps`, () => {
+        const ranges = chunkDateRanges(dates)
+
+        assert.equal(ranges[0].startDate, dates.startDate)
+        assert.equal(ranges.at(-1).endDate, dates.endDate)
+        ranges.slice(1).forEach(({startDate}, index) => assert.equal(ranges[index].endDate, startDate))
+    })
+}

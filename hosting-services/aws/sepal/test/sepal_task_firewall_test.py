@@ -7,7 +7,6 @@ import unittest
 
 SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docker', 'sepal-task-firewall.sh')
 TASK_RANGE = '172.29.128.0/17'
-LEGACY_SUBNET = '172.29.0.0/16'
 GATEWAY = '172.29.0.2'
 BLOCKED = ['169.254.0.0/16', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '100.64.0.0/10', '127.0.0.0/8']
 NAMESERVER = '172.31.0.2'
@@ -119,22 +118,6 @@ class SepalTaskFirewallTest(unittest.TestCase):
         self.assertEqual(first['INPUT'], second['INPUT'])
         dns = [rule for rule in second['SEPAL-TASK'] if '53' in rule]
         self.assertEqual({'10.0.0.2'}, {rule[rule.index('-d') + 1] for rule in dns})
-
-    def test_rules_an_earlier_version_put_directly_in_docker_user_are_removed(self):
-        legacy = ([['-s', LEGACY_SUBNET, '-d', LEGACY_SUBNET, '-j', 'RETURN']]
-                  + [['-s', LEGACY_SUBNET, '-d', NAMESERVER, '-p', protocol, '--dport', '53', '-j', 'RETURN']
-                     for protocol in ['tcp', 'udp']]
-                  + [['-s', LEGACY_SUBNET, '-d', destination, '-j', 'DROP'] for destination in BLOCKED])
-        unrelated = ['-s', '10.1.0.0/16', '-j', 'RETURN']
-        self.given_chains({
-            'DOCKER-USER': legacy + legacy[:1] + [unrelated],
-            'INPUT': [['-s', LEGACY_SUBNET, '-j', 'DROP']]
-        })
-
-        chains = self.run_script()
-
-        self.assertEqual([['-s', TASK_RANGE, '-j', 'SEPAL-TASK'], unrelated], chains['DOCKER-USER'])
-        self.assertEqual([['-s', TASK_RANGE, '-j', 'DROP']], chains['INPUT'])
 
     def test_without_resolv_conf_no_nameserver_is_allowed(self):
         os.remove(self.resolv_conf)

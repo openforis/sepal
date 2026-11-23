@@ -64,11 +64,6 @@ const reconcilePendingSessions = async ({repo, instanceManager, activatePendingS
                 log.debug(`Skipping re-provisioning of ${sessionTag(session)} - it is no longer the PENDING session on its instance`)
                 continue
             }
-            // Known limitation, pre-existing and not closed by the read above: provisionInstance
-            // has no abort, so a provision ALREADY in flight (from here or from the
-            // InstancePendingProvisioning path) keeps retrying for up to seventeen minutes after
-            // its session is gone. The guarded read only bounds the window for starting a new one.
-            //
             // Deliberately NOT awaited: provisionInstance retries for up to seventeen minutes,
             // which would stall the sweep well past its own one-minute interval. The registry
             // guard above is what keeps the next sweep from starting a second one.

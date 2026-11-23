@@ -3,20 +3,62 @@ name: Test
 on:
   pull_request:
   push:
-    branches: [sepal-server, master]
+    branches: [master, dev]
+  workflow_dispatch:
 
 concurrency:
   group: ${{github.workflow}}-${{github.ref}}
-  cancel-in-progress: true
+  # A push run tests only what changed since the previous push, so cancelling one would leave those
+  # changes untested. A pull request run always covers the whole pull request.
+  cancel-in-progress: ${{github.event_name == 'pull_request'}}
 
 jobs:
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    outputs:
+      tests: ${{steps.select.outputs.tests}}
+      lint: ${{steps.select.outputs.lint}}
+      python: ${{steps.select.outputs.python}}
+      deploy: ${{steps.select.outputs.deploy}}
+      shell: ${{steps.select.outputs.shell}}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      - run: python3 -m unittest discover -s .github/scripts -p '*_test.py'
+      - id: select
+        run: python3 .github/scripts/select_jobs.py
+        env:
+          EVENT: ${{github.event_name}}
+          BEFORE: ${{github.event.before}}
+
   test:
     name: ${{matrix.module}}
+    needs: changes
+    if: needs.changes.outputs.tests != '[]'
     runs-on: ubuntu-latest
     # The *.integration.test.js suites reach a real database, since the schema, collation and
-    # transaction guarantees they cover cannot be shown against a fake: Postgres for the modules on
-    # it, MySQL 5.7 for scene-metadata and as the source the mysqlImport suites read through
+    # transaction guarantees they cover cannot be shown against a fake: Postgres for the entries that
+    # ask for it, MySQL for scene-metadata and as the source the mysqlImport suites read through
     # mysql_fdw. Modules without such a suite ignore both.
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: sepal
+        ports:
+          - 3306:3306
+        # scene-metadata hands MySQL a path and the server reads the file itself, so the runner and
+        # the server have to see one directory under the same name. This is the image's
+        # secure_file_priv, the only directory a server-side read is allowed to reach.
+        volumes:
+          - /var/lib/mysql-files:/var/lib/mysql-files
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -psepal"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
     env:
       POSTGRES_HOST: 127.0.0.1
       POSTGRES_USER: sepal
@@ -31,51 +73,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          # The library carries no lock of its own, so it is tested with the one most modules install it
-          # from. Its gdal wrapper shells out to the GDAL tools.
-          - module: lib/js/shared
-            lock: modules/worker/lib/shared/package-lock.json
-            packages: gdal-bin python3-gdal
-          - module: modules/gui
-          - module: modules/gee
-            libs: lib/js/shared lib/js/ee
-          - module: modules/task
-            libs: lib/js/shared
-          - module: modules/task-manager
-            libs: lib/js/shared
-          - module: modules/app-manager
-            libs: lib/js/shared
-          - module: modules/budget
-            libs: lib/js/shared
-          - module: modules/email
-            libs: lib/js/shared
-          - module: modules/gateway
-            libs: lib/js/shared
-          - module: modules/message
-            libs: lib/js/shared
-          - module: modules/r-proxy
-            libs: lib/js/shared
-          - module: modules/recipe
-            libs: lib/js/shared
-          - module: modules/scene
-            libs: lib/js/shared
-          - module: modules/scene-metadata
-            libs: lib/js/shared
-          - module: modules/ssh-gateway
-            libs: lib/js/shared
-          - module: modules/storage
-            libs: lib/js/shared
-          - module: modules/terminal
-            libs: lib/js/shared
-          - module: modules/user
-            libs: lib/js/shared
-          - module: modules/user-assets
-            libs: lib/js/shared
-          - module: modules/user-files
-            libs: lib/js/shared
-          - module: modules/worker
-            libs: lib/js/shared
+        # The entries live in .github/scripts/select_jobs.py, which keeps those the change affects.
+        include: ${{fromJSON(needs.changes.outputs.tests)}}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -101,43 +100,56 @@ jobs:
           done
       - run: npm ci
         working-directory: ${{matrix.module}}
-      # Postgres is the SEPAL image, which carries mysql_fdw. It shares a network with MySQL so the
-      # import tests can reach MySQL from inside it, by container name. scene-metadata hands MySQL a path and the server reads the file
-      # itself, so the runner and the server see one directory under the same name: the image's
-      # secure_file_priv, the only directory a server-side read is allowed to reach.
-      - name: Start Postgres and MySQL
+      # SEPAL's own MySQL runs with explicit_defaults_for_timestamp on. Without it the stock image
+      # gives every TIMESTAMP column after the first a zero default, which NO_ZERO_DATE rejects,
+      # and the schemas the integration suites create fail to build.
+      - name: Match the SEPAL MySQL settings
+        run: mysql -h 127.0.0.1 -uroot -p"$MYSQL_PASSWORD" -e 'SET GLOBAL explicit_defaults_for_timestamp = ON'
+      # The MySQL image takes the shared directory over for its own user; the runner writes the files
+      # there and MySQL reads them back.
+      - name: Let the runner write to the MySQL files directory
+        run: sudo chmod 0777 "$MYSQL_FILES_DIR"
+      # SEPAL's own image, for its locale and mysql_fdw. On the MySQL service's network, so the import
+      # tests' mysql_fdw reaches it by name.
+      - name: Start Postgres
+        if: matrix.postgres
         run: |
-          docker network create sepal
           docker build -t sepal-postgres -f modules/postgres/Dockerfile .
-          docker run -d --name postgres --network sepal -p 127.0.0.1:5432:5432 \
+          docker run -d --name postgres --network "${{job.services.mysql.network}}" -p 127.0.0.1:5432:5432 \
             -e POSTGRES_PASSWORD="$POSTGRES_ROOT_PASSWORD" -e SEPAL_PASSWORD="$POSTGRES_PASSWORD" \
             -e POSTGRES_INITDB_ARGS="--locale-provider=builtin --builtin-locale=C.UTF-8" \
             sepal-postgres
-          # SEPAL's own MySQL runs with explicit_defaults_for_timestamp on. Without it the stock image
-          # gives every TIMESTAMP column after the first a zero default, which NO_ZERO_DATE rejects,
-          # and the schemas the integration suites create fail to build.
-          docker run -d --name mysql --network sepal -p 127.0.0.1:3306:3306 \
-            -e MYSQL_ROOT_PASSWORD="$MYSQL_PASSWORD" -v "$MYSQL_FILES_DIR:$MYSQL_FILES_DIR" \
-            mysql:5.7 --explicit_defaults_for_timestamp=ON
           for i in $(seq 60); do
-            docker exec postgres pg_isready -h 127.0.0.1 -U postgres \
-              && docker exec mysql mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_PASSWORD" \
-              && sudo chmod 0777 "$MYSQL_FILES_DIR" && exit 0
+            docker exec postgres pg_isready -h 127.0.0.1 -U postgres && exit 0
             sleep 2
           done
           docker logs postgres
-          docker logs mysql
           exit 1
       # vitest single-shots rather than watching because Actions sets CI
       - run: npm test
         working-directory: ${{matrix.module}}
-      # only gui carries its own eslint
-      - run: npm run lint --if-present
-        if: '!cancelled()'
-        working-directory: ${{matrix.module}}
+
+  lint:
+    name: modules/gui lint
+    needs: changes
+    if: needs.changes.outputs.lint == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: npm
+          cache-dependency-path: modules/gui/package-lock.json
+      - run: npm ci
+        working-directory: modules/gui
+      - run: npm run lint
+        working-directory: modules/gui
 
   python:
     name: time-series stacker
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -146,6 +158,8 @@ jobs:
 
   deploy:
     name: deploy scripts
+    needs: changes
+    if: needs.changes.outputs.deploy == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -153,6 +167,8 @@ jobs:
 
   shell:
     name: shell
+    needs: changes
+    if: needs.changes.outputs.shell == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -161,4 +177,7 @@ jobs:
       # pre-existing warnings in code this change does not touch.
       - run: shellcheck -S warning modules/app-manager/sepal-app-kernel modules/app-manager/test/*.sh
       - run: shellcheck -S error modules/app-manager/update-app.sh
+      - run: shellcheck -S warning modules/ops/script/sepal-build.sh modules/ops/test/*.sh
+      - run: bash modules/ops/test/sepal-build.test.sh
+      - run: python3 -m unittest discover -s modules/ops/test -p '*_test.py'
       - run: modules/app-manager/test/run-all.sh

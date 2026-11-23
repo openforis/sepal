@@ -1,5 +1,7 @@
-// repo.timedOutSessions() → close each via CloseSession. Each close is isolated in its own
-// try/catch so one failure does not abort the rest.
+// repo.timedOutSessions() → close each with repo.closeTimedOutSession, which closes the row only
+// while it is still PENDING and overdue: an activation, update or other close since selection wins.
+// Only a session it closed is announced, then has its instance retired. Each close is isolated in
+// its own try/catch so one failure does not abort the rest.
 //
 // PENDING ONLY. An ACTIVE session's lifetime is the stored timeout_time, swept by ExpireSessions;
 // this sweep now only kills provisions that hung for ten minutes. A PENDING session's update_time
@@ -9,7 +11,6 @@
 import {getLogger} from '#sepal/log'
 
 import {sessionTag} from '../../tag.js'
-import {closeSession} from './closeSession.js'
 
 const log = getLogger('worker/closeTimedOutSessions')
 
@@ -17,7 +18,11 @@ const closeTimedOutSessions = async ({repo, instanceManager, emitWorkerSessionCl
     const sessions = await repo.timedOutSessions()
     for (const session of sessions) {
         try {
-            await closeSession({sessionId: session.id}, {repo, instanceManager, emitWorkerSessionClosed})
+            if (await repo.closeTimedOutSession(session.id)) {
+                emitWorkerSessionClosed({username: session.username, sessionId: session.id})
+                await instanceManager.releaseInstance(session.instance.id, session.id, {retire: true})
+                log.info(`Closed timed-out ${sessionTag(session)}`)
+            }
         } catch (error) {
             log.error(`Failed to close timed-out ${sessionTag(session)}`, error)
         }

@@ -2,14 +2,14 @@ import {act} from 'react'
 import {createRoot} from 'react-dom/client'
 import {Provider} from 'react-redux'
 import {legacy_createStore as createStore} from 'redux'
-import {asapScheduler, NEVER, observeOn, of, Subject} from 'rxjs'
+import {asapScheduler, observeOn, of, Subject} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore, savedDraft, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {deserialize, serialize} from '~/serialize'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import errorIndicatorStyles from '~/widget/errorIndicator.module.css'
 import listItemStyles from '~/widget/listItem.module.css'
@@ -23,6 +23,7 @@ import {tooltipText} from '~/widget/tooltip.test.fixtures'
 // references, judges its constraints as before. Earth Engine answers only what the input asset's image holds, which
 // running the Remapping builds.
 
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         bands$: ({asset, recipe, includeDataTypes}) => {
@@ -44,10 +45,9 @@ vi.mock('~/apiRegistry', () => ({default: {
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
         datasets$: () => of({community: {datasets: [], matchingResults: 0}, gee: {datasets: [], matchingResults: 0}})
     },
-    recipe: {save$: () => NEVER, load$: id => of(sourceRecipes[id] || sourceRecipe(id)), loadAll$: () => of([])}
+    recipe: {save$: request => io.storage.save$(request), load$: id => io.storage.load$(id), loadAll$: () => of([])}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
@@ -67,7 +67,7 @@ const {default: unsupervised} = await import('../unsupervisedClassification/unsu
 const {InputImagery: SharedInputs} = await import('../../panels/inputImagery/inputImagery')
 const {InputImagery: BandMathInputs} = await import('../bandMath/panels/inputImagery/inputImagery')
 const {InputImagery: DerivedInputs} = await import('../../panels/inputImageryWithDerived/inputImagery')
-const {SectionButton} = await import('../sectionButton')
+const {SectionButton} = await import('../requirements/sectionButton')
 const {Toolbar} = await import('~/widget/toolbar/toolbar')
 const {PanelWizard} = await import('~/widget/panelWizard')
 const {default: indexChange} = await import('../indexChange/indexChange')
@@ -75,12 +75,12 @@ const {defaultModel: indexChangeModel} = await import('../indexChange/indexChang
 const {IndexChangeToolbar} = await import('../indexChange/panels/indexChangeToolbar')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
-const {requestGate} = await import('../sourceRequirements')
-const {withSourceProblems} = await import('../selectedSource')
+const {requestGate} = await import('../requirements/sourceRequirements')
+const {withSourceProblems} = await import('../requirements/selectedSource')
 const ProblemProbe = withSourceProblems()(({sourceProblems}) => <div data-upstream-problems={JSON.stringify(tooltipText(sourceProblems))}/>)
 const {readImageOutput} = await import('#sepal/recipe/output/readImageOutput')
 const {recipeType} = await import('#sepal/recipe/recipeTypeRegistry')
-const {buildMapDependencyGraph} = await import('../mapDependencyGraph')
+const {buildMapDependencyGraph} = await import('../outputs/mapDependencyGraph')
 
 addRecipeType(remapping())
 addRecipeType(bandMath())
@@ -91,14 +91,14 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let root, container, store, runtime
 let sourceBands = {}
-let sourceRecipes = {}
 let bandResponses = {}
 
 beforeEach(() => {
     sourceBands = {}
-    sourceRecipes = {}
     bandResponses = {}
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -226,8 +226,8 @@ describe('a reference to a recipe that cannot run', () => {
         expect(applyEnabled()).toBe(false)
         expect(model()).toEqual(b.model)
         expect(JSON.parse(document.querySelector('[data-upstream-problems]').dataset.upstreamProblems)).toEqual({})
-        // Closing the selector releases loaded records; reopening reads the repaired saved version.
-        sourceRecipes.math = store.getState().process.loadedRecipes.math
+        // Closing the selector releases loaded records; reopening reads the repaired version, once saved.
+        await savedDraft(store, io.storage, 'math')
         expect(previewGate()).toBeNull()
         await click([...document.querySelectorAll('button')].filter(button => button.textContent === 'button.close').pop())
         expect(retrieveOffered()).toBe(true)
@@ -530,10 +530,10 @@ describe('restoring a Remapping input by its exact source', () => {
         await open(opticalRadarRecipe(), <RemappingToolbar/>)
         await press(IMAGERY)
         await removeInput(RADAR)
-        const persisted = serialize({id: 'remapping-1', type: 'REMAPPING', model: model()})
+        const persisted = await savedDraft(store, io.storage, 'remapping-1')
         await act(async () => root.unmount())
         container.remove()
-        await open(deserialize(persisted), <RemappingToolbar/>)
+        await open(persisted, <RemappingToolbar/>)
         await expectMappingBlocked(['B'], 'MISSING_CONSTRAINT_INPUT')
 
         await press(IMAGERY)
@@ -856,7 +856,6 @@ async function openForest(saved = remappingRecipe()) {
 }
 
 async function open(recipe, toolbar, sources = []) {
-    sourceRecipes = Object.fromEntries(sources.map(source => [source.id, source]))
     const initialState = {
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
@@ -870,8 +869,11 @@ async function open(recipe, toolbar, sources = []) {
         assets: {user: [ASSET, OPTICAL, RADAR, OTHER_RADAR].map(id => ({id, type: 'Image', updateTime: 'T1'})), other: []},
         dimensions: {width: 1024, height: 768}
     }
-    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
+    installStore(store)
+    opening.openIn(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

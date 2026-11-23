@@ -17,6 +17,10 @@ mock.module('#gee/config', {
     }
 })
 
+mock.module('#sepal/worker/scheduler', {
+    exports: {getScheduler: () => ({submit$: submitted => of(submitted)})}
+})
+
 const {WORKER} = await import('#sepal/worker/factory')
 const {currentEEContext, DEFAULT_EE_ENDPOINT} = await import('#sepal/ee/eeContext')
 const {job} = await import('#gee/jobs/job')
@@ -90,13 +94,36 @@ describe('the Earth Engine context a job runs in', () => {
     })
 
     test('is task traffic for a request authenticated with a task container\'s key', async () => {
-        const context = await contextOf({sepalUser: {username: 'bob'}, sepalSession: {workerType: 'task', taskId: 't-1'}})
+        const context = await contextOf({sepalUser: {username: 'bob'}, apiKeyContext: {workerType: 'task', taskId: 't-1'}})
 
         assert.equal(context.origin, 'task')
     })
 
+    test('keeps task traffic in the task tiers when a request crosses the job boundary', async () => {
+        const user = {username: 'bob'}
+        const submitted = await firstValueFrom(contextJob({
+            username: user.username,
+            requestId: 'task-request',
+            request: {
+                headers: {
+                    'sepal-user': JSON.stringify(user),
+                    'sepal-session': JSON.stringify({workerType: 'task', taskId: 't-1'})
+                },
+                query: {}, body: {}
+            }
+        }))
+        const [probe] = contextJob(WORKER)
+
+        const context = await firstValueFrom(probe.worker$({
+            ...submitted.args[0], requestId: submitted.requestId, state: {}
+        }))
+
+        assert.equal(context.username, user.username)
+        assert.equal(context.origin, 'task')
+    })
+
     test('is interactive for a sandbox session\'s request', async () => {
-        const context = await contextOf({sepalUser: {username: 'bob'}, sepalSession: {workerType: 'sandbox', sessionId: 's-1'}})
+        const context = await contextOf({sepalUser: {username: 'bob'}, apiKeyContext: {workerType: 'sandbox', sessionId: 's-1'}})
 
         assert.equal(context.origin, 'interactive')
     })
@@ -135,11 +162,11 @@ const tokens = overrides => ({
     ...overrides
 })
 
-const contextOf = ({sepalUser, sepalSession, requestArgs}, initArgs) => {
+const contextOf = ({sepalUser, apiKeyContext, requestArgs}, initArgs) => {
     const [probe] = contextJob(WORKER)
     return firstValueFrom(probe.worker$({
         requestArgs,
-        credentials: {sepalUser, sepalSession, googleProjectId: SEPAL_PROJECT},
+        credentials: {sepalUser, apiKeyContext, googleProjectId: SEPAL_PROJECT},
         requestId: 'request-1',
         initArgs,
         state: {}

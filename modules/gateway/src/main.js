@@ -196,7 +196,7 @@ const main = async () => {
     process.on('SIGTERM', () => shutdown('SIGTERM'))
     process.on('SIGINT', () => shutdown('SIGINT'))
 
-    server.on('upgrade', webSocketUpgradeHandler({sessionParser, userStore, wss, sandboxProxy, proxies}))
+    server.on('upgrade', webSocketUpgradeHandler({sessionParser, userStore, wss, sandboxProxy, proxies, event$}))
     
     process.on('uncaughtException', error => {
         log.fatal('Uncaught exception', error)

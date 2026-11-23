@@ -46,16 +46,47 @@ export class ClaimRepository {
         })
     }
 
+    async startRecovery(instanceId, sessionId) {
+        const changed = await this.#db.withConnection(async connection => {
+            const {rowCount} = await connection.query(
+                `UPDATE instance_claim SET recovery_started_at = COALESCE(recovery_started_at, now())
+                 WHERE instance_id = $1 AND session_id = $2`,
+                [instanceId, sessionId]
+            )
+            return rowCount > 0
+        })
+        return changed || await this.sessionIdForInstance(instanceId) === sessionId
+    }
+
+    finishRecovery(instanceId, sessionId) {
+        return this.#db.withConnection(connection => connection.query(
+            'UPDATE instance_claim SET recovery_started_at = NULL WHERE instance_id = $1 AND session_id = $2',
+            [instanceId, sessionId]
+        ))
+    }
+
     all() {
         return this.#db.withConnection(async connection => {
             const {rows} = await connection.query(
-                'SELECT instance_id, session_id, claimed_at FROM instance_claim'
+                'SELECT instance_id, session_id, claimed_at, recovery_started_at FROM instance_claim'
             )
             return rows.map(row => ({
                 instanceId: row.instance_id,
                 sessionId: row.session_id,
                 claimedAt: new Date(row.claimed_at),
+                recoveryStartedAt: row.recovery_started_at ? new Date(row.recovery_started_at) : null,
             }))
+        })
+    }
+
+    // null means unclaimed; an empty string is a legacy session key.
+    sessionIdForInstance(instanceId) {
+        return this.#db.withConnection(async connection => {
+            const {rows} = await connection.query(
+                'SELECT session_id FROM instance_claim WHERE instance_id = $1',
+                [instanceId]
+            )
+            return rows[0]?.session_id ?? null
         })
     }
 }

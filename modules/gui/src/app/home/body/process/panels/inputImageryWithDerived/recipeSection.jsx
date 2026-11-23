@@ -2,8 +2,8 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import {isTakenSource} from '~/app/home/body/process/inputImages'
+import {RecipeInput} from '~/app/home/body/process/recipe/sources/recipeInput'
 import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
-import {RecipeInput} from '~/widget/recipeInput'
 
 export class RecipeSection extends React.Component {
     render() {

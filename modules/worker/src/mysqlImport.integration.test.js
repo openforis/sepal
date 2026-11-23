@@ -37,7 +37,7 @@ describe('worker import from MySQL', () => {
             notified_time: new Date('2026-01-02T04:01:00Z'),
             api_key: 'the-key'
         })
-        const claim = aClaim()
+        const claim = aClaim({recovery_started_at: new Date('2026-01-02T03:05:00Z')})
         const app = anApp({label: 'Café 😀 漢字', client_id: 'a-client'})
         const sample = aSample()
         const hour = anHour()
@@ -146,6 +146,7 @@ const aClaim = overrides => ({
     instance_id: 'i-1',
     session_id: 'a-session',
     claimed_at: new Date('2026-01-02T03:04:07Z'),
+    recovery_started_at: null,
     ...overrides
 })
 

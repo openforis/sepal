@@ -13,7 +13,7 @@ import {Buttons} from '~/widget/buttons'
 import {Layout} from '~/widget/layout'
 
 import {withRecipe} from '../../recipeContext'
-import {layerSelection, layerVisualizations, presetVisualizations} from '../visualizations'
+import {layerSelection, layerVisualizations, presetVisualizations} from '../outputs/visualizations'
 import {mapProducts} from './bands'
 import {visualizationOptions} from './visualizations'
 

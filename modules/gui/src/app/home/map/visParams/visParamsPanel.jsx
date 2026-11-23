@@ -3,7 +3,7 @@ import React from 'react'
 import {filter, Subject, takeUntil} from 'rxjs'
 
 import api from '~/apiRegistry'
-import {productArgs} from '~/app/home/body/process/recipe/recipeOutput'
+import {productArgs} from '~/app/home/body/process/recipe/outputs/recipeOutput'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {LegendBuilder, legendEntriesToModel, nextLegendValue} from '~/app/home/map/legendBuilder'
 import {withMap} from '~/app/home/map/mapContext'

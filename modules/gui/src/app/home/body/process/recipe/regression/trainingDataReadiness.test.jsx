@@ -5,7 +5,8 @@ import {legacy_createStore as createStore} from 'redux'
 import {Subject} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {initStore} from '~/store'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 
 // A Regression predicting above-ground biomass from a Landsat composite, and a Remapping of its predictions, through
@@ -17,10 +18,11 @@ import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 // Earth Engine is faked: a plots table answers the rows asked of it when a test says so.
 
 const fake = vi.hoisted(() => ({rows: []}))
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', async () => {
     const {asapScheduler, NEVER, observeOn, of, Subject} = await import('rxjs')
     return {default: {
-        recipe: {save$: () => NEVER, load$: () => NEVER, loadAll$: () => of(LISTING)},
+        recipe: {save$: request => io.storage.save$(request), load$: () => NEVER, loadAll$: () => of(LISTING)},
         gee: {
             // A table's columns, answered once it is chosen, as Earth Engine answers: later.
             loadEETableColumns$: () => of(['agb', 'plot_id']).pipe(observeOn(asapScheduler)),
@@ -43,7 +45,6 @@ vi.mock('~/translate', () => ({msg: (key, values) => {
 vi.mock('~/user', () => ({isServiceAccount: () => false}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => msg && !disabled && typeof msg !== 'function'
@@ -104,12 +105,12 @@ const {addRecipeImageLayer} = await import('../../recipeImageLayerRegistry')
 const {Recipe} = await import('~/app/home/body/process/recipeContext')
 const {SourceRuntimeProvider, withSourceRuntime} = await import('~/app/home/body/process/sourceRuntime/sourceRuntimeContext')
 const {TrainingData} = await import('./panels/trainingData/trainingData')
-const {SectionButton} = await import('../sectionButton')
-const {RecipeImageLayer} = await import('../recipeImageLayer')
-const {retrieveAvailability} = await import('../operationAvailability')
-const {readRetrieveOutput} = await import('../retrieveOutput')
-const {requestGate} = await import('../sourceRequirements')
-const {sourceProblemsOfState} = await import('../selectedSourceStatus')
+const {SectionButton} = await import('../requirements/sectionButton')
+const {RecipeImageLayer} = await import('../map/recipeImageLayer')
+const {retrieveAvailability} = await import('../requirements/operationAvailability')
+const {readRetrieveOutput} = await import('../retrieve/retrieveOutput')
+const {requestGate} = await import('../requirements/sourceRequirements')
+const {sourceProblemsOfState} = await import('../requirements/selectedSourceStatus')
 const {TabContext} = await import('~/widget/tabs/tabContext')
 const {MapAreaContext} = await import('~/app/home/map/mapAreaContext')
 const {EventShield} = await import('~/widget/eventShield')
@@ -128,6 +129,8 @@ beforeEach(() => {
     fake.rows = []
     map.shown = undefined
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -317,8 +320,11 @@ async function open(dataSets) {
         assets: {user: [PLOTS_TABLE, REMEASURED_TABLE].map(id => ({id, type: 'Table', updateTime: 'T1'})), other: []},
         dimensions: {width: 1024, height: 768}
     }
-    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
+    installStore(store)
+    opening.openIn(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

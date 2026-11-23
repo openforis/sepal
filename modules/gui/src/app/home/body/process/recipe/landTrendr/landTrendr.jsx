@@ -1,8 +1,8 @@
 import moment from 'moment'
 import React from 'react'
 
-import {Aoi} from '~/app/home/body/process/recipe/aoi'
-import {initializeLayers} from '~/app/home/body/process/recipe/recipeImageLayerSource'
+import {Aoi} from '~/app/home/body/process/recipe/map/aoi'
+import {initializeLayers} from '~/app/home/body/process/recipe/map/recipeImageLayerSource'
 import {recipe} from '~/app/home/body/process/recipeContext'
 import {Map} from '~/app/home/map/map'
 import {compose} from '~/compose'

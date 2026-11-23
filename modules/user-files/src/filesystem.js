@@ -1,420 +1,194 @@
-import {createReadStream, createWriteStream, realpathSync} from 'node:fs'
-import {chmod, chown, lstat, mkdir, readdir, realpath, rm, stat, unlink} from 'node:fs/promises'
+import {constants} from 'node:fs'
+import {open, readdir, stat} from 'node:fs/promises'
 import Path from 'node:path'
+
+import {lastValueFrom} from 'rxjs'
 
 import {getLogger} from '#sepal/log'
 
+import {describeEntries$, describeEntry, resolvePath} from './homePath.js'
+import {createFolders, publishFile, resolveWritePath} from './homeWrite.js'
+
 const log = getLogger('filesystem')
 
-const resolvePath = (baseDir, path) => {
-    const realBaseDir = realpathSync(baseDir)
-    const absolutePath = realpathSync(Path.join(realBaseDir, path))
-    const relativePath = Path.relative(realBaseDir, absolutePath)
-    const isSubPath = (relativePath === '' || !relativePath.startsWith('..')) // Allow empty as subpath
-    const isExternalPath = !!relativePath && relativePath.startsWith('..')
-    return {
-        absolutePath,
-        relativePath,
-        isSubPath,
-        isExternalPath
-    }
-}
-
-// Only the parent is resolved, so a symlink is removed itself instead of its target.
-export const removeUserPath = async (userHomeDir, path) => {
-    const {absolutePath: parent, isSubPath} = resolvePath(userHomeDir, Path.dirname(path))
-    const name = Path.basename(path)
-    if (!isSubPath || ['', '.', '..'].includes(name)) {
-        throw new Error(`Refusing to remove path outside home: ${path}`)
-    }
-    await rm(Path.join(parent, name), {recursive: true})
-}
-
-const getUserInfo = async userHomeDir => {
-    try {
-        const {uid, gid} = await stat(userHomeDir)
-        return {uid, gid}
-    } catch (error) {
-        throw new Error(`User directory not found: ${userHomeDir}`, {cause: error})
-    }
-}
-
-const resolvePathSafe = (baseDir, path) => {
-    try {
-        return resolvePath(baseDir, path)
-    } catch (error) {
-        return {
-            absolutePath: null,
-            relativePath: null,
-            isSubPath: false,
-            isExternalPath: false,
-            error: error.message
-        }
-    }
-}
-
-async function resolvePathForWrite(homeDir, username, relPath, op, recursive = false) {
-    if (!relPath || relPath === '.' || Path.isAbsolute(relPath)) {
-        throw new Error('Path must be a non-empty relative path')
-    }
-    if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
-        throw new Error('Invalid username')
-    }
-    const operation = op === 'writeFile' ? 'writeFile' : (op === 'mkdir' ? 'mkdir' : null)
-    if (!operation) throw new Error('Invalid operation type')
-
-    const userHomeDir = Path.join(homeDir, username)
-    const userInfo = await getUserInfo(userHomeDir)
-    const baseAbs = await realpath(userHomeDir)
-    const targetAbs = Path.join(baseAbs, relPath)
-
-    const relFromBase = Path.relative(baseAbs, targetAbs)
-    if (!relFromBase || relFromBase.startsWith('..') || Path.isAbsolute(relFromBase)) {
-        throw new Error('Path escapes base directory')
-    }
-
-    const parts = relFromBase.split(Path.sep)
-    let current = baseAbs
-    let firstMissing = null
-
-    for (let i = 0; i < parts.length; i++) {
-        current = Path.join(current, parts[i])
-        const isLast = i === parts.length - 1
-
-        try {
-            const st = await lstat(current)
-            if (st.isSymbolicLink()) throw new Error(`${current} is a symlink`)
-            if (!st.isDirectory() && !isLast) {
-                throw new Error(`Parent path component is not a directory: ${current}`)
-            }
-            if (st.uid !== userInfo.uid) {
-                throw new Error(`Cannot operate inside directories you do not own: ${current}`)
-            }
-
-            if (isLast) {
-                if (operation === 'writeFile') {
-                    if (st.isDirectory()) throw new Error('Target exists and is a directory')
-                    return {targetAbs: current, userInfo, existed: true, firstMissing: null}
-                } else {
-                    if (!st.isDirectory()) throw new Error('Path exists but is not a directory')
-                    return {targetAbs: current, userInfo, existed: true, firstMissing: null}
-                }
-            }
-        } catch (err) {
-            if (err?.code !== 'ENOENT') throw err
-            if (!firstMissing) firstMissing = current
-            if (!isLast) {
-                if (operation === 'writeFile') {
-                    throw new Error(`Parent directory does not exist: ${current}`, {cause: err})
-                }
-                if (!recursive) {
-                    throw new Error(`Parent directory does not exist (enable recursive): ${current}`, {cause: err})
-                }
-            } else {
-                return {targetAbs: current, userInfo, existed: false, firstMissing}
-            }
-        }
-    }
-
-    throw new Error('Unexpected fallthrough')
-}
-
-async function createDirectoryRecursive(targetAbs, userInfo, firstMissing) {
-    if (!firstMissing) return
-    const {uid, gid} = userInfo
-
-    const validateOrCreateOwnedDir = async p => {
-        try {
-            const st = await lstat(p)
-            if (st.isSymbolicLink()) throw new Error(`${p} is a symlink`)
-            if (!st.isDirectory()) throw new Error(`${p} exists but is not a directory`)
-            if (st.uid !== uid) throw new Error('Cannot create inside directories you do not own')
-        } catch (err) {
-            if (err?.code !== 'ENOENT') throw err
-            await mkdir(p)
-            await chown(p, uid, gid)
-            await chmod(p, 0o755)
-        }
-    }
-
-    const rel = Path.relative(firstMissing, targetAbs)
-    let cur = firstMissing
-    await validateOrCreateOwnedDir(cur)
-
-    if (rel) {
-        for (const part of rel.split(Path.sep).filter(Boolean)) {
-            cur = Path.join(cur, part)
-            await validateOrCreateOwnedDir(cur)
-        }
-    }
-}
-
-const getSepalUser = request => {
-    const sepalUser = request.headers['sepal-user']
-    return sepalUser
-        ? JSON.parse(sepalUser)
-        : {}
-}
-
-const download = async (homeDir, ctx) => {
-    const sepalUser = getSepalUser(ctx.request)
-    if (sepalUser && sepalUser.username) {
-        const username = sepalUser.username
-        const {absolutePath: userHomeDir, isSubPath: validUserHome} = resolvePath(homeDir, username)
-        if (!validUserHome) {
-            log.warn('Cannot download - invalid user home:', userHomeDir)
-            ctx.response.status = 404
-            return
-        }
-        const path = ctx.query.path
-        if (!path) {
-            ctx.response.status = 400
-            ctx.body = {error: 'No path specified'}
-            return
-        }
-        try {
-            const {absolutePath, isSubPath: validPath} = resolvePath(userHomeDir, path)
-            if (!validPath) {
-                log.warn('Cannot download - invalid path:', absolutePath)
-                ctx.response.status = 404
-                return
-            }
-            const filename = Path.parse(absolutePath).base
-            const stats = await stat(absolutePath)
-            if (stats.isFile()) {
-                log.debug(`Downloading: ${absolutePath}`)
-                ctx.body = createReadStream(absolutePath)
-                ctx.attachment(filename)
-            } else {
-                log.warn(`Cannot download - non-file: ${absolutePath}`)
-                ctx.response.status = 400
-                ctx.body = {error: 'Cannot download - non-file, only files are supported'}
-            }
-        } catch (error) {
-            log.warn('Cannot download', error)
-            ctx.response.status = 404
-        }
-    } else {
-        log.warn('Cannot download - unauthenticated user')
-        ctx.response.status = 401
-    }
-}
-
-const setFile = async (homeDir, ctx) => {
-    const sepalUser = getSepalUser(ctx.request)
-    if (!sepalUser || !sepalUser.username) {
-        log.warn(() => 'Cannot set file: unauthenticated user')
-        ctx.response.status = 401
-        return
-    }
-
-    const relPath = ctx.query.path
-    const upload = ctx.request.files?.file
-    const allowOverwrite = ctx.query.overwrite === 'true'
-    if (!relPath) {
-        ctx.response.status = 400
-        ctx.body = {error: 'No path specified'}
-        return
-    }
-    if (!upload?.filepath) {
-        ctx.response.status = 400
-        ctx.body = {error: 'No file content provided'}
-        return
-    }
-
-    try {
-        const {targetAbs, existed, userInfo} = await resolvePathForWrite(
-            homeDir, sepalUser.username, relPath, 'writeFile'
-        )
-
-        if (existed && !allowOverwrite) {
-            log.warn(() => `Cannot overwrite existing file: ${targetAbs}`)
-            ctx.response.status = 409
-            ctx.body = {error: 'Cannot overwrite existing files'}
-            return
-        }
-
-        await new Promise((resolve, reject) => {
-            const src = createReadStream(upload.filepath)
-            const dst = createWriteStream(targetAbs, {flags: 'w'})
-            src.on('error', reject)
-            dst.on('error', reject)
-            dst.on('finish', resolve)
-            src.pipe(dst)
-        })
-
-        await chown(targetAbs, userInfo.uid, userInfo.gid)
-        await chmod(targetAbs, 0o644)
-
-        try { await unlink(upload.filepath) } catch {
-            log.warn(() => `Error cleaning up temporary file: ${upload.filepath}`)
-        }
-
-        ctx.response.status = 200
-        ctx.body = {
-            message: existed ? 'File overwritten successfully' : 'File created successfully',
-            path: relPath,
-            overwritten: existed
-        }
-    } catch (error) {
-        log.warn(() => `Error setting file: ${error.message}`)
-        const msg = ('' + error.message).toLowerCase()
-        if (msg.includes('escape') || msg.includes('symlink') || msg.includes('own') || msg.includes('parent')) {
-            ctx.response.status = 403
-            ctx.body = {error: 'Forbidden path'}
-        } else if (msg.includes('directory')) {
-            ctx.response.status = 400
-            ctx.body = {error: error.message}
-        } else {
-            ctx.response.status = 500
-            ctx.body = {error: 'Failed to write file'}
-        }
-    }
-}
-
-const createFolder = async (homeDir, ctx) => {
-    const sepalUser = getSepalUser(ctx.request)
-    if (!sepalUser || !sepalUser.username) {
-        log.warn(() => 'Cannot create directory: unauthenticated user')
-        ctx.response.status = 401
-        return
-    }
-
-    const username = sepalUser.username
-    const path = ctx.query.path
-    const recursive = ctx.query.recursive === 'true'
+export const download = authenticated(async (homeDir, ctx, username) => {
+    const {path} = ctx.query
     if (!path) {
-        ctx.response.status = 400
-        ctx.body = {error: 'No path specified'}
-        return
+        return respond(ctx, 400, {error: 'No path specified'})
     }
-
     try {
-        const {targetAbs, existed, userInfo, firstMissing} = await resolvePathForWrite(
-            homeDir, username, path, 'mkdir', recursive
-        )
-
-        if (existed) {
-            log.warn(() => `Directory already exists: ${targetAbs}`)
-            ctx.response.status = 409
-            ctx.body = {error: 'Directory already exists'}
-            return
+        const resolved = await resolvePath(await resolvePath(homeDir, username), path)
+        const file = await openFile(resolved)
+        if (!file) {
+            log.warn(`Cannot download - non-file: ${resolved}`)
+            return respond(ctx, 400, {error: 'Cannot download - non-file, only files are supported'})
         }
-
-        if (recursive) {
-            await createDirectoryRecursive(targetAbs, userInfo, firstMissing)
-        } else {
-            await mkdir(targetAbs)
-            await chown(targetAbs, userInfo.uid, userInfo.gid)
-            await chmod(targetAbs, 0o755)
-        }
-
-        const userHomeDir = Path.join(homeDir, username)
-        ctx.response.status = 201
-        ctx.body = {
-            message: 'Directory created successfully',
-            path: Path.relative(userHomeDir, targetAbs)
-        }
-
+        log.debug(`Downloading: ${resolved}`)
+        ctx.body = file.createReadStream()
+        ctx.attachment(Path.basename(path))
     } catch (error) {
-        log.error(() => `Error creating directory: ${error.message}`)
-        const msg = ('' + error.message).toLowerCase()
-        if (msg.includes('exists but is not a directory')) {
-            ctx.response.status = 400
-            ctx.body = {error: 'Path exists but is not a directory'}
-        } else if (msg.includes('escape') || msg.includes('symlink') || msg.includes('own') || msg.includes('parent')) {
-            ctx.response.status = 403
-            ctx.body = {error: 'Forbidden path'}
-        } else {
-            ctx.response.status = 500
-            ctx.body = {error: 'Failed to create directory', details: error.message}
-        }
+        log.warn('Cannot download', error)
+        ctx.response.status = 404
     }
-}
+})
 
-const listFiles = async (homeDir, ctx) => {
-    const sepalUser = getSepalUser(ctx.request)
-    if (!sepalUser?.username) {
-        log.warn(() => 'Cannot list files: unauthenticated user')
-        ctx.response.status = 401
-        return
-    }
-
-    const {absolutePath: userHomeDir, isSubPath} = resolvePath(homeDir, sepalUser.username)
-    if (!isSubPath) {
-        log.warn('Cannot list files - invalid user home:', userHomeDir)
+export const listFiles = authenticated(async (homeDir, ctx, username) => {
+    const query = ctx.query || {}
+    const directory = await findDirectory(homeDir, username, query.path || '.')
+    if (!directory) {
         ctx.response.status = 404
         return
     }
-
-    const q = ctx.query || {}
-    const relPath = q.path || '.'
-    const includeHidden = q.includeHidden === 'true'
-    const exts = q.extensions ? new Set(q.extensions.split(',').map(s => s.trim())) : null
-
-    const pathResult = resolvePathSafe(userHomeDir, relPath)
-    if (pathResult.error || !pathResult.isSubPath) {
-        log.warn('Cannot list files - invalid path:', pathResult.absolutePath || pathResult.error)
-        ctx.response.status = 404
-        return
-    }
-    const absolutePath = pathResult.absolutePath
-
     try {
-        const st = await stat(absolutePath)
-        if (!st.isDirectory()) {
-            log.warn(() => `Cannot list non-directory: ${absolutePath}`)
-            ctx.response.status = 404
-            return
-        }
-
-        const names = await readdir(absolutePath)
-        const visible = includeHidden ? names : names.filter(n => !n.startsWith('.'))
-
-        const describe = async name => {
-            const filePath = Path.join(absolutePath, name)
-            try {
-                const fst = await lstat(filePath) // don't follow symlinks
-                const isDir = fst.isDirectory()
-                const isLink = fst.isSymbolicLink()
-
-                if (!isDir && exts) {
-                    const ext = Path.extname(name)
-                    if (!exts.has(ext)) return null
-                }
-
-                return {
-                    name,
-                    path: Path.relative(userHomeDir, filePath),
-                    type: isDir ? 'directory' : (isLink ? 'symlink' : 'file'),
-                    size: fst.size, // for symlinks: size of link itself
-                    modifiedTime: fst.mtime,
-                    ...(isLink ? {isSymlink: true} : null),
-                }
-            } catch (e) {
-                log.warn(() => `Skipping inaccessible entry: ${filePath}, error: ${e.message}`)
-                return null
-            }
-        }
-
-        const fileDetailsArray = await Promise.all(visible.map(describe))
-        const files = fileDetailsArray.filter(Boolean)
-
-        files.sort((a, b) => (a.type === 'directory') === (b.type === 'directory')
-            ? a.name.localeCompare(b.name)
-            : (a.type === 'directory' ? -1 : 1))
-
-        ctx.body = {
-            path: Path.relative(userHomeDir, absolutePath),
-            files,
-            count: files.length
-        }
+        const files = await listDirectory(directory, {
+            includeHidden: query.includeHidden === 'true',
+            extensions: query.extensions && new Set(query.extensions.split(',').map(extension => extension.trim()))
+        })
+        ctx.body = {path: directory.path, files, count: files.length}
     } catch (error) {
         log.error(() => `Error listing directory: ${error.message}`)
-        ctx.response.status = 500
-        ctx.body = {error: 'Failed to list directory contents'}
+        respond(ctx, 500, {error: 'Failed to list directory contents'})
+    }
+})
+
+// Publishes the one file of an upload; upload.js removes its temporary files.
+export const setFile = authenticated(async (homeDir, ctx, username) => {
+    const {path, overwrite} = ctx.query
+    const files = ctx.request.files || {}
+    if (!path) {
+        return respond(ctx, 400, {error: 'No path specified'})
+    }
+    if (Object.values(files).flat().length > 1) {
+        return respond(ctx, 400, {error: 'Only a single file is supported'})
+    }
+    if (!files.file?.filepath) {
+        return respond(ctx, 400, {error: 'No file content provided'})
+    }
+    try {
+        const {target, owner, existed} = await resolveWritePath(homeDir, username, path)
+        if (existed && overwrite !== 'true') {
+            log.warn(() => `Cannot overwrite existing file: ${target}`)
+            return respond(ctx, 409, {error: 'Cannot overwrite existing files'})
+        }
+        await publishFile(files.file.filepath, target, owner, {overwrite: overwrite === 'true'})
+        // Whether a file was there when the request was checked: another may have created or replaced one since.
+        respond(ctx, 200, {
+            message: existed ? 'File overwritten successfully' : 'File created successfully',
+            path,
+            overwritten: existed
+        })
+    } catch (error) {
+        log.warn(() => `Error setting file: ${error.message}`)
+        respondFailure(ctx, error, {error: 'Failed to write file'})
+    }
+})
+
+export const createFolder = authenticated(async (homeDir, ctx, username) => {
+    const {path, recursive} = ctx.query
+    if (!path) {
+        return respond(ctx, 400, {error: 'No path specified'})
+    }
+    try {
+        const {home, target, owner, existed, firstMissing} =
+            await resolveWritePath(homeDir, username, path, {directory: true, recursive: recursive === 'true'})
+        if (existed) {
+            log.warn(() => `Directory already exists: ${target}`)
+            return respond(ctx, 409, {error: 'Directory already exists'})
+        }
+        await createFolders(firstMissing, target, owner)
+        respond(ctx, 201, {message: 'Directory created successfully', path: Path.relative(home, target)})
+    } catch (error) {
+        log.error(() => `Error creating directory: ${error.message}`)
+        respondFailure(ctx, error, {error: 'Failed to create directory'})
+    }
+})
+
+// Handles a request of a SEPAL user, refusing any other. Declared as a function to be hoisted above the handlers.
+function authenticated(handle) {
+    return async (homeDir, ctx) => {
+        const username = sepalUser(ctx.request)?.username
+        if (!username) {
+            log.warn(() => `Refusing unauthenticated request: ${ctx.path}`)
+            ctx.response.status = 401
+            return
+        }
+        return handle(homeDir, ctx, username)
     }
 }
 
-export {createFolder, download, listFiles, resolvePath, setFile}
+// A regular file opened to stream, judged by what was opened rather than by an earlier look at the path: anything
+// else put there meanwhile is closed again and refused, and a FIFO is opened without waiting for a writer.
+const openFile = async path => {
+    const handle = await open(path, constants.O_RDONLY | constants.O_NONBLOCK)
+    const stats = await handle.stat().catch(error => closing(handle, error))
+    if (stats.isFile()) {
+        return handle
+    }
+    await handle.close()
+    return null
+}
 
+const closing = async (handle, error) => {
+    await handle.close()
+    throw error
+}
+
+const sepalUser = request => {
+    const header = request.headers['sepal-user']
+    return header ? JSON.parse(header) : {}
+}
+
+// The directory asked for in the user's home: where it is, and its path as asked, which a linked directory is
+// listed under. None when the path does not lead to a directory in the home.
+const findDirectory = async (homeDir, username, path) => {
+    try {
+        const home = await resolvePath(homeDir, username)
+        const absolutePath = await resolvePath(home, path)
+        const isDirectory = (await stat(absolutePath)).isDirectory()
+        return isDirectory ? {home, absolutePath, path: Path.relative(home, Path.join(home, path))} : null
+    } catch (error) {
+        log.warn(`Cannot list files - unresolvable path: ${path} (${error.code})`)
+        return null
+    }
+}
+
+const listDirectory = async ({home, absolutePath, path}, {includeHidden, extensions}) => {
+    const names = (await readdir(absolutePath)).filter(name => includeHidden || !name.startsWith('.'))
+    const entries = await lastValueFrom(describeEntries$(names, name => listEntry(home, absolutePath, path, name)))
+    return entries
+        .filter(entry => !extensions || entry.type === 'directory' || extensions.has(Path.extname(entry.name)))
+        .sort(directoriesFirst)
+}
+
+const listEntry = async (home, directory, path, name) => {
+    try {
+        const {stats, link} = await describeEntry(home, Path.join(directory, name))
+        return {
+            name,
+            path: Path.join(path, name),
+            type: stats.isDirectory() ? 'directory' : (stats.isSymbolicLink() ? 'symlink' : 'file'),
+            size: stats.size,
+            modifiedTime: stats.mtime,
+            ...link
+        }
+    } catch (error) {
+        log.warn(() => `Skipping inaccessible entry: ${Path.join(directory, name)}, error: ${error.message}`)
+        return null
+    }
+}
+
+const directoriesFirst = (a, b) =>
+    (a.type === 'directory') === (b.type === 'directory')
+        ? a.name.localeCompare(b.name)
+        : (a.type === 'directory' ? -1 : 1)
+
+const respond = (ctx, status, body) => {
+    ctx.response.status = status
+    ctx.body = body
+}
+
+// A refused write is answered with its status and reason, anything else that failed as a server error.
+const respondFailure = (ctx, error, serverError) =>
+    error.status
+        ? respond(ctx, error.status, {error: error.reason})
+        : respond(ctx, 500, serverError)

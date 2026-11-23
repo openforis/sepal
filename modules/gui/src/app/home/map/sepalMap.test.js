@@ -178,12 +178,16 @@ const startRectangleDraft = adapter => {
     adapter.callbacks.onMouseMove(pointerEvent(30, 40))
 }
 
-const completePolygon = (adapter, eventTarget) => {
+const drawPolygonPoints = adapter => {
     adapter.callbacks.onClick(pointerEvent(10, 20))
     adapter.callbacks.onMouseMove(pointerEvent(30, 20))
     adapter.callbacks.onClick(pointerEvent(30, 20))
     adapter.callbacks.onMouseMove(pointerEvent(30, 40))
     adapter.callbacks.onClick(pointerEvent(30, 40))
+}
+
+const completePolygon = (adapter, eventTarget) => {
+    drawPolygonPoints(adapter)
     eventTarget.dispatchEvent(new KeyboardEvent('keyup', {key: 'Enter', bubbles: true}))
 }
 
@@ -334,6 +338,57 @@ describe('polygon drawing', () => {
         expect(drawing.enabled).toBe(false)
         expect(adapter.cursor).toBe('unset')
         expect(adapter.doubleClickToZoom).toBe(true)
+    })
+})
+
+describe('polygon Enter propagation', () => {
+    it('keeps draft Enter keydown local while TerraDraw finishes on keyup', () => {
+        const order = []
+        const harness = createKeyboardHarness({onFinish: () => order.push('terra-keyup-finished')})
+        const stopObserving = observeDocumentKeydown(() => order.push('document-keydown'))
+        try {
+            drawPolygonPoints(harness.adapter)
+
+            dispatchKey(harness.eventTarget, 'keydown', 'Enter')
+            dispatchKey(harness.eventTarget, 'keyup', 'Enter')
+
+            expect(order).toEqual(['terra-keyup-finished'])
+        } finally {
+            stopObserving()
+            harness.dispose()
+        }
+    })
+
+    it('lets Enter reach the document when no polygon draft exists', () => {
+        const harness = createKeyboardHarness()
+        const documentKeys = []
+        const stopObserving = observeDocumentKeydown(event => documentKeys.push(event.key))
+        try {
+            dispatchKey(harness.eventTarget, 'keydown', 'Enter')
+
+            expect(documentKeys).toEqual(['Enter'])
+        } finally {
+            stopObserving()
+            harness.dispose()
+        }
+    })
+
+    it('lets a second Enter reach the document once the polygon is finished', () => {
+        const harness = createKeyboardHarness()
+        const documentKeys = []
+        const stopObserving = observeDocumentKeydown(event => documentKeys.push(event.key))
+        try {
+            drawPolygonPoints(harness.adapter)
+            dispatchKey(harness.eventTarget, 'keydown', 'Enter')
+            dispatchKey(harness.eventTarget, 'keyup', 'Enter')
+
+            dispatchKey(harness.eventTarget, 'keydown', 'Enter')
+
+            expect(documentKeys).toEqual(['Enter'])
+        } finally {
+            stopObserving()
+            harness.dispose()
+        }
     })
 })
 

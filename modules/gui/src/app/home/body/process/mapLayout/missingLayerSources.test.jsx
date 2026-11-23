@@ -6,8 +6,9 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import errorIndicatorStyles from '~/widget/errorIndicator.module.css'
 import listItemStyles from '~/widget/listItem.module.css'
@@ -19,11 +20,12 @@ import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 // naming the recipe, without a notification, until it is removed or names a recipe that loads. The server answers at
 // once.
 
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', async () => {
     const {NEVER, of, throwError} = await import('rxjs')
     return {default: {
         recipe: {
-            save$: () => NEVER,
+            save$: request => io.storage.save$(request),
             loadAll$: () => NEVER,
             load$: id => id === DELETED
                 ? throwError(() => ({name: 'AjaxError', status: 404}))
@@ -32,7 +34,6 @@ vi.mock('~/apiRegistry', async () => {
     }}
 })
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 const notified = vi.hoisted(() => [])
 vi.mock('~/widget/notifications', () => ({Notifications: {error: notification => notified.push(notification)}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
@@ -64,6 +65,8 @@ let root, container, store
 beforeEach(() => {
     notified.length = 0
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -141,8 +144,11 @@ async function open() {
             tabs: [{id: ID}]
         }
     }
-    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
+    installStore(store)
+    opening.openIn(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

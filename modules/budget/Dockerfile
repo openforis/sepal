@@ -1,4 +1,4 @@
-FROM node:26-alpine
+FROM node:26-alpine AS production
 
 ENV MODULE_NAME budget
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
@@ -29,3 +29,10 @@ ADD --chmod=0755 modules/${MODULE_NAME}/start.sh /usr/local/bin/start.sh
 
 USER node
 CMD /usr/local/bin/start.sh
+
+FROM production AS test
+# The import suites' source schema
+ADD modules/${MODULE_NAME}/migrations-mysql ${MODULE}/migrations-mysql
+CMD ["npm", "test"]
+
+FROM production

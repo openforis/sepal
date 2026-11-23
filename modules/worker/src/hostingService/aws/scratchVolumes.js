@@ -14,6 +14,7 @@ import {
     DescribeVolumesCommand,
     DetachVolumeCommand,
     ModifyInstanceAttributeCommand,
+    waitUntilInstanceRunning,
     waitUntilVolumeAvailable,
     waitUntilVolumeInUse,
 } from '@aws-sdk/client-ec2'
@@ -51,6 +52,7 @@ export class ScratchVolumes {
             return null
         }
         if (await this.#attachedVolumeId(instance.id)) {
+            await this.#enableDeleteOnTermination(instance.id)
             return DEVICE_NAME
         }
         const {VolumeId: volumeId} = await this.#client.send(new CreateVolumeCommand({
@@ -63,20 +65,21 @@ export class ScratchVolumes {
             }],
         }))
         await waitUntilVolumeAvailable({client: this.#client, ...WAITER}, {VolumeIds: [volumeId]})
+        await waitUntilInstanceRunning({client: this.#client, ...WAITER}, {InstanceIds: [instance.id]})
         await this.#client.send(new AttachVolumeCommand({InstanceId: instance.id, VolumeId: volumeId, Device: DEVICE_NAME}))
         await waitUntilVolumeInUse({client: this.#client, ...WAITER}, {VolumeIds: [volumeId]})
-        await this.#client.send(new ModifyInstanceAttributeCommand({
-            InstanceId: instance.id,
-            BlockDeviceMappings: [{DeviceName: DEVICE_NAME, Ebs: {DeleteOnTermination: true}}],
-        }))
+        await this.#enableDeleteOnTermination(instance.id)
         log.info(`Attached scratch volume ${volumeId} to ${instanceTag(instance)}`)
         return DEVICE_NAME
     }
 
     // The volume must no longer be mounted: the caller has removed the containers using it.
-    async remove(instanceId) {
+    async remove(instanceId, {requireAttached = false} = {}) {
         const volumeId = await this.#attachedVolumeId(instanceId)
         if (!volumeId) {
+            if (requireAttached) {
+                throw new Error(`Expected scratch attachment missing on ${instanceTag(instanceId)}`)
+            }
             return
         }
         await this.#client.send(new DetachVolumeCommand({InstanceId: instanceId, VolumeId: volumeId}))
@@ -115,6 +118,13 @@ export class ScratchVolumes {
     #needsVolume(instanceType) {
         const type = this.#instanceTypeById.get(instanceType)
         return !type || type.ssdGB === 0 || type.name.startsWith('x1.')
+    }
+
+    async #enableDeleteOnTermination(instanceId) {
+        await this.#client.send(new ModifyInstanceAttributeCommand({
+            InstanceId: instanceId,
+            BlockDeviceMappings: [{DeviceName: DEVICE_NAME, Ebs: {DeleteOnTermination: true}}],
+        }))
     }
 
     async #attachedVolumeId(instanceId) {

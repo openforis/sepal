@@ -12,7 +12,7 @@ const {recipeType} = await import('#sepal/recipe/recipeTypeRegistry')
 const {buildRecipeDependencyGraph} = await import('#sepal/recipe/source/dependencyGraph')
 
 const {bandMathRequirements} = await import('./bandMathRequirements')
-const {readSourceRequirements, readKey, requestGate} = await import('../sourceRequirements')
+const {readSourceRequirements, readKey, requestGate} = await import('../requirements/sourceRequirements')
 
 registry.BAND_MATH = {sourceRequirements: bandMathRequirements}
 

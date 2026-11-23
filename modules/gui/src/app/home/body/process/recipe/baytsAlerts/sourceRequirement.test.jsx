@@ -6,11 +6,12 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe, withRecipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore, openStoredRecipe} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {compose} from '~/compose'
 import translations from '~/locale/en/translations.json'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 import {tooltipText} from '~/widget/tooltip.test.fixtures'
 
 // Whether BAYTS Alerts' reference suits what reads it, composed as its editor composes it - the evidence lifecycle, the
@@ -18,7 +19,7 @@ import {tooltipText} from '~/widget/tooltip.test.fixtures'
 // storage are faked.
 
 const fake = vi.hoisted(() => ({
-    assets: {}, failing: new Set(), heldMetadata: null, cancelledMetadata: [], versions: {}, calls: [], stored: {}
+    assets: {}, failing: new Set(), heldMetadata: null, cancelledMetadata: [], versions: {}, calls: [], storage: null
 }))
 vi.mock('~/apiRegistry', async () => {
     const {Observable, of, throwError} = await import('rxjs')
@@ -47,16 +48,16 @@ vi.mock('~/apiRegistry', async () => {
             datasets$: () => of({community: {datasets: [], matchingResults: 0}, gee: {datasets: [], matchingResults: 0}}),
             assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: fake.versions[id] ?? 'v1'}))})
         },
-        // Storage holds the recipes the session does.
+        // Storage holds the recipes the session does, and saves them as the recipe module does.
         recipe: {
-            load$: id => fake.stored[id] ? of(fake.stored[id]) : throwError(() => new Error(`Recipe ${id} not found`)),
+            load$: id => fake.storage.load$(id),
+            save$: request => fake.storage.save$(request),
             loadAll$: () => of(LISTING)
         }
     }}
 })
 vi.mock('~/translate', () => ({msg: (key, values) => [[key].flat().join('.'), ...values ? [JSON.stringify(values)] : []].join(' ')}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // The REF panel opens with the editor, and closes as it does when cancelled or applied.
 vi.mock('~/widget/activation/activatable', async () => {
     const {useState} = await import('react')
@@ -101,17 +102,17 @@ vi.mock('~/app/home/map/layer/earthEngineImageLayer', () => ({
     }
 }))
 
-const {SourceEvidenceSync} = await import('../sourceEvidenceSync')
+const {SourceEvidenceSync} = await import('../sources/sourceEvidenceSync')
 const {baytsAlertsObservation} = await import('./referenceObservation')
 const {baytsAlertsRequirements} = await import('./sourceRequirement')
 const {mapProducts} = await import('./bands')
 const {Reference} = await import('./panels/reference/reference')
 const {Preprocess} = await import('./panels/preprocess/preprocess')
 const {Options: HistoricalOptions} = await import('../baytsHistorical/panels/options/options')
-const {RetrieveButton} = await import('../retrieveButton')
-const {withRetrieveOutput} = await import('../withRetrieveOutput')
-const {retrieveDecision} = await import('../retrieveOutput')
-const {RecipeImageLayer} = await import('../recipeImageLayer')
+const {RetrieveButton} = await import('../retrieve/retrieveButton')
+const {withRetrieveOutput} = await import('../retrieve/withRetrieveOutput')
+const {retrieveDecision} = await import('../retrieve/retrieveOutput')
+const {RecipeImageLayer} = await import('../map/recipeImageLayer')
 const {addRecipeImageLayer} = await import('../../recipeImageLayerRegistry')
 const {recipeAccess} = await import('../../recipeAccess')
 const {Toolbar} = await import('~/widget/toolbar/toolbar')
@@ -120,12 +121,12 @@ const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
 const {actionBuilder} = await import('~/action-builder')
 const {Subject} = await import('rxjs')
-const {IMAGE_OUTPUT} = await import('../recipeOutput')
+const {IMAGE_OUTPUT} = await import('../outputs/recipeOutput')
 const {RADAR_OBSERVATION} = await import('#sepal/recipe/type/baytsAlerts')
 const {
     CHECKING_SOURCE, selectedSourceStatusOfState, sourceProblemsOfState, UNAVAILABLE_SOURCE, UNSUITABLE_SOURCE
-} = await import('../selectedSourceStatus')
-const {requestGate} = await import('../sourceRequirements')
+} = await import('../requirements/selectedSourceStatus')
+const {requestGate} = await import('../requirements/sourceRequirements')
 
 // BAYTS Alerts' own layer form is replaced by nothing: what a layer requests is what is observed.
 addRecipeImageLayer('BAYTS_ALERTS', () => null)
@@ -152,9 +153,11 @@ beforeEach(() => {
     fake.cancelledMetadata = []
     fake.versions = {}
     fake.calls = []
-    fake.stored = Object.fromEntries(RECORDS.map(record => [record.id, record]))
+    fake.storage = recipeStorage({records: RECORDS})
     previews.constructed = []
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -791,20 +794,22 @@ const ALERT_LAYER = {
 }
 const FIRST_OBSERVATION_LAYER = {visualizationType: 'first', visParams: {type: 'continuous', bands: ['VV']}}
 
-const sessionState = ({selection, options = HISTORICAL_OPTIONS, tabs, initialized = true}) => ({
+const alertsRecord = ({selection, options = HISTORICAL_OPTIONS, initialized = true}) => ({
+    id: ALERTS, type: 'BAYTS_ALERTS', revision: 1,
+    model: {
+        reference: selection,
+        date: {monitoringEnd: '2024-01-01', monitoringDuration: 2, monitoringDurationUnit: 'months'},
+        options,
+        baytsAlertsOptions: {}
+    },
+    ui: {initialized}
+})
+
+const sessionState = ({alerts, tabs}) => ({
     user: {currentUser: {googleTokens: {accessToken: 'token'}}},
     process: {
         loadedRecipes: {
-            [ALERTS]: {
-                id: ALERTS, type: 'BAYTS_ALERTS', revision: 1,
-                model: {
-                    reference: selection,
-                    date: {monitoringEnd: '2024-01-01', monitoringDuration: 2, monitoringDurationUnit: 'months'},
-                    options,
-                    baytsAlertsOptions: {}
-                },
-                ui: {initialized}
-            },
+            ...alerts ? {[ALERTS]: alerts} : {},
             [HOST]: {id: HOST, type: 'MOSAIC', revision: 1, model: {}, ui: {initialized: true}},
             ...Object.fromEntries(RECORDS.map(record => [record.id, record]))
         },
@@ -851,10 +856,20 @@ const onAnotherMap = async ({selection, layers}) => {
     await mount({selection, tabs: [{id: HOST}], shown: {owner: false, panel: false, actions: false, layers}})
 }
 
-const mount = async ({selection, options, initialized, tabs, shown}) => {
-    const initialState = sessionState({selection, options, initialized, tabs})
+// Alerts already saved are stored, and their editor opens them as navigation does; alerts being created are held by the
+// session alone.
+const mount = async ({selection, options, initialized = true, tabs, shown}) => {
+    const alerts = alertsRecord({selection, options, initialized})
+    if (initialized) {
+        fake.storage.store(alerts)
+    }
+    const opening = initialized && tabs.some(({id}) => id === ALERTS)
+    const initialState = sessionState({alerts: opening ? null : alerts, tabs: tabs.filter(({id}) => !opening || id !== ALERTS)})
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
+    if (opening) {
+        openStoredRecipe(store, fake.storage, ALERTS)
+    }
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
@@ -863,6 +878,7 @@ const mount = async ({selection, options, initialized, tabs, shown}) => {
 }
 
 const showEditor = async () => {
+    // Its tab alone: opened as navigation opens it, from storage, the evidence held for the alerts would be read again.
     await act(async () => actionBuilder('OPEN_TAB').set('process.tabs', [{id: HOST}, {id: ALERTS}]).dispatch())
     mounted = {...mounted, owner: true}
     await render()

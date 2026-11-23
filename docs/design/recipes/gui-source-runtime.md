@@ -6,6 +6,59 @@ instance. Components request source questions without owning catalogues, travers
 [source resolution](source-resolution.md) owns shared requirements and authorization;
 [behavior contracts](behavior-contracts.md) owns the user interaction.
 
+## Code layout
+
+Shared recipe GUI code lives in `modules/gui/src/app/home/body/process/recipe/`, beside one folder per recipe type,
+grouped by responsibility. Each group imports only the groups listed before it:
+
+| Folder | Responsibility |
+| --- | --- |
+| `outputs/` | The common output read, its dependency graph and watches, preview pixel generation and visualizations. |
+| `sources/` | The recipe selector (`RecipeInput`), evidence about selected sources, and the CCDC segment capability. |
+| `requirements/` | Reading declared requirements, gating operations, and presenting findings at toolbars and fields. |
+| `collections/` | What image-collection Sources share: the data-set period, collection bands, the selected Classification and initial data sets. |
+| `editing/` | Candidates, submissions and derived or calculated results behind `process/recipeFormPanel.jsx`. |
+| `map/` | The recipe's image layer, its layer source and the AOI bounds. |
+| `charts/` | Pixel chart actions, headers, updates and CSV export. |
+| `retrieve/` | What may be retrieved, task submission and the common Retrieve panel. |
+
+Acquisition stays in `process/sourceRuntime/`, including the evidence basis and the image-output observer, and shared
+GUI/server policies in `lib/js/shared`. What the session holds of storage - drafts, cache acceptance and claims, listing
+authority and save coordination - is in `process/recipeSession/`. Code one type owns stays in its folder, even where
+other types reuse it; `mosaic/` holds the AOI and radar-options panels several types share.
+
+## Recipe session
+
+Each store has one recipe session (`recipeSession/recipeSession.js`): the autosave and the records it compares edits
+against, the save coordinator with its revisions and timers, and the claims on the recipe cache with the adapter its
+claimants read and write through. `index.jsx` starts it where it installs the store (`startRecipeSession(store)`), and
+it lives as long as the store - a page load. Asking for a store's session (`recipeSessionOf(store)`) never starts one:
+for a store that started none it fails, so no session starts unawares or compares edits from later than its store's
+installation. The UI reaches it through the installed store (`currentRecipeSession()`), the source runtime through the
+store it is given; a claimant through the runtime's own adapter shares the session's claims, and another store's
+session claims apart. Panels, recipe tabs and the Process screen come and go without ending it.
+
+Everything a session does later is applied to its own store, never to whichever store is installed then: a published
+save state, an acknowledged revision, an entry its last claimant releases, a read landing in the cache. A session
+compares edits against what its store held when it started, so records a store is created holding are no edits, and
+saves on top of the revisions it opened or was acknowledged. A recipe is opened at its revision before its tab is
+(`openRecipeById$`), so the load is not taken for an edit.
+
+`dispose()` ends a session: its store subscription is dropped, nothing it queued is sent, a save still being
+compressed never starts, no wait is timed and its claimants write and remove nothing. A write already sent is not
+withdrawn - storage may have accepted it - but nothing it is answered with is applied. The application never disposes
+its session. Tests install a store as the application does (`installStore`, `recipeSession.test.fixtures.js`) and
+dispose its session as each test ends, whether or not they stand in for storage: an edit starts a save either way, and
+a session left running would carry it into the next test. Where edits save, tests stand in for storage as the recipe
+module answers (`recipeStorage.test.fixtures.js`) and open a saved recipe as navigation does (`openStoredRecipe`,
+`storedOpenRecipes`): a recipe given a tab without being opened saves as a new one, which storage refuses as a
+conflict. Once its sessions are disposed, a test fails for any save the storage fake refused or could not process.
+
+A store serves one account. Logging out, a refused request (401) and a login session ended elsewhere reload the page
+(`user.js`, `http-client.js`, `loginSessionMonitor.jsx`), starting another store and session. Logging in from Landing,
+and through a password-set link, which starts the application logged off (`startLoggedOff$`), begin from a store
+holding no recipes. Reloading the current user's details or Google account (`loadUser$`) keeps the account.
+
 ## Public boundary
 
 `SourceRuntimeContext` exposes one stable service object, not records or observer state. The Redux adapter uses the
@@ -103,7 +156,7 @@ by an evidence write. Releasing the last watcher cancels work and releases recor
 
 A candidate represents the recipe with the panel's values applied. Output and local candidates judge the recipe as
 the panel's submission leaves it - its model at its path and the rest of the recipe its values imply
-(`additionalUpdates`) - by the construction its commit applies (`recipe/formSubmission.js`); the source candidate
+(`additionalUpdates`) - by the construction its commit applies (`recipe/editing/formSubmission.js`); the source candidate
 overlays the panel's model alone, as the alerts' seeded updates derive from its facts. If the applied observation's
 basis holds for it, reuse that evidence; otherwise observe privately. The candidate neither publishes evidence nor changes the
 applied recipe/drawing. Source replacement, Cancel and panel closure release superseded work. Refresh targets the

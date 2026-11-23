@@ -8,9 +8,9 @@ import {selectFrom} from '~/stateUtils'
 
 import {withRecipe} from '../../../../recipeContext'
 import {withSourceRuntime} from '../../../../sourceRuntime/sourceRuntimeContext'
-import {MosaicRetrievePanel} from '../../../mosaic/panels/retrieve/retrievePanel'
-import {retrievedRecordOf} from '../../../retrieveOutput'
-import {selectedClassificationOfState} from '../../../selectedClassification'
+import {selectedClassificationOfState} from '../../../collections/selectedClassification'
+import {retrievedRecordOf} from '../../../retrieve/retrieveOutput'
+import {MosaicRetrievePanel} from '../../../retrieve/retrievePanel'
 import {submitRetrieveTask} from '../../ccdcRecipe'
 import {ccdcMeasureSelection} from '../../retrieveSelection'
 

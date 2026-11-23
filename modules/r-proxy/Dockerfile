@@ -1,4 +1,4 @@
-FROM openforis/sandbox-base
+FROM openforis/sandbox-base AS production
 
 EXPOSE 80
 
@@ -49,3 +49,8 @@ ADD modules/${MODULE_NAME}/config ${MODULE}/config
 ADD modules/${MODULE_NAME}/start.sh /usr/local/bin
 
 CMD start.sh
+
+FROM production AS test
+CMD ["npm", "test"]
+
+FROM production

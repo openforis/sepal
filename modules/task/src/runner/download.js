@@ -1,6 +1,6 @@
 import {createWriteStream} from 'node:fs'
-import {mkdir, rename, rm} from 'node:fs/promises'
-import {dirname, relative, resolve, sep} from 'node:path'
+import {mkdir, mkdtemp, rename, rm, rmdir} from 'node:fs/promises'
+import {dirname, join, relative, resolve, sep} from 'node:path'
 import {Readable} from 'node:stream'
 import {pipeline} from 'node:stream/promises'
 import {setTimeout} from 'node:timers/promises'
@@ -35,6 +35,7 @@ export const downloadFiles = async ({destination, dir, sepal, report, signal, fe
     if (!signal.aborted) {
         progress.done()
         log.info(`Downloaded ${summary}`)
+        return [...targets.values()]
     }
 }
 
@@ -75,9 +76,20 @@ class Listing {
     }
 }
 
-const downloadFile = async ({name, path, listing, progress, fetchFn, sleep, signal}) => {
-    const partial = `${path}.part`
+// The tasks of a user share the home they download into, so two can download the same path at once. Each download
+// stages in a directory that only it created, beside path so that publishing is a rename. Its file is published or
+// removed by then, so only the empty directory is removed: anything else put there is not this download's.
+const downloadFile = async ({path, ...download}) => {
     await mkdir(dirname(path), {recursive: true})
+    const staging = await mkdtemp(join(dirname(path), 'partial-download-'))
+    try {
+        await downloadWithRetries({...download, path, partial: join(staging, 'file')})
+    } finally {
+        await rmdir(staging).catch(error => log.warn(`Cannot remove download staging ${staging} (${error.code})`))
+    }
+}
+
+const downloadWithRetries = async ({name, path, partial, listing, progress, fetchFn, sleep, signal}) => {
     let refusals = 0
     for (let attempt = 1; !signal.aborted; attempt++) {
         const {url, headers, size} = await listing.file(name)

@@ -20,7 +20,7 @@ const parseHeader = (ctx, name) => {
 
 const getCredentials = ctx => ({
     sepalUser: parseHeader(ctx, 'sepal-user') || {},
-    sepalSession: parseHeader(ctx, 'sepal-session'),
+    apiKeyContext: parseHeader(ctx, 'sepal-session'),
     serviceAccountCredentials: config.serviceAccountCredentials,
     googleProjectId: config.googleProjectId
 })

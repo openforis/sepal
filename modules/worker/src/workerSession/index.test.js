@@ -12,7 +12,7 @@ const STARTED_AT = new Date('2026-01-01T12:00:00Z')
 
 const timedOutSession = createWorkerSession({
     id: 's-1',
-    state: State.ACTIVE,
+    state: State.PENDING,
     username: 'alice',
     workerType: 'sandbox',
     instanceType: 'T3aSmall',
@@ -23,10 +23,10 @@ const timedOutSession = createWorkerSession({
 
 const makeRepo = () => ({
     update: mock.fn(async () => true),
-    getSession: mock.fn(async () => timedOutSession),
     sessionOnInstance: mock.fn(async () => null),
     sessions: mock.fn(async () => []),
     timedOutSessions: mock.fn(async () => [timedOutSession]),
+    closeTimedOutSession: mock.fn(async () => true),
 })
 
 const makeInstanceManager = () => ({

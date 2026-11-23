@@ -3,7 +3,7 @@ import {getLogger} from '#sepal/log'
 const log = getLogger('currentUser')
 
 const HEADER = 'sepal-user'
-const SESSION_HEADER = 'sepal-session'
+const API_KEY_CONTEXT_HEADER = 'sepal-session'
 const ADMIN_ROLE = 'application_admin'
 
 export const isAdmin = user =>
@@ -44,7 +44,7 @@ export const requireTaskSession = async (ctx, next) => {
         refuseUnauthenticated(ctx)
         return
     }
-    const session = parseHeader(ctx, SESSION_HEADER)
+    const session = parseHeader(ctx, API_KEY_CONTEXT_HEADER)
     if (session?.workerType !== 'task' || !session.taskId) {
         ctx.status = 403
         ctx.body = {message: 'Task session required'}

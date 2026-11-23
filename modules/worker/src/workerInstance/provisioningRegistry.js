@@ -1,54 +1,63 @@
-// ProvisioningRegistry — which instances are being provisioned RIGHT NOW, in this process.
-//
-// provisionInstance starts by deleting the instance's existing containers, so two overlapping
-// provisions of one instance destroy each other's work. Every path that provisions goes through
-// run(), and a second caller for the same instance is DROPPED rather than queued: the first one
-// is already doing exactly what the second would ask for.
-//
-// An entry is keyed by instance but belongs to the session it was started for. Once that instance
-// is released the entry stands for nothing — see forget().
-//
-// In-memory and per-process. A restart forgetting it is the safe direction — after a restart,
-// nobody is provisioning anything.
+// Coordinate provisioning and release in one process; durable claims protect allocation.
+// Replacing an entry cancels its callbacks by identity, even if the same session starts again.
 
 const createProvisioningRegistry = () => {
-    const sessionIdByInstanceId = new Map()
+    const entries = new Map()
 
-    const isProvisioning = instanceId => sessionIdByInstanceId.has(instanceId)
+    // Reconciliation treats releases as busy too.
+    const isProvisioning = instanceId => entries.has(instanceId)
 
-    // run(instanceId, sessionId, fn) — true when fn ran, false when it was dropped. fn's rejection
-    // propagates to the caller; the entry is cleared either way, so a failed provision does not
-    // lock the instance out of the next attempt.
-    //
-    // fn receives isCurrent(): false once the entry is forgotten or taken over by another session.
-    // A provision outlives its session by up to seventeen minutes, and must stop touching the
-    // instance once it does.
+    // Duplicate starts are dropped; fn receives a predicate invalidated by release.
     const run = async (instanceId, sessionId, fn) => {
-        if (sessionIdByInstanceId.has(instanceId)) {
+        sessionId = sessionId ?? ''
+        const previous = entries.get(instanceId)
+        if (previous && (!Object.hasOwn(previous, 'retire') || previous.sessionId === sessionId)) {
             return false
         }
-        sessionIdByInstanceId.set(instanceId, sessionId)
-        const isCurrent = () =>
-            sessionIdByInstanceId.has(instanceId) && sessionIdByInstanceId.get(instanceId) === sessionId
+        const entry = {sessionId, scratch: Promise.resolve(null)}
+        entries.set(instanceId, entry)
+        const isCurrent = () => entries.get(instanceId) === entry
+        const prepareScratch = attach => {
+            const pending = (async () => attach())()
+            entry.scratch = Promise.all([entry.scratch, pending]).then(([, device]) => device)
+            // Keep failed attachment history for recovery, even if provisioning retries successfully.
+            entry.scratch.catch(() => {})
+            return pending
+        }
         try {
-            await fn(isCurrent)
+            await fn(isCurrent, {prepareScratch})
         } finally {
-            // Clear only the entry THIS call made. A forgotten provision that settles late must
-            // not take the entry of the session that holds the instance now with it.
-            if (sessionIdByInstanceId.get(instanceId) === sessionId) {
-                sessionIdByInstanceId.delete(instanceId)
+            // A late completion must not clear its replacement's gate.
+            if (isCurrent()) {
+                entries.delete(instanceId)
             }
         }
         return true
     }
 
-    // forget(instanceId) — the instance is no longer the session's, so neither is its entry.
-    // Provisioning retries for up to seventeen minutes; without this, an entry against an
-    // instance released mid-provision outlives its session and silently drops the provisioning of
-    // whichever session the pool hands that instance to next.
-    const forget = instanceId => sessionIdByInstanceId.delete(instanceId)
+    const beginRelease = (instanceId, sessionId, {retire = false} = {}) => {
+        sessionId = sessionId ?? ''
+        const previous = entries.get(instanceId)
+        if (previous && previous.sessionId !== sessionId) {
+            return null
+        }
+        const releaseToken = {
+            sessionId,
+            retire: retire || !!previous,
+            scratch: previous?.scratch,
+            isCurrent: () => entries.get(instanceId) === releaseToken,
+        }
+        entries.set(instanceId, releaseToken)
+        return releaseToken
+    }
 
-    return {isProvisioning, run, forget}
+    const finishRelease = (instanceId, releaseToken) => {
+        if (entries.get(instanceId) === releaseToken) {
+            entries.delete(instanceId)
+        }
+    }
+
+    return {isProvisioning, run, beginRelease, finishRelease}
 }
 
 export {createProvisioningRegistry}

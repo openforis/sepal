@@ -20,7 +20,7 @@ export const loadApps$ = () =>
         )
     )
 
-// The session report is kept fresh by the worker/session websocket (~/widget/sessionMonitor), so
+// The session report is kept fresh by the worker/session websocket (~/app/home/monitoring/sessionMonitor), so
 // waiting for a session to start is a store subscription rather than a poll. Emit the current value
 // on subscribe so a session that is already running resolves without waiting for a push.
 const sessions$ = () => new Observable(subscriber => {

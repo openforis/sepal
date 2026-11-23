@@ -4,10 +4,8 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 // the generic Retrieve submission. Only the task API and notifications are replaced.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
-// Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
-vi.mock('~/user', () => ({}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
-vi.mock('~/app/home/body/process/recipe/recipeOutputPath', () => ({getTaskInfo: () => ({})}))
+vi.mock('~/app/home/body/process/recipe/retrieve/recipeOutputPath', () => ({getTaskInfo: () => ({})}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 
 const submitted = vi.hoisted(() => [])
@@ -30,9 +28,9 @@ const {default: masking} = await import('../masking/masking')
 const {default: stack} = await import('../stack/stack')
 const {retrieveTask: maskingTask} = await import('../masking/maskingRecipe')
 const {retrieveTask: stackTask} = await import('../stack/stackRecipe')
-const {buildMapDependencyGraph} = await import('../mapDependencyGraph')
-const {readRecipeOutput} = await import('../recipeOutput')
-const {physicalRequest, submitRetrieve} = await import('../retrieveOutput')
+const {buildMapDependencyGraph} = await import('../outputs/mapDependencyGraph')
+const {readRecipeOutput} = await import('../outputs/recipeOutput')
+const {physicalRequest, submitRetrieve} = await import('../retrieve/retrieveOutput')
 
 addRecipeType(baytsHistorical())
 addRecipeType(masking())

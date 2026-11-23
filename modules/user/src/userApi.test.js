@@ -22,7 +22,7 @@ const repository = {
         users.set(username, {...details, username, status: 'PENDING', revision: 1})
     },
     // The conditional write of the real repository: nothing happens on a stale revision.
-    updateUserDetails: async ({username, revision, ...details}) => {
+    updateUserDetails: async ({username, revision, admin, ...details}) => {
         const user = users.get(username)
         if (!user || (revision != null && revision !== user.revision)) {
             return false
@@ -30,7 +30,7 @@ const repository = {
         if (isEmailTaken(details.email, username)) {
             throw new DuplicateUserError()
         }
-        users.set(username, {...user, ...details, revision: user.revision + 1})
+        users.set(username, {...user, ...details, admin: admin ?? user.admin, revision: user.revision + 1})
         return true
     }
 }

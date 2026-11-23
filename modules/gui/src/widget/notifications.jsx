@@ -1,18 +1,15 @@
-import _ from 'lodash'
-import hash from 'object-hash'
 import PropTypes from 'prop-types'
 import React from 'react'
-import {delay, filter, map, merge, mergeMap, scan, Subject, takeWhile, timer} from 'rxjs'
+import {delay, filter, map, merge, mergeMap, scan, takeWhile, timer} from 'rxjs'
 
 import {compose} from '~/compose'
-import {publishError} from '~/eventPublisher'
 import {withSubscriptions} from '~/subscription'
 import {msg} from '~/translate'
-import {uuid} from '~/uuid'
 
 import {CopyButton} from './copyButton'
 import {Layout} from './layout'
 import {messageLines, messageTextLines} from './messageLines'
+import {manuallyDismissed$, notify, published$} from './notificationPublisher'
 import styles from './notifications.module.css'
 import {setNotificationsContainer} from './notificationsContainer'
 import {Scrollable} from './scrollable'
@@ -20,10 +17,7 @@ import {Scrollable} from './scrollable'
 const PUBLISH_ANIMATION_DURATION_MS = 500
 const DISMISS_ANIMATION_DURATION_MS = 500
 
-const publish$ = new Subject()
-const manualDismiss$ = new Subject()
-
-const autoDismiss$ = publish$.pipe(
+const autoDismiss$ = published$.pipe(
     filter(({timeout}) => timeout),
     mergeMap(({id, timeout}) =>
         timer(0, 1000).pipe(
@@ -35,49 +29,15 @@ const autoDismiss$ = publish$.pipe(
 )
 
 const dismiss$ = merge(
-    manualDismiss$,
+    manuallyDismissed$,
     autoDismiss$.pipe(
         filter(({timeout}) => timeout === 0),
         map(({id}) => id)
     )
 )
 
-const added$ = publish$.pipe(delay(PUBLISH_ANIMATION_DURATION_MS))
+const added$ = published$.pipe(delay(PUBLISH_ANIMATION_DURATION_MS))
 const removed$ = dismiss$.pipe(delay(DISMISS_ANIMATION_DURATION_MS))
-
-const getGroup = ({group = false, id, ...notification}) =>
-    group === false
-        ? id
-        : group === true
-            ? hash(_.omit(notification, ['id', 'error'])) // id and error are excluded
-            : group
-
-const publish = notification => {
-    const publish = notification =>
-        publish$.next({
-            ...notification,
-            group: getGroup(notification)
-        })
-
-    const defaultTitle = {
-        'error': msg('widget.notification.error.title'),
-        'warning': msg('widget.notification.warning.title')
-    }
-
-    const applyDefaults = ({
-        id = uuid(),
-        level = 'info',
-        title = defaultTitle[level],
-        timeout = 8,
-        dismissable = true,
-        ...notification
-    }) => ({id, level, title, timeout, dismissable, ...notification, adding: true})
-
-    publish(applyDefaults(notification))
-}
-
-const dismiss = notificationId =>
-    manualDismiss$.next(notificationId)
 
 class _Notifications extends React.Component {
     state = {
@@ -177,7 +137,7 @@ class _Notifications extends React.Component {
 
     renderNotification(notification) {
         const {id, level, message, error, content, link, timeout, dismissable, adding, removing} = notification
-        const dismiss = () => manualDismiss$.next(id)
+        const dismiss = () => notify.dismiss(id)
         return id
             ? (
                 <div
@@ -250,7 +210,7 @@ class _Notifications extends React.Component {
     componentDidMount() {
         const {addSubscription} = this.props
         addSubscription(
-            publish$.subscribe(notification => {
+            published$.subscribe(notification => {
                 this.setState(({notifications}) => ({notifications: this.withPublished(notifications, notification)}))
             }),
             dismiss$.subscribe(id => {
@@ -324,25 +284,15 @@ export const Notifications = compose(
     withSubscriptions()
 )
 
-Notifications.success = notification =>
-    publish({...notification, level: 'success'})
+Notifications.success = notify.success
 
-Notifications.info = notification =>
-    publish({...notification, level: 'info'})
+Notifications.info = notify.info
 
-Notifications.warning = notification =>
-    publish({...notification, level: 'warning'})
+Notifications.warning = notify.warning
 
-Notifications.error = notification => {
-    publish({...notification, level: 'error'})
-    publishError(typeof notification === 'string'
-        ? notification
-        : (notification.message || notification)
-    )
-}
+Notifications.error = notify.error
 
-Notifications.dismiss = notificationId =>
-    dismiss(notificationId)
+Notifications.dismiss = notify.dismiss
 
 Notifications.propTypes = {
     content: PropTypes.func,

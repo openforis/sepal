@@ -1,4 +1,4 @@
-import {defer, finalize, interval, map, switchMap, takeLast, takeWhile, tap} from 'rxjs'
+import {defer, exhaustMap, finalize, interval, map, switchMap, takeLast, takeWhile, tap} from 'rxjs'
 
 import ee from '#sepal/ee/ee'
 import {currentEEContext, inEEContext} from '#sepal/ee/eeContext'
@@ -52,7 +52,7 @@ const cleanup = ({eeTaskId, description, context}) =>
 const poll$ = ({eeTaskId, description, context}) => {
     let terminal = false
     return interval(POLL_FREQUENCY_MS).pipe(
-        switchMap(() => status$({eeTaskId, description})),
+        exhaustMap(() => status$({eeTaskId, description})),
         takeWhile(({state}) => isRunning(state), true),
         tap(({state}) => {
             terminal = !isRunning(state)

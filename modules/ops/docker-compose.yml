@@ -10,10 +10,12 @@ services:
       - jenkins:/var/jenkins_home
     environment:
       CASC_JENKINS_CONFIG: /var/lib/jenkins/casc
+      PLUGINS_FORCE_UPGRADE: "true"
       JENKINS_DOMAIN: "${OPS_DOMAIN}"
       JENKINS_PORT: "${JENKINS_PORT}"
       JENKINS_PASSWORD: "${JENKINS_PASSWORD}"
-      DOCKER_REGISTRY_HOST: "${DOCKER_REGISTRY_HOST}"
+      DOCKER_REGISTRY_HOST: "localhost:5000"
+      REGISTRY_API_URL: "http://docker-registry:5000"
       DOCKER_REGISTRY_USERNAME: "${DOCKER_REGISTRY_USERNAME}"
       DOCKER_REGISTRY_PASSWORD: "${DOCKER_REGISTRY_PASSWORD}"
     restart: unless-stopped
@@ -35,6 +37,8 @@ services:
     container_name: docker-registry
     volumes:
       - registry:/var/lib/registry
+    ports:
+      - "127.0.0.1:5000:5000"
     restart: unless-stopped
     ulimits:
       core: 0

@@ -6,8 +6,8 @@ SELECT id, state, username, worker_type, instance_type, instance_id, instance_na
        notification_state, notified_time, api_key
 FROM mysql_source.worker_session;
 
-INSERT INTO instance_claim (instance_id, session_id, claimed_at)
-SELECT instance_id, session_id, claimed_at
+INSERT INTO instance_claim (instance_id, session_id, claimed_at, recovery_started_at)
+SELECT instance_id, session_id, claimed_at, recovery_started_at
 FROM mysql_source.instance_claim;
 
 INSERT INTO session_app (username, app_path, session_id, label, client_id, creation_time)

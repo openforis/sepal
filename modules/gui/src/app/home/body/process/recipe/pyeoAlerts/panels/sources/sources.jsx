@@ -5,6 +5,7 @@ import {Subject, takeUntil} from 'rxjs'
 
 import {dataSetPeriod} from '#sepal/recipe/type/pyeoAlerts'
 import api from '~/apiRegistry'
+import {RecipeInput} from '~/app/home/body/process/recipe/sources/recipeInput'
 import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
@@ -19,9 +20,8 @@ import {Layout} from '~/widget/layout'
 import {NoData} from '~/widget/noData'
 import {Notifications} from '~/widget/notifications'
 import {Panel} from '~/widget/panel/panel'
-import {RecipeInput} from '~/widget/recipeInput'
 
-import {withUpdates} from '../../../formSubmission'
+import {withUpdates} from '../../../editing/formSubmission'
 import {preferredGateIndex, readableGateIndexes} from '../../gateIndexes'
 import {NOT_DERIVABLE, readInputImagery$, SELECTED_SCENES} from '../../inputImagery'
 import toDateString from '../../toDateString'
@@ -244,10 +244,11 @@ export const Sources = compose(
             return acquisition.value || {}
         }
 
-        // The years monitored as Apply would save them: the dates applied, with those the classification's reading proposes.
+        // The days monitored, and the correction they are read with, as Apply would save them: the dates and options applied,
+        // with those the classification's reading proposes.
         period(acquisition) {
-            const {dates} = this.props
-            return dataSetPeriod(withUpdates({model: {dates}}, proposedUpdates(acquisition)).model)
+            const {dates, processing} = this.props
+            return dataSetPeriod(withUpdates({model: {dates, options: processing}}, proposedUpdates(acquisition)).model)
         }
 
         // Opening a saved recipe reads metadata without re-deriving its configuration.

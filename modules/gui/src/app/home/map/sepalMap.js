@@ -16,6 +16,9 @@ import {
 
 const log = getLogger('sepalMap')
 
+// The keys TerraDraw acts on while a feature is being drawn: Escape cancels it, Enter finishes it.
+const DRAWING_KEYS = ['Escape', 'Enter']
+
 export class SepalMap {
     constructor({google, googleMap, renderingEnabled$, renderingStatus$}) {
         log.debug('creating new SepalMap')
@@ -265,8 +268,9 @@ export class SepalMap {
         }
         drawing.setMode(mode)
         this.drawingKeydownListener = event => {
-            // TerraDraw cancels provisional features on keyup; keep the competing Escape keydown map-local.
-            if (event.key === 'Escape' && drawing.getModeState() === 'drawing') {
+            // TerraDraw cancels (Escape) or finishes (Enter) a provisional feature on keyup; keep the competing
+            // keydown map-local, or an open panel takes it as Cancel or Apply.
+            if (DRAWING_KEYS.includes(event.key) && drawing.getModeState() === 'drawing') {
                 event.stopPropagation()
             }
         }

@@ -19,6 +19,7 @@ describe('stopped pool', () => {
 
         assert.deepEqual(await provider.pooledInstances(), [])
         assert.deepEqual(await provider.pooledInstances({ready: true}), [])
+        assert.deepEqual(await provider.recoveringInstances(), [])
     })
 
     test('refuses to fill the pool', async () => {
@@ -27,6 +28,8 @@ describe('stopped pool', () => {
 
         await assert.rejects(provider.launchPooled(1), /not supported/)
         await assert.rejects(provider.pool(idle.id), /not supported/)
+        await assert.rejects(provider.beginRecovery(idle.id), /not supported/)
+        await assert.rejects(provider.awaitStopped(idle.id), /not supported/)
     })
 })
 

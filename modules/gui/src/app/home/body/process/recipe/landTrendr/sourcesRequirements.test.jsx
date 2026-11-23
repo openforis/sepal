@@ -7,9 +7,11 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore, openStoredRecipe} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
+import format from '~/format'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
@@ -20,13 +22,13 @@ import {tooltipText} from '~/widget/tooltip.test.fixtures'
 // beside it; the Sources button is marked, and the image and Retrieve held, until it is repaired. The root, its toolbar
 // and Sources panel, the store and the source runtime are real; Earth Engine is never asked for anything.
 
-const fake = vi.hoisted(() => ({stored: {}, open: new Set(), english: false}))
+const fake = vi.hoisted(() => ({storage: null, open: new Set(), english: false}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         bands$: () => of([]),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
     },
-    recipe: {load$: id => of(fake.stored[id]), loadAll$: () => of(LISTING), save$: () => of()}
+    recipe: {load$: id => fake.storage.load$(id), loadAll$: () => of(LISTING), save$: request => fake.storage.save$(request)}
 }}))
 // A message is its key and values, a message given no values reading as one given none, as the real one does; in English,
 // the real one says it from the catalogue.
@@ -41,7 +43,6 @@ vi.mock('~/translate', async importOriginal => {
     }}
 })
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => !disabled && [msg].flat().map(tooltipText).some(line => typeof line === 'string')
@@ -62,13 +63,14 @@ vi.mock('~/widget/activation/activator', () => ({
 }))
 // The root's map and its layers: the toolbar is what is looked at.
 vi.mock('~/app/home/map/map', async importOriginal => ({...await importOriginal(), Map: ({children}) => children}))
-vi.mock('../aoi', async importOriginal => ({...await importOriginal(), Aoi: () => null}))
-vi.mock('../recipeImageLayerSource', async importOriginal => ({...await importOriginal(), initializeLayers: () => {}}))
+vi.mock('../map/aoi', async importOriginal => ({...await importOriginal(), Aoi: () => null}))
+vi.mock('../map/recipeImageLayerSource', async importOriginal => ({...await importOriginal(), initializeLayers: () => {}}))
 
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: landTrendr} = await import('./landTrendr')
-const {mapProductGate, retrieveAvailability} = await import('../operationAvailability')
-const {requestGate} = await import('../sourceRequirements')
+const {layerProduct} = await import('../outputs/layerProduct')
+const {mapProductGate, retrieveAvailability} = await import('../requirements/operationAvailability')
+const {requestGate} = await import('../requirements/sourceRequirements')
 const {msg, TranslationProvider} = await import('~/translate')
 
 addRecipeType(landTrendr())
@@ -82,6 +84,8 @@ beforeEach(() => {
     fake.open = new Set(['sources'])
     fake.english = false
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -102,7 +106,7 @@ describe('a LandTrendr\'s Sources opened untouched', () => {
         expect(retrieveGate()).toBe(null)
     })
 
-    it('keep an index the data sets cannot compute chosen and explained, holding the image and Retrieve, not the annual mosaic', async () => {
+    it('keep an index the data sets cannot compute chosen and explained, holding the image, Retrieve and the annual mosaic', async () => {
         await open({dataSets: {SENTINEL_2: ['SENTINEL_2']}, index: 'ebbi'})
         const applied = model()
 
@@ -112,10 +116,9 @@ describe('a LandTrendr\'s Sources opened untouched', () => {
         expect(button('button.close')).toBeDefined()
         expect(inError(SOURCES)).toBe(true)
         expect(buttonTooltip(SOURCES)).toContain(thermalLacking())
-        for (const gate of [imageGate(), retrieveGate()]) {
+        for (const gate of [imageGate(), retrieveGate(), annualMosaicGate()]) {
             expect(gate).toMatchObject({withdraw: true, section: SOURCES})
         }
-        expect(annualMosaicGate()).toBe(null)
         expect(model()).toBe(applied)
     })
 
@@ -170,7 +173,7 @@ describe('a LandTrendr\'s Sources opened untouched', () => {
         expect(chosenOf(INDEX)).toEqual(['NBR'])
         expect(errorsOf(DATA_SETS)).toEqual([DATA_SETS_REQUIRED])
         expect(inError(SOURCES)).toBe(true)
-        for (const gate of [imageGate(), retrieveGate()]) {
+        for (const gate of [imageGate(), retrieveGate(), annualMosaicGate()]) {
             expect(gate).toMatchObject({withdraw: true, section: SOURCES})
         }
 
@@ -181,6 +184,7 @@ describe('a LandTrendr\'s Sources opened untouched', () => {
         expect(model().sources).toMatchObject({dataSets: {LANDSAT: ['LANDSAT_8']}, index: 'nbr'})
         expect(inError(SOURCES)).toBe(false)
         expect(imageGate()).toBe(null)
+        expect(annualMosaicGate()).toBe(null)
     })
 
     // Panels open one at a time: Dates are applied with Sources closed.
@@ -201,12 +205,14 @@ describe('a LandTrendr\'s Sources opened untouched', () => {
         expect(inError(SOURCES)).toBe(false)
     })
 
-    it('keep data sets none of which may cover the years, said and held until Dates cover one', async () => {
+    it('keep data sets none of which may cover the years, said and held, the annual mosaic too, until Dates cover one', async () => {
         await open({dataSets: {LANDSAT: ['LANDSAT_9']}, index: 'nbr'}, {startYear: 2000, endYear: 2010})
 
         expect(chosenOf(DATA_SETS)).toEqual([dataSetLabel('LANDSAT_9')])
         expect(errorsOf(DATA_SETS)).toEqual([noOverlap(2000, 2010)])
-        expect(retrieveGate()).toMatchObject({withdraw: true, section: SOURCES})
+        for (const gate of [imageGate(), retrieveGate(), annualMosaicGate()]) {
+            expect(gate).toMatchObject({withdraw: true, section: SOURCES})
+        }
 
         await show([])
         await applyDates({startYear: 2000, endYear: 2022})
@@ -215,19 +221,24 @@ describe('a LandTrendr\'s Sources opened untouched', () => {
         expect(errorsOf(DATA_SETS)).toEqual([])
         expect(inError(SOURCES)).toBe(false)
         expect(retrieveGate()).toBe(null)
+        expect(annualMosaicGate()).toBe(null)
     })
 })
 
 describe('a LandTrendr\'s applied Dates', () => {
-    it('may leave no data set chosen covering the years, which marks Sources', async () => {
+    it('may leave no data set chosen covering the years, which marks Sources and holds the change map and annual mosaic', async () => {
         await open({dataSets: {LANDSAT: ['LANDSAT_9']}, index: 'nbr'}, {startYear: 2021, endYear: 2025}, [])
         expect(inError(SOURCES)).toBe(false)
+        expect(annualMosaicGate()).toBe(null)
 
         await applyDates({startYear: 2000, endYear: 2010})
 
         expect(model().dates).toEqual({startYear: 2000, endYear: 2010})
         expect(inError(SOURCES)).toBe(true)
         expect(buttonTooltip(SOURCES)).toContain(noOverlap(2000, 2010))
+        for (const gate of [imageGate(), annualMosaicGate()]) {
+            expect(gate).toMatchObject({withdraw: true, section: SOURCES})
+        }
     })
 })
 
@@ -376,7 +387,7 @@ const thermalLacking = ({removable} = {}) => {
         ? `process.landTrendr.panel.sources.form.index.removeDataSets ${JSON.stringify({...facts, removable: facts.dataSets})}`
         : `process.landTrendr.panel.sources.form.index.missingInputs ${JSON.stringify(facts)}`
 }
-const noOverlap = (startYear, endYear) => `process.source.dataSets.noPeriodOverlap ${JSON.stringify({startYear, endYear})}`
+const noOverlap = (startYear, endYear) => `process.source.dataSets.noPeriodOverlap ${JSON.stringify({period: format.yearRange(startYear, endYear)})}`
 
 const label = index => index.toUpperCase()
 const dataSetLabel = dataSet => `sources.dataSets.${dataSet}.label`
@@ -407,7 +418,8 @@ const retrieveGate = () => retrieveAvailability(gateArgs()).gate
 
 const imageGate = () => requestGate({...gateArgs(), operation: 'IMAGE_OUTPUT'})
 
-const annualMosaicGate = () => mapProductGate({...gateArgs(), product: {name: 'ANNUAL_MOSAIC', parameters: {year: 2020}}})
+// What the map layer showing a year's mosaic is held to, read as its selector reads it (recipeImageLayer.jsx).
+const annualMosaicGate = () => mapProductGate({...gateArgs(), product: layerProduct(applied(), {visualizationType: 'mosaics', year: 2020})})
 
 const field = label => document.querySelector(`[data-label="${label}"]`)
 
@@ -500,21 +512,21 @@ const recipeTree = () => (
 
 async function open(sources, dates = {startYear: 2000, endYear: 2025}, panels = ['sources']) {
     const recipe = landTrendrRecipe(sources, dates)
-    fake.stored = {[ID]: recipe}
+    fake.storage = recipeStorage({records: [recipe]})
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: {[ID]: recipe},
+            loadedRecipes: {},
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
-            tabs: [{id: ID}]
+            projects: []
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
+    openStoredRecipe(store, fake.storage, ID, {ui: recipe.ui})
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

@@ -22,7 +22,8 @@ const fields = {
 }
 
 const mapRecipeToProps = recipe => ({
-    dates: selectFrom(recipe, 'model.dates')
+    dates: selectFrom(recipe, 'model.dates'),
+    corrections: selectFrom(recipe, 'model.compositeOptions.corrections')
 })
 
 class _Sources extends React.Component {
@@ -58,12 +59,12 @@ class _Sources extends React.Component {
     }
 
     renderDataSets() {
-        const {dates, form, inputs: {dataSets}} = this.props
+        const {dates, corrections, form, inputs: {dataSets}} = this.props
         return (
             <Form.Buttons
                 label={msg('process.changeAlerts.panel.sources.form.dataSets.label')}
                 input={dataSets}
-                options={dataSetOptions({type: 'OPTICAL', period: dataSetPeriod({dates}), chosen: dataSets.value})}
+                options={dataSetOptions({type: 'OPTICAL', period: dataSetPeriod({dates, compositeOptions: {corrections}}), chosen: dataSets.value})}
                 multiple
                 errorMessage={form.getErrorMessage(dataSets)}
             />

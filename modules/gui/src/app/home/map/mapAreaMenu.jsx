@@ -24,8 +24,8 @@ import {recipePath} from '../body/process/recipe'
 import {withRecipe} from '../body/process/recipeContext'
 import {withLayers} from '../body/process/withLayers'
 import {resolveAoiStyle, withUpdatedAoiOpacity} from './aoiLayer'
+import {resolveFeatureLayerStyle, withUpdatedOpacity} from './eeTableAsset/featureLayerStyle'
 import {isDataFeatureLayer, isPresentationFeatureLayer, reorderDataLayersByPointer, toDisplayedFeatureLayers, toPersistedDataOrder, withFeatureLayerDisabled, withReorderedDataLayers} from './featureLayerOrder'
-import {resolveFeatureLayerStyle, withUpdatedOpacity} from './featureLayerStyle'
 import styles from './mapAreaMenu.module.css'
 
 // Shared placement for the feature overlay row action cluster, so its tooltips feel consistent.

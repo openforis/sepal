@@ -1,5 +1,5 @@
-# Build stage: compile the React app
-FROM node:26-alpine AS build
+# Source stage: the app's dependencies and source
+FROM node:26-alpine AS source
 
 ENV MODULE_NAME=gui
 ENV MODULE=/usr/local/src/sepal/modules/gui
@@ -20,6 +20,17 @@ ADD modules/${MODULE_NAME}/vite.config.js ./vite.config.js
 
 # shared library source, resolved by the #sepal/* alias in vite.config.js
 ADD lib/js/shared/src ${SHARED}/src
+
+# Test stage: the tests and the linter, without the release metadata, since this image's ID decides whether
+# they run
+FROM source AS test
+ADD modules/${MODULE_NAME}/eslint.config.js ./eslint.config.js
+# Vitest runs once instead of watching, and with a worker per CPU of the suite's two instead of leaving one idle
+ENV CI=true
+CMD ["sh", "-c", "npm test -- --maxWorkers=2 && npm run lint"]
+
+# Build stage: compile the React app
+FROM source AS build
 
 ARG BUILD_NUMBER
 ENV BUILD_NUMBER=$BUILD_NUMBER

@@ -7,9 +7,11 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {MapContext} from '~/app/home/map/mapContext'
-import {initStore, select} from '~/store'
+import {select} from '~/store'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
 // The Classification a CCDC's Sources select is part of its analysis, whatever its breakpoint bands (type/ccdc.js): once
@@ -22,7 +24,7 @@ const {loadCCDCSegments$, loadTimeSeriesObservations$} = vi.hoisted(() => ({
     loadCCDCSegments$: vi.fn(),
     loadTimeSeriesObservations$: vi.fn()
 }))
-const stored = vi.hoisted(() => ({records: {}}))
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         loadCCDCSegments$,
@@ -32,12 +34,11 @@ vi.mock('~/apiRegistry', () => ({default: {
             : ['red', 'nir'].map(name => ({name, arrayDimensions: 0}))),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
     },
-    recipe: {load$: id => of(stored.records[id]), loadAll$: () => of(LISTING)}
+    recipe: {load$: id => io.storage.load$(id), save$: request => io.storage.save$(request), loadAll$: () => of(LISTING)}
 }}))
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 vi.mock('~/user', () => ({}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
@@ -64,7 +65,7 @@ const {default: ccdc} = await import('../ccdc')
 const {default: classification} = await import('../../classification/classification')
 const {default: opticalMosaic} = await import('../../opticalMosaic/opticalMosaic')
 const {RecipeActions} = await import('../ccdcRecipe')
-const {ChartPixelButton} = await import('../../chartPixelButton')
+const {ChartPixelButton} = await import('../../charts/chartPixelButton')
 const {CHART_OPERATIONS, ChartPixel} = await import('./chartPixel')
 
 addRecipeType(ccdc())
@@ -79,6 +80,8 @@ beforeEach(() => {
     loadCCDCSegments$.mockReset().mockReturnValue(of({tStart: [], tEnd: [], tBreak: [], changeProb: [], numObs: []}))
     loadTimeSeriesObservations$.mockReset().mockReturnValue(of({features: []}))
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -230,7 +233,6 @@ const mapOf = () => {
 
 async function open({breakpointBands}) {
     const records = [ccdcRecipe({breakpointBands}), classificationRecipe(), mosaicRecipe()]
-    stored.records = Object.fromEntries(records.map(record => [record.id, record]))
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
@@ -243,8 +245,11 @@ async function open({breakpointBands}) {
             tabs: [{id: CCDC}]
         }
     }
-    const store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    const store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
+    installStore(store)
+    opening.openIn(store)
     map = mapOf()
     const recipeActions = RecipeActions(CCDC)
     container = document.createElement('div')

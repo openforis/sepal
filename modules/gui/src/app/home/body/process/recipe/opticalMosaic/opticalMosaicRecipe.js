@@ -3,7 +3,7 @@ import moment from 'moment'
 
 import {dataSetPeriod} from '#sepal/recipe/type/opticalMosaic'
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {pyramidingPolicies} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
+import {pyramidingPolicies} from '~/app/home/body/process/recipe/retrieve/recipeTaskSubmitter'
 import {selectFrom} from '~/stateUtils'
 
 const DATE_FORMAT = 'YYYY-MM-DD'

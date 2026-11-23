@@ -1,0 +1,14 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<!-- The console sections of builds: the details of an operation, which ci/console.sh prints when it passes -->
+<org.jvnet.hudson.plugins.collapsingconsolesections.CollapsingSectionNote_-DescriptorImpl plugin="collapsing-console-sections">
+  <sections>
+    <org.jvnet.hudson.plugins.collapsingconsolesections.CollapsingSectionNote>
+      <sectionDisplayName>{1}</sectionDisplayName>
+      <sectionStartPattern>Details of (.+)</sectionStartPattern>
+      <sectionEndPattern>Full log: .+</sectionEndPattern>
+      <collapseOnlyOneLevel>false</collapseOnlyOneLevel>
+      <collapseSection>true</collapseSection>
+    </org.jvnet.hudson.plugins.collapsingconsolesections.CollapsingSectionNote>
+  </sections>
+  <numberingEnabled>false</numberingEnabled>
+</org.jvnet.hudson.plugins.collapsingconsolesections.CollapsingSectionNote_-DescriptorImpl>

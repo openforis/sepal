@@ -36,8 +36,6 @@ services:
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/user-assets:${SEPAL_VERSION:-latest}"
     container_name: user-assets
     init: true
-    volumes:
-      - "${SEPAL_DATA_DIR}/sepal/home:/sepalUsers"
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       REDIS_HOST: "user-assets-redis"
