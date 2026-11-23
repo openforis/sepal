@@ -15,7 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     # The *.integration.test.js suites reach a real database, since the schema, collation and
     # transaction guarantees they cover cannot be shown against a fake: Postgres for the modules on
-    # it, MySQL 5.7 for the ones still on MySQL. Modules without such a suite ignore both.
+    # it, MySQL 5.7 for scene-metadata and as the source the mysqlImport suites read through
+    # mysql_fdw. Modules without such a suite ignore both.
     env:
       POSTGRES_HOST: 127.0.0.1
       POSTGRES_USER: sepal
@@ -25,6 +26,8 @@ jobs:
       MYSQL_USER: root
       MYSQL_PASSWORD: sepal
       MYSQL_FILES_DIR: /var/lib/mysql-files
+      # How mysql_fdw inside the postgres container reaches MySQL; the tests reach both on 127.0.0.1
+      MYSQL_FDW_HOST: mysql
     strategy:
       fail-fast: false
       matrix:
@@ -98,7 +101,8 @@ jobs:
           done
       - run: npm ci
         working-directory: ${{matrix.module}}
-      # Postgres is the SEPAL image. scene-metadata hands MySQL a path and the server reads the file
+      # Postgres is the SEPAL image, which carries mysql_fdw. It shares a network with MySQL so the
+      # import tests can reach MySQL from inside it, by container name. scene-metadata hands MySQL a path and the server reads the file
       # itself, so the runner and the server see one directory under the same name: the image's
       # secure_file_priv, the only directory a server-side read is allowed to reach.
       - name: Start Postgres and MySQL
