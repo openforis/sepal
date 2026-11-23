@@ -22,6 +22,10 @@ export const subscribe = (path, listener) => {
     return () => unsubscribe()
 }
 
+// The store installed, whose session (recipeSession.js) code acting on it as the user does uses.
+export const currentStore = () =>
+    storeInstance
+
 // only used by route.js
 export const state = () =>
     storeInstance.getState() || {}

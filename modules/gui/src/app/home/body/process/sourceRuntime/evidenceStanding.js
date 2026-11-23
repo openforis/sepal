@@ -1,4 +1,5 @@
-import {AGREED} from '../draftAgreement'
+import {AGREED} from '~/app/home/body/process/recipeSession/draftAgreement'
+
 import {assetAuthority, CURRENT as ASSET_CURRENT} from './assetEvidence'
 import {PRIVATE} from './recordCurrency'
 import {sourceCurrency} from './sourceCurrency'

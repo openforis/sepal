@@ -1,4 +1,4 @@
-FROM node:26-alpine
+FROM node:26-alpine AS production
 
 ENV MODULE_NAME=task
 ENV MODULE=/usr/local/src/sepal/modules/${MODULE_NAME}
@@ -31,3 +31,8 @@ ADD modules/${MODULE_NAME}/config ${MODULE}/config
 ADD --chmod=0755 modules/${MODULE_NAME}/start.sh /usr/local/bin/start.sh
 
 CMD ["start.sh"]
+
+FROM production AS test
+CMD ["npm", "test"]
+
+FROM production

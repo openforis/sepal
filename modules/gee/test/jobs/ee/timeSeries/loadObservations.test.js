@@ -225,9 +225,12 @@ describe('loading the observations of a Change Alerts pixel', () => {
         assertNoChartWork()
     })
 
+    // Readiness describes the reference from its catalogue, for the processing it establishes: what could not be read is
+    // that, with the failure as its cause.
     it('passes on an unavailable band catalogue without inventing a monitoring finding', async () => {
         state.bandFailure = new Error('Reference catalogue temporarily unavailable')
-        await assert.rejects(load({recipe: CHANGE_ALERTS, bands: ['ndvi']}), error => error === state.bandFailure && !error.errorCode)
+        await assert.rejects(load({recipe: CHANGE_ALERTS, bands: ['ndvi']}), error =>
+            /cannot run: what it needs could not be read/.test(error.message) && error.cause === state.bandFailure && !error.errorCode)
         assertNoChartWork()
     })
 
@@ -242,7 +245,8 @@ describe('loading the observations of a Change Alerts pixel', () => {
         assert.deepEqual(CHANGE_ALERTS.model.options.corrections, ['SR'])
         // Facts and authorization both read the selected producer; the job's real request scope shares the record.
         assert.deepEqual([...new Set(state.recipeReads)], ['ccdc-unreadable'])
-        assert.deepEqual(state.recipeImages, ['ccdc-unreadable']) // Catalogue only; no getImage or segments.
+        // Its catalogue only - read for readiness's description and for the monitored measure - no image or segments.
+        assert.deepEqual([...new Set(state.recipeImages)], ['ccdc-unreadable'])
         assert.deepEqual(state.builtImages, [])
     })
 
@@ -264,8 +268,10 @@ describe('loading the observations of a Change Alerts pixel', () => {
         assertNoChartWork()
     })
 
+    // Readiness observes the asset's bands beside the properties it records.
     it('reads asset processing without its private producer and refuses malformed governing metadata', async () => {
         const recipe = {...CHANGE_ALERTS, model: {...CHANGE_ALERTS.model, reference: {type: 'ASSET', id: 'segments'}}}
+        state.assetBands.segments = ['tStart', 'tEnd', 'ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude']
         state.properties = {recipe_options: JSON.stringify({corrections: []}), recipe_id: 'private-producer', dateFormat: 1}
         await load({recipe, bands: ['ndvi']})
         assert.deepEqual(state.recipeReads, [])
@@ -502,13 +508,14 @@ mock.module('#sepal/ee/recipe', {
         }
     }
 })
+// An asset is observed as readiness reads it: its bands, and the properties it records.
 mock.module('#sepal/ee/bandEvidence', {
     exports: {
-        assetBandEvidence$: id => {
+        assetObservation$: id => {
             state.observed.push(id)
             const bands = state.assetBands[id]
             return bands
-                ? of(bands.map(name => ({name, arrayDimensions: 0})))
+                ? of({bands: bands.map(name => ({name, arrayDimensions: 0})), properties: state.properties || {}})
                 : throwError(() => new Error(`Asset unreadable: ${id}`))
         },
         imageBandEvidence$: recipe => throwError(() => new Error(`Image described: ${recipe.id}`))

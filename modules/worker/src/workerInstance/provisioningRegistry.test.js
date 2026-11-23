@@ -51,6 +51,35 @@ test('the entry clears when the provision fails, so the next sweep may retry', a
     assert.equal(await registry.run('i-1', 's-2', async () => {}), true)
 })
 
+test('a different session replaces a release entry without reviving canceled callbacks', async () => {
+    const registry = createProvisioningRegistry()
+    const oldAttempt = deferred()
+    const newAttempt = deferred()
+    let oldIsCurrent
+    const oldRunning = registry.run('i-1', 's-alice', isCurrent => {
+        oldIsCurrent = isCurrent
+        return oldAttempt.promise
+    })
+    const release = registry.beginRelease('i-1', 's-alice')
+    const provision = mock.fn(() => newAttempt.promise)
+
+    const newRunning = registry.run('i-1', 's-bob', provision)
+
+    try {
+        assert.equal(provision.mock.callCount(), 1)
+        assert.equal(oldIsCurrent(), false)
+        assert.equal(release.isCurrent(), false)
+        registry.finishRelease('i-1', release)
+        oldAttempt.resolve()
+        await oldRunning
+        assert.equal(registry.isProvisioning('i-1'), true)
+    } finally {
+        oldAttempt.resolve()
+        newAttempt.resolve()
+        await Promise.all([oldRunning, newRunning])
+    }
+})
+
 test('different instances provision concurrently', async () => {
     const registry = createProvisioningRegistry()
     const a = deferred()
@@ -68,16 +97,38 @@ test('different instances provision concurrently', async () => {
     assert.equal(await runningB, true)
 })
 
-// An instance handed back to the pool takes its entry with it: provisioning retries for up to
-// seventeen minutes, and an entry nobody is waiting for drops the NEXT session's provisioning.
-test('a forgotten instance may be provisioned again while the abandoned provision runs on', async () => {
+test('a successful scratch retry cannot erase an earlier uncertain attachment', async () => {
+    const registry = createProvisioningRegistry()
+    const pending = deferred()
+    const ready = deferred()
+    const running = registry.run('i-1', 's-1', async (_isCurrent, {prepareScratch}) => {
+        await assert.rejects(prepareScratch(() => { throw new Error('attachment response lost') }))
+        await prepareScratch(() => '/dev/xvdg')
+        ready.resolve()
+        await pending.promise
+    })
+    await ready.promise
+    const release = registry.beginRelease('i-1', 's-1', {retire: true})
+    assert.equal(release.retire, true)
+    await assert.rejects(release.scratch, /attachment response lost/)
+    assert.equal(await registry.run('i-1', 's-1', async () => {}), false)
+    assert.equal(release.isCurrent(), true)
+
+    pending.resolve()
+    await running
+    registry.finishRelease('i-1', release)
+})
+
+test('release cancels an active provision and drops starts from the same session', async () => {
     const registry = createProvisioningRegistry()
     const abandoned = deferred()
     const successor = deferred()
 
     const first = registry.run('i-1', 's-1', () => abandoned.promise)
-    registry.forget('i-1')
-    assert.equal(registry.isProvisioning('i-1'), false)
+    const release = registry.beginRelease('i-1', 's-1')
+    assert.equal(release.retire, true)
+    assert.equal(await registry.run('i-1', 's-1', async () => {}), false)
+    registry.finishRelease('i-1', release)
 
     const second = registry.run('i-1', 's-2', () => successor.promise)
     assert.equal(registry.isProvisioning('i-1'), true)
@@ -92,8 +143,7 @@ test('a forgotten instance may be provisioned again while the abandoned provisio
     assert.equal(registry.isProvisioning('i-1'), false)
 })
 
-// The abandoned provision keeps running after forget(); isCurrent is how it learns to stop.
-test('a provision stops being current when its instance is forgotten, and stays so for the successor', async () => {
+test('a canceled provision stays canceled even if its own session starts another attempt', async () => {
     const registry = createProvisioningRegistry()
     const abandoned = deferred()
     let isCurrent
@@ -104,19 +154,52 @@ test('a provision stops being current when its instance is forgotten, and stays 
     })
     assert.equal(isCurrent(), true)
 
-    registry.forget('i-1')
+    const release = registry.beginRelease('i-1', 's-1')
     assert.equal(isCurrent(), false)
-
-    const second = registry.run('i-1', 's-2', async () => {})
+    registry.finishRelease('i-1', release)
+    const second = registry.run('i-1', 's-1', async () => {})
     assert.equal(isCurrent(), false)
 
     abandoned.resolve()
     await Promise.all([first, second])
 })
 
-test('forgetting an instance nobody is provisioning is harmless', () => {
+test('release gates an idle registry entry without requiring retirement', async () => {
     const registry = createProvisioningRegistry()
 
-    assert.equal(registry.forget('i-1'), false)
+    const release = registry.beginRelease('i-1', 's-1')
+    assert.equal(release.retire, false)
+    assert.equal(await registry.run('i-1', 's-1', async () => {}), false)
+    registry.finishRelease('i-1', release)
     assert.equal(registry.isProvisioning('i-1'), false)
+})
+
+test('retirement remains required after the canceled attempt settles', async () => {
+    const registry = createProvisioningRegistry()
+    const pending = deferred()
+    const running = registry.run('i-1', 's-1', () => pending.promise)
+    const firstRelease = registry.beginRelease('i-1', 's-1')
+    pending.resolve()
+    await running
+
+    const retry = registry.beginRelease('i-1', 's-1')
+    assert.equal(retry.retire, true)
+    registry.finishRelease('i-1', firstRelease)
+    assert.equal(registry.isProvisioning('i-1'), true)
+    registry.finishRelease('i-1', retry)
+})
+
+test('a release cannot cancel another session\'s active provision', async () => {
+    const registry = createProvisioningRegistry()
+    const pending = deferred()
+    let isCurrent
+    const running = registry.run('i-1', 's-bob', current => {
+        isCurrent = current
+        return pending.promise
+    })
+
+    assert.equal(registry.beginRelease('i-1', 's-alice'), null)
+    assert.equal(isCurrent(), true)
+    pending.resolve()
+    await running
 })

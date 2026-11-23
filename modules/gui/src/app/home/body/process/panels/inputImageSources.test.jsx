@@ -5,8 +5,9 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 import lookStyles from '~/style/look.module.css'
 
 // The source of an input chosen in the panel editing it, as each input imagery form offers it, over a real store: a
@@ -15,10 +16,11 @@ import lookStyles from '~/style/look.module.css'
 // an asset.
 
 const fake = vi.hoisted(() => ({metadata: null}))
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', async () => {
     const {from, NEVER, of} = await import('rxjs')
     return {default: {
-        recipe: {save$: () => NEVER, load$: () => NEVER, loadAll$: () => NEVER},
+        recipe: {save$: request => io.storage.save$(request), load$: () => NEVER, loadAll$: () => NEVER},
         gee: {
             // Answered later, as Earth Engine answers.
             assetMetadata$: () => from(Promise.resolve(fake.metadata)),
@@ -33,7 +35,6 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', async importOriginal => ({
     getRecipeType: id => ({id, imageSource: true})
 }))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // The panel editing one input is open for the input it was activated with.
 const activation = vi.hoisted(() => ({imageId: null}))
 vi.mock('~/widget/activation/activatable', async () => {
@@ -76,6 +77,8 @@ beforeEach(() => {
         properties: {}
     }
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -210,8 +213,11 @@ const editInput = async (InputImage, {images, imageId}) => {
         assets: {user: [ASSET_X, ASSET_Y].map(id => ({id, type: 'Image', updateTime: 'T1'})), other: []},
         dimensions: {width: 1024, height: 768}
     }
-    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
+    installStore(store)
+    opening.openIn(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

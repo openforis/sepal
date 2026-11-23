@@ -1201,8 +1201,9 @@ describe('exporting a Change Alerts', () => {
     // A Classification of another user's, named by the asset's exported recipe_sources: this one cannot read it.
     const INACCESSIBLE = 'colleagues-classification'
 
+    // The segments asset records the representation its dates are in, as CCDC exports it.
     beforeEach(() => {
-        state.assets[SEGMENTS_ASSET] = {bands: [{name: 'tStart', arrayDimensions: 1}], properties: {}}
+        state.assets[SEGMENTS_ASSET] = {bands: [{name: 'tStart', arrayDimensions: 1}], properties: {dateFormat: 1}}
     })
 
     it('exports over a shared segments asset, though the Classification its Sources copied cannot be read', async () => {
@@ -1254,6 +1255,134 @@ describe('exporting a Change Alerts', () => {
             /cannot run: CLASSIFIED_MONITORED_BAND$/
         )
         assert.deepEqual(state.exported, [])
+    })
+
+    // Calibration 2011-2012, monitoring 2013-2014: Landsat 8 covers only monitoring, Landsat 4-5 only calibration.
+    it('is refused where no data set chosen may cover its calibration, though one covers monitoring, and exported once one does', async () => {
+        const date = {monitoringEnd: '2015-01-01', monitoringDuration: 24, monitoringDurationUnit: 'months', calibrationDuration: 24, calibrationDurationUnit: 'months'}
+        const over = dataSets => {
+            const recipe = alerts({dataSets: {LANDSAT: dataSets}})
+            return {...recipe, model: {...recipe.model, date}}
+        }
+
+        await assert.rejects(submit({recipe: over(['LANDSAT_8']), bands: ['confidence']}), /alerts-1 cannot run: NO_PERIOD_OVERLAP$/)
+        assert.deepEqual(state.exported, [])
+
+        await submit({recipe: over(['LANDSAT_8', 'LANDSAT_TM']), bands: ['confidence']})
+    })
+
+    // Calibration December 2011 to February 2012, monitoring March and April 2012: Landsat 4-5's surface reflectance
+    // covers both, its top of atmosphere neither. The segments asset records the correction they were fitted under, which
+    // its imagery is read with, whatever correction the recipe saved.
+    const early2012 = (saved, surfaceReflectance) => {
+        state.assets[SEGMENTS_ASSET] = {...state.assets[SEGMENTS_ASSET], properties: {dateFormat: 1, surfaceReflectance}}
+        const recipe = alerts({dataSets: {LANDSAT: ['LANDSAT_TM']}})
+        return {...recipe, model: {...recipe.model, options: {corrections: saved}, date: {
+            monitoringEnd: '2012-05-01', monitoringDuration: 2, monitoringDurationUnit: 'months', calibrationDuration: 3, calibrationDurationUnit: 'months'
+        }}}
+    }
+
+    it('is exported over Landsat 4-5 saved top of atmosphere where its segments record SR', async () => {
+        await submit({recipe: early2012([], true), bands: ['confidence']})
+
+        assert.equal(state.exported.length, 1)
+    })
+
+    it('is refused over Landsat 4-5 saved with SR where its segments record top of atmosphere, before anything is built', async () => {
+        await assert.rejects(submit({recipe: early2012(['SR'], false), bands: ['confidence']}), /alerts-1 cannot run: NO_PERIOD_OVERLAP$/)
+
+        assert.deepEqual(state.exported, [])
+        assert.deepEqual(state.built, [])
+    })
+
+    // A recipe whose image is the changes is held by what holds them, found as its readiness reaches them: a Masking of
+    // changes no data set may cover is refused as they are, before anything is built.
+    describe('masked', () => {
+        const gap = dataSets => {
+            const recipe = alerts({dataSets: {LANDSAT: dataSets}})
+            return {...recipe, model: {...recipe.model, date: {
+                monitoringEnd: '2013-02-01', monitoringDuration: 2, monitoringDurationUnit: 'months', calibrationDuration: 3, calibrationDurationUnit: 'months'
+            }}}
+        }
+        const maskingOf = recipe => {
+            state.catalogue[recipe.id] = recipe
+            return masking({primary: {type: 'RECIPE_REF', id: recipe.id}})
+        }
+
+        it('is refused, as the changes it masks are, where no data set chosen may cover them', async () => {
+            state.assets[SEGMENTS_ASSET] = {...state.assets[SEGMENTS_ASSET], properties: {dateFormat: 1, surfaceReflectance: true}}
+            const changes = gap(['LANDSAT_9'])
+
+            await assert.rejects(submit({recipe: changes, bands: ['confidence']}), /alerts-1 cannot run: NO_PERIOD_OVERLAP$/)
+            await assert.rejects(submit({recipe: maskingOf(changes), bands: ['confidence']}), /masking-1 cannot run: NO_PERIOD_OVERLAP$/)
+
+            assert.deepEqual(state.exported, [])
+            assert.deepEqual(state.built, [])
+        })
+
+        // The changes are computed under the processing their segments record (changeAlerts/processing.js), which must
+        // be readable, with their dates in a representation the segments record or the reference states.
+        it('is refused, as the changes it masks are, where their segments record processing that cannot be read, and exported once it can be', async () => {
+            state.assets[SEGMENTS_ASSET] = {...state.assets[SEGMENTS_ASSET], properties: {dateFormat: 1, surfaceReflectance: 'yes'}}
+            const changes = alerts()
+
+            await assert.rejects(submit({recipe: changes, bands: ['confidence']}), /alerts-1 cannot run: UNREADABLE_REFERENCE_PROCESSING$/)
+            await assert.rejects(submit({recipe: maskingOf(changes), bands: ['confidence']}), /masking-1 cannot run: UNREADABLE_REFERENCE_PROCESSING$/)
+            assert.deepEqual(state.exported, [])
+            assert.deepEqual(state.built, [])
+
+            state.assets[SEGMENTS_ASSET] = {...state.assets[SEGMENTS_ASSET], properties: {dateFormat: 1, surfaceReflectance: true}}
+            await submit({recipe: maskingOf(changes), bands: ['confidence']})
+            assert.equal(state.exported.length, 1)
+        })
+
+        it('is refused, as the changes it masks are, where neither their segments nor their reference state a date representation', async () => {
+            state.assets[SEGMENTS_ASSET] = {...state.assets[SEGMENTS_ASSET], properties: {surfaceReflectance: true}}
+            const changes = alerts()
+
+            await assert.rejects(submit({recipe: changes, bands: ['confidence']}), /alerts-1 cannot run: REFERENCE_DATE_FORMAT_REQUIRED$/)
+            await assert.rejects(submit({recipe: maskingOf(changes), bands: ['confidence']}), /masking-1 cannot run: REFERENCE_DATE_FORMAT_REQUIRED$/)
+            assert.deepEqual(state.exported, [])
+            assert.deepEqual(state.built, [])
+
+            await submit({recipe: maskingOf(alerts({reference: {type: 'ASSET', id: SEGMENTS_ASSET, dateFormat: 1}})), bands: ['confidence']})
+            assert.equal(state.exported.length, 1)
+        })
+
+        it('is exported where Landsat 7 covers the changes it masks', async () => {
+            await submit({recipe: maskingOf(gap(['LANDSAT_7'])), bands: ['confidence']})
+
+            assert.equal(state.exported.length, 1)
+        })
+
+        it('is exported over Landsat 4-5 saved top of atmosphere where the segments record SR', async () => {
+            await submit({recipe: maskingOf(early2012([], true)), bands: ['confidence']})
+
+            assert.equal(state.exported.length, 1)
+        })
+
+        it('is refused over Landsat 4-5 saved with SR where the segments record top of atmosphere', async () => {
+            await assert.rejects(submit({recipe: maskingOf(early2012(['SR'], false)), bands: ['confidence']}), /masking-1 cannot run: NO_PERIOD_OVERLAP$/)
+
+            assert.deepEqual(state.exported, [])
+            assert.deepEqual(state.built, [])
+        })
+    })
+
+    // Calibration September to November 2012, monitoring December 2012 and January 2013: after Landsat 4-5's last
+    // acquisition and before Landsat 8's first.
+    it('is refused over Landsat 4-5 and 8 between their imagery, and exported over Landsat 7', async () => {
+        const date = {monitoringEnd: '2013-02-01', monitoringDuration: 2, monitoringDurationUnit: 'months', calibrationDuration: 3, calibrationDurationUnit: 'months'}
+        const over = dataSets => {
+            const recipe = alerts({dataSets: {LANDSAT: dataSets}})
+            return {...recipe, model: {...recipe.model, date}}
+        }
+
+        await assert.rejects(submit({recipe: over(['LANDSAT_TM', 'LANDSAT_8']), bands: ['confidence']}), /alerts-1 cannot run: NO_PERIOD_OVERLAP$/)
+        assert.deepEqual(state.exported, [])
+
+        await submit({recipe: over(['LANDSAT_7']), bands: ['confidence']})
+        assert.equal(state.exported.length, 1)
     })
 })
 
@@ -1324,7 +1453,7 @@ mock.module('#sepal/ee/ee', {exports: {
         getAsset$: id => {
             state.observed.push(id)
             return state.assets[id]
-                ? of({type: state.assets[id].type || 'Image'})
+                ? of({type: state.assets[id].type || 'Image', properties: state.assets[id].properties})
                 : throwError(() => new Error(`Asset could not be read: ${id}`))
         },
         Image: id => assetImage(typeof id === 'string' ? state.assets[id] : {bands: [], properties: {}}),
@@ -1360,7 +1489,12 @@ mock.module('#sepal/ee/imageFactory', {exports: {
                 getBands$: () => state.recipeBands[source.id]
                     ? of(state.recipeBands[source.id])
                     : throwError(() => new Error(`Recipe bands could not be read: ${source.id}`)),
-                getGeometry$: () => defer(() => of(built({bounds: () => 'region'})))
+                getGeometry$: () => defer(() => of(built({bounds: () => 'region'}))),
+                // The record a reference's settings are read from, nothing built of it.
+                withRecord$: derive => defer(() => {
+                    state.recipeReads.push(source.id)
+                    return of(derive(state.catalogue[source.id]))
+                })
             }
     }
 }})

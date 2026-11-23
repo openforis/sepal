@@ -3,6 +3,7 @@ import {beforeEach, describe, it, mock} from 'node:test'
 
 import {firstValueFrom, of} from 'rxjs'
 
+import {PROCESSING_PROPERTIES} from '#sepal/recipe/changeAlerts/processing'
 import {ENCODING_PROPERTY, encodingPropertyKeys} from '#sepal/recipe/output/bandEncoding'
 
 let assetType = 'Image'
@@ -365,7 +366,8 @@ describe('stored band encoding', () => {
     })
 
     // However many properties the encoding occupies, they are named before the asset is read, so reading it
-    // stays the one evaluation that reads the bands.
+    // stays the one evaluation that reads the bands - with the properties recording its processing, which readiness
+    // observes beside them.
     it('reads every part in the one evaluation that reads the bands', async () => {
         assetProperties = {
             [ENCODING_PROPERTY]: JSON.stringify({version: 2, parts: 2}),
@@ -377,7 +379,8 @@ describe('stored band encoding', () => {
 
         assert.equal(getInfoCalls.length, 1)
         assert.deepEqual(toDictionaryCalls, [
-            {image: getInfoCalls[0].value.values.bands.image, keys: encodingPropertyKeys()}
+            {image: getInfoCalls[0].value.values.bands.image, keys: encodingPropertyKeys()},
+            {image: getInfoCalls[0].value.values.bands.image, keys: PROCESSING_PROPERTIES}
         ])
     })
 

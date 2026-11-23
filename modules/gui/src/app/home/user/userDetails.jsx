@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import React from 'react'
-import {Subject} from 'rxjs'
 
 import {compose} from '~/compose'
 import {connect} from '~/connect'
@@ -21,6 +20,7 @@ import {ChangePassword} from './changePassword'
 import {GoogleAccount} from './googleAccount'
 import {SshKeys} from './sshKeys'
 import styles from './userDetails.module.css'
+import {userDetailsHint$} from './userDetailsHint'
 import {UserMenuButton} from './userMenu'
 
 const fields = {
@@ -53,8 +53,6 @@ const mapStateToProps = state => {
         tasks: state.tasks
     }
 }
-
-const hint$ = new Subject()
 
 class _UserDetails extends React.Component {
 
@@ -263,7 +261,7 @@ class _UserDetailsButton extends React.Component {
     initializeHints() {
         const {addSubscription} = this.props
         addSubscription(
-            hint$.subscribe(hint => this.setState({hint}))
+            userDetailsHint$.subscribe(hint => this.setState({hint}))
         )
     }
 }
@@ -278,9 +276,6 @@ export const UserDetailsButton = compose(
 )
 
 UserDetailsButton.propTypes = {}
-
-export const userDetailsHint = visible =>
-    hint$.next(visible)
 
 // Changing the address password resets are sent to takes the password.
 const isEmailChanged = email =>

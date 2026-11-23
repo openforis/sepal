@@ -2,7 +2,7 @@ import {INVALID_CALCULATION} from '#sepal/recipe/bandMath/calculationReferences'
 import {INPUT_IMAGES_ITEM, MISSING_INPUT_IMAGERY} from '~/app/home/body/process/panels/inputImagery/inputImageryRequirements'
 import {msg} from '~/translate'
 
-import {IMAGE_OUTPUT} from '../recipeOutput'
+import {IMAGE_OUTPUT} from '../outputs/recipeOutput'
 import {
     CALCULATIONS_REQUIREMENT,
     chainFacts,

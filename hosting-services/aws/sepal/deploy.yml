@@ -129,14 +129,6 @@
         group: "root"
         mode: "0755"
 
-    - name: Remove the retired sepal_user MySQL check
-      file:
-        path: "{{ item }}"
-        state: absent
-      loop:
-        - /etc/monit.d/mysql
-        - /usr/local/bin/mysqlcheck-sepal_user
-
     - name: Remove the checks of the retired MySQL and scene-metadata containers
       file:
         path: "/usr/local/bin/{{ item }}"
@@ -158,11 +150,6 @@
         mode: "0700"
       vars:
         monit_instance: "SEPAL"
-
-    - name: Remove unused aws.properties
-      file:
-        path: "/data/sepal/etc/aws.properties"
-        state: absent
 
     # sshd
     - name: Bind sshd to primary private IP

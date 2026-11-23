@@ -20,13 +20,14 @@ setup() {                      # setup <with-tarball: yes|no>
     mkdir -p "$v/bin" "$SEPAL_CACHE_ROOT"
     stub > "$v/bin/python3"
     chmod +x "$v/bin/python3"
-    touch "$v/.installed"
+    # Files written milliseconds apart can share an mtime, so the tests set the times they compare
+    touch -d '2 hours ago' "$v/.installed"
     if [[ $1 == yes ]]; then
         local s="$WORK/src"; mkdir -p "$s/venv/bin"
         stub > "$s/venv/bin/python3"
         chmod +x "$s/venv/bin/python3"
         tar -C "$s" -cf - venv | zstd -q -3 -o "$SEPAL_KERNELS_DIR/venv-testapp/venv.tar.zst"
-        touch "$SEPAL_KERNELS_DIR/venv-testapp/venv.tar.zst"   # newer than .installed
+        touch -d '1 hour ago' "$SEPAL_KERNELS_DIR/venv-testapp/venv.tar.zst"   # newer than .installed
     fi
 }
 teardown() { rm -rf "$WORK"; }
@@ -63,7 +64,7 @@ mkdir -p "$SEPAL_KERNELS_DIR/venv-../escape/venv/bin"
 cp "$SEPAL_KERNELS_DIR/venv-testapp/venv.tar.zst" "$SEPAL_KERNELS_DIR/venv-../escape/venv.tar.zst"
 stub > "$SEPAL_KERNELS_DIR/venv-../escape/venv/bin/python3"
 chmod +x "$SEPAL_KERNELS_DIR/venv-../escape/venv/bin/python3"
-touch "$SEPAL_KERNELS_DIR/venv-../escape/venv/.installed"
+touch -d '1 hour ago' "$SEPAL_KERNELS_DIR/venv-../escape/venv/.installed"
 touch "$SEPAL_KERNELS_DIR/venv-../escape/venv.tar.zst"
 bash "$LAUNCHER" ../escape >/dev/null 2>&1
 if [[ ! -e $WORK/escape ]]; then echo "ok   - a name with .. does not escape the cache root"; pass=$((pass+1))
@@ -107,7 +108,7 @@ chmod 700 "$SEPAL_CACHE_ROOT"; teardown
 setup yes
 bash "$LAUNCHER" testapp >/dev/null 2>&1
 old=$(echo "$SEPAL_CACHE_ROOT"/testapp/*)
-sleep 1; touch "$SEPAL_KERNELS_DIR/venv-testapp/venv.tar.zst"
+touch "$SEPAL_KERNELS_DIR/venv-testapp/venv.tar.zst"
 bash "$LAUNCHER" testapp >/dev/null 2>&1
 if [[ -d $old ]]; then echo "ok   - the previous generation survives"; pass=$((pass+1))
 else echo "FAIL - the previous generation was deleted"; fail=$((fail+1)); fi

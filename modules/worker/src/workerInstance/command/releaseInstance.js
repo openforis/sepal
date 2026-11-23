@@ -1,15 +1,3 @@
-// ReleaseInstance — releases the instance from ONE session; the instance may since have moved on.
-//   1. provider.getInstance(instanceId) — if null, drop the session's orphaned claim and return.
-//   2. Not reserved for the session (idle, or reserved by the next one) → drop the session's
-//      claim and return: whoever released it before already tore it down.
-//   3. forget any in-flight provisioning.
-//   4. instance.host set → provisioner.undeploy(instance), then provider.deleteScratchVolume.
-//   5. claims.release(instanceId, sessionId) — cleanup, not an election: the claim outlives the
-//      container, never the other way round.
-//   6. provider.release(instanceId) → emit InstanceReleased(release(instance)).
-//   7. On ANY exception → emit FailedToReleaseInstance, terminate the instance (swallowing its
-//      own errors), then claims.release(instanceId, sessionId).
-
 import {getLogger} from '#sepal/log'
 
 import {instanceTag, sessionTag} from '../../tag.js'
@@ -18,88 +6,198 @@ import {
     emitInstanceReleased,
 } from '../events.js'
 import {release} from '../workerInstance.js'
+import {recoverStartup as recoverCanceledStartup} from './recoverStartup.js'
 
 const log = getLogger('worker/releaseInstance')
 
-// releasing — the releases in flight in this process. Stop and ReclaimStaleClaims both release a
-// closed session's instance; side by side, both passed the ownership check, and the slower one
-// re-tagged the instance idle after the next session had reserved it. A second caller joins the
-// release in flight instead. Every release path shares the instance manager's map; without one,
-// nothing is joined.
-//
-// provisioning is optional: callers that never provision have nothing to forget.
+// Stop and reconciliation share this map so duplicate releases join instead of racing reuse.
 const releaseInstance = (instanceId, sessionId, {releasing = new Map(), ...deps}) => {
+    sessionId = sessionId ?? ''
+    const accepted = Promise.withResolvers()
+    const finished = coordinateRelease({instanceId, sessionId, releasing}, () =>
+        releaseFromSession(instanceId, sessionId, {...deps, onRecoveryAccepted: accepted.resolve}))
+        .catch(error => reportReleaseFailure({instanceId, error}))
+    return deps.recoverStartup && !deps.recovering ? Promise.race([accepted.promise, finished]) : finished
+}
+
+const releaseGoneClaim = (instanceId, sessionId, {claims, provisioning, releasing = new Map()}) => {
+    sessionId = sessionId ?? ''
+    return coordinateRelease({instanceId, sessionId, releasing}, async () => {
+        const releaseToken = provisioning?.beginRelease(instanceId, sessionId)
+        try {
+            await claims.release(instanceId, sessionId)
+        } finally {
+            finishRelease({instanceId, provisioning, releaseToken})
+        }
+    })
+}
+
+const coordinateRelease = ({instanceId, sessionId, releasing}, operation) => {
     const key = `${instanceId}/${sessionId}`
     if (!releasing.has(key)) {
-        releasing.set(key, releaseFromSession(instanceId, sessionId, deps).finally(() => releasing.delete(key)))
+        const pendingRelease = operation().finally(() => releasing.delete(key))
+        releasing.set(key, pendingRelease)
     }
     return releasing.get(key)
 }
 
-const releaseFromSession = async (instanceId, sessionId, {claims, provider, provisioner, provisioning}) => {
+const releaseFromSession = async (instanceId, sessionId, deps) => {
     log.debug(`Releasing ${instanceTag(instanceId)} from ${sessionTag(sessionId)}...`)
-
-    let instance
+    const {provisioning, retire = false, recoverStartup = false, recovering = false} = deps
+    const releaseToken = provisioning?.beginRelease(instanceId, sessionId, {retire})
+    const requiresRetirement = releaseToken ? releaseToken.retire : retire
+    const options = {...deps, instanceId, sessionId, releaseToken, requiresRetirement}
     try {
-        instance = await provider.getInstance(instanceId)
+        const instance = await findReleaseTarget(options).catch(error => {
+            reportReleaseFailure({instanceId, error})
+            return null
+        })
         if (!instance) {
-            log.warn(`${instanceTag(instanceId)} not found in provider - nothing to release`)
-            await claims.release(instanceId, sessionId)
             return
         }
-        if (!isReservedFor(instance, sessionId)) {
-            log.debug(`${instanceTag(instanceId)} is no longer reserved for ${sessionTag(sessionId)} - left alone`)
-            await claims.release(instanceId, sessionId)
+        // Ownership reads may finish after this release gate was replaced.
+        if (releaseToken && !releaseToken.isCurrent()) {
             return
         }
 
-        // A provision still retrying against the instance works for a session that no longer owns
-        // it. Forgetting it before the undeploy stops it before the instance can reach the pool:
-        // past that point it would be deleting the next session's containers, and its entry would
-        // drop that session's provisioning as a duplicate.
-        provisioning?.forget(instanceId)
-
-        // Undeploy BEFORE dropping the claim. The claim is the only durable record that this
-        // instance may still be carrying a container, so a worker that dies mid-release has to
-        // leave it standing: ReclaimStaleClaims then finds the abandoned claim and runs the whole
-        // release again. Dropping the row first and dying here stranded the previous user's
-        // container on an instance ReleaseUnusedInstances went on to tag idle.
-        //
-        // No election is needed to keep that safe — undeploy is a force-delete by container name,
-        // so the retry, and a concurrent releaser doing the same thing, find nothing to do.
-        if (instance.host) {
-            await provisioner.undeploy(instance)
-            await provider.deleteScratchVolume(instanceId)
+        if (recovering || (recoverStartup && instance.imageDiskWarm && requiresRetirement)) {
+            if (await recoverCanceledStartup({...options, instance})) await completeRelease({...options, instance})
+        } else if (requiresRetirement || !instance.running) {
+            await retireOwnedInstance({...options, instance})
+        } else {
+            await reuseOwnedInstance({...options, instance})
         }
-        await claims.release(instanceId, sessionId)
-
-        await provider.release(instanceId)
-
-        const releasedInstance = release(instance)
-        emitInstanceReleased(releasedInstance)
-        log.info(`Released ${instanceTag(instanceId)}`)
-
-    } catch (err) {
-        emitFailedToReleaseInstance(instanceId, err)
-        log.error(`Failed to release ${instanceTag(instanceId)}: ${err.message}`)
-
-        try {
-            await provider.terminate(instanceId)
-        } catch (termErr) {
-            log.error(`Failed to terminate ${instanceTag(instanceId)} during error recovery: ${termErr.message}`)
-        }
-        try {
-            await claims.release(instanceId, sessionId)
-        } catch (termErr) {
-            log.error(`Failed to release claim for ${instanceTag(instanceId)} during error recovery: ${termErr.message}`)
-        }
+    } finally {
+        finishRelease(options)
     }
 }
 
-// A reservation without a session id predates the SessionId tag, or reads back as the empty value
-// EC2 still reports for tags written moments ago: it cannot be told apart, so it counts as the
-// session's.
+const findReleaseTarget = async options => {
+    const {instanceId, sessionId, claims, provider, provisioning, releaseToken} = options
+    if (provisioning && !releaseToken) {
+        // A different registry entry is not authority to drop this session's durable claim.
+        return null
+    }
+    const instance = await provider.getInstance(instanceId)
+    if (!instance) {
+        log.warn(`${instanceTag(instanceId)} not found in provider - nothing to release`)
+        await claims.release(instanceId, sessionId)
+        return null
+    }
+    const claimedSessionId = await claims.sessionIdForInstance(instanceId)
+    if (claimedSessionId !== null && claimedSessionId !== sessionId) {
+        await claims.release(instanceId, sessionId)
+        return null
+    }
+    const mayRelease = await claimReleaseAuthority({...options, instance, claimedSessionId})
+    return mayRelease ? instance : null
+}
+
+const claimReleaseAuthority = async options => {
+    const {instanceId, sessionId, claims, instance, claimedSessionId, requiresRetirement} = options
+    // Retry a partially completed release only while its durable claim still belongs to this session.
+    const canResumeRetirement = requiresRetirement
+        && claimedSessionId === sessionId
+        && (!instance.reservation || sessionId === '')
+    if (!isReservedFor(instance, sessionId) && !canResumeRetirement) {
+        if (claimedSessionId === sessionId) {
+            log.warn(`${instanceTag(instanceId)} reservation contradicts its claim for ${sessionTag(sessionId)} - keeping the claim for retry`)
+            return false
+        }
+        log.debug(`${instanceTag(instanceId)} is no longer reserved for ${sessionTag(sessionId)} - left alone`)
+        await claims.release(instanceId, sessionId)
+        return false
+    }
+    if (claimedSessionId === null && !await claims.claim(instanceId, sessionId)) {
+        return false
+    }
+    return true
+}
+
+const retireOwnedInstance = async options => {
+    const {instanceId, instance, provider, provisioner, releaseToken} = options
+    const isCurrent = releaseToken?.isCurrent ?? (() => true)
+    try {
+        // Docker may still be executing an old request; this host cannot return to the pool.
+        await provider.terminate(instanceId)
+        if (!isCurrent()) {
+            return
+        }
+        if (instance.daemonHost) {
+            provisioner.undeploy(instance).catch(error =>
+                log.warn(`Cleanup of retired local ${instanceTag(instanceId)} failed: ${error.message}`)
+            )
+        }
+        // Termination acceptance is not completion; reconciliation still owns claim removal.
+        emitInstanceReleased(release(instance))
+    } catch (error) {
+        await terminateAfterFailure({...options, error})
+    }
+}
+
+const reuseOwnedInstance = async options => {
+    const {instanceId, instance, provider, provisioner, releaseToken} = options
+    const isCurrent = releaseToken?.isCurrent ?? (() => true)
+    try {
+        if (instance.host) {
+            await provisioner.undeploy(instance, {isCurrent})
+            if (!isCurrent()) {
+                return
+            }
+            await provider.deleteScratchVolume(instanceId)
+        }
+        if (!isCurrent()) {
+            return
+        }
+        await provider.release(instanceId)
+    } catch (error) {
+        await terminateAfterFailure({...options, error})
+        return
+    }
+    if (!isCurrent()) {
+        return
+    }
+    // From here a committed DELETE can admit the next owner; failures must never terminate.
+    await completeRelease(options)
+}
+
+const completeRelease = async options => {
+    const {instanceId, sessionId, instance, claims} = options
+    try {
+        await claims.release(instanceId, sessionId)
+        emitInstanceReleased(release(instance))
+        log.info(`Released ${instanceTag(instanceId)}`)
+    } catch (error) {
+        reportReleaseFailure({instanceId, error})
+    }
+}
+
+const finishRelease = ({instanceId, provisioning, releaseToken}) => {
+    if (releaseToken) {
+        provisioning.finishRelease(instanceId, releaseToken)
+    }
+}
+
+const reportReleaseFailure = ({instanceId, error}) => {
+    emitFailedToReleaseInstance(instanceId, error)
+    log.error(`Failed to release ${instanceTag(instanceId)}: ${error.message}`)
+}
+
+const terminateAfterFailure = async ({instanceId, provider, releaseToken, error}) => {
+    reportReleaseFailure({instanceId, error})
+    if (releaseToken && !releaseToken.isCurrent()) {
+        return
+    }
+    try {
+        await provider.terminate(instanceId)
+    } catch (terminationError) {
+        log.error(`Failed to terminate ${instanceTag(instanceId)} during error recovery: ${terminationError.message}`)
+    }
+    // The retained claim lets reconciliation retry retirement if termination failed.
+}
+
+// Missing/empty SessionId covers both legacy reservations and EC2 tag reads that lag writes.
 const isReservedFor = (instance, sessionId) =>
     !!instance.reservation && (!instance.reservation.sessionId || instance.reservation.sessionId === sessionId)
 
-export {releaseInstance}
+export {releaseGoneClaim, releaseInstance}

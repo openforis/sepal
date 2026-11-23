@@ -293,7 +293,7 @@ describe('reconciling after a restart', () => {
 
 describe('timeouts', () => {
     test('a container silent for too long is killed and its task fails', async () => {
-        const {supervisor, repository, docker, clock} = setup()
+        const {supervisor, repository, docker, workspace, clock} = setup()
         await repository.add(aTask())
         await supervisor.dispatch()
 
@@ -305,6 +305,41 @@ describe('timeouts', () => {
         assert.equal(task.state, State.FAILED)
         assert.partialDeepStrictEqual(JSON.parse(task.statusDescription), {messageKey: 'tasks.status.stalled'})
         assert.deepEqual(docker.killed, ['task.alice.t-1'])
+        assert.equal(docker.containers.has('task.alice.t-1'), false)
+        assert.ok(workspace.removed.includes('t-1'))
+    })
+
+    test('a task that reports progress after being found silent keeps running', async () => {
+        const {supervisor, repository, docker, workspace, clock} = setup()
+        await repository.add(aTask())
+        await supervisor.dispatch()
+        clock.advance(16 * 60 * 1000)
+        const progress = JSON.stringify({messageKey: 'tasks.ee.export.running'})
+        afterSelectingStalled(repository, task => repository.recordProgress(task, progress))
+
+        await supervisor.enforceTimeouts()
+        await supervisor.idle()
+
+        assert.partialDeepStrictEqual(await repository.getTask('t-1'), {state: State.ACTIVE, statusDescription: progress})
+        assert.deepEqual(docker.killed, [])
+        assert.partialDeepStrictEqual(docker.containers.get('task.alice.t-1'), {running: true})
+        assert.deepEqual(workspace.removed, [])
+    })
+
+    test('a task cancelled after being found silent is left to its cancellation', async () => {
+        const {supervisor, repository, docker, workspace, clock} = setup()
+        await repository.add(aTask())
+        await supervisor.dispatch()
+        clock.advance(16 * 60 * 1000)
+        afterSelectingStalled(repository, task => repository.transition(task, {from: [State.ACTIVE], to: State.CANCELING}))
+
+        await supervisor.enforceTimeouts()
+        await supervisor.idle()
+
+        assert.equal((await repository.getTask('t-1')).state, State.CANCELING)
+        assert.deepEqual(docker.killed, [])
+        assert.partialDeepStrictEqual(docker.containers.get('task.alice.t-1'), {running: true})
+        assert.deepEqual(workspace.removed, [])
     })
 
     test('a cancellation the container does not finish in time is forced', async () => {
@@ -528,6 +563,19 @@ const withRunningTasks = async options => {
     await context.repository.add(aTask({id: 't-2', creationTime: new Date(2000)}))
     await context.supervisor.dispatch()
     return context
+}
+
+// Runs work between the supervisor selecting stalled tasks and acting on them, as a request handled outside its
+// queue can.
+const afterSelectingStalled = (repository, work) => {
+    const select = repository.stalledTasks.bind(repository)
+    repository.stalledTasks = async before => {
+        const stalled = await select(before)
+        for (const task of stalled) {
+            await work(task)
+        }
+        return stalled
+    }
 }
 
 const aTask = overrides => createTask({

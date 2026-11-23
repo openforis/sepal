@@ -5,7 +5,7 @@ import {Subject, takeUntil} from 'rxjs'
 
 import {isProportionsSkipped} from '#sepal/recipe/samplingDesign/proportionsSkip'
 import api from '~/apiRegistry'
-import {recipeVisualizationsNaming} from '~/app/home/body/process/recipe/visualizations'
+import {recipeVisualizationsNaming} from '~/app/home/body/process/recipe/outputs/visualizations'
 import {RecipeFormPanel, recipeFormPanel} from '~/app/home/body/process/recipeFormPanel'
 import {compose} from '~/compose'
 import {selectFrom} from '~/stateUtils'

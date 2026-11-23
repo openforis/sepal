@@ -7,8 +7,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import {tooltipText} from '~/widget/tooltip.test.fixtures'
 
 // A Classification whose classifier is trained, saved without training data, and the recipes whose running builds its
@@ -38,7 +38,6 @@ vi.mock('~/apiRegistry', async () => {
 })
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => msg && !disabled && typeof msg !== 'function'
@@ -63,16 +62,16 @@ const {default: stack} = await import('../stack/stack')
 const {default: classChange} = await import('../classChange/classChange')
 const {default: remapping} = await import('../remapping/remapping')
 const {default: masking} = await import('../masking/masking')
-const {canPreview, readRecipeOutput} = await import('../recipeOutput')
-const {buildMapDependencyGraph} = await import('../mapDependencyGraph')
+const {canPreview, readRecipeOutput} = await import('../outputs/recipeOutput')
+const {buildMapDependencyGraph} = await import('../outputs/mapDependencyGraph')
 const {assetEvidenceOfState} = await import('../../sourceRuntime/assetEvidence')
 const {recordStalenessOfState} = await import('../../sourceRuntime/recordCurrency')
 const {getPreSetVisualizations} = await import('../stack/visualizations')
-const {retrieveAvailability} = await import('../operationAvailability')
-const {physicalRequest, readRetrieveOutput, submitRetrieve} = await import('../retrieveOutput')
-const {requestGate} = await import('../sourceRequirements')
-const {sourceProblemsOfState} = await import('../selectedSourceStatus')
-const {RecipeImageLayer} = await import('../recipeImageLayer')
+const {retrieveAvailability} = await import('../requirements/operationAvailability')
+const {physicalRequest, readRetrieveOutput, submitRetrieve} = await import('../retrieve/retrieveOutput')
+const {requestGate} = await import('../requirements/sourceRequirements')
+const {sourceProblemsOfState} = await import('../requirements/selectedSourceStatus')
+const {RecipeImageLayer} = await import('../map/recipeImageLayer')
 const {addRecipeImageLayer} = await import('../../recipeImageLayerRegistry')
 const {TabContext} = await import('~/widget/tabs/tabContext')
 const {VisualizationSelector} = await import('~/app/home/map/imageLayerSource/visualizationSelector')
@@ -104,6 +103,8 @@ beforeEach(() => {
     fake.observations = []
     fake.missing = new Set()
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -401,7 +402,7 @@ async function onChangeMap(referenceData = []) {
         dimensions: {width: 1024, height: 768}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

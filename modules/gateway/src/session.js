@@ -4,7 +4,7 @@ import {isStoredUsername, storedUsername} from '#sepal/username'
 import {toPromise} from '#sepal/util'
 
 import {usernameTag} from './tag.js'
-import {getSessionUsername} from './user.js'
+import {getBrowserSessionUsername} from './user.js'
 
 const log = getLogger('session')
 
@@ -86,7 +86,7 @@ const SessionManager = (sessionStore, redis, event$) => {
     }
 
     const logout = async (req, res, _next) => {
-        const username = getSessionUsername(req)
+        const username = getBrowserSessionUsername(req)
         const sessionId = req.sessionID
         await new Promise((resolve, reject) =>
             req.session.destroy(err => err ? reject(err) : resolve())
@@ -117,7 +117,7 @@ const SessionManager = (sessionStore, redis, event$) => {
     // so that user's tabs are kicked instead of silently switching account. They are told only once
     // the response carrying the new cookie has gone out, so their reload already lands as the new user.
     const ensureSessionFor = async (req, res, username) => {
-        const previousUsername = getSessionUsername(req)
+        const previousUsername = getBrowserSessionUsername(req)
         const previousSessionId = req.sessionID
         if (previousUsername && storedUsername(previousUsername) !== storedUsername(username)) {
             await toPromise(
@@ -129,7 +129,7 @@ const SessionManager = (sessionStore, redis, event$) => {
     }
 
     const invalidateOtherSessions = async (req, res, _next) => {
-        const username = getSessionUsername(req)
+        const username = getBrowserSessionUsername(req)
         const userSessionIds = await getSessionIdsByUsername(username)
         
         await Promise.all(

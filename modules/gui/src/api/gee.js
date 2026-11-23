@@ -196,6 +196,14 @@ export default {
             }
         }),
 
+    loadDiasObservations$: ({recipe, latLng}) =>
+        postJson$('/api/gee/dias/loadObservations', {
+            body: {recipe, latLng},
+            retry: {
+                maxRetries: 0
+            }
+        }),
+
     loadLandTrendrSegments$: ({recipe, latLng}) =>
         postJson$('/api/gee/landTrendr/loadSegments', {
             body: {recipe, latLng},

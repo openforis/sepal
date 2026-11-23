@@ -7,8 +7,8 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 import {tooltipText} from '~/widget/tooltip.test.fixtures'
@@ -33,7 +33,6 @@ vi.mock('~/translate', () => ({msg: (key, values) => {
     return values ? `${text} ${JSON.stringify(values)}` : text
 }}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => !disabled && [msg].flat().map(tooltipText).some(line => typeof line === 'string')
@@ -52,7 +51,7 @@ const {default: phenology} = await import('./phenology')
 const {default: classification} = await import('../classification/classification')
 const {default: opticalMosaic} = await import('../opticalMosaic/opticalMosaic')
 const {Sources} = await import('./panels/sources/sources')
-const {retrieveAvailability} = await import('../operationAvailability')
+const {retrieveAvailability} = await import('../requirements/operationAvailability')
 
 addRecipeType(phenology())
 addRecipeType(classification())
@@ -61,6 +60,8 @@ addRecipeType(opticalMosaic())
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let root, container, store, runtime
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -256,7 +257,7 @@ async function open({band, classifier, points, inputs}) {
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

@@ -1,23 +1,5 @@
-// InstanceManager — the bridge between the workerSession component and the workerInstance
-// infrastructure.
-//
-//   requestInstance(session)                          → Promise<{id, host}>
-//   releaseInstance(instanceId, sessionId)            → Promise<void>
-//   releaseUnusedInstances(sessions, minAge, timeUnit) → Promise<void>
-//   reclaimStaleClaims(sessions, graceMs)             → Promise<number>
-//   removeOrphanedContainers(sessions)                → Promise<string[]>
-//   getInstanceTypes()                                → InstanceType[]
-//   sessionsWithoutInstance(sessions)                 → Promise<{session, status}[]>
-//   onInstanceActivated(callback)                     → void  (fires on InstanceProvisioned)
-//   onFailedToProvisionInstance(callback)             → void
-//   reprovisionInstance(session)                      → Promise<boolean>
-//   isProvisioning(instanceId)                        → boolean
-//
-// requestInstance, onInstanceActivated and onFailedToProvisionInstance all hand the session
-// layer a projected {id, host} object; the full domain object stays inside this layer.
-//
-// Session shape: { instance: { id, host }, workerType, username }
-// WorkerInstance shape: { id, type, host, running, launchTime, reservation }
+// Bridge session operations to provider-backed instances. Allocation and activation expose {id, host};
+// provider state and release coordination remain inside this component.
 
 import {getLogger} from '#sepal/log'
 
@@ -35,12 +17,17 @@ import {findMissingInstances} from './query/findMissingInstances.js'
 
 const log = getLogger('worker/instanceManager')
 
-const createInstanceManager = ({claims, provider, provisioner, instanceTypes, provisioning = createProvisioningRegistry()}) => {
+const createInstanceManager = ({
+    claims,
+    provider,
+    provisioner,
+    instanceTypes,
+    provisioning = createProvisioningRegistry(),
+}) => {
     // Shared by every release path, so a second release of the same instance joins the first.
     const releasing = new Map()
+    const releaseDeps = {claims, provider, provisioner, provisioning, releasing}
 
-    // requestInstance — allocate an instance for a session. Resolves to the {id, host} projection.
-    // session: { workerType, instanceType, username }.
     const _requestInstance = async session => {
         const {workerType, instanceType, username, id: sessionId} = session
         log.debug(`Requesting ${instanceType} instance for ${userTag(username)} (${workerType})...`)
@@ -48,30 +35,23 @@ const createInstanceManager = ({claims, provider, provisioner, instanceTypes, pr
         return {id: instance.id, host: instance.host}
     }
 
-    // releaseInstance — release the instance from the session; an instance the session no longer
-    // holds is left alone.
-    const _releaseInstance = async (instanceId, sessionId) => {
+    const _releaseInstance = async (instanceId, sessionId, {retire = false, recoverStartup = false} = {}) => {
         log.debug(`Releasing ${instanceTag(instanceId)}...`)
-        return releaseInstance(instanceId, sessionId, {claims, provider, provisioner, provisioning, releasing})
+        return releaseInstance(instanceId, sessionId, {...releaseDeps, retire, recoverStartup})
     }
 
-    // releaseUnusedInstances — reclaim instances not bound to any active session.
-    // sessions: session objects carrying session.instance.id.
     const _releaseUnusedInstances = async (sessions, minAge, timeUnit) => {
         const usedInstanceIds = sessions
             .filter(s => s.instance && s.instance.id)
             .map(s => s.instance.id)
         log.debug(`Releasing unused instances (${usedInstanceIds.length} in use, minAge: ${minAge} ${timeUnit})...`)
-        return releaseUnusedInstances(usedInstanceIds, minAge, timeUnit, {claims, provider, provisioner, provisioning, releasing})
+        return releaseUnusedInstances(usedInstanceIds, minAge, timeUnit, releaseDeps)
     }
 
-    // reclaimStaleClaims — sessions carry the ids; the command needs nothing else from them.
     const _reclaimStaleClaims = async (sessions, graceMs) =>
-        reclaimStaleClaims(sessions.map(({id}) => id), graceMs, {claims, provider, provisioner, provisioning, releasing})
+        reclaimStaleClaims(sessions.map(({id}) => id), graceMs, releaseDeps)
 
-    // removeOrphanedContainers — sweep the shared local daemon for worker containers that neither
-    // the open sessions nor the provider claim (the in-memory local provider forgets instances on
-    // restart, so releaseInstance never undeploys their containers).
+    // Sweep the shared daemon for containers outside open sessions and provider tracking.
     const _removeOrphanedContainers = async sessions => {
         log.debug(`Removing orphaned containers (${sessions.length} open sessions)...`)
         return removeOrphanedContainers(sessions, {provider, provisioner})
@@ -79,10 +59,7 @@ const createInstanceManager = ({claims, provider, provisioner, instanceTypes, pr
 
     const getInstanceTypes = () => instanceTypes
 
-    // sessionsWithoutInstance — of the given sessions, those whose instance the probe did not
-    // CONFIRM, as {session, status}. A session missing from the result was confirmed present.
-    // status is MISSING or UNKNOWN; the caller decides what each is worth (see
-    // workerSession/missingInstanceTracker.js) — an UNKNOWN must not cost a user their session.
+    // Callers must distinguish UNKNOWN probes from confirmed MISSING instances.
     const sessionsWithoutInstance = async sessions => {
         const sessionsWithInst = sessions.filter(s => s.instance && s.instance.id)
         const instances = sessionsWithInst.map(instanceFromSession)
@@ -97,8 +74,6 @@ const createInstanceManager = ({claims, provider, provisioner, instanceTypes, pr
             .map(s => ({session: s, status: statusByInstanceId.get(s.instance.id)}))
     }
 
-    // onInstanceActivated — subscribe to the in-proc InstanceProvisioned event; the callback
-    // receives the {id, host} projection.
     const onInstanceActivated = callback => {
         instanceEvents.on('InstanceProvisioned', instance => {
             log.debug(`Activated ${instanceTag(instance)}`)
@@ -106,8 +81,6 @@ const createInstanceManager = ({claims, provider, provisioner, instanceTypes, pr
         })
     }
 
-    // onFailedToProvisionInstance — subscribe to the in-proc event; the callback receives
-    // {id, host} only, with NO error argument.
     const _onFailedToProvisionInstance = callback => {
         instanceEvents.on('FailedToProvisionInstance', instance => {
             log.debug(`Failed to provision ${instanceTag(instance)}`)
@@ -115,17 +88,19 @@ const createInstanceManager = ({claims, provider, provisioner, instanceTypes, pr
         })
     }
 
-    // isProvisioning — the guard ReconcilePendingSessions skips on. Re-entering provisionInstance
-    // for an instance already in flight would delete the containers it is busy creating.
+    // Reconciliation skips instances busy provisioning or releasing.
     const isProvisioning = instanceId => provisioning.isProvisioning(instanceId)
 
-    // reprovisionInstance — rebuild the instance from the session and run it through the SAME
-    // registry-guarded provisioning path the InstancePendingProvisioning handler uses. Success
-    // emits InstanceProvisioned, so the session is activated through the one existing hook.
-    // Resolves false when a provision for that instance was already in flight.
+    // Fresh allocation and restart recovery share the same provisioning gate.
     const _reprovisionInstance = session =>
-        provisioning.run(session.instance.id, session.id, isCurrent =>
-            provisionInstance(instanceFromSession(session), {provider, provisioner, isCurrent}))
+        provisioning.run(session.instance.id, session.id, (isCurrent, progress) =>
+            provisionInstance(instanceFromSession(session), {
+                claims,
+                provider,
+                provisioner,
+                isCurrent,
+                ...progress,
+            }))
 
     return {
         requestInstance: _requestInstance,

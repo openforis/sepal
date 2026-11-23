@@ -96,7 +96,7 @@ Band names drafts the mapping as the user names it. A field left empty names its
 as its placeholder; a saved blank name, and the bands of an input the mapping does not name, open so, and Apply names
 them. Band names' requirement (`stack/bandNamesRequirements.js`) judges names as the recipe holds them, by the
 declaration's own refusals (`stackMappingRefusals`) and the editor's format rule. The panel's values are judged as
-Apply's commit would name them, over the applied recipe (`recipe/localCandidate.js` runs the applied derivation), so
+Apply's commit would name them, over the applied recipe (`recipe/editing/localCandidate.js` runs the applied derivation), so
 an automatic name - suffixed past the length allowed, say - is judged as it would be saved. A name taken twice is said
 at every band holding it, and a band left to name after an ambiguous save is said too. What it finds holds Apply and
 Enter, judged again over the recipe as it stands at submission. A field says before Apply where a

@@ -1,12 +1,13 @@
-import {createProxyMiddleware} from 'http-proxy-middleware'
+import {createProxyMiddleware, debugProxyErrorsPlugin, loggerPlugin, proxyEventsPlugin} from 'http-proxy-middleware'
 import {catchError, EMPTY, mergeMap, Subject} from 'rxjs'
 
 import {getLogger} from '#sepal/log'
 
 import {endpoints, internalPaths} from '../config/endpoints.js'
 import {sepalHost} from './config.js'
+import {closeUpstreamOnClientClose, isClientDisconnect} from './proxyError.js'
 import {urlTag, usernameTag} from './tag.js'
-import {getRequestSession, getRequestUser, SEPAL_SESSION_HEADER, SEPAL_USER_HEADER, SEPAL_USER_UPDATED_HEADER} from './user.js'
+import {API_KEY_CONTEXT_HEADER, getApiKeyContext, getRequestUser, SEPAL_USER_HEADER, SEPAL_USER_UPDATED_HEADER} from './user.js'
 
 const log = getLogger('proxy')
 
@@ -53,7 +54,11 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
                 proxyTimeout,
                 timeout,
                 logger: log,
+                ejectPlugins: true,
+                plugins: [debugProxyErrorsPlugin, proxyEventsPlugin, requestLoggingPlugin],
                 on: {
+                    proxyReqWs: (proxyRequest, _req, clientSocket) =>
+                        closeUpstreamOnClientClose({proxyRequest, clientSocket}),
                     proxyReq: (proxyReq, req, res) => {
                         // Make sure the client doesn't inject the user header, and pretend to be another user.
                         const user = getRequestUser(req)
@@ -76,12 +81,12 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
                             log.isTrace() && log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} No sepal-user header set`)
                         }
                         // Set here rather than left to ride along on req.headers, so an
-                        // unauthenticated endpoint forwards no worker session.
-                        const workerSession = authenticate ? getRequestSession(req) : null
-                        if (workerSession) {
-                            proxyReq.setHeader(SEPAL_SESSION_HEADER, JSON.stringify(workerSession))
+                        // unauthenticated endpoint forwards no API-key context.
+                        const apiKeyContext = authenticate ? getApiKeyContext(req) : null
+                        if (apiKeyContext) {
+                            proxyReq.setHeader(API_KEY_CONTEXT_HEADER, JSON.stringify(apiKeyContext))
                         } else {
-                            proxyReq.removeHeader(SEPAL_SESSION_HEADER)
+                            proxyReq.removeHeader(API_KEY_CONTEXT_HEADER)
                         }
                         if (noCache) {
                             log.isTrace() && log.trace(`${usernameTag(username)} ${urlTag(req.originalUrl)} Disabling caching`)
@@ -101,7 +106,11 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
                         }
                     },
                     error: (error, req, res) => {
-                        log.error(`${urlTag(req.originalUrl)} Proxy error:`, error)
+                        if (isClientDisconnect({error, response: res})) {
+                            log.debug(`${urlTag(req.originalUrl || req.url)} Client disconnected:`, error)
+                            return
+                        }
+                        log.error(`${urlTag(req.originalUrl || req.url)} Proxy error:`, error)
                         if (res.writeHead && !res.headersSent) {
                             res.writeHead(500, 'Something went wrong', {
                                 'Content-Type': 'text/plain'
@@ -132,5 +141,9 @@ const Proxy = (userStore, authMiddleware, googleAccessTokenMiddleware) => {
 
     return {proxyEndpoints}
 }
+
+// SEPAL classifies errors above; retain HPM's request/socket logs without its duplicate error log.
+const requestLoggingPlugin = (proxyServer, options) =>
+    loggerPlugin(proxyServer, {...options, logger: {...options.logger, error: () => {}}})
 
 export {Proxy}

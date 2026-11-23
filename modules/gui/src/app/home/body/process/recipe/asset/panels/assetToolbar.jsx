@@ -9,7 +9,7 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {setInitialized} from '../../../recipe'
-import {RetrieveButton} from '../../retrieveButton'
+import {RetrieveButton} from '../../retrieve/retrieveButton'
 import {AssetDetails} from './assetDetails/assetDetails'
 import styles from './assetToolbar.module.css'
 import {Composite} from './composite/composite'

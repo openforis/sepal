@@ -8,9 +8,9 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {effectiveSettings} from '#sepal/recipe/changeAlerts/processing'
 import {PRIMARY_IMAGE} from '#sepal/recipe/type/changeAlerts'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 
 // Mounts the real lifecycle and observation against a Redux store; remote reads and presentation are faked.
 const assetMetadata$ = vi.fn()
@@ -43,9 +43,9 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
     }
 })
 
-const {SourceEvidenceSync} = await import('../sourceEvidenceSync')
+const {SourceEvidenceSync} = await import('../sources/sourceEvidenceSync')
 const {changeAlertsObservation} = await import('./referenceObservation')
-const {baseBandsOf} = await import('../segmentEvidence')
+const {baseBandsOf} = await import('../sources/segmentEvidence')
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -63,6 +63,8 @@ beforeEach(() => {
     loadRecipe$.mockReset()
     loadRecipe$.mockReturnValue(throwError(() => new Error('Recipe not found')))
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -489,7 +491,7 @@ const sync = ({selection, sources = {}}) => {
         assets: {user: [{id: SEGMENTS_ASSET, updateTime: 'v0'}], other: []}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

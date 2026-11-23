@@ -1,4 +1,4 @@
-FROM openforis/sandbox-base
+FROM openforis/sandbox-base AS production
 
 EXPOSE 80
 
@@ -62,3 +62,8 @@ ADD modules/${MODULE_NAME}/sepal-app-kernel /etc/sepal/app-manager/sepal-app-ker
 ADD modules/${MODULE_NAME}/kernel-spec.py /etc/sepal/app-manager/kernel-spec.py
 
 CMD start.sh
+
+FROM production AS test
+CMD ["npm", "test"]
+
+FROM production

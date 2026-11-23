@@ -1,5 +1,5 @@
 import {MISSING_ROLE} from '#sepal/recipe/output/diagnostic'
-import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
+import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/outputs/recipeOutput'
 import {msg} from '~/translate'
 
 // What Masking needs of its mask, as its shared definition finds it (lib/js/shared/src/recipe/type/masking.js): one is

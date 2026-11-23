@@ -9,7 +9,7 @@ import {homeDir, sshScriptPath} from './config.js'
 
 const log = getLogger('session')
 
-const sessions = {}
+const sessions = Object.create(null)
 
 const getUsername = req => {
     const sepalUser = req.headers['sepal-user'] && JSON.parse(req.headers['sepal-user'])
@@ -80,6 +80,9 @@ const create = (id, username, req) => {
 
 const get = req => {
     const id = req.params.sessionId
+    if (typeof id !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(id)) {
+        throw Error('Invalid terminal session ID')
+    }
     const username = getUsername(req)
     if (!sessions[id]) {
         sessions[id] = create(id, username, req)

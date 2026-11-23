@@ -9,7 +9,7 @@ import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
-import {baseBandsOf} from '../../../segmentEvidence'
+import {baseBandsOf} from '../../../sources/segmentEvidence'
 import styles from './options.module.css'
 
 const EXTRAPOLATE_MAX_DAYS = 800

@@ -20,11 +20,11 @@ import {withRecipe} from '../../../recipeContext'
 import {withSourceRuntime} from '../../../sourceRuntime/sourceRuntimeContext'
 import {ccdcChart, ccdcExportRecords} from '../../ccdc/ccdcChart'
 import {CCDCGraph} from '../../ccdc/ccdcGraph'
-import {ChartPixelPanelHeader} from '../../chartPixelPanelHeader'
-import {pixelOperationsAvailability, watchOperations} from '../../operationAvailability'
-import {exportableChart, PixelChartExport} from '../../pixelChartExport'
-import {pixelChartUpdate} from '../../pixelChartUpdate'
-import {selectedClassificationOfState} from '../../selectedClassification'
+import {ChartPixelPanelHeader} from '../../charts/chartPixelPanelHeader'
+import {exportableChart, PixelChartExport} from '../../charts/pixelChartExport'
+import {pixelChartUpdate} from '../../charts/pixelChartUpdate'
+import {selectedClassificationOfState} from '../../collections/selectedClassification'
+import {pixelOperationsAvailability, watchOperations} from '../../requirements/operationAvailability'
 import {loadObservations$, RecipeActions} from '../timeSeriesRecipe'
 import styles from './chartPixel.module.css'
 
@@ -43,7 +43,7 @@ const mapRecipeToProps = recipe => ({
     startDate: moment(selectFrom(recipe, 'model.dates.startDate'), 'YYYY-MM-DD').toDate(),
     endDate: moment(selectFrom(recipe, 'model.dates.endDate'), 'YYYY-MM-DD').toDate(),
     dateFormat: selectFrom(recipe, 'model.ccdcOptions.dateFormat'),
-    corrections: selectFrom(recipe, 'model.opticalPreprocess.corrections'),
+    corrections: selectFrom(recipe, 'model.options.corrections'),
     dataSets: selectFrom(recipe, 'model.sources.dataSets'),
     recipe
 })

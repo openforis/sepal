@@ -6,7 +6,7 @@ import {ASSET} from '#sepal/recipe/source/reference'
 import {getLogger} from '~/log'
 import {uuid} from '~/uuid'
 
-import {OBSERVED, sourceKeyOf, UNAVAILABLE} from '../recipe/sourceEvidence'
+import {OBSERVED, sourceKeyOf, UNAVAILABLE} from '../recipe/sources/sourceEvidence'
 import {
     assetVersion,
     currentRecords,
@@ -14,7 +14,7 @@ import {
     outdatedBasis,
     resolvedBasis,
     startingBasis
-} from '../recipe/sourceEvidenceBasis'
+} from './sourceEvidenceBasis'
 
 const log = getLogger('sourceEvidence')
 

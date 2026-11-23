@@ -11,8 +11,8 @@ import {stratumFrameQuestion} from '#sepal/recipe/samplingDesign/stratumFrame'
 import {probabilitySourceQuestion, stratumProbabilitiesQuestion} from '#sepal/recipe/samplingDesign/stratumProbabilities'
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider, useSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
@@ -53,11 +53,11 @@ vi.mock('~/widget/panelWizard', () => ({
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
 // The source recipe's bands load as the panel opens, with a legend of its own for them.
-vi.mock('~/widget/recipeInput', () => ({RecipeInput: ({onBandsLoaded}) => {
+vi.mock('~/app/home/body/process/recipe/sources/recipeInput', () => ({RecipeInput: ({onBandsLoaded}) => {
     React.useEffect(() => onBandsLoaded({bandNames: ['class'], recipe: {}}), [])
     return null
 }}))
-vi.mock('~/app/home/body/process/recipe/visualizations', () => ({
+vi.mock('~/app/home/body/process/recipe/outputs/visualizations', () => ({
     recipeVisualizationsNaming: () => [{type: 'categorical', bands: ['class'], values: [1], labels: ['Legend'], palette: ['#ff0000']}]
 }))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
@@ -93,7 +93,7 @@ vi.mock('./proportions/proportionControls', () => ({
 }))
 
 const {samplingDesignRequirements, samplesGate} = await import('../freshnessRequirements')
-const {sectionProblemsOfState} = await import('../../selectedSourceStatus')
+const {sectionProblemsOfState} = await import('../../requirements/selectedSourceStatus')
 const {samplingDesignCalculations} = await import('../calculations')
 const {Stratification} = await import('./stratification/stratification')
 const {Proportions} = await import('./proportions/proportions')
@@ -114,6 +114,8 @@ beforeEach(() => {
     harness.inputs = {}
     harness.wizard = {next: vi.fn()}
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -802,7 +804,7 @@ const open = async (Panel, {sources, model}, current) => {
         dimensions: {width: 1024, height: 768}, assets: {user: [], other: []}
     }
     store = createStore((state = initial, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     harness.panel = Panel
     container = document.createElement('div')
     document.body.appendChild(container)

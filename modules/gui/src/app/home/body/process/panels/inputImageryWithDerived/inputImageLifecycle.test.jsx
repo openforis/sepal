@@ -5,8 +5,9 @@ import {legacy_createStore as createStore} from 'redux'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 import lookStyles from '~/style/look.module.css'
 import listItemStyles from '~/widget/listItem.module.css'
 
@@ -18,6 +19,7 @@ import listItemStyles from '~/widget/listItem.module.css'
 // (recipe/classification/inputBandSets.test.jsx).
 
 const fake = vi.hoisted(() => ({requests: []}))
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', async () => {
     const {NEVER, of, Subject} = await import('rxjs')
     const request = id => {
@@ -27,7 +29,7 @@ vi.mock('~/apiRegistry', async () => {
     }
     return {default: {
         recipe: {
-            save$: () => NEVER,
+            save$: request => io.storage.save$(request),
             load$: id => of({id, type: 'MOSAIC', revision: 1, model: {}}),
             loadAll$: () => NEVER
         },
@@ -43,7 +45,6 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', async importOriginal => ({
     getRecipeType: id => ({id, imageSource: true, getPreSetVisualizations: () => []})
 }))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : `${key}`}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => msg && !disabled && typeof msg !== 'function'
@@ -76,6 +77,8 @@ let root, container, store
 beforeEach(() => {
     fake.requests = []
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -332,8 +335,11 @@ const editInput = async (saved = SAVED) => {
         assets: {user: [SAVED_ASSET.id, OTHER_ASSET].map(id => ({id, type: 'Image', updateTime: 'T1'})), other: []},
         dimensions: {width: 1024, height: 768}
     }
-    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
+    installStore(store)
+    opening.openIn(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

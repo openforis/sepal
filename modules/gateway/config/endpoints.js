@@ -61,15 +61,14 @@ const endpoints = [
         authenticate: true
     },
     {
+        // The internal protocol trusts message identities; browsers must use /api/ws.
         path: '/api/user-files',
         target: `http://${modules.userFiles}`,
-        ws: true,
         authenticate: true
     },
     {
         path: '/api/storage',
         target: `http://${modules.storage}`,
-        ws: false,
         authenticate: true
     },
     {

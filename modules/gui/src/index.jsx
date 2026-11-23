@@ -15,6 +15,7 @@ import {applyMiddleware, legacy_createStore as createStore} from 'redux'
 
 import {initApi} from '~/api'
 import {App} from '~/app/app'
+import {startRecipeSession} from '~/app/home/body/process/recipeSession/recipeSession'
 import {isDevelopment} from '~/environment'
 import {initStore} from '~/store'
 import {TranslationProvider} from '~/translate'
@@ -57,6 +58,8 @@ const store = createStore(
 )
 
 initStore(store)
+// Its session lives as long as it does (recipeSession.js).
+startRecipeSession(store)
 
 const container = document.getElementById('app')
 const root = createRoot(container)

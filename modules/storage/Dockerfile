@@ -1,4 +1,4 @@
-FROM node:26-alpine
+FROM node:26-alpine AS production
 
 ENV MODULE_NAME storage
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
@@ -58,3 +58,8 @@ ADD --chmod=0755 modules/${MODULE_NAME}/start.sh /usr/local/bin/start.sh
 # run
 USER node
 CMD /usr/local/bin/start.sh
+
+FROM production AS test
+CMD ["npm", "test"]
+
+FROM production

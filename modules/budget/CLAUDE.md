@@ -3,6 +3,11 @@
 Event-driven budget service. Tracks
 instance + storage spending and enforces monthly budgets; owns the `budget` Postgres schema (Postgrator).
 
+Instance spending is elapsed hours × hourly rate, without rounding durations or individual costs.
+The interval runs from session creation to closure, including startup. Existing usage is recalculated
+from its saved timestamps; no billing migration is needed. Cached spending reports refresh through
+the normal event/hourly rebuild, while live budget checks calculate from usage directly.
+
 ## Database migrations
 
 `migrations/` holds the Postgres schema stream; see [docs/database-migrations.md](../../docs/database-migrations.md).

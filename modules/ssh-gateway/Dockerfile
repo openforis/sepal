@@ -15,7 +15,7 @@ RUN go mod download
 ADD modules/ssh-gateway/router .
 RUN go vet ./... && go test ./... && go build -o /out/sepal-router .
 
-FROM node:26-trixie
+FROM node:26-trixie AS production
 
 EXPOSE 22
 
@@ -56,3 +56,10 @@ ADD modules/${MODULE_NAME}/src ./src
 # run
 USER root
 CMD /usr/local/bin/init_container.sh
+
+FROM production AS test
+# The tests run the repository copies of the scripts the image installs
+ADD modules/${MODULE_NAME}/script ./script
+CMD ["npm", "test"]
+
+FROM production

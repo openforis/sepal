@@ -12,7 +12,7 @@ vi.mock('~/compose', () => ({
 vi.mock('~/translate', () => ({msg: key => key}))
 
 const {VisualizationSelector} = await import('~/app/home/map/imageLayerSource/visualizationSelector')
-const {reconciledSelection} = await import('../visualizationMatching')
+const {reconciledSelection} = await import('../outputs/visualizationMatching')
 const {getPreSetVisualizations, visualizationOptions} = await import('./visualizations')
 
 const GREYS = {id: 'greys', type: 'continuous', bands: ['elevation'], min: [0], max: [1000], palette: ['#000000', '#ffffff']}

@@ -6,8 +6,8 @@ import api from '~/apiRegistry'
 import {toVisualizations} from '~/app/home/map/imageLayerSource/assetVisualizationParser'
 
 import {getRecipeType} from '../../recipeTypeRegistry'
-import {inheritedSourceReference} from '../sourceEvidence'
-import {outputOwnedVisualizations, sourceVisualizations} from '../visualizations'
+import {outputOwnedVisualizations, sourceVisualizations} from '../outputs/visualizations'
+import {inheritedSourceReference} from '../sources/sourceEvidence'
 
 // What a recipe that preserves its input's schema observes about that input: the presets it may offer. Read by the
 // shared evidence lifecycle, which decides when. Its bands are its description's, which the source runtime loads

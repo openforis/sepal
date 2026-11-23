@@ -9,8 +9,8 @@ import {actionBuilder} from '~/action-builder'
 import {getImageLayerSource} from '~/app/home/body/process/imageLayerSourceRegistry'
 import {registerImageLayerSources} from '~/app/home/body/process/imageLayerSources'
 import {Recipe, withRecipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {Notifications} from '~/widget/notifications'
 import {PortalContainer} from '~/widget/portal'
@@ -49,6 +49,8 @@ beforeEach(() => {
         return NEVER.pipe(finalize(() => activePreviews--))
     }))
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -301,7 +303,7 @@ const openLayer = ({custom, selectedBand = 'red'} = {}) => {
         }}, tabs: [{id: 'map'}], recipes: []}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     registerImageLayerSources()
     container = document.createElement('div')
     document.body.appendChild(container)

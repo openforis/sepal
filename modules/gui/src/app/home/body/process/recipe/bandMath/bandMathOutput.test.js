@@ -5,10 +5,8 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 // Math's running image; only the task API and notifications are replaced.
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
-// Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
-vi.mock('~/user', () => ({}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
-vi.mock('~/app/home/body/process/recipe/recipeOutputPath', () => ({getTaskInfo: () => ({})}))
+vi.mock('~/app/home/body/process/recipe/retrieve/recipeOutputPath', () => ({getTaskInfo: () => ({})}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 
 const submitted = vi.hoisted(() => [])
@@ -29,15 +27,15 @@ const {addRecipeType} = await import('../../recipeTypeRegistry')
 const {default: bandMath} = await import('./bandMath')
 const {default: remapping} = await import('../remapping/remapping')
 const {retrieveTask: remappingTask} = await import('../remapping/remappingRecipe')
-const {requestGate} = await import('../sourceRequirements')
-const {sourceProblemsOfState} = await import('../selectedSourceStatus')
+const {requestGate} = await import('../requirements/sourceRequirements')
+const {sourceProblemsOfState} = await import('../requirements/selectedSourceStatus')
 const {default: masking} = await import('../masking/masking')
 const {retrieveTask: bandMathTask} = await import('./bandMathRecipe')
 const {retrieveTask: maskingTask} = await import('../masking/maskingRecipe')
-const {buildMapDependencyGraph} = await import('../mapDependencyGraph')
-const {readRecipeOutput} = await import('../recipeOutput')
-const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('../retrieveOutput')
-const {retrieveAvailability} = await import('../operationAvailability')
+const {buildMapDependencyGraph} = await import('../outputs/mapDependencyGraph')
+const {readRecipeOutput} = await import('../outputs/recipeOutput')
+const {physicalRequest, readRetrieveOutput, retrieveDecision, submitRetrieve} = await import('../retrieve/retrieveOutput')
+const {retrieveAvailability} = await import('../requirements/operationAvailability')
 
 addRecipeType(bandMath())
 addRecipeType(masking())

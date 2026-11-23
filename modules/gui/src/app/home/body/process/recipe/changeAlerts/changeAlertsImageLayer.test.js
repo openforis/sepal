@@ -18,8 +18,8 @@ vi.mock('~/app/home/body/process/recipeTypeRegistry', async () => {
 })
 
 const {ChangeAlertsImageLayer} = await import('./changeAlertsImageLayer')
-const {buildMapDependencyGraph} = await import('../mapDependencyGraph')
-const {canPreview, layerProduct, readRecipeOutput} = await import('../recipeOutput')
+const {buildMapDependencyGraph} = await import('../outputs/mapDependencyGraph')
+const {canPreview, layerProduct, readRecipeOutput} = await import('../outputs/recipeOutput')
 const {describedByRuntime, observedSegmentsAsset, segmentsAssetMetadata} = await import('./observedReference.test.fixtures')
 
 describe.each([

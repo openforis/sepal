@@ -3,6 +3,7 @@ import React from 'react'
 import {Subject, takeUntil} from 'rxjs'
 
 import api from '~/apiRegistry'
+import {RecipeInput} from '~/app/home/body/process/recipe/sources/recipeInput'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
 import {SourceKind} from '~/app/home/body/process/sourceTypeButtons'
@@ -12,7 +13,6 @@ import {Form} from '~/widget/form'
 import {FormCombo} from '~/widget/form/combo'
 import {Layout} from '~/widget/layout'
 import {NumberButtons} from '~/widget/numberButtons'
-import {RecipeInput} from '~/widget/recipeInput'
 
 const mapRecipeToProps = recipe => ({recipe})
 

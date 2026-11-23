@@ -3,10 +3,10 @@ import React from 'react'
 import {Subject} from 'rxjs'
 
 import {mayProvideSegments} from '#sepal/recipe/capability/ccdcSegments'
+import {RecipeInput} from '~/app/home/body/process/recipe/sources/recipeInput'
 import {recipeAccess} from '~/app/home/body/process/recipeAccess'
 import {compose} from '~/compose'
 import {Layout} from '~/widget/layout'
-import {RecipeInput} from '~/widget/recipeInput'
 
 class _RecipeSection extends React.Component {
     constructor(props) {

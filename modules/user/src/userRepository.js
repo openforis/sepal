@@ -1,6 +1,7 @@
 import {isUniqueViolation} from '#sepal/db/postgres'
 import {storedUsername} from '#sepal/username'
 
+import {TOKEN_MAX_AGE_MS} from './tokens.js'
 import {rowToUser, toISOString} from './user.js'
 import {isText} from './validation.js'
 
@@ -152,6 +153,32 @@ export class UserRepository {
         })
     }
 
+    async resetPasswordIfTokenIsValid({username, token, passwordHash}) {
+        requireSelector(username)
+        requireSelector(token)
+        return this.#db.withConnection(async connection => {
+            const {rowCount} = await connection.query(
+                `UPDATE sepal_user SET password_hash = $1, token = NULL, status = 'ACTIVE', ${BUMP}
+                 WHERE username = $2 AND token = $3 AND status IN ('PENDING', 'ACTIVE')
+                   AND token_generation_time >= now() - make_interval(secs => $4)`,
+                [passwordHash, username, token, TOKEN_MAX_AGE_MS / 1000]
+            )
+            return rowCount > 0
+        })
+    }
+
+    async upgradePasswordHashIfUnchanged({username, verifiedHash, upgradedHash}) {
+        requireSelector(username)
+        return this.#db.withConnection(async connection => {
+            const {rowCount} = await connection.query(
+                `UPDATE sepal_user SET password_hash = $1, token = NULL, ${BUMP}
+                 WHERE username = $2 AND password_hash = $3`,
+                [upgradedHash, username, verifiedHash]
+            )
+            return rowCount > 0
+        })
+    }
+
     // With a `revision`, the write only happens if the row still has it — the check and the write
     // are one statement, so two callers holding the same revision cannot both get through. Returns
     // whether a row was written.
@@ -166,10 +193,11 @@ export class UserRepository {
                 `UPDATE sepal_user
                  SET token = CASE WHEN email IS NOT DISTINCT FROM $1::citext THEN token END,
                      name = $2, email = $1::citext, organization = $3, intended_use = $4,
-                     email_notifications_enabled = $5, manual_map_rendering_enabled = $6, admin = $7, ${BUMP}
+                     email_notifications_enabled = $5, manual_map_rendering_enabled = $6,
+                     admin = COALESCE($7::boolean, admin), ${BUMP}
                  WHERE username = $8 AND ($9::integer IS NULL OR revision = $9::integer)`,
                 [email, name, organization, intendedUse,
-                    emailNotificationsEnabled, manualMapRenderingEnabled, admin, username,
+                    emailNotificationsEnabled, manualMapRenderingEnabled, admin ?? null, username,
                     revision ?? null]
             ).catch(rethrowDuplicate)
             return rowCount > 0
@@ -251,7 +279,9 @@ export class UserRepository {
 
     async #assignDerivedPosixIds(connection, id) {
         await connection.query(
-            'UPDATE sepal_user SET uid = id, gid = id WHERE id = $1 AND (uid IS NULL OR gid IS NULL)', [id]
+            `UPDATE sepal_user
+             SET uid = COALESCE(uid, id), gid = COALESCE(gid, id)
+             WHERE id = $1 AND (uid IS NULL OR gid IS NULL)`, [id]
         )
     }
 }

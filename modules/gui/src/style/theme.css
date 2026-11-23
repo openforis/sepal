@@ -206,6 +206,7 @@ html {
     /* home chrome */
     --footer-background-color: rgba(28, 28, 28, 0.99);
     --disabled-overlay-color: hsla(0, 0%, 0%, .5);
+    --dimmed-image-filter: grayscale(1) brightness(.4);
     --row-expansion-shade-color: hsla(0, 0%, 0%, .15);
 
     /* map chrome */
@@ -434,6 +435,7 @@ html[data-theme=light] {
     /* home chrome */
     --footer-background-color: hsla(38, 24%, 93%, .99);
     --disabled-overlay-color: hsla(40, 20%, 97%, .55);
+    --dimmed-image-filter: grayscale(1) opacity(.4);
     --row-expansion-shade-color: hsla(40, 20%, 25%, .05);
 
     /* map chrome */

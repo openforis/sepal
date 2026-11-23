@@ -5,7 +5,7 @@ import {msg} from '~/translate'
 import {Form} from '~/widget/form'
 import {Layout} from '~/widget/layout'
 
-import {bandOptionsOf, showLoadError} from '../../../changeImageSelection'
+import {bandOptionsOf, showLoadError} from '../../../editing/changeImageSelection'
 import styles from './inputImage.module.css'
 
 // The image's source, its band, and the band holding its error. A read of the source the image was saved with changes

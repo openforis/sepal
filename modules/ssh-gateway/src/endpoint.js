@@ -1,4 +1,4 @@
-import {catchError, filter, first, forkJoin, interval, map, of, switchMap} from 'rxjs'
+import {catchError, exhaustMap, filter, first, forkJoin, interval, map, of, switchMap} from 'rxjs'
 
 import {delete$, get$, post$} from '#sepal/httpClient'
 
@@ -94,7 +94,7 @@ const joinSession$ = session => {
                 : response.body)
         )
     return interval(WAIT_TIME).pipe( // Retry until session is not starting
-        switchMap(() => loadSession$()),
+        exhaustMap(() => loadSession$()),
         filter(session => session.unavailable || session.status !== 'STARTING'),
         first()
     )

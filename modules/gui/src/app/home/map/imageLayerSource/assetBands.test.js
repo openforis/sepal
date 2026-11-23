@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {renderableBandNames} from '~/app/home/body/process/recipe/visualizationMatching'
+import {renderableBandNames} from '~/app/home/body/process/recipe/outputs/visualizationMatching'
 
 import {assetAvailableBands} from './assetBands'
 

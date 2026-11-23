@@ -73,7 +73,7 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
 - `lib/js/shared/test/recipe/output/type/baytsAlerts.test.js`: named-product parameters, identity, date
   normalization and refusals.
 - `modules/gee/test/jobs/ee/bayts/alertMapProducts.test.js`: executed product, unknown mode and asset masking.
-- `modules/gui/src/app/home/body/process/recipe/modelDerivedOutput.test.js` and `recipe/recipeImageLayer.test.js`:
+- `modules/gui/src/app/home/body/process/recipe/outputs/modelDerivedOutput.test.js` and `recipe/map/recipeImageLayer.test.js`:
   presentation, readiness, preview arguments and acquisition lifetime.
 - [Live BAYTS probes](../../modules/gee/verify/README.md): alerts schema and first/last radar samples;
   historical-asset masking is not covered without an accessible fixture.

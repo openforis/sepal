@@ -1,6 +1,8 @@
 import {Observable, Subject} from 'rxjs'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {processingEvidence, processingOfProducer} from '#sepal/recipe/changeAlerts/processing'
+
 // The one-shot source-runtime operation, exercised directly. The shared graph builder, registry, CCDC and MASKING
 // declarations, resolver, observer and the committed GUI observer adapter all really run; only the Earth Engine
 // bands API and the Redux environment are replaced.
@@ -219,7 +221,7 @@ const CCDC_BANDS = [
 const DECLARED_CCDC_BANDS = ['tStart', 'ndvi_coefs']
 
 // Running a Masking builds its mask, so its mask asset is observed beside what describes it.
-const MASK_CALL = {asset: 'users/x/mask', includeDataTypes: true}
+const MASK_CALL = {asset: 'users/x/mask', includeDataTypes: true, includeProperties: true}
 
 const MASK_BANDS = [{name: 'mask', arrayDimensions: 0}]
 
@@ -320,7 +322,7 @@ describe('completing the operation-local recipe closure', () => {
 
         // Running the Masking builds its mask, a Remapping over the loaded recipe, whose bands are observed too.
         expect(state.bandsCalls).toEqual([
-            {asset: 'users/x/segments', includeDataTypes: true},
+            {asset: 'users/x/segments', includeDataTypes: true, includeProperties: true},
             {recipe: ccdc('nested-1')}
         ])
         emit('ASSET:users/x/segments', CCDC_BANDS)
@@ -417,7 +419,7 @@ describe('the one-shot envelope', () => {
             description: {
                 executionReference: {type: 'RECIPE_REF', id: 'masked-1'},
                 output: {kind: 'IMAGE', bands: sampled(CCDC_BANDS)},
-                evidence: []
+                evidence: [processingEvidence(processingOfProducer({}))]
             },
             dependencyValidity: SOUND,
             readiness: RUNNABLE

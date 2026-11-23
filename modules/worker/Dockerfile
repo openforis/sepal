@@ -1,4 +1,4 @@
-FROM node:26-alpine
+FROM node:26-alpine AS production
 
 ENV MODULE_NAME worker
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
@@ -25,3 +25,11 @@ ADD --chmod=0755 modules/${MODULE_NAME}/start.sh /usr/local/bin/start.sh
 
 USER node
 CMD /usr/local/bin/start.sh
+
+FROM production AS test
+USER root
+RUN npm ci
+USER node
+CMD ["npm", "test"]
+
+FROM production

@@ -6,7 +6,7 @@ import {of, Subject} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {initStore} from '~/store'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {EventShield} from '~/widget/eventShield'
 import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
@@ -31,8 +31,6 @@ vi.mock('~/app/home/body/process/recipeFormPanel', () => ({
 // Every read is recorded, so a read nobody asked for is visible.
 vi.mock('~/apiRegistry', () => ({default: {recipe: {load$: recipeId => recipeRead(recipeId)}}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-// Cuts an import cycle the form barrel would otherwise enter from the wrong side. Nothing here renders one.
-vi.mock('~/widget/form/assetCombo', () => ({FormAssetCombo: () => null}))
 // Panel chrome, not the controls under test. Every form control stays real.
 vi.mock('~/widget/form', async importOriginal => {
     const {Form} = await importOriginal()
@@ -131,6 +129,8 @@ beforeEach(() => {
     load$ = () => of(classificationRecipe())
 })
 
+afterEach(disposeInstalledSessions)
+
 afterEach(async () => {
     await act(async () => root?.unmount())
     root = null
@@ -161,7 +161,7 @@ const open = ({classification, advanced}, {load$: reads} = {}) => {
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

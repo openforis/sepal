@@ -18,9 +18,9 @@ import {inputFeedback} from '~/widget/form/inputFeedback'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 
-import {baseBandsOf} from '../../../segmentEvidence'
+import {baseBandsOf} from '../../../sources/segmentEvidence'
 import {MONITORING_TYPES} from '../../monitoringData'
-import {settingsOf} from '../../processingSettings'
+import {effectiveReflectanceOf, settingsOf} from '../../processingSettings'
 import {fittedMeasures, segmentBandsOf} from '../../referenceEvidence'
 import styles from './sources.module.css'
 
@@ -50,7 +50,8 @@ const mapRecipeToProps = recipe => ({
     date: selectFrom(recipe, 'model.date'),
     bands: segmentBandsOf(recipe),
     baseBands: baseBandsOf(recipe, PRIMARY_IMAGE),
-    corrections: settingsOf(recipe).model?.options.corrections || []
+    corrections: settingsOf(recipe).model?.options.corrections || [],
+    reflectance: effectiveReflectanceOf(recipe)
 })
 
 class _Sources extends React.Component {
@@ -214,9 +215,11 @@ class _Sources extends React.Component {
         return dataSetOptions({type: dataSetType.value, period: this.period(), chosen: dataSets.value})
     }
 
+    // Judged under the correction the reference's processing makes effective: while that is read, a data set is offered
+    // unless neither correction may cover the period.
     period() {
-        const {date} = this.props
-        return dataSetPeriod({date})
+        const {date, reflectance} = this.props
+        return dataSetPeriod({date}, reflectance)
     }
 
 }

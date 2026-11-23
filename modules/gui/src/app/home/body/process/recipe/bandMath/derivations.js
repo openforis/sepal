@@ -1,6 +1,6 @@
 import _ from 'lodash'
 
-import {renamedVisualizationBands} from '../visualizationRenames'
+import {renamedVisualizationBands} from '../outputs/visualizationRenames'
 import {CALCULATION_REFERENCES, calculationItem, chainFacts} from './chainRequirements'
 import {updateIncludedBands} from './panels/calculations/calculation'
 import {outputNameOf} from './panels/outputBands/outputImages'

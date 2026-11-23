@@ -2,7 +2,7 @@ import _ from 'lodash'
 import moment from 'moment'
 
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {pyramidingPolicies} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
+import {pyramidingPolicies} from '~/app/home/body/process/recipe/retrieve/recipeTaskSubmitter'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
 

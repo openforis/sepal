@@ -1,5 +1,5 @@
 #   {$OPS_DOMAIN}:{$JENKINS_PORT}  -> jenkins:8080
-#   {$OPS_DOMAIN}:443              -> docker-registry:5000  (basic-auth gated)
+#   {$OPS_DOMAIN}:443              -> docker-registry:5000  (basic-auth gated, pulls only)
 {
 	email {$LETSENCRYPT_EMAIL}
 	admin off
@@ -43,13 +43,17 @@
 {$OPS_DOMAIN}:443 {
 	encode gzip
 
-	# Same credentials as the registry itself enforces internally
-	# (modules/ops/script/start-registry.sh writes them to /auth/.htpasswd).
+	# Caddy is the registry's only authentication; otherwise the registry is
+	# reachable only from the ops host's loopback and the ops network.
 	# basic_auth needs a bcrypt hash, computed in start-caddy.sh from
 	# DOCKER_REGISTRY_PASSWORD at container start.
 	basic_auth {
 		{$DOCKER_REGISTRY_USERNAME} {$DOCKER_REGISTRY_PASSWORD_HASH}
 	}
+
+	# Jenkins pushes over the ops host's loopback; this site only serves pulls.
+	@write not method GET HEAD
+	respond @write 405
 
 	# Strip headers that leak server identity / proxy chain.
 	header {
