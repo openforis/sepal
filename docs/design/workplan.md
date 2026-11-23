@@ -1055,29 +1055,56 @@ choose production only from measured results.
 
 ## Sandbox build time
 
-Reduce sandbox build time with tests disabled, starting with cache invalidation and download reuse. Observed
-costs include roughly seven minutes installing GPU dependencies, eight minutes installing GMT/GMTSAR (mostly
-a slow UbuntuGIS download), and R source compilation. An early OFT installer change invalidated later layers
-even though the GPU installer was unchanged. GPU setup already installs prebuilt packages; standalone DGGRID
-compilation and R's `dggridR` are separate concerns, and the latter already benefits from the R binary proxy.
+Reduce sandbox build time with tests disabled. Prioritize preserving expensive cached layers, then R package
+installation and validation, slow UbuntuGIS downloads, and standalone DGGRID compilation. Deliver live Jenkins
+progress alongside these changes; assess GPU dependency reductions after the larger measured costs.
+
+Observed on the two-CPU ops host in [Sepal-test #477](https://ops.sepal.io:8443/job/Sepal-test/477/):
+
+| Sandbox step | Elapsed time | Observation |
+|---|---:|---|
+| R packages, R Torch and package-load checks | 20m 30s | Roughly 12 minutes installing packages, 3m 26s setting up Torch, and five minutes checking package loads. |
+| GMT / GMTSAR | 8m 12s | Six minutes downloading about 83 MB from UbuntuGIS, including retries. |
+| GPU libraries, TensorFlow and Python PyTorch | 7m 03s | Downloads and installation of prebuilt packages. |
+| Standalone DGGRID | 5m 49s | Builds from source. |
+| Remaining Dockerfile steps | 21m 10s | Includes SNAP, Orfeo, other Python packages, OFT and application setup. |
+| **Total before image export** | **62m 44s** | Excludes export and registry pushes; their final timings were not captured in this sample. |
+
+The four largest steps account for about two-thirds of the measured time. This was not a fully clean build:
+the base image and early configuration layers were reused, but an OFT installer change invalidated subsequent
+layers even though the GPU installer was unchanged. Most R packages already came from the binary proxy;
+source misses such as `interp`, R Torch setup and package validation still add work. Standalone DGGRID and
+R's cached `dggridR` package are separate concerns.
 
 - **Preserve expensive installation layers.** Assess moving stable GPU dependencies earlier in the sandbox's
   own Dockerfile, with configuration and frequently changed inputs later. Establish actual dependencies before
   reordering: Python installers share one environment, and R/native tools depend on compatible system libraries.
+- **Optimize R installation and validation.** Use the existing binary proxy to prepare expensive misses such
+  as `interp`, and avoid duplicate foreground/background compilation where practical. Assess reuse of the
+  runtime downloaded by `torch::install_torch()` separately from the R package binary cache. Package validation
+  currently starts a separate R process per package, repeatedly loading dependencies; assess bounded batches
+  or fewer processes while respecting R's loaded-DLL limit. Preserve R ABI checks, detection of missing or
+  unloadable packages, and the Torch runtime check, including when Jenkins application tests are disabled.
 - **Reuse downloads without enlarging the shipped image.** Assess BuildKit cache mounts for APT and `uv` so a
   necessary layer rebuild can reuse downloaded packages. Keep caches outside image layers and measure their
-  contribution to the ops disk and cache budget. Investigate reliable download paths for slow UbuntuGIS packages.
+  contribution to the ops disk and cache budget. Prioritize reliable download paths and reuse for slow UbuntuGIS
+  packages: most of the observed GMT step was downloading, rather than compilation.
 - **Reuse compiled tools.** Assess a pinned standalone DGGRID binary published as a checksummed release asset,
   or an independent build stage that survives unrelated sandbox changes. Match OS, architecture, runtime
   libraries and required GDAL/features. A full new package repository is not selected.
-- **Use the existing R binary cache.** Identify expensive misses such as `interp`, assess preparing those
-  binaries before sandbox installation, and avoid duplicate foreground/background compilation where practical.
-  Preserve R ABI checks; assess the standalone DGGRID tool separately from cached `dggridR` packages.
 - **Assess GPU dependency overlap.** Inventory system CUDA packages and the NVIDIA libraries installed with
   Python frameworks. Establish compiler, R and native-application requirements before proposing removals.
+- **Show live sandbox progress in Jenkins.** Report each installer starting, completing or being reused from
+  cache, with elapsed times. During long GPU and R installers, identify the current substep: downloading,
+  installing, setting up Torch or checking package loads; show completed/total counts where known. Periodic
+  progress lines must name the current installer/substep and its elapsed time, rather than only saying the
+  sandbox build is running. Distinguish image export and registry push from installation. Keep detailed tool
+  output in the full log and keep summaries visible while the build runs; do not imply a percentage or ETA from
+  Dockerfile step counts.
 - **Make measurements usable.** Capture completed step timings and sufficient diagnostics despite BuildKit's
   per-step log clipping, while keeping the Jenkins console concise. Separate download, unpack/install and
-  compilation costs before choosing further optimization.
+  compilation costs, and measure R validation, image export and registry push separately before choosing further
+  optimization.
 
 Acceptance: compare cold and warm builds on the same hardware, including an unchanged rebuild and a change to
 an unrelated installer. Show which expensive work is reused, report image/cache sizes and timings, and preserve
