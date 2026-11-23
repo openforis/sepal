@@ -179,16 +179,6 @@
         "build": {},
         "run": false
     },
-    "scene-metadata": {
-        "lib": [
-            "shared"
-        ],
-        "build": {},
-        "run": [
-            "logger",
-            "mysql"
-        ]
-    },
     "scene": {
         "lib": [
             "shared"
