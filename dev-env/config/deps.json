@@ -103,6 +103,19 @@
             "logger"
         ]
     },
+    "postgres": {
+        "build": {},
+        "run": [
+            "logger"
+        ]
+    },
+    "postgres-backup": {
+        "build": {},
+        "run": [
+            "logger",
+            "postgres"
+        ]
+    },
     "mysql-backup": {
         "build": {},
         "run": [

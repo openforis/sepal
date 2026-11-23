@@ -1,0 +1,11 @@
+services:
+  postgres:
+    extends:
+      file: ../docker-compose.logger.override.yml
+      service: logger
+    ports: !override []
+
+  pgadmin:
+    extends:
+      file: ../docker-compose.logger.override.yml
+      service: logger

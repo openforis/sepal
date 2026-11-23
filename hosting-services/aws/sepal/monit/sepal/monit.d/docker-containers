@@ -43,6 +43,15 @@ check program mysql-admin with path /usr/local/bin/dockercheck-mysql-admin
 check program mysql-backup with path /usr/local/bin/dockercheck-mysql-backup
     if status != 0 then exec "/usr/local/bin/pushover-notify 0"
 
+check program postgres with path /usr/local/bin/dockercheck-postgres
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
+
+check program pgadmin with path /usr/local/bin/dockercheck-pgadmin
+    if status != 0 then exec "/usr/local/bin/pushover-notify 2"
+
+check program postgres-backup with path /usr/local/bin/dockercheck-postgres-backup
+    if status != 0 then exec "/usr/local/bin/pushover-notify 0"
+
 check program message with path /usr/local/bin/dockercheck-message
     if status != 0 then exec "/usr/local/bin/pushover-notify 2"
 

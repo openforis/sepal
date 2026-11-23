@@ -58,6 +58,8 @@ build rabbitmq
 build backup
 build mysql-backup
 build mysql
+build postgres-backup
+build postgres
 build gateway
 build terminal
 build ssh-gateway
@@ -101,6 +103,9 @@ push gui
 push ceo-gateway
 push mysql
 push mysql-backup
+push postgres
+push pgadmin
+push postgres-backup
 push gee
 push gateway
 push ssh-gateway

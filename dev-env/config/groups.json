@@ -11,6 +11,7 @@
         "gui",
         "logger",
         "mysql",
+        "postgres",
         "message",
         "rabbitmq",
         "recipe",
@@ -32,6 +33,7 @@
         "gee",
         "gui",
         "mysql",
+        "postgres",
         "rabbitmq",
         "worker",
         "user"
@@ -42,6 +44,7 @@
         "gateway",
         "gui",
         "mysql",
+        "postgres",
         "rabbitmq",
         "worker",
         "ssh-gateway",

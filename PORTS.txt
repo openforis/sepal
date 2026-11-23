@@ -12,6 +12,8 @@ Modules
     mysql           3306
     mysql-admin     8980
     message         80
+    pgadmin         8981
+    postgres        5432
     prometheus      9090
     r-proxy         8180
     recipe          80
