@@ -1,10 +1,10 @@
 import {createConnection} from '#sepal/db/mysql'
-import {createTestDb} from '#sepal/testSupport/db/testDb'
+import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
 
 // LOAD DATA INFILE requires FILE; DDL is confined to these three randomly named schemas.
-// The ordinary insert suites keep createTestDb's original data-only privileges.
+// The ordinary insert suites keep createMysqlTestDb's original data-only privileges.
 export const createRebuildDb = async migrations => {
-    const testDb = await createTestDb({name: 'scene_rebuild', migrations})
+    const testDb = await createMysqlTestDb({name: 'scene_rebuild', migrations})
     let admin
     const disposable = []
     try {

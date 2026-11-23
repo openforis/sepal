@@ -5,7 +5,7 @@ import {after, before, beforeEach, describe, test} from 'node:test'
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 import {failingDb} from '#sepal/testSupport/db/faultyConnection'
-import {createTestDb} from '#sepal/testSupport/db/testDb'
+import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
 
 import {MessageRepository} from './messageRepository.js'
 
@@ -16,7 +16,7 @@ describe('MessageRepository', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createTestDb({name: 'message_repository', migrations: MIGRATIONS_PATH})
+        testDb = await createMysqlTestDb({name: 'message_repository', migrations: MIGRATIONS_PATH})
     })
 
     beforeEach(async () => {

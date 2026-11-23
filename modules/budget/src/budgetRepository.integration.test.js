@@ -4,7 +4,7 @@ import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
-import {createTestDb} from '#sepal/testSupport/db/testDb'
+import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
 
 import {BudgetRepository} from './budgetRepository.js'
 import {budget, storageUse, userSpendingReport} from './dto.js'
@@ -22,7 +22,7 @@ describe('BudgetRepository', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createTestDb({name: 'budget_repository', migrations: MIGRATIONS_PATH})
+        testDb = await createMysqlTestDb({name: 'budget_repository', migrations: MIGRATIONS_PATH})
     })
 
     beforeEach(async () => {

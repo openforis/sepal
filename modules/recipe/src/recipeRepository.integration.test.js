@@ -5,7 +5,7 @@ import {after, before, beforeEach, describe, test} from 'node:test'
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 import {failingDb} from '#sepal/testSupport/db/faultyConnection'
-import {createTestDb} from '#sepal/testSupport/db/testDb'
+import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
 
 import {RecipeRepository} from './recipeRepository.js'
 
@@ -17,7 +17,7 @@ describe('recipe repository', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createTestDb({name: 'reciperepository', migrations: MIGRATIONS_PATH})
+        testDb = await createMysqlTestDb({name: 'reciperepository', migrations: MIGRATIONS_PATH})
         repository = new RecipeRepository(testDb.db)
     })
 
@@ -455,7 +455,7 @@ describe('recipe repository', () => {
         let concurrentRepository
 
         before(async () => {
-            concurrent = await createTestDb({
+            concurrent = await createMysqlTestDb({
                 name: 'reciperepositoryconcurrent', migrations: MIGRATIONS_PATH, connections: COMPETING_WRITERS
             })
             concurrentRepository = new RecipeRepository(concurrent.db)

@@ -4,7 +4,7 @@ import {after, before, beforeEach, describe, mock, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
-import {createTestDb} from '#sepal/testSupport/db/testDb'
+import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
 
 // userApi -> email/googleOAuth/recaptcha -> config.js (commander). Mock config before importing the chain.
 mock.module('./config.js', {
@@ -37,7 +37,7 @@ describe('UserApi', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createTestDb({name: 'user_api', migrations: MIGRATIONS_PATH})
+        testDb = await createMysqlTestDb({name: 'user_api', migrations: MIGRATIONS_PATH})
     })
 
     beforeEach(async () => {
