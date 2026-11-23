@@ -26,6 +26,7 @@
       - {module: recipe}
       - {module: task-manager}
       - {module: scene-metadata}
+      - {module: scene}
       - {module: user-assets}
       - {module: user-files}
       - {module: gui}

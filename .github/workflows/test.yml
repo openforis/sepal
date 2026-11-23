@@ -13,27 +13,14 @@ jobs:
   test:
     name: ${{matrix.module}}
     runs-on: ubuntu-latest
-    # The *.integration.test.js suites reach a real MySQL, since the schema, collation and
-    # transaction guarantees they cover cannot be shown against a fake. Modules without such
-    # a suite ignore the service.
-    services:
-      mysql:
-        image: mysql:5.7
-        env:
-          MYSQL_ROOT_PASSWORD: sepal
-        ports:
-          - 3306:3306
-        # scene-metadata hands MySQL a path and the server reads the file itself, so the runner and
-        # the server have to see one directory under the same name. This is the image's
-        # secure_file_priv, the only directory a server-side read is allowed to reach.
-        volumes:
-          - /var/lib/mysql-files:/var/lib/mysql-files
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -psepal"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
+    # The *.integration.test.js suites reach a real database, since the schema, collation and
+    # transaction guarantees they cover cannot be shown against a fake: Postgres for the modules on
+    # it, MySQL 5.7 for the ones still on MySQL. Modules without such a suite ignore both.
     env:
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_USER: sepal
+      POSTGRES_PASSWORD: sepal
+      POSTGRES_ROOT_PASSWORD: sepal-root
       MYSQL_HOST: 127.0.0.1
       MYSQL_USER: root
       MYSQL_PASSWORD: sepal
@@ -67,6 +54,8 @@ jobs:
           - module: modules/r-proxy
             libs: lib/js/shared
           - module: modules/recipe
+            libs: lib/js/shared
+          - module: modules/scene
             libs: lib/js/shared
           - module: modules/scene-metadata
             libs: lib/js/shared
@@ -109,15 +98,32 @@ jobs:
           done
       - run: npm ci
         working-directory: ${{matrix.module}}
-      # SEPAL's own MySQL runs with explicit_defaults_for_timestamp on. Without it the stock image
-      # gives every TIMESTAMP column after the first a zero default, which NO_ZERO_DATE rejects,
-      # and the schemas the integration suites create fail to build.
-      - name: Match the SEPAL MySQL settings
-        run: mysql -h 127.0.0.1 -uroot -p"$MYSQL_PASSWORD" -e 'SET GLOBAL explicit_defaults_for_timestamp = ON'
-      # The MySQL image takes the shared directory over for its own user; the runner writes the files
-      # there and MySQL reads them back.
-      - name: Let the runner write to the MySQL files directory
-        run: sudo chmod 0777 "$MYSQL_FILES_DIR"
+      # Postgres is the SEPAL image. scene-metadata hands MySQL a path and the server reads the file
+      # itself, so the runner and the server see one directory under the same name: the image's
+      # secure_file_priv, the only directory a server-side read is allowed to reach.
+      - name: Start Postgres and MySQL
+        run: |
+          docker network create sepal
+          docker build -t sepal-postgres -f modules/postgres/Dockerfile .
+          docker run -d --name postgres --network sepal -p 127.0.0.1:5432:5432 \
+            -e POSTGRES_PASSWORD="$POSTGRES_ROOT_PASSWORD" -e SEPAL_PASSWORD="$POSTGRES_PASSWORD" \
+            -e POSTGRES_INITDB_ARGS="--locale-provider=builtin --builtin-locale=C.UTF-8" \
+            sepal-postgres
+          # SEPAL's own MySQL runs with explicit_defaults_for_timestamp on. Without it the stock image
+          # gives every TIMESTAMP column after the first a zero default, which NO_ZERO_DATE rejects,
+          # and the schemas the integration suites create fail to build.
+          docker run -d --name mysql --network sepal -p 127.0.0.1:3306:3306 \
+            -e MYSQL_ROOT_PASSWORD="$MYSQL_PASSWORD" -v "$MYSQL_FILES_DIR:$MYSQL_FILES_DIR" \
+            mysql:5.7 --explicit_defaults_for_timestamp=ON
+          for i in $(seq 60); do
+            docker exec postgres pg_isready -h 127.0.0.1 -U postgres \
+              && docker exec mysql mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_PASSWORD" \
+              && sudo chmod 0777 "$MYSQL_FILES_DIR" && exit 0
+            sleep 2
+          done
+          docker logs postgres
+          docker logs mysql
+          exit 1
       # vitest single-shots rather than watching because Actions sets CI
       - run: npm test
         working-directory: ${{matrix.module}}

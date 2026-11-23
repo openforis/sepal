@@ -17,6 +17,7 @@ Modules
     prometheus      9090
     r-proxy         8180
     recipe          80
+    scene           80
     scene-metadata  80
     ssh-gateway     22
     storage         80

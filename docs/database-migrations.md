@@ -3,6 +3,10 @@
 The schema migrations build the same database for production and integration tests. This guide covers
 startup, the unreleased dev/test reset, and removal of the one-off legacy imports.
 
+The modules below run on MySQL through `lib/js/shared/src/db/mysql.js`. `scene` runs on Postgres through
+`db/postgres.js`, with the same `initDb` contract; its integration tests use `createTestDb` and the MySQL
+modules' use `createMysqlTestDb` (`testSupport/db/mysqlTestDb.js`).
+
 ## Schema and imports
 
 `migrations/` contains the schema stream, tracked in `schema_version`. Targets are unqualified: the
@@ -21,7 +25,7 @@ including reference data and backfills, belong in the schema stream instead.
 | `task-manager` | worker tasks |
 | `user` | `sepal_user` |
 | `storage` | `user_storage` |
-| `message`, `scene-metadata` | none |
+| `message`, `scene-metadata`, `scene` | none |
 
 Before a fresh import, check the legacy source for full keys that collide after username normalization:
 `username` in User's `sepal_user` and Budget's `user_budget` and `user_spending`, and

@@ -1,0 +1,20 @@
+services:
+  scene-redis:
+    extends:
+      file: ../docker-compose.logger.override.yml
+      service: logger
+
+  scene:
+    extends:
+      file: ../docker-compose.logger.override.yml
+      service: logger
+    volumes:  # To allow dynamic reloading in dev
+      # lib/shared
+      - ${SEPAL_PROJECT_DIR}/lib/js/shared/src:/usr/local/src/sepal/lib/js/shared/src
+      - ${SEPAL_PROJECT_DIR}/lib/js/shared/package.json:/usr/local/src/sepal/lib/js/shared/package.json
+      - ${SEPAL_PROJECT_DIR}/modules/scene/lib/shared/package-lock.json:/usr/local/src/sepal/lib/js/shared/package-lock.json
+      - ${SEPAL_PROJECT_DIR}/modules/scene/lib/shared/node_modules:/usr/local/src/sepal/lib/js/shared/node_modules
+      # module
+      - ${SEPAL_PROJECT_DIR}/modules/scene:/usr/local/src/sepal/modules/scene
+    environment:
+      POSTGRES_ROOT_PASSWORD: "${POSTGRES_ROOT_PASSWORD}"

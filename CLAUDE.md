@@ -27,7 +27,7 @@ not implementation history; recipe-specific issues are deferred unless explicitl
 - `task-manager` - Runs each export task in its own detached container on the main host
 - `task` - One-shot task runner image, started by task-manager per task
 - `app-manager` / `app-launcher` - Application management
-- `email`, `terminal`, `user-assets`, `user-files`, `storage`, `ssh-gateway`, `scene-metadata`, `ceo-gateway`, `r-proxy`, `message`, `recipe`, `budget`
+- `email`, `terminal`, `user-assets`, `user-files`, `storage`, `ssh-gateway`, `scene-metadata`, `scene`, `ceo-gateway`, `r-proxy`, `message`, `recipe`, `budget`
 
 **Infrastructure modules** (Docker-only, no application code):
 - `caddy`, `mysql`, `postgres` (with `pgadmin`), `postgres-backup`, `rabbitmq`, `prometheus`, `logger`

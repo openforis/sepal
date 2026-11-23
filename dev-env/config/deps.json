@@ -186,6 +186,16 @@
             "mysql"
         ]
     },
+    "scene": {
+        "lib": [
+            "shared"
+        ],
+        "build": {},
+        "run": [
+            "logger",
+            "postgres"
+        ]
+    },
     "ssh-gateway": {
         "lib": [
             "shared"

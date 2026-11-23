@@ -81,6 +81,7 @@ build ceo-gateway
 build app-launcher
 build app-manager
 build scene-metadata
+build scene
 
 echo "${DOCKER_REGISTRY_PASSWORD}" | docker login "${DOCKER_REGISTRY_HOST}" -u "${DOCKER_REGISTRY_USERNAME}" --password-stdin
 
@@ -115,6 +116,7 @@ push task-manager
 push terminal
 push caddy
 push scene-metadata
+push scene
 
 docker logout localhost
 docker system prune --force

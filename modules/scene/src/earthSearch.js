@@ -1,0 +1,76 @@
+import {EMPTY, map, tap} from 'rxjs'
+
+import {postJson$} from '#sepal/httpClient'
+import {getLogger} from '#sepal/log'
+
+const log = getLogger('earthSearch')
+
+const SEARCH_URL = 'https://earth-search.aws.element84.com/v1/search'
+
+const COLLECTION = {
+    'landsat-ot': 'landsat-c2-l2',
+    'sentinel-2': 'sentinel-2-l1c'
+    // 'sentinel-2': 'sentinel-2-l2a'
+}
+
+const BLOCK_SIZE = {
+    'landsat-ot': 200,
+    'sentinel-2': 500,
+}
+
+const getScenes = (features, sceneMapper) =>
+    features.map(feature => sceneMapper(feature)).filter(Boolean)
+
+const getToken = links =>
+    links.find(({rel}) => rel === 'next')?.body?.next
+
+const getResponse = ({features, links}, sceneMapper) => {
+    const scenes = getScenes(features, sceneMapper)
+    const token = scenes.length ? getToken(links) : null
+    const mostRecentTimestamp = scenes.reduce(
+        (mostRecentTimestamp, {acquiredTimestamp}) =>
+            !mostRecentTimestamp || acquiredTimestamp > mostRecentTimestamp
+                ? acquiredTimestamp
+                : mostRecentTimestamp,
+        null
+    )
+    return {scenes, token, mostRecentTimestamp}
+}
+
+const getCollection = source => {
+    const collection = COLLECTION[source]
+    if (!collection) {
+        throw new Error(`Unknown collection for source: ${source}`)
+    }
+    return collection
+}
+
+const getUpdates$ = ({source, dataset, query, sceneMapper, minTimestamp, maxTimestamp, token}) => {
+    const collection = getCollection(source)
+    if (maxTimestamp >= minTimestamp) {
+        log.info(token ? `Retrieving ${collection}/${dataset} scenes, token: ${token}` : `Getting ${collection}/${dataset} scenes between ${minTimestamp} and ${maxTimestamp}`)
+        return postJson$(SEARCH_URL, {
+            body: {
+                collections: [collection],
+                datetime: `${minTimestamp}/${maxTimestamp}`,
+                sortby: '+properties.datetime',
+                limit: BLOCK_SIZE[source],
+                query,
+                next: token
+            },
+            responseType: 'json',
+            retry: {
+                maxRetries: 0
+            }
+        }).pipe(
+            map(({body}) => body),
+            map(response => getResponse(response, sceneMapper)),
+            tap(({scenes}) => log.info(scenes.length ? `Retrieved ${collection}/${dataset} scenes: ${scenes.length}` : `No more ${collection}/${dataset} scenes`))
+        )
+    } else {
+        log.info(`No scenes to retrieve between ${minTimestamp} and ${maxTimestamp}`)
+        return EMPTY
+    }
+}
+
+export {getUpdates$}
