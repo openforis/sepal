@@ -18,7 +18,8 @@ setup() {
     mkdir -p "$current_venv_path/bin"
     head -c 500000 /dev/urandom > "$current_venv_path/bin/blob"
     printf 'x' > "$current_venv_path/bin/python3"
-    touch "$current_venv_path/.installed"
+    # Files written milliseconds apart can share an mtime, so the tests set the times they compare
+    touch -d '1 hour ago' "$current_venv_path/.installed"
     export LAUNCHER_SRC="$WORK/sepal-app-kernel"
     printf '#!/bin/bash\necho v1\n' > "$LAUNCHER_SRC"
 }
@@ -44,8 +45,8 @@ setup; cache_venv=false; printf 'stale' > "$kernel_path/venv.tar.zst"; pack_venv
 if [[ ! -f $kernel_path/venv.tar.zst ]]; then ok "opting out deletes the archive"
 else bad "opting out deletes the archive" "venv.tar.zst survived"; fi; teardown
 
-setup; cache_venv=true; pack_venv
-before=$(stat -c %Y "$kernel_path/venv.tar.zst"); sleep 1; pack_venv
+setup; cache_venv=true; pack_venv; touch -d '30 minutes ago' "$kernel_path/venv.tar.zst"
+before=$(stat -c %Y "$kernel_path/venv.tar.zst"); pack_venv
 after=$(stat -c %Y "$kernel_path/venv.tar.zst")
 if [[ $before == "$after" ]]; then ok "an up-to-date archive is not rebuilt"
 else bad "an up-to-date archive is not rebuilt" "mtime moved $before -> $after"; fi; teardown
@@ -53,7 +54,7 @@ else bad "an up-to-date archive is not rebuilt" "mtime moved $before -> $after";
 # Without pipefail a failing tar still lets zstd exit 0, publishing an archive that extracts
 # cleanly but holds a partial environment. The stale archive must go too, so consumers that
 # check only for existence fall back to Lustre rather than run old dependencies.
-setup; cache_venv=true; pack_venv
+setup; cache_venv=true; pack_venv; touch -d '30 minutes ago' "$kernel_path/venv.tar.zst"
 chmod 000 "$current_venv_path/bin/blob"; touch "$current_venv_path/.installed"
 pack_venv
 chmod 644 "$current_venv_path/bin/blob"
@@ -65,8 +66,8 @@ setup; sync_launcher
 if [[ -x $current_kernels/sepal-app-kernel ]]; then ok "the launcher is installed when missing"
 else bad "the launcher is installed when missing" "not installed or not executable"; fi; teardown
 
-setup; sync_launcher
-m1=$(stat -c %Y "$current_kernels/sepal-app-kernel"); sleep 1; sync_launcher
+setup; sync_launcher; touch -d '1 hour ago' "$current_kernels/sepal-app-kernel"
+m1=$(stat -c %Y "$current_kernels/sepal-app-kernel"); sync_launcher
 m2=$(stat -c %Y "$current_kernels/sepal-app-kernel")
 if [[ $m1 == "$m2" ]]; then ok "an unchanged launcher is not rewritten"
 else bad "an unchanged launcher is not rewritten" "mtime moved $m1 -> $m2"; fi; teardown
@@ -129,7 +130,8 @@ teardown
 
 setup; cache_venv=true
 chmod 000 "$current_venv_path/bin/blob"; pack_venv >/dev/null 2>&1
-chmod 644 "$current_venv_path/bin/blob"; sleep 1; touch "$current_venv_path/.installed"
+chmod 644 "$current_venv_path/bin/blob"; touch -d '30 minutes ago' "$kernel_path/venv.tar.zst.failed"
+touch "$current_venv_path/.installed"
 third=$(pack_venv 2>&1)
 if [[ $third == *"Packing venv"* && -f $kernel_path/venv.tar.zst ]]; then ok "a rebuilt venv clears the back-off"
 else bad "a rebuilt venv clears the back-off" "$third"; fi
@@ -162,8 +164,8 @@ teardown
 
 setup; app_name=testapp; app_label="Test App"; app_path="$WORK/app"; venv_path="$kernel_path/venv"
 mkdir -p "$app_path"; cache_venv=false
-create_kernel_json >/dev/null 2>&1
-m1=$(stat -c %Y "$kernel_path/kernel.json"); sleep 1; create_kernel_json >/dev/null 2>&1
+create_kernel_json >/dev/null 2>&1; touch -d '1 hour ago' "$kernel_path/kernel.json"
+m1=$(stat -c %Y "$kernel_path/kernel.json"); create_kernel_json >/dev/null 2>&1
 m2=$(stat -c %Y "$kernel_path/kernel.json")
 if [[ $m1 == "$m2" ]]; then ok "an unchanged kernel.json is not rewritten"
 else bad "an unchanged kernel.json is not rewritten" "mtime moved $m1 -> $m2"; fi
