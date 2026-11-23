@@ -1,0 +1,156 @@
+# The test suites Jenkins builds run (the services under the suite profile) and the services they need.
+# ci/test-images.sh tags a suite's image ${COMPOSE_PROJECT_NAME}/<suite>, building it from its build here or else
+# from the test target of modules/<suite>/Dockerfile. The image's default command runs the suite and exits.
+# Everything here is disposable and belongs to the Compose project: no host ports, bind mounts or production
+# credentials.
+
+x-suite: &suite
+  profiles: [suite]
+  pull_policy: never
+  # At most two test workers
+  cpuset: "0-1"
+
+x-mysql: &mysql
+  depends_on:
+    mysql:
+      condition: service_healthy
+  environment:
+    MYSQL_HOST: mysql
+    MYSQL_USER: root
+    MYSQL_PASSWORD: test
+    MYSQL_FILES_DIR: /var/lib/mysql-files
+  volumes:
+    - mysql-files:/var/lib/mysql-files
+
+x-check: &check
+  context: ..
+  dockerfile: ci/checks.dockerfile
+
+services:
+  # SEPAL's own image, as this build made it: the schemas need its server settings
+  mysql:
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/mysql:${SEPAL_VERSION:-latest}"
+    pull_policy: never
+    environment:
+      MYSQL_ROOT_PASSWORD: test
+      MYSQL_PASSWORD: test
+    volumes:
+      # Its secure_file_priv directory: scene-metadata writes files there that the server reads back
+      - mysql-files:/var/lib/mysql-files
+      # Where it marks itself initialized
+      - /data
+    healthcheck:
+      test: ["CMD", "test", "-f", "/data/module_initialized"]
+      interval: 2s
+      retries: 150
+
+  redis:
+    image: "redis:6"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      retries: 60
+
+  lib-js-shared:
+    <<: [*suite, *mysql]
+    image: "${COMPOSE_PROJECT_NAME}/lib-js-shared"
+    build: {<<: *check, target: lib-js-shared}
+
+  lib-python-shared:
+    <<: *suite
+    image: "${COMPOSE_PROJECT_NAME}/lib-python-shared"
+    build: {<<: *check, target: lib-python-shared}
+
+  deploy-scripts:
+    <<: *suite
+    image: "${COMPOSE_PROJECT_NAME}/deploy-scripts"
+    build: {<<: *check, target: deploy-scripts}
+
+  shell:
+    <<: *suite
+    image: "${COMPOSE_PROJECT_NAME}/shell"
+    build: {<<: *check, target: shell}
+
+  app-manager:
+    <<: *suite
+    image: "${COMPOSE_PROJECT_NAME}/app-manager"
+
+  budget:
+    <<: [*suite, *mysql]
+    image: "${COMPOSE_PROJECT_NAME}/budget"
+
+  email:
+    <<: *suite
+    image: "${COMPOSE_PROJECT_NAME}/email"
+
+  gateway:
+    <<: *suite
+    image: "${COMPOSE_PROJECT_NAME}/gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      GATEWAY_TEST_REDIS_URL: "redis://redis:6379"
+
+  gee:
+    <<: *suite
+    image: "${COMPOSE_PROJECT_NAME}/gee"
+
+  gui:
+    <<: *suite
+    image: "${COMPOSE_PROJECT_NAME}/gui"
+
+  message:
+    <<: [*suite, *mysql]
+    image: "${COMPOSE_PROJECT_NAME}/message"
+
+  r-proxy:
+    <<: *suite
+    image: "${COMPOSE_PROJECT_NAME}/r-proxy"
+
+  recipe:
+    <<: [*suite, *mysql]
+    image: "${COMPOSE_PROJECT_NAME}/recipe"
+
+  scene-metadata:
+    <<: [*suite, *mysql]
+    image: "${COMPOSE_PROJECT_NAME}/scene-metadata"
+
+  ssh-gateway:
+    <<: *suite
+    image: "${COMPOSE_PROJECT_NAME}/ssh-gateway"
+
+  storage:
+    <<: [*suite, *mysql]
+    image: "${COMPOSE_PROJECT_NAME}/storage"
+
+  task:
+    <<: *suite
+    image: "${COMPOSE_PROJECT_NAME}/task"
+
+  task-manager:
+    <<: [*suite, *mysql]
+    image: "${COMPOSE_PROJECT_NAME}/task-manager"
+
+  terminal:
+    <<: *suite
+    image: "${COMPOSE_PROJECT_NAME}/terminal"
+
+  user:
+    <<: [*suite, *mysql]
+    image: "${COMPOSE_PROJECT_NAME}/user"
+
+  user-assets:
+    <<: *suite
+    image: "${COMPOSE_PROJECT_NAME}/user-assets"
+
+  user-files:
+    <<: *suite
+    image: "${COMPOSE_PROJECT_NAME}/user-files"
+
+  worker:
+    <<: [*suite, *mysql]
+    image: "${COMPOSE_PROJECT_NAME}/worker"
+
+volumes:
+  mysql-files:

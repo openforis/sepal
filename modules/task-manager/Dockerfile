@@ -1,4 +1,4 @@
-FROM node:26-alpine
+FROM node:26-alpine AS production
 
 ENV MODULE_NAME task-manager
 ENV MODULE /usr/local/src/sepal/modules/${MODULE_NAME}
@@ -28,3 +28,9 @@ ADD modules/${MODULE_NAME}/migrations ${MODULE}/migrations
 ADD --chmod=0755 modules/${MODULE_NAME}/start.sh /usr/local/bin/start.sh
 
 CMD /usr/local/bin/start.sh
+
+FROM production AS test
+RUN npm ci
+CMD ["npm", "test"]
+
+FROM production
