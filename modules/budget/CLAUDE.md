@@ -1,11 +1,11 @@
 # CLAUDE.md - modules/budget
 
 Event-driven budget service. Tracks
-instance + storage spending and enforces monthly budgets; owns the `budget` MySQL schema (Postgrator).
+instance + storage spending and enforces monthly budgets; owns the `budget` Postgres schema (Postgrator).
 
 ## Database migrations
 
-`migrations/` holds the portable schema stream. `migrations/legacy-import/` holds the one-off copy from `sdms`. Startup and import cleanup are described in [docs/database-migrations.md](../../docs/database-migrations.md).
+`migrations/` holds the Postgres schema stream and `mysql-import.sql`, the one-time copy from the MySQL `budget` database; `migrations-mysql/` keeps the MySQL schema as the import test's source. Startup and import cleanup are described in [docs/database-migrations.md](../../docs/database-migrations.md).
 
 ## Commands
 - `npm test` — Node test runner (TZ=UTC)
