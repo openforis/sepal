@@ -9,17 +9,32 @@
     dump: 0
     passno: 0
 
-# Logs stay on the local /var/log volume. These unmount the former EFS log mounts from existing hosts; the running
-# logger keeps its own copy of the mounts until the deploy recreates it.
-- name: Unmount EFS user logs
-  mount:
-    name: "/var/log/sepal/user"
-    state: "absent"
+- name: Install restricted homes mount setup
+  copy:
+    src: sepal-restricted-home.sh
+    dest: /usr/local/bin/sepal-restricted-home
+    owner: root
+    group: root
+    mode: '0755'
 
-- name: Unmount EFS worker instance logs
-  mount:
-    name: "/var/log/sepal/worker"
-    state: "absent"
+- name: Install restricted homes mount service
+  copy:
+    src: sepal-restricted-home.service
+    dest: /etc/systemd/system/sepal-restricted-home.service
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Prepare restricted homes mount
+  systemd:
+    name: sepal-restricted-home
+    daemon_reload: yes
+    enabled: yes
+    state: started
+
+- name: Apply and verify restricted homes mount
+  command: /usr/local/bin/sepal-restricted-home
+  changed_when: false
 
 - name: Mount /data/sepal/jupyter
   mount:

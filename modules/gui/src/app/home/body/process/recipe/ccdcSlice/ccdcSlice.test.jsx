@@ -7,9 +7,10 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {addRecipeType} from '~/app/home/body/process/recipeTypeRegistry'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore, select} from '~/store'
+import {select} from '~/store'
 
 import createSliceType from './ccdcSlice'
 import {outputBandsOf} from './sliceEvidence'
@@ -25,8 +26,8 @@ vi.mock('~/apiRegistry', async () => {
     }}}
 })
 vi.mock('~/app/home/map/map', () => ({Map: ({children}) => children}))
-vi.mock('../aoi', () => ({Aoi: () => null}))
-vi.mock('../recipeImageLayerSource', () => ({initializeLayers: () => {}}))
+vi.mock('../map/aoi', () => ({Aoi: () => null}))
+vi.mock('../map/recipeImageLayerSource', () => ({initializeLayers: () => {}}))
 vi.mock('./panels/ccdcSliceToolbar', () => ({CcdcSliceToolbar: () => null}))
 vi.mock('~/translate', () => ({msg: key => key}))
 
@@ -40,6 +41,9 @@ beforeEach(() => {
     assetMetadata$.mockReset()
     versions.current = '1'
 })
+
+afterEach(disposeInstalledSessions)
+
 afterEach(() => {
     if (root) {
         act(() => root.unmount())
@@ -125,7 +129,7 @@ const openSlice = recipe => {
         user: {currentUser: {}}
     }
     const store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     const Slice = sliceType.components.recipe
     root = createRoot(document.createElement('div'))
     act(() => root.render(

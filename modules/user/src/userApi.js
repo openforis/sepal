@@ -144,7 +144,6 @@ export class UserApi {
         }
     }
 
-    // The admin flag comes from the caller's current status, so a self-update cannot self-elevate.
     async updateCurrentDetails(ctx) {
         const current = ctx.state.currentUser
         if (!(await this.#confirmsEmailChange(ctx, current.username))) {
@@ -152,7 +151,7 @@ export class UserApi {
             ctx.body = {message: 'Invalid password'}
             return
         }
-        const user = await this.#applyDetails(ctx, {targetUsername: current.username, adminValue: !!current.admin})
+        const user = await this.#applyDetails(ctx, {targetUsername: current.username})
         if (user === INVALID_EMAIL) {
             ctx.status = 400
             ctx.body = {message: 'Invalid email'}
@@ -285,8 +284,16 @@ export class UserApi {
             return
         }
         const wasPending = user.status === 'PENDING'
-        await this.#repository.updatePassword(user.username, await hashPassword(password))
-        await this.#repository.updateStatus(user.username, 'ACTIVE')
+        const reset = await this.#repository.resetPasswordIfTokenIsValid({
+            username: user.username,
+            token,
+            passwordHash: await hashPassword(password)
+        })
+        if (!reset) {
+            ctx.status = 400
+            ctx.body = {message: 'Invalid token'}
+            return
+        }
         // Leaving PENDING (covers unlock: LOCKED -> PENDING -> reset link) must guarantee complete
         // provisioning; a keyless user is healed too. Routine resets of provisioned users skip it —
         // provision recursively chowns the data home, too expensive for a request that needs neither.
@@ -478,8 +485,14 @@ export class UserApi {
     async #maybeRehashPassword(user, password) {
         if (needsRehash(user.passwordHash)) {
             try {
-                await this.#repository.updatePassword(user.username, await hashPassword(password))
-                log.info(`Upgraded password hash for '${user.username}'`)
+                const upgraded = await this.#repository.upgradePasswordHashIfUnchanged({
+                    username: user.username,
+                    verifiedHash: user.passwordHash,
+                    upgradedHash: await hashPassword(password)
+                })
+                if (upgraded) {
+                    log.info(`Upgraded password hash for '${user.username}'`)
+                }
             } catch (error) {
                 log.warn(`Password hash upgrade failed for '${user.username}': ${error.message}`)
             }
@@ -494,7 +507,7 @@ export class UserApi {
         return !user || email === user.email || await verifies(user, password)
     }
 
-    // Shared detail-update core. adminValue forces the admin flag (self-update cannot self-elevate).
+    // Shared detail-update core. An omitted adminValue preserves the stored administrator flag.
     // Returns the reloaded user, null when the request names no existing user, INVALID_EMAIL when
     // the body carries an email the database would reject (malformed, or over EMAIL_MAX_LENGTH),
     // EMAIL_TAKEN when another user has that email, or CONFLICT when the body's revision is not the

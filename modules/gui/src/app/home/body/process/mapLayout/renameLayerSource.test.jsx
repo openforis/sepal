@@ -7,7 +7,7 @@ import {NEVER} from 'rxjs'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {initStore} from '~/store'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import buttonSelectStyles from '~/widget/buttonSelect.module.css'
 import crudItemStyles from '~/widget/crudItem.module.css'
@@ -25,8 +25,7 @@ import layerStyles from './imageLayerSources.module.css'
 
 vi.mock('~/apiRegistry', () => ({default: {recipe: {load$: () => NEVER, loadAll$: () => NEVER, save$: () => NEVER}}}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
-vi.mock('~/widget/recipeInput', () => ({RecipeInput: () => null}))
+vi.mock('~/app/home/body/process/recipe/sources/recipeInput', () => ({RecipeInput: () => null}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, children}) => typeof msg === 'string'
@@ -45,7 +44,7 @@ const LISTING = [{id: OPTICAL, name: 'optical'}, {id: MASK, name: 'mask'}, {id: 
 
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: masking} = await import('../recipe/masking/masking')
-const {initializeLayers} = await import('../recipe/recipeImageLayerSource')
+const {initializeLayers} = await import('../recipe/map/recipeImageLayerSource')
 const {registerImageLayerSources} = await import('../imageLayerSources')
 const {MapLayout, MapLayoutButton} = await import('./mapLayout')
 
@@ -55,6 +54,8 @@ registerImageLayerSources()
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let root, store
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -223,7 +224,7 @@ const open = async model => {
             process: {loadedRecipes: {[model.id]: model}, recipes: LISTING, projects: [], tabs: []}
         }, action) => action.reduce ? action.reduce(state) : state
     )
-    initStore(store)
+    installStore(store)
     initializeLayers({recipeId: model.id, savedLayers: model.layers})
     const container = document.createElement('div')
     document.body.appendChild(container)

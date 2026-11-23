@@ -1,12 +1,5 @@
-// The message module's gateway-websocket endpoint (module `message` in the gateway's
-// webSocketEndpoints; see modules/gateway/src/websocket.js for the MODULE PROTOCOL).
-//
-// Payload is {notifications}, mapped with the SAME notificationToMap the REST endpoint uses, so
-// the GUI stores it without translation. Sending the FULL list on every push (rather than deltas)
-// is what makes reconnect self-healing: the GUI re-subscribes and gets a fresh snapshot.
-//
-// One gateway connection carries every user's subscriptions, so the registry is per-connection
-// state inside the protocol closure (moduleWs$ invokes protocol once per connection).
+// One gateway connection serves every user's notification subscriptions.
+// Each push contains the full REST-shaped list, so re-subscribing restores the client's state.
 
 import {takeUntil} from 'rxjs'
 
@@ -19,68 +12,120 @@ const log = getLogger('ws')
 
 const createMessageWsProtocol = ({userNotifications, messageChanged$}) =>
     ({send, stop$}) => {
-        // subscriptionId → {username, isAdmin, clientId}
-        const subscriptions = new Map()
+        const subscriptionsById = new Map()
+        // Role updates and subscription snapshots can arrive older than one already seen (see nextRole).
+        const knownRoleByUsername = new Map()
 
-        // username → isAdmin (only admins get unpublished messages in their snapshots)
         const subscribedUsers = () => {
-            const users = new Map()
-            for (const {username, isAdmin} of subscriptions.values()) {
-                users.set(username, isAdmin)
+            const usersByUsername = new Map()
+            for (const subscription of subscriptionsById.values()) {
+                const {username, isAdmin} = subscription
+                if (!usersByUsername.has(username)) {
+                    usersByUsername.set(username, {username, isAdmin, subscriptions: []})
+                }
+                usersByUsername.get(username).subscriptions.push(subscription)
             }
-            return users
+            return usersByUsername.values()
         }
 
-        // Unicast to one subscriber (subscriptionUp / refresh).
-        const sendSnapshot = async ({username, isAdmin, clientId, subscriptionId}) => {
+        // Role changes replace records, so this checks both subscription lifetime and permissions.
+        const isSubscriptionUnchanged = subscription => subscriptionsById.get(subscription.subscriptionId) === subscription
+
+        const sendToSubscription = async subscription => {
+            const {username, isAdmin, clientId, subscriptionId} = subscription
             try {
-                send({clientId, subscriptionId, data: {notifications: await userNotifications(username, isAdmin)}})
+                const notifications = await userNotifications(username, isAdmin)
+                if (isSubscriptionUnchanged(subscription)) {
+                    send({clientId, subscriptionId, data: {notifications}})
+                }
             } catch (error) {
                 log.error(`Failed to send notification snapshot for ${username}`, error)
             }
         }
 
-        // Multicast to all of the user's tabs (a change the user did not necessarily trigger).
-        const sendUpdate = async (username, isAdmin) => {
+        const sendToUser = async ({username, isAdmin, subscriptions}) => {
             try {
-                send({username, data: {notifications: await userNotifications(username, isAdmin)}})
+                const notifications = await userNotifications(username, isAdmin)
+                if (subscriptions.some(isSubscriptionUnchanged)) {
+                    send({username, data: {notifications}})
+                }
             } catch (error) {
                 log.error(`Failed to send notification update for ${username}`, error)
             }
         }
 
-        const onChanged = ({username}) =>
-            subscribedUsers().forEach((isAdmin, subscribedUsername) => {
-                if (!username || subscribedUsername === username || isAdmin) {
-                    sendUpdate(subscribedUsername, isAdmin)
+        const onNotificationsChanged = ({username: changedUsername}) => {
+            for (const subscribedUser of subscribedUsers()) {
+                const {username, isAdmin} = subscribedUser
+                if (!changedUsername || username === changedUsername || isAdmin) {
+                    sendToUser(subscribedUser)
                 }
-            })
+            }
+        }
 
         const onSubscriptionUp = ({user, clientId, subscriptionId}) => {
             const {username} = user
-            const isAdmin = userIsAdmin(user)
+            const {isAdmin} = observeRole(user)
             log.debug(() => `Subscription up: ${username} (${subscriptionId})`)
-            subscriptions.set(subscriptionId, {username, isAdmin, clientId})
-            sendSnapshot({username, isAdmin, clientId, subscriptionId})
+            const subscription = {username, isAdmin, clientId, subscriptionId}
+            subscriptionsById.set(subscriptionId, subscription)
+            sendToSubscription(subscription)
+        }
+
+        const onUserUpdated = ({user}) => {
+            observeRole(user, {revokesWithoutRevision: true})
+        }
+
+        const observeRole = (user, {revokesWithoutRevision = false} = {}) => {
+            const {username} = user
+            const known = knownRoleByUsername.get(username)
+            const role = nextRole(known, user, revokesWithoutRevision)
+            if (role !== known) {
+                knownRoleByUsername.set(username, role)
+                applyRole(username, role.isAdmin)
+            }
+            return role
+        }
+
+        const applyRole = (username, isAdmin) => {
+            const changedSubscriptions = []
+            for (const [subscriptionId, subscription] of subscriptionsById) {
+                if (subscription.username === username && subscription.isAdmin !== isAdmin) {
+                    // Replacing the record invalidates responses fetched with the previous permissions.
+                    const updatedSubscription = {...subscription, isAdmin}
+                    subscriptionsById.set(subscriptionId, updatedSubscription)
+                    changedSubscriptions.push(updatedSubscription)
+                }
+            }
+            if (changedSubscriptions.length) {
+                sendToUser({username, isAdmin, subscriptions: changedSubscriptions})
+            }
         }
 
         const onSubscriptionDown = ({subscriptionId}) => {
-            subscriptions.delete(subscriptionId)
+            subscriptionsById.delete(subscriptionId)
         }
 
         const onClientDown = ({clientId}) => {
-            for (const [subscriptionId, subscription] of subscriptions) {
+            for (const [subscriptionId, subscription] of subscriptionsById) {
                 if (subscription.clientId === clientId) {
-                    subscriptions.delete(subscriptionId)
+                    subscriptionsById.delete(subscriptionId)
                 }
             }
         }
 
         const onUserDown = ({user: {username}}) => {
-            for (const [subscriptionId, subscription] of subscriptions) {
+            for (const [subscriptionId, subscription] of subscriptionsById) {
                 if (subscription.username === username) {
-                    subscriptions.delete(subscriptionId)
+                    subscriptionsById.delete(subscriptionId)
                 }
+            }
+        }
+
+        const onRefresh = ({user, clientId, subscriptionId}) => {
+            const subscription = subscriptionsById.get(subscriptionId)
+            if (subscription?.username === user.username && subscription.clientId === clientId) {
+                sendToSubscription(subscription)
             }
         }
 
@@ -89,37 +134,53 @@ const createMessageWsProtocol = ({userNotifications, messageChanged$}) =>
             subscriptionDown: onSubscriptionDown,
             clientDown: onClientDown,
             userDown: onUserDown,
+            userUpdated: onUserUpdated,
         }
+
+        stop$.subscribe(() => {
+            subscriptionsById.clear()
+            knownRoleByUsername.clear()
+        })
 
         messageChanged$
             .pipe(takeUntil(stop$))
             .subscribe({
-                next: change => onChanged(change),
+                next: onNotificationsChanged,
                 error: error => log.error('Unexpected messageChanged$ stream error', error),
             })
 
         return message => {
-            const {event, user, data, clientId, subscriptionId} = message
+            const {event, data} = message
             if (event) {
                 const handler = EVENT_HANDLERS[event]
                 if (handler) {
-                    handler({user, clientId, subscriptionId})
+                    handler(message)
                 } else {
                     log.trace(() => `Ignoring event: ${event}`)
                 }
+            } else if (data?.refresh) {
+                onRefresh(message)
             } else if (data) {
-                if (data.refresh) {
-                    const subscription = subscriptions.get(subscriptionId)
-                    const isAdmin = subscription ? subscription.isAdmin : userIsAdmin(user)
-                    sendSnapshot({username: user.username, isAdmin, clientId, subscriptionId})
-                } else {
-                    log.warn('Unsupported message data:', data)
-                }
+                log.warn('Unsupported message data:', data)
             } else {
                 log.warn('Unsupported message:', message)
             }
         }
     }
+
+// Newer by revision wins. Without a revision nothing can be ordered: such a role update can still revoke, since a
+// missed revocation would keep drafts visible indefinitely, but never grant, and the known revision stays, so only a
+// newer one grants again. A subscription snapshot without a revision only fills in a role not yet known.
+const nextRole = (known, user, revokesWithoutRevision) => {
+    const isAdmin = userIsAdmin(user)
+    if (!known) {
+        return {isAdmin, revision: user.revision ?? -1}
+    }
+    if (user.revision == null) {
+        return revokesWithoutRevision && known.isAdmin && !isAdmin ? {isAdmin, revision: known.revision} : known
+    }
+    return user.revision > known.revision ? {isAdmin, revision: user.revision} : known
+}
 
 const createMessageWs = ({userNotifications, messageChanged$}) =>
     moduleWs$(createMessageWsProtocol({userNotifications, messageChanged$}))

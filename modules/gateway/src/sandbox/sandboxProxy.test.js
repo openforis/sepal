@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import {EventEmitter} from 'node:events'
 import http from 'node:http'
 import {afterEach, describe, mock, test} from 'node:test'
 
@@ -390,6 +391,88 @@ describe('sandbox WebSocket proxy', () => {
         if (proxyServer) await proxyServer.close()
         if (upstream) await upstream.close()
     })
+
+    for (const stage of ['resolve', 'start']) {
+        test(`does not connect after the socket closes during ${stage}`, async () => {
+            const entered = Promise.withResolvers()
+            const resume = Promise.withResolvers()
+            resolveTarget.mock.mockImplementation(async () => {
+                if (stage === 'resolve') {
+                    entered.resolve()
+                    await resume.promise
+                }
+                return {host: 'sandbox-host', port: 8787, sessionId: 'worker-session'}
+            })
+            ensureServerStarted.mock.mockImplementation(async () => {
+                if (stage === 'start') {
+                    entered.resolve()
+                    await resume.promise
+                }
+            })
+            const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, forgetServerStarted, sepalHost: 'sepal.test'})
+            const wsSpy = mock.method(sandboxProxy._proxy, 'ws', async () => undefined)
+            const socket = {destroyed: false, write: mock.fn()}
+            const pending = sandboxProxy.upgrade({url: '/api/sandbox/rstudio/ws', headers: {}}, socket, Buffer.alloc(0), 'alice')
+            await entered.promise
+
+            socket.destroyed = true
+            resume.resolve()
+            await pending
+
+            assert.equal(wsSpy.mock.callCount(), 0)
+            assert.equal(socket.write.mock.callCount(), 0)
+            if (stage === 'resolve') assert.equal(ensureServerStarted.mock.callCount(), 0)
+        })
+
+        test(`logs a ${stage} failure after the socket closes without writing to it`, async () => {
+            const entered = Promise.withResolvers()
+            const resume = Promise.withResolvers()
+            const failure = new Error('Setup failed')
+            const log = {error: mock.fn(), debug: mock.fn(), warn: mock.fn()}
+            resolveTarget.mock.mockImplementation(async () => ({host: 'sandbox-host', port: 8787, sessionId: 'worker'}))
+            const fail = async () => {
+                entered.resolve()
+                await resume.promise
+                throw failure
+            }
+            const operation = stage === 'resolve' ? resolveTarget : ensureServerStarted
+            operation.mock.mockImplementation(fail)
+            const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, forgetServerStarted, sepalHost: 'sepal.test', log})
+            const socket = {destroyed: false, write: mock.fn(), destroy: mock.fn()}
+            const pending = sandboxProxy.upgrade({url: '/api/sandbox/rstudio/ws', headers: {}}, socket, Buffer.alloc(0), 'alice')
+            await entered.promise
+
+            socket.destroyed = true
+            resume.resolve()
+            await pending
+
+            assert.equal(log.error.mock.callCount(), 1)
+            assert.equal(log.error.mock.calls[0].arguments.at(-1), failure)
+            assert.equal(socket.write.mock.callCount(), 0)
+            assert.equal(socket.destroy.mock.callCount(), 0)
+        })
+    }
+
+    for (const code of ['ECONNREFUSED', 'ECONNRESET']) {
+        test(`${code} remains an ERROR after an observed client close${code === 'ECONNRESET' ? ' with a recorded socket error' : ''}`, () => {
+            const log = {error: mock.fn(), debug: mock.fn(), warn: mock.fn()}
+            const sandboxProxy = createSandboxProxy({resolveTarget, ensureServerStarted, forgetServerStarted, sepalHost: 'sepal.test', log})
+            const failure = Object.assign(new Error('Connection failed'), {code})
+            const request = {url: '/ws', _sandbox: {endpoint: 'rstudio', target: {sessionId: 'worker'}}}
+            const socket = Object.assign(new EventEmitter(), {destroyed: false, errored: code === 'ECONNRESET' ? failure : null, destroy: mock.fn()})
+            const proxyRequest = new EventEmitter()
+            sandboxProxy._proxy.emit('proxyReqWs', proxyRequest, request, socket)
+            proxyRequest.emit('socket', {destroy: mock.fn()})
+            socket.destroyed = true
+            socket.emit('close')
+
+            sandboxProxy._proxy.emit('error', failure, request, socket)
+
+            assert.equal(log.error.mock.callCount(), 1)
+            assert.equal(log.error.mock.calls[0].arguments.at(-1), failure)
+            assert.deepEqual(callsOf(forgetServerStarted), code === 'ECONNREFUSED' ? [[{sessionId: 'worker', endpoint: 'rstudio'}]] : [])
+        })
+    }
 
     test('dynamic-target ws upgrade tunnels bidirectionally, upstream sees the stripped path', async () => {
         // Fail loud: only /ws is allowed upstream — a wrong strip (e.g. /rstudio/ws) is refused and the

@@ -1,9 +1,9 @@
 import {Observable, Subject} from 'rxjs'
 import {describe, expect, it} from 'vitest'
 
-import {buildMapDependencyGraph} from '../recipe/mapDependencyGraph'
-import {recipeContent} from '../recipe/recipeContent'
-import {compatibleBasis, outputLoading, readRecipeOutput} from '../recipe/recipeOutput'
+import {buildMapDependencyGraph} from '../recipe/outputs/mapDependencyGraph'
+import {recipeContent} from '../recipe/outputs/recipeContent'
+import {compatibleBasis, outputLoading, readRecipeOutput} from '../recipe/outputs/recipeOutput'
 import {OutputRegistry} from './outputRegistry'
 
 // Who watches which output question, and the description loading shared between them. The session, the clock and the

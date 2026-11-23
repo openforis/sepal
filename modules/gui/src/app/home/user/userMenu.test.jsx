@@ -23,8 +23,8 @@ vi.mock('~/widget/buttonSelect', () => ({
             )}
         </div>
 }))
-vi.mock('~/app/landing/themeSelector', () => ({ThemeSelector: () => 'theme selector'}))
-vi.mock('~/app/landing/languageSelector', () => ({LanguageSelector: () => 'language selector'}))
+vi.mock('~/app/preferences/themeSelector', () => ({ThemeSelector: () => 'theme selector'}))
+vi.mock('~/app/preferences/languageSelector', () => ({LanguageSelector: () => 'language selector'}))
 
 import {of} from 'rxjs'
 

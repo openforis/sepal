@@ -1,4 +1,4 @@
-FROM node:26-alpine
+FROM node:26-alpine AS production
 
 EXPOSE 80
 
@@ -30,10 +30,14 @@ ADD modules/${MODULE_NAME}/config ./config
 # add shell scripts
 ADD --chmod=0755 modules/${MODULE_NAME}/start.sh /usr/local/bin
 
-# expose environment variables
-ARG BUILD_NUMBER
-ENV BUILD_NUMBER=$BUILD_NUMBER
-
 # run
 USER node
 CMD start.sh
+
+FROM production AS test
+CMD ["npm", "test"]
+
+FROM production
+# Release metadata stays out of the test image, whose ID decides whether its suite runs
+ARG BUILD_NUMBER
+ENV BUILD_NUMBER=$BUILD_NUMBER

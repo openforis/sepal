@@ -7,9 +7,10 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 
 // How a Stack's band names follow its inputs and the names the user gives, through the real toolbar, input list and
 // Band names panel over a real store: every commit names the bands it leaves in its own action, and opening the
@@ -18,6 +19,7 @@ import {initStore} from '~/store'
 // follow its bands' names. Earth Engine answers each asset's bands when a test says so.
 
 const earthEngine = vi.hoisted(() => ({requests: []}))
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         bands$: request => new Observable(subscriber => {
@@ -25,10 +27,9 @@ vi.mock('~/apiRegistry', () => ({default: {
         }),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
     },
-    recipe: {save$: () => new Observable(), load$: () => new Observable(), loadAll$: () => of(LISTING)}
+    recipe: {save$: request => io.storage.save$(request), load$: () => new Observable(), loadAll$: () => of(LISTING)}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 // The Input imagery list is open, and Band names once a test opens it; no button is pressed.
 const panels = vi.hoisted(() => ({open: new Set()}))
@@ -53,7 +54,7 @@ vi.mock('~/widget/tooltip', () => ({
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: stack} = await import('./stack')
 const {StackToolbar} = await import('./panels/stackToolbar')
-const {commitRecipe} = await import('~/app/home/body/process/recipe/derivedResult')
+const {commitRecipe} = await import('~/app/home/body/process/recipe/editing/derivedResult')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
 
@@ -67,6 +68,8 @@ beforeEach(() => {
     earthEngine.requests = []
     panels.open.clear()
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -348,14 +351,19 @@ async function open(recipe) {
         dimensions: {width: 1024, height: 768}
     }
     modelWrites = []
-    store = createStore((state = initialState, action) => {
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => {
         const next = action.reduce ? action.reduce(state) : state
         if (selectFrom(next, ['process.loadedRecipes', ID, 'model']) !== selectFrom(state, ['process.loadedRecipes', ID, 'model'])) {
             modelWrites.push(action.type)
         }
         return next
     })
-    initStore(store)
+    installStore(store)
+    opening.openIn(store)
+    // Opening the recipe as navigation does is not one of the editor's writes.
+    modelWrites = []
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

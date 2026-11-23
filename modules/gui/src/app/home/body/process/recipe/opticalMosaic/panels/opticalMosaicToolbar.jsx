@@ -18,8 +18,8 @@ import {PanelWizard} from '~/widget/panelWizard'
 import {Toolbar} from '~/widget/toolbar/toolbar'
 
 import {setInitialized} from '../../../recipe'
-import {RetrieveButton} from '../../retrieveButton'
-import {SectionButton} from '../../sectionButton'
+import {SectionButton} from '../../requirements/sectionButton'
+import {RetrieveButton} from '../../retrieve/retrieveButton'
 import styles from './opticalMosaicToolbar.module.css'
 
 const mapRecipeToProps = recipe => {

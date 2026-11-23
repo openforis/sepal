@@ -7,9 +7,9 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe, withRecipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {compose} from '~/compose'
-import {initStore} from '~/store'
 import {tooltipText} from '~/widget/tooltip.test.fixtures'
 
 // The count a CCDC's map shows by default is a named map product (type/ccdc.js), described from configuration, and held
@@ -36,7 +36,6 @@ vi.mock('~/apiRegistry', async () => {
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
 const {notifyError} = vi.hoisted(() => ({notifyError: vi.fn()}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: notifyError}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
 // Constructing a preview layer is what requests a preview: the map mounts it and Earth Engine is asked for its tiles.
 const previews = vi.hoisted(() => ({constructed: [], shown: undefined}))
@@ -56,10 +55,10 @@ const {default: ccdc} = await import('./ccdc')
 const {default: classification} = await import('../classification/classification')
 const {default: opticalMosaic} = await import('../opticalMosaic/opticalMosaic')
 const {getPreSetVisualizations} = await import('./visualizations')
-const {RecipeImageLayer} = await import('../recipeImageLayer')
+const {RecipeImageLayer} = await import('../map/recipeImageLayer')
 const {addRecipeImageLayer} = await import('../../recipeImageLayerRegistry')
-const {withSourceProblems} = await import('../selectedSource')
-const {mapProductGate} = await import('../operationAvailability')
+const {withSourceProblems} = await import('../requirements/selectedSource')
+const {mapProductGate} = await import('../requirements/operationAvailability')
 const {withSourceRuntime} = await import('../../sourceRuntime/sourceRuntimeContext')
 const {TabContext} = await import('~/widget/tabs/tabContext')
 
@@ -83,6 +82,8 @@ beforeEach(() => {
     fake.loads = {}
     notifyError.mockReset()
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -343,7 +344,7 @@ async function open({breakpointBands, classification, input = MOSAIC_INPUT, trai
         dimensions: {width: 1024, height: 768}
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

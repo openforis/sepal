@@ -2,40 +2,22 @@ import {beforeEach, describe, expect, it, test, vi} from 'vitest'
 
 const dispatched = []
 
-// The session the module reads, and the one listener it registers on loaded recipes: the autosave.
-const session = vi.hoisted(() => ({state: {}, autosave: null, saves: [], listings: []}))
+// The state the module reads, and the listings it asks storage for.
+const session = vi.hoisted(() => ({state: {}, listings: []}))
 
 vi.mock('~/store', () => ({
-    select: path => selectPath(session.state, path),
-    subscribe: (_path, listener) => {
-        session.autosave = listener
-        return () => {}
-    }
+    select: path => selectPath(session.state, path)
 }))
 
 vi.mock('~/apiRegistry', async () => {
     const {Subject} = await import('rxjs')
     return {default: {recipe: {
-        save$: request => {
-            const response = new Subject()
-            session.saves.push({request, respond: body => {
-                response.next(body)
-                response.complete()
-            }})
-            return response
-        },
-        load$: () => new Subject(),
         loadAll$: () => {
             const response = new Subject()
             session.listings.push(response)
             return response
         }
     }}}
-})
-
-vi.mock('~/gzip', async () => {
-    const {of} = await import('rxjs')
-    return {gzip$: recipe => of(recipe)}
 })
 
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
@@ -66,11 +48,10 @@ vi.mock('~/widget/tabs/tabActions', () => ({
 
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
 
-const {duplicateRecipe, loadRecipes$, openRecipeRevision, recipePath, saveRecipe, saveStatePath} = await import('./recipe')
+const {duplicateRecipe, loadRecipes$, recipePath, saveRecipe} = await import('./recipe')
 
 beforeEach(() => {
     dispatched.length = 0
-    session.saves = []
 })
 
 test('a duplicated recipe does not retain the source revision', () => {
@@ -79,93 +60,6 @@ test('a duplicated recipe does not retain the source revision', () => {
     const copy = dispatched.at(-1)[JSON.stringify(recipePath('copy-id'))]
     expect(copy.revision).toBeUndefined()
     expect(copy.model).toEqual({a: 1})
-})
-
-// An open, saved recipe acknowledged by the server while its draft may have moved on.
-describe('saving an open recipe', () => {
-    const OPENED = {content: 'opened'}
-
-    const opened = (id, model = OPENED) => {
-        const draft = {id, type: 'MOSAIC', model, ui: {initialized: true}}
-        session.state = {process: {
-            loadedRecipes: {[id]: draft},
-            recipes: [{id, revision: 4}],
-            tabs: [{id}]
-        }}
-        openRecipeRevision({id, revision: 4, model})
-        return draft
-    }
-
-    const edit = (id, model) => {
-        session.state.process.loadedRecipes = {
-            ...session.state.process.loadedRecipes,
-            [id]: {...session.state.process.loadedRecipes[id], model}
-        }
-    }
-
-    const acknowledge = async revision => {
-        session.saves.at(-1).respond({revision})
-        await new Promise(resolve => setTimeout(resolve, 0))
-    }
-
-    const draftRevisions = id => dispatched
-        .map(sets => sets[JSON.stringify(recipePath(id, 'revision'))])
-        .filter(revision => revision !== undefined)
-
-    const savedState = id => dispatched
-        .map(sets => sets[JSON.stringify(saveStatePath(id))])
-        .filter(Boolean)
-        .at(-1)
-
-    it('gives the draft the acknowledged revision when the draft is what was acknowledged', async () => {
-        opened('a')
-        edit('a', {content: 'edited'})
-        saveRecipe({id: 'a'})
-
-        await acknowledge(5)
-
-        expect(draftRevisions('a')).toEqual([5])
-    })
-
-    it('leaves the revision off a draft edited again before the acknowledgement arrived', async () => {
-        opened('a')
-        edit('a', {content: 'edited'})
-        saveRecipe({id: 'a'})
-        edit('a', {content: 'edited again'})
-
-        await acknowledge(5)
-
-        expect(draftRevisions('a')).toEqual([])
-        expect(savedState('a')).toMatchObject({revision: 5, model: {content: 'edited'}})
-    })
-
-    // The autosave saves a recipe the first time it sees it, so that save is acknowledged first.
-    it('treats a new model object with the same content as what was persisted', async () => {
-        const draft = opened('a-equal')
-        session.autosave(session.state.process.loadedRecipes)
-        await acknowledge(5)
-        const replaced = {...draft.model}
-        edit('a-equal', replaced)
-
-        session.autosave(session.state.process.loadedRecipes)
-
-        expect(session.saves).toHaveLength(1)
-        expect(savedState('a-equal')).toMatchObject({status: 'SAVED', revision: 5})
-        expect(savedState('a-equal').model).toBe(replaced)
-    })
-
-    // Closed, so the autosave sends nothing for it: other content is not persisted content.
-    it('does not treat other content as persisted when nothing saves it', async () => {
-        const draft = opened('a-closed')
-        session.autosave(session.state.process.loadedRecipes)
-        await acknowledge(5)
-        session.state.process.tabs = []
-        edit('a-closed', {content: 'elsewhere'})
-
-        session.autosave(session.state.process.loadedRecipes)
-
-        expect(savedState('a-closed').model).toBe(draft.model)
-    })
 })
 
 describe('renaming a recipe tab', () => {

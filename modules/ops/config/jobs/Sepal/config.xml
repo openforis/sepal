@@ -1,19 +1,36 @@
 <?xml version='1.1' encoding='UTF-8'?>
 <project>
+  <actions/>
   <description></description>
   <keepDependencies>false</keepDependencies>
   <properties>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>-1</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>20</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
     <com.coravy.hudson.plugins.github.GithubProjectProperty plugin="github">
       <projectUrl>https://github.com/openforis/sepal/</projectUrl>
       <displayName></displayName>
     </com.coravy.hudson.plugins.github.GithubProjectProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.BooleanParameterDefinition>
+          <name>SKIP_TESTS</name>
+          <description>Tests are temporarily skipped by default while their runtime and reliability are improved. Clear this checkbox to run tests. Skipped builds leave the job's test record unchanged.</description>
+          <defaultValue>true</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
   </properties>
   <scm class="hudson.plugins.git.GitSCM" plugin="git">
     <configVersion>2</configVersion>
     <userRemoteConfigs>
       <hudson.plugins.git.UserRemoteConfig>
-        <url>git@github.com:openforis/sepal.git</url>
-        <!-- <url>github:openforis/sepal.git</url> -->
+        <url>git@github.com:openforis-sepal/sepal-private.git</url>
       </hudson.plugins.git.UserRemoteConfig>
     </userRemoteConfigs>
     <branches>
@@ -42,11 +59,20 @@
   <concurrentBuild>false</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>${WORKSPACE}/modules/ops/script/build-and-push-images.sh $BUILD_NUMBER</command>
+      <command>sepal-build $BUILD_NUMBER</command>
       <configuredLocalRules/>
     </hudson.tasks.Shell>
   </builders>
   <publishers>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>build-logs/**</artifacts>
+      <allowEmptyArchive>true</allowEmptyArchive>
+      <onlyIfSuccessful>false</onlyIfSuccessful>
+      <fingerprint>false</fingerprint>
+      <defaultExcludes>true</defaultExcludes>
+      <caseSensitive>true</caseSensitive>
+      <followSymlinks>false</followSymlinks>
+    </hudson.tasks.ArtifactArchiver>
     <hudson.plugins.git.GitPublisher plugin="git">
       <configVersion>2</configVersion>
       <pushMerge>false</pushMerge>
@@ -55,7 +81,7 @@
       <tagsToPush>
         <hudson.plugins.git.GitPublisher_-TagToPush>
           <targetRepoName>origin</targetRepoName>
-          <tagName>build-$BUILD_NUMBER</tagName>
+          <tagName>build-${BUILD_NUMBER}</tagName>
           <tagMessage></tagMessage>
           <createTag>true</createTag>
           <updateTag>false</updateTag>
@@ -63,5 +89,9 @@
       </tagsToPush>
     </hudson.plugins.git.GitPublisher>
   </publishers>
-  <buildWrappers/>
+  <buildWrappers>
+    <hudson.plugins.ansicolor.AnsiColorBuildWrapper plugin="ansicolor">
+      <colorMapName>xterm</colorMapName>
+    </hudson.plugins.ansicolor.AnsiColorBuildWrapper>
+  </buildWrappers>
 </project>

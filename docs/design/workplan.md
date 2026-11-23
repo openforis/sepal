@@ -1,4 +1,16 @@
 # SEPAL workplan
+Calibration behaviour in time-series isn't consistent with optical mosaic.
+
+Retry tasks, open recipe creating a task. Warn when recipe or its dependencies changed
+
+MySQL -> PostgreSQL
+
+AQS keys - separate for PROD and DEV, locked to specific regions.
+
+Redo the backup scripts
+
+Don't do all AOI rendering using EE. For Countries/areas, serve PMTiles perhaps, polygons - client rendered? Only custom EE tables throw EE
+
 
 The single backlog for SEPAL recipes, tasks, applications and infrastructure. Reports need reproduction;
 proposals need bounded scope and acceptance criteria; research questions do not select an implementation.
@@ -80,6 +92,15 @@ unselected defaults, then consolidate final export projection and remove redunda
 Preserve established output order and producer-specific internal selection semantics.
 
 ### Validation and execution coverage
+
+New or changed execution prerequisites must enter shared readiness in the same implementation slice, with explicit
+operation scopes. GUI feedback, draft validation and server execution checks must consume that declaration, and
+recipes consuming the affected output must inherit its refusal. Existing acquisition owners supply any required
+facts; adapters must not implement a separate compatibility rule.
+
+Acceptance covers the direct recipe and a consuming recipe, refusal before construction, and recovery after repair.
+Where evidence is acquired, also verify pending, failed and unreadable evidence. Keep operation-specific exceptions
+explicit and tested. The operation-coverage audit below remains separate work for existing gaps.
 
 - **Removed or inaccessible assets.** Audit the reported EE "asset not found" errors against
   [current asset freshness](recipes/source-freshness.md#asset-freshness-and-drawing-currency). Active consumers already claim
@@ -277,6 +298,55 @@ saved class identities and locally edited styles; exports and downstream recipes
 preview-only filter. Verify map tiles, cursor values, legends, histograms, Copy/Paste and re-enabling classes agree
 with the chosen policy, including unknown categories and genuinely masked pixels.
 
+## GUI code organization
+
+The [shared recipe GUI reorganization](#shared-recipe-gui-organization) is implemented. These follow-up candidates
+are confirmed by code and imports, not by file count alone. Keep each move bounded and preserve behavior and existing
+lifecycle, acquisition, caching and validation owners.
+
+The GUI import graph is acyclic, and test mocks used solely to cut those cycles have been removed. Import-time side
+effects still need review when changing import order. Shared support now lives in leaf modules: the user-details hint
+(`app/home/user/userDetailsHint.js`), notification publication (`widget/notificationPublisher.js`, behind the
+`Notifications` API) and the Earth Engine credential generation (`credentialId.js` in `process/sourceRuntime/`).
+
+- **Application code out of `widget/`.** The application monitors live in `app/home/monitoring/`; the asset listing
+  and selection in `browse/assets/`, workspace browsing in `browse/files/`, Retrieve's destination fields in
+  `recipe/retrieve/` and the recipe selector (`RecipeInput`, Map Layers and the training samplers included) in
+  `recipe/sources/`. `Form.AssetCombo` and `Form.AssetInput` stay in `widget/form/`, the adapter being the widget
+  library's one import of the asset feature, and the input reading the map's asset parser. Beyond them, only the
+  legend widgets import `app/`: the recipe context, and the map's context and legend builder. Keep generic controls in
+  the widget library.
+- **Recipe-session support out of the `process/` root.** What the session holds of storage - drafts, cache
+  acceptance and claims, listing authority and save coordination - lives in `process/recipeSession/`, which gives each
+  store its one session (`recipeSession.js`, [lifetime](recipes/gui-source-runtime.md#recipe-session)). The folder
+  imports what saving needs - `apiRegistry`, `hash`, `gzip`, the store and action builder, event publication,
+  translations and notifications - and nothing of `process/`. The process entry points keep the orchestration
+  (`recipe.jsx`, which hands opening, saving and forgetting to the installed store's session and re-exports
+  `saveStatePath`), `recipeAccess.jsx` and `recipeContext.jsx`, the registries, screens, menus and shared form
+  panel.
+- **Feature-layer code in `app/home/map/`.** The Earth Engine table-asset overlay lives in `map/eeTableAsset/`: its
+  options panel, the style, filter, category and asset-style helpers, and `eeTableAssetLayer.jsx`, the one renderer that
+  reads that style and filter. The overlay stack stays in the root: `featureLayers.jsx` renders every overlay type and
+  `featureLayerOrder.js` orders them, while `eeTableLayer.jsx` also draws the AOI, which keeps its own style and panel.
+  Legend helpers are not grouped by name: `legendBuilder.jsx` and `legendValue.js` serve recipe legends, `visParams/`
+  and `widget/legend/`; `legendImport.jsx` serves those legends and the table-asset panel; `legendLayer.jsx` is a
+  presentation overlay beside palette and values. Preserve the `visParams/`, `imageLayerSource/`, `tileProvider/` and
+  `tileManager/` boundaries rather than reshuffling the map tree.
+- **Application preferences in `app/preferences/`.** `themeSelector.jsx` and `languageSelector.jsx` serve both Landing
+  and the authenticated user menu: Landing shows the theme selector and its intro the language selector, and the user
+  menu offers both as the popups of its preference entries. The folder sits beside `landing/` and `home/`, which both
+  import it while it imports neither. The selectors hold no state of their own: `theme.js` and `themeHooks.jsx` keep
+  the theme preference, its persistence and system-theme following, `translate.jsx` keeps the language and its
+  persistence, and the language selector keeps its page reload.
+
+Acceptance for each move: a concrete old-to-new path map; companion tests/styles kept together; static and dynamic
+imports, test mocks and documentation links updated. Each mechanical batch passes its focused tests, lint and a
+production GUI build, with every import resolving, the graph acyclic, and module code and import targets unchanged from
+HEAD apart from paths and import order. The full GUI suite runs at the organization checkpoint before merge, or earlier
+where uncertainty warrants it. Tests use at most two workers. Keep moves separate from behavior/API redesign and
+introduce no compatibility re-exports, barrels or aliases solely for relocation. Shared recipe `type/`, `source/` and
+`output/` already have clear responsibilities and are not candidates merely because they contain many files.
+
 ## Deferred recipe architecture
 
 These remain unscheduled target designs. Correctness and usability slices above do not require adopting them.
@@ -300,8 +370,8 @@ operations return evidence of what they read (`modules/gee/src/jobs/dependencyEv
 it (`lib/js/shared/src/recipe/calculation`); the source runtime owns calculation work and current evidence
 (`sourceRuntime/calculationEvidence.js`); and local requirements read runtime-acquired evidence with its acquisition
 state (`sourceRequirements.js`). Sampling Design is its first consumer. Form panels judge drafts, as committing them
-would leave the recipe, by local requirements naming them as `editor` (`recipe/localCandidate.js`) and keep synchronous results derived in their drafts
-(`recipe/derivedResult.js`): Sampling Design's manual proportions and allocation, and Band Math's Output bands, use them.
+would leave the recipe, by local requirements naming them as `editor` (`recipe/editing/localCandidate.js`) and keep synchronous results derived in their drafts
+(`recipe/editing/derivedResult.js`): Sampling Design's manual proportions and allocation, and Band Math's Output bands, use them.
 Commits keep applied results derived in the same action (`commitRecipe`, same file):
 [Band Math's calculation bands](../recipes/band-math.md), [Stack's band names](../recipes/stack.md#band-names) and
 [Class Change's transition legend](../recipes/class-change.md#transition-legend).
@@ -334,8 +404,8 @@ Use the part of the mechanism each responsibility needs:
 
 | Recipes | Concrete reuse and existing owner | Migration boundary |
 | --- | --- | --- |
-| CCDC, Time Series, Phenology | The selected Classification is read once per recipe for its UI (`selectedClassification.js`). Chosen bands of the images, classified outputs and CCDC's TMask are judged in shared readiness, and Sources keep chosen bands shown. `collectionClassifierRequirements.js`, `collectionBandRequirements.js` and CCDC's `segmentDescription.js` establish reusable owners. | [Remaining items](#temporal-sources-dependencies): unmatched Planet Daily's imagery-dependent bands and the Time Series chart's corrections. No persisted fit evidence. |
-| LandTrendr | Sources' data-set, date and index dependencies are judged in shared readiness, and Sources keep chosen values shown and say which inputs an index lacks ([LandTrendr](../recipes/landtrendr.md#sources)). Data sets follow the shared [data-set availability](recipes/data-sources.md#data-set-availability). | [Named-product periods](#sources-data-set-availability), the annual mosaic's included; chart gating stays with [server preview readiness](#server-preview-readiness). |
+| CCDC, Time Series, Phenology | The selected Classification is read once per recipe for its UI (`collections/selectedClassification.js`). Chosen bands of the images, classified outputs and CCDC's TMask are judged in shared readiness, and Sources keep chosen bands shown. `collections/collectionClassifierRequirements.js`, `collections/collectionBandRequirements.js` and CCDC's `segmentDescription.js` establish reusable owners. | [Remaining items](#temporal-sources-dependencies): unmatched Planet Daily's imagery-dependent bands. No persisted fit evidence. |
+| LandTrendr | Sources' data-set, date and index dependencies are judged in shared readiness, and Sources keep chosen values shown and say which inputs an index lacks ([LandTrendr](../recipes/landtrendr.md#sources)). Data sets follow the shared [data-set availability](recipes/data-sources.md#data-set-availability). | The annual mosaic is held for the change map's Sources and Dates ([LandTrendr](../recipes/landtrendr.md#sources)); chart gating stays with [server preview readiness](#server-preview-readiness). |
 | Optical Mosaic | `sceneAreas.jsx`, `sceneSelection.jsx`, `autoSelectScenes.jsx` and `sceneDeselection.jsx` separately coordinate AOI/source/date-dependent reads and selected scenes. | Shared question identity and request lifecycle can replace local coordination. Scene discovery results are temporary; manual selections remain user-owned. Preserve explicit auto-selection and define retention/reconciliation before changing scene deletion behaviour. |
 | Classification, Regression | Shared input-band and training-data requirements already judge live dependencies. `panels/trainingData/sample*Section.jsx` and table-import sections own similar asynchronous import requests and mapping stages. | Reuse acquisition lifecycle and declared stage prerequisites where duplicated. Sampled/imported rows are persisted snapshots, and source IDs there record provenance; do not turn them into live execution dependencies or invalidate them automatically. Keep training adequacy and value/encoding policy separate. |
 | Unsupervised Classification | Shared derived-input requirements already validate its band sets; sampling and clustering run during execution. Cluster-dependent preset legends are computed synchronously by `visualizations.js`. | No persisted calculation sidecar is justified by these paths. Conditional sampling/clusterer rules can use shared requirements when their validation is migrated; retain the domain parameter rules and cheap preset derivation. |
@@ -357,7 +427,7 @@ Use the part of the mechanism each responsibility needs:
   explicit stretching and legend-value requests. Request identity includes the image/product, band and spatial
   question. Sharing/currency must preserve edited ranges and legends; a fresh result does not authorize replacing
   them. Retain the existing Paste cancellation safeguards.
-- **Charts and Retrieve:** `pixelChartUpdate.js`, operation watches, selected-Classification reads and the shared
+- **Charts and Retrieve:** `charts/pixelChartUpdate.js`, operation watches, selected-Classification reads and the shared
   Retrieve panel already coordinate relevant consumers. Extend those owners where a migration exposes a gap;
   do not add a second chart/request coordinator or duplicate server-preview readiness work.
 
@@ -375,14 +445,13 @@ unverified for these follow-ups.
 
 For CCDC, Time Series and Phenology. The selected Classification's UI read, CCDC's TMask bands and the bands of the images
 CCDC and Phenology choose are current behaviour
-([Time Series](../recipes/time-series.md#bands-of-the-images-ccdc-and-phenology-choose)). Remaining, from code
-inspection; paths are relative to `modules/gui/src/app/home/body/process/recipe/`:
+([Time Series](../recipes/time-series.md#bands-of-the-images-ccdc-and-phenology-choose)), as are the Time Series
+chart's bands of the images under the corrections applied ([Time Series](../recipes/time-series.md#inputs)).
+Remaining, from code inspection:
 
 - **Unmatched Planet Daily.** Its eight-band names, and any index needing them, are not refused, because the rule reads
   no imagery. Refusing them needs the contributing imagery's bands (`nativeBands$`) acquired for the rule; a pending or
   failed read establishes nothing.
-- **Time Series chart corrections.** `timeSeries/panels/chartPixel.jsx` reads corrections from
-  `model.opticalPreprocess`, which nothing writes, so under SR the chart offers bands the collection lacks.
 
 **Further label opportunities, not scheduled.** Other places could adopt the
 [retained-output naming](../recipes/time-series.md#what-is-offered-of-the-selected-classification) where they are shown
@@ -398,31 +467,37 @@ to be the same case:
 
 Date-filtered Sources share one data-set availability policy, LandTrendr's included, and new recipes resolve their
 initial data sets by it ([current behaviour](recipes/data-sources.md#data-set-availability),
-[initial data sets](recipes/data-sources.md#initial-data-sets)). Remaining:
+[initial data sets](recipes/data-sources.md#initial-data-sets)). Auxiliary mosaic layers are held with the result they
+accompany, and Change Alerts needs each of its windows covered
+([Change Alerts](../recipes/change-alerts.md#collection-mosaic), [LandTrendr](../recipes/landtrendr.md#sources)).
+Classifier-input findings name only repairs it allows, for the complete feature set
+([Time Series](../recipes/time-series.md#inputs)). Availability is judged by the days of the collections execution reads
+under the recipe's correction, as the Earth Engine catalogue states them, so a period within a data set's first or last
+year is judged by when its imagery begins or ends. Change Alerts' is judged by its readiness under the correction its
+reference's description establishes, so whatever is built on the changes is held with them; so is processing that
+description shows cannot be used. Remaining:
 
-- **Named-product periods, a separate bounded follow-up.** Products reading a period of their own are not judged for it:
-  LandTrendr's annual mosaic, its requested year, and Change Alerts' calibration and monitoring mosaics
-  (`COLLECTION_MOSAIC`), each its own period. A Landsat 8-only LandTrendr annual mosaic for 2010 cannot hold imagery
-  even where its fitted years include usable ones. A configuration requirement reads the model, not a product's
-  parameters, and a delegated product reads the delegate's description without its readiness
-  (`lib/js/shared/src/recipe/output/resolveImageOutput.js`), so Optical Mosaic's requirement does not cover them.
-  Judging each product's own period needs its parameters where its readiness is read.
-- **Classifier-input messages, a separate bounded slice.** The finding is located at the classification when no single
-  data set supplies the classifier's features at the current reflectance (`collectionClassifierRequirement`,
-  `lib/js/shared/src/recipe/type/pyeoAlerts.js`). Its messages ("No collection this recipe can use provides…", and
-  PyEO's "No supported monitoring data provides…") overlook a PRC repair: Landsat 8 under SR with a classifier reading
-  `pan` is located there, although TOA supplies it. The smallest correction scopes the wording to the processing
-  applied, and offers PRC only from a finding fact naming it (alternatives judged at the other reflectance). The
-  data-set alternatives also ignore the period: Landsat 4-5 for 1990-1995 with a classifier reading `redEdge1` is told
-  to choose data sets that provide it, though only Sentinel-2 does and Sources refuse it for those years. They can be
-  judged by the shared policy (`excludedDataSets`, `lib/js/shared/src/recipe/dataSetAvailability.js`).
-- **Chart gating.** LandTrendr's pixel chart is not held for these findings and declares no pixel operation; it stays
-  with [server preview readiness](#server-preview-readiness).
+- **Layers shown elsewhere, not scheduled.** In another recipe's map, a layer withdrawn by its product's own readiness -
+  LandTrendr's annual mosaic, a Change Alerts collection mosaic, CCDC's count - is not explained on its selector, as one
+  withdrawn for its source is (`heldSource`, `recipeImageLayer.jsx`). Within its own recipe, the section holding it
+  says why.
 - **Open drafts.** A form panel's draft is judged again when the panel renders. An applied change made elsewhere while
   it is open is seen only then; panels open one at a time, so no current path reaches this.
-- **Choices unavailable anew, not scheduled.** A data set the years exclude is disabled without saying why; only one kept
-  chosen gives its catalogue years. A tooltip on the disabled choice would explain it, if hover on disabled buttons is
-  reliable.
+- **Choices unavailable anew, not scheduled.** A data set the period excludes is disabled without saying why; only one
+  kept chosen says when it holds imagery. A tooltip on the disabled choice would explain it, if hover on disabled
+  buttons is reliable.
+- **Catalogue dates.** `optical/collectionDates.js` and `radar/collectionDates.js` record the catalogue as read on
+  2026-11-11, and nothing follows it. Two entries rest on what it states rather than on a check of the collections:
+  Landsat 5 Tier 2 top of atmosphere ends in February 2001, ten years before its surface reflectance, and
+  `COPERNICUS/S1_GRD_FLOAT`, which the catalogue does not list, is given `COPERNICUS/S1_GRD`'s first day.
+- **Landsat 8 Tier 2 top of atmosphere.** `dataSetSpecs` reads `LANDSAT/LC08/C02/T1_TOA` for it, so it is judged by Tier
+  1's days. Whether execution should read `LANDSAT/LC08/C02/T2_TOA`, which begins in October 2021, is a separate
+  question.
+- **Change Alerts processing read twice per chart request.** Readiness judges the reference's processing from its
+  description ([Change Alerts REF](recipes/source-resolution.md#change-alerts-ref)), while the observations job reads
+  it again itself (`segmentSourceFacts$`, `lib/js/ee/src/timeSeries/segmentSource.js`) and evaluates the same rule
+  first. A CCDC's catalogue, or a segments asset, is so read twice per request. One acquisition per request would
+  serve both; the image and mosaic construction paths read it once more when built.
 - **Abandoned set-up drafts.** Wizard Back leaves an invalid Sources draft uncommitted, as for every panel; Sources
   opened again are proposed again over the dates then chosen. Keeping such a draft would need draft persistence, not
   defaulting.
@@ -515,6 +590,19 @@ and explicit refresh for external changes and missed events.
   committed revisions, ignore duplicate/out-of-order events and retain reload/reconnect recovery. Inventory
   listing, save and dependency consumers before adding event types; patch transport is a separate choice.
 - Choose batch-by-ID versus closure transport based on consumers without duplicating graph/authorization logic.
+- **Recipe-session ownership, remaining.** Each store's session owns autosave, save coordination and cache claims
+  ([lifetime](recipes/gui-source-runtime.md#recipe-session)). Still acting on whichever store is installed when they
+  complete: `recipe.jsx`'s navigation and listing requests (`openRecipeById$`, `removeRecipes$`, `loadRecipes$`,
+  `moveRecipes$`), harmless while one store serves the page. Test harnesses install stores with their sessions and
+  dispose them as each test ends. Where a test's edits save, storage answers as the recipe module does
+  (`recipeStorage.test.fixtures.js`) and a saved recipe is opened as navigation opens it; the tests of pending, refused
+  and conflicting saves keep their own control. Apart from that: `bandMath/derivations.test.js` ends before any save
+  is compressed and keeps saves unanswered; `sources/recipeInput.test.jsx` writes drafts the session never opened,
+  whose saves stay unanswered; 19 files keep a save fake that is never answered or answers nothing, though none of
+  their tests saves. Some harnesses list a recipe still being set up, which autosave then creates; the application
+  lists a recipe once it is saved. A test ending through the session fixtures fails for any save the storage fake
+  refused or could not process (`checkSaves`); only saves that reached storage are judged, so one still being
+  compressed as the test ends goes unjudged, and saves answered by a harness's own fake are not checked.
 - Stronger trusted provenance, post-execution asset drift policy and product-specific AOI projections remain target
   architecture, not promises of current exports.
 
@@ -587,7 +675,28 @@ zoom, outer-layer transformations, and superseded requests on location/source ch
 generic charts can follow separately. Scalar/array and unit/encoded-value presentation still need decisions;
 physical-value presentation remains deferred separately. No new tool-registration framework is selected.
 
+### Shared recipe GUI organization
+
+Shared recipe GUI modules are grouped by responsibility ([code layout](recipes/gui-source-runtime.md#code-layout)).
+Remaining, each a separate bounded move or decision:
+
+- **`mosaic/` shared panels.** The AOI and radar-options panels several types use sit in a folder that is no recipe
+  type. Give them a shared location with their tests, styles and `mosaicRecipe.js`.
+- **Shared code reading type folders.** `collections/` reads `classification/bands.js`, and
+  `sources/segmentCapability.js` reads `ccdc/segmentsAsset.js`. Assess whether those owners should move, not just
+  the files.
+- **Collection definitions.** The mosaic types' data-set catalogues, bands and processing panels, and `~/sources.js`,
+  follow [source planning](#source-planning-and-temporal-collection-composition).
+
 ### Recipe packages and supporting work
+
+**Shared-library cohesion.** Group recipe-specific shared definitions, prerequisites and helpers by their recipe or
+recipe-family owner. Change Alerts currently spans `recipe/type/changeAlerts.js`,
+`recipe/requirement/changeAlertsProcessing.js` and `recipe/changeAlerts/`; its definition and processing requirement
+belong with its other domain code. Keep the registry, readiness/resolution engine and generic requirement protocol
+with their common owners. Inventory callers, tests and cross-recipe reuse before selecting a bounded move; preserve
+the import graph and behaviour. Do this after the active functional change is committed, as organization within the
+existing shared library, independently of the packaging work below.
 
 Recipe packaging remains unscheduled: one package would own shared rules, GUI and EE behavior/tests, with separate
 runtime entry points. Establish discovery, cross-package dependencies, compatibility and build/deployment ownership
@@ -622,12 +731,15 @@ in the [recipe contract](../recipes/bayts-alerts.md#radar-observation).
 
 - Unknown visualization modes fall through to calibration; a non-`latest` mosaic type becomes median.
   A layer saving `mosaicType: undefined` instead names no product. Establish one boundary policy.
-- Saved `sources.dataSetType` selects map mosaics, while `sources.dataSets` selects alert collections;
-  mismatched models can therefore compare different families. Include in collection/monitoring assessment.
+- Saved `sources.dataSetType` selects map mosaics, while `sources.dataSets` selects alert collections and is what
+  the windows' availability judges; mismatched models can therefore compare different families. Include in
+  collection/monitoring assessment.
 - A new empty `reference: {}` can pass preview preflight although execution raises `MALFORMED_SEGMENT_SOURCE`.
   Include in the separately deferred server-preview readiness work.
 - Chart highlights still call `monitoringDates` for malformed applied periods. Execution permits overflowing
   calendar days, fractional durations and years that product validation refuses; settle compatibility explicitly.
+  Readiness refuses only a duration that does not last; a period that cannot be stated at all holds the mosaics, by
+  their description, but not the changes.
 
 ### Phenology
 
@@ -940,6 +1052,98 @@ choose production only from measured results.
   product-driven map workflow. Assess catalogue, coverage, styling and selection behavior once the use is defined.
 - **Recipe to GEE script.** Assess which recipes can produce a runnable Earth Engine script, dependency expansion,
   private-asset access, credentials exclusion and equivalence with SEPAL processing. Unsupported steps must be explicit.
+
+## Sandbox build time
+
+Reduce sandbox build time with tests disabled. Prioritize preserving expensive cached layers, then R package
+installation and validation, slow UbuntuGIS downloads, and standalone DGGRID compilation. Deliver live Jenkins
+progress alongside these changes; assess GPU dependency reductions after the larger measured costs.
+
+Observed on the two-CPU ops host in [Sepal-test #477](https://ops.sepal.io:8443/job/Sepal-test/477/):
+
+| Sandbox step | Elapsed time | Observation |
+|---|---:|---|
+| R packages, R Torch and package-load checks | 20m 30s | Roughly 12 minutes installing packages, 3m 26s setting up Torch, and five minutes checking package loads. |
+| GMT / GMTSAR | 8m 12s | Six minutes downloading about 83 MB from UbuntuGIS, including retries. |
+| GPU libraries, TensorFlow and Python PyTorch | 7m 03s | Downloads and installation of prebuilt packages. |
+| Standalone DGGRID | 5m 49s | Builds from source. |
+| Remaining Dockerfile steps | 21m 10s | Includes SNAP, Orfeo, other Python packages, OFT and application setup. |
+| **Total before image export** | **62m 44s** | Excludes export and registry pushes; their final timings were not captured in this sample. |
+
+The four largest steps account for about two-thirds of the measured time. This was not a fully clean build:
+the base image and early configuration layers were reused, but an OFT installer change invalidated subsequent
+layers even though the GPU installer was unchanged. Most R packages already came from the binary proxy;
+source misses such as `interp`, R Torch setup and package validation still add work. Standalone DGGRID and
+R's cached `dggridR` package are separate concerns.
+
+- **Preserve expensive installation layers.** Assess moving stable GPU dependencies earlier in the sandbox's
+  own Dockerfile, with configuration and frequently changed inputs later. Establish actual dependencies before
+  reordering: Python installers share one environment, and R/native tools depend on compatible system libraries.
+- **Optimize R installation and validation.** Use the existing binary proxy to prepare expensive misses such
+  as `interp`, and avoid duplicate foreground/background compilation where practical. Assess reuse of the
+  runtime downloaded by `torch::install_torch()` separately from the R package binary cache. Package validation
+  currently starts a separate R process per package, repeatedly loading dependencies; assess bounded batches
+  or fewer processes while respecting R's loaded-DLL limit. Preserve R ABI checks, detection of missing or
+  unloadable packages, and the Torch runtime check, including when Jenkins application tests are disabled.
+- **Reuse downloads without enlarging the shipped image.** Assess BuildKit cache mounts for APT and `uv` so a
+  necessary layer rebuild can reuse downloaded packages. Keep caches outside image layers and measure their
+  contribution to the ops disk and cache budget. Prioritize reliable download paths and reuse for slow UbuntuGIS
+  packages: most of the observed GMT step was downloading, rather than compilation.
+- **Reuse compiled tools.** Assess a pinned standalone DGGRID binary published as a checksummed release asset,
+  or an independent build stage that survives unrelated sandbox changes. Match OS, architecture, runtime
+  libraries and required GDAL/features. A full new package repository is not selected.
+- **Assess GPU dependency overlap.** Inventory system CUDA packages and the NVIDIA libraries installed with
+  Python frameworks. Establish compiler, R and native-application requirements before proposing removals.
+- **Show live sandbox progress in Jenkins.** Report each installer starting, completing or being reused from
+  cache, with elapsed times. During long GPU and R installers, identify the current substep: downloading,
+  installing, setting up Torch or checking package loads; show completed/total counts where known. Periodic
+  progress lines must name the current installer/substep and its elapsed time, rather than only saying the
+  sandbox build is running. Distinguish image export and registry push from installation. Keep detailed tool
+  output in the full log and keep summaries visible while the build runs; do not imply a percentage or ETA from
+  Dockerfile step counts.
+- **Make measurements usable.** Capture completed step timings and sufficient diagnostics despite BuildKit's
+  per-step log clipping, while keeping the Jenkins console concise. Separate download, unpack/install and
+  compilation costs, and measure R validation, image export and registry push separately before choosing further
+  optimization.
+
+Acceptance: compare cold and warm builds on the same hardware, including an unchanged rebuild and a change to
+an unrelated installer. Show which expensive work is reused, report image/cache sizes and timings, and preserve
+package imports, native-tool features and representative GPU behavior. Start with bounded Dockerfile/cache
+changes; choose additional artifact hosting or dependency reductions only from measured remaining costs.
+
+## Test quality and execution time
+
+Review and improve tests across SEPAL, starting with the GUI. GUI runs take several minutes on two CPUs and
+emit React `act()` warnings; the wider concern about test quality needs an assessment of what regressions the
+tests actually detect. Follow the [testing rules](../../CLAUDE.md#testing) and
+[test boundaries](../code-design.md#test-boundaries).
+
+- **Measure and prioritize.** Identify slow files, repeated setup, import/transform cost, unnecessary DOM/store
+  construction and real-time waits. Establish comparable timings with at most two workers, then improve bounded
+  groups of tests; increasing parallelism or skipping tests does not resolve poor test design.
+- **Test the right seam.** Test rules and application operations directly through stable behavioral contracts.
+  Use component tests for rendering, interaction and lifecycle, real infrastructure for adapter guarantees, and
+  a small set of composed tests for wiring. Remove duplicated scenarios and assertions tied to private helpers,
+  incidental call order, component structure or a harness's own behavior. Preserve meaningful failure, security
+  and asynchronous regression coverage.
+- **Separate business logic from GUI mechanics.** Include focused production refactorings where business rules
+  and application state transitions can currently be tested only through large React/store setups. Give those
+  responsibilities stable operations that can be exercised without rendering; keep rendering, interaction and
+  framework bindings at the GUI boundary. Move behavioral tests with the extracted responsibility, remove
+  redundant UI scenarios, and retain representative wiring and lifecycle tests. Preserve user-visible behavior
+  and existing ownership; avoid test-only APIs or a new abstraction framework.
+- **Delete development scaffolding.** Implementation-coupled tests may help during implementation, but must be
+  deleted before final review. Replace any lasting regression protection they provided with behavioral tests at
+  the appropriate seam; do not keep temporary probes as permanent coverage.
+- **Make asynchronous tests deterministic.** Control clocks and external completions, wait for meaningful
+  outcomes, and clean up subscriptions, timers, React roots and shared state. Fix genuine `act()` warnings and
+  avoid sleeps or arbitrary flush loops; do not silence warnings to make a suite appear healthy.
+
+Acceptance for each slice: report comparable before/after timings and the tests removed, simplified or moved,
+with the behavior each retained test protects. Demonstrate selected meaningful regressions are still caught,
+and resolve warnings/flakiness in the changed tests. Prefer fewer, faster tests that survive behavior-preserving
+implementation changes; test counts and coverage percentages are not success criteria. Begin with a bounded GUI
+assessment and improvement slice, not a wholesale suite or framework rewrite. Jenkins log presentation is separate.
 
 ## Platform and development research
 

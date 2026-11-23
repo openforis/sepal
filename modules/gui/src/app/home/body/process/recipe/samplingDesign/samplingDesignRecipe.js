@@ -1,8 +1,8 @@
 import _ from 'lodash'
 
 import {recipeActionBuilder} from '~/app/home/body/process/recipe'
-import {getTaskInfo} from '~/app/home/body/process/recipe/recipeOutputPath'
-import {submitExportTask} from '~/app/home/body/process/recipe/recipeTaskSubmitter'
+import {getTaskInfo} from '~/app/home/body/process/recipe/retrieve/recipeOutputPath'
+import {submitExportTask} from '~/app/home/body/process/recipe/retrieve/recipeTaskSubmitter'
 import {publishEvent} from '~/eventPublisher'
 import {select} from '~/store'
 import {msg} from '~/translate'

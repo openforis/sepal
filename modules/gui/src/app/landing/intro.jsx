@@ -1,4 +1,4 @@
-import {LanguageSelector} from '~/app/landing/languageSelector'
+import {LanguageSelector} from '~/app/preferences/languageSelector'
 import {msg} from '~/translate'
 import {Button} from '~/widget/button'
 import {ButtonGroup} from '~/widget/buttonGroup'

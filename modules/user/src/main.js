@@ -2,6 +2,7 @@ import logConfig from '#config/log.json' with {type: 'json'}
 import * as server from '#sepal/httpServer'
 import {configureServer, getLogger} from '#sepal/log'
 import {initMessageQueue} from '#sepal/messageQueue'
+import {requireRestrictedHome} from '#sepal/restrictedHome'
 
 import {createBootstrap} from './bootstrap.js'
 import {
@@ -29,6 +30,7 @@ configureServer(logConfig)
 const log = getLogger('main')
 
 const main = async () => {
+    await requireRestrictedHome('/sepal/home')
     const db = await initializeDb()
     const repository = new UserRepository(db)
     const clock = () => new Date()
@@ -71,4 +73,7 @@ const main = async () => {
     log.info('Initialized')
 }
 
-main().catch(log.fatal)
+main().catch(error => {
+    log.fatal(error)
+    process.exit(1)
+})

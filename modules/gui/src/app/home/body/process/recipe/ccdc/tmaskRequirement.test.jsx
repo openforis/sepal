@@ -7,9 +7,10 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {IMAGE_OUTPUT, PIXEL_OBSERVATIONS, PIXEL_SEGMENTS} from '#sepal/recipe/output/readiness'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore, openStoredRecipe} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
@@ -18,10 +19,10 @@ import {tooltipText} from '~/widget/tooltip.test.fixtures'
 // TMask screens a pixel's observations with two of the bands CCDC segments, so an enabled one must use breakpoint bands
 // (type/ccdc.js). A Sources Apply may remove one it uses: OPT is then marked, and what segments the image is held,
 // until either section repairs it. The CCDC root, its toolbar and panels, the store and the source runtime are real;
-// recipe reads answer from stored records, Earth Engine with CCDC's segment bands, and no request ever completes for a
+// storage answers as the recipe module does, Earth Engine with CCDC's segment bands, and no request ever completes for a
 // chart.
 
-const fake = vi.hoisted(() => ({stored: {}, open: new Set()}))
+const fake = vi.hoisted(() => ({storage: null, open: new Set()}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         bands$: () => of(['tStart', 'tEnd', 'tBreak', 'numObs', 'changeProb', 'ndvi_coefs', 'ndvi_rmse', 'ndvi_magnitude']),
@@ -29,14 +30,13 @@ vi.mock('~/apiRegistry', () => ({default: {
         loadCCDCSegments$: () => new Observable(),
         loadTimeSeriesObservations$: () => new Observable()
     },
-    recipe: {load$: id => of(fake.stored[id]), loadAll$: () => of(LISTING), save$: () => of()}
+    recipe: {load$: id => fake.storage.load$(id), loadAll$: () => of(LISTING), save$: request => fake.storage.save$(request)}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => {
     const text = [key].flat().join('.')
     return values ? `${text} ${JSON.stringify(values)}` : text
 }}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => !disabled && [msg].flat().map(tooltipText).some(line => typeof line === 'string')
@@ -57,14 +57,14 @@ vi.mock('~/widget/activation/activator', () => ({
 }))
 // The root's map and its layers: the toolbar is what is looked at.
 vi.mock('~/app/home/map/map', async importOriginal => ({...await importOriginal(), Map: ({children}) => children}))
-vi.mock('../aoi', async importOriginal => ({...await importOriginal(), Aoi: () => null}))
-vi.mock('../recipeImageLayerSource', async importOriginal => ({...await importOriginal(), initializeLayers: () => {}}))
+vi.mock('../map/aoi', async importOriginal => ({...await importOriginal(), Aoi: () => null}))
+vi.mock('../map/recipeImageLayerSource', async importOriginal => ({...await importOriginal(), initializeLayers: () => {}}))
 
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: ccdc} = await import('./ccdc')
 const {breakDetectionOptions} = await import('./ccdcRecipe')
-const {mapProductGate, pixelOperationsAvailability, retrieveAvailability} = await import('../operationAvailability')
-const {requestGate} = await import('../sourceRequirements')
+const {mapProductGate, pixelOperationsAvailability, retrieveAvailability} = await import('../requirements/operationAvailability')
+const {requestGate} = await import('../requirements/sourceRequirements')
 
 addRecipeType(ccdc())
 const Root = ccdc().components.recipe
@@ -76,6 +76,8 @@ let root, container, store, runtime
 beforeEach(() => {
     fake.open = new Set()
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -316,22 +318,22 @@ const RuntimeProbe = withSourceRuntime()(({sourceRuntime}) => {
 
 async function open({breakpointBands, tmaskBands, options, panels}) {
     const recipe = ccdcRecipe({breakpointBands, tmaskBands, options})
-    fake.stored = {[CCDC]: recipe}
+    fake.storage = recipeStorage({records: [recipe]})
     fake.open = new Set(panels)
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: {[CCDC]: recipe},
+            loadedRecipes: {},
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
-            tabs: [{id: CCDC}]
+            projects: []
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
+    openStoredRecipe(store, fake.storage, CCDC)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

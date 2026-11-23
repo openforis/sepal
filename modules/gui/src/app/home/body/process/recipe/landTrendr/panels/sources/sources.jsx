@@ -51,8 +51,8 @@ class _Sources extends React.Component {
 
     // What is wrong with the data sets chosen, if anything, is said here.
     renderDataSets() {
-        const {form, dates, inputs: {dataSets}} = this.props
-        const options = dataSetOptions({type: 'OPTICAL', period: dataSetPeriod({dates}), chosen: dataSets.value})
+        const {form, dates, corrections, inputs: {dataSets}} = this.props
+        const options = dataSetOptions({type: 'OPTICAL', period: dataSetPeriod({dates, options: {corrections}}), chosen: dataSets.value})
         return (
             <Form.Buttons
                 label={msg('process.landTrendr.panel.sources.form.dataSets.label')}

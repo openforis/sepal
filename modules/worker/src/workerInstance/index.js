@@ -47,16 +47,8 @@ const restoreOpenSessionInstances = async ({provider, openSessionInstances}) => 
     }
 }
 
-// A reserved instance with no claim row has nobody to tear it down: ReleaseUnusedInstances tags
-// it idle and its container keeps running. Re-claiming it here puts it back under
-// ReclaimStaleClaims, which routes an abandoned claim through the full release.
-//
-// Claims go missing two ways, and both are permanent rather than migration-era: a session that
-// predates the claim table, and launchInstance's claim INSERT failing (it logs rather than
-// throwing, so as not to strand a running machine). This is reconciliation, not a shim.
-//
-// A claim written here for a session that has since closed is not a leak: ReclaimStaleClaims drops
-// it once the grace period passes.
+// Rebuild claims missing after legacy allocations or failed launch INSERTs, so abandoned
+// reservations remain tracked until reconciliation retires them.
 const backfillClaims = async ({claims, provider}) => {
     const reserved = await provider.reservedInstances()
     let backfilled = 0
@@ -94,7 +86,14 @@ const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceT
     // ── Wire: in-proc InstancePendingProvisioning → provisionInstance ─────────
     instanceEvents.on('InstancePendingProvisioning', instance => {
         log.debug(`Starting provisioning for ${instanceTag(instance)}`)
-        provisioning.run(instance.id, instance.reservation?.sessionId, isCurrent => provisionInstance(instance, {provider, provisioner, isCurrent}))
+        provisioning.run(instance.id, instance.reservation?.sessionId, (isCurrent, progress) =>
+            provisionInstance(instance, {
+                claims,
+                provider,
+                provisioner,
+                isCurrent,
+                ...progress,
+            }))
             .then(ran => ran || log.debug(`Already provisioning ${instanceTag(instance)} - ignored`))
             .catch(err => {
                 // provisionInstance already emits FailedToProvisionInstance; just log here
@@ -122,20 +121,12 @@ const createWorkerInstanceComponent = ({claims, provider, provisioner, instanceT
             log.error('Claim backfill failed:', err.message)
         }
 
-        // Scheduled UNCONDITIONALLY, even with no idle pool configured. SizeIdlePool is the only
-        // step that terminates, or stops into the pool, a released instance — releaseInstance
-        // merely un-reserves it (on AWS, re-tags it State=idle), and the provider's own cleanup
-        // sweeps only idle instances of an OLDER version. An empty target map is not "nothing to
-        // do": every idle instance then has target 0 and is terminated, which is exactly what should
-        // happen. Gating on `size > 0` made the whole termination path hinge on one catalog entry
-        // carrying idleCount.
+        // Run even with no idle pool configured: every idle instance then has target 0 and is
+        // terminated. Completed sessions return idle; warmed manual cancellations recover to stopped.
         const targets = [...targetIdleCountByInstanceType.keys()].join(', ') || 'none (all idle instances are surplus)'
         log.debug(`Scheduling SizeIdlePool every ${SIZE_IDLE_POOL_INTERVAL_MS}ms for types: ${targets}`)
-        // SizeIdlePool is the only step that terminates, or pools, a released instance —
-        // releaseInstance merely un-reserves it. The provider sweep then collects what no
-        // allocation path can see: instances of an older version, and untagged instances whose
-        // CreateTags never ran. A sweep failure must not stop the sizing, hence the two
-        // independent catches.
+        // The provider sweep collects old-version and untagged instances outside the allocation
+        // paths. A sizing failure must not stop that cleanup.
         const runPoolCycle = async () => {
             try {
                 await sizeIdlePool(targetIdleCountByInstanceType, stoppedPoolSize, {provider, claims})

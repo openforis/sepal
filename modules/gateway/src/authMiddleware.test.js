@@ -15,7 +15,7 @@ mock.module('#sepal/httpClient', {
             of(throttledClients.includes(clientIp)
                 ? {statusCode: 429, body: {}}
                 : accounts[username] === password
-                    ? {statusCode: 200, body: {username, status: 'ACTIVE', roles: []}}
+                    ? {statusCode: 200, body: {username, status: 'ACTIVE', roles: ['application_admin'], revision: 1}}
                     : {statusCode: 401, body: {}}),
 
         get$: () => of({statusCode: 401, body: {}})
@@ -27,7 +27,7 @@ const {AuthMiddleware} = await import('./authMiddleware.js')
 describe('a gui request carrying credentials', () => {
     test('is authenticated as the credentials\' user, not the session\'s', async () => {
         const req = guiRequestOf({session: 'alice', credentials: ['bob', 'bob-pw']})
-        const {authMiddleware, sessionsEnsured} = middlewareFor(req)
+        const {authMiddleware, sessionsEnsured} = middlewareFor()
 
         const {status} = await run(authMiddleware, req)
 
@@ -37,9 +37,31 @@ describe('a gui request carrying credentials', () => {
         assert.deepEqual(sessionsEnsured, ['bob'])
     })
 
+    test('is authenticated as the newer identity the user cache holds, not the login\'s', async () => {
+        const req = guiRequestOf({session: 'alice', credentials: ['bob', 'bob-pw']})
+        const {authMiddleware} = middlewareFor({bob: {username: 'bob', status: 'ACTIVE', roles: [], revision: 2}})
+
+        const {status} = await run(authMiddleware, req)
+
+        assert.equal(status, 'next')
+        assert.deepEqual(JSON.parse(req.headers['sepal-user']), {username: 'bob', status: 'ACTIVE', roles: []})
+    })
+
+    test('is refused, starting no session, when the user cache holds a newer lock', async () => {
+        const req = guiRequestOf({session: 'alice', credentials: ['bob', 'bob-pw']})
+        const {authMiddleware, sessionsEnsured} = middlewareFor({bob: {username: 'bob', status: 'LOCKED', roles: [], revision: 2}})
+
+        const {status} = await run(authMiddleware, req)
+
+        assert.equal(status, 401)
+        assert.equal(req.session.username, 'alice')
+        assert.equal(req.headers['sepal-user'], undefined)
+        assert.deepEqual(sessionsEnsured, [])
+    })
+
     test('is refused when the credentials are wrong, whoever the session holds', async () => {
         const req = guiRequestOf({session: 'alice', credentials: ['bob', 'wrong']})
-        const {authMiddleware} = middlewareFor(req)
+        const {authMiddleware} = middlewareFor()
 
         const {status} = await run(authMiddleware, req)
 
@@ -48,7 +70,7 @@ describe('a gui request carrying credentials', () => {
 
     test('is refused as too many requests when the user module throttles its client address', async () => {
         const req = guiRequestOf({credentials: ['bob', 'bob-pw'], ip: throttledClients[0]})
-        const {authMiddleware} = middlewareFor(req)
+        const {authMiddleware} = middlewareFor()
 
         const {status} = await run(authMiddleware, req)
 
@@ -59,7 +81,7 @@ describe('a gui request carrying credentials', () => {
 describe('a gui request without credentials', () => {
     test('passes as the session\'s user', async () => {
         const req = guiRequestOf({session: 'alice'})
-        const {authMiddleware} = middlewareFor(req)
+        const {authMiddleware} = middlewareFor()
 
         const {status} = await run(authMiddleware, req)
 
@@ -69,7 +91,7 @@ describe('a gui request without credentials', () => {
 
     test('is refused without a session', async () => {
         const req = guiRequestOf({})
-        const {authMiddleware} = middlewareFor(req)
+        const {authMiddleware} = middlewareFor()
 
         const {status} = await run(authMiddleware, req)
 
@@ -96,9 +118,14 @@ const guiRequestOf = ({session, credentials, ip = '198.51.100.1'}) => {
     }
 }
 
-const middlewareFor = () => {
+// The user cache answers with `cachedUsers[username]` when it holds a newer identity than the login's.
+const middlewareFor = (cachedUsers = {}) => {
     const sessionsEnsured = []
-    const userStore = {setUser$: () => of(true)}
+    const cache = {...cachedUsers}
+    const userStore = {
+        setUser$: user => of(cache[user.username] ??= user),
+        getUser$: username => of(cache[username])
+    }
     const ensureSessionFor = async (_req, _res, username) => sessionsEnsured.push(username)
     const {authMiddleware} = AuthMiddleware(userStore, ensureSessionFor)
     return {authMiddleware, sessionsEnsured}

@@ -12,7 +12,7 @@ vi.mock('~/compose', () => ({
     composeHoC: () => Component => Component
 }))
 
-vi.mock('~/widget/recipeInput', () => ({RecipeInput: () => null}))
+vi.mock('~/app/home/body/process/recipe/sources/recipeInput', () => ({RecipeInput: () => null}))
 
 vi.mock('~/app/home/body/process/recipeTypeRegistry', () => ({
     getRecipeType: () => ({

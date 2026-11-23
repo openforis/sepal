@@ -3,7 +3,7 @@ import {INSUFFICIENT_INPUT_BANDS, UNDERIVABLE_INPUT_INDEX} from '#sepal/recipe/b
 import {MISSING_INPUT_BAND} from '#sepal/recipe/output/diagnostic'
 import {AMBIGUOUS_TRAINING_FEATURES} from '#sepal/recipe/trainingData'
 import {inputRecipeFeedback, missingInputImageryRequirement} from '~/app/home/body/process/panels/inputImagery/inputImageryRequirements'
-import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
+import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/outputs/recipeOutput'
 import {msg} from '~/translate'
 
 // What Classification, Regression and Unsupervised Classification need of their input images' band sets, as their

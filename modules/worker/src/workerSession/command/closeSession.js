@@ -1,7 +1,7 @@
 // CloseSession runs as TWO SEPARATE TRANSACTIONS (do NOT merge):
 //   step 1: repo.update(session.close())   → state=CLOSED, api_key=NULL
-//   step 2: instanceManager.releaseInstance(session.instance.id, session.id)
-//   then:   emit WorkerSessionClosed {username, sessionId}
+//   then:   emit WorkerSessionClosed {username, sessionId} to stop billing
+//   step 2: release the instance; manual warmed PENDING sessions can recover through stop
 // The row-close must commit before the instance release runs.
 //
 // Ownership check: if command.username is set AND != session.username → throw Unauthorized.
@@ -23,7 +23,7 @@ class Unauthorized extends Error {
 }
 
 // username — optional owner check (null/undefined = system/admin, which skips the check).
-const closeSession = async ({sessionId, username}, {repo, instanceManager, emitWorkerSessionClosed}) => {
+const closeSession = async ({sessionId, username, recoverStartup = false}, {repo, instanceManager, emitWorkerSessionClosed}) => {
     const session = await repo.getSession(sessionId)
     if (username && username !== session.username) {
         throw new Unauthorized(`Session not owned by user: ${session.id}`)
@@ -36,10 +36,11 @@ const closeSession = async ({sessionId, username}, {repo, instanceManager, emitW
     if (!await repo.update(close(session))) {
         return null
     }
-    // step 2 — release the instance (separate transaction)
-    await instanceManager.releaseInstance(session.instance.id, session.id)
-    // publish AFTER both steps
     emitWorkerSessionClosed({username: session.username, sessionId: session.id})
+    // step 2 — release the instance (separate transaction)
+    const releaseOptions = {retire: isPending(session)}
+    if (isPending(session) && recoverStartup) releaseOptions.recoverStartup = true
+    await instanceManager.releaseInstance(session.instance.id, session.id, releaseOptions)
     log.info(`Closed ${sessionTag(session)}`)
     return null
 }

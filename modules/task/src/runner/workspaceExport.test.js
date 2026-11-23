@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {mkdtemp, readdir, readFile, rm} from 'node:fs/promises'
+import {mkdtemp, readdir, readFile, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {afterEach, beforeEach, test} from 'node:test'
@@ -24,18 +24,20 @@ afterEach(async () => {
 })
 
 test('starts the export, follows it, downloads it and cleans up', async () => {
+    await writeFile(join(downloadDir, 'old.tif'), 'old')
     server = await FileServer.start(serving({'a.tif': 'aaa'}))
     const sepal = fakeSepal({states: [{state: 'COMPLETED'}], contents: {'a.tif': 'aaa'}})
 
     const result = await exportTo({sepal})
 
-    assert.deepEqual(result, {downloaded: true})
+    assert.deepEqual(result, {downloaded: true, downloadedPaths: [join(downloadDir, 'a.tif')]})
     assert.deepEqual(
         sepal.calls.map(({path}) => path),
         ['start', 'task/operation/status', 'task/download/files', 'task/download/cleanup']
     )
     assert.deepEqual(sepal.calls.at(-1).body, {destination})
     assert.equal(await readFile(join(downloadDir, 'a.tif'), 'utf8'), 'aaa')
+    assert.equal(await readFile(join(downloadDir, 'old.tif'), 'utf8'), 'old')
 })
 
 test('downloads as a local processing step once the export has completed', async () => {
@@ -44,13 +46,15 @@ test('downloads as a local processing step once the export has completed', async
     const localProcessing = {
         run: async work => {
             sepal.calls.push({path: 'local processing begins'})
-            await work()
+            const result = await work()
             sepal.calls.push({path: 'local processing ends'})
+            return result
         }
     }
 
-    await exportTo({sepal, localProcessing})
+    const result = await exportTo({sepal, localProcessing})
 
+    assert.deepEqual(result, {downloaded: true, downloadedPaths: [join(downloadDir, 'a.tif')]})
     assert.deepEqual(sepal.calls.map(({path}) => path), [
         'start', 'task/operation/status', 'local processing begins', 'task/download/files', 'local processing ends', 'task/download/cleanup'
     ])
@@ -94,7 +98,7 @@ test('a cleanup that fails does not fail the export', async () => {
     server = await FileServer.start(serving({'a.tif': 'aaa'}))
     const sepal = fakeSepal({states: [{state: 'COMPLETED'}], contents: {'a.tif': 'aaa'}, cleanupFails: true})
 
-    assert.deepEqual(await exportTo({sepal}), {downloaded: true})
+    assert.deepEqual(await exportTo({sepal}), {downloaded: true, downloadedPaths: [join(downloadDir, 'a.tif')]})
 })
 
 const PASS_THROUGH = {run: work => work()}

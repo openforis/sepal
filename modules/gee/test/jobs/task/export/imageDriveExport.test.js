@@ -12,7 +12,7 @@ const state = {}
 // The Classification's input is observed holding what it selects (`state.inputBands`), to judge its training.
 mock.module('#sepal/ee/bandEvidence', {
     exports: {
-        assetBandEvidence$: () => of((state.inputBands || []).map(name => ({name, arrayDimensions: 0}))),
+        assetObservation$: () => of((state.inputBands || []).map(name => ({name, arrayDimensions: 0}))),
         imageBandEvidence$: recipe => throwError(() => new Error(`Image described: ${recipe.id}`))
     }
 })

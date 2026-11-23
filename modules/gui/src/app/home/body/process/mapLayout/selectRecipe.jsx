@@ -1,5 +1,6 @@
 import React from 'react'
 
+import {RecipeInput} from '~/app/home/body/process/recipe/sources/recipeInput'
 import {withRecipe} from '~/app/home/body/process/recipeContext'
 import {isImageSource} from '~/app/home/body/process/recipeTypeRegistry'
 import {compose} from '~/compose'
@@ -10,7 +11,6 @@ import {Form} from '~/widget/form'
 import {withForm} from '~/widget/form/form'
 import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
-import {RecipeInput} from '~/widget/recipeInput'
 
 import {updateLayerSource, withSourceValues} from './layerSourceEdit'
 import {layerSourceName, withLayerSourceName} from './layerSourceNames'

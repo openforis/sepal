@@ -7,8 +7,9 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore, openStoredRecipe} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider, withSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 import {tooltipText} from '~/widget/tooltip.test.fixtures'
@@ -16,10 +17,10 @@ import {tooltipText} from '~/widget/tooltip.test.fixtures'
 // The Classification a CCDC's Sources select is part of its analysis, whatever its breakpoint bands (type/ccdc.js):
 // where it cannot be trained - it stores no training points - the Sources panel names it beside the classification
 // field, whose own sections say why, and Retrieve is held, while holding the panel's Apply - for a breakpoint band it
-// computes, which trains it, and for breakpoint bands of the images alike. The panel, store, source runtime and recipe types are real; the recipe reads answer from stored
-// records, Earth Engine the bands of a recipe's image or an asset at once - a radar asset's VV and VH.
+// computes, which trains it, and for breakpoint bands of the images alike. The panel, store, source runtime and recipe types are real; storage answers as
+// the recipe module does, Earth Engine the bands of a recipe's image or an asset at once - a radar asset's VV and VH.
 
-const stored = vi.hoisted(() => ({records: {}}))
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         bands$: ({recipe, asset}) => of(recipe?.type === 'CCDC'
@@ -28,14 +29,13 @@ vi.mock('~/apiRegistry', () => ({default: {
         assetMetadata$: () => of({bandNames: ['red', 'nir'], properties: {}}),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
     },
-    recipe: {load$: id => of(stored.records[id]), loadAll$: () => of(LISTING), save$: () => of()}
+    recipe: {load$: id => io.storage.load$(id), loadAll$: () => of(LISTING), save$: request => io.storage.save$(request)}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => {
     const text = [key].flat().join('.')
     return values ? `${text} ${JSON.stringify(values)}` : text
 }}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, disabled, children}) => !disabled && [msg].flat().map(tooltipText).some(line => typeof line === 'string')
@@ -54,7 +54,7 @@ const {default: ccdc} = await import('./ccdc')
 const {default: classification} = await import('../classification/classification')
 const {default: opticalMosaic} = await import('../opticalMosaic/opticalMosaic')
 const {Sources} = await import('./panels/sources/sources')
-const {retrieveAvailability} = await import('../operationAvailability')
+const {retrieveAvailability} = await import('../requirements/operationAvailability')
 
 addRecipeType(ccdc())
 addRecipeType(classification())
@@ -63,6 +63,8 @@ addRecipeType(opticalMosaic())
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let root, container, store, runtime
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -266,21 +268,21 @@ const RuntimeProbe = withSourceRuntime()(({sourceRuntime}) => {
 
 async function open({breakpointBands, classifier, points, classification, inputs}) {
     const records = [ccdcRecipe({breakpointBands, classification}), classificationRecipe({classifier, points, inputs}), reusingRecipe(), mosaicRecipe()]
-    stored.records = Object.fromEntries(records.map(record => [record.id, record]))
+    io.storage = recipeStorage({records})
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: Object.fromEntries(records.map(record => [record.id, record])),
+            loadedRecipes: Object.fromEntries(records.filter(({id}) => id !== CCDC).map(record => [record.id, record])),
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
-            tabs: [{id: CCDC}]
+            projects: []
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
+    openStoredRecipe(store, io.storage, CCDC)
     await render()
 }
 

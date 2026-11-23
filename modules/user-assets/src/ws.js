@@ -6,6 +6,9 @@ import {subscriptionTag, userTag} from './tag.js'
 
 const log = getLogger('ws')
 
+const isAssetPath = path =>
+    Array.isArray(path) && path.length > 0 && path.every(segment => typeof segment === 'string' && segment.length > 0)
+
 const protocol = ({send, stop$}) => {
     const assetManager = createAssetManager({send, stop$})
 
@@ -55,11 +58,19 @@ const protocol = ({send, stop$}) => {
     }
 
     const onRemove = ({user: {username}, clientId, subscriptionId, paths}) => {
+        if (!Array.isArray(paths) || !paths.every(isAssetPath)) {
+            log.warn(`${userTag(username)} Invalid asset removal paths`)
+            return
+        }
         log.debug(`${subscriptionTag({username, clientId, subscriptionId})} remove ${paths}`)
         assetManager.remove({username, clientId, subscriptionId, paths})
     }
 
     const onCreateFolder = ({user: {username}, clientId, subscriptionId, path}) => {
+        if (!isAssetPath(path)) {
+            log.warn(`${userTag(username)} Invalid asset folder path`)
+            return
+        }
         log.debug(`${subscriptionTag({username, clientId, subscriptionId})} create folder ${path}`)
         assetManager.createFolder({username, clientId, subscriptionId, path})
     }
@@ -75,27 +86,31 @@ const protocol = ({send, stop$}) => {
     }
 
     return message => {
-        const {event, user, data, clientId, subscriptionId} = message
-        if (event) {
-            const handler = EVENT_HANDLERS[event]
-            if (handler) {
-                handler({user, clientId, subscriptionId})
-            }
-        } else if (data) {
-            const {reload, cancelReload, remove, createFolder} = data
-            if (reload) {
-                onReload({user, clientId, subscriptionId})
-            } else if (cancelReload) {
-                onCancelReload({user, clientId, subscriptionId})
-            } else if (remove) {
-                onRemove({user, clientId, subscriptionId, paths: remove})
-            } else if (createFolder) {
-                onCreateFolder({user, clientId, subscriptionId, path: createFolder})
+        try {
+            const {event, user, data, clientId, subscriptionId} = message
+            if (event) {
+                const handler = EVENT_HANDLERS[event]
+                if (handler) {
+                    handler({user, clientId, subscriptionId})
+                }
+            } else if (data) {
+                const {reload, cancelReload, remove, createFolder} = data
+                if (reload) {
+                    onReload({user, clientId, subscriptionId})
+                } else if (cancelReload) {
+                    onCancelReload({user, clientId, subscriptionId})
+                } else if (remove) {
+                    onRemove({user, clientId, subscriptionId, paths: remove})
+                } else if (createFolder) {
+                    onCreateFolder({user, clientId, subscriptionId, path: createFolder})
+                } else {
+                    log.warn('Unsupported message data:', data)
+                }
             } else {
-                log.warn('Unsupported message data:', data)
+                log.warn('Unsupported message:', message)
             }
-        } else {
-            log.warn('Unsupported message:', message)
+        } catch (error) {
+            log.warn('Asset command failed', error)
         }
     }
 }

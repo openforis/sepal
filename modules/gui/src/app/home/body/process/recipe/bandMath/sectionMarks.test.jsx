@@ -7,9 +7,10 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore, storedOpenRecipes} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {selectFrom} from '~/stateUtils'
-import {initStore} from '~/store'
 import crudItemStyles from '~/widget/crudItem.module.css'
 import errorIndicatorStyles from '~/widget/errorIndicator.module.css'
 import listItemStyles from '~/widget/listItem.module.css'
@@ -21,6 +22,7 @@ import toolbarButtonStyles from '~/widget/toolbar/toolbarButton.module.css'
 // so.
 
 const earthEngine = vi.hoisted(() => ({requests: []}))
+const io = vi.hoisted(() => ({storage: null}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         bands$: request => new Observable(subscriber => {
@@ -28,10 +30,9 @@ vi.mock('~/apiRegistry', () => ({default: {
         }),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
     },
-    recipe: {save$: () => new Observable(), load$: () => new Observable(), loadAll$: () => of(LISTING)}
+    recipe: {save$: request => io.storage.save$(request), load$: () => new Observable(), loadAll$: () => of(LISTING)}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => values ? `${key} ${JSON.stringify(values)}` : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 // Input imagery and Output bands are open; no other panel is, and no button is pressed.
 vi.mock('~/widget/activation/activatable', () => ({
@@ -55,8 +56,8 @@ vi.mock('~/widget/tooltip', () => ({
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: bandMath} = await import('./bandMath')
 const {BandMathToolbar} = await import('./panels/bandMathToolbar')
-const {commitRecipe} = await import('~/app/home/body/process/recipe/derivedResult')
-const {configurationGate, requestGate} = await import('../sourceRequirements')
+const {commitRecipe} = await import('~/app/home/body/process/recipe/editing/derivedResult')
+const {configurationGate, requestGate} = await import('../requirements/sourceRequirements')
 const {EventShield} = await import('~/widget/eventShield')
 const {PortalContainer, PortalContext} = await import('~/widget/portal')
 
@@ -73,6 +74,8 @@ let root, container, store
 beforeEach(() => {
     earthEngine.requests = []
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -361,8 +364,11 @@ async function open(recipe) {
         assets: {user: [], other: []},
         dimensions: {width: 1024, height: 768}
     }
-    store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    io.storage = recipeStorage()
+    const opening = storedOpenRecipes(initialState, io.storage)
+    store = createStore((state = opening.state, action) => action.reduce ? action.reduce(state) : state)
+    installStore(store)
+    opening.openIn(store)
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

@@ -5,7 +5,7 @@ import {getLogger} from '#sepal/log'
 
 import modules from '../config/modules.json' with {type: 'json'}
 import {urlTag, usernameTag} from './tag.js'
-import {getRequestUser, setRequestSession, setRequestUser} from './user.js'
+import {getRequestUser, setApiKeyContext, setRequestUser} from './user.js'
 import {userSessionStarter} from './userSession.js'
 
 const log = getLogger('authMiddleware')
@@ -48,18 +48,27 @@ const AuthMiddleware = (userStore, ensureSessionFor) => {
 
             const authenticatedGuiRequest$ = (username, user) =>
                 from(startSession(req, res, user)).pipe(
-                    map(() => OK),
-                    tap(() => log.debug(() => `${usernameTag(username)} ${urlTag(req.originalUrl)} Authenticated gui request`))
+                    map(loggedIn => loggedIn ? OK : UNAUTHORIZED),
+                    tap(status => log.debug(() => `${usernameTag(username)} ${urlTag(req.originalUrl)} ${status === OK
+                        ? 'Authenticated gui request'
+                        : 'Refused gui request, the user is no longer active'}`))
                 )
 
-            const authenticatedNonGuiRequest$ = (username, user) =>
-                of(OK).pipe(
-                    tap(() => {
-                        setRequestUser(req, user)
+            // The user module answers from the database, and the user cache can have learned of a newer change while
+            // that answer was on its way: the request proceeds as the user the cache holds once it is offered, if ACTIVE.
+            const authenticatedNonGuiRequest$ = (username, user, apiKeyContext = null) =>
+                userStore.setUser$(user).pipe(
+                    switchMap(currentUser => {
+                        if (currentUser.status !== 'ACTIVE') {
+                            return unauthorized$(username)
+                        }
+                        apiKeyContext && setApiKeyContext(req, apiKeyContext)
+                        setRequestUser(req, currentUser)
                         log.debug(() => `${usernameTag(username)} ${urlTag(req.originalUrl)} Authenticated non-gui request`)
+                        return of(OK)
                     })
                 )
-                
+
             const authorized$ = (username, response) => {
                 const {body: user} = response
                 return isGuiRequest()
@@ -131,13 +140,15 @@ const AuthMiddleware = (userStore, ensureSessionFor) => {
                     validStatuses: [OK, UNAUTHORIZED]
                 }).pipe(switchMap(response => {
                     switch (response.statusCode) {
-                        case OK: return authorized$(response.body)
+                        case OK:
+                            req.authenticatedWithApiKey = true
+                            return authorized$(response.body)
                         case UNAUTHORIZED: return unauthorized$('')
                         default: return failure$('', response)
                     }
                 }))
 
-            const loadUser$ = (username, workerSession = null) =>
+            const loadUser$ = (username, apiKeyContext = null) =>
                 get$(USER_LOOKUP_URL, {
                     query: {username},
                     headers: INTERNAL_ADMIN_HEADER,
@@ -146,14 +157,7 @@ const AuthMiddleware = (userStore, ensureSessionFor) => {
                 }).pipe(switchMap(response => {
                     const {statusCode} = response
                     switch (statusCode) {
-                        case OK: {
-                            const user = response.body
-                            if (user.status !== 'ACTIVE') {
-                                return unauthorized$(username)
-                            }
-                            workerSession && setRequestSession(req, workerSession)
-                            return authenticatedNonGuiRequest$(username, user)
-                        }
+                        case OK: return authenticatedNonGuiRequest$(username, response.body, apiKeyContext)
                         case UNAUTHORIZED: return unauthorized$(username)
                         default: return failure$(username, response)
                     }

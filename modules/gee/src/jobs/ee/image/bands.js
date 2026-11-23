@@ -1,19 +1,22 @@
 import {map, switchMap} from 'rxjs'
 
 import {job} from '#gee/jobs/job'
-import {assetBandEvidence$, imageBandEvidence$} from '#sepal/ee/bandEvidence'
+import {assetBandEvidence$, assetObservation$, imageBandEvidence$} from '#sepal/ee/bandEvidence'
 import ee from '#sepal/ee/ee'
 import ImageFactory from '#sepal/ee/imageFactory'
 import {fileName} from '#sepal/path'
 
 const worker$ = ({
-    requestArgs: {asset, recipe, includeDataTypes = false}
+    requestArgs: {asset, recipe, includeDataTypes = false, includeProperties = false}
 }) => {
 
+    // With its properties, an asset is answered as readiness observes it: {bands, properties} (assetObservation$).
     const assetBands$ = () =>
-        includeDataTypes
-            ? assetBandEvidence$(asset)
-            : assetBandEvidence$(asset).pipe(map(bands => bands.map(({name}) => name)))
+        includeProperties
+            ? assetObservation$(asset)
+            : includeDataTypes
+                ? assetBandEvidence$(asset)
+                : assetBandEvidence$(asset).pipe(map(bands => bands.map(({name}) => name)))
 
     const recipeBandNames$ = () => {
         const {getBands$, getImage$} = ImageFactory(recipe)

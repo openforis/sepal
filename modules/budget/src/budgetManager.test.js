@@ -120,6 +120,24 @@ describe('BudgetManager.check', () => {
 })
 
 describe('BudgetManager.verdict', () => {
+    test('a short session keeps its remaining budget available and reports proportional spending', async () => {
+        const repo = createFakeRepo({
+            budgets: {u: {instanceSpending: 0.5, storageSpending: 100, storageQuota: 100}},
+            instanceUses: {u: [{
+                instanceType: 'm5.large',
+                from: new Date('2026-07-01T00:00:00Z'),
+                to: new Date('2026-07-01T00:01:00Z'),
+            }]},
+        })
+        const mgr = createBudgetManager({repo, pricing, userClient: userClientOf('u'), events: createEvents(), clock: CLOCK})
+
+        const verdict = await mgr.verdict('u')
+        const spending = await mgr.userSpending('u')
+
+        assert.deepEqual(verdict, {username: 'u', exceeded: false, reason: null})
+        assert.equal(spending.monthlyInstanceSpending, 1 / 60)
+    })
+
     test('under both budgets → {exceeded: false, reason: null}', async () => {
         const repo = createFakeRepo({
             budgets: {u: {instanceSpending: 100, storageSpending: 100, storageQuota: 100}},

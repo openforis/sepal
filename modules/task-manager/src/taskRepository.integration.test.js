@@ -107,6 +107,28 @@ describe('TaskRepository', () => {
         assert.equal((await repository.getTask(task.id)).statusDescription, progress)
     })
 
+    test('fails a task as stalled only if it has reported no progress since the cutoff', async () => {
+        const silent = aTask({id: 't-1'})
+        const reporting = aTask({id: 't-2'})
+        for (const task of [silent, reporting]) {
+            await repository.insert(task)
+            await repository.activate(task, task.id.padEnd(64, 'c'))
+        }
+        const cutoff = new Date('2026-10-06T10:05:00.000Z')
+        now = new Date('2026-10-06T10:20:00.000Z')
+        const progress = JSON.stringify({messageKey: 'tasks.ee.export.running', defaultMessage: 'Exporting'})
+        await repository.recordProgress(reporting, progress)
+
+        const failStalled = task => repository.transition(task, {from: [State.ACTIVE], to: State.FAILED, silentSince: cutoff})
+
+        assert.equal(await failStalled(silent), true)
+        assert.equal(await failStalled(reporting), false)
+        assert.partialDeepStrictEqual(
+            await repository.getTask(reporting.id),
+            {state: State.ACTIVE, statusDescription: progress}
+        )
+    })
+
     test('cancellations are timed from the last change, which a restart resets', async () => {
         const task = aTask()
         await repository.insert(task)

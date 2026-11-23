@@ -7,9 +7,10 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe, withRecipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore, openStoredRecipe} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider, useSourceRuntime} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
 import {compose} from '~/compose'
-import {initStore, select} from '~/store'
+import {select} from '~/store'
 import {ActivationContext} from '~/widget/activation/activationContext'
 import {EventShield} from '~/widget/eventShield'
 import {PanelWizard} from '~/widget/panelWizard'
@@ -27,14 +28,14 @@ import {tooltipText} from '~/widget/tooltip.test.fixtures'
 // submission and the workspace destination's check are the substitutes.
 
 const {inputBands$, saveRecipe$} = vi.hoisted(() => ({inputBands$: vi.fn(), saveRecipe$: vi.fn()}))
-const fake = vi.hoisted(() => ({stored: {}, submitted: [], projects: [], workspacePath: null}))
+const fake = vi.hoisted(() => ({storage: null, submitted: [], projects: [], workspacePath: null}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))}),
         bands$: ({asset}) => inputBands$(asset)
     },
     recipe: {
-        load$: id => of(fake.stored[id]),
+        load$: id => fake.storage.load$(id),
         loadAll$: () => of(LISTING),
         save$: request => saveRecipe$(request)
     },
@@ -54,7 +55,6 @@ vi.mock('~/apiRegistry', () => ({default: {
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 vi.mock('~/user', () => ({isGoogleAccount: () => false}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
 // A toolbar button is pressed by its icon; it says whether what it opens is open.
@@ -64,7 +64,7 @@ vi.mock('~/widget/toolbar/toolbarButton', () => ({
 }))
 // The workspace destination checks the user's files: it names a folder, reports that its check has settled, and is
 // handed its input to name another.
-vi.mock('~/widget/workspaceDestination', () => ({
+vi.mock('~/app/home/body/process/recipe/retrieve/workspaceDestination', () => ({
     WorkspaceDestination: ({workspacePathInput, onValidityCheckChange}) => {
         fake.workspacePath = workspacePathInput
         useEffect(() => {
@@ -75,14 +75,14 @@ vi.mock('~/widget/workspaceDestination', () => ({
     }
 }))
 
+const {recipeStorage} = await import('~/app/home/body/process/recipeSession/recipeStorage.test.fixtures')
 const {addRecipeType} = await import('../../../../recipeTypeRegistry')
 const {default: timeSeries} = await import('../../timeSeries')
 const {default: classification} = await import('../../../classification/classification')
 const {default: opticalMosaic} = await import('../../../opticalMosaic/opticalMosaic')
-const {RetrieveButton} = await import('../../../retrieveButton')
-const {withSourceProblems} = await import('../../../selectedSource')
+const {RetrieveButton} = await import('../../../retrieve/retrieveButton')
+const {withSourceProblems} = await import('../../../requirements/selectedSource')
 const {Retrieve} = await import('./retrieve')
-const {forgetRecipeSaveState} = await import('~/app/home/body/process/recipe')
 
 addRecipeType(timeSeries())
 addRecipeType(classification())
@@ -94,19 +94,19 @@ let root, store
 
 beforeEach(() => {
     inputBands$.mockReset().mockReturnValue(of(INPUT_BANDS))
-    saveRecipe$.mockReset().mockReturnValue(of({revision: 2}))
+    saveRecipe$.mockReset().mockImplementation(request => fake.storage.save$(request))
     fake.submitted = []
     fake.projects = []
     fake.workspacePath = null
     watched.length = 0
 })
 
+afterEach(disposeInstalledSessions)
+
 afterEach(async () => {
     await act(async () => root?.unmount())
     root = null
     document.body.innerHTML = ''
-    // The session's saves outlive a test: what one acknowledged is not the next one's storage.
-    ;[ID, CLASSIFICATION, MOSAIC].forEach(forgetRecipeSaveState)
 })
 
 // Read as the suites are defined.
@@ -650,33 +650,32 @@ const settled = async () => {
     }
 }
 
-// The recipes open in a tab whose saves are unacknowledged: on mounting, the session saves what it holds of them.
-const saving = () => Object.entries(select('process.saveStates') || {})
-    .filter(([_id, {status}]) => status === 'SAVING')
-    .map(([id]) => id)
-
 // `classificationOpen`: the Classification is open in a tab of its own, where it is edited and saved (saveRecipe$).
 // `legacy`: the one indicator selected is saved as the value itself, as an earlier release saved it. Retrieve is
 // offered beside the toolbar's marks within its set-up wizard, done, as the toolbar offers it, and is closed.
 // `classificationHeld: false`: the session does not hold the Classification's record, which storage answers.
 const open = async ({selected, legacy = false, input = MOSAIC_INPUT, trainingData = [COLLECTED], classificationOpen = false, classificationHeld = true}) => {
     const stored = [seriesRecipe(legacy || selected === undefined ? selected : [].concat(selected)), classificationRecipe({input, trainingData}), mosaicRecipe()]
-    fake.stored = Object.fromEntries(stored.map(record => [record.id, record]))
+    fake.storage = recipeStorage({records: stored})
     const records = classificationHeld ? stored : stored.filter(({id}) => id !== CLASSIFICATION)
+    const opened = [ID, ...(classificationOpen ? [CLASSIFICATION] : [])]
     const initialState = {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: Object.fromEntries(records.map(record => [record.id, record])),
-            tabs: [{id: ID}, ...(classificationOpen ? [{id: CLASSIFICATION}] : [])],
-            saveStates: classificationOpen ? {[CLASSIFICATION]: {status: 'SAVED', revision: 1, model: records[1].model}} : {},
+            loadedRecipes: Object.fromEntries(records.filter(({id}) => !opened.includes(id)).map(record => [record.id, record])),
+            tabs: [],
+            saveStates: {},
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             projects: [{id: PROJECT, name: 'Project', defaultWorkspaceFolder: 'earlier'}]
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
+    // Opened as navigation opens them, in the view state the case leaves them in; the tabs are the case's.
+    stored.filter(({id}) => opened.includes(id)).forEach(record => openStoredRecipe(store, fake.storage, record.id, {ui: record.ui}))
+    store.dispatch(actionBuilder('OPEN_RECIPES').set('process.tabs', opened.map(id => ({id}))).build())
     const container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
@@ -704,5 +703,4 @@ const open = async ({selected, legacy = false, input = MOSAIC_INPUT, trainingDat
         </Provider>
     ))
     await settled()
-    await vi.waitFor(() => expect(saving()).toEqual([]))
 }

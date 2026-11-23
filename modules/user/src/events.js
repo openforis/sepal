@@ -1,7 +1,8 @@
 import {Subject} from 'rxjs'
 
-// The RabbitMQ payload shape — matches the Java User.toMap() (NOT the endpoint userToMap):
-// no googleUser, no admin, and googleTokens has only 4 fields (no legacyProject).
+// The RabbitMQ payload shape, also relayed over the gateway websocket — the Java User.toMap() (NOT the endpoint
+// userToMap): no googleUser, no admin, and googleTokens has only 4 fields (no legacyProject). The revision lets
+// consumers ignore an update that arrives after a newer one.
 const userToEventMap = user => ({
     id: user.id,
     name: user.name,
@@ -24,7 +25,8 @@ const userToEventMap = user => ({
     roles: user.roles,
     systemUser: user.systemUser,
     creationTime: user.creationTime,
-    updateTime: user.updateTime
+    updateTime: user.updateTime,
+    revision: user.revision
 })
 
 // Publishers wired into initMessageQueue (main.js): each Subject's emissions are published to

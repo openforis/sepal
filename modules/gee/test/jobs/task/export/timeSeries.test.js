@@ -94,7 +94,7 @@ mock.module('#sepal/ee/recipe', {
 // A Classification's input imagery, observed as readiness's own evidence: no work of the download's.
 mock.module('#sepal/ee/bandEvidence', {
     exports: {
-        assetBandEvidence$: id => {
+        assetObservation$: id => {
             state.observed.push(id)
             return state.unreadable.includes(id)
                 ? throwError(() => new Error(`Asset unreadable: ${id}`))

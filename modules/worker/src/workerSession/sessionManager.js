@@ -141,7 +141,8 @@ const createSessionManager = ({
 
     const closeSessionOnInstance = instanceId => _closeSessionOnInstance(instanceId, closeDeps)
 
-    const closeUserSessions = username => _closeUserSessions(username, closeDeps)
+    const closeUserSessions = (username, {recoverStartup = false} = {}) =>
+        _closeUserSessions(username, {...closeDeps, recoverStartup})
 
     // instanceDescription — how every surface names this instance: the derived two-word name a
     // user READS (instanceName.js), the SSH-menu ordinal they TYPE (query/sessionOrdinals.js), and
@@ -174,8 +175,8 @@ const createSessionManager = ({
         if (!terminated) {
             return false
         }
-        await instanceManager.releaseInstance(session?.instance?.id, sessionId)
         emitClosed({username: session?.username, sessionId})
+        await instanceManager.releaseInstance(session?.instance?.id, sessionId)
         emitChanged({username: session?.username})
         return true
     }

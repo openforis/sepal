@@ -185,7 +185,48 @@ function verify_images() {
 }
 
 function is_production() {
-    [ "$(set -a; source $CONFIG_DIR/env; echo $DEPLOY_ENVIRONMENT)" == "PROD" ]
+    [ "$(deploy_environment)" == "PROD" ]
+}
+
+function deploy_environment() {
+    (set -a; source $CONFIG_DIR/env; echo $DEPLOY_ENVIRONMENT | tr '[:lower:]' '[:upper:]')
+}
+
+# The environment each deployment is tagged with in the private repository, as deployed/<environment>/<timestamp>/<build>
+function deployed_tag_environment() {
+    case $(deploy_environment) in
+        PROD)
+        echo prod
+        ;;
+        UAT)
+        echo test
+        ;;
+    esac
+}
+
+function tag_deployed_build() {
+    local ENVIRONMENT=$1
+    local TAG=deployed/$ENVIRONMENT/$(date -u +%Y%m%dT%H%M%SZ)/$BUILD_NUMBER
+    echo ""
+    echo "Tagging build $BUILD_NUMBER as $TAG..."
+    if ! create_tag $TAG; then
+        echo ""
+        echo "================================================================"
+        echo "Build $BUILD_NUMBER is deployed, but tagging it as $TAG failed."
+        echo "Fix the problem above, then run:"
+        echo "  git tag $TAG 'build-$BUILD_NUMBER^{commit}'"
+        echo "  git push origin refs/tags/$TAG"
+        echo "================================================================"
+    fi
+}
+
+# Fetches the build's tag, as a --local deployment doesn't
+function create_tag() {
+    local TAG=$1
+    local BUILD_TAG=build-$BUILD_NUMBER
+    git -C $PROJECT_DIR fetch --quiet --no-tags origin "+refs/tags/$BUILD_TAG:refs/tags/$BUILD_TAG" \
+        && git -C $PROJECT_DIR tag $TAG "refs/tags/$BUILD_TAG^{commit}" \
+        && git -C $PROJECT_DIR push --quiet origin "refs/tags/$TAG"
 }
 
 # A build from a branch that isn't merged into master may lack fixes production already runs,
@@ -325,6 +366,24 @@ elif [ -n "$UPDATE_VERSION" ]; then
     RELEASE_ACTION=update
 fi
 
+# The outer checkout protects pulls even when the selected build has an older deployment script.
+if [[ ${SEPAL_REGISTRY_GUARDED:-} != 1 && "$SCRIPT_PATH" =~ ^aws/sepal/(provision|deploy|rollout|build-worker-ami)\.sh$ ]]; then
+    REGISTRY_STEP=${BASH_REMATCH[1]}
+    REGISTRY_ENV=$(deployed_tag_environment)
+    if [ -z "$REGISTRY_ENV" ]; then
+        REGISTRY_ENV=$(deploy_environment | tr '[:upper:]' '[:lower:]')
+    fi
+    REGISTRY_ARGS=()
+    if [[ ("$REGISTRY_STEP" == deploy || "$REGISTRY_STEP" == rollout) && ("$REGISTRY_ENV" == prod || "$REGISTRY_ENV" == test) ]]; then
+        REGISTRY_ARGS+=(--record)
+    fi
+    if [ -n "$WAIT" ]; then
+        REGISTRY_ARGS+=(--wait)
+    fi
+    exec python3 "$PROJECT_DIR/modules/ops/script/registry_maintenance.py" protect --repo "$PROJECT_DIR" \
+        --environment "$REGISTRY_ENV" --build "$BUILD_NUMBER" "${REGISTRY_ARGS[@]}" -- "$PROJECT_DIR/bin/deploy" "${ARGS[@]}"
+fi
+
 if [ -n "$GIT_COMMIT" ]; then
     : # already running from the build sources
 elif [ -z "$LOCAL" ]; then
@@ -369,6 +428,12 @@ fi
 build_docker_image
 run_docker_image
 
-if [[ -n "$PRODUCTION" && ("$STEP" == "deploy" || "$STEP" == "rollout") ]]; then
-    publish_build
+if [[ "$STEP" == "deploy" || "$STEP" == "rollout" ]]; then
+    TAG_ENVIRONMENT=$(deployed_tag_environment)
+    if [[ -n "$TAG_ENVIRONMENT" && ${SEPAL_REGISTRY_GUARDED:-} != 1 ]]; then
+        tag_deployed_build $TAG_ENVIRONMENT
+    fi
+    if [ -n "$PRODUCTION" ]; then
+        publish_build
+    fi
 fi

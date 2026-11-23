@@ -7,8 +7,8 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 
@@ -50,7 +50,6 @@ vi.mock('~/apiRegistry', () => ({default: {
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 vi.mock('~/user', () => ({isGoogleAccount: () => false}))
 vi.mock('~/eventPublisher', () => ({publishEvent: () => {}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
 vi.mock('~/widget/tooltip', () => ({Tooltip: ({children}) => children}))
 vi.mock('~/widget/activation/activatable', () => ({
@@ -59,7 +58,7 @@ vi.mock('~/widget/activation/activatable', () => ({
     )
 }))
 // The workspace destination checks the user's files: it names a folder and reports that its check has settled.
-vi.mock('~/widget/workspaceDestination', () => ({
+vi.mock('~/app/home/body/process/recipe/retrieve/workspaceDestination', () => ({
     WorkspaceDestination: ({workspacePathInput, onValidityCheckChange}) => {
         useEffect(() => {
             workspacePathInput.set('downloads/series')
@@ -86,6 +85,8 @@ beforeEach(() => {
     fake.heldLoads = null
     fake.submitted = []
 })
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -339,7 +340,7 @@ const open = async ({selected, saving}) => {
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     const container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

@@ -10,9 +10,10 @@ Retrieve downloads one to SEPAL, and its map shows how many observations each pi
 its data sets and an optional Classification (`sources.classification`). `options` configure how each image is
 processed. The AOI, when taken from a recipe or an asset, and the Classification are its dependencies.
 
-Its data sets, like CCDC's and Phenology's, are judged against the years its dates read, as the shared
-[data-set availability](../design/recipes/data-sources.md#data-set-availability) describes: one none of whose years overlap cannot be chosen anew, one chosen stays chosen,
-and where none may contribute its image and pixel observations are held.
+Its data sets, like CCDC's and Phenology's, are judged against the days its dates read, under the correction its options
+select, as the shared [data-set availability](../design/recipes/data-sources.md#data-set-availability) describes: one
+that may hold no imagery on any of those days cannot be chosen anew, one chosen stays chosen, and where none may
+contribute its image and pixel observations are held.
 
 A selected Classification must be one the collection's images can feed. Its classifier reads the features its input's
 band sets include, and readiness requires each image to carry them where `lib/js/ee/src/timeSeries/collection.js`
@@ -22,10 +23,15 @@ classifies it (`collectionClassifierRequirement` in `lib/js/shared/src/recipe/so
 `targetDayCloseness` and `unixTimeDays` its collection adds to every image (`PLANET_DATE_BANDS`) - and any index the
 classifier computes from them. The RGB `brightness` a Planet collection also adds is an internal working band, not the
 tasseled cap's `brightness` a classifier reads, so it never supplies one.
-Latitude, terrain and water imagery the classifier generates itself. `UNSUPPLIED_CLASSIFIER_INPUTS` refuses it at the
-data sets where an optical data set alone or the radar collection would carry the features, otherwise at the
-classification; the output description stays. SRC is marked and its editor says why beside that field - the
-classification shows outside More while it cannot be used - and a draft refused for it cannot be applied. Selecting
+Latitude, terrain and water imagery the classifier generates itself. `UNSUPPLIED_CLASSIFIER_INPUTS` refuses it, naming
+the features in `missing` and the first repair supplying all of them among the data sets Sources can choose for the
+dates ([data-set availability](../design/recipes/data-sources.md#data-set-availability)): optical or radar data sets
+that do as the collection is processed now (`alternatives`), which replace the selection, at the data sets; otherwise,
+at the classification, turning SR off or on in PRC (`reflectance`, alone or with such optical data sets), data sets that
+would but the dates exclude (`unavailable`, with the years), or none. A change supplying only some of the features is
+no repair, and other dates are not suggested. The output description stays. SRC is marked and its editor says that
+repair beside the classification - which shows outside More while it cannot be used - and a draft refused for it
+cannot be applied. Selecting
 no classification requires nothing; a Classification record not held, or one with several inputs, is judged for
 nothing, and a Planet Daily band only eight-band imagery carries is not refused. Map previews, the Retrieve
 button, the download task Retrieve submits and the pixel chart's observation request follow the finding. The chart
@@ -49,11 +55,16 @@ An open chart reads again whenever what it is computed from changes, such as the
 settings. It waits while an edit to the Classification is not yet saved, since storage's copy is what is executed. Its
 band options follow the Classification record the session holds.
 
+Of the images, the chart offers the bands its collection carries under the corrections applied (`options.corrections`),
+as CCDC's does: under SR, Landsat 8's `pan`, `cirrus` and `thermal2` are not offered. Once applied processing no longer
+carries the band charted, the chart cancels that read and charts its fallback, as for any band no longer offered
+(`pixelChartUpdate`); a band still carried stays charted and is read again.
+
 ### What is offered of the selected Classification
 
 What Sources, the chart, Retrieve and CCDC's OPT offer of the selected Classification - its outputs and their labels -
 reads its record as the session holds it, otherwise as the record the consumer's own runtime read resolved
-(`selectedClassificationOfState`, `modules/gui/src/app/home/body/process/recipe/selectedClassification.js`). The
+(`selectedClassificationOfState`, `modules/gui/src/app/home/body/process/recipe/collections/selectedClassification.js`). The
 selection is the one the type declares (`CLASSIFICATION_SOURCE`). CCDC and Phenology are read the same way.
 
 - **One UI read.** Each recipe has one reader for the selected Classification, shared by its consumers. The root holds
@@ -325,15 +336,16 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
 - `modules/gee/test/jobs/task/export/timeSeries.test.js`, `jobs/ee/timeSeries/loadObservations.test.js` and
   `test/ee/timeSeries/classifiedOutputs.test.js`: planning/chunk/observation guards, native versus classified
   construction, unsupported output and repair across collection families.
-- `modules/gui/src/app/home/body/process/recipe/timeSeries/` and `recipe/selectedClassificationChart.test.jsx`:
-  indicator requests, feedback, submission races, chart/Retrieve withdrawal, pending states and recovery.
-- `modules/gui/src/app/home/body/process/recipe/selectedClassification.test.jsx`: the shared UI read through real roots,
+- `modules/gui/src/app/home/body/process/recipe/timeSeries/` and `recipe/collections/selectedClassificationChart.test.jsx`:
+  indicator requests, feedback, submission races, chart/Retrieve withdrawal, pending states and recovery, and the
+  chart's bands of the images under the corrections applied.
+- `modules/gui/src/app/home/body/process/recipe/collections/selectedClassification.test.jsx`: the shared UI read through real roots,
   panels and runtime (CCDC and Time Series) - one request for the root and Sources, independent runtime reads, release,
   supersession, teardown, pending and failed reads, recovery, and labels in Sources, OPT and Retrieve.
-- `modules/gui/src/app/home/body/process/recipe/classifiedOutputSources.test.jsx`: CCDC's and Phenology's retained
+- `modules/gui/src/app/home/body/process/recipe/collections/classifiedOutputSources.test.jsx`: CCDC's and Phenology's retained
   classified outputs named in their choice and refusal - the label of the Classification selected before, the class
   fallback, the current label winning - with Apply refused, and while the Classification is read and after repair.
-  `mosaic/panels/retrieve/retrieveDestinationCompatibility.test.jsx`: Retrieve's kept selection named only as its
+  `retrieve/retrieveDestinationCompatibility.test.jsx`: Retrieve's kept selection named only as its
   owner says.
 - `lib/js/shared/test/recipe/output/type/ccdc.test.js`, `modules/gee/test/jobs/ee/ccdc/loadSegmentsReadiness.test.js`
   and `modules/gui/src/app/home/body/process/recipe/ccdc/tmaskRequirement.test.jsx`: the TMask rule per operation,
@@ -342,11 +354,11 @@ Known limitations and follow-ups are tracked in the [workplan](../design/workpla
   refused drafts and each repair.
 - `lib/js/shared/test/recipe/collectionBands.test.js`, `modules/gee/test/jobs/ee/ccdc/loadSegmentsReadiness.test.js`,
   `modules/gee/test/jobs/task/export/imageAssetExport.test.js`, `modules/gui/src/sources.test.js` and
-  `modules/gui/src/app/home/body/process/recipe/collectionBands.test.jsx`: the collection-band rule per operation and
+  `modules/gui/src/app/home/body/process/recipe/collections/collectionBands.test.jsx`: the collection-band rule per operation and
   family, Planet's boundary, empty data sets, the server refusal, offered bands agreeing with the catalogue, and,
   through CCDC's and Phenology's roots, toolbars, Sources and PRC, retained choices, refused drafts and submissions,
   the allowed PRC Apply, held operations and each repair.
-- `modules/gui/src/app/home/body/process/recipe/pixelChartExport.test.jsx`: each pixel chart's Export CSV through its
+- `modules/gui/src/app/home/body/process/recipe/charts/pixelChartExport.test.jsx`: each pixel chart's Export CSV through its
   panel - when it is enabled, a new band or pixel, zoom, empty results and an unchanged recipe.
   `ccdc/ccdcChart.test.js`, `landTrendr/panels/landTrendrChart.test.js` and `pixelChartCsv.test.js`: the prepared
   model's methods, RMSE and drawn bounds, segment edges, timezones and leap days, annual rows, and CSV order, blanks,

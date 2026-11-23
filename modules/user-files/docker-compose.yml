@@ -14,7 +14,11 @@ services:
     container_name: user-files
     init: true
     volumes:
-      - "${SEPAL_DATA_DIR}/sepal/home:/sepalUsers"
+      - type: bind
+        source: "${SEPAL_DATA_DIR}/sepal/restricted/home"
+        target: /sepalUsers
+        bind:
+          create_host_path: false
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       RABBITMQ_HOST: "rabbitmq"

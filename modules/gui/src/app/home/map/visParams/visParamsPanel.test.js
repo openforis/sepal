@@ -16,9 +16,6 @@ vi.mock('~/compose', () => ({
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
 
-// Loading the user module here closes an import cycle through its forms; the editor reads nothing from it.
-vi.mock('~/user', () => ({}))
-
 vi.mock('~/apiRegistry', async () => {
     const {EMPTY} = await import('rxjs')
     const recording = name => args => (requests[name].push(args), EMPTY)
@@ -34,7 +31,7 @@ vi.mock('~/apiRegistry', async () => {
 })
 
 const {VisParamsPanel} = await import('./visParamsPanel')
-const {productArgs} = await import('~/app/home/body/process/recipe/recipeOutput')
+const {productArgs} = await import('~/app/home/body/process/recipe/outputs/recipeOutput')
 const {layerConfigChanges} = await import('~/app/home/body/process/recipe/landTrendr/bands')
 
 beforeEach(() => {

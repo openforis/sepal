@@ -88,11 +88,6 @@
     - import_role:
         name: storage-data-volume
 
-    - name: Remove unused aws.properties
-      file:
-        path: "/data/sepal/etc/aws.properties"
-        state: absent
-
     # rsyslog
     - name: Copy rsyslog.conf
       template: src="rsyslog.conf" dest=/etc/rsyslog.conf

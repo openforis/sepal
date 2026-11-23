@@ -1,8 +1,6 @@
 import {describe, expect, it, vi} from 'vitest'
 
 vi.mock('~/translate', () => ({msg: key => (Array.isArray(key) ? key.join('.') : key)}))
-// Loading the recipe types closes an import cycle through the user module's forms; nothing here reads it.
-vi.mock('~/user', () => ({}))
 
 const {addRecipeType} = await import('../../recipeTypeRegistry')
 const {default: planetMosaic} = await import('../planetMosaic/planetMosaic')

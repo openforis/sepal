@@ -11,7 +11,7 @@ const {tooltips, account} = vi.hoisted(() => ({tooltips: [], account: {serviceAc
 vi.mock('~/connect', () => ({connect: () => component => component}))
 vi.mock('~/apps', () => ({loadApps$: vi.fn()}))
 vi.mock('~/user', () => ({isServiceAccount: () => account.serviceAccount, currentUser: () => ({})}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => null}))
+vi.mock('~/app/home/user/userDetailsHint', () => ({userDetailsHint: () => null}))
 vi.mock('~/widget/userAgent', () => ({isMobile: () => false}))
 vi.mock('~/widget/tooltip', () => ({
     Tooltip: ({msg, children}) => {

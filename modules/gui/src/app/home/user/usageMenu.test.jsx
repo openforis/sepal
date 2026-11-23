@@ -6,8 +6,8 @@ import {createRoot} from 'react-dom/client'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 vi.mock('~/widget/activation/activator', () => ({withActivators: () => component => component}))
-vi.mock('~/widget/budgetMonitor', () => ({refreshBudget: vi.fn()}))
-vi.mock('~/widget/sessionMonitor', () => ({refreshSessions: vi.fn()}))
+vi.mock('~/app/home/monitoring/budgetMonitor', () => ({refreshBudget: vi.fn()}))
+vi.mock('~/app/home/monitoring/sessionMonitor', () => ({refreshSessions: vi.fn()}))
 vi.mock('~/widget/buttonSelect', () => ({
     ButtonSelect: ({label, additionalClassName, hint, options}) =>
         <div className='select' data-class-name={additionalClassName} data-hint={String(hint)}>
@@ -20,9 +20,9 @@ vi.mock('~/widget/buttonSelect', () => ({
         </div>
 }))
 
+import {refreshBudget} from '~/app/home/monitoring/budgetMonitor'
+import {refreshSessions} from '~/app/home/monitoring/sessionMonitor'
 import {setLanguage, TranslationProvider} from '~/translate'
-import {refreshBudget} from '~/widget/budgetMonitor'
-import {refreshSessions} from '~/widget/sessionMonitor'
 
 import {UsageMenuButton} from './usageMenu'
 

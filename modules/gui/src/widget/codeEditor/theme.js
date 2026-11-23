@@ -67,10 +67,9 @@ export const theme = (themeName = 'dark') => {
             '.cm-cursor, .cm-dropCursor': {
                 borderLeftColor: settings.caret,
             },
-            '&.cm-focused .cm-selectionBackgroundm .cm-selectionBackground, .cm-content ::selection':
-            	{
-            	    backgroundColor: settings.selection,
-            	},
+            '&.cm-focused .cm-selectionBackgroundm .cm-selectionBackground, .cm-content ::selection': {
+                backgroundColor: settings.selection,
+            },
             '.cm-activeLine': {
                 backgroundColor: settings.lineHighlight,
             },

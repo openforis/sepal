@@ -301,9 +301,12 @@ export class ContainerSupervisor {
 
     async #enforceTimeouts() {
         const now = this.#config.clock().getTime()
-        for (const task of await this.#repository.stalledTasks(new Date(now - this.#config.stallTimeoutMs))) {
-            await this.#repository.transition(task, {from: [State.ACTIVE], to: State.FAILED, statusDescription: STALLED})
-            await this.#kill(task)
+        const silentSince = new Date(now - this.#config.stallTimeoutMs)
+        // Progress and cancels are stored outside the queue, so a task selected as stalled may no longer be.
+        for (const task of await this.#repository.stalledTasks(silentSince)) {
+            if (await this.#repository.transition(task, {from: [State.ACTIVE], to: State.FAILED, statusDescription: STALLED, silentSince})) {
+                await this.#kill(task)
+            }
         }
         for (const task of await this.#repository.cancelingSince(new Date(now - this.#config.cancelTimeoutMs))) {
             await this.#repository.transition(task, {from: [State.CANCELING], to: State.CANCELED})

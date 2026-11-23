@@ -449,11 +449,11 @@ test('sessionUsageOther → scoped to the path user', async () => {
 // ── close ────────────────────────────────────────────────────────────────────
 
 test('closeSessionSelf → 204 with {status: OK}, self user', async () => {
-    const c = ctx({params: {sessionId: 's1'}})
+    const c = ctx({params: {sessionId: 's1'}, request: {body: {recoverStartup: false}}})
     await api.closeSessionSelf(c)
     assert.deepEqual(
         callsOf(sessionManager.closeSession),
-        [[{sessionId: 's1', username: 'alice'}]]
+        [[{sessionId: 's1', username: 'alice', recoverStartup: true}]]
     )
     assert.equal(c.status, 204)
     assert.deepEqual(c.body, {status: 'OK'})
@@ -464,7 +464,7 @@ test('closeSessionOther → path username, 204', async () => {
     await api.closeSessionOther(c)
     assert.deepEqual(
         callsOf(sessionManager.closeSession),
-        [[{sessionId: 's1', username: 'bob'}]]
+        [[{sessionId: 's1', username: 'bob', recoverStartup: true}]]
     )
     assert.equal(c.status, 204)
 })
@@ -472,7 +472,7 @@ test('closeSessionOther → path username, 204', async () => {
 test('closeUserSessions → path username, 204', async () => {
     const c = ctx({params: {username: 'Bob'}})
     await api.closeUserSessions(c)
-    assert.deepEqual(callsOf(sessionManager.closeUserSessions), [['bob']])
+    assert.deepEqual(callsOf(sessionManager.closeUserSessions), [['bob', {recoverStartup: true}]])
     assert.equal(c.status, 204)
 })
 
@@ -614,6 +614,24 @@ test('apiKeyAuthenticate → reads apiKey from query too', async () => {
 
 // ── report serialization ──────────────────────────────────────────────────────
 
+for (const {state, creationTime, cost} of [
+    {state: 'PENDING', creationTime: '2026-07-01T11:59:30Z', cost: 0.03},
+    {state: 'ACTIVE', creationTime: '2026-07-01T11:59:00Z', cost: 0.05},
+    {state: 'ACTIVE', creationTime: '2026-07-01T10:58:30Z', cost: 3.08},
+]) {
+    test(`reports proportional ${state} cost since ${creationTime}, rounded for display`, async () => {
+        sessionManager.generateUserSessionReport.mock.mockImplementation(async () => ({
+            sessions: [pendingSession({state, creationTime: new Date(creationTime), instanceType: 'T3aSmall'})],
+            instanceTypes: [{id: 'T3aSmall', hourlyCost: 3}],
+        }))
+        const c = ctx()
+
+        await api.generateReportSelf(c)
+
+        assert.equal(c.body.sessions[0].costSinceCreation, cost)
+    })
+}
+
 test('generateReportSelf → full report map with session + instanceType', async () => {
     const instanceType = {
         id: 'T3aSmall', name: 't3a.small', tag: 't1', cpuCount: 1, ramGiB: 2, performance: 1,
@@ -648,7 +666,6 @@ test('generateReportSelf → full report map with session + instanceType', async
             tag: 't1', cpuCount: 1, ramGiB: 2, gpuCount: 0, ssdGB: 0, performance: 1, description: '1 CPU, 2 GB', hourlyCost: 0.02,
         },
         creationTime: '2026-07-01T10:00:00.000Z',
-        // 2h since creation (clock 12:00, creation 10:00) → ceil(2) * 0.02 = 0.04
         costSinceCreation: 0.04,
         apps: [],
         terminals: 0,

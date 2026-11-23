@@ -19,6 +19,10 @@ npm run testWatch     # Node test runner watch mode
 - Routes `/github/...` to GitHub proxy (`src/proxy-github.js`)
 - All other requests to CRAN proxy (`src/proxy-cran.js`)
 
+Outbound HTTPS verifies certificates in DEV and OPS. Use Node's trusted CA configuration for a
+private certificate authority; do not disable verification. Native HEAD checks and archive GETs
+use separate connections, so both must verify their peers. Connection-reset retries remain enabled.
+
 ### BullMQ Job Queue
 `src/queue.js` - Redis-backed (db 1), queue name `build-queue-{platformVersion}`:
 - Job types: `buildCranPackage`, `buildGitHubPackage`, `updateCranPackage`, `updateGitHubPackage`

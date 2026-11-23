@@ -1,4 +1,4 @@
-FROM node:26-alpine
+FROM node:26-alpine AS production
 
 EXPOSE 80
 
@@ -40,3 +40,10 @@ ADD --chmod=0755 modules/${MODULE_NAME}/script/ssh_gateway.sh /usr/local/bin
 # run
 USER node
 CMD start.sh
+
+FROM production AS test
+# The tests run the repository copy of the script the image installs
+ADD modules/${MODULE_NAME}/script ./script
+CMD ["npm", "test"]
+
+FROM production

@@ -1,0 +1,16 @@
+.top, .bottom {
+    --look-default-h: 37;
+    --look-default-s: var(--recipe-toolbar-default-s);
+    --look-default-l: var(--recipe-toolbar-default-l);
+    --look-default-a: .9;
+
+    --look-highlight-h: 40;
+    --look-highlight-s: var(--recipe-toolbar-highlight-s);
+    --look-highlight-l: var(--recipe-toolbar-highlight-l);
+    --look-highlight-a: .95;
+
+    --look-disabled-h: 37;
+    --look-disabled-s: var(--recipe-toolbar-disabled-s);
+    --look-disabled-l: var(--recipe-toolbar-disabled-l);
+    --look-disabled-a: .9;
+}

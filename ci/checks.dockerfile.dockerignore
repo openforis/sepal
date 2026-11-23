@@ -1,0 +1,11 @@
+**
+!ci/
+!bin/deploy
+!lib/
+!hosting-services/
+!modules/app-manager/
+!modules/ops/script/
+!modules/ops/test/
+!modules/worker/lib/shared/package-lock.json
+**/node_modules/
+**/__pycache__/

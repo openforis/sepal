@@ -21,6 +21,11 @@ Session (Redis-backed) -> User injection -> Auth -> Google token refresh -> Prox
 - `config/endpoints.js`: Defines all 25+ HTTP proxy routes and 2 WebSocket routes with auth requirements, timeouts, and caching
 - `config/modules.json`: Maps module names to Docker hostnames (e.g., `"gee": "gee"`, `"taskManager": "task-manager"`)
 - `src/proxy.js`: Creates `http-proxy-middleware` instances per endpoint. Sets `sepal-user` header with user JSON for downstream services.
+- Both WebSocket proxy paths log resets after an observed clean client close at DEBUG. Socket destruction alone
+  does not establish cancellation: upstream response failures can destroy it before reporting the error. Live upstream
+  resets, refused connections and response-stream failures stay at ERROR. The static proxy retains HPM's default safety/event/request logging plugins,
+  with error logging owned by SEPAL's callback. Sandbox WebSocket resolution/start failures are logged even after
+  the client closes; nothing is written to a closed socket.
 
 ### WebSocket Architecture (6 files)
 Three-layer WebSocket system:
@@ -84,6 +89,7 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
 - Redis store via `connect-redis`
 - Session secret persisted in Redis (survives restarts)
 - `src/session.js`: Logout destroys session, invalidate-other-sessions destroys all but current. Every destroyed session (also on `user.UserLocked`) is announced on `event$` as `loginSessionInvalidated {username, sessionId}` (the `workerSession*` events are the sandbox ones); browser websockets are bound to the session that upgraded them, so the tabs of that session get the event and are then closed — the GUI reloads on it
+- `src/webSocketUpgrade.js`: Direct terminal and sandbox sockets also follow that login session's invalidation, including during asynchronous setup. Closing a proxy socket closes its upstream connection too. Global browser sockets keep their existing notification-before-close behavior.
 
 ### Authentication
 - `src/authMiddleware.js`: HTTP Basic credentials, when present, are authenticated via POST to `http://user/authenticate` and win over the session's `sepal-user` (a login from a browser logged in as someone else must switch account); otherwise the injected `sepal-user` passes. A GUI login on a session held by another user replaces the session (`ensureSessionFor` in `session.js`)
@@ -100,6 +106,15 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
   `sepal-session` (`{sessionId, workerType}` — never the key, never a role). `sepal-session` is
   request-local: `userStore.userMiddleware` strips whatever the client sent, only successful key
   authentication sets it, and `src/proxy.js` forwards it on authenticated endpoints only.
+- Worker-session and task API keys identify their owner without administrator privileges. `setRequestUser`
+  removes `application_admin` and clears `admin`/`systemUser` when `req.authenticatedWithApiKey` is true,
+  including after foreground Google-token refresh. Authentication sets this request-local flag only after
+  successful key validation; the restriction does not depend on worker/task metadata. The cached account retains its full privileges;
+  browser sessions and username/password authentication retain theirs.
+- `getApiKeyContext`/`setApiKeyContext`/`removeApiKeyContext` read, set and strip that key-derived metadata.
+  `getBrowserSessionUsername`/`setBrowserSessionUsername` access the separate cookie-backed login session.
+  `API_KEY_CONTEXT_HEADER` retains the `sepal-session` wire name because external sandbox apps may read it;
+  browser login uses the separate `SEPAL-SESSIONID` cookie.
 - **Metrics are admin-only**: `src/metricsAccess.js` answers 403 to any `/api/<module>/metrics[.json]` request
   from a user without `application_admin` (Prometheus scrapes as `sepaladmin`). Every Koa module serves
   `/metrics` behind its catch-all proxy, so the guard matches the path pattern, case-insensitively, not a list.
@@ -110,6 +125,10 @@ Client registry in `websocket-client.js` (in-memory, keyed by clientId). Server 
   `sepal-user` and `sepal-session`, refuses metrics paths, and proxies only endpoints marked `ws: true` in
   `config/endpoints.js` (plus `/api/ws` and the sandbox proxy); anything else is answered 404.
 - `src/googleAccessToken.js`: Background token refresh monitor. Refreshes 10 min before expiry with exponential backoff retry.
+- Both token-refresh paths use `userStore.updateGoogleTokens$`: merge only Google tokens into the current cached user, retry if a concurrent write changed that record, and forward the resulting current identity. Refresh failures reload current identity instead of forwarding the pre-refresh snapshot. If a foreground refresh succeeds but its cache write fails, forward the fresh tokens with reloaded current identity; an unavailable identity still prevents forwarding.
+- Initial user-cache loads use `SET NX`; a delayed backend response must use an already-populated cache entry rather than overwrite newer roles.
+- Full user snapshots (reloads on `sepal-user-updated`, logins, password resets) replace the cached user only with a higher `revision`, by the same compare-and-set, and answer the user the cache then holds. An equal revision keeps the cached copy, which can carry Google tokens refreshed since; a snapshot without a revision only fills an empty cache. Only a write that lands announces `userUpdated` or token events. A write is announced in the same tick as its Redis reply and the single client replies in order, so announcements follow the order writes landed; a second Redis client or an await between reply and announcement would break that. An answer, a read's included, can reach its caller after a newer write was announced, so consumers that keep role knowledge order it by revision. Logins and resets proceed as the answered user, read again after the session is ensured (a session held by another user is replaced first); one no longer `ACTIVE` is refused with 401, no session and no `sepal-user`. Non-browser Basic logins and worker/task API keys offer their user-module answer the same way and proceed only as an `ACTIVE` answered user, without a browser session. A foreground token refresh does not forward a user who is no longer `ACTIVE`.
+- `src/userStore.integration.test.js` runs against the Redis `GATEWAY_TEST_REDIS_URL` names, which must be disposable (each test writes and deletes its own `user:alice-<uuid>` key), and otherwise against `testSupport/memoryRedis.js`, which checks the rules but not atomicity.
 
 ### RabbitMQ
 - Publishes: system events (USER_UP, USER_DOWN) via RxJS Subject

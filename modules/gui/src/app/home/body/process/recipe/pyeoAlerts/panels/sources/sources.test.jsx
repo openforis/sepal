@@ -6,7 +6,7 @@ import {of, Subject, throwError} from 'rxjs'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
-import {initStore} from '~/store'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 import widgetStyles from '~/widget/widget.module.css'
@@ -541,6 +541,8 @@ beforeEach(() => {
     loadRecipe$.mockReset()
 })
 
+afterEach(disposeInstalledSessions)
+
 afterEach(async () => {
     await act(async () => root?.unmount())
     root = null
@@ -591,7 +593,7 @@ const open = ({classificationRead, imageryRead, imagery: input, recipe}) => {
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
     // Teardown removes cached recipes, which publishes states this recipe is no longer in.
     store.subscribe(() => loadedRecipe() && published.push(recipeModel()))
     container = document.createElement('div')

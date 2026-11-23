@@ -17,6 +17,7 @@ const createUserWsProtocol = ({userUpdated$, userChanged$}) =>
     ({send, stop$}) => {
         // subscriptionId → {username, clientId}
         const subscriptions = new Map()
+        const latestAdminRoleByUsername = new Map()
 
         const removeSubscriptions = predicate => {
             for (const [subscriptionId, subscription] of subscriptions) {
@@ -26,7 +27,23 @@ const createUserWsProtocol = ({userUpdated$, userChanged$}) =>
             }
         }
 
-        const onSubscriptionUp = ({user: {username, admin}, clientId, subscriptionId}) => {
+        const updateAdminRole = user => {
+            const previous = latestAdminRoleByUsername.get(user.username)
+            const current = {admin: user.admin, revision: user.revision ?? -1}
+            if (previous && previous.revision >= current.revision) {
+                return previous
+            }
+            // Cached subscriptions and delayed local updates can carry an older role.
+            latestAdminRoleByUsername.set(user.username, current)
+            if (!current.admin) {
+                removeSubscriptions(subscription => subscription.username === user.username)
+            }
+            return current
+        }
+
+        const onSubscriptionUp = ({user, clientId, subscriptionId}) => {
+            const {username} = user
+            const {admin} = updateAdminRole(user)
             if (admin) {
                 subscriptions.set(subscriptionId, {username, clientId})
             } else {
@@ -44,6 +61,7 @@ const createUserWsProtocol = ({userUpdated$, userChanged$}) =>
             removeSubscriptions(subscription => subscription.username === username)
 
         const onUserChanged = user => {
+            updateAdminRole(user)
             const data = {user: userToMap(user, false)}
             for (const [subscriptionId, {clientId}] of subscriptions) {
                 send({clientId, subscriptionId, data})
@@ -56,6 +74,11 @@ const createUserWsProtocol = ({userUpdated$, userChanged$}) =>
             clientDown: onClientDown,
             userDown: onUserDown
         }
+
+        stop$.subscribe(() => {
+            subscriptions.clear()
+            latestAdminRoleByUsername.clear()
+        })
 
         userUpdated$.pipe(takeUntil(stop$)).subscribe({
             next: user => send({event: 'userUpdated', user}),

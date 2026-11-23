@@ -7,8 +7,8 @@ import {Subject} from 'rxjs'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import crudItemStyles from '~/widget/crudItem.module.css'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
@@ -22,13 +22,12 @@ import layerStyles from './imageLayerSources.module.css'
 // listed recipe and reporting its bands; panel activation by an always-active panel.
 
 vi.mock('~/translate', () => ({msg: key => Array.isArray(key) ? key.join('.') : key}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/activation/activatable', () => ({
     withActivatable: () => Component => props => (
         <Component {...props} activatable={{active: true, activate: () => {}, deactivate: () => {}}}/>
     )
 }))
-vi.mock('~/widget/recipeInput', async () => {
+vi.mock('~/app/home/body/process/recipe/sources/recipeInput', async () => {
     const {useEffect} = await import('react')
     return {
         RecipeInput: ({input, onBandsLoaded}) => {
@@ -54,7 +53,7 @@ const LISTING = [{id: OPTICAL, name: 'optical'}, {id: MASK, name: 'mask'}, {id: 
 const {addRecipeType} = await import('~/app/home/body/process/recipeTypeRegistry')
 const {default: masking} = await import('../recipe/masking/masking')
 const {ImageToMask} = await import('../recipe/masking/panels/inputImage/imageToMask')
-const {initializeLayers} = await import('../recipe/recipeImageLayerSource')
+const {initializeLayers} = await import('../recipe/map/recipeImageLayerSource')
 const {registerImageLayerSources} = await import('../imageLayerSources')
 const {Areas} = await import('./areas')
 const {ImageLayerSources} = await import('./imageLayerSources')
@@ -65,6 +64,8 @@ registerImageLayerSources()
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let root, store
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -118,7 +119,7 @@ const open = async model => {
             process: {loadedRecipes: {[model.id]: model}, recipes: LISTING, projects: [], tabs: []}
         }, action) => action.reduce ? action.reduce(state) : state
     )
-    initStore(store)
+    installStore(store)
     initializeLayers({recipeId: model.id, savedLayers: model.layers})
     const container = document.createElement('div')
     document.body.appendChild(container)

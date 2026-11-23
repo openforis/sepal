@@ -1,5 +1,5 @@
 import {retrieveTask} from '~/app/home/body/process/recipe/masking/maskingRecipe'
-import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/mosaic/panels/retrieve/retrievePanel'
+import {MosaicRetrievePanel} from '~/app/home/body/process/recipe/retrieve/retrievePanel'
 
 // What Masking offers and exports is its output as the common read answers it: its source's, through its
 // declaration, or - over a source that declares nothing - the names its evidence lifecycle observed.

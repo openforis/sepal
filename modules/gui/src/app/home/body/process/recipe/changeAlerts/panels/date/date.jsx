@@ -11,7 +11,7 @@ import {Layout} from '~/widget/layout'
 import {Panel} from '~/widget/panel/panel'
 import {Widget} from '~/widget/widget'
 
-import {segmentDatesOf} from '../../../segmentEvidence'
+import {segmentDatesOf} from '../../../sources/segmentEvidence'
 import styles from './date.module.css'
 
 const DATE_FORMAT = 'YYYY-MM-DD'
@@ -22,12 +22,14 @@ const fields = {
         .date(DATE_FORMAT),
     monitoringDuration: new Form.Field()
         .notBlank()
-        .int(),
+        .int()
+        .min(1, 'process.changeAlerts.panel.date.form.monitoring.duration.positive'),
     monitoringDurationUnit: new Form.Field()
         .notBlank(),
     calibrationDuration: new Form.Field()
         .notBlank()
-        .int(),
+        .int()
+        .min(1, 'process.changeAlerts.panel.date.form.calibration.duration.positive'),
     calibrationDurationUnit: new Form.Field()
         .notBlank()
 }

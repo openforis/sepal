@@ -7,8 +7,9 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 
 import {actionBuilder} from '~/action-builder'
 import {Recipe} from '~/app/home/body/process/recipeContext'
+import {disposeInstalledSessions, installStore, openStoredRecipe} from '~/app/home/body/process/recipeSession/recipeSession.test.fixtures'
+import {recipeStorage} from '~/app/home/body/process/recipeSession/recipeStorage.test.fixtures'
 import {SourceRuntimeProvider} from '~/app/home/body/process/sourceRuntime/sourceRuntimeContext'
-import {initStore} from '~/store'
 import {EventShield} from '~/widget/eventShield'
 import {PortalContainer, PortalContext} from '~/widget/portal'
 import widgetStyles from '~/widget/widget.module.css'
@@ -21,23 +22,23 @@ import widgetStyles from '~/widget/widget.module.css'
 // monitoring data feeds, an index its imagery cannot provide is said beside the index, repaired by another index or by
 // turning the gate off. The indexes offered follow the same rule over the evidence held now: changing only the
 // Classification changes them. Opening OPT edits nothing. The panel, form, store, source runtime and recipe types are
-// real; storage answers the classification as a test says, Earth Engine an asset's bands at once.
+// real; storage answers the classification as a test says, and the alerts' saves as the recipe module does, Earth
+// Engine an asset's bands at once.
 // Detection thresholds keep the upstream defaults, persistence and From/To controls behind More unless set.
 
-const stored = vi.hoisted(() => ({classification: null}))
+const stored = vi.hoisted(() => ({classification: null, storage: null}))
 vi.mock('~/apiRegistry', () => ({default: {
     gee: {
         bands$: ({asset}) => of(ASSET_BANDS[asset].map(name => ({name, arrayDimensions: 0}))),
         assetVersions$: ({ids}) => of({assets: ids.map(id => ({id, type: 'IMAGE', version: 'v1'}))})
     },
-    recipe: {load$: () => stored.classification, loadAll$: () => of(LISTING), save$: () => of()}
+    recipe: {load$: id => id === CLASSIFICATION ? stored.classification : stored.storage.load$(id), loadAll$: () => of(LISTING), save$: request => stored.storage.save$(request)}
 }}))
 vi.mock('~/translate', () => ({msg: (key, values) => {
     const text = [key].flat().join('.')
     return values ? `${text} ${JSON.stringify(values)}` : text
 }}))
 vi.mock('~/widget/notifications', () => ({Notifications: {error: () => {}}}))
-vi.mock('~/app/home/user/userDetails', () => ({userDetailsHint: () => {}}))
 vi.mock('~/widget/keybinding', () => ({Keybinding: ({children}) => children}))
 // A tooltip's text is rendered where it is attached, to be read without hovering.
 vi.mock('~/widget/tooltip', () => ({
@@ -62,6 +63,8 @@ addRecipeType(classification())
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 let root, container, store
+
+afterEach(disposeInstalledSessions)
 
 afterEach(async () => {
     await act(async () => root?.unmount())
@@ -533,6 +536,8 @@ const chooseGateIndex = async label => {
 // `stack`: the bands a Stack the Classification's input names maps, `renamed` as stackRecipe takes it.
 async function open({input, gate, classification, stack, renamed, options}) {
     stored.classification = classification
+    const pyeo = pyeoRecipe({gate, options})
+    stored.storage = recipeStorage({records: [pyeo]})
     const held = [
         ...classification ? [] : [classificationRecipe(input)],
         ...stack ? [stackRecipe(stack, renamed)] : []
@@ -541,16 +546,16 @@ async function open({input, gate, classification, stack, renamed, options}) {
         dimensions: {width: 1024, height: 768},
         user: {currentUser: {googleTokens: {accessToken: 'token'}}},
         process: {
-            loadedRecipes: Object.fromEntries([pyeoRecipe({gate, options}), ...held].map(record => [record.id, record])),
+            loadedRecipes: Object.fromEntries(held.map(record => [record.id, record])),
             recipes: LISTING,
             recipeListing: {checkedAt: Date.now()},
             saveStates: {},
-            projects: [],
-            tabs: [{id: PYEO}]
+            projects: []
         }
     }
     store = createStore((state = initialState, action) => action.reduce ? action.reduce(state) : state)
-    initStore(store)
+    installStore(store)
+    openStoredRecipe(store, stored.storage, PYEO, {ui: pyeo.ui})
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)

@@ -1,4 +1,4 @@
-import {mkdir, readdir} from 'node:fs/promises'
+import {mkdir} from 'node:fs/promises'
 import {join} from 'node:path'
 
 import {lastValueFrom} from 'rxjs'
@@ -14,20 +14,14 @@ export const imageSepalExport = async (params, {sepal, report, signal, sleep, lo
         ? join(process.env.HOME, workspacePath)
         : join(process.env.HOME, 'downloads', description)
     await mkdir(downloadDir, {recursive: true})
-    const {downloaded} = await exportToWorkspace({
+    const {downloaded, downloadedPaths} = await exportToWorkspace({
         start: () => sepal.startExport('task/export/image/sepal', params),
         downloadDir, sepal, report, signal, sleep, localProcessing
     })
     if (downloaded) {
         const vrtPath = join(downloadDir, `${filenamePrefix || description}.vrt`)
-        const inputPaths = await geoTiffs(downloadDir)
+        const inputPaths = downloadedPaths.filter(path => path.endsWith('.tif')).sort()
         await lastValueFrom(createVrt$({inputPaths, outputPath: vrtPath}), {defaultValue: null})
         await lastValueFrom(setBandNames$(vrtPath, bands.selection), {defaultValue: null})
     }
 }
-
-const geoTiffs = async dir =>
-    (await readdir(dir))
-        .filter(name => name.endsWith('.tif'))
-        .sort()
-        .map(name => join(dir, name))

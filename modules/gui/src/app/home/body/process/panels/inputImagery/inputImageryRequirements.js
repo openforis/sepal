@@ -1,8 +1,8 @@
 import {MISSING_INPUT_BAND} from '#sepal/recipe/output/diagnostic'
 import {SUPPORTED, unsupported} from '#sepal/recipe/requirement/verdict'
 import {INPUT_IMAGE, INPUT_IMAGERY_PATH, inputImageryRequirement} from '#sepal/recipe/source/inputImagery'
-import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/recipeOutput'
-import {referenceFeedback} from '~/app/home/body/process/recipe/referenceFeedback'
+import {IMAGE_OUTPUT} from '~/app/home/body/process/recipe/outputs/recipeOutput'
+import {referenceFeedback} from '~/app/home/body/process/recipe/requirements/referenceFeedback'
 import {msg} from '~/translate'
 
 // What Stack, Band Math and Remapping need of their input images' bands, as their shared output/readiness declarations

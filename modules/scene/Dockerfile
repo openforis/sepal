@@ -1,4 +1,4 @@
-FROM node:26-alpine
+FROM node:26-alpine AS production
 
 EXPOSE 80
 
@@ -33,3 +33,9 @@ ADD --chmod=0755 modules/${MODULE_NAME}/start.sh /usr/local/bin
 
 # run: start.sh drops to node once it owns the CSV directory
 CMD start.sh
+
+FROM production AS test
+USER node
+CMD ["npm", "test"]
+
+FROM production
