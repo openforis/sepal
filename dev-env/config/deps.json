@@ -239,7 +239,8 @@
         },
         "run": [
             "logger",
-            "mysql"
+            "mysql",
+            "postgres"
         ]
     },
     "terminal": {
