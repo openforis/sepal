@@ -15,7 +15,7 @@ TESTS=${WORKSPACE}/ci/test-images.sh
 CI_IMAGES=("${DOCKER_REGISTRY_HOST}/openforis/*" openforis/sandbox-base)
 
 # Each operation's complete output, which Jenkins archives with the build
-export BUILD_LOGS=${WORKSPACE:?}/build-logs
+export BUILD_LOGS=${WORKSPACE:?}/build-logs/${BUILD_NUMBER:-$SEPAL_VERSION}
 source "${WORKSPACE}/ci/console.sh"
 
 function build {
@@ -85,7 +85,11 @@ function clean_up {
   logged tests cleanup "${TESTS}" clean "${CI_IMAGES[@]}"
 }
 
-rm -rf "${BUILD_LOGS}"
+rm -rf "${WORKSPACE}/build-logs"
+mkdir -p "${BUILD_LOGS}"
+if [[ -n ${JOB_URL:-} ]]; then
+  echo "Live logs (archived at build end): ${JOB_URL}ws/${BUILD_LOGS#"$WORKSPACE"/}/"
+fi
 # A failed or cancelled build exits through cleanup; the next build's cleanup removes what a killed one left
 trap 'stop_progress; clean_up' EXIT
 logged leftovers cleanup "${TESTS}" clean "${CI_IMAGES[@]}"

@@ -9,8 +9,11 @@ if [[ -z ${IN_FIXTURE_DAEMON:-} ]]; then
     daemon=sepal-ci-test-$$
     trap 'docker rm --force --volumes "$daemon" > /dev/null; docker volume rm "$daemon" > /dev/null' EXIT
     docker volume create "$daemon" > /dev/null
+    buildkit_env=()
+    while IFS= read -r setting; do buildkit_env+=(--env "$setting"); done \
+        < <(sed -n 's/^Environment="\(.*\)"$/\1/p' "$REPO/hosting-services/aws/operations/docker/buildkit-logs.conf")
     docker run --detach --privileged --name "$daemon" --volume "$daemon:/var/run" \
-        docker:25.0-dind dockerd --host=unix:///var/run/docker.sock > /dev/null
+        "${buildkit_env[@]}" docker:25.0-dind dockerd --host=unix:///var/run/docker.sock > /dev/null
     docker run --rm --network "container:$daemon" --volume "$daemon:/var/run" --volume "$REPO:$REPO:ro" \
         --env IN_FIXTURE_DAEMON=1 --user root --entrypoint bash "${1:-jenkins}" "$REPO/ci/test/test-images.test.sh"
     exit
@@ -47,15 +50,19 @@ logged sample progress sh -c 'printf "step 1\rstep 2\r"; sleep 30'
 EOF
 env WORK="$WORK" REPO="$REPO" setsid bash "$WORK/progress.sh" > "$WORK/out" 2>&1 & operation=$!
 for _ in $(seq 25); do grep -q "step 2" "$WORK/logs/sample.progress.log" 2> /dev/null && break; sleep 0.2; done
-kill -TERM -- "-$operation"; wait "$operation" || true
+kill -TERM -- "-$operation"; status=0; wait "$operation" || status=$?
 printf '%s\n' 'step 1' 'step 2' > "$WORK/progress-output"
 check "a cancelled operation's log keeps the lines it had written" \
     'cmp -s "$WORK/logs/sample.progress.log" "$WORK/progress-output"' "$(cat -v "$WORK/logs/sample.progress.log")"
+check "cancelling the whole operation group prints its stopped status, diagnostic excerpt and full log path" \
+    '[[ $status == 143 ]] && grep -q "^sample: progress STOPPED by signal 15" "$WORK/out" \
+        && grep -qx "The last 100 lines of its log:" "$WORK/out" && grep -qx "step 2" "$WORK/out" \
+        && grep -q "^Full log: " "$WORK/out"' "status $status: $(cat "$WORK/out")"
 
 # A log that cannot take all of an operation's output: a file size limit cuts a write short, as a full disk does. The
 # console goes through cat, outside the limit.
 status=0
-(ulimit -f 4; WORKSPACE=$WORK BUILD_LOGS=$WORK/logs; source "$REPO/ci/console.sh"
+(ulimit -f 4; export WORKSPACE=$WORK BUILD_LOGS=$WORK/logs; source "$REPO/ci/console.sh"
     logged sample large sh -c 'head -c 8192 /dev/zero | tr "\0" x; echo') 2>&1 | cat > "$WORK/out" || status=$?
 check "an operation fails when its log cannot take all its output" \
     '[[ $status != 0 ]] && grep -q "^Cannot write the log" "$WORK/out" && grep -q "^sample: large FAILED" "$WORK/out" \
@@ -65,13 +72,33 @@ docker pull --quiet alpine:3 > /dev/null
 docker pull --quiet registry:3 > /dev/null
 docker run --detach --publish 127.0.0.1:5000:5000 registry:3 > /dev/null
 
+# A failed RUN must retain diagnostics after more than BuildKit's default 2 MiB of output.
+mkdir "$WORK/buildkit-output"
+printf '%s\n' 'FROM alpine:3' 'COPY init_r_packages.sh /script/init_r_packages.sh' \
+    'RUN sh /script/init_r_packages.sh' > "$WORK/buildkit-output/Dockerfile"
+cat > "$WORK/buildkit-output/init_r_packages.sh" <<'EOF'
+awk 'BEGIN {for (i = 1; i <= 50000; i++) printf "R_COMPILE_%05d routine compiler output for the disposable package fixture\n", i}'
+echo 'SEPAL_PROGRESS Checking R package loads (1/1)'
+echo 'R_FAILURE: compiler diagnostic after the noisy output' >&2
+exit 23
+EOF
+status=0
+(WORKSPACE=$WORK BUILD_LOGS=$WORK/logs; source "$REPO/ci/console.sh"
+    logged sandbox build docker build --progress=plain "$WORK/buildkit-output") > "$WORK/out" 2>&1 || status=$?
+check "a noisy failed build keeps every compiler line, later progress and the failure diagnostic without clipping" \
+    '[[ $status != 0 && $(grep -c "R_COMPILE_[0-9]" "$WORK/logs/sandbox.build.log") -ge 50000 ]] \
+        && ! grep -q "output clipped" "$WORK/logs/sandbox.build.log" \
+        && grep -q "R_FAILURE: compiler diagnostic" "$WORK/logs/sandbox.build.log" \
+        && grep -q "R packages — Checking R package loads (1/1)" "$WORK/out" \
+        && grep -q "^sandbox: build FAILED" "$WORK/out"' "status $status: $(tail -5 "$WORK/out")"
+
 # A workspace with a fixture module for each module the build script names, and fixture checks; email, budget
 # (which needs postgres) and the shell check are the suites of its test configuration
 function workspace {
     WORKSPACES=$((${WORKSPACES:-0} + 1))
     WORKSPACE=$WORK/workspace-$WORKSPACES; export WORKSPACE
     mkdir -p "$WORKSPACE/ci" "$WORKSPACE/modules/ops/script"
-    cp "$REPO/ci/test-images.sh" "$REPO/ci/console.sh" "$WORKSPACE/ci/"
+    cp "$REPO/ci/test-images.sh" "$REPO/ci/console.sh" "$REPO/ci/console.py" "$WORKSPACE/ci/"
     cp "$REPO/$BUILD_SCRIPT" "$WORKSPACE/$BUILD_SCRIPT"
     for module in $(awk '$1 ~ /^(build|push|start|restart)$/ && NF == 2 {print $2}' "$REPO/$BUILD_SCRIPT" | sort -u); do
         mkdir -p "$WORKSPACE/modules/$module"
@@ -238,7 +265,7 @@ check "a configuration without suites fails" \
 
 # The build script, as Jenkins runs it, with the suites and services of the real test configuration
 export SKIP_TESTS=false
-JENKINS=(JENKINS_HOME="$WORK/jenkins" JOB_NAME=Sepal-test REGISTRY_API_URL=http://localhost:5000
+JENKINS=(JENKINS_HOME="$WORK/jenkins" JOB_NAME=Sepal-test JOB_URL=https://jenkins.example/job/Sepal-test/ REGISTRY_API_URL=http://localhost:5000
     DOCKER_REGISTRY_USERNAME=user DOCKER_REGISTRY_PASSWORD=password GIT_COMMIT=0123abc)
 # In a process group of its own, as Jenkins runs a build; $build is its ID
 function jenkins_build {
@@ -286,7 +313,7 @@ cp "$REPO/ci/tests.yml" "$WORKSPACE/ci/tests.yml"
 SUITES=$(awk '/^  [a-z-]+:$/ {name = $1} /<<: .*\*suite/ {sub(":", "", name); print name}' "$WORKSPACE/ci/tests.yml" | sort | xargs)
 RECORD=$WORK/jenkins/sepal-tests/Sepal-test
 # shellcheck disable=SC2034  # read by the conditions check evaluates
-LOGS=$WORKSPACE/build-logs
+LOGS=$WORKSPACE/build-logs/1
 PUSH_COUNT=$(awk '$1 == "push"' "$WORKSPACE/$BUILD_SCRIPT" | wc -l)
 
 status=0; jenkins_build 1-test || status=$?
@@ -302,12 +329,17 @@ check "a build's console has the results and the end of each log, while the logs
         && ! grep -qx "Error: expected by a passing email test" "$WORK/out" \
         && grep -qx "email passing test 50" "$LOGS/email.tests.log" && grep -qx "Error: expected by a passing email test" "$LOGS/email.tests.log" \
         && grep -q "naming to" "$LOGS/email.build.log"'
+check "a build provides a live log directory that identifies its build" \
+    'grep -qx "Live logs (archived at build end): https://jenkins.example/job/Sepal-test/ws/build-logs/1/" "$WORK/out" \
+        && [[ -f $LOGS/email.build.log ]]'
 check "a build ends its console sections and leaves no processes" 'sections_closed && ! processes_left'
 
-status=0; jenkins_build 2-test || status=$?
+status=0; BUILD_NUMBER=2 jenkins_build 2-test || status=$?
 check "a build with unchanged images runs no suite, pushes every image and records every suite" \
     '[[ $status == 0 && -z $(ran) && $(pushed 2-test | wc -l) == "$PUSH_COUNT" && $(recorded "$RECORD") == "$SUITES" ]]' \
     "status $status, ran: $(ran), recorded: $(recorded "$RECORD"): $(tail -3 "$WORK/out")"
+check "the next build has a new live log path and removes the old path instead of reusing it" \
+    'grep -q "ws/build-logs/2/" "$WORK/out" && [[ ! -e $WORKSPACE/build-logs/1 && -f $WORKSPACE/build-logs/2/email.build.log ]]'
 
 cp "$RECORD" "$WORK/record-before"
 suite email 'echo "email assertion failed"; exit 1'
@@ -319,7 +351,7 @@ check "a failed build leaves the record alone and cleans up" \
     'cmp -s "$RECORD" "$WORK/record-before" && [[ -z $(project_resources sepal-jenkins-tests) ]]'
 check "a failed suite shows the end of its log, after the sections, and where its log is" \
     'grep -q "^email: tests FAILED" "$WORK/out" && grep -qx "email assertion failed" "$WORK/out" \
-        && grep -qx "Full log: build-logs/email.tests.log" "$WORK/out" && sections_closed' "$(grep -A3 -B1 "email: tests" "$WORK/out")"
+        && grep -qx "Full log: build-logs/1/email.tests.log" "$WORK/out" && sections_closed' "$(grep -A3 -B1 "email: tests" "$WORK/out")"
 
 status=0; (unset SKIP_TESTS; jenkins_build 4-test) || status=$?
 check "a build skips tests by default and pushes every image" \
@@ -364,7 +396,8 @@ check "a cancelled build cleans up and leaves the record alone" \
 check "a cancelled build keeps the log of its test service before cleanup removes it" \
     'grep -q " postgres fixture ready$" "$LOGS/postgres.service.log"' "$(ls "$LOGS")"
 check "a cancelled build reported progress, ends its sections and leaves no processes" \
-    'grep -q "^budget: tests running (" "$WORK/out" && sections_closed && ! processes_left' "$(tail -8 "$WORK/out")"
+    'grep -q "^budget: tests running (" "$WORK/out" && grep -q "^budget: tests STOPPED by signal 15" "$WORK/out" \
+        && grep -q "Full log: .*budget.tests.log" "$WORK/out" && sections_closed && ! processes_left' "$(tail -8 "$WORK/out")"
 
 echo "$pass passed, $fail failed"
 (( fail == 0 ))

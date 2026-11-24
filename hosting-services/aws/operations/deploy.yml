@@ -100,6 +100,19 @@
         validate: dockerd --validate --config-file %s
       register: docker_daemon_config
 
+    - name: Create Docker systemd override directory
+      file:
+        path: /etc/systemd/system/docker.service.d
+        state: directory
+        mode: '0755'
+
+    - name: Preserve complete BuildKit logs
+      copy:
+        src: docker/buildkit-logs.conf
+        dest: /etc/systemd/system/docker.service.d/buildkit-logs.conf
+        mode: '0644'
+      register: docker_buildkit_logs
+
     - name: Add ec2-user to docker group
       user:
         name: ec2-user
@@ -112,11 +125,12 @@
         enabled: yes
         masked: no
 
-    - name: Restart docker to apply /etc/docker/daemon.json
+    - name: Restart docker to apply daemon configuration
       systemd:
         name: docker
         state: restarted
-      when: docker_daemon_config.changed
+        daemon_reload: yes
+      when: docker_daemon_config.changed or docker_buildkit_logs.changed
 
     - docker_network:
         name: sepal
