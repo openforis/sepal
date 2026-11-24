@@ -351,7 +351,7 @@ check "a failed build leaves the record alone and cleans up" \
     'cmp -s "$RECORD" "$WORK/record-before" && [[ -z $(project_resources sepal-jenkins-tests) ]]'
 check "a failed suite shows the end of its log, after the sections, and where its log is" \
     'grep -q "^email: tests FAILED" "$WORK/out" && grep -qx "email assertion failed" "$WORK/out" \
-        && grep -qx "Full log: build-logs/1/email.tests.log" "$WORK/out" && sections_closed' "$(grep -A3 -B1 "email: tests" "$WORK/out")"
+        && grep -qx "Full log: https://jenkins.example/job/Sepal-test/ws/build-logs/1/email.tests.log" "$WORK/out" && sections_closed' "$(grep -A3 -B1 "email: tests" "$WORK/out")"
 
 status=0; (unset SKIP_TESTS; jenkins_build 4-test) || status=$?
 check "a build skips tests by default and pushes every image" \

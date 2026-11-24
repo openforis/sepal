@@ -22,8 +22,10 @@ function logged {
     local name=$1 operation=$2 log started=$SECONDS status statuses details progress=() interrupted=0 handlers
     shift 2
     log=$BUILD_LOGS/$name.${operation// /-}.log
-    mkdir -p "$BUILD_LOGS"
+    mkdir -p "$BUILD_LOGS" || return
+    touch "$log" || return
     echo "$name: $operation..."
+    echo "Live log: $(link "$log")"
     if [[ $name == sandbox && $operation == build ]]; then
         progress=("$PROGRESS_SECONDS")
     else
@@ -70,9 +72,9 @@ function plain {
     python3 "$(dirname "${BASH_SOURCE[0]}")/console.py" "$@"
 }
 
-# The log's address in the build's artifacts
+# The workspace log while the build runs; Jenkins archives historical logs separately.
 function link {
-    echo "${BUILD_URL:+${BUILD_URL}artifact/}${1#"$WORKSPACE"/}"
+    echo "${JOB_URL:+${JOB_URL}ws/}${1#"$WORKSPACE"/}"
 }
 
 function duration {

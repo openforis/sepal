@@ -57,10 +57,12 @@ After deployment, `systemctl show docker --property=Environment` must include bo
 `docker exec jenkins docker buildx inspect` should report `Driver: docker`; a separately configured
 `docker-container` builder would need those variables on its own BuildKit daemon instead.
 
-The live-log directory link at the start of a build serves the workspace's `build-logs/<build-number>/` files.
-Those paths identify the build: the next build removes them instead of reusing them. The `Full log:` links point
-to build artifacts, available once Jenkins archives the logs at build completion, including failure
-and cancellation. The latest 20 builds retain their artifacts.
+Each operation prints a `Live log:` link before it starts, outside collapsed sections, after creating its log
+without truncating earlier diagnostics. The link serves the workspace's `build-logs/<build-number>/` file;
+the `Full log:` line closing a section points to the same live file, as do test-service log links. Outside Jenkins,
+links are workspace-relative paths. The next build removes these files instead of reusing their paths, so an old
+link cannot show a later build's output. Jenkins's Artifacts section provides the archived logs after build
+completion, including failure and cancellation. The latest 20 builds retain their artifacts.
 
 Console checks: `python3 -m unittest discover -s ci/test -p '*_test.py'`. The Docker integration check uses only
 its own disposable daemon: `bash ci/test/test-images.test.sh <jenkins-image>`.

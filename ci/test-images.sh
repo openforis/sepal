@@ -101,7 +101,7 @@ function service_logs {
         log=$BUILD_LOGS/$service.service.log
         mkdir -p "$BUILD_LOGS"
         tests logs --no-color --no-log-prefix --timestamps "$service" > "$log" 2>&1 || warn "cannot keep the log of $service"
-        echo "$service: service log in $(link "$log")"
+        echo "Live log: $(link "$log")"
     done
 }
 
