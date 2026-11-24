@@ -113,10 +113,10 @@
         src: "{{ config_home }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
 
-    # Only a DOCKER_VERSION change upgrades Docker (see deploy.sh)
+    # Docker upgrades with the Amazon Linux release (amazon-linux-release.yml)
     - name: Install docker
       yum:
-        name: "docker{{ '-' ~ lookup('env', 'DOCKER_VERSION') if lookup('env', 'DOCKER_VERSION') else '' }}"
+        name: docker
 
     - name: Create /etc/docker
       file:
