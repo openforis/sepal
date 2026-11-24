@@ -12,6 +12,8 @@ export JAVA_LD_LIBRARY_PATH=${JAVA_HOME}/lib/server:${JAVA_HOME}/lib
 # XLConnect runs java when it loads
 export PATH=${JAVA_HOME}/bin:${PATH}
 export R_DEFAULT_INTERNET_TIMEOUT=7200
+# Suppress Make's command echo, while retaining compiler warnings and errors.
+export MAKEFLAGS="${MAKEFLAGS:+$MAKEFLAGS }--silent --no-print-directory"
 
 CRAN_REPO=http://localhost:8180
 
@@ -298,34 +300,49 @@ rVector() {
     printf "'%s'," "$@" | sed 's/,$//'
 }
 
-R -e "install.packages('remotes', dependencies=TRUE, repos='$CRAN_REPO/')"
+echo "SEPAL_PROGRESS Installing R package tooling"
+R --no-echo -e "install.packages('remotes', dependencies=TRUE, repos='$CRAN_REPO/')"
 
 R CMD javareconf
 
 # CRAN resets some of r-proxy's connections, which fails the download of those packages and their dependents
-R -e "
+echo "SEPAL_PROGRESS Installing CRAN packages"
+R --no-echo -e "
 packages <- c($(rVector "${CRAN_PACKAGES[@]}"))
 install.packages(packages, repos = '$CRAN_REPO/')
 for (attempt in 1:2) {
     missing <- setdiff(packages, rownames(installed.packages()))
-    if (length(missing)) install.packages(missing, repos = '$CRAN_REPO/')
+    if (length(missing)) {
+        message(sprintf('SEPAL_PROGRESS Retrying %d missing CRAN packages (attempt %d/2)', length(missing), attempt))
+        install.packages(missing, repos = '$CRAN_REPO/')
+    }
 }
 "
 
-R -e "remotes::install_url(c($(rVector "${GITHUB_URLS[@]}")), repos='$CRAN_REPO/', build = FALSE)"
+echo "SEPAL_PROGRESS Installing GitHub R packages"
+R --no-echo -e "remotes::install_url(c($(rVector "${GITHUB_URLS[@]}")), repos='$CRAN_REPO/', build = FALSE)"
 
-R -e "torch::install_torch(cuda_version = '12.8')"
+echo "SEPAL_PROGRESS Installing R Torch runtime"
+R --no-echo -e "torch::install_torch(cuda_version = '12.8')"
 
 # install.packages() and install_url() only warn when a package fails to install, and a binary package
 # installs even when its compiled code can't load. Each package loads in its own R process, to stay below
 # R's limit on loaded DLLs.
 FAILED_PACKAGES=()
+CHECKED=0
+TOTAL=$((1 + ${#CRAN_PACKAGES[@]} + ${#GITHUB_PACKAGES[@]}))
+printf 'SEPAL_PROGRESS Checking R package loads (%s/%s)\n' "$CHECKED" "$TOTAL"
 for package in remotes "${CRAN_PACKAGES[@]}" "${GITHUB_PACKAGES[@]##*/}"; do
     Rscript -e "loadNamespace('$package')" > /dev/null || FAILED_PACKAGES+=("$package")
+    CHECKED=$((CHECKED + 1))
+    if (( CHECKED % 25 == 0 || CHECKED == TOTAL )); then
+        printf 'SEPAL_PROGRESS Checking R package loads (%s/%s)\n' "$CHECKED" "$TOTAL"
+    fi
 done
 if (( ${#FAILED_PACKAGES[@]} )); then
     echo "Packages that fail to load: ${FAILED_PACKAGES[*]}" >&2
     exit 1
 fi
 
-R -e "if (!torch::torch_is_installed()) stop('libtorch not installed')"
+echo "SEPAL_PROGRESS Checking R Torch runtime"
+R --no-echo -e "if (!torch::torch_is_installed()) stop('libtorch not installed')"

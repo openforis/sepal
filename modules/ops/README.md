@@ -37,6 +37,34 @@ script and owns protection until it succeeds and the remote deployment record is
 or interrupted runs leave their marker for manual review. Successful provisioning/AMI builds remove
 their marker without creating a deployment record. Run these operations through `bin/deploy`.
 
+## Build console and logs
+
+Build scripts from the checked-out branch provide the console feedback; changing them needs a push, not an ops
+redeploy. The deployed Jenkins image supplies the colour and collapsing-section plugins and artifact archiving.
+The console names sandbox installers, cache reuse, completion times and the current substep during GPU and R
+setup. Package-load checks report counts periodically. Quiet substeps still report elapsed time, and clipped
+BuildKit output produces a warning. Command exit status determines success; compiler and test output stays in
+the diagnostic log, with a bounded excerpt shown on failure.
+
+R installation omits R's interpreter banners, echoed R expressions and Make's echoed commands. The installer
+section banners remain consistent with other installers for dev-env builds. Package progress, compiler warnings
+and errors remain in the diagnostic log; R's blanket `quiet=TRUE` is not used.
+The ops Docker daemon disables BuildKit's per-step size and rate limits so output reaches that log intact.
+This setting is installed as `/etc/systemd/system/docker.service.d/buildkit-logs.conf` and requires an ops
+redeploy and Docker restart, with no build running. Changing the installer itself only requires a push.
+After deployment, `systemctl show docker --property=Environment` must include both
+`BUILDKIT_STEP_LOG_MAX_SIZE=-1` and `BUILDKIT_STEP_LOG_MAX_SPEED=-1`.
+`docker exec jenkins docker buildx inspect` should report `Driver: docker`; a separately configured
+`docker-container` builder would need those variables on its own BuildKit daemon instead.
+
+The live-log directory link at the start of a build serves the workspace's `build-logs/<build-number>/` files.
+Those paths identify the build: the next build removes them instead of reusing them. The `Full log:` links point
+to build artifacts, available once Jenkins archives the logs at build completion, including failure
+and cancellation. The latest 20 builds retain their artifacts.
+
+Console checks: `python3 -m unittest discover -s ci/test -p '*_test.py'`. The Docker integration check uses only
+its own disposable daemon: `bash ci/test/test-images.test.sh <jenkins-image>`.
+
 ## Rollout
 
 1. Review and deploy the ops image. Do not repeat the one-time registry reset.

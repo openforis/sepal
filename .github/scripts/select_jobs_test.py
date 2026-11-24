@@ -92,6 +92,16 @@ class SelectJobsTest(unittest.TestCase):
 
         self.assertEqual(running(jobs), {'shell'})
 
+    def test_console_and_installer_changes_run_the_console_tests(self):
+        for path in ('ci/console.py', 'ci/console.sh', 'ci/test/console_test.py',
+                     'ci/shell-checks.sh', 'modules/sandbox/script/init_gpu.sh',
+                     'modules/sandbox/script/init_r_packages.sh'):
+            with self.subTest(path=path):
+                jobs = select_jobs([path], self.root, MODULES)
+
+                self.assertEqual(jobs['tests'], [])
+                self.assertEqual(running(jobs), {'shell'})
+
     def test_a_python_library_change_runs_the_python_tests(self):
         jobs = select_jobs(['lib/python/shared/stack.py'], self.root, MODULES)
 

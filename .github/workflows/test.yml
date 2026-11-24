@@ -157,4 +157,5 @@ jobs:
       - run: shellcheck -S warning modules/ops/script/sepal-build.sh modules/ops/test/*.sh
       - run: bash modules/ops/test/sepal-build.test.sh
       - run: python3 -m unittest discover -s modules/ops/test -p '*_test.py'
+      - run: python3 -m unittest discover -s ci/test -p '*_test.py'
       - run: modules/app-manager/test/run-all.sh

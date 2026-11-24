@@ -17,6 +17,7 @@ mkdir -p /etc/OpenCL/vendors
 echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd
 
 # Add NVIDIA repo
+echo "SEPAL_PROGRESS Preparing NVIDIA package repository"
 wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
 dpkg -i cuda-keyring_1.1-1_all.deb
 apt-get update
@@ -26,12 +27,14 @@ export CUDA_VERSION=12.8
 # tensorflow 2.19 requires CUDA<13 and R torch require CUDA<12.9
 # cuda-toolkit without its visual tools (Nsight, nvvp), documentation and GDS tools.
 # cuDNN without its static libraries.
+echo "SEPAL_PROGRESS Installing CUDA toolkit"
 apt-get -y install \
     cuda-compiler-12-8 \
     cuda-libraries-12-8 \
     cuda-libraries-dev-12-8 \
     cuda-command-line-tools-12-8 \
     cuda-nvml-dev-12-8
+echo "SEPAL_PROGRESS Installing cuDNN libraries"
 apt-get -y install libcudnn9-cuda-12 libcudnn9-dev-cuda-12 cuda-cudart-12.8
 
 # Static libraries take gigabytes; nvcc links libcudart_static.a by default, so keep it.
@@ -39,17 +42,20 @@ find /usr/local/cuda-${CUDA_VERSION} -name '*_static*.a' ! -name libcudart_stati
 
 
 # tensorflow 2.20.0 crashes, pinning an older version
+echo "SEPAL_PROGRESS Installing TensorFlow"
 uv pip install --system 'tensorflow<2.20.0' \
     tensorflow-probability \
     tf-keras \
     'numpy<2' 
 
+echo "SEPAL_PROGRESS Installing Python PyTorch"
 uv pip install --system \
     --index-url https://download.pytorch.org/whl/cu128 \
     --index-strategy unsafe-best-match \
     torch==2.9.1 \
     torchvision==0.24.1
 
+echo "SEPAL_PROGRESS Installing GPU utilities"
 uv pip install --system \
     pyopencl \
     gpustat \
