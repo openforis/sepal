@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
+# Builds, tests and pushes SEPAL's images as Jenkins jobs run it: build-and-push-images.sh version [--clean]
+# A clean build rebuilds every layer on the latest base images, runs every test suite and empties the R package caches.
 set -e
+
+function usage {
+  echo "Usage: $0 version [--clean]" >&2
+  exit 2
+}
+
+# Before anything changes; the version is an image tag
+[[ ${1:-} =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]] || usage
+CLEAN=''
+for option in "${@:2}"; do
+  [[ ${option} == --clean ]] || usage
+  CLEAN=true
+done
+export CLEAN
 
 export SEPAL_VERSION=$1
 export SEPAL_DATA_DIR=/data
@@ -13,14 +29,33 @@ export TEST_RECORD=${JENKINS_HOME}/sepal-tests/${JOB_NAME}
 TESTS=${WORKSPACE}/ci/test-images.sh
 # What builds leave behind; cleanup removes the images no container uses
 CI_IMAGES=("${DOCKER_REGISTRY_HOST}/openforis/*" openforis/sandbox-base)
+# The modules built on openforis/sandbox-base, which only this host has: clean builds cannot pull their base image
+export LOCAL_BASE="r-proxy app-manager sandbox"
+# The R package caches a clean build empties, as "service type source target" of the mounts of r-proxy and
+# r-proxy-redis: the package repository, the installed packages and the build queue
+R_CACHES=(
+  "r-proxy bind ${SEPAL_DATA_DIR}/r-proxy/repo /R"
+  "r-proxy bind ${SEPAL_DATA_DIR}/r-proxy/site-library /usr/local/lib/R/site-library"
+  "r-proxy-redis bind ${SEPAL_DATA_DIR}/r-proxy-redis /data"
+)
 
 # Each operation's complete output, which Jenkins archives with the build
 export BUILD_LOGS=${WORKSPACE:?}/build-logs/${BUILD_NUMBER:-$SEPAL_VERSION}
 source "${WORKSPACE}/ci/console.sh"
 
 function build {
-  logged "$1" build compose "$1" build
-  tests run "$1"
+  local options=()
+  if [[ -n ${CLEAN} ]]; then
+    options=(--no-cache)
+    [[ " ${LOCAL_BASE} " == *" $1 "* ]] || options+=(--pull)
+  fi
+  if [[ -n ${CLEAN} && ${SKIP_TESTS:-true} != true ]]; then
+    logged "$1" build env BUILD_NUMBER="${SEPAL_VERSION}" GIT_COMMIT="${GIT_COMMIT}" \
+      "${TESTS}" build-module "$1" "${options[@]}"
+  else
+    logged "$1" build compose "$1" build "${options[@]}"
+  fi
+  TEST_IMAGE_BUILT=${CLEAN} tests run "$1"
 }
 
 # The test helper, unless this build skips tests
@@ -50,6 +85,34 @@ function compose {
 
 function recompose {
   compose "$1" down && compose "$1" up -d
+}
+
+# Stops r-proxy and r-proxy-redis, empties their caches, then starts them and waits until they are ready. The emptied
+# mounts are those of the containers that start.
+function reset_r_caches {
+  compose r-proxy down && compose r-proxy create && check_r_caches && empty_r_caches \
+    && compose r-proxy up --detach --wait
+}
+
+# The containers must mount the caches and nothing else, since emptying them mounts all their mounts
+function check_r_caches {
+  local service='{{index $.Config.Labels "com.docker.compose.service"}}' mounts expected
+  mounts=$(docker inspect --format "{{range .Mounts}}${service} {{.Type}} {{.Source}} {{.Destination}}{{println}}{{end}}" \
+    r-proxy r-proxy-redis | grep . | sort)
+  expected=$(printf '%s\n' "${R_CACHES[@]}" | sort)
+  if [[ ${mounts} != "${expected}" ]]; then
+    printf '%s\n' "Not emptying the R package caches: r-proxy and r-proxy-redis mount" "${mounts}" "instead of" "${expected}"
+    return 1
+  fi
+}
+
+# Deletes everything in the caches but the cache directories themselves. --init passes a cancellation on to find.
+function empty_r_caches {
+  local cache targets=()
+  for cache in "${R_CACHES[@]}"; do targets+=("${cache##* }"); done
+  docker run --rm --init --name sepal-r-cache-reset --label org.openforis.sepal.r-cache-reset=true \
+    --network none --user 0 --volumes-from r-proxy --volumes-from r-proxy-redis \
+    --entrypoint find "${DOCKER_REGISTRY_HOST}/openforis/r-proxy:${SEPAL_VERSION}" "${targets[@]}" -xdev -mindepth 1 -delete
 }
 
 function publish {
@@ -101,12 +164,18 @@ tests begin
 # The checks that need no image of this build
 tests run lib-python-shared deploy-scripts shell
 
+build logger
 start logger
 
 build sandbox-base
 
 build r-proxy
-restart r-proxy
+# A clean build starts r-proxy with empty package caches
+if [[ -n ${CLEAN} ]]; then
+  logged r-proxy "cache reset" reset_r_caches
+else
+  restart r-proxy
+fi
 
 build email
 build caddy
