@@ -26,6 +26,7 @@ COPY bin/deploy bin/deploy
 COPY modules/app-manager modules/app-manager
 COPY modules/ops/script modules/ops/script
 COPY modules/ops/test modules/ops/test
+COPY modules/sandbox/script/init_r_packages.sh modules/sandbox/script/init_r_packages.sh
 COPY ci ci
 # The app-manager suites check permission handling, which root would bypass
 USER node

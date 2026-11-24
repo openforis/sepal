@@ -19,16 +19,26 @@ trap stop_progress EXIT
 # name operation command... → runs the command, without colours, with its output in the operation's log; fails as
 # the command fails
 function logged {
-    local name=$1 operation=$2 log started=$SECONDS status statuses details
+    local name=$1 operation=$2 log started=$SECONDS status statuses details progress=() interrupted=0 handlers
     shift 2
     log=$BUILD_LOGS/$name.${operation// /-}.log
     mkdir -p "$BUILD_LOGS"
     echo "$name: $operation..."
-    report_progress "$name: $operation" &
-    PROGRESS=$!
+    if [[ $name == sandbox && $operation == build ]]; then
+        progress=("$PROGRESS_SECONDS")
+    else
+        report_progress "$name: $operation" &
+        PROGRESS=$!
+    fi
+    handlers=$(trap -p INT TERM)
+    trap 'interrupted=130' INT
+    trap 'interrupted=143' TERM
     # Some tools, such as the backends' log4js, colour their output whatever NO_COLOR says
-    { NO_COLOR=1 COMPOSE_ANSI=never "$@" 2>&1 | plain >> "$log"; statuses=("${PIPESTATUS[@]}"); } || true
-    status=${statuses[0]}
+    { NO_COLOR=1 COMPOSE_ANSI=never BUILDKIT_PROGRESS=plain "$@" 2>&1 | plain "${progress[@]}" >> "$log"; statuses=("${PIPESTATUS[@]}"); } || true
+    trap - INT TERM
+    eval "$handlers"
+    status=$interrupted
+    (( status )) || status=${statuses[0]}
     (( status )) || status=${statuses[1]}
     stop_progress
     if (( status > 128 )); then
@@ -57,27 +67,7 @@ function warn {
 # end. A line is written as soon as it ends, so a cancelled operation's log keeps what it had written. Not with awk:
 # Busybox's holds back the last record of its input when records may end with a carriage return.
 function plain {
-    python3 -c '
-import os, re, sys
-codes = re.compile(rb"\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)|\x1b\[[0-?]*[ -/]*[@-~]|\x1b")
-
-def write(data):  # A full disk can take part of a write
-    while data:
-        data = data[os.write(1, data):]
-
-try:
-    rest, after_cr = b"", False
-    while chunk := os.read(0, 65536):
-        if after_cr and chunk.startswith(b"\n"):
-            chunk = chunk[1:]
-        *lines, rest = re.split(rb"\r\n|\r|\n", rest + chunk)
-        after_cr = chunk.endswith(b"\r")
-        write(b"".join(codes.sub(b"", line) + b"\n" for line in lines))
-    if rest:
-        write(codes.sub(b"", rest) + b"\n")
-except OSError as error:
-    sys.exit(f"Cannot write the log: {error.strerror}")
-'
+    python3 "$(dirname "${BASH_SOURCE[0]}")/console.py" "$@"
 }
 
 # The log's address in the build's artifacts
