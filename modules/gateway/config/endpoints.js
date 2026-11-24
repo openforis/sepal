@@ -97,6 +97,11 @@ const endpoints = [
         authenticate: true
     },
     {
+        path: '/api/scene',
+        target: `http://${modules.scene}`,
+        authenticate: true
+    },
+    {
         path: '/api/apps/list',
         target: `http://${modules.appManager}/list`,
         noCache: true

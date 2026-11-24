@@ -7,7 +7,7 @@ import {defer, EMPTY, of, Subject} from 'rxjs'
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 import {failingDb} from '#sepal/testSupport/db/faultyConnection'
-import {createTestDb} from '#sepal/testSupport/db/testDb'
+import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
 
 import {SceneIngestor} from './sceneIngestor.js'
 import {SceneRepository} from './sceneRepository.js'
@@ -38,7 +38,7 @@ describe('scene ingestion', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createTestDb({name: 'scene_ingestor', migrations: MIGRATIONS_PATH})
+        testDb = await createMysqlTestDb({name: 'scene_ingestor', migrations: MIGRATIONS_PATH})
     })
 
     beforeEach(async () => {

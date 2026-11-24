@@ -1,0 +1,4 @@
+FROM dpage/pgadmin4:9.19.0
+
+# Baked in because deploys copy only docker-compose.yml to the host, so a bind-mounted file would not exist there
+COPY --chmod=644 modules/postgres/config/pgadmin-servers.json /pgadmin4/servers.json

@@ -5,7 +5,7 @@ import {after, before, beforeEach, describe, test} from 'node:test'
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 import {failingDb} from '#sepal/testSupport/db/faultyConnection'
-import {createTestDb} from '#sepal/testSupport/db/testDb'
+import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
 
 import {migrateRecipes} from './migrateRecipes.js'
 import {currentVersionForType} from './migration/registry.js'
@@ -17,7 +17,7 @@ describe('migrateRecipes', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createTestDb({name: 'recipemigraterecipes', migrations: MIGRATIONS_PATH})
+        testDb = await createMysqlTestDb({name: 'recipemigraterecipes', migrations: MIGRATIONS_PATH})
         repository = new RecipeRepository(testDb.db)
     })
 

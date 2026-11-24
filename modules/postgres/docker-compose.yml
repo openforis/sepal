@@ -1,0 +1,74 @@
+services:
+  postgres:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
+    build:
+      context: ../..
+      dockerfile: ./modules/postgres/Dockerfile
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/postgres:${SEPAL_VERSION:-latest}"
+    container_name: postgres
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - "${SEPAL_DATA_DIR}/postgres:/var/lib/postgresql"
+    environment:
+      POSTGRES_PASSWORD: "${POSTGRES_ROOT_PASSWORD}"
+      SEPAL_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_INITDB_ARGS: "--locale-provider=builtin --builtin-locale=C.UTF-8"
+    networks:
+      - sepal
+      - pgadmin
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres"]
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    platform: linux/amd64 # Required for macOS builds
+
+  # Without a login, pgAdmin must be out of reach of the containers on sepal, which extending the logger
+  # service would join it to.
+  pgadmin:
+    logging:
+      driver: syslog
+      options:
+        cache-disabled: "true"
+        syslog-address: ${SYSLOG_ADDRESS:-udp://172.20.128.2}
+        tag: docker/{{.Name}}
+    build:
+      context: ../..
+      dockerfile: ./modules/postgres/Dockerfile.pgadmin
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/pgadmin:${SEPAL_VERSION:-latest}"
+    container_name: pgadmin
+    user: root # the bind-mounted data directory is created root-owned
+    environment:
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+      PGADMIN_CONFIG_ALLOW_SAVE_PASSWORD: "False"
+      PGADMIN_DEFAULT_EMAIL: "admin@sepal.io"
+      PGADMIN_DEFAULT_PASSWORD: "unused"
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+    ports:
+      - "127.0.0.1:8981:80"
+    volumes:
+      - "${SEPAL_DATA_DIR}/pgadmin:/var/lib/pgadmin"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/misc/ping"]
+      start_period: 60s
+      start_interval: 1s
+      interval: 20s
+      timeout: 5s
+      retries: 3
+    networks:
+      - pgadmin
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+networks:
+  sepal:
+    external: true
+  pgadmin:

@@ -8,8 +8,11 @@ Shared Node.js library used by most SEPAL microservices. Imported via `#sepal/*`
 module's service container: those carry a copy of the repo baked into the image, so the suite silently runs
 stale sources.
 
-The `*.integration.test.js` files under `src/db` and `src/testSupport/db` need a reachable MySQL and
-credentials that can create databases and accounts. `src/gdal` shells out to Python 3 with GDAL.
+The `*.integration.test.js` files under `src/db` and `src/testSupport/db` need a reachable Postgres and a
+role with `CREATEDB` (`POSTGRES_*`, plus `POSTGRES_ROOT_PASSWORD` for `testDb`); the `mysql.*` and
+`mysqlTestDb` ones need a reachable MySQL with credentials that can create databases and accounts. In
+dev-env, run single Postgres files in the `scene` container and MySQL ones in `message`: both mount this
+library's `src` (but not its `test/`). `src/gdal` shells out to Python 3 with GDAL.
 
 ## Module map
 
@@ -24,7 +27,8 @@ credentials that can create databases and accounts. `src/gdal` shells out to Pyt
 | `rxjs.js` | Operators: `autoRetry`, `finalizeObservable`, `promise$`, `lastInWindow`, `repeating`, `swallow` |
 | `rxjs/subscriberContext.js` | `inSubscriberContext(source$)`: delivers next, error and complete in the async context each subscriber subscribed in. Used by `service.js` and `RecipeScope`'s shared reads. Node only: keep it out of modules browser code imports |
 | `exception.js` | `Exception` base with `ServerException` (500), `ClientException` (400), `NotFoundException` (404) |
-| `db/mysql.js` | mysql2/promise wrapper: `createConnection`, `createPool`, `createDb`, `initDb`, `migrateDb`. Postgrator schema versioning. Reads `MYSQL_HOST`, `MYSQL_USER`, `MYSQL_PASSWORD` from env |
+| `db/mysql.js` | mysql2/promise wrapper for the modules still on MySQL: `createConnection`, `createPool`, `createDb`, `initDb`, `migrateDb`. Postgrator schema versioning. Reads `MYSQL_HOST`, `MYSQL_USER`, `MYSQL_PASSWORD` from env |
+| `db/postgres.js` | node-postgres wrapper with the same API as `db/mysql.js`, plus `isUniqueViolation`. Sets process-wide type parsers on import: int8 to `Number` (out-of-safe-range values fail the query), numeric stays a string. `migrateDb` holds an advisory lock per history table so concurrent migrations take turns. Reads `POSTGRES_HOST`, `POSTGRES_USER`, `POSTGRES_PASSWORD` |
 | `event/definitions.js` | System event constants used by gateway WebSocket routing |
 | `service/registry.js` | `addServices([...])` registers handlers, `getServiceHandler$(name)` retrieves them |
 
@@ -34,14 +38,19 @@ credentials that can create databases and accounts. `src/gdal` shells out to Pyt
 import of it from any JavaScript production file it covers, in this library and in `modules/*/src`; tests
 and test-support modules are exempt.
 
-- `testSupport/db/testDb.js` — `createTestDb({name, migrations})` gives a suite its own database, built from
-  the module's production migrations, plus an account that can reach only that database. Returns `dbName`,
-  `db`, `query` and `withAnotherConnection(callback)`, plus `reset()` to restore the post-migration baseline
-  between tests and `remove()` to drop everything afterwards. Schemas with foreign keys, triggers, generated
-  columns or views are refused. Import as `#sepal/testSupport/db/testDb`.
+- `testSupport/db/testDb.js` — `createTestDb({name, migrations, connections = 1})` gives a suite its own
+  Postgres database, built from the module's production migrations as the application role, plus an account
+  that can connect only to that database. Returns `dbName`, `account`, `db`, `query` and
+  `withAnotherConnection(callback)`, plus `reset()` to restore the post-migration baseline (rows and sequence
+  positions) between tests and `remove()` to drop everything afterwards. An acquisition beyond `connections`
+  fails at once instead of waiting. Schemas with foreign keys, triggers, generated columns or views are
+  refused. Provisions as the `postgres` superuser with `POSTGRES_ROOT_PASSWORD`. Import as
+  `#sepal/testSupport/db/testDb`.
+- `testSupport/db/mysqlTestDb.js` — `createMysqlTestDb`, the same contract against MySQL, for the suites
+  of modules still on MySQL. Retired with MySQL.
 - `testSupport/db/faultyConnection.js` — `failingDb(db, {when, error})` fails the first statement matching
-  `when(sql, params)` in each decorated callback, leaving real MySQL and the production transaction handling
-  in place.
+  `when(sql, params)` in each decorated callback, leaving the real database and the production transaction
+  handling in place.
 - `testSupport/mock.js` — `callsOf(fn)` lists the arguments of each call to a `node:test` mock;
   `inSequence(implementations, otherwise)` answers successive calls in turn.
 - `testSupport/worker/threadJob.js` — a job on a `SchedulerTest` scheduler the test initializes; with `crash`

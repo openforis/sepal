@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Selects the jobs of the Test workflow that the triggering change affects.
 
-A module's tests run when its directory, a library its package.json links or the lock it is
-tested with changes. Everything runs when the change set is unknown (a manual run, a new branch,
+A module's tests run when its directory, a library its package.json links, the lock it is
+tested with or, for an entry that asks for Postgres, the SEPAL Postgres image changes. Everything runs when the change set is unknown (a manual run, a new branch,
 an unreachable previous push) or when the workflow itself changes. Writes the selection to
 $GITHUB_OUTPUT: `tests` holds the matrix entries to run, the other outputs are 'true' or 'false'.
 """
@@ -17,7 +17,7 @@ TEST_MODULES = [
     # The library carries no lock of its own, so it is tested with the one most modules install it
     # from. Its gdal wrapper shells out to the GDAL tools.
     {'module': 'lib/js/shared', 'lock': 'modules/worker/lib/shared/package-lock.json',
-     'packages': 'gdal-bin python3-gdal'},
+     'packages': 'gdal-bin python3-gdal', 'postgres': True},
     {'module': 'modules/gui'},
     {'module': 'modules/gee', 'libs': 'lib/js/shared lib/js/ee'},
     {'module': 'modules/task', 'libs': 'lib/js/shared'},
@@ -29,6 +29,7 @@ TEST_MODULES = [
     {'module': 'modules/message', 'libs': 'lib/js/shared'},
     {'module': 'modules/r-proxy', 'libs': 'lib/js/shared'},
     {'module': 'modules/recipe', 'libs': 'lib/js/shared'},
+    {'module': 'modules/scene', 'libs': 'lib/js/shared', 'postgres': True},
     {'module': 'modules/scene-metadata', 'libs': 'lib/js/shared'},
     {'module': 'modules/ssh-gateway', 'libs': 'lib/js/shared'},
     {'module': 'modules/storage', 'libs': 'lib/js/shared'},
@@ -47,6 +48,8 @@ JOB_PATHS = {
 }
 
 RUN_ALL_PATHS = ['.github']
+
+POSTGRES_IMAGE = 'modules/postgres'
 
 
 def main(env):
@@ -92,7 +95,12 @@ def report(changed, jobs):
 
 def trigger_paths(entry, root):
     module = entry['module']
-    return [module, *linked_libraries(module, root), *([entry['lock']] if 'lock' in entry else [])]
+    return [
+        module,
+        *linked_libraries(module, root),
+        *([entry['lock']] if 'lock' in entry else []),
+        *([POSTGRES_IMAGE] if entry.get('postgres') else []),
+    ]
 
 
 def linked_libraries(module, root):

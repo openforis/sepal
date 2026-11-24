@@ -38,9 +38,9 @@ jobs:
     needs: changes
     if: needs.changes.outputs.tests != '[]'
     runs-on: ubuntu-latest
-    # The *.integration.test.js suites reach a real MySQL, since the schema, collation and
-    # transaction guarantees they cover cannot be shown against a fake. Modules without such
-    # a suite ignore the service.
+    # The *.integration.test.js suites reach a real database, since the schema, collation and
+    # transaction guarantees they cover cannot be shown against a fake: Postgres for the entries that
+    # ask for it, MySQL for the modules still on it. Modules without such a suite ignore both.
     services:
       mysql:
         image: mysql:5.7
@@ -59,6 +59,10 @@ jobs:
           --health-timeout=5s
           --health-retries=10
     env:
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_USER: sepal
+      POSTGRES_PASSWORD: sepal
+      POSTGRES_ROOT_PASSWORD: sepal-root
       MYSQL_HOST: 127.0.0.1
       MYSQL_USER: root
       MYSQL_PASSWORD: sepal
@@ -102,6 +106,21 @@ jobs:
       # there and MySQL reads them back.
       - name: Let the runner write to the MySQL files directory
         run: sudo chmod 0777 "$MYSQL_FILES_DIR"
+      # SEPAL's own image, for its locale and extensions
+      - name: Start Postgres
+        if: matrix.postgres
+        run: |
+          docker build -t sepal-postgres -f modules/postgres/Dockerfile .
+          docker run -d --name postgres -p 127.0.0.1:5432:5432 \
+            -e POSTGRES_PASSWORD="$POSTGRES_ROOT_PASSWORD" -e SEPAL_PASSWORD="$POSTGRES_PASSWORD" \
+            -e POSTGRES_INITDB_ARGS="--locale-provider=builtin --builtin-locale=C.UTF-8" \
+            sepal-postgres
+          for i in $(seq 60); do
+            docker exec postgres pg_isready -h 127.0.0.1 -U postgres && exit 0
+            sleep 2
+          done
+          docker logs postgres
+          exit 1
       # vitest single-shots rather than watching because Actions sets CI
       - run: npm test
         working-directory: ${{matrix.module}}

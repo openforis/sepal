@@ -5,7 +5,7 @@ import {after, before, beforeEach, describe, mock, test} from 'node:test'
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 import {failingDb} from '#sepal/testSupport/db/faultyConnection'
-import {createTestDb} from '#sepal/testSupport/db/testDb'
+import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
 import {callsOf} from '#sepal/testSupport/mock'
 
 import {createLocalInstanceProvider} from '../hostingService/local/localInstanceProvider.js'
@@ -25,7 +25,7 @@ describe('ClaimRepository', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createTestDb({name: 'worker_claim', migrations: MIGRATIONS_PATH, connections: 2})
+        testDb = await createMysqlTestDb({name: 'worker_claim', migrations: MIGRATIONS_PATH, connections: 2})
     })
 
     beforeEach(async () => {

@@ -1,0 +1,28 @@
+services:
+  postgres-backup:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
+    build:
+      context: ../..
+      dockerfile: ./modules/postgres-backup/Dockerfile
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/postgres-backup:${SEPAL_VERSION:-latest}"
+    container_name: postgres-backup
+    volumes:
+      - "${SEPAL_BACKUP_DIR}/postgres:/backup"
+      - "${SEPAL_DATA_DIR}/postgres-backup:/module"
+    environment:
+      PGHOST: postgres
+      PGUSER: postgres
+      POSTGRES_ROOT_PASSWORD: "${POSTGRES_ROOT_PASSWORD}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      BACKUP_CRON_EXP: '0 0 * * *'
+      RESTORE_BACKUP: "${RESTORE_BACKUP}"
+    networks:
+      - sepal
+    restart: unless-stopped
+    platform: linux/amd64 # Required for macOS builds
+
+networks:
+  sepal:
+    external: true

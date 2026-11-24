@@ -103,6 +103,19 @@
             "logger"
         ]
     },
+    "postgres": {
+        "build": {},
+        "run": [
+            "logger"
+        ]
+    },
+    "postgres-backup": {
+        "build": {},
+        "run": [
+            "logger",
+            "postgres"
+        ]
+    },
     "mysql-backup": {
         "build": {},
         "run": [
@@ -171,6 +184,16 @@
         "run": [
             "logger",
             "mysql"
+        ]
+    },
+    "scene": {
+        "lib": [
+            "shared"
+        ],
+        "build": {},
+        "run": [
+            "logger",
+            "postgres"
         ]
     },
     "ssh-gateway": {

@@ -77,6 +77,14 @@ class SelectJobsTest(unittest.TestCase):
 
         self.assertEqual(jobs['tests'], [SHARED, WORKER])
 
+    def test_a_postgres_image_change_runs_the_entries_tested_against_it(self):
+        scene = {'module': 'modules/scene', 'libs': 'lib/js/shared', 'postgres': True}
+        package(self.root, 'modules/scene', sepal='../../lib/js/shared')
+
+        jobs = select_jobs(['modules/postgres/Dockerfile'], self.root, [*MODULES, scene])
+
+        self.assertEqual(jobs['tests'], [scene])
+
     def test_an_app_manager_change_runs_the_shell_tests(self):
         jobs = select_jobs(['modules/app-manager/update-app.sh'], self.root, MODULES)
 

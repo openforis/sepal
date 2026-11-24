@@ -49,6 +49,7 @@ apps_host() {
 storage_host() {
     check 'EFS mounted' findmnt -t nfs4 /data/sepal/home
     check 'Swarm overlay reaches MySQL' docker run --rm --network sepal busybox:1.36 nc -zv -w5 mysql 3306
+    check 'Swarm overlay reaches Postgres' docker run --rm --network sepal busybox:1.36 nc -zv -w5 postgres 5432
 }
 
 docker_storage_and_cgroups() {

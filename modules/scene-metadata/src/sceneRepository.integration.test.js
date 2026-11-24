@@ -4,7 +4,7 @@ import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
-import {createTestDb} from '#sepal/testSupport/db/testDb'
+import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
 
 import {SceneRepository} from './sceneRepository.js'
 
@@ -19,7 +19,7 @@ describe('SceneRepository', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createTestDb({name: 'scene_metadata', migrations: MIGRATIONS_PATH})
+        testDb = await createMysqlTestDb({name: 'scene_metadata', migrations: MIGRATIONS_PATH})
     })
 
     beforeEach(async () => {

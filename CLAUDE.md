@@ -27,10 +27,10 @@ not implementation history; recipe-specific issues are deferred unless explicitl
 - `task-manager` - Runs each export task in its own detached container on the main host
 - `task` - One-shot task runner image, started by task-manager per task
 - `app-manager` / `app-launcher` - Application management
-- `email`, `terminal`, `user-assets`, `user-files`, `storage`, `ssh-gateway`, `scene-metadata`, `ceo-gateway`, `r-proxy`, `message`, `recipe`, `budget`
+- `email`, `terminal`, `user-assets`, `user-files`, `storage`, `ssh-gateway`, `scene-metadata`, `scene`, `ceo-gateway`, `r-proxy`, `message`, `recipe`, `budget`
 
 **Infrastructure modules** (Docker-only, no application code):
-- `caddy`, `mysql`, `rabbitmq`, `prometheus`, `logger`
+- `caddy`, `mysql`, `postgres` (with `pgadmin`), `postgres-backup`, `rabbitmq`, `prometheus`, `logger`
 
 **Build-only modules** (images only, not runnable services):
 - `sandbox-base`, `sandbox` - User sandbox images (`app-manager` and `r-proxy` also build on `sandbox-base`, so the binaries they build for sandboxes match its libraries)
@@ -56,6 +56,7 @@ The Node.js libraries carry no lockfile of their own: each module locks the depe
 - **Caddy** - HTTPS entry point (ports 80/443) with automatic ACME certificate management; reverse-proxies to `gateway` (for `/api/*`, `/privacy-policy`) and `gui` (everything else)
 - **nginx** - HTTP reverse proxy within containers
 - **MySQL** - Primary database (Postgrator migrations per Node module; the legacy Java schemas used Flyway)
+- **Postgres** - Database of the `scene` module, and of every module once they move off MySQL (Postgrator migrations)
 - **AWS EC2** - Dynamic worker instances for user sandboxes with per-user budget tracking
 
 ## Development Environment
