@@ -31,15 +31,6 @@
         quiet: true
       run_once: true
 
-    - name: Skip Amazon Linux 2
-      when: ansible_distribution_major_version == '2'
-      block:
-        - name: Report Amazon Linux 2
-          debug:
-            msg: "{{ host_name }} runs Amazon Linux 2, which has no releases to check"
-
-        - meta: end_host
-
     # Provide dnf needs-restarting and check-release-update. The Amazon Linux AMIs come with them.
     - name: Install the dnf plugins
       dnf:

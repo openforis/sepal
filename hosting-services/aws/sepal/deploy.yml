@@ -43,7 +43,7 @@
   pre_tasks:
     - set_fact:
         sepal_ip: "{{ ec2_private_ip_address }}"
-        # The interface's other address: eth0 lists it second on Amazon Linux 2, ens5 first on Amazon Linux 2023
+        # The interface's other address
         sepal_ssh_ip: >-
           {{ ([main_interface.ipv4] + main_interface.ipv4_secondaries | default([])) | map(attribute='address')
              | reject('equalto', ansible_default_ipv4.address) | first }}
@@ -86,19 +86,15 @@
         - {name: vm.max_map_count, value: 1048576}
         - {name: vm.overcommit_memory, value: 1}
 
-    # Amazon Linux 2 has EPEL for monit and multitail, Amazon Linux 2023 has SPAL
+    # monit and multitail come from SPAL
     - name: Install spal-release
       dnf:
         name: spal-release
-      when: ansible_distribution_major_version != '2'
 
-    # One transaction: each yum task reloads the repository metadata. Amazon Linux 2023 packages the Docker SDK,
-    # which Amazon Linux 2 installs with pip.
+    # One transaction: each yum task reloads the repository metadata
     - name: Install packages
       yum:
-        name: "{{ packages + (['python3-docker'] if ansible_distribution_major_version != '2' else []) }}"
-      vars:
-        packages: [monit, multitail, htop, rsyslog, '@Development Tools']
+        name: [monit, multitail, htop, rsyslog, python3-docker, '@Development Tools']
 
     # A subset deploy leaves monit disabled too, so a reboot doesn't start it alerting on the modules left out
     - name: Stop monit
@@ -192,11 +188,6 @@
         src: "{{ config_home }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
 
-    - name: Enable the Docker extras topic
-      command: "amazon-linux-extras enable docker"
-      changed_when: false
-      when: ansible_distribution_major_version == '2'
-
     # Only a DOCKER_VERSION change upgrades Docker (see deploy.sh)
     - name: Install docker
       yum:
@@ -239,15 +230,6 @@
         state: restarted
         enabled: yes
         daemon_reload: yes
-
-    - name: pip install Docker SDK
-      pip:
-        name:
-          - urllib3==1.26.18
-          - requests
-          - docker
-        executable: pip3
-      when: ansible_distribution_major_version == '2'
 
     - name: Init a new swarm with default parameters
       docker_swarm:
