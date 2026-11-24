@@ -188,12 +188,6 @@
         mode: +x
         status_code: [200, 304]
 
-    - uri:
-        url: https://github.com/docker/buildx/releases/download/v{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}/buildx-v{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}.linux-amd64
-        dest: /usr/libexec/docker/cli-plugins/docker-buildx
-        mode: +x
-        status_code: [200, 304]
-
     # The env file holds the deployment's credentials: root only
     - file: path="/etc/sepal/env.d" state=directory mode=0700
     - name: Copy env file to env-config
