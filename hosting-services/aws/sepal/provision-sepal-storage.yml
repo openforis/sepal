@@ -4,7 +4,7 @@
   gather_facts: false
 
   vars:
-    root_and_docker_volumes:
+    storage_volumes:
       - device_name: /dev/xvda
         ebs:
           delete_on_termination: false
@@ -15,7 +15,6 @@
           delete_on_termination: false
           volume_type: gp3
           volume_size: 32
-    data_volumes:
       - device_name: /dev/sdc # /data
         ebs:
           delete_on_termination: false
@@ -47,13 +46,6 @@
             cidr_ip: 0.0.0.0/0
       register: sepal_storage_group
 
-    # Production still launches Amazon Linux 2, which keeps /data on the root volume
-    - name: Describe AWS_AMI
-      amazon.aws.ec2_ami_info:
-        region: "{{ lookup('env', 'AWS_REGION') }}"
-        image_ids: ["{{ lookup('env', 'AWS_AMI') }}"]
-      register: ami
-
     - name: Create Sepal-Storage instance
       ec2_instance:
         key_name: "{{ lookup('env', 'AWS_REGION') }}"
@@ -77,9 +69,7 @@
           Type: "SepalStorage"
           Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
         # Applied only when the instance is launched: a running host keeps the volumes it has
-        volumes: >-
-          {{ root_and_docker_volumes
-             + (data_volumes if ami.images | selectattr('name', 'match', 'al2023-ami-') | list else []) }}
+        volumes: "{{ storage_volumes }}"
       register: started_ec2_sepal_storage
 
     - name: Get Sepal-Storage instance information
