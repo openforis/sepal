@@ -2,10 +2,9 @@
 
 umask 077
 
-# scene is rebuilt from the external catalogues
 databases=$(psql -d postgres -Atc "
     SELECT datname FROM pg_database
-    WHERE NOT datistemplate AND datname NOT IN ('postgres', 'scene')
+    WHERE NOT datistemplate AND datname NOT IN ('postgres')
     ORDER BY datname") || { echo "Backup failed: cannot list databases"; exit 1; }
 
 echo "Backup started"
