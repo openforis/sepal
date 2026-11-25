@@ -4,20 +4,19 @@ import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
-import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
+import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 import {SessionAppRepository} from './sessionAppRepository.js'
 import {close, createWorkerSession, NotificationState, State} from './workerSession.js'
 import {WorkerSessionRepository} from './workerSessionRepository.js'
 
-// Session lifetime against real MySQL. Every deadline this repository writes comes from the database's
-// own NOW() through GREATEST/LEAST/COALESCE, so what the ratchet, the cap and the guarded transitions
-// actually do to a stored TIMESTAMP is only observable here.
+// Session lifetime against real Postgres. Every deadline this repository writes comes from the database's
+// own now() through GREATEST/LEAST/COALESCE, so what the ratchet, the cap and the guarded transitions
+// actually do to a stored timestamp is only observable here.
 //
 // App associations are arranged through the repository that owns them. Rows are written directly only for
 // what no operation can produce: a notification that was raised in the past, an interaction that happened
-// an hour ago, a leftover row in the legacy task table, and an activation held uncommitted while a close
-// waits on it.
+// an hour ago, and an activation held uncommitted while a close waits on it.
 
 describe('WorkerSessionRepository', () => {
     let testDb
@@ -27,7 +26,7 @@ describe('WorkerSessionRepository', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createMysqlTestDb({name: 'worker_session', migrations: MIGRATIONS_PATH})
+        testDb = await createTestDb({name: 'worker_session', migrations: MIGRATIONS_PATH})
     })
 
     beforeEach(async () => {
@@ -324,8 +323,8 @@ describe('WorkerSessionRepository', () => {
             assert.ok(timeoutTime.getTime() <= ceiling.getTime())
         })
 
-        // MySQL takes only a whole number of units in INTERVAL n HOUR and quietly rounds anything
-        // else, so a fractional cap has to reach SQL as minutes.
+        // maxUnattendedHours is a float by configuration, so a fractional cap has to reach SQL as
+        // whole minutes.
         test('honours a cap of less than an hour', async () => {
             await repository.insert(activeSession())
             await givenLastInteractionSecondsAgo(60)
@@ -389,15 +388,6 @@ describe('WorkerSessionRepository', () => {
     describe('expiredSessions', () => {
         test('reports a session that is past its deadline', async () => {
             await givenExpiredSession()
-
-            const expired = await repository.expiredSessions()
-
-            assert.deepEqual(expired.map(({id}) => id), [SESSION_ID])
-        })
-
-        test('reports an expired session even when the legacy task table still lists an unfinished task for it', async () => {
-            await givenExpiredSession()
-            await givenLegacyActiveTask()
 
             const expired = await repository.expiredSessions()
 
@@ -507,18 +497,6 @@ describe('WorkerSessionRepository', () => {
             const stored = await repository.getSession(SESSION_ID)
             assert.equal(closed, false)
             assert.equal(stored.state, State.ACTIVE)
-        })
-
-        test('closes an expired session even when the legacy task table still lists an unfinished task for it', async () => {
-            await givenExpiredSession()
-            const observed = await givenNotificationRaisedMinutesAgo(61)
-            await givenLegacyActiveTask()
-
-            const closed = await repository.closeExpiredSession({...observed, graceMinutes: 60})
-
-            const stored = await repository.getSession(SESSION_ID)
-            assert.equal(closed, true)
-            assert.equal(stored.state, State.CLOSED)
         })
 
         test('leaves a session whose grace has not elapsed', async () => {
@@ -659,15 +637,15 @@ describe('WorkerSessionRepository', () => {
             const [timedOut] = await repository.timedOutSessions()
 
             const closed = await testDb.withAnotherConnection(async activation => {
-                await activation.beginTransaction()
+                await activation.query('BEGIN')
                 await activation.query(
-                    `UPDATE worker_session SET state = 'ACTIVE', update_time = NOW(), active_time = NOW()
-                        WHERE id = ? AND state = 'PENDING'`,
+                    `UPDATE worker_session SET state = 'ACTIVE', update_time = now(), active_time = now()
+                        WHERE id = $1 AND state = 'PENDING'`,
                     [timedOut.id]
                 )
                 const closing = repository.closeTimedOutSession(timedOut.id)
                 await untilRunning('UPDATE worker_session')
-                await activation.commit()
+                await activation.query('COMMIT')
                 return closing
             })
 
@@ -885,20 +863,13 @@ describe('WorkerSessionRepository', () => {
     const givenExpiredSession = async (over = {}) =>
         await repository.insert(activeSession({timeoutTime: await secondsFromNow(-60), ...over}))
 
-    const givenLegacyActiveTask = () => testDb.query(
-        `INSERT INTO task (id, state, username, session_id, operation, params, status_description,
-             creation_time, update_time, removed)
-         VALUES ('legacy-task', 'ACTIVE', ?, ?, 'image.GEE', '{}', '{}', NOW(), NOW(), 0)`,
-        [USERNAME, SESSION_ID]
-    )
-
-    // notifyExpiry stamps notified_time with NOW(), so a grace period has not elapsed by definition.
+    // notifyExpiry stamps notified_time with now(), so a grace period has not elapsed by definition.
     // Backdating it is what lets a close be attempted at all, and keeps the guard tests failing for the
     // reason they name rather than for want of elapsed time.
     const givenNotificationRaisedMinutesAgo = async minutes => {
         await repository.notifyExpiry(SESSION_ID)
         await testDb.query(
-            'UPDATE worker_session SET notified_time = notified_time - INTERVAL ? MINUTE WHERE id = ?',
+            'UPDATE worker_session SET notified_time = notified_time - make_interval(mins => $1) WHERE id = $2',
             [minutes, SESSION_ID]
         )
         return await observedNotification()
@@ -909,38 +880,39 @@ describe('WorkerSessionRepository', () => {
         return {sessionId: SESSION_ID, notificationState, notifiedTime}
     }
 
-    // The cap is anchored on times only the database writes, and only ever as NOW().
+    // The cap is anchored on times only the database writes, and only ever as now().
     const givenLastInteractionHoursAgo = hours => testDb.query(
-        'UPDATE worker_session SET last_interaction_time = NOW() - INTERVAL ? HOUR WHERE id = ?',
+        'UPDATE worker_session SET last_interaction_time = now() - make_interval(hours => $1) WHERE id = $2',
         [hours, SESSION_ID]
     )
 
     const givenLastInteractionSecondsAgo = seconds => testDb.query(
-        'UPDATE worker_session SET last_interaction_time = NOW() - INTERVAL ? SECOND WHERE id = ?',
+        'UPDATE worker_session SET last_interaction_time = now() - make_interval(secs => $1) WHERE id = $2',
         [seconds, SESSION_ID]
     )
 
     const givenNeverInteractedActiveHoursAgo = hours => testDb.query(
         `UPDATE worker_session
-            SET last_interaction_time = NULL, active_time = NOW() - INTERVAL ? HOUR
-            WHERE id = ?`,
+            SET last_interaction_time = NULL, active_time = now() - make_interval(hours => $1)
+            WHERE id = $2`,
         [hours, SESSION_ID]
     )
 
     // Deadlines are compared against the database's clock, never the suite's.
     const secondsFromNow = async seconds => {
-        const [rows] = await testDb.query('SELECT NOW() + INTERVAL ? SECOND AS t', [seconds])
-        return new Date(rows[0].t)
+        const {rows} = await testDb.query('SELECT now() + make_interval(secs => $1) AS t', [seconds])
+        return rows[0].t
     }
 
     const minutesAgo = minutes => new Date(now.getTime() - minutes * 60 * 1000)
 
     // Waits on a connection of its own until another of the suite's connections is running the statement, for
-    // instance blocked on a row lock. The suite's account sees its own threads without the PROCESS privilege.
+    // instance blocked on a row lock. pg_stat_activity shows the account the statements of its own sessions.
     const untilRunning = statement => testDb.withAnotherConnection(async observer => {
         for (let attempt = 0; attempt < 2000; attempt++) {
-            const [rows] = await observer.query(
-                'SELECT 1 FROM information_schema.PROCESSLIST WHERE INFO LIKE ? AND ID <> CONNECTION_ID()',
+            const {rows} = await observer.query(
+                `SELECT 1 FROM pg_stat_activity
+                    WHERE state = 'active' AND query LIKE $1 AND pid <> pg_backend_pid()`,
                 [`${statement}%`]
             )
             if (rows.length) {

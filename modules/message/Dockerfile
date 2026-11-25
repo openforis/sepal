@@ -31,6 +31,8 @@ USER node
 CMD /usr/local/bin/start.sh
 
 FROM production AS test
+# The import suites' source schema
+ADD modules/${MODULE_NAME}/migrations-mysql ${MODULE}/migrations-mysql
 CMD ["npm", "test"]
 
 FROM production

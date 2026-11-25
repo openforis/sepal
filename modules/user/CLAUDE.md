@@ -1,13 +1,13 @@
 # User
 
 Owns accounts, password hashes, SSH public keys, Google credentials and POSIX identities in the `user`
-MySQL database (`sepal_user` table). The Java user service and LDAP are no longer runtime dependencies.
+Postgres database (`sepal_user` and `ssh_key` tables). The Java user service and LDAP are no longer runtime dependencies.
 
 ## POSIX identity
 
 `uid` and `gid` are stored independently of the account ID. Migrated users retain their LDAP-assigned
 values, which can differ from each other and from `id`; existing files depend on those values.
-New users get `uid = gid = id`. The LDAP migration advanced `AUTO_INCREMENT` beyond existing uid/gid values
+New users get `uid = gid = id`. The LDAP migration advanced the identity sequence beyond existing uid/gid values
 before this allocation rule was used. The local OS group `sepal` (gid 9999) is separate from per-user groups.
 Identity repair fills each missing field from `id` independently and preserves every populated UID/GID.
 
@@ -35,11 +35,12 @@ regardless of the database collation. Validation must not accept a token that th
 
 ## Database migrations
 
-`migrations/001.do.schema.sql` creates the complete current table. The separate
-`migrations/legacy-import/001.do.import.sql` copies rows, including uid/gid and credentials, from the
-legacy `sepal_user` schema only when its table exists and the target is empty. The source is unchanged.
-Schema and import histories use `schema_version` and `legacy_import_version` respectively.
-See [database migrations](../../docs/database-migrations.md) for startup, repair and import retirement.
+`migrations/001.do.schema.sql` creates the complete Postgres schema. `migrations/mysql-import.sql` copies the
+rows, including uid/gid and credentials, from the legacy MySQL `user` database (kept in `migrations-mysql/`) on
+first start, then advances both identity sequences; a restart that finds MySQL changed since the import is refused.
+Usernames and emails are `citext`, so comparisons and unique indexes ignore case. `system_user` is a reserved
+word in Postgres and must be quoted in SQL.
+See [database migrations](../../docs/database-migrations.md) for startup and repair.
 
 ## User-list subscriptions
 

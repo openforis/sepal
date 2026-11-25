@@ -1,7 +1,7 @@
 import {storedUsername} from '#sepal/username'
 
-// An in-memory stand-in for the MySQL adapter. It models ordinary persistence for application tests, but
-// not revision preconditions or concurrency; that evidence lives only in the real-MySQL suite.
+// An in-memory stand-in for the Postgres adapter. It models ordinary persistence for application tests, but
+// not revision preconditions or concurrency; that evidence lives only in the real-Postgres suite.
 class FakeRecipeRepository {
     #recipes = new Map()
     #projects = new Map()
@@ -120,7 +120,7 @@ const persisted = content => {
     return stored
 }
 
-// Through JSON, as the column is: whatever MySQL storage would drop or reshape is dropped here too.
+// Through JSON, as the column is: whatever jsonb storage would drop or reshape is dropped here too.
 const clone = content => JSON.parse(JSON.stringify(content))
 
 export {FakeRecipeRepository}

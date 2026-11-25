@@ -1,26 +1,31 @@
+CREATE EXTENSION IF NOT EXISTS citext;
+
 CREATE TABLE IF NOT EXISTS recipe (
-  id            VARCHAR(36)  NOT NULL,
-  username      VARCHAR(32)  COLLATE ascii_general_ci NOT NULL,
-  name          VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
-  type          VARCHAR(63)  NOT NULL,
-  contents      LONGTEXT     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
-  creation_time TIMESTAMP    NOT NULL,
-  update_time   TIMESTAMP    NOT NULL,
-  removed       BOOLEAN      NOT NULL DEFAULT FALSE,
-  type_version  INT          DEFAULT 1,
-  project_id    VARCHAR(255),
-  PRIMARY KEY (id),
-  INDEX idx_recipe_1 (username, removed, name, update_time) USING BTREE,
-  INDEX idx_recipe_2 (type, type_version, removed, creation_time) USING BTREE,
-  INDEX idx_recipe_3 (username, project_id) USING BTREE
+  id            varchar(36)    NOT NULL,
+  username      citext         NOT NULL CHECK (char_length(username) <= 32),
+  name          varchar(255)   NOT NULL,
+  type          varchar(63)    NOT NULL,
+  contents      jsonb          NOT NULL,
+  creation_time timestamptz(0) NOT NULL,
+  update_time   timestamptz(0) NOT NULL,
+  removed       boolean        NOT NULL DEFAULT FALSE,
+  type_version  integer        DEFAULT 1,
+  project_id    varchar(255),
+  revision      integer        NOT NULL DEFAULT 1 CHECK (revision >= 0),
+  PRIMARY KEY (id)
 );
 
+CREATE INDEX recipe_idx_recipe_1 ON recipe (username, removed, name, update_time);
+CREATE INDEX recipe_idx_recipe_2 ON recipe (type, type_version, removed, creation_time);
+CREATE INDEX recipe_idx_recipe_3 ON recipe (username, project_id);
+
 CREATE TABLE IF NOT EXISTS project (
-  id                       VARCHAR(36)  NOT NULL,
-  username                 VARCHAR(32)  COLLATE ascii_general_ci NOT NULL,
-  name                     VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
-  default_asset_folder     TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci,
-  default_workspace_folder TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci,
-  PRIMARY KEY (id),
-  INDEX idx_project_1 (username, name) USING BTREE
+  id                       varchar(36)  NOT NULL,
+  username                 citext       NOT NULL CHECK (char_length(username) <= 32),
+  name                     varchar(255) NOT NULL,
+  default_asset_folder     text,
+  default_workspace_folder text,
+  PRIMARY KEY (id)
 );
+
+CREATE INDEX project_idx_project_1 ON project (username, name);

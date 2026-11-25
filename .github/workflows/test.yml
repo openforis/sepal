@@ -40,7 +40,8 @@ jobs:
     runs-on: ubuntu-latest
     # The *.integration.test.js suites reach a real database, since the schema, collation and
     # transaction guarantees they cover cannot be shown against a fake: Postgres for the entries that
-    # ask for it, MySQL for the modules still on it. Modules without such a suite ignore both.
+    # ask for it, MySQL for scene-metadata and as the source the mysqlImport suites read through
+    # mysql_fdw. Modules without such a suite ignore both.
     services:
       mysql:
         image: mysql:5.7
@@ -67,6 +68,8 @@ jobs:
       MYSQL_USER: root
       MYSQL_PASSWORD: sepal
       MYSQL_FILES_DIR: /var/lib/mysql-files
+      # How mysql_fdw inside the postgres container reaches MySQL; the tests reach both on 127.0.0.1
+      MYSQL_FDW_HOST: mysql
     strategy:
       fail-fast: false
       matrix:
@@ -106,12 +109,13 @@ jobs:
       # there and MySQL reads them back.
       - name: Let the runner write to the MySQL files directory
         run: sudo chmod 0777 "$MYSQL_FILES_DIR"
-      # SEPAL's own image, for its locale and extensions
+      # SEPAL's own image, for its locale and mysql_fdw. On the MySQL service's network, so the import
+      # tests' mysql_fdw reaches it by name.
       - name: Start Postgres
         if: matrix.postgres
         run: |
           docker build -t sepal-postgres -f modules/postgres/Dockerfile .
-          docker run -d --name postgres -p 127.0.0.1:5432:5432 \
+          docker run -d --name postgres --network "${{job.services.mysql.network}}" -p 127.0.0.1:5432:5432 \
             -e POSTGRES_PASSWORD="$POSTGRES_ROOT_PASSWORD" -e SEPAL_PASSWORD="$POSTGRES_PASSWORD" \
             -e POSTGRES_INITDB_ARGS="--locale-provider=builtin --builtin-locale=C.UTF-8" \
             sepal-postgres

@@ -4,7 +4,7 @@ import {gunzip} from 'node:zlib'
 import {ClientException} from '#sepal/exception'
 
 // Bounds both the upload and the document it decompresses to, so neither a large body nor a gzip bomb can
-// exhaust memory. Stays below MySQL's max_allowed_packet (128M), which caps what the contents column stores.
+// exhaust memory.
 export const MAX_RECIPE_BYTES = 100 * 1024 * 1024
 
 const gunzip$ = promisify(gunzip)

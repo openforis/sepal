@@ -10,7 +10,6 @@
   "gui": "gui",
   "worker": "worker",
   "scene": "scene",
-  "sceneMetadata": "scene-metadata",
   "storage": "storage",
   "taskManager": "task-manager",
   "terminal": "terminal",

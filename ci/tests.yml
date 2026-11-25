@@ -32,6 +32,12 @@ x-postgres: &postgres
     POSTGRES_PASSWORD: test
     POSTGRES_ROOT_PASSWORD: test-root
 
+# The modules on Postgres, whose import suites read MySQL through mysql_fdw, and the library holding that import
+x-databases: &databases
+  <<: *mysql
+  depends_on: {<<: [*mysql-depends-on, *postgres-depends-on]}
+  environment: {<<: [*mysql-environment, *postgres-environment]}
+
 x-check: &check
   context: ..
   dockerfile: ci/checks.dockerfile
@@ -76,9 +82,7 @@ services:
       retries: 60
 
   lib-js-shared:
-    <<: [*suite, *mysql]
-    depends_on: {<<: [*mysql-depends-on, *postgres-depends-on]}
-    environment: {<<: [*mysql-environment, *postgres-environment]}
+    <<: [*suite, *databases]
     image: "${COMPOSE_PROJECT_NAME}/lib-js-shared"
     build: {<<: *check, target: lib-js-shared}
 
@@ -102,7 +106,7 @@ services:
     image: "${COMPOSE_PROJECT_NAME}/app-manager"
 
   budget:
-    <<: [*suite, *mysql]
+    <<: [*suite, *databases]
     image: "${COMPOSE_PROJECT_NAME}/budget"
 
   email:
@@ -127,7 +131,7 @@ services:
     image: "${COMPOSE_PROJECT_NAME}/gui"
 
   message:
-    <<: [*suite, *mysql]
+    <<: [*suite, *databases]
     image: "${COMPOSE_PROJECT_NAME}/message"
 
   r-proxy:
@@ -135,7 +139,7 @@ services:
     image: "${COMPOSE_PROJECT_NAME}/r-proxy"
 
   recipe:
-    <<: [*suite, *mysql]
+    <<: [*suite, *databases]
     image: "${COMPOSE_PROJECT_NAME}/recipe"
 
   scene:
@@ -151,7 +155,7 @@ services:
     image: "${COMPOSE_PROJECT_NAME}/ssh-gateway"
 
   storage:
-    <<: [*suite, *mysql]
+    <<: [*suite, *databases]
     image: "${COMPOSE_PROJECT_NAME}/storage"
 
   task:
@@ -159,7 +163,7 @@ services:
     image: "${COMPOSE_PROJECT_NAME}/task"
 
   task-manager:
-    <<: [*suite, *mysql]
+    <<: [*suite, *databases]
     image: "${COMPOSE_PROJECT_NAME}/task-manager"
 
   terminal:
@@ -167,7 +171,7 @@ services:
     image: "${COMPOSE_PROJECT_NAME}/terminal"
 
   user:
-    <<: [*suite, *mysql]
+    <<: [*suite, *databases]
     image: "${COMPOSE_PROJECT_NAME}/user"
 
   user-assets:
@@ -179,7 +183,7 @@ services:
     image: "${COMPOSE_PROJECT_NAME}/user-files"
 
   worker:
-    <<: [*suite, *mysql]
+    <<: [*suite, *databases]
     image: "${COMPOSE_PROJECT_NAME}/worker"
 
 volumes:

@@ -4,7 +4,7 @@ import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
-import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
+import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 import {createTask, State, StateDescription} from './task.js'
 import {TaskRepository} from './taskRepository.js'
@@ -19,7 +19,7 @@ describe('TaskRepository', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createMysqlTestDb({name: 'task_manager_repository', migrations: MIGRATIONS_PATH})
+        testDb = await createTestDb({name: 'task_manager_repository', migrations: MIGRATIONS_PATH})
     })
 
     beforeEach(async () => {
@@ -40,6 +40,14 @@ describe('TaskRepository', () => {
             await repository.getTask(task.id),
             {id: task.id, state: State.PENDING, params: task.params, statusDescription: StateDescription.PENDING}
         )
+    })
+
+    test('loads params that are a top-level array back as the array', async () => {
+        const task = aTask({params: [{image: 'a'}, {image: 'b'}]})
+
+        await repository.insert(task)
+
+        assert.deepEqual((await repository.getTask(task.id)).params, task.params)
     })
 
     test('answers nothing for a task it does not hold', async () => {

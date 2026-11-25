@@ -1,21 +1,25 @@
+CREATE EXTENSION IF NOT EXISTS citext;
+
 CREATE TABLE IF NOT EXISTS message (
-  id            VARCHAR(36)  NOT NULL,
-  username      VARCHAR(32)  COLLATE ascii_general_ci NOT NULL,
-  subject       VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
-  contents      LONGTEXT     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
-  type          VARCHAR(63)  NOT NULL,
-  creation_time TIMESTAMP    NOT NULL,
-  update_time   TIMESTAMP    NOT NULL,
-  removed       BOOLEAN      NOT NULL DEFAULT FALSE,
-  priority      INT          NOT NULL DEFAULT 0,
-  PRIMARY KEY (id),
-  INDEX idx_message_1 (removed, creation_time) USING BTREE
+  id            varchar(36)  NOT NULL,
+  username      citext       NOT NULL CHECK (char_length(username) <= 32),
+  subject       varchar(255) NOT NULL,
+  contents      text         NOT NULL,
+  type          varchar(63)  NOT NULL,
+  creation_time timestamptz(0) NOT NULL,
+  update_time   timestamptz(0) NOT NULL,
+  removed       boolean      NOT NULL DEFAULT FALSE,
+  priority      integer      NOT NULL DEFAULT 0,
+  PRIMARY KEY (id)
 );
 
+CREATE INDEX message_idx_message_1 ON message (removed, creation_time);
+
 CREATE TABLE IF NOT EXISTS notification (
-  message_id VARCHAR(36)  NOT NULL,
-  username   VARCHAR(32)  COLLATE ascii_general_ci NOT NULL,
-  state      VARCHAR(16)  NOT NULL,
-  PRIMARY KEY (message_id, username),
-  INDEX idx_notification_1 (username, message_id) USING BTREE
+  message_id varchar(36) NOT NULL,
+  username   citext      NOT NULL CHECK (char_length(username) <= 32),
+  state      varchar(16) NOT NULL,
+  PRIMARY KEY (message_id, username)
 );
+
+CREATE INDEX notification_idx_notification_1 ON notification (username, message_id);

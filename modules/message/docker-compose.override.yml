@@ -11,3 +11,5 @@ services:
       - ${SEPAL_PROJECT_DIR}/modules/message/lib/shared/node_modules:/usr/local/src/sepal/lib/js/shared/node_modules
       # module
       - ${SEPAL_PROJECT_DIR}/modules/message:/usr/local/src/sepal/modules/message
+    environment:
+      POSTGRES_ROOT_PASSWORD: "${POSTGRES_ROOT_PASSWORD}"

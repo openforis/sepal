@@ -1,11 +1,13 @@
 # CLAUDE.md - modules/worker
 
 SEPAL worker service (Node.js). Provisions worker instances and manages sandbox sessions. Owns the single
-`worker` MySQL schema via Postgrator. Export tasks belong to `task-manager`.
+`worker` Postgres database via Postgrator. Export tasks belong to `task-manager`.
 
 ## Database migrations
 
-`migrations/` holds the portable schema stream. `migrations/legacy-import/` holds the one-off copy from `sdms`. Startup and import cleanup are described in [docs/database-migrations.md](../../docs/database-migrations.md).
+`migrations/` holds the Postgres schema stream and `mysql-import.sql`, the one-off copy of the MySQL `worker`
+database run by `importFromMysql` on startup while `MYSQL_HOST` is set. `migrations-mysql/` is the MySQL schema,
+kept as the import test's source fixture.
 
 ## Commands
 - `npm test` — Node test runner
@@ -95,7 +97,7 @@ The `worker` container restarts routinely — a deploy, an OOM kill, and in dev 
 on every file save. Instance management recovers through these mechanisms:
 
 - **The boot fails loudly.** A rejected `main()` exits non-zero so the Docker restart policy retries it.
-  Left to log and hang, the process stayed alive on the MySQL pool's handles with no HTTP server,
+  Left to log and hang, the process stayed alive on the database pool's handles with no HTTP server,
   and Compose does not act on a failing healthcheck.
 - **`provider.restore(instances)`** (`workerInstance/index.js`, before `backfillClaims`) hands the
   open sessions' instances back to a provider that keeps its world in memory. The LOCAL provider
@@ -274,16 +276,14 @@ running sessions, via the `budget.UserBudgetExceeded` subscriber in `main.js`.
 
 ## Database schema
 
-The `worker` schema holds:
+The `worker` database holds (usernames are `citext`, so they compare without regard to case):
 
 - `worker_session`: persisted sessions, deadlines, API keys and instance references.
 - `session_app`: `(username, app_path)` key mapped to `session_id`, `label` and nullable browser `client_id`.
   Application code removes rows when their session closes; there is no database foreign key. Client-down
   handling dissociates owned rows; ownerless rows are not swept by that event.
-- `instance_claim`: `(instance_id, session_id, claimed_at)`, one claim per instance. Hosting-service inventory
-  remains authoritative for instance state.
-- `task`: historical rows retained solely for task-manager's one-off import from `worker.task`. Keep the
-  worker's import from `sdms` until task-manager's import has completed everywhere; drop the table later.
+- `instance_claim`: `(instance_id, session_id, claimed_at, recovery_started_at)`, one claim per instance.
+  Hosting-service inventory remains authoritative for instance state.
+- `instance_usage_sample` / `instance_usage_hourly`: the sampler's per-tick readings and their hourly rollup.
 
-Budget and scene metadata have their own schemas. Legacy reliable-message-bus and access-control tables in
-`sdms` are not worker tables. Migration streams and cleanup are owned by the guide linked above.
+Budget and scene metadata have their own databases.

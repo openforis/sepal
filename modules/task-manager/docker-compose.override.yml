@@ -13,3 +13,4 @@ services:
       - ${SEPAL_PROJECT_DIR}/modules/task-manager:/usr/local/src/sepal/modules/task-manager
     environment:
       SEPAL_HOST_PROJECT_DIR: "${SEPAL_PROJECT_DIR}"
+      POSTGRES_ROOT_PASSWORD: "${POSTGRES_ROOT_PASSWORD}"

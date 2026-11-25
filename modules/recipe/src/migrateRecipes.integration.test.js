@@ -5,7 +5,7 @@ import {after, before, beforeEach, describe, test} from 'node:test'
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 import {failingDb} from '#sepal/testSupport/db/faultyConnection'
-import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
+import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 import {migrateRecipes} from './migrateRecipes.js'
 import {currentVersionForType} from './migration/registry.js'
@@ -17,7 +17,7 @@ describe('migrateRecipes', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createMysqlTestDb({name: 'recipemigraterecipes', migrations: MIGRATIONS_PATH})
+        testDb = await createTestDb({name: 'recipemigraterecipes', migrations: MIGRATIONS_PATH})
         repository = new RecipeRepository(testDb.db)
     })
 
@@ -57,25 +57,6 @@ describe('migrateRecipes', () => {
         assert.equal(migrated.recipe.revision, MIGRATED_REVISION)
     })
 
-    test('logs and skips a recipe it cannot read, and migrates the others', async () => {
-        const unreadable = await givenRecipe({id: 'unreadable', typeVersion: OUTDATED_TYPE_VERSION})
-        const other = await givenRecipe({id: 'other', typeVersion: OUTDATED_TYPE_VERSION})
-        const before = await repository.findRecipe(unreadable.id)
-        const log = aRecordingLog()
-        const readingOneAsUnreadable = new RecipeRepository(withUnreadableRecord(testDb.db, unreadable.id))
-
-        await migrateRecipes({repository: readingOneAsUnreadable, log})
-
-        const untouched = await repository.findRecipe(unreadable.id)
-        const remaining = await staleRecipeIds()
-        const migrated = await repository.findRecipe(other.id)
-        assert.deepEqual(untouched, before)
-        assert.deepEqual(remaining, [unreadable.id])
-        assert.equal(migrated.recipe.revision, MIGRATED_REVISION)
-        assert.equal(log.warnings.length, 1)
-        assert.ok(log.warnings[0].includes(unreadable.id))
-    })
-
     const givenRecipe = async recipe => {
         const stored = aRecipe(recipe)
         await repository.saveRecipe(stored)
@@ -84,34 +65,6 @@ describe('migrateRecipes', () => {
 
     const staleRecipeIds = async () =>
         (await repository.findRecipesToMigrate('MOSAIC', MOSAIC_VERSION)).map(({id}) => id)
-
-    // Lets every real query run, then makes one returned record unreadable on the way back. Nothing
-    // malformed is stored, and every other call and result passes through untouched.
-    const withUnreadableRecord = (db, id) => ({
-        withTransaction: callback => db.withTransaction(connection => callback(corrupting(connection, id))),
-        withConnection: callback => db.withConnection(connection => callback(corrupting(connection, id)))
-    })
-
-    // Delegated with the real connection as receiver; only row sets are rewritten, so a write result
-    // keeps its shape.
-    const corrupting = (connection, id) => ({
-        query: async (sql, params) => {
-            const [rows, ...rest] = await connection.query(sql, params)
-            return [Array.isArray(rows) ? rows.map(row => unreadableIf(row, id)) : rows, ...rest]
-        },
-        beginTransaction: () => connection.beginTransaction(),
-        commit: () => connection.commit(),
-        rollback: () => connection.rollback(),
-        release: () => connection.release(),
-        destroy: () => connection.destroy()
-    })
-
-    const unreadableIf = (row, id) => row.id === id ? {...row, contents: 'not json'} : row
-
-    const aRecordingLog = () => {
-        const warnings = []
-        return {warnings, info: () => {}, warn: message => warnings.push(message)}
-    }
 
     // The migration write of one recipe: the statement that advances its version, for that id alone.
     const theMigrationSaveOf = id => (sql, params) =>

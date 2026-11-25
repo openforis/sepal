@@ -4,13 +4,13 @@ import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
-import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
+import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 import {SessionAppRepository} from './sessionAppRepository.js'
 import {createWorkerSession, State} from './workerSession.js'
 import {WorkerSessionRepository} from './workerSessionRepository.js'
 
-// The (username, app_path) key that makes an app permanent for the life of a session is MySQL's own.
+// The (username, app_path) key that makes an app permanent for the life of a session is the database's own.
 
 describe('SessionAppRepository', () => {
     let testDb
@@ -20,7 +20,7 @@ describe('SessionAppRepository', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createMysqlTestDb({name: 'worker_session_app', migrations: MIGRATIONS_PATH})
+        testDb = await createTestDb({name: 'worker_session_app', migrations: MIGRATIONS_PATH})
     })
 
     beforeEach(async () => {
@@ -211,7 +211,7 @@ describe('SessionAppRepository', () => {
 
     // The one column a read returns only after a case-insensitive comparison has already matched it.
     const storedUsernames = async () => {
-        const [rows] = await testDb.query('SELECT username FROM session_app ORDER BY username')
+        const {rows} = await testDb.query('SELECT username FROM session_app ORDER BY username')
         return rows.map(({username}) => username)
     }
 

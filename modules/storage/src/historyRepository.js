@@ -3,9 +3,11 @@ import {storedUsername} from '#sepal/username'
 
 const log = getLogger('database')
 
-// Every operation is a single statement, so none of them needs a transaction. `addEvent` additionally holds
-// a MySQL named lock, which is session-scoped: acquiring, writing and releasing all have to happen on the
-// one connection `withConnection` scopes.
+const LOCK_TIMEOUT = '5s'
+
+// `addEvent` holds a transaction-scoped advisory lock per user, so the check against the latest event and
+// the insert cannot interleave with another writer for the same user. The other operations are single
+// statements.
 export class HistoryRepository {
     #db
 
@@ -15,30 +17,31 @@ export class HistoryRepository {
 
     addEvent({username, event}) {
         log.debug(`Adding event to ${username}: ${event}`)
-        const lockName = `user_history_${username}`
-        return this.#db.withConnection(async connection => {
-            await connection.query('SELECT GET_LOCK(?, 5) AS got_lock', [lockName])
-            const [results, _fields] = await connection.query(`
+        return this.#db.withTransaction(async connection => {
+            await connection.query(`SET LOCAL lock_timeout = '${LOCK_TIMEOUT}'`)
+            await connection.query('SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))', [`user_history_${storedUsername(username)}`])
+            // Stamped after the lock wait, not at the transaction's start. Events within one second share a
+            // timestamp, so the id decides which is the latest.
+            const {rowCount} = await connection.query(`
                 INSERT INTO history
                 (username, event, timestamp)
-                SELECT ?, ?, NOW()
+                SELECT $1::text, $2::text, statement_timestamp()
                 WHERE COALESCE((
                     SELECT event
                     FROM history
-                    WHERE username = ?
-                    ORDER BY timestamp DESC
+                    WHERE username = $1
+                    ORDER BY timestamp DESC, id DESC
                     LIMIT 1
-                ), '') <> ?;
-            `, [storedUsername(username), event, username, event])
-            await connection.query('SELECT RELEASE_LOCK(?)', [lockName])
-            return results
+                ), '') <> $2
+            `, [storedUsername(username), event])
+            return rowCount
         })
     }
 
     getMostRecentEvents() {
         log.debug('Getting most recent event for any user')
         return this.#db.withConnection(async connection => {
-            const [results, _fields] = await connection.query(`
+            const {rows} = await connection.query(`
                 SELECT t.id, t.username, t.event, t.timestamp
                 FROM history t
                 INNER JOIN (
@@ -48,7 +51,7 @@ export class HistoryRepository {
                 ) AS sub
                 ON t.username = sub.username AND t.id = sub.max_id
             `)
-            return results.reduce((acc, {username, event, timestamp}) => {
+            return rows.reduce((acc, {username, event, timestamp}) => {
                 acc[username] = {event, timestamp}
                 return acc
             }, {})
@@ -58,30 +61,23 @@ export class HistoryRepository {
     getUserEvents(username) {
         log.debug(`Getting events for user: ${username}`)
         return this.#db.withConnection(async connection => {
-            const [results, _fields] = await connection.query(`
+            const {rows} = await connection.query(`
                 SELECT event, timestamp
                 FROM (
                     SELECT
-                        username,
                         event,
                         timestamp,
-                        @prev_event := @current_event AS prev_event,
-                        @current_event := event AS current_event,
-                        @row_num := IF(@prev_event = event, @row_num + 1, 1) AS row_num
-                    FROM (
-                        SELECT username, event, timestamp
-                        FROM history
-                        WHERE username = ?
-                        AND event != 'INACTIVE_UNKNOWN'
-                        ORDER BY timestamp DESC
-                    ) AS filtered_events
-                    CROSS JOIN (SELECT @current_event := '', @prev_event := '', @row_num := 0) AS vars
+                        id,
+                        LAG(event) OVER (ORDER BY timestamp DESC, id DESC) AS prev_event
+                    FROM history
+                    WHERE username = $1
+                    AND event != 'INACTIVE_UNKNOWN'
                 ) AS numbered_events
-                WHERE row_num = 1
-                ORDER BY timestamp DESC
+                WHERE prev_event IS DISTINCT FROM event
+                ORDER BY timestamp DESC, id DESC
                 LIMIT 10
             `, [username])
-            return results
+            return rows
         })
     }
 }

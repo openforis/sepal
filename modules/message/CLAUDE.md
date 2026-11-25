@@ -1,11 +1,11 @@
 # CLAUDE.md - modules/message
 
 System messages (admin) and per-user read/unread state ("notifications").
-Owns the `message` MySQL schema (`message.message`, `message.notification`).
+Owns the `message` Postgres schema (`message.message`, `message.notification`).
 
 ## Database migrations
 
-`migrations/` holds the portable schema stream; there is no legacy import. Startup is described in
+`migrations/` holds the Postgres schema stream and `mysql-import.sql`, the one-time copy from the MySQL `message` database; `migrations-mysql/` keeps the MySQL schema as the import test's source. Startup is described in
 [docs/database-migrations.md](../../docs/database-migrations.md).
 
 ## Commands

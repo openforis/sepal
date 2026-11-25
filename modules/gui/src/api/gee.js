@@ -243,14 +243,14 @@ export default {
         }),
 
     scenesInSceneArea$: ({sceneAreaId, dates, sources, sceneSelectionOptions}) =>
-        get$(`/api/scene-metadata/sceneareas/${sceneAreaId}`, {
+        get$(`/api/scene/sceneareas/${sceneAreaId}`, {
             query: {
                 query: JSON.stringify({dates, sources, sceneSelectionOptions})
             }
         }),
 
     autoSelectScenes$: ({sceneAreaIds, sources, dates, sceneSelectionOptions, sceneCount, cloudCoverTarget}) =>
-        post$('/api/scene-metadata/best-scenes', {
+        post$('/api/scene/best-scenes', {
             body: {
                 query: JSON.stringify({
                     sceneAreaIds, sources, dates, sceneSelectionOptions, sceneCount, cloudCoverTarget

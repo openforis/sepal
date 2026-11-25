@@ -5,6 +5,7 @@ services:
       service: logger
     environment:
       RECAPTCHA_OPTIONAL: "true"  # dev/test only: bypass reCAPTCHA (no browser tokens). Prod (base compose) leaves it unset -> config.js defaults to false -> calls Google.
+      POSTGRES_ROOT_PASSWORD: "${POSTGRES_ROOT_PASSWORD}"
     volumes:  # To allow dynamic reloading in dev
       - "${SEPAL_DATA_DIR}/sepal/home:/sepal/home"
       # lib/shared

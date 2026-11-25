@@ -5,8 +5,6 @@
 
 import {storedUsername} from '#sepal/username'
 
-import {placeholders} from '../sql.js'
-
 export class SessionAppRepository {
     #db
     #clock
@@ -23,12 +21,12 @@ export class SessionAppRepository {
         return this.#db.withConnection(async connection => {
             await connection.query(
                 `INSERT INTO session_app(username, app_path, session_id, label, client_id, creation_time)
-                    VALUES(?, ?, ?, ?, ?, ?)
-                    ON DUPLICATE KEY UPDATE
-                        session_id = VALUES(session_id),
-                        label = VALUES(label),
-                        client_id = VALUES(client_id),
-                        creation_time = VALUES(creation_time)`,
+                    VALUES($1, $2, $3, $4, $5, $6)
+                    ON CONFLICT (username, app_path) DO UPDATE SET
+                        session_id = EXCLUDED.session_id,
+                        label = EXCLUDED.label,
+                        client_id = EXCLUDED.client_id,
+                        creation_time = EXCLUDED.creation_time`,
                 [storedUsername(username), appPath, sessionId, label ?? null, clientId ?? null, this.#clock()]
             )
         })
@@ -39,7 +37,7 @@ export class SessionAppRepository {
     setClient({username, appPath, clientId}) {
         return this.#db.withConnection(async connection => {
             await connection.query(
-                'UPDATE session_app SET client_id = ? WHERE username = ? AND app_path = ?',
+                'UPDATE session_app SET client_id = $1 WHERE username = $2 AND app_path = $3',
                 [clientId ?? null, username, appPath]
             )
         })
@@ -48,11 +46,11 @@ export class SessionAppRepository {
     // `status` is the raw worker_session.state, 'PENDING' or 'ACTIVE'.
     userAppSessions(username) {
         return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query(
+            const {rows} = await connection.query(
                 `SELECT sa.app_path, sa.label, sa.session_id, ws.host, ws.state, ws.instance_type
                     FROM session_app sa
                     JOIN worker_session ws ON ws.id = sa.session_id
-                    WHERE sa.username = ? AND ws.state IN (?, ?)`,
+                    WHERE sa.username = $1 AND ws.state IN ($2, $3)`,
                 [username, 'PENDING', 'ACTIVE']
             )
             return rows.map(row => ({
@@ -72,12 +70,12 @@ export class SessionAppRepository {
         }
         return this.#db.withConnection(async connection => {
             const map = new Map()
-            const [rows] = await connection.query(
+            const {rows} = await connection.query(
                 `SELECT session_id, app_path, label
                     FROM session_app
-                    WHERE session_id IN (${placeholders(sessionIds.length)})
+                    WHERE session_id = ANY($1)
                     ORDER BY creation_time`,
-                sessionIds
+                [sessionIds]
             )
             for (const row of rows) {
                 const apps = map.get(row.session_id) ?? []
@@ -91,7 +89,7 @@ export class SessionAppRepository {
     deleteForSession(sessionId) {
         return this.#db.withConnection(async connection => {
             await connection.query(
-                'DELETE FROM session_app WHERE session_id = ?',
+                'DELETE FROM session_app WHERE session_id = $1',
                 [sessionId]
             )
         })
@@ -101,15 +99,15 @@ export class SessionAppRepository {
     // which the dissociation event needs; nothing to remove is an idempotent no-op, not an error.
     dissociate({username, appPath}) {
         return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query(
-                'SELECT session_id, client_id FROM session_app WHERE username = ? AND app_path = ?',
+            const {rows} = await connection.query(
+                'SELECT session_id, client_id FROM session_app WHERE username = $1 AND app_path = $2',
                 [username, appPath]
             )
             if (rows.length === 0) {
                 return null
             }
             await connection.query(
-                'DELETE FROM session_app WHERE username = ? AND app_path = ?',
+                'DELETE FROM session_app WHERE username = $1 AND app_path = $2',
                 [username, appPath]
             )
             return {sessionId: rows[0].session_id, clientId: rows[0].client_id}
@@ -120,15 +118,15 @@ export class SessionAppRepository {
     // events.
     dissociateForClient({username, clientId}) {
         return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query(
-                'SELECT app_path, session_id FROM session_app WHERE username = ? AND client_id = ?',
+            const {rows} = await connection.query(
+                'SELECT app_path, session_id FROM session_app WHERE username = $1 AND client_id = $2',
                 [username, clientId]
             )
             if (rows.length === 0) {
                 return []
             }
             await connection.query(
-                'DELETE FROM session_app WHERE username = ? AND client_id = ?',
+                'DELETE FROM session_app WHERE username = $1 AND client_id = $2',
                 [username, clientId]
             )
             return rows.map(row => ({appPath: row.app_path, sessionId: row.session_id}))

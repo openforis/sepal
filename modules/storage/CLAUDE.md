@@ -4,12 +4,12 @@ Monitors user storage quota and usage. Tracks inactivity, sends notifications, m
 
 ## Database migrations
 
-`migrations/` holds the portable schema stream and `migrations/legacy-import/` the one-off copy from the `user_storage` database this module used before the rename. Startup and import cleanup are described in [docs/database-migrations.md](../../docs/database-migrations.md).
+`migrations/` holds the Postgres schema stream and `mysql-import.sql`, the one-time copy from the MySQL `storage` database; `migrations-mysql/` keeps the MySQL schema as the import test's source. Startup and import cleanup are described in [docs/database-migrations.md](../../docs/database-migrations.md).
 
 ## Commands
 
 ```bash
-npm test              # Node test runner; the *.integration.test.js suites need a reachable MySQL
+npm test              # Node test runner; the *.integration.test.js suites need reachable Postgres and MySQL
 npm run testWatch     # Node test runner watch mode
 ```
 
@@ -44,13 +44,12 @@ Subscribers:
 - `GET /userEvents?username=X` - Event history for user
 
 ### Database
-MySQL (`storage` schema):
+Postgres (`storage` database):
 - Table: `history` - Records `(username, event, timestamp)` with deduplication
-- `src/db.js` runs the schema and legacy-import migrations and returns the shared callback db; `src/historyRepository.js` holds it
+- `src/db.js` runs the schema migrations and the MySQL import and returns the shared callback db; `src/historyRepository.js` holds it
   and owns every statement against `history`. Nothing else reaches the pool.
-- `addEvent` uses `GET_LOCK()`/`RELEASE_LOCK()` on one connection for concurrent access safety. Known defects
-  in that locking are recorded in [docs/database-migrations.md](../../docs/database-migrations.md) and are
-  not addressed here.
+- `addEvent` takes a transaction-scoped advisory lock (`pg_advisory_xact_lock`) per user, so concurrent writes
+  for one user serialize and the lock is released on commit or rollback.
 - Migration: `migrations/001.do.schema.sql`
 
 ### Session Tracking

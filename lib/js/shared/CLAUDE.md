@@ -9,10 +9,11 @@ module's service container: those carry a copy of the repo baked into the image,
 stale sources.
 
 The `*.integration.test.js` files under `src/db` and `src/testSupport/db` need a reachable Postgres and a
-role with `CREATEDB` (`POSTGRES_*`, plus `POSTGRES_ROOT_PASSWORD` for `testDb`); the `mysql.*` and
-`mysqlTestDb` ones need a reachable MySQL with credentials that can create databases and accounts. In
-dev-env, run single Postgres files in the `scene` container and MySQL ones in `message`: both mount this
-library's `src` (but not its `test/`). `src/gdal` shells out to Python 3 with GDAL.
+role with `CREATEDB` (`POSTGRES_*`, plus `POSTGRES_ROOT_PASSWORD` for `testDb`); the MySQL import and the
+`mysql.*` and `mysqlTestDb` ones also need a reachable MySQL with credentials that can create databases and
+accounts, and `MYSQL_FDW_HOST` when `mysql_fdw` reaches it under another name. Dev-env provides both in the
+`message` container, which mounts this library's `src` (but not its `test/`), so run single `src/db` files
+there. `src/gdal` shells out to Python 3 with GDAL.
 
 ## Module map
 
@@ -27,8 +28,9 @@ library's `src` (but not its `test/`). `src/gdal` shells out to Python 3 with GD
 | `rxjs.js` | Operators: `autoRetry`, `finalizeObservable`, `promise$`, `lastInWindow`, `repeating`, `swallow` |
 | `rxjs/subscriberContext.js` | `inSubscriberContext(source$)`: delivers next, error and complete in the async context each subscriber subscribed in. Used by `service.js` and `RecipeScope`'s shared reads. Node only: keep it out of modules browser code imports |
 | `exception.js` | `Exception` base with `ServerException` (500), `ClientException` (400), `NotFoundException` (404) |
-| `db/mysql.js` | mysql2/promise wrapper for the modules still on MySQL: `createConnection`, `createPool`, `createDb`, `initDb`, `migrateDb`. Postgrator schema versioning. Reads `MYSQL_HOST`, `MYSQL_USER`, `MYSQL_PASSWORD` from env |
+| `db/mysql.js` | mysql2/promise wrapper for `scene-metadata` and `testSupport/db/mysqlTestDb.js`: `createConnection`, `createPool`, `createDb`, `initDb`, `migrateDb`. Postgrator schema versioning. Reads `MYSQL_HOST`, `MYSQL_USER`, `MYSQL_PASSWORD` from env |
 | `db/postgres.js` | node-postgres wrapper with the same API as `db/mysql.js`, plus `isUniqueViolation`. Sets process-wide type parsers on import: int8 to `Number` (out-of-safe-range values fail the query), numeric stays a string. `migrateDb` holds an advisory lock per history table so concurrent migrations take turns. Reads `POSTGRES_HOST`, `POSTGRES_USER`, `POSTGRES_PASSWORD` |
+| `db/mysqlImport.js` | `importFromMysql({dbName, sourceDb, sqlPath, fingerprint, mysql?})`: copies a module's MySQL database into its migrated Postgres database through `mysql_fdw` once, in one transaction, recorded in `mysql_import`; later starts fail with `StaleImportError` when MySQL changed since (per-table fingerprint: row count plus max of a column, or `CONTENTS`), and with `MissingSourceError` when the source database is gone or its tables lost every row, where a reimport would discard the Postgres data. Import SQL reads `mysql_source.<table>`; `TIMESTAMP` arrives as the right `timestamptz` and is copied as is; `ENUM` arrives as text. Retired with MySQL |
 | `event/definitions.js` | System event constants used by gateway WebSocket routing |
 | `service/registry.js` | `addServices([...])` registers handlers, `getServiceHandler$(name)` retrieves them |
 
@@ -47,7 +49,7 @@ and test-support modules are exempt.
   refused. Provisions as the `postgres` superuser with `POSTGRES_ROOT_PASSWORD`. Import as
   `#sepal/testSupport/db/testDb`.
 - `testSupport/db/mysqlTestDb.js` — `createMysqlTestDb`, the same contract against MySQL, for the suites
-  of modules still on MySQL. Retired with MySQL.
+  of `scene-metadata` and the MySQL import tests. Retired with MySQL.
 - `testSupport/db/faultyConnection.js` — `failingDb(db, {when, error})` fails the first statement matching
   `when(sql, params)` in each decorated callback, leaving the real database and the production transaction
   handling in place.

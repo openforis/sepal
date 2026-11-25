@@ -4,12 +4,11 @@ import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
-import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
+import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 import {OpenSessionUseRepository} from './openSessionUse.js'
 
-// The upserts these operations rely on are MySQL's own. Direct SQL appears only for the columns no read
-// returns: the username, instance type and times a placeholder row must end up carrying.
+// Direct SQL appears only for the columns no read returns: the username, instance type and times a placeholder row must end up carrying.
 
 describe('OpenSessionUseRepository', () => {
     let testDb
@@ -17,7 +16,7 @@ describe('OpenSessionUseRepository', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createMysqlTestDb({name: 'budget_session_use', migrations: MIGRATIONS_PATH})
+        testDb = await createTestDb({name: 'budget_session_use', migrations: MIGRATIONS_PATH})
     })
 
     beforeEach(async () => {
@@ -187,7 +186,7 @@ describe('OpenSessionUseRepository', () => {
     // Only for the columns no operation returns: who the session belonged to, what it ran on, and when it
     // started and ended.
     const storedSession = async sessionId => {
-        const [rows] = await testDb.query('SELECT * FROM open_session_use WHERE session_id = ?', [sessionId])
+        const {rows} = await testDb.query('SELECT * FROM open_session_use WHERE session_id = $1', [sessionId])
         return rows[0]
     }
 

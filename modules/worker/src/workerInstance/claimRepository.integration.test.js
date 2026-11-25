@@ -5,7 +5,7 @@ import {after, before, beforeEach, describe, mock, test} from 'node:test'
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 import {failingDb} from '#sepal/testSupport/db/faultyConnection'
-import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
+import {createTestDb} from '#sepal/testSupport/db/testDb'
 import {callsOf} from '#sepal/testSupport/mock'
 
 import {createLocalInstanceProvider} from '../hostingService/local/localInstanceProvider.js'
@@ -16,7 +16,7 @@ import {createInstanceManager} from './instanceManager.js'
 import {createProvisioningRegistry} from './provisioningRegistry.js'
 
 // The claim is the allocation arbiter, so it is exercised against the real primary key: whether two
-// simultaneous claims produce one winner is a property of MySQL, not of this code. The suite therefore
+// simultaneous claims produce one winner is a property of the database, not of this code. The suite therefore
 // takes two connections — the one case the single-connection default cannot express.
 
 describe('ClaimRepository', () => {
@@ -25,7 +25,7 @@ describe('ClaimRepository', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createMysqlTestDb({name: 'worker_claim', migrations: MIGRATIONS_PATH, connections: 2})
+        testDb = await createTestDb({name: 'worker_claim', migrations: MIGRATIONS_PATH, connections: 2})
     })
 
     beforeEach(async () => {
@@ -121,7 +121,7 @@ describe('ClaimRepository', () => {
             await repository.startRecovery(INSTANCE_ID, SESSION_ID)
             await repository.claim(ANOTHER_INSTANCE_ID, ANOTHER_SESSION_ID)
             await testDb.query(
-                'UPDATE instance_claim SET claimed_at = DATE_SUB(NOW(), INTERVAL 11 MINUTE) WHERE instance_id = ?',
+                'UPDATE instance_claim SET claimed_at = now() - make_interval(mins => 11) WHERE instance_id = $1',
                 [ANOTHER_INSTANCE_ID]
             )
             const recoveredClaims = new ClaimRepository(testDb.db)
@@ -151,7 +151,7 @@ describe('ClaimRepository', () => {
 
             scenario.confirmTerminated()
             await testDb.query(
-                'UPDATE instance_claim SET claimed_at = DATE_SUB(NOW(), INTERVAL 11 MINUTE) WHERE instance_id = ?',
+                'UPDATE instance_claim SET claimed_at = now() - make_interval(mins => 11) WHERE instance_id = $1',
                 [INSTANCE_ID]
             )
             await worker.instanceManager.reclaimStaleClaims([{id: ANOTHER_SESSION_ID}], 10 * 60_000)
@@ -216,12 +216,12 @@ describe('ClaimRepository', () => {
     })
 
     for (const outcome of ['success', 'failure before commit', 'committed response lost']) {
-        test(`a late release joins a real MySQL gone-claim DELETE: ${outcome}`, {timeout: 10000}, async () => {
+        test(`a late release joins a real Postgres gone-claim DELETE: ${outcome}`, {timeout: 10000}, async () => {
             const provider = createLocalInstanceProvider()
             const [instance] = provider.launchIdle('T3aSmall', 1)
             await repository.claim(instance.id, SESSION_ID)
             await testDb.query(
-                'UPDATE instance_claim SET claimed_at = DATE_SUB(NOW(), INTERVAL 11 MINUTE) WHERE instance_id = ?',
+                'UPDATE instance_claim SET claimed_at = now() - make_interval(mins => 11) WHERE instance_id = $1',
                 [instance.id]
             )
             const deleting = Promise.withResolvers()

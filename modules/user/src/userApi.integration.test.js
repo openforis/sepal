@@ -4,7 +4,7 @@ import {after, before, beforeEach, describe, mock, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
-import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
+import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 // userApi -> email/googleOAuth/recaptcha -> config.js (commander). Mock config before importing the chain.
 mock.module('./config.js', {
@@ -38,7 +38,7 @@ describe('UserApi', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createMysqlTestDb({name: 'user_api', migrations: MIGRATIONS_PATH, connections: 2})
+        testDb = await createTestDb({name: 'user_api', migrations: MIGRATIONS_PATH, connections: 2})
     })
 
     beforeEach(async () => {
@@ -194,7 +194,7 @@ describe('UserApi', () => {
         ['cannot undo a password change after its token check', async () =>
             repository.updatePassword(USERNAME, await hashPassword('another-new-password'))],
         ['cannot use a token that expires after its token check', () => testDb.query(
-            'UPDATE sepal_user SET token_generation_time = NOW() - INTERVAL 25 HOUR WHERE username = ?', [USERNAME]
+            'UPDATE sepal_user SET token_generation_time = now() - make_interval(hours => 25) WHERE username = $1', [USERNAME]
         )]
     ]) {
         test(`a password reset ${name}`, async t => {
@@ -290,10 +290,11 @@ describe('UserApi', () => {
     // An active user with a POSIX identity in the NSS range — the shape the legacy import left behind,
     // which no operation here can write.
     const givenActiveUser = async ({passwordHash, admin = false} = {}) => {
-        await testDb.query('INSERT INTO sepal_user SET ?', [{
-            username: USERNAME, name: 'Bob', email: EMAIL, admin, system_user: 0, status: 'ACTIVE',
-            uid: 10001, gid: 10001, password_hash: passwordHash ?? await hashPassword(PASSWORD)
-        }])
+        await testDb.query(
+            `INSERT INTO sepal_user (username, name, email, admin, "system_user", status, uid, gid, password_hash)
+             VALUES ($1, 'Bob', $2, $3, false, 'ACTIVE', 10001, 10001, $4)`,
+            [USERNAME, EMAIL, admin, passwordHash ?? await hashPassword(PASSWORD)]
+        )
     }
 
     const aContext = (over = {}) => ({

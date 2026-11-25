@@ -4,7 +4,7 @@ import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
-import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
+import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 import {BudgetRepository} from './budgetRepository.js'
 import {budget, storageUse, userSpendingReport} from './dto.js'
@@ -22,7 +22,7 @@ describe('BudgetRepository', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createMysqlTestDb({name: 'budget_repository', migrations: MIGRATIONS_PATH})
+        testDb = await createTestDb({name: 'budget_repository', migrations: MIGRATIONS_PATH})
     })
 
     beforeEach(async () => {
@@ -136,7 +136,7 @@ describe('BudgetRepository', () => {
             await repository.updateUserStorageUse(OWNER, storageUse({gbHours: 30, gb: 5, updateTime: at('06-20')}))
 
             const use = await repository.userStorageUse(OWNER, 2026, 6)
-            const [rows] = await testDb.query('SELECT COUNT(*) c FROM user_monthly_storage')
+            const {rows} = await testDb.query('SELECT COUNT(*) AS c FROM user_monthly_storage')
             assert.equal(use.gbHours, 30)
             assert.equal(use.gb, 5)
             assert.equal(use.updateTime.getTime(), at('06-20').getTime())
@@ -295,7 +295,7 @@ describe('BudgetRepository', () => {
             await repository.updateDefaultBudget(budget({instanceSpending: 10, storageSpending: 20, storageQuota: 30}))
 
             const found = await repository.userBudget('nobody')
-            const [rows] = await testDb.query('SELECT COUNT(*) c FROM default_user_budget')
+            const {rows} = await testDb.query('SELECT COUNT(*) AS c FROM default_user_budget')
             assert.deepEqual(found, {instanceSpending: 10, storageSpending: 20, storageQuota: 30})
             assert.equal(rows[0].c, 1)
         })
@@ -317,7 +317,7 @@ describe('BudgetRepository', () => {
     // Only for the figures the request DTO leaves out: what the budget was when it was opened, and what
     // it became when it was granted.
     const storedRequests = async username => {
-        const [rows] = await testDb.query('SELECT * FROM budget_update_request WHERE username = ?', [username])
+        const {rows} = await testDb.query('SELECT * FROM budget_update_request WHERE username = $1', [username])
         return rows
     }
 

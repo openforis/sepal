@@ -31,6 +31,7 @@
         "run": [
             "logger",
             "mysql",
+            "postgres",
             "rabbitmq",
             "user"
         ]
@@ -129,7 +130,8 @@
         "build": {},
         "run": [
             "logger",
-            "mysql"
+            "mysql",
+            "postgres"
         ]
     },
     "prometheus": {
@@ -162,7 +164,8 @@
         "build": {},
         "run": [
             "logger",
-            "mysql"
+            "mysql",
+            "postgres"
         ]
     },
     "sandbox": {
@@ -216,6 +219,7 @@
             "logger",
             "email",
             "mysql",
+            "postgres",
             "rabbitmq"
         ]
     },
@@ -235,7 +239,8 @@
         },
         "run": [
             "logger",
-            "mysql"
+            "mysql",
+            "postgres"
         ]
     },
     "terminal": {
@@ -255,6 +260,7 @@
         "run": [
             "logger",
             "mysql",
+            "postgres",
             "rabbitmq"
         ]
     },
@@ -290,6 +296,7 @@
         "run": [
             "logger",
             "mysql",
+            "postgres",
             "rabbitmq",
             "email",
             "budget",

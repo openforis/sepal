@@ -1,8 +1,9 @@
-// mysql2 returns DECIMAL columns as strings — toNumber() normalizes on the way out.
+// pg returns numeric values (the numeric columns, AVG and SUM) as strings — toNumber() normalizes on
+// the way out. Averages are rounded to six decimals over numeric(5,2) and four over bigint, the
+// precision the usage API reports, and the hourly rollup stores from.
 
 import {storedUsername} from '#sepal/username'
 
-import {placeholders} from '../sql.js'
 import {DAY_MS, HOUR_MS} from '../time.js'
 
 export class UsageRepository {
@@ -19,7 +20,7 @@ export class UsageRepository {
             await connection.query(
                 `INSERT INTO instance_usage_sample(session_id, username, instance_type, sample_time,
                     cpu_pct, ram_bytes, ram_pct, gpu_pct, gpu_ram_bytes, net_rx_bytes_per_s, net_tx_bytes_per_s)
-                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
                 [
                     sample.sessionId, storedUsername(sample.username), sample.instanceType, sample.sampleTime,
                     sample.cpuPct, sample.ramBytes, sample.ramPct, sample.gpuPct, sample.gpuRamBytes,
@@ -34,17 +35,17 @@ export class UsageRepository {
             return Promise.resolve(new Map())
         }
         return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query(
+            const {rows} = await connection.query(
                 `SELECT s.session_id, s.sample_time, s.cpu_pct, s.ram_pct, s.gpu_pct,
                     s.net_rx_bytes_per_s + s.net_tx_bytes_per_s AS net_bytes_per_s
                     FROM instance_usage_sample s
                     JOIN (
                         SELECT session_id, MAX(sample_time) AS max_time
                         FROM instance_usage_sample
-                        WHERE session_id IN (${placeholders(sessionIds.length)})
+                        WHERE session_id = ANY($1)
                         GROUP BY session_id
                     ) m ON s.session_id = m.session_id AND s.sample_time = m.max_time`,
-                sessionIds
+                [sessionIds]
             )
             return new Map(rows.map(row => [row.session_id, {
                 cpuPct: toNumber(row.cpu_pct),
@@ -61,15 +62,16 @@ export class UsageRepository {
     // latest reading rather than a bucket boundary still in the future.
     sessionHistory(sessionId, {fromTime, bucketSeconds}) {
         return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query(
+            const {rows} = await connection.query(
                 `SELECT MAX(sample_time) AS sample_time,
-                    AVG(cpu_pct) AS cpu_pct, AVG(ram_pct) AS ram_pct, AVG(gpu_pct) AS gpu_pct,
-                    AVG(net_rx_bytes_per_s + net_tx_bytes_per_s) AS net_bytes_per_s
+                    round(AVG(cpu_pct), 6) AS cpu_pct, round(AVG(ram_pct), 6) AS ram_pct,
+                    round(AVG(gpu_pct), 6) AS gpu_pct,
+                    round(AVG(net_rx_bytes_per_s + net_tx_bytes_per_s), 4) AS net_bytes_per_s
                     FROM instance_usage_sample
-                    WHERE session_id = ? AND sample_time >= ?
-                    GROUP BY TIMESTAMPDIFF(SECOND, ?, sample_time) DIV ?
+                    WHERE session_id = $1 AND sample_time >= $2
+                    GROUP BY floor(extract(epoch FROM sample_time - $2::timestamptz) / $3::integer)
                     ORDER BY sample_time`,
-                [sessionId, fromTime, fromTime, bucketSeconds]
+                [sessionId, fromTime, bucketSeconds]
             )
             return rows.map(row => ({
                 sampleTime: new Date(row.sample_time),
@@ -92,21 +94,21 @@ export class UsageRepository {
                 await connection.query(
                     `INSERT INTO instance_usage_hourly(session_id, username, instance_type, hour, sample_count,
                         cpu_avg, cpu_max, ram_avg, ram_max, gpu_avg, gpu_max, gpu_ram_max, net_avg_bytes_per_s)
-                    SELECT session_id, username, instance_type, ?, COUNT(*),
-                        AVG(cpu_pct), MAX(cpu_pct), AVG(ram_pct), MAX(ram_pct),
-                        AVG(gpu_pct), MAX(gpu_pct), MAX(gpu_ram_bytes),
-                        AVG(COALESCE(net_rx_bytes_per_s, 0) + COALESCE(net_tx_bytes_per_s, 0))
+                    SELECT session_id, username, instance_type, $1::timestamptz, COUNT(*),
+                        round(AVG(cpu_pct), 6), MAX(cpu_pct), round(AVG(ram_pct), 6), MAX(ram_pct),
+                        round(AVG(gpu_pct), 6), MAX(gpu_pct), MAX(gpu_ram_bytes),
+                        round(AVG(COALESCE(net_rx_bytes_per_s, 0) + COALESCE(net_tx_bytes_per_s, 0)), 4)
                     FROM instance_usage_sample
-                    WHERE sample_time >= ? AND sample_time < ?
+                    WHERE sample_time >= $1 AND sample_time < $2
                     GROUP BY session_id, username, instance_type
-                    ON DUPLICATE KEY UPDATE
-                        sample_count = VALUES(sample_count),
-                        cpu_avg = VALUES(cpu_avg), cpu_max = VALUES(cpu_max),
-                        ram_avg = VALUES(ram_avg), ram_max = VALUES(ram_max),
-                        gpu_avg = VALUES(gpu_avg), gpu_max = VALUES(gpu_max),
-                        gpu_ram_max = VALUES(gpu_ram_max),
-                        net_avg_bytes_per_s = VALUES(net_avg_bytes_per_s)`,
-                    [hourStart, hourStart, hourEnd]
+                    ON CONFLICT (session_id, hour) DO UPDATE SET
+                        sample_count = EXCLUDED.sample_count,
+                        cpu_avg = EXCLUDED.cpu_avg, cpu_max = EXCLUDED.cpu_max,
+                        ram_avg = EXCLUDED.ram_avg, ram_max = EXCLUDED.ram_max,
+                        gpu_avg = EXCLUDED.gpu_avg, gpu_max = EXCLUDED.gpu_max,
+                        gpu_ram_max = EXCLUDED.gpu_ram_max,
+                        net_avg_bytes_per_s = EXCLUDED.net_avg_bytes_per_s`,
+                    [hourStart, hourEnd]
                 )
             }
         })
@@ -115,18 +117,18 @@ export class UsageRepository {
     pruneSamples(retentionDays) {
         return this.#db.withConnection(async connection => {
             const cutoff = new Date(this.#clock().getTime() - retentionDays * DAY_MS)
-            const [result] = await connection.query(
-                'DELETE FROM instance_usage_sample WHERE sample_time < ?', [cutoff])
-            return result.affectedRows
+            const {rowCount} = await connection.query(
+                'DELETE FROM instance_usage_sample WHERE sample_time < $1', [cutoff])
+            return rowCount
         })
     }
 
     pruneHourly(retentionDays) {
         return this.#db.withConnection(async connection => {
             const cutoff = new Date(this.#clock().getTime() - retentionDays * DAY_MS)
-            const [result] = await connection.query(
-                'DELETE FROM instance_usage_hourly WHERE hour < ?', [cutoff])
-            return result.affectedRows
+            const {rowCount} = await connection.query(
+                'DELETE FROM instance_usage_hourly WHERE hour < $1', [cutoff])
+            return rowCount
         })
     }
 
@@ -139,17 +141,17 @@ export class UsageRepository {
             return Promise.resolve(new Map())
         }
         return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query(
+            const {rows} = await connection.query(
                 `SELECT session_id,
                     COUNT(cpu_pct) AS samples,
-                    AVG(cpu_pct) AS cpu_avg,
+                    round(AVG(cpu_pct), 6) AS cpu_avg,
                     COUNT(gpu_pct) AS gpu_samples,
-                    AVG(gpu_pct) AS gpu_avg,
-                    AVG(COALESCE(net_rx_bytes_per_s, 0) + COALESCE(net_tx_bytes_per_s, 0)) AS net_avg
+                    round(AVG(gpu_pct), 6) AS gpu_avg,
+                    round(AVG(COALESCE(net_rx_bytes_per_s, 0) + COALESCE(net_tx_bytes_per_s, 0)), 4) AS net_avg
                     FROM instance_usage_sample
-                    WHERE session_id IN (${placeholders(sessionIds.length)}) AND sample_time >= ?
+                    WHERE session_id = ANY($1) AND sample_time >= $2
                     GROUP BY session_id`,
-                [...sessionIds, fromTime]
+                [sessionIds, fromTime]
             )
             return new Map(rows.map(row => [row.session_id, {
                 samples: Number(row.samples),
@@ -166,7 +168,7 @@ export class UsageRepository {
     // weighted over GPU-instance hours alone. A null username rolls up every user.
     userUsageRollup(username, fromTime, toTime) {
         return this.#db.withConnection(async connection => {
-            const [rows] = await connection.query(
+            const {rows} = await connection.query(
                 `SELECT instance_type,
                     COUNT(*) AS hours,
                     SUM(CASE WHEN cpu_avg IS NOT NULL THEN sample_count END) AS cpu_weight,
@@ -181,7 +183,7 @@ export class UsageRepository {
                     SUM(CASE WHEN net_avg_bytes_per_s IS NOT NULL THEN sample_count END) AS net_weight,
                     SUM(net_avg_bytes_per_s * sample_count) AS net_sum
                     FROM instance_usage_hourly
-                    WHERE ${username == null ? '' : 'username = ? AND '}hour >= ? AND hour < ?
+                    WHERE ${username == null ? 'hour >= $1 AND hour < $2' : 'username = $1 AND hour >= $2 AND hour < $3'}
                     GROUP BY instance_type
                     ORDER BY hours DESC`,
                 username == null ? [fromTime, toTime] : [username, fromTime, toTime]

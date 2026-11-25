@@ -4,7 +4,7 @@ import {after, before, beforeEach, describe, mock, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
-import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
+import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 // routes -> userApi -> email/googleOAuth/recaptcha -> config.js (commander). Mock config before the chain.
 mock.module('./config.js', {
@@ -47,7 +47,7 @@ describe('a credential that is not a string', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createMysqlTestDb({name: 'user_credential_types', migrations: MIGRATIONS_PATH})
+        testDb = await createTestDb({name: 'user_credential_types', migrations: MIGRATIONS_PATH})
         repository = new UserRepository(testDb.db)
         running = await startServer()
         url = path => `http://127.0.0.1:${running.address().port}${path}`

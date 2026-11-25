@@ -31,15 +31,6 @@
         quiet: true
       run_once: true
 
-    - name: Skip Amazon Linux 2
-      when: ansible_distribution_major_version == '2'
-      block:
-        - name: Report Amazon Linux 2
-          debug:
-            msg: "{{ host_name }} runs Amazon Linux 2, which has no releases to check"
-
-        - meta: end_host
-
     # Provide dnf needs-restarting and check-release-update. The Amazon Linux AMIs come with them.
     - name: Install the dnf plugins
       dnf:
@@ -66,13 +57,12 @@
         behind: "{{ deployed_release is version(target_release, '<') }}"
         newer_than_target: "{{ newest_release is version(target_release, '>') }}"
 
-    # Docker only upgrades on a DOCKER_VERSION change (see deploy.sh): restarting it restarts every container
+    # Docker upgrades with the release: a docker, containerd or runc update restarts Docker, and every container
     - name: List the packages an upgrade to {{ target_release }} would update
       dnf: &upgrade
         name: '*'
         state: latest
         releasever: "{{ target_release }}"
-        exclude: [docker, containerd, runc]
       check_mode: true
       changed_when: false
       register: pending_upgrade

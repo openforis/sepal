@@ -3,7 +3,7 @@ import {randomBytes} from 'node:crypto'
 import {join} from 'node:path'
 import {after, afterEach, before, describe, test} from 'node:test'
 
-import {createConnection, initDb} from '#sepal/db/mysql'
+import {createConnection, initDb, isUniqueViolation} from '#sepal/db/postgres'
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
 
@@ -13,92 +13,93 @@ describe('budget database migrations', () => {
 
     before(async () => {
         configureNoLogging()
-        admin = await createConnection('mysql')
+        admin = await createConnection('postgres', {user: 'postgres', password: process.env.POSTGRES_ROOT_PASSWORD})
     })
 
     afterEach(() => dropReservedDatabases())
 
     after(() => admin?.end())
 
+    test('creates the budget tables in the selected database', async () => {
+        const dbName = await reserveDatabase()
+
+        await initDb(dbName, SCHEMA_PATH)
+
+        const tables = await tableNames(dbName)
+        assert.ok(new Set([
+            'budget_update_request', 'default_user_budget', 'open_session_use',
+            'user_budget', 'user_monthly_storage', 'user_spending'
+        ]).isSubsetOf(new Set(tables)))
+    })
+
+    test('creates empty tables, importing nothing', async () => {
+        const dbName = await reserveDatabase()
+
+        await initDb(dbName, SCHEMA_PATH)
+
+        const budgets = await query(dbName, 'SELECT username FROM user_budget')
+        assert.deepEqual(budgets.rows, [])
+    })
+
     test('compares usernames without regard to case', async () => {
         const dbName = await reserveDatabase()
         await initDb(dbName, SCHEMA_PATH)
         const stored = await insertUserBudget(dbName, aUserBudget())
 
-        const [found] = await admin.query('SELECT username FROM ??.user_budget WHERE username = ?', [dbName, stored.username.toUpperCase()])
+        const found = await query(dbName, 'SELECT username FROM user_budget WHERE username = $1', [stored.username.toUpperCase()])
 
-        const collations = await usernameCollations(dbName)
-        assert.deepEqual(found, [{username: stored.username}])
-        assert.deepEqual(collations, {
-            user_budget: 'ascii_general_ci',
-            user_monthly_storage: 'ascii_general_ci',
-            user_spending: 'ascii_general_ci',
-            budget_update_request: 'ascii_general_ci',
-            open_session_use: 'ascii_general_ci'
-        })
+        assert.deepEqual(found.rows, [{username: stored.username}])
     })
 
-    describe('schema migrations', () => {
-        test('create the budget tables in the selected database', async () => {
-            const dbName = await reserveDatabase()
+    test('rejects a user budget for a username that differs only in case', async () => {
+        const dbName = await reserveDatabase()
+        await initDb(dbName, SCHEMA_PATH)
+        const stored = await insertUserBudget(dbName, aUserBudget())
 
-            await initDb(dbName, SCHEMA_PATH)
+        const duplicate = insertUserBudget(dbName, {...stored, username: stored.username.toUpperCase()})
 
-            const tables = await tableNames(dbName)
-            assert.ok(new Set([
-                'budget_update_request', 'default_user_budget', 'open_session_use',
-                'user_budget', 'user_monthly_storage', 'user_spending'
-            ]).isSubsetOf(new Set(tables)))
-        })
-
-        test('create them empty, importing nothing', async () => {
-            const dbName = await reserveDatabase()
-
-            await initDb(dbName, SCHEMA_PATH)
-
-            const budgets = await userBudgetUsernames(dbName)
-            assert.deepEqual(budgets, [])
-        })
+        await assert.rejects(duplicate, isUniqueViolation)
     })
 
     // Deliberately not IF NOT EXISTS: a name collision must fail rather than take over a database
     // someone else owns, so only databases this suite created are ever dropped.
     const reserveDatabase = async () => {
-        const dbName = `budgetmigrations_${randomBytes(6).toString('hex')}`
-        await admin.query(`CREATE DATABASE \`${dbName}\` DEFAULT CHARACTER SET ascii COLLATE ascii_bin`)
+        const dbName = `budget_migrations_test_${randomBytes(6).toString('hex')}`
+        await admin.query(`CREATE DATABASE ${admin.escapeIdentifier(dbName)} OWNER ${admin.escapeIdentifier(process.env.POSTGRES_USER)}`)
         reserved.push(dbName)
         return dbName
     }
 
     const dropReservedDatabases = async () => {
         for (const dbName of reserved.splice(0)) {
-            await admin.query(`DROP DATABASE IF EXISTS \`${dbName}\``)
+            await admin.query(`DROP DATABASE IF EXISTS ${admin.escapeIdentifier(dbName)} WITH (FORCE)`)
+        }
+    }
+
+    const query = async (dbName, sql, params) => {
+        const connection = await createConnection(dbName, {user: 'postgres', password: process.env.POSTGRES_ROOT_PASSWORD})
+        try {
+            return await connection.query(sql, params)
+        } finally {
+            await connection.end()
         }
     }
 
     const insertUserBudget = async (dbName, budget) => {
-        await admin.query('INSERT INTO ??.user_budget SET ?', [dbName, budget])
+        await query(
+            dbName,
+            'INSERT INTO user_budget (username, monthly_instance, monthly_storage, storage_quota) VALUES ($1, $2, $3, $4)',
+            [budget.username, budget.monthly_instance, budget.monthly_storage, budget.storage_quota]
+        )
         return budget
     }
 
-    const userBudgetUsernames = async dbName => {
-        const [rows] = await admin.query('SELECT username FROM ??.user_budget ORDER BY username', [dbName])
-        return rows.map(({username}) => username)
-    }
-
-    const usernameCollations = async dbName => {
-        const [rows] = await admin.query(
-            'SELECT TABLE_NAME, COLLATION_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND COLUMN_NAME = ?',
-            [dbName, 'username']
-        )
-        return Object.fromEntries(rows.map(({TABLE_NAME, COLLATION_NAME}) => [TABLE_NAME, COLLATION_NAME]))
-    }
-
     const tableNames = async dbName => {
-        const [rows] = await admin.query(
-            'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = ? ORDER BY TABLE_NAME', [dbName]
+        const {rows} = await query(
+            dbName,
+            'SELECT table_name FROM information_schema.tables WHERE table_schema = \'public\' ORDER BY table_name'
         )
-        return rows.map(({TABLE_NAME}) => TABLE_NAME)
+        return rows.map(({table_name}) => table_name)
     }
 })
 

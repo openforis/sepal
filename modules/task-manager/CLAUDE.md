@@ -1,7 +1,7 @@
 # CLAUDE.md - modules/task-manager
 
 Runs each SEPAL export task in its own detached Docker container (`task.<username>.<taskId>`, like sandbox containers) on the main host's
-Docker daemon, instead of inside a user's worker session. Owns the `task_manager` MySQL schema and serves the
+Docker daemon, instead of inside a user's worker session. Owns the `task_manager` Postgres schema and serves the
 GUI task API (the contract the worker module served before), the container progress callback, the gateway's
 API-key check, and the task-list websocket.
 
@@ -43,14 +43,14 @@ containers or task state from outside it.
   or a reboot (`live-restore` is incompatible with Swarm mode, and the main host is the Swarm manager): the
   task then ends FAILED "interrupted" and the user runs it again.
 
-## Legacy import
+## MySQL import
 
-`migrations/legacy-import/001.do.import.sql` copies the worker's task history once (only into an empty `task`
-table), tracked in `legacy_import_version`. PENDING and ACTIVE tasks become FAILED "interrupted", CANCELING becomes CANCELED,
-and tasks the user had removed are skipped. The worker's `task` table is only the import's source.
+`migrations/mysql-import.sql` copies the worker's task history from the MySQL `task_manager` database once, on
+first start, recorded in `mysql_import`. Rows are copied as they are (`params` becomes `jsonb`, `removed`
+a boolean). `migrations-mysql/` keeps the MySQL schema as the import test's source.
 
 ## Commands
-- `npm test` - Node test runner; `*.integration.test.js` needs `MYSQL_HOST`, `MYSQL_USER` and `MYSQL_PASSWORD`
+- `npm test` - Node test runner; `*.integration.test.js` needs reachable Postgres (`POSTGRES_*`) and, for the import test, MySQL (`MYSQL_*`)
 - `sepal build task-manager` / `sepal start task-manager` / `sepal logs task-manager -r`
 
 ## Routes (served without the `/api/tasks` gateway prefix)

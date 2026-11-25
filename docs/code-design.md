@@ -47,7 +47,7 @@ independent definitions of the same policy that can drift, not repeated enforcem
 
 ## Contracts
 
-- In both directions, exchange application or plain values, not Koa contexts, BullMQ jobs, mysql2
+- In both directions, exchange application or plain values, not Koa contexts, BullMQ jobs, pg
   connections or provider response objects. A scheduler may return a token to pass back for cancellation;
   define how long it remains valid, and keep its internal job object behind the adapter.
 - State what each operation's success means. Queued, committed and delivered are different guarantees;
@@ -77,7 +77,7 @@ const routes = createRoutes({recipeService, requireAuth})
 inbound adapter: they extract `principal` and `recipeId` from HTTP and call `recipeService.loadRecipe`.
 
 Shared `db.withTransaction` and `db.withConnection` belong inside persistence adapters. Keep connection
-and session-lock cleanup explicit: transaction commit or rollback does not release a MySQL named lock.
+and session-lock cleanup explicit: transaction commit or rollback does not release a session-level advisory lock.
 
 ## Validation across model properties
 

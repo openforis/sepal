@@ -4,7 +4,7 @@ import {after, before, beforeEach, describe, test} from 'node:test'
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
-import {createMysqlTestDb} from '#sepal/testSupport/db/mysqlTestDb'
+import {createTestDb} from '#sepal/testSupport/db/testDb'
 
 import {DuplicateUserError, UserRepository} from './userRepository.js'
 
@@ -17,7 +17,7 @@ describe('UserRepository', () => {
 
     before(async () => {
         configureNoLogging()
-        testDb = await createMysqlTestDb({name: 'user_repository', migrations: MIGRATIONS_PATH})
+        testDb = await createTestDb({name: 'user_repository', migrations: MIGRATIONS_PATH})
     })
 
     beforeEach(async () => {
@@ -571,7 +571,7 @@ describe('UserRepository', () => {
         let concurrentRepository
 
         before(async () => {
-            concurrent = await createMysqlTestDb({
+            concurrent = await createTestDb({
                 name: 'user_repository_concurrent', migrations: MIGRATIONS_PATH, connections: COMPETING_WRITERS
             })
             concurrentRepository = new UserRepository(concurrent.db)
@@ -613,10 +613,16 @@ describe('UserRepository', () => {
     // predate this database, and no operation here can write any of the three.
     const givenImportedUser = async row => {
         const username = row.username
-        await testDb.query('INSERT INTO sepal_user SET ?', [{
-            name: username, email: `${username}@example.org`, admin: 0, system_user: 0, status: 'ACTIVE',
-            uid: null, gid: null, ...row
-        }])
+        const columns = {
+            name: username, email: `${username}@example.org`, admin: false, status: 'ACTIVE', uid: null, gid: null,
+            ...row, system_user: !!row.system_user
+        }
+        const names = Object.keys(columns)
+        const placeholders = names.map((_, i) => '$' + (i + 1))
+        await testDb.query(
+            `INSERT INTO sepal_user (${names.map(n => n === 'system_user' ? '"system_user"' : n).join(', ')}) VALUES (${placeholders.join(', ')})`,
+            Object.values(columns)
+        )
         return await repository.findByUsername(username)
     }
 
