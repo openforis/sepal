@@ -30,8 +30,6 @@ ADD --chmod=0755 modules/${MODULE_NAME}/start.sh /usr/local/bin/start.sh
 CMD /usr/local/bin/start.sh
 
 FROM production AS test
-# The import suites' source schema
-ADD modules/${MODULE_NAME}/migrations-mysql ${MODULE}/migrations-mysql
 RUN npm ci
 CMD ["npm", "test"]
 

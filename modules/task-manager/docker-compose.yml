@@ -15,9 +15,6 @@ services:
       - "${SEPAL_DATA_DIR}/task-manager:/var/lib/sepal/task-manager"
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
-      MYSQL_HOST: "mysql"
-      MYSQL_USER: "root"
-      MYSQL_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
       POSTGRES_HOST: "postgres"
       POSTGRES_USER: "sepal"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"

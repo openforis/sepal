@@ -98,7 +98,7 @@ check "a noisy failed build keeps every compiler line, later progress and the fa
         && grep -q "^sandbox: build FAILED" "$WORK/out"' "status $status: $(tail -5 "$WORK/out")"
 
 # A workspace with a fixture module for each module the build script names, and fixture checks; email, budget
-# (which needs mysql) and the shell check are the suites of its test configuration
+# (which needs postgres) and the shell check are the suites of its test configuration
 function workspace {
     WORKSPACES=$((${WORKSPACES:-0} + 1))
     WORKSPACE=$WORK/workspace-$WORKSPACES; export WORKSPACE
@@ -156,10 +156,21 @@ services:
       - "\${SEPAL_DATA_DIR}/r-proxy/repo:/R"
     healthcheck: {test: ["CMD", "sh", "-c", "\${FIXTURE_R_PROXY_HEALTH:-true}"], interval: 1s, retries: 2}
 EOF
-    # Like SEPAL's MySQL image: no release metadata, and it marks itself initialized
-    printf '%s\n' "FROM $BASE" 'COPY modules/mysql/content /content' \
-        'CMD ["sh", "-c", "mkdir -p /data && touch /data/module_initialized && echo mysql fixture ready && exec sleep 3600"]' \
-        > "$WORKSPACE/modules/mysql/Dockerfile"
+    # Like SEPAL's Postgres image: no release metadata, and pg_isready, which its healthcheck in ci/tests.yml runs
+    printf '%s\n' "FROM $BASE" 'COPY modules/postgres/content /content' \
+        'RUN echo "#!/bin/sh" > /usr/local/bin/pg_isready && chmod +x /usr/local/bin/pg_isready' \
+        'CMD ["sh", "-c", "echo postgres fixture ready && exec sleep 3600"]' \
+        > "$WORKSPACE/modules/postgres/Dockerfile"
+    # Like SEPAL's postgres module, whose compose file also builds the pgadmin image the build script pushes
+    cat > "$WORKSPACE/modules/postgres/docker-compose.yml" <<EOF
+services:
+  postgres:
+    build: {context: ../.., dockerfile: ./modules/postgres/Dockerfile}
+    image: "\${DOCKER_REGISTRY_HOST:-localhost}/openforis/postgres:\${SEPAL_VERSION:-latest}"
+  pgadmin:
+    build: {context: ../.., dockerfile: ./modules/postgres/Dockerfile}
+    image: "\${DOCKER_REGISTRY_HOST:-localhost}/openforis/pgadmin:\${SEPAL_VERSION:-latest}"
+EOF
     printf '%s\n' "FROM $BASE AS check" 'COPY ci/check-test /test' 'CMD ["sh", "/test"]' \
         'FROM check AS lib-js-shared' 'FROM check AS lib-python-shared' 'FROM check AS deploy-scripts' 'FROM check AS shell' \
         > "$WORKSPACE/ci/checks.dockerfile"
@@ -169,8 +180,8 @@ x-suite: &suite
   profiles: [suite]
   pull_policy: never
 services:
-  mysql:
-    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/mysql:${SEPAL_VERSION:-latest}"
+  postgres:
+    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/postgres:${SEPAL_VERSION:-latest}"
     pull_policy: never
     healthcheck: {test: ["CMD", "true"], interval: 1s}
   email:
@@ -179,7 +190,7 @@ services:
   budget:
     <<: *suite
     image: "${COMPOSE_PROJECT_NAME}/budget"
-    depends_on: {mysql: {condition: service_healthy}}
+    depends_on: {postgres: {condition: service_healthy}}
   shell:
     <<: *suite
     image: "${COMPOSE_PROJECT_NAME}/shell"
@@ -195,11 +206,11 @@ function suite {
         "for i in \$(seq 100); do echo \"$1 passing test \$i\"; done" "$2" > "$WORKSPACE/modules/$1/test"
 }
 
-function build_mysql { docker compose --file "$WORKSPACE/modules/mysql/docker-compose.yml" build --quiet; }
+function build_postgres { docker compose --file "$WORKSPACE/modules/postgres/docker-compose.yml" build --quiet; }
 
 function helper { "$WORKSPACE/ci/test-images.sh" "$@"; }
 
-# The tests of a build of the fixture workspace: those needing no MySQL, then budget, then the record
+# The tests of a build of the fixture workspace: those needing no Postgres, then budget, then the record
 function run_tests {
     { helper begin && helper run shell email && helper run budget && helper complete && helper record; } > "$WORK/out" 2>&1
 }
@@ -218,13 +229,13 @@ function project_resources {
 
 workspace
 status=0; { helper begin && helper run shell email; } > "$WORK/out" 2>&1 || status=$?
-check "suites without services run before MySQL is built" '[[ $status == 0 && $(ran) == "email shell" ]]' \
+check "suites without services run before Postgres is built" '[[ $status == 0 && $(ran) == "email shell" ]]' \
     "status $status, ran: $(ran): $(tail -3 "$WORK/out")"
 status=0; helper run budget > "$WORK/out" 2>&1 || status=$?
 check "a suite whose service image is missing fails without running" '[[ $status != 0 && -z $(ran) ]]' \
     "status $status, ran: $(ran)"
 
-build_mysql
+build_postgres
 status=0; run_tests || status=$?
 check "without a record, every suite runs and passing records them all" \
     '[[ $status == 0 && $(ran) == "budget email shell" && $(recorded "$TEST_RECORD") == "budget email shell" ]]' \
@@ -254,7 +265,7 @@ check "results are coloured, while suites run without colours" \
     '[[ $status == 0 ]] && grep -qF "email: tests ${ESC}[30;42mpassed" "$WORK/out" && ! grep -qF "$ESC" "$WORKSPACE/build-logs/email.tests.log"' \
     "status $status: $(tail -3 "$WORK/out")"
 
-echo changed > "$WORKSPACE/modules/mysql/content"; build_mysql
+echo changed > "$WORKSPACE/modules/postgres/content"; build_postgres
 status=0; run_tests || status=$?
 check "a changed service image runs the suites that use it" '[[ $status == 0 && $(ran) == budget ]]' \
     "status $status, ran: $(ran)"
@@ -301,7 +312,7 @@ check "cleanup keeps images in use, other images and other projects" \
     'docker image inspect fixture-ci/used:1 fixture-ci/used:2 fixture-other/kept:1 > /dev/null && [[ $(project_resources other | wc -l) == 2 ]]'
 
 workspace
-printf '%s\n' 'services:' '  mysql: {image: alpine:3}' > "$WORKSPACE/ci/tests.yml"
+printf '%s\n' 'services:' '  postgres: {image: alpine:3}' > "$WORKSPACE/ci/tests.yml"
 status=0; helper begin > "$WORK/out" 2>&1 || status=$?
 check "a configuration without suites fails" \
     '[[ $status != 0 ]] && grep -q "Cannot find the test suites" "$WORK/out"' "status $status: $(tail -3 "$WORK/out")"
@@ -507,7 +518,7 @@ check "a cancelled build cleans up and leaves the record alone" \
     'cmp -s "$RECORD" "$WORK/record-before" && [[ -z $(project_resources sepal-jenkins-tests) ]]' \
     "left: $(project_resources sepal-jenkins-tests | xargs)"
 check "a cancelled build keeps the log of its test service before cleanup removes it" \
-    'grep -q " mysql fixture ready$" "$LOGS/mysql.service.log"' "$(ls "$LOGS")"
+    'grep -q " postgres fixture ready$" "$LOGS/postgres.service.log"' "$(ls "$LOGS")"
 check "a cancelled build reported progress, ends its sections and leaves no processes" \
     'grep -q "^budget: tests running (" "$WORK/out" && grep -q "^budget: tests STOPPED by signal 15" "$WORK/out" \
         && grep -q "Full log: .*budget.tests.log" "$WORK/out" && sections_closed && ! processes_left' "$(tail -8 "$WORK/out")"

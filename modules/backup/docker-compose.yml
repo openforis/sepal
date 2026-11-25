@@ -10,7 +10,6 @@ services:
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/backup:${SEPAL_VERSION:-latest}"
     container_name: backup
     volumes:
-      - "${SEPAL_DATA_DIR}/mysql:/data/mysql:ro"
       - "${SEPAL_DATA_DIR}/ssh-gateway:/data/ssh-gateway:ro"
       - "${SEPAL_DATA_DIR}/user:/data/user:ro"
       - "${SEPAL_BACKUP_DIR}:/backup"

@@ -9,8 +9,6 @@ Modules
     gateway         80
     gee             80
     gui             8080
-    mysql           3306
-    mysql-admin     8980
     message         80
     pgadmin         8981
     postgres        5432
@@ -18,7 +16,6 @@ Modules
     r-proxy         8180
     recipe          80
     scene           80
-    scene-metadata  80
     ssh-gateway     22
     storage         80
     task-manager    80

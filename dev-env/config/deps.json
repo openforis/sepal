@@ -30,7 +30,6 @@
         "build": {},
         "run": [
             "logger",
-            "mysql",
             "postgres",
             "rabbitmq",
             "user"
@@ -98,12 +97,6 @@
         "build": {},
         "run": []
     },
-    "mysql": {
-        "build": {},
-        "run": [
-            "logger"
-        ]
-    },
     "postgres": {
         "build": {},
         "run": [
@@ -117,12 +110,6 @@
             "postgres"
         ]
     },
-    "mysql-backup": {
-        "build": {},
-        "run": [
-            "logger"
-        ]
-    },
     "message": {
         "lib": [
             "shared"
@@ -130,7 +117,6 @@
         "build": {},
         "run": [
             "logger",
-            "mysql",
             "postgres"
         ]
     },
@@ -164,7 +150,6 @@
         "build": {},
         "run": [
             "logger",
-            "mysql",
             "postgres"
         ]
     },
@@ -178,16 +163,6 @@
     "sandbox-base": {
         "build": {},
         "run": false
-    },
-    "scene-metadata": {
-        "lib": [
-            "shared"
-        ],
-        "build": {},
-        "run": [
-            "logger",
-            "mysql"
-        ]
     },
     "scene": {
         "lib": [
@@ -218,7 +193,6 @@
         "run": [
             "logger",
             "email",
-            "mysql",
             "postgres",
             "rabbitmq"
         ]
@@ -239,7 +213,6 @@
         },
         "run": [
             "logger",
-            "mysql",
             "postgres"
         ]
     },
@@ -259,7 +232,6 @@
         "build": {},
         "run": [
             "logger",
-            "mysql",
             "postgres",
             "rabbitmq"
         ]
@@ -295,7 +267,6 @@
         "build": {},
         "run": [
             "logger",
-            "mysql",
             "postgres",
             "rabbitmq",
             "email",

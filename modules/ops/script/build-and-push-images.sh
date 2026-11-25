@@ -181,11 +181,9 @@ build email
 build caddy
 build rabbitmq
 build backup
-build mysql-backup
-build mysql
 build postgres-backup
 build postgres
-# The shared library's suite needs MySQL and Postgres
+# The shared library's suite needs Postgres
 tests run lib-js-shared
 build gateway
 build terminal
@@ -206,7 +204,6 @@ build gui
 build ceo-gateway
 build app-launcher
 build app-manager
-build scene-metadata
 build scene
 # The longest build, once the suites that can fail before it have passed
 build sandbox
@@ -232,8 +229,6 @@ push budget
 push worker
 push gui
 push ceo-gateway
-push mysql
-push mysql-backup
 push postgres
 push pgadmin
 push postgres-backup
@@ -245,7 +240,6 @@ push task
 push task-manager
 push terminal
 push caddy
-push scene-metadata
 push scene
 
 logged registry logout docker logout "${DOCKER_REGISTRY_HOST}"

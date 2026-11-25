@@ -12,9 +12,6 @@ services:
     environment:
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
       TZ: "UTC"
-      MYSQL_HOST: "mysql"
-      MYSQL_USER: "root"
-      MYSQL_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
       POSTGRES_HOST: "postgres"
       POSTGRES_USER: "sepal"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"

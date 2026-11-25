@@ -30,7 +30,6 @@ TEST_MODULES = [
     {'module': 'modules/r-proxy', 'libs': 'lib/js/shared'},
     {'module': 'modules/recipe', 'libs': 'lib/js/shared', 'postgres': True},
     {'module': 'modules/scene', 'libs': 'lib/js/shared', 'postgres': True},
-    {'module': 'modules/scene-metadata', 'libs': 'lib/js/shared'},
     {'module': 'modules/ssh-gateway', 'libs': 'lib/js/shared'},
     {'module': 'modules/storage', 'libs': 'lib/js/shared', 'postgres': True},
     {'module': 'modules/terminal', 'libs': 'lib/js/shared'},
