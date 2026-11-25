@@ -71,6 +71,11 @@ for _ in $(seq 100); do docker version > /dev/null 2>&1 && break; sleep 0.2; don
 docker pull --quiet alpine:3 > /dev/null
 docker pull --quiet registry:3 > /dev/null
 docker run --detach --publish 127.0.0.1:5000:5000 registry:3 > /dev/null
+for _ in $(seq 50); do curl --fail --silent http://localhost:5000/v2/ > /dev/null && break; sleep 0.2; done
+# The base image of the fixtures, which clean builds pull from the disposable registry
+BASE=localhost:5000/fixture/alpine:3
+docker tag alpine:3 "$BASE"
+docker push --quiet "$BASE" > /dev/null
 
 # A failed RUN must retain diagnostics after more than BuildKit's default 2 MiB of output.
 mkdir "$WORK/buildkit-output"
@@ -104,7 +109,7 @@ function workspace {
         mkdir -p "$WORKSPACE/modules/$module"
         echo "$module" > "$WORKSPACE/modules/$module/content"
         suite "$module" 'exit 0'
-        printf '%s\n' 'FROM alpine:3 AS production' "COPY modules/$module/content /content" \
+        printf '%s\n' "FROM $BASE AS production" "COPY modules/$module/content /content" \
             'FROM production AS test' "COPY modules/$module/test /test" 'CMD ["sh", "/test"]' \
             'FROM production' 'ARG BUILD_NUMBER' 'ENV BUILD_NUMBER=$BUILD_NUMBER' > "$WORKSPACE/modules/$module/Dockerfile"
         cat > "$WORKSPACE/modules/$module/docker-compose.yml" <<EOF
@@ -119,11 +124,43 @@ services:
 EOF
     done
     sed -i 's|image: .*|image: "openforis/sandbox-base:latest"|' "$WORKSPACE/modules/sandbox-base/docker-compose.yml"
+    # Like SEPAL's sandbox-base: no release metadata, and only this host has it
+    printf '%s\n' "FROM $BASE" 'COPY modules/sandbox-base/content /content' > "$WORKSPACE/modules/sandbox-base/Dockerfile"
+    for module in r-proxy app-manager sandbox; do
+        sed -i "s|^FROM .* AS production|FROM openforis/sandbox-base AS production|" "$WORKSPACE/modules/$module/Dockerfile"
+    done
+    # A production layer that differs each time it is built, which the email suite shows
+    printf '%s\n' "FROM $BASE AS production" 'COPY modules/email/content /content' \
+        'RUN cat /proc/sys/kernel/random/uuid > /built' 'FROM production AS test' 'COPY modules/email/test /test' \
+        'CMD ["sh", "-c", "cat /built; sh /test"]' 'FROM production' > "$WORKSPACE/modules/email/Dockerfile"
+    # Like r-proxy and r-proxy-redis, with caches in the host's SEPAL_DATA_DIR. Stopping, r-proxy finishes the package it
+    # builds and Redis saves its queue.
+    cat > "$WORKSPACE/modules/r-proxy/docker-compose.yml" <<EOF
+services:
+  r-proxy-redis:
+    image: "$BASE"
+    container_name: r-proxy-redis
+    command: ["sh", "-c", "trap 'echo queue > /data/dump.rdb; exit' TERM; while :; do sleep 1 & wait \$\$!; done"]
+    volumes:
+      - "\${SEPAL_DATA_DIR}/r-proxy-redis:/data"
+    healthcheck: {test: ["CMD", "true"], interval: 1s}
+  r-proxy:
+    build:
+      context: ../..
+      dockerfile: ./modules/r-proxy/Dockerfile
+    image: "\${DOCKER_REGISTRY_HOST:-localhost}/openforis/r-proxy:\${SEPAL_VERSION:-latest}"
+    container_name: r-proxy
+    command: ["sh", "-c", "trap 'touch /R/unfinished.tar.gz; exit' TERM; while :; do sleep 1 & wait \$\$!; done"]
+    volumes:
+      - "\${SEPAL_DATA_DIR}/r-proxy/site-library:/usr/local/lib/R/site-library"
+      - "\${SEPAL_DATA_DIR}/r-proxy/repo:/R"
+    healthcheck: {test: ["CMD", "sh", "-c", "\${FIXTURE_R_PROXY_HEALTH:-true}"], interval: 1s, retries: 2}
+EOF
     # A service image with no release metadata, which reports itself ready
-    printf '%s\n' 'FROM alpine:3' 'COPY modules/postgres/content /content' \
+    printf '%s\n' "FROM $BASE" 'COPY modules/postgres/content /content' \
         'CMD ["sh", "-c", "echo postgres fixture ready && exec sleep 3600"]' \
         > "$WORKSPACE/modules/postgres/Dockerfile"
-    printf '%s\n' 'FROM alpine:3 AS check' 'COPY ci/check-test /test' 'CMD ["sh", "/test"]' \
+    printf '%s\n' "FROM $BASE AS check" 'COPY ci/check-test /test' 'CMD ["sh", "/test"]' \
         'FROM check AS lib-js-shared' 'FROM check AS lib-python-shared' 'FROM check AS deploy-scripts' 'FROM check AS shell' \
         > "$WORKSPACE/ci/checks.dockerfile"
     echo 'echo "check ran"' > "$WORKSPACE/ci/check-test"
@@ -198,6 +235,12 @@ check "unchanged suites do not run again, and the record keeps them all" \
     '[[ $status == 0 && -z $(ran) && $(recorded "$TEST_RECORD") == "budget email shell" ]]' \
     "status $status, ran: $(ran), recorded: $(recorded "$TEST_RECORD")"
 
+cp "$TEST_RECORD" "$WORK/record-before"
+status=0; CLEAN=true run_tests || status=$?
+check "a clean build runs every suite, also one whose images are those of its last successful test" \
+    '[[ $status == 0 && $(ran) == "budget email shell" ]] && grep -qxF "$(grep "^email " "$WORK/record-before")" "$TEST_RECORD"' \
+    "status $status, ran: $(ran): $(diff "$WORK/record-before" "$TEST_RECORD")"
+
 status=0; BUILD_NUMBER=2 run_tests || status=$?
 check "release metadata leaves test images unchanged" '[[ $status == 0 && -z $(ran) ]]' "status $status, ran: $(ran)"
 
@@ -269,7 +312,7 @@ JENKINS=(JENKINS_HOME="$WORK/jenkins" JOB_NAME=Sepal-test JOB_URL=https://jenkin
     DOCKER_REGISTRY_USERNAME=user DOCKER_REGISTRY_PASSWORD=password GIT_COMMIT=0123abc)
 # In a process group of its own, as Jenkins runs a build; $build is its ID
 function jenkins_build {
-    env "${JENKINS[@]}" setsid "$WORKSPACE/$BUILD_SCRIPT" "$1" > "$WORK/out" 2>&1 & build=$!
+    env "${JENKINS[@]}" setsid "$WORKSPACE/$BUILD_SCRIPT" "$@" > "$WORK/out" 2>&1 & build=$!
     wait "$build"
 }
 
@@ -306,6 +349,56 @@ function pushed {  # version → the pushed modules the registry serves under it
 
 function built { grep -qx "$1: build\.\.\." "$WORK/out"; }
 
+# A docker that keeps the arguments of image builds in $WORK/builds
+mkdir "$WORK/spy"
+cat > "$WORK/spy/docker" <<EOF
+#!/bin/sh
+case " \$* " in *" build "*) echo "\$*" >> "$WORK/builds" ;; esac
+exec $(command -v docker) "\$@"
+EOF
+chmod +x "$WORK/spy/docker"
+
+# The image builds of the last build with that docker, as "kind name options": the images of modules, the test images
+# of modules and the images of checks, with the options that make builds clean
+function image_builds {
+    awk '{
+        kind = /ci\/tests\.yml/ ? "check" : / --file - / ? "test-image" : "image"; name = $NF
+        if (kind == "image") { match($0, /modules\/[a-z-]+\//); name = substr($0, RSTART + 8, RLENGTH - 9) }
+        options = ""; for (i = 1; i <= NF; i++) if ($i ~ /^--(no-cache|pull)$/) options = options " " $i
+        if (kind == "test-image" && name ~ /-test$/) {
+            print "image " $(NF - 1) options
+            sub(/-test$/, "", name)
+        }
+        print kind " " name options
+    }' "$WORK/builds"
+}
+
+# Whether every image build had the options of a clean build, except pulling openforis/sandbox-base.
+function clean_build_options {
+    image_builds | awk '
+        { no_cache = / --no-cache( |$)/; pull = / --pull( |$)/; local_base = $2 ~ /^(r-proxy|app-manager|sandbox)$/ }
+        !no_cache || pull == local_base { print "wrong options: " $0; wrong = 1 }
+        END { exit wrong }'
+}
+
+# Runs the shell command on the fixture host, whose /data is SEPAL_DATA_DIR in builds
+function on_host { docker run --rm --volume /data:/data "$BASE" sh -c "$1"; }
+
+# R package caches with nested and hidden files, and files beside them
+function seed_data {
+    on_host 'mkdir -p /data/r-proxy/repo/src/contrib /data/r-proxy/repo/.partial /data/r-proxy/site-library/pkg/R \
+            /data/r-proxy-redis /data/r-proxy-redis-old
+        echo index > /data/r-proxy/repo/src/contrib/PACKAGES; touch /data/r-proxy/repo/.partial/pkg.tar.gz
+        touch /data/r-proxy/site-library/pkg/DESCRIPTION /data/r-proxy/site-library/pkg/R/pkg /data/r-proxy/site-library/.lock
+        echo queue > /data/r-proxy-redis/dump.rdb; touch /data/r-proxy-redis/.hidden
+        for kept in /data/kept /data/r-proxy/kept /data/r-proxy-redis-old/kept; do echo kept > "$kept"; done
+        chmod 2775 /data/r-proxy/repo; chown 999:999 /data/r-proxy-redis; chmod 750 /data/r-proxy-redis'
+}
+
+function data_files { on_host 'find /data | sort'; }
+
+function cache_dirs { on_host 'stat -c "%n %u:%g %a" /data/r-proxy/repo /data/r-proxy/site-library /data/r-proxy-redis'; }
+
 workspace; unset TEST_PROJECT TEST_RECORD
 cp "$REPO/ci/tests.yml" "$WORKSPACE/ci/tests.yml"
 # The services that merge the suite anchor
@@ -315,8 +408,24 @@ RECORD=$WORK/jenkins/sepal-tests/Sepal-test
 # shellcheck disable=SC2034  # read by the conditions check evaluates
 LOGS=$WORKSPACE/build-logs/1
 PUSH_COUNT=$(awk '$1 == "push"' "$WORKSPACE/$BUILD_SCRIPT" | wc -l)
+# An image for each module the build script builds, and a test image for each suite
+# shellcheck disable=SC2034  # read by the conditions check evaluates
+IMAGE_BUILDS=$(( $(awk '$1 == "build"' "$WORKSPACE/$BUILD_SCRIPT" | wc -l) + $(wc -w <<< "$SUITES") ))
 
-status=0; jenkins_build 1-test || status=$?
+mkdir -p "$LOGS"; echo kept > "$LOGS/kept"
+docker tag "$BASE" localhost:5000/openforis/leftover:1
+exits=''
+for arguments in '' '--clean' '1-test --clena' '1-test --clean more' 'not/a/tag'; do
+    read -ra args <<< "$arguments"
+    status=0; jenkins_build "${args[@]}" || status=$?; exits+=" $status"
+done
+check "a build with wrong arguments changes nothing" \
+    '[[ $exits == " 2 2 2 2 2" ]] && grep -q "^Usage: " "$WORK/out" && [[ -f $LOGS/kept ]] \
+        && docker image inspect localhost:5000/openforis/leftover:1 > /dev/null' "exits:$exits: $(tail -3 "$WORK/out")"
+
+seed_data
+SEEDED=$(data_files)
+status=0; PATH=$WORK/spy:$PATH jenkins_build 1-test || status=$?
 check "a build tests every suite once, then pushes and verifies every image" \
     '[[ -n $SUITES && $status == 0 && $(ran) == "$SUITES" && $(pushed 1-test | wc -l) == "$PUSH_COUNT" ]]' \
     "status $status, ran: $(ran), pushed $(pushed 1-test | wc -l) of $PUSH_COUNT: $(tail -5 "$WORK/out")"
@@ -333,6 +442,10 @@ check "a build provides a live log directory that identifies its build" \
     'grep -qx "Live logs (archived at build end): https://jenkins.example/job/Sepal-test/ws/build-logs/1/" "$WORK/out" \
         && [[ -f $LOGS/email.build.log ]]'
 check "a build ends its console sections and leaves no processes" 'sections_closed && ! processes_left'
+check "an ordinary build builds every image with the cache and the base images this host has" \
+    '[[ $(image_builds | wc -l) == "$IMAGE_BUILDS" ]] && ! image_builds | grep -q -- " --"' "$(image_builds | grep -- " --")"
+check "an ordinary build keeps the R package caches" '[[ -z $(comm -23 <(echo "$SEEDED") <(data_files)) ]]' \
+    "lost: $(comm -23 <(echo "$SEEDED") <(data_files) | xargs)"
 
 status=0; BUILD_NUMBER=2 jenkins_build 2-test || status=$?
 check "a build with unchanged images runs no suite, pushes every image and records every suite" \
@@ -351,7 +464,7 @@ check "a failed build leaves the record alone and cleans up" \
     'cmp -s "$RECORD" "$WORK/record-before" && [[ -z $(project_resources sepal-jenkins-tests) ]]'
 check "a failed suite shows the end of its log, after the sections, and where its log is" \
     'grep -q "^email: tests FAILED" "$WORK/out" && grep -qx "email assertion failed" "$WORK/out" \
-        && grep -qx "Full log: build-logs/1/email.tests.log" "$WORK/out" && sections_closed' "$(grep -A3 -B1 "email: tests" "$WORK/out")"
+        && grep -qx "Full log: https://jenkins.example/job/Sepal-test/ws/build-logs/1/email.tests.log" "$WORK/out" && sections_closed' "$(grep -A3 -B1 "email: tests" "$WORK/out")"
 
 status=0; (unset SKIP_TESTS; jenkins_build 4-test) || status=$?
 check "a build skips tests by default and pushes every image" \
@@ -398,6 +511,61 @@ check "a cancelled build keeps the log of its test service before cleanup remove
 check "a cancelled build reported progress, ends its sections and leaves no processes" \
     'grep -q "^budget: tests running (" "$WORK/out" && grep -q "^budget: tests STOPPED by signal 15" "$WORK/out" \
         && grep -q "Full log: .*budget.tests.log" "$WORK/out" && sections_closed && ! processes_left' "$(tail -8 "$WORK/out")"
+
+suite budget 'exit 0'
+cp "$RECORD" "$WORK/record-before"
+# shellcheck disable=SC2034  # read by the conditions check evaluates
+DIRS=$(cache_dirs)
+EMPTIED=$(grep -vE '^/data/(r-proxy/repo|r-proxy/site-library|r-proxy-redis)/' <<< "$SEEDED")
+rm -f "$WORK/builds"
+status=0; PATH=$WORK/spy:$PATH jenkins_build 8-weekly --clean || status=$?
+check "a clean build runs every suite, then pushes every image and records every suite" \
+    '[[ $status == 0 && $(ran) == "$SUITES" && $(pushed 8-weekly | wc -l) == "$PUSH_COUNT" && $(recorded "$RECORD") == "$SUITES" ]]' \
+    "status $status, ran: $(ran), pushed $(pushed 8-weekly | wc -l) of $PUSH_COUNT: $(tail -5 "$WORK/out")"
+check "a clean build builds images without cache, on the latest base images but openforis/sandbox-base" \
+    '[[ $(image_builds | wc -l) == "$IMAGE_BUILDS" ]] && clean_build_options' "$(clean_build_options)"
+BUILT=$(docker run --rm localhost:5000/openforis/email:8-weekly cat /built)
+check "a clean build tests the layers it pushes" 'grep -qxF "$BUILT" "$LOGS/email.tests.log"' \
+    "pushed: $BUILT, tested: $(head -5 "$LOGS/email.tests.log" | xargs)"
+check "a clean build empties the R package caches, also of what r-proxy and Redis save as they stop, and nothing else" \
+    '[[ $(data_files) == "$EMPTIED" && $(cache_dirs) == "$DIRS" ]]' "$(diff <(echo "$EMPTIED") <(data_files)) $(cache_dirs)"
+check "a clean build leaves r-proxy and r-proxy-redis running, ready" \
+    '[[ $(docker inspect --format "{{.State.Health.Status}}" r-proxy r-proxy-redis | xargs) == "healthy healthy" ]]'
+
+cp "$RECORD" "$WORK/record-before"
+seed_data
+SEEDED=$(data_files)
+sed -i 's|"${SEPAL_DATA_DIR}/r-proxy/repo:/R"|"${SEPAL_DATA_DIR}:/R"|' "$WORKSPACE/modules/r-proxy/docker-compose.yml"
+status=0; jenkins_build 9-weekly --clean || status=$?
+check "a clean build whose r-proxy mounts more than its caches deletes nothing and pushes nothing" \
+    '[[ $status != 0 && -z $(pushed 9-weekly) && -z $(comm -23 <(echo "$SEEDED") <(data_files)) ]] \
+        && grep -q "^Not emptying the R package caches" "$WORK/out" && cmp -s "$RECORD" "$WORK/record-before"' \
+    "status $status, pushed: $(pushed 9-weekly | xargs), lost: $(comm -23 <(echo "$SEEDED") <(data_files) | xargs)"
+sed -i 's|"${SEPAL_DATA_DIR}:/R"|"${SEPAL_DATA_DIR}/r-proxy/repo:/R"|' "$WORKSPACE/modules/r-proxy/docker-compose.yml"
+
+status=0; FIXTURE_R_PROXY_HEALTH=false jenkins_build 10-weekly --clean || status=$?
+check "a clean build whose r-proxy does not get ready stops and pushes nothing" \
+    '[[ $status != 0 && -z $(pushed 10-weekly) ]] && grep -q "^r-proxy: cache reset FAILED" "$WORK/out" \
+        && cmp -s "$RECORD" "$WORK/record-before"' "status $status, pushed: $(pushed 10-weekly | xargs): $(tail -3 "$WORK/out")"
+
+# Cancelled while r-proxy gets ready
+env "${JENKINS[@]}" FIXTURE_R_PROXY_HEALTH='sleep 60' setsid "$WORKSPACE/$BUILD_SCRIPT" 11-weekly --clean > "$WORK/out" 2>&1 &
+build=$!
+for _ in $(seq 1500); do
+    [[ $(docker inspect --format '{{.State.Health.Status}}' r-proxy 2> /dev/null) == starting ]] && break; sleep 0.2
+done
+kill -TERM -- "-$build"; status=0; wait "$build" || status=$?
+check "a cancelled clean build stops, pushes nothing, leaves the record alone and leaves no processes" \
+    '[[ $status == 143 && -z $(pushed 11-weekly) ]] && cmp -s "$RECORD" "$WORK/record-before" && ! processes_left' \
+    "status $status, pushed: $(pushed 11-weekly | xargs): $(tail -3 "$WORK/out")"
+
+status=0; SKIP_TESTS=true jenkins_build 12-weekly --clean || status=$?
+check "after a cancelled clean build, a clean build that skips tests warns, pushes every image and keeps the record" \
+    '[[ $status == 0 && -z $(ran) && $(pushed 12-weekly | wc -l) == "$PUSH_COUNT" ]] && grep -q "^WARNING: SKIP_TESTS" "$WORK/out" \
+        && cmp -s "$RECORD" "$WORK/record-before"' "status $status, ran: $(ran): $(tail -3 "$WORK/out")"
+check "after a cancelled clean build, a clean build leaves r-proxy and r-proxy-redis running, ready, with empty caches" \
+    '[[ $(docker inspect --format "{{.State.Health.Status}}" r-proxy r-proxy-redis | xargs) == "healthy healthy" \
+        && $(data_files) == "$EMPTIED" ]]' "$(diff <(echo "$EMPTIED") <(data_files))"
 
 echo "$pass passed, $fail failed"
 (( fail == 0 ))

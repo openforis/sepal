@@ -239,6 +239,15 @@ class CoordinationTest(unittest.TestCase):
             recover(self.tags, host)
         self.assertIn(MAINTENANCE, self.tags.read())
 
+    def test_failed_cache_reset_removal_stops_recovery_and_keeps_the_marker(self):
+        self.tags.create(MAINTENANCE, self.sha)
+        host = HostFixture()
+        host.fail_cache_reset = True
+        with self.assertRaisesRegex(CleanupError, 'cache reset'):
+            recover(self.tags, host)
+        self.assertFalse(host.started)
+        self.assertIn(MAINTENANCE, self.tags.read())
+
 
 class HostFixture:
     def __init__(self):
@@ -246,6 +255,13 @@ class HostFixture:
         self.started = False
         self.healthy = False
         self.fail_health = False
+        self.cache_reset = True
+        self.fail_cache_reset = False
+
+    def remove_cache_reset(self):
+        if self.fail_cache_reset:
+            raise CleanupError('cannot remove cache reset')
+        self.cache_reset = False
 
     def gc_exists(self):
         return self.gc
@@ -257,6 +273,7 @@ class HostFixture:
         return self.started
 
     def start(self):
+        assert not self.cache_reset, 'recovery must stop cache deletion before starting services'
         assert not self.gc, 'registry may not start while GC exists'
         self.started = True
 

@@ -9,13 +9,16 @@
 #   complete           checks that this build has tested every suite exactly once
 #   record             makes the pending record this job's record
 #   build suite...     builds the test images of the suites
+#   build-module name [options...] builds a module's production and test images together
 #   service-logs       keeps the logs of the test services in BUILD_LOGS
 #   clean [pattern...] removes the containers, networks, volumes and test images of the Compose project, and the
 #                      images matching the reference patterns that no container uses
 #
 # Environment: WORKSPACE (the repository), TEST_PROJECT (the Compose project of the test resources), and for
 # begin, run, complete and record, TEST_RECORD (the file holding this job's record). The console and BUILD_LOGS are
-# those of ci/console.sh.
+# those of ci/console.sh. CLEAN=true marks a clean build: every suite runs whatever the record holds, test images build
+# on the latest base images (except those of the modules in LOCAL_BASE), and check images without cache.
+# TEST_IMAGE_BUILT=true tells run that build-module has already built this module's test image.
 set -euo pipefail
 
 TESTS=$WORKSPACE/ci/tests.yml
@@ -30,9 +33,10 @@ function main {
         complete) complete ;;
         record) record ;;
         build) shift; build "$@" ;;
+        build-module) shift; build_module "$@" ;;
         service-logs) service_logs ;;
         clean) shift; clean "$@" ;;
-        *) echo "Usage: $0 begin | run name... | complete | record | build suite... | service-logs" \
+        *) echo "Usage: $0 begin | run name... | complete | record | build suite... | build-module name [options...] | service-logs" \
                 "| clean [image-pattern...]" >&2
             exit 2 ;;
     esac
@@ -42,7 +46,9 @@ function begin {
     suites > /dev/null
     mkdir -p "$(dirname "$TEST_RECORD")"
     : > "$PENDING"
-    if [[ ! -e $TEST_RECORD ]]; then
+    if clean_build; then
+        echo "A clean build: every suite runs"
+    elif [[ ! -e $TEST_RECORD ]]; then
         echo "No suite has passed in this job yet: every suite runs"
     elif ! cat "$TEST_RECORD" > /dev/null 2>&1; then
         warn "cannot read $TEST_RECORD: every suite runs"
@@ -50,9 +56,11 @@ function begin {
 }
 
 function run {
-    local list name previous
+    local list name previous=''
     list=$(suites)
-    previous=$(cat "$TEST_RECORD" 2> /dev/null) || previous=''
+    if ! clean_build; then
+        previous=$(cat "$TEST_RECORD" 2> /dev/null) || previous=''
+    fi
     for name in "$@"; do
         if grep -qxF "$name" <<< "$list"; then
             test_suite "$name" "$previous"
@@ -77,22 +85,46 @@ function record {
 }
 
 function build {
-    local suite
+    local suite pull
     for suite in "$@"; do
         echo
         echo "******* Building the ${suite} test image *******"
+        pull=()
+        if clean_build && [[ " ${LOCAL_BASE:-} " != *" $suite "* ]]; then pull=(--pull); fi
         if [[ -f $WORKSPACE/modules/$suite/docker-compose.yml ]]; then
-            # With the module's own build settings, the test image builds on the layers of its production image
-            docker compose --file "$WORKSPACE/modules/$suite/docker-compose.yml" --file - build "$suite" <<EOF
+            # With the module's own build settings, the test image builds on the layers of its production image. Its
+            # base image must be the one the production image was built on: the latest one in clean builds.
+            docker compose --file "$WORKSPACE/modules/$suite/docker-compose.yml" --file - build "${pull[@]}" "$suite" <<EOF
 services:
   $suite:
     build: {target: test}
     image: $TEST_PROJECT/$suite
 EOF
+        elif clean_build; then
+            tests build --no-cache "${pull[@]}" "$suite"
         else
             tests build "$suite"
         fi
     done
+}
+
+function build_module {
+    local module=$1 list
+    shift
+    list=$(suites)
+    if ! grep -qxF "$module" <<< "$list"; then
+        docker compose --file "$WORKSPACE/modules/$module/docker-compose.yml" build "$@"
+        return
+    fi
+    # Separate no-cache builds can select different results for the same production layer.
+    docker compose --file "$WORKSPACE/modules/$module/docker-compose.yml" --file - build "$@" "$module" "$module-test" <<EOF
+services:
+  $module-test:
+    extends: {file: "$WORKSPACE/modules/$module/docker-compose.yml", service: $module}
+    container_name: $module-test
+    image: $TEST_PROJECT/$module
+    build: {target: test}
+EOF
 }
 
 function service_logs {
@@ -101,7 +133,7 @@ function service_logs {
         log=$BUILD_LOGS/$service.service.log
         mkdir -p "$BUILD_LOGS"
         tests logs --no-color --no-log-prefix --timestamps "$service" > "$log" 2>&1 || warn "cannot keep the log of $service"
-        echo "$service: service log in $(link "$log")"
+        echo "Live log: $(link "$log")"
     done
 }
 
@@ -130,7 +162,8 @@ function test_suite {
 # compose pull: it pulls :latest tags anyway.
 function prepare {
     local image
-    build "$1" && tests config --images "$1" | while read -r image; do
+    if [[ ${TEST_IMAGE_BUILT:-} != true ]]; then build "$1" || return; fi
+    tests config --images "$1" | while read -r image; do
         docker image inspect "$image" > /dev/null 2>&1 || docker pull --quiet "$image" || return
     done
 }
@@ -162,5 +195,7 @@ function remove_unused {
 function tests {
     docker compose --file "$TESTS" --profile suite "$@"
 }
+
+function clean_build { [[ ${CLEAN:-} == true ]]; }
 
 main "$@"

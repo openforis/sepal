@@ -57,10 +57,12 @@ After deployment, `systemctl show docker --property=Environment` must include bo
 `docker exec jenkins docker buildx inspect` should report `Driver: docker`; a separately configured
 `docker-container` builder would need those variables on its own BuildKit daemon instead.
 
-The live-log directory link at the start of a build serves the workspace's `build-logs/<build-number>/` files.
-Those paths identify the build: the next build removes them instead of reusing them. The `Full log:` links point
-to build artifacts, available once Jenkins archives the logs at build completion, including failure
-and cancellation. The latest 20 builds retain their artifacts.
+Each operation prints a `Live log:` link before it starts, outside collapsed sections, after creating its log
+without truncating earlier diagnostics. The link serves the workspace's `build-logs/<build-number>/` file;
+the `Full log:` line closing a section points to the same live file, as do test-service log links. Outside Jenkins,
+links are workspace-relative paths. The next build removes these files instead of reusing their paths, so an old
+link cannot show a later build's output. Jenkins's Artifacts section provides the archived logs after build
+completion, including failure and cancellation. The latest 20 builds retain their artifacts.
 
 Console checks: `python3 -m unittest discover -s ci/test -p '*_test.py'`. The Docker integration check uses only
 its own disposable daemon: `bash ci/test/test-images.test.sh <jenkins-image>`.
@@ -85,3 +87,41 @@ Checks: `python3 -m unittest discover -s modules/ops/test -p '*_test.py'` and
 `bash modules/ops/test/sepal-build.test.sh`. The Docker integration check uses a private disposable
 Docker daemon: `bash modules/ops/test/registry-cleanup.test.sh <jenkins-image>`. No test should target
 the ops registry or a shared Git remote. Deployment launchers require Python 3.9 or newer.
+
+## Weekly clean build
+
+`Sepal-weekly` builds `dev` on Saturdays around 02:00 UTC with `sepal-build "${BUILD_NUMBER}-weekly" --clean`
+and tags `build-<number>-weekly` only when it succeeds. It goes through the same launcher, lock and registry
+recovery as other builds, so it waits for a running build or cleanup. It is seeded **disabled**, and Jenkins
+restores the seeded job configuration whenever it starts: enabling it in the UI does not last.
+
+A clean build (`build-and-push-images.sh <version> --clean`):
+
+- Builds every image with `--no-cache`, and with `--pull` except r-proxy, app-manager and sandbox, which build on
+  the local `openforis/sandbox-base`. Production and test targets build together so they share the same fresh
+  layers; modules and their suites still run one at a time. Check images also build without cache.
+  `--no-cache` bypasses the BuildKit cache without emptying it.
+- Runs every test suite, whatever the job's test record holds. `SKIP_TESTS`, cleared for this job, still skips
+  them. As in other builds, failed, cancelled and skipping builds leave the record unchanged.
+- Empties the R package caches. It stops r-proxy and r-proxy-redis, checks that their containers mount exactly
+  `/data/r-proxy/repo`, `/data/r-proxy/site-library` and `/data/r-proxy-redis`, deletes what those directories
+  hold (keeping the directories), then starts both and waits until they are healthy. A failure stops the build
+  before it pushes anything.
+
+A cancelled clean build can leave the caches partly emptied and r-proxy stopped. The next build restarts r-proxy
+before anything needs it, and the next clean build empties the caches again. Shared launcher recovery removes
+the owned `sepal-r-cache-reset` container first, including after a force-killed build and before an older hotfix
+branch runs. An unowned container with that name or a removal failure stops recovery and the build. This recovery
+requires the updated ops image; deploy it before running clean builds. Nothing restores the emptied caches:
+r-proxy rebuilds packages on demand, so the sandbox build after a reset takes longer.
+
+To activate it, once registry cleanup is accepted and the tests are fast and reliable enough:
+
+1. Set `<disabled>false</disabled>` in `config/jobs/Sepal-weekly/config.xml`, and the expectation in
+   `test/jobs_test.py`. Keep `SKIP_TESTS` cleared.
+2. Review and deploy the ops image.
+3. Start the first build by hand, outside working hours, and check its duration, its test results, the
+   `build-<number>-weekly` tag and that r-proxy serves the sandbox build.
+
+Checks: `python3 -m unittest discover -s modules/ops/test -p '*_test.py'` and, with a private disposable Docker
+daemon, `bash ci/test/test-images.test.sh <jenkins-image>`.

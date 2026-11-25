@@ -14,6 +14,97 @@ CI = Path(__file__).resolve().parent.parent
 
 
 class ConsoleTest(unittest.TestCase):
+    def test_the_live_log_is_available_before_a_held_operation_finishes(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            log = Path(workspace) / 'build-logs/42/sample.build.log'
+            url = 'https://jenkins.example/job/folder/job/Sepal-test/'
+            env = {**os.environ, 'WORKSPACE': workspace, 'NO_COLOR': '1',
+                'JOB_URL': url, 'BUILD_NUMBER': '42', 'BUILD_URL': url + '42/', 'BUILD_LOGS': str(log.parent)}
+            process = subprocess.Popen(['bash', '-c',
+                'set -euo pipefail\nsource "$1"\nlogged sample build sh -c \'read -r release; echo finished\'',
+                'console-test', str(CI / 'console.sh')], env=env, stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=True)
+            output = b''
+            try:
+                with selectors.DefaultSelector() as ready:
+                    ready.register(process.stdout, selectors.EVENT_READ)
+                    while b'Live log: ' not in output or not output.endswith(b'\n'):
+                        self.assertTrue(ready.select(timeout=5), 'No live-log link while the operation is held')
+                        chunk = os.read(process.stdout.fileno(), 4096)
+                        self.assertTrue(chunk, output.decode())
+                        output += chunk
+                self.assertIn(f'Live log: {url}ws/build-logs/42/sample.build.log\n'.encode(), output)
+                self.assertTrue(log.is_file(), 'The advertised log must exist')
+                self.assertIsNone(process.poll(), output.decode())
+                self.assertNotIn(b'Details of', output)
+                remaining, _ = process.communicate(b'continue\n', timeout=5)
+                output = (output + remaining).decode()
+                self.assertEqual(process.returncode, 0, output)
+                self.assertIn('sample: build passed', output)
+                self.assertNotIn('/artifact/', output)
+                self.assertEqual(log.read_text(), 'finished\n')
+            finally:
+                if process.poll() is None:
+                    os.killpg(process.pid, signal.SIGKILL)
+                process.communicate()
+
+    def test_live_links_keep_builds_separate_and_preserve_existing_diagnostics(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            url = 'https://jenkins.example/job/Sepal-test/'
+            for build in ('42', '43'):
+                log = Path(workspace) / f'build-logs/{build}/sample.build.log'
+                log.parent.mkdir(parents=True)
+                log.write_text(f'earlier diagnostic from {build}\n')
+                result = run_shell(workspace, 'logged sample build echo new diagnostic', env={
+                    'JOB_URL': url, 'BUILD_URL': url + build + '/', 'BUILD_NUMBER': build,
+                    'BUILD_LOGS': str(log.parent)})
+                self.assertEqual(result.returncode, 0, result.stdout)
+                self.assertIn(f'Live log: {url}ws/build-logs/{build}/sample.build.log', result.stdout)
+                self.assertNotIn('/artifact/', result.stdout)
+            self.assertEqual((Path(workspace) / 'build-logs/42/sample.build.log').read_text(),
+                'earlier diagnostic from 42\nnew diagnostic\n')
+            self.assertEqual(log.read_text(), 'earlier diagnostic from 43\nnew diagnostic\n')
+
+    def test_outside_jenkins_links_remain_workspace_relative(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            result = run_shell(workspace, 'logged sample build echo diagnostic', env={
+                'JOB_URL': '', 'BUILD_URL': 'https://jenkins.example/job/Sepal-test/42/'})
+            self.assertEqual(result.returncode, 0, result.stdout)
+            self.assertIn('Live log: build-logs/sample.build.log\n', result.stdout)
+            self.assertNotIn('https://', result.stdout)
+
+    def test_a_log_that_cannot_be_created_is_not_advertised_and_the_command_does_not_run(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            invalid = Path(workspace) / 'not-a-directory'
+            invalid.touch()
+            result = run_shell(workspace, 'logged sample build touch "$WORKSPACE/ran"',
+                env={'BUILD_LOGS': str(invalid)})
+            self.assertNotEqual(result.returncode, 0, result.stdout)
+            self.assertNotIn('Live log:', result.stdout)
+            self.assertFalse((Path(workspace) / 'ran').exists())
+
+    def test_service_logs_use_the_same_live_destination_and_label(self):
+        with tempfile.TemporaryDirectory() as workspace:
+            binary = Path(workspace) / 'bin'
+            binary.mkdir()
+            docker = binary / 'docker'
+            docker.write_text('#!/bin/sh\ncase " $* " in\n'
+                '    *" ps --all --services ") echo mysql ;;\n'
+                '    *" logs "*) echo service diagnostic ;;\n'
+                '    *) exit 2 ;;\nesac\n')
+            docker.chmod(0o755)
+            log = Path(workspace) / 'build-logs/42/mysql.service.log'
+            url = 'https://jenkins.example/job/Sepal-test/'
+            result = subprocess.run(['bash', str(CI / 'test-images.sh'), 'service-logs'],
+                env={**os.environ, 'WORKSPACE': workspace, 'TEST_PROJECT': 'fixture', 'NO_COLOR': '1',
+                    'JOB_URL': url, 'BUILD_URL': url + '42/', 'BUILD_LOGS': str(log.parent),
+                    'PATH': str(binary) + os.pathsep + os.environ['PATH']},
+                text=True, capture_output=True, timeout=5)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn(f'Live log: {url}ws/build-logs/42/mysql.service.log', result.stdout)
+            self.assertNotIn('/artifact/', result.stdout)
+            self.assertEqual(log.read_text(), 'service diagnostic\n')
+
     def test_sandbox_progress_keeps_details_in_the_log_and_reports_named_steps(self):
         output = (
             '#11 [6/57] RUN /script/init_gpu.sh\n'
@@ -120,7 +211,7 @@ class ConsoleTest(unittest.TestCase):
             self.assertIn('Cannot write the log:', result.stdout)
             self.assertIn('sample: output FAILED', result.stdout)
 
-    def test_a_failed_sandbox_reports_its_step_status_excerpt_and_archived_log(self):
+    def test_a_failed_sandbox_reports_its_step_status_excerpt_and_live_log(self):
         with tempfile.TemporaryDirectory() as workspace:
             result = run_shell(workspace, '''
                 logged sandbox build sh -c 'printf "%s\\n" \
@@ -204,8 +295,9 @@ def run_filter(output, *, sandbox=False):
         input=output, text=True, capture_output=True, timeout=5)
 
 
-def run_shell(workspace, command):
-    env = {**os.environ, 'WORKSPACE': workspace, 'NO_COLOR': '1'}
+def run_shell(workspace, command, *, env=None):
+    env = {**os.environ, 'WORKSPACE': workspace, 'NO_COLOR': '1',
+        'BUILD_LOGS': str(Path(workspace) / 'build-logs'), 'JOB_URL': '', **(env or {})}
     return subprocess.run(['bash', '-c', 'set -euo pipefail\nsource "$1"\n' + command,
         'console-test', str(CI / 'console.sh')], env=env, text=True, stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT, timeout=10)

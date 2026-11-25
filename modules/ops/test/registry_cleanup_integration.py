@@ -258,6 +258,107 @@ class RegistryIntegration(unittest.TestCase):
             out, err = first.communicate(b'x', timeout=15)
             self.assertEqual(first.returncode, 0, out + err)
 
+    def test_10_a_force_killed_cache_reset_cannot_delete_the_next_builds_packages(self):
+        checkout, env = self.cache_reset_fixture()
+        script = checkout / 'modules/ops/script/build-and-push-images.sh'
+        image = 'localhost:5000/openforis/r-proxy:10-weekly'
+        process = subprocess.Popen([str(script), '10-weekly', '--clean'], env=env,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
+        deletion = []
+
+        def deleting():
+            for container in self.cmd('docker', 'ps', '--quiet', '--filter', 'ancestor=' + image).splitlines():
+                if subprocess.run(['docker', 'exec', container, 'test', '-f', '/R/.deletion-started'],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
+                    deletion.append(container)
+                    return True
+            return False
+
+        try:
+            self.wait(deleting)
+            os.killpg(process.pid, signal.SIGKILL)
+            out, err = process.communicate(timeout=10)
+            self.assertEqual(process.returncode, -signal.SIGKILL, out + err)
+            self.assertEqual(self.cmd('docker', 'inspect', '--format', '{{.State.Running}}', deletion[0]), 'true')
+
+            # An older branch also restarts these services, through the image-baked launcher.
+            script.write_text('#!/bin/bash\nset -e\n'
+                'docker compose --file "$WORKSPACE/modules/r-proxy/docker-compose.yml" up --detach --wait\n'
+                'docker exec r-proxy sh -c "echo replacement > /R/new-package"\n')
+            result = subprocess.run(['/usr/local/bin/sepal-build', '11-hotfix'],
+                env=env, capture_output=True, text=True, timeout=30)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+            if self.cmd('docker', 'ps', '--quiet', '--filter', 'id=' + deletion[0]):
+                self.cmd('docker', 'exec', 'r-proxy', 'sh', '-c', 'echo continue > /R/.deletion-release')
+                self.wait(lambda: not self.cmd('docker', 'ps', '--all', '--quiet', '--filter', 'id=' + deletion[0]))
+            self.assertEqual(self.cmd('docker', 'exec', 'r-proxy', 'cat', '/R/new-package'), 'replacement')
+            self.assertEqual(self.cmd('docker', 'ps', '--all', '--quiet', '--filter', 'id=' + deletion[0]), '')
+        finally:
+            if process.poll() is None:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.communicate()
+            subprocess.run(['docker', 'rm', '--force', *deletion, 'r-proxy', 'r-proxy-redis', 'logger'],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    def test_11_recovery_refuses_an_unowned_container_with_the_cache_reset_name(self):
+        self.cmd('docker', 'run', '--detach', '--name', 'sepal-r-cache-reset', '--entrypoint', 'sh',
+            'fixture-registry', '-c', 'sleep 3600')
+        notice = self.root / 'unprotected-build-started'
+        try:
+            result = self.operation('build', '--', 'touch', str(notice))
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('refusing to remove', result.stderr)
+            self.assertFalse(notice.exists())
+            self.assertEqual(self.cmd('docker', 'inspect', '--format', '{{.State.Running}}', 'sepal-r-cache-reset'), 'true')
+        finally:
+            self.cmd('docker', 'rm', '--force', 'sepal-r-cache-reset')
+
+    def cache_reset_fixture(self):
+        checkout = self.root / 'cache-build'
+        script = checkout / 'modules/ops/script/build-and-push-images.sh'
+        script.parent.mkdir(parents=True)
+        shutil.copy2(self.source / 'modules/ops/script/build-and-push-images.sh', script)
+        (checkout / 'ci').mkdir()
+        for name in ('console.sh', 'console.py'):
+            shutil.copy2(self.source / 'ci' / name, checkout / 'ci' / name)
+        helper = checkout / 'ci/test-images.sh'
+        helper.write_text('#!/bin/sh\nexit 0\n')
+        helper.chmod(0o755)
+        self.cmd('git', '-C', str(checkout), 'init', '--quiet')
+        self.cmd('git', '-C', str(checkout), 'remote', 'add', 'origin', str(self.root / 'origin'))
+
+        context = self.root / 'cache-image'
+        context.mkdir()
+        (context / 'find').write_text('#!/bin/sh\ntouch /R/.deletion-started\n'
+            'read -r release < /R/.deletion-release\nexec /usr/bin/find "$@"\n')
+        (context / 'Dockerfile').write_text('FROM alpine:3\nCOPY find /usr/local/bin/find\n'
+            'RUN chmod +x /usr/local/bin/find\n')
+        self.cmd('docker', 'build', '--quiet', '-t', 'localhost:5000/openforis/r-proxy:10-weekly', str(context))
+        for module in ('logger', 'sandbox-base', 'r-proxy'):
+            (checkout / 'modules' / module).mkdir()
+        (checkout / 'modules/logger/docker-compose.yml').write_text('services:\n  logger:\n'
+            '    image: alpine:3\n    container_name: logger\n    command: [sleep, "3600"]\n')
+        (checkout / 'modules/r-proxy/docker-compose.yml').write_text('services:\n  r-proxy:\n'
+            '    image: localhost:5000/openforis/r-proxy:10-weekly\n    container_name: r-proxy\n'
+            '    command: [sleep, "3600"]\n    volumes:\n'
+            '      - /data/r-proxy/repo:/R\n      - /data/r-proxy/site-library:/usr/local/lib/R/site-library\n'
+            '  r-proxy-redis:\n    image: alpine:3\n    container_name: r-proxy-redis\n'
+            '    command: [sleep, "3600"]\n    volumes:\n      - /data/r-proxy-redis:/data\n')
+        self.cmd('docker', 'run', '--rm', '--volume', '/data:/data', 'alpine:3', 'sh', '-c',
+            'mkdir -p /data/r-proxy/repo /data/r-proxy/site-library /data/r-proxy-redis; '
+            'mkfifo /data/r-proxy/repo/.deletion-release; echo old > /data/r-proxy/repo/old-package')
+
+        binary = checkout / 'bin'
+        binary.mkdir()
+        docker = binary / 'docker'
+        docker.write_text('#!/bin/sh\ncase " $* " in *" build "*) exit 0 ;; esac\n'
+            f'exec {shutil.which("docker")} "$@"\n')
+        docker.chmod(0o755)
+        env = dict(self.env, WORKSPACE=str(checkout), PATH=str(binary) + os.pathsep + os.environ['PATH'],
+            SKIP_TESTS='true', DOCKER_REGISTRY_HOST='localhost:5000', GIT_COMMIT=self.sha)
+        return checkout, env
+
     def interrupt_gc(self, signum):
         self.cmd('docker', 'exec', 'docker-registry', 'touch', '/var/lib/registry/hold')
         process = subprocess.Popen([sys.executable, str(self.source / 'modules/ops/script/registry_maintenance.py'), 'cleanup'],

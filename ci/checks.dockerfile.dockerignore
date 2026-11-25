@@ -6,6 +6,7 @@
 !modules/app-manager/
 !modules/ops/script/
 !modules/ops/test/
+!modules/ops/config/jobs/
 !modules/sandbox/script/init_r_packages.sh
 !modules/worker/lib/shared/package-lock.json
 **/node_modules/

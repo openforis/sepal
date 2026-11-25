@@ -18,6 +18,8 @@ from registry_cleanup import BUILD, CleanupError, Registry, plan_cleanup
 
 MAINTENANCE = 'maintenance/registry-cleanup'
 GC_LABEL = 'org.openforis.sepal.registry-gc'
+R_CACHE_RESET = 'sepal-r-cache-reset'
+R_CACHE_RESET_LABEL = 'org.openforis.sepal.r-cache-reset'
 
 
 class GitTags:
@@ -174,6 +176,18 @@ class DockerRegistry:
         if self.gc_exists():
             raise CleanupError('Garbage collection still exists; registry must stay stopped')
 
+    def remove_cache_reset(self):
+        query = ('ps', '--all', '--quiet', '--filter', 'name=^/' + R_CACHE_RESET + '$')
+        if not self.docker(*query):
+            return
+        labels = self.inspect(R_CACHE_RESET)['Config']['Labels'] or {}
+        if labels.get(R_CACHE_RESET_LABEL) != 'true':
+            raise CleanupError(R_CACHE_RESET + ' is not a SEPAL cache reset container; refusing to remove it')
+        self.docker('rm', '--force', R_CACHE_RESET)
+        if self.docker(*query):
+            raise CleanupError('R cache reset still exists; build must not start')
+        print('Removed interrupted R cache reset', flush=True)
+
     def start(self):
         self.docker('start', 'docker-registry')
 
@@ -212,6 +226,7 @@ class DockerRegistry:
 
 
 def recover(git, host):
+    host.remove_cache_reset()
     changed = host.gc_exists()
     if changed:
         host.remove_gc()
