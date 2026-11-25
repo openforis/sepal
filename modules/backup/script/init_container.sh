@@ -13,7 +13,8 @@ printf '%s\n' \
     > ~/bucket
 
 printf '%s\n' \
-    "$BACKUP_CRON_EXP root flock -xn ~/backup.lck -c /script/backup.sh" \
+    "PATH=/usr/local/bin:/usr/bin:/bin" \
+    "$BACKUP_CRON_EXP root flock -xn ~/backup.lck -c /script/backup.sh >> /proc/1/fd/1 2>&1" \
     > /etc/cron.d/backup
 
 cron -f
