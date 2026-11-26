@@ -1,27 +1,31 @@
 services:
   backup:
+    extends:
+      file: ../docker-compose.logger.yml
+      service: logger
     build:
       context: ../..
       dockerfile: ./modules/backup/Dockerfile
-      ulimits:
-        nofile:
-          soft: 65536
-          hard: 65536
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/backup:${SEPAL_VERSION:-latest}"
     container_name: backup
     volumes:
       - "${SEPAL_DATA_DIR}/ssh-gateway:/data/ssh-gateway:ro"
-      - "${SEPAL_DATA_DIR}/user:/data/user:ro"
+      - "${SEPAL_DATA_DIR}/user/home:/data/user/home:ro"
+      - "${SEPAL_DATA_DIR}/app-manager:/data/app-manager:ro"
       - "${SEPAL_BACKUP_DIR}:/backup"
     environment:
-      DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_ROOT_PASSWORD: "${POSTGRES_ROOT_PASSWORD}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
       AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
       AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
       S3_BACKUP_BUCKET: "${S3_BACKUP_BUCKET}"
-      BACKUP_CRON_EXP: "0 2 * * *"
+      BACKUP_CRON_EXP: "0 0 * * *"
     networks:
       - sepal
     restart: unless-stopped
+    platform: linux/amd64 # Required for macOS builds
 
 networks:
   sepal:

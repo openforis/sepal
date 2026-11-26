@@ -153,6 +153,27 @@
         tags:
           Name: "Sepal {{ lookup('env', 'DEPLOY_ENVIRONMENT') }} Log"
 
+    # modules/backup uploads to backup/<tier>/<date>/; yearly backups are kept forever
+    - name: Expire backups
+      community.aws.s3_lifecycle:
+        name: "{{ lookup('env', 'S3_BACKUP_BUCKET') }}"
+        rule_id: "backup-{{ item.tier }}"
+        prefix: "backup/{{ item.tier }}/"
+        expiration_days: "{{ item.days }}"
+        status: enabled
+      loop:
+        - {tier: daily, days: 7}
+        - {tier: weekly, days: 35}
+        - {tier: monthly, days: 365}
+
+    - name: Abort incomplete backup uploads
+      community.aws.s3_lifecycle:
+        name: "{{ lookup('env', 'S3_BACKUP_BUCKET') }}"
+        rule_id: backup-incomplete-uploads
+        prefix: backup/
+        abort_incomplete_multipart_upload_days: 1
+        status: enabled
+
     - name: Wait for SSH to be available on Sepal
       local_action: wait_for host="{{ item.public_ip_address }}"
                     port=22
