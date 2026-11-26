@@ -42,7 +42,7 @@
         key_name: "{{ lookup('env', 'AWS_REGION') }}"
         security_groups: 
           - "Operations"
-        instance_type: t3a.large
+        instance_type: t3a.xlarge
         image_id: "{{ lookup('env', 'AWS_AMI') }}"
         region: "{{ lookup('env', 'AWS_REGION') }}"
         state: running
@@ -51,7 +51,8 @@
         filters:
           tag:Type: "Operations"
           tag:Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
-          instance-state-name: running
+          # A stopped host is started, not replaced by a second one
+          instance-state-name: [pending, running, stopping, stopped]
         tags:
           Name: "Operations"
           Type: Operations
