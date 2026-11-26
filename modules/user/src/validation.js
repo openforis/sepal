@@ -1,9 +1,9 @@
 // Mirrors the Java Username/Email validation: a format regex + a system-name blacklist, and the
 // standard email pattern.
 //
-// The maximum lengths are contractual, not cosmetic: `username` and `email` are varchar(32) and
-// varchar(255), and MySQL runs with STRICT_TRANS_TABLES, so an over-long value is a 500 rather
-// than a silent truncation. EMAIL_MAX_LENGTH is the RFC 5321 maximum address length.
+// The maximum lengths are contractual, not cosmetic: `username` and `email` are capped at 32 and
+// 255 characters by CHECK constraints, so an over-long value is a 500 rather than a silent
+// truncation. EMAIL_MAX_LENGTH is the RFC 5321 maximum address length.
 //
 // Both validators are the same shape — type, then length, then format — so the format regexes
 // describe only shape. Length first also bounds the work EMAIL_FORMAT can do: its

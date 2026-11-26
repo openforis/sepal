@@ -10,56 +10,21 @@ x-suite: &suite
   # At most two test workers
   cpuset: "0-1"
 
-x-mysql: &mysql
-  depends_on: &mysql-depends-on
-    mysql:
-      condition: service_healthy
-  environment: &mysql-environment
-    MYSQL_HOST: mysql
-    MYSQL_USER: root
-    MYSQL_PASSWORD: test
-    MYSQL_FILES_DIR: /var/lib/mysql-files
-  volumes:
-    - mysql-files:/var/lib/mysql-files
-
 x-postgres: &postgres
-  depends_on: &postgres-depends-on
+  depends_on:
     postgres:
       condition: service_healthy
-  environment: &postgres-environment
+  environment:
     POSTGRES_HOST: postgres
     POSTGRES_USER: sepal
     POSTGRES_PASSWORD: test
     POSTGRES_ROOT_PASSWORD: test-root
-
-# The modules on Postgres, whose import suites read MySQL through mysql_fdw, and the library holding that import
-x-databases: &databases
-  <<: *mysql
-  depends_on: {<<: [*mysql-depends-on, *postgres-depends-on]}
-  environment: {<<: [*mysql-environment, *postgres-environment]}
 
 x-check: &check
   context: ..
   dockerfile: ci/checks.dockerfile
 
 services:
-  # SEPAL's own image, as this build made it: the schemas need its server settings
-  mysql:
-    image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/mysql:${SEPAL_VERSION:-latest}"
-    pull_policy: never
-    environment:
-      MYSQL_ROOT_PASSWORD: test
-      MYSQL_PASSWORD: test
-    volumes:
-      # Its secure_file_priv directory: scene-metadata writes files there that the server reads back
-      - mysql-files:/var/lib/mysql-files
-      # Where it marks itself initialized
-      - /data
-    healthcheck:
-      test: ["CMD", "test", "-f", "/data/module_initialized"]
-      interval: 2s
-      retries: 150
-
   # SEPAL's own image, as this build made it: the schemas need its locale
   postgres:
     image: "${DOCKER_REGISTRY_HOST:-localhost}/openforis/postgres:${SEPAL_VERSION:-latest}"
@@ -82,7 +47,7 @@ services:
       retries: 60
 
   lib-js-shared:
-    <<: [*suite, *databases]
+    <<: [*suite, *postgres]
     image: "${COMPOSE_PROJECT_NAME}/lib-js-shared"
     build: {<<: *check, target: lib-js-shared}
 
@@ -106,7 +71,7 @@ services:
     image: "${COMPOSE_PROJECT_NAME}/app-manager"
 
   budget:
-    <<: [*suite, *databases]
+    <<: [*suite, *postgres]
     image: "${COMPOSE_PROJECT_NAME}/budget"
 
   email:
@@ -131,7 +96,7 @@ services:
     image: "${COMPOSE_PROJECT_NAME}/gui"
 
   message:
-    <<: [*suite, *databases]
+    <<: [*suite, *postgres]
     image: "${COMPOSE_PROJECT_NAME}/message"
 
   r-proxy:
@@ -139,23 +104,19 @@ services:
     image: "${COMPOSE_PROJECT_NAME}/r-proxy"
 
   recipe:
-    <<: [*suite, *databases]
+    <<: [*suite, *postgres]
     image: "${COMPOSE_PROJECT_NAME}/recipe"
 
   scene:
     <<: [*suite, *postgres]
     image: "${COMPOSE_PROJECT_NAME}/scene"
 
-  scene-metadata:
-    <<: [*suite, *mysql]
-    image: "${COMPOSE_PROJECT_NAME}/scene-metadata"
-
   ssh-gateway:
     <<: *suite
     image: "${COMPOSE_PROJECT_NAME}/ssh-gateway"
 
   storage:
-    <<: [*suite, *databases]
+    <<: [*suite, *postgres]
     image: "${COMPOSE_PROJECT_NAME}/storage"
 
   task:
@@ -163,7 +124,7 @@ services:
     image: "${COMPOSE_PROJECT_NAME}/task"
 
   task-manager:
-    <<: [*suite, *databases]
+    <<: [*suite, *postgres]
     image: "${COMPOSE_PROJECT_NAME}/task-manager"
 
   terminal:
@@ -171,7 +132,7 @@ services:
     image: "${COMPOSE_PROJECT_NAME}/terminal"
 
   user:
-    <<: [*suite, *databases]
+    <<: [*suite, *postgres]
     image: "${COMPOSE_PROJECT_NAME}/user"
 
   user-assets:
@@ -183,8 +144,5 @@ services:
     image: "${COMPOSE_PROJECT_NAME}/user-files"
 
   worker:
-    <<: [*suite, *databases]
+    <<: [*suite, *postgres]
     image: "${COMPOSE_PROJECT_NAME}/worker"
-
-volumes:
-  mysql-files:

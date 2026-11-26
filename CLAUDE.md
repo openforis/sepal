@@ -27,17 +27,17 @@ not implementation history; recipe-specific issues are deferred unless explicitl
 - `task-manager` - Runs each export task in its own detached container on the main host
 - `task` - One-shot task runner image, started by task-manager per task
 - `app-manager` / `app-launcher` - Application management
-- `email`, `terminal`, `user-assets`, `user-files`, `storage`, `ssh-gateway`, `scene-metadata`, `scene`, `ceo-gateway`, `r-proxy`, `message`, `recipe`, `budget`
+- `email`, `terminal`, `user-assets`, `user-files`, `storage`, `ssh-gateway`, `scene`, `ceo-gateway`, `r-proxy`, `message`, `recipe`, `budget`
 
 **Infrastructure modules** (Docker-only, no application code):
-- `caddy`, `mysql`, `postgres` (with `pgadmin`), `postgres-backup`, `rabbitmq`, `prometheus`, `logger`
+- `caddy`, `postgres` (with `pgadmin`), `postgres-backup`, `rabbitmq`, `prometheus`, `logger`
 
 **Build-only modules** (images only, not runnable services):
 - `sandbox-base`, `sandbox` - User sandbox images (`app-manager` and `r-proxy` also build on `sandbox-base`, so the binaries they build for sandboxes match its libraries)
 
 ### Shared Libraries
 
-- `lib/js/shared` - Core Node.js library used by most Node modules. Provides HTTP server/client (`httpServer.js`, `httpClient.js`), message queue (`messageQueue.js` via amqplib), database (`db/` via pg; `db/mysqlImport.js` reads the legacy MySQL data through `mysql_fdw` for the one-off import; `db/mysql.js` serves `scene-metadata` and the MySQL test support), logging (`log.js` via log4js), metrics (`metrics.js` via prom-client), RxJS utilities, and service base class (`service.js`).
+- `lib/js/shared` - Core Node.js library used by most Node modules. Provides HTTP server/client (`httpServer.js`, `httpClient.js`), message queue (`messageQueue.js` via amqplib), database (`db/` via pg), logging (`log.js` via log4js), metrics (`metrics.js` via prom-client), RxJS utilities, and service base class (`service.js`).
 - `lib/js/ee` - Google Earth Engine JavaScript wrapper used by `gee`, including its task endpoints
 - `lib/python/shared` - Shared Python utilities
 
@@ -55,7 +55,7 @@ The Node.js libraries carry no lockfile of their own: each module locks the depe
 
 - **Caddy** - HTTPS entry point (ports 80/443) with automatic ACME certificate management; reverse-proxies to `gateway` (for `/api/*`, `/privacy-policy`) and `gui` (everything else)
 - **nginx** - HTTP reverse proxy within containers
-- **Postgres** - Primary database (Postgrator migrations per Node module; `mysql_fdw` imports the legacy MySQL data on first start). MySQL remains as that import's source and as `scene-metadata`'s database until the cleanup build removes both
+- **Postgres** - Primary database (Postgrator migrations per Node module)
 - **AWS EC2** - Dynamic worker instances for user sandboxes with per-user budget tracking
 
 ## Development Environment

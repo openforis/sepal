@@ -60,18 +60,9 @@
         src: "{{ config_home }}/certificates/docker-registry.crt"
         dest: "/etc/docker/certs.d/{{ lookup('env', 'DOCKER_REGISTRY_HOST') }}/ca.crt"
 
-    - name: Install docker
-      command: "amazon-linux-extras install docker -y"
-
-    - name: pip install urllib3
-      pip:
-        name: urllib3==1.26.18
-        executable: pip3
-
-    - name: pip install requests
-      pip:
-        name: requests
-        executable: pip3
+    - name: Install packages
+      dnf:
+        name: [docker, python3-requests]
 
     - file:
         path: "/usr/local/lib/docker/cli-plugins"
@@ -85,10 +76,12 @@
         force: true
         timeout: 30
 
+    # compose build needs a newer buildx than the docker rpm's. The CLI looks in /usr/local/lib first, and rpm updates
+    # leave it alone.
     - name: Install Docker Buildx
       get_url:
         url: https://github.com/docker/buildx/releases/download/{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}/buildx-{{ lookup('env', 'DOCKER_BUILDX_VERSION') }}.linux-amd64
-        dest: /usr/libexec/docker/cli-plugins/docker-buildx
+        dest: /usr/local/lib/docker/cli-plugins/docker-buildx
         mode: +x
         force: true
         timeout: 30

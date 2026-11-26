@@ -5,9 +5,7 @@ SEPAL worker service (Node.js). Provisions worker instances and manages sandbox 
 
 ## Database migrations
 
-`migrations/` holds the Postgres schema stream and `mysql-import.sql`, the one-off copy of the MySQL `worker`
-database run by `importFromMysql` on startup while `MYSQL_HOST` is set. `migrations-mysql/` is the MySQL schema,
-kept as the import test's source fixture.
+`migrations/` holds the Postgres schema stream.
 
 ## Commands
 - `npm test` — Node test runner

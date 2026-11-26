@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
 # remove locked libs
-find /usr/local/lib/R/site-library/ -name "00LOCK-*" -print0 | xargs -0 rm -rf
+find /usr/local/lib/R/site-library/ -name "00LOCK-*" -print0 | xargs -0 -r rm -rf
 
 # remove cached CRAN sources
-find /R -type f -path */cranroot/src/* -print0 | xargs -0 rm
+find /R -type f -path "*/cranroot/src/*" -print0 | xargs -0 -r rm
 
 # remove cached GitHub sources
-find /R -maxdepth 4 -type d -path */github/src/* -print0 | xargs -0 rm -r
+find /R -maxdepth 4 -type d -path "*/github/src/*" -print0 | xargs -0 -r rm -r
 
 source /etc/os-release
 

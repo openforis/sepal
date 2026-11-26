@@ -35,12 +35,10 @@ regardless of the database collation. Validation must not accept a token that th
 
 ## Database migrations
 
-`migrations/001.do.schema.sql` creates the complete Postgres schema. `migrations/mysql-import.sql` copies the
-rows, including uid/gid and credentials, from the legacy MySQL `user` database (kept in `migrations-mysql/`) on
-first start, then advances both identity sequences; a restart that finds MySQL changed since the import is refused.
+`migrations/001.do.schema.sql` creates the complete Postgres schema.
 Usernames and emails are `citext`, so comparisons and unique indexes ignore case. `system_user` is a reserved
 word in Postgres and must be quoted in SQL.
-See [database migrations](../../docs/database-migrations.md) for startup and repair.
+See [database migrations](../../docs/database-migrations.md) for startup.
 
 ## User-list subscriptions
 

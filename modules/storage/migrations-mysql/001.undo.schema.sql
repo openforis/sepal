@@ -1,2 +1,0 @@
-DROP TABLE IF EXISTS history;
-DROP PROCEDURE IF EXISTS DropIndexIfExists;

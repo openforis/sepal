@@ -40,8 +40,6 @@ USER node
 CMD /usr/local/bin/start.sh
 
 FROM production AS test
-# The import suites' source schema
-ADD modules/${MODULE_NAME}/migrations-mysql ${MODULE}/migrations-mysql
 # The tests read the repository copies of the scripts the image installs
 ADD modules/${MODULE_NAME}/script ./script
 USER root

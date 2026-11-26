@@ -72,11 +72,11 @@ mount_data_copy() {
     mount -o ro,norecovery,nouuid $DATA_COPY /mnt/data-copy || return 1
     local format
     format=$(xfs_info /mnt/data-copy | grep -Eo 'crc=[01]')
-    local has_mysql=no
-    [ -d /mnt/data-copy/mysql ] && has_mysql=yes
+    local has_postgres=no
+    [ -d /mnt/data-copy/postgres ] && has_postgres=yes
     umount /mnt/data-copy
-    echo "$format, mysql directory: $has_mysql"
-    [ $has_mysql = yes ]
+    echo "$format, postgres directory: $has_postgres"
+    [ $has_postgres = yes ]
 }
 
 mount_and_list() {
