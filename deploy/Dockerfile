@@ -24,3 +24,5 @@ RUN ansible-galaxy collection install community.docker:4.8.8 -v --no-cache -f
 RUN packer plugins install github.com/hashicorp/amazon && packer plugins install github.com/hashicorp/ansible
 ADD boto.conf /root/.boto
 ENV SEPAL_HOME=/usr/local/lib/sepal
+# Keeps root-owned bytecode out of the mounted sources
+ENV PYTHONDONTWRITEBYTECODE=1
