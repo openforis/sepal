@@ -66,7 +66,7 @@
             ebs:
               delete_on_termination: false
               volume_type: gp3
-              volume_size: 250
+              volume_size: 500
 
     - ec2_instance_info:
         region: "{{ lookup('env', 'AWS_REGION') }}"
