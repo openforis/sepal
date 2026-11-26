@@ -1,4 +1,5 @@
 plugin: amazon.aws.aws_ec2
+use_deprecated_tags: false
 regions:
   - ${AWS_REGION}
 filters:
