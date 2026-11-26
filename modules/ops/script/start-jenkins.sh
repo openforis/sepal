@@ -1,12 +1,16 @@
 #!/bin/sh
 set -e
 
-# To use docker-cli as jenkins from within the container
-# we create a docker group with same gid as on the host
-# and assign jenkins to that group
-DOCKER_GROUP=$(stat -c %g /var/run/docker.sock)
-addgroup -g $DOCKER_GROUP docker || echo "User docker already associated with group"
-adduser jenkins docker || echo "User jenkins already associated with group"
+# Jenkins uses the host's Docker socket, so it joins the group that owns it, whatever its name in the image. A
+# restarted container keeps the groups of its earlier starts, so a group created here is named after its GID: a
+# docker group left with an older GID can't block it.
+DOCKER_GID=$(stat -c %g /var/run/docker.sock)
+DOCKER_GROUP=$(getent group $DOCKER_GID | cut -d: -f1)
+if [ -z "$DOCKER_GROUP" ]; then
+    DOCKER_GROUP=docker-$DOCKER_GID
+    addgroup -g $DOCKER_GID $DOCKER_GROUP
+fi
+id -nG jenkins | grep -qw $DOCKER_GROUP || addgroup jenkins $DOCKER_GROUP
 
 # Setup GitHub SSH identity file
 sudo -u jenkins rsync -a /var/lib/jenkins/.ssh/* /var/jenkins_home/.ssh/

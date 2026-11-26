@@ -37,21 +37,36 @@
             to_port: 65535
             cidr_ip: 0.0.0.0/0
 
-    - name: Provision Operations instance
+    # An existing host is only started: its type and volumes are changed by hand
+    - name: Find the Operations instance
+      ec2_instance_info:
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        filters:
+          tag:Type: Operations
+          tag:Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
+          instance-state-name: [pending, running, stopping, stopped]
+      register: existing_ops
+
+    # Only instance_ids and state: any other option would be enforced on the existing host
+    - name: Start the Operations instance
+      when: existing_ops.instances | length > 0
+      ec2_instance:
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        instance_ids: "{{ existing_ops.instances | map(attribute='instance_id') | list }}"
+        state: running
+        wait: true
+
+    - name: Create Operations instance
+      when: existing_ops.instances | length == 0
       ec2_instance:
         key_name: "{{ lookup('env', 'AWS_REGION') }}"
-        security_groups: 
+        security_groups:
           - "Operations"
-        instance_type: t3a.large
+        instance_type: t3a.xlarge
         image_id: "{{ lookup('env', 'AWS_AMI') }}"
         region: "{{ lookup('env', 'AWS_REGION') }}"
         state: running
         wait: true
-        exact_count: 1
-        filters:
-          tag:Type: "Operations"
-          tag:Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
-          instance-state-name: running
         tags:
           Name: "Operations"
           Type: Operations

@@ -14,7 +14,7 @@
     target_release: "{{ lookup('env', 'AMAZON_LINUX_RELEASEVER') }}"
     release_action: "{{ lookup('env', 'AMAZON_LINUX_RELEASE_ACTION') | default('check', true) }}"
     aws_common_env: "{{ lookup('env', 'AWS_COMMON') | default('aws-common', true) }}/env"
-    host_name: "{{ tags.Type | default(inventory_hostname) }}"
+    host_name: "{{ ec2_tags.Type | default(inventory_hostname) }}"
     behind_report: >-
       {{ host_name }} runs Amazon Linux {{ deployed_release }}, behind {{ target_release }} in {{ aws_common_env }}
       {{- (', and behind the newest release, ' ~ newest_release) if newer_than_target else ', the newest release' }}.
