@@ -37,7 +37,7 @@
             to_port: 65535
             cidr_ip: 0.0.0.0/0
 
-    # An existing host is left as it is: its type, volumes and state are changed by hand
+    # An existing host is only started: its type and volumes are changed by hand
     - name: Find the Operations instance
       ec2_instance_info:
         region: "{{ lookup('env', 'AWS_REGION') }}"
@@ -47,10 +47,14 @@
           instance-state-name: [pending, running, stopping, stopped]
       register: existing_ops
 
-    - name: Check the Operations instance is running
-      assert:
-        that: existing_ops.instances | rejectattr('state.name', 'equalto', 'running') | list | length == 0
-        fail_msg: "Start the Operations instance {{ existing_ops.instances | map(attribute='instance_id') | join(', ') }} first"
+    # Only instance_ids and state: any other option would be enforced on the existing host
+    - name: Start the Operations instance
+      when: existing_ops.instances | length > 0
+      ec2_instance:
+        region: "{{ lookup('env', 'AWS_REGION') }}"
+        instance_ids: "{{ existing_ops.instances | map(attribute='instance_id') | list }}"
+        state: running
+        wait: true
 
     - name: Create Operations instance
       when: existing_ops.instances | length == 0
