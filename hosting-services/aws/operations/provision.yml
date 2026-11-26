@@ -45,6 +45,7 @@
         instance_type: t3a.large
         image_id: "{{ lookup('env', 'AWS_AMI') }}"
         region: "{{ lookup('env', 'AWS_REGION') }}"
+        state: running
         wait: true
         exact_count: 1
         filters:
