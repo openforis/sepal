@@ -88,9 +88,9 @@
           Name: "Sepal - {{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
           Type: Sepal
           Environment: "{{ lookup('env', 'DEPLOY_ENVIRONMENT') }}"
-        network:
-          interfaces:
-            - id: "{{ sepal_eni.interface.id }}" 
+        network_interfaces_ids:
+          - id: "{{ sepal_eni.interface.id }}"
+            device_index: 0
         ebs_optimized: true
         volumes:
           - device_name: /dev/xvda

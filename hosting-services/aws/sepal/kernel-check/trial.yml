@@ -66,8 +66,8 @@
             key_name: "{{ region }}"
             vpc_subnet_id: "{{ lookup('env', 'AWS_SUBNET_ID') }}"
             security_groups: [Sepal, Sepal-Swarm, Sepal-Swarm-Manager, Sepal-Developers]
-            network:
-              assign_public_ip: true
+            network_interfaces:
+              - assign_public_ip: true
             tags: "{{ check_tags }}"
             state: running
             wait: true
