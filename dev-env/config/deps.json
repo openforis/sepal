@@ -21,7 +21,10 @@
     },
     "backup": {
         "build": {},
-        "run": []
+        "run": [
+            "logger",
+            "postgres"
+        ]
     },
     "budget": {
         "lib": [
@@ -101,13 +104,6 @@
         "build": {},
         "run": [
             "logger"
-        ]
-    },
-    "postgres-backup": {
-        "build": {},
-        "run": [
-            "logger",
-            "postgres"
         ]
     },
     "message": {
@@ -255,10 +251,6 @@
             "logger",
             "rabbitmq"
         ]
-    },
-    "user-storage-backup": {
-        "build": {},
-        "run": []
     },
     "worker": {
         "lib": [

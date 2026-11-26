@@ -181,7 +181,6 @@ build email
 build caddy
 build rabbitmq
 build backup
-build postgres-backup
 build postgres
 # The shared library's suite needs Postgres
 tests run lib-js-shared
@@ -193,7 +192,6 @@ build task-manager
 build gee
 build user
 build storage
-build user-storage-backup
 build user-assets
 build user-files
 build message
@@ -218,7 +216,6 @@ push backup
 push rabbitmq
 push user
 push storage
-push user-storage-backup
 push app-launcher
 push app-manager
 push user-assets
@@ -231,7 +228,6 @@ push gui
 push ceo-gateway
 push postgres
 push pgadmin
-push postgres-backup
 push gee
 push gateway
 push ssh-gateway

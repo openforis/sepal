@@ -1,4 +1,0 @@
-services:
-  user-storage-backup:
-    # dev-env runs no backups
-    scale: 0

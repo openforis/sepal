@@ -1,4 +1,7 @@
 services:
   backup:
+    extends:
+      file: ../docker-compose.logger.override.yml
+      service: logger
     # dev-env runs no backups
     scale: 0

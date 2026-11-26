@@ -30,7 +30,7 @@ not implementation history; recipe-specific issues are deferred unless explicitl
 - `email`, `terminal`, `user-assets`, `user-files`, `storage`, `ssh-gateway`, `scene`, `ceo-gateway`, `r-proxy`, `message`, `recipe`, `budget`
 
 **Infrastructure modules** (Docker-only, no application code):
-- `caddy`, `postgres` (with `pgadmin`), `postgres-backup`, `rabbitmq`, `prometheus`, `logger`
+- `caddy`, `postgres` (with `pgadmin`), `backup`, `rabbitmq`, `prometheus`, `logger`
 
 **Build-only modules** (images only, not runnable services):
 - `sandbox-base`, `sandbox` - User sandbox images (`app-manager` and `r-proxy` also build on `sandbox-base`, so the binaries they build for sandboxes match its libraries)

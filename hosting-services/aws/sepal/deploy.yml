@@ -14,7 +14,6 @@
       - {module: rabbitmq}
       - {module: email}
       - {module: postgres}
-      - {module: postgres-backup}
       - {module: gee}
       - {module: user}
       - {module: budget}
@@ -43,10 +42,10 @@
         # The interface's other address
         sepal_ssh_ip: >-
           {{ ([main_interface.ipv4] + main_interface.ipv4_secondaries | default([])) | map(attribute='address')
-             | reject('equalto', ansible_default_ipv4.address) | first }}
+             | reject('equalto', ansible_facts.default_ipv4.address) | first }}
         syslog_address: "udp://{{ ec2_private_ip_address }}"
       vars:
-        main_interface: "{{ hostvars[inventory_hostname]['ansible_' ~ ansible_default_ipv4.interface] }}"
+        main_interface: "{{ ansible_facts[ansible_facts.default_ipv4.interface] }}"
 
     # syslog address
     - name: Write syslog_address to /tmp/syslog-address
@@ -125,11 +124,12 @@
         group: "root"
         mode: "0755"
 
-    - name: Remove the checks of the retired MySQL and scene-metadata containers
+    - name: Remove the checks of retired containers
       file:
         path: "/usr/local/bin/{{ item }}"
         state: absent
       loop:
+        - dockercheck-postgres-backup
         - dockercheck-mysql
         - dockercheck-mysql-admin
         - dockercheck-mysql-backup
@@ -349,6 +349,12 @@
     # Their data stays under /data as an archive: /data/mysql holds the last MySQL state
     - name: Remove the retired MySQL and scene-metadata containers
       command: docker rm --force mysql mysql-admin mysql-backup scene-metadata scene-metadata-redis
+      changed_when: false
+      failed_when: false
+
+    # backup took over its Postgres dumps
+    - name: Remove the retired postgres-backup container
+      command: docker rm --force postgres-backup
       changed_when: false
       failed_when: false
 
