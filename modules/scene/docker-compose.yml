@@ -1,27 +1,4 @@
 services:
-  scene-redis:
-    extends:
-      file: ../docker-compose.logger.yml
-      service: logger
-    image: "redis:6"
-    container_name: scene-redis
-    # Holds the per-collection import watermarks: losing one silently re-imports an entire scene
-    # collection.
-    # maxmemory is a guard rail, not a cache budget: with noeviction, reaching it makes writes fail.
-    command: ["redis-server", "--maxmemory", "64mb", "--maxmemory-policy", "noeviction"]
-    volumes:
-      - "${SEPAL_DATA_DIR}/scene-redis:/data"
-    healthcheck:
-      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
-      start_period: 60s
-      start_interval: 1s
-      interval: 20s
-      timeout: 5s
-      retries: 3
-    networks:
-      - sepal
-    restart: unless-stopped
-
   scene:
     extends:
       file: ../docker-compose.logger.yml
@@ -41,7 +18,6 @@ services:
     environment:
       TZ: "UTC"
       DEPLOY_ENVIRONMENT: "${DEPLOY_ENVIRONMENT}"
-      REDIS_HOST: "scene-redis"
       CSV_DIR: "/var/lib/scene/csv"
       POSTGRES_HOST: "postgres"
       POSTGRES_USER: "sepal"

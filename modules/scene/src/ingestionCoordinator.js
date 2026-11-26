@@ -8,15 +8,13 @@ const log = getLogger('ingestion')
 const INITIAL_UPDATE_DELAY_SECONDS = 10
 
 export class IngestionCoordinator {
-    #redis
     #ingestor
     #sources
     #clock
     #minHoursPublished
     #updateIntervalMinutes
 
-    constructor({redis, sceneIngestor, sources, clock, minHoursPublished, updateIntervalMinutes}) {
-        this.#redis = redis
+    constructor({sceneIngestor, sources, clock, minHoursPublished, updateIntervalMinutes}) {
         this.#ingestor = sceneIngestor
         this.#sources = sources
         this.#clock = clock
@@ -25,13 +23,8 @@ export class IngestionCoordinator {
     }
 
     // Emits readiness once; the subscription then owns the scheduler and its active update.
-    start$(created) {
-        return defer(() => {
-            if (!created) return of(undefined)
-            log.warn('Database did not exist, resetting Redis')
-            return this.#redis.reset()
-        }).pipe(
-            concatMap(() => this.#redis.getInitialized()),
+    start$() {
+        return defer(() => this.#ingestor.isInitialized()).pipe(
             concatMap(initialized => {
                 if (!initialized) return this.#initialize$()
                 log.info('Skipped initialization from CSV files')
@@ -58,10 +51,7 @@ export class IngestionCoordinator {
                     concatMap(source => source.load$({database: this.#ingestor, maxTimestamp, timestamp})),
                     reduce((checkpoints, updates) => Object.assign(checkpoints, updates), {})
                 )),
-                concatMap(checkpoints => defer(() => this.#ingestor.publish()).pipe(
-                    concatMap(() => this.#redis.setLastUpdate(checkpoints)),
-                    concatMap(() => this.#redis.setInitialized(timestamp.toISOString()))
-                )),
+                concatMap(checkpoints => defer(() => this.#ingestor.publish({checkpoints, timestamp}))),
                 tap(() => log.info('Initialized database from CSV files'))
             )
         })
@@ -97,7 +87,7 @@ export class IngestionCoordinator {
         return defer(() => {
             const timestamp = this.#clock()
             return from(this.#sources).pipe(
-                concatMap(source => source.update$({redis: this.#redis, database: this.#ingestor, timestamp}))
+                concatMap(source => source.update$({database: this.#ingestor, timestamp}))
             )
         })
     }

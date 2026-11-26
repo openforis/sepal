@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS catalogue;
+DROP TABLE IF EXISTS checkpoint;

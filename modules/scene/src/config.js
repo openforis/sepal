@@ -25,11 +25,6 @@ try {
                 .default(DEFAULT_PORT)
         )
         .addOption(
-            new Option('--redis-host <value>')
-                .env('REDIS_HOST')
-                .makeOptionMandatory()
-        )
-        .addOption(
             new Option('--update-interval-minutes <number>')
                 .env('UPDATE_INTERVAL_MINUTES')
                 .argParser(v => parseInt(v))
@@ -58,7 +53,6 @@ try {
 
 const {
     port,
-    redisHost,
     updateIntervalMinutes,
     minHoursPublished,
     googleMapsApiKey,
@@ -67,6 +61,4 @@ const {
 
 log.info('Configuration loaded')
 
-const redisUri = `redis://${redisHost}`
-
-export {googleMapsApiKey, minHoursPublished, nicfiPlanetApiKey, port, redisUri, updateIntervalMinutes}
+export {googleMapsApiKey, minHoursPublished, nicfiPlanetApiKey, port, updateIntervalMinutes}

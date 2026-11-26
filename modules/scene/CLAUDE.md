@@ -1,15 +1,14 @@
 # Scene
 
-Landsat/Sentinel-2 catalogue ingester and HTTP query service. Owns the `scene` table in the Postgres `scene`
-database; the gateway strips `/api/scene` before forwarding requests here. Commands: `npm test`,
-`npm run testWatch`. Schema migrations only; see [database migrations](../../docs/database-migrations.md).
+Landsat/Sentinel-2 catalogue ingester and HTTP query service. Owns the Postgres `scene` database: the `scene`
+table and the ingestion state beside it. The gateway strips `/api/scene` before forwarding requests here.
+Commands: `npm test`, `npm run testWatch`. Schema migrations only; see [database migrations](../../docs/database-migrations.md).
 
 ## Startup and HTTP
 
-`src/main.js` initializes Redis and Postgres, obtaining `{db, created}`, then starts HTTP over the live table
-before subscribing to `IngestionCoordinator.start$(created)`. Queries keep the previous catalogue during a
-rebuild; the first catalogue is empty until a rebuild publishes, which with the STAC catch-up that follows takes
-many hours from scratch. Initialization failure logs and exits with status 1.
+`src/main.js` initializes Postgres, then starts HTTP over the live table before subscribing to
+`IngestionCoordinator.start$()`. Queries keep the previous catalogue during a rebuild; the first catalogue is
+empty until a rebuild publishes, which with the STAC catch-up that follows takes many hours from scratch. Initialization failure logs and exits with status 1.
 
 Port defaults to 80 (`HTTP_PORT`). `src/routes.js` serves:
 
@@ -29,20 +28,28 @@ Scene responses use `{id, dataSet, date, cloudCover, daysFromTarget}`.
 
 `IngestionCoordinator` sequences initialization and updates. Ordered sources are Landsat, then Sentinel-2;
 each supplies cold `download$()`, `load$({database, maxTimestamp, timestamp})` and
-`update$({redis, database, timestamp})`. Downloads emit success after writers settle; loads emit one
+`update$({database, timestamp})`. Downloads emit success after writers settle; loads emit one
 checkpoint map, including `{}` when empty. Native Promise I/O is wrapped at these boundaries.
 
-`SceneIngestor` owns the `staging`/`backup` schemas, bulk loading, publication and incremental insert SQL.
-It uses the shared callback db, one connection per operation; preparation, each chunk load and publication
-are each one transaction. `csv.js` owns streaming parsing and chunk files in `CSV_DIR`. Redis holds
-initialization and per-collection checkpoints.
+`SceneIngestor` owns the `staging`/`backup` schemas, bulk loading, publication, incremental insert SQL and the
+ingestion state: `checkpoint`, the most recent acquisition ingested per dataset, and `catalogue`, one row once a
+rebuild has published. It uses the shared callback db, one connection per operation; preparation, each chunk
+load, publication and each STAC page are each one transaction. `csv.js` owns streaming parsing and chunk files
+in `CSV_DIR`.
+
+The state commits with the rows it describes, so a restored dump of the database resumes from its own
+checkpoints and STAC updates fill in what was acquired since. `backup` dumps it with the other databases.
+A missing checkpoint is derived on first use and stored: a second before the dataset's latest
+`acquisition_date`, which is stored rounded to the second. That scans the table (seconds per dataset on a full
+catalogue) during an update, after HTTP is up; it is how catalogues that predate the state, which migration
+002 marks initialized, get their checkpoints.
 
 ### Initial CSV rebuild
 
 Assumes one rebuild at a time; no distributed lock or resumable chunks.
 
-1. For a newly created database, reset Redis before reading the initialization marker. Existing databases
-   retain Redis state. Rebuild when the marker is absent.
+1. Rebuild when `catalogue` has no row: a new database, or one whose row was deleted to force a rebuild
+   (`DELETE FROM catalogue`, then restart `scene`). The marker is read only at startup.
 2. Prepare clean staging/backup schemas without touching the live table. Download source archives in
    parallel and drain all writers before reporting a failure. Replace archives only after temporary files finish.
 3. Parse/load collections sequentially. Await each chunk writer and bulk load before preparing the next chunk;
@@ -54,17 +61,17 @@ Assumes one rebuild at a time; no distributed lock or resumable chunks.
    build its primary key and search index under the migration's names, `ANALYZE` it, then
    `ALTER TABLE … SET SCHEMA` moves live to `backup` and staging to `public`. Building the indexes once
    instead of maintaining them row by row keeps chunk loads from slowing as the indexes outgrow memory.
-   Save checkpoints, then the initialized marker, only after publication.
+   The same transaction replaces the checkpoints with the loaded ones and sets the initialized marker: the
+   STAC rows of the replaced catalogue are not in the new one.
 5. Clean staging/backup schemas separately and repeatably. Post-initialization cleanup failures log and retry
    next startup without preventing HTTP/scheduling; preparation cleanup must succeed before another rebuild.
 
-Post-publication Redis failure retains the new live catalogue. Without an initialized marker, restart does
-a fresh rebuild, never a blind repeat of the swap. Postgres/Redis are not one transaction. Failed temporary
-files may remain and be overwritten on retry. An empty CSV field loads as NULL and fails its chunk.
-Sequential chunk loading bounds pending work.
+A publication failure leaves the previous catalogue, checkpoints and marker in place, and restart rebuilds from
+scratch. Failed temporary files may remain and be overwritten on retry. An empty CSV field loads as NULL and
+fails its chunk. Sequential chunk loading bounds pending work.
 
 `CSV_DIR` is bind-mounted from the host; `start.sh` runs as root only to take ownership of it, then drops to
-`node`. `scene` is derived data and is not backed up.
+`node`.
 
 ### Incremental STAC updates
 
@@ -73,14 +80,15 @@ prevents overlapping cycles. `MIN_HOURS_PUBLISHED` defaults to 24. Dataset mappi
 Landsat filters category/cloud cover and adjusts Landsat-7 cloud cover by 22 percentage points.
 
 `updateLandsat$`/`updateSentinel2$` compose `updateFromStac$`; `updateFromStac` remains a Promise adapter.
-Fetching can overlap sequential page inserts. Advance Redis only after all fetches/inserts succeed.
-Fetch/write failures log and settle normally without checkpoint advancement; completed inserts remain and
-retry uses `ON CONFLICT (id) DO NOTHING`. Initial checkpoint-read failures propagate. Empty streams settle normally;
-checkpoint-write failure preserves inserted rows.
+Fetching can overlap sequential page inserts. Earth Search returns pages in acquisition order, so each page
+commits with its checkpoint advanced to its most recent scene (`GREATEST`: never backwards). Fetch/write
+failures log and settle normally, keeping the pages already committed; retry resumes from their checkpoint and
+`ON CONFLICT (id) DO NOTHING` ignores scenes fetched again. Initial checkpoint-read failures propagate. Empty
+streams settle normally.
 
 ### Cancellation and limits
 
-Unsubscribing `start$()` stops timers, later requests, queued inserts, later datasets and checkpoint writes.
+Unsubscribing `start$()` stops timers, later requests, queued inserts and later datasets.
 Already-started Promise operations can finish and release their connections; cancellation does not undo them.
 Initialization downloads/current CSV collection may finish, so a cancelled rebuild must not overlap a new one.
 No successful-completion work runs through finalization. Fetching may buffer unbounded pages if writes lag.
@@ -94,16 +102,15 @@ The removed scene-area EE lookup is not part of this service; the GUI uses `/api
 
 ## Verification
 
-- `db.test.js`, `ingestionCoordinator.test.js`, `csvSources.test.js`: migration gating, reset policy,
+- `db.test.js`, `ingestionCoordinator.test.js`, `csvSources.test.js`: migration gating, rebuild policy,
   source sequencing, deferred I/O, download draining and cancellation through actual source/STAC composition.
-- Repository/migration/ingestor integration tests: isolated real Postgres, duplicate handling, ordered inserts,
-  fetch/write overlap, failure recovery, checkpoints and connection release.
+- Repository/migration/ingestor integration tests: isolated real Postgres, state seeding, duplicate handling,
+  ordered inserts, fetch/write overlap, per-page checkpoint commits, failure recovery and connection release.
 - `rebuild.integration.test.js`: tiny gzip fixtures through parsing, `COPY` and publication; partial
-  failure/restart, post-publication Redis failure and repeatable cleanup. Runs the ingestor as the role that
+  failure/restart, rollback of a failed publication and repeatable cleanup. Runs the ingestor as the role that
   owns its test database, since moving tables between schemas requires ownership.
 - `filesystem.integration.test.js`: local HTTP downloads preserve complete archives on interruption.
 - `routes.integration.test.js`: real HTTP with an in-memory repository.
 
-Live providers, full-scale throughput and process/DB crashes during DDL are not covered. Injected workflow
-failures do not establish a distributed Postgres/Redis transaction. HTTP-before-ingest
+Live providers, full-scale throughput and process/DB crashes during DDL are not covered. HTTP-before-ingest
 and fatal-exit wiring are checked by inspection, not a dedicated main unit test.

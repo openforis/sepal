@@ -33,30 +33,6 @@ describe('initializeDb', () => {
         assert.deepEqual(options, {label: 'schema migrations'})
     })
 
-    it('is not created when an existing schema is migrated', async () => {
-        initDb.mock.mockImplementationOnce(async () => ({
-            created: false,
-            migrated: true,
-            version: 1
-        }))
-
-        const {created} = await initializeDb()
-
-        assert.equal(created, false)
-    })
-
-    it('is created when the schema was missing', async () => {
-        initDb.mock.mockImplementationOnce(async () => ({
-            created: true,
-            migrated: true,
-            version: 1
-        }))
-
-        const {created} = await initializeDb()
-
-        assert.equal(created, true)
-    })
-
     it('waits for migrations before creating the adapter resources', async () => {
         const migrations = Promise.withResolvers()
         initDb.mock.mockImplementationOnce(() => migrations.promise)

@@ -41,60 +41,55 @@ describe('ingestion coordinator lifetime', () => {
         mock.timers.reset()
     })
 
-    test('a recreated database invalidates an old initialization marker and rebuilds before readiness', async () => {
-        const {coordinator, redis, ingestor} = givenIngestion({initialized: INITIAL_CHECKPOINT})
+    test('an uninitialized catalogue is rebuilt and published with the loaded checkpoints before readiness', async () => {
+        const {coordinator, sources: [landsat], ingestor} = givenIngestion({initialized: false})
+        landsat.load$.mock.mockImplementation(() => of({LANDSAT_8: UPDATED_CHECKPOINT}))
 
-        await firstValueFrom(coordinator.start$(true))
+        await firstValueFrom(coordinator.start$())
 
-        const initialized = await redis.getInitialized()
-        assert.equal(initialized, TIMESTAMP.toISOString())
-        assert.equal(ingestor.publish.mock.callCount(), 1)
+        assert.deepEqual(callsOf(ingestor.publish), [[{checkpoints: {LANDSAT_8: UPDATED_CHECKPOINT}, timestamp: TIMESTAMP}]])
     })
 
-    test('an existing database preserves its initialization marker and published catalogue', async () => {
-        const {coordinator, redis, ingestor} = givenIngestion({initialized: INITIAL_CHECKPOINT})
+    test('an initialized catalogue is kept without a rebuild', async () => {
+        const {coordinator, sources: [landsat], ingestor} = givenIngestion({initialized: true})
 
-        await firstValueFrom(coordinator.start$(false))
+        await firstValueFrom(coordinator.start$())
 
-        const initialized = await redis.getInitialized()
-        assert.equal(initialized, INITIAL_CHECKPOINT)
+        assert.equal(landsat.load$.mock.callCount(), 0)
         assert.equal(ingestor.publish.mock.callCount(), 0)
     })
 
     test('an empty source list still publishes and reaches readiness with no checkpoints', async () => {
-        const {coordinator, redis, ingestor} = givenIngestion({initialized: null, sources: []})
+        const {coordinator, ingestor} = givenIngestion({initialized: false, sources: []})
 
-        await firstValueFrom(coordinator.start$(false))
+        await firstValueFrom(coordinator.start$())
 
-        const initialized = await redis.getInitialized()
-        assert.equal(initialized, TIMESTAMP.toISOString())
-        assert.deepEqual(callsOf(redis.setLastUpdate), [[{}]])
-        assert.equal(ingestor.publish.mock.callCount(), 1)
+        assert.deepEqual(callsOf(ingestor.publish), [[{checkpoints: {}, timestamp: TIMESTAMP}]])
     })
 
     test('a scheduled cycle follows the injected source order and each source\'s dataset order', async () => {
         const sources = [aSource(updateSentinel2$), aSource(updateLandsat$)]
-        const {coordinator, stored, redis} = givenIngestion({sources})
+        const {coordinator, stored, ingestor} = givenIngestion({sources})
         getUpdates$.mock.mockImplementation(({dataset}) => of(aPage(dataset)))
         const ready = Promise.withResolvers()
 
-        subscriptions.push(coordinator.start$(false).subscribe({next: ready.resolve, error: ready.reject}))
+        subscriptions.push(coordinator.start$().subscribe({next: ready.resolve, error: ready.reject}))
         await ready.promise
         await advanceTimers(10_000)
 
         assert.deepEqual(stored.map(({id}) => id), ['SENTINEL_2', 'LANDSAT_8', 'LANDSAT_9'])
         for (const dataset of ['LANDSAT_8', 'LANDSAT_9', 'SENTINEL_2']) {
-            const checkpoint = await redis.getLastUpdate(dataset)
+            const checkpoint = await ingestor.getCheckpoint(dataset)
             assert.equal(checkpoint, UPDATED_CHECKPOINT)
         }
     })
 
     test('unsubscribing cancels a pending STAC page, later datasets and future scheduled cycles', async () => {
-        const {coordinator, stored, redis} = givenIngestion()
+        const {coordinator, stored, ingestor} = givenIngestion()
         const page$ = new Subject()
         getUpdates$.mock.mockImplementation(() => page$)
         const ready = Promise.withResolvers()
-        const subscription = coordinator.start$(false).subscribe({next: ready.resolve, error: ready.reject})
+        const subscription = coordinator.start$().subscribe({next: ready.resolve, error: ready.reject})
         subscriptions.push(subscription)
         await ready.promise
         await advanceTimers(10_000)
@@ -105,26 +100,26 @@ describe('ingestion coordinator lifetime', () => {
         page$.complete()
         await advanceTimers(60 * 60 * 1000)
 
-        const checkpoint = await redis.getLastUpdate('LANDSAT_8')
+        const checkpoint = await ingestor.getCheckpoint('LANDSAT_8')
         assert.deepEqual(stored, [])
         assert.equal(checkpoint, INITIAL_CHECKPOINT)
-        assert.equal(redis.setLastUpdate.mock.callCount(), 0)
         assert.equal(getUpdates$.mock.callCount(), 1)
     })
 
     test('unsubscribing lets an active insert finish but drops queued pages and later datasets', async () => {
-        const {coordinator, ingestor, stored, redis} = givenIngestion()
+        const {coordinator, ingestor, stored} = givenIngestion()
         const pending = Promise.withResolvers()
         const started = Promise.withResolvers()
+        const insert = ingestor.insert
         let insertion
-        ingestor.insert = ({scenes}) => {
-            insertion = pending.promise.then(() => { stored.push(...scenes) })
+        ingestor.insert = args => {
+            insertion = pending.promise.then(() => insert(args))
             started.resolve()
             return insertion
         }
         getUpdates$.mock.mockImplementation(({token}) => of(token ? aPage('queued') : aPage('first', 'next')))
         const ready = Promise.withResolvers()
-        const subscription = coordinator.start$(false).subscribe({next: ready.resolve, error: ready.reject})
+        const subscription = coordinator.start$().subscribe({next: ready.resolve, error: ready.reject})
         subscriptions.push(subscription)
         await ready.promise
         await advanceTimers(10_000)
@@ -136,15 +131,14 @@ describe('ingestion coordinator lifetime', () => {
         await insertion
         await advanceTimers(60 * 60 * 1000)
 
-        const checkpoint = await redis.getLastUpdate('LANDSAT_8')
+        const checkpoint = await ingestor.getCheckpoint('LANDSAT_8')
         assert.deepEqual(stored.map(({id}) => id), ['first'])
-        assert.equal(checkpoint, INITIAL_CHECKPOINT)
-        assert.equal(redis.setLastUpdate.mock.callCount(), 0)
+        assert.equal(checkpoint, UPDATED_CHECKPOINT)
         assert.equal(getUpdates$.mock.callCount(), 2)
     })
 
     test('cancelling initialization allows an active CSV load to settle without starting another load or publication', async () => {
-        const {coordinator, sources: [landsat, sentinel2], ingestor, redis} = givenIngestion({initialized: null})
+        const {coordinator, sources: [landsat, sentinel2], ingestor} = givenIngestion({initialized: false})
         const loading = Promise.withResolvers()
         const pending = Promise.withResolvers()
         const load = pending.promise.then(() => ({LANDSAT_8: UPDATED_CHECKPOINT}))
@@ -152,7 +146,7 @@ describe('ingestion coordinator lifetime', () => {
             loading.resolve()
             return load
         })
-        const subscription = coordinator.start$(false).subscribe()
+        const subscription = coordinator.start$().subscribe()
         subscriptions.push(subscription)
         await loading.promise
 
@@ -163,13 +157,10 @@ describe('ingestion coordinator lifetime', () => {
 
         assert.equal(sentinel2.load$.mock.callCount(), 0)
         assert.equal(ingestor.publish.mock.callCount(), 0)
-        assert.equal(redis.setLastUpdate.mock.callCount(), 0)
-        const initialized = await redis.getInitialized()
-        assert.equal(initialized, null)
     })
 
     test('a failed download is reported only after the other download settles, without loading or publishing', async () => {
-        const {coordinator, sources: [landsat, sentinel2], ingestor, redis} = givenIngestion({initialized: null})
+        const {coordinator, sources: [landsat, sentinel2], ingestor} = givenIngestion({initialized: false})
         const error = new Error('Download failed')
         const pending = Promise.withResolvers()
         const downloading = Promise.withResolvers()
@@ -180,7 +171,7 @@ describe('ingestion coordinator lifetime', () => {
         })
         let failure
 
-        const initialization = firstValueFrom(coordinator.start$(false)).catch(error => { failure = error })
+        const initialization = firstValueFrom(coordinator.start$()).catch(error => { failure = error })
         await downloading.promise
         await advanceTimers(0)
         assert.equal(failure, undefined)
@@ -192,36 +183,28 @@ describe('ingestion coordinator lifetime', () => {
         assert.equal(landsat.load$.mock.callCount(), 0)
         assert.equal(sentinel2.load$.mock.callCount(), 0)
         assert.equal(ingestor.publish.mock.callCount(), 0)
-        assert.equal(redis.setLastUpdate.mock.callCount(), 0)
         assert.equal(getUpdates$.mock.callCount(), 0)
-        const initialized = await redis.getInitialized()
-        assert.equal(initialized, null)
     })
 })
 
-const givenIngestion = ({initialized = TIMESTAMP.toISOString(), sources = [aSource(updateLandsat$), aSource(updateSentinel2$)]} = {}) => {
+const givenIngestion = ({initialized = true, sources = [aSource(updateLandsat$), aSource(updateSentinel2$)]} = {}) => {
     const stored = []
     const checkpoints = {}
-    const redis = {
-        getInitialized: async () => initialized,
-        setInitialized: async timestamp => { initialized = timestamp },
-        reset: async () => {
-            initialized = null
-            for (const dataset of Object.keys(checkpoints)) delete checkpoints[dataset]
-        },
-        getLastUpdate: async dataset => checkpoints[dataset] || INITIAL_CHECKPOINT,
-        setLastUpdate: mock.fn(async updates => { Object.assign(checkpoints, updates) })
-    }
     const ingestor = {
+        isInitialized: async () => initialized,
+        getCheckpoint: async dataset => checkpoints[dataset] || INITIAL_CHECKPOINT,
         prepare: async () => {},
         cleanup: async () => {},
         publish: mock.fn(async () => {}),
-        insert: async ({scenes}) => { stored.push(...scenes) }
+        insert: async ({scenes, checkpoints: reached}) => {
+            stored.push(...scenes)
+            Object.assign(checkpoints, reached)
+        }
     }
     return {
-        stored, redis, ingestor, sources,
+        stored, ingestor, sources,
         coordinator: new IngestionCoordinator({
-            redis, sceneIngestor: ingestor, sources,
+            sceneIngestor: ingestor, sources,
             clock: () => TIMESTAMP, minHoursPublished: 24, updateIntervalMinutes: 60
         })
     }
