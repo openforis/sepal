@@ -10,6 +10,7 @@ import {concatMap, defer, EMPTY, firstValueFrom, lastValueFrom, throwError, toAr
 
 import {configureNoLogging} from '#sepal/log'
 import {dirName} from '#sepal/path'
+import {failingDb} from '#sepal/testSupport/db/faultyConnection'
 
 import {processCSV} from './csv.js'
 import {IngestionCoordinator} from './ingestionCoordinator.js'
@@ -25,7 +26,6 @@ describe('catalogue rebuild recovery', () => {
     let testDb
     let directory
     let ingestor
-    let redis
     let landsat
     let sentinel2
     const filesDirectory = process.env.CSV_DIR
@@ -40,8 +40,10 @@ describe('catalogue rebuild recovery', () => {
         directory = await mkdtemp(join(tmpdir(), 'scene-rebuild-'))
         process.env.CSV_DIR = directory
         ingestor = new SceneIngestor(testDb.db)
-        await ingestor.insert({scenes: [aScene({id: 'live-before-rebuild'})], timestamp: TIMESTAMP})
-        redis = checkpointStore()
+        await ingestor.insert({
+            scenes: [aScene({id: 'live-before-rebuild'})], timestamp: TIMESTAMP,
+            checkpoints: {LANDSAT_8: INITIAL_CHECKPOINT}
+        })
         landsat = {
             download$: () => defer(async () => {
                 await writeCsv('landsat-tm', landsatCsv('LT05'))
@@ -65,25 +67,23 @@ describe('catalogue rebuild recovery', () => {
 
     after(() => testDb?.remove())
 
-    test('publishes parsed Landsat and Sentinel files before persisting checkpoints and initialization', async () => {
-        const {setLastUpdate} = redis
-        let publishedAtCheckpoint
-        redis.setLastUpdate = async checkpoints => {
-            publishedAtCheckpoint = await storedIds()
-            await setLastUpdate(checkpoints)
-        }
+    test('publishes parsed Landsat and Sentinel files with their checkpoints and the initialized marker', async () => {
         const coordinator = aCoordinator()
 
-        await firstValueFrom(coordinator.start$(false))
+        await firstValueFrom(coordinator.start$())
 
-        const initialized = await redis.getInitialized()
-        const landsatCheckpoint = await redis.getLastUpdate('LANDSAT_8')
-        const sentinelCheckpoint = await redis.getLastUpdate('SENTINEL_2')
-        assert.equal(publishedAtCheckpoint.length, 4)
-        assert.ok(!publishedAtCheckpoint.includes('live-before-rebuild'))
-        assert.equal(initialized, TIMESTAMP.toISOString())
-        assert.equal(landsatCheckpoint, '2021-07-15T00:00:00.000Z')
-        assert.equal(sentinelCheckpoint, '2021-07-15T10:00:00.000Z')
+        const published = await storedIds()
+        const initialized = await ingestor.isInitialized()
+        const checkpoints = await storedCheckpoints()
+        assert.equal(published.length, 4)
+        assert.ok(!published.includes('live-before-rebuild'))
+        assert.equal(initialized, true)
+        assert.deepEqual(checkpoints, {
+            LANDSAT_7: '2021-07-15T00:00:00.000Z',
+            LANDSAT_8: '2021-07-15T00:00:00.000Z',
+            LANDSAT_TM: '2021-07-15T00:00:00.000Z',
+            SENTINEL_2: '2021-07-15T10:00:00.000Z'
+        })
     })
 
     for (const [name, load$] of [
@@ -114,14 +114,14 @@ describe('catalogue rebuild recovery', () => {
         landsat.download$ = () => throwError(() => error)
         const coordinator = aCoordinator()
 
-        await assert.rejects(firstValueFrom(coordinator.start$(false)), thrown => thrown === error)
+        await assert.rejects(firstValueFrom(coordinator.start$()), thrown => thrown === error)
 
         const stored = await storedIds()
-        const checkpoint = await redis.getLastUpdate('LANDSAT_8')
-        const initialized = await redis.getInitialized()
+        const checkpoints = await storedCheckpoints()
+        const initialized = await ingestor.isInitialized()
         assert.deepEqual(stored, ['live-before-rebuild'])
-        assert.equal(checkpoint, INITIAL_CHECKPOINT)
-        assert.equal(initialized, null)
+        assert.deepEqual(checkpoints, {LANDSAT_8: INITIAL_CHECKPOINT})
+        assert.equal(initialized, false)
     })
 
     test('a parsing failure after partial progress preserves live data, and a restart discards staging', async () => {
@@ -134,26 +134,26 @@ describe('catalogue rebuild recovery', () => {
         )
         const coordinator = aCoordinator()
 
-        await assert.rejects(firstValueFrom(coordinator.start$(false)))
+        await assert.rejects(firstValueFrom(coordinator.start$()))
 
         const liveBeforeRetry = await storedIds()
         const staged = await stagedIds()
-        const checkpointBeforeRetry = await redis.getLastUpdate('LANDSAT_8')
-        const initializedBeforeRetry = await redis.getInitialized()
+        const checkpointsBeforeRetry = await storedCheckpoints()
+        const initializedBeforeRetry = await ingestor.isInitialized()
         assert.deepEqual(liveBeforeRetry, ['live-before-rebuild'])
         assert.equal(staged.length, 1)
-        assert.equal(checkpointBeforeRetry, INITIAL_CHECKPOINT)
-        assert.equal(initializedBeforeRetry, null)
+        assert.deepEqual(checkpointsBeforeRetry, {LANDSAT_8: INITIAL_CHECKPOINT})
+        assert.equal(initializedBeforeRetry, false)
 
         landsat.download$ = download$
-        await firstValueFrom(coordinator.start$(false))
+        await firstValueFrom(coordinator.start$())
 
         const liveAfterRetry = await storedIds()
-        const initialized = await redis.getInitialized()
+        const initialized = await ingestor.isInitialized()
         assert.equal(liveAfterRetry.length, 4)
         assert.ok(!liveAfterRetry.includes('live-before-rebuild'))
         assert.ok(!liveAfterRetry.includes(staged[0]))
-        assert.equal(initialized, TIMESTAMP.toISOString())
+        assert.equal(initialized, true)
     })
 
     test('a failed bulk load retains its chunk and prevents publication until a fresh successful rebuild', async () => {
@@ -164,48 +164,52 @@ describe('catalogue rebuild recovery', () => {
         }))
         const coordinator = aCoordinator()
 
-        await assert.rejects(firstValueFrom(coordinator.start$(false)), thrown => thrown === error)
+        await assert.rejects(firstValueFrom(coordinator.start$()), thrown => thrown === error)
 
         const live = await storedIds()
         const failedChunk = await readFile(join(directory, 'landsat-tm.1.csv'), 'utf8')
-        const initialized = await redis.getInitialized()
+        const initialized = await ingestor.isInitialized()
         assert.deepEqual(live, ['live-before-rebuild'])
         assert.ok(failedChunk.includes('LT05'))
         assert.equal(failedChunk.endsWith('\n'), true)
-        assert.equal(initialized, null)
+        assert.equal(initialized, false)
 
         fail = false
-        await firstValueFrom(coordinator.start$(false))
+        await firstValueFrom(coordinator.start$())
 
         const published = await storedIds()
         assert.equal(published.length, 4)
         assert.ok(!published.includes('live-before-rebuild'))
     })
 
-    for (const operation of ['setLastUpdate', 'setInitialized']) {
+    for (const statement of ['INSERT INTO checkpoint', 'INSERT INTO catalogue']) {
         test(
-            `failure of ${operation} after publication restarts with a full rebuild, not another swap`,
+            `a failed ${statement} undoes the swap, and a restart rebuilds and publishes`,
             async () => {
-                const error = new Error('Redis write failed')
-                redis[operation].mock.mockImplementationOnce(async () => {
-                    throw error
-                })
+                const error = new Error('Publication failed')
+                let fail = true
+                ingestor = new SceneIngestor(failingDb(testDb.db, {
+                    when: sql => fail && typeof sql === 'string' && sql.includes(statement), error
+                }))
                 const coordinator = aCoordinator()
 
-                await assert.rejects(firstValueFrom(coordinator.start$(false)), thrown => thrown === error)
+                await assert.rejects(firstValueFrom(coordinator.start$()), thrown => thrown === error)
+
+                const live = await storedIds()
+                const checkpoints = await storedCheckpoints()
+                const initializedBeforeRetry = await ingestor.isInitialized()
+                assert.deepEqual(live, ['live-before-rebuild'])
+                assert.deepEqual(checkpoints, {LANDSAT_8: INITIAL_CHECKPOINT})
+                assert.equal(initializedBeforeRetry, false)
+
+                fail = false
+                await firstValueFrom(coordinator.start$())
 
                 const published = await storedIds()
-                const initializedBeforeRetry = await redis.getInitialized()
+                const initialized = await ingestor.isInitialized()
                 assert.equal(published.length, 4)
                 assert.ok(!published.includes('live-before-rebuild'))
-                assert.equal(initializedBeforeRetry, null)
-
-                await firstValueFrom(coordinator.start$(false))
-
-                const afterRetry = await storedIds()
-                const initialized = await redis.getInitialized()
-                assert.deepEqual(afterRetry, published)
-                assert.equal(initialized, TIMESTAMP.toISOString())
+                assert.equal(initialized, true)
             }
         )
     }
@@ -216,15 +220,15 @@ describe('catalogue rebuild recovery', () => {
         }, {times: 1})
         const coordinator = aCoordinator()
 
-        await firstValueFrom(coordinator.start$(false))
+        await firstValueFrom(coordinator.start$())
 
         const published = await storedIds()
-        const initialized = await redis.getInitialized()
+        const initialized = await ingestor.isInitialized()
         assert.equal(published.length, 4)
-        assert.equal(initialized, TIMESTAMP.toISOString())
+        assert.equal(initialized, true)
 
         landsat.download$ = () => throwError(() => new Error('Must not rebuild'))
-        await firstValueFrom(coordinator.start$(false))
+        await firstValueFrom(coordinator.start$())
 
         const afterCleanup = await storedIds()
         const {rows: disposable} = await testDb.query(
@@ -249,7 +253,7 @@ describe('catalogue rebuild recovery', () => {
             database: ingestor, timestamp: TIMESTAMP, chunkSize: 2
         })
         const beforePublication = await storedIds()
-        await ingestor.publish()
+        await ingestor.publish({checkpoints, timestamp: TIMESTAMP})
 
         const published = await storedIds()
         assert.deepEqual(beforePublication, ['live-before-rebuild'])
@@ -262,12 +266,12 @@ describe('catalogue rebuild recovery', () => {
         const second = aScene({id: 'twin', cloudCover: 90})
         await writeCsv('tiny', 'id\n1\n2\n')
         await ingestor.prepare()
-        await processCSV({
+        const checkpoints = await processCSV({
             collection: 'tiny', sceneMapper: ({id}) => [first, second][Number(id) - 1],
             database: ingestor, timestamp: TIMESTAMP
         })
 
-        await ingestor.publish()
+        await ingestor.publish({checkpoints, timestamp: TIMESTAMP})
 
         const {rows} = await testDb.query('SELECT id, cloud_cover FROM scene')
         assert.deepEqual(rows, [{id: first.id, cloud_cover: first.cloudCover}])
@@ -278,12 +282,12 @@ describe('catalogue rebuild recovery', () => {
         const second = aScene({id: 'twin', cloudCover: 90})
         await writeCsv('tiny', 'id\n1\n2\n')
         await ingestor.prepare()
-        await processCSV({
+        const checkpoints = await processCSV({
             collection: 'tiny', sceneMapper: ({id}) => [first, second][Number(id) - 1],
             database: ingestor, timestamp: TIMESTAMP, chunkSize: 1
         })
 
-        await ingestor.publish()
+        await ingestor.publish({checkpoints, timestamp: TIMESTAMP})
 
         const {rows} = await testDb.query('SELECT id, cloud_cover FROM scene')
         assert.deepEqual(rows, [{id: first.id, cloud_cover: first.cloudCover}])
@@ -293,9 +297,9 @@ describe('catalogue rebuild recovery', () => {
         const migrated = await tableDefinition()
         await writeCsv('tiny', 'id\n1\n')
         await ingestor.prepare()
-        await processCSV({collection: 'tiny', sceneMapper: () => aScene(), database: ingestor, timestamp: TIMESTAMP})
+        const checkpoints = await processCSV({collection: 'tiny', sceneMapper: () => aScene(), database: ingestor, timestamp: TIMESTAMP})
 
-        await ingestor.publish()
+        await ingestor.publish({checkpoints, timestamp: TIMESTAMP})
 
         assert.deepEqual(await tableDefinition(), migrated)
     })
@@ -326,8 +330,7 @@ describe('catalogue rebuild recovery', () => {
     })
 
     const aCoordinator = () => new IngestionCoordinator({
-        redis, sceneIngestor: ingestor, sources: [landsat, sentinel2], clock: () => TIMESTAMP,
-        importCatalogue: async () => ({outcome: 'skipped'}),
+        sceneIngestor: ingestor, sources: [landsat, sentinel2], clock: () => TIMESTAMP,
         minHoursPublished: 24, updateIntervalMinutes: 60
     })
 
@@ -336,6 +339,11 @@ describe('catalogue rebuild recovery', () => {
     const storedIds = async () => {
         const {rows} = await testDb.query('SELECT id FROM scene ORDER BY id')
         return rows.map(({id}) => id)
+    }
+
+    const storedCheckpoints = async () => {
+        const {rows} = await testDb.query('SELECT dataset, last_acquisition FROM checkpoint ORDER BY dataset')
+        return Object.fromEntries(rows.map(({dataset, last_acquisition}) => [dataset, last_acquisition.toISOString()]))
     }
 
     const stagedIds = async () => {
@@ -383,14 +391,3 @@ const failingCopy = (db, {when, error}) => ({
             : connection.query(query, params)
     }))
 })
-
-const checkpointStore = () => {
-    let initialized = null
-    const checkpoints = {LANDSAT_8: INITIAL_CHECKPOINT}
-    return {
-        getInitialized: async () => initialized,
-        getLastUpdate: async dataset => checkpoints[dataset],
-        setLastUpdate: mock.fn(async updates => { Object.assign(checkpoints, updates) }),
-        setInitialized: mock.fn(async value => { initialized = value })
-    }
-}

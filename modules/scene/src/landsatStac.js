@@ -7,13 +7,12 @@ import {updateFromStac$} from './stac.js'
 
 const log = getLogger('landsat')
 
-export const updateLandsat$ = ({redis, database, timestamp}) => from([8, 9]).pipe(
+export const updateLandsat$ = ({database, timestamp}) => from([8, 9]).pipe(
     concatMap(number => updateFromStac$({
         source: 'landsat-ot',
         dataset: `LANDSAT_${number}`,
         query: {platform: {eq: `landsat-${number}`}},
         sceneMapper,
-        redis,
         database,
         timestamp
     }))

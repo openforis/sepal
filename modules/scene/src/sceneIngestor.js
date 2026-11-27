@@ -43,9 +43,28 @@ export class SceneIngestor {
         log.info(`Data ingested from file ${csvFile} (${formatInterval(t0)})`)
     }
 
+    async isInitialized() {
+        const {rowCount} = await this.#db.withConnection(connection => connection.query('SELECT 1 FROM catalogue'))
+        return rowCount > 0
+    }
+
+    // A missing checkpoint is derived from the catalogue and stored, so a dataset whose checkpoint was lost
+    // resumes where its rows end instead of never being queried. The derivation scans the table.
+    async getCheckpoint(dataset) {
+        const lastAcquisition = await this.#db.withConnection(async connection => {
+            const {rows: [stored]} = await connection.query(SELECT_CHECKPOINT, [dataset])
+            if (stored) return stored.last_acquisition
+            const {rows: [derived]} = await connection.query(DERIVE_CHECKPOINT, [dataset])
+            log.info(`Derived checkpoint for dataset ${dataset} from the catalogue:`, derived?.last_acquisition ?? 'none')
+            return derived?.last_acquisition
+        })
+        return lastAcquisition ? lastAcquisition.toISOString() : null
+    }
+
     // Indexes are built once over the loaded rows rather than maintained row by row, which made each chunk
-    // slower as they outgrew memory.
-    async publish() {
+    // slower as they outgrew memory. The checkpoints and the initialized marker commit with the swap, since
+    // they describe the published rows: the STAC rows of the catalogue it replaces are not among them.
+    async publish({checkpoints, timestamp}) {
         const t0 = Date.now()
         await this.#db.withTransaction(async connection => {
             await connection.query('CREATE TABLE staging.scene (LIKE public.scene INCLUDING ALL EXCLUDING INDEXES)')
@@ -55,6 +74,10 @@ export class SceneIngestor {
             await connection.query('ANALYZE staging.scene')
             await connection.query('ALTER TABLE public.scene SET SCHEMA backup')
             await connection.query('ALTER TABLE staging.scene SET SCHEMA public')
+            await connection.query('DELETE FROM checkpoint')
+            await advanceCheckpoints(connection, checkpoints)
+            await connection.query('DELETE FROM catalogue')
+            await connection.query('INSERT INTO catalogue (initialized) VALUES ($1)', [timestamp])
         })
         log.info(`Published catalogue (${formatInterval(t0)})`)
     }
@@ -63,18 +86,24 @@ export class SceneIngestor {
         await this.#db.withConnection(connection => connection.query(DROP_SCHEMAS))
     }
 
-    async insert({scenes, timestamp}) {
+    // Scenes commit with the checkpoints they reach, which never move back.
+    async insert({scenes, timestamp, checkpoints = {}}) {
         log.debug('Ingesting updates...')
         const t0 = Date.now()
-        await this.#db.withConnection(connection => connection.query(`
-            INSERT INTO scene
-            (id, meta_data_source, sensor_id, scene_area_id, acquisition_date, day_of_year, cloud_cover, sun_azimuth, sun_elevation, update_time)
-            SELECT *, $10::timestamptz
-            FROM unnest($1::text[], $2::text[], $3::text[], $4::text[], $5::timestamptz[], $6::smallint[], $7::float8[], $8::float8[], $9::float8[])
-            ON CONFLICT (id) DO NOTHING
-        `, [...columns(scenes), timestamp]))
+        await this.#db.withTransaction(async connection => {
+            await connection.query(INSERT_SCENES, [...columns(scenes), timestamp])
+            await advanceCheckpoints(connection, checkpoints)
+        })
         log.info(`Updates ingested (${formatInterval(t0)})`)
     }
+}
+
+const advanceCheckpoints = (connection, checkpoints) => {
+    const entries = Object.entries(checkpoints)
+    return connection.query(ADVANCE_CHECKPOINTS, [
+        entries.map(([dataset]) => dataset),
+        entries.map(([, lastAcquisition]) => lastAcquisition)
+    ])
 }
 
 const COLUMNS = 'id, meta_data_source, sensor_id, scene_area_id, acquisition_date, day_of_year, cloud_cover, sun_azimuth, sun_elevation'
@@ -112,6 +141,30 @@ const CREATE_INDEXES = `
     ALTER TABLE staging.scene ADD CONSTRAINT scene_pkey PRIMARY KEY (id);
     CREATE INDEX scene_scene_area_id_acquisition_date_day_of_year_idx
         ON staging.scene (scene_area_id, acquisition_date, day_of_year)`
+
+const INSERT_SCENES = `
+    INSERT INTO scene
+    (id, meta_data_source, sensor_id, scene_area_id, acquisition_date, day_of_year, cloud_cover, sun_azimuth, sun_elevation, update_time)
+    SELECT *, $10::timestamptz
+    FROM unnest($1::text[], $2::text[], $3::text[], $4::text[], $5::timestamptz[], $6::smallint[], $7::float8[], $8::float8[], $9::float8[])
+    ON CONFLICT (id) DO NOTHING`
+
+const SELECT_CHECKPOINT = 'SELECT last_acquisition FROM checkpoint WHERE dataset = $1'
+
+// acquisition_date is rounded to the second, so the checkpoint is set a second early; the scenes fetched
+// again are ignored as duplicates. A checkpoint stored meanwhile is kept, and returned.
+const DERIVE_CHECKPOINT = `
+    INSERT INTO checkpoint (dataset, last_acquisition)
+    SELECT $1::text, max(acquisition_date) - interval '1 second' FROM scene WHERE sensor_id = $1::text
+    HAVING max(acquisition_date) IS NOT NULL
+    ON CONFLICT (dataset) DO UPDATE SET last_acquisition = checkpoint.last_acquisition
+    RETURNING last_acquisition`
+
+const ADVANCE_CHECKPOINTS = `
+    INSERT INTO checkpoint (dataset, last_acquisition)
+    SELECT * FROM unnest($1::text[], $2::timestamptz[])
+    ON CONFLICT (dataset) DO UPDATE
+    SET last_acquisition = GREATEST(checkpoint.last_acquisition, EXCLUDED.last_acquisition)`
 
 const columns = scenes => [
     scenes.map(({id}) => id),

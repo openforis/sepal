@@ -6,7 +6,6 @@ import {dirName} from '#sepal/path'
 const DATABASE_NAME = 'scene'
 
 export const initializeDb = async () => {
-    const {created} = await initDb(DATABASE_NAME, join(dirName(import.meta.url), '../migrations'), {label: 'schema migrations'})
-    const db = createDb(await createPool(DATABASE_NAME))
-    return {db, created}
+    await initDb(DATABASE_NAME, join(dirName(import.meta.url), '../migrations'), {label: 'schema migrations'})
+    return createDb(await createPool(DATABASE_NAME))
 }

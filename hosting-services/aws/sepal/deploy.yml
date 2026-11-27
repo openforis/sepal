@@ -136,6 +136,8 @@
         - dockercheck-scene-metadata
         - dockercheck-scene-metadata-redis
         - redismemcheck-scene-metadata-redis
+        - dockercheck-scene-redis
+        - redismemcheck-scene-redis
 
     - name: Configure monit/4
       template:
@@ -349,6 +351,12 @@
     # Their data stays under /data as an archive: /data/mysql holds the last MySQL state
     - name: Remove the retired MySQL and scene-metadata containers
       command: docker rm --force mysql mysql-admin mysql-backup scene-metadata scene-metadata-redis
+      changed_when: false
+      failed_when: false
+
+    # scene keeps its ingestion state in Postgres. /data/scene-redis is left behind
+    - name: Remove the retired scene-redis container
+      command: docker rm --force scene-redis
       changed_when: false
       failed_when: false
 
