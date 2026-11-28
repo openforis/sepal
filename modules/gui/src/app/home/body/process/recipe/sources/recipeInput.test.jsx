@@ -684,5 +684,5 @@ const choose = async label => act(async () => {
 })
 
 const showAll = () => act(async () =>
-    [...document.querySelectorAll('button')].find(button => button.textContent === 'ALL').click()
+    [...document.querySelectorAll('button')].find(button => button.textContent === 'widget.recipeInput.all.label').click()
 )
