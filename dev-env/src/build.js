@@ -1,7 +1,7 @@
 import _ from 'lodash'
 
 import {compose} from './compose.js'
-import {SEPAL_SRC} from './config.js'
+import {SEPAL_SRC, USER_GID, USER_UID} from './config.js'
 import {allowsProductionMode, getBuildDeps, getBuildRunDeps, getLibDeps} from './deps.js'
 import {exec} from './exec.js'
 import {log} from './log.js'
@@ -28,7 +28,7 @@ const ensurePackageLockExists = async (modulePath, lib) => {
         command: 'chown',
         args: [
             '-R',
-            '1000:1000',
+            `${USER_UID || '1000'}:${USER_GID || '1000'}`,
             `${path}/node_modules`,
             `${path}/package-lock.json`
         ]
