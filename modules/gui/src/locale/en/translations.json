@@ -7244,6 +7244,7 @@
       "open": "Open selected recipe",
       "placeholder": "Select a recipe...",
       "all": {
+        "label": "All projects",
         "tooltip": "Show all recipes or only recipes in current project"
       },
       "ownRecipe": {

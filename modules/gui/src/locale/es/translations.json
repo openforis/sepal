@@ -5494,6 +5494,7 @@
       "label": "",
       "placeholder": "Selecciona un flujo de trabajo...",
       "all": {
+        "label": "Todos los proyectos",
         "tooltip": ""
       }
     },

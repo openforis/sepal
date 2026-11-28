@@ -57,7 +57,7 @@ class _RecipeInput extends React.Component {
                 air={'less'}
                 size={'x-small'}
                 options={[
-                    {value: true, label: 'ALL', tooltip: msg('widget.recipeInput.all.tooltip')}
+                    {value: true, label: msg('widget.recipeInput.all.label'), tooltip: msg('widget.recipeInput.all.tooltip')}
                 ]}
                 multiple
                 tabIndex={-1}
